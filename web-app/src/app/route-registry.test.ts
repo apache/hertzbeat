@@ -154,6 +154,7 @@ describe('route registry', () => {
   it('keeps notification configuration under one settings entry', () => {
     expect(routeRegistry.find(route => route.id === 'settings')?.resource).toBeDefined();
     expect(routeRegistry.find(route => route.id === 'instrumentation')).toMatchObject({
+      layout: 'blank',
       resource: { labelKey: 'instrumentation.menu' }
     });
   });

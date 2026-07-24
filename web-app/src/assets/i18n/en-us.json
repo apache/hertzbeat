@@ -713,6 +713,12 @@
       "detect": "Verify signals",
       "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
     },
+    "question": {
+      "framework": "Which framework do you use?",
+      "method": "How do you want to instrument it?",
+      "environment": "Where does the application run?",
+      "platform": "Which platform does it use?"
+    },
     "field": {
       "deploymentEnvironment": "Deployment environment",
       "platform": "Platform",
@@ -733,6 +739,7 @@
       "tokenPlaceholder": "Paste the OTLP ingestion token"
     },
     "action": {
+      "exit": "Back to dashboard",
       "continue": "Continue",
       "render": "Render instructions",
       "reviewContext": "Review context",

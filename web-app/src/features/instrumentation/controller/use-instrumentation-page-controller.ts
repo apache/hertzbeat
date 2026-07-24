@@ -85,6 +85,7 @@ export function useInstrumentationPageController() {
     ...guideActions,
     detect,
     openQuery,
+    hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),
     canContinueSource: Boolean(state.draft.recipeId),
     canRender: draftReady(state.draft)
   };

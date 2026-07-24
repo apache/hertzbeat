@@ -60,15 +60,9 @@ describe('application data router', () => {
     }
   });
 
-  it('enforces canonical page, redirect, and layout ownership in the route tree', () => {
+  it('keeps public canonical pages on their declared layouts', () => {
     const applicationChildren = appRoutes[0]?.children ?? [];
-    const authenticatedRoute = applicationChildren.find(route => route.id === 'authenticated');
-    const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
     const directCanonicalRoutes = applicationChildren.filter(route => route.id && route.id !== 'authenticated');
-    const basicCanonicalRoutes = (basicRoute?.children ?? []).filter(
-      route => route.id && !route.id.startsWith('legacy-')
-    );
-
     expect(
       directCanonicalRoutes
         .map(route => ({ id: route.id, layout: getAppRoute(route.id as AppRouteId).layout }))
@@ -78,9 +72,32 @@ describe('application data router', () => {
       { id: 'login', layout: 'passport' },
       { id: 'status', layout: 'blank' }
     ]);
+    expect(applicationChildren.find(route => route.index)?.element).toBeDefined();
+  });
+
+  it('protects the immersive instrumentation route without the basic shell', () => {
+    const authenticatedRoute = appRoutes[0]?.children?.find(route => route.id === 'authenticated');
+    const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
+    const authenticatedCanonicalRoutes = (authenticatedRoute?.children ?? []).filter(
+      route => route.id && route.id !== 'basic-layout'
+    );
     expect(isValidElement(authenticatedRoute?.element)).toBe(true);
     if (!isValidElement(authenticatedRoute?.element)) throw new Error('The authenticated route gate is missing.');
     expect(authenticatedRoute.element.type).toBe(AuthGate);
+    expect(authenticatedCanonicalRoutes.map(route => route.id)).toEqual(['instrumentation']);
+    expect(authenticatedCanonicalRoutes[0]).toMatchObject({
+      id: getAppRoute('instrumentation').id,
+      path: getAppRoute('instrumentation').path
+    });
+    expect((basicRoute?.children ?? []).some(route => route.id === 'instrumentation')).toBe(false);
+  });
+
+  it('keeps basic canonical routes and redirect ownership inside the shell', () => {
+    const authenticatedRoute = appRoutes[0]?.children?.find(route => route.id === 'authenticated');
+    const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
+    const basicCanonicalRoutes = (basicRoute?.children ?? []).filter(
+      route => route.id && !route.id.startsWith('legacy-')
+    );
     expect(basicCanonicalRoutes.map(route => route.id).sort()).toEqual(
       routeRegistry
         .filter(route => route.layout === 'basic')
@@ -88,13 +105,11 @@ describe('application data router', () => {
         .sort()
     );
 
-    [...directCanonicalRoutes, ...basicCanonicalRoutes].forEach(route => {
+    for (const route of basicCanonicalRoutes) {
       const definition = getAppRoute(route.id as AppRouteId);
       expect(Boolean(route.lazy)).toBe(definition.kind === 'page');
       if (definition.kind === 'redirect') expect(route.element).toBeDefined();
-    });
-
-    expect(applicationChildren.find(route => route.index)?.element).toBeDefined();
+    }
   });
 
   it('provides a shared route error boundary', () => {

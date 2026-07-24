@@ -12,6 +12,7 @@ import {
   buildRenderRequest,
   emptyDraft,
   materializeBlock,
+  previousApplicationSelection,
   previousInstrumentationStage,
   selectSource,
   type ApplicationQuestion,
@@ -75,16 +76,26 @@ export function useDraftActions(
     state.setStage('source');
     state.setSourceDirectoryRevision(current => current + 1);
   }, [defaultProfileId, resetResults, state]);
-  const goBack = useBackAction(state, resetResults);
+  const goBack = useBackAction(state, resetResults, catalog);
   return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
 }
 
-function useBackAction(state: InstrumentationControllerState, resetResults: () => void) {
+function useBackAction(
+  state: InstrumentationControllerState,
+  resetResults: () => void,
+  catalog: CatalogResponse | undefined
+) {
   return useCallback(() => {
-    if (state.stage === 'source') return;
+    if (state.stage === 'source') {
+      if (!catalog || !state.draft.sourceId) return;
+      resetResults();
+      state.setDraft(current => previousApplicationSelection(current, catalog));
+      state.setSourceDirectoryRevision(current => current + 1);
+      return;
+    }
     if (state.stage === 'install') resetResults();
     state.setStage(previousInstrumentationStage(state.stage));
-  }, [resetResults, state]);
+  }, [catalog, resetResults, state]);
 }
 
 export function useGuideActions(

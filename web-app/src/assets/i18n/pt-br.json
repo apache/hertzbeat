@@ -716,6 +716,12 @@
       "detect": "Verificar sinais",
       "detectHelp": "Verifique Métricas, Logs e Traces no escopo sem considerar dados ausentes como sucesso."
     },
+    "question": {
+      "framework": "Qual framework você usa?",
+      "method": "Como você deseja instrumentar?",
+      "environment": "Onde o aplicativo é executado?",
+      "platform": "Qual plataforma ele usa?"
+    },
     "field": {
       "deploymentEnvironment": "Ambiente de implantação",
       "platform": "Plataforma",
@@ -736,6 +742,7 @@
       "tokenPlaceholder": "Cole o Token de ingestão OTLP"
     },
     "action": {
+      "exit": "Voltar ao painel",
       "continue": "Continuar",
       "render": "Gerar instruções",
       "reviewContext": "Revisar contexto",

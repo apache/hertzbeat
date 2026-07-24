@@ -63,6 +63,13 @@ export const appRoutes: RouteObject[] = [
         element: <AuthGate />,
         children: [
           {
+            ...getAppRouteIdentity('instrumentation'),
+            lazy: async () => {
+              const { InstrumentationPage } = await import('@/features/instrumentation');
+              return { Component: InstrumentationPage };
+            }
+          },
+          {
             id: 'basic-layout',
             element: <BasicLayout />,
             children: [
@@ -141,13 +148,6 @@ export const appRoutes: RouteObject[] = [
                 lazy: async () => {
                   const { ExplorePage } = await import('@/features/explore');
                   return { Component: ExplorePage };
-                }
-              },
-              {
-                ...getAppRouteIdentity('instrumentation'),
-                lazy: async () => {
-                  const { InstrumentationPage } = await import('@/features/instrumentation');
-                  return { Component: InstrumentationPage };
                 }
               },
               {

@@ -4,20 +4,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { Input, Select, Space, Tag, Typography } from 'antd';
+import { Input, Tag, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   APPLICATION_QUESTIONS,
-  applicationQuestionOptions,
   answerApplicationQuestion,
   selectSource,
-  type ApplicationQuestion,
-  type InstrumentationDraft
+  type ApplicationQuestion
 } from '../model/instrumentation-flow';
-import { SIGNALS, type CatalogResponse, type Recipe, type SourceEntry } from '../model/instrumentation-v2-contract';
+import { SIGNALS, type CatalogResponse, type SourceEntry } from '../model/instrumentation-v2-contract';
+import { InstrumentationApplicationQuestions } from './instrumentation-application-questions';
 import { translateBackend } from './instrumentation-i18n';
 import { InstrumentationSourceCategoryRail } from './instrumentation-source-category-rail';
 import { InstrumentationSourceIcon } from './instrumentation-source-icon';
@@ -36,13 +35,28 @@ export function InstrumentationSourceStep(props: {
 }) {
   const { t } = useTranslation();
   const draft = buildDraft(props);
+  const selectedSource = props.catalog.sources.find(source => source.id === props.sourceId);
   return (
-    <section className={styles.section} aria-labelledby="instrumentation-source-title">
-      <Typography.Title id="instrumentation-source-title" level={4}>
-        {t('instrumentation.v2.connectTitle')}
-      </Typography.Title>
-      <SourceDirectory {...props} />
-      {draft?.sourceKind === 'application' && <ApplicationQuestions {...props} draft={draft} />}
+    <section className={styles.section} aria-label={t('instrumentation.v2.connectTitle')}>
+      {!draft && (
+        <>
+          <Typography.Title level={3}>{t('instrumentation.v2.connectTitle')}</Typography.Title>
+          <Typography.Text type="secondary">{t('instrumentation.v2.description')}</Typography.Text>
+          <SourceDirectory {...props} />
+        </>
+      )}
+      {draft?.sourceKind === 'application' && (
+        <InstrumentationApplicationQuestions
+          catalog={props.catalog}
+          draft={draft}
+          onAnswer={props.onApplicationAnswer}
+        />
+      )}
+      {draft?.sourceKind !== 'application' && selectedSource && (
+        <div className={styles.selectedSource}>
+          <SourceTile source={selectedSource} selected onSelect={props.onSource} />
+        </div>
+      )}
     </section>
   );
 }
@@ -66,14 +80,16 @@ function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0])
             return entries.length ? (
               <section key={group.id} className={styles.sourceGroup}>
                 <Typography.Text strong>{translateBackend(t, group.labelKey)}</Typography.Text>
-                {entries.map(source => (
-                  <SourceRow
-                    key={source.id}
-                    source={source}
-                    selected={source.id === props.sourceId}
-                    onSelect={props.onSource}
-                  />
-                ))}
+                <div className={styles.sourceGrid}>
+                  {entries.map(source => (
+                    <SourceTile
+                      key={source.id}
+                      source={source}
+                      selected={source.id === props.sourceId}
+                      onSelect={props.onSource}
+                    />
+                  ))}
+                </div>
               </section>
             ) : null;
           })}
@@ -88,13 +104,14 @@ function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0])
   );
 }
 
-function SourceRow(props: { source: SourceEntry; selected: boolean; onSelect: (sourceId: string) => void }) {
+function SourceTile(props: { source: SourceEntry; selected: boolean; onSelect: (sourceId: string) => void }) {
   const { t } = useTranslation();
   const source = props.source;
   return (
     <button
       type="button"
-      className={`${styles.sourceRow} ${props.selected ? styles.sourceRowSelected : ''}`}
+      aria-pressed={props.selected}
+      className={`${styles.sourceTile} ${props.selected ? styles.sourceTileSelected : ''}`}
       disabled={source.support === 'unsupported'}
       onClick={() => props.onSelect(source.id)}
     >
@@ -110,7 +127,9 @@ function SourceRow(props: { source: SourceEntry; selected: boolean; onSelect: (s
           </span>
         ))}
       </span>
-      <Tag color={supportTagColor(source.support)}>{t(`instrumentation.capability.${source.support}`)}</Tag>
+      <Tag className={styles.supportTag!} color={supportTagColor(source.support)}>
+        {t(`instrumentation.capability.${source.support}`)}
+      </Tag>
     </button>
   );
 }
@@ -121,46 +140,7 @@ function supportTagColor(support: SourceEntry['support']) {
   return 'default';
 }
 
-function ApplicationQuestions(
-  props: Parameters<typeof InstrumentationSourceStep>[0] & {
-    draft: InstrumentationDraft;
-  }
-) {
-  const { t } = useTranslation();
-  const selectedRecipe = props.catalog.recipes.find(recipe => recipe.id === props.draft.recipeId);
-  const question = APPLICATION_QUESTIONS.find(
-    field => !props.draft[field] && applicationQuestionOptions(props.catalog, props.draft, field).length > 1
-  );
-  return (
-    <Space direction="vertical" className={styles.fullWidth!}>
-      {question && (
-        <label className={styles.question}>
-          <Typography.Text strong>
-            {t(`instrumentation.field.${question === 'environment' ? 'deploymentEnvironment' : question}`)}
-          </Typography.Text>
-          <Select
-            className={styles.questionSelect!}
-            value={props[question] ?? null}
-            placeholder={t('instrumentation.v2.questionPlaceholder')}
-            options={applicationQuestionOptions(props.catalog, props.draft, question).map(value => ({
-              value,
-              label: t(`instrumentation.${question}.${value}`, { defaultValue: value })
-            }))}
-            onChange={value => props.onApplicationAnswer(question, value)}
-          />
-        </label>
-      )}
-      {selectedRecipe && (
-        <Typography.Text type="secondary">
-          {translateRecipe(t, selectedRecipe)}
-          {selectedRecipe.preview && <Tag color="warning">{t('instrumentation.preview')}</Tag>}
-        </Typography.Text>
-      )}
-    </Space>
-  );
-}
-
-function buildDraft(props: Parameters<typeof InstrumentationSourceStep>[0]): InstrumentationDraft | undefined {
+function buildDraft(props: Parameters<typeof InstrumentationSourceStep>[0]) {
   if (!props.sourceId) return undefined;
   let draft = selectSource(props.catalog, props.sourceId);
   for (const field of APPLICATION_QUESTIONS) {
@@ -184,12 +164,4 @@ function sourcesForGroup(sources: SourceEntry[], groupId: string, selectedGroupI
   const activeGroupId = query.trim() ? undefined : selectedGroupId;
   if (activeGroupId) return activeGroupId === groupId ? sources : [];
   return sources.filter(source => source.groupIds[0] === groupId);
-}
-
-function translateRecipe(t: TFunction, recipe: Recipe) {
-  const fallback = (['language', 'framework', 'method'] as const)
-    .flatMap(field => (recipe[field] ? [[field, recipe[field]]] : []))
-    .map(([field, value]) => t(`instrumentation.${field}.${value}`, { defaultValue: value }))
-    .join(' · ');
-  return t(recipe.labelKey, { defaultValue: fallback });
 }

@@ -80,6 +80,30 @@ export function answerApplicationQuestion(
   return hydrateApplicationDraft(next, sourceRecipes(catalog, next));
 }
 
+export function previousApplicationSelection(draft: InstrumentationDraft, catalog: CatalogResponse) {
+  if (!draft.sourceId || draft.sourceKind !== 'application') return clearSourceSelection(draft);
+
+  // The draft stores the resolved selection, not a second navigation history.
+  // Replaying only user-visible choices keeps Back deterministic when the
+  // catalog auto-fills single-option dimensions between two questions.
+  let rebuilt = selectSource(catalog, draft.sourceId);
+  const answers: Array<{ field: ApplicationQuestion; value: string }> = [];
+  for (const field of APPLICATION_QUESTIONS) {
+    const value = draft[field];
+    const options = applicationQuestionOptions(catalog, rebuilt, field);
+    if (options.length <= 1 || !value || !options.includes(value)) continue;
+    answers.push({ field, value });
+    rebuilt = answerApplicationQuestion(rebuilt, catalog, field, value);
+  }
+  if (answers.length === 0) return clearSourceSelection(draft);
+
+  rebuilt = selectSource(catalog, draft.sourceId);
+  for (const answer of answers.slice(0, -1)) {
+    rebuilt = answerApplicationQuestion(rebuilt, catalog, answer.field, answer.value);
+  }
+  return preserveOnboardingContext(rebuilt, draft);
+}
+
 export function buildRenderRequest(draft: InstrumentationDraft): RenderRequest {
   validateDraft(draft);
   return { schemaVersion: 2, ...copySelection(draft), intakeProfileId: draft.intakeProfileId, service: draft.service };
@@ -168,6 +192,18 @@ function sourceRecipes(catalog: CatalogResponse, draft: InstrumentationDraft) {
   return catalog.recipes.filter(recipe => recipeIds.includes(recipe.id) && recipe.kind === draft.sourceKind);
 }
 
+function clearSourceSelection(draft: InstrumentationDraft) {
+  return preserveOnboardingContext(emptyDraft(), draft);
+}
+
+function preserveOnboardingContext(selection: InstrumentationDraft, draft: InstrumentationDraft) {
+  return {
+    ...selection,
+    intakeProfileId: draft.intakeProfileId,
+    service: draft.service
+  };
+}
+
 function hydrateApplicationDraft(draft: InstrumentationDraft, recipes: Recipe[]) {
   let next = { ...draft };
   for (const field of RECIPE_DIMENSIONS) {
@@ -181,7 +217,10 @@ function hydrateApplicationDraft(draft: InstrumentationDraft, recipes: Recipe[])
   const matches = recipes.filter(recipe =>
     RECIPE_DIMENSIONS.every(field => !next[field] || recipeHas(recipe, field, next[field]))
   );
-  if (matches.length === 1) return { ...next, ...selectionFromRecipe(matches[0]) };
+  const hasUnresolvedChoice = APPLICATION_QUESTIONS.some(
+    field => !next[field] && unique(matches.flatMap(recipe => recipeValues(recipe, field))).length > 1
+  );
+  if (matches.length === 1 && !hasUnresolvedChoice) return { ...next, recipeId: matches[0]!.id };
   return next;
 }
 

@@ -68,6 +68,7 @@ export const appRouteCatalog = {
     resource: { labelKey: 'menu.explore' }
   }),
   instrumentation: pageRoute('instrumentation', '/observability/integration', {
+    layout: 'blank',
     resource: { labelKey: 'instrumentation.menu' }
   }),
   alerts: pageRoute('alerts', alertRoutePaths.center, {

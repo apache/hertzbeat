@@ -1,0 +1,83 @@
+.page {
+  min-height: 100dvh;
+  width: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  background: var(--hb-bg-canvas);
+}
+
+.onboardingHeader {
+  position: relative;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--hb-border);
+  padding: 8px 24px;
+  background: var(--hb-bg-chrome);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.brand img {
+  object-fit: contain;
+}
+
+.backAction {
+  justify-self: start;
+}
+
+.startOver {
+  justify-self: end;
+}
+
+.progressBand {
+  border-bottom: 1px solid var(--hb-border);
+  padding: 22px 32px;
+  background: var(--hb-bg-chrome);
+}
+
+.onboardingContent {
+  width: min(100%, 1384px);
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.sourceStage {
+  min-height: calc(100dvh - 185px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 24px;
+}
+
+.sourceContinue {
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .onboardingHeader {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .brand {
+    justify-self: center;
+  }
+
+  .startOver {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .progressBand,
+  .onboardingContent {
+    padding: 20px 16px;
+  }
+}

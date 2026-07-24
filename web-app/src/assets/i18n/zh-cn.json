@@ -702,6 +702,12 @@
       "detect": "验证信号",
       "detectHelp": "检查指定范围内的指标、日志和链路，不会将缺失数据视为成功。"
     },
+    "question": {
+      "framework": "你使用什么框架？",
+      "method": "你希望如何接入？",
+      "environment": "应用运行在哪里？",
+      "platform": "运行平台是什么？"
+    },
     "field": {
       "deploymentEnvironment": "部署环境",
       "platform": "平台",
@@ -722,6 +728,7 @@
       "tokenPlaceholder": "粘贴 OTLP 接入 Token"
     },
     "action": {
+      "exit": "返回仪表盘",
       "continue": "继续",
       "render": "生成操作说明",
       "reviewContext": "检查上下文",

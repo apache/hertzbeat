@@ -11,6 +11,7 @@ import {
   answerApplicationQuestion,
   buildQueryJump,
   materializeBlock,
+  previousApplicationSelection,
   selectSource
 } from './instrumentation-flow';
 import type { CatalogResponse } from './instrumentation-v2-contract';
@@ -34,9 +35,37 @@ describe('instrumentation v2 flow', () => {
     expect(start).toMatchObject({ sourceId: 'java', sourceKind: 'application', language: 'java' });
     expect(applicationQuestionOptions(catalog, start, 'framework')).toEqual(['spring_boot', 'java_jar']);
     expect(applicationQuestionOptions(catalog, start, 'method')).toEqual([]);
+    const spring = answerApplicationQuestion(start, catalog, 'framework', 'spring_boot');
+    expect(spring).toMatchObject({ language: 'java', framework: 'spring_boot' });
+    expect(spring.recipeId).toBeUndefined();
+    expect(spring.environment).toBeUndefined();
+    expect(applicationQuestionOptions(catalog, spring, 'environment')).toEqual(['docker', 'kubernetes']);
+    expect(answerApplicationQuestion(spring, catalog, 'environment', 'docker')).toMatchObject({
+      environment: 'docker',
+      recipeId: 'java_spring'
+    });
     const jar = answerApplicationQuestion(start, catalog, 'framework', 'java_jar');
     expect(jar).toMatchObject({ language: 'java', framework: 'java_jar' });
     expect(jar.recipeId).toBe('java_jar_sdk');
+  });
+
+  it('steps back through application choices before returning to the source directory', () => {
+    const start = selectSource(catalog, 'java');
+    const spring = answerApplicationQuestion(start, catalog, 'framework', 'spring_boot');
+    const docker = answerApplicationQuestion(spring, catalog, 'environment', 'docker');
+
+    const beforeEnvironment = previousApplicationSelection(docker, catalog);
+    expect(beforeEnvironment).toMatchObject({
+      sourceId: 'java',
+      framework: 'spring_boot'
+    });
+    expect(beforeEnvironment).not.toHaveProperty('environment');
+    expect(beforeEnvironment).not.toHaveProperty('recipeId');
+    const beforeFramework = previousApplicationSelection(spring, catalog);
+    expect(beforeFramework).toMatchObject({ sourceId: 'java' });
+    expect(beforeFramework).not.toHaveProperty('framework');
+    expect(beforeFramework).not.toHaveProperty('recipeId');
+    expect(previousApplicationSelection(start, catalog).sourceId).toBeUndefined();
   });
 
   it('blocks unsupported catalog entries from selection', () => {
@@ -70,6 +99,22 @@ describe('instrumentation v2 flow', () => {
       start: '1000',
       end: '2000'
     });
+  });
+
+  it('does not invent a metric name that detection did not return', () => {
+    const href = buildQueryJump('metrics', {
+      serviceName: 'checkout',
+      serviceNamespace: 'shop',
+      environment: 'prod',
+      intakeProfileId: 'server-default',
+      collectorId: 'edge',
+      serviceInstanceId: 'checkout-1',
+      endpoint: '/checkout',
+      startedAt: 1000,
+      detectedAt: 2000
+    });
+
+    expect(new URL(href, 'http://localhost').searchParams.has('query')).toBe(false);
   });
 });
 
@@ -112,7 +157,7 @@ const catalog = {
       language: 'java',
       framework: 'spring_boot',
       method: 'zero_code',
-      environments: ['docker'],
+      environments: ['docker', 'kubernetes'],
       platforms: ['linux_amd64'],
       signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
       components: [],

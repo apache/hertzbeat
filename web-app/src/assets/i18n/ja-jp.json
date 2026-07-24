@@ -710,6 +710,12 @@
       "detect": "シグナルを確認",
       "detectHelp": "指定範囲のメトリクス、ログ、トレースを確認し、データ欠落を成功として扱いません。"
     },
+    "question": {
+      "framework": "どのフレームワークを使用していますか？",
+      "method": "どの方法で計装しますか？",
+      "environment": "アプリケーションはどこで動作しますか？",
+      "platform": "どのプラットフォームを使用しますか？"
+    },
     "field": {
       "deploymentEnvironment": "デプロイ環境",
       "platform": "プラットフォーム",
@@ -730,6 +736,7 @@
       "tokenPlaceholder": "OTLP 取り込み Token を貼り付け"
     },
     "action": {
+      "exit": "ダッシュボードに戻る",
       "continue": "続行",
       "render": "手順を生成",
       "reviewContext": "コンテキストを確認",

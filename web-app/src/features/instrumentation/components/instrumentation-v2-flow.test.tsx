@@ -23,7 +23,6 @@ vi.mock('antd', async importOriginal => {
 import { InstrumentationContextStep } from './instrumentation-context-step';
 import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
-import { InstrumentationProgress } from './instrumentation-progress';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
 import guideCss from './instrumentation-guide.module.css?raw';
 import shellCss from './instrumentation-shell.module.css?raw';
@@ -38,18 +37,16 @@ describe('instrumentation v2 interaction', () => {
     const onSource = vi.fn();
     const onApplicationAnswer = vi.fn();
     const view = render(
-      <InstrumentationSourceStep
-        catalog={catalog}
-        sourceId="quick_start"
-        onSource={onSource}
-        onApplicationAnswer={onApplicationAnswer}
-      />
+      <InstrumentationSourceStep catalog={catalog} onSource={onSource} onApplicationAnswer={onApplicationAnswer} />
     );
     expect(screen.getByRole('searchbox')).toBeVisible();
     expect(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
+    expect(shellCss).toMatch(
+      /\.sourceGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(190px,\s*260px\)\)/
+    );
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
     ).toBeVisible();
@@ -61,7 +58,6 @@ describe('instrumentation v2 interaction', () => {
       <InstrumentationSourceStep
         key="after-reset"
         catalog={catalog}
-        sourceId="quick_start"
         onSource={onSource}
         onApplicationAnswer={onApplicationAnswer}
       />
@@ -87,20 +83,30 @@ describe('instrumentation v2 interaction', () => {
         onApplicationAnswer={onApplicationAnswer}
       />
     );
-    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('button', { name: 'spring_boot' })).toBeVisible();
     expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
   });
 
   it('provides a usable localized application question sequence', async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
     render(<ApplicationQuestionHarness />);
-    const framework = screen.getByRole('combobox', { name: /^instrumentation\.field\.framework/ });
-    expect(screen.getByText('instrumentation.v2.questionPlaceholder')).toBeVisible();
-    expect(shellCss).toMatch(/\.question\s*\{[^}]*display:\s*grid[^}]*width:\s*100%/);
-    expect(shellCss).toMatch(/\.questionSelect\s*\{[^}]*width:\s*100%/);
+    const framework = screen.getByRole('button', { name: 'spring_boot' });
+    expect(screen.getByText('instrumentation.question.framework')).toBeVisible();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(shellCss).toMatch(/\.questionGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill/);
     expect(framework).toBeEnabled();
-    fireEvent.mouseDown(framework);
-    fireEvent.click(await screen.findByTitle('spring_boot'));
-    expect(screen.queryByRole('combobox', { name: /^instrumentation\.field\.method/ })).toBeNull();
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    fireEvent.click(framework);
+    expect(screen.queryByRole('button', { name: 'spring_boot' })).toBeNull();
+    expect(screen.queryByText('instrumentation.question.framework')).toBeNull();
+    expect(screen.queryByText('instrumentation.field.method')).toBeNull();
+    expect(screen.getByText('instrumentation.question.environment')).toBeVisible();
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('button', { name: 'docker' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'docker' }));
+    expect(screen.getByRole('button', { name: 'docker' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/java · spring_boot · zero_code/)).toBeVisible();
   });
 
@@ -219,14 +225,6 @@ describe('instrumentation v2 interaction', () => {
     await waitFor(() => expect(notifications.warning).toHaveBeenCalledWith('instrumentation.copyFailed'));
     expect(JSON.stringify(notifications.warning.mock.calls)).not.toContain('private token');
   });
-
-  it('shows compact progress and an explicit non-destructive Back action', () => {
-    const onBack = vi.fn();
-    render(<InstrumentationProgress stage="install" onBack={onBack} />);
-    expect(screen.getByText('instrumentation.v2.stage.install')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
-    expect(onBack).toHaveBeenCalledOnce();
-  });
 });
 
 function ApplicationQuestionHarness() {
@@ -313,7 +311,7 @@ const catalog = {
       language: 'java',
       framework: 'spring_boot',
       method: 'zero_code',
-      environments: ['docker'],
+      environments: ['docker', 'kubernetes'],
       platforms: ['linux_amd64'],
       signals: { metrics: 'supported' as const, logs: 'preview' as const, traces: 'supported' as const },
       components: [],

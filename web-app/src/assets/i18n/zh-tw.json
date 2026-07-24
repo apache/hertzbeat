@@ -702,6 +702,12 @@
       "detect": "驗證訊號",
       "detectHelp": "檢查指定範圍內的指標、日誌和追蹤，不會將缺少資料視為成功。"
     },
+    "question": {
+      "framework": "你使用什麼框架？",
+      "method": "你希望如何接入？",
+      "environment": "應用程式執行在哪裡？",
+      "platform": "執行平台是什麼？"
+    },
     "field": {
       "deploymentEnvironment": "部署環境",
       "platform": "平台",
@@ -722,6 +728,7 @@
       "tokenPlaceholder": "貼上 OTLP 接收 Token"
     },
     "action": {
+      "exit": "返回儀表板",
       "continue": "繼續",
       "render": "產生操作說明",
       "reviewContext": "檢查情境",

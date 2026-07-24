@@ -1,103 +1,111 @@
-.page {
-  width: 100%;
-  display: grid;
-  gap: 20px;
-}
-
 .progress {
+  max-width: 1320px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
 }
 
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid var(--hb-border);
-  padding-bottom: 16px;
-}
-
-.heading h2,
-.section h4 {
+.section h4,
+.questionSection h3 {
   margin: 0;
 }
 
 .section {
   display: grid;
-  gap: 16px;
+  align-content: start;
+  gap: 10px;
 }
 
 .sourceList {
   display: grid;
-  gap: 16px;
+  gap: 28px;
 }
 
-.sourceRow {
-  width: 100%;
-  min-height: 64px;
+.selectedSource {
+  width: min(100%, 520px);
+}
+
+.sourceTile {
+  min-height: 76px;
   display: grid;
-  grid-template-columns: 36px minmax(180px, 1fr) minmax(210px, auto) auto;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-content: start;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px 10px;
+  padding: 12px;
   border: 1px solid var(--hb-border);
-  border-bottom: 0;
   background: var(--hb-bg-raised);
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.sourceRow:last-child {
-  border-bottom: 1px solid var(--hb-border);
-}
-
-.sourceRow:hover:not(:disabled),
-.sourceRowSelected {
+.sourceTile:hover:not(:disabled),
+.sourceTileSelected {
   border-color: var(--hb-brand-accent);
-  background: var(--hb-bg-canvas);
+  background: var(--hb-bg-selected);
 }
 
-.sourceRow:disabled {
+.sourceTile:disabled {
   cursor: not-allowed;
   opacity: 0.62;
 }
 
 .sourceCopy {
+  min-width: 0;
   display: grid;
   gap: 2px;
 }
 
+.sourceCopy > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sourceIcon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-  font-size: 28px;
+  font-size: 24px;
+  color: var(--hb-brand-accent);
+}
+
+.choiceIcon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  font-size: 18px;
   color: var(--hb-brand-accent);
 }
 
 .directory {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) 200px;
   align-items: start;
-  gap: 20px;
+  gap: 32px;
+  margin-top: 18px;
 }
 
 .sourceGroup {
   display: grid;
+  gap: 10px;
 }
 
-.sourceGroup > :first-child {
-  padding: 0 0 8px;
+.sourceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 260px));
+  gap: 10px;
 }
 
 .categoryRail {
   position: sticky;
-  top: calc(var(--hb-shell-header-height) + 16px);
+  top: 16px;
   display: grid;
+  gap: 2px;
   border-left: 1px solid var(--hb-border);
   padding-left: 12px;
 }
@@ -109,8 +117,18 @@
 }
 
 .capabilities {
+  grid-column: 2 / -1;
+  grid-row: 2;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+.supportTag {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin: 0;
 }
 
 .capabilities span {
@@ -146,30 +164,63 @@
   width: 100%;
 }
 
-.question {
+.questionSection {
   display: grid;
-  gap: 8px;
-  width: 100%;
+  align-content: start;
+  gap: 18px;
 }
 
-.questionSelect {
-  width: 100%;
+.questionGroup {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.questionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 240px));
+  gap: 10px;
+}
+
+.questionTile {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--hb-border);
+  padding: 10px 12px;
+  background: var(--hb-bg-raised);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.questionTile:hover,
+.questionTileSelected {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-bg-selected);
+}
+
+.questionChoice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 @media (max-width: 760px) {
-  .heading,
   .formGrid,
-  .directory,
-  .sourceRow {
+  .directory {
     grid-template-columns: 1fr;
-  }
-
-  .heading {
-    display: grid;
   }
 
   .categoryRail {
     position: static;
     grid-row: 1;
+  }
+
+  .sourceGrid,
+  .questionGrid {
+    grid-template-columns: 1fr;
   }
 }
