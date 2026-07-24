@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.instrumentation.v2.service;
 import java.util.Comparator;
 import java.util.List;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.DiscoveryStatus;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfilesResponse;
@@ -45,14 +46,21 @@ public class InstrumentationIntakeProfileV2Service {
                     .thenComparing(profile -> profile.kind() != IntakeKind.SERVER)
                     .thenComparing(IntakeProfile::id)).toList();
         } catch (RuntimeException exception) {
-            profiles = List.of();
+            return new IntakeProfilesResponse(
+                    2,
+                    DiscoveryStatus.UNAVAILABLE,
+                    org.apache.hertzbeat.observability.instrumentation.v2.api
+                            .InstrumentationIntakeProfileV2.ErrorCode.DISCOVERY_UNAVAILABLE,
+                    null,
+                    List.of());
         }
         String defaultId = profiles.stream()
                 .filter(profile -> profile.availability() == Availability.AVAILABLE)
                 .map(IntakeProfile::id)
                 .findFirst()
                 .orElse(null);
-        return new IntakeProfilesResponse(2, defaultId, profiles);
+        DiscoveryStatus status = profiles.isEmpty() ? DiscoveryStatus.UNCONFIGURED : DiscoveryStatus.AVAILABLE;
+        return new IntakeProfilesResponse(2, status, null, defaultId, profiles);
     }
 
     public IntakeProfile requireAvailable(String profileId) {

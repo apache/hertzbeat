@@ -36,6 +36,7 @@ import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationS
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.SignalObservation;
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationCatalogService;
+import org.apache.hertzbeat.observability.instrumentation.guide.InstrumentationGuideAdapterRegistry;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionStatus;
@@ -59,7 +60,11 @@ class InstrumentationV2ServicesTest {
         InstrumentationCatalogV2Service catalog = catalog();
         InstrumentationIntakeProfileV2Service profiles =
                 new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile()));
-        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(catalog, profiles);
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog,
+                profiles,
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
 
         var response = renderer.render(new RenderRequest(
                 2,
@@ -77,8 +82,8 @@ class InstrumentationV2ServicesTest {
                 .httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF));
         assertTrue(response.blocks().getFirst().content().contains("https://otel.example.test/v1"));
         assertTrue(response.blocks().getFirst().content().contains("${HERTZBEAT_TOKEN}"));
-        assertTrue(response.blocks().get(1).content().contains("otlphttp/hertzbeat"));
-        assertTrue(response.blocks().get(1).content().contains("https://otel.example.test/v1"));
+        assertTrue(response.blocks().getFirst().content().contains("otlphttp/hertzbeat"));
+        assertFalse(response.blocks().getFirst().content().contains("pipelines:"));
         String json = new ObjectMapper().writeValueAsString(response);
         assertFalse(json.contains("secret-value"));
         assertFalse(json.contains("entityId"));
@@ -88,21 +93,25 @@ class InstrumentationV2ServicesTest {
     void rendersPinnedExternalQuickStartWithSafeCleanup() {
         InstrumentationIntakeProfileV2Service profiles =
                 new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile()));
-        var response = new InstrumentationGuideV2Renderer(catalog(), profiles).render(new RenderRequest(
+        var response = new InstrumentationGuideV2Renderer(
+                catalog(),
+                profiles,
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog(), InstrumentationGuideAdapterRegistry.official())).render(new RenderRequest(
                 2,
                 SourceKind.QUICK_START,
-                "opentelemetry_demo",
+                "opentelemetry_telemetrygen",
                 null,
                 null,
                 null,
-                Environment.DOCKER,
-                Platform.ANY,
+                Environment.VM,
+                Platform.LINUX_AMD64,
                 "server-primary",
                 service()));
 
-        assertTrue(response.blocks().getFirst().content().contains("63649d6d6a59de88fb421b88c3c3a6185b6d21ad"));
+        assertTrue(response.blocks().getFirst().content().contains("telemetrygen@v0.156.0"));
         assertTrue(response.blocks().stream().anyMatch(block -> block.content() != null
-                && block.content().contains("docker compose down --volumes --remove-orphans")));
+                && block.content().contains("rm -rf -- .hertzbeat-telemetrygen")));
         assertEquals(
                 response.blocks().size(),
                 new HashSet<>(response.blocks().stream().map(block -> block.id()).toList()).size());
@@ -151,12 +160,12 @@ class InstrumentationV2ServicesTest {
         var response = service.detect(new DetectionRequest(
                 2,
                 SourceKind.QUICK_START,
-                "opentelemetry_demo",
+                "opentelemetry_telemetrygen",
                 null,
                 null,
                 null,
-                Environment.DOCKER,
-                Platform.ANY,
+                Environment.VM,
+                Platform.LINUX_AMD64,
                 service(),
                 "server-primary",
                 STARTED_AT));

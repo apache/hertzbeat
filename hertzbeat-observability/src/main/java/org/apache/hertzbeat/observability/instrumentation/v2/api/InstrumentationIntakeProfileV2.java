@@ -107,11 +107,30 @@ public final class InstrumentationIntakeProfileV2 {
     public enum ErrorCode {
         NOT_ADVERTISED("intake_profile_not_advertised"),
         ADVERTISEMENT_INVALID("intake_profile_advertisement_invalid"),
-        UNAVAILABLE("intake_profile_unavailable");
+        UNAVAILABLE("intake_profile_unavailable"),
+        DISCOVERY_UNAVAILABLE("intake_profile_discovery_unavailable");
 
         private final String code;
 
         ErrorCode(String code) {
+            this.code = code;
+        }
+
+        @JsonValue
+        public String code() {
+            return code;
+        }
+    }
+
+    /** Whether profile discovery completed and whether it found configured profiles. */
+    public enum DiscoveryStatus {
+        AVAILABLE("available"),
+        UNCONFIGURED("unconfigured"),
+        UNAVAILABLE("unavailable");
+
+        private final String code;
+
+        DiscoveryStatus(String code) {
             this.code = code;
         }
 
@@ -151,17 +170,32 @@ public final class InstrumentationIntakeProfileV2 {
     }
 
     /** Discovery result sorted in backend preference order. */
-    public record IntakeProfilesResponse(int schemaVersion, String defaultProfileId, List<IntakeProfile> profiles) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record IntakeProfilesResponse(
+            int schemaVersion,
+            DiscoveryStatus status,
+            ErrorCode errorCode,
+            String defaultProfileId,
+            List<IntakeProfile> profiles) {
         public IntakeProfilesResponse {
             if (schemaVersion != InstrumentationCatalogV2.SCHEMA_VERSION) {
                 throw new IllegalArgumentException("Unsupported Instrumentation v2 schema");
             }
+            Objects.requireNonNull(status, "status");
             Objects.requireNonNull(profiles, "profiles");
             if (profiles.size() > MAX_PROFILES || profiles.stream().anyMatch(Objects::isNull)
                     || profiles.stream().map(IntakeProfile::id).distinct().count() != profiles.size()) {
                 throw new IllegalArgumentException("Instrumentation intake profile list is invalid");
             }
             profiles = List.copyOf(profiles);
+            if (status == DiscoveryStatus.UNAVAILABLE
+                    ? errorCode != ErrorCode.DISCOVERY_UNAVAILABLE || !profiles.isEmpty()
+                            || defaultProfileId != null
+                    : errorCode != null
+                            || status == DiscoveryStatus.UNCONFIGURED && !profiles.isEmpty()
+                            || status == DiscoveryStatus.AVAILABLE && profiles.isEmpty()) {
+                throw new IllegalArgumentException("Instrumentation intake discovery status is invalid");
+            }
             if (defaultProfileId != null && profiles.stream()
                     .noneMatch(profile -> profile.id().equals(defaultProfileId)
                             && profile.availability() == Availability.AVAILABLE)) {

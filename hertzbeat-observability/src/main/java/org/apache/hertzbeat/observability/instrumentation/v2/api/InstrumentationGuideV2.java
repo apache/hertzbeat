@@ -18,6 +18,7 @@ package org.apache.hertzbeat.observability.instrumentation.v2.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 public final class InstrumentationGuideV2 {
 
     private static final int MAX_BLOCKS = 32;
-    private static final Set<String> PLACEHOLDER_ALLOWLIST = Set.of(
-            "endpoint", "protocol", "serviceName", "serviceNamespace", "environment", "authorizationToken");
+    private static final Set<String> SECRET_PLACEHOLDER_ALLOWLIST = Set.of("authorizationToken");
 
     private InstrumentationGuideV2() {
     }
@@ -102,6 +102,10 @@ public final class InstrumentationGuideV2 {
             if (blocks.size() > MAX_BLOCKS || blocks.stream().anyMatch(Objects::isNull)) {
                 throw new IllegalArgumentException("Instrumentation guide blocks are invalid");
             }
+            if (blocks.stream().map(GuideBlock::id).distinct().count() != blocks.size()) {
+                throw new IllegalArgumentException("Instrumentation guide block IDs must be unique");
+            }
+            validateSecretPlaceholders(secretPlaceholders, blocks);
         }
     }
 
@@ -111,6 +115,7 @@ public final class InstrumentationGuideV2 {
             String id,
             BlockType type,
             String titleKey,
+            String bodyKey,
             String executionLocationKey,
             String language,
             String content,
@@ -118,13 +123,39 @@ public final class InstrumentationGuideV2 {
             List<String> placeholders) {
         public GuideBlock {
             if (id == null || !id.matches("[a-z0-9_]{1,64}") || type == null
-                    || titleKey == null || executionLocationKey == null) {
+                    || !safeKey(titleKey) || !safeKey(executionLocationKey)
+                    || bodyKey != null && !safeKey(bodyKey)) {
                 throw new IllegalArgumentException("Instrumentation guide block metadata is invalid");
             }
             placeholders = List.copyOf(Objects.requireNonNull(placeholders, "placeholders"));
             if (new HashSet<>(placeholders).size() != placeholders.size()
-                    || !PLACEHOLDER_ALLOWLIST.containsAll(placeholders)) {
+                    || !SECRET_PLACEHOLDER_ALLOWLIST.containsAll(placeholders)) {
                 throw new IllegalArgumentException("Instrumentation guide placeholder is not allowed");
+            }
+            switch (type) {
+                case COMMAND, CODE, ENVIRONMENT, DOWNLOAD -> {
+                    if (language == null || language.isBlank() || content == null || content.isBlank()
+                            || content.stripLeading().startsWith("instrumentation.") || bodyKey != null
+                            || type != BlockType.DOWNLOAD && href != null) {
+                        throw new IllegalArgumentException("Copyable guide block is invalid");
+                    }
+                    if (href != null) {
+                        requireHttpsHref(href);
+                    }
+                }
+                case LINK -> {
+                    if (content != null || language != null || bodyKey != null || !placeholders.isEmpty()) {
+                        throw new IllegalArgumentException("Link guide block is invalid");
+                    }
+                    requireHttpsHref(href);
+                }
+                case NOTE, WARNING, CHECK -> {
+                    if (bodyKey == null || content != null || language != null || href != null
+                            || !placeholders.isEmpty()) {
+                        throw new IllegalArgumentException("Explanatory guide block is invalid");
+                    }
+                }
+                default -> throw new IllegalArgumentException("Guide block type is invalid");
             }
         }
     }
@@ -140,6 +171,58 @@ public final class InstrumentationGuideV2 {
 
         public static SecretPlaceholder authorizationToken() {
             return new SecretPlaceholder("${HERTZBEAT_TOKEN}", "authorization_token", null);
+        }
+    }
+
+    private static void validateSecretPlaceholders(
+            Map<String, SecretPlaceholder> placeholders, List<GuideBlock> blocks) {
+        if (!SECRET_PLACEHOLDER_ALLOWLIST.containsAll(placeholders.keySet())
+                || placeholders.values().stream().anyMatch(Objects::isNull)
+                || new HashSet<>(placeholders.values().stream().map(SecretPlaceholder::marker).toList()).size()
+                != placeholders.size()) {
+            throw new IllegalArgumentException("Instrumentation secret declarations are invalid");
+        }
+        Set<String> referenced = new HashSet<>();
+        for (GuideBlock block : blocks) {
+            for (String name : block.placeholders()) {
+                SecretPlaceholder placeholder = placeholders.get(name);
+                if (placeholder == null || block.content() == null
+                        || !block.content().contains(placeholder.marker())) {
+                    throw new IllegalArgumentException("Instrumentation secret reference is invalid");
+                }
+                referenced.add(name);
+            }
+            for (Map.Entry<String, SecretPlaceholder> entry : placeholders.entrySet()) {
+                if (block.content() != null && block.content().contains(entry.getValue().marker())
+                        && !block.placeholders().contains(entry.getKey())) {
+                    throw new IllegalArgumentException("Instrumentation secret marker is undeclared");
+                }
+            }
+        }
+        if (!referenced.containsAll(placeholders.keySet())) {
+            throw new IllegalArgumentException("Every instrumentation secret must be referenced");
+        }
+        if (!placeholders.containsKey("authorizationToken") && blocks.stream()
+                .map(GuideBlock::content)
+                .filter(Objects::nonNull)
+                .anyMatch(content -> content.contains("${HERTZBEAT_TOKEN}"))) {
+            throw new IllegalArgumentException("Instrumentation secret marker is undeclared");
+        }
+    }
+
+    private static boolean safeKey(String value) {
+        return value != null && value.matches("[a-z0-9_.]{1,160}");
+    }
+
+    private static void requireHttpsHref(String value) {
+        try {
+            URI uri = URI.create(value);
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
+                    || uri.getUserInfo() != null || uri.getRawQuery() != null || uri.getFragment() != null) {
+                throw new IllegalArgumentException("Instrumentation guide href is invalid");
+            }
+        } catch (NullPointerException | IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Instrumentation guide href is invalid");
         }
     }
 }

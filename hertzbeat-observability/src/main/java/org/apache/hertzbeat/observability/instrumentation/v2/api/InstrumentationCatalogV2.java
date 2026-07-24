@@ -65,6 +65,9 @@ public final class InstrumentationCatalogV2 {
             }
             sources = safeList(sources, "sources");
             recipes = safeList(recipes, "recipes");
+            if (recipes.stream().map(RecipeOption::id).distinct().count() != recipes.size()) {
+                throw new IllegalArgumentException("Instrumentation v2 recipe IDs must be unique");
+            }
         }
     }
 

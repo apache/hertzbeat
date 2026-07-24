@@ -18,7 +18,10 @@ package org.apache.hertzbeat.observability.instrumentation.v2.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Environment;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Framework;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
@@ -46,6 +49,24 @@ public final class InstrumentationDetectionV2 {
         private final String code;
 
         DetectionStatus(String code) {
+            this.code = code;
+        }
+
+        @JsonValue
+        public String code() {
+            return code;
+        }
+    }
+
+    /** Backend-owned polling action. */
+    public enum PollingDecision {
+        CONTINUE_POLLING("continue_polling"),
+        COMPLETE("complete"),
+        MANUAL_RETRY("manual_retry");
+
+        private final String code;
+
+        PollingDecision(String code) {
             this.code = code;
         }
 
@@ -123,14 +144,70 @@ public final class InstrumentationDetectionV2 {
         }
     }
 
+    /** Fixed polling cadence and bounded automatic detection deadline. */
+    public record PollingInstruction(PollingDecision decision, Long pollAfterMs, long deadlineAt) {
+        public PollingInstruction {
+            if (decision == null || deadlineAt <= 0
+                    || decision == PollingDecision.CONTINUE_POLLING
+                    && (pollAfterMs == null || pollAfterMs <= 0)
+                    || decision != PollingDecision.CONTINUE_POLLING && pollAfterMs != null) {
+                throw new IllegalArgumentException("Instrumentation v2 polling instruction is invalid");
+            }
+        }
+    }
+
+    /** Shared scope used by all three query handoffs. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record QueryJumpContext(
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String intakeProfileId,
+            String collectorId,
+            String serviceInstanceId,
+            String endpoint,
+            long startedAt,
+            long detectedAt) {
+    }
+
+    /** Typed query handoff; only a received signal is enabled. */
+    public record QueryJump(Signal signal, boolean enabled, QueryJumpContext context) {
+        public QueryJump {
+            Objects.requireNonNull(signal, "signal");
+            Objects.requireNonNull(context, "context");
+        }
+    }
+
     /** Complete fixed-signal detection result. */
     public record DetectionResponse(
             int schemaVersion,
             long detectedAt,
             DetectionContext context,
-            Map<Signal, SignalDetection> signals) {
+            Map<Signal, SignalDetection> signals,
+            PollingInstruction polling,
+            QueryJumpContext queryJumpContext,
+            List<QueryJump> queryJumps) {
         public DetectionResponse {
-            signals = Map.copyOf(signals);
+            if (schemaVersion != InstrumentationCatalogV2.SCHEMA_VERSION || detectedAt <= 0
+                    || context == null || polling == null || queryJumpContext == null) {
+                throw new IllegalArgumentException("Instrumentation v2 detection response is invalid");
+            }
+            Map<Signal, SignalDetection> copiedSignals = Map.copyOf(signals);
+            signals = copiedSignals;
+            if (!copiedSignals.keySet().equals(EnumSet.allOf(Signal.class))
+                    || copiedSignals.values().stream().anyMatch(Objects::isNull)) {
+                throw new IllegalArgumentException("Instrumentation v2 requires all three signals");
+            }
+            queryJumps = List.copyOf(queryJumps);
+            if (queryJumps.size() != Signal.values().length
+                    || queryJumps.stream().map(QueryJump::signal).collect(
+                            java.util.stream.Collectors.toSet()).size() != Signal.values().length
+                    || queryJumps.stream().anyMatch(jump ->
+                            !jump.context().equals(queryJumpContext)
+                                    || jump.enabled()
+                                    != (copiedSignals.get(jump.signal()).status() == DetectionStatus.RECEIVED))) {
+                throw new IllegalArgumentException("Instrumentation v2 query jumps are invalid");
+            }
         }
     }
 }

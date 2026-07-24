@@ -39,9 +39,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class InstrumentationCatalogV2Service {
 
+    private final InstrumentationCatalogService v1Catalog;
     private final CatalogResponse catalog;
 
     public InstrumentationCatalogV2Service(InstrumentationCatalogService v1Catalog) {
+        this.v1Catalog = v1Catalog;
         this.catalog = build(v1Catalog);
     }
 
@@ -56,6 +58,13 @@ public class InstrumentationCatalogV2Service {
                 .orElseThrow(() -> new org.apache.hertzbeat.observability.instrumentation.v2.api
                         .InstrumentationV2RequestException(org.apache.hertzbeat.observability.instrumentation.v2.api
                                 .InstrumentationV2RequestException.ErrorCode.SELECTION_INVALID));
+    }
+
+    public MethodOption requireApplicationMethod(RecipeOption recipe) {
+        if (recipe.kind() != SourceKind.APPLICATION) {
+            throw new IllegalArgumentException("Application recipe is required");
+        }
+        return v1Catalog.requireMethod(recipe.language(), recipe.framework(), recipe.method());
     }
 
     private CatalogResponse build(InstrumentationCatalogService v1Catalog) {
@@ -98,35 +107,38 @@ public class InstrumentationCatalogV2Service {
 
     private RecipeOption quickStart() {
         OfficialComponent demo = new OfficialComponent(
-                "OpenTelemetry Demo",
-                "https://github.com/open-telemetry/opentelemetry-demo/tree/"
-                        + "63649d6d6a59de88fb421b88c3c3a6185b6d21ad",
-                "2.0.2",
+                "OpenTelemetry telemetrygen",
+                "https://github.com/open-telemetry/opentelemetry-collector-contrib/"
+                        + "tree/v0.156.0/cmd/telemetrygen",
+                "0.156.0",
                 ComponentVersionPolicy.PINNED,
                 "Apache-2.0",
-                "instrumentation.location.external_demo_workspace",
+                "instrumentation.location.application_host",
                 true,
                 false,
                 List.of(),
                 List.of());
         return new RecipeOption(
-                "opentelemetry_demo",
+                "opentelemetry_telemetrygen",
                 SourceKind.QUICK_START,
-                "instrumentation.v2.recipe.opentelemetry_demo",
+                "instrumentation.v2.recipe.opentelemetry_telemetrygen",
                 false,
                 null,
                 null,
                 null,
-                List.of(Environment.DOCKER, Environment.KUBERNETES),
-                List.of(Platform.ANY),
+                List.of(Environment.VM),
+                List.of(
+                        Platform.LINUX_AMD64,
+                        Platform.LINUX_ARM64,
+                        Platform.MACOS_AMD64,
+                        Platform.MACOS_ARM64),
                 supportedSignals(),
                 List.of(demo),
                 List.of(
                         BlockType.DOWNLOAD,
                         BlockType.COMMAND,
-                        BlockType.ENVIRONMENT,
                         BlockType.CHECK,
-                        BlockType.WARNING));
+                        BlockType.NOTE));
     }
 
     private RecipeOption existingOpenTelemetry() {

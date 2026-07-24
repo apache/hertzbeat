@@ -7,6 +7,7 @@
  * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +17,12 @@
 
 package org.apache.hertzbeat.observability.instrumentation.v2.service;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.RecipeOption;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
@@ -33,20 +37,24 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.ErrorCode;
 import org.springframework.stereotype.Service;
 
-/** Explicitly renders typed blocks without a template language or caller-supplied endpoint. */
+/** Renders validated v2 blocks while delegating application instructions to the v1 adapters. */
 @Service
 public class InstrumentationGuideV2Renderer {
 
     private static final Pattern RESOURCE_VALUE = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._/-]{0,127}");
     private static final String TOKEN_MARKER = "${HERTZBEAT_TOKEN}";
+    private static final String TOKEN_NAME = "authorizationToken";
     private final InstrumentationCatalogV2Service catalogService;
     private final InstrumentationIntakeProfileV2Service profileService;
+    private final InstrumentationApplicationGuideV2Adapter applicationAdapter;
 
     public InstrumentationGuideV2Renderer(
             InstrumentationCatalogV2Service catalogService,
-            InstrumentationIntakeProfileV2Service profileService) {
+            InstrumentationIntakeProfileV2Service profileService,
+            InstrumentationApplicationGuideV2Adapter applicationAdapter) {
         this.catalogService = catalogService;
         this.profileService = profileService;
+        this.applicationAdapter = applicationAdapter;
     }
 
     public RenderResponse render(RenderRequest request) {
@@ -63,111 +71,147 @@ public class InstrumentationGuideV2Renderer {
                 service,
                 recipe.signals(),
                 recipe.components(),
-                Map.of("authorizationToken", SecretPlaceholder.authorizationToken()),
-                blocks(recipe, target, service));
+                Map.of(TOKEN_NAME, SecretPlaceholder.authorizationToken()),
+                blocks(request, recipe, profile, target, service));
     }
 
-    private List<GuideBlock> blocks(RecipeOption recipe, Target target, ServiceIdentity service) {
-        GuideBlock configure = new GuideBlock(
-                "configure_exporter",
-                BlockType.ENVIRONMENT,
-                "instrumentation.v2.block.configure_exporter",
+    private List<GuideBlock> blocks(
+            RenderRequest request,
+            RecipeOption recipe,
+            IntakeProfile profile,
+            Target target,
+            ServiceIdentity service) {
+        return switch (recipe.kind()) {
+            case APPLICATION -> applicationAdapter.blocks(
+                    request, recipe, profile, target.endpoint(), target.protocol(), service);
+            case QUICK_START -> quickStartBlocks(target, service, recipe);
+            case EXISTING_OPENTELEMETRY -> existingCollectorBlocks(target);
+        };
+    }
+
+    private List<GuideBlock> quickStartBlocks(Target target, ServiceIdentity service, RecipeOption recipe) {
+        List<GuideBlock> blocks = new ArrayList<>();
+        blocks.add(copyable(
+                "install_telemetrygen",
+                BlockType.DOWNLOAD,
+                "instrumentation.v2.block.install_telemetrygen",
                 "instrumentation.location.application_host",
-                "shell",
-                "OTEL_EXPORTER_OTLP_ENDPOINT=" + target.endpoint() + "\n"
-                        + "OTEL_EXPORTER_OTLP_PROTOCOL=" + target.protocol() + "\n"
-                        + "OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer " + TOKEN_MARKER + "\n"
-                        + "OTEL_SERVICE_NAME=" + service.name() + "\n"
-                        + "OTEL_RESOURCE_ATTRIBUTES=service.namespace=" + service.namespace()
-                        + ",deployment.environment.name=" + service.environment(),
+                "bash",
+                "GOBIN=\"$PWD/.hertzbeat-telemetrygen\" go install "
+                        + "github.com/open-telemetry/opentelemetry-collector-contrib/cmd/telemetrygen@v0.156.0",
+                recipe.components().getFirst().sourceUrl(),
+                List.of()));
+        for (String signal : List.of("metrics", "logs", "traces")) {
+            blocks.add(copyable(
+                    "send_" + signal,
+                    BlockType.COMMAND,
+                    "instrumentation.v2.block.send_" + signal,
+                    "instrumentation.location.application_host",
+                    "bash",
+                    telemetrygenCommand(signal, target, service),
+                    null,
+                    List.of(TOKEN_NAME)));
+        }
+        blocks.add(check("validate_signals", "instrumentation.v2.check.detect_scoped_signals"));
+        blocks.add(note(
+                "no_persistence",
+                "instrumentation.v2.block.no_persistence",
+                "instrumentation.v2.note.telemetrygen_no_persistence",
+                "instrumentation.location.application_host"));
+        blocks.add(copyable(
+                "cleanup_telemetrygen",
+                BlockType.COMMAND,
+                "instrumentation.v2.block.cleanup_telemetrygen",
+                "instrumentation.location.application_host",
+                "bash",
+                "rm -rf -- .hertzbeat-telemetrygen",
                 null,
-                List.of("authorizationToken"));
-        GuideBlock validate = new GuideBlock(
-                "validate_signals",
+                List.of()));
+        return List.copyOf(blocks);
+    }
+
+    private String telemetrygenCommand(String signal, Target target, ServiceIdentity service) {
+        String countFlag = switch (signal) {
+            case "metrics" -> "--metrics 1";
+            case "logs" -> "--logs 1";
+            case "traces" -> "--traces 1";
+            default -> throw new IllegalArgumentException("Unsupported telemetrygen signal");
+        };
+        String transport = "http/protobuf".equals(target.protocol())
+                ? " --otlp-http --otlp-http-url-path " + shellQuote(target.signalPath(signal))
+                : "";
+        return "./.hertzbeat-telemetrygen/telemetrygen " + signal
+                + transport
+                + " --otlp-endpoint " + shellQuote(target.authority())
+                + " --otlp-header 'Authorization=\"Bearer " + TOKEN_MARKER + "\"'"
+                + " --service " + shellQuote(service.name())
+                + " --otlp-attributes 'service.namespace=\"" + service.namespace() + "\"'"
+                + " --otlp-attributes 'deployment.environment.name=\"" + service.environment() + "\"' "
+                + countFlag;
+    }
+
+    private List<GuideBlock> existingCollectorBlocks(Target target) {
+        return List.of(
+                copyable(
+                        "configure_exporter",
+                        BlockType.CODE,
+                        "instrumentation.v2.block.configure_exporter",
+                        "instrumentation.location.otel_collector",
+                        "yaml",
+                        exporterFragment(target),
+                        null,
+                        List.of(TOKEN_NAME)),
+                note(
+                        "merge_exporter",
+                        "instrumentation.v2.block.merge_exporter",
+                        "instrumentation.v2.note.merge_exporter_into_each_pipeline",
+                        "instrumentation.location.otel_collector"),
+                note(
+                        "restart_collector",
+                        "instrumentation.v2.block.restart_collector",
+                        "instrumentation.v2.note.restart_collector_for_deployment",
+                        "instrumentation.location.otel_collector"),
+                check("validate_signals", "instrumentation.v2.check.detect_scoped_signals"));
+    }
+
+    private String exporterFragment(Target target) {
+        String exporter = "http/protobuf".equals(target.protocol()) ? "otlphttp/hertzbeat" : "otlp/hertzbeat";
+        return "exporters:\n"
+                + "  " + exporter + ":\n"
+                + "    endpoint: " + target.endpoint() + "\n"
+                + "    headers:\n"
+                + "      Authorization: \"Bearer " + TOKEN_MARKER + "\"";
+    }
+
+    private GuideBlock copyable(
+            String id,
+            BlockType type,
+            String titleKey,
+            String locationKey,
+            String language,
+            String content,
+            String href,
+            List<String> placeholders) {
+        return new GuideBlock(
+                id, type, titleKey, null, locationKey, language, content, href, placeholders);
+    }
+
+    private GuideBlock note(String id, String titleKey, String bodyKey, String locationKey) {
+        return new GuideBlock(
+                id, BlockType.NOTE, titleKey, bodyKey, locationKey, null, null, null, List.of());
+    }
+
+    private GuideBlock check(String id, String bodyKey) {
+        return new GuideBlock(
+                id,
                 BlockType.CHECK,
                 "instrumentation.v2.block.validate_signals",
+                bodyKey,
                 "instrumentation.location.hertzbeat_ui",
                 null,
-                "instrumentation.v2.check.detect_scoped_signals",
+                null,
                 null,
                 List.of());
-        if (recipe.kind() == SourceKind.EXISTING_OPENTELEMETRY) {
-            return List.of(
-                    configure,
-                    new GuideBlock(
-                            "configure_pipeline",
-                            BlockType.CODE,
-                            "instrumentation.v2.block.configure_pipeline",
-                            "instrumentation.location.otel_collector",
-                            "yaml",
-                            exporterPipeline(target),
-                            null,
-                            List.of("authorizationToken")),
-                    new GuideBlock(
-                            "restart_pipeline",
-                            BlockType.COMMAND,
-                            "instrumentation.v2.block.restart_pipeline",
-                            "instrumentation.location.otel_collector",
-                            "shell",
-                            "instrumentation.v2.command.restart_collector",
-                            null,
-                            List.of()),
-                    validate);
-        }
-        boolean quickStart = recipe.kind() == SourceKind.QUICK_START;
-        GuideBlock source = new GuideBlock(
-                "official_source",
-                quickStart ? BlockType.DOWNLOAD : BlockType.LINK,
-                "instrumentation.v2.block.official_source",
-                "instrumentation.location.external",
-                quickStart ? "shell" : null,
-                quickStart
-                        ? "git clone --branch 2.0.2 --depth 1 "
-                                + "https://github.com/open-telemetry/opentelemetry-demo.git "
-                                + "opentelemetry-demo-2.0.2 && "
-                                + "git -C opentelemetry-demo-2.0.2 checkout "
-                                + "63649d6d6a59de88fb421b88c3c3a6185b6d21ad"
-                        : null,
-                recipe.components().getFirst().sourceUrl(),
-                List.of());
-        if (recipe.kind() == SourceKind.QUICK_START) {
-            return List.of(
-                    source,
-                    configure,
-                    new GuideBlock(
-                            "run_demo",
-                            BlockType.COMMAND,
-                            "instrumentation.v2.block.run_demo",
-                            "instrumentation.location.external_demo_workspace",
-                            "shell",
-                            "cd opentelemetry-demo-2.0.2 && docker compose up --detach",
-                            null,
-                            List.of()),
-                    validate,
-                    new GuideBlock(
-                            "cleanup_demo",
-                            BlockType.COMMAND,
-                            "instrumentation.v2.block.cleanup_demo",
-                            "instrumentation.location.external_demo_workspace",
-                            "shell",
-                            "cd opentelemetry-demo-2.0.2 && "
-                                    + "docker compose down --volumes --remove-orphans",
-                            null,
-                            List.of()));
-        }
-        return List.of(
-                source,
-                configure,
-                new GuideBlock(
-                        "start_application",
-                        BlockType.COMMAND,
-                        "instrumentation.v2.block.start_application",
-                        "instrumentation.location.application_host",
-                        "shell",
-                        "instrumentation.v2.command.start_application",
-                        null,
-                        List.of()),
-                validate);
     }
 
     private RecipeOption requireRecipe(RenderRequest request) {
@@ -199,8 +243,7 @@ public class InstrumentationGuideV2Renderer {
     private void requireRuntimeSelection(RenderRequest request, RecipeOption recipe) {
         if (request.environment() != null && !recipe.environments().contains(request.environment())
                 || request.platform() != null && !recipe.platforms().contains(request.platform())
-                && !recipe.platforms().contains(org.apache.hertzbeat.observability.instrumentation.api
-                        .InstrumentationApiContract.Platform.ANY)
+                && !recipe.platforms().contains(Platform.ANY)
                 || request.sourceKind() == SourceKind.APPLICATION
                 && (request.environment() == null || request.platform() == null)) {
             throw new InstrumentationV2RequestException(ErrorCode.SELECTION_INVALID);
@@ -228,6 +271,10 @@ public class InstrumentationGuideV2Renderer {
         return value != null && RESOURCE_VALUE.matcher(value).matches();
     }
 
+    private String shellQuote(String value) {
+        return "'" + value.replace("'", "'\"'\"'") + "'";
+    }
+
     private Target target(IntakeProfile profile) {
         if (profile.httpsEndpoints().containsKey(OtlpTransport.HTTP_PROTOBUF)) {
             return new Target(profile.httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF), "http/protobuf");
@@ -235,23 +282,19 @@ public class InstrumentationGuideV2Renderer {
         return new Target(profile.httpsEndpoints().get(OtlpTransport.GRPC), "grpc");
     }
 
-    private String exporterPipeline(Target target) {
-        String exporter = "http/protobuf".equals(target.protocol()) ? "otlphttp/hertzbeat" : "otlp/hertzbeat";
-        return "exporters:\n"
-                + "  " + exporter + ":\n"
-                + "    endpoint: " + target.endpoint() + "\n"
-                + "    headers:\n"
-                + "      Authorization: \"Bearer " + TOKEN_MARKER + "\"\n"
-                + "service:\n"
-                + "  pipelines:\n"
-                + "    metrics:\n"
-                + "      exporters: [" + exporter + "]\n"
-                + "    logs:\n"
-                + "      exporters: [" + exporter + "]\n"
-                + "    traces:\n"
-                + "      exporters: [" + exporter + "]";
-    }
-
     private record Target(String endpoint, String protocol) {
+
+        String authority() {
+            URI uri = URI.create(endpoint);
+            return uri.getRawAuthority();
+        }
+
+        String signalPath(String signal) {
+            String path = URI.create(endpoint).getRawPath();
+            String normalized = path == null || path.isBlank() || "/".equals(path)
+                    ? ""
+                    : path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+            return normalized + "/v1/" + signal;
+        }
     }
 }
