@@ -75,7 +75,7 @@ export type CatalogResponse = {
   recipes: Recipe[];
 };
 
-export type SourceGroup = { id: string; labelKey: string };
+type SourceGroup = { id: string; labelKey: string };
 export type SourceEntry = {
   id: string;
   labelKey: string;
@@ -89,7 +89,7 @@ export type SourceEntry = {
   documentationUrl?: string | undefined;
 };
 
-export type IntakeProfile = {
+type IntakeProfile = {
   id: string;
   kind: 'server' | 'hertzbeat_collector' | 'external_otel_collector';
   availability: 'available' | 'unavailable';
