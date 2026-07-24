@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.ui.runtime;
 
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.stereotype.Component;
 
 /** Adapts the established Warehouse server health boundary for UI aggregation. */
@@ -25,13 +26,22 @@ import org.springframework.stereotype.Component;
 final class WarehouseUiRuntimeStorageStatusProbe implements UiRuntimeStorageStatusProbe {
 
     private final MetricsDataService metricsDataService;
+    private final GreptimeProperties greptimeProperties;
 
-    WarehouseUiRuntimeStorageStatusProbe(MetricsDataService metricsDataService) {
+    WarehouseUiRuntimeStorageStatusProbe(
+            MetricsDataService metricsDataService,
+            GreptimeProperties greptimeProperties) {
         this.metricsDataService = metricsDataService;
+        this.greptimeProperties = greptimeProperties;
     }
 
     @Override
     public boolean isAvailable() {
+        // The public v1 contract names Greptime explicitly; another healthy
+        // Warehouse implementation must not satisfy this Greptime status.
+        if (!greptimeProperties.enabled()) {
+            return false;
+        }
         return Boolean.TRUE.equals(metricsDataService.getWarehouseStorageServerStatus());
     }
 }

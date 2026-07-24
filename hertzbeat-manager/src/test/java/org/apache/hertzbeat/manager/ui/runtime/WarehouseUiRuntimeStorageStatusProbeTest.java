@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.junit.jupiter.api.Test;
 
 /** Ensures the UI probe reuses the Warehouse health boundary without storage queries. */
@@ -32,7 +33,8 @@ class WarehouseUiRuntimeStorageStatusProbeTest {
     @Test
     void delegatesToMetricsDataServiceAndTreatsNullAsUnavailable() {
         MetricsDataService metricsDataService = mock(MetricsDataService.class);
-        WarehouseUiRuntimeStorageStatusProbe probe = new WarehouseUiRuntimeStorageStatusProbe(metricsDataService);
+        WarehouseUiRuntimeStorageStatusProbe probe = new WarehouseUiRuntimeStorageStatusProbe(
+                metricsDataService, greptimeProperties(true));
         when(metricsDataService.getWarehouseStorageServerStatus())
                 .thenReturn(Boolean.TRUE)
                 .thenReturn((Boolean) null);
@@ -40,5 +42,21 @@ class WarehouseUiRuntimeStorageStatusProbeTest {
         assertTrue(probe.isAvailable());
         assertFalse(probe.isAvailable());
         verify(metricsDataService, org.mockito.Mockito.times(2)).getWarehouseStorageServerStatus();
+    }
+
+    @Test
+    void doesNotReportAnotherWarehouseAsAvailableGreptimeStorage() {
+        MetricsDataService metricsDataService = mock(MetricsDataService.class);
+        WarehouseUiRuntimeStorageStatusProbe probe = new WarehouseUiRuntimeStorageStatusProbe(
+                metricsDataService, greptimeProperties(false));
+        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(Boolean.TRUE);
+
+        assertFalse(probe.isAvailable());
+        verify(metricsDataService, org.mockito.Mockito.never()).getWarehouseStorageServerStatus();
+    }
+
+    private GreptimeProperties greptimeProperties(boolean enabled) {
+        return new GreptimeProperties(
+                enabled, "127.0.0.1:4001", "http://127.0.0.1:4000", "public", null, null, null);
     }
 }
