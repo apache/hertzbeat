@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
@@ -92,6 +93,21 @@ class InstrumentationV2ContractTest {
                 .filter(recipe -> recipe.kind() == SourceKind.QUICK_START)
                 .flatMap(recipe -> recipe.components().stream())
                 .allMatch(component -> component.official() && !component.bundledWithHertzBeat()));
+    }
+
+    @Test
+    void exposesOnlyExplicitCanonicalHttpsCatalogUrls() {
+        var catalog = new InstrumentationCatalogV2Service(new InstrumentationCatalogService()).catalog();
+
+        catalog.recipes().stream().flatMap(recipe -> recipe.components().stream()).forEach(component -> {
+            assertExplicitCanonicalHttps(component.sourceUrl());
+            component.dependencies().forEach(dependency ->
+                    assertExplicitCanonicalHttps(dependency.sourceUrl()));
+            component.artifacts().forEach(artifact -> {
+                assertExplicitCanonicalHttps(artifact.downloadUrl());
+                assertExplicitCanonicalHttps(artifact.provenanceUrl());
+            });
+        });
     }
 
     @Test
@@ -164,6 +180,15 @@ class InstrumentationV2ContractTest {
                 "Authorization",
                 null,
                 null));
+    }
+
+    private static void assertExplicitCanonicalHttps(String value) {
+        URI uri = URI.create(value);
+        assertEquals("https", uri.getScheme(), value);
+        assertTrue(uri.getHost() != null && !uri.getHost().isBlank(), value);
+        assertNull(uri.getUserInfo(), value);
+        assertNull(uri.getRawQuery(), value);
+        assertNull(uri.getRawFragment(), value);
     }
 
     @Test

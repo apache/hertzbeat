@@ -307,17 +307,17 @@ public class InstrumentationCatalogService {
         return List.of(
                 dependency(
                         "open-telemetry/sdk",
-                        "https://packagist.org/packages/open-telemetry/sdk#1.14.0",
+                        "https://packagist.org/packages/open-telemetry/sdk",
                         "1.14.0",
                         "instrumentation.dependency.sdk"),
                 dependency(
                         "open-telemetry/exporter-otlp",
-                        "https://packagist.org/packages/open-telemetry/exporter-otlp#1.4.0",
+                        "https://packagist.org/packages/open-telemetry/exporter-otlp",
                         "1.4.0",
                         "instrumentation.dependency.exporter"),
                 dependency(
                         "open-telemetry/" + instrumentationPackage,
-                        "https://packagist.org/packages/open-telemetry/" + instrumentationPackage + "#" + version,
+                        "https://packagist.org/packages/open-telemetry/" + instrumentationPackage,
                         version,
                         "instrumentation.dependency.framework_instrumentation"));
     }
