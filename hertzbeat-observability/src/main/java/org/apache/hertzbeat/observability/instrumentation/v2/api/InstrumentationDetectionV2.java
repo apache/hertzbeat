@@ -109,6 +109,7 @@ public final class InstrumentationDetectionV2 {
     }
 
     /** One signal's result. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SignalDetection(DetectionStatus status, Long lastReceivedAt, DetectionErrorCode errorCode) {
         public SignalDetection {
             if (status == null || lastReceivedAt != null && lastReceivedAt <= 0) {
@@ -145,6 +146,7 @@ public final class InstrumentationDetectionV2 {
     }
 
     /** Fixed polling cadence and bounded automatic detection deadline. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record PollingInstruction(PollingDecision decision, Long pollAfterMs, long deadlineAt) {
         public PollingInstruction {
             if (decision == null || deadlineAt <= 0

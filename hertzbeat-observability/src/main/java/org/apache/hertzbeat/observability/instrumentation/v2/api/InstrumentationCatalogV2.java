@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.instrumentation.v2.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.HashSet;
 import java.util.List;
@@ -81,6 +82,7 @@ public final class InstrumentationCatalogV2 {
     }
 
     /** A small, selectable recipe rather than rendered tutorial prose. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RecipeOption(
             String id,
             SourceKind kind,
