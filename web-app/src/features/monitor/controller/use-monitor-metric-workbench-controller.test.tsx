@@ -24,6 +24,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import { MonitorContractError, type Monitor } from '../model/monitor-contract';
+import { defaultMonitorDetailRefreshSeconds } from '../model/monitor-detail-model';
 
 const api = vi.hoisted(() => ({
   loadFavoriteMetrics: vi.fn(),
@@ -127,6 +128,22 @@ describe('useMonitorMetricWorkbenchController', () => {
     });
 
     expectMetricReadsNotCalled();
+  });
+
+  it('manually refreshes favorites, realtime, and history even when auto-refresh is Off', async () => {
+    const view = renderController(monitor(), [], '/monitors/7?refresh=0');
+    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
+    await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
+    vi.clearAllMocks();
+
+    await act(async () => {
+      view.result.current.controller.actions.refresh();
+      await Promise.resolve();
+    });
+
+    expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(1);
+    expect(api.loadRealtimeMetric).toHaveBeenCalledTimes(1);
+    expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1);
   });
 
   it('treats a successful query without its required payload as invalid evidence', async () => {
@@ -354,7 +371,13 @@ function renderController(
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return renderHook(
     ({ monitor: current, embedded: currentEmbedded }) => ({
-      controller: useMonitorMetricWorkbenchController(current, currentEmbedded, notifications),
+      controller: useMonitorMetricWorkbenchController(current, currentEmbedded, {
+        notifications,
+        refreshControl: {
+          refreshSeconds: defaultMonitorDetailRefreshSeconds,
+          setRefreshSeconds: vi.fn()
+        }
+      }),
       navigate: useNavigate(),
       location: useLocation()
     }),

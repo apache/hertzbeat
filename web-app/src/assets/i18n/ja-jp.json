@@ -995,6 +995,11 @@
     "description": "監視詳細から現在値と履歴を確認します。",
     "realtime": "リアルタイム",
     "history": "履歴",
+    "autoRefresh": {
+      "label": "自動更新",
+      "seconds": "自動更新：{{count}}秒",
+      "off": "自動更新：オフ"
+    },
     "favorite": "お気に入り",
     "unfavorite": "お気に入り解除",
     "favoriteSaved": "お気に入りを更新しました。",

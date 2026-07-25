@@ -23,7 +23,12 @@ import { useMonitorMetricWorkbenchController } from '../controller/use-monitor-m
 export function MonitorDetailPage() {
   const detail = useMonitorDetailController();
   const ready = detail.state.detail.kind === 'ready' ? detail.state.detail.detail : undefined;
-  const metrics = useMonitorMetricWorkbenchController(ready?.monitor, ready?.metrics ?? []);
+  const metrics = useMonitorMetricWorkbenchController(ready?.monitor, ready?.metrics ?? [], {
+    refreshControl: {
+      refreshSeconds: detail.state.refreshSeconds,
+      setRefreshSeconds: detail.actions.setRefreshSeconds
+    }
+  });
   return (
     <MonitorDetailView {...detail} metricWorkbench={ready ? <MonitorMetricWorkbench {...metrics} /> : undefined} />
   );

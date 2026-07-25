@@ -25,6 +25,7 @@ import type {
   monitorHistoryRows,
   monitorRealtimeRows
 } from '../model/monitor-detail-model';
+import { MonitorRefreshSelect } from './monitor-refresh-select';
 import styles from './monitor-metric-workbench.module.css';
 
 const historyTablePageSize = 20;
@@ -180,6 +181,7 @@ function MonitorMetricToolbar({
         onChange={actions.setHistory}
         options={monitorMetricHistoryRanges.map(value => ({ value, label: value }))}
       />
+      <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
       <Button
         disabled={state.favorite.kind !== 'ready' || state.favoriteBusy}
         loading={state.favoriteBusy}

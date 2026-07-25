@@ -18,9 +18,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  defaultMonitorDetailRefreshSeconds,
+  monitorDetailRefreshChoices,
+  monitorDetailRefreshInterval,
   monitorHistoryRows,
   monitorMetricOptions,
   monitorRealtimeRows,
+  parseMonitorDetailRefresh,
   parseMonitorRouteId
 } from './monitor-detail-model';
 
@@ -76,5 +80,17 @@ describe('monitor detail model', () => {
     expect(parseMonitorRouteId('0')).toBeUndefined();
     expect(parseMonitorRouteId('7.5')).toBeUndefined();
     expect(parseMonitorRouteId('9007199254740992')).toBeUndefined();
+  });
+
+  it('normalizes detail refresh to the legacy default and one shared allowlist', () => {
+    expect(defaultMonitorDetailRefreshSeconds).toBe(90);
+    expect(monitorDetailRefreshChoices).toEqual([10, 30, 60, 300, 0]);
+    expect(parseMonitorDetailRefresh(null)).toBe(90);
+    expect(parseMonitorDetailRefresh('bad')).toBe(90);
+    expect(parseMonitorDetailRefresh('90')).toBe(90);
+    expect(parseMonitorDetailRefresh('10')).toBe(10);
+    expect(parseMonitorDetailRefresh('0')).toBe(0);
+    expect(monitorDetailRefreshInterval(90)).toBe(90_000);
+    expect(monitorDetailRefreshInterval(0)).toBe(false);
   });
 });

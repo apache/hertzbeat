@@ -1003,6 +1003,11 @@
     "description": "Consulte valores atuais e históricos no detalhe do monitor.",
     "realtime": "Tempo real",
     "history": "Histórico",
+    "autoRefresh": {
+      "label": "Atualização automática",
+      "seconds": "Atualização automática: {{count}} segundos",
+      "off": "Atualização automática: desativada"
+    },
     "favorite": "Favoritar",
     "unfavorite": "Remover favorito",
     "favoriteSaved": "Favoritos atualizados.",

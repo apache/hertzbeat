@@ -998,6 +998,11 @@
     "description": "Inspect current values and stored history without leaving the monitor.",
     "realtime": "Realtime",
     "history": "History",
+    "autoRefresh": {
+      "label": "Auto-refresh",
+      "seconds": "Auto-refresh: {{count}} seconds",
+      "off": "Auto-refresh: Off"
+    },
     "favorite": "Favorite",
     "unfavorite": "Remove favorite",
     "favoriteSaved": "Favorite metrics updated.",

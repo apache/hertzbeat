@@ -983,6 +983,11 @@
     "description": "無需離開監控詳情即可查看目前值與歷史資料。",
     "realtime": "即時",
     "history": "歷史",
+    "autoRefresh": {
+      "label": "自動重新整理",
+      "seconds": "自動重新整理：{{count}} 秒",
+      "off": "自動重新整理：關閉"
+    },
     "favorite": "收藏",
     "unfavorite": "取消收藏",
     "favoriteSaved": "收藏指標已更新。",

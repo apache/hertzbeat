@@ -983,6 +983,11 @@
     "description": "无需离开监控详情即可查看当前值与历史数据。",
     "realtime": "实时",
     "history": "历史",
+    "autoRefresh": {
+      "label": "自动刷新",
+      "seconds": "自动刷新：{{count}} 秒",
+      "off": "自动刷新：关闭"
+    },
     "favorite": "收藏",
     "unfavorite": "取消收藏",
     "favoriteSaved": "收藏指标已更新。",

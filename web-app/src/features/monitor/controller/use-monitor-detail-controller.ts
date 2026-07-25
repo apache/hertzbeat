@@ -20,29 +20,42 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { classifyMonitorDetailReadError, loadMonitorDetail } from '../api/monitor-api';
 import type { MonitorDetail } from '../model/monitor-contract';
-import { parseMonitorRouteId, type MonitorDetailEvidence } from '../model/monitor-detail-model';
+import {
+  monitorDetailRefreshChoices,
+  parseMonitorDetailRefresh,
+  parseMonitorRouteId,
+  type MonitorDetailEvidence,
+  type MonitorDetailRefreshChoice
+} from '../model/monitor-detail-model';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-model';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorDetailController() {
   const navigate = useNavigate();
   const { monitorId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const id = parseMonitorRouteId(monitorId);
   const returnTo = safeMonitorReturnTo(searchParams.get('returnTo'));
+  const refreshSeconds = parseMonitorDetailRefresh(searchParams.get('refresh'));
   const query = useQuery({
     queryKey: monitorQueryKeys.detail(id),
     queryFn: id === undefined ? skipToken : ({ signal }) => loadMonitorDetail(id, signal),
     retry: false
   });
   return {
-    state: { detail: resolveMonitorDetail(id, query.isPending, query.error, query.data), returnTo },
+    state: { detail: resolveMonitorDetail(id, query.isPending, query.error, query.data), returnTo, refreshSeconds },
     actions: {
       back: () => {
         void navigate(returnTo);
       },
       edit: () => {
         if (id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
+      },
+      setRefreshSeconds: (value: MonitorDetailRefreshChoice) => {
+        if (!monitorDetailRefreshChoices.includes(value)) return;
+        const next = new URLSearchParams(searchParams);
+        next.set('refresh', String(value));
+        setSearchParams(next);
       }
     }
   };

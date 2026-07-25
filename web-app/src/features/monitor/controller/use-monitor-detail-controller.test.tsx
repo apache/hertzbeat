@@ -67,6 +67,27 @@ describe('useMonitorDetailController', () => {
     expect(view.location()).toBe('/monitors?app=website');
   });
 
+  it('normalizes refresh state and preserves metric, history, and return context when it changes', async () => {
+    const view = renderController(
+      '/monitors/7?returnTo=%2Fmonitors%3Fapp%3Dwebsite&metric=summary.value&history=1h&refresh=invalid'
+    );
+
+    await waitFor(() => expect(view.result.current.state.refreshSeconds).toBe(90));
+    expect(view.location()).toContain('refresh=invalid');
+    expect(view.location()).toContain('returnTo=%2Fmonitors%3Fapp%3Dwebsite');
+    expect(view.location()).toContain('metric=summary.value');
+    expect(view.location()).toContain('history=1h');
+
+    act(() => view.result.current.actions.setRefreshSeconds(30));
+    await waitFor(() => expect(view.result.current.state.refreshSeconds).toBe(30));
+    expect(view.location()).toContain('refresh=30');
+    expect(view.location()).toContain('metric=summary.value');
+
+    act(() => view.result.current.actions.setRefreshSeconds(0));
+    await waitFor(() => expect(view.result.current.state.refreshSeconds).toBe(0));
+    expect(view.location()).toContain('refresh=0');
+  });
+
   it.each([
     [new ApiMessageError('missing', { status: 404 }), 'missing'],
     [new ApiMessageError('missing', { status: 200, code: 15 }), 'missing'],

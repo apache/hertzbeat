@@ -18,6 +18,7 @@ import {
   monitorMetricHistoryRanges,
   monitorRealtimeRows,
   parseMonitorMetricHistory,
+  type MonitorDetailRefreshControl,
   type MonitorMetricCatalogEvidence,
   type MonitorMetricHistory,
   type MonitorMetricWorkbenchController
@@ -28,38 +29,37 @@ import {
   useMonitorFavoriteMutation,
   type MonitorMetricNotifications as Notifications
 } from './use-monitor-favorite-mutation';
+import { buildMonitorMetricWorkbenchResult } from './monitor-metric-workbench-result';
 import { useMonitorMetricData } from './use-monitor-metric-data';
+
+type MonitorMetricWorkbenchOptions = {
+  notifications?: Notifications;
+  refreshControl: MonitorDetailRefreshControl;
+};
 
 export function useMonitorMetricWorkbenchController(
   monitor: Monitor | undefined,
   embedded: MonitorDetailMetric[],
-  notificationOverride?: Notifications
+  options: MonitorMetricWorkbenchOptions
 ): MonitorMetricWorkbenchController {
+  const { refreshControl } = options;
   const { t } = useTranslation();
   const { message: appMessage } = App.useApp();
-  const message = notificationOverride ?? appMessage;
+  const message = options.notifications ?? appMessage;
   const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
   const source = monitorSource(monitor);
-  const catalog = useMonitorMetricCatalog(monitor, embedded, source);
-  const requestedMetric = params.get('metric') ?? '';
-  const requestedHistory = params.get('history');
-  const history = parseMonitorMetricHistory(requestedHistory);
-  const metricKey = selectedMetricKey(catalog, requestedMetric);
-  const metric = catalog.options.find(option => option.key === metricKey);
-
-  useCanonicalMetricParams({
+  const { catalog, history, metric, metricKey, params, setParams } = useMonitorMetricSelection(
     monitor,
-    catalog,
-    requestedHistory,
-    requestedMetric,
+    embedded,
+    source
+  );
+  const queries = useMonitorMetricData({
+    monitor,
+    metric,
     metricKey,
     history,
-    params,
-    setParams
+    refreshSeconds: refreshControl.refreshSeconds
   });
-
-  const queries = useMonitorMetricData({ monitor, metric, metricKey, history });
   const favoritesQuery = queries.favorites;
   const favorite = favoriteEvidence(favoritesQuery, metricKey);
   const realtimeQuery = queries.realtime;
@@ -76,15 +76,17 @@ export function useMonitorMetricWorkbenchController(
     t
   });
   const urlActions = useMetricUrlActions({ catalog, history, metricKey, params, setParams });
-  return buildMetricWorkbenchController({
+  return buildMonitorMetricWorkbenchResult({
     catalog,
     metricKey,
     history,
     favorite,
-    favoriteMutation,
+    favoriteBusy: favoriteMutation.busy,
     realtime,
     historical,
+    refreshControl,
     urlActions,
+    toggleFavorite: favoriteMutation.toggle,
     refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric))
   });
 }
@@ -109,24 +111,6 @@ function useMonitorMetricCatalog(
   return catalogEvidence(query, embedded);
 }
 
-function buildMetricWorkbenchController(input: {
-  catalog: MonitorMetricWorkbenchController['state']['catalog'];
-  metricKey: string;
-  history: MonitorMetricHistory;
-  favorite: MonitorMetricWorkbenchController['state']['favorite'];
-  favoriteMutation: ReturnType<typeof useMonitorFavoriteMutation>;
-  realtime: MonitorMetricWorkbenchController['state']['realtime'];
-  historical: MonitorMetricWorkbenchController['state']['historical'];
-  urlActions: ReturnType<typeof useMetricUrlActions>;
-  refresh: () => void;
-}): MonitorMetricWorkbenchController {
-  const { catalog, metricKey, history, favorite, favoriteMutation, realtime, historical, urlActions, refresh } = input;
-  return {
-    state: { catalog, metricKey, history, favorite, favoriteBusy: favoriteMutation.busy, realtime, historical },
-    actions: { ...urlActions, toggleFavorite: favoriteMutation.toggle, refresh }
-  };
-}
-
 function monitorSource(monitor: Monitor | undefined) {
   return monitor ? { id: monitor.id, app: monitor.app, scrape: monitor.scrape } : {};
 }
@@ -134,6 +118,31 @@ function monitorSource(monitor: Monitor | undefined) {
 function selectedMetricKey(catalog: MonitorMetricCatalogEvidence, requested: string) {
   if (catalog.options.some(option => option.key === requested)) return requested;
   return catalog.options[0]?.key ?? '';
+}
+
+function useMonitorMetricSelection(
+  monitor: Monitor | undefined,
+  embedded: MonitorDetailMetric[],
+  source: ReturnType<typeof monitorSource>
+) {
+  const [params, setParams] = useSearchParams();
+  const catalog = useMonitorMetricCatalog(monitor, embedded, source);
+  const requestedMetric = params.get('metric') ?? '';
+  const requestedHistory = params.get('history');
+  const history = parseMonitorMetricHistory(requestedHistory);
+  const metricKey = selectedMetricKey(catalog, requestedMetric);
+  const metric = catalog.options.find(option => option.key === metricKey);
+  useCanonicalMetricParams({
+    monitor,
+    catalog,
+    requestedHistory,
+    requestedMetric,
+    metricKey,
+    history,
+    params,
+    setParams
+  });
+  return { catalog, history, metric, metricKey, params, setParams };
 }
 
 function useCanonicalMetricParams(input: {

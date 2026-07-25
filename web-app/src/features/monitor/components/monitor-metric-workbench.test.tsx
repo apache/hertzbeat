@@ -87,6 +87,20 @@ describe('MonitorMetricWorkbench', () => {
     fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
     expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
   });
+
+  it('shows the auto-refresh choices and forwards an Off selection', () => {
+    const value = controller();
+    renderWorkbench(value);
+
+    const refreshSelect = screen.getByRole('combobox', { name: i18n.t('monitorMetrics.autoRefresh.label') });
+    expect(refreshSelect.closest('.ant-select')).toHaveTextContent(
+      i18n.t('monitorMetrics.autoRefresh.seconds', { count: 90 })
+    );
+    fireEvent.mouseDown(refreshSelect);
+    fireEvent.click(screen.getByText(i18n.t('monitorMetrics.autoRefresh.off')));
+
+    expect(value.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
+  });
 });
 
 function controller(
@@ -97,13 +111,20 @@ function controller(
       catalog: { kind: 'ready', options: [{ key: 'summary.value', group: 'summary', field: 'value' }] },
       metricKey: 'summary.value',
       history: '30m',
+      refreshSeconds: 90,
       favorite: { kind: 'ready', value: false },
       favoriteBusy: false,
       realtime: { kind: 'empty', rows: [] },
       historical: { kind: 'empty', rows: [] },
       ...statePatch
     },
-    actions: { setMetric: vi.fn(), setHistory: vi.fn(), toggleFavorite: vi.fn(), refresh: vi.fn() }
+    actions: {
+      setMetric: vi.fn(),
+      setHistory: vi.fn(),
+      setRefreshSeconds: vi.fn(),
+      toggleFavorite: vi.fn(),
+      refresh: vi.fn()
+    }
   };
 }
 
