@@ -2741,6 +2741,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "moduvoice",
+      "name": "moduvoice",
+      "avatar_url": "https://avatars.githubusercontent.com/u/291867022?v=4",
+      "profile": "https://moduvoice.com/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
