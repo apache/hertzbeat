@@ -17,15 +17,18 @@ describe('HertzBeat semantic theme', () => {
     expect(theme.token).toMatchObject({
       colorPrimary: '#9b5bb3',
       colorBgElevated: '#14171e',
-      borderRadius: 2,
-      controlHeight: 28,
+      borderRadius: 4,
+      controlHeight: 32,
       fontSize: 13
     });
     expect(theme.components?.Menu).toMatchObject({
-      itemBorderRadius: 2,
+      itemBorderRadius: 4,
       itemHeight: 32,
       itemSelectedBg: '#211a26'
     });
+    expect(theme.components?.Button).toBeUndefined();
+    expect(theme.components?.Input).toBeUndefined();
+    expect(theme.components?.Select).toBeUndefined();
     expect(theme.components?.Layout).toMatchObject({
       bodyBg: '#0d0f14',
       headerBg: '#101218',

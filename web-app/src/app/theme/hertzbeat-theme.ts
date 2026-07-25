@@ -15,33 +15,33 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
     algorithm: themeAlgorithm(runtimeTheme),
     cssVar: true,
     token: {
-      borderRadius: 2,
+      // SigNoz uses a restrained four-pixel radius: enough to soften dense
+      // controls without turning an operations console into pill-shaped UI.
+      borderRadius: 4,
       colorBgBase: palette.canvas,
       colorBgContainer: palette.chrome,
       colorBgElevated: palette.raised,
       colorBorder: palette.border,
+      colorBorderSecondary: palette.border,
       colorPrimary: '#9b5bb3',
       colorText: palette.text,
       colorTextSecondary: palette.muted,
-      controlHeight: 28,
+      controlHeight: 32,
       fontSize: 13
     },
     components: {
-      Button: { borderRadius: 2, controlHeight: 28 },
-      Input: { borderRadius: 2, controlHeight: 28 },
       Layout: {
         bodyBg: palette.canvas,
         headerBg: palette.chrome,
         siderBg: palette.chrome
       },
       Menu: {
-        itemBorderRadius: 2,
+        itemBorderRadius: 4,
         itemHeight: 32,
         itemSelectedBg: palette.selected,
         itemSelectedColor: palette.selectedText
       },
-      Select: { borderRadius: 2, controlHeight: 28 },
-      Table: { borderRadius: 2, cellPaddingBlock: 8, cellPaddingInline: 10 }
+      Table: { cellPaddingBlock: 8, cellPaddingInline: 10 }
     }
   };
 }

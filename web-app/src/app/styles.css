@@ -38,7 +38,7 @@
   --hb-status-degraded: var(--ant-color-warning);
   --hb-status-unavailable: var(--ant-color-error);
   --hb-status-unknown: #7d8593;
-  --hb-radius-control: 2px;
+  --hb-radius-control: 4px;
   --hb-page-bg: var(--hb-bg-canvas);
   --hb-content-bg: var(--hb-bg-canvas);
   --hb-chrome-bg: var(--hb-bg-chrome);

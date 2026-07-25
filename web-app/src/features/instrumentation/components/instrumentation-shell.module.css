@@ -36,6 +36,7 @@
   gap: 8px 10px;
   padding: 12px;
   border: 1px solid var(--hb-border);
+  border-radius: var(--hb-radius-control);
   background: var(--hb-bg-raised);
   color: inherit;
   text-align: left;
@@ -133,7 +134,7 @@
 
 .capabilities span {
   border: 1px solid var(--hb-border);
-  border-radius: 2px;
+  border-radius: var(--hb-radius-control);
   padding: 2px 5px;
   color: var(--hb-text-secondary);
   font-size: 11px;
@@ -174,6 +175,7 @@
   justify-content: space-between;
   gap: 12px;
   border: 1px solid var(--hb-border);
+  border-radius: var(--hb-radius-control);
   padding: 10px 12px;
   background: var(--hb-bg-raised);
   color: inherit;

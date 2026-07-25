@@ -53,18 +53,18 @@ describe('AppProviders theme contract', () => {
     expectAntVariableScope();
     expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     expect(screen.getByTestId('background')).toHaveTextContent('#0d0f14');
-    expect(screen.getByTestId('control-height')).toHaveTextContent('28');
+    expect(screen.getByTestId('control-height')).toHaveTextContent('32');
 
     fireEvent.click(screen.getByRole('button', { name: 'default' }));
     expectAntVariableScope();
     expect(screen.getByTestId('theme')).toHaveTextContent('default');
     expect(screen.getByTestId('background')).toHaveTextContent('#f5f6f8');
-    expect(screen.getByTestId('control-height')).toHaveTextContent('28');
+    expect(screen.getByTestId('control-height')).toHaveTextContent('32');
 
     fireEvent.click(screen.getByRole('button', { name: 'compact' }));
     expectAntVariableScope();
     expect(screen.getByTestId('theme')).toHaveTextContent('compact');
     expect(screen.getByTestId('background')).toHaveTextContent('#0d0f14');
-    expect(screen.getByTestId('control-height')).toHaveTextContent('24');
+    expect(screen.getByTestId('control-height')).toHaveTextContent('28');
   });
 });

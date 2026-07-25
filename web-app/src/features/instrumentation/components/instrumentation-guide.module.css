@@ -16,6 +16,7 @@
   display: grid;
   gap: 12px;
   border: 1px solid var(--hb-border);
+  border-radius: var(--hb-radius-control);
   padding: 12px;
   background: var(--hb-bg-raised);
 }
