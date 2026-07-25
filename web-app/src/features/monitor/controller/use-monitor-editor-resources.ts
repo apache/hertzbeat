@@ -31,7 +31,7 @@ export type MonitorEditorEvidence =
   { kind: 'loading' } | { kind: 'missing' | 'invalid' | 'unavailable' | 'error' } | { kind: 'ready' };
 
 export function useMonitorEditorResources(input: ResourceInput) {
-  const { app, appDefines, apps, collectors, defines, detail, scrape, sdDefines, source } =
+  const { app, appDefines, apps, collectors, defines, detail, labelSuggestions, scrape, sdDefines, source } =
     useMonitorEditorResourceQueries(input);
   const canonical = useMemo(
     () =>
@@ -83,6 +83,7 @@ export function useMonitorEditorResources(input: ResourceInput) {
     defines,
     detail: detail.data,
     evidence,
+    labelSuggestions: labelSuggestions.data,
     retry,
     scrape,
     source

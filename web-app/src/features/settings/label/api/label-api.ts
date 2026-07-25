@@ -16,6 +16,7 @@
  */
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
 import { LabelContractError, type LabelIdentity, type LabelPage, type LabelRecord } from '../model/label-model';
 import { labelApiRequest } from './label-api-failure';
@@ -44,9 +45,31 @@ export class LabelCanonicalProofLimitError extends LabelContractError {
   }
 }
 
-export async function loadLabels(query: LabelListRequest) {
-  const response = await labelApiRequest(() => apiMessageGet(buildLabelListPath(query)));
+export type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
+
+export async function loadLabels(query: LabelListRequest, signal?: AbortSignal) {
+  const response = await labelApiRequest(() =>
+    signal ? apiMessageGet(buildLabelListPath(query), { signal }) : apiMessageGet(buildLabelListPath(query))
+  );
   return parseLabelPage(response, query);
+}
+
+export async function loadLabelSuggestions(signal?: AbortSignal): Promise<LabelSuggestionCatalog> {
+  const request = { search: '', pageIndex: 0, pageSize: 100 };
+  const first = await loadLabels(request, signal);
+  assertBoundedProof(first.totalPages);
+  const pages: LabelPage[] = [
+    first,
+    ...(await Promise.all(
+      Array.from({ length: Math.max(0, first.totalPages - 1) }, async (_, offset) => {
+        const pageIndex = offset + 1;
+        const page = await loadLabels({ ...request, pageIndex }, signal);
+        assertStableProofPage(page, first, pageIndex);
+        return page;
+      })
+    ))
+  ];
+  return buildLabelSuggestionCatalog(pages.flatMap(page => page.content));
 }
 
 export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
@@ -128,4 +151,21 @@ function assertStableProofPage(page: LabelPage, first: LabelPage, expectedPage: 
 
 function normalizeLabelValue(value?: string) {
   return value?.trim() ?? '';
+}
+
+function buildLabelSuggestionCatalog(labels: LabelRecord[]): LabelSuggestionCatalog {
+  const catalog = new Map<string, Set<string>>();
+  labels.forEach(label => {
+    const key = label.name.trim();
+    if (!key) return;
+    const values = catalog.get(key) ?? new Set<string>();
+    const value = normalizeLabelValue(label.tagValue);
+    if (value) values.add(value);
+    catalog.set(key, values);
+  });
+  const keys = [...catalog.keys()].sort();
+  return {
+    keys,
+    valuesByKey: Object.fromEntries(keys.map(key => [key, [...(catalog.get(key) ?? [])].sort()]))
+  };
 }

@@ -17,6 +17,8 @@
 
 import { Input, InputNumber, Radio, Switch } from 'antd';
 
+import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
+
 import type { MonitorParamDefine } from '../model/monitor-contract';
 import type { MonitorParamFormValue } from '../model/monitor-editor-model';
 import { numberDefineRange } from '../model/monitor-param-codec';
@@ -30,6 +32,7 @@ type MonitorParamFieldProps = {
   onChange: (value: MonitorParamFormValue) => void;
   onValidityChange?: (valid: boolean) => void;
   mapLabels: RowEditorLabels;
+  mapSuggestions?: LabelSuggestionCatalog;
   metricsLabels: MetricsEditorLabels;
   disabled?: boolean;
 };
@@ -41,6 +44,7 @@ export function MonitorParamField({
   onChange,
   onValidityChange,
   mapLabels,
+  mapSuggestions,
   metricsLabels,
   disabled = false
 }: MonitorParamFieldProps) {
@@ -56,6 +60,7 @@ export function MonitorParamField({
         onChange={onChange}
         {...(onValidityChange ? { onValidityChange } : {})}
         labels={mapLabels}
+        {...(mapSuggestions ? { suggestions: mapSuggestions } : {})}
         disabled={disabled}
       />
     );

@@ -37,6 +37,7 @@ import {
   findCanonicalLabel,
   LabelCanonicalProofLimitError,
   labelEndpoint,
+  loadLabelSuggestions,
   loadLabels,
   maximumLabelCanonicalProofPages,
   saveLabel
@@ -154,6 +155,27 @@ describe('label API', () => {
       number: 0,
       size: 100
     });
+  });
+
+  it('builds a stable monitor-editor suggestion catalog without exposing transport records', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet.mockResolvedValue(
+      page(
+        [
+          { ...label, id: 8, name: ' region ', tagValue: ' west ' },
+          { ...label, id: 7, name: 'env', tagValue: 'prod' },
+          { ...label, id: 9, name: 'env', tagValue: ' staging ' },
+          { ...label, id: 10, name: 'env', tagValue: 'prod' }
+        ],
+        { totalElements: 4 }
+      )
+    );
+
+    await expect(loadLabelSuggestions(signal)).resolves.toEqual({
+      keys: ['env', 'region'],
+      valuesByKey: { env: ['prod', 'staging'], region: ['west'] }
+    });
+    expect(apiMessageGet).toHaveBeenCalledWith(`${labelEndpoint}?pageIndex=0&pageSize=100`, { signal });
   });
 
   it.each([

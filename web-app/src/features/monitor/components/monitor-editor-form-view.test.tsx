@@ -108,6 +108,29 @@ describe('MonitorEditorFormView validation evidence', () => {
     ).toHaveValue('west');
   });
 
+  it('offers canonical label suggestions without turning annotations into constrained fields', () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.labels = { env: 'prod' };
+    controller.state.draft.monitor.annotations = { owner: 'ops' };
+    controller.state.labelSuggestions = {
+      keys: ['env', 'region'],
+      valuesByKey: { env: ['prod', 'staging'], region: ['east', 'west'] }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByRole('combobox', {
+        name: 'monitor.editor.map.key'
+      })
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'monitor.editor.annotations' })).getByRole('textbox', {
+        name: 'monitor.editor.map.key'
+      })
+    ).toBeInTheDocument();
+  });
+
   it('disables editable fields while a command owns the draft snapshot', () => {
     const controller = editorController([]);
     controller.state.busy = true;
@@ -176,7 +199,8 @@ function editorController(validationIssues: string[]) {
       validationIssues,
       returnTo: '/monitors',
       scrapeValues: ['static'] as const,
-      sourceKey: 'new:website:static'
+      sourceKey: 'new:website:static',
+      labelSuggestions: undefined as { keys: string[]; valuesByKey: Record<string, string[]> } | undefined
     },
     actions: {
       updateMonitor: vi.fn(),

@@ -72,6 +72,9 @@ function MapMetadataField({
         onChange={next => controller.actions.updateMonitor({ [field]: mapValue(next) })}
         onValidityChange={valid => controller.actions.setParamValid(`__${field}`, valid)}
         mapLabels={labels.map}
+        {...(field === 'labels' && controller.state.labelSuggestions
+          ? { mapSuggestions: controller.state.labelSuggestions }
+          : {})}
         metricsLabels={labels.metrics}
         disabled={controller.state.busy}
       />

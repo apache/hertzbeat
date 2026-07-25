@@ -66,6 +66,7 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
       defines: resources.defines,
       apps: resources.apps,
       collectors: resources.collectors,
+      labelSuggestions: resources.labelSuggestions,
       busy: commands.command !== 'idle',
       command: commands.command,
       validationIssues: commands.validationIssues,

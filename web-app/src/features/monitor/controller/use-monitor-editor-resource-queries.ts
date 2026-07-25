@@ -3,6 +3,8 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { loadLabelSuggestions } from '@/features/settings';
+
 import { loadMonitorApps, loadMonitorCollectors, loadMonitorDetail, loadMonitorParamDefines } from '../api/monitor-api';
 import { normalizeMonitorScrape, type MonitorEditorMode, type MonitorScrape } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
@@ -42,12 +44,18 @@ function useMonitorEditorBaseQueries(input: MonitorEditorResourceInput) {
     enabled: input.validRoute,
     retry: false
   });
+  const labelSuggestions = useQuery({
+    queryKey: monitorQueryKeys.labelSuggestions(),
+    queryFn: ({ signal }) => loadLabelSuggestions(signal),
+    enabled: input.validRoute,
+    retry: false
+  });
   const detail = useQuery({
     queryKey: monitorQueryKeys.detail(detailId),
     queryFn: detailId === undefined ? skipToken : ({ signal }) => loadMonitorDetail(detailId, signal),
     retry: false
   });
-  return { apps, collectors, detail };
+  return { apps, collectors, detail, labelSuggestions };
 }
 
 function useMonitorEditorDefinitionQueries(input: MonitorEditorResourceInput, app: string, scrape: MonitorScrape) {

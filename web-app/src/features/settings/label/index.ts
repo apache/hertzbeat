@@ -16,3 +16,4 @@
  */
 
 export { LabelPage } from './pages/label-page';
+export { loadLabelSuggestions, type LabelSuggestionCatalog } from './api/label-api';

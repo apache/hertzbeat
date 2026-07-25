@@ -1,5 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
+
 import type { MonitorApp, MonitorCollector, MonitorParamDefine } from '../model/monitor-contract';
 import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
 
@@ -10,6 +12,7 @@ export type MonitorEditorFormController = {
     defines: MonitorParamDefine[];
     apps: MonitorApp[];
     collectors: MonitorCollector[];
+    labelSuggestions: LabelSuggestionCatalog | undefined;
     busy: boolean;
     command: 'idle' | 'detecting' | 'saving';
     validationIssues: string[];
