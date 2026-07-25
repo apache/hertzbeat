@@ -41,6 +41,7 @@ import type {
   AlertSummaryState
 } from '../model/alert-center-view-model';
 import { alertCenterQueryKeys } from './alert-center-query-keys';
+import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
 
 export function useAlertCenterController() {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ export function useAlertCenterController() {
     queryKey: alertCenterQueryKeys.groups(query),
     queryFn: ({ signal }) => loadAlertGroups(query, signal)
   });
+  useAlertCenterPageCorrection(query, listQuery.data, setParams);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));

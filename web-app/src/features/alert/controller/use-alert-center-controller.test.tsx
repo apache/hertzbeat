@@ -60,6 +60,9 @@ describe('Alert Center controller', () => {
 
   it('owns URL query, scoped drafts, and discards drafts after Back or Forward changes the URL', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve(query.pageIndex === 1 ? { ...page(query), totalElements: 16, totalPages: 2 } : page(query))
+    );
     const routed = renderRoutedController(
       [
         '/alerts?search=A&serviceName=checkout&serviceNamespace=shop&environment=prod&pageIndex=1&pageSize=15',
@@ -67,7 +70,7 @@ describe('Alert Center controller', () => {
       ],
       true
     );
-    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('ready'));
 
     expect(routed.current().state.query).toMatchObject({
       search: 'A',
@@ -94,6 +97,9 @@ describe('Alert Center controller', () => {
   });
 
   it('resets unsubmitted drafts when POP changes only status and page identity', async () => {
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve(query.pageIndex === 2 ? { ...page(query), totalElements: 17, totalPages: 3 } : page(query))
+    );
     const routed = renderRoutedController(
       [
         '/alerts?search=A&status=firing&pageIndex=0&pageSize=8',
@@ -117,7 +123,14 @@ describe('Alert Center controller', () => {
     await waitFor(() => expect(result.current.state.query).toMatchObject({ pageIndex: 0, pageSize: 15 }));
   });
 
-  it('keeps summary and list failures independent and preserves an out-of-range ready page', async () => {
+  it('returns an authoritative empty alert page to the first page', async () => {
+    const { result } = renderController('/alerts?search=missing&pageIndex=2&pageSize=8');
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await waitFor(() => expect(result.current.state.query).toMatchObject({ search: 'missing', pageIndex: 0 }));
+  });
+
+  it('keeps summary and list failures independent and corrects an out-of-range ready page', async () => {
     api.loadAlertSummary.mockRejectedValue(new AlertRequestFailure('unavailable'));
     api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
       Promise.resolve({
@@ -130,6 +143,7 @@ describe('Alert Center controller', () => {
 
     await waitFor(() => expect(result.current.state.summary.kind).toBe('unavailable'));
     expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 });
+    await waitFor(() => expect(result.current.state.query.pageIndex).toBe(0));
   });
 
   it('classifies malformed data as error instead of unavailable or empty', async () => {
