@@ -559,6 +559,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wilmerdooley"><img src="https://avatars.githubusercontent.com/u/259930736?v=4?s=100" width="100px;" alt="wilmerdooley"/><br /><sub><b>wilmerdooley</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wilmerdooley" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Zmjjeff7"><img src="https://avatars.githubusercontent.com/u/175370943?v=4?s=100" width="100px;" alt="Zhenhong Guo"/><br /><sub><b>Zhenhong Guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Zmjjeff7" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abhyudayareddy"><img src="https://avatars.githubusercontent.com/u/54602866?v=4?s=100" width="100px;" alt="abhyudayareddy"/><br /><sub><b>abhyudayareddy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=abhyudayareddy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/neon-hippo"><img src="https://avatars.githubusercontent.com/u/165560498?v=4?s=100" width="100px;" alt="neon-hippo"/><br /><sub><b>neon-hippo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=neon-hippo" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
