@@ -27,9 +27,11 @@ const controller = vi.hoisted(() => ({
   edit: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  removeMany: vi.fn(),
   retry: vi.fn(),
   retryDetail: vi.fn(),
   setSearch: vi.fn(),
+  selectIds: vi.fn(),
   state: {},
   submit: vi.fn(),
   submitSearch: vi.fn(),
@@ -107,6 +109,21 @@ describe('AlertGroupPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it('restores current-page selection and confirms one batch delete', () => {
+    const view = render(<AlertGroupPage />);
+    const rowCheckbox = screen.getAllByRole('checkbox').at(1);
+    expect(rowCheckbox).toBeDefined();
+    fireEvent.click(rowCheckbox!);
+    expect(controller.selectIds).toHaveBeenCalledWith([7]);
+
+    controller.state = buildState({ selectedIds: [7] });
+    view.rerender(<AlertGroupPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertGroups.deleteSelected' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.delete' }));
+
+    expect(controller.removeMany).toHaveBeenCalledWith([7]);
   });
 
   it('locks an acknowledged create draft and offers proof retry without claiming save failure', () => {
@@ -228,6 +245,7 @@ function buildState(override: Record<string, unknown> = {}) {
     refreshing: false,
     recovery: undefined,
     search: '',
+    selectedIds: [],
     ...override
   };
 }

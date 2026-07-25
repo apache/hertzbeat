@@ -6,22 +6,28 @@
  */
 
 import { useAlertGroupCommandController } from './use-alert-group-command-controller';
+import { useAlertGroupPageCorrection } from './use-alert-group-page-correction';
 import { useAlertGroupQueryController } from './use-alert-group-query-controller';
 import { useAlertGroupReadController } from './use-alert-group-read-controller';
+import { useAlertGroupSelection } from './use-alert-group-selection';
 
 export function useAlertGroupController() {
   const queryController = useAlertGroupQueryController();
   const readController = useAlertGroupReadController(queryController.state.query);
   const commandController = useAlertGroupCommandController(readController.rereadList);
+  const selection = useAlertGroupSelection(queryController.state.query, readController.state.list);
+  useAlertGroupPageCorrection(queryController.state.query, readController.state.list, queryController.replacePageIndex);
 
   return {
     state: {
       ...commandController.state,
       ...queryController.state,
-      ...readController.state
+      ...readController.state,
+      selectedIds: selection.selectedIds
     },
     ...queryController.actions,
     refresh: readController.refresh,
+    selectIds: selection.selectIds,
     ...commandController.actions
   };
 }

@@ -73,6 +73,10 @@ export async function proveAlertGroupMissing(id: number) {
   throw new AlertGroupContractError('deleted detail still exists');
 }
 
+export async function proveAlertGroupsMissing(ids: readonly number[]) {
+  await Promise.all(ids.map(proveAlertGroupMissing));
+}
+
 function stringListsEqual(actual: string[] | null, expected: string[] | null) {
   if (actual === null || expected === null) return actual === expected;
   return actual.length === expected.length && actual.every((value, index) => value === expected[index]);

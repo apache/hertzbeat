@@ -21,6 +21,7 @@ import { alertGroupApiRequest } from './alert-group-api-failure';
 import {
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
+  normalizeAlertGroupIds,
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupQuery
@@ -61,8 +62,10 @@ export async function saveAlertGroup(draft: AlertGroupDraft): Promise<void> {
   else await alertGroupApiRequest(() => apiMessagePost(alertGroupEndpoint, payload));
 }
 
-export async function deleteAlertGroup(id: number): Promise<void> {
-  await alertGroupApiRequest(() => apiMessageDelete(`${alertGroupsEndpoint}?ids=${id}`));
+export async function deleteAlertGroups(ids: readonly number[]): Promise<void> {
+  const params = new URLSearchParams();
+  normalizeAlertGroupIds(ids).forEach(id => params.append('ids', String(id)));
+  await alertGroupApiRequest(() => apiMessageDelete(`${alertGroupsEndpoint}?${params.toString()}`));
 }
 
 export async function updateAlertGroupEnabled(group: AlertGroupConverge, enable: boolean): Promise<void> {

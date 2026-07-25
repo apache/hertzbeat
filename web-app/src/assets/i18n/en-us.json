@@ -1497,6 +1497,8 @@
     "seconds": "{{value}} s",
     "delete": "Delete",
     "deleteConfirm": "Delete this grouping policy?",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm": "Delete {{count}} selected grouping policies?",
     "validation": "Enter a policy name and at least one group label.",
     "loadFailed": "The grouping policy could not be loaded.",
     "saveSuccess": "Grouping policy saved.",

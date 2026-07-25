@@ -1478,6 +1478,8 @@
     "seconds": "{{value}} 秒",
     "delete": "删除",
     "deleteConfirm": "确认删除这条分组策略？",
+    "deleteSelected": "删除所选",
+    "deleteSelectedConfirm": "确认删除选中的 {{count}} 条分组策略？",
     "validation": "请填写策略名称并选择至少一个分组标签。",
     "loadFailed": "分组策略加载失败。",
     "saveSuccess": "分组策略已保存。",

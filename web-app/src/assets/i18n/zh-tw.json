@@ -1478,6 +1478,8 @@
     "seconds": "{{value}} 秒",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此分組策略？",
+    "deleteSelected": "刪除所選",
+    "deleteSelectedConfirm": "確認刪除選取的 {{count}} 條分組策略？",
     "validation": "請填寫策略名稱並選擇至少一個分組標籤。",
     "loadFailed": "分組策略載入失敗。",
     "saveSuccess": "分組策略已儲存。",

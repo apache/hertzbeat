@@ -32,7 +32,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  deleteAlertGroup,
+  deleteAlertGroups,
   loadAlertGroup,
   loadAlertGroups,
   saveAlertGroup,
@@ -124,7 +124,7 @@ describe('alert group API', () => {
     await expect(saveAlertGroup(draft)).resolves.toBeUndefined();
     await expect(saveAlertGroup({ ...draft, id: 7 })).resolves.toBeUndefined();
     await expect(updateAlertGroupEnabled(persisted, false)).resolves.toBeUndefined();
-    await expect(deleteAlertGroup(7)).resolves.toBeUndefined();
+    await expect(deleteAlertGroups([7])).resolves.toBeUndefined();
     expect(transport.apiMessagePut).toHaveBeenLastCalledWith('/api/alert/group', {
       id: 7,
       name: 'By service',
@@ -134,6 +134,15 @@ describe('alert group API', () => {
       repeatInterval: 0,
       enable: false
     });
+  });
+
+  it('canonicalizes a batch delete into one repeated-id request', async () => {
+    await expect(deleteAlertGroups([9, 7, 9])).resolves.toBeUndefined();
+
+    expect(transport.apiMessageDelete).toHaveBeenCalledWith('/api/alert/groups?ids=7&ids=9');
+    await expect(deleteAlertGroups([])).rejects.toThrow();
+    await expect(deleteAlertGroups([0])).rejects.toThrow();
+    expect(transport.apiMessageDelete).toHaveBeenCalledTimes(1);
   });
 
   it('normalizes every transport entry before leaving the API', async () => {
@@ -150,7 +159,7 @@ describe('alert group API', () => {
     transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
     await expect(saveAlertGroup({ ...draft, id: 7 })).rejects.toBeInstanceOf(AlertGroupRequestFailure);
     transport.apiMessageDelete.mockRejectedValueOnce(transportFailure());
-    await expect(deleteAlertGroup(7)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
+    await expect(deleteAlertGroups([7])).rejects.toBeInstanceOf(AlertGroupRequestFailure);
     transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
     await expect(updateAlertGroupEnabled(persisted, false)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
   });

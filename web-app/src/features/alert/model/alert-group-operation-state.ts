@@ -26,7 +26,7 @@ export type AlertGroupOperationReceipt =
   | {
       kind: 'delete';
       phase: Exclude<AlertGroupOperationPhase, 'prepare'>;
-      id: number;
+      ids: number[];
     };
 
 export type AlertGroupOperationRecovery = {

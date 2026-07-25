@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Input, Typography } from 'antd';
+import { Button, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
@@ -56,7 +56,17 @@ function AlertGroupToolbar(props: AlertGroupToolbarProps) {
   );
 }
 
-function AlertGroupPageHeader({ busy, create }: { busy: boolean; create: () => void }) {
+function AlertGroupPageHeader({
+  busy,
+  create,
+  removeSelected,
+  selectedCount
+}: {
+  busy: boolean;
+  create: () => void;
+  removeSelected: () => unknown;
+  selectedCount: number;
+}) {
   const { t } = useTranslation();
   return (
     <header className={styles.heading}>
@@ -64,30 +74,57 @@ function AlertGroupPageHeader({ busy, create }: { busy: boolean; create: () => v
         <Typography.Title level={2}>{t('alertGroups.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('alertGroups.description')}</Typography.Text>
       </div>
-      <Button type="primary" disabled={busy} onClick={create}>
-        {t('alertGroups.new')}
-      </Button>
+      <Space>
+        {selectedCount > 0 && (
+          <Popconfirm
+            title={t('alertGroups.deleteSelectedConfirm', { count: selectedCount })}
+            okText={t('common.delete')}
+            cancelText={t('common.cancel')}
+            okButtonProps={{ danger: true, disabled: busy }}
+            onConfirm={removeSelected}
+          >
+            <Button danger disabled={busy}>
+              {t('alertGroups.deleteSelected')}
+            </Button>
+          </Popconfirm>
+        )}
+        <Button type="primary" disabled={busy} onClick={create}>
+          {t('alertGroups.new')}
+        </Button>
+      </Space>
     </header>
   );
 }
 
-export function AlertGroupPage() {
+function useAlertGroupPageColumns(controller: ReturnType<typeof useAlertGroupController>, busy: boolean) {
   const { t } = useTranslation();
-  const controller = useAlertGroupController();
-  const state = controller.state;
-  const busy = state.command !== 'idle';
-  const saveRecovery = state.recovery?.kind === 'update' ? state.recovery : undefined;
-  const routeRecovery = state.recovery?.kind === 'update' ? undefined : state.recovery;
-  const columns = buildAlertGroupColumns(t, {
+  return buildAlertGroupColumns(t, {
     busy,
     edit: controller.edit,
     toggle: controller.toggle,
     remove: controller.remove
   });
+}
+
+export function AlertGroupPage() {
+  const controller = useAlertGroupController();
+  const state = controller.state;
+  const busy = state.command !== 'idle';
+  const saveRecovery = state.recovery?.kind === 'update' ? state.recovery : undefined;
+  const routeRecovery = state.recovery?.kind === 'update' ? undefined : state.recovery;
+  const removeSelected = () => {
+    if (state.selectedIds.length > 0) return controller.removeMany(state.selectedIds);
+  };
+  const columns = useAlertGroupPageColumns(controller, busy);
 
   return (
     <div className={styles.page}>
-      <AlertGroupPageHeader busy={busy} create={controller.create} />
+      <AlertGroupPageHeader
+        busy={busy}
+        create={controller.create}
+        selectedCount={state.selectedIds.length}
+        removeSelected={removeSelected}
+      />
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertGroupToolbar
@@ -104,6 +141,9 @@ export function AlertGroupPage() {
         columns={columns}
         pageIndex={state.query.pageIndex}
         pageSize={state.query.pageSize}
+        busy={busy}
+        selectedIds={state.selectedIds}
+        selectIds={controller.selectIds}
         changePage={controller.changePage}
         retry={controller.refresh}
       />

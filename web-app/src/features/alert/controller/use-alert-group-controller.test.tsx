@@ -35,7 +35,7 @@ import {
 import { useAlertGroupController } from './use-alert-group-controller';
 
 const api = vi.hoisted(() => ({
-  deleteAlertGroup: vi.fn(),
+  deleteAlertGroups: vi.fn(),
   loadAlertGroup: vi.fn(),
   loadAlertGroups: vi.fn(),
   saveAlertGroup: vi.fn(),
@@ -73,7 +73,7 @@ describe('Alert Group controller', () => {
     api.loadAlertGroup.mockResolvedValue(persisted);
     api.saveAlertGroup.mockResolvedValue(undefined);
     api.updateAlertGroupEnabled.mockResolvedValue(undefined);
-    api.deleteAlertGroup.mockResolvedValue(undefined);
+    api.deleteAlertGroups.mockResolvedValue(undefined);
   });
 
   it('forwards TanStack cancellation to the list read', async () => {
@@ -112,17 +112,26 @@ describe('Alert Group controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe(kind));
   });
 
-  it('keeps an out-of-range empty page with a nonzero total ready', async () => {
-    api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) =>
-      Promise.resolve({
-        ...page(query, []),
+  it('returns an authoritative out-of-range page to the last populated page', async () => {
+    api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => {
+      if (query.pageIndex === 2) {
+        return Promise.resolve({
+          ...page(query, []),
+          totalElements: 5,
+          totalPages: 1
+        });
+      }
+      return Promise.resolve({
+        ...page(query, [persisted]),
         totalElements: 5,
         totalPages: 1
-      })
-    );
-    const { result } = renderController('/alerts/groups?pageIndex=2&pageSize=8');
+      });
+    });
+    const routed = renderRoutedController(['/alerts/groups?pageIndex=2&pageSize=8']);
 
-    await waitFor(() => expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 }));
+    await waitFor(() => expect(routed.current().state.query.pageIndex).toBe(0));
+    await waitFor(() => expect(routed.current().state.list).toMatchObject({ kind: 'ready', total: 5 }));
+    expect(routed.router.state.location.search).toBe('?pageIndex=0&pageSize=8');
   });
 
   it.each([
@@ -356,7 +365,7 @@ describe('Alert Group controller', () => {
 
     await waitFor(() => expect(api.saveAlertGroup).toHaveBeenCalledTimes(1));
     expect(api.updateAlertGroupEnabled).not.toHaveBeenCalled();
-    expect(api.deleteAlertGroup).not.toHaveBeenCalled();
+    expect(api.deleteAlertGroups).not.toHaveBeenCalled();
     expect(api.loadAlertGroup).not.toHaveBeenCalled();
     expect(result.current.state.draft).toMatchObject({ name: 'New' });
 
@@ -594,8 +603,8 @@ describe('Alert Group controller', () => {
       operation = routed.current().toggle(persisted, false);
     });
     await waitFor(() => expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce());
-    await act(async () => routed.router.navigate('/alerts/groups?search=fresh&pageIndex=2&pageSize=8'));
-    await waitFor(() => expect(routed.current().state.query).toEqual({ search: 'fresh', pageIndex: 2, pageSize: 8 }));
+    await act(async () => routed.router.navigate('/alerts/groups?search=fresh&pageIndex=0&pageSize=8'));
+    await waitFor(() => expect(routed.current().state.query).toEqual({ search: 'fresh', pageIndex: 0, pageSize: 8 }));
     const callsBeforeConvergence = api.loadAlertGroups.mock.calls.length;
 
     act(() => write.resolve());
@@ -603,7 +612,7 @@ describe('Alert Group controller', () => {
 
     expect(api.loadAlertGroups.mock.calls.length).toBeGreaterThan(callsBeforeConvergence);
     expect(api.loadAlertGroups).toHaveBeenLastCalledWith(
-      { search: 'fresh', pageIndex: 2, pageSize: 8 },
+      { search: 'fresh', pageIndex: 0, pageSize: 8 },
       expect.any(AbortSignal)
     );
   });
@@ -669,7 +678,7 @@ describe('Alert Group controller', () => {
     });
     expect(api.saveAlertGroup).toHaveBeenCalledOnce();
     expect(api.updateAlertGroupEnabled).not.toHaveBeenCalled();
-    expect(api.deleteAlertGroup).not.toHaveBeenCalled();
+    expect(api.deleteAlertGroups).not.toHaveBeenCalled();
     expect(result.current.state.draft).toMatchObject(submitted);
 
     await act(async () => result.current.retry());
@@ -728,14 +737,14 @@ describe('Alert Group controller', () => {
   it('keeps an uncertain delete locked to missing proof and never repeats the DELETE', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.deleteAlertGroup.mockRejectedValueOnce(uncertainRequestFailure());
+    api.deleteAlertGroups.mockRejectedValueOnce(uncertainRequestFailure());
     api.loadAlertGroup
       .mockRejectedValueOnce(unavailableRequestFailure())
       .mockRejectedValueOnce(new AlertGroupMissingError());
 
     await act(async () => result.current.remove(7));
 
-    expect(api.deleteAlertGroup).toHaveBeenCalledOnce();
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
     expect(result.current.state.recovery).toEqual({
       kind: 'delete',
       phase: 'proof',
@@ -745,14 +754,14 @@ describe('Alert Group controller', () => {
     expect(notify.error).not.toHaveBeenCalledWith('alertGroups.operationFailed');
 
     await act(async () => result.current.remove(7));
-    expect(api.deleteAlertGroup).toHaveBeenCalledOnce();
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
 
     await act(async () => result.current.retry());
 
     expect(result.current.state.recovery).toMatchObject({ failure: 'unavailable', phase: 'proof' });
     await act(async () => result.current.retry());
 
-    expect(api.deleteAlertGroup).toHaveBeenCalledOnce();
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
     expect(api.loadAlertGroup).toHaveBeenCalledTimes(2);
     expect(result.current.state.recovery).toBeUndefined();
     expect(notify.success).toHaveBeenCalledWith('alertGroups.operationSuccess');
@@ -775,14 +784,14 @@ describe('Alert Group controller', () => {
     expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce();
     expect(api.loadAlertGroup).toHaveBeenCalledTimes(2);
 
-    await act(async () => routed.router.navigate('/alerts/groups?search=fresh&pageIndex=2&pageSize=8'));
+    await act(async () => routed.router.navigate('/alerts/groups?search=fresh&pageIndex=0&pageSize=8'));
     api.loadAlertGroups.mockResolvedValueOnce(page(routed.current().state.query, []));
     await act(async () => routed.current().retry());
 
     expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce();
     expect(api.loadAlertGroup).toHaveBeenCalledTimes(2);
     expect(api.loadAlertGroups).toHaveBeenLastCalledWith(
-      { search: 'fresh', pageIndex: 2, pageSize: 8 },
+      { search: 'fresh', pageIndex: 0, pageSize: 8 },
       expect.any(AbortSignal)
     );
     expect(routed.current().state.recovery).toBeUndefined();
@@ -802,7 +811,7 @@ describe('Alert Group controller', () => {
     });
 
     expect(api.loadAlertGroup).toHaveBeenCalledOnce();
-    expect(api.deleteAlertGroup).not.toHaveBeenCalled();
+    expect(api.deleteAlertGroups).not.toHaveBeenCalled();
     act(() => detail.resolve(persisted));
     await act(async () => first);
     expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce();
@@ -853,11 +862,11 @@ describe('Alert Group controller', () => {
       await act(async () => result.current.toggle(persisted, false));
       expect(api.updateAlertGroupEnabled).toHaveBeenCalledTimes(2);
     } else {
-      api.deleteAlertGroup.mockRejectedValueOnce(rejection()).mockResolvedValueOnce(undefined);
+      api.deleteAlertGroups.mockRejectedValueOnce(rejection()).mockResolvedValueOnce(undefined);
       api.loadAlertGroup.mockRejectedValue(new AlertGroupMissingError());
       await act(async () => result.current.remove(7));
       await act(async () => result.current.remove(7));
-      expect(api.deleteAlertGroup).toHaveBeenCalledTimes(2);
+      expect(api.deleteAlertGroups).toHaveBeenCalledTimes(2);
     }
     expect(result.current.state.recovery).toBeUndefined();
   });
@@ -909,18 +918,58 @@ describe('Alert Group controller', () => {
     api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => Promise.resolve(page(query, [])));
 
     await act(async () => result.current.remove(7));
-    expect(api.deleteAlertGroup).toHaveBeenCalledWith(7);
+    expect(api.deleteAlertGroups).toHaveBeenCalledWith([7]);
     expect(api.loadAlertGroup).toHaveBeenCalledWith(7);
     expect(notify.success).toHaveBeenCalledWith('alertGroups.operationSuccess');
 
     vi.clearAllMocks();
-    api.deleteAlertGroup.mockResolvedValue(undefined);
+    api.deleteAlertGroups.mockResolvedValue(undefined);
     api.loadAlertGroup.mockRejectedValue(new AlertGroupMissingError());
     api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => Promise.resolve(page(query, [persisted])));
     await act(async () => result.current.remove(7));
     expect(notify.success).not.toHaveBeenCalled();
     expect(result.current.state.recovery).toMatchObject({ kind: 'delete', phase: 'projection', failure: 'error' });
     expect(notify.error).toHaveBeenCalledWith('common.routeError.description');
+  });
+
+  it('deletes the selected policies in one write and proves every id missing', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroup.mockRejectedValue(new AlertGroupMissingError());
+    api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => Promise.resolve(page(query, [])));
+
+    await act(async () => result.current.removeMany([8, 7, 8]));
+
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
+    expect(api.deleteAlertGroups).toHaveBeenCalledWith([7, 8]);
+    expect(api.loadAlertGroup).toHaveBeenCalledTimes(2);
+    expect(api.loadAlertGroup).toHaveBeenCalledWith(7);
+    expect(api.loadAlertGroup).toHaveBeenCalledWith(8);
+    expect(notify.success).toHaveBeenCalledWith('alertGroups.operationSuccess');
+  });
+
+  it('never repeats an uncertain batch delete while every selected id is proved', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.deleteAlertGroups.mockRejectedValueOnce(uncertainRequestFailure());
+    api.loadAlertGroup.mockImplementation((id: number) =>
+      Promise.reject(id === 7 ? new AlertGroupMissingError() : unavailableRequestFailure())
+    );
+
+    await act(async () => result.current.removeMany([7, 8]));
+
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
+    expect(result.current.state.recovery).toMatchObject({ kind: 'delete', phase: 'proof' });
+
+    api.loadAlertGroup.mockRejectedValue(new AlertGroupMissingError());
+    api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => Promise.resolve(page(query, [])));
+    await act(async () => result.current.retry());
+
+    expect(api.deleteAlertGroups).toHaveBeenCalledOnce();
+    expect(api.loadAlertGroup).toHaveBeenCalledWith(7);
+    expect(api.loadAlertGroup).toHaveBeenCalledWith(8);
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(notify.success).toHaveBeenCalledWith('alertGroups.operationSuccess');
   });
 });
 

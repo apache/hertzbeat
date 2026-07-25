@@ -17,6 +17,7 @@ import {
 } from './alert-group-submit-failure';
 import {
   removeAlertGroup,
+  removeAlertGroups,
   retryAlertGroupOperation,
   toggleAlertGroup,
   updateAlertGroup,
@@ -56,6 +57,7 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
       submit,
       toggle: (group: AlertGroupConverge, enable: boolean) => toggleAlertGroup(context, group, enable),
       remove: (id: number) => removeAlertGroup(context, id),
+      removeMany: (ids: readonly number[]) => removeAlertGroups(context, ids),
       retry: () => retryAlertGroupOperation(context)
     }
   };

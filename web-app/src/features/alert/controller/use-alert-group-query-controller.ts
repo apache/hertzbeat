@@ -5,6 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
@@ -19,9 +20,22 @@ export function useAlertGroupQueryController() {
   const updateQuery = (patch: Partial<AlertGroupQuery>) => {
     setParams(writeAlertGroupQuery({ ...query, ...patch }));
   };
+  const replacePageIndex = useCallback(
+    (pageIndex: number) =>
+      setParams(
+        writeAlertGroupQuery({
+          search: query.search,
+          pageSize: query.pageSize,
+          pageIndex
+        }),
+        { replace: true }
+      ),
+    [query.pageSize, query.search, setParams]
+  );
 
   return {
     state: { query, search },
+    replacePageIndex,
     actions: {
       setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),

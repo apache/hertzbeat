@@ -1499,6 +1499,8 @@
     "seconds": "{{value}} 秒",
     "delete": "削除",
     "deleteConfirm": "このグループポリシーを削除しますか？",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択した{{count}}件のグループポリシーを削除しますか？",
     "validation": "名前と1つ以上のグループラベルを入力してください。",
     "loadFailed": "グループポリシーを読み込めませんでした。",
     "saveSuccess": "グループポリシーを保存しました。",

@@ -7,6 +7,7 @@
 
 import { Alert, Button, Empty, Skeleton, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
 
 import { alertGroupPageSizes, type AlertGroupConverge } from '../model/alert-group-model';
@@ -17,6 +18,9 @@ export function AlertGroupResults({
   columns,
   pageIndex,
   pageSize,
+  busy,
+  selectedIds,
+  selectIds,
   changePage,
   retry
 }: {
@@ -24,6 +28,9 @@ export function AlertGroupResults({
   columns: ColumnsType<AlertGroupConverge>;
   pageIndex: number;
   pageSize: number;
+  busy: boolean;
+  selectedIds: number[];
+  selectIds: (ids: number[]) => void;
   changePage: (page: number, pageSize: number) => void;
   retry: () => unknown;
 }) {
@@ -33,6 +40,11 @@ export function AlertGroupResults({
   if (state.kind === 'empty') return <Empty description={t('alertGroups.empty')} />;
   const records = state.kind === 'ready' ? state.records : [];
   const total = state.kind === 'ready' ? state.total : 0;
+  const rowSelection: TableRowSelection<AlertGroupConverge> = {
+    selectedRowKeys: selectedIds,
+    getCheckboxProps: () => ({ disabled: busy }),
+    onChange: keys => selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
+  };
   return (
     <Table<AlertGroupConverge>
       rowKey="id"
@@ -40,6 +52,7 @@ export function AlertGroupResults({
       loading={state.kind === 'loading'}
       dataSource={records}
       columns={columns}
+      rowSelection={rowSelection}
       scroll={{ x: 1100 }}
       pagination={{
         current: pageIndex + 1,

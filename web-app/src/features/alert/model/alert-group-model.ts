@@ -162,3 +162,11 @@ export function alertGroupDraftFromDetail(group: AlertGroupConverge): AlertGroup
     enable: group.enable ?? true
   };
 }
+
+/** Canonicalizes selected ids before they become batch-write evidence. */
+export function normalizeAlertGroupIds(ids: readonly number[]) {
+  if (ids.length === 0 || ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertGroupContractError('Alert Group ids are invalid');
+  }
+  return [...new Set(ids)].sort((left, right) => left - right);
+}

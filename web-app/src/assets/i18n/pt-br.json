@@ -1501,6 +1501,8 @@
     "seconds": "{{value}} s",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de agrupamento?",
+    "deleteSelected": "Excluir selecionadas",
+    "deleteSelectedConfirm": "Excluir as {{count}} políticas de agrupamento selecionadas?",
     "validation": "Informe um nome e pelo menos um rótulo de grupo.",
     "loadFailed": "Não foi possível carregar a política.",
     "saveSuccess": "Política de agrupamento salva.",

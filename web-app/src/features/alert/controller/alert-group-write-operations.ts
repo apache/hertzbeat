@@ -5,19 +5,20 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { deleteAlertGroup, loadAlertGroup, saveAlertGroup, updateAlertGroupEnabled } from '../api/alert-group-api';
+import { deleteAlertGroups, loadAlertGroup, saveAlertGroup, updateAlertGroupEnabled } from '../api/alert-group-api';
 import {
   AlertGroupContractError,
   alertGroupFailureKind,
   alertGroupWriteOutcome,
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
+  normalizeAlertGroupIds,
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupPage
 } from '../model/alert-group-model';
 import {
-  proveAlertGroupMissing,
+  proveAlertGroupsMissing,
   requireAlertGroupConvergence,
   requireExactAlertGroupId
 } from '../api/alert-group-write-proof';
@@ -51,8 +52,13 @@ export async function toggleAlertGroup(context: AlertGroupWriteContext, group: A
 }
 
 export async function removeAlertGroup(context: AlertGroupWriteContext, id: number) {
+  return removeAlertGroups(context, [id]);
+}
+
+export async function removeAlertGroups(context: AlertGroupWriteContext, ids: readonly number[]) {
+  const canonicalIds = normalizeAlertGroupIds(ids);
   if (!context.gate.begin('operating')) return;
-  const receipt: AlertGroupOperationReceipt = { kind: 'delete', phase: 'write', id };
+  const receipt: AlertGroupOperationReceipt = { kind: 'delete', phase: 'write', ids: canonicalIds };
   beginReceipt(context, receipt);
   await runReceipt(context, receipt);
 }
@@ -103,7 +109,7 @@ async function advanceReceipt(context: AlertGroupWriteContext, receipt: AlertGro
   }
   const page = await context.rereadList();
   if (!context.gate.isOwnerAlive()) return false;
-  if (receipt.kind === 'delete' && page.content.some(record => record.id === receipt.id)) {
+  if (receipt.kind === 'delete' && page.content.some(record => receipt.ids.includes(record.id))) {
     throw new AlertGroupContractError('deleted id remains');
   }
   return true;
@@ -115,13 +121,13 @@ function freezeAlertGroup(group: AlertGroupConverge): AlertGroupConverge {
 
 async function mutate(receipt: AlertGroupOperationReceipt) {
   if (receipt.kind === 'update') return saveAlertGroup(receipt.draft);
-  if (receipt.kind === 'delete') return deleteAlertGroup(receipt.id);
+  if (receipt.kind === 'delete') return deleteAlertGroups(receipt.ids);
   if (!receipt.current) throw new AlertGroupContractError('toggle source detail is missing');
   return updateAlertGroupEnabled(receipt.current, receipt.enable);
 }
 
 async function prove(receipt: AlertGroupOperationReceipt) {
-  if (receipt.kind === 'delete') return proveAlertGroupMissing(receipt.id);
+  if (receipt.kind === 'delete') return proveAlertGroupsMissing(receipt.ids);
   if (receipt.kind === 'update') {
     const canonical = await loadExactAlertGroup(receipt.draft.id);
     return requireAlertGroupConvergence(canonical, { ...buildAlertGroupPayload(receipt.draft), id: receipt.draft.id });
