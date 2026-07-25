@@ -2804,6 +2804,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "P-Peaceful",
+      "name": "P_Peaceful",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52856161?v=4",
+      "profile": "https://github.com/P-Peaceful",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
