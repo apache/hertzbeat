@@ -24,18 +24,45 @@ import { LogStreamComponent } from './log-stream.component';
 describe('LogStreamComponent', () => {
   let component: LogStreamComponent;
   let fixture: ComponentFixture<LogStreamComponent>;
+  let fetchSpy: jasmine.Spy<typeof window.fetch>;
 
   beforeEach(async () => {
+    localStorage.setItem('Authorization', 'test-token');
+    fetchSpy = spyOn(window, 'fetch').and.returnValue(new Promise<Response>(() => {}));
+
     await TestBed.configureTestingModule({
       imports: [LogStreamComponent]
-    }).compileComponents();
+    })
+      .overrideComponent(LogStreamComponent, {
+        set: { template: '' }
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(LogStreamComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    fixture.destroy();
+    localStorage.removeItem('Authorization');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should authenticate the log stream request', () => {
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/logs/sse/subscribe',
+      jasmine.objectContaining({
+        method: 'GET',
+        headers: jasmine.objectContaining({
+          Accept: 'text/event-stream',
+          Authorization: 'Bearer test-token'
+        }),
+        signal: jasmine.any(AbortSignal)
+      })
+    );
   });
 });
