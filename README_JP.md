@@ -574,6 +574,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/miantalha45"><img src="https://avatars.githubusercontent.com/u/155809113?v=4?s=100" width="100px;" alt="Talha Amjad"/><br /><sub><b>Talha Amjad</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=miantalha45" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://turanalmammadov.com/"><img src="https://avatars.githubusercontent.com/u/16321061?v=4?s=100" width="100px;" alt="Turan Almammadov"/><br /><sub><b>Turan Almammadov</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=turanalmammadov" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=turanalmammadov" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhaoyangplus"><img src="https://avatars.githubusercontent.com/u/245090302?v=4?s=100" width="100px;" alt="zhaoyangplus"/><br /><sub><b>zhaoyangplus</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhaoyangplus" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
