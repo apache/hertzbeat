@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 import { useQueryDraft } from '@/shared/query-context';
 
-import { loadAlertGroups, loadAlertSummary } from '../api/alert-api';
 import {
   alertFailureKind,
   readAlertQuery,
@@ -40,7 +38,7 @@ import type {
   AlertListState,
   AlertSummaryState
 } from '../model/alert-center-view-model';
-import { alertCenterQueryKeys } from './alert-center-query-keys';
+import { useAlertCenterData } from './use-alert-center-data';
 import { useAlertCenterDeleteController } from './use-alert-center-delete-controller';
 import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
 
@@ -51,16 +49,10 @@ export function useAlertCenterController() {
   const source = writeAlertQuery(query).toString();
   const draft = useAlertFilterDraft(query, source);
 
-  const summaryQuery = useQuery({
-    queryKey: alertCenterQueryKeys.summary(),
-    queryFn: ({ signal }) => loadAlertSummary(signal)
-  });
-  const listQuery = useQuery({
-    queryKey: alertCenterQueryKeys.groups(query),
-    queryFn: ({ signal }) => loadAlertGroups(query, signal)
-  });
+  const data = useAlertCenterData(query);
+  const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
   useAlertCenterPageCorrection(query, listQuery.data, setParams);
-  const deletion = useAlertCenterDeleteController(listQuery.refetch, summaryQuery.refetch);
+  const deletion = useAlertCenterDeleteController(refetchList, refetchSummary);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));
@@ -99,11 +91,11 @@ export function useAlertCenterController() {
         pageIndex: pageSize === query.pageSize ? page - 1 : 0,
         pageSize
       }),
-    retryList: () => listQuery.refetch(),
-    retrySummary: () => summaryQuery.refetch(),
+    retryList: refetchList,
+    retrySummary: refetchSummary,
     retryDelete: deletion.retry,
     remove: (group: { id: number }) => deletion.remove(group.id),
-    refresh: () => Promise.all([summaryQuery.refetch(), listQuery.refetch()]),
+    refresh,
     manageRules: () => void navigate(alertRoutePaths.rules)
   };
 }

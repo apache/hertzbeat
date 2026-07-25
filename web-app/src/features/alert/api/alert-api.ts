@@ -16,6 +16,7 @@
  */
 
 import { apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
+import { openBrowserEventStream } from '@/core/http/event-stream';
 import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 
 import { AlertContractError, writeAlertQuery, type AlertQuery } from '../model/alert-model';
@@ -49,6 +50,23 @@ export function loadAlertGroups(query: AlertQuery, signal?: AbortSignal) {
 
 export function deleteAlertGroups(ids: number[]) {
   return alertApiRequest(() => apiMessageDelete(buildAlertDeletePath(ids)));
+}
+
+export function openAlertGroupStream(handlers: {
+  onOpen: () => void;
+  onAlert: () => void;
+  onRetrying: () => void;
+  onUnavailable: () => void;
+}) {
+  return openBrowserEventStream('/api/alert/sse/subscribe', {
+    eventNames: ['ALERT_EVENT'],
+    onOpen: handlers.onOpen,
+    onRetrying: handlers.onRetrying,
+    onUnavailable: handlers.onUnavailable,
+    // Alert bodies stay at the transport boundary; the list and summary are
+    // projected again from their canonical APIs after receiving only a signal.
+    onEvent: () => handlers.onAlert()
+  });
 }
 
 function buildAlertDeletePath(ids: number[]) {

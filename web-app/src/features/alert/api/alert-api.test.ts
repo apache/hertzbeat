@@ -6,19 +6,27 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMessageDelete, apiMessageGet } = vi.hoisted(() => ({
+const { apiMessageDelete, apiMessageGet, openBrowserEventStream } = vi.hoisted(() => ({
   apiMessageDelete: vi.fn(),
-  apiMessageGet: vi.fn()
+  apiMessageGet: vi.fn(),
+  openBrowserEventStream: vi.fn()
 }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
   apiMessageDelete,
   apiMessageGet
 }));
+vi.mock('@/core/http/event-stream', () => ({ openBrowserEventStream }));
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { buildAlertListPath, deleteAlertGroups, loadAlertGroups, loadAlertSummary } from './alert-api';
+import {
+  buildAlertListPath,
+  deleteAlertGroups,
+  loadAlertGroups,
+  loadAlertSummary,
+  openAlertGroupStream
+} from './alert-api';
 import { AlertContractError, AlertRequestFailure } from '../model/alert-model';
 
 const query = {
@@ -156,5 +164,29 @@ describe('alert API', () => {
 
     await expect(deleteAlertGroups([0])).rejects.toBeInstanceOf(AlertContractError);
     expect(apiMessageDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('owns the alert event stream path and forwards only the event signal', () => {
+    const handlers = {
+      onOpen: vi.fn(),
+      onAlert: vi.fn(),
+      onRetrying: vi.fn(),
+      onUnavailable: vi.fn()
+    };
+
+    openAlertGroupStream(handlers);
+    expect(openBrowserEventStream).toHaveBeenCalledWith('/api/alert/sse/subscribe', {
+      eventNames: ['ALERT_EVENT'],
+      onOpen: handlers.onOpen,
+      onRetrying: handlers.onRetrying,
+      onUnavailable: handlers.onUnavailable,
+      onEvent: expect.any(Function)
+    });
+
+    const transport = openBrowserEventStream.mock.calls[0]?.[1] as
+      { onEvent: (name: string, data: string) => void } | undefined;
+    transport?.onEvent('ALERT_EVENT', 'private alert body');
+    expect(handlers.onAlert).toHaveBeenCalledOnce();
+    expect(handlers.onAlert).toHaveBeenCalledWith();
   });
 });

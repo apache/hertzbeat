@@ -34,13 +34,15 @@ const api = vi.hoisted(() => ({
   deleteAlertGroups: vi.fn(),
   loadAlertGroups: vi.fn(),
   loadAlertSummary: vi.fn(),
-  notification: vi.fn()
+  notification: vi.fn(),
+  openAlertGroupStream: vi.fn()
 }));
 
 vi.mock('../api/alert-api', () => ({
   deleteAlertGroups: api.deleteAlertGroups,
   loadAlertGroups: api.loadAlertGroups,
-  loadAlertSummary: api.loadAlertSummary
+  loadAlertSummary: api.loadAlertSummary,
+  openAlertGroupStream: api.openAlertGroupStream
 }));
 vi.mock('@refinedev/core', () => ({ useNotification: () => ({ open: api.notification }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -60,6 +62,7 @@ describe('Alert Center controller', () => {
     api.deleteAlertGroups.mockResolvedValue(undefined);
     api.loadAlertSummary.mockResolvedValue(summary);
     api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve(page(query)));
+    api.openAlertGroupStream.mockReturnValue({ close: vi.fn() });
   });
 
   afterEach(() => vi.restoreAllMocks());
