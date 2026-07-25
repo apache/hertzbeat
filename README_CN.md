@@ -550,6 +550,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://prakashh-portfolio.vercel.app/"><img src="https://avatars.githubusercontent.com/u/183058331?v=4?s=100" width="100px;" alt="Prakash Kumar"/><br /><sub><b>Prakash Kumar</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Prakash1185" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/orangeCatDeveloper"><img src="https://avatars.githubusercontent.com/u/95899648?v=4?s=100" width="100px;" alt="NekoPunch"/><br /><sub><b>NekoPunch</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=orangeCatDeveloper" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=orangeCatDeveloper" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://wy471x.github.io/"><img src="https://avatars.githubusercontent.com/u/52033069?v=4?s=100" width="100px;" alt="wy471x"/><br /><sub><b>wy471x</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wy471x" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hengyuss"><img src="https://avatars.githubusercontent.com/u/81064732?v=4?s=100" width="100px;" alt="hengyuss"/><br /><sub><b>hengyuss</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hengyuss" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
