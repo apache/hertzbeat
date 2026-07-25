@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
@@ -123,6 +124,7 @@ class AgentRuntimeServiceTest {
         AgentRuntimeProperties properties = runtimeProperties();
         properties.getStream().setMaxBufferedEvents(1);
         CountDownLatch modelCalled = new CountDownLatch(1);
+        AtomicBoolean stopObserved = new AtomicBoolean();
         AgentRuntimeModelClient modelClient = new AgentRuntimeModelClient() {
 
             @Override
@@ -132,6 +134,7 @@ class AgentRuntimeServiceTest {
                     java.util.function.Consumer<String> textDeltaConsumer) {
                 textDeltaConsumer.accept("a");
                 textDeltaConsumer.accept("b");
+                stopObserved.set(control.isStopRequested());
                 modelCalled.countDown();
                 return AgentRuntimeModelResponse.finalAnswer("ab", null);
             }
@@ -167,6 +170,7 @@ class AgentRuntimeServiceTest {
         });
 
         assertTrue(modelCalled.await(2, TimeUnit.SECONDS));
+        assertTrue(stopObserved.get());
         subscriptionRef.get().request(16);
         assertTrue(completed.await(2, TimeUnit.SECONDS));
         assertNull(error.get());
