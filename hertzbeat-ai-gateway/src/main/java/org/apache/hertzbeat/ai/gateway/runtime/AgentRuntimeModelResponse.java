@@ -42,8 +42,6 @@ public class AgentRuntimeModelResponse {
 
     Usage usage;
 
-    String errorCode;
-
     String errorMessage;
 
     public static AgentRuntimeModelResponse finalAnswer(String finalAnswer,
@@ -58,7 +56,6 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                null,
                 null);
     }
 
@@ -77,15 +74,14 @@ public class AgentRuntimeModelResponse {
                 assistantText,
                 safeToolCalls,
                 usage,
-                null,
                 null);
     }
 
-    public static AgentRuntimeModelResponse invalidResponse(String errorCode,
-                                                            String errorMessage,
+    public static AgentRuntimeModelResponse invalidResponse(String errorMessage,
                                                             Usage usage) {
-        if (!StringUtils.hasText(errorCode) || !StringUtils.hasText(errorMessage)) {
-            throw new IllegalArgumentException("errorCode and errorMessage are required for INVALID_RESPONSE.");
+        // INVALID_RESPONSE becomes a terminal runtime error and must carry a displayable message.
+        if (!StringUtils.hasText(errorMessage)) {
+            throw new IllegalArgumentException("errorMessage is required for INVALID_RESPONSE.");
         }
         return new AgentRuntimeModelResponse(
                 ResponseType.INVALID_RESPONSE,
@@ -93,7 +89,6 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                errorCode,
                 errorMessage);
     }
 

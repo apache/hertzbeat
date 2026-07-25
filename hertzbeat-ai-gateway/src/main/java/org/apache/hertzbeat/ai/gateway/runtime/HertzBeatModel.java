@@ -52,16 +52,8 @@ import org.springframework.util.StringUtils;
  */
 public class HertzBeatModel {
 
-    private static final int SUMMARY_LIMIT = 1024;
-    private static final String RUNTIME_PROMPT_FRAME = "runtimeRuntimePrompt.Frame";
-    private static final String DEFAULT_TOOL_TYPE = "function";
-    private static final String DEFAULT_TOOL_NAME = "tool_call";
-    private static final String DEFAULT_TOOL_RESPONSE_ID = "runtime-tool-response";
-    private static final String EMPTY_MODEL_RESPONSE_CODE = "empty_model_response";
-    private static final String EMPTY_MODEL_RESPONSE_MESSAGE =
-            "Runtime model returned neither a final answer nor tool calls.";
-    private static final String TOOL_EXECUTION_DISABLED = "Tool execution is disabled in the Spring AI adapter. "
-            + "Return the tool call to AgentRuntimeLoop for controlled execution.";
+    private static final int MODEL_ERROR_MESSAGE_LIMIT = 1024;
+    private static final String FUNCTION_TOOL_TYPE = "function";
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
 
@@ -111,7 +103,7 @@ public class HertzBeatModel {
             }
             // Provider exception messages can include request or credential details and cross into runtime errors.
             String providerMessage = AgentRuntimeTextSanitizer
-                    .sanitizeAndLimit(exception.getMessage(), SUMMARY_LIMIT);
+                    .sanitizeAndLimit(exception.getMessage(), MODEL_ERROR_MESSAGE_LIMIT);
             throw AgentRuntimeModelException.retryable(
                     "Spring AI chat model stream failed: " + providerMessage, exception);
         } finally {
@@ -144,7 +136,6 @@ public class HertzBeatModel {
         }
         messages.add(SystemMessage.builder()
                 .text(instructions)
-                .metadata(Map.of(RUNTIME_PROMPT_FRAME, RuntimePrompt.Frame.BASE_INSTRUCTIONS.id()))
                 .build());
     }
 
@@ -165,26 +156,14 @@ public class HertzBeatModel {
         if (!StringUtils.hasText(content)) {
             return null;
         }
-        Map<String, Object> metadata = promptMetadata(block);
         if (block.getRole() == RuntimePrompt.Role.SYSTEM) {
             return SystemMessage.builder()
                     .text(content)
-                    .metadata(metadata)
                     .build();
         }
         return UserMessage.builder()
                 .text(content)
-                .metadata(metadata)
                 .build();
-    }
-
-    private Map<String, Object> promptMetadata(RuntimePrompt.Block block) {
-        Map<String, Object> metadata = new LinkedHashMap<>();
-        String frame = block.frameId();
-        if (StringUtils.hasText(frame)) {
-            metadata.put(RUNTIME_PROMPT_FRAME, frame);
-        }
-        return metadata;
     }
 
     private void addHistoryMessages(List<Message> messages, List<TranscriptMessage> chatHistory) {
@@ -237,12 +216,10 @@ public class HertzBeatModel {
     }
 
     private AssistantMessage.ToolCall springToolCall(TranscriptContent block) {
-        String id = block.getId();
-        String name = StringUtils.hasText(block.getName()) ? block.getName() : DEFAULT_TOOL_NAME;
         return new AssistantMessage.ToolCall(
-                StringUtils.hasText(id) ? id : DEFAULT_TOOL_RESPONSE_ID,
-                DEFAULT_TOOL_TYPE,
-                name,
+                block.getId(),
+                FUNCTION_TOOL_TYPE,
+                block.getName(),
                 assistantToolArguments(block));
     }
 
@@ -254,13 +231,9 @@ public class HertzBeatModel {
     }
 
     private ToolResponseMessage toolResponseHistoryMessage(TranscriptMessage historyMessage) {
-        String id = historyMessage.getToolCallId();
-        String name = StringUtils.hasText(historyMessage.getToolName())
-                ? historyMessage.getToolName()
-                : DEFAULT_TOOL_NAME;
         ToolResponseMessage.ToolResponse response = new ToolResponseMessage.ToolResponse(
-                StringUtils.hasText(id) ? id : DEFAULT_TOOL_RESPONSE_ID,
-                name,
+                historyMessage.getToolCallId(),
+                historyMessage.getToolName(),
                 toolResponseData(historyMessage));
         return ToolResponseMessage.builder()
                 .responses(List.of(response))
@@ -352,8 +325,8 @@ public class HertzBeatModel {
         if (StringUtils.hasText(text)) {
             return AgentRuntimeModelResponse.finalAnswer(text, usage);
         }
-        return AgentRuntimeModelResponse.invalidResponse(EMPTY_MODEL_RESPONSE_CODE,
-                EMPTY_MODEL_RESPONSE_MESSAGE, usage);
+        return AgentRuntimeModelResponse.invalidResponse(
+                "Runtime model returned neither a final answer nor tool calls.", usage);
     }
 
     private List<AgentRuntimeToolCall> toRuntimeToolCalls(List<AssistantMessage.ToolCall> toolCalls) {
@@ -406,7 +379,7 @@ public class HertzBeatModel {
         } catch (JsonProcessingException | IllegalArgumentException exception) {
             // Model-generated tool arguments can contain secrets or huge fragments and are returned in runtime errors.
             String parseMessage = AgentRuntimeTextSanitizer
-                    .sanitizeAndLimit(exception.getMessage(), SUMMARY_LIMIT);
+                    .sanitizeAndLimit(exception.getMessage(), MODEL_ERROR_MESSAGE_LIMIT);
             throw AgentRuntimeModelException.nonRetryable(
                     "Spring AI tool call arguments are not valid JSON for tool "
                             + toolCall.name() + ": " + parseMessage,
@@ -493,7 +466,7 @@ public class HertzBeatModel {
 
         @Override
         public String call(String toolInput) {
-            return TOOL_EXECUTION_DISABLED;
+            throw new UnsupportedOperationException("Tool execution is owned by AgentRuntimeLoop");
         }
     }
 }
