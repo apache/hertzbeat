@@ -17,7 +17,7 @@
 
 import { buildMonitorDetailPath, buildMonitorEditPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 
-import { monitorStatusCodes, type MonitorQuery } from './monitor-contract';
+import { monitorStatusCodes, type MonitorQuery, type MonitorScrape } from './monitor-contract';
 import { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
 export { monitorPageSizes, type MonitorQuery } from './monitor-contract';
@@ -73,6 +73,10 @@ export function monitorStatusColor(status: number) {
   if (status === monitorStatusCodes.available) return 'green';
   if (status === monitorStatusCodes.unavailable) return 'red';
   return 'default';
+}
+
+export function monitorDiscoveryTypeKey(scrape?: MonitorScrape | null) {
+  return scrape && scrape !== 'static' ? `monitor.editor.scrapeTypes.${scrape}` : null;
 }
 
 export function parseMonitorTimestamp(value?: number | string | null) {

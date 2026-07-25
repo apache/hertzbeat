@@ -93,6 +93,52 @@ describe('MonitorListView evidence states', () => {
     expect(row).toHaveTextContent('team:payments');
   });
 
+  it('preserves endpoint copy, application drilldown, and discovery target semantics', () => {
+    const copyInstance = vi.fn();
+    const changeApp = vi.fn();
+    renderView(
+      {
+        monitors: {
+          kind: 'ready',
+          records: [
+            {
+              id: 7,
+              name: 'checkout',
+              app: 'website',
+              instance: 'https://checkout.example',
+              status: 1,
+              scrape: 'static'
+            },
+            {
+              id: 8,
+              name: 'discovered',
+              app: 'website',
+              instance: 'unknow',
+              status: 1,
+              scrape: 'http_sd'
+            }
+          ],
+          total: 2
+        }
+      },
+      { copyInstance, changeApp }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: i18n.t('monitor.copyEndpoint', { instance: 'https://checkout.example' })
+      })
+    );
+    expect(copyInstance).toHaveBeenCalledWith('https://checkout.example');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'website' })[0]!);
+    expect(changeApp).toHaveBeenCalledWith('website');
+
+    const discoveryRow = screen.getByText('discovered').closest('tr');
+    expect(discoveryRow).toHaveTextContent(i18n.t('monitor.editor.scrapeTypes.http_sd'));
+    expect(discoveryRow).not.toHaveTextContent('unknow');
+  });
+
   it('links operators to the monitor help guide', () => {
     renderView({ monitors: { kind: 'empty' } });
 
@@ -164,6 +210,7 @@ function renderView(
     cancelImport: () => undefined,
     selectImportFile: () => undefined,
     submitImport: () => Promise.resolve(true),
+    copyInstance: () => Promise.resolve(true),
     selectIds: () => undefined,
     ...actionPatch
   };

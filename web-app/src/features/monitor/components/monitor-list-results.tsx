@@ -18,6 +18,7 @@
 import { Alert, Empty, Spin, Table, Tag, type TableProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { SortOrder, TableRowSelection } from 'antd/es/table/interface';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { isMonitorSortField, type Monitor, type MonitorAction } from '../model/monitor-contract';
@@ -31,7 +32,17 @@ import {
 } from '../model/monitor-model';
 
 import { MonitorRowActions } from './monitor-list-actions';
-import styles from './monitor-list.module.css';
+import { monitorIdentityColumns } from './monitor-list-identity-columns';
+
+type MonitorResultActions = {
+  changePage: (page: number, pageSize: number) => void;
+  changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
+  selectIds: (ids: number[]) => void;
+  changeApp: (app: string) => void;
+  copyInstance: (instance: string) => Promise<boolean>;
+  open: (id: number, mode: 'view' | 'edit') => void;
+  run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
+};
 
 export function MonitorListResults({
   evidence,
@@ -44,13 +55,7 @@ export function MonitorListResults({
   query: MonitorQuery;
   selectedIds: number[];
   operating: boolean;
-  actions: {
-    changePage: (page: number, pageSize: number) => void;
-    changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
-    selectIds: (ids: number[]) => void;
-    open: (id: number, mode: 'view' | 'edit') => void;
-    run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
-  };
+  actions: MonitorResultActions;
 }) {
   const { t } = useTranslation();
   if (evidence.kind === 'loading')
@@ -72,7 +77,7 @@ export function MonitorListResults({
       rowKey="id"
       size="small"
       dataSource={evidence.records}
-      columns={columns(t, query, actions.open, actions.run, operating)}
+      columns={columns(t, query, actions, operating)}
       rowSelection={rowSelection}
       onChange={monitorTableChange(actions.changeSort)}
       pagination={{
@@ -101,27 +106,13 @@ function monitorTableChange(
 }
 
 function columns(
-  t: (key: string) => string,
+  t: TFunction,
   query: MonitorQuery,
-  open: (id: number, mode: 'view' | 'edit') => void,
-  run: (action: MonitorAction, ids: number[]) => void | Promise<void>,
+  actions: MonitorResultActions,
   operating: boolean
 ): ColumnsType<Monitor> {
   return [
-    {
-      title: t('monitor.name'),
-      dataIndex: 'name',
-      sorter: true,
-      sortOrder: monitorTableSortOrder(query, 'name'),
-      render: (_value: string, row) => (
-        <div className={styles.name}>
-          <strong>{row.name}</strong>
-          <span>{row.instance}</span>
-          <MonitorLabels labels={row.labels} />
-        </div>
-      )
-    },
-    { title: t('monitor.application'), dataIndex: 'app', render: (value: string) => <Tag>{value}</Tag> },
+    ...monitorIdentityColumns(t, monitorTableSortOrder(query, 'name'), actions, operating),
     {
       title: t('monitor.status.label'),
       dataIndex: 'status',
@@ -139,22 +130,11 @@ function columns(
     {
       title: t('common.actions'),
       width: 370,
-      render: (_value: unknown, row) => <MonitorRowActions monitor={row} open={open} run={run} disabled={operating} />
+      render: (_value: unknown, row) => (
+        <MonitorRowActions monitor={row} open={actions.open} run={actions.run} disabled={operating} />
+      )
     }
   ];
-}
-
-function MonitorLabels({ labels }: { labels: Record<string, string> | null | undefined }) {
-  if (!labels) return null;
-  const entries = Object.entries(labels).sort(([left], [right]) => left.localeCompare(right));
-  if (entries.length === 0) return null;
-  return (
-    <div className={styles.rowLabels}>
-      {entries.map(([key, value]) => (
-        <Tag key={key}>{`${key}:${value}`}</Tag>
-      ))}
-    </div>
-  );
 }
 
 function monitorTableSortOrder(query: MonitorQuery, field: NonNullable<MonitorQuery['sort']>): SortOrder {

@@ -99,6 +99,7 @@ export function useMonitorListController() {
       runBulk: commands.runBulk,
       exportSelected: monitorExport.exportSelected,
       exportAll: monitorExport.exportAll,
+      copyInstance: commands.copyInstance,
       openImport: monitorImport.actions.open,
       cancelImport: monitorImport.actions.cancel,
       selectImportFile: monitorImport.actions.selectFile,

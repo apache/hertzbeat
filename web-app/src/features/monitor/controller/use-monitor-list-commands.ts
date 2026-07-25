@@ -35,6 +35,7 @@ import {
   type MonitorWriteVerification
 } from '../model/monitor-write-verification';
 import { monitorQueryKeys } from './monitor-query-keys';
+import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
 
 type ActiveListOperation = { source: string; token: number; controller: AbortController };
@@ -52,6 +53,7 @@ export function useMonitorListCommands(
   const sequence = useRef(0);
   const currentSourceRef = useRef<string | undefined>(undefined);
   const [busyOperation, setBusyOperation] = useState<ActiveListOperation | undefined>(undefined);
+  const copyInstance = useMonitorInstanceCopy();
   useListOperationScope(source, currentSourceRef, activeOperationRef, setBusyOperation);
 
   const refresh = async () => {
@@ -98,6 +100,7 @@ export function useMonitorListCommands(
   return {
     operating: busyOperation?.source === source,
     refresh,
+    copyInstance,
     run,
     runBulk: (action: MonitorAction) => run(action, selection.validatedIds())
   };

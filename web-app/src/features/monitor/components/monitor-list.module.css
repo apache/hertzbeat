@@ -55,6 +55,21 @@
   color: var(--ant-color-text-secondary);
   font-size: 12px;
 }
+.endpoint,
+.appFilter {
+  height: auto;
+  padding: 0;
+}
+.endpoint {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rowLabels {
   display: flex;
   flex-wrap: wrap;

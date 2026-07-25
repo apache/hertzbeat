@@ -60,5 +60,6 @@ export type MonitorListViewActions = {
   cancelImport: () => void;
   selectImportFile: (file: File | null) => void;
   submitImport: () => Promise<boolean>;
+  copyInstance: (instance: string) => Promise<boolean>;
   selectIds: (ids: number[]) => void;
 };

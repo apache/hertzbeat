@@ -58,6 +58,7 @@ const initialMonitorPage = {
   ],
   totalElements: 1
 };
+const clipboardWrite = vi.fn();
 
 describe('useMonitorListController URL evidence', () => {
   beforeAll(async () => {
@@ -75,6 +76,10 @@ describe('useMonitorListController URL evidence', () => {
       metrics: []
     });
     api.loadMonitors.mockResolvedValue(initialMonitorPage);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWrite }
+    });
   });
   afterEach(() => {
     cleanup();
@@ -181,6 +186,18 @@ describe('useMonitorListController URL evidence', () => {
     };
     expect(monitorListAutoRefreshMs).toBe(120_000);
     expect(monitorListQueryOptions(sorted).refetchInterval).toBe(monitorListAutoRefreshMs);
+  });
+
+  it('copies a static monitor endpoint and contains clipboard failures', async () => {
+    clipboardWrite.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('private clipboard failure'));
+    const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('ready'));
+
+    await expect(view.result.current.actions.copyInstance('https://checkout.example')).resolves.toBe(true);
+    await expect(view.result.current.actions.copyInstance('https://orders.example')).resolves.toBe(false);
+
+    expect(clipboardWrite).toHaveBeenNthCalledWith(1, 'https://checkout.example');
+    expect(clipboardWrite).toHaveBeenNthCalledWith(2, 'https://orders.example');
   });
 
   it('moves server sorting into the route and resets pagination', async () => {
