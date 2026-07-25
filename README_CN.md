@@ -562,6 +562,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/neon-hippo"><img src="https://avatars.githubusercontent.com/u/165560498?v=4?s=100" width="100px;" alt="neon-hippo"/><br /><sub><b>neon-hippo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=neon-hippo" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/P-Peaceful"><img src="https://avatars.githubusercontent.com/u/52856161?v=4?s=100" width="100px;" alt="P_Peaceful"/><br /><sub><b>P_Peaceful</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=P-Peaceful" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=P-Peaceful" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhusaidong"><img src="https://avatars.githubusercontent.com/u/3039961?v=4?s=100" width="100px;" alt="zhusaidong"/><br /><sub><b>zhusaidong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhusaidong" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
