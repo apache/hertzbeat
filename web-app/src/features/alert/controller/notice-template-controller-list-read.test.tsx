@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useNoticeTemplateController } from './notice-template-controller';
@@ -63,7 +63,7 @@ function buildListResult(override: { data?: (typeof record)[]; total?: number } 
     query: { error: null, isError: false, isFetching: false, isPending: false, refetch: refine.refetch },
     result: {
       data: override.data ?? [record],
-      total: override.total ?? 1
+      total: override.total ?? 16
     }
   };
 }
@@ -188,10 +188,23 @@ describe('Notice Template list and detail reads', () => {
     else expect(result.current.state.draft).toBeNull();
   });
 
-  it('keeps an out-of-range empty page honest when the query still has results', () => {
+  it('returns an out-of-range template page to the last authoritative result page', async () => {
     refine.useList.mockReturnValue(buildListResult({ data: [], total: 5 }));
     const { result } = renderHook(() => useNoticeTemplateController());
 
     expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 });
+    await waitFor(() => expect(refine.setParams).toHaveBeenCalled());
+    const corrected = refine.setParams.mock.calls.at(-1)?.[0] as URLSearchParams;
+    expect(corrected.toString()).toBe('name=Mail&preset=false&pageIndex=0&pageSize=15');
+  });
+
+  it('returns an authoritative empty template page to the first page', async () => {
+    refine.useList.mockReturnValue(buildListResult({ data: [], total: 0 }));
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    expect(result.current.state.list).toEqual({ kind: 'empty' });
+    await waitFor(() => expect(refine.setParams).toHaveBeenCalled());
+    const corrected = refine.setParams.mock.calls.at(-1)?.[0] as URLSearchParams;
+    expect(corrected.toString()).toBe('name=Mail&preset=false&pageIndex=0&pageSize=15');
   });
 });

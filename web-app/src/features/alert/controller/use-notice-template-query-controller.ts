@@ -33,12 +33,19 @@ export function useNoticeTemplateQueryController() {
     },
     [query, setParams]
   );
+  const replacePageIndex = useCallback(
+    (pageIndex: number) => {
+      setParams(writeNoticeTemplateQuery({ ...query, pageIndex }), { replace: true });
+    },
+    [query, setParams]
+  );
 
   return {
     changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
     changePreset: (preset: boolean) => updateQuery({ preset, pageIndex: 0 }),
     name,
     query,
+    replacePageIndex,
     setName,
     submitQuery: () => updateQuery({ name: name.trim(), pageIndex: 0 })
   };

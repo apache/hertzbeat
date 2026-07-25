@@ -23,6 +23,7 @@ import type { NoticeTemplateResourceRecord } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import { useNoticeTemplateCommandController } from './use-notice-template-command-controller';
 import { useNoticeTemplateListController } from './use-notice-template-list-controller';
+import { useNoticeTemplatePageCorrection } from './use-notice-template-page-correction';
 import { useNoticeTemplateQueryController } from './use-notice-template-query-controller';
 
 /** Composes URL, read, and command owners into the page-facing controller. */
@@ -33,6 +34,7 @@ export function useNoticeTemplateController() {
   const provider = resolveDataProvider(noticeTemplateResourceName);
   const queryController = useNoticeTemplateQueryController();
   const listController = useNoticeTemplateListController(queryController.query);
+  useNoticeTemplatePageCorrection(queryController.query, listController.listState, queryController.replacePageIndex);
   const [preview, setPreview] = useState<NoticeTemplateResourceRecord | null>(null);
   const commands = useNoticeTemplateCommandController({
     notification,
