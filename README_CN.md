@@ -555,6 +555,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hutiefang76"><img src="https://avatars.githubusercontent.com/u/137664623?v=4?s=100" width="100px;" alt="hutiefang76"/><br /><sub><b>hutiefang76</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hutiefang76" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zylatent.com/"><img src="https://avatars.githubusercontent.com/u/250777154?v=4?s=100" width="100px;" alt="柳含知 Liu Hanzhi"/><br /><sub><b>柳含知 Liu Hanzhi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ZhouYinLong-lab" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
