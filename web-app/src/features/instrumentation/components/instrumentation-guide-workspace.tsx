@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { Button, Input, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { InstrumentationDraft } from '../model/instrumentation-flow';
@@ -28,7 +28,6 @@ export function InstrumentationGuideWorkspace(props: {
   detection?: DetectionResponse;
   detecting: boolean;
   detectionError: boolean;
-  onToken: (value: string) => void;
   onCopy: (block: GuideBlock) => Promise<void>;
   onEdit: () => void;
   onDetect: () => void;
@@ -68,7 +67,6 @@ function SelectionSummary(props: { catalog: CatalogResponse; draft: Instrumentat
         ) : null
       )}
       <SummaryRow label={t('instrumentation.field.serviceName')} value={props.draft.service.name} />
-      <SummaryRow label={t('instrumentation.field.serviceNamespace')} value={props.draft.service.namespace} />
     </aside>
   );
 }
@@ -92,16 +90,9 @@ function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>
       {endpoints.map(([transport, endpoint]) => (
         <code key={transport}>{endpoint}</code>
       ))}
-      <label className={styles.tokenField}>
-        <Typography.Text strong>{t('instrumentation.field.token')}</Typography.Text>
-        <Input.Password
-          value={props.token}
-          autoComplete="off"
-          placeholder={t('instrumentation.field.tokenPlaceholder')}
-          onChange={event => props.onToken(event.target.value)}
-        />
-        <Typography.Text type="secondary">{t('instrumentation.field.tokenMemory')}</Typography.Text>
-      </label>
+      <Typography.Text type={props.token ? 'success' : 'secondary'}>
+        {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
+      </Typography.Text>
       <Button type="primary" loading={props.detecting} onClick={props.onDetect}>
         {t('instrumentation.action.startDetection')}
       </Button>

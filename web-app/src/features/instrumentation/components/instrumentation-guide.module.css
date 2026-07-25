@@ -31,8 +31,7 @@
   justify-content: space-between;
 }
 
-.summaryRow,
-.tokenField {
+.summaryRow {
   display: grid;
   gap: 4px;
 }

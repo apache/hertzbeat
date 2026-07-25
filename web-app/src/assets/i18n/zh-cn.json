@@ -497,6 +497,7 @@
       "description": "选择要接入的对象，配置目标位置，并逐项验证信号。",
       "connectTitle": "要接入什么？",
       "contextTitle": "服务与目标位置",
+      "configureTitle": "配置",
       "installTitle": "安装并配置",
       "recipeLabel": "插桩方案",
       "chooseRecipe": "选择后端支持的方案",
@@ -525,8 +526,16 @@
         "available": "可用",
         "unavailable": "不可用"
       },
+      "profileReason": {
+        "unavailable": "此目标位置尚不可选择。",
+        "notAdvertised": "管理员尚未发布安全的接入地址。",
+        "invalidAdvertisement": "已发布的接入配置无效。",
+        "destinationUnavailable": "此目标位置暂时不可用。"
+      },
+      "hybridCollectorSetupHint": "设置 HertzBeat Hybrid Collector 后即可使用此目标位置。",
       "stage": {
         "source": "来源",
+        "configure": "配置",
         "context": "上下文",
         "install": "配置并验证",
         "detect": "检测"
@@ -687,6 +696,18 @@
     "tokenRequired": "需要 Token",
     "tokenInMemory": "仅保存在内存中",
     "tokenMissing": "未提供",
+    "token": {
+      "generateAccess": "生成访问令牌",
+      "generateTitle": "生成访问令牌",
+      "generate": "生成",
+      "name": "令牌名称",
+      "expires": "有效期",
+      "scope": "范围",
+      "fixedScope": "OTLP 接收",
+      "ready": "访问令牌已在内存中生成",
+      "notGenerated": "尚未生成访问令牌",
+      "generateError": "无法生成访问令牌。"
+    },
     "copySuccess": "已复制代码片段。",
     "copyFailed": "无法复制代码片段。",
     "queryUnavailable": "查询不可用",

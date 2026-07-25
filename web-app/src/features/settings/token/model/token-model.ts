@@ -16,16 +16,21 @@
  */
 
 import type { RemoteCollectionState } from '@/shared/remote-state';
+import {
+  accessTokenExpirationDefinitions,
+  accessTokenScopeDefinitions,
+  createAccessTokenGenerationDraft,
+  isAccessTokenScope,
+  validateAccessTokenGenerationDraft,
+  type AccessTokenGenerationDraft,
+  type AccessTokenScope,
+  type GeneratedAccessTokenReceipt
+} from '@/shared/access-token/access-token-generation-model';
 
 export const tokenResourceName = 'tokens';
 
-export type TokenScope = 'api-admin' | 'otlp-ingest' | 'readonly-query';
-
-export type TokenDraft = {
-  name: string;
-  expireSeconds: number;
-  scope: TokenScope;
-};
+export type TokenScope = AccessTokenScope;
+export type TokenDraft = AccessTokenGenerationDraft;
 
 type TokenTimeValue = string | number | null;
 
@@ -47,10 +52,7 @@ export type TokenResourceRecord = {
   revokedBy: string | null;
 };
 
-export type GeneratedTokenReceipt = {
-  id: 'generated';
-  token: string;
-};
+export type GeneratedTokenReceipt = GeneratedAccessTokenReceipt;
 
 export type TokenMutationResult = {
   id: number;
@@ -69,28 +71,11 @@ export type TokenRevocationRecovery = {
 
 export type TokenListState = RemoteCollectionState<TokenResourceRecord, 'unavailable' | 'error'>;
 
-export const tokenScopeDefinitions = [
-  { value: 'api-admin', labelKey: 'token.scope.apiAdmin' },
-  { value: 'otlp-ingest', labelKey: 'token.scope.otlpIngest' },
-  { value: 'readonly-query', labelKey: 'token.scope.readonlyQuery' }
-] as const satisfies readonly { value: TokenScope; labelKey: string }[];
-
-export const tokenExpirationDefinitions = [
-  { value: -1, labelKey: 'token.expiration.never' },
-  { value: 604_800, labelKey: 'token.expiration.days7' },
-  { value: 2_592_000, labelKey: 'token.expiration.days30' },
-  { value: 7_776_000, labelKey: 'token.expiration.days90' },
-  { value: 15_552_000, labelKey: 'token.expiration.days180' },
-  { value: 31_536_000, labelKey: 'token.expiration.days365' }
-] as const;
+export const tokenScopeDefinitions = accessTokenScopeDefinitions;
+export const tokenExpirationDefinitions = accessTokenExpirationDefinitions;
 
 export function isTokenScope(value: unknown): value is TokenScope {
-  return tokenScopeDefinitions.some(definition => definition.value === value);
-}
-
-function normalizeTokenScope(scope?: string | null): TokenScope {
-  const normalized = scope?.trim().toLowerCase();
-  return isTokenScope(normalized) ? normalized : 'api-admin';
+  return isAccessTokenScope(value);
 }
 
 export function tokenScopeLabelKey(scope: TokenScope | null | undefined) {
@@ -101,11 +86,11 @@ export function tokenScopeLabelKey(scope: TokenScope | null | undefined) {
 }
 
 export function createTokenDraft(scope?: string | null): TokenDraft {
-  return { name: '', expireSeconds: -1, scope: normalizeTokenScope(scope) };
+  return createAccessTokenGenerationDraft(scope);
 }
 
 export function validateTokenDraft(draft: TokenDraft) {
-  return draft.name.trim() ? [] : ['name'];
+  return validateAccessTokenGenerationDraft(draft);
 }
 
 export function isTokenExpired(token: Pick<TokenResourceRecord, 'expireTime'>, now = Date.now()) {

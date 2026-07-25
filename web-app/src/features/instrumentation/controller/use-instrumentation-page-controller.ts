@@ -17,11 +17,13 @@ import {
   buildDetectionRequest,
   buildQueryJump,
   draftReady,
+  selectedRecipePlatforms,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
+import { useInstrumentationTokenActions } from './instrumentation-token-actions';
 
 const keys = {
   catalog: ['instrumentation', 'catalog'] as const,
@@ -30,11 +32,7 @@ const keys = {
 
 export function useInstrumentationPageController() {
   const navigate = useNavigate();
-  const catalogQuery = useQuery({
-    queryKey: keys.catalog,
-    queryFn: ({ signal }) => loadInstrumentationCatalog(signal)
-  });
-  const profilesQuery = useQuery({ queryKey: keys.profiles, queryFn: ({ signal }) => loadIntakeProfiles(signal) });
+  const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const state = useInstrumentationControllerState();
   const startedAtRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<number | undefined>(undefined);
@@ -44,6 +42,7 @@ export function useInstrumentationPageController() {
   useEffect(
     () => () => {
       // Token state is destroyed with this controller and is never persisted.
+      generationRef.current += 1;
       if (timerRef.current) window.clearTimeout(timerRef.current);
     },
     []
@@ -58,6 +57,7 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const guideActions = useGuideActions(state, generationRef, startedAtRef);
+  const tokenActions = useInstrumentationTokenActions(state, generationRef);
   const detect = useDetection(
     state.draft,
     state.setDetection,
@@ -83,12 +83,28 @@ export function useInstrumentationPageController() {
     profilesState: queryState(profilesQuery),
     ...draftActions,
     ...guideActions,
+    ...tokenActions,
     detect,
     openQuery,
     hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),
     canContinueSource: Boolean(state.draft.recipeId),
-    canRender: draftReady(state.draft)
+    platformOptions: catalogQuery.data ? selectedRecipePlatforms(catalogQuery.data, state.draft) : [],
+    // Every advertised intake profile requires Authorization. Rendering only
+    // after generation avoids presenting copy-disabled commands as ready.
+    canRender: draftReady(state.draft) && Boolean(state.token.trim())
   };
+}
+
+function useInstrumentationQueries() {
+  const catalogQuery = useQuery({
+    queryKey: keys.catalog,
+    queryFn: ({ signal }) => loadInstrumentationCatalog(signal)
+  });
+  const profilesQuery = useQuery({
+    queryKey: keys.profiles,
+    queryFn: ({ signal }) => loadIntakeProfiles(signal)
+  });
+  return { catalogQuery, profilesQuery };
 }
 
 function useDefaultProfile(

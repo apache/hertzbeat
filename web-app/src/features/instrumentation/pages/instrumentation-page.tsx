@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import { InstrumentationContextStep } from '../components/instrumentation-context-step';
+import { InstrumentationConfigureStep } from '../components/instrumentation-configure-step';
 import { InstrumentationGuideWorkspace } from '../components/instrumentation-guide-workspace';
 import { InstrumentationProgress } from '../components/instrumentation-progress';
 import { InstrumentationSourceStep } from '../components/instrumentation-source-step';
@@ -58,8 +58,7 @@ type PageController = ReturnType<typeof useInstrumentationPageController>;
 
 function InstrumentationStageContent({ page }: { page: PageController }) {
   if (page.stage === 'source') return <SourceStage page={page} />;
-  if (page.stage === 'context') return <ContextStage page={page} />;
-  return <InstallStage page={page} />;
+  return <ConfigureStage page={page} />;
 }
 
 function SourceStage({ page }: { page: PageController }) {
@@ -83,7 +82,7 @@ function SourceStage({ page }: { page: PageController }) {
         className={styles.sourceContinue!}
         type="primary"
         disabled={!page.canContinueSource}
-        onClick={() => page.setStage('context')}
+        onClick={() => page.setStage('configure')}
       >
         {t('instrumentation.action.continue')}
       </Button>
@@ -91,42 +90,47 @@ function SourceStage({ page }: { page: PageController }) {
   );
 }
 
-function ContextStage({ page }: { page: PageController }) {
-  if (!page.profiles) return null;
+function ConfigureStage({ page }: { page: PageController }) {
+  if (!page.profiles || !page.catalog) return null;
   return (
-    <InstrumentationContextStep
-      profiles={page.profiles}
-      profileId={page.draft.intakeProfileId}
-      service={page.draft.service}
-      canRender={page.canRender}
-      rendering={page.rendering}
-      renderError={page.renderError}
-      onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
-      onService={page.patchService}
-      onRender={() => void page.renderGuide()}
-    />
-  );
-}
-
-function InstallStage({ page }: { page: PageController }) {
-  if (!page.guide || !page.catalog) return null;
-  return (
-    <InstrumentationGuideWorkspace
-      catalog={page.catalog}
-      draft={page.draft}
-      guide={page.guide}
-      token={page.token}
-      onToken={page.setToken}
-      onCopy={page.copyBlock}
-      detecting={page.detecting}
-      detectionError={page.detectionError}
-      {...(page.detection ? { detection: page.detection } : {})}
-      onEdit={() => {
-        page.goBack();
-        page.setStage('source');
-      }}
-      onDetect={() => void page.detect()}
-      onOpen={page.openQuery}
-    />
+    <>
+      <InstrumentationConfigureStep
+        profiles={page.profiles}
+        profileId={page.draft.intakeProfileId}
+        serviceName={page.draft.service.name}
+        platform={page.draft.platform}
+        platformOptions={page.platformOptions}
+        canRender={page.canRender}
+        rendering={page.rendering}
+        renderError={page.renderError}
+        token={page.token}
+        tokenDraft={page.tokenDraft}
+        tokenGenerating={page.tokenGenerating}
+        tokenError={page.tokenError}
+        onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
+        onServiceName={page.patchServiceName}
+        onPlatform={platform => page.patchDraft({ platform })}
+        onRender={() => void page.renderGuide()}
+        onOpenToken={page.openTokenGenerator}
+        onCloseToken={page.closeTokenGenerator}
+        onTokenDraft={page.updateTokenDraft}
+        onGenerateToken={() => void page.generateToken()}
+      />
+      {page.guide && (
+        <InstrumentationGuideWorkspace
+          catalog={page.catalog}
+          draft={page.draft}
+          guide={page.guide}
+          token={page.token}
+          onCopy={page.copyBlock}
+          detecting={page.detecting}
+          detectionError={page.detectionError}
+          {...(page.detection ? { detection: page.detection } : {})}
+          onEdit={page.goBack}
+          onDetect={() => void page.detect()}
+          onOpen={page.openQuery}
+        />
+      )}
+    </>
   );
 }

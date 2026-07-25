@@ -1,0 +1,83 @@
+.section {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.section h4 {
+  margin: 0;
+}
+
+.serviceNameField {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(240px, 460px);
+  align-items: center;
+  gap: 12px;
+}
+
+.destinationGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.destinationCard {
+  min-height: 84px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  border: 1px solid var(--hb-border);
+  padding: 12px;
+  background: var(--hb-bg-raised);
+  color: inherit;
+  text-align: left;
+}
+
+button.destinationCard {
+  cursor: pointer;
+}
+
+button.destinationCard:disabled,
+.destinationCardUnavailable {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.destinationCardSelected {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-bg-selected);
+}
+
+.destinationCard small {
+  grid-column: 1 / -1;
+  color: var(--hb-text-secondary);
+}
+
+.configureActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.configureActions > :last-child {
+  margin-left: auto;
+}
+
+.tokenForm,
+.tokenForm label,
+.tokenForm > div {
+  display: grid;
+  gap: 8px;
+}
+
+.tokenForm {
+  margin-top: 12px;
+}
+
+@media (max-width: 760px) {
+  .serviceNameField {
+    grid-template-columns: 1fr;
+  }
+}

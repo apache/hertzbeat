@@ -17,13 +17,14 @@
 
 import { z } from 'zod';
 
-import { hasOwnProperties } from '@/shared/validation/own-properties';
+import {
+  AccessTokenGenerationContractError,
+  parseAccessTokenGenerationDraft,
+  parseGeneratedAccessTokenReceipt
+} from '@/shared/access-token/access-token-generation-schema';
 
 import {
-  tokenExpirationDefinitions,
   isTokenScope,
-  type GeneratedTokenReceipt,
-  type TokenDraft,
   type TokenMutationResult,
   type TokenResourceRecord,
   type TokenScope
@@ -70,26 +71,10 @@ const tokenWireSchema = z
   })
   .strict();
 
-const generatedTokenWireSchema = z
-  .object({
-    token: z.string().refine(value => value.trim() !== '')
-  })
-  .strict();
-
 const tokenMutationWireSchema = z
   .object({
     id: safePositiveIntegerSchema,
     status: z.enum(['deleted', 'missing'])
-  })
-  .strict();
-
-const tokenDraftInputSchema = z
-  .object({
-    name: z.string().refine(value => value.trim() !== ''),
-    expireSeconds: z
-      .number()
-      .refine(value => tokenExpirationDefinitions.some(definition => definition.value === value)),
-    scope: z.custom<TokenScope>(isTokenScope)
   })
   .strict();
 
@@ -101,11 +86,7 @@ export function parseTokenResourceRecords(value: unknown): TokenResourceRecord[]
   return result.data.map(mapTokenRecord);
 }
 
-export function parseGeneratedTokenReceipt(value: unknown): GeneratedTokenReceipt {
-  const result = generatedTokenWireSchema.safeParse(value);
-  if (!result.success) throw new TokenApiContractError();
-  return { id: 'generated', token: result.data.token };
-}
+export const parseGeneratedTokenReceipt = adaptGenerationContract(parseGeneratedAccessTokenReceipt);
 
 export function parseTokenMutationResponse(value: unknown): TokenMutationResult {
   const result = tokenMutationWireSchema.safeParse(value);
@@ -113,16 +94,7 @@ export function parseTokenMutationResponse(value: unknown): TokenMutationResult 
   return result.data;
 }
 
-export function parseTokenGenerationDraft(value: unknown): TokenDraft {
-  if (!hasOwnProperties(value, ['name', 'expireSeconds', 'scope'])) throw new TokenApiContractError();
-  const result = tokenDraftInputSchema.safeParse(value);
-  if (!result.success) throw new TokenApiContractError();
-  return {
-    name: result.data.name.trim(),
-    expireSeconds: result.data.expireSeconds,
-    scope: result.data.scope
-  };
-}
+export const parseTokenGenerationDraft = adaptGenerationContract(parseAccessTokenGenerationDraft);
 
 function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
   return {
@@ -146,4 +118,15 @@ function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
 
 function readKnownScope(value: string | null | undefined): TokenScope | null {
   return isTokenScope(value) ? value : null;
+}
+
+function adaptGenerationContract<T>(parser: (value: unknown) => T) {
+  return (value: unknown): T => {
+    try {
+      return parser(value);
+    } catch (reason) {
+      if (reason instanceof AccessTokenGenerationContractError) throw new TokenApiContractError();
+      throw reason;
+    }
+  };
 }

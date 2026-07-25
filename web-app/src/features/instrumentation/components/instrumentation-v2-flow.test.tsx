@@ -20,7 +20,7 @@ vi.mock('antd', async importOriginal => {
   return { ...actual, App: { useApp: () => ({ message: notifications }) } };
 });
 
-import { InstrumentationContextStep } from './instrumentation-context-step';
+import { InstrumentationConfigureStep } from './instrumentation-configure-step';
 import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
@@ -110,23 +110,68 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText(/java · spring_boot · zero_code/)).toBeVisible();
   });
 
-  it('keeps unconfigured and discovery unavailable destinations distinct', () => {
+  it('keeps every destination visible and explains a missing Hybrid Collector without inventing an endpoint', () => {
     const props = {
       profileId: '',
-      service: { name: '', namespace: '', environment: '' },
+      serviceName: '',
+      platformOptions: [],
       canRender: false,
       rendering: false,
       renderError: false,
+      token: '',
+      tokenDraft: undefined,
+      tokenGenerating: false,
+      tokenError: false,
       onProfile: vi.fn(),
-      onService: vi.fn(),
-      onRender: vi.fn()
+      onServiceName: vi.fn(),
+      onPlatform: vi.fn(),
+      onRender: vi.fn(),
+      onOpenToken: vi.fn(),
+      onCloseToken: vi.fn(),
+      onTokenDraft: vi.fn(),
+      onGenerateToken: vi.fn()
     };
     const view = render(
-      <InstrumentationContextStep profiles={{ schemaVersion: 2, status: 'unconfigured', profiles: [] }} {...props} />
+      <InstrumentationConfigureStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [
+            guide.intakeProfile,
+            {
+              id: 'hybrid-edge',
+              kind: 'hertzbeat_collector',
+              availability: 'unavailable',
+              supportedTransports: [],
+              httpsEndpoints: {},
+              errorCode: 'intake_profile_unavailable'
+            }
+          ]
+        }}
+        {...props}
+      />
+    );
+    expect(screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' })).toBeVisible();
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.queryByText('instrumentation.field.serviceNamespace')).toBeNull();
+    expect(screen.queryByText('instrumentation.field.serviceEnvironment')).toBeNull();
+    expect(screen.queryByText('instrumentation.field.serviceInstanceId')).toBeNull();
+    expect(screen.queryByText('instrumentation.field.endpoint')).toBeNull();
+    expect(screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.server/ })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.hertzbeat_collector/ })
+    ).toBeDisabled();
+    expect(screen.getByText('instrumentation.v2.profileReason.destinationUnavailable')).toBeVisible();
+
+    view.rerender(
+      <InstrumentationConfigureStep profiles={{ schemaVersion: 2, status: 'unconfigured', profiles: [] }} {...props} />
     );
     expect(screen.getByText('instrumentation.v2.profile.unconfigured')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.hybridCollectorSetupHint')).toBeInTheDocument();
+    expect(screen.queryByText(/https?:\/\//)).toBeNull();
     view.rerender(
-      <InstrumentationContextStep
+      <InstrumentationConfigureStep
         profiles={{
           schemaVersion: 2,
           status: 'unavailable',
@@ -139,9 +184,11 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.v2.profile.unavailable')).toBeInTheDocument();
   });
 
-  it('collects required and optional service identity without exposing an Entity concept', () => {
+  it('generates an OTLP ingest token through a name and expiry modal without a password field', () => {
+    const onOpenToken = vi.fn();
+    const onGenerateToken = vi.fn();
     render(
-      <InstrumentationContextStep
+      <InstrumentationConfigureStep
         profiles={{
           schemaVersion: 2,
           status: 'available',
@@ -149,19 +196,33 @@ describe('instrumentation v2 interaction', () => {
           profiles: [guide.intakeProfile]
         }}
         profileId="server-default"
-        service={{ name: '', namespace: '', environment: '' }}
+        serviceName="checkout"
+        platformOptions={[]}
         canRender={false}
         rendering={false}
         renderError={false}
+        token=""
+        tokenDraft={{ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' }}
+        tokenGenerating={false}
+        tokenError={false}
         onProfile={vi.fn()}
-        onService={vi.fn()}
+        onServiceName={vi.fn()}
+        onPlatform={vi.fn()}
         onRender={vi.fn()}
+        onOpenToken={onOpenToken}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={onGenerateToken}
       />
     );
-    expect(screen.getAllByRole('textbox')).toHaveLength(5);
-    expect(screen.getByText('instrumentation.field.serviceInstanceId')).toBeVisible();
-    expect(screen.getByText('instrumentation.field.endpoint')).toBeVisible();
-    expect(screen.queryByText(/entity/i)).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'instrumentation.token.name' })).toHaveValue('Checkout ingest');
+    expect(screen.getByText('instrumentation.token.fixedScope')).toBeInTheDocument();
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+    expect(screen.queryByLabelText('instrumentation.field.token')).toBeNull();
+    expect(document.querySelector('input[type="password"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.token.generate' }));
+    expect(onGenerateToken).toHaveBeenCalledOnce();
   });
 
   it('materializes the memory-only token visibly without mutating the backend guide', () => {

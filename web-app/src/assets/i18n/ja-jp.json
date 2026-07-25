@@ -505,6 +505,7 @@
       "description": "接続対象を選択し、送信先を設定して、各シグナルを確認します。",
       "connectTitle": "何を接続しますか？",
       "contextTitle": "サービスと送信先",
+      "configureTitle": "設定",
       "installTitle": "インストールと設定",
       "recipeLabel": "計装レシピ",
       "chooseRecipe": "バックエンドが対応するレシピを選択",
@@ -533,8 +534,16 @@
         "available": "利用可能",
         "unavailable": "利用不可"
       },
+      "profileReason": {
+        "unavailable": "この送信先はまだ選択できません。",
+        "notAdvertised": "管理者が安全な取り込み先をまだ公開していません。",
+        "invalidAdvertisement": "公開された取り込み設定が無効です。",
+        "destinationUnavailable": "この送信先は一時的に利用できません。"
+      },
+      "hybridCollectorSetupHint": "HertzBeat Hybrid Collector を設定すると、この送信先を利用できます。",
       "stage": {
         "source": "ソース",
+        "configure": "設定",
         "context": "コンテキスト",
         "install": "設定と確認",
         "detect": "検出"
@@ -695,6 +704,18 @@
     "tokenRequired": "Token が必要です",
     "tokenInMemory": "メモリ内のみ",
     "tokenMissing": "未入力",
+    "token": {
+      "generateAccess": "アクセストークンを生成",
+      "generateTitle": "アクセストークンを生成",
+      "generate": "生成",
+      "name": "トークン名",
+      "expires": "有効期限",
+      "scope": "スコープ",
+      "fixedScope": "OTLP 取り込み",
+      "ready": "アクセストークンをメモリ内に生成しました",
+      "notGenerated": "アクセストークンは未生成です",
+      "generateError": "アクセストークンを生成できませんでした。"
+    },
     "copySuccess": "スニペットをコピーしました。",
     "copyFailed": "スニペットをコピーできませんでした。",
     "queryUnavailable": "クエリを利用できません",

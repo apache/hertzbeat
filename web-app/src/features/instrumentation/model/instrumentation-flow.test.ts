@@ -9,10 +9,13 @@ import { describe, expect, it } from 'vitest';
 import {
   applicationQuestionOptions,
   answerApplicationQuestion,
+  buildDetectionRequest,
   buildQueryJump,
+  buildRenderRequest,
   materializeBlock,
   previousApplicationSelection,
-  selectSource
+  selectSource,
+  selectedRecipePlatforms
 } from './instrumentation-flow';
 import type { CatalogResponse } from './instrumentation-v2-contract';
 
@@ -70,6 +73,40 @@ describe('instrumentation v2 flow', () => {
 
   it('blocks unsupported catalog entries from selection', () => {
     expect(() => selectSource(catalog, 'fluent_bit')).toThrow('Instrumentation source is unavailable');
+  });
+
+  it('derives stable hidden service context without treating the runtime as a service environment', () => {
+    const start = selectSource(catalog, 'java');
+    const spring = answerApplicationQuestion(start, catalog, 'framework', 'spring_boot');
+    const docker = answerApplicationQuestion(spring, catalog, 'environment', 'docker');
+    const draft = { ...docker, intakeProfileId: 'server-default', service: { ...docker.service, name: 'checkout' } };
+
+    expect(buildRenderRequest(draft)).toMatchObject({
+      intakeProfileId: 'server-default',
+      service: { name: 'checkout', namespace: 'default', environment: 'default' }
+    });
+    expect(buildDetectionRequest(draft, 1000)).toMatchObject({
+      startedAt: 1000,
+      service: { name: 'checkout', namespace: 'default', environment: 'default' }
+    });
+    expect(JSON.stringify(buildRenderRequest(draft))).not.toContain('token');
+    expect(JSON.stringify(buildDetectionRequest(draft, 1000))).not.toContain('token');
+  });
+
+  it('resolves the recipe before platform selection and exposes platforms for Configure', () => {
+    const multiPlatformCatalog = {
+      ...catalog,
+      recipes: catalog.recipes.map(recipe =>
+        recipe.id === 'java_spring' ? { ...recipe, platforms: ['linux_amd64', 'linux_arm64'] } : recipe
+      )
+    };
+    const start = selectSource(multiPlatformCatalog, 'java');
+    const spring = answerApplicationQuestion(start, multiPlatformCatalog, 'framework', 'spring_boot');
+    const docker = answerApplicationQuestion(spring, multiPlatformCatalog, 'environment', 'docker');
+
+    expect(docker.recipeId).toBe('java_spring');
+    expect(docker.platform).toBeUndefined();
+    expect(selectedRecipePlatforms(multiPlatformCatalog, docker)).toEqual(['linux_amd64', 'linux_arm64']);
   });
 
   it('materializes the secret only at copy time and validates it first', () => {

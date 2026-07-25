@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 
+import type { AccessTokenGenerationDraft } from '@/shared/access-token/access-token-generation-model';
 import { emptyDraft, type InstrumentationDraft, type InstrumentationStage } from '../model/instrumentation-flow';
 import type { DetectionResponse, RenderResponse } from '../model/instrumentation-v2-contract';
 
@@ -14,6 +15,9 @@ export function useInstrumentationControllerState() {
   const [draft, setDraft] = useState<InstrumentationDraft>(emptyDraft);
   const [guide, setGuide] = useState<RenderResponse>();
   const [token, setToken] = useState('');
+  const [tokenDraft, setTokenDraft] = useState<AccessTokenGenerationDraft>();
+  const [tokenGenerating, setTokenGenerating] = useState(false);
+  const [tokenError, setTokenError] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [renderError, setRenderError] = useState(false);
   const [detection, setDetection] = useState<DetectionResponse>();
@@ -29,6 +33,12 @@ export function useInstrumentationControllerState() {
     setGuide,
     token,
     setToken,
+    tokenDraft,
+    setTokenDraft,
+    tokenGenerating,
+    setTokenGenerating,
+    tokenError,
+    setTokenError,
     rendering,
     setRendering,
     renderError,

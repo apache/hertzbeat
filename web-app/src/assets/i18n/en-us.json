@@ -508,6 +508,7 @@
       "description": "Choose what you are connecting, configure a destination, and verify each signal.",
       "connectTitle": "What do you want to connect?",
       "contextTitle": "Service and destination",
+      "configureTitle": "Configure",
       "installTitle": "Install and configure",
       "recipeLabel": "Instrumentation recipe",
       "chooseRecipe": "Choose a backend-supported recipe",
@@ -536,8 +537,16 @@
         "available": "Available",
         "unavailable": "Unavailable"
       },
+      "profileReason": {
+        "unavailable": "This destination is not ready for selection.",
+        "notAdvertised": "An administrator has not published a secure intake address.",
+        "invalidAdvertisement": "The published intake configuration is invalid.",
+        "destinationUnavailable": "This destination is temporarily unavailable."
+      },
+      "hybridCollectorSetupHint": "Set up a HertzBeat Hybrid Collector to make this destination available.",
       "stage": {
         "source": "Source",
+        "configure": "Configure",
         "context": "Context",
         "install": "Configure and verify",
         "detect": "Detect"
@@ -698,6 +707,18 @@
     "tokenRequired": "Token required",
     "tokenInMemory": "In memory",
     "tokenMissing": "Not provided",
+    "token": {
+      "generateAccess": "Generate access token",
+      "generateTitle": "Generate access token",
+      "generate": "Generate",
+      "name": "Token name",
+      "expires": "Expiry",
+      "scope": "Scope",
+      "fixedScope": "OTLP ingest",
+      "ready": "Access token generated in memory",
+      "notGenerated": "No access token generated",
+      "generateError": "The access token could not be generated."
+    },
     "copySuccess": "Snippet copied.",
     "copyFailed": "The snippet could not be copied.",
     "queryUnavailable": "Query unavailable",

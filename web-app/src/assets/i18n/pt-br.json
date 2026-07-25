@@ -511,6 +511,7 @@
       "description": "Escolha o que será conectado, configure um destino e verifique cada sinal.",
       "connectTitle": "O que você deseja conectar?",
       "contextTitle": "Serviço e destino",
+      "configureTitle": "Configurar",
       "installTitle": "Instalar e configurar",
       "recipeLabel": "Receita de instrumentação",
       "chooseRecipe": "Escolha uma receita compatível com o backend",
@@ -539,8 +540,16 @@
         "available": "Disponível",
         "unavailable": "Indisponível"
       },
+      "profileReason": {
+        "unavailable": "Este destino ainda não está pronto para seleção.",
+        "notAdvertised": "Um administrador ainda não publicou um endereço seguro de ingestão.",
+        "invalidAdvertisement": "A configuração de ingestão publicada é inválida.",
+        "destinationUnavailable": "Este destino está temporariamente indisponível."
+      },
+      "hybridCollectorSetupHint": "Configure um HertzBeat Hybrid Collector para disponibilizar este destino.",
       "stage": {
         "source": "Origem",
+        "configure": "Configurar",
         "context": "Contexto",
         "install": "Configurar e verificar",
         "detect": "Detectar"
@@ -701,6 +710,18 @@
     "tokenRequired": "Token obrigatório",
     "tokenInMemory": "Somente na memória",
     "tokenMissing": "Não informado",
+    "token": {
+      "generateAccess": "Gerar token de acesso",
+      "generateTitle": "Gerar token de acesso",
+      "generate": "Gerar",
+      "name": "Nome do token",
+      "expires": "Expiração",
+      "scope": "Escopo",
+      "fixedScope": "Ingestão OTLP",
+      "ready": "Token de acesso gerado na memória",
+      "notGenerated": "Nenhum token de acesso gerado",
+      "generateError": "Não foi possível gerar o token de acesso."
+    },
     "copySuccess": "Trecho copiado.",
     "copyFailed": "Não foi possível copiar o trecho.",
     "queryUnavailable": "Consulta indisponível",

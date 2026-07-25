@@ -17,6 +17,8 @@ const api = vi.hoisted(() => ({
   detectInstrumentationSignals: vi.fn()
 }));
 vi.mock('../api/instrumentation-api', () => api);
+const tokenApi = vi.hoisted(() => ({ generateAccessToken: vi.fn() }));
+vi.mock('@/shared/access-token/access-token-generation-api', () => tokenApi);
 
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
 
@@ -119,13 +121,8 @@ describe('useInstrumentationPageController', () => {
     await waitFor(() => expect(result.current.catalogState).toBe('ready'));
     act(() => result.current.chooseSource('quick_start'));
     expect(result.current.draft.recipeId).toBe('telemetrygen');
-    act(() =>
-      result.current.patchService({
-        name: 'checkout',
-        namespace: 'shop',
-        environment: 'prod'
-      })
-    );
+    act(() => result.current.setStage('configure'));
+    act(() => result.current.patchServiceName('checkout'));
 
     await act(async () => result.current.renderGuide());
     now.mockReturnValue(5_000);
@@ -137,13 +134,72 @@ describe('useInstrumentationPageController', () => {
     expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 1_000 }));
 
     act(() => result.current.goBack());
-    expect(result.current.stage).toBe('context');
+    expect(result.current.stage).toBe('source');
+    act(() => result.current.setStage('configure'));
     now.mockReturnValue(7_000);
     await act(async () => result.current.renderGuide());
     now.mockReturnValue(8_000);
     await act(async () => result.current.detect());
     expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 7_000 }));
     now.mockRestore();
+  });
+
+  it('keeps a generated token in controller memory only and clears it at every Configure boundary', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [
+        serverProfile,
+        { ...serverProfile, id: 'collector-edge', kind: 'hertzbeat_collector', gateway: 'collector' }
+      ]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    tokenApi.generateAccessToken.mockResolvedValue({ id: 'generated', token: 'hb_generated_once' });
+    const { result, unmount } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.setStage('configure'));
+    act(() => result.current.patchServiceName('checkout'));
+    expect(result.current.canRender).toBe(false);
+    act(() => result.current.openTokenGenerator());
+    act(() =>
+      result.current.updateTokenDraft({ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' })
+    );
+    await act(async () => result.current.generateToken());
+
+    expect(tokenApi.generateAccessToken).toHaveBeenCalledWith({
+      name: 'Checkout ingest',
+      expireSeconds: 2_592_000,
+      scope: 'otlp-ingest'
+    });
+    expect(result.current.tokenDraft).toBeUndefined();
+    expect(result.current.token).toBe('hb_generated_once');
+    expect(result.current.canRender).toBe(true);
+    await act(async () => result.current.renderGuide());
+    expect(JSON.stringify(api.renderInstrumentationGuide.mock.calls)).not.toContain('hb_generated_once');
+
+    act(() => result.current.patchServiceName('cart'));
+    expect(result.current.token).toBe('');
+    await act(async () => result.current.generateToken());
+    expect(result.current.token).toBe('');
+
+    act(() => result.current.openTokenGenerator());
+    act(() => result.current.updateTokenDraft({ name: 'Cart ingest', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => result.current.generateToken());
+    expect(result.current.token).toBe('hb_generated_once');
+    act(() => result.current.patchDraft({ intakeProfileId: 'collector-edge' }));
+    expect(result.current.token).toBe('');
+
+    act(() => result.current.openTokenGenerator());
+    act(() => result.current.updateTokenDraft({ name: 'Collector ingest', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => result.current.generateToken());
+    act(() => result.current.goBack());
+    expect(result.current.stage).toBe('source');
+    expect(result.current.token).toBe('');
+    unmount();
   });
 });
 

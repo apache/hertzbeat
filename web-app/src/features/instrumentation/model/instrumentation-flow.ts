@@ -26,19 +26,21 @@ export type InstrumentationDraft = Omit<Selection, 'sourceKind'> & {
   service: ServiceIdentity;
 };
 export type ApplicationQuestion = 'framework' | 'method' | 'environment' | 'platform';
-export type InstrumentationStage = 'source' | 'context' | 'install';
-export const INSTRUMENTATION_STAGES: InstrumentationStage[] = ['source', 'context', 'install'];
+export type InstrumentationStage = 'source' | 'configure';
+export const INSTRUMENTATION_STAGES: InstrumentationStage[] = ['source', 'configure'];
 
 export function previousInstrumentationStage(stage: InstrumentationStage): InstrumentationStage {
   const index = INSTRUMENTATION_STAGES.indexOf(stage);
   return INSTRUMENTATION_STAGES[Math.max(0, index - 1)]!;
 }
-export const APPLICATION_QUESTIONS: ApplicationQuestion[] = ['framework', 'method', 'environment', 'platform'];
+// Platform affects generated commands, but it is configuration rather than a
+// source-discovery question. It is selected inline on the Configure screen.
+export const APPLICATION_QUESTIONS: ApplicationQuestion[] = ['framework', 'method', 'environment'];
 const RECIPE_DIMENSIONS = ['language', 'framework', 'method', 'environment', 'platform'] as const;
 
 export const emptyDraft = (): InstrumentationDraft => ({
   intakeProfileId: '',
-  service: { name: '', namespace: '', environment: '' }
+  service: { name: '', namespace: 'default', environment: 'default' }
 });
 
 export function selectSource(catalog: CatalogResponse, sourceId: string): InstrumentationDraft {
@@ -48,8 +50,9 @@ export function selectSource(catalog: CatalogResponse, sourceId: string): Instru
   }
   const draft = { ...emptyDraft(), sourceId, sourceKind: source.sourceKind };
   const recipes = sourceRecipes(catalog, draft);
-  if (source.sourceKind !== 'application') return { ...draft, ...selectionFromRecipe(recipes[0]) };
-  return hydrateApplicationDraft(draft, recipes);
+  if (source.sourceKind !== 'application')
+    return withDerivedServiceContext({ ...draft, ...selectionFromRecipe(recipes[0]) });
+  return withDerivedServiceContext(hydrateApplicationDraft(draft, recipes));
 }
 
 export function applicationQuestionOptions(
@@ -77,7 +80,7 @@ export function answerApplicationQuestion(
   const next = { ...draft, [field]: value };
   delete next.recipeId;
   for (const dependent of APPLICATION_QUESTIONS.slice(index + 1)) delete next[dependent];
-  return hydrateApplicationDraft(next, sourceRecipes(catalog, next));
+  return withDerivedServiceContext(hydrateApplicationDraft(next, sourceRecipes(catalog, next)));
 }
 
 export function previousApplicationSelection(draft: InstrumentationDraft, catalog: CatalogResponse) {
@@ -106,7 +109,12 @@ export function previousApplicationSelection(draft: InstrumentationDraft, catalo
 
 export function buildRenderRequest(draft: InstrumentationDraft): RenderRequest {
   validateDraft(draft);
-  return { schemaVersion: 2, ...copySelection(draft), intakeProfileId: draft.intakeProfileId, service: draft.service };
+  return {
+    schemaVersion: 2,
+    ...copySelection(draft),
+    intakeProfileId: draft.intakeProfileId,
+    service: derivedServiceIdentity(draft)
+  };
 }
 
 export function buildDetectionRequest(draft: InstrumentationDraft, startedAt: number): DetectionRequest {
@@ -148,15 +156,18 @@ export function draftReady(draft: InstrumentationDraft) {
 function validateDraft(
   draft: InstrumentationDraft
 ): asserts draft is InstrumentationDraft & { sourceKind: SourceKind; recipeId: string } {
-  if (
-    !draft.intakeProfileId ||
-    !draft.service.name.trim() ||
-    !draft.service.namespace.trim() ||
-    !draft.service.environment.trim()
-  ) {
+  if (!draft.intakeProfileId || !draft.service.name.trim()) {
     throw new Error('Instrumentation context is incomplete');
   }
   if (!draft.sourceKind || !draft.recipeId) throw new Error('Instrumentation selection is required');
+  if (draft.sourceKind === 'application' && (!draft.environment || !draft.platform)) {
+    throw new Error('Application configuration is incomplete');
+  }
+}
+
+export function selectedRecipePlatforms(catalog: CatalogResponse, draft: InstrumentationDraft) {
+  if (!draft.recipeId) return [];
+  return catalog.recipes.find(recipe => recipe.id === draft.recipeId)?.platforms ?? [];
 }
 
 function selectionFromRecipe(recipe?: Recipe): Partial<Selection> {
@@ -197,11 +208,11 @@ function clearSourceSelection(draft: InstrumentationDraft) {
 }
 
 function preserveOnboardingContext(selection: InstrumentationDraft, draft: InstrumentationDraft) {
-  return {
+  return withDerivedServiceContext({
     ...selection,
     intakeProfileId: draft.intakeProfileId,
     service: draft.service
-  };
+  });
 }
 
 function hydrateApplicationDraft(draft: InstrumentationDraft, recipes: Recipe[]) {
@@ -233,4 +244,18 @@ function recipeValues(recipe: Recipe, field: ApplicationQuestion | 'language'): 
 
 function recipeHas(recipe: Recipe, field: ApplicationQuestion | 'language', value: string | undefined) {
   return Boolean(value && recipeValues(recipe, field).includes(value));
+}
+
+function withDerivedServiceContext(draft: InstrumentationDraft): InstrumentationDraft {
+  return { ...draft, service: derivedServiceIdentity(draft) };
+}
+
+function derivedServiceIdentity(draft: InstrumentationDraft): ServiceIdentity {
+  return {
+    name: draft.service.name,
+    namespace: 'default',
+    // Recipe environment describes where the process runs, not the semantic
+    // service environment used to correlate telemetry.
+    environment: 'default'
+  };
 }

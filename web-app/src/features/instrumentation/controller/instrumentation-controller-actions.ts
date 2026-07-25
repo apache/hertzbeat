@@ -36,9 +36,10 @@ export function useDraftActions(
     state.setRenderError(false);
     state.setDetectionError(false);
     state.setToken('');
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = undefined;
-    startedAtRef.current = undefined;
+    state.setTokenDraft(undefined);
+    state.setTokenError(false);
+    state.setTokenGenerating(false);
+    clearDetectionWindow(timerRef, startedAtRef);
   }, [generationRef, startedAtRef, state, timerRef]);
   const chooseSource = useCallback(
     (sourceId: string) => {
@@ -63,10 +64,10 @@ export function useDraftActions(
     },
     [resetResults, state]
   );
-  const patchService = useCallback(
-    (patch: Partial<InstrumentationDraft['service']>) => {
+  const patchServiceName = useCallback(
+    (name: string) => {
       resetResults();
-      state.setDraft(current => ({ ...current, service: { ...current.service, ...patch } }));
+      state.setDraft(current => ({ ...current, service: { ...current.service, name } }));
     },
     [resetResults, state]
   );
@@ -77,7 +78,13 @@ export function useDraftActions(
     state.setSourceDirectoryRevision(current => current + 1);
   }, [defaultProfileId, resetResults, state]);
   const goBack = useBackAction(state, resetResults, catalog);
-  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
+  return { chooseSource, answerApplication, patchDraft, patchServiceName, reset, goBack };
+}
+
+function clearDetectionWindow(timerRef: RefObject<number | undefined>, startedAtRef: RefObject<number | undefined>) {
+  if (timerRef.current) window.clearTimeout(timerRef.current);
+  timerRef.current = undefined;
+  startedAtRef.current = undefined;
 }
 
 function useBackAction(
@@ -93,7 +100,7 @@ function useBackAction(
       state.setSourceDirectoryRevision(current => current + 1);
       return;
     }
-    if (state.stage === 'install') resetResults();
+    if (state.stage === 'configure') resetResults();
     state.setStage(previousInstrumentationStage(state.stage));
   }, [catalog, resetResults, state]);
 }
@@ -112,7 +119,6 @@ export function useGuideActions(
       if (generationRef.current !== currentGeneration) return;
       startedAtRef.current = Date.now();
       state.setGuide(value);
-      state.setStage('install');
     } catch {
       if (generationRef.current !== currentGeneration) return;
       state.setRenderError(true);

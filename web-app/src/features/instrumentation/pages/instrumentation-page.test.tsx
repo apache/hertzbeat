@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe('InstrumentationPage immersive onboarding shell', () => {
-  it('owns an accessible HertzBeat header, exit action, and three-step progress without a fixed overlay', () => {
+  it('owns an accessible HertzBeat header, exit action, and two-step progress without a context stage', () => {
     render(
       <MemoryRouter initialEntries={['/observability/integration']}>
         <Routes>
@@ -49,7 +49,8 @@ describe('InstrumentationPage immersive onboarding shell', () => {
 
     expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/logo.svg');
     expect(screen.getByText('HertzBeat')).toBeVisible();
-    expect(screen.getAllByText(/^instrumentation\.v2\.stage\./)).toHaveLength(3);
+    expect(screen.getAllByText(/^instrumentation\.v2\.stage\./)).toHaveLength(2);
+    expect(screen.queryByText('instrumentation.v2.stage.context')).toBeNull();
     expect(styles).toMatch(/\.onboardingHeader\s*\{[^}]*position:\s*(?!fixed)/);
 
     fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.exit' }));

@@ -497,6 +497,7 @@
       "description": "選擇要連接的對象、設定目的地，並逐項驗證訊號。",
       "connectTitle": "要連接什麼？",
       "contextTitle": "服務與目的地",
+      "configureTitle": "設定",
       "installTitle": "安裝並設定",
       "recipeLabel": "插樁方案",
       "chooseRecipe": "選擇後端支援的方案",
@@ -525,8 +526,16 @@
         "available": "可用",
         "unavailable": "無法使用"
       },
+      "profileReason": {
+        "unavailable": "此目的地尚不可選取。",
+        "notAdvertised": "管理員尚未發佈安全的接入位址。",
+        "invalidAdvertisement": "已發佈的接入設定無效。",
+        "destinationUnavailable": "此目的地暫時無法使用。"
+      },
+      "hybridCollectorSetupHint": "設定 HertzBeat Hybrid Collector 後即可使用此目的地。",
       "stage": {
         "source": "來源",
+        "configure": "設定",
         "context": "情境",
         "install": "設定並驗證",
         "detect": "偵測"
@@ -687,6 +696,18 @@
     "tokenRequired": "需要 Token",
     "tokenInMemory": "僅保留在記憶體中",
     "tokenMissing": "未提供",
+    "token": {
+      "generateAccess": "產生存取權杖",
+      "generateTitle": "產生存取權杖",
+      "generate": "產生",
+      "name": "權杖名稱",
+      "expires": "有效期限",
+      "scope": "範圍",
+      "fixedScope": "OTLP 接收",
+      "ready": "存取權杖已在記憶體中產生",
+      "notGenerated": "尚未產生存取權杖",
+      "generateError": "無法產生存取權杖。"
+    },
     "copySuccess": "已複製程式碼片段。",
     "copyFailed": "無法複製程式碼片段。",
     "queryUnavailable": "查詢無法使用",

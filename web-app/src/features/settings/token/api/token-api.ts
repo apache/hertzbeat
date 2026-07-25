@@ -15,20 +15,23 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
+import {
+  accessTokenGenerateActionUrl,
+  buildAccessTokenGenerationPath,
+  generateAccessToken
+} from '@/shared/access-token/access-token-generation-api';
+import {
+  AccessTokenGenerationContractError,
+  parseAccessTokenGenerationDraft
+} from '@/shared/access-token/access-token-generation-schema';
 
 import type { TokenDraft } from '../model/token-model';
-import {
-  parseGeneratedTokenReceipt,
-  parseTokenGenerationDraft,
-  parseTokenMutationResponse,
-  parseTokenResourceRecords,
-  TokenApiContractError
-} from './token-schema';
+import { parseTokenMutationResponse, parseTokenResourceRecords, TokenApiContractError } from './token-schema';
 import { tokenApiRequest } from './token-api-failure';
 
 export const tokenApiUrl = '/api/account/token';
-export const tokenGenerateActionUrl = `${tokenApiUrl}/generate`;
+export const tokenGenerateActionUrl = accessTokenGenerateActionUrl;
 
 export async function loadTokens() {
   return tokenApiRequest('collection', async () => {
@@ -39,8 +42,12 @@ export async function loadTokens() {
 
 export async function generateToken(draft: TokenDraft) {
   return tokenApiRequest('write', async () => {
-    const response = await apiMessagePost(buildGenerateTokenPath(draft), {});
-    return parseGeneratedTokenReceipt(response);
+    try {
+      return await generateAccessToken(draft);
+    } catch (reason) {
+      if (reason instanceof AccessTokenGenerationContractError) throw new TokenApiContractError();
+      throw reason;
+    }
   });
 }
 
@@ -53,12 +60,7 @@ export function revokeToken(id: number) {
 }
 
 export function buildGenerateTokenPath(draft: TokenDraft) {
-  const params = new URLSearchParams({
-    name: draft.name.trim(),
-    expireSeconds: String(draft.expireSeconds),
-    scope: draft.scope
-  });
-  return `${tokenGenerateActionUrl}?${params.toString()}`;
+  return buildAccessTokenGenerationPath(draft);
 }
 
 export function tokenRevokeActionUrl(id: number) {
@@ -72,4 +74,12 @@ export function parseTokenRevokeActionUrl(value: string) {
   return Number.isSafeInteger(id) ? id : null;
 }
 
-export { parseTokenGenerationDraft, TokenApiContractError };
+export { TokenApiContractError };
+
+export function parseTokenGenerationDraft(value: unknown) {
+  try {
+    return parseAccessTokenGenerationDraft(value);
+  } catch {
+    throw new TokenApiContractError();
+  }
+}

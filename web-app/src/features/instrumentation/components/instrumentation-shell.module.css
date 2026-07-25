@@ -149,21 +149,6 @@
   color: var(--hb-status-degraded);
 }
 
-.formGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.formGrid label {
-  display: grid;
-  gap: 8px;
-}
-
-.fullWidth {
-  width: 100%;
-}
-
 .questionSection {
   display: grid;
   align-content: start;
@@ -209,7 +194,6 @@
 }
 
 @media (max-width: 760px) {
-  .formGrid,
   .directory {
     grid-template-columns: 1fr;
   }
