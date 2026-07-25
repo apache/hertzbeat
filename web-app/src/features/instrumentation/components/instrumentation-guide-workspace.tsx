@@ -8,6 +8,7 @@ import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { InstrumentationDraft } from '../model/instrumentation-flow';
+import { intakeEndpointEntries } from '../model/intake-profile';
 import type {
   CatalogResponse,
   DetectionResponse,
@@ -82,13 +83,19 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>[0]) {
   const { t } = useTranslation();
-  const endpoints = Object.entries(props.guide.intakeProfile.httpsEndpoints);
+  const endpoints = intakeEndpointEntries(props.guide.intakeProfile);
   return (
     <aside className={styles.statusRail}>
       <Typography.Text strong>{t('instrumentation.v2.destination')}</Typography.Text>
       <Typography.Text>{t(`instrumentation.v2.profileKind.${props.guide.intakeProfile.kind}`)}</Typography.Text>
       {endpoints.map(([transport, endpoint]) => (
-        <code key={transport}>{endpoint}</code>
+        <div key={transport} className={styles.endpoint}>
+          <Typography.Text type="secondary">{t(`instrumentation.v2.transport.${transport}`)}</Typography.Text>
+          <Typography.Text type={endpoint.security === 'plaintext' ? 'danger' : 'success'}>
+            {t(`instrumentation.v2.security.${endpoint.security}`)}
+          </Typography.Text>
+          <code>{endpoint.url}</code>
+        </div>
       ))}
       <Typography.Text type={props.token ? 'success' : 'secondary'}>
         {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}

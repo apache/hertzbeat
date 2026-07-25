@@ -11,7 +11,6 @@ import { DETECTION_STATUSES, POLLING_DECISIONS, SIGNALS, SOURCE_KINDS } from '..
 import {
   capability,
   component,
-  explicitHttps,
   guideBlock,
   profileError,
   service,
@@ -29,6 +28,22 @@ const selection = {
   environment: text.optional(),
   platform: text.optional()
 };
+const intakeEndpoint = z
+  .object({ url: z.string(), security: z.enum(['tls', 'plaintext']) })
+  .strict()
+  .superRefine((value, context) => {
+    try {
+      const url = new URL(value.url);
+      const matchesSecurity =
+        (url.protocol === 'https:' && value.security === 'tls') ||
+        (url.protocol === 'http:' && value.security === 'plaintext');
+      if (!matchesSecurity || url.username || url.password || url.search || url.hash) {
+        context.addIssue({ code: 'custom', message: 'endpoint URL and security evidence are inconsistent' });
+      }
+    } catch {
+      context.addIssue({ code: 'custom', message: 'endpoint URL is invalid' });
+    }
+  });
 const intakeProfile = z
   .object({
     id: text,
@@ -36,7 +51,7 @@ const intakeProfile = z
     availability: z.enum(['available', 'unavailable']),
     gateway: z.enum(['server', 'collector', 'external']).optional(),
     supportedTransports: z.array(z.enum(['http_protobuf', 'grpc'])),
-    httpsEndpoints: z.object({ http_protobuf: explicitHttps.optional(), grpc: explicitHttps.optional() }).strict(),
+    endpoints: z.object({ http_protobuf: intakeEndpoint.optional(), grpc: intakeEndpoint.optional() }).strict(),
     authHeaderName: text.optional(),
     collectorId: text.optional(),
     errorCode: profileError.optional()
@@ -60,13 +75,13 @@ function validateIntakeProfile(value: IntakeProfile, context: z.RefinementCtx) {
 }
 
 function hasValidAvailableConnectivity(value: IntakeProfile) {
-  const endpointCount = Object.values(value.httpsEndpoints).length;
+  const endpointCount = Object.values(value.endpoints).length;
   const expectedGateway = {
     server: 'server',
     hertzbeat_collector: 'collector',
     external_otel_collector: 'external'
   }[value.kind];
-  const transportsMatch = value.supportedTransports.every(transport => Boolean(value.httpsEndpoints[transport]));
+  const transportsMatch = value.supportedTransports.every(transport => Boolean(value.endpoints[transport]));
   return (
     Boolean(value.gateway) &&
     value.supportedTransports.length > 0 &&
@@ -83,7 +98,7 @@ function hasAdvertisedConnectivity(value: IntakeProfile) {
   return Boolean(
     value.gateway ||
     value.supportedTransports.length ||
-    Object.values(value.httpsEndpoints).length ||
+    Object.values(value.endpoints).length ||
     value.authHeaderName ||
     !value.errorCode ||
     !hasValidCollectorIdentity(value)

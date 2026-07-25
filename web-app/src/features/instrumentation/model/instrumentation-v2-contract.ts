@@ -95,7 +95,10 @@ type IntakeProfile = {
   availability: 'available' | 'unavailable';
   gateway?: 'server' | 'collector' | 'external' | undefined;
   supportedTransports: Array<'http_protobuf' | 'grpc'>;
-  httpsEndpoints: { http_protobuf?: string | undefined; grpc?: string | undefined };
+  endpoints: {
+    http_protobuf?: { url: string; security: 'tls' | 'plaintext' } | undefined;
+    grpc?: { url: string; security: 'tls' | 'plaintext' } | undefined;
+  };
   authHeaderName?: string | undefined;
   collectorId?: string | undefined;
   errorCode?: string | undefined;

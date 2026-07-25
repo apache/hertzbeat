@@ -151,7 +151,7 @@ function renderFixture() {
       availability: 'available',
       gateway: 'server',
       supportedTransports: ['http_protobuf'],
-      httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+      endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' } },
       authHeaderName: 'Authorization'
     },
     service: { name: 'checkout', namespace: 'shop', environment: 'prod' },

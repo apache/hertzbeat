@@ -43,6 +43,11 @@
   font-size: 11px;
 }
 
+.endpoint {
+  display: grid;
+  gap: 2px;
+}
+
 .statusRail .signalRow {
   grid-template-columns: 1fr auto;
   grid-template-areas:

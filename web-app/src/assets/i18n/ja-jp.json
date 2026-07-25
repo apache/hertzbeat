@@ -534,6 +534,8 @@
         "available": "利用可能",
         "unavailable": "利用不可"
       },
+      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
+      "security": { "tls": "TLS", "plaintext": "暗号化なし" },
       "profileReason": {
         "unavailable": "この送信先はまだ選択できません。",
         "notAdvertised": "管理者が安全な取り込み先をまだ公開していません。",
@@ -571,8 +573,10 @@
         "restart_collector": "Collector を再起動",
         "validate_signals": "シグナル受信を確認",
         "official_source": "公式コンポーネントのソースを開く",
+        "plaintext_transport_warning": "暗号化されていない転送",
         "no_persistence": "HertzBeat 側にインストーラーは作成されません"
       },
+      "warning": { "plaintext_authorization": "Authorization ヘッダーは暗号化されていない接続を通過します。" },
       "note": {
         "telemetrygen_no_persistence": "この確認でのみ公式ツールを実行し、完了後に削除してください。",
         "merge_exporter_into_each_pipeline": "送信する各シグナルパイプラインから exporter を参照してください。",
@@ -714,7 +718,8 @@
       "fixedScope": "OTLP 取り込み",
       "ready": "アクセストークンをメモリ内に生成しました",
       "notGenerated": "アクセストークンは未生成です",
-      "generateError": "アクセストークンを生成できませんでした。"
+      "generateError": "アクセストークンを生成できませんでした。",
+      "plaintextBearerWarning": "Bearer トークンは暗号化されていない接続で送信されます。"
     },
     "copySuccess": "スニペットをコピーしました。",
     "copyFailed": "スニペットをコピーできませんでした。",

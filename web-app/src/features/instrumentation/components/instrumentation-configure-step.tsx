@@ -13,6 +13,7 @@ import {
   type AccessTokenGenerationDraft
 } from '@/shared/access-token/access-token-generation-model';
 
+import { intakeEndpointEntries, profileUsesPlaintext } from '../model/intake-profile';
 import type { IntakeProfilesResponse } from '../model/instrumentation-v2-contract';
 import styles from './instrumentation-configure.module.css';
 
@@ -76,6 +77,9 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         </label>
       )}
       <DestinationCards profiles={props.profiles} profileId={props.profileId} onProfile={props.onProfile} />
+      {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
+        <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
+      )}
       <div className={styles.configureActions}>
         <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
         <Typography.Text type={props.token ? 'success' : 'secondary'}>
@@ -119,6 +123,15 @@ function DestinationCards(props: {
               <Tag color={available ? 'success' : 'default'}>
                 {t(`instrumentation.v2.profileAvailability.${profile.availability}`)}
               </Tag>
+              {intakeEndpointEntries(profile).map(([transport, endpoint]) => (
+                <span key={transport} className={styles.endpointEvidence}>
+                  <span>{t(`instrumentation.v2.transport.${transport}`)}</span>
+                  <Tag color={endpoint.security === 'plaintext' ? 'error' : 'success'}>
+                    {t(`instrumentation.v2.security.${endpoint.security}`)}
+                  </Tag>
+                  <code>{endpoint.url}</code>
+                </span>
+              ))}
               {!available && <small>{t(profileReasonKey(profile.errorCode))}</small>}
             </button>
           );
@@ -133,6 +146,11 @@ function DestinationCards(props: {
       </div>
     </div>
   );
+}
+
+function selectedProfileUsesPlaintext(profiles: IntakeProfilesResponse, profileId: string) {
+  const profile = profiles.profiles.find(item => item.id === profileId);
+  return profileUsesPlaintext(profile);
 }
 
 function profileReasonKey(errorCode?: string) {

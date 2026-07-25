@@ -182,11 +182,12 @@ describe('instrumentation v2 wire contracts', () => {
   });
 
   it.each([
-    'http://example.test/otlp',
-    'https://user@example.test/otlp',
-    'https://example.test/otlp?token=secret',
-    'https://example.test/otlp#fragment'
-  ])('rejects unsafe intake endpoint %s', endpoint => {
+    ['https://example.test/otlp', 'plaintext'],
+    ['http://example.test/otlp', 'tls'],
+    ['https://user@example.test/otlp', 'tls'],
+    ['https://example.test/otlp?token=secret', 'tls'],
+    ['https://example.test/otlp#fragment', 'tls']
+  ])('rejects endpoint/security mismatch or unsafe URL %s', (url, security) => {
     expect(() =>
       parseIntakeProfilesResponse({
         schemaVersion: 2,
@@ -199,8 +200,71 @@ describe('instrumentation v2 wire contracts', () => {
             availability: 'available',
             gateway: 'server',
             supportedTransports: ['http_protobuf'],
-            httpsEndpoints: { http_protobuf: endpoint },
+            endpoints: { http_protobuf: { url, security } },
             authHeaderName: 'Authorization'
+          }
+        ]
+      })
+    ).toThrow();
+  });
+
+  it.each([
+    ['https://example.test/otlp', 'tls'],
+    ['http://example.test/otlp', 'plaintext']
+  ])('preserves backend endpoint security evidence for %s', (url, security) => {
+    expect(
+      parseIntakeProfilesResponse({
+        schemaVersion: 2,
+        status: 'available',
+        defaultProfileId: 'server-default',
+        profiles: [
+          {
+            id: 'server-default',
+            kind: 'server',
+            availability: 'available',
+            gateway: 'server',
+            supportedTransports: ['http_protobuf'],
+            endpoints: { http_protobuf: { url, security } },
+            authHeaderName: 'Authorization'
+          }
+        ]
+      }).profiles[0]?.endpoints.http_protobuf
+    ).toEqual({ url, security });
+  });
+
+  it('rejects the removed httpsEndpoints field and unavailable advertised endpoints', () => {
+    expect(() =>
+      parseIntakeProfilesResponse({
+        schemaVersion: 2,
+        status: 'available',
+        profiles: [
+          {
+            id: 'server-default',
+            kind: 'server',
+            availability: 'available',
+            gateway: 'server',
+            supportedTransports: ['http_protobuf'],
+            httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+            authHeaderName: 'Authorization'
+          }
+        ]
+      })
+    ).toThrow();
+    expect(() =>
+      parseIntakeProfilesResponse({
+        schemaVersion: 2,
+        status: 'available',
+        profiles: [
+          {
+            id: 'collector-edge',
+            kind: 'hertzbeat_collector',
+            availability: 'unavailable',
+            supportedTransports: [],
+            endpoints: {
+              http_protobuf: { url: 'http://collector.test:4318', security: 'plaintext' }
+            },
+            collectorId: 'edge',
+            errorCode: 'intake_profile_unavailable'
           }
         ]
       })
@@ -219,7 +283,7 @@ describe('instrumentation v2 wire contracts', () => {
             availability: 'available',
             gateway: 'server',
             supportedTransports: ['grpc'],
-            httpsEndpoints: { grpc: 'https://example.test:4317' },
+            endpoints: { grpc: { url: 'https://example.test:4317', security: 'tls' } },
             authHeaderName: 'Authorization'
           }
         ]
@@ -238,7 +302,7 @@ describe('instrumentation v2 wire contracts', () => {
             kind: 'hertzbeat_collector',
             availability: 'unavailable',
             supportedTransports: [],
-            httpsEndpoints: {},
+            endpoints: {},
             collectorId: 'edge',
             errorCode: 'intake_profile_unavailable'
           }
@@ -264,7 +328,7 @@ describe('instrumentation v2 wire contracts', () => {
           availability: 'available',
           gateway: 'server',
           supportedTransports: ['http_protobuf'],
-          httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+          endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' } },
           authHeaderName: 'Authorization'
         },
         service,
@@ -298,7 +362,7 @@ describe('instrumentation v2 wire contracts', () => {
         availability: 'available',
         gateway: 'server',
         supportedTransports: ['http_protobuf'],
-        httpsEndpoints: { http_protobuf: 'https://example.test/v1/otlp' },
+        endpoints: { http_protobuf: { url: 'https://example.test/v1/otlp', security: 'tls' } },
         authHeaderName: 'Authorization'
       },
       service,
@@ -308,6 +372,14 @@ describe('instrumentation v2 wire contracts', () => {
         authorizationToken: { marker: '${HERTZBEAT_TOKEN}', kind: 'authorization_token' }
       },
       blocks: [
+        {
+          id: 'plaintext_transport_warning',
+          type: 'warning',
+          titleKey: 'instrumentation.v2.block.plaintext_transport_warning',
+          bodyKey: 'instrumentation.v2.warning.plaintext_authorization',
+          executionLocationKey: 'instrumentation.location.hertzbeat',
+          placeholders: []
+        },
         {
           id: 'send',
           type: 'command',
@@ -327,7 +399,8 @@ describe('instrumentation v2 wire contracts', () => {
         }
       ]
     });
-    expect(value.blocks[0]?.content).toContain('${HERTZBEAT_TOKEN}');
+    expect(value.blocks[0]).toMatchObject({ id: 'plaintext_transport_warning', type: 'warning' });
+    expect(value.blocks[1]?.content).toContain('${HERTZBEAT_TOKEN}');
     expect(JSON.stringify(value)).not.toContain('secret-value');
   });
 

@@ -526,6 +526,8 @@
         "available": "可用",
         "unavailable": "不可用"
       },
+      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
+      "security": { "tls": "TLS", "plaintext": "未加密" },
       "profileReason": {
         "unavailable": "此目标位置尚不可选择。",
         "notAdvertised": "管理员尚未发布安全的接入地址。",
@@ -563,8 +565,10 @@
         "restart_collector": "重启 Collector",
         "validate_signals": "验证信号接收情况",
         "official_source": "打开官方组件源代码",
+        "plaintext_transport_warning": "未加密传输",
         "no_persistence": "不会在 HertzBeat 端创建安装程序"
       },
+      "warning": { "plaintext_authorization": "Authorization 请求头将通过未加密连接传输。" },
       "note": {
         "telemetrygen_no_persistence": "仅在本次验证中运行官方工具，并在完成后将其移除。",
         "merge_exporter_into_each_pipeline": "在每条需要发送数据的信号管道中引用该 exporter。",
@@ -706,7 +710,8 @@
       "fixedScope": "OTLP 接收",
       "ready": "访问令牌已在内存中生成",
       "notGenerated": "尚未生成访问令牌",
-      "generateError": "无法生成访问令牌。"
+      "generateError": "无法生成访问令牌。",
+      "plaintextBearerWarning": "Bearer 令牌将通过未加密连接传输。"
     },
     "copySuccess": "已复制代码片段。",
     "copyFailed": "无法复制代码片段。",

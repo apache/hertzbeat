@@ -56,6 +56,21 @@ button.destinationCard:disabled,
   color: var(--hb-text-secondary);
 }
 
+.endpointEvidence {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.endpointEvidence code {
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .configureActions {
   display: flex;
   align-items: center;

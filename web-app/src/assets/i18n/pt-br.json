@@ -540,6 +540,8 @@
         "available": "Disponível",
         "unavailable": "Indisponível"
       },
+      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
+      "security": { "tls": "TLS", "plaintext": "Não criptografado" },
       "profileReason": {
         "unavailable": "Este destino ainda não está pronto para seleção.",
         "notAdvertised": "Um administrador ainda não publicou um endereço seguro de ingestão.",
@@ -577,7 +579,11 @@
         "restart_collector": "Reiniciar o Collector",
         "validate_signals": "Validar o recebimento de sinais",
         "official_source": "Abrir o código-fonte oficial do componente",
+        "plaintext_transport_warning": "Transporte não criptografado",
         "no_persistence": "Nenhum instalador é criado no HertzBeat"
+      },
+      "warning": {
+        "plaintext_authorization": "O cabeçalho Authorization será transmitido por uma conexão não criptografada."
       },
       "note": {
         "telemetrygen_no_persistence": "Execute a ferramenta oficial apenas nesta verificação e remova-a depois.",
@@ -720,7 +726,8 @@
       "fixedScope": "Ingestão OTLP",
       "ready": "Token de acesso gerado na memória",
       "notGenerated": "Nenhum token de acesso gerado",
-      "generateError": "Não foi possível gerar o token de acesso."
+      "generateError": "Não foi possível gerar o token de acesso.",
+      "plaintextBearerWarning": "O token Bearer será transmitido por uma conexão não criptografada."
     },
     "copySuccess": "Trecho copiado.",
     "copyFailed": "Não foi possível copiar o trecho.",

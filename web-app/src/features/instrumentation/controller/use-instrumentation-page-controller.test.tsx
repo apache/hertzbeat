@@ -225,7 +225,7 @@ const serverProfile = {
   availability: 'available',
   gateway: 'server',
   supportedTransports: ['http_protobuf'],
-  httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+  endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' as const } },
   authHeaderName: 'Authorization'
 };
 const groups = [

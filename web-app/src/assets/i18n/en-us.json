@@ -537,6 +537,8 @@
         "available": "Available",
         "unavailable": "Unavailable"
       },
+      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
+      "security": { "tls": "TLS", "plaintext": "Unencrypted" },
       "profileReason": {
         "unavailable": "This destination is not ready for selection.",
         "notAdvertised": "An administrator has not published a secure intake address.",
@@ -574,8 +576,10 @@
         "restart_collector": "Restart the Collector",
         "validate_signals": "Validate signal reception",
         "official_source": "Open the official component source",
+        "plaintext_transport_warning": "Unencrypted transport",
         "no_persistence": "No HertzBeat-side installer is created"
       },
+      "warning": { "plaintext_authorization": "The Authorization header will travel over an unencrypted connection." },
       "note": {
         "telemetrygen_no_persistence": "Run the official tool only for this verification and remove it afterward.",
         "merge_exporter_into_each_pipeline": "Reference the exporter from every signal pipeline you want to send.",
@@ -717,7 +721,8 @@
       "fixedScope": "OTLP ingest",
       "ready": "Access token generated in memory",
       "notGenerated": "No access token generated",
-      "generateError": "The access token could not be generated."
+      "generateError": "The access token could not be generated.",
+      "plaintextBearerWarning": "The Bearer token will be transmitted over an unencrypted connection."
     },
     "copySuccess": "Snippet copied.",
     "copyFailed": "The snippet could not be copied.",

@@ -21,8 +21,8 @@ vi.mock('antd', async importOriginal => {
 });
 
 import { InstrumentationConfigureStep } from './instrumentation-configure-step';
-import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
+import { InstrumentationGuideWorkspace } from './instrumentation-guide-workspace';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
 import guideCss from './instrumentation-guide.module.css?raw';
 import shellCss from './instrumentation-shell.module.css?raw';
@@ -144,7 +144,7 @@ describe('instrumentation v2 interaction', () => {
               kind: 'hertzbeat_collector',
               availability: 'unavailable',
               supportedTransports: [],
-              httpsEndpoints: {},
+              endpoints: {},
               errorCode: 'intake_profile_unavailable'
             }
           ]
@@ -225,24 +225,72 @@ describe('instrumentation v2 interaction', () => {
     expect(onGenerateToken).toHaveBeenCalledOnce();
   });
 
+  it('shows endpoint security and an explicit Bearer risk for a selected plaintext destination', () => {
+    render(
+      <InstrumentationConfigureStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [
+            {
+              ...guide.intakeProfile,
+              endpoints: {
+                http_protobuf: { url: 'http://example.test:4318', security: 'plaintext' }
+              }
+            }
+          ]
+        }}
+        profileId="server-default"
+        serviceName="checkout"
+        platformOptions={[]}
+        canRender={false}
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        onProfile={vi.fn()}
+        onServiceName={vi.fn()}
+        onPlatform={vi.fn()}
+        onRender={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+      />
+    );
+    expect(screen.getByText('instrumentation.v2.transport.http_protobuf')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.security.plaintext')).toBeVisible();
+    expect(screen.getByText('instrumentation.token.plaintextBearerWarning')).toBeVisible();
+  });
+
   it('materializes the memory-only token visibly without mutating the backend guide', () => {
     render(
-      <>
-        <InstrumentationGuideBlocks
-          guide={guide}
-          token="valid-token-123"
-          onCopy={vi.fn().mockResolvedValue(undefined)}
-        />
-        <InstrumentationDetectionPanel
-          response={detection}
-          detecting={false}
-          error={false}
-          onRetry={vi.fn()}
-          onOpen={vi.fn()}
-        />
-      </>
+      <InstrumentationGuideWorkspace
+        catalog={catalog}
+        draft={{
+          sourceId: 'quick_start',
+          sourceKind: 'quick_start',
+          recipeId: 'telemetrygen',
+          intakeProfileId: 'server-default',
+          service: guide.service
+        }}
+        guide={guide}
+        token="valid-token-123"
+        detection={detection}
+        detecting={false}
+        detectionError={false}
+        onCopy={vi.fn().mockResolvedValue(undefined)}
+        onEdit={vi.fn()}
+        onDetect={vi.fn()}
+        onOpen={vi.fn()}
+      />
     );
     expect(screen.getByText('token=valid-token-123')).toBeVisible();
+    expect(screen.getByText('https://example.test/otlp')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.security.tls')).toBeVisible();
+    expect(screen.queryByText('[object Object]')).toBeNull();
     expect(guide.blocks[0]!.content).toBe('token=${HERTZBEAT_TOKEN}');
     const openButtons = screen.getAllByRole('button', { name: 'instrumentation.action.openExplore' });
     expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
@@ -413,7 +461,7 @@ const guide = {
     availability: 'available' as const,
     gateway: 'server' as const,
     supportedTransports: ['http_protobuf' as const],
-    httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+    endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' as const } },
     authHeaderName: 'Authorization'
   },
   service: { name: 'checkout', namespace: 'shop', environment: 'prod' },

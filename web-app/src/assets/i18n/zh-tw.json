@@ -526,6 +526,8 @@
         "available": "可用",
         "unavailable": "無法使用"
       },
+      "transport": { "http_protobuf": "OTLP HTTP/protobuf", "grpc": "OTLP gRPC" },
+      "security": { "tls": "TLS", "plaintext": "未加密" },
       "profileReason": {
         "unavailable": "此目的地尚不可選取。",
         "notAdvertised": "管理員尚未發佈安全的接入位址。",
@@ -563,8 +565,10 @@
         "restart_collector": "重新啟動 Collector",
         "validate_signals": "驗證訊號接收情況",
         "official_source": "開啟官方元件原始碼",
+        "plaintext_transport_warning": "未加密傳輸",
         "no_persistence": "不會在 HertzBeat 端建立安裝程式"
       },
+      "warning": { "plaintext_authorization": "Authorization 標頭將透過未加密連線傳輸。" },
       "note": {
         "telemetrygen_no_persistence": "僅在本次驗證中執行官方工具，並在完成後將其移除。",
         "merge_exporter_into_each_pipeline": "在每條需要傳送資料的訊號管線中參照該 exporter。",
@@ -706,7 +710,8 @@
       "fixedScope": "OTLP 接收",
       "ready": "存取權杖已在記憶體中產生",
       "notGenerated": "尚未產生存取權杖",
-      "generateError": "無法產生存取權杖。"
+      "generateError": "無法產生存取權杖。",
+      "plaintextBearerWarning": "Bearer 權杖將透過未加密連線傳輸。"
     },
     "copySuccess": "已複製程式碼片段。",
     "copyFailed": "無法複製程式碼片段。",
