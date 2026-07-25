@@ -291,8 +291,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.pendingApproval = undefined;
     this.isLoadingSessions = true;
     this.followOutput = true;
+    const sessionRequest =
+      this.sessionType === 'alert-analysis'
+        ? this.aiChatService.getAlertAnalysisSession(sessionUid)
+        : this.aiChatService.getSession(sessionUid);
     loadSubscription.add(
-      this.aiChatService.getSession(sessionUid).subscribe({
+      sessionRequest.subscribe({
         next: response => {
           const persisted = response.data?.body as AgentSession | undefined;
           if (persisted) {
@@ -504,7 +508,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   private loadTranscript(sessionUid: string): Subscription {
-    return this.aiChatService.getSessionTranscript(sessionUid).subscribe({
+    const transcriptRequest =
+      this.sessionType === 'alert-analysis'
+        ? this.aiChatService.getAlertAnalysisSessionTranscript(sessionUid)
+        : this.aiChatService.getSessionTranscript(sessionUid);
+    return transcriptRequest.subscribe({
       next: response => {
         this.isLoadingSessions = false;
         this.turns = this.toChatTurns(response.data?.content || []);

@@ -22,6 +22,7 @@ import java.util.Map;
 import lombok.Builder;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.springframework.util.StringUtils;
@@ -33,7 +34,9 @@ public sealed interface GatewayCommand permits
         GatewayCommand.InvokeCommand,
         GatewayCommand.ApprovalDecisionCommand,
         GatewayCommand.CancelRunCommand,
-        GatewayCommand.GetSessionCommand {
+        GatewayCommand.GetSessionCommand,
+        GatewayCommand.ListSessionsCommand,
+        GatewayCommand.GetSessionTranscriptCommand {
 
     GatewayEnvelope envelope();
 
@@ -126,6 +129,65 @@ public sealed interface GatewayCommand permits
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(sessionUid)) {
                 throw new IllegalArgumentException("commandId and sessionUid are required");
             }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Session query actor is required");
+            }
+        }
+    }
+
+    /**
+     * Current actor session list query.
+     */
+    @Builder
+    record ListSessionsCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            String title,
+            int pageIndex,
+            int pageSize) implements GatewayCommand {
+
+        public ListSessionsCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId)) {
+                throw new IllegalArgumentException("commandId is required");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Session query actor is required");
+            }
+            if (pageIndex < 0 || pageSize < 1) {
+                throw new IllegalArgumentException("Session page index and size are invalid");
+            }
+            pageSize = Math.min(pageSize, 200);
+        }
+    }
+
+    /**
+     * Current actor session transcript query.
+     */
+    @Builder
+    record GetSessionTranscriptCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            String sessionUid,
+            int pageIndex,
+            int pageSize) implements GatewayCommand {
+
+        public GetSessionTranscriptCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(sessionUid)) {
+                throw new IllegalArgumentException("commandId and sessionUid are required");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Session query actor is required");
+            }
+            if (pageIndex < 0 || pageSize < 1) {
+                throw new IllegalArgumentException("Session page index and size are invalid");
+            }
+            pageSize = Math.min(pageSize, 200);
         }
     }
 

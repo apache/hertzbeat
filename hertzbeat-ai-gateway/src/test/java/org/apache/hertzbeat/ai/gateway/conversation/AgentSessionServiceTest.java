@@ -76,19 +76,53 @@ class AgentSessionServiceTest {
     private EntityManager entityManager;
 
     @Test
+    void findOwnedSessionShouldScopeUidLookupToEnvelopeActor() {
+        AgentSessionService service = new AgentSessionService(
+            sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        GatewayEnvelope envelope = envelope("bob");
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
+        when(sessionDao.findBySessionUidAndChannelAndActorTypeAndActorId(
+            "ags-1", "web-ui", "user", "bob")).thenReturn(Optional.of(session));
+
+        assertSame(session, service.findOwnedSession(" ags-1 ", envelope).orElseThrow());
+
+        verify(sessionDao).findBySessionUidAndChannelAndActorTypeAndActorId(
+            "ags-1", "web-ui", "user", "bob");
+    }
+
+    @Test
+    void findOwnedSessionShouldScopeNumericLookupToEnvelopeActor() {
+        AgentSessionService service = new AgentSessionService(
+            sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        GatewayEnvelope envelope = envelope("bob");
+        AgentSession session = AgentSession.builder().id(42L).sessionUid("ags-42").build();
+        when(sessionDao.findByIdAndChannelAndActorTypeAndActorId(
+            42L, "web-ui", "user", "bob")).thenReturn(Optional.of(session));
+
+        assertSame(session, service.findOwnedSession("42", envelope).orElseThrow());
+
+        verify(sessionDao).findByIdAndChannelAndActorTypeAndActorId(
+            42L, "web-ui", "user", "bob");
+    }
+
+    @Test
     void findSessionsShouldApplyOptionalTitleFilter() {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
-        AgentActor actor = AgentActor.builder().type("service").id("alert-analysis").build();
+        GatewayEnvelope envelope = GatewayEnvelope.builder()
+            .channelId("alert")
+            .receivedAt(100L)
+            .actor(AgentActor.alertAnalysisActor())
+            .build();
         PageRequest pageRequest = PageRequest.of(0, 8);
         Page<AgentSession> page = Page.empty(pageRequest);
         when(sessionDao.findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-            "alert", "service", "alert-analysis", "database", pageRequest)).thenReturn(page);
+            "alert", "system", "alert-analysis", "database", pageRequest)).thenReturn(page);
 
-        assertSame(page, service.findSessions("alert", actor, "database", pageRequest));
+        assertSame(page, service.findSessions(envelope, "database", pageRequest));
 
         verify(sessionDao).findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-            "alert", "service", "alert-analysis", "database", pageRequest);
+            "alert", "system", "alert-analysis", "database", pageRequest);
     }
 
     @Test
@@ -380,6 +414,14 @@ class AgentSessionServiceTest {
             .payloadJson(JsonUtil.toJson(message))
             .messageRole(message.getRole().wireValue())
             .gmtCreate(LocalDateTime.parse("2026-04-19T00:00:00").plusSeconds(id))
+            .build();
+    }
+
+    private GatewayEnvelope envelope(String actorId) {
+        return GatewayEnvelope.builder()
+            .channelId("web-ui")
+            .receivedAt(100L)
+            .actor(AgentActor.builder().type("user").id(actorId).roles(List.of("user")).build())
             .build();
     }
 

@@ -42,6 +42,12 @@ public interface AgentSessionDao extends JpaRepository<AgentSession, Long> {
      */
     Optional<AgentSession> findBySessionUid(String sessionUid);
 
+    Optional<AgentSession> findByIdAndChannelAndActorTypeAndActorId(
+            Long id, String channel, String actorType, String actorId);
+
+    Optional<AgentSession> findBySessionUidAndChannelAndActorTypeAndActorId(
+            String sessionUid, String channel, String actorType, String actorId);
+
     Page<AgentSession> findByChannelAndActorTypeAndActorIdOrderByGmtUpdateDesc(
             String channel, String actorType, String actorId, Pageable pageable);
 

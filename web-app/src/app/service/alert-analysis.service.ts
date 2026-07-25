@@ -64,7 +64,10 @@ export class AlertAnalysisService {
 
   getSessionTranscript(sessionUid: string): Observable<Message<Page<AgentTranscriptEntry>>> {
     const params = new HttpParams().set('pageIndex', 0).set('pageSize', 200);
-    return this.http.get<Message<Page<AgentTranscriptEntry>>>(`/agent/sessions/${encodeURIComponent(sessionUid)}/transcript`, { params });
+    return this.http.get<Message<Page<AgentTranscriptEntry>>>(
+      `/agent/alert-analysis/sessions/${encodeURIComponent(sessionUid)}/transcript`,
+      { params }
+    );
   }
 
   getPolicies(): Observable<Message<AlertAnalysisPolicy[]>> {

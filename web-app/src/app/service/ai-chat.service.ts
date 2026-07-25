@@ -130,9 +130,19 @@ export class AiChatService {
     return this.http.get<Message<GatewayResponse>>(`${this.agentUri}/sessions/${encodeURIComponent(sessionUid)}`);
   }
 
+  getAlertAnalysisSession(sessionUid: string): Observable<Message<GatewayResponse>> {
+    return this.http.get<Message<GatewayResponse>>(`${this.agentUri}/alert-analysis/sessions/${encodeURIComponent(sessionUid)}`);
+  }
+
   getSessionTranscript(sessionUid: string): Observable<Message<Page<AgentTranscriptEntry>>> {
     return this.http.get<Message<Page<AgentTranscriptEntry>>>(
       `${this.agentUri}/sessions/${encodeURIComponent(sessionUid)}/transcript?pageIndex=0&pageSize=200`
+    );
+  }
+
+  getAlertAnalysisSessionTranscript(sessionUid: string): Observable<Message<Page<AgentTranscriptEntry>>> {
+    return this.http.get<Message<Page<AgentTranscriptEntry>>>(
+      `${this.agentUri}/alert-analysis/sessions/${encodeURIComponent(sessionUid)}/transcript?pageIndex=0&pageSize=200`
     );
   }
 
