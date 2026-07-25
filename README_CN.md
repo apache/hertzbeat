@@ -566,6 +566,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhusaidong"><img src="https://avatars.githubusercontent.com/u/3039961?v=4?s=100" width="100px;" alt="zhusaidong"/><br /><sub><b>zhusaidong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhusaidong" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhehenlu"><img src="https://avatars.githubusercontent.com/u/31504542?v=4?s=100" width="100px;" alt="zhlu"/><br /><sub><b>zhlu</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhehenlu" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=zhehenlu" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/brettgervasoni"><img src="https://avatars.githubusercontent.com/u/34056000?v=4?s=100" width="100px;" alt="brettgervasoni"/><br /><sub><b>brettgervasoni</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=brettgervasoni" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Darshan-paul"><img src="https://avatars.githubusercontent.com/u/211450705?v=4?s=100" width="100px;" alt="Darshan-paul"/><br /><sub><b>Darshan-paul</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Darshan-paul" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
