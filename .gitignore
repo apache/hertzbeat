@@ -56,3 +56,7 @@ application-mysql.yml
 application-pg.yml
 /package.json
 /yarn.lock
+
+# Local Codex workspace files
+.codex/
+AGENTS.md
