@@ -18,6 +18,7 @@
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import type { Monitor, MonitorAction, MonitorQuery } from './monitor-contract';
+import type { MonitorExportFormat } from './monitor-export-model';
 
 export type MonitorListEvidence = RemotePageState<Monitor, 'unavailable' | 'error'>;
 
@@ -34,6 +35,7 @@ export type MonitorListViewState = {
   monitors: MonitorListEvidence;
   apps: MonitorAppsEvidence;
   refreshing: boolean;
+  canExport: boolean;
 };
 
 export type MonitorListViewActions = {
@@ -49,5 +51,7 @@ export type MonitorListViewActions = {
   open: (id: number, mode: 'view' | 'edit') => void;
   run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
   runBulk: (action: MonitorAction) => void | Promise<void>;
+  exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
+  exportAll: (format: MonitorExportFormat) => Promise<boolean>;
   selectIds: (ids: number[]) => void;
 };

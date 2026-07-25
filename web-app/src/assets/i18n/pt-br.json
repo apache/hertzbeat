@@ -1948,6 +1948,17 @@
     "name": "Monitor",
     "updated": "Atualizado",
     "detail": "Detalhes do monitor",
+    "export": {
+      "all": "Exportar todos",
+      "selected": "Exportar selecionados",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "Configuração de monitor baixada.",
+      "failure": {
+        "forbidden": "É necessário acesso de administrador para exportar monitores.",
+        "unavailable": "A exportação de monitores está temporariamente indisponível.",
+        "error": "Não foi possível exportar a configuração de monitor."
+      }
+    },
     "status": {
       "label": "Status",
       "all": "Todos os estados",

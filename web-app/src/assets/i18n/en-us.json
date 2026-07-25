@@ -1905,6 +1905,17 @@
     "name": "Monitor",
     "updated": "Updated",
     "detail": "Monitor detail",
+    "export": {
+      "all": "Export all",
+      "selected": "Export selected",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "Monitor configuration downloaded.",
+      "failure": {
+        "forbidden": "Administrator access is required to export monitors.",
+        "unavailable": "Monitor export is temporarily unavailable.",
+        "error": "Monitor configuration could not be exported."
+      }
+    },
     "status": {
       "label": "Status",
       "all": "All statuses",

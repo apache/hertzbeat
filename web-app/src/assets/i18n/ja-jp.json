@@ -1946,6 +1946,17 @@
     "name": "監視",
     "updated": "更新日時",
     "detail": "監視詳細",
+    "export": {
+      "all": "すべてエクスポート",
+      "selected": "選択項目をエクスポート",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "監視設定をダウンロードしました。",
+      "failure": {
+        "forbidden": "監視のエクスポートには管理者権限が必要です。",
+        "unavailable": "監視のエクスポートは一時的に利用できません。",
+        "error": "監視設定をエクスポートできませんでした。"
+      }
+    },
     "status": {
       "label": "状態",
       "all": "すべての状態",

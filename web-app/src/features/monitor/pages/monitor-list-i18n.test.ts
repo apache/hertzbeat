@@ -27,6 +27,12 @@ describe('Monitor list locale coverage', () => {
   it('provides the label filter copy in every runtime locale', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw]) {
       expect(locale.labels.filter).toBeTruthy();
+      expect(locale.monitor.export.all).toBeTruthy();
+      expect(locale.monitor.export.selected).toBeTruthy();
+      expect(locale.monitor.export.success).toBeTruthy();
+      expect(locale.monitor.export.failure.forbidden).toBeTruthy();
+      expect(locale.monitor.export.failure.unavailable).toBeTruthy();
+      expect(locale.monitor.export.failure.error).toBeTruthy();
     }
   });
 });

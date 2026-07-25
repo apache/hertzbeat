@@ -1886,6 +1886,17 @@
     "name": "监控",
     "updated": "更新时间",
     "detail": "监控详情",
+    "export": {
+      "all": "导出全部",
+      "selected": "导出所选",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "监控配置已下载。",
+      "failure": {
+        "forbidden": "需要管理员权限才能导出监控。",
+        "unavailable": "监控导出暂时不可用。",
+        "error": "无法导出监控配置。"
+      }
+    },
     "status": {
       "label": "状态",
       "all": "全部状态",

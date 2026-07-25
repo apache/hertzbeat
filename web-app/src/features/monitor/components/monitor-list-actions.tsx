@@ -19,7 +19,9 @@ import { Button, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorStatusCodes, type Monitor, type MonitorAction } from '../model/monitor-contract';
+import type { MonitorExportFormat } from '../model/monitor-export-model';
 
+import { MonitorExportButton } from './monitor-export-button';
 import styles from './monitor-list.module.css';
 
 type Runner = (action: MonitorAction, ids: number[]) => void | Promise<void>;
@@ -63,10 +65,14 @@ export function MonitorRowActions({
 export function MonitorBulkActions({
   selectedIds,
   run,
+  exportSelected,
+  canExport,
   disabled
 }: {
   selectedIds: number[];
   run: (action: MonitorAction) => void | Promise<void>;
+  exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
+  canExport: boolean;
   disabled: boolean;
 }) {
   const { t } = useTranslation();
@@ -81,6 +87,9 @@ export function MonitorBulkActions({
         <Button disabled={disabled} onClick={() => void run('pause')}>
           {t('monitorActions.pause')}
         </Button>
+        {canExport ? (
+          <MonitorExportButton label={t('monitor.export.selected')} disabled={disabled} onExport={exportSelected} />
+        ) : null}
         <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete')}>
           <Button danger disabled={disabled}>
             {t('monitorActions.delete')}

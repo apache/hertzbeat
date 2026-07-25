@@ -41,9 +41,16 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         apps={state.apps}
         disabled={state.operating}
         refreshing={state.refreshing}
+        canExport={state.canExport}
         actions={actions}
       />
-      <MonitorBulkActions selectedIds={state.selectedIds} run={actions.runBulk} disabled={state.operating} />
+      <MonitorBulkActions
+        selectedIds={state.selectedIds}
+        run={actions.runBulk}
+        exportSelected={actions.exportSelected}
+        canExport={state.canExport}
+        disabled={state.operating}
+      />
       <MonitorListResults
         evidence={state.monitors}
         query={state.query}

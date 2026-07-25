@@ -69,6 +69,13 @@ describe('MonitorListView evidence states', () => {
     expect(row).not.toBeNull();
     expect(row).not.toHaveTextContent('—');
   });
+
+  it('shows administrator export actions for all and selected monitors', () => {
+    renderView({ canExport: true, selectedIds: [7], monitors: { kind: 'empty' } });
+
+    expect(screen.getByRole('button', { name: i18n.t('monitor.export.all') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('monitor.export.selected') })).toBeInTheDocument();
+  });
 });
 
 function renderView(patch: Partial<MonitorListViewProps['state']>) {
@@ -78,6 +85,7 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     selectedIds: [],
     operating: false,
     refreshing: false,
+    canExport: false,
     apps: { kind: 'ready', options: [] },
     monitors: { kind: 'loading' },
     ...patch
@@ -95,6 +103,8 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     open: () => undefined,
     run: () => undefined,
     runBulk: () => undefined,
+    exportSelected: () => Promise.resolve(true),
+    exportAll: () => Promise.resolve(true),
     selectIds: () => undefined
   };
   return render(

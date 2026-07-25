@@ -1925,6 +1925,17 @@
     "name": "監控",
     "updated": "更新時間",
     "detail": "監控詳情",
+    "export": {
+      "all": "匯出全部",
+      "selected": "匯出所選",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "監控設定已下載。",
+      "failure": {
+        "forbidden": "需要管理員權限才能匯出監控。",
+        "unavailable": "監控匯出暫時不可用。",
+        "error": "無法匯出監控設定。"
+      }
+    },
     "status": {
       "label": "狀態",
       "all": "全部狀態",

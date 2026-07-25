@@ -19,8 +19,10 @@ import { Alert, Button, Input, Select, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorStatusFilters, type MonitorQuery } from '../model/monitor-contract';
+import type { MonitorExportFormat } from '../model/monitor-export-model';
 import type { MonitorAppsEvidence } from '../model/monitor-list-model';
 
+import { MonitorExportButton } from './monitor-export-button';
 import styles from './monitor-list.module.css';
 
 type MonitorListToolbarActions = {
@@ -32,6 +34,7 @@ type MonitorListToolbarActions = {
   changeStatus: (value: string) => void;
   refresh: () => Promise<boolean>;
   create: () => void;
+  exportAll: (format: MonitorExportFormat) => Promise<boolean>;
 };
 
 type MonitorListToolbarProps = {
@@ -40,6 +43,7 @@ type MonitorListToolbarProps = {
   apps: MonitorAppsEvidence;
   disabled: boolean;
   refreshing: boolean;
+  canExport: boolean;
   actions: MonitorListToolbarActions;
 };
 
@@ -48,7 +52,12 @@ export function MonitorListToolbar(props: MonitorListToolbarProps) {
   return (
     <div className={styles.toolbar}>
       <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
-      <MonitorToolbarActions disabled={disabled} refreshing={refreshing} actions={actions} />
+      <MonitorToolbarActions
+        disabled={disabled}
+        refreshing={refreshing}
+        canExport={props.canExport}
+        actions={actions}
+      />
     </div>
   );
 }
@@ -93,8 +102,9 @@ function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<Mon
 function MonitorToolbarActions({
   disabled,
   refreshing,
-  actions
-}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'actions'>) {
+  actions,
+  canExport
+}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'canExport' | 'actions'>) {
   const { t } = useTranslation();
   return (
     <>
@@ -112,6 +122,9 @@ function MonitorToolbarActions({
       <Button type="primary" disabled={disabled} onClick={actions.create}>
         {t('monitor.editor.newTitle')}
       </Button>
+      {canExport ? (
+        <MonitorExportButton label={t('monitor.export.all')} disabled={disabled} onExport={actions.exportAll} />
+      ) : null}
     </>
   );
 }

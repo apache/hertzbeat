@@ -33,6 +33,7 @@ import {
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
 import { monitorQueryKeys } from './monitor-query-keys';
+import { useMonitorExport } from './use-monitor-export';
 import { useMonitorListCommands } from './use-monitor-list-commands';
 import { useMonitorSelection } from './use-monitor-selection';
 
@@ -48,16 +49,18 @@ export function useMonitorListController() {
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
   const commands = useMonitorListCommands(source, reread, selection);
+  const monitorExport = useMonitorExport(selection.selectedIds);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     state: {
       query,
       draft: draft.value,
-      operating: commands.operating,
+      operating: commands.operating || monitorExport.exporting,
       selectedIds: selection.selectedIds,
       monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
       apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
-      refreshing: monitors.isFetching
+      refreshing: monitors.isFetching,
+      canExport: monitorExport.canExport
     },
     actions: {
       setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
@@ -77,6 +80,8 @@ export function useMonitorListController() {
       },
       run: commands.run,
       runBulk: commands.runBulk,
+      exportSelected: monitorExport.exportSelected,
+      exportAll: monitorExport.exportAll,
       selectIds: selection.selectIds
     }
   };
