@@ -223,6 +223,6 @@ class AgentRuntimeContextBuilderTest {
 
     private TranscriptMessage assistantToolCall(String toolCallId, String toolName, String password) {
         return TranscriptMessage.assistantToolCalls(null, List.of(
-                TranscriptContent.toolCall(toolCallId, toolName, Map.of("alertId", 1001, "password", password))));
+                TranscriptContent.toolCall(toolCallId, toolName, Map.of("alertId", 1001, "password", password))), null);
     }
 }

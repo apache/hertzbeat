@@ -370,11 +370,11 @@ class AgentRuntimeLoopTest {
     void oversizedHistoryShouldUseModelCompactionAndRecordCheckpoint() {
         List<TranscriptMessage> history = List.of(
                 sequenced(1L, TranscriptMessage.userText("older request " + "alert ".repeat(500))),
-                sequenced(2L, TranscriptMessage.assistantText("older answer " + "diagnosis ".repeat(500))),
+                sequenced(2L, TranscriptMessage.assistantText("older answer " + "diagnosis ".repeat(500), null)),
                 sequenced(3L, TranscriptMessage.userText("middle request " + "metric ".repeat(500))),
-                sequenced(4L, TranscriptMessage.assistantText("middle answer " + "evidence ".repeat(500))),
+                sequenced(4L, TranscriptMessage.assistantText("middle answer " + "evidence ".repeat(500), null)),
                 sequenced(5L, TranscriptMessage.userText("recent request inspect monitor 42")),
-                sequenced(6L, TranscriptMessage.assistantText("recent answer")));
+                sequenced(6L, TranscriptMessage.assistantText("recent answer", null)));
         RuntimeFixture runtime = runtime(config -> {
             config.getContext().setMaxTokens(1800);
             config.getContext().getCompaction().setThresholdRatio(0.88D);
@@ -648,7 +648,7 @@ class AgentRuntimeLoopTest {
         QueueModelClient modelClient = new QueueModelClient(List.of(finalResponse("Continue with JDBC.")));
         List<TranscriptMessage> history = List.of(
             TranscriptMessage.assistantToolCalls("", List.of(TranscriptContent.toolCall(
-                "call-search-history", "tool.search", Map.of("namespace", "jdbc")))),
+                "call-search-history", "tool.search", Map.of("namespace", "jdbc"))), null),
             TranscriptMessage.toolResult("call-search-history", "tool.search",
                 "{\"count\":1}", null));
 
@@ -665,7 +665,7 @@ class AgentRuntimeLoopTest {
         QueueModelClient modelClient = new QueueModelClient(List.of(finalResponse("Search again.")));
         List<TranscriptMessage> history = List.of(
             TranscriptMessage.assistantToolCalls("", List.of(TranscriptContent.toolCall(
-                "call-search-history", "tool.search", Map.of("namespace", "jdbc")))),
+                "call-search-history", "tool.search", Map.of("namespace", "jdbc"))), null),
             TranscriptMessage.toolResult("call-search-history", "tool.search", "",
                 "registry unavailable"));
 
@@ -701,7 +701,7 @@ class AgentRuntimeLoopTest {
                             .arguments(Map.of("monitorId", 99L))
                             .build(),
                     control,
-                    AgentToolBridge.ExecutionListener.noop());
+                    noOpExecutionListener());
         }
 
         assertEquals("node result missing", result.getOutput());
@@ -1224,6 +1224,23 @@ class AgentRuntimeLoopTest {
 
     private static AgentRuntimeModelException transientFailure(String message) {
         return new AgentRuntimeModelException(message, true);
+    }
+
+    private static AgentToolBridge.ExecutionListener noOpExecutionListener() {
+        return new AgentToolBridge.ExecutionListener() {
+            @Override
+            public void approvalRequested(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
+            }
+
+            @Override
+            public void approvalCompleted(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result,
+                                          AgentApprovalDecision decision) {
+            }
+
+            @Override
+            public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {
+            }
+        };
     }
 
     private static final class QueueModelClient implements AgentRuntimeModelClient {

@@ -316,22 +316,6 @@ public class AgentToolBridge {
 
         void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event);
 
-        static ExecutionListener noop() {
-            return new ExecutionListener() {
-                @Override
-                public void approvalRequested(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
-                }
-
-                @Override
-                public void approvalCompleted(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result,
-                                              AgentApprovalDecision decision) {
-                }
-
-                @Override
-                public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {
-                }
-            };
-        }
     }
 
 }

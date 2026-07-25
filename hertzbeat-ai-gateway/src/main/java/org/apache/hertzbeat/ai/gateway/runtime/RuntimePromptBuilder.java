@@ -81,10 +81,6 @@ public class RuntimePromptBuilder {
             - Separate observed facts, inferred causes, and recommended actions in diagnostic responses.
             """;
 
-    public RuntimePrompt build(AgentRuntimeContext context, List<AgentToolDescriptor> availableTools) {
-        return build(context, availableTools, List.of());
-    }
-
     public RuntimePrompt build(AgentRuntimeContext context, List<AgentToolDescriptor> availableTools,
                                List<AgentSkillDefinition> availableSkills) {
         // Prompt construction requires the immutable runtime snapshot assembled by AgentRuntimeContextBuilder.
@@ -230,13 +226,6 @@ public class RuntimePromptBuilder {
 
         static PromptText create() {
             return new PromptText();
-        }
-
-        PromptText line(String value) {
-            if (StringUtils.hasText(value)) {
-                lines.add(value);
-            }
-            return this;
         }
 
         PromptText bullet(String value) {

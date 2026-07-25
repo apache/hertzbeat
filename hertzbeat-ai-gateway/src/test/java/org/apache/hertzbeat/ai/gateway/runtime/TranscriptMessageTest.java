@@ -68,6 +68,6 @@ class TranscriptMessageTest {
 
     private TranscriptMessage assistantToolCall(String id, String name) {
         return TranscriptMessage.assistantToolCalls("", List.of(
-                TranscriptContent.toolCall(id, name, Map.of())));
+                TranscriptContent.toolCall(id, name, Map.of())), null);
     }
 }

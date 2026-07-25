@@ -46,7 +46,8 @@ class ReloadableAgentRuntimeModelClientTest {
         GeneralConfigDao configDao = mock(GeneralConfigDao.class);
 
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, new AgentProviderProperties(), providerRegistry());
+                new ReloadableAgentRuntimeModelClient(configDao, new AgentProviderProperties(),
+                        new AgentModelProviderRegistry(List.of(new TestAgentModelProvider())));
 
         assertFalse(client.isAgentClientConfigured());
     }
@@ -61,13 +62,15 @@ class ReloadableAgentRuntimeModelClientTest {
         properties.setBaseUrl("https://property.example.test/v1");
         properties.setModel("property-model");
         properties.setApiKey("property-secret");
+        TestAgentModelProvider provider = new TestAgentModelProvider();
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, properties, providerRegistry());
-        HertzBeatModel propertyModel = client.currentModel();
+                new ReloadableAgentRuntimeModelClient(configDao, properties,
+                        new AgentModelProviderRegistry(List.of(provider)));
+        TaggedModel propertyModel = provider.lastCreatedModel();
         assertNotNull(propertyModel);
         assertTrue(client.isAgentClientConfigured());
-        assertEquals("property-preset", ((TaggedModel) propertyModel).providerCode);
-        assertEquals("property-model", ((TaggedModel) propertyModel).model);
+        assertEquals("property-preset", propertyModel.providerCode);
+        assertEquals("property-model", propertyModel.model);
 
         ModelProviderConfig databaseProvider = new ModelProviderConfig();
         databaseProvider.setType("test-provider");
@@ -82,9 +85,10 @@ class ReloadableAgentRuntimeModelClientTest {
 
         client.onProviderConfigChanged();
 
-        assertNotSame(propertyModel, client.currentModel());
-        assertEquals("database-preset", ((TaggedModel) client.currentModel()).providerCode);
-        assertEquals("database-model", ((TaggedModel) client.currentModel()).model);
+        TaggedModel databaseModel = provider.lastCreatedModel();
+        assertNotSame(propertyModel, databaseModel);
+        assertEquals("database-preset", databaseModel.providerCode);
+        assertEquals("database-model", databaseModel.model);
         assertEquals("test-provider", properties.getType());
         assertEquals("property-preset", properties.getCode());
         assertEquals("property-model", properties.getModel());
@@ -102,8 +106,10 @@ class ReloadableAgentRuntimeModelClientTest {
         properties.setCode("property-preset");
         properties.setModel("property-model");
         properties.setApiKey("property-secret");
+        TestAgentModelProvider modelProvider = new TestAgentModelProvider();
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, properties, providerRegistry());
+                new ReloadableAgentRuntimeModelClient(configDao, properties,
+                        new AgentModelProviderRegistry(List.of(modelProvider)));
 
         ModelProviderConfig provider = new ModelProviderConfig();
         provider.setType("test-provider");
@@ -113,19 +119,17 @@ class ReloadableAgentRuntimeModelClientTest {
                 .content(JsonUtil.toJson(provider))
                 .build());
         client.onProviderConfigChanged();
-        assertEquals("database-model", ((TaggedModel) client.currentModel()).model);
+        assertEquals("database-model", modelProvider.lastCreatedModel().model);
 
         databaseConfig.set(null);
         client.onProviderConfigChanged();
 
-        assertEquals("property-model", ((TaggedModel) client.currentModel()).model);
-    }
-
-    private AgentModelProviderRegistry providerRegistry() {
-        return new AgentModelProviderRegistry(List.of(new TestAgentModelProvider()));
+        assertEquals("property-model", modelProvider.lastCreatedModel().model);
     }
 
     private static final class TestAgentModelProvider implements AgentModelProvider {
+
+        private final AtomicReference<TaggedModel> lastCreatedModel = new AtomicReference<>();
 
         @Override
         public String type() {
@@ -134,7 +138,13 @@ class ReloadableAgentRuntimeModelClientTest {
 
         @Override
         public HertzBeatModel createModel(ModelProviderConfig config) {
-            return new TaggedModel(config.getCode(), config.getModel());
+            TaggedModel model = new TaggedModel(config.getCode(), config.getModel());
+            lastCreatedModel.set(model);
+            return model;
+        }
+
+        private TaggedModel lastCreatedModel() {
+            return lastCreatedModel.get();
         }
     }
 
