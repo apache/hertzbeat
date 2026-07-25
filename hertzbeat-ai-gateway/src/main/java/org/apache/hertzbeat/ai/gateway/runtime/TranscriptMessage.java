@@ -132,7 +132,9 @@ public class TranscriptMessage {
             return List.of();
         }
         return content.stream()
-            .filter(block -> block != null && block.isToolCall())
+            .filter(block -> block != null && block.isToolCall()
+                && block.getId() != null && !block.getId().isBlank()
+                && block.getName() != null && !block.getName().isBlank())
             .toList();
     }
 
@@ -150,14 +152,16 @@ public class TranscriptMessage {
 
     public boolean hasReplayContent() {
         if (role == TranscriptRole.TOOL_RESULT) {
-            return toolCallId != null && !toolCallId.isBlank();
+            return toolCallId != null && !toolCallId.isBlank()
+                && toolName != null && !toolName.isBlank();
         }
         if (role == TranscriptRole.COMPACTION_SUMMARY) {
             return !text().isBlank();
         }
-        return content != null && content.stream().anyMatch(block -> block != null
-            && (block.isText() && block.getText() != null && !block.getText().isBlank()
-            || block.isToolCall() && block.getId() != null && !block.getId().isBlank()));
+        if (role == TranscriptRole.ASSISTANT) {
+            return !text().isBlank() || !toolCalls().isEmpty();
+        }
+        return !text().isBlank();
     }
 
     /** Stable transcript roles used in persisted JSON and model replay. */

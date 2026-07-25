@@ -117,9 +117,7 @@ public class AgentRuntimeLoop {
                         return;
                     case INVALID_RESPONSE:
                         publishRunCompleted(loopRun, AgentRuntimeEventType.ERROR,
-                                StringUtils.hasText(modelResponse.getErrorMessage())
-                                        ? modelResponse.getErrorMessage()
-                                        : "Runtime model returned an invalid response.");
+                                modelResponse.getErrorMessage());
                         return;
                     case TOOL_CALLS:
                         publishAssistantMessageCompletedIfStarted(loopRun, modelCall);
@@ -240,7 +238,7 @@ public class AgentRuntimeLoop {
 
     private ModelCallResult modelError(String itemId) {
         return new ModelCallResult(AgentRuntimeModelResponse.invalidResponse(
-                "model_request_failed", "Runtime model returned no response.", null), itemId);
+                "Runtime model returned no response.", null), itemId);
     }
 
     private List<ToolExecution> recordAssistantToolTurn(LoopRun run, AgentRuntimeModelResponse modelResponse,

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
@@ -74,8 +75,7 @@ class HertzBeatModelTest {
         assertEquals(2, chatModel.prompt.getInstructions().size());
         SystemMessage runtimeContext = assertInstanceOf(SystemMessage.class,
                 chatModel.prompt.getInstructions().get(1));
-        assertEquals("runtime", runtimeContext.getMetadata().get("runtimeRuntimePrompt.Frame"));
-        assertFalse(runtimeContext.getMetadata().containsKey("runtimePromptTrusted"));
+        assertFalse(runtimeContext.getMetadata().containsKey("runtimeRuntimePrompt.Frame"));
         assertTrue(runtimeContext.getText().contains("## Runtime"));
         assertFalse(runtimeContext.getText().contains("Trusted"));
         assertTrue(runtimeContext.getText().contains("context"));
@@ -151,8 +151,7 @@ class HertzBeatModelTest {
         SystemMessage runtimeContext = assertInstanceOf(SystemMessage.class, messages.get(1));
         assertFalse(runtimeContext.getText().contains("sender=alice"));
         UserMessage userContextMessage = assertInstanceOf(UserMessage.class, messages.get(2));
-        assertEquals("runtime", userContextMessage.getMetadata().get("runtimeRuntimePrompt.Frame"));
-        assertFalse(userContextMessage.getMetadata().containsKey("runtimePromptTrusted"));
+        assertFalse(userContextMessage.getMetadata().containsKey("runtimeRuntimePrompt.Frame"));
         assertTrue(userContextMessage.getText().contains("## Runtime"));
         assertFalse(userContextMessage.getText().contains("Untrusted"));
         assertFalse(userContextMessage.getText().contains("<untrusted_context>"));
@@ -222,7 +221,6 @@ class HertzBeatModelTest {
         assertEquals(AgentRuntimeModelResponse.ResponseType.INVALID_RESPONSE, response.getType());
         assertNull(response.getFinalAnswer());
         assertTrue(response.getToolCalls().isEmpty());
-        assertEquals("empty_model_response", response.getErrorCode());
         assertEquals("Runtime model returned neither a final answer nor tool calls.", response.getErrorMessage());
         assertEquals(11, response.getUsage().getTotalTokens());
     }
@@ -247,17 +245,16 @@ class HertzBeatModelTest {
         assertTrue(definition.inputSchema().contains("\"type\": \"object\""));
         assertTrue(definition.inputSchema().contains("\"pageSize\""));
         assertTrue(definition.inputSchema().contains("\"additionalProperties\": false"));
-        assertEquals("Tool execution is disabled in the Spring AI adapter. "
-                        + "Return the tool call to AgentRuntimeLoop for controlled execution.",
-                callback.call("{\"pageSize\":1}"));
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                () -> callback.call("{\"pageSize\":1}"));
+        assertEquals("Tool execution is owned by AgentRuntimeLoop", exception.getMessage());
         assertTrue(chatModel.prompt.getContents().contains("## Tool Protocol"));
         assertTrue(chatModel.prompt.getContents().contains("monitor.get"));
         assertTrue(chatModel.prompt.getContents().contains("Query monitor inventory"));
         assertTrue(chatModel.prompt.getInstructions().stream()
                 .filter(SystemMessage.class::isInstance)
                 .map(SystemMessage.class::cast)
-                .anyMatch(message -> "tool_protocol".equals(message.getMetadata().get("runtimeRuntimePrompt.Frame"))
-                        && message.getText().contains("## Tool Protocol")));
+                .anyMatch(message -> message.getText().contains("## Tool Protocol")));
         assertFalse(chatModel.prompt.getInstructions().stream()
                 .filter(UserMessage.class::isInstance)
                 .map(UserMessage.class::cast)
@@ -277,7 +274,7 @@ class HertzBeatModelTest {
         assertEquals(7, messages.size());
         assertInstanceOf(SystemMessage.class, messages.get(0));
         SystemMessage contextMessage = assertInstanceOf(SystemMessage.class, messages.get(1));
-        assertEquals("runtime", contextMessage.getMetadata().get("runtimeRuntimePrompt.Frame"));
+        assertFalse(contextMessage.getMetadata().containsKey("runtimeRuntimePrompt.Frame"));
         assertTrue(contextMessage.getText().contains("## Runtime"));
         assertFalse(contextMessage.getText().contains("Earlier question"));
 

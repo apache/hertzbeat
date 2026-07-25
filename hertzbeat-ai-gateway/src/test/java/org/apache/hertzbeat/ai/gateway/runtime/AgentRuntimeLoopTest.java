@@ -122,7 +122,6 @@ class AgentRuntimeLoopTest {
     void invalidModelResponseShouldStopWithModelError() {
         FakeToolCatalogService catalog = new FakeToolCatalogService(List.of(queryTool()));
         QueueModelClient modelClient = new QueueModelClient(List.of(AgentRuntimeModelResponse.invalidResponse(
-                "empty_model_response",
                 "Runtime model returned neither a final answer nor tool calls.",
                 null)));
 
@@ -140,7 +139,6 @@ class AgentRuntimeLoopTest {
         List<AgentRuntimeEvent> events = new ArrayList<>();
         String errorMessage = "Runtime model returned a large invalid response: " + "x".repeat(1500);
         QueueModelClient modelClient = new QueueModelClient(List.of(AgentRuntimeModelResponse.invalidResponse(
-                "large_invalid_model_response",
                 errorMessage,
                 null)));
 
