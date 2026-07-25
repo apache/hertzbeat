@@ -19,11 +19,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { monitorRoutePaths } from '@/shared/navigation/app-paths';
 import { useQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import {
+  buildMonitorCreatePath,
   buildMonitorRoutePath,
   monitorAppOptions,
   monitorSelectionScope,
@@ -70,7 +70,7 @@ export function useMonitorListController() {
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: commands.refresh,
       create: () => {
-        void navigate(monitorRoutePaths.create);
+        void navigate(buildMonitorCreatePath(query.app, `${location.pathname}${location.search}`));
       },
       open: (id: number, mode: 'view' | 'edit') => {
         void navigate(buildMonitorRoutePath(id, mode, `${location.pathname}${location.search}`));

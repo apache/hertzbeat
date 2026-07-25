@@ -107,3 +107,13 @@ export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', 
   const pathname = mode === 'edit' ? buildMonitorEditPath(monitorId) : buildMonitorDetailPath(monitorId);
   return `${pathname}?returnTo=${encodeURIComponent(safeMonitorReturnTo(returnTo))}`;
 }
+
+export function buildMonitorCreatePath(app: string, returnTo: string) {
+  const normalizedApp = app.trim();
+  if (!normalizedApp) return monitorRoutePaths.create;
+  const params = new URLSearchParams({
+    app: normalizedApp,
+    returnTo: safeMonitorReturnTo(returnTo)
+  });
+  return `${monitorRoutePaths.create}?${params.toString()}`;
+}
