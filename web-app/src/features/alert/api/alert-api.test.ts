@@ -6,15 +6,19 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+const { apiMessageDelete, apiMessageGet } = vi.hoisted(() => ({
+  apiMessageDelete: vi.fn(),
+  apiMessageGet: vi.fn()
+}));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageDelete,
   apiMessageGet
 }));
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { buildAlertListPath, loadAlertGroups, loadAlertSummary } from './alert-api';
+import { buildAlertListPath, deleteAlertGroups, loadAlertGroups, loadAlertSummary } from './alert-api';
 import { AlertContractError, AlertRequestFailure } from '../model/alert-model';
 
 const query = {
@@ -142,5 +146,15 @@ describe('alert API', () => {
 
     apiMessageGet.mockRejectedValueOnce(new ApiMessageError('private list failure', { status: 400 }));
     await expect(loadAlertGroups(query)).rejects.toMatchObject({ kind: 'error' });
+  });
+
+  it('owns the group-delete path and rejects invalid ids before transport', async () => {
+    apiMessageDelete.mockResolvedValue(undefined);
+
+    await expect(deleteAlertGroups([9, 7, 9])).resolves.toBeUndefined();
+    expect(apiMessageDelete).toHaveBeenCalledWith('/api/alerts/group?ids=7&ids=9');
+
+    await expect(deleteAlertGroups([0])).rejects.toBeInstanceOf(AlertContractError);
+    expect(apiMessageDelete).toHaveBeenCalledTimes(1);
   });
 });

@@ -18,7 +18,9 @@ export function normalizeAlertApiFailure(error: unknown) {
   // unavailable. Other HTTP and envelope failures remain ordinary errors.
   const unavailable =
     error.cause !== undefined || error.status === undefined || unavailableHttpStatuses.has(error.status);
-  return new AlertRequestFailure(unavailable ? 'unavailable' : 'error');
+  const rejected =
+    error.code !== undefined || (error.status !== undefined && error.status >= 400 && error.status < 500);
+  return new AlertRequestFailure(unavailable ? 'unavailable' : 'error', rejected ? 'rejected' : 'uncertain');
 }
 
 export async function alertApiRequest<T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> {

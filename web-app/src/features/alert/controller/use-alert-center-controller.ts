@@ -41,6 +41,7 @@ import type {
   AlertSummaryState
 } from '../model/alert-center-view-model';
 import { alertCenterQueryKeys } from './alert-center-query-keys';
+import { useAlertCenterDeleteController } from './use-alert-center-delete-controller';
 import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
 
 export function useAlertCenterController() {
@@ -59,6 +60,7 @@ export function useAlertCenterController() {
     queryFn: ({ signal }) => loadAlertGroups(query, signal)
   });
   useAlertCenterPageCorrection(query, listQuery.data, setParams);
+  const deletion = useAlertCenterDeleteController(listQuery.refetch, summaryQuery.refetch);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));
@@ -77,11 +79,13 @@ export function useAlertCenterController() {
   };
 
   const state: AlertCenterState = {
+    command: deletion.command,
     draft: draft.value,
     list: resolveListState(listQuery),
     query,
     refreshing: summaryQuery.isFetching || listQuery.isFetching,
-    summary: resolveSummaryState(summaryQuery)
+    summary: resolveSummaryState(summaryQuery),
+    recovery: deletion.recovery
   };
 
   return {
@@ -97,6 +101,8 @@ export function useAlertCenterController() {
       }),
     retryList: () => listQuery.refetch(),
     retrySummary: () => summaryQuery.refetch(),
+    retryDelete: deletion.retry,
+    remove: (group: { id: number }) => deletion.remove(group.id),
     refresh: () => Promise.all([summaryQuery.refetch(), listQuery.refetch()]),
     manageRules: () => void navigate(alertRoutePaths.rules)
   };

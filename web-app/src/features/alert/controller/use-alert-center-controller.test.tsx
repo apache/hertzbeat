@@ -31,14 +31,19 @@ import {
 import { useAlertCenterController } from './use-alert-center-controller';
 
 const api = vi.hoisted(() => ({
+  deleteAlertGroups: vi.fn(),
   loadAlertGroups: vi.fn(),
-  loadAlertSummary: vi.fn()
+  loadAlertSummary: vi.fn(),
+  notification: vi.fn()
 }));
 
 vi.mock('../api/alert-api', () => ({
+  deleteAlertGroups: api.deleteAlertGroups,
   loadAlertGroups: api.loadAlertGroups,
   loadAlertSummary: api.loadAlertSummary
 }));
+vi.mock('@refinedev/core', () => ({ useNotification: () => ({ open: api.notification }) }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const summary: AlertSummary = {
   total: 3,
@@ -52,6 +57,7 @@ const summary: AlertSummary = {
 describe('Alert Center controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.deleteAlertGroups.mockResolvedValue(undefined);
     api.loadAlertSummary.mockResolvedValue(summary);
     api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve(page(query)));
   });
@@ -215,6 +221,20 @@ describe('Alert Center controller', () => {
     await act(async () => result.current.refresh());
     expect(api.loadAlertGroups).toHaveBeenCalledTimes(2);
     expect(api.loadAlertSummary).toHaveBeenCalledTimes(2);
+  });
+
+  it('projects a proven group deletion before reporting success', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+
+    await act(async () => result.current.remove({ id: 7 }));
+
+    expect(api.deleteAlertGroups).toHaveBeenCalledWith([7]);
+    expect(api.notification).toHaveBeenCalledWith({
+      type: 'success',
+      message: 'alert.deleteSuccess'
+    });
+    expect(result.current.state).toMatchObject({ command: 'idle', recovery: null });
   });
 });
 

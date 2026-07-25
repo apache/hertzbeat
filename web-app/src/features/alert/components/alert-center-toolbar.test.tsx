@@ -109,6 +109,7 @@ function renderToolbar() {
 
 function createCallbacks() {
   return {
+    disabled: false,
     onDraftChange: vi.fn(),
     onSubmit: vi.fn(),
     onStatusChange: vi.fn(),

@@ -18,6 +18,7 @@
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import type { AlertGroup, AlertQuery, AlertSummary } from './alert-model';
+import type { AlertCenterDeleteRecovery } from './alert-center-operation-state';
 
 export type AlertFilterDraft = Pick<AlertQuery, 'search' | 'serviceName' | 'serviceNamespace' | 'environment'>;
 
@@ -28,9 +29,11 @@ export type AlertListState = RemotePageState<AlertGroup, 'unavailable' | 'error'
 export type AlertSummaryState = RemotePayloadState<{ summary: AlertSummary }, 'unavailable' | 'error'>;
 
 export type AlertCenterState = {
+  command: 'deleting' | 'recovering' | 'idle';
   draft: AlertFilterDraft;
   list: AlertListState;
   query: AlertQuery;
   refreshing: boolean;
+  recovery: AlertCenterDeleteRecovery | null;
   summary: AlertSummaryState;
 };

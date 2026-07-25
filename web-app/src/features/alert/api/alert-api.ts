@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { apiMessageGet } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
 import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 
-import { writeAlertQuery, type AlertQuery } from '../model/alert-model';
+import { AlertContractError, writeAlertQuery, type AlertQuery } from '../model/alert-model';
 import { alertApiRequest } from './alert-api-failure';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
@@ -45,4 +45,18 @@ export function loadAlertGroups(query: AlertQuery, signal?: AbortSignal) {
     const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
     return parseAlertGroupPage(response, query);
   }, signal);
+}
+
+export function deleteAlertGroups(ids: number[]) {
+  return alertApiRequest(() => apiMessageDelete(buildAlertDeletePath(ids)));
+}
+
+function buildAlertDeletePath(ids: number[]) {
+  const uniqueIds = [...new Set(ids)].sort((left, right) => left - right);
+  if (uniqueIds.length === 0 || uniqueIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertContractError('Alert group ids are invalid');
+  }
+  const params = new URLSearchParams();
+  uniqueIds.forEach(id => params.append('ids', String(id)));
+  return `/api/alerts/group?${params.toString()}`;
 }

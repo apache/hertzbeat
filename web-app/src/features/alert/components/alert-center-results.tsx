@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Table, Tag } from 'antd';
+import { Alert, Button, Empty, Popconfirm, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
@@ -33,14 +33,24 @@ import { AlertCenterRetryButton } from './alert-center-retry-button';
 type Translator = (key: string) => string;
 
 type AlertCenterResultsProps = {
+  busy: boolean;
   state: AlertListState;
   pageIndex: number;
   pageSize: number;
   onPageChange: (page: number, pageSize: number) => void;
+  onRemove: (group: AlertGroup) => void | Promise<unknown>;
   retry: () => unknown;
 };
 
-export function AlertCenterResults({ state, pageIndex, pageSize, onPageChange, retry }: AlertCenterResultsProps) {
+export function AlertCenterResults({
+  busy,
+  state,
+  pageIndex,
+  pageSize,
+  onPageChange,
+  onRemove,
+  retry
+}: AlertCenterResultsProps) {
   const { t } = useTranslation();
   if (state.kind === 'unavailable') {
     return (
@@ -72,9 +82,10 @@ export function AlertCenterResults({ state, pageIndex, pageSize, onPageChange, r
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
-      columns={buildColumns(t)}
+      columns={buildColumns(t, busy, onRemove)}
       pagination={{
         current: pageIndex + 1,
+        disabled: busy,
         pageSize,
         pageSizeOptions: [...alertPageSizes],
         showSizeChanger: true,
@@ -85,7 +96,11 @@ export function AlertCenterResults({ state, pageIndex, pageSize, onPageChange, r
   );
 }
 
-function buildColumns(t: Translator): ColumnsType<AlertGroup> {
+function buildColumns(
+  t: Translator,
+  busy: boolean,
+  onRemove: (group: AlertGroup) => void | Promise<unknown>
+): ColumnsType<AlertGroup> {
   return [
     { title: t('alert.name'), render: (_value, row) => alertName(row) },
     {
@@ -119,6 +134,23 @@ function buildColumns(t: Translator): ColumnsType<AlertGroup> {
       dataIndex: 'gmtUpdate',
       width: 190,
       render: (value: AlertGroup['gmtUpdate']) => value ?? '—'
+    },
+    {
+      title: t('common.actions'),
+      width: 100,
+      render: (_value, group) => (
+        <Popconfirm
+          title={t('alert.deleteConfirm')}
+          okText={t('alert.confirmDelete')}
+          disabled={busy}
+          okButtonProps={{ danger: true, disabled: busy }}
+          onConfirm={() => !busy && void onRemove(group)}
+        >
+          <Button type="link" danger disabled={busy}>
+            {t('alert.delete')}
+          </Button>
+        </Popconfirm>
+      )
     }
   ];
 }

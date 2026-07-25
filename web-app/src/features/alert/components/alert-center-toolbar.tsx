@@ -30,6 +30,7 @@ import type { AlertDraftField, AlertFilterDraft } from '../model/alert-center-vi
 
 type AlertCenterToolbarProps = {
   draft: AlertFilterDraft;
+  disabled: boolean;
   query: AlertQuery;
   refreshing: boolean;
   onDraftChange: (field: AlertDraftField, value: string) => void;
@@ -41,6 +42,7 @@ type AlertCenterToolbarProps = {
 
 export function AlertCenterToolbar({
   draft,
+  disabled,
   query,
   refreshing,
   onDraftChange,
@@ -52,8 +54,9 @@ export function AlertCenterToolbar({
   const { t } = useTranslation();
   return (
     <div className={styles.toolbar}>
-      <AlertScopeFilterFields draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
+      <AlertScopeFilterFields disabled={disabled} draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
       <Select<AlertStatusFilter>
+        disabled={disabled}
         value={query.status}
         onChange={onStatusChange}
         options={['', ...alertStatusFilters].map(value => ({
@@ -62,6 +65,7 @@ export function AlertCenterToolbar({
         }))}
       />
       <Select<AlertSeverity>
+        disabled={disabled}
         value={query.severity}
         onChange={onSeverityChange}
         options={['', ...alertSeverities].map(value => ({
@@ -69,11 +73,12 @@ export function AlertCenterToolbar({
           label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
         }))}
       />
-      <Button type="primary" onClick={onSubmit}>
+      <Button type="primary" disabled={disabled} onClick={onSubmit}>
         {t('common.query')}
       </Button>
       <Button
         loading={refreshing}
+        disabled={disabled}
         onClick={() => {
           void onRefresh();
         }}
@@ -85,17 +90,19 @@ export function AlertCenterToolbar({
 }
 
 type AlertScopeFilterFieldsProps = {
+  disabled: boolean;
   draft: AlertFilterDraft;
   onDraftChange: (field: AlertDraftField, value: string) => void;
   onSubmit: () => void;
 };
 
-function AlertScopeFilterFields({ draft, onDraftChange, onSubmit }: AlertScopeFilterFieldsProps) {
+function AlertScopeFilterFields({ disabled, draft, onDraftChange, onSubmit }: AlertScopeFilterFieldsProps) {
   const { t } = useTranslation();
   return (
     <>
       <Input
         allowClear
+        disabled={disabled}
         value={draft.search}
         placeholder={t('alert.search')}
         onChange={event => onDraftChange('search', event.target.value)}
@@ -103,6 +110,7 @@ function AlertScopeFilterFields({ draft, onDraftChange, onSubmit }: AlertScopeFi
       />
       <Input
         allowClear
+        disabled={disabled}
         value={draft.serviceName}
         placeholder={t('instrumentation.field.serviceName')}
         onChange={event => onDraftChange('serviceName', event.target.value)}
@@ -110,6 +118,7 @@ function AlertScopeFilterFields({ draft, onDraftChange, onSubmit }: AlertScopeFi
       />
       <Input
         allowClear
+        disabled={disabled}
         value={draft.serviceNamespace}
         placeholder={t('instrumentation.field.serviceNamespace')}
         onChange={event => onDraftChange('serviceNamespace', event.target.value)}
@@ -117,6 +126,7 @@ function AlertScopeFilterFields({ draft, onDraftChange, onSubmit }: AlertScopeFi
       />
       <Input
         allowClear
+        disabled={disabled}
         value={draft.environment}
         placeholder={t('instrumentation.field.serviceEnvironment')}
         onChange={event => onDraftChange('environment', event.target.value)}

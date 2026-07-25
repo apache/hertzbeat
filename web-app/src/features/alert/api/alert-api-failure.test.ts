@@ -30,6 +30,20 @@ describe('Alert Center API failure boundary', () => {
     expect(normalizeAlertApiFailure(error)).toMatchObject({ kind });
   });
 
+  it('distinguishes definite request rejection from an uncertain write outcome', () => {
+    expect(normalizeAlertApiFailure(new ApiMessageError('rejected', { status: 400 }))).toMatchObject({
+      writeOutcome: 'rejected'
+    });
+    expect(normalizeAlertApiFailure(new ApiMessageError('offline', { status: 503 }))).toMatchObject({
+      writeOutcome: 'uncertain'
+    });
+    expect(
+      normalizeAlertApiFailure(new ApiMessageError('application rejection', { code: 1, status: 200 }))
+    ).toMatchObject({
+      writeOutcome: 'rejected'
+    });
+  });
+
   it('redacts transport details and preserves non-transport domain errors', () => {
     const normalized = normalizeAlertApiFailure(
       new ApiMessageError('private backend response', { status: 503, cause: new Error('private cause') })

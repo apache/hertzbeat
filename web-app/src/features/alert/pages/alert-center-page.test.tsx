@@ -28,8 +28,10 @@ const controller = vi.hoisted(() => ({
   changeSeverity: vi.fn(),
   changeStatus: vi.fn(),
   manageRules: vi.fn(),
+  remove: vi.fn(),
   refresh: vi.fn(),
   retryList: vi.fn(),
+  retryDelete: vi.fn(),
   retrySummary: vi.fn(),
   setDraft: vi.fn(),
   state: {},
@@ -98,6 +100,15 @@ describe('AlertCenterPage', () => {
     expect(screen.queryByPlaceholderText(/instrumentation\.field\./)).not.toBeInTheDocument();
   });
 
+  it('confirms deletion before delegating the selected alert group', async () => {
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.delete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmDelete' }));
+
+    expect(controller.remove).toHaveBeenCalledWith(record);
+  });
+
   it.each([
     ['unavailable', 'alert.listUnavailable'],
     ['error', 'alert.listLoadFailed']
@@ -108,6 +119,19 @@ describe('AlertCenterPage', () => {
     expect(screen.getByText(evidence)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(controller.retryList).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps uncertain delete proof visible and retries without another UI write', () => {
+    controller.state = buildState({
+      command: 'idle',
+      recovery: { id: 1, phase: 'proof', failure: 'unavailable' }
+    });
+    render(<AlertCenterPage />);
+
+    expect(screen.getByText('common.unavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.retryDelete).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'alert.delete' })).toBeDisabled();
   });
 
   it('keeps an out-of-range ready page as a table instead of an empty result', () => {
@@ -146,6 +170,8 @@ function buildState(override: Record<string, unknown> = {}) {
       pageSize: 8
     },
     refreshing: false,
+    command: 'idle',
+    recovery: null,
     summary: { kind: 'ready', summary },
     ...override
   };

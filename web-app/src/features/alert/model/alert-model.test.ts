@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   alertFailureKind,
+  alertWriteOutcome,
   AlertContractError,
   AlertRequestFailure,
   readAlertQuery,
@@ -74,5 +75,7 @@ describe('alert center model', () => {
     expect(alertFailureKind(new AlertRequestFailure('error'))).toBe('error');
     expect(alertFailureKind(new AlertContractError('invalid contract'))).toBe('error');
     expect(alertFailureKind(new Error('unknown failure'))).toBe('error');
+    expect(alertWriteOutcome(new AlertRequestFailure('error', 'rejected'))).toBe('rejected');
+    expect(alertWriteOutcome(new Error('unknown failure'))).toBe('uncertain');
   });
 });

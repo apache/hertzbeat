@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertManagementNav } from '../components/alert-management-nav';
 import styles from '../shared/alert-center.module.css';
 import { AlertCenterResults } from '../components/alert-center-results';
+import { AlertCenterRecovery } from '../components/alert-center-recovery';
 import { AlertCenterSummary } from '../components/alert-center-summary';
 import { AlertCenterToolbar } from '../components/alert-center-toolbar';
 import { useAlertCenterController } from '../controller/use-alert-center-controller';
@@ -28,7 +29,8 @@ import { useAlertCenterController } from '../controller/use-alert-center-control
 export function AlertCenterPage() {
   const { t } = useTranslation();
   const controller = useAlertCenterController();
-  const { draft, list, query, refreshing, summary } = controller.state;
+  const { command, draft, list, query, recovery, refreshing, summary } = controller.state;
+  const busy = command !== 'idle' || recovery !== null;
 
   return (
     <div className={styles.page}>
@@ -47,6 +49,7 @@ export function AlertCenterPage() {
       </header>
       <AlertManagementNav />
       <AlertCenterToolbar
+        disabled={busy}
         draft={draft}
         query={query}
         refreshing={refreshing}
@@ -57,11 +60,14 @@ export function AlertCenterPage() {
         onRefresh={controller.refresh}
       />
       <AlertCenterSummary state={summary} retry={controller.retrySummary} />
+      <AlertCenterRecovery recovery={recovery} retrying={command === 'recovering'} retry={controller.retryDelete} />
       <AlertCenterResults
+        busy={busy}
         state={list}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
         onPageChange={controller.changePage}
+        onRemove={controller.remove}
         retry={controller.retryList}
       />
     </div>

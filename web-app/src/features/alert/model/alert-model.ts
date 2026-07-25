@@ -68,10 +68,14 @@ export class AlertContractError extends Error {
 }
 
 export type AlertFailureKind = 'unavailable' | 'error';
+export type AlertWriteOutcome = 'rejected' | 'uncertain';
 
 /** Stable request evidence emitted by the Alert Center API boundary. */
 export class AlertRequestFailure extends Error {
-  constructor(readonly kind: AlertFailureKind) {
+  constructor(
+    readonly kind: AlertFailureKind,
+    readonly writeOutcome: AlertWriteOutcome = 'uncertain'
+  ) {
     super('Alert request failed');
     this.name = 'AlertRequestFailure';
   }
@@ -79,6 +83,10 @@ export class AlertRequestFailure extends Error {
 
 export function alertFailureKind(error: unknown): AlertFailureKind {
   return error instanceof AlertRequestFailure ? error.kind : 'error';
+}
+
+export function alertWriteOutcome(error: unknown): AlertWriteOutcome {
+  return error instanceof AlertRequestFailure ? error.writeOutcome : 'uncertain';
 }
 
 export function readAlertQuery(params: URLSearchParams): AlertQuery {
