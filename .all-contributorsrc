@@ -2869,6 +2869,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "turanalmammadov",
+      "name": "Turan Almammadov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16321061?v=4",
+      "profile": "https://turanalmammadov.com/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
