@@ -63,6 +63,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
+    private static final String EXECUTE = "execute";
     private static final int CONNECTION_LOCK_STRIPES = 64;
     private static final Object[] CONNECTION_LOCKS = createConnectionLocks();
 
@@ -229,6 +230,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     }
                 }
                 case RUN_SCRIPT -> runScript(metrics, timeout, reuseConnection);
+                case EXECUTE -> executeUpdate(metrics, timeout, builder);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
@@ -303,6 +305,21 @@ public class JdbcCommonCollect extends AbstractCollect {
             ScriptUtils.executeSqlScript(connection, rc);
         } finally {
             closeStatementAndConnection(statement, reuseConnection);
+        }
+    }
+
+    private void executeUpdate(Metrics metrics, int timeout, CollectRep.MetricsData.Builder builder) throws Exception {
+        JdbcProtocol jdbcProtocol = metrics.getJdbc();
+        String databaseUrl = resolveDatabaseUrl(jdbcProtocol);
+        try (Connection connection = DriverManager.getConnection(
+                databaseUrl, jdbcProtocol.getUsername(), jdbcProtocol.getPassword());
+             Statement statement = connection.createStatement()) {
+            int timeoutSecond = Math.max(1, timeout / 1000);
+            statement.setQueryTimeout(timeoutSecond);
+            int affectedRows = statement.executeUpdate(jdbcProtocol.getSql());
+            builder.addValueRow(CollectRep.ValueRow.newBuilder()
+                .addColumn(String.valueOf(affectedRows))
+                .build());
         }
     }
 

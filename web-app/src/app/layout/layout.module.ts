@@ -16,9 +16,11 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 import { LayoutBasicComponent } from './basic/basic.component';
+import { AiSessionNavigationComponent } from './basic/ai-session-navigation.component';
 import { HeaderFullScreenComponent } from './basic/widgets/fullscreen.component';
 import { HeaderI18nComponent } from './basic/widgets/i18n.component';
 import { HeaderAiChatComponent } from './basic/widgets/chat-input.component';
@@ -27,7 +29,7 @@ import { HeaderNotifyComponent } from './basic/widgets/notify.component';
 import { LayoutBlankComponent } from './blank/blank.component';
 import { SettingDrawerI18nDirective } from './basic/directives/setting-drawer-i18n.directive';
 
-const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent];
+const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent, AiSessionNavigationComponent];
 const DIRECTIVES = [SettingDrawerI18nDirective];
 
 const HEADER_COMPONENTS = [
@@ -40,7 +42,6 @@ const HEADER_COMPONENTS = [
 
 import { LayoutPassportComponent } from './passport/passport.component';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
@@ -61,6 +62,7 @@ const PASSPORT = [LayoutPassportComponent];
     GlobalFooterModule,
     NzDropDownModule,
     NzInputModule,
+    NzModalModule,
     NzAutocompleteModule,
     NzGridModule,
     NzFormModule,
@@ -69,7 +71,6 @@ const PASSPORT = [LayoutPassportComponent];
     NzAvatarModule,
     NzIconModule,
     NzButtonModule,
-    NzModalModule,
     NzTagModule,
     NzDividerModule,
     NzListComponent,

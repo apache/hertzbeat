@@ -373,3 +373,12 @@ hertzbeat:
       concurrency-limit: 256
       reject-when-limit-reached: true
       task-termination-timeout: 5000
+  agent:
+    gateway:
+      runtime:
+        provider: openai-compatible
+        model: tencent/hy3:free
+        base-url: https://openrouter.ai/api/v1
+        api-key: ${HERTZBEAT_AGENT_GATEWAY_API_KEY:}
+        temperature: 0.2
+        max-completion-tokens: 4096

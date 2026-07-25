@@ -1,12 +1,12 @@
 import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, MenuService, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
-import { Subject } from 'rxjs';
+import { filter, Subject, takeUntil } from 'rxjs';
 
 import { CONSTANTS } from '../../shared/constants';
-import { AiChatModalService } from '../../shared/services/ai-chat-modal.service';
 
 @Component({
   selector: 'layout-basic',
@@ -52,14 +52,24 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
         <header-user></header-user>
       </layout-default-header-item>
       <ng-template #navTpl>
-        <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
+        <div class="workspace-navigation">
+          <app-ai-session-navigation></app-ai-session-navigation>
+          <button type="button" class="function-navigation-toggle" (click)="functionNavigationCollapsed = !functionNavigationCollapsed">
+            <i nz-icon nzType="appstore"></i>
+            <span>{{ 'ai.navigation.functions' | i18n }}</span>
+            <i nz-icon class="primary-chevron" [nzType]="functionNavigationCollapsed ? 'right' : 'down'"></i>
+          </button>
+          <div class="function-navigation" [class.collapsed]="functionNavigationCollapsed">
+            <layout-default-nav class="d-block" openStrictly="true"></layout-default-nav>
+          </div>
+        </div>
       </ng-template>
       <ng-template #contentTpl>
         <router-outlet></router-outlet>
       </ng-template>
     </layout-default>
     <global-footer>
-      <div style="margin-top: 30px">
+      <div>
         Apache HertzBeat™ {{ version }}<br />
         Copyright &copy; {{ currentYear }}
         <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
@@ -68,28 +78,10 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
       </div>
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer" appSettingDrawerI18n></setting-drawer>
-
-    <!-- AI Chat Button -->
-    <div class="ai-chat-button-container">
-      <div class="ai-chat-button" (click)="openChatModal()">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="28"
-          height="28"
-          fill="white"
-          style="min-width:36px; min-height:36px;"
-        >
-          <path
-            d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z"
-          />
-        </svg>
-      </div>
-    </div>
   `,
   styleUrls: ['./basic.component.less']
 })
-export class LayoutBasicComponent implements OnDestroy {
+export class LayoutBasicComponent implements OnInit, OnDestroy {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
@@ -97,6 +89,7 @@ export class LayoutBasicComponent implements OnDestroy {
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
   aiChatToggleStatus = false;
+  functionNavigationCollapsed = false;
   showSettingDrawer = !environment.production;
   version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();
@@ -120,15 +113,28 @@ export class LayoutBasicComponent implements OnDestroy {
   constructor(
     private settings: SettingsService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
-    private aiChatModalService: AiChatModalService
+    private router: Router,
+    private menuService: MenuService
   ) {}
+
+  ngOnInit(): void {
+    if (this.router.url.startsWith('/ai/')) {
+      this.menuService.toggleOpen(null, { allStatus: false });
+    }
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(event => {
+        if (event.urlAfterRedirects.startsWith('/ai/')) {
+          this.menuService.toggleOpen(null, { allStatus: false });
+        }
+      });
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  openChatModal(): void {
-    this.aiChatModalService.openChatModal();
   }
 }

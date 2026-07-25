@@ -110,6 +110,9 @@ import java.util.Collections;
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
 
+    private static final String PARSE_AGENT_RAW = "agent_raw";
+    private static final int MAX_AGENT_RESPONSE_CHARS = 65_536;
+
     /**
      * Pre-compiled regex patterns for dangerous Xpath detection.
      * Compiled once at class load for performance.
@@ -205,6 +208,8 @@ public class HttpCollectImpl extends AbstractCollect {
                                 parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                         case DispatchConstants.PARSE_CONFIG ->
                                 parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                        case PARSE_AGENT_RAW ->
+                                parseResponseByAgentRaw(resp, metrics.getAliasFields(), builder, responseTime, statusCode);
                         default ->
                                 parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     }
@@ -244,6 +249,27 @@ public class HttpCollectImpl extends AbstractCollect {
                 request.abort();
             }
         }
+    }
+
+    private void parseResponseByAgentRaw(String response, List<String> aliases,
+                                         CollectRep.MetricsData.Builder builder,
+                                         long responseTime, int statusCode) {
+        String boundedResponse = response.length() <= MAX_AGENT_RESPONSE_CHARS
+            ? response
+            : response.substring(0, MAX_AGENT_RESPONSE_CHARS);
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String alias : aliases) {
+            if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
+                valueRowBuilder.addColumn(String.valueOf(statusCode));
+            } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
+            } else if ("body".equalsIgnoreCase(alias)) {
+                valueRowBuilder.addColumn(boundedResponse);
+            } else {
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+            }
+        }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private boolean isXmlParseType(String parseType) {

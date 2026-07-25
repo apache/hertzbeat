@@ -17,430 +17,430 @@
  * under the License.
  */
 
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzModalService } from 'ng-zorro-antd/modal';
+import { combineLatest, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
-import { ParamDefine } from '../../../pojo/ParamDefine';
-import {
-  AiChatService,
-  ChatMessage,
-  ChatConversation,
-  SecurityForm,
-  DEFAULT_SECURITY_FORM,
-  SopSchedule,
-  SkillInfo
-} from '../../../service/ai-chat.service';
+import { AgentSession, AgentTranscriptEntry, AiChatService, GatewayEvent, TranscriptMessage } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
+import { AiSessionStore, AiSessionType } from '../../services/ai-session.store';
+
+type AssistantRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+type RunItemStatus = 'streaming' | 'running' | 'completed' | 'failed' | 'waiting_approval';
+type ApprovalStatus = 'waiting' | 'resolving' | 'approved' | 'rejected';
+
+interface UserMessage {
+  content: string;
+  createdAt: Date;
+}
+
+interface AssistantRunItem {
+  type: 'text' | 'tool';
+  itemId: string;
+  status: RunItemStatus;
+  content?: string;
+  pendingContent?: string;
+  toolName?: string;
+  toolCallUid?: string;
+  toolInput?: Record<string, unknown>;
+  toolInputExpanded?: boolean;
+  approval?: PendingApproval;
+  interaction?: PendingInteraction;
+}
+
+interface AssistantRun {
+  runUid?: string;
+  status: AssistantRunStatus;
+  items: AssistantRunItem[];
+  createdAt: Date;
+  error?: string;
+}
+
+interface ChatTurn {
+  id: string;
+  runId?: number;
+  user: UserMessage;
+  assistant: AssistantRun;
+}
+
+interface ChatSession {
+  conversationId: string;
+  sessionUid?: string;
+  title: string;
+  updatedAt: Date;
+}
+
+interface PendingApproval {
+  approvalId: string;
+  toolName: string;
+  toolCallUid?: string;
+  message: string;
+  status: ApprovalStatus;
+}
+
+interface InteractionField {
+  field: string;
+  type: string;
+  label: string;
+  required: boolean;
+  placeholder?: string;
+}
+
+interface PendingInteraction {
+  interactionId: string;
+  targetTool: string;
+  title: string;
+  description: string;
+  fields: InteractionField[];
+  values: Record<string, unknown>;
+  status: 'waiting' | 'submitting' | 'submitted' | 'completed' | 'failed';
+}
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.less']
+  styleUrls: ['./chat.component.less'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChatComponent implements OnInit, OnDestroy {
-  /**
-   * Marker for skill report content that should be displayed directly to users
-   * without further AI processing.
-   */
-  private readonly SKILL_REPORT_MARKER = '[[SKILL_REPORT]]';
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLElement>;
 
-  @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
-
-  conversations: ChatConversation[] = [];
-  currentConversation: ChatConversation | null = null;
-  messages: ChatMessage[] = [];
+  sessionType: AiSessionType = 'chat';
+  currentSession: ChatSession | null = null;
+  turns: ChatTurn[] = [];
   newMessage = '';
   initialMessage = '';
-  isLoadingConversations = false;
+  isLoadingSessions = false;
   isSendingMessage = false;
-  sidebarCollapsed = false;
-  theme: string = 'default';
-  private scrollTimeout: any;
-
-  // Provider Configuration
-  isAiProviderConfigured = false;
+  isStopping = false;
+  theme = 'default';
+  activeRunUid?: string;
+  pendingApproval?: PendingApproval;
+  showScrollToBottom = false;
   showConfigModal = false;
   configLoading = false;
-  showSecurityFormModal = false;
-  aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
-  providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
+  aiProviderConfig = new ModelProviderConfig();
+  readonly providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
 
-  securityParamDefine: ParamDefine[] = [];
-  securityParams: any = {};
-
-  // Schedule Configuration
-  showScheduleModal = false;
-  scheduleLoading = false;
-  schedules: SopSchedule[] = [];
-  availableSkills: SkillInfo[] = [];
-  newSchedule: Partial<SopSchedule> = {
-    sopName: '',
-    cronExpression: '',
-    enabled: true
-  };
-  editingSchedule: SopSchedule | null = null;
+  private streamSubscription?: Subscription;
+  private routeSubscription?: Subscription;
+  private sessionLoadSubscription?: Subscription;
+  private renderFrame?: number;
+  private scrollFrame?: number;
+  private followOutput = true;
+  private readonly processedEventIds = new Set<string>();
 
   constructor(
     private aiChatService: AiChatService,
     private message: NzMessageService,
-    private modal: NzModalService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
+    private route: ActivatedRoute,
+    private sessionStore: AiSessionStore,
     private generalConfigSvc: GeneralConfigService
   ) {}
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    // Always load conversations first, regardless of AI configuration status
-    this.loadConversations();
-    this.checkAiConfiguration();
-    if (this.initialMessage) {
-      this.newMessage = this.initialMessage;
-      setTimeout(() => this.sendMessage(), 800);
-    }
+    this.onProviderChange(this.aiProviderConfig.code);
+    this.loadModelProviderConfig();
+    this.routeSubscription = combineLatest([this.route.data, this.route.paramMap, this.route.queryParamMap]).subscribe(([data, params]) => {
+      this.sessionType = (data['sessionType'] as AiSessionType | undefined) || 'chat';
+      const sessionUid = params.get('sessionUid');
+      if (sessionUid) {
+        this.loadSession(sessionUid);
+      } else if (this.sessionType === 'chat') {
+        this.initialMessage = this.sessionStore.takeInitialMessage();
+        this.createNewConversation();
+      } else {
+        this.currentSession = null;
+        this.turns = [];
+      }
+    });
   }
 
   ngOnDestroy(): void {
-    if (this.scrollTimeout) {
-      clearTimeout(this.scrollTimeout);
+    this.routeSubscription?.unsubscribe();
+    this.streamSubscription?.unsubscribe();
+    this.sessionLoadSubscription?.unsubscribe();
+    if (this.renderFrame !== undefined) {
+      cancelAnimationFrame(this.renderFrame);
+    }
+    if (this.scrollFrame !== undefined) {
+      cancelAnimationFrame(this.scrollFrame);
     }
   }
 
-  /**
-   * Debounced scroll to bottom to improve performance
-   */
-  private scrollToBottomDebounced(): void {
-    if (this.scrollTimeout) {
-      clearTimeout(this.scrollTimeout);
-    }
-    this.scrollTimeout = setTimeout(() => {
-      this.scrollToBottom();
-    }, 100);
-  }
-
-  /**
-   * Load all conversations
-   */
-  loadConversations(): void {
-    this.aiChatService.getConversations().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.conversations = response.data;
-          // If no current conversation, create a new one
-          if (this.conversations.length === 0) {
-            this.createNewConversation();
-          } else {
-            // Select the most recent conversation
-            this.selectConversation(this.conversations[0]);
-          }
-        } else {
-          console.error('Error in conversations response:', response);
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${response.msg || 'Unknown error'}`);
-        }
-      },
-      error: error => {
-        console.error('Error loading conversations:', error);
-        this.message.error(
-          `${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${error.status} ${error.statusText || error.message}`
-        );
-
-        // Create a fallback new conversation if API is not available
-        console.log('Creating fallback conversation...');
-        this.createFallbackConversation();
-      }
-    });
-  }
-
-  /**
-   * Create a new conversation
-   */
   createNewConversation(): void {
-    this.aiChatService.createConversation().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          const newConversation = response.data;
-          this.conversations.unshift(newConversation);
-          this.selectConversation(newConversation);
-          this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.created'));
-        } else {
-          console.error('Error in create conversation response:', response);
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${response.msg || 'Unknown error'}`);
-        }
-      },
-      error: error => {
-        console.error('Error creating conversation:', error);
-        this.message.error(
-          `${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${error.status} ${error.statusText || error.message}`
-        );
-
-        // Create fallback conversation
-        this.createFallbackConversation();
-      }
-    });
-  }
-
-  /**
-   * Create a fallback conversation when API is not available
-   */
-  createFallbackConversation(): void {
-    const fallbackConversation: ChatConversation = {
-      id: 0,
-      title: 'Offline Conversation',
-      gmtCreated: new Date(),
-      gmtUpdate: new Date(),
-      messages: []
-    };
-
-    this.conversations = [fallbackConversation];
-    this.selectConversation(fallbackConversation);
-
-    this.message.warning(this.i18nSvc.fanyi('ai.chat.offline.mode'));
-  }
-
-  /**
-   * Select a conversation and load its messages
-   */
-  selectConversation(conversation: ChatConversation): void {
-    this.currentConversation = conversation;
-    this.loadConversationHistory(conversation.id);
-  }
-
-  /**
-   * Load conversation history from the API
-   */
-  loadConversationHistory(conversationId: number): void {
-    this.isLoadingConversations = true;
-
-    this.aiChatService.getConversation(conversationId).subscribe({
-      next: response => {
-        this.isLoadingConversations = false;
-
-        if (response.code === 0 && response.data) {
-          this.messages = response.data.messages || [];
-          //calculate security form for each message
-          for (let i = 0; i < this.messages.length; i++) {
-            const message = this.messages[i];
-            const next = i < this.messages.length - 1 ? this.messages[i + 1].content : '';
-            message.securityForm = this.calculateShowSecurityForm(message.content, next);
-            message.content = message.securityForm.content;
-          }
-
-          this.cdr.detectChanges();
-          this.scrollToBottom();
-        } else {
-          console.error('Error loading conversation history:', response);
-          // Fallback to the messages from the conversation list if API fails
-          this.messages = this.currentConversation?.messages || [];
-          this.cdr.detectChanges();
-          this.scrollToBottom();
-        }
-      },
-      error: error => {
-        this.isLoadingConversations = false;
-        console.error('Error loading conversation history:', error);
-        // Fallback to the messages from the conversation list if API fails
-        this.messages = this.currentConversation?.messages || [];
-        this.cdr.detectChanges();
-        this.scrollToBottom();
-      }
-    });
-  }
-
-  /**
-   * Delete a conversation
-   */
-  deleteConversation(conversation: ChatConversation, event: Event): void {
-    event.stopPropagation();
-
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('ai.chat.conversation.delete.title'),
-      nzContent: this.i18nSvc.fanyi('ai.chat.conversation.delete.content'),
-      nzOkText: this.i18nSvc.fanyi('ai.chat.conversation.delete.confirm'),
-      nzOkType: 'primary',
-      nzOkDanger: true,
-      nzOnOk: () => {
-        this.aiChatService.deleteConversation(conversation.id).subscribe({
-          next: response => {
-            if (response.code === 0) {
-              // Remove from conversations list
-              this.conversations = this.conversations.filter(c => c.id !== conversation.id);
-
-              // If this was the current conversation, select another or create new
-              if (this.currentConversation?.id === conversation.id) {
-                if (this.conversations.length > 0) {
-                  this.selectConversation(this.conversations[0]);
-                } else {
-                  this.createNewConversation();
-                }
-              }
-
-              this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.delete.success'));
-            }
-          },
-          error: error => {
-            console.error('Error deleting conversation:', error);
-            this.message.error(this.i18nSvc.fanyi('ai.chat.conversation.delete.failed'));
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * calculate if the security form should be shown for the given message content
-   *
-   * @param content current message content
-   * @param next next message content
-   */
-  calculateShowSecurityForm(content: string, next: string): SecurityForm {
-    const completeMessage: String[] = ['表单填写完成', '表單已完成', 'Formulário concluído', 'フォームが完了しました', 'Form completed'];
-    const complete = completeMessage.includes(next);
-    const regex = /```json\s*SecureForm:((?:.+\s)+)```/gm;
-    if (!content) return { show: false, param: '', content: content, complete: complete };
-    const match = content.match(regex);
-    if (!match || match.length === 0) {
-      return { show: false, param: '', content: content, complete: complete };
+    if (this.isSendingMessage) {
+      return;
     }
-    // @ts-ignore
-    const result = match[0].replace(/```json\s*SecureForm:/gm, '').replace(/```/, '');
-    return { show: true, param: result, content: content.replace(regex, ''), complete: complete };
+    this.sessionLoadSubscription?.unsubscribe();
+    this.isLoadingSessions = false;
+    this.currentSession = {
+      conversationId: this.newId('webui'),
+      title: this.i18nSvc.fanyi('ai.chat.new-chat'),
+      updatedAt: new Date()
+    };
+    this.turns = [];
+    this.pendingApproval = undefined;
+    this.activeRunUid = undefined;
+    this.followOutput = true;
+    this.showScrollToBottom = false;
+    this.cdr.markForCheck();
+    if (this.initialMessage) {
+      this.newMessage = this.initialMessage;
+      this.initialMessage = '';
+      setTimeout(() => this.sendMessage());
+    }
   }
 
-  /**
-   * Send a message
-   */
-  sendMessage(): void {
-    if (!this.newMessage.trim() || this.isSendingMessage) {
+  canDeactivate(): boolean {
+    return !this.isSendingMessage || window.confirm('The Agent is still running. Leave this page and stop the current stream?');
+  }
+
+  get activeModelLabel(): string {
+    const provider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code)?.label;
+    if (provider && this.aiProviderConfig.model) {
+      return `${provider} / ${this.aiProviderConfig.model}`;
+    }
+    return this.aiProviderConfig.model || provider || this.i18nSvc.fanyi('ai.chat.config.model');
+  }
+
+  openModelConfig(): void {
+    this.showConfigModal = true;
+  }
+
+  closeModelConfig(): void {
+    this.showConfigModal = false;
+  }
+
+  saveModelProviderConfig(): void {
+    if (!this.aiProviderConfig.code) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.provider'));
+      return;
+    }
+    if (!this.aiProviderConfig.apiKey) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.api.key'));
+      return;
+    }
+    if (!this.aiProviderConfig.baseUrl) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.base.url'));
+      return;
+    }
+    if (!this.aiProviderConfig.model) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.model'));
       return;
     }
 
-    const userMessage: ChatMessage = {
-      content: this.newMessage.trim(),
-      role: 'user',
-      securityForm: DEFAULT_SECURITY_FORM,
-      gmtCreate: new Date()
-    };
+    this.configLoading = true;
+    this.generalConfigSvc
+      .saveModelProviderConfig(this.aiProviderConfig)
+      .pipe(
+        finalize(() => {
+          this.configLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: response => {
+          if (response.code === 0) {
+            this.showConfigModal = false;
+            this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
+          } else {
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${response.msg}`);
+          }
+        },
+        error: error => {
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${error.message}`);
+        }
+      });
+  }
 
-    // Add user message to the messages list
-    this.messages.push(userMessage);
+  onProviderChange(provider: string): void {
+    const selectedProvider = this.providerOptions.find(option => option.value === provider);
+    if (!selectedProvider) {
+      return;
+    }
+    this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+    this.aiProviderConfig.model = selectedProvider.defaultModel;
+  }
 
-    const messageContent = this.newMessage.trim();
+  resetModelProviderDefaults(): void {
+    const selectedProvider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code);
+    if (!selectedProvider) {
+      return;
+    }
+    this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+    this.aiProviderConfig.model = selectedProvider.defaultModel;
+  }
+
+  private loadSession(sessionUid: string): void {
+    this.sessionLoadSubscription?.unsubscribe();
+    const loadSubscription = new Subscription();
+    this.sessionLoadSubscription = loadSubscription;
+    this.currentSession = null;
+    this.turns = [];
+    this.pendingApproval = undefined;
+    this.isLoadingSessions = true;
+    this.followOutput = true;
+    loadSubscription.add(
+      this.aiChatService.getSession(sessionUid).subscribe({
+        next: response => {
+          const persisted = response.data?.body as AgentSession | undefined;
+          if (persisted) {
+            this.currentSession = this.toChatSession(persisted);
+          }
+          loadSubscription.add(this.loadTranscript(sessionUid));
+        },
+        error: () => {
+          this.isLoadingSessions = false;
+          this.message.error(this.i18nSvc.fanyi('ai.chat.error.conversations.load'));
+          this.cdr.markForCheck();
+        }
+      })
+    );
+  }
+
+  private loadModelProviderConfig(): void {
+    this.generalConfigSvc.getModelProviderConfig().subscribe({
+      next: response => {
+        if (response.code === 0 && response.data) {
+          this.aiProviderConfig = { ...new ModelProviderConfig(), ...response.data };
+          const provider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code);
+          // Older provider records may omit fields that the backend resolves to provider defaults.
+          if (provider) {
+            if (!this.aiProviderConfig.baseUrl) {
+              this.aiProviderConfig.baseUrl = provider.defaultBaseUrl;
+            }
+            if (!this.aiProviderConfig.model) {
+              this.aiProviderConfig.model = provider.defaultModel;
+            }
+          }
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => this.cdr.markForCheck()
+    });
+  }
+
+  sendMessage(): void {
+    const content = this.newMessage.trim();
+    if (!content || this.isSendingMessage || !this.currentSession) {
+      return;
+    }
+
+    const now = new Date();
+    this.turns = [
+      ...this.turns,
+      {
+        id: this.newId('turn'),
+        user: { content, createdAt: now },
+        assistant: { status: 'pending', items: [], createdAt: now }
+      }
+    ];
     this.newMessage = '';
     this.isSendingMessage = true;
+    this.isStopping = false;
+    this.pendingApproval = undefined;
+    this.activeRunUid = undefined;
+    this.processedEventIds.clear();
+    this.followOutput = true;
+    this.showScrollToBottom = false;
     this.cdr.detectChanges();
-    this.scrollToBottom();
+    this.scheduleScroll(true);
 
-    // Check if this is a fallback conversation
-    if (this.currentConversation?.id == 0) {
-      setTimeout(() => {
-        const offlineMessage: ChatMessage = {
-          content: this.i18nSvc.fanyi('ai.chat.offline.response'),
-          role: 'assistant',
-          securityForm: DEFAULT_SECURITY_FORM,
-          gmtCreate: new Date()
-        };
-        this.messages.push(offlineMessage);
-        this.isSendingMessage = false;
-        this.cdr.detectChanges();
-        this.scrollToBottom();
-      }, 1000);
+    this.streamSubscription = this.aiChatService.streamChat(content, this.currentSession.conversationId, this.newId('message')).subscribe({
+      next: event => this.handleGatewayEvent(event),
+      error: error => {
+        const run = this.activeAssistantRun();
+        if (run) {
+          run.status = 'failed';
+          run.error = this.i18nSvc.fanyi('ai.chat.error.processing');
+        }
+        this.finishRun();
+        this.message.error(error.message || this.i18nSvc.fanyi('ai.chat.error.chat.response'));
+      },
+      complete: () => this.finishRun()
+    });
+  }
+
+  stopRun(): void {
+    if (!this.activeRunUid || this.isStopping) {
       return;
     }
-
-    // Create empty assistant message for streaming
-    const assistantMessage: ChatMessage = {
-      content: '',
-      role: 'assistant',
-      securityForm: { show: false, param: '', content: '', complete: false },
-      gmtCreate: new Date()
-    };
-    this.messages.push(assistantMessage);
-    this.cdr.detectChanges();
-    this.scrollToBottom();
-
-    // Send to AI service
-    this.aiChatService.streamChat(messageContent, this.currentConversation?.id).subscribe({
-      next: chunk => {
-        // Find the last assistant message and append content
-        const lastMessage = this.messages[this.messages.length - 1];
-        if (lastMessage && lastMessage.role === 'assistant') {
-          // Accumulate the content for streaming effect
-          lastMessage.content += chunk.content;
-          lastMessage.gmtCreate = chunk.gmtCreate;
-
-          // Check for skill report marker and process it
-          if (lastMessage.content.includes(this.SKILL_REPORT_MARKER)) {
-            lastMessage.content = this.processSkillReportContent(lastMessage.content);
-            lastMessage.isSkillReport = true;
-          }
-
-          this.cdr.detectChanges();
-          this.scrollToBottom();
+    this.isStopping = true;
+    this.cdr.markForCheck();
+    this.aiChatService.stopRun(this.activeRunUid).subscribe({
+      next: response => {
+        if (response.data?.events?.some(event => event.type === 'ERROR')) {
+          this.isStopping = false;
+          this.message.error(response.data.events[0].payload.errorMessage || 'Unable to stop the Agent run');
+          this.cdr.markForCheck();
         }
       },
-      error: error => {
-        console.error('Error in chat stream:', error);
-        this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.chat.response')}: ${error.status} ${error.statusText || error.message}`);
-
-        // Remove the empty assistant message and add error message
-        if (
-          this.messages.length > 0 &&
-          this.messages[this.messages.length - 1].role === 'assistant' &&
-          this.messages[this.messages.length - 1].content === ''
-        ) {
-          this.messages.pop();
-        }
-
-        const errorMessage: ChatMessage = {
-          content: this.i18nSvc.fanyi('ai.chat.error.processing'),
-          role: 'assistant',
-          securityForm: DEFAULT_SECURITY_FORM,
-          gmtCreate: new Date()
-        };
-        this.messages.push(errorMessage);
-        this.isSendingMessage = false;
-        this.cdr.detectChanges();
-        this.scrollToBottom();
-      },
-      complete: () => {
-        this.isSendingMessage = false;
-        this.cdr.detectChanges();
-
-        const lastMessage = this.messages[this.messages.length - 1];
-        lastMessage.securityForm = this.calculateShowSecurityForm(lastMessage.content, '');
-        lastMessage.content = lastMessage.securityForm.content;
-
-        // Refresh current conversation to get updated data (only if not fallback)
-        if (this.currentConversation && this.currentConversation.id !== 0) {
-          this.aiChatService.getConversation(this.currentConversation.id).subscribe({
-            next: response => {
-              if (response.code === 0 && response.data) {
-                // Update conversation in the list
-                const index = this.conversations.findIndex(c => c.id === response.data!.id);
-                if (index >= 0) {
-                  this.conversations[index] = response.data;
-                }
-                this.currentConversation = response.data;
-              }
-            },
-            error: error => {
-              console.log('Error refreshing conversation (non-critical):', error);
-            }
-          });
-        }
+      error: () => {
+        this.isStopping = false;
+        this.message.error('Unable to stop the Agent run');
+        this.cdr.markForCheck();
       }
     });
   }
 
-  /**
-   * Handle Enter key press
-   */
+  resolveApproval(approved: boolean): void {
+    const approval = this.pendingApproval;
+    if (!approval || approval.status === 'resolving' || approval.status === 'approved' || approval.status === 'rejected') {
+      return;
+    }
+    if (approved && !this.canApprove(approval)) {
+      return;
+    }
+    approval.status = 'resolving';
+    this.cdr.markForCheck();
+    const request = approved ? this.aiChatService.approve(approval.approvalId) : this.aiChatService.reject(approval.approvalId);
+    request.subscribe({
+      next: response => {
+        if (response.data?.events?.some(event => event.type === 'ERROR')) {
+          approval.status = 'waiting';
+          this.message.error(response.data.events[0].payload.errorMessage || 'Unable to resolve approval');
+          this.cdr.markForCheck();
+        }
+      },
+      error: () => {
+        approval.status = 'waiting';
+        this.message.error('Unable to resolve approval');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  submitInteraction(interaction: PendingInteraction): void {
+    if (interaction.status !== 'waiting' || !this.canSubmitInteraction(interaction)) {
+      return;
+    }
+    interaction.status = 'submitting';
+    this.cdr.markForCheck();
+    this.aiChatService.submitInteraction(interaction.interactionId, interaction.values).subscribe({
+      next: () => {
+        interaction.status = 'submitted';
+        interaction.values = {};
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        interaction.status = 'waiting';
+        this.message.error(this.i18nSvc.fanyi('ai.chat.input-request.submit-failed'));
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   onKeyPress(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -448,512 +448,422 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Toggle sidebar
-   */
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+  onMessagesScroll(): void {
+    const element = this.messagesContainer?.nativeElement;
+    if (!element) {
+      return;
+    }
+    this.followOutput = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+    this.showScrollToBottom = !this.followOutput;
+    this.cdr.markForCheck();
   }
 
-  /**
-   * Format conversation title
-   */
-  getConversationTitle(conversation: ChatConversation): string {
-    if (conversation.title) {
-      return conversation.title;
+  scrollToLatest(): void {
+    const element = this.messagesContainer?.nativeElement;
+    if (!element) {
+      return;
     }
-    if (conversation.messages && conversation.messages.length > 0) {
-      const firstUserMessage = conversation.messages.find(m => m.role === 'user');
-      if (firstUserMessage) {
-        return firstUserMessage.content.length > 30 ? `${firstUserMessage.content.substring(0, 30)}...` : firstUserMessage.content;
+    this.followOutput = true;
+    this.showScrollToBottom = false;
+    element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+    this.cdr.markForCheck();
+  }
+
+  formatTime(date: Date): string {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  canApprove(approval: PendingApproval): boolean {
+    return approval.status === 'waiting';
+  }
+
+  canSubmitInteraction(interaction: PendingInteraction): boolean {
+    return interaction.fields.every(field => {
+      if (!field.required) {
+        return true;
       }
-    }
-    return `Conversation ${conversation.id}`;
-  }
-
-  /**
-   * Format time
-   */
-  formatTime(date: any): string {
-    date = new Date(date);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
+      const value = interaction.values[field.field];
+      return typeof value === 'string' ? Boolean(value.trim()) : value !== null && value !== undefined;
     });
   }
 
-  /**
-   * Process message content to ensure it's properly handled
-   */
-  processMessage(message: ChatMessage): void {
-    // Handle Promise content
-    if (typeof message.content === 'object' && message.content !== null && 'then' in message.content) {
-      (message.content as Promise<any>)
-        .then((content: any) => {
-          message.content = String(content || '');
-          this.cdr.detectChanges();
-        })
-        .catch((error: any) => {
-          console.error('Error processing message content:', error);
-          message.content = 'Error loading message content';
-          this.cdr.detectChanges();
-        });
-    } else {
-      // Ensure content is always a string
-      message.content = String(message.content || '');
-    }
+  trackTurn(_: number, turn: ChatTurn): string {
+    return turn.id;
   }
 
-  /**
-   * Process skill report content by removing the marker and extracting the report.
-   * Skill reports are directly displayed to users without further AI processing.
-   */
-  private processSkillReportContent(content: string): string {
-    // Remove the marker and return the report content
-    const markerIndex = content.indexOf(this.SKILL_REPORT_MARKER);
-    if (markerIndex !== -1) {
-      // Extract content after the marker
-      let reportContent = content.substring(markerIndex + this.SKILL_REPORT_MARKER.length);
-      // Remove leading newlines
-      reportContent = reportContent.replace(/^\n+/, '');
-      return reportContent;
-    }
-    return content;
+  trackRunItem(_: number, item: AssistantRunItem): string {
+    return item.itemId;
   }
 
-  /**
-   * Scroll to bottom of messages with smooth animation
-   */
-  private scrollToBottom(): void {
-    try {
-      if (this.messagesContainer) {
-        const element = this.messagesContainer.nativeElement;
-        // Use requestAnimationFrame for better performance
-        requestAnimationFrame(() => {
-          element.scrollTo({
-            top: element.scrollHeight,
-            behavior: 'smooth'
-          });
-        });
-      }
-    } catch (err) {
-      console.error('Error scrolling to bottom:', err);
-    }
+  toggleToolInput(item: AssistantRunItem): void {
+    item.toolInputExpanded = !item.toolInputExpanded;
   }
 
-  /**
-   * Check provider configuration status
-   */
-  checkAiConfiguration(): void {
-    this.generalConfigSvc.getModelProviderConfig().subscribe({
+  formatToolInput(input: Record<string, unknown>): string {
+    return JSON.stringify(input, null, 2);
+  }
+
+  private loadTranscript(sessionUid: string): Subscription {
+    return this.aiChatService.getSessionTranscript(sessionUid).subscribe({
       next: response => {
-        if (response.code === 0 && response.data) {
-          this.aiProviderConfig = response.data;
-          // Ensure default values are set if not present
-          if (!this.aiProviderConfig.code) {
-            this.aiProviderConfig.code = 'openai';
-          }
-          if (!this.aiProviderConfig.baseUrl) {
-            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
-            if (defaultProvider) {
-              this.aiProviderConfig.baseUrl = defaultProvider.defaultBaseUrl;
-            }
-          }
-          if (!this.aiProviderConfig.model) {
-            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
-            if (defaultProvider) {
-              this.aiProviderConfig.model = defaultProvider.defaultModel;
-            }
-          }
-          // Don't load conversations here anymore - they're loaded in ngOnInit
-        } else {
-          // Initialize with default values if no config exists
-          this.aiProviderConfig = new ModelProviderConfig();
-          this.showAiProviderConfigDialog();
-        }
+        this.isLoadingSessions = false;
+        this.turns = this.toChatTurns(response.data?.content || []);
+        this.cdr.detectChanges();
+        this.scheduleScroll(true);
       },
-      error: error => {
-        console.error('Failed to load model provider config:', error);
-        this.aiProviderConfig = new ModelProviderConfig();
-        this.showAiProviderConfigDialog();
+      error: () => {
+        this.isLoadingSessions = false;
+        this.message.error(this.i18nSvc.fanyi('ai.chat.error.conversations.load'));
+        this.cdr.markForCheck();
       }
     });
   }
 
-  /**
-   * Show ai configuration dialog
-   */
-  showAiProviderConfigDialog(error?: string): void {
-    let contentMessage = `
-      <div style="margin-bottom: 16px;">
-        <p>${this.i18nSvc.fanyi('ai.chat.config.required.content')}</p>
-    `;
-
-    if (error) {
-      contentMessage += `
-        <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
-          <strong>${this.i18nSvc.fanyi('ai.chat.config.required.error')}</strong> ${error}
-        </div>
-      `;
-    }
-
-    const modalRef = this.modal.create({
-      nzTitle: this.i18nSvc.fanyi('ai.chat.config.required.title'),
-      nzContent: contentMessage,
-      nzWidth: 600,
-      nzClosable: false,
-      nzMaskClosable: false,
-      nzFooter: [
-        {
-          label: this.i18nSvc.fanyi('ai.chat.config.required.button'),
-          type: 'primary',
-          onClick: () => {
-            this.showConfigModal = true;
-            modalRef.destroy();
-          }
-        }
-      ]
-    });
-  }
-
-  /**
-   * Show configuration modal
-   */
-  onShowConfigModal(): void {
-    this.checkAiConfiguration();
-    this.showConfigModal = true;
-  }
-
-  /**
-   * Close configuration modal
-   */
-  onCloseConfigModal(): void {
-    this.showConfigModal = false;
-  }
-
-  /**
-   * Save OpenAI configuration
-   */
-  onSaveAiProviderConfig(): void {
-    if (!this.aiProviderConfig.apiKey?.trim()) {
-      this.message.error(this.i18nSvc.fanyi('ai.chat.error.api.key'));
+  private handleGatewayEvent(event: GatewayEvent): void {
+    if (this.processedEventIds.has(event.eventId)) {
       return;
     }
-
-    if (!this.aiProviderConfig.code?.trim()) {
-      this.message.error(this.i18nSvc.fanyi('ai.chat.error.provider'));
+    this.processedEventIds.add(event.eventId);
+    const run = this.activeAssistantRun();
+    if (!run) {
       return;
     }
-
-    if (!this.aiProviderConfig.baseUrl?.trim()) {
-      this.message.error(this.i18nSvc.fanyi('ai.chat.error.base.url'));
-      return;
+    if (event.runUid) {
+      this.activeRunUid = event.runUid;
+      run.runUid = event.runUid;
+    }
+    if (event.sessionUid && this.currentSession) {
+      this.currentSession.sessionUid = event.sessionUid;
     }
 
-    if (!this.aiProviderConfig.model?.trim()) {
-      this.message.error(this.i18nSvc.fanyi('ai.chat.error.model'));
-      return;
-    }
-
-    this.configLoading = true;
-
-    this.generalConfigSvc.saveModelProviderConfig(this.aiProviderConfig).subscribe({
-      next: response => {
-        this.configLoading = false;
-        if (response.code === 0) {
-          this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
-          this.showConfigModal = false;
-          this.isAiProviderConfigured = true;
-          this.loadConversations();
-        } else {
-          // Check if it's a validation error
-          if (response.msg.includes('validation failed')) {
-            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.validation.failed')} ${response.msg}`, { nzDuration: 5000 });
-          } else {
-            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${response.msg}`);
-          }
-        }
-      },
-      error: error => {
-        this.configLoading = false;
-        this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${error.message}`);
+    switch (event.type) {
+      case 'RUN_STARTED':
+        run.status = 'running';
+        break;
+      case 'MESSAGE_STARTED':
+        this.ensureTextItem(run, event.itemId).status = 'streaming';
+        break;
+      case 'MESSAGE_DELTA': {
+        const item = this.ensureTextItem(run, event.itemId);
+        item.status = 'streaming';
+        item.pendingContent = `${item.pendingContent || ''}${event.payload.delta || ''}`;
+        this.scheduleRender();
+        return;
       }
-    });
-  }
-
-  /**
-   * Handle provider selection change
-   */
-  onProviderChange(provider: string): void {
-    const selectedProvider = this.providerOptions.find(p => p.value === provider);
-    if (selectedProvider) {
-      this.aiProviderConfig.code = provider;
-      // Auto-fill default values if current values are empty
-      if (!this.aiProviderConfig.baseUrl) {
-        this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      case 'MESSAGE_COMPLETED':
+        this.flushTextItem(this.ensureTextItem(run, event.itemId), true);
+        break;
+      case 'TOOL_STARTED': {
+        const tool = this.ensureToolItem(run, event);
+        tool.status = 'running';
+        break;
       }
-      if (!this.aiProviderConfig.model) {
-        this.aiProviderConfig.model = selectedProvider.defaultModel;
+      case 'TOOL_COMPLETED': {
+        const tool = this.ensureToolItem(run, event);
+        tool.status = this.payloadString(event, 'status') === 'failed' || event.payload.errorMessage ? 'failed' : 'completed';
+        break;
       }
+      case 'INPUT_REQUESTED':
+        this.handleInputRequested(run, event);
+        break;
+      case 'INPUT_COMPLETED':
+        this.handleInputCompleted(run, event);
+        break;
+      case 'APPROVAL_REQUESTED':
+        this.handleApprovalRequested(run, event);
+        break;
+      case 'APPROVAL_COMPLETED':
+        this.handleApprovalCompleted(run, event);
+        break;
+      case 'RUN_COMPLETED':
+        run.status = 'completed';
+        this.finishRun();
+        return;
+      case 'ERROR':
+        run.status = this.isStopping ? 'cancelled' : 'failed';
+        run.error = event.payload.errorMessage || this.i18nSvc.fanyi('ai.chat.error.processing');
+        this.finishRun();
+        return;
     }
+    this.cdr.detectChanges();
+    this.scheduleScroll();
   }
 
-  /**
-   * Reset to default values for selected provider
-   */
-  resetToDefaults(): void {
-    const selectedProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
-    if (selectedProvider) {
-      this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
-      this.aiProviderConfig.model = selectedProvider.defaultModel;
-    }
-  }
-
-  /**
-   * handle security form submit
-   *
-   */
-  onSecurityFormSubmit(): void {
-    this.aiChatService
-      .saveSecurityData({
-        securityData: JSON.stringify(Object.values(this.securityParams)),
-        conversationId: this.currentConversation?.id
-      })
-      .subscribe(
-        (message: any) => {
-          if (message.code === 0) {
-            const lastMessage = this.messages[this.messages.length - 1];
-            lastMessage.securityForm.complete = true;
-            const tmpMessage = this.newMessage;
-            this.newMessage = this.i18nSvc.fanyi('ai.chat.security.form.default.callback');
-            this.sendMessage();
-            this.newMessage = tmpMessage;
-          } else {
-            console.log('Error saving security data:');
-          }
-        },
-        (error: any) => {
-          console.error('Error saving security data:', error);
-        }
-      );
-    this.showSecurityFormModal = false;
-  }
-
-  /**
-   *  handle security form cancel
-   */
-  onSecurityFormCancel(): void {
-    this.showSecurityFormModal = false;
-  }
-
-  /**
-   * handle open security form
-   *
-   * @param securityForm
-   */
-  openSecurityForm(securityForm: SecurityForm): void {
-    this.securityParamDefine = JSON.parse(securityForm.param).privateParams.map((i: any) => {
-      this.securityParams[i.field] = {
-        // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-        type: i.type === 'number' ? 0 : i.type === 'text' || i.type === 'string' ? 1 : i.type === 'json' ? 3 : 2,
-        field: i.field,
-        paramValue: null
-      };
-      i.name = i.name[this.i18nSvc.defaultLang] || i.name['en-US'] || i.name;
-      return i;
-    });
-
-    console.log('this.securityParamDefine:', this.securityParamDefine);
-    this.showSecurityFormModal = true;
-  }
-
-  // ===== Schedule Management Methods =====
-
-  /**
-   * Show schedule configuration modal
-   */
-  onShowScheduleModal(): void {
-    if (!this.currentConversation) {
-      this.message.warning('请先选择或创建一个对话');
-      return;
-    }
-    this.showScheduleModal = true;
-    this.loadSchedules();
-    this.loadAvailableSkills();
-  }
-
-  /**
-   * Close schedule modal
-   */
-  onCloseScheduleModal(): void {
-    this.showScheduleModal = false;
-  }
-
-  /**
-   * Load available SOP skills from backend
-   */
-  loadAvailableSkills(): void {
-    this.aiChatService.getAvailableSkills().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.availableSkills = response.data;
-        }
-      },
-      error: error => {
-        console.error('Error loading skills:', error);
-        // Fallback to empty - user will see nothing in dropdown
-      }
-    });
-  }
-
-  /**
-   * Load schedules for current conversation
-   */
-  loadSchedules(): void {
-    if (!this.currentConversation) return;
-
-    this.aiChatService.getSchedules(this.currentConversation.id).subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.schedules = response.data;
-        }
-      },
-      error: error => {
-        console.error('Error loading schedules:', error);
-        this.message.error('加载定时任务失败');
-      }
-    });
-  }
-
-  /**
-   * Create a new schedule
-   */
-  onCreateSchedule(): void {
-    if (!this.currentConversation || !this.newSchedule.sopName || !this.newSchedule.cronExpression) {
-      return;
-    }
-
-    this.scheduleLoading = true;
-    const schedule: SopSchedule = {
-      conversationId: this.currentConversation.id,
-      sopName: this.newSchedule.sopName,
-      cronExpression: this.newSchedule.cronExpression,
-      enabled: true
+  private handleApprovalRequested(run: AssistantRun, event: GatewayEvent): void {
+    const tool = this.ensureToolItem(run, event);
+    tool.status = 'waiting_approval';
+    const approval: PendingApproval = {
+      approvalId: event.payload.approvalId!,
+      toolName: event.payload.toolName!,
+      toolCallUid: this.payloadString(event, 'toolCallUid'),
+      message: 'This tool changes HertzBeat data and requires approval.',
+      status: 'waiting'
     };
+    tool.approval = approval;
+    this.pendingApproval = approval;
+  }
 
-    this.aiChatService.createSchedule(schedule).subscribe({
-      next: response => {
-        this.scheduleLoading = false;
-        if (response.code === 0 && response.data) {
-          this.schedules.push(response.data);
-          this.newSchedule = { sopName: '', cronExpression: '', enabled: true };
-          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.create.success'));
-        } else {
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.create.failed')}: ${response.msg}`);
-        }
-      },
-      error: error => {
-        this.scheduleLoading = false;
-        console.error('Error creating schedule:', error);
-        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.create.failed'));
+  private handleInputRequested(run: AssistantRun, event: GatewayEvent): void {
+    const item = run.items.find(candidate => candidate.type === 'tool' && candidate.itemId === event.itemId);
+    if (!item) {
+      return;
+    }
+    const rawFields = event.payload['fields'];
+    const fields = Array.isArray(rawFields)
+      ? rawFields.filter((field): field is InteractionField => Boolean(field && typeof field === 'object' && 'field' in field))
+      : [];
+    item.status = 'running';
+    item.interaction = {
+      interactionId: this.payloadString(event, 'interactionId')!,
+      targetTool: this.payloadString(event, 'targetTool') || '',
+      title: this.payloadString(event, 'title') || '',
+      description: this.payloadString(event, 'description') || '',
+      fields,
+      values: {},
+      status: 'waiting'
+    };
+  }
+
+  private handleInputCompleted(run: AssistantRun, event: GatewayEvent): void {
+    const interactionId = this.payloadString(event, 'interactionId');
+    const item = run.items.find(candidate => candidate.type === 'tool' && candidate.interaction?.interactionId === interactionId);
+    if (!item?.interaction) {
+      return;
+    }
+    const failed = this.payloadString(event, 'status') === 'failed';
+    item.interaction.status = failed ? 'failed' : 'completed';
+    item.status = failed ? 'failed' : 'running';
+  }
+
+  private handleApprovalCompleted(run: AssistantRun, event: GatewayEvent): void {
+    const approvalId = event.payload.approvalId;
+    const tool = run.items.find(item => item.type === 'tool' && item.approval?.approvalId === approvalId);
+    const approval = tool?.approval || (this.pendingApproval?.approvalId === approvalId ? this.pendingApproval : undefined);
+    if (!approval) {
+      return;
+    }
+    const status = this.payloadString(event, 'status');
+    approval.status = status === 'rejected' ? 'rejected' : 'approved';
+    if (tool) {
+      tool.status = approval.status === 'rejected' ? 'failed' : 'running';
+    }
+    if (this.pendingApproval?.approvalId === approval.approvalId) {
+      this.pendingApproval = undefined;
+    }
+  }
+
+  private ensureTextItem(run: AssistantRun, itemId?: string): AssistantRunItem {
+    const stableItemId = itemId || `${run.runUid || 'active'}:text`;
+    let item = run.items.find(candidate => candidate.type === 'text' && candidate.itemId === stableItemId);
+    if (!item) {
+      item = { type: 'text', itemId: stableItemId, status: 'streaming', content: '', pendingContent: '' };
+      run.items.push(item);
+    }
+    return item;
+  }
+
+  private ensureToolItem(run: AssistantRun, event: GatewayEvent): AssistantRunItem {
+    const toolCallUid = this.payloadString(event, 'toolCallUid');
+    const toolInput = this.payloadObject(event, 'arguments');
+    const itemId = event.itemId || toolCallUid || `${run.runUid || 'active'}:${event.payload.toolName || 'tool'}`;
+    let item = run.items.find(
+      candidate =>
+        candidate.type === 'tool' && (candidate.itemId === itemId || Boolean(toolCallUid && candidate.toolCallUid === toolCallUid))
+    );
+    if (!item) {
+      item = {
+        type: 'tool',
+        itemId,
+        status: 'running',
+        toolName: event.payload.toolName || this.i18nSvc.fanyi('ai.chat.tool.unknown'),
+        toolCallUid,
+        toolInput,
+        toolInputExpanded: false
+      };
+      run.items.push(item);
+    } else {
+      item.toolCallUid = toolCallUid || item.toolCallUid;
+      item.toolName = event.payload.toolName || item.toolName;
+      if (toolInput !== undefined) {
+        item.toolInput = toolInput;
+        item.toolInputExpanded ??= false;
       }
+    }
+    return item;
+  }
+
+  private scheduleRender(): void {
+    if (this.renderFrame !== undefined) {
+      return;
+    }
+    this.renderFrame = requestAnimationFrame(() => {
+      this.renderFrame = undefined;
+      const run = this.activeAssistantRun();
+      run?.items.filter(item => item.type === 'text').forEach(item => this.flushTextItem(item));
+      this.cdr.detectChanges();
+      this.scheduleScroll();
     });
   }
 
-  /**
-   * Toggle schedule enabled status
-   */
-  onToggleSchedule(schedule: SopSchedule): void {
-    if (!schedule.id) return;
-
-    this.aiChatService.toggleSchedule(schedule.id, schedule.enabled).subscribe({
-      next: response => {
-        if (response.code === 0) {
-          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.toggle.success'));
-        } else {
-          schedule.enabled = !schedule.enabled; // Revert on error
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.toggle.failed')}: ${response.msg}`);
-        }
-      },
-      error: error => {
-        schedule.enabled = !schedule.enabled; // Revert on error
-        console.error('Error toggling schedule:', error);
-        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.toggle.failed'));
-      }
-    });
+  private flushTextItem(item: AssistantRunItem, completed = false): void {
+    if (item.pendingContent) {
+      item.content = `${item.content || ''}${item.pendingContent}`;
+      item.pendingContent = '';
+    }
+    if (completed) {
+      item.status = 'completed';
+    }
   }
 
-  /**
-   * Delete a schedule
-   */
-  onDeleteSchedule(schedule: SopSchedule): void {
-    if (!schedule.id) return;
+  private finishRun(): void {
+    const wasSending = this.isSendingMessage;
+    const run = this.activeAssistantRun();
+    run?.items.filter(item => item.type === 'text').forEach(item => this.flushTextItem(item, true));
+    if (run?.status === 'pending' || run?.status === 'running') {
+      run.status = 'completed';
+    }
+    this.isSendingMessage = false;
+    this.isStopping = false;
+    this.activeRunUid = undefined;
+    this.cdr.detectChanges();
+    this.scheduleScroll();
+    if (wasSending) {
+      this.refreshSessionList();
+    }
+  }
 
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('ai.chat.conversation.delete.title'),
-      nzContent: `${this.i18nSvc.fanyi('ai.chat.conversation.delete.content')} "${schedule.sopName}"`,
-      nzOkText: this.i18nSvc.fanyi('ai.chat.conversation.delete.confirm'),
-      nzOkDanger: true,
-      nzOnOk: () => {
-        this.aiChatService.deleteSchedule(schedule.id!).subscribe({
-          next: response => {
-            if (response.code === 0) {
-              this.schedules = this.schedules.filter(s => s.id !== schedule.id);
-              this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.delete.success'));
-            } else {
-              this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.delete.failed')}: ${response.msg}`);
-            }
-          },
-          error: error => {
-            console.error('Error deleting schedule:', error);
-            this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.delete.failed'));
+  private refreshSessionList(): void {
+    this.sessionStore.refresh(this.sessionType).subscribe({
+      next: persistedSessions => {
+        const sessions = persistedSessions.map(session => this.toChatSession(session));
+        if (this.currentSession) {
+          const refreshed = sessions.find(
+            session =>
+              session.sessionUid === this.currentSession?.sessionUid || session.conversationId === this.currentSession?.conversationId
+          );
+          if (refreshed) {
+            this.currentSession = refreshed;
           }
-        });
-      }
-    });
-  }
-
-  /**
-   * Start editing a schedule
-   */
-  onEditSchedule(schedule: SopSchedule): void {
-    this.editingSchedule = { ...schedule };
-  }
-
-  /**
-   * Cancel editing
-   */
-  onCancelEdit(): void {
-    this.editingSchedule = null;
-  }
-
-  /**
-   * Update an existing schedule
-   */
-  onUpdateSchedule(): void {
-    if (!this.editingSchedule || !this.editingSchedule.id) return;
-
-    this.scheduleLoading = true;
-    this.aiChatService.updateSchedule(this.editingSchedule.id, this.editingSchedule).subscribe({
-      next: response => {
-        this.scheduleLoading = false;
-        if (response.code === 0 && response.data) {
-          // Update the schedule in the list
-          const index = this.schedules.findIndex(s => s.id === this.editingSchedule!.id);
-          if (index !== -1) {
-            this.schedules[index] = response.data;
-          }
-          this.editingSchedule = null;
-          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.update.success'));
-        } else {
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.update.failed')}: ${response.msg}`);
         }
-      },
-      error: error => {
-        this.scheduleLoading = false;
-        console.error('Error updating schedule:', error);
-        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.update.failed'));
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  private toChatSession(session: AgentSession): ChatSession {
+    return {
+      conversationId: session.conversationId,
+      sessionUid: session.sessionUid,
+      title: session.title || this.i18nSvc.fanyi('ai.chat.new-chat'),
+      updatedAt: new Date(session.gmtUpdate || session.gmtCreate)
+    };
+  }
+
+  private toChatTurns(entries: AgentTranscriptEntry[]): ChatTurn[] {
+    const turns: ChatTurn[] = [];
+    const turnsByRun = new Map<number, ChatTurn>();
+    for (const entry of entries) {
+      let payload: TranscriptMessage;
+      try {
+        payload = JSON.parse(entry.payloadJson) as TranscriptMessage;
+      } catch {
+        continue;
+      }
+      if (payload.role === 'user') {
+        const content = this.transcriptText(payload);
+        if (!content) {
+          continue;
+        }
+        const turn: ChatTurn = {
+          id: entry.runId ? `run:${entry.runId}` : `entry:${entry.id}`,
+          runId: entry.runId,
+          user: { content, createdAt: new Date(entry.gmtCreate) },
+          assistant: { status: 'completed', items: [], createdAt: new Date(entry.gmtCreate) }
+        };
+        turns.push(turn);
+        if (entry.runId !== undefined) {
+          turnsByRun.set(entry.runId, turn);
+        }
+        continue;
+      }
+      if (payload.role !== 'assistant') {
+        continue;
+      }
+      const turn = entry.runId !== undefined ? turnsByRun.get(entry.runId) : turns[turns.length - 1];
+      if (!turn) {
+        continue;
+      }
+      payload.content?.forEach((block, index) => {
+        if (block.type === 'text' && block.text) {
+          turn.assistant.items.push({
+            type: 'text',
+            itemId: `entry:${entry.id}:text:${index}`,
+            status: 'completed',
+            content: block.text
+          });
+        } else if (block.type === 'toolCall' && block.name) {
+          turn.assistant.items.push({
+            type: 'tool',
+            itemId: block.id || block.toolCallUid || `entry:${entry.id}:tool:${index}`,
+            toolCallUid: block.toolCallUid,
+            toolName: block.name,
+            toolInput: block.input,
+            toolInputExpanded: false,
+            status: 'completed'
+          });
+        }
+      });
+    }
+    return turns;
+  }
+
+  private transcriptText(message: TranscriptMessage): string {
+    return (message.content || [])
+      .filter(block => block.type === 'text' && block.text)
+      .map(block => block.text)
+      .join('\n');
+  }
+
+  private activeAssistantRun(): AssistantRun | undefined {
+    return this.turns[this.turns.length - 1]?.assistant;
+  }
+
+  private payloadString(event: GatewayEvent, key: string): string | undefined {
+    const value = event.payload[key];
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private payloadObject(event: GatewayEvent, key: string): Record<string, unknown> | undefined {
+    const value = event.payload[key];
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+  }
+
+  private scheduleScroll(force = false): void {
+    if ((!force && !this.followOutput) || this.scrollFrame !== undefined) {
+      return;
+    }
+    const scrollToLatest = (): void => {
+      const element = this.messagesContainer?.nativeElement;
+      if (element && (force || this.followOutput)) {
+        element.scrollTop = element.scrollHeight;
+      }
+    };
+    this.scrollFrame = requestAnimationFrame(() => {
+      scrollToLatest();
+      if (!force) {
+        this.scrollFrame = undefined;
+        return;
+      }
+      this.scrollFrame = requestAnimationFrame(() => {
+        this.scrollFrame = undefined;
+        scrollToLatest();
+      });
+    });
+  }
+
+  private newId(prefix: string): string {
+    const bytes = new Uint32Array(2);
+    crypto.getRandomValues(bytes);
+    return `${prefix}_${Date.now().toString(36)}_${bytes[0].toString(36)}${bytes[1].toString(36)}`;
   }
 }

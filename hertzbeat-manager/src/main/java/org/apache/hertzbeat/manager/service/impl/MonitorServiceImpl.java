@@ -212,7 +212,11 @@ public class MonitorServiceImpl implements MonitorService {
                 : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
         try {
             detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            if (Thread.currentThread().isInterrupted()) {
+                collectJobScheduling.cancelAsyncCollectJob(jobId);
+                throw new MonitorDatabaseException("Monitor creation was interrupted");
+            }
         }
 
         try {

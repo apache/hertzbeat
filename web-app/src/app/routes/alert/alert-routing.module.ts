@@ -20,6 +20,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { AlertAnalysisComponent } from './alert-analysis/alert-analysis.component';
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
 import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
@@ -34,6 +35,7 @@ const routes: Routes = [
   { path: 'setting', component: AlertSettingComponent },
   { path: 'notice', component: AlertNoticeComponent },
   { path: 'silence', component: AlertSilenceComponent },
+  { path: 'analysis', component: AlertAnalysisComponent },
   { path: 'group', component: AlertGroupConvergeComponent },
   { path: 'inhibit', component: AlertInhibitComponent },
   { path: 'integration/:source', component: AlertIntegrationComponent, data: { titleI18n: 'menu.alert.integration' } }

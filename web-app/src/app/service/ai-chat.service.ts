@@ -19,249 +19,211 @@
 
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { LocalStorageService } from './local-storage.service';
 
-export interface ChatMessage {
-  content: string;
-  role: 'user' | 'assistant' | 'system_push';
-  gmtCreate: Date;
-  securityForm: SecurityForm;
-  /** Flag indicating this message is a skill report that should be displayed directly */
-  isSkillReport?: boolean;
+export type GatewayEventType =
+  | 'RUN_STARTED'
+  | 'MESSAGE_STARTED'
+  | 'MESSAGE_DELTA'
+  | 'MESSAGE_COMPLETED'
+  | 'TOOL_STARTED'
+  | 'TOOL_COMPLETED'
+  | 'INPUT_REQUESTED'
+  | 'INPUT_COMPLETED'
+  | 'APPROVAL_REQUESTED'
+  | 'APPROVAL_COMPLETED'
+  | 'RUN_COMPLETED'
+  | 'ERROR';
+
+export interface GatewayEvent {
+  type: GatewayEventType;
+  eventId: string;
+  conversationId?: string;
+  sessionUid?: string;
+  runUid?: string;
+  itemId?: string;
+  payload: {
+    delta?: string;
+    approvalId?: string;
+    toolName?: string;
+    arguments?: Record<string, unknown>;
+    errorMessage?: string;
+    [key: string]: unknown;
+  };
+  timestamp: number;
 }
 
-export interface SecurityForm {
-  show: Boolean;
-  param: string;
-  content: string;
-  complete: boolean;
-}
-
-export const DEFAULT_SECURITY_FORM: SecurityForm = {
-  show: false,
-  param: '',
-  content: '',
-  complete: false
-};
-
-export interface ChatConversation {
+export interface AgentSession {
   id: number;
+  sessionUid: string;
+  conversationId: string;
+  status: string;
   title: string;
-  gmtCreated: Date;
-  gmtUpdate: Date;
-  messages: ChatMessage[];
+  gmtCreate: string;
+  gmtUpdate: string;
 }
 
-export interface ChatRequestContext {
-  message: string;
-  conversationId?: number;
+export interface AgentTranscriptEntry {
+  id: number;
+  runId?: number;
+  sessionSequence: number;
+  messageRole?: string;
+  payloadJson: string;
+  gmtCreate: string;
 }
 
-export interface SopSchedule {
-  id?: number;
-  conversationId: number;
-  sopName: string;
-  sopParams?: string;
-  cronExpression: string;
-  enabled: boolean;
-  lastRunTime?: Date;
-  nextRunTime?: Date;
-  gmtCreate?: Date;
-  gmtUpdate?: Date;
+export interface TranscriptContent {
+  type: 'text' | 'toolCall';
+  text?: string;
+  id?: string;
+  name?: string;
+  toolCallUid?: string;
+  input?: Record<string, unknown>;
 }
 
-export interface SkillInfo {
-  name: string;
-  description: string;
+export interface TranscriptMessage {
+  role: string;
+  content: TranscriptContent[];
 }
 
-const chat_uri = '/chat';
-const schedule_uri = '/ai/schedule';
+export interface GatewayResponse {
+  meta: {
+    commandId: string;
+    conversationId?: string;
+    sessionUid?: string;
+    runUid?: string;
+    terminal: boolean;
+    message: string;
+  };
+  body?: unknown;
+  events: GatewayEvent[];
+}
+
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AiChatService {
+  private readonly agentUri = '/agent';
+
   constructor(private http: HttpClient, private localStorageService: LocalStorageService) {}
 
-  /**
-   * Create a new conversation
-   */
-  createConversation(): Observable<Message<ChatConversation>> {
-    return this.http.post<Message<ChatConversation>>(`${chat_uri}/conversations`, {});
+  getSessions(pageIndex = 0, pageSize = 100): Observable<Message<Page<AgentSession>>> {
+    return this.http.get<Message<Page<AgentSession>>>(`${this.agentUri}/sessions?pageIndex=${pageIndex}&pageSize=${pageSize}`);
   }
 
-  /**
-   * Get all conversations
-   */
-  getConversations(): Observable<Message<ChatConversation[]>> {
-    return this.http.get<Message<ChatConversation[]>>(`${chat_uri}/conversations`);
+  getAlertAnalysisSessions(pageIndex = 0, pageSize = 100): Observable<Message<Page<AgentSession>>> {
+    return this.http.get<Message<Page<AgentSession>>>(
+      `${this.agentUri}/alert-analysis/sessions?pageIndex=${pageIndex}&pageSize=${pageSize}`
+    );
   }
 
-  /**
-   * Get a specific conversation with its history
-   */
-  getConversation(conversationId: number): Observable<Message<ChatConversation>> {
-    return this.http.get<Message<ChatConversation>>(`${chat_uri}/conversations/${conversationId}`);
+  getSession(sessionUid: string): Observable<Message<GatewayResponse>> {
+    return this.http.get<Message<GatewayResponse>>(`${this.agentUri}/sessions/${encodeURIComponent(sessionUid)}`);
   }
 
-  /**
-   * Delete a conversation
-   */
-  deleteConversation(conversationId: number): Observable<Message<void>> {
-    return this.http.delete<Message<void>>(`${chat_uri}/conversations/${conversationId}`);
+  getSessionTranscript(sessionUid: string): Observable<Message<Page<AgentTranscriptEntry>>> {
+    return this.http.get<Message<Page<AgentTranscriptEntry>>>(
+      `${this.agentUri}/sessions/${encodeURIComponent(sessionUid)}/transcript?pageIndex=0&pageSize=200`
+    );
   }
 
-  /**
-   * Send a message and get streaming response
-   */
-  streamChat(message: string, conversationId?: number): Observable<ChatMessage> {
-    const responseSubject = new Subject<ChatMessage>();
+  stopRun(runUid: string): Observable<Message<GatewayResponse>> {
+    return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/runs/${encodeURIComponent(runUid)}/stop`, {});
+  }
 
-    const requestBody: ChatRequestContext = { message };
-    if (conversationId) {
-      requestBody.conversationId = conversationId;
-    }
+  approve(approvalId: string, sensitiveParams: Record<string, unknown> = {}): Observable<Message<GatewayResponse>> {
+    return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/approvals/${encodeURIComponent(approvalId)}/approve`, {
+      sensitiveParams
+    });
+  }
 
-    const token = this.localStorageService.getAuthorizationToken();
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-      'Cache-Control': 'no-cache'
-    };
+  reject(approvalId: string): Observable<Message<GatewayResponse>> {
+    return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/approvals/${encodeURIComponent(approvalId)}/reject`, {});
+  }
 
-    // Add Authorization header like the interceptor does
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+  submitInteraction(interactionId: string, values: Record<string, unknown>): Observable<Message<string>> {
+    return this.http.post<Message<string>>(`${this.agentUri}/interactions/${encodeURIComponent(interactionId)}/submit`, { values });
+  }
 
-    // Use fetch for SSE streaming (HttpClient doesn't support true streaming)
-    fetch(`/api${chat_uri}/stream`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  streamChat(message: string, conversationId: string, messageId: string): Observable<GatewayEvent> {
+    return new Observable<GatewayEvent>(subscriber => {
+      const abortController = new AbortController();
+      const token = this.localStorageService.getAuthorizationToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('No reader available');
-        }
-
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        const readStream = (): Promise<void> => {
-          if (!reader) {
-            return Promise.resolve();
-          }
-          return reader.read().then(({ value, done }) => {
-            if (done) {
-              responseSubject.complete();
-              return;
-            }
-
-            const chunk = decoder.decode(value, { stream: true });
-
-            buffer += chunk;
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (trimmedLine.startsWith('data:')) {
-                const jsonStr = trimmedLine.substring(5).trim();
-                if (jsonStr && jsonStr !== '[DONE]') {
-                  try {
-                    const data = JSON.parse(jsonStr);
-                    if (data.response !== undefined) {
-                      responseSubject.next({
-                        content: data.response || '',
-                        role: 'assistant',
-                        securityForm: DEFAULT_SECURITY_FORM,
-                        gmtCreate: data.timestamp ? new Date(data.timestamp) : new Date()
-                      });
-                    }
-                  } catch (parseError) {
-                    console.error('Error parsing SSE data:', parseError, 'Raw data:', jsonStr);
-                    if (jsonStr) {
-                      responseSubject.next({
-                        content: jsonStr,
-                        role: 'assistant',
-                        securityForm: DEFAULT_SECURITY_FORM,
-                        gmtCreate: new Date()
-                      });
-                    }
-                  }
-                }
-              }
-            }
-
-            return readStream();
-          });
-        };
-
-        return readStream();
+      fetch('/api/agent/webui/chat/stream', {
+        method: 'POST',
+        headers,
+        signal: abortController.signal,
+        body: JSON.stringify({ conversationId, messageId, message })
       })
-      .catch(error => {
-        console.error('Chat stream error:', error);
-        responseSubject.error(error);
-      });
+        .then(async response => {
+          if (!response.ok) {
+            throw new Error(`Agent Gateway returned HTTP ${response.status}`);
+          }
+          if (!response.body) {
+            throw new Error('Agent Gateway returned an empty stream');
+          }
+          await this.readEventStream(response.body.getReader(), subscriber);
+          subscriber.complete();
+        })
+        .catch(error => {
+          if (!abortController.signal.aborted) {
+            subscriber.error(error);
+          }
+        });
 
-    return responseSubject.asObservable();
+      return () => abortController.abort();
+    });
   }
 
-  saveSecurityData(body: any): Observable<Message<any>> {
-    return this.http.post<Message<any>>(`${chat_uri}/security`, body);
+  private async readEventStream(reader: ReadableStreamDefaultReader<Uint8Array>, subscriber: Subscriber<GatewayEvent>): Promise<void> {
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const frames = buffer.split(/\r?\n\r?\n/);
+      buffer = frames.pop() || '';
+      for (const frame of frames) {
+        const data = this.eventData(frame);
+        if (data) {
+          subscriber.next(JSON.parse(data) as GatewayEvent);
+        }
+      }
+      if (done) {
+        if (buffer.trim()) {
+          const data = this.eventData(buffer);
+          if (data) {
+            subscriber.next(JSON.parse(data) as GatewayEvent);
+          }
+        }
+        return;
+      }
+    }
   }
 
-  // ===== Schedule API Methods =====
-
-  /**
-   * Get all schedules for a conversation
-   */
-  getSchedules(conversationId: number): Observable<Message<SopSchedule[]>> {
-    return this.http.get<Message<SopSchedule[]>>(`${schedule_uri}/conversation/${conversationId}`);
-  }
-
-  /**
-   * Create a new schedule
-   */
-  createSchedule(schedule: SopSchedule): Observable<Message<SopSchedule>> {
-    return this.http.post<Message<SopSchedule>>(schedule_uri, schedule);
-  }
-
-  /**
-   * Update a schedule
-   */
-  updateSchedule(id: number, schedule: SopSchedule): Observable<Message<SopSchedule>> {
-    return this.http.put<Message<SopSchedule>>(`${schedule_uri}/${id}`, schedule);
-  }
-
-  /**
-   * Delete a schedule
-   */
-  deleteSchedule(id: number): Observable<Message<void>> {
-    return this.http.delete<Message<void>>(`${schedule_uri}/${id}`);
-  }
-
-  /**
-   * Toggle schedule enabled status
-   */
-  toggleSchedule(id: number, enabled: boolean): Observable<Message<SopSchedule>> {
-    return this.http.put<Message<SopSchedule>>(`${schedule_uri}/${id}/toggle?enabled=${enabled}`, {});
-  }
-
-  /**
-   * Get available SOP skills
-   */
-  getAvailableSkills(): Observable<Message<SkillInfo[]>> {
-    return this.http.get<Message<SkillInfo[]>>(`${schedule_uri}/skills`);
+  private eventData(frame: string): string {
+    return frame
+      .split(/\r?\n/)
+      .filter(line => line.startsWith('data:'))
+      .map(line => line.substring(5).trimStart())
+      .join('\n');
   }
 }

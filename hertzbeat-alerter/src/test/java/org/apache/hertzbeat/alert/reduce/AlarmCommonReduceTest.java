@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * test case for {@link AlarmCommonReduce}
@@ -46,6 +49,9 @@ class AlarmCommonReduceTest {
 
     @Mock
     private AlarmGroupReduce alarmGroupReduce;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private AlarmCommonReduce alarmCommonReduce;
 
@@ -66,7 +72,11 @@ class AlarmCommonReduceTest {
 
     @Test
     void testReduceAndSendAlarm() {
+        alarmCommonReduce.destroy();
+        alarmCommonReduce = new AlarmCommonReduce(alarmGroupReduce, VirtualThreadProperties.defaults(), eventPublisher);
         alarmCommonReduce.reduceAndSendAlarm(testAlert);
+
+        verify(eventPublisher, timeout(2000)).publishEvent(any(SingleAlert.CreatedEvent.class));
     }
 
     @Test

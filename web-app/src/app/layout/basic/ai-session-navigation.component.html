@@ -1,0 +1,111 @@
+<!--
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ -->
+
+<nav class="ai-session-navigation" aria-label="AI sessions">
+  <section class="session-section" [class.collapsed]="chatSessionsCollapsed">
+    <div class="section-header">
+      <button type="button" class="section-toggle" (click)="chatSessionsCollapsed = !chatSessionsCollapsed">
+        <i nz-icon nzType="message"></i>
+        <span>{{ 'ai.navigation.chat' | i18n }}</span>
+        <i nz-icon class="primary-chevron" [nzType]="chatSessionsCollapsed ? 'right' : 'down'"></i>
+      </button>
+      <button
+        type="button"
+        class="new-session"
+        (click)="createNewConversation()"
+        [nz-tooltip]="'ai.chat.new-chat' | i18n"
+        nzTooltipPlacement="right"
+        [attr.aria-label]="'ai.chat.new-chat' | i18n"
+      >
+        <i nz-icon nzType="plus"></i>
+      </button>
+    </div>
+
+    <div class="session-list" *ngIf="!chatSessionsCollapsed && (loadingChatSessions || chatSessions.length > 0)">
+      <div class="loading-sessions" *ngIf="loadingChatSessions"><nz-spin nzSimple nzSize="small"></nz-spin></div>
+      <a
+        *ngFor="let session of chatSessions; trackBy: trackSession"
+        class="session-item"
+        [routerLink]="['/ai/chat', session.sessionUid]"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [nz-tooltip]="session.title"
+        nzTooltipPlacement="right"
+      >
+        <i nz-icon nzType="message" class="session-icon"></i>
+        <span class="session-copy">
+          <span class="session-title">{{ session.title || ('ai.chat.new-chat' | i18n) }}</span>
+          <span class="session-time">{{ session.gmtUpdate || session.gmtCreate | date : 'MMM d, HH:mm' }}</span>
+        </span>
+      </a>
+      <button
+        *ngIf="chatSessionsHasMore"
+        type="button"
+        class="load-more-sessions"
+        [disabled]="loadingMoreChatSessions"
+        (click)="loadMoreSessions('chat')"
+      >
+        <nz-spin *ngIf="loadingMoreChatSessions" nzSimple nzSize="small"></nz-spin>
+        <span *ngIf="!loadingMoreChatSessions">{{ 'ai.navigation.load-more' | i18n }}</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="session-section" [class.collapsed]="alertAnalysisSessionsCollapsed">
+    <div class="section-header">
+      <button type="button" class="section-toggle" (click)="alertAnalysisSessionsCollapsed = !alertAnalysisSessionsCollapsed">
+        <i nz-icon nzType="alert"></i>
+        <span>{{ 'ai.navigation.analysis' | i18n }}</span>
+        <i nz-icon class="primary-chevron" [nzType]="alertAnalysisSessionsCollapsed ? 'right' : 'down'"></i>
+      </button>
+    </div>
+
+    <div
+      class="session-list alert-sessions"
+      *ngIf="!alertAnalysisSessionsCollapsed && (loadingAlertAnalysisSessions || alertAnalysisSessions.length > 0)"
+    >
+      <div class="loading-sessions" *ngIf="loadingAlertAnalysisSessions"><nz-spin nzSimple nzSize="small"></nz-spin></div>
+      <a
+        *ngFor="let session of alertAnalysisSessions; trackBy: trackSession"
+        class="session-item"
+        [routerLink]="['/ai/alert-analysis', session.sessionUid]"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [nz-tooltip]="session.title"
+        nzTooltipPlacement="right"
+      >
+        <i nz-icon nzType="alert" class="session-icon"></i>
+        <span class="session-copy">
+          <span class="session-title">{{ session.title }}</span>
+          <span class="session-time">{{ session.gmtUpdate || session.gmtCreate | date : 'MMM d, HH:mm' }}</span>
+        </span>
+      </a>
+      <button
+        *ngIf="alertAnalysisSessionsHasMore"
+        type="button"
+        class="load-more-sessions"
+        [disabled]="loadingMoreAlertAnalysisSessions"
+        (click)="loadMoreSessions('alert-analysis')"
+      >
+        <nz-spin *ngIf="loadingMoreAlertAnalysisSessions" nzSimple nzSize="small"></nz-spin>
+        <span *ngIf="!loadingMoreAlertAnalysisSessions">{{ 'ai.navigation.load-more' | i18n }}</span>
+      </button>
+    </div>
+  </section>
+</nav>

@@ -57,6 +57,7 @@ import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -239,6 +240,32 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
         assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null, null));
+    }
+
+    @Test
+    void addMonitorShouldCancelScheduledJobWhenDetectionIsInterrupted() {
+        Monitor monitor = Monitor.builder()
+                .intervals(60)
+                .name("interrupted-monitor")
+                .instance("localhost")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        job.setMetrics(new ArrayList<>());
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(7L);
+        doAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Synchronous collection was interrupted");
+        }).when(collectJobScheduling).collectSyncJobData(any(Job.class));
+
+        try {
+            assertThrows(MonitorDatabaseException.class,
+                    () -> monitorService.addMonitor(monitor, List.of(new Param()), null, null));
+            verify(collectJobScheduling).cancelAsyncCollectJob(7L);
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     /**

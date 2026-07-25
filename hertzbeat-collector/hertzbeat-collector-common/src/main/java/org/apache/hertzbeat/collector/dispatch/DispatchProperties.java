@@ -109,7 +109,7 @@ public class DispatchProperties {
              * connect cluster master port
              */
             private int managerPort = 1158;
-            
+
             public boolean isEnabled() {
                 return enabled;
             }
@@ -149,6 +149,7 @@ public class DispatchProperties {
             public void setManagerPort(int managerPort) {
                 this.managerPort = managerPort;
             }
+
         }
     }
 

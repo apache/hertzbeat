@@ -92,10 +92,10 @@
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
 
-        <!-- HertzBeat ai -->
+        <!-- HertzBeat ai gateway -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-ai</artifactId>
+            <artifactId>hertzbeat-ai-gateway</artifactId>
         </dependency>
 
         <!-- Commons Lang3 -->

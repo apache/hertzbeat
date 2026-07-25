@@ -1,0 +1,330 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'alert.help.analysis' | i18n"
+  [guild_link]="'alert.help.analysis.link' | i18n"
+  [module_name]="'menu.alert.analysis'"
+  [icon_name]="'robot'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<nz-tabset>
+  <nz-tab [nzTitle]="'alert.analysis.record.tab' | i18n">
+    <app-toolbar>
+      <ng-template #left>
+        <button nz-button nzType="primary" (click)="loadSessions()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+        </button>
+      </ng-template>
+      <ng-template #right>
+        <app-multi-func-input
+          groupStyle="width: 280px;"
+          [placeholder]="'alert.analysis.record.search-placeholder' | i18n"
+          [(value)]="sessionSearch"
+          (keydown.enter)="searchSessions()"
+          (cleared)="searchSessions()"
+        />
+        <button nz-button nzType="primary" (click)="searchSessions()" class="mobile-hide">
+          {{ 'common.search' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
+
+    <nz-table
+      #sessionTable
+      [nzData]="sessions"
+      [nzPageIndex]="sessionPageIndex"
+      [nzPageSize]="sessionPageSize"
+      [nzTotal]="sessionTotal"
+      [nzFrontPagination]="false"
+      [nzLoading]="sessionsLoading"
+      [nzShowTotal]="sessionTotalTemplate"
+      [nzPageSizeOptions]="[8, 15, 25]"
+      [nzScroll]="{ x: '860px' }"
+      nzShowSizeChanger
+      (nzQueryParams)="onSessionTableChange($event)"
+    >
+      <thead>
+        <tr>
+          <th nzWidth="42%">{{ 'alert.analysis.record.title' | i18n }}</th>
+          <th nzAlign="center" nzWidth="16%">{{ 'alert.analysis.status' | i18n }}</th>
+          <th nzAlign="center" nzWidth="24%">{{ 'alert.analysis.record.time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="18%" nzRight>{{ 'alert.analysis.operation' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let session of sessionTable.data">
+          <td>
+            <div class="record-title">{{ session.title }}</div>
+            <div class="record-id">{{ session.sessionUid }}</div>
+          </td>
+          <td nzAlign="center">
+            <nz-tag [nzColor]="session.status === 'ACTIVE' ? 'processing' : 'default'">{{ session.status }}</nz-tag>
+          </td>
+          <td nzAlign="center">{{ session.gmtUpdate || session.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+          <td nzAlign="center" nzRight>
+            <button nz-button nzType="primary" (click)="viewAnalysis(session)">
+              <i nz-icon nzType="eye" nzTheme="outline"></i>
+              {{ 'alert.analysis.record.view' | i18n }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+    <ng-template #sessionTotalTemplate>{{ 'common.total' | i18n }} {{ sessionTotal }}</ng-template>
+  </nz-tab>
+
+  <nz-tab [nzTitle]="'alert.analysis.policy.tab' | i18n">
+    <nz-alert
+      *ngIf="!availabilityLoading && !agentClientConfigured"
+      nzType="warning"
+      nzShowIcon
+      [nzMessage]="'alert.analysis.agent-client-required' | i18n"
+      [nzDescription]="'alert.analysis.agent-client-required-description' | i18n"
+    ></nz-alert>
+    <app-toolbar>
+      <ng-template #left>
+        <button nz-button nzType="primary" (click)="loadPolicies()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+        </button>
+        <button
+          nz-button
+          nzType="primary"
+          [disabled]="availabilityLoading || !agentClientConfigured"
+          (click)="openPolicyModal()"
+          nz-tooltip
+          [nzTooltipTitle]="!availabilityLoading && !agentClientConfigured ? ('alert.analysis.agent-client-required' | i18n) : null"
+        >
+          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+          {{ 'common.button.new' | i18n }}
+        </button>
+      </ng-template>
+      <ng-template #right>
+        <app-multi-func-input
+          groupStyle="width: 280px;"
+          [placeholder]="'alert.analysis.policy.search-placeholder' | i18n"
+          [(value)]="policySearch"
+        />
+      </ng-template>
+    </app-toolbar>
+
+    <nz-table
+      #policyTable
+      [nzData]="filteredPolicies"
+      [nzLoading]="policiesLoading"
+      [nzPageSize]="8"
+      [nzPageSizeOptions]="[8, 15, 25]"
+      [nzShowTotal]="policyTotalTemplate"
+      [nzScroll]="{ x: '1280px' }"
+      nzShowSizeChanger
+    >
+      <thead>
+        <tr>
+          <th nzWidth="16%">{{ 'alert.analysis.policy.name' | i18n }}</th>
+          <th nzWidth="20%">{{ 'alert.analysis.policy.match-labels' | i18n }}</th>
+          <th nzWidth="16%">{{ 'alert.analysis.policy.group-labels' | i18n }}</th>
+          <th nzAlign="center" nzWidth="11%">{{ 'alert.analysis.policy.window' | i18n }}</th>
+          <th nzAlign="center" nzWidth="11%">{{ 'alert.analysis.policy.minimum-count' | i18n }}</th>
+          <th nzAlign="center" nzWidth="11%">{{ 'alert.analysis.policy.cooldown' | i18n }}</th>
+          <th nzAlign="center" nzWidth="7%">{{ 'common.enable' | i18n }}</th>
+          <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.analysis.operation' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let policy of policyTable.data">
+          <td>{{ policy.name }}</td>
+          <td>
+            <span *ngIf="!policy.matchLabels || (policy.matchLabels | keyvalue).length === 0" class="muted-text">
+              {{ 'alert.analysis.policy.match-all' | i18n }}
+            </span>
+            <nz-tag *ngFor="let label of policy.matchLabels | keyvalue">{{ label.key }}={{ label.value }}</nz-tag>
+          </td>
+          <td
+            ><nz-tag *ngFor="let label of policy.groupByLabels" nzColor="blue">{{ label }}</nz-tag></td
+          >
+          <td nzAlign="center">{{ policy.windowSeconds }} {{ 'common.time.unit.second' | i18n }}</td>
+          <td nzAlign="center">{{ policy.minimumAlertCount }}</td>
+          <td nzAlign="center">{{ policy.cooldownSeconds }} {{ 'common.time.unit.second' | i18n }}</td>
+          <td nzAlign="center">
+            <nz-switch
+              [(ngModel)]="policy.enabled"
+              [nzDisabled]="availabilityLoading || (!agentClientConfigured && !policy.enabled)"
+              (ngModelChange)="togglePolicy(policy, $event)"
+            ></nz-switch>
+          </td>
+          <td nzAlign="center" nzRight>
+            <button nz-button nzDanger (click)="confirmDeletePolicy(policy)" nz-tooltip [nzTooltipTitle]="'common.button.delete' | i18n">
+              <i nz-icon nzType="delete" nzTheme="outline"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+    <ng-template #policyTotalTemplate>{{ 'common.total' | i18n }} {{ filteredPolicies.length }}</ng-template>
+  </nz-tab>
+</nz-tabset>
+
+<nz-drawer
+  [nzVisible]="detailVisible"
+  [nzTitle]="selectedSession?.title || ('alert.analysis.detail.title' | i18n)"
+  [nzWidth]="720"
+  (nzOnClose)="detailVisible = false"
+>
+  <ng-container *nzDrawerContent>
+    <nz-spin [nzSpinning]="detailLoading">
+      <div *ngIf="selectedSession" class="detail-meta">
+        <span><i nz-icon nzType="clock-circle"></i>{{ selectedSession.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
+        <span>{{ selectedSession.sessionUid }}</span>
+      </div>
+      <nz-empty *ngIf="!detailLoading && analysisMessages.length === 0"></nz-empty>
+      <div class="analysis-transcript">
+        <article *ngFor="let message of analysisMessages" class="analysis-message" [class.assistant]="message.role === 'assistant'">
+          <header>
+            <span>
+              <i nz-icon [nzType]="message.role === 'assistant' ? 'robot' : 'alert'"></i>
+              {{ (message.role === 'assistant' ? 'alert.analysis.detail.ai' : 'alert.analysis.detail.input') | i18n }}
+            </span>
+            <time>{{ message.createdAt | date : 'YYYY-MM-dd HH:mm:ss' }}</time>
+          </header>
+          <markdown *ngIf="message.role === 'assistant'; else plainInput" [data]="message.content"></markdown>
+          <ng-template #plainInput>
+            <pre>{{ message.content }}</pre>
+          </ng-template>
+        </article>
+      </div>
+    </nz-spin>
+  </ng-container>
+</nz-drawer>
+
+<nz-modal
+  [(nzVisible)]="policyModalVisible"
+  [nzTitle]="'alert.analysis.policy.new' | i18n"
+  [nzOkLoading]="policyModalLoading"
+  [nzWidth]="640"
+  [nzMaskClosable]="false"
+  (nzOnCancel)="policyModalVisible = false"
+  (nzOnOk)="createPolicy()"
+>
+  <div *nzModalContent>
+    <form nz-form #policyForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired [nzTooltipTitle]="'alert.analysis.policy.name-tip' | i18n">
+          {{ 'alert.analysis.policy.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15" [nzErrorTip]="'validation.required' | i18n">
+          <input nz-input required maxlength="128" name="policyName" [(ngModel)]="policyRequest.name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired [nzTooltipTitle]="'alert.analysis.policy.group-labels-tip' | i18n">
+          {{ 'alert.analysis.policy.group-labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzMode="tags"
+            required
+            nzAllowClear
+            [nzTokenSeparators]="[',']"
+            name="groupByLabels"
+            [(ngModel)]="policyRequest.groupByLabels"
+            [nzPlaceHolder]="'alert.analysis.policy.group-labels-placeholder' | i18n"
+          >
+            <nz-option *ngFor="let label of commonLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" [nzTooltipTitle]="'alert.analysis.policy.match-labels-tip' | i18n">
+          {{ 'alert.analysis.policy.match-labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15">
+          <div class="match-label-list">
+            <div *ngFor="let entry of matchLabelEntries; let i = index" class="match-label-row">
+              <input
+                nz-input
+                required
+                [name]="'matchLabelKey' + i"
+                [(ngModel)]="entry.key"
+                [placeholder]="'alert.analysis.policy.label-key' | i18n"
+              />
+              <input
+                nz-input
+                required
+                [name]="'matchLabelValue' + i"
+                [(ngModel)]="entry.value"
+                [placeholder]="'alert.analysis.policy.label-value' | i18n"
+              />
+              <button nz-button nzType="text" nzDanger type="button" (click)="removeMatchLabel(i)">
+                <i nz-icon nzType="minus-circle"></i>
+              </button>
+            </div>
+            <button nz-button nzType="dashed" type="button" class="add-label-button" (click)="addMatchLabel()">
+              <i nz-icon nzType="plus"></i>{{ 'alert.analysis.policy.add-match-label' | i18n }}
+            </button>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired [nzTooltipTitle]="'alert.analysis.policy.window-tip' | i18n">
+          {{ 'alert.analysis.policy.window' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15">
+          <nz-input-number
+            required
+            name="windowSeconds"
+            [nzMin]="1"
+            [nzStep]="60"
+            [(ngModel)]="policyRequest.windowSeconds"
+          ></nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired [nzTooltipTitle]="'alert.analysis.policy.minimum-count-tip' | i18n">
+          {{ 'alert.analysis.policy.minimum-count' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15">
+          <nz-input-number required name="minimumAlertCount" [nzMin]="1" [(ngModel)]="policyRequest.minimumAlertCount"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired [nzTooltipTitle]="'alert.analysis.policy.cooldown-tip' | i18n">
+          {{ 'alert.analysis.policy.cooldown' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="15">
+          <nz-input-number
+            required
+            name="cooldownSeconds"
+            [nzMin]="1"
+            [nzStep]="60"
+            [(ngModel)]="policyRequest.cooldownSeconds"
+          ></nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

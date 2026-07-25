@@ -6,6 +6,8 @@ import { DetectAuthGuard } from '../core/guard/detect-auth-guard';
 import { LayoutBasicComponent } from '../layout/basic/basic.component';
 import { LayoutBlankComponent } from '../layout/blank/blank.component';
 import { LayoutPassportComponent } from '../layout/passport/passport.component';
+import { aiChatDeactivateGuard } from '../shared/components/ai-chat/ai-chat-deactivate.guard';
+import { ChatComponent } from '../shared/components/ai-chat/chat.component';
 import { BulletinComponent } from './bulletin/bulletin.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { UserLockComponent } from './passport/lock/lock.component';
@@ -18,7 +20,25 @@ export const routes: Routes = [
     component: LayoutBasicComponent,
     canActivate: [DetectAuthGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'ai/chat/new', pathMatch: 'full' },
+      {
+        path: 'ai/chat/new',
+        component: ChatComponent,
+        canDeactivate: [aiChatDeactivateGuard],
+        data: { titleI18n: 'menu.extras.ai.chat', sessionType: 'chat' }
+      },
+      {
+        path: 'ai/chat/:sessionUid',
+        component: ChatComponent,
+        canDeactivate: [aiChatDeactivateGuard],
+        data: { titleI18n: 'menu.extras.ai.chat', sessionType: 'chat' }
+      },
+      {
+        path: 'ai/alert-analysis/:sessionUid',
+        component: ChatComponent,
+        canDeactivate: [aiChatDeactivateGuard],
+        data: { titleI18n: 'ai.chat.session-type.alert-analysis', sessionType: 'alert-analysis' }
+      },
       { path: 'dashboard', component: DashboardComponent, data: { titleI18n: 'menu.dashboard' } },
       { path: 'bulletin', component: BulletinComponent, data: { titleI18n: 'menu.monitor.bulletin' } },
       { path: 'exception', loadChildren: () => import('./exception/exception.module').then(m => m.ExceptionModule) },

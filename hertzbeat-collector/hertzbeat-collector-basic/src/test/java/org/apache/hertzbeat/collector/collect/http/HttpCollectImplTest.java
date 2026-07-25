@@ -631,4 +631,19 @@ class HttpCollectImplTest {
         assertEquals("G1 Eden Space", firstRow.getColumns(1));
         capturedRows.forEach(t -> assertEquals(2, t.getColumnsList().size()));
     }
+
+    @Test
+    void testParseAgentRawResponse() throws Exception {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+            "parseResponseByAgentRaw", String.class, List.class,
+            CollectRep.MetricsData.Builder.class, long.class, int.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, "response body",
+            Lists.newArrayList("statusCode", "responseTime", "body"), builder, 37L, 503);
+
+        CollectRep.ValueRow row = builder.getValues(0);
+        assertEquals(List.of("503", "37", "response body"), row.getColumnsList());
+    }
 }

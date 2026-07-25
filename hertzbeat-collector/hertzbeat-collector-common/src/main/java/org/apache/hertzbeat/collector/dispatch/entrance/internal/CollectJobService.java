@@ -101,9 +101,12 @@ public class CollectJobService {
         };
         timerDispatch.addJob(job, listener);
         try {
-            countDownLatch.await(120, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.info("The sync task runs for 120 seconds with no response and returns");
+            if (!countDownLatch.await(120, TimeUnit.SECONDS)) {
+                log.info("The sync task runs for 120 seconds with no response and returns");
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Synchronous collection was interrupted", exception);
         }
         return metricsData;
     }

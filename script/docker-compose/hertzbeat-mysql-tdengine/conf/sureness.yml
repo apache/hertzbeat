@@ -68,8 +68,8 @@ resourceRole:
   - /api/bulletin/**===delete===[admin]
   - /api/mcp/**===get===[admin]
   - /api/mcp/**===post===[admin]
-  - /api/chat/**===get===[admin,user]
-  - /api/chat/**===post===[admin]
+  - /api/agent/**===get===[admin,user]
+  - /api/agent/**===post===[admin,user]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
 
