@@ -1927,6 +1927,14 @@
     "listUnavailable": "Os resultados de alertas estão indisponíveis.",
     "listLoadFailed": "Não foi possível carregar os resultados de alertas.",
     "summaryLoadFailed": "Não foi possível carregar o resumo de alertas.",
+    "details": {
+      "triggerTimes": "Acionamentos",
+      "labels": "Rótulos",
+      "annotations": "Anotações",
+      "startAt": "Primeiro acionamento",
+      "activeAt": "Última atividade",
+      "endAt": "Resolvido em"
+    },
     "summary": {
       "total": "Total",
       "acknowledged": "Reconhecidos",

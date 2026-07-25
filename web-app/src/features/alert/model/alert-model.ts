@@ -20,9 +20,11 @@ import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination
 export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
 export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as const;
+export const alertRecordStatuses = ['firing', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
 
 export type AlertStatus = (typeof alertStatuses)[number];
+export type AlertRecordStatus = (typeof alertRecordStatuses)[number];
 export type AlertStatusFilter = '' | (typeof alertStatusFilters)[number];
 export type AlertSeverity = '' | (typeof alertSeverities)[number];
 declare const serverLocalDateTimeBrand: unique symbol;
@@ -55,7 +57,21 @@ export type AlertGroup = {
   commonLabels: Record<string, string> | null;
   commonAnnotations: Record<string, string> | null;
   alertFingerprints: string[] | null;
+  alerts: AlertRecord[];
   gmtUpdate: ServerLocalDateTime | null;
+};
+
+/** A hydrated backend SingleAlert projected as operator-facing evidence. */
+export type AlertRecord = {
+  id: number;
+  labels: Record<string, string> | null;
+  annotations: Record<string, string> | null;
+  content: string | null;
+  status: AlertRecordStatus;
+  triggerTimes: number | null;
+  startAt: number | null;
+  activeAt: number | null;
+  endAt: number | null;
 };
 
 export type AlertPage = PagedCollection<AlertGroup>;

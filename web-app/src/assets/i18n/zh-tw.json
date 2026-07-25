@@ -1904,6 +1904,14 @@
     "listUnavailable": "警報清單暫時無法使用。",
     "listLoadFailed": "警報清單載入失敗。",
     "summaryLoadFailed": "警報概覽載入失敗。",
+    "details": {
+      "triggerTimes": "觸發次數",
+      "labels": "標籤",
+      "annotations": "註解",
+      "startAt": "首次觸發",
+      "activeAt": "最近觸發",
+      "endAt": "恢復時間"
+    },
     "summary": {
       "total": "警報總數",
       "acknowledged": "已確認",

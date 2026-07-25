@@ -1925,6 +1925,14 @@
     "listUnavailable": "アラート一覧を利用できません。",
     "listLoadFailed": "アラート一覧を読み込めませんでした。",
     "summaryLoadFailed": "アラート概要を読み込めませんでした。",
+    "details": {
+      "triggerTimes": "発生回数",
+      "labels": "ラベル",
+      "annotations": "注釈",
+      "startAt": "初回発生",
+      "activeAt": "最終発生",
+      "endAt": "解決日時"
+    },
     "summary": {
       "total": "合計",
       "acknowledged": "確認済み",

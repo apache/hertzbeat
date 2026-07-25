@@ -2040,6 +2040,14 @@
     "listUnavailable": "Alert results are unavailable.",
     "listLoadFailed": "Alert results could not be loaded.",
     "summaryLoadFailed": "Alert summary could not be loaded.",
+    "details": {
+      "triggerTimes": "Triggers",
+      "labels": "Labels",
+      "annotations": "Annotations",
+      "startAt": "First triggered",
+      "activeAt": "Last active",
+      "endAt": "Resolved"
+    },
     "summary": {
       "total": "Total",
       "acknowledged": "Acknowledged",

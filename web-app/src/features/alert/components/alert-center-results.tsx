@@ -28,6 +28,7 @@ import {
   type AlertStatus
 } from '../model/alert-model';
 import type { AlertListState } from '../model/alert-center-view-model';
+import { AlertCenterGroupDetails } from './alert-center-group-details';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
 type Translator = (key: string) => string;
@@ -83,6 +84,10 @@ export function AlertCenterResults({
       loading={state.kind === 'loading'}
       dataSource={records}
       columns={buildColumns(t, busy, onRemove)}
+      expandable={{
+        expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
+        rowExpandable: group => group.alerts.length > 0
+      }}
       pagination={{
         current: pageIndex + 1,
         disabled: busy,

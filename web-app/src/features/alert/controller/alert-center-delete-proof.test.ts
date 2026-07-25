@@ -69,6 +69,7 @@ function group(id: number): AlertGroup {
     commonLabels: null,
     commonAnnotations: null,
     alertFingerprints: null,
+    alerts: [],
     gmtUpdate: null
   };
 }

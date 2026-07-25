@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { AlertSummaryContractError, parseAlertSummaryWire } from '@/shared/alert-summary/alert-summary-contract';
 import {
   AlertContractError,
+  alertRecordStatuses,
   alertSeverities,
   alertStatuses,
   type AlertGroup,
@@ -32,15 +33,33 @@ import {
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
+// Date and Intl reject epoch values outside the ECMAScript time range.
+const maxJavaScriptDateTimestamp = 8_640_000_000_000_000;
+const nullableTimestampSchema = nonNegativeIntegerSchema
+  .refine(value => value <= maxJavaScriptDateTimestamp, 'Expected a renderable epoch timestamp')
+  .nullable();
 const nullableStringMapSchema = z.record(z.string().min(1), z.string()).nullable();
 const nullableStringArraySchema = z.array(z.string()).nullable();
+const nullableNonNegativeIntegerSchema = nonNegativeIntegerSchema.nullable();
 const nullableServerLocalDateTimeSchema = z
   .string()
   .refine(isServerLocalDateTime, 'Expected the GroupAlert server-local date-time format')
   .nullable();
 
-// GroupAlert contains persistence and hydration fields that the center does
-// not consume. The schema allowlists only stable operator-facing evidence.
+const alertRecordSchema = z.object({
+  id: positiveIntegerSchema,
+  labels: nullableStringMapSchema,
+  annotations: nullableStringMapSchema,
+  content: z.string().nullable(),
+  status: z.enum(alertRecordStatuses),
+  triggerTimes: nullableNonNegativeIntegerSchema,
+  startAt: nullableTimestampSchema,
+  activeAt: nullableTimestampSchema,
+  endAt: nullableTimestampSchema
+});
+
+// GroupAlert contains persistence fields that the center does not consume.
+// Hydrated child alerts are retained because they are the operator's evidence.
 const alertGroupSchema = z.object({
   id: positiveIntegerSchema,
   status: z.enum(alertStatuses),
@@ -48,6 +67,7 @@ const alertGroupSchema = z.object({
   commonLabels: nullableStringMapSchema,
   commonAnnotations: nullableStringMapSchema,
   alertFingerprints: nullableStringArraySchema,
+  alerts: z.array(alertRecordSchema),
   gmtUpdate: nullableServerLocalDateTimeSchema
 });
 
@@ -100,6 +120,9 @@ export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPag
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
     throw new AlertContractError('Duplicate ids are not allowed');
   }
+  if (page.content.some(item => new Set(item.alerts.map(alert => alert.id)).size !== item.alerts.length)) {
+    throw new AlertContractError('Duplicate child alert ids are not allowed');
+  }
   // Status and OTLP scope are exact backend predicates visible on each group.
   // Search is fuzzy and severity is evaluated against hydrated child alerts, so
   // neither can be proven from this intentionally smaller list-row contract.
@@ -136,6 +159,7 @@ function mapAlertGroup(source: z.output<typeof alertGroupSchema>): AlertGroup {
     commonLabels: source.commonLabels,
     commonAnnotations: source.commonAnnotations,
     alertFingerprints: source.alertFingerprints,
+    alerts: source.alerts,
     // JsonFormat makes this a server-local value with no zone. Branding at the
     // validated boundary prevents downstream code from treating it as an instant.
     gmtUpdate: source.gmtUpdate as ServerLocalDateTime | null

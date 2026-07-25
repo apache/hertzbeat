@@ -23,4 +23,15 @@ describe('Alert Center locale coverage', () => {
       expect(locale.alert.deleteFailed).toBeTruthy();
     }
   });
+
+  it('provides every child-alert evidence label in every runtime locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.alert.details.triggerTimes).toBeTruthy();
+      expect(locale.alert.details.labels).toBeTruthy();
+      expect(locale.alert.details.annotations).toBeTruthy();
+      expect(locale.alert.details.startAt).toBeTruthy();
+      expect(locale.alert.details.activeAt).toBeTruthy();
+      expect(locale.alert.details.endAt).toBeTruthy();
+    }
+  });
 });

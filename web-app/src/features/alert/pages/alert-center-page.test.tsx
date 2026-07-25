@@ -66,6 +66,19 @@ const record: AlertGroup = {
   commonLabels: { severity: 'info', serviceName: 'checkout' },
   commonAnnotations: null,
   alertFingerprints: null,
+  alerts: [
+    {
+      id: 11,
+      labels: { alertname: 'Latency', instance: 'checkout-1' },
+      annotations: { summary: 'Checkout latency exceeded the threshold.' },
+      content: 'Checkout latency is above 500 ms.',
+      status: 'firing',
+      triggerTimes: 3,
+      startAt: 1784250000000,
+      activeAt: 1784250060000,
+      endAt: null
+    }
+  ],
   gmtUpdate: '2026-07-17 08:09:10' as ServerLocalDateTime
 };
 
@@ -98,6 +111,20 @@ describe('AlertCenterPage', () => {
     expect(screen.getByPlaceholderText(en.instrumentation.field.serviceNamespace)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(en.instrumentation.field.serviceEnvironment)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/instrumentation\.field\./)).not.toBeInTheDocument();
+  });
+
+  it('expands a group into the operator-facing child alert evidence from Angular', () => {
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand row' }));
+
+    fireEvent.click(screen.getByText('Checkout latency is above 500 ms.'));
+
+    expect(screen.getByText('Checkout latency exceeded the threshold.')).toBeInTheDocument();
+    expect(screen.getByText('instance=checkout-1')).toBeInTheDocument();
+    expect(screen.getByText('alert.details.triggerTimes')).toBeInTheDocument();
+    expect(screen.getByText('alert.details.startAt')).toBeInTheDocument();
+    expect(screen.getByText('alert.details.activeAt')).toBeInTheDocument();
   });
 
   it('confirms deletion before delegating the selected alert group', async () => {

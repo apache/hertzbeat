@@ -59,8 +59,33 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+.alertRecordHeader {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+}
+.alertRecordHeader :global(.ant-typography:last-child) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.alertRecordEvidence {
+  display: grid;
+  gap: 12px;
+  padding-inline: 28px 8px;
+}
+.alertRecordMap {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
 @media (max-width: 900px) {
   .toolbar {
     grid-template-columns: 1fr 1fr;
+  }
+  .alertRecordHeader,
+  .alertRecordMap {
+    display: grid;
   }
 }

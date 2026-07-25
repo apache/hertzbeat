@@ -27,6 +27,20 @@ const group = {
   commonLabels: { severity: 'critical', 'service.name': 'checkout' },
   commonAnnotations: null,
   alertFingerprints: ['fingerprint-1'],
+  alerts: [
+    {
+      id: 11,
+      labels: { alertname: 'HighLatency', instance: 'checkout-1' },
+      annotations: { summary: 'Checkout latency exceeded the threshold.' },
+      content: 'Checkout latency is above 500 ms.',
+      status: 'firing',
+      triggerTimes: 3,
+      startAt: 1784250000000,
+      activeAt: 1784250060000,
+      endAt: null,
+      creator: 'ignored'
+    }
+  ],
   gmtUpdate: '2026-07-17 10:20:30',
   creator: 'ignored'
 };
@@ -139,6 +153,19 @@ describe('alert center wire schemas', () => {
           commonLabels: { severity: 'critical', 'service.name': 'checkout' },
           commonAnnotations: null,
           alertFingerprints: ['fingerprint-1'],
+          alerts: [
+            {
+              id: 11,
+              labels: { alertname: 'HighLatency', instance: 'checkout-1' },
+              annotations: { summary: 'Checkout latency exceeded the threshold.' },
+              content: 'Checkout latency is above 500 ms.',
+              status: 'firing',
+              triggerTimes: 3,
+              startAt: 1784250000000,
+              activeAt: 1784250060000,
+              endAt: null
+            }
+          ],
           gmtUpdate: '2026-07-17 10:20:30'
         }
       ],
@@ -158,6 +185,7 @@ describe('alert center wire schemas', () => {
               commonLabels: null,
               commonAnnotations: null,
               alertFingerprints: null,
+              alerts: [],
               gmtUpdate: null
             }
           ],
@@ -174,6 +202,7 @@ describe('alert center wire schemas', () => {
       commonLabels: null,
       commonAnnotations: null,
       alertFingerprints: null,
+      alerts: [],
       gmtUpdate: null
     });
   });
@@ -198,6 +227,10 @@ describe('alert center wire schemas', () => {
     ['zero id', { ...group, id: 0 }],
     ['unsupported status', { ...group, status: 'unknown' }],
     ['unsupported severity', { ...group, commonLabels: { severity: 'debug' } }],
+    ['unsupported child status', { ...group, alerts: [{ ...group.alerts[0], status: 'pending' }] }],
+    ['negative child trigger count', { ...group, alerts: [{ ...group.alerts[0], triggerTimes: -1 }] }],
+    ['unsafe child timestamp', { ...group, alerts: [{ ...group.alerts[0], activeAt: Number.MAX_SAFE_INTEGER + 1 }] }],
+    ['unrenderable child timestamp', { ...group, alerts: [{ ...group.alerts[0], activeAt: 8_640_000_000_000_001 }] }],
     ['offset date-time', { ...group, gmtUpdate: '2026-07-17T10:20:30Z' }],
     ['invalid Java local date-time', { ...group, gmtUpdate: '2026-02-30 10:20:30' }]
   ])('rejects malformed row %s', (_label, row) => {
@@ -258,6 +291,18 @@ describe('alert center wire schemas', () => {
         {
           content: [group, group],
           totalElements: 2,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        firstPageQuery
+      )
+    ).toThrow(AlertContractError);
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [{ ...group, alerts: [group.alerts[0], group.alerts[0]] }],
+          totalElements: 1,
           totalPages: 1,
           number: 0,
           size: 8

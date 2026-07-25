@@ -2016,6 +2016,14 @@
     "listUnavailable": "告警列表暂不可用。",
     "listLoadFailed": "告警列表加载失败。",
     "summaryLoadFailed": "告警概览加载失败。",
+    "details": {
+      "triggerTimes": "触发次数",
+      "labels": "标签",
+      "annotations": "注解",
+      "startAt": "首次触发",
+      "activeAt": "最近触发",
+      "endAt": "恢复时间"
+    },
     "summary": {
       "total": "告警总数",
       "acknowledged": "已确认",
