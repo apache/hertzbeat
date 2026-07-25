@@ -6,6 +6,7 @@
  */
 
 import { useNoticeRuleCommandController } from './notice-rule-command-controller';
+import { useNoticeRulePageCorrection } from './use-notice-rule-page-correction';
 import { useNoticeRuleQueryController } from './notice-rule-query-controller';
 import { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
 
@@ -13,6 +14,7 @@ export function useNoticeRuleController() {
   const queryController = useNoticeRuleQueryController();
   const options = useNoticeRuleOptions();
   const list = useNoticeRuleList(queryController.query);
+  useNoticeRulePageCorrection(queryController.query, list.state, queryController.replacePageIndex);
   const commandController = useNoticeRuleCommandController(list, options);
   const { gate, editor } = commandController;
 

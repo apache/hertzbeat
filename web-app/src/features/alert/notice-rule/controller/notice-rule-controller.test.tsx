@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   getOne: vi.fn(),
   notification: vi.fn(),
   options: new Map<string, unknown>(),
+  query: { name: '', pageIndex: 0, pageSize: 8 },
+  replacePageIndex: vi.fn(),
   refetch: vi.fn(),
   update: vi.fn(),
   useDataProvider: vi.fn(),
@@ -27,11 +29,12 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('./notice-rule-query-controller', () => ({
   useNoticeRuleQueryController: () => ({
-    query: { name: '', pageIndex: 0, pageSize: 8 },
+    query: mocks.query,
     name: '',
     setName: vi.fn(),
     search: vi.fn(),
-    changePage: vi.fn()
+    changePage: vi.fn(),
+    replacePageIndex: mocks.replacePageIndex
   })
 }));
 
@@ -58,6 +61,7 @@ const rule = {
 describe('notice rule controller', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mocks.query = { name: '', pageIndex: 0, pageSize: 8 };
     mocks.options.clear();
     mocks.options.set('notice-receivers:all', ready([receiver]));
     mocks.options.set('notice-templates:all', ready([template]));
@@ -176,6 +180,27 @@ describe('notice rule controller', () => {
     expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ resource: 'notice-rules' }));
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
     expect(result.current.state.draft).toBeNull();
+  });
+
+  it('returns an out-of-range rule page to the last authoritative result page', async () => {
+    mocks.query = { name: 'ops', pageIndex: 2, pageSize: 8 };
+    mocks.useList.mockReturnValue({
+      query: { error: null, isError: false, isFetching: false, isPending: false, refetch: mocks.refetch },
+      result: { data: [], total: 10 }
+    });
+    vi.mocked(mocks.replacePageIndex).mockClear();
+
+    renderHook(() => useNoticeRuleController());
+
+    await waitFor(() => expect(mocks.replacePageIndex).toHaveBeenCalledWith(1));
+  });
+
+  it('returns an empty out-of-range rule page to the first page', async () => {
+    mocks.query = { name: 'missing', pageIndex: 2, pageSize: 8 };
+
+    renderHook(() => useNoticeRuleController());
+
+    await waitFor(() => expect(mocks.replacePageIndex).toHaveBeenCalledWith(0));
   });
 
   it('persists a list switch change and reports success only after false detail convergence and list reread', async () => {

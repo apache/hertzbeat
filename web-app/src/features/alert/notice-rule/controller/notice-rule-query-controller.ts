@@ -27,6 +27,12 @@ export function useNoticeRuleQueryController() {
     },
     [query, setSearchParams]
   );
+  const replacePageIndex = useCallback(
+    (pageIndex: number) => {
+      setSearchParams(writeNoticeRuleQuery({ ...query, pageIndex }), { replace: true });
+    },
+    [query, setSearchParams]
+  );
 
-  return { query, name, setName, search, changePage };
+  return { query, name, setName, search, changePage, replacePageIndex };
 }
