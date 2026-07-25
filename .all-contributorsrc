@@ -2906,6 +2906,17 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "leo-934",
+      "name": "leo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55838224?v=4",
+      "profile": "https://github.com/leo-934",
+      "contributions": [
+        "code",
+        "doc",
+        "blog"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -578,6 +578,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhaoyangplus"><img src="https://avatars.githubusercontent.com/u/245090302?v=4?s=100" width="100px;" alt="zhaoyangplus"/><br /><sub><b>zhaoyangplus</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhaoyangplus" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yexuanyang"><img src="https://avatars.githubusercontent.com/u/73885401?v=4?s=100" width="100px;" alt="Yang Yexuan"/><br /><sub><b>Yang Yexuan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yexuanyang" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/markguo123"><img src="https://avatars.githubusercontent.com/u/155072651?v=4?s=100" width="100px;" alt="markguo123"/><br /><sub><b>markguo123</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=markguo123" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/leo-934"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="leo"/><br /><sub><b>leo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=leo-934" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=leo-934" title="Documentation">📖</a> <a href="#blog-leo-934" title="Blogposts">📝</a></td>
     </tr>
   </tbody>
 </table>
