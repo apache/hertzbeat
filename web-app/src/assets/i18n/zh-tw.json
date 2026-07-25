@@ -975,6 +975,7 @@
     "delete": "刪除",
     "deleteConfirm": "確認刪除所選監控資料？",
     "selected": "已選擇 {{count}} 項",
+    "clearSelection": "清除選取",
     "success": "監控操作已完成。",
     "failed": "監控操作失敗。"
   },

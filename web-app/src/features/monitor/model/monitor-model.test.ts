@@ -151,18 +151,21 @@ describe('monitor list model', () => {
     expect(routePath).not.toContain('private-credential');
   });
 
-  it('keeps bulk selection inside one query scope and visible row set', () => {
+  it('keeps bulk selection across pages and sorting within one filter scope', () => {
     const base = readMonitorQuery(new URLSearchParams('search=checkout&pageIndex=0&pageSize=10'));
     const filtered = readMonitorQuery(new URLSearchParams('search=orders&pageIndex=0&pageSize=10'));
     const paged = readMonitorQuery(new URLSearchParams('search=checkout&pageIndex=1&pageSize=10'));
+    const sorted = readMonitorQuery(
+      new URLSearchParams('search=checkout&pageIndex=0&pageSize=20&sort=name&order=desc')
+    );
     const scope = monitorSelectionScope(base);
     const selection = { scope, ids: [7, 8, 7] };
 
     expect(monitorSelectionScope(filtered)).not.toBe(scope);
-    expect(monitorSelectionScope(paged)).not.toBe(scope);
-    expect(reconcileMonitorSelection(selection, scope, [8, 9])).toEqual([8]);
-    expect(reconcileMonitorSelection(selection, monitorSelectionScope(filtered), [7, 8])).toEqual([]);
-    expect(reconcileMonitorSelection(selection, monitorSelectionScope(paged), [7, 8])).toEqual([]);
+    expect(monitorSelectionScope(paged)).toBe(scope);
+    expect(monitorSelectionScope(sorted)).toBe(scope);
+    expect(reconcileMonitorSelection(selection, scope)).toEqual([7, 8]);
+    expect(reconcileMonitorSelection(selection, monitorSelectionScope(filtered))).toEqual([]);
   });
 
   it('preserves the existing selection reference when reconciliation makes no change', () => {
@@ -170,6 +173,6 @@ describe('monitor list model', () => {
     const ids = [7, 8];
     const selection = { scope: monitorSelectionScope(query), ids };
 
-    expect(reconcileMonitorSelection(selection, selection.scope, [7, 8, 9])).toBe(ids);
+    expect(reconcileMonitorSelection(selection, selection.scope)).toBe(ids);
   });
 });

@@ -69,6 +69,7 @@ export function MonitorListResults({
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
   const rowSelection: TableRowSelection<Monitor> = {
     selectedRowKeys: selectedIds,
+    preserveSelectedRowKeys: true,
     getCheckboxProps: () => ({ disabled: operating }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };

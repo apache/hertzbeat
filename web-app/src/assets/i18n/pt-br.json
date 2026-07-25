@@ -995,6 +995,7 @@
     "delete": "Excluir",
     "deleteConfirm": "Excluir os dados dos monitores selecionados?",
     "selected": "{{count}} selecionados",
+    "clearSelection": "Limpar seleção",
     "success": "Operação de monitor concluída.",
     "failed": "Falha na operação de monitor."
   },

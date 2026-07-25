@@ -149,10 +149,13 @@ describe('MonitorListView evidence states', () => {
   });
 
   it('shows administrator export actions for all and selected monitors', () => {
-    renderView({ canExport: true, selectedIds: [7], monitors: { kind: 'empty' } });
+    const clearSelection = vi.fn();
+    renderView({ canExport: true, selectedIds: [7], monitors: { kind: 'empty' } }, { clearSelection });
 
     expect(screen.getByRole('button', { name: i18n.t('monitor.export.all') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('monitor.export.selected') })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorActions.clearSelection') }));
+    expect(clearSelection).toHaveBeenCalledOnce();
   });
 
   it('delegates sortable legacy columns to the server query', () => {
@@ -212,6 +215,7 @@ function renderView(
     submitImport: () => Promise.resolve(true),
     copyInstance: () => Promise.resolve(true),
     selectIds: () => undefined,
+    clearSelection: () => undefined,
     ...actionPatch
   };
   return render(

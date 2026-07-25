@@ -67,12 +67,14 @@ export function MonitorBulkActions({
   run,
   exportSelected,
   canExport,
+  clearSelection,
   disabled
 }: {
   selectedIds: number[];
   run: (action: MonitorAction) => void | Promise<void>;
   exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
   canExport: boolean;
+  clearSelection: () => void;
   disabled: boolean;
 }) {
   const { t } = useTranslation();
@@ -90,6 +92,9 @@ export function MonitorBulkActions({
         {canExport ? (
           <MonitorExportButton label={t('monitor.export.selected')} disabled={disabled} onExport={exportSelected} />
         ) : null}
+        <Button disabled={disabled} onClick={clearSelection}>
+          {t('monitorActions.clearSelection')}
+        </Button>
         <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete')}>
           <Button danger disabled={disabled}>
             {t('monitorActions.delete')}

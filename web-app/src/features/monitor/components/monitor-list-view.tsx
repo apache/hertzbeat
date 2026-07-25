@@ -55,6 +55,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         run={actions.runBulk}
         exportSelected={actions.exportSelected}
         canExport={state.canExport}
+        clearSelection={actions.clearSelection}
         disabled={state.operating}
       />
       <MonitorListResults

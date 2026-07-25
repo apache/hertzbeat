@@ -990,6 +990,7 @@
     "delete": "Delete",
     "deleteConfirm": "Delete the selected monitor data?",
     "selected": "{{count}} selected",
+    "clearSelection": "Clear selection",
     "success": "Monitor operation completed.",
     "failed": "Monitor operation failed."
   },

@@ -23,6 +23,7 @@ import { reconcileMonitorSelection, type MonitorScopedSelection } from '../model
 type MonitorSelectionSnapshot = {
   selection: MonitorScopedSelection;
   scope: string;
+  page: string;
   visibleIds: readonly number[];
 };
 
@@ -34,29 +35,29 @@ export type MonitorSelectionController = {
   validatedIds: () => number[];
 };
 
-export function useMonitorSelection(scope: string, content?: Monitor[]): MonitorSelectionController {
+export function useMonitorSelection(scope: string, page: string, content?: Monitor[]): MonitorSelectionController {
   const rows = useMemo(() => content ?? [], [content]);
   const visibleIds = useMemo(() => rows.map(row => row.id), [rows]);
   const [selection, setSelection] = useState<MonitorScopedSelection>({ scope, ids: [] });
-  const latest = useRef<MonitorSelectionSnapshot>({ selection, scope, visibleIds });
+  const latest = useRef<MonitorSelectionSnapshot>({ selection, scope, page, visibleIds });
+  const selectedIds = reconcileMonitorSelection(selection, scope);
 
   useLayoutEffect(() => {
-    latest.current = { selection, scope, visibleIds };
-  }, [selection, scope, visibleIds]);
-
-  const selectedIds = reconcileMonitorSelection(selection, scope, visibleIds);
-
-  if (selection.scope !== scope || selectedIds !== selection.ids) {
-    // Persist fail-closed reconciliation before commit so removed rows cannot
-    // revive a previous selection when they re-enter the visible result set.
-    setSelection({ scope, ids: selectedIds });
-  }
+    const previous = latest.current;
+    setSelection(current => reconcileSelectionAfterRead(current, previous, scope, page, visibleIds));
+    latest.current = {
+      selection: selection.scope === scope ? selection : { scope, ids: [] },
+      scope,
+      page,
+      visibleIds
+    };
+  }, [page, scope, selection, visibleIds]);
 
   const selectIds = useCallback(
     (ids: number[]) => {
-      setSelection({ scope, ids: reconcileMonitorSelection({ scope, ids }, scope, visibleIds) });
+      setSelection({ scope, ids: reconcileMonitorSelection({ scope, ids }, scope) });
     },
-    [scope, visibleIds]
+    [scope]
   );
 
   const remove = useCallback((ids: readonly number[]) => {
@@ -69,8 +70,28 @@ export function useMonitorSelection(scope: string, content?: Monitor[]): Monitor
 
   const validatedIds = useCallback(() => {
     const current = latest.current;
-    return reconcileMonitorSelection(current.selection, current.scope, current.visibleIds);
+    return reconcileMonitorSelection(current.selection, current.scope);
   }, []);
 
   return { rows, selectedIds, selectIds, remove, validatedIds };
+}
+
+function reconcileSelectionAfterRead(
+  selection: MonitorScopedSelection,
+  previous: MonitorSelectionSnapshot,
+  scope: string,
+  page: string,
+  visibleIds: readonly number[]
+) {
+  const selectedIds = reconcileMonitorSelection(selection, scope);
+  if (selection.scope !== scope) return { scope, ids: [] };
+  if (previous.scope !== scope || previous.page !== page) {
+    return selectedIds === selection.ids ? selection : { scope, ids: selectedIds };
+  }
+  // A same-page reread is authoritative for rows that were previously visible.
+  // Hidden-page selections remain valid until that page is revisited or a write removes them.
+  const visible = new Set(visibleIds);
+  const removed = new Set(previous.visibleIds.filter(id => !visible.has(id)));
+  const retained = selectedIds.filter(id => !removed.has(id));
+  return retained.length === selection.ids.length ? selection : { scope, ids: retained };
 }

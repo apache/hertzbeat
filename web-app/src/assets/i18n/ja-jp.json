@@ -987,6 +987,7 @@
     "delete": "削除",
     "deleteConfirm": "選択した監視データを削除しますか？",
     "selected": "{{count}} 件を選択",
+    "clearSelection": "選択を解除",
     "success": "監視操作が完了しました。",
     "failed": "監視操作に失敗しました。"
   },

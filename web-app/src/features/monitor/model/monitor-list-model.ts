@@ -62,4 +62,5 @@ export type MonitorListViewActions = {
   submitImport: () => Promise<boolean>;
   copyInstance: (instance: string) => Promise<boolean>;
   selectIds: (ids: number[]) => void;
+  clearSelection: () => void;
 };

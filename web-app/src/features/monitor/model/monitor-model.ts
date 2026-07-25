@@ -28,17 +28,17 @@ export const monitorHelpUrl = 'https://hertzbeat.apache.org/docs/help/guide/';
 export type MonitorScopedSelection = { scope: string; ids: number[] };
 
 export function monitorSelectionScope(query: MonitorQuery) {
-  return writeMonitorQuery(query).toString();
+  return new URLSearchParams({
+    search: query.search,
+    app: query.app,
+    status: query.status,
+    labels: query.labels
+  }).toString();
 }
 
-export function reconcileMonitorSelection(
-  selection: MonitorScopedSelection,
-  scope: string,
-  visibleIds: readonly number[]
-) {
+export function reconcileMonitorSelection(selection: MonitorScopedSelection, scope: string) {
   if (selection.scope !== scope) return [];
-  const visible = new Set(visibleIds);
-  const reconciled = [...new Set(selection.ids)].filter(id => visible.has(id));
+  const reconciled = [...new Set(selection.ids)].filter(id => Number.isSafeInteger(id) && id > 0);
   return reconciled.length === selection.ids.length && reconciled.every((id, index) => id === selection.ids[index])
     ? selection.ids
     : reconciled;

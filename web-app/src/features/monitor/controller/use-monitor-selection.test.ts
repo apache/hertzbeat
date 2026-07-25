@@ -21,28 +21,28 @@ import { describe, expect, it } from 'vitest';
 import { useMonitorSelection } from './use-monitor-selection';
 
 describe('useMonitorSelection', () => {
-  it('revalidates a previously captured action against the latest scope and rows', () => {
-    const { result, rerender } = renderHook(({ scope, rows }) => useMonitorSelection(scope, rows), {
-      initialProps: { scope: 'checkout-page-1', rows: [monitor(7), monitor(8)] }
+  it('preserves selected ids across pages but clears them when the filter scope changes', () => {
+    const { result, rerender } = renderHook(({ scope, page, rows }) => useMonitorSelection(scope, page, rows), {
+      initialProps: { scope: 'checkout', page: 'checkout-page-1', rows: [monitor(7), monitor(8)] }
     });
 
     act(() => result.current.selectIds([7]));
     const staleValidatedIds = result.current.validatedIds;
     expect(staleValidatedIds()).toEqual([7]);
 
-    rerender({ scope: 'checkout-page-1', rows: [monitor(8)] });
-    expect(staleValidatedIds()).toEqual([]);
+    rerender({ scope: 'checkout', page: 'checkout-page-2', rows: [monitor(9)] });
+    expect(staleValidatedIds()).toEqual([7]);
 
-    act(() => result.current.selectIds([8]));
-    expect(staleValidatedIds()).toEqual([8]);
+    act(() => result.current.selectIds([7, 9]));
+    expect(staleValidatedIds()).toEqual([7, 9]);
 
-    rerender({ scope: 'orders-page-1', rows: [monitor(9)] });
+    rerender({ scope: 'orders', page: 'orders-page-1', rows: [monitor(10)] });
 
     expect(staleValidatedIds()).toEqual([]);
   });
 
-  it('does not revive a selected id after it leaves and later returns to the visible rows', () => {
-    const { result, rerender } = renderHook(({ rows }) => useMonitorSelection('checkout-page-1', rows), {
+  it('does not revive a selected id after a same-page refresh removes it', () => {
+    const { result, rerender } = renderHook(({ rows }) => useMonitorSelection('checkout', 'checkout-page-1', rows), {
       initialProps: { rows: [monitor(7), monitor(8)] }
     });
 

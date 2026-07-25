@@ -60,7 +60,7 @@ export function useMonitorListController() {
   const draft = useQueryDraft(source, canonicalDraft);
   const { monitors, apps, reread } = useMonitorListResources(query);
   const records = monitors.data?.content;
-  const selection = useMonitorSelection(monitorSelectionScope(query), records);
+  const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
   const commands = useMonitorListCommands(source, reread, selection);
   const monitorExport = useMonitorExport(selection.selectedIds);
   const monitorImport = useMonitorImport(reread, () => selection.selectIds([]));
@@ -104,7 +104,8 @@ export function useMonitorListController() {
       cancelImport: monitorImport.actions.cancel,
       selectImportFile: monitorImport.actions.selectFile,
       submitImport: monitorImport.actions.submit,
-      selectIds: selection.selectIds
+      selectIds: selection.selectIds,
+      clearSelection: () => selection.selectIds([])
     }
   };
 }
