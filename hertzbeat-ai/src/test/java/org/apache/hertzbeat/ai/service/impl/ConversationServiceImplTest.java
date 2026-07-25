@@ -20,6 +20,7 @@ package org.apache.hertzbeat.ai.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.ai.dao.ChatMessageDao;
+import org.apache.hertzbeat.ai.dao.SopScheduleDao;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.codec.ServerSentEvent;
@@ -58,6 +61,9 @@ class ConversationServiceImplTest {
 
     @Mock
     private ChatMessageDao messageDao;
+
+    @Mock
+    private SopScheduleDao sopScheduleDao;
 
     @Mock
     private ChatClientProviderService chatClientProviderService;
@@ -115,5 +121,27 @@ class ConversationServiceImplTest {
         verify(chatClientProviderService).streamChat(contextCaptor.capture());
         assertEquals(history, contextCaptor.getValue().getConversationHistory());
         assertEquals(subject, contextCaptor.getValue().getSubject());
+    }
+
+    /**
+     * 删除会话时必须先清理关联计划，避免定时任务继续向已删除的会话推送消息。
+     */
+    @Test
+    void deleteConversationShouldRemoveSchedulesMessagesAndConversationInOrder() {
+        ChatMessage message = ChatMessage.builder()
+            .id(11L)
+            .conversationId(CONVERSATION_ID)
+            .role("user")
+            .content("待删除消息")
+            .build();
+        when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID))
+            .thenReturn(List.of(message));
+
+        conversationService.deleteConversation(CONVERSATION_ID);
+
+        InOrder deletionOrder = inOrder(sopScheduleDao, messageDao, conversationDao);
+        deletionOrder.verify(sopScheduleDao).deleteByConversationId(CONVERSATION_ID);
+        deletionOrder.verify(messageDao).deleteAll(List.of(message));
+        deletionOrder.verify(conversationDao).deleteById(CONVERSATION_ID);
     }
 }
