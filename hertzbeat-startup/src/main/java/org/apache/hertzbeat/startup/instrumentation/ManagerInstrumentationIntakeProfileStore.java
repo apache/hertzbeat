@@ -28,6 +28,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeEndpoint;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.apache.hertzbeat.observability.instrumentation.v2.store.InstrumentationIntakeProfileStore;
@@ -72,15 +73,15 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
                     collectorId,
                     mapError(intake.errorCode()));
         }
-        EnumMap<OtlpTransport, String> endpoints = new EnumMap<>(OtlpTransport.class);
+        EnumMap<OtlpTransport, IntakeEndpoint> endpoints = new EnumMap<>(OtlpTransport.class);
         List<OtlpTransport> transports = new ArrayList<>();
         if (intake.capabilities().contains(CollectorInstrumentationIntake.Capability.OTLP_HTTP_PROTOBUF)) {
             transports.add(OtlpTransport.HTTP_PROTOBUF);
-            endpoints.put(OtlpTransport.HTTP_PROTOBUF, intake.otlpHttpEndpoint());
+            endpoints.put(OtlpTransport.HTTP_PROTOBUF, IntakeEndpoint.fromUrl(intake.otlpHttpEndpoint()));
         }
         if (intake.capabilities().contains(CollectorInstrumentationIntake.Capability.OTLP_GRPC)) {
             transports.add(OtlpTransport.GRPC);
-            endpoints.put(OtlpTransport.GRPC, intake.otlpGrpcEndpoint());
+            endpoints.put(OtlpTransport.GRPC, IntakeEndpoint.fromUrl(intake.otlpGrpcEndpoint()));
         }
         return new IntakeProfile(
                 id,

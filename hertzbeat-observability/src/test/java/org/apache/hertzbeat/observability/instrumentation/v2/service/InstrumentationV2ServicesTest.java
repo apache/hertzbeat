@@ -41,13 +41,16 @@ import org.apache.hertzbeat.observability.instrumentation.guide.InstrumentationG
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionStatus;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeEndpoint;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException;
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +83,7 @@ class InstrumentationV2ServicesTest {
                 service()));
 
         assertEquals("https://otel.example.test/v1", response.intakeProfile()
-                .httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF));
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
         String rendered = response.blocks().stream()
                 .map(block -> block.content() == null ? "" : block.content())
                 .collect(java.util.stream.Collectors.joining("\n"));
@@ -88,9 +91,55 @@ class InstrumentationV2ServicesTest {
         assertTrue(rendered.contains("${HERTZBEAT_TOKEN}"));
         assertTrue(rendered.contains("otlphttp/hertzbeat"));
         assertFalse(rendered.contains("pipelines:"));
+        assertFalse(response.blocks().stream()
+                .anyMatch(block -> block.type() == BlockType.WARNING));
         String json = new ObjectMapper().writeValueAsString(response);
         assertFalse(json.contains("secret-value"));
         assertFalse(json.contains("entityId"));
+    }
+
+    @Test
+    void rendersStableWarningForPlaintextAuthorizationWithoutRejectingProfile() {
+        InstrumentationCatalogV2Service catalog = catalog();
+        IntakeProfile plaintext = new IntakeProfile(
+                "collector:loopback",
+                IntakeKind.HERTZBEAT_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("http://127.0.0.1:4318", TransportSecurity.PLAINTEXT)),
+                "Authorization",
+                "loopback",
+                null);
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog,
+                new InstrumentationIntakeProfileV2Service(() -> List.of(plaintext)),
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
+
+        var response = renderer.render(new RenderRequest(
+                2,
+                SourceKind.EXISTING_OPENTELEMETRY,
+                "existing_otlp",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "collector:loopback",
+                service()));
+
+        assertEquals(Availability.AVAILABLE, response.intakeProfile().availability());
+        assertEquals("plaintext_transport_warning", response.blocks().getFirst().id());
+        assertEquals(BlockType.WARNING, response.blocks().getFirst().type());
+        assertEquals(
+                "instrumentation.v2.warning.plaintext_authorization",
+                response.blocks().getFirst().bodyKey());
+        assertTrue(response.blocks().stream()
+                .filter(block -> block.content() != null)
+                .anyMatch(block -> block.content().contains("http://127.0.0.1:4318")));
     }
 
     @Test
@@ -269,7 +318,9 @@ class InstrumentationV2ServicesTest {
                 Availability.AVAILABLE,
                 Gateway.SERVER,
                 List.of(OtlpTransport.HTTP_PROTOBUF),
-                Map.of(OtlpTransport.HTTP_PROTOBUF, "https://otel.example.test/v1"),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("https://otel.example.test/v1", TransportSecurity.TLS)),
                 "Authorization",
                 null,
                 null);

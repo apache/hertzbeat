@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -43,10 +44,14 @@ import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+@ExtendWith(OutputCaptureExtension.class)
 class OtelRuntimeSupervisorTest {
 
     @TempDir
@@ -199,6 +204,25 @@ class OtelRuntimeSupervisorTest {
         assertTrue(supervisor.snapshot().lastError().contains("intake token"));
         verify(resolver, never()).resolve();
         verify(launcher, never()).start(any(), any(), any(), any(), anyMap(), anyBoolean());
+    }
+
+    @Test
+    void redactsCredentialsBeforeRecordingOrLoggingSupervisorFailure(CapturedOutput output) throws Exception {
+        properties.setRestartDelay(Duration.ofHours(1));
+        when(resolver.resolve()).thenThrow(
+                new IllegalStateException("Authorization: Bearer token-phase0"));
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        String diagnostic = supervisor.snapshot().lastError();
+        assertTrue(diagnostic.startsWith("[REDACTED"));
+        assertFalse(diagnostic.contains("token-phase0"));
+        assertFalse(diagnostic.contains("Authorization"));
+        assertFalse(diagnostic.contains("Bearer"));
+        assertFalse(output.getAll().contains("token-phase0"));
+        assertFalse(output.getAll().contains("Authorization"));
+        assertFalse(output.getAll().contains("Bearer"));
     }
 
     @Test

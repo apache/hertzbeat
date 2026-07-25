@@ -81,7 +81,7 @@ class CollectorIntakeAdvertisementContractTest {
     }
 
     @Test
-    void rejectsInvalidSchemaDuplicateCapabilitiesAndUnsafeEndpoints() {
+    void acceptsExplicitHttpAndHttpsButRejectsUnsafeEndpoints() {
         assertThrows(IllegalArgumentException.class, () -> request(
                 2, List.of(Capability.OTLP_GRPC), null, "https://server.example.test:4317"));
         assertThrows(IllegalArgumentException.class, () -> request(
@@ -89,8 +89,24 @@ class CollectorIntakeAdvertisementContractTest {
                 List.of(Capability.OTLP_GRPC, Capability.OTLP_GRPC),
                 null,
                 "https://server.example.test:4317"));
+        assertEquals(
+                "http://10.0.0.8:4318",
+                request(
+                        1,
+                        List.of(Capability.OTLP_HTTP_PROTOBUF),
+                        "http://10.0.0.8:4318",
+                        null).otlpHttpEndpoint());
+        assertEquals(
+                "https://server.example.test:4317",
+                request(
+                        1,
+                        List.of(Capability.OTLP_GRPC),
+                        null,
+                        "https://server.example.test:4317").otlpGrpcEndpoint());
         assertThrows(IllegalArgumentException.class, () -> request(
-                1, List.of(Capability.OTLP_HTTP_PROTOBUF), "http://10.0.0.8:4318", null));
+                1, List.of(Capability.OTLP_HTTP_PROTOBUF), "ftp://10.0.0.8:4318", null));
+        assertThrows(IllegalArgumentException.class, () -> request(
+                1, List.of(Capability.OTLP_HTTP_PROTOBUF), "10.0.0.8:4318", null));
         assertThrows(IllegalArgumentException.class, () -> request(
                 1,
                 List.of(Capability.OTLP_GRPC),

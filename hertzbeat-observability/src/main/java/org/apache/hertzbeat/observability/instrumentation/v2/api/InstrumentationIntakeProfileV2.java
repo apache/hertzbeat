@@ -85,6 +85,46 @@ public final class InstrumentationIntakeProfileV2 {
         }
     }
 
+    /** Transport confidentiality derived from the explicit endpoint scheme. */
+    public enum TransportSecurity {
+        TLS("tls"),
+        PLAINTEXT("plaintext");
+
+        private final String code;
+
+        TransportSecurity(String code) {
+            this.code = code;
+        }
+
+        @JsonValue
+        public String code() {
+            return code;
+        }
+    }
+
+    /** One explicit endpoint paired with its scheme-derived transport security. */
+    public record IntakeEndpoint(String url, TransportSecurity security) {
+
+        public IntakeEndpoint {
+            URI uri = requireHttpEndpoint(url);
+            Objects.requireNonNull(security, "security");
+            TransportSecurity derived = "https".equalsIgnoreCase(uri.getScheme())
+                    ? TransportSecurity.TLS
+                    : TransportSecurity.PLAINTEXT;
+            if (security != derived) {
+                throw new IllegalArgumentException("Intake endpoint security must match its URI scheme");
+            }
+        }
+
+        public static IntakeEndpoint fromUrl(String url) {
+            URI uri = requireHttpEndpoint(url);
+            TransportSecurity security = "https".equalsIgnoreCase(uri.getScheme())
+                    ? TransportSecurity.TLS
+                    : TransportSecurity.PLAINTEXT;
+            return new IntakeEndpoint(url, security);
+        }
+    }
+
     /** Stable intake gateway identifier. */
     public enum Gateway {
         SERVER("server"),
@@ -148,7 +188,7 @@ public final class InstrumentationIntakeProfileV2 {
             Availability availability,
             Gateway gateway,
             List<OtlpTransport> supportedTransports,
-            Map<OtlpTransport, String> httpsEndpoints,
+            Map<OtlpTransport, IntakeEndpoint> endpoints,
             String authHeaderName,
             String collectorId,
             ErrorCode errorCode) {
@@ -158,13 +198,13 @@ public final class InstrumentationIntakeProfileV2 {
             Objects.requireNonNull(kind, "kind");
             Objects.requireNonNull(availability, "availability");
             supportedTransports = copyTransports(supportedTransports);
-            httpsEndpoints = Map.copyOf(Objects.requireNonNull(httpsEndpoints, "httpsEndpoints"));
+            endpoints = Map.copyOf(Objects.requireNonNull(endpoints, "endpoints"));
             if (availability == Availability.AVAILABLE) {
                 validateAvailable(
-                        kind, gateway, supportedTransports, httpsEndpoints, authHeaderName, collectorId, errorCode);
+                        kind, gateway, supportedTransports, endpoints, authHeaderName, collectorId, errorCode);
             } else {
                 validateUnavailable(
-                        kind, gateway, supportedTransports, httpsEndpoints, authHeaderName, collectorId, errorCode);
+                        kind, gateway, supportedTransports, endpoints, authHeaderName, collectorId, errorCode);
             }
         }
     }
@@ -216,7 +256,7 @@ public final class InstrumentationIntakeProfileV2 {
             IntakeKind kind,
             Gateway gateway,
             List<OtlpTransport> transports,
-            Map<OtlpTransport, String> endpoints,
+            Map<OtlpTransport, IntakeEndpoint> endpoints,
             String authHeaderName,
             String collectorId,
             ErrorCode errorCode) {
@@ -230,7 +270,9 @@ public final class InstrumentationIntakeProfileV2 {
                 || (kind == IntakeKind.EXTERNAL_OTEL_COLLECTOR && gateway != Gateway.EXTERNAL)) {
             throw new IllegalArgumentException("Intake profile kind and gateway do not match");
         }
-        endpoints.values().forEach(InstrumentationIntakeProfileV2::requireHttps);
+        if (endpoints.entrySet().stream().anyMatch(entry -> entry.getKey() == null || entry.getValue() == null)) {
+            throw new IllegalArgumentException("Available intake profile endpoints are invalid");
+        }
         if (kind == IntakeKind.HERTZBEAT_COLLECTOR) {
             requireId(collectorId);
         } else if (collectorId != null) {
@@ -242,7 +284,7 @@ public final class InstrumentationIntakeProfileV2 {
             IntakeKind kind,
             Gateway gateway,
             List<OtlpTransport> transports,
-            Map<OtlpTransport, String> endpoints,
+            Map<OtlpTransport, IntakeEndpoint> endpoints,
             String authHeaderName,
             String collectorId,
             ErrorCode errorCode) {
@@ -256,16 +298,21 @@ public final class InstrumentationIntakeProfileV2 {
         }
     }
 
-    private static void requireHttps(String value) {
+    private static URI requireHttpEndpoint(String value) {
         try {
             URI uri = URI.create(value);
-            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
+            if (!isHttpScheme(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
                     || uri.getRawQuery() != null || uri.getFragment() != null) {
-                throw new IllegalArgumentException("Intake profile endpoint must be explicit HTTPS");
+                throw new IllegalArgumentException("Intake profile endpoint must be explicit HTTP(S)");
             }
+            return uri;
         } catch (NullPointerException | IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Intake profile endpoint must be explicit HTTPS");
+            throw new IllegalArgumentException("Intake profile endpoint must be explicit HTTP(S)");
         }
+    }
+
+    private static boolean isHttpScheme(String scheme) {
+        return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
     }
 
     private static void requireId(String value) {

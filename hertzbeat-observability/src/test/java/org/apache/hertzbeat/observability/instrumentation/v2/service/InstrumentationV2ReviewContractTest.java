@@ -56,9 +56,11 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.DiscoveryStatus;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeEndpoint;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.junit.jupiter.api.Test;
 
 class InstrumentationV2ReviewContractTest {
@@ -329,7 +331,10 @@ class InstrumentationV2ReviewContractTest {
         return new IntakeProfile(
                 "server-primary", IntakeKind.SERVER, Availability.AVAILABLE, Gateway.SERVER,
                 List.of(OtlpTransport.HTTP_PROTOBUF),
-                Map.of(OtlpTransport.HTTP_PROTOBUF, "https://otel.example.test/api/otlp"),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint(
+                                "https://otel.example.test/api/otlp", TransportSecurity.TLS)),
                 "Authorization", null, null);
     }
 
@@ -337,7 +342,10 @@ class InstrumentationV2ReviewContractTest {
         return new IntakeProfile(
                 "collector:edge", IntakeKind.HERTZBEAT_COLLECTOR, Availability.AVAILABLE, Gateway.COLLECTOR,
                 List.of(OtlpTransport.HTTP_PROTOBUF),
-                Map.of(OtlpTransport.HTTP_PROTOBUF, "https://edge.example.test/api/otlp"),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint(
+                                "https://edge.example.test/api/otlp", TransportSecurity.TLS)),
                 "Authorization", "edge", null);
     }
 
@@ -348,7 +356,9 @@ class InstrumentationV2ReviewContractTest {
                 Availability.AVAILABLE,
                 Gateway.EXTERNAL,
                 List.of(OtlpTransport.GRPC),
-                Map.of(OtlpTransport.GRPC, "https://grpc.example.test:4317"),
+                Map.of(
+                        OtlpTransport.GRPC,
+                        new IntakeEndpoint("https://grpc.example.test:4317", TransportSecurity.TLS)),
                 "Authorization",
                 null,
                 null);

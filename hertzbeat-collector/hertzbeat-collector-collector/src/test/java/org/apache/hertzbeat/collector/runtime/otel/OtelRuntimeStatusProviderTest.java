@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -143,6 +144,38 @@ class OtelRuntimeStatusProviderTest {
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, recovered.failureCode());
         assertEquals(42, recovered.pid());
         assertEquals(0, recovered.restartCount());
+    }
+
+    @Test
+    void redactsRejectedSourceDiagnosticsBeforeHeartbeatSerialization() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        properties.setToken("collector-secret-token");
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                OtelRuntimeState.RUNNING, 42, 0, Instant.parse("2026-07-15T06:00:00Z"), ""));
+        when(supervisor.activeRevision()).thenReturn(1L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of(
+                new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                        ManagedOtelRuntimeStatus.SourceType.PROMETHEUS,
+                        "private-source",
+                        2,
+                        ManagedOtelRuntimeStatus.SourceState.REJECTED,
+                        "Authorization: Bearer collector-secret-token")));
+        OtelRuntimeTelemetryClient telemetryClient = mock(OtelRuntimeTelemetryClient.class);
+        when(telemetryClient.scrape(properties, false)).thenReturn(telemetry(0, 2048, 0));
+        OtelRuntimeDiagnosticsReader diagnosticsReader =
+                new OtelRuntimeDiagnosticsReader(new OtelRuntimeFailureClassifier());
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus status = provider.status();
+        String payload = JsonUtil.toJson(status);
+
+        assertTrue(status.sources().getFirst().lastError().startsWith("[REDACTED"));
+        assertFalse(payload.contains("collector-secret-token"));
+        assertFalse(payload.contains("Authorization"));
+        assertFalse(payload.contains("Bearer"));
     }
 
     @Test

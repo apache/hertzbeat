@@ -42,6 +42,8 @@ import org.springframework.context.SmartLifecycle;
 public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, CollectorRuntimeConfigApplier {
 
     private static final long HEALTH_POLL_MILLIS = 100;
+    private static final OtelRuntimeDiagnosticsReader DIAGNOSTICS_READER =
+            new OtelRuntimeDiagnosticsReader(new OtelRuntimeFailureClassifier());
 
     private final OtelRuntimeProperties properties;
     private final OtelRuntimeBinaryResolver resolver;
@@ -359,9 +361,10 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
         }
     }
 
-    private static String safeMessage(Exception error) {
+    private String safeMessage(Exception error) {
         String message = error.getMessage();
-        return message == null || message.isBlank() ? error.getClass().getSimpleName() : message;
+        String diagnostic = message == null || message.isBlank() ? error.getClass().getSimpleName() : message;
+        return DIAGNOSTICS_READER.sanitize(diagnostic, properties);
     }
 
     @Override

@@ -113,7 +113,7 @@ class CollectorInstrumentationIntakeContractTest {
     }
 
     @Test
-    void availableIntakeAcceptsOnlyExplicitHttpsEndpointsAndTheAuthorizationHeaderName() {
+    void availableIntakeAcceptsExplicitHttpAndHttpsEndpointsAndTheAuthorizationHeaderName() {
         CollectorInstrumentationIntake intake = new CollectorInstrumentationIntake(
                 1,
                 "edge-west",
@@ -126,13 +126,44 @@ class CollectorInstrumentationIntakeContractTest {
                 null);
 
         assertEquals("https://collector.example.test:4318", intake.otlpHttpEndpoint());
+        CollectorInstrumentationIntake plaintext = new CollectorInstrumentationIntake(
+                1,
+                "edge-loopback",
+                State.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "http://127.0.0.1:4318",
+                null,
+                "Authorization",
+                null);
+        assertEquals("http://127.0.0.1:4318", plaintext.otlpHttpEndpoint());
         assertThrows(IllegalArgumentException.class, () -> new CollectorInstrumentationIntake(
                 1,
                 "edge-west",
                 State.AVAILABLE,
                 Gateway.COLLECTOR,
                 List.of(Capability.OTLP_HTTP_PROTOBUF),
-                "http://10.0.0.8:4318",
+                "ftp://10.0.0.8:4318",
+                null,
+                "Authorization",
+                null));
+        assertThrows(IllegalArgumentException.class, () -> new CollectorInstrumentationIntake(
+                1,
+                "edge-west",
+                State.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "collector.example.test:4318",
+                null,
+                "Authorization",
+                null));
+        assertThrows(IllegalArgumentException.class, () -> new CollectorInstrumentationIntake(
+                1,
+                "edge-west",
+                State.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "https://collector.example.test:4318/v1?token=unsafe#fragment",
                 null,
                 "Authorization",
                 null));
