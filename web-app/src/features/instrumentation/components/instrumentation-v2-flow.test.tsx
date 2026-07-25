@@ -45,12 +45,26 @@ describe('instrumentation v2 interaction', () => {
     const javaSource = screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ });
     expect(javaSource).toBeVisible();
     expect(javaSource).toHaveAttribute('title', 'instrumentation.v2.directory.source.java');
+    expect(within(javaSource).getByText('instrumentation.v2.directory.source.java').tagName).toBe('SPAN');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
     expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
     expect(shellCss).toMatch(
-      /\.sourceTile\s*\{[^}]*min-width:\s*150px[^}]*min-height:\s*44px[^}]*flex:\s*0\s+0\s+auto/
+      /\.sourceTile\s*\{[^}]*min-width:\s*150px[^}]*min-height:\s*var\(--ant-control-height-lg\)[^}]*flex:\s*0\s+0\s+auto/
     );
-    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*white-space:\s*nowrap/);
+    expect(shellCss).toMatch(
+      /\.sourceTile\s*\{[^}]*border:\s*var\(--ant-line-width\) solid transparent[^}]*background:\s*var\(--ant-color-fill-quaternary\)/
+    );
+    expect(shellCss).toMatch(
+      /\.sourceTile:hover:not\(:disabled\),\s*\.sourceTile:focus-visible\s*\{[^}]*border-color:\s*var\(--ant-color-border\)[^}]*background:\s*var\(--ant-color-fill-tertiary\)/
+    );
+    expect(shellCss).toMatch(/\.sourceTile:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--hb-focus-ring\)/);
+    expect(shellCss).toMatch(
+      /\.sourceTileSelected,\s*\.sourceTileSelected:hover:not\(:disabled\),\s*\.sourceTileSelected:focus-visible\s*\{[^}]*border-color:\s*var\(--hb-brand-accent\)/
+    );
+    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*font-weight:\s*normal[^}]*white-space:\s*nowrap/);
+    expect(shellCss).toMatch(
+      /\.sourceIcon\s*\{[^}]*width:\s*var\(--ant-font-size-lg\)[^}]*height:\s*var\(--ant-font-size-lg\)/
+    );
     const assistiveDescription = within(javaSource).getByText('instrumentation.v2.directory.source.java_description');
     expect(assistiveDescription).toHaveClass(/sourceAssistiveText/);
     expect(within(assistiveDescription).getByText(/instrumentation\.signal\.metrics/)).toBeInTheDocument();

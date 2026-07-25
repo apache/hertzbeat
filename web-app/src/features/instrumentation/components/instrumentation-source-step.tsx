@@ -119,7 +119,7 @@ function SourceTile(props: { source: SourceEntry; selected: boolean; onSelect: (
       onClick={() => props.onSelect(source.id)}
     >
       <InstrumentationSourceIcon source={source} />
-      <strong className={styles.sourceName}>{sourceName}</strong>
+      <span className={styles.sourceName}>{sourceName}</span>
       {source.support !== 'supported' && (
         <span className={styles.sourceStatus} data-support={source.support}>
           {t(`instrumentation.capability.${source.support}`)}

@@ -29,29 +29,37 @@
 
 .sourceTile {
   min-width: 150px;
-  min-height: 44px;
+  min-height: var(--ant-control-height-lg);
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-control);
-  background: var(--hb-bg-raised);
+  gap: var(--ant-margin-xs);
+  padding: var(--ant-padding-xs) var(--ant-padding-sm);
+  border: var(--ant-line-width) solid transparent;
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-quaternary);
   color: inherit;
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+    border-color var(--ant-motion-duration-mid),
+    background-color var(--ant-motion-duration-mid);
 }
 
-.sourceTile:hover:not(:disabled) {
-  border-color: var(--hb-text-disabled);
-  background: var(--hb-bg-hover);
+.sourceTile:hover:not(:disabled),
+.sourceTile:focus-visible {
+  border-color: var(--ant-color-border);
+  background: var(--ant-color-fill-tertiary);
 }
 
-.sourceTileSelected {
+.sourceTile:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: var(--ant-line-width);
+}
+
+.sourceTileSelected,
+.sourceTileSelected:hover:not(:disabled),
+.sourceTileSelected:focus-visible {
   border-color: var(--hb-brand-accent);
   background: var(--hb-bg-selected);
 }
@@ -63,16 +71,17 @@
 
 .sourceName {
   min-width: 0;
+  font-weight: normal;
   line-height: 1.25;
   white-space: nowrap;
 }
 
 .sourceIcon {
-  width: 20px;
-  height: 20px;
+  width: var(--ant-font-size-lg);
+  height: var(--ant-font-size-lg);
   flex: 0 0 auto;
   object-fit: contain;
-  font-size: 20px;
+  font-size: var(--ant-font-size-lg);
   color: var(--hb-brand-accent);
 }
 
@@ -121,8 +130,8 @@
 
 .sourceStatus {
   margin-left: auto;
-  color: var(--hb-text-secondary);
-  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  font-size: var(--ant-font-size-sm);
   white-space: nowrap;
 }
 
