@@ -451,7 +451,9 @@ describe('monitor detail API contracts', () => {
 
   it('classifies missing, unavailable, and contract detail reads separately', () => {
     expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 404 }))).toBe('missing');
+    expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 200, code: 3 }))).toBe('missing');
     expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 200, code: 15 }))).toBe('missing');
+    expect(classifyMonitorDetailReadError(new ApiMessageError('rejected', { status: 200, code: 2 }))).toBe('error');
     expect(classifyMonitorDetailReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
     expect(classifyMonitorDetailReadError(new MonitorContractError('bad'))).toBe('error');
   });

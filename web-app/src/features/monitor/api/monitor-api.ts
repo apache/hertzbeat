@@ -51,6 +51,14 @@ export class MonitorMissingError extends Error {
   }
 }
 
+const monitorNotExistApiCode = 3;
+const legacyMonitorMissingApiCode = 15;
+
+// HertzBeat returns a successful HTTP envelope for domain-level missing data.
+// Older deployments used the generic failure code for the same detail lookup,
+// so both codes remain at this transport boundary during rolling upgrades.
+const monitorMissingResponseCodes = new Set([monitorNotExistApiCode, legacyMonitorMissingApiCode]);
+
 export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error' {
   if (error instanceof MonitorContractError) return 'error';
   if (
@@ -65,7 +73,9 @@ export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error
 export function classifyMonitorDetailReadError(error: unknown): 'missing' | 'unavailable' | 'error' {
   if (
     error instanceof MonitorMissingError ||
-    (error instanceof ApiMessageError && (error.status === 404 || (error.status === 200 && error.code === 15)))
+    (error instanceof ApiMessageError &&
+      (error.status === 404 ||
+        (error.status === 200 && error.code !== undefined && monitorMissingResponseCodes.has(error.code))))
   ) {
     return 'missing';
   }

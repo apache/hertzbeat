@@ -38,7 +38,6 @@ vi.mock('../api/monitor-api', async importOriginal => ({
 }));
 
 import { useMonitorListController } from './use-monitor-list-controller';
-import { MonitorMissingError } from '../api/monitor-api';
 import { MonitorContractError } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
 
@@ -340,7 +339,7 @@ describe('useMonitorListController URL evidence', () => {
   });
 
   it('accepts delete only when exact detail is canonically missing', async () => {
-    api.loadMonitorDetail.mockRejectedValue(new MonitorMissingError());
+    api.loadMonitorDetail.mockRejectedValue(new ApiMessageError('missing', { status: 200, code: 3 }));
     api.mutateMonitors.mockResolvedValue(undefined);
     api.loadMonitors.mockResolvedValueOnce(initialMonitorPage).mockResolvedValueOnce({
       content: [],
