@@ -17,64 +17,61 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
+import org.apache.hertzbeat.alert.service.AgentClientAvailability;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
  * Runtime model client that atomically follows HertzBeat provider configuration changes.
  */
 @Slf4j
-public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient {
+@Component
+public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient, AgentClientAvailability {
 
-    private static final String DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
-    private static final String DEFAULT_ZHIPU_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
-    private static final String DEFAULT_ZAI_BASE_URL = "https://api.z.ai/api/paas/v4";
+    private static final String DEFAULT_PROVIDER = "openai-compatible";
 
     private final GeneralConfigDao generalConfigDao;
     private final AgentRuntimeProperties properties;
-    private final AgentRuntimeModelClient fallbackClient;
-    private final AtomicReference<AgentRuntimeModelClient> delegate = new AtomicReference<>();
+    private final AgentModelProviderRegistry providerRegistry;
+    private final AtomicReference<HertzBeatModel> model = new AtomicReference<>();
 
     public ReloadableAgentRuntimeModelClient(GeneralConfigDao generalConfigDao,
                                              AgentRuntimeProperties properties,
-                                             ChatModel fallbackChatModel) {
+                                             AgentModelProviderRegistry providerRegistry) {
         this.generalConfigDao = generalConfigDao;
         this.properties = properties;
-        this.fallbackClient = fallbackChatModel == null ? null : new SpringAiAgentRuntimeModelClient(fallbackChatModel);
+        this.providerRegistry = providerRegistry;
         try {
             reload();
         } catch (RuntimeException exception) {
             log.error("Failed to initialize Agent Gateway model provider", exception);
-            delegate.set(fallbackClient);
         }
     }
 
     @Override
     public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                             Consumer<String> textDeltaConsumer) {
-        AgentRuntimeModelClient client = delegate.get();
-        if (client == null) {
+        HertzBeatModel current = model.get();
+        if (current == null) {
             throw new IllegalStateException("Agent Gateway runtime model provider is not configured");
         }
-        return client.stream(request, control, textDeltaConsumer);
+        return current.stream(request, control, textDeltaConsumer);
     }
 
     @Override
     public boolean isAgentClientConfigured() {
-        return delegate.get() != null;
+        return model.get() != null;
     }
 
     @EventListener(AiProviderConfigChangeEvent.class)
@@ -92,20 +89,17 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
             provider = propertyProvider();
         }
         if (provider == null) {
-            delegate.set(fallbackClient);
+            model.set(null);
             return;
         }
-        AgentRuntimeModelClient replacement = new SpringAiAgentRuntimeModelClient(createChatModel(provider));
-        delegate.set(replacement);
-        properties.setProvider(provider.getCode());
-        properties.setModel(provider.getModel());
-        properties.setBaseUrl(provider.getBaseUrl());
-        log.info("Agent Gateway model provider reloaded: provider={}, model={}",
-                provider.getCode(), provider.getModel());
+        HertzBeatModel replacement = providerRegistry.createModel(provider);
+        model.set(replacement);
+        log.info("Agent Gateway model provider reloaded: type={}, preset={}, model={}",
+                provider.getType(), provider.getCode(), provider.getModel());
     }
 
-    AgentRuntimeModelClient currentClient() {
-        return delegate.get();
+    HertzBeatModel currentModel() {
+        return model.get();
     }
 
     private ModelProviderConfig databaseProvider() {
@@ -114,58 +108,27 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
             return null;
         }
         ModelProviderConfig provider = JsonUtil.fromJson(config.getContent(), ModelProviderConfig.class);
-        if (provider == null || !StringUtils.hasText(provider.getApiKey())) {
-            log.warn("Ignoring incomplete AI provider configuration from database");
+        if (provider == null) {
+            log.warn("Ignoring invalid AI provider configuration from database");
             return null;
         }
-        complete(provider);
         return provider;
     }
 
     private ModelProviderConfig propertyProvider() {
-        if (!StringUtils.hasText(properties.getApiKey()) || !StringUtils.hasText(properties.getModel())) {
+        boolean defaultEmptyConfig = DEFAULT_PROVIDER.equalsIgnoreCase(properties.getProvider())
+                && !StringUtils.hasText(properties.getBaseUrl())
+                && !StringUtils.hasText(properties.getModel())
+                && !StringUtils.hasText(properties.getApiKey());
+        if (defaultEmptyConfig) {
             return null;
         }
         ModelProviderConfig provider = new ModelProviderConfig();
+        provider.setType(properties.getProvider());
         provider.setCode(properties.getProvider());
         provider.setBaseUrl(properties.getBaseUrl());
         provider.setModel(properties.getModel());
         provider.setApiKey(properties.getApiKey());
-        complete(provider);
         return provider;
-    }
-
-    private void complete(ModelProviderConfig provider) {
-        // Provider codes originate from UI selections and are case-insensitive identifiers at this boundary.
-        String code = StringUtils.hasText(provider.getCode())
-                ? provider.getCode().trim().toLowerCase(Locale.ROOT) : "openai-compatible";
-        provider.setCode(code);
-        if (!StringUtils.hasText(provider.getBaseUrl())) {
-            provider.setBaseUrl(switch (code) {
-                case "openai" -> DEFAULT_OPENAI_BASE_URL;
-                case "zhipu", "bigmodel" -> DEFAULT_ZHIPU_BASE_URL;
-                case "zai" -> DEFAULT_ZAI_BASE_URL;
-                default -> DEFAULT_OPENAI_BASE_URL;
-            });
-        }
-        if (!StringUtils.hasText(provider.getModel())) {
-            provider.setModel(switch (code) {
-                case "zhipu", "bigmodel", "zai" -> "glm-4.6";
-                default -> "gpt-5";
-            });
-        }
-    }
-
-    private ChatModel createChatModel(ModelProviderConfig provider) {
-        OpenAiChatOptions options = OpenAiChatOptions.builder()
-                .baseUrl(provider.getBaseUrl())
-                .apiKey(provider.getApiKey())
-                .model(provider.getModel())
-                .temperature(properties.getTemperature())
-                .maxCompletionTokens(properties.getMaxCompletionTokens())
-                .build();
-        return OpenAiChatModel.builder()
-                .options(options)
-                .build();
     }
 }

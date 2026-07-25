@@ -15,19 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.gateway.runtime;
+package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
-import java.util.function.Consumer;
+import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 
 /**
- * Pure Java model boundary used by the runtime loop.
+ * Creates a HertzBeat model for one Spring AI model provider type.
  */
-@FunctionalInterface
-public interface AgentRuntimeModelClient {
+public interface AgentModelProvider {
 
     /**
-     * Invoke the configured model and report visible assistant text deltas as they are produced.
+     * Stable configuration identifier for this provider implementation.
+     *
+     * @return provider type
      */
-    AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
-                                     Consumer<String> textDeltaConsumer);
+    String type();
+
+    /**
+     * Validate the effective provider configuration and create its HertzBeat model.
+     *
+     * @param config effective model provider configuration
+     * @return configured HertzBeat model
+     */
+    HertzBeatModel createModel(ModelProviderConfig config);
 }

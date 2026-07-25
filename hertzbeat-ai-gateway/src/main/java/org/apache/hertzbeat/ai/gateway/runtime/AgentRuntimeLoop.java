@@ -105,7 +105,6 @@ public class AgentRuntimeLoop {
                         .prompt(prompt)
                         .chatHistory(state.messages())
                         .availableTools(availableTools)
-                        .model(config.getModel())
                         .temperature(config.getTemperature())
                         .maxCompletionTokens(config.getMaxCompletionTokens())
                         .build();
@@ -205,7 +204,6 @@ public class AgentRuntimeLoop {
                         .build())
                 .chatHistory(compactionHistory)
                 .availableTools(List.of())
-                .model(config.getModel())
                 .temperature(0D)
                 .maxCompletionTokens(Math.min(config.getMaxCompletionTokens(), Math.max(1, maxChars)))
                 .build();

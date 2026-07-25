@@ -15,19 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.gateway.runtime;
+package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
-import java.util.function.Consumer;
+import java.util.List;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeModelRequest;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.tool.ToolCallback;
 
 /**
- * Pure Java model boundary used by the runtime loop.
+ * Maps provider-neutral runtime request values to provider-specific Spring AI options.
  */
 @FunctionalInterface
-public interface AgentRuntimeModelClient {
+public interface AgentModelRequestOptionsFactory {
 
     /**
-     * Invoke the configured model and report visible assistant text deltas as they are produced.
+     * Create request options for one model invocation.
+     *
+     * @param request runtime model request
+     * @param toolCallbacks model-visible tools
+     * @return Spring AI request options
      */
-    AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
-                                     Consumer<String> textDeltaConsumer);
+    ChatOptions create(AgentRuntimeModelRequest request, List<ToolCallback> toolCallbacks);
 }

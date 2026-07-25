@@ -21,22 +21,25 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.OpenAiCompatibleAgentModelProvider;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 /**
- * Test case for {@link AgentGatewayModelConfiguration}.
+ * Test case for Agent runtime model components.
  */
-class AgentGatewayModelConfigurationTest {
+class AgentGatewayModelComponentsTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-        .withUserConfiguration(BindingConfig.class, AgentGatewayModelConfiguration.class);
+        .withUserConfiguration(BindingConfig.class);
 
     @Test
     void runtimeWithoutModelCredentialsShouldCreateReloadableClient() {
@@ -47,7 +50,7 @@ class AgentGatewayModelConfigurationTest {
     }
 
     @Test
-    void runtimeCredentialsShouldCreateChatModelAndRuntimeModelClient() {
+    void runtimeCredentialsShouldCreateHertzBeatModel() {
         contextRunner.withPropertyValues(
             "hertzbeat.agent.gateway.runtime.provider=openai-compatible",
             "hertzbeat.agent.gateway.runtime.model=gpt-runtime",
@@ -56,23 +59,29 @@ class AgentGatewayModelConfigurationTest {
             .run(context -> {
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
-                assertNotNull(client.currentClient());
+                assertNotNull(client.currentModel());
             });
     }
 
     @Test
-    void existingChatModelShouldCreateRuntimeModelClientWithoutOpenAiRuntimeCredentials() {
-        contextRunner.withUserConfiguration(ExistingChatModelConfig.class)
-            .withPropertyValues("hertzbeat.agent.gateway.runtime.model=gpt-runtime")
+    void customProviderShouldCreateHertzBeatModelThroughRegistry() {
+        contextRunner.withUserConfiguration(CustomProviderConfig.class)
+            .withPropertyValues(
+                "hertzbeat.agent.gateway.runtime.provider=custom-provider",
+                "hertzbeat.agent.gateway.runtime.model=custom-model")
             .run(context -> {
-                assertInstanceOf(ExistingChatModel.class, context.getBean(ChatModel.class));
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
-                assertNotNull(client.currentClient());
+                assertInstanceOf(CustomHertzBeatModel.class, client.currentModel());
             });
     }
 
     @EnableConfigurationProperties(AgentRuntimeProperties.class)
+    @Import({
+        OpenAiCompatibleAgentModelProvider.class,
+        AgentModelProviderRegistry.class,
+        ReloadableAgentRuntimeModelClient.class
+    })
     static class BindingConfig {
 
         @Bean
@@ -81,19 +90,31 @@ class AgentGatewayModelConfigurationTest {
         }
     }
 
-    static class ExistingChatModelConfig {
+    static class CustomProviderConfig {
 
         @Bean
-        ChatModel existingChatModel() {
-            return new ExistingChatModel();
+        AgentModelProvider customProvider() {
+            return new CustomProvider();
         }
     }
 
-    private static final class ExistingChatModel implements ChatModel {
+    private static final class CustomProvider implements AgentModelProvider {
 
         @Override
-        public ChatResponse call(Prompt prompt) {
-            return null;
+        public String type() {
+            return "custom-provider";
+        }
+
+        @Override
+        public HertzBeatModel createModel(ModelProviderConfig config) {
+            return new CustomHertzBeatModel();
+        }
+    }
+
+    private static final class CustomHertzBeatModel extends HertzBeatModel {
+
+        private CustomHertzBeatModel() {
+            super(mock(ChatModel.class));
         }
     }
 }

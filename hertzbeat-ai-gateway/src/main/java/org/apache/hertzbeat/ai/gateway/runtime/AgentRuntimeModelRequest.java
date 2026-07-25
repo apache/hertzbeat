@@ -35,23 +35,19 @@ public class AgentRuntimeModelRequest {
 
     List<AgentToolDescriptor> availableTools;
 
-    String model;
-
     Double temperature;
 
     Integer maxCompletionTokens;
 
     @Builder
     private AgentRuntimeModelRequest(RuntimePrompt prompt, List<TranscriptMessage> chatHistory,
-                                     List<AgentToolDescriptor> availableTools, String model,
-                                     Double temperature, Integer maxCompletionTokens) {
+                                     List<AgentToolDescriptor> availableTools, Double temperature,
+                                     Integer maxCompletionTokens) {
         // Model requests cannot be repaired after streaming starts, so their prompt is mandatory at this boundary.
         this.prompt = Objects.requireNonNull(prompt, "Agent runtime model prompt is required");
         // New sessions and tool-free requests legitimately omit these builder values.
         this.chatHistory = chatHistory == null ? List.of() : List.copyOf(chatHistory);
         this.availableTools = availableTools == null ? List.of() : List.copyOf(availableTools);
-        // A blank model delegates model selection to Spring AI's provider configuration.
-        this.model = model;
         this.temperature = temperature;
         this.maxCompletionTokens = maxCompletionTokens;
     }
