@@ -2768,6 +2768,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "wilmerdooley",
+      "name": "wilmerdooley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/259930736?v=4",
+      "profile": "https://github.com/wilmerdooley",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
