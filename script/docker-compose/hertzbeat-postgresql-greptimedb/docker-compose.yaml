@@ -46,7 +46,7 @@ services:
       - hertzbeat
 
   greptime:
-    image: greptime/greptimedb:v0.14.3
+    image: greptime/greptimedb:v1.1.3
     container_name: compose-greptimedb
     hostname: greptime
     restart: always
