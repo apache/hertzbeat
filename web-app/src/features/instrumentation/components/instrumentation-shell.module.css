@@ -28,22 +28,29 @@
 }
 
 .sourceTile {
-  min-height: 76px;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-content: start;
+  min-width: 150px;
+  min-height: 44px;
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: 8px 10px;
-  padding: 12px;
+  gap: 10px;
+  padding: 9px 12px;
   border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-surface);
+  border-radius: var(--hb-radius-control);
   background: var(--hb-bg-raised);
   color: inherit;
   text-align: left;
   cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
 }
 
-.sourceTile:hover:not(:disabled),
+.sourceTile:hover:not(:disabled) {
+  border-color: var(--hb-text-disabled);
+  background: var(--hb-bg-hover);
+}
+
 .sourceTileSelected {
   border-color: var(--hb-brand-accent);
   background: var(--hb-bg-selected);
@@ -54,23 +61,18 @@
   opacity: 0.62;
 }
 
-.sourceCopy {
+.sourceName {
   min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.sourceCopy > :last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
 .sourceIcon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
   object-fit: contain;
-  font-size: 24px;
+  font-size: 20px;
   color: var(--hb-brand-accent);
 }
 
@@ -97,8 +99,8 @@
 }
 
 .sourceGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 260px));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -117,37 +119,26 @@
   text-align: left;
 }
 
-.capabilities {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.supportTag {
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-  margin: 0;
-}
-
-.capabilities span {
-  border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-control);
-  padding: 2px 5px;
+.sourceStatus {
+  margin-left: auto;
   color: var(--hb-text-secondary);
   font-size: 11px;
+  white-space: nowrap;
 }
 
-.capabilities [data-capability='supported'] {
-  border-color: var(--hb-status-available);
-  color: var(--hb-status-available);
-}
-
-.capabilities [data-capability='preview'] {
-  border-color: var(--hb-status-degraded);
+.sourceStatus[data-support='preview'] {
   color: var(--hb-status-degraded);
+}
+
+.sourceAssistiveText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .questionSection {
@@ -205,7 +196,11 @@
     grid-row: 1;
   }
 
-  .sourceGrid,
+  .sourceGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .questionGrid {
     grid-template-columns: 1fr;
   }

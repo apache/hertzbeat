@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { Input, Tag, Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -107,37 +107,34 @@ function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0])
 function SourceTile(props: { source: SourceEntry; selected: boolean; onSelect: (sourceId: string) => void }) {
   const { t } = useTranslation();
   const source = props.source;
+  const sourceName = translateBackend(t, source.labelKey);
+  const sourceDescription = translateBackend(t, source.descriptionKey);
   return (
     <button
       type="button"
       aria-pressed={props.selected}
       className={`${styles.sourceTile} ${props.selected ? styles.sourceTileSelected : ''}`}
       disabled={source.support === 'unsupported'}
+      title={sourceName}
       onClick={() => props.onSelect(source.id)}
     >
       <InstrumentationSourceIcon source={source} />
-      <span className={styles.sourceCopy}>
-        <strong>{translateBackend(t, source.labelKey)}</strong>
-        <Typography.Text type="secondary">{translateBackend(t, source.descriptionKey)}</Typography.Text>
-      </span>
-      <span className={styles.capabilities}>
+      <strong className={styles.sourceName}>{sourceName}</strong>
+      {source.support !== 'supported' && (
+        <span className={styles.sourceStatus} data-support={source.support}>
+          {t(`instrumentation.capability.${source.support}`)}
+        </span>
+      )}
+      <span className={styles.sourceAssistiveText}>
+        {sourceDescription}
         {SIGNALS.map(signal => (
-          <span key={signal} data-capability={source.signals[signal]}>
-            {t(`instrumentation.signal.${signal}`)}
+          <span key={signal}>
+            {t(`instrumentation.signal.${signal}`)} {t(`instrumentation.capability.${source.signals[signal]}`)}
           </span>
         ))}
       </span>
-      <Tag className={styles.supportTag!} color={supportTagColor(source.support)}>
-        {t(`instrumentation.capability.${source.support}`)}
-      </Tag>
     </button>
   );
-}
-
-function supportTagColor(support: SourceEntry['support']) {
-  if (support === 'preview') return 'warning';
-  if (support === 'supported') return 'success';
-  return 'default';
 }
 
 function buildDraft(props: Parameters<typeof InstrumentationSourceStep>[0]) {

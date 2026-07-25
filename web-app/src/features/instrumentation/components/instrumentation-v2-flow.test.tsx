@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -42,10 +42,21 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByRole('searchbox')).toBeVisible();
     expect(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ })).toBeVisible();
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
-    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
+    const javaSource = screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ });
+    expect(javaSource).toBeVisible();
+    expect(javaSource).toHaveAttribute('title', 'instrumentation.v2.directory.source.java');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
+    expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
     expect(shellCss).toMatch(
-      /\.sourceGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(190px,\s*260px\)\)/
+      /\.sourceTile\s*\{[^}]*min-width:\s*150px[^}]*min-height:\s*44px[^}]*flex:\s*0\s+0\s+auto/
+    );
+    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*white-space:\s*nowrap/);
+    const assistiveDescription = within(javaSource).getByText('instrumentation.v2.directory.source.java_description');
+    expect(assistiveDescription).toHaveClass(/sourceAssistiveText/);
+    expect(within(assistiveDescription).getByText(/instrumentation\.signal\.metrics/)).toBeInTheDocument();
+    expect(javaSource.querySelector('[data-support]')).toBeNull();
+    expect(shellCss).toMatch(
+      /\.sourceAssistiveText\s*\{[^}]*position:\s*absolute[^}]*clip:\s*rect\(0,\s*0,\s*0,\s*0\)/
     );
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
