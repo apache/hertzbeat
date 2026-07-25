@@ -36,7 +36,7 @@
   gap: 8px 10px;
   padding: 12px;
   border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-control);
+  border-radius: var(--hb-radius-surface);
   background: var(--hb-bg-raised);
   color: inherit;
   text-align: left;
@@ -175,7 +175,7 @@
   justify-content: space-between;
   gap: 12px;
   border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-control);
+  border-radius: var(--hb-radius-surface);
   padding: 10px 12px;
   background: var(--hb-bg-raised);
   color: inherit;

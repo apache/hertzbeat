@@ -15,9 +15,11 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
     algorithm: themeAlgorithm(runtimeTheme),
     cssVar: true,
     token: {
-      // SigNoz uses a restrained four-pixel radius: enough to soften dense
-      // controls without turning an operations console into pill-shaped UI.
-      borderRadius: 4,
+      // SigNoz keeps dense controls restrained while Horizon gives larger
+      // surfaces more separation. Six/eight pixels preserves both qualities
+      // without turning an operations console into pill-shaped UI.
+      borderRadius: 6,
+      borderRadiusLG: 8,
       colorBgBase: palette.canvas,
       colorBgContainer: palette.chrome,
       colorBgElevated: palette.raised,
@@ -36,7 +38,7 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
         siderBg: palette.chrome
       },
       Menu: {
-        itemBorderRadius: 4,
+        itemBorderRadius: 6,
         itemHeight: 32,
         itemSelectedBg: palette.selected,
         itemSelectedColor: palette.selectedText

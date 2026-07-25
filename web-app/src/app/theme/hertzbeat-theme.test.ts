@@ -17,12 +17,13 @@ describe('HertzBeat semantic theme', () => {
     expect(theme.token).toMatchObject({
       colorPrimary: '#9b5bb3',
       colorBgElevated: '#14171e',
-      borderRadius: 4,
+      borderRadius: 6,
+      borderRadiusLG: 8,
       controlHeight: 32,
       fontSize: 13
     });
     expect(theme.components?.Menu).toMatchObject({
-      itemBorderRadius: 4,
+      itemBorderRadius: 6,
       itemHeight: 32,
       itemSelectedBg: '#211a26'
     });

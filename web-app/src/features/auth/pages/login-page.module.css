@@ -27,6 +27,7 @@
   width: min(400px, 100%);
   padding: 32px;
   border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-surface);
   background: var(--hb-bg-raised);
 }
 
