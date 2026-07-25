@@ -129,17 +129,35 @@ public class AgentSessionService {
         return sessionDao.findBySessionUid(normalized);
     }
 
-    public Page<AgentSession> findSessions(String channel, AgentActor actor, Pageable pageable) {
-        return sessionDao.findByChannelAndActorTypeAndActorIdOrderByGmtUpdateDesc(
-                channel, actor.getType(), actor.getId(), pageable);
+    public Optional<AgentSession> findOwnedSession(String sessionId, GatewayEnvelope envelope) {
+        AgentActor actor = envelope.getActor();
+        if (!ActorSupport.hasIdentity(actor)) {
+            throw new IllegalArgumentException("Session query actor is required");
+        }
+        // External session lookup values may contain surrounding whitespace; normalize before owner-scoped lookup.
+        String normalized = GatewayText.normalize(sessionId);
+        if (normalized == null) {
+            return Optional.empty();
+        }
+        if (normalized.chars().allMatch(Character::isDigit)) {
+            return sessionDao.findByIdAndChannelAndActorTypeAndActorId(
+                    Long.parseLong(normalized), envelope.getChannelId(), actor.getType(), actor.getId());
+        }
+        return sessionDao.findBySessionUidAndChannelAndActorTypeAndActorId(
+                normalized, envelope.getChannelId(), actor.getType(), actor.getId());
     }
 
-    public Page<AgentSession> findSessions(String channel, AgentActor actor, String title, Pageable pageable) {
+    public Page<AgentSession> findSessions(GatewayEnvelope envelope, String title, Pageable pageable) {
+        AgentActor actor = envelope.getActor();
+        if (!ActorSupport.hasIdentity(actor)) {
+            throw new IllegalArgumentException("Session query actor is required");
+        }
         if (!StringUtils.hasText(title)) {
-            return findSessions(channel, actor, pageable);
+            return sessionDao.findByChannelAndActorTypeAndActorIdOrderByGmtUpdateDesc(
+                    envelope.getChannelId(), actor.getType(), actor.getId(), pageable);
         }
         return sessionDao.findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                channel, actor.getType(), actor.getId(), title, pageable);
+                envelope.getChannelId(), actor.getType(), actor.getId(), title, pageable);
     }
 
     public Page<AgentTranscriptEntry> findTranscriptEntries(Long sessionId, Pageable pageable) {

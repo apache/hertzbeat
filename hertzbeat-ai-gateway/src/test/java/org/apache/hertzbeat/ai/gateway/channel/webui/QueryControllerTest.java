@@ -22,28 +22,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.any;
 
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
-import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
-import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,9 +61,6 @@ class QueryControllerTest {
     private GatewayCommandRouter commandRouter;
 
     @Mock
-    private AgentSessionService sessionService;
-
-    @Mock
     private SubjectSum subject;
 
     @Captor
@@ -82,6 +73,7 @@ class QueryControllerTest {
 
     @Test
     void sessionQueryShouldRouteThroughGatewayCommandRouter() {
+        bindSubject();
         QueryController controller = controller();
         GatewaySingleResponse sessionResponse = response("get-session:ags-1", "session");
         when(commandRouter.handle(commandCaptor.capture()))
@@ -90,44 +82,103 @@ class QueryControllerTest {
         assertSame(sessionResponse, controller.getSession("ags-1").getBody().getData());
 
         assertInstanceOf(GetSessionCommand.class, commandCaptor.getValue());
+        GetSessionCommand command = (GetSessionCommand) commandCaptor.getValue();
+        assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
+        assertEquals("trusted-user", command.envelope().getActor().getId());
     }
 
     @Test
-    void listSessionsShouldOnlyQueryCurrentWebUiActor() {
+    void listSessionsShouldRouteCurrentWebUiActorThroughGatewayCommandRouter() {
         bindSubject();
         PageRequest pageRequest = PageRequest.of(0, 50);
         Page<AgentSession> page = Page.empty(pageRequest);
-        when(sessionService.findSessions(eq(ChannelId.WEB_UI.id()), any(AgentActor.class),
-                eq(pageRequest))).thenReturn(page);
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("list-sessions:0", "sessions", page));
 
         ResponseEntity<Message<Page<AgentSession>>> response = controller().listSessions(0, 50);
 
         assertSame(page, response.getBody().getData());
-        verify(sessionService).findSessions(eq(ChannelId.WEB_UI.id()), any(AgentActor.class),
-                eq(pageRequest));
+        assertInstanceOf(ListSessionsCommand.class, commandCaptor.getValue());
+        ListSessionsCommand command = (ListSessionsCommand) commandCaptor.getValue();
+        assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(0, command.pageIndex());
+        assertEquals(50, command.pageSize());
     }
 
     @Test
-    void sessionTranscriptShouldUseSessionService() {
+    void alertAnalysisListShouldRouteSystemEnvelopeAndSearchThroughGatewayCommandRouter() {
+        Page<AgentSession> page = Page.empty(PageRequest.of(0, 50));
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("list-alert-analysis-sessions:0", "sessions", page));
+
+        ResponseEntity<Message<Page<AgentSession>>> response =
+                controller().listAlertAnalysisSessions(0, 50, "database");
+
+        assertSame(page, response.getBody().getData());
+        assertInstanceOf(ListSessionsCommand.class, commandCaptor.getValue());
+        ListSessionsCommand command = (ListSessionsCommand) commandCaptor.getValue();
+        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals("system", command.envelope().getActor().getType());
+        assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals("database", command.title());
+    }
+
+    @Test
+    void alertAnalysisSessionShouldRouteSystemEnvelopeThroughGatewayCommandRouter() {
+        GatewaySingleResponse sessionResponse = response("get-alert-analysis-session:ags-1", "session");
+        when(commandRouter.handle(commandCaptor.capture())).thenReturn(sessionResponse);
+
+        assertSame(sessionResponse, controller().getAlertAnalysisSession("ags-1").getBody().getData());
+
+        assertInstanceOf(GetSessionCommand.class, commandCaptor.getValue());
+        GetSessionCommand command = (GetSessionCommand) commandCaptor.getValue();
+        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals("ags-1", command.sessionUid());
+    }
+
+    @Test
+    void sessionTranscriptShouldRouteCurrentWebUiActorThroughGatewayCommandRouter() {
+        bindSubject();
         QueryController controller = controller();
-        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
         AgentTranscriptEntry sessionTranscript = AgentTranscriptEntry.builder()
                 .sessionId(1L)
-                .messageRole(TranscriptMessage.TranscriptRole.ASSISTANT.wireValue())
-                .payloadJson(JsonUtil.toJson(TranscriptMessage.assistantText("diagnosis complete")))
                 .build();
         PageRequest defaultPage = PageRequest.of(0, 50);
         Page<AgentTranscriptEntry> sessionTranscriptPage = new PageImpl<>(List.of(sessionTranscript), defaultPage, 1);
-        when(sessionService.findSession("ags-1")).thenReturn(Optional.of(session));
-        when(sessionService.findTranscriptEntries(1L, defaultPage)).thenReturn(sessionTranscriptPage);
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("get-session-transcript:ags-1", "session-transcript",
+                        sessionTranscriptPage));
 
         ResponseEntity<Message<Page<AgentTranscriptEntry>>> sessionTranscriptResponse =
                 controller.listSessionTranscript("ags-1", 0, 50);
 
         assertSame(sessionTranscriptPage, sessionTranscriptResponse.getBody().getData());
-        assertEquals("diagnosis complete", JsonUtil.fromJson(
-            sessionTranscriptResponse.getBody().getData().getContent().get(0).getPayloadJson(),
-            TranscriptMessage.class).getContent().get(0).getText());
+        assertInstanceOf(GetSessionTranscriptCommand.class, commandCaptor.getValue());
+        GetSessionTranscriptCommand command = (GetSessionTranscriptCommand) commandCaptor.getValue();
+        assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals("ags-1", command.sessionUid());
+        assertEquals(0, command.pageIndex());
+        assertEquals(50, command.pageSize());
+    }
+
+    @Test
+    void alertAnalysisTranscriptShouldRouteSystemEnvelopeThroughGatewayCommandRouter() {
+        PageRequest defaultPage = PageRequest.of(0, 50);
+        Page<AgentTranscriptEntry> transcript = Page.empty(defaultPage);
+        when(commandRouter.handle(commandCaptor.capture()))
+                .thenReturn(response("get-alert-analysis-session-transcript:ags-1",
+                        "session-transcript", transcript));
+
+        ResponseEntity<Message<Page<AgentTranscriptEntry>>> response =
+                controller().listAlertAnalysisSessionTranscript("ags-1", 0, 50);
+
+        assertSame(transcript, response.getBody().getData());
+        assertInstanceOf(GetSessionTranscriptCommand.class, commandCaptor.getValue());
+        GetSessionTranscriptCommand command = (GetSessionTranscriptCommand) commandCaptor.getValue();
+        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals("ags-1", command.sessionUid());
     }
 
     @Test
@@ -148,12 +199,16 @@ class QueryControllerTest {
     }
 
     private QueryController controller() {
-        return new QueryController(commandRouter, sessionService);
+        return new QueryController(commandRouter);
     }
 
     private GatewaySingleResponse response(String commandId, String message) {
+        return response(commandId, message, null);
+    }
+
+    private GatewaySingleResponse response(String commandId, String message, Object body) {
         return new GatewaySingleResponse(new Meta(commandId, null, null, null, true, message),
-                null, List.of());
+                body, List.of());
     }
 
     private void bindSubject() {

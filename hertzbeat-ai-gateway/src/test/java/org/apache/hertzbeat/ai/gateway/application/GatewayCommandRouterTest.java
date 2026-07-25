@@ -25,12 +25,15 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -80,13 +83,43 @@ class GatewayCommandRouterTest {
         verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
     }
 
+    @Test
+    void sessionListCommandShouldRouteOnlyToQueryService() {
+        GatewaySingleResponse expected = response("sessions");
+        ListSessionsCommand command = new ListSessionsCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "list-sessions", null, 0, 50);
+        when(queryService.listSessions(command)).thenReturn(expected);
+
+        assertSame(expected, router().handle(command));
+
+        verify(queryService).listSessions(command);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
+    }
+
+    @Test
+    void transcriptCommandShouldRouteOnlyToQueryService() {
+        GatewaySingleResponse expected = response("session-transcript");
+        GetSessionTranscriptCommand command = new GetSessionTranscriptCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "get-transcript", "ags-1", 0, 50);
+        when(queryService.getSessionTranscript(command)).thenReturn(expected);
+
+        assertSame(expected, router().handle(command));
+
+        verify(queryService).getSessionTranscript(command);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
+    }
+
     private GatewayCommandRouter router() {
         return new GatewayCommandRouter(agentCommandService, approvalCommandService,
                 runCommandService, queryService);
     }
 
     private GatewayEnvelope envelope() {
-        return GatewayEnvelope.builder().channelId("web-ui").receivedAt(100L).build();
+        return GatewayEnvelope.builder()
+                .channelId("web-ui")
+                .receivedAt(100L)
+                .actor(AgentActor.builder().type("user").id("alice").roles(List.of("user")).build())
+                .build();
     }
 
     private UserInput userInput(String messageId, String conversationId, String text) {
