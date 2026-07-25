@@ -136,6 +136,8 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
       app: normalizedApp,
       status: monitorStatusFilters.all,
       labels: '',
+      sort: null,
+      order: null,
       pageIndex: 0,
       pageSize: 50
     },
@@ -155,6 +157,8 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
         app: normalizedApp,
         status: monitorStatusFilters.all,
         labels: '',
+        sort: null,
+        order: null,
         pageIndex,
         pageSize: 50
       },

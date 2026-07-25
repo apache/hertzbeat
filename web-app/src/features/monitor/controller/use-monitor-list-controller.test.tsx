@@ -37,7 +37,11 @@ vi.mock('../api/monitor-api', async importOriginal => ({
   ...api
 }));
 
-import { useMonitorListController } from './use-monitor-list-controller';
+import {
+  monitorListAutoRefreshMs,
+  monitorListQueryOptions,
+  useMonitorListController
+} from './use-monitor-list-controller';
 import { MonitorContractError } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
 
@@ -162,6 +166,34 @@ describe('useMonitorListController URL evidence', () => {
     api.loadMonitors.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
     const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
     await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('empty'));
+  });
+
+  it('retains the legacy two-minute refresh interval in the canonical list query options', () => {
+    const sorted = {
+      search: '',
+      app: '',
+      status: '9',
+      labels: '',
+      sort: 'gmtUpdate' as const,
+      order: 'desc' as const,
+      pageIndex: 0,
+      pageSize: 10
+    };
+    expect(monitorListAutoRefreshMs).toBe(120_000);
+    expect(monitorListQueryOptions(sorted).refetchInterval).toBe(monitorListAutoRefreshMs);
+  });
+
+  it('moves server sorting into the route and resets pagination', async () => {
+    const view = renderHook(() => ({ controller: useMonitorListController(), location: useLocation() }), {
+      wrapper: wrapper(['/monitors?pageIndex=2&pageSize=20'], 0)
+    });
+    await waitFor(() => expect(view.result.current.controller.state.monitors.kind).toBe('ready'));
+
+    act(() => view.result.current.controller.actions.changeSort('name', 'asc'));
+
+    await waitFor(() => expect(view.result.current.location.search).toContain('sort=name&order=asc'));
+    expect(view.result.current.location.search).toContain('pageIndex=0');
+    expect(view.result.current.controller.state.query).toMatchObject({ sort: 'name', order: 'asc', pageIndex: 0 });
   });
 
   it.each([

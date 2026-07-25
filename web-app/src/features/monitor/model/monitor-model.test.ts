@@ -33,7 +33,16 @@ describe('monitor list model', () => {
   it('normalizes unsupported pagination and keeps explicit filters', () => {
     const query = readMonitorQuery(new URLSearchParams('search=mysql&app=mysql&status=2&pageIndex=-1&pageSize=99'));
 
-    expect(query).toEqual({ search: 'mysql', app: 'mysql', status: '2', labels: '', pageIndex: 0, pageSize: 10 });
+    expect(query).toEqual({
+      search: 'mysql',
+      app: 'mysql',
+      status: '2',
+      labels: '',
+      sort: null,
+      order: null,
+      pageIndex: 0,
+      pageSize: 10
+    });
     expect(writeMonitorQuery(query).toString()).toBe('pageIndex=0&pageSize=10&search=mysql&app=mysql&status=2');
   });
 
@@ -51,7 +60,16 @@ describe('monitor list model', () => {
 
   it('omits the all-status sentinel from backend requests', () => {
     expect(
-      writeMonitorQuery({ search: '', app: '', status: '9', labels: '', pageIndex: 1, pageSize: 20 }).toString()
+      writeMonitorQuery({
+        search: '',
+        app: '',
+        status: '9',
+        labels: '',
+        sort: null,
+        order: null,
+        pageIndex: 1,
+        pageSize: 20
+      }).toString()
     ).toBe('pageIndex=1&pageSize=20');
   });
 
@@ -59,6 +77,16 @@ describe('monitor list model', () => {
     const query = readMonitorQuery(new URLSearchParams('labels=env%3Aprod'));
     expect(query.labels).toBe('env:prod');
     expect(writeMonitorQuery(query).toString()).toContain('labels=env%3Aprod');
+  });
+
+  it('keeps only a complete allowlisted server sort pair', () => {
+    const sorted = readMonitorQuery(new URLSearchParams('sort=name&order=asc&pageIndex=2'));
+    expect(sorted).toMatchObject({ sort: 'name', order: 'asc', pageIndex: 2 });
+    expect(writeMonitorQuery(sorted).toString()).toContain('sort=name&order=asc');
+
+    expect(readMonitorQuery(new URLSearchParams('sort=name')).sort).toBeNull();
+    expect(readMonitorQuery(new URLSearchParams('sort=private&order=desc')).sort).toBeNull();
+    expect(readMonitorQuery(new URLSearchParams('sort=status&order=sideways')).sort).toBeNull();
   });
 
   it('maps established monitor states without inventing health', () => {

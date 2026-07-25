@@ -47,6 +47,7 @@ export type MonitorListViewActions = {
   submitFilters: () => void;
   changeApp: (value: string) => void;
   changeStatus: (value: string) => void;
+  changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
   changePage: (page: number, pageSize: number) => void;
   refresh: () => Promise<boolean>;
   create: () => void;

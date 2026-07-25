@@ -27,6 +27,8 @@ export const monitorScrapeValues = [
   'zookeeper_sd'
 ] as const;
 export const monitorScheduleTypes = ['interval', 'cron'] as const;
+export const monitorSortFields = ['name', 'status', 'gmtUpdate'] as const;
+export const monitorSortOrders = ['asc', 'desc'] as const;
 export const monitorStatusCodes = { paused: 0, available: 1, unavailable: 2 } as const;
 export const monitorStatusFilters = {
   all: '9',
@@ -37,6 +39,12 @@ export const monitorStatusFilters = {
 export type MonitorScrape = (typeof monitorScrapeValues)[number];
 type MonitorScheduleType = (typeof monitorScheduleTypes)[number];
 export type MonitorEditorMode = 'new' | 'edit';
+export type MonitorSortField = (typeof monitorSortFields)[number];
+export type MonitorSortOrder = (typeof monitorSortOrders)[number];
+
+export function isMonitorSortField(value: unknown): value is MonitorSortField {
+  return typeof value === 'string' && monitorSortFields.includes(value as MonitorSortField);
+}
 
 export function normalizeMonitorScrape(value: string | null | undefined): MonitorScrape {
   return monitorScrapeValues.includes(value as MonitorScrape) ? (value as MonitorScrape) : 'static';
@@ -146,6 +154,8 @@ export type MonitorQuery = {
   app: string;
   status: string;
   labels: string;
+  sort: MonitorSortField | null;
+  order: MonitorSortOrder | null;
   pageIndex: number;
   pageSize: number;
 };

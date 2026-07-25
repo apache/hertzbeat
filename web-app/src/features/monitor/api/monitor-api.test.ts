@@ -57,7 +57,16 @@ import {
 import { MonitorContractError, type MonitorQuery } from '../model/monitor-contract';
 import { monitorAppOptions } from '../model/monitor-model';
 
-const query: MonitorQuery = { search: '', app: '', status: '9', labels: '', pageIndex: 0, pageSize: 10 };
+const query: MonitorQuery = {
+  search: '',
+  app: '',
+  status: '9',
+  labels: '',
+  sort: null,
+  order: null,
+  pageIndex: 0,
+  pageSize: 10
+};
 const row = { id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1, gmtUpdate: 0, ignored: true };
 const detailRow = {
   ...row,
@@ -236,6 +245,12 @@ describe('monitor list API contracts', () => {
     expect(buildMonitorActionPath('delete', [7, 8])).toBe('/api/monitors?ids=7&ids=8');
     expect(() => buildMonitorActionPath('copy', [])).toThrow();
     expect(() => buildMonitorActionPath('copy', [7, 8])).toThrow();
+  });
+
+  it('forwards an allowlisted server sort pair with the list query', () => {
+    expect(buildMonitorListPath({ ...query, sort: 'gmtUpdate', order: 'desc' })).toBe(
+      '/api/monitors?pageIndex=0&pageSize=10&sort=gmtUpdate&order=desc'
+    );
   });
 });
 

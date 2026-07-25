@@ -198,6 +198,8 @@ async function loadAllMonitors(app: string, signal?: AbortSignal): Promise<Monit
         app,
         status: bulletinMonitorProofPolicy.status,
         labels: '',
+        sort: null,
+        order: null,
         pageIndex,
         pageSize: bulletinMonitorProofPolicy.pageSize
       },

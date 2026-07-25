@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
@@ -76,11 +76,32 @@ describe('MonitorListView evidence states', () => {
     expect(screen.getByRole('button', { name: i18n.t('monitor.export.all') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('monitor.export.selected') })).toBeInTheDocument();
   });
+
+  it('delegates sortable legacy columns to the server query', () => {
+    const changeSort = vi.fn();
+    renderView(
+      {
+        monitors: {
+          kind: 'ready',
+          records: [{ id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1, gmtUpdate: 0 }],
+          total: 1
+        }
+      },
+      { changeSort }
+    );
+
+    fireEvent.click(screen.getByRole('columnheader', { name: i18n.t('monitor.name') }));
+
+    expect(changeSort).toHaveBeenCalledWith('name', 'asc');
+  });
 });
 
-function renderView(patch: Partial<MonitorListViewProps['state']>) {
+function renderView(
+  patch: Partial<MonitorListViewProps['state']>,
+  actionPatch: Partial<MonitorListViewProps['actions']> = {}
+) {
   const state: MonitorListViewProps['state'] = {
-    query: { search: '', app: '', status: '9', labels: '', pageIndex: 0, pageSize: 10 },
+    query: { search: '', app: '', status: '9', labels: '', sort: null, order: null, pageIndex: 0, pageSize: 10 },
     draft: { search: '', labels: '' },
     selectedIds: [],
     operating: false,
@@ -98,6 +119,7 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     submitFilters: () => undefined,
     changeApp: () => undefined,
     changeStatus: () => undefined,
+    changeSort: () => undefined,
     changePage: () => undefined,
     refresh: () => Promise.resolve(true),
     create: () => undefined,
@@ -110,7 +132,8 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     cancelImport: () => undefined,
     selectImportFile: () => undefined,
     submitImport: () => Promise.resolve(true),
-    selectIds: () => undefined
+    selectIds: () => undefined,
+    ...actionPatch
   };
   return render(
     <I18nextProvider i18n={i18n}>

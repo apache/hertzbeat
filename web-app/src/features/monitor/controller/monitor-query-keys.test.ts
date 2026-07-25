@@ -24,6 +24,8 @@ const listQuery = {
   app: 'website',
   status: '1',
   labels: 'env:prod',
+  sort: null,
+  order: null,
   pageIndex: 2,
   pageSize: 20
 };
@@ -61,6 +63,8 @@ describe('Monitor Query Key factory', () => {
       ['app', 'jvm'],
       ['status', '0'],
       ['labels', 'zone:a'],
+      ['sort', 'name'],
+      ['order', 'asc'],
       ['pageIndex', 3],
       ['pageSize', 50]
     ] as const) {

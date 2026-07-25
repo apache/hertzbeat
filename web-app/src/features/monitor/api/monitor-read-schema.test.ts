@@ -27,6 +27,8 @@ const query: MonitorQuery = {
   app: '',
   status: '9',
   labels: '',
+  sort: null,
+  order: null,
   pageIndex: 0,
   pageSize: 10
 };

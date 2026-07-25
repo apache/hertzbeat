@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Spin, Table, Tag } from 'antd';
+import { Alert, Empty, Spin, Table, Tag, type TableProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { TableRowSelection } from 'antd/es/table/interface';
+import type { SortOrder, TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
 
-import type { Monitor, MonitorAction } from '../model/monitor-contract';
+import { isMonitorSortField, type Monitor, type MonitorAction } from '../model/monitor-contract';
 import type { MonitorListEvidence } from '../model/monitor-list-model';
 import {
   monitorPageSizes,
@@ -46,6 +46,7 @@ export function MonitorListResults({
   operating: boolean;
   actions: {
     changePage: (page: number, pageSize: number) => void;
+    changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
     selectIds: (ids: number[]) => void;
     open: (id: number, mode: 'view' | 'edit') => void;
     run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
@@ -71,8 +72,9 @@ export function MonitorListResults({
       rowKey="id"
       size="small"
       dataSource={evidence.records}
-      columns={columns(t, actions.open, actions.run, operating)}
+      columns={columns(t, query, actions.open, actions.run, operating)}
       rowSelection={rowSelection}
+      onChange={monitorTableChange(actions.changeSort)}
       pagination={{
         current: query.pageIndex + 1,
         pageSize: query.pageSize,
@@ -85,8 +87,22 @@ export function MonitorListResults({
   );
 }
 
+function monitorTableChange(
+  changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void
+): NonNullable<TableProps<Monitor>['onChange']> {
+  return (_pagination, _filters, sorter, extra) => {
+    if (extra.action !== 'sort') return;
+    const active = Array.isArray(sorter) ? sorter.find(candidate => candidate.order) : sorter;
+    const sort = isMonitorSortField(active?.field) ? active.field : null;
+    const order = monitorQueryOrder(active?.order);
+    if (sort && order) changeSort(sort, order);
+    else changeSort(null, null);
+  };
+}
+
 function columns(
   t: (key: string) => string,
+  query: MonitorQuery,
   open: (id: number, mode: 'view' | 'edit') => void,
   run: (action: MonitorAction, ids: number[]) => void | Promise<void>,
   operating: boolean
@@ -95,6 +111,8 @@ function columns(
     {
       title: t('monitor.name'),
       dataIndex: 'name',
+      sorter: true,
+      sortOrder: monitorTableSortOrder(query, 'name'),
       render: (_value: string, row) => (
         <div className={styles.name}>
           <strong>{row.name}</strong>
@@ -106,11 +124,15 @@ function columns(
     {
       title: t('monitor.status.label'),
       dataIndex: 'status',
+      sorter: true,
+      sortOrder: monitorTableSortOrder(query, 'status'),
       render: (value: number) => <Tag color={monitorStatusColor(value)}>{t(monitorStatusKey(value))}</Tag>
     },
     {
       title: t('monitor.updated'),
       dataIndex: 'gmtUpdate',
+      sorter: true,
+      sortOrder: monitorTableSortOrder(query, 'gmtUpdate'),
       render: (value: number | string | null | undefined, row) => formatMonitorTime(value ?? row.gmtCreate)
     },
     {
@@ -119,6 +141,19 @@ function columns(
       render: (_value: unknown, row) => <MonitorRowActions monitor={row} open={open} run={run} disabled={operating} />
     }
   ];
+}
+
+function monitorTableSortOrder(query: MonitorQuery, field: NonNullable<MonitorQuery['sort']>): SortOrder {
+  if (query.sort !== field) return null;
+  if (query.order === 'asc') return 'ascend';
+  if (query.order === 'desc') return 'descend';
+  return null;
+}
+
+function monitorQueryOrder(order: SortOrder | undefined): MonitorQuery['order'] {
+  if (order === 'ascend') return 'asc';
+  if (order === 'descend') return 'desc';
+  return null;
 }
 
 function formatMonitorTime(value?: number | string | null) {

@@ -15,7 +15,15 @@
  * limitations under the License.
  */
 
-import { monitorPageSizes, monitorStatusFilters, type MonitorQuery } from './monitor-contract';
+import {
+  monitorPageSizes,
+  monitorSortFields,
+  monitorSortOrders,
+  monitorStatusFilters,
+  type MonitorQuery,
+  type MonitorSortField,
+  type MonitorSortOrder
+} from './monitor-contract';
 
 function validPageIndex(value: string | null) {
   if (!value || !/^(?:0|[1-9]\d*)$/.test(value)) return 0;
@@ -33,6 +41,15 @@ function validStatus(value: string | null) {
   return value !== null && Object.values(monitorStatusFilters).includes(value) ? value : monitorStatusFilters.all;
 }
 
+function validSort(params: URLSearchParams): Pick<MonitorQuery, 'sort' | 'order'> {
+  const sort = params.get('sort');
+  const order = params.get('order');
+  if (!monitorSortFields.includes(sort as MonitorSortField) || !monitorSortOrders.includes(order as MonitorSortOrder)) {
+    return { sort: null, order: null };
+  }
+  return { sort: sort as MonitorSortField, order: order as MonitorSortOrder };
+}
+
 /** Reads the route-owned list filters without introducing backend paths into the domain model. */
 export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
   return {
@@ -40,6 +57,7 @@ export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
     app: params.get('app')?.trim() ?? '',
     status: validStatus(params.get('status')?.trim() ?? null),
     labels: params.get('labels')?.trim() ?? '',
+    ...validSort(params),
     pageIndex: validPageIndex(params.get('pageIndex')),
     pageSize: validPageSize(params.get('pageSize'))
   };
@@ -52,5 +70,9 @@ export function writeMonitorQuery(query: MonitorQuery) {
   if (query.app) params.set('app', query.app);
   if (query.status && query.status !== monitorStatusFilters.all) params.set('status', query.status);
   if (query.labels) params.set('labels', query.labels);
+  if (query.sort && query.order) {
+    params.set('sort', query.sort);
+    params.set('order', query.order);
+  }
   return params;
 }

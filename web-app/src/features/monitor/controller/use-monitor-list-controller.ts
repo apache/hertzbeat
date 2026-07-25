@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -37,6 +37,18 @@ import { useMonitorExport } from './use-monitor-export';
 import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
 import { useMonitorSelection } from './use-monitor-selection';
+
+/** Retains the established monitor-list cadence while leaving manual refresh available. */
+export const monitorListAutoRefreshMs = 120_000;
+
+export function monitorListQueryOptions(query: MonitorQuery) {
+  return queryOptions({
+    queryKey: monitorQueryKeys.list(query),
+    queryFn: ({ signal }) => loadMonitors(query, signal),
+    retry: false,
+    refetchInterval: monitorListAutoRefreshMs
+  });
+}
 
 export function useMonitorListController() {
   const navigate = useNavigate();
@@ -73,6 +85,8 @@ export function useMonitorListController() {
         updateQuery({ search: draft.value.search.trim(), labels: draft.value.labels.trim(), pageIndex: 0 }),
       changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
       changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
+      changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) =>
+        updateQuery({ sort, order, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: commands.refresh,
       create: () => {
@@ -96,11 +110,7 @@ export function useMonitorListController() {
 
 function useMonitorListResources(query: MonitorQuery) {
   const queryClient = useQueryClient();
-  const monitors = useQuery({
-    queryKey: monitorQueryKeys.list(query),
-    queryFn: ({ signal }) => loadMonitors(query, signal),
-    retry: false
-  });
+  const monitors = useQuery(monitorListQueryOptions(query));
   const apps = useQuery({
     queryKey: monitorQueryKeys.apps(),
     queryFn: ({ signal }) => loadMonitorApps(signal),

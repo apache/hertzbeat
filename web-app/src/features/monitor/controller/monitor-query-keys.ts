@@ -25,7 +25,18 @@ const rootKey = ['monitor'] as const;
 export const monitorQueryKeys = {
   lists: () => [...rootKey, 'list'] as const,
   list: (query: MonitorQuery) =>
-    [...rootKey, 'list', query.search, query.app, query.status, query.labels, query.pageIndex, query.pageSize] as const,
+    [
+      ...rootKey,
+      'list',
+      query.search,
+      query.app,
+      query.status,
+      query.labels,
+      query.sort,
+      query.order,
+      query.pageIndex,
+      query.pageSize
+    ] as const,
   apps: () => [...rootKey, 'apps'] as const,
   detail: (id: number | undefined) => [...rootKey, 'detail', id] as const,
   collectors: () => [...rootKey, 'collectors'] as const,
