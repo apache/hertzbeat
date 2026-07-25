@@ -24,13 +24,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.util.StringUtils;
 
 /**
  * Runtime history window and compaction checkpoint builder.
  */
 public final class AgentRuntimeHistoryWindow {
+
+    private static final AgentRuntimeTokenEstimator TOKEN_ESTIMATOR = new AgentRuntimeTokenEstimator();
+    private static final long SUMMARY_MESSAGE_OVERHEAD_TOKENS = TOKEN_ESTIMATOR.estimateMessages(
+        List.of(TranscriptMessage.compactionSummary("", null, null)));
 
     private AgentRuntimeHistoryWindow() {
     }
@@ -56,22 +59,18 @@ public final class AgentRuntimeHistoryWindow {
         return Collections.unmodifiableList(repairToolCallResultPairing(window));
     }
 
-    public static CompactionResult compactWithCheckpoint(List<TranscriptMessage> history, Policy policy) {
-        return compactWithCheckpoint(history, policy, AgentRuntimeHistoryWindow::compactionSummary);
-    }
-
     public static CompactionResult compactWithCheckpoint(List<TranscriptMessage> history, Policy policy,
                                                          SummaryGenerator summaryGenerator) {
         if (history == null || history.isEmpty()) {
             return new CompactionResult(List.of(), null);
         }
-        Policy safePolicy = policy.normalized();
+        Policy safePolicy = policy.validated();
         List<TranscriptMessage> window = replayWindow(history);
         if (window.isEmpty()) {
             return new CompactionResult(List.of(), null);
         }
-        int promptBudget = safePolicy.promptBudget();
-        if (estimateMessagesTokens(window) <= promptBudget) {
+        long promptBudget = safePolicy.historyTokenBudget();
+        if (TOKEN_ESTIMATOR.estimateMessages(window) < promptBudget) {
             return new CompactionResult(Collections.unmodifiableList(window), null);
         }
         CompactedHistory compacted = compactHistory(window, safePolicy, promptBudget, summaryGenerator);
@@ -88,8 +87,13 @@ public final class AgentRuntimeHistoryWindow {
     }
 
     private static CompactedHistory compactHistory(List<TranscriptMessage> messages, Policy policy,
-                                                   int promptBudget, SummaryGenerator summaryGenerator) {
-        int keepStart = recentTailStart(messages, Math.min(policy.recentTokenBudget(), promptBudget));
+                                                   long promptBudget, SummaryGenerator summaryGenerator) {
+        long recentBudget = Math.min(policy.retainRecentTokens(),
+            promptBudget - policy.summaryTokenBudget() - SUMMARY_MESSAGE_OVERHEAD_TOKENS);
+        if (recentBudget <= 0) {
+            throw new IllegalStateException("History compaction has no token budget for recent messages");
+        }
+        int keepStart = recentTailStart(messages, recentBudget);
         if (keepStart <= 0 && messages.size() > 1) {
             keepStart = 1;
         }
@@ -98,18 +102,27 @@ public final class AgentRuntimeHistoryWindow {
         if (tail.isEmpty() && !dropped.isEmpty()) {
             tail.add(dropped.remove(dropped.size() - 1));
         }
-        while (estimateMessagesTokens(tail) >= promptBudget && canDropFirstTailTurn(tail)) {
+        while (TOKEN_ESTIMATOR.estimateMessages(tail)
+            + policy.summaryTokenBudget() + SUMMARY_MESSAGE_OVERHEAD_TOKENS >= promptBudget
+            && canDropFirstTailTurn(tail)) {
             dropped.addAll(removeFirstTailTurn(tail));
         }
-        int summaryLimit = Math.min(policy.compactionSummaryLimit(),
-            Math.max(1, (promptBudget - estimateMessagesTokens(tail) - 12) * 4));
-        String summary = summaryGenerator.summarize(List.copyOf(dropped), summaryLimit);
-        if (!StringUtils.hasText(summary)) {
-            summary = compactionSummary(dropped, summaryLimit);
+        while (true) {
+            String summary = summaryGenerator.summarize(List.copyOf(dropped), policy.summaryTokenBudget());
+            if (!StringUtils.hasText(summary)) {
+                throw new IllegalStateException("History compaction model returned no summary");
+            }
+            // Compaction is the intentional lossy boundary; redact persisted free-form text before replay.
+            summary = AgentRuntimeTextSanitizer.redact(summary);
+            CompactedHistory compacted = compactedMessages(dropped, tail, summary);
+            if (TOKEN_ESTIMATOR.estimateMessages(compacted.messages()) < promptBudget) {
+                return compacted;
+            }
+            if (!canDropFirstTailTurn(tail)) {
+                throw new IllegalStateException("Compacted history still exceeds the configured token budget");
+            }
+            dropped.addAll(removeFirstTailTurn(tail));
         }
-        // Compaction is the intentional lossy boundary; redact secrets and enforce its remaining prompt budget.
-        summary = AgentRuntimeTextSanitizer.sanitizeAndLimit(summary, summaryLimit);
-        return compactedMessages(dropped, tail, summary);
     }
 
     private static CompactedHistory compactedMessages(List<TranscriptMessage> dropped,
@@ -121,11 +134,12 @@ public final class AgentRuntimeHistoryWindow {
             summary, summarizedThroughSessionSequence, firstKeptSessionSequence);
         List<TranscriptMessage> compacted = new ArrayList<>();
         compacted.add(checkpointMessage);
-        if (!tail.isEmpty()) {
-            compacted.add(tail.get(0).toBuilder().pruned(true).build());
-            for (int i = 1; i < tail.size(); i++) {
-                compacted.add(tail.get(i));
-            }
+        for (int i = 0; i < tail.size(); i++) {
+            TranscriptMessage retained = tail.get(i).toBuilder()
+                .usage(null)
+                .pruned(i == 0 || tail.get(i).isPruned())
+                .build();
+            compacted.add(retained);
         }
         List<TranscriptMessage> repaired = new ArrayList<>(repairToolCallResultPairing(compacted));
         return new CompactedHistory(repaired, new CompactionCheckpoint(checkpointMessage,
@@ -205,14 +219,14 @@ public final class AgentRuntimeHistoryWindow {
         return Math.max(left, right);
     }
 
-    private static int recentTailStart(List<TranscriptMessage> messages, int recentTokenBudget) {
+    private static int recentTailStart(List<TranscriptMessage> messages, long recentTokenBudget) {
         if (messages.isEmpty()) {
             return 0;
         }
-        int accumulated = 0;
+        long accumulated = 0;
         int start = messages.size() - 1;
         for (int i = messages.size() - 1; i >= 0; i--) {
-            int next = estimateMessageTokens(messages.get(i));
+            long next = TOKEN_ESTIMATOR.estimateMessages(List.of(messages.get(i)));
             if (i < messages.size() - 1 && accumulated + next > recentTokenBudget) {
                 break;
             }
@@ -225,96 +239,6 @@ public final class AgentRuntimeHistoryWindow {
             start--;
         }
         return start;
-    }
-
-    static String compactionSummary(List<TranscriptMessage> messages, int summaryLimit) {
-        if (messages == null || messages.isEmpty()) {
-            return "No prior history.";
-        }
-        StringBuilder summary = new StringBuilder();
-        summary.append("Compacted ").append(messages.size()).append(" earlier transcript messages.");
-        for (TranscriptMessage message : messages) {
-            appendSummaryLine(summary, message);
-            if (summary.length() > summaryLimit * 2) {
-                break;
-            }
-        }
-        // Compaction summaries combine persisted free-form messages and enter the next model prompt.
-        return AgentRuntimeTextSanitizer.sanitizeAndLimit(summary.toString(), summaryLimit);
-    }
-
-    private static void appendSummaryLine(StringBuilder summary, TranscriptMessage message) {
-        if (message == null) {
-            return;
-        }
-        if (sameRole(message, TranscriptMessage.TranscriptRole.USER)) {
-            appendSummaryText(summary, "User", message.text());
-            return;
-        }
-        if (sameRole(message, TranscriptMessage.TranscriptRole.ASSISTANT)) {
-            if (!message.toolCalls().isEmpty()) {
-                summary.append("\n- Assistant requested tools: ")
-                    .append(message.toolCalls().stream()
-                        .map(TranscriptContent::getName)
-                        .filter(value -> value != null && !value.isBlank())
-                        .collect(Collectors.joining(", ")));
-                return;
-            }
-            appendSummaryText(summary, "Assistant", message.text());
-            return;
-        }
-        if (sameRole(message, TranscriptMessage.TranscriptRole.TOOL_RESULT)) {
-            appendSummaryText(summary, "Tool result "
-                    + (StringUtils.hasText(message.getToolName()) ? message.getToolName() : "unknown"),
-                message.text());
-            return;
-        }
-        if (sameRole(message, TranscriptMessage.TranscriptRole.COMPACTION_SUMMARY)) {
-            appendSummaryText(summary, "Previous summary", message.text());
-        }
-    }
-
-    private static void appendSummaryText(StringBuilder summary, String label, String text) {
-        // Persisted message text is untrusted free form copied into a model-visible compaction summary.
-        String safeText = AgentRuntimeTextSanitizer.sanitizeAndLimit(text, 240);
-        if (!safeText.isBlank()) {
-            summary.append("\n- ").append(label).append(": ").append(safeText);
-        }
-    }
-
-    private static int estimateMessagesTokens(List<TranscriptMessage> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return 0;
-        }
-        return messages.stream()
-            .mapToInt(AgentRuntimeHistoryWindow::estimateMessageTokens)
-            .sum();
-    }
-
-    private static int estimateMessageTokens(TranscriptMessage message) {
-        if (message == null) {
-            return 0;
-        }
-        int chars = safeLength(message.getRole() == null ? null : message.getRole().wireValue())
-            + safeLength(message.getToolName())
-            + safeLength(message.getToolCallId());
-        if (message.getContent() != null) {
-            for (TranscriptContent block : message.getContent()) {
-                if (block == null) {
-                    continue;
-                }
-                chars += safeLength(block.getType())
-                    + safeLength(block.getText())
-                    + safeLength(block.getId())
-                    + safeLength(block.getName())
-                    + (block.getInput() == null ? 0 : String.valueOf(block.getInput()).length());
-            }
-        }
-        return Math.max(1, (int) Math.ceil(chars / 4.0D) + 12);
-    }
-
-    private static int safeLength(String value) {
-        return value == null ? 0 : value.length();
     }
 
     private static List<TranscriptMessage> repairToolCallResultPairing(List<TranscriptMessage> messages) {
@@ -434,19 +358,14 @@ public final class AgentRuntimeHistoryWindow {
     /**
      * Runtime history window and compaction budget.
      */
-    public record Policy(int contextTokenBudget, int reserveTokens,
-                         int recentTokenBudget, int compactionSummaryLimit) {
+    public record Policy(long historyTokenBudget, long retainRecentTokens,
+                         int summaryTokenBudget) {
 
-        private Policy normalized() {
-            return new Policy(
-                Math.max(1, contextTokenBudget),
-                Math.max(0, reserveTokens),
-                Math.max(1, recentTokenBudget),
-                Math.max(1, compactionSummaryLimit));
-        }
-
-        private int promptBudget() {
-            return Math.max(1, contextTokenBudget - reserveTokens);
+        private Policy validated() {
+            if (historyTokenBudget <= 0 || retainRecentTokens <= 0 || summaryTokenBudget <= 0) {
+                throw new IllegalArgumentException("History compaction token budgets must be positive");
+            }
+            return this;
         }
     }
 
@@ -462,6 +381,6 @@ public final class AgentRuntimeHistoryWindow {
     @FunctionalInterface
     public interface SummaryGenerator {
 
-        String summarize(List<TranscriptMessage> messages, int maxChars);
+        String summarize(List<TranscriptMessage> messages, int maxTokens);
     }
 }

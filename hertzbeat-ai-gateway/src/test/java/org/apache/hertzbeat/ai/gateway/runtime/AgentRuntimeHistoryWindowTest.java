@@ -39,11 +39,11 @@ class AgentRuntimeHistoryWindowTest {
             sequenced(5L, TranscriptMessage.userText("recent request inspect monitor 42")),
             sequenced(6L, TranscriptMessage.assistantText("recent final answer")));
         AgentRuntimeHistoryWindow.Policy policy = new AgentRuntimeHistoryWindow.Policy(
-            190, 40, 80, 1200);
+            150, 80, 20);
 
         AgentRuntimeHistoryWindow.CompactionResult result =
             AgentRuntimeHistoryWindow.compactWithCheckpoint(history, policy,
-                (messages, maxChars) -> "Model summary for earlier diagnosis");
+                (messages, maxTokens) -> "Model summary for earlier diagnosis");
 
         assertEquals(TranscriptMessage.TranscriptRole.COMPACTION_SUMMARY, result.messages().get(0).getRole());
         assertEquals(TranscriptMessage.TranscriptRole.USER, result.messages().get(1).getRole());
@@ -52,6 +52,7 @@ class AgentRuntimeHistoryWindowTest {
         assertEquals(4L, result.checkpoint().summarizedThroughSessionSequence());
         assertEquals(5L, result.checkpoint().firstKeptSessionSequence());
         assertEquals("Model summary for earlier diagnosis", result.checkpoint().message().text());
+        assertTrue(result.messages().stream().allMatch(message -> message.getUsage() == null));
     }
 
     @Test
@@ -62,10 +63,11 @@ class AgentRuntimeHistoryWindowTest {
             sequenced(21L, TranscriptMessage.userText("recent request inspect monitor 42")),
             sequenced(22L, TranscriptMessage.assistantText("recent final answer")));
         AgentRuntimeHistoryWindow.Policy policy = new AgentRuntimeHistoryWindow.Policy(
-            190, 40, 80, 1200);
+            150, 80, 20);
 
         AgentRuntimeHistoryWindow.CompactionResult result =
-            AgentRuntimeHistoryWindow.compactWithCheckpoint(history, policy);
+            AgentRuntimeHistoryWindow.compactWithCheckpoint(history, policy,
+                (messages, maxTokens) -> "Prior and recent diagnostic context");
 
         assertNotNull(result.checkpoint());
         assertEquals(10L, result.checkpoint().summarizedThroughSessionSequence());

@@ -27,8 +27,12 @@ public final class AgentRuntimeTextSanitizer {
     private AgentRuntimeTextSanitizer() {
     }
 
+    public static String redact(String value) {
+        return value == null ? "" : GatewayText.redactSecrets(value).strip();
+    }
+
     public static String sanitizeAndLimit(String value, int maxLength) {
-        String safeValue = value == null ? "" : GatewayText.redactSecrets(value).strip();
+        String safeValue = redact(value);
         if (maxLength <= 0) {
             return "";
         }

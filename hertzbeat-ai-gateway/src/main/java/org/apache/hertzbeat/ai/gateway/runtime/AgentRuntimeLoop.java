@@ -48,6 +48,7 @@ public class AgentRuntimeLoop {
 
 
     private final RuntimePromptBuilder promptBuilder;
+    private final AgentRuntimeTokenEstimator tokenEstimator;
     private final AgentRuntimeProperties config;
     private final AgentRuntimeModelClient modelClient;
     private final AgentToolBridge toolBridge;
@@ -68,8 +69,10 @@ public class AgentRuntimeLoop {
                             Clock clock,
                             List<AgentSkillDefinition> availableSkills) {
         this.promptBuilder = new RuntimePromptBuilder();
+        this.tokenEstimator = new AgentRuntimeTokenEstimator();
         // A loop instance is bound to one complete runtime composition for its entire execution.
         this.config = Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
+        this.config.validate();
         this.modelClient = Objects.requireNonNull(modelClient, "modelClient must not be null");
         this.toolBridge = Objects.requireNonNull(toolBridge, "toolBridge must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
@@ -100,14 +103,9 @@ public class AgentRuntimeLoop {
                 }
                 List<AgentToolDescriptor> availableTools = state.availableTools(toolBridge.visibleTools());
                 RuntimePrompt prompt = promptBuilder.build(context, availableTools, availableSkills);
-                compactHistory(loopRun, prompt, availableTools);
-                AgentRuntimeModelRequest modelRequest = AgentRuntimeModelRequest.builder()
-                        .prompt(prompt)
-                        .chatHistory(state.messages())
-                        .availableTools(availableTools)
-                        .temperature(config.getTemperature())
-                        .maxCompletionTokens(config.getMaxCompletionTokens())
-                        .build();
+                AgentRuntimeModelRequest modelRequest = modelRequest(prompt, state.messages(), availableTools,
+                        config.getMaxCompletionTokens());
+                modelRequest = compactHistory(loopRun, modelRequest);
                 ModelCallResult modelCall = callModel(loopRun, modelRequest);
                 control.checkpoint();
                 AgentRuntimeModelResponse modelResponse = modelCall.response();
@@ -174,25 +172,44 @@ public class AgentRuntimeLoop {
         }
     }
 
-    private void compactHistory(LoopRun run, RuntimePrompt prompt, List<AgentToolDescriptor> availableTools) {
-        int contextBudget = Math.max(1,
-                config.getHistoryContextTokenBudget() - estimatePromptTokens(prompt, availableTools));
+    private AgentRuntimeModelRequest compactHistory(LoopRun run, AgentRuntimeModelRequest modelRequest) {
+        AgentRuntimeProperties.ContextProperties context = config.getContext();
+        long thresholdTokens = context.compactionThresholdTokens();
+        if (estimateActiveContextTokens(run.state(), modelRequest) < thresholdTokens) {
+            return modelRequest;
+        }
+        AgentRuntimeProperties.CompactionProperties compaction = context.getCompaction();
+        long fixedTokens = tokenEstimator.estimateFixedContext(
+                modelRequest.getPrompt(), modelRequest.getAvailableTools());
+        long estimatedHistoryTokens = tokenEstimator.estimateMessages(modelRequest.getChatHistory());
+        long availableHistoryTokens = thresholdTokens - fixedTokens;
+        if (availableHistoryTokens <= 0) {
+            throw new IllegalStateException(
+                    "Agent runtime prompt and tools leave no context budget for history compaction");
+        }
+        long historyTokenBudget = Math.min(availableHistoryTokens,
+                Math.max(1L, estimatedHistoryTokens - 1L));
         AgentRuntimeHistoryWindow.Policy policy = new AgentRuntimeHistoryWindow.Policy(
-                contextBudget,
-                config.getHistoryReserveTokens(),
-                config.getHistoryRecentTokenBudget(),
-                config.getHistoryCompactionSummaryLimit());
+                historyTokenBudget,
+                compaction.getRetainRecentTokens(),
+                compaction.getSummaryTokenBudget());
         AgentRuntimeHistoryWindow.CompactionResult result = AgentRuntimeHistoryWindow.compactWithCheckpoint(
                 run.state().messages(), policy,
-                (messages, maxChars) -> modelCompactionSummary(run, messages, maxChars));
+                (messages, maxTokens) -> modelCompactionSummary(run, messages, maxTokens));
         if (result.checkpoint() == null) {
-            return;
+            throw new IllegalStateException("Agent runtime history exceeded the context threshold but could not compact");
+        }
+        AgentRuntimeModelRequest compactedRequest = modelRequest(modelRequest.getPrompt(), result.messages(),
+                modelRequest.getAvailableTools(), modelRequest.getMaxCompletionTokens());
+        if (tokenEstimator.estimateRequest(compactedRequest) >= thresholdTokens) {
+            throw new IllegalStateException("Agent runtime compacted history still exceeds the context threshold");
         }
         run.state().replaceMessages(result.messages());
         run.transcriptSink().recordCompactionCheckpoint(result.checkpoint());
+        return compactedRequest;
     }
 
-    private String modelCompactionSummary(LoopRun run, List<TranscriptMessage> messages, int maxChars) {
+    private String modelCompactionSummary(LoopRun run, List<TranscriptMessage> messages, int maxTokens) {
         List<TranscriptMessage> compactionHistory = new ArrayList<>(messages);
         compactionHistory.add(TranscriptMessage.userText("Create the compacted summary now."));
         AgentRuntimeModelRequest request = AgentRuntimeModelRequest.builder()
@@ -203,7 +220,7 @@ public class AgentRuntimeLoop {
                 .chatHistory(compactionHistory)
                 .availableTools(List.of())
                 .temperature(0D)
-                .maxCompletionTokens(Math.min(config.getMaxCompletionTokens(), Math.max(1, maxChars)))
+                .maxCompletionTokens(maxTokens)
                 .build();
         try {
             AgentRuntimeModelResponse response = taskRunner.run(
@@ -222,18 +239,30 @@ public class AgentRuntimeLoop {
         }
     }
 
-    private int estimatePromptTokens(RuntimePrompt prompt, List<AgentToolDescriptor> availableTools) {
-        int chars = Objects.toString(prompt.getInstructions(), "").length();
-        for (RuntimePrompt.Block block : prompt.getBlocks()) {
-            chars += Objects.toString(block.getContent(), "").length();
+    private AgentRuntimeModelRequest modelRequest(RuntimePrompt prompt, List<TranscriptMessage> history,
+                                                  List<AgentToolDescriptor> availableTools,
+                                                  Integer maxCompletionTokens) {
+        return AgentRuntimeModelRequest.builder()
+                .prompt(prompt)
+                .chatHistory(history)
+                .availableTools(availableTools)
+                .temperature(config.getTemperature())
+                .maxCompletionTokens(maxCompletionTokens)
+                .build();
+    }
+
+    private long estimateActiveContextTokens(AgentRuntimeLoopState state,
+                                             AgentRuntimeModelRequest modelRequest) {
+        long fullRequestEstimate = tokenEstimator.estimateRequest(modelRequest);
+        int usageMessageIndex = state.latestCurrentRunUsageMessageIndex();
+        if (usageMessageIndex < 0) {
+            return fullRequestEstimate;
         }
-        for (AgentToolDescriptor tool : availableTools) {
-            chars += Objects.toString(tool.getName(), "").length()
-                    + Objects.toString(tool.getDescription(), "").length()
-                    + Objects.toString(tool.getNamespace(), "").length()
-                    + Objects.toString(tool.getInputSchema(), "").length();
-        }
-        return Math.max(1, (int) Math.ceil(chars / 4.0D));
+        List<TranscriptMessage> messages = state.messages();
+        AgentRuntimeModelResponse.Usage usage = messages.get(usageMessageIndex).getUsage();
+        long providerBaselineEstimate = usage.totalTokens()
+                + tokenEstimator.estimateMessages(messages.subList(usageMessageIndex + 1, messages.size()));
+        return Math.max(fullRequestEstimate, providerBaselineEstimate);
     }
 
     private ModelCallResult modelError(String itemId) {
@@ -255,7 +284,8 @@ public class AgentRuntimeLoop {
                     toolCall.getArguments()));
         }
         String content = modelResponse.getAssistantText();
-        TranscriptMessage assistantToolCallMessage = TranscriptMessage.assistantToolCalls(content, toolCallBlocks);
+        TranscriptMessage assistantToolCallMessage = TranscriptMessage.assistantToolCalls(
+                content, toolCallBlocks, modelResponse.getUsage());
         state.addTurnMessage(assistantToolCallMessage);
         recordTranscriptMessage(run, assistantToolCallMessage);
         return toolExecutions;
@@ -360,7 +390,7 @@ public class AgentRuntimeLoop {
         AgentRuntimeModelResponse modelResponse = modelCall.response();
         String response = modelResponse.getFinalAnswer();
         Instant now = Instant.now(clock);
-        TranscriptMessage assistantText = TranscriptMessage.assistantText(response);
+        TranscriptMessage assistantText = TranscriptMessage.assistantText(response, modelResponse.getUsage());
         state.addTurnMessage(assistantText);
         recordTranscriptMessage(run, assistantText);
         if (!state.hasCurrentAssistantMessageStarted()) {

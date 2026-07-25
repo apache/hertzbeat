@@ -42,6 +42,32 @@ class AgentRuntimeLoopStateTest {
                 state.availableTools(List.of()).stream().map(AgentToolDescriptor::getName).toList());
     }
 
+    @Test
+    void shouldOnlyUseProviderUsageRecordedDuringCurrentUncompactedRun() {
+        TranscriptMessage restoredAssistant = TranscriptMessage.assistantText("restored", usage(100));
+        AgentRuntimeLoopState state = new AgentRuntimeLoopState(List.of(restoredAssistant));
+
+        assertEquals(-1, state.latestCurrentRunUsageMessageIndex());
+
+        state.addTurnMessage(TranscriptMessage.userText("current request"));
+        state.addTurnMessage(TranscriptMessage.assistantText("current response", usage(120)));
+        assertEquals(2, state.latestCurrentRunUsageMessageIndex());
+
+        state.replaceMessages(state.messages());
+        assertEquals(-1, state.latestCurrentRunUsageMessageIndex());
+
+        state.addTurnMessage(TranscriptMessage.assistantText("after compaction", usage(80)));
+        assertEquals(3, state.latestCurrentRunUsageMessageIndex());
+    }
+
+    private AgentRuntimeModelResponse.Usage usage(long totalTokens) {
+        return AgentRuntimeModelResponse.Usage.builder()
+                .promptTokens(totalTokens - 1)
+                .completionTokens(1)
+                .totalTokens(totalTokens)
+                .build();
+    }
+
     private AgentToolDescriptor descriptor(int index) {
         return AgentToolDescriptor.builder()
                 .name("test.tool" + index)

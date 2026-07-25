@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
@@ -38,20 +38,17 @@ class AgentRuntimePropertiesTest {
         contextRunner.run(context -> {
             AgentRuntimeProperties properties = context.getBean(AgentRuntimeProperties.class);
 
-            assertEquals("openai-compatible", properties.getProvider());
-            assertEquals("", properties.getModel());
-            assertEquals("", properties.getBaseUrl());
-            assertEquals("", properties.getApiKey());
             assertEquals(0.2D, properties.getTemperature());
             assertEquals(4096, properties.getMaxCompletionTokens());
             assertEquals(2048, properties.getMaxSteps());
             assertEquals(1024, properties.getMaxToolCalls());
             assertEquals(Duration.ofSeconds(360), properties.getModelRequestTimeout());
             assertEquals(Duration.ofSeconds(180), properties.getToolTimeout());
-            assertEquals(32000, properties.getHistoryContextTokenBudget());
-            assertEquals(8000, properties.getHistoryReserveTokens());
-            assertEquals(12000, properties.getHistoryRecentTokenBudget());
-            assertEquals(4000, properties.getHistoryCompactionSummaryLimit());
+            assertEquals(32000, properties.getContext().getMaxTokens());
+            assertEquals(0.9D, properties.getContext().getCompaction().getThresholdRatio());
+            assertEquals(12000, properties.getContext().getCompaction().getRetainRecentTokens());
+            assertEquals(4000, properties.getContext().getCompaction().getSummaryTokenBudget());
+            assertEquals(28800, properties.getContext().compactionThresholdTokens());
             assertEquals(2, properties.getRetry().getMaxModelRetries());
             assertEquals(Duration.ofMillis(500), properties.getRetry().getInitialBackoff());
             assertEquals(1024, properties.getStream().getMaxBufferedEvents());
@@ -59,47 +56,52 @@ class AgentRuntimePropertiesTest {
     }
 
     @Test
-    void runtimePropertiesShouldBindAndHideApiKeyFromToString() {
+    void runtimePropertiesShouldBind() {
         contextRunner.withPropertyValues(
-            "hertzbeat.agent.gateway.runtime.provider=openai-compatible",
-            "hertzbeat.agent.gateway.runtime.model=gpt-runtime",
-            "hertzbeat.agent.gateway.runtime.base-url=https://model.example.test/v1",
-            "hertzbeat.agent.gateway.runtime.api-key=runtime-secret",
-            "hertzbeat.agent.gateway.runtime.temperature=0.4",
-            "hertzbeat.agent.gateway.runtime.max-completion-tokens=2048",
-            "hertzbeat.agent.gateway.runtime.max-steps=5",
-            "hertzbeat.agent.gateway.runtime.max-tool-calls=3",
-            "hertzbeat.agent.gateway.runtime.model-request-timeout=30s",
-            "hertzbeat.agent.gateway.runtime.tool-timeout=250ms",
-            "hertzbeat.agent.gateway.runtime.history-context-token-budget=24000",
-            "hertzbeat.agent.gateway.runtime.history-reserve-tokens=6000",
-            "hertzbeat.agent.gateway.runtime.history-recent-token-budget=9000",
-            "hertzbeat.agent.gateway.runtime.history-compaction-summary-limit=2048",
-            "hertzbeat.agent.gateway.runtime.retry.max-model-retries=1",
-            "hertzbeat.agent.gateway.runtime.retry.initial-backoff=125ms",
-            "hertzbeat.agent.gateway.runtime.stream.max-buffered-events=8")
+            "hertzbeat.agent.runtime.temperature=0.4",
+            "hertzbeat.agent.runtime.max-completion-tokens=2048",
+            "hertzbeat.agent.runtime.max-steps=5",
+            "hertzbeat.agent.runtime.max-tool-calls=3",
+            "hertzbeat.agent.runtime.model-request-timeout=30s",
+            "hertzbeat.agent.runtime.tool-timeout=250ms",
+            "hertzbeat.agent.runtime.context.max-tokens=24000",
+            "hertzbeat.agent.runtime.context.compaction.threshold-ratio=0.75",
+            "hertzbeat.agent.runtime.context.compaction.retain-recent-tokens=9000",
+            "hertzbeat.agent.runtime.context.compaction.summary-token-budget=2048",
+            "hertzbeat.agent.runtime.retry.max-model-retries=1",
+            "hertzbeat.agent.runtime.retry.initial-backoff=125ms",
+            "hertzbeat.agent.runtime.stream.max-buffered-events=8")
             .run(context -> {
                 AgentRuntimeProperties properties = context.getBean(AgentRuntimeProperties.class);
 
-                assertEquals("openai-compatible", properties.getProvider());
-                assertEquals("gpt-runtime", properties.getModel());
-                assertEquals("https://model.example.test/v1", properties.getBaseUrl());
-                assertEquals("runtime-secret", properties.getApiKey());
                 assertEquals(0.4D, properties.getTemperature());
                 assertEquals(2048, properties.getMaxCompletionTokens());
                 assertEquals(5, properties.getMaxSteps());
                 assertEquals(3, properties.getMaxToolCalls());
                 assertEquals(Duration.ofSeconds(30), properties.getModelRequestTimeout());
                 assertEquals(Duration.ofMillis(250), properties.getToolTimeout());
-                assertEquals(24000, properties.getHistoryContextTokenBudget());
-                assertEquals(6000, properties.getHistoryReserveTokens());
-                assertEquals(9000, properties.getHistoryRecentTokenBudget());
-                assertEquals(2048, properties.getHistoryCompactionSummaryLimit());
+                assertEquals(24000, properties.getContext().getMaxTokens());
+                assertEquals(0.75D, properties.getContext().getCompaction().getThresholdRatio());
+                assertEquals(9000, properties.getContext().getCompaction().getRetainRecentTokens());
+                assertEquals(2048, properties.getContext().getCompaction().getSummaryTokenBudget());
+                assertEquals(18000, properties.getContext().compactionThresholdTokens());
                 assertEquals(1, properties.getRetry().getMaxModelRetries());
                 assertEquals(Duration.ofMillis(125), properties.getRetry().getInitialBackoff());
                 assertEquals(8, properties.getStream().getMaxBufferedEvents());
-                assertFalse(properties.toString().contains("runtime-secret"));
             });
+    }
+
+    @Test
+    void invalidCompactionPolicyShouldFailFast() {
+        AgentRuntimeProperties properties = new AgentRuntimeProperties();
+
+        assertThrows(IllegalArgumentException.class,
+            () -> properties.getContext().getCompaction().setThresholdRatio(1D));
+
+        properties.getContext().setMaxTokens(100);
+        properties.getContext().getCompaction().setRetainRecentTokens(60);
+        properties.getContext().getCompaction().setSummaryTokenBudget(30);
+        assertThrows(IllegalArgumentException.class, properties::validate);
     }
 
     @EnableConfigurationProperties(AgentRuntimeProperties.class)

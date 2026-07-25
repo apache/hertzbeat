@@ -39,18 +39,18 @@ import org.springframework.util.StringUtils;
 @Component
 public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClient, AgentClientAvailability {
 
-    private static final String DEFAULT_PROVIDER = "openai-compatible";
+    private static final String DEFAULT_PROVIDER_TYPE = "openai-compatible";
 
     private final GeneralConfigDao generalConfigDao;
-    private final AgentRuntimeProperties properties;
+    private final AgentProviderProperties providerProperties;
     private final AgentModelProviderRegistry providerRegistry;
     private final AtomicReference<HertzBeatModel> model = new AtomicReference<>();
 
     public ReloadableAgentRuntimeModelClient(GeneralConfigDao generalConfigDao,
-                                             AgentRuntimeProperties properties,
+                                             AgentProviderProperties providerProperties,
                                              AgentModelProviderRegistry providerRegistry) {
         this.generalConfigDao = generalConfigDao;
-        this.properties = properties;
+        this.providerProperties = providerProperties;
         this.providerRegistry = providerRegistry;
         try {
             reload();
@@ -116,19 +116,20 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
     }
 
     private ModelProviderConfig propertyProvider() {
-        boolean defaultEmptyConfig = DEFAULT_PROVIDER.equalsIgnoreCase(properties.getProvider())
-                && !StringUtils.hasText(properties.getBaseUrl())
-                && !StringUtils.hasText(properties.getModel())
-                && !StringUtils.hasText(properties.getApiKey());
+        boolean defaultEmptyConfig = DEFAULT_PROVIDER_TYPE.equalsIgnoreCase(providerProperties.getType())
+                && !StringUtils.hasText(providerProperties.getCode())
+                && !StringUtils.hasText(providerProperties.getBaseUrl())
+                && !StringUtils.hasText(providerProperties.getModel())
+                && !StringUtils.hasText(providerProperties.getApiKey());
         if (defaultEmptyConfig) {
             return null;
         }
         ModelProviderConfig provider = new ModelProviderConfig();
-        provider.setType(properties.getProvider());
-        provider.setCode(properties.getProvider());
-        provider.setBaseUrl(properties.getBaseUrl());
-        provider.setModel(properties.getModel());
-        provider.setApiKey(properties.getApiKey());
+        provider.setType(providerProperties.getType());
+        provider.setCode(providerProperties.getCode());
+        provider.setBaseUrl(providerProperties.getBaseUrl());
+        provider.setModel(providerProperties.getModel());
+        provider.setApiKey(providerProperties.getApiKey());
         return provider;
     }
 }
