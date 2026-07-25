@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { MonitorDetailView } from './monitor-detail-view';
@@ -38,6 +38,7 @@ describe('MonitorDetailView', () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
+  afterEach(cleanup);
 
   it('renders loading as status evidence', () => {
     renderView({ kind: 'loading' });
@@ -60,7 +61,47 @@ describe('MonitorDetailView', () => {
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
   });
+
+  it.each([
+    null,
+    grafana(false, 'https://grafana.example/d/ops'),
+    grafana(true, ''),
+    grafana(true, '/d/ops'),
+    grafana(true, 'javascript:alert(1)'),
+    grafana(true, 'data:text/html,unsafe')
+  ])('does not render a dashboard for missing, disabled, or unsafe evidence', grafanaDashboard => {
+    renderView({ ...ready, detail: { ...ready.detail, grafanaDashboard } });
+
+    expect(screen.queryByTitle(i18n.t('monitor.grafana.title'))).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: i18n.t('monitor.grafana.title') })).not.toBeInTheDocument();
+  });
+
+  it('renders an enabled dashboard with a safe absolute URL', () => {
+    renderView({
+      ...ready,
+      detail: { ...ready.detail, grafanaDashboard: grafana(true, 'https://grafana.example/d/ops?orgId=1') }
+    });
+
+    expect(screen.getByTitle(i18n.t('monitor.grafana.title'))).toHaveAttribute(
+      'src',
+      'https://grafana.example/d/ops?orgId=1'
+    );
+  });
 });
+
+function grafana(enabled: boolean, url: string | null) {
+  return {
+    monitorId: 7,
+    folderUid: null,
+    slug: null,
+    status: null,
+    uid: null,
+    url,
+    version: null,
+    enabled,
+    template: null
+  };
+}
 
 function renderView(detail: Parameters<typeof MonitorDetailView>[0]['state']['detail']) {
   return render(

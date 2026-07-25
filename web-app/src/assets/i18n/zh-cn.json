@@ -1891,6 +1891,7 @@
     "name": "监控",
     "updated": "更新时间",
     "detail": "监控详情",
+    "grafana": { "title": "Grafana 仪表盘" },
     "export": {
       "all": "导出全部",
       "selected": "导出所选",

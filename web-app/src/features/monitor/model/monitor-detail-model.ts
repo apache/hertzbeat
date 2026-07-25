@@ -23,7 +23,8 @@ import type {
   MonitorHistoryMetric,
   MonitorMetricOption,
   MonitorMetricValue,
-  MonitorRealtimeMetric
+  MonitorRealtimeMetric,
+  MonitorGrafanaDashboard
 } from './monitor-contract';
 
 export type MonitorDetailEvidence = RemotePayloadState<{ detail: MonitorDetail }, 'missing' | 'unavailable' | 'error'>;
@@ -57,6 +58,22 @@ export function parseMonitorDetailRefresh(value: string | null): MonitorDetailRe
 
 export function monitorDetailRefreshInterval(value: MonitorDetailRefreshSeconds) {
   return value === 0 ? false : value * 1000;
+}
+
+/**
+ * Dashboard URLs cross an iframe trust boundary. Keep admission centralized
+ * and fail closed without rejecting the rest of an otherwise valid detail.
+ */
+export function safeMonitorGrafanaUrl(dashboard: Pick<MonitorGrafanaDashboard, 'enabled' | 'url'> | null | undefined) {
+  if (!dashboard?.enabled || !dashboard.url) return undefined;
+  try {
+    const parsed = new URL(dashboard.url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
+    if (parsed.username || parsed.password) return undefined;
+    return parsed.href;
+  } catch {
+    return undefined;
+  }
 }
 
 export type { MonitorMetricOption } from './monitor-contract';

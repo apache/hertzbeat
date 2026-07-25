@@ -25,7 +25,8 @@ import {
   monitorMetricOptions,
   monitorRealtimeRows,
   parseMonitorDetailRefresh,
-  parseMonitorRouteId
+  parseMonitorRouteId,
+  safeMonitorGrafanaUrl
 } from './monitor-detail-model';
 
 describe('monitor detail model', () => {
@@ -92,5 +93,20 @@ describe('monitor detail model', () => {
     expect(parseMonitorDetailRefresh('0')).toBe(0);
     expect(monitorDetailRefreshInterval(90)).toBe(90_000);
     expect(monitorDetailRefreshInterval(0)).toBe(false);
+  });
+
+  it.each([
+    [null, undefined],
+    [{ enabled: false, url: 'https://grafana.example/d/ops' }, undefined],
+    [{ enabled: true, url: null }, undefined],
+    [{ enabled: true, url: '' }, undefined],
+    [{ enabled: true, url: '/d/ops' }, undefined],
+    [{ enabled: true, url: 'javascript:alert(1)' }, undefined],
+    [{ enabled: true, url: 'data:text/html,unsafe' }, undefined],
+    [{ enabled: true, url: 'https://operator:secret@grafana.example/d/ops' }, undefined],
+    [{ enabled: true, url: 'https://grafana.example/d/ops?orgId=1' }, 'https://grafana.example/d/ops?orgId=1'],
+    [{ enabled: true, url: 'http://grafana.internal/d/ops' }, 'http://grafana.internal/d/ops']
+  ])('allows only an explicitly enabled absolute HTTP(S) Grafana URL', (dashboard, expected) => {
+    expect(safeMonitorGrafanaUrl(dashboard)).toBe(expected);
   });
 });

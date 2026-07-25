@@ -28,3 +28,16 @@
 .heading :global(.ant-typography) {
   margin: 0;
 }
+.dashboard {
+  display: grid;
+  gap: 12px;
+}
+.dashboard :global(.ant-typography) {
+  margin: 0;
+}
+.dashboardFrame {
+  width: 100%;
+  height: min(1200px, 75vh);
+  min-height: 480px;
+  border: 0;
+}

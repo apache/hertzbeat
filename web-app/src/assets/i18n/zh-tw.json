@@ -1930,6 +1930,7 @@
     "name": "監控",
     "updated": "更新時間",
     "detail": "監控詳情",
+    "grafana": { "title": "Grafana 儀表板" },
     "export": {
       "all": "匯出全部",
       "selected": "匯出所選",

@@ -25,6 +25,7 @@ import type {
   MonitorDetailViewActions,
   MonitorDetailViewState
 } from '../model/monitor-detail-model';
+import { safeMonitorGrafanaUrl } from '../model/monitor-detail-model';
 import { monitorStatusColor, monitorStatusKey } from '../model/monitor-model';
 import styles from './monitor-detail-view.module.css';
 
@@ -68,7 +69,30 @@ export function MonitorDetailView({
       </header>
       <Descriptions size="small" column={2} items={monitorDescriptionItems(t, monitor)} />
       {metricWorkbench}
+      <MonitorGrafanaDashboard dashboard={state.detail.detail.grafanaDashboard} />
     </div>
+  );
+}
+
+function MonitorGrafanaDashboard({
+  dashboard
+}: {
+  dashboard: Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail']['grafanaDashboard'];
+}) {
+  const { t } = useTranslation();
+  const url = safeMonitorGrafanaUrl(dashboard);
+  if (!url) return null;
+  return (
+    <section className={styles.dashboard}>
+      <Typography.Title level={3}>{t('monitor.grafana.title')}</Typography.Title>
+      <iframe
+        className={styles.dashboardFrame}
+        src={url}
+        title={t('monitor.grafana.title')}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    </section>
   );
 }
 

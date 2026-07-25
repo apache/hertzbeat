@@ -1910,6 +1910,7 @@
     "name": "Monitor",
     "updated": "Updated",
     "detail": "Monitor detail",
+    "grafana": { "title": "Grafana dashboard" },
     "export": {
       "all": "Export all",
       "selected": "Export selected",
