@@ -201,7 +201,6 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long conversationId) {
-        // 先删除关联计划，避免会话删除后定时任务继续执行并写入孤儿消息。
         sopScheduleDao.deleteByConversationId(conversationId);
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
         if (!messages.isEmpty()) {
