@@ -27,6 +27,7 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({
+  deleteMonitorGrafanaDashboards: vi.fn(),
   loadMonitorApps: vi.fn(),
   loadMonitorDetail: vi.fn(),
   loadMonitors: vi.fn(),
@@ -67,6 +68,7 @@ describe('useMonitorListController URL evidence', () => {
   });
   beforeEach(() => {
     vi.resetAllMocks();
+    api.deleteMonitorGrafanaDashboards.mockResolvedValue(false);
     api.loadMonitorApps.mockResolvedValue([]);
     api.loadMonitorDetail.mockResolvedValue({
       monitor: { id: 7, name: 'epoch', app: 'website', instance: 'zero', status: 1 },
@@ -404,6 +406,35 @@ describe('useMonitorListController URL evidence', () => {
 
     expect(view.result.current.state.selectedIds).toEqual([]);
     expect(client.getQueryData(monitorQueryKeys.detail(7))).toBeUndefined();
+    expect(api.deleteMonitorGrafanaDashboards).toHaveBeenCalledWith([7], expect.any(AbortSignal));
+  });
+
+  it('keeps a committed monitor delete when Grafana cleanup is unavailable', async () => {
+    api.loadMonitorDetail.mockRejectedValue(new ApiMessageError('missing', { status: 200, code: 3 }));
+    api.deleteMonitorGrafanaDashboards.mockResolvedValue(true);
+    api.mutateMonitors.mockResolvedValue(undefined);
+    api.loadMonitors.mockResolvedValueOnce(initialMonitorPage).mockResolvedValueOnce({
+      content: [],
+      totalElements: 0
+    });
+    const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('ready'));
+    act(() => view.result.current.actions.selectIds([7]));
+
+    await act(() => view.result.current.actions.run('delete', [7]));
+
+    expect(view.result.current.state.selectedIds).toEqual([]);
+    expect(api.loadMonitors).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not delete a Grafana dashboard for non-delete monitor commands', async () => {
+    api.mutateMonitors.mockResolvedValue(undefined);
+    const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('ready'));
+
+    await act(() => view.result.current.actions.run('enable', [7]));
+
+    expect(api.deleteMonitorGrafanaDashboards).not.toHaveBeenCalled();
   });
 
   it.each([

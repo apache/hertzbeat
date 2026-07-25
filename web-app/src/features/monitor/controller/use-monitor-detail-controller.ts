@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { classifyMonitorDetailReadError, loadMonitorDetail } from '../api/monitor-api';
+import { classifyMonitorDetailReadError, deleteMonitorGrafanaDashboard, loadMonitorDetail } from '../api/monitor-api';
 import type { MonitorDetail } from '../model/monitor-contract';
 import {
   monitorDetailRefreshChoices,
@@ -31,19 +32,27 @@ import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-mod
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorDetailController() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { monitorId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const id = parseMonitorRouteId(monitorId);
   const returnTo = safeMonitorReturnTo(searchParams.get('returnTo'));
   const refreshSeconds = parseMonitorDetailRefresh(searchParams.get('refresh'));
+  const dashboardDelete = useGrafanaDashboardDelete(id, queryClient);
   const query = useQuery({
     queryKey: monitorQueryKeys.detail(id),
     queryFn: id === undefined ? skipToken : ({ signal }) => loadMonitorDetail(id, signal),
     retry: false
   });
   return {
-    state: { detail: resolveMonitorDetail(id, query.isPending, query.error, query.data), returnTo, refreshSeconds },
+    state: {
+      detail: resolveMonitorDetail(id, query.isPending, query.error, query.data),
+      returnTo,
+      refreshSeconds,
+      grafanaDeleting: dashboardDelete.deleting,
+      grafanaDeleteError: dashboardDelete.error
+    },
     actions: {
       back: () => {
         void navigate(returnTo);
@@ -51,6 +60,7 @@ export function useMonitorDetailController() {
       edit: () => {
         if (id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
       },
+      deleteGrafanaDashboard: dashboardDelete.run,
       setRefreshSeconds: (value: MonitorDetailRefreshChoice) => {
         if (!monitorDetailRefreshChoices.includes(value)) return;
         const next = new URLSearchParams(searchParams);
@@ -59,6 +69,43 @@ export function useMonitorDetailController() {
       }
     }
   };
+}
+
+function useGrafanaDashboardDelete(id: number | undefined, queryClient: ReturnType<typeof useQueryClient>) {
+  const operation = useRef<AbortController | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(false);
+  useEffect(
+    () => () => {
+      operation.current?.abort();
+      operation.current = null;
+    },
+    [id]
+  );
+  const run = async () => {
+    if (id === undefined || operation.current) return;
+    const controller = new AbortController();
+    operation.current = controller;
+    setDeleting(true);
+    setError(false);
+    try {
+      await deleteMonitorGrafanaDashboard(id, controller.signal);
+      if (operation.current !== controller) return;
+      queryClient.setQueryData<MonitorDetail>(monitorQueryKeys.detail(id), detail =>
+        detail?.grafanaDashboard
+          ? { ...detail, grafanaDashboard: { ...detail.grafanaDashboard, enabled: false, url: null } }
+          : detail
+      );
+    } catch {
+      if (operation.current === controller && !controller.signal.aborted) setError(true);
+    } finally {
+      if (operation.current === controller) {
+        operation.current = null;
+        setDeleting(false);
+      }
+    }
+  };
+  return { deleting, error, run };
 }
 
 function resolveMonitorDetail(

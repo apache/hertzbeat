@@ -1938,7 +1938,13 @@
     "name": "監控",
     "updated": "更新時間",
     "detail": "監控詳情",
-    "grafana": { "title": "Grafana 儀表板" },
+    "grafana": {
+      "title": "Grafana 儀表板",
+      "delete": "刪除儀表板",
+      "deleteConfirm": "確定刪除此 Grafana 儀表板嗎？",
+      "deleteFailure": "無法刪除 Grafana 儀表板。",
+      "cleanupFailure": "監控已刪除，但無法清理關聯的 Grafana 儀表板。"
+    },
     "export": {
       "all": "匯出全部",
       "selected": "匯出所選",

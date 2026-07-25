@@ -1961,7 +1961,13 @@
     "name": "Monitor",
     "updated": "Atualizado",
     "detail": "Detalhes do monitor",
-    "grafana": { "title": "Painel do Grafana" },
+    "grafana": {
+      "title": "Painel do Grafana",
+      "delete": "Excluir painel",
+      "deleteConfirm": "Excluir este painel do Grafana?",
+      "deleteFailure": "Não foi possível excluir o painel do Grafana.",
+      "cleanupFailure": "O monitor foi excluído, mas não foi possível limpar o painel do Grafana."
+    },
     "export": {
       "all": "Exportar todos",
       "selected": "Exportar selecionados",

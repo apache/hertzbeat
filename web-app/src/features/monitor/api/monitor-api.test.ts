@@ -35,6 +35,7 @@ import {
   buildHistoryMetricPath,
   buildMetricCatalogPath,
   buildMonitorActionPath,
+  buildMonitorGrafanaPath,
   buildMonitorListPath,
   buildRealtimeMetricPath,
   classifyMonitorDetailReadError,
@@ -50,6 +51,8 @@ import {
   loadMonitors,
   loadNewMonitorEvidence,
   loadRealtimeMetric,
+  deleteMonitorGrafanaDashboard,
+  deleteMonitorGrafanaDashboards,
   mutateMonitors,
   saveMonitor,
   MonitorMissingError
@@ -245,6 +248,25 @@ describe('monitor list API contracts', () => {
     expect(buildMonitorActionPath('delete', [7, 8])).toBe('/api/monitors?ids=7&ids=8');
     expect(() => buildMonitorActionPath('copy', [])).toThrow();
     expect(() => buildMonitorActionPath('copy', [7, 8])).toThrow();
+  });
+
+  it('owns the Grafana dashboard delete path and forwards cancellation', async () => {
+    const signal = new AbortController().signal;
+
+    await deleteMonitorGrafanaDashboard(7, signal);
+
+    expect(buildMonitorGrafanaPath(7)).toBe('/api/grafana/dashboard?monitorId=7');
+    expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/grafana/dashboard?monitorId=7', { signal });
+  });
+
+  it('reports partial Grafana cleanup failure without rejecting a committed monitor delete', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageDelete.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('offline'));
+
+    await expect(deleteMonitorGrafanaDashboards([7, 8], signal)).resolves.toBe(true);
+
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/grafana/dashboard?monitorId=7', { signal });
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/grafana/dashboard?monitorId=8', { signal });
   });
 
   it('forwards an allowlisted server sort pair with the list query', () => {

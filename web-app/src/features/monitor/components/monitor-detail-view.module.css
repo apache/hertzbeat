@@ -35,6 +35,12 @@
 .dashboard :global(.ant-typography) {
   margin: 0;
 }
+.dashboardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .dashboardFrame {
   width: 100%;
   height: min(1200px, 75vh);

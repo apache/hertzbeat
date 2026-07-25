@@ -1959,7 +1959,13 @@
     "name": "監視",
     "updated": "更新日時",
     "detail": "監視詳細",
-    "grafana": { "title": "Grafana ダッシュボード" },
+    "grafana": {
+      "title": "Grafana ダッシュボード",
+      "delete": "ダッシュボードを削除",
+      "deleteConfirm": "この Grafana ダッシュボードを削除しますか？",
+      "deleteFailure": "Grafana ダッシュボードを削除できませんでした。",
+      "cleanupFailure": "監視は削除されましたが、Grafana ダッシュボードをクリーンアップできませんでした。"
+    },
     "export": {
       "all": "すべてエクスポート",
       "selected": "選択項目をエクスポート",

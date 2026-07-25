@@ -1918,7 +1918,13 @@
     "name": "Monitor",
     "updated": "Updated",
     "detail": "Monitor detail",
-    "grafana": { "title": "Grafana dashboard" },
+    "grafana": {
+      "title": "Grafana dashboard",
+      "delete": "Delete dashboard",
+      "deleteConfirm": "Delete this Grafana dashboard?",
+      "deleteFailure": "The Grafana dashboard could not be deleted.",
+      "cleanupFailure": "The monitor was deleted, but its Grafana dashboard could not be cleaned up."
+    },
     "export": {
       "all": "Export all",
       "selected": "Export selected",

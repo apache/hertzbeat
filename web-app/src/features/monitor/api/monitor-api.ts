@@ -103,6 +103,11 @@ export function buildMonitorActionPath(action: MonitorAction, ids: number[]) {
   return action === 'delete' ? `/api/monitors?${params.toString()}` : `/api/monitors/manage?${params.toString()}`;
 }
 
+export function buildMonitorGrafanaPath(id: number) {
+  if (!Number.isSafeInteger(id) || id <= 0) throw new Error('Grafana dashboard deletion requires one monitor id');
+  return `/api/grafana/dashboard?monitorId=${id}`;
+}
+
 export async function loadMonitors(query: MonitorQuery, signal?: AbortSignal) {
   const value = await apiMessageGet(buildMonitorListPath(query), signal ? { signal } : undefined);
   return parseMonitorPage(value, query);
@@ -198,6 +203,15 @@ export function mutateMonitors(action: MonitorAction, ids: number[]) {
   const path = buildMonitorActionPath(action, ids);
   if (action === 'copy' || action === 'enable') return apiMessagePost(path, null);
   return apiMessageDelete(path);
+}
+
+export function deleteMonitorGrafanaDashboard(id: number, signal?: AbortSignal) {
+  return apiMessageDelete(buildMonitorGrafanaPath(id), signal ? { signal } : undefined);
+}
+
+export async function deleteMonitorGrafanaDashboards(ids: number[], signal: AbortSignal) {
+  const results = await Promise.allSettled(ids.map(id => deleteMonitorGrafanaDashboard(id, signal)));
+  return results.some(result => result.status === 'rejected');
 }
 
 function monitorDetailId(value: string | number) {

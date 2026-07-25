@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -85,16 +85,36 @@ describe('MonitorDetailView', () => {
     expect(screen.queryByRole('link', { name: i18n.t('monitor.grafana.title') })).not.toBeInTheDocument();
   });
 
-  it('renders an enabled dashboard with a safe absolute URL', () => {
-    renderView({
-      ...ready,
-      detail: { ...ready.detail, grafanaDashboard: grafana(true, 'https://grafana.example/d/ops?orgId=1') }
-    });
+  it('renders an enabled dashboard with a safe absolute URL and confirmed delete action', async () => {
+    const deleteGrafanaDashboard = vi.fn();
+    renderView(
+      {
+        ...ready,
+        detail: { ...ready.detail, grafanaDashboard: grafana(true, 'https://grafana.example/d/ops?orgId=1') }
+      },
+      { deleteGrafanaDashboard }
+    );
 
     expect(screen.getByTitle(i18n.t('monitor.grafana.title'))).toHaveAttribute(
       'src',
       'https://grafana.example/d/ops?orgId=1'
     );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.grafana.delete') }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('common.delete') }));
+    await waitFor(() => expect(deleteGrafanaDashboard).toHaveBeenCalledOnce());
+  });
+
+  it('shows a generic dashboard deletion failure without exposing backend details', () => {
+    renderView(
+      {
+        ...ready,
+        detail: { ...ready.detail, grafanaDashboard: grafana(true, 'https://grafana.example/d/ops') }
+      },
+      { grafanaDeleteError: true }
+    );
+
+    expect(screen.getByText(i18n.t('monitor.grafana.deleteFailure'))).toBeInTheDocument();
+    expect(screen.queryByText('private backend failure')).not.toBeInTheDocument();
   });
 });
 
@@ -112,12 +132,27 @@ function grafana(enabled: boolean, url: string | null) {
   };
 }
 
-function renderView(detail: Parameters<typeof MonitorDetailView>[0]['state']['detail']) {
+function renderView(
+  detail: Parameters<typeof MonitorDetailView>[0]['state']['detail'],
+  overrides: {
+    deleteGrafanaDashboard?: () => Promise<void>;
+    grafanaDeleteError?: boolean;
+  } = {}
+) {
   return render(
     <I18nextProvider i18n={i18n}>
       <MonitorDetailView
-        state={{ detail, returnTo: '/monitors' }}
-        actions={{ back: vi.fn(), edit: vi.fn() }}
+        state={{
+          detail,
+          returnTo: '/monitors',
+          grafanaDeleting: false,
+          grafanaDeleteError: overrides.grafanaDeleteError ?? false
+        }}
+        actions={{
+          back: vi.fn(),
+          edit: vi.fn(),
+          deleteGrafanaDashboard: overrides.deleteGrafanaDashboard ?? vi.fn()
+        }}
         metricWorkbench={
           detail.kind === 'ready' ? (
             <output data-testid="metrics">{detail.detail.metrics?.length ?? 0}</output>

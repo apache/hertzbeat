@@ -1899,7 +1899,13 @@
     "name": "监控",
     "updated": "更新时间",
     "detail": "监控详情",
-    "grafana": { "title": "Grafana 仪表盘" },
+    "grafana": {
+      "title": "Grafana 仪表盘",
+      "delete": "删除仪表盘",
+      "deleteConfirm": "确定删除此 Grafana 仪表盘吗？",
+      "deleteFailure": "无法删除 Grafana 仪表盘。",
+      "cleanupFailure": "监控已删除，但无法清理关联的 Grafana 仪表盘。"
+    },
     "export": {
       "all": "导出全部",
       "selected": "导出所选",

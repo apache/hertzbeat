@@ -36,8 +36,17 @@ const monitorDetailRefreshValues = [defaultMonitorDetailRefreshSeconds, ...monit
 export type MonitorDetailRefreshChoice = (typeof monitorDetailRefreshChoices)[number];
 export type MonitorDetailRefreshSeconds = (typeof monitorDetailRefreshValues)[number];
 
-export type MonitorDetailViewState = { detail: MonitorDetailEvidence; returnTo: string };
-export type MonitorDetailViewActions = { back: () => void; edit: () => void };
+export type MonitorDetailViewState = {
+  detail: MonitorDetailEvidence;
+  returnTo: string;
+  grafanaDeleting: boolean;
+  grafanaDeleteError: boolean;
+};
+export type MonitorDetailViewActions = {
+  back: () => void;
+  edit: () => void;
+  deleteGrafanaDashboard: () => Promise<void>;
+};
 export type MonitorDetailRefreshControl = {
   refreshSeconds: MonitorDetailRefreshSeconds;
   setRefreshSeconds: (value: MonitorDetailRefreshChoice) => void;

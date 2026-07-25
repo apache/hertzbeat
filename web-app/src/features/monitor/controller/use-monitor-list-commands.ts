@@ -20,27 +20,15 @@ import { App } from 'antd';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { classifyMonitorDetailReadError, loadMonitorDetail, mutateMonitors } from '../api/monitor-api';
-import {
-  monitorStatusCodes,
-  type MonitorAction,
-  type MonitorDetail,
-  type MonitorPage
-} from '../model/monitor-contract';
-import {
-  acknowledgedMonitorWrite,
-  invalidMonitorWriteEvidence,
-  unavailableMonitorWrite,
-  verifiedMonitorWrite,
-  type MonitorWriteVerification
-} from '../model/monitor-write-verification';
+import { deleteMonitorGrafanaDashboards, mutateMonitors } from '../api/monitor-api';
+import { type MonitorAction, type MonitorPage } from '../model/monitor-contract';
+import type { MonitorWriteVerification } from '../model/monitor-write-verification';
+import { verifyMonitorMutation, type MonitorDetailCacheEvidence } from './monitor-command-verification';
 import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
 
 type ActiveListOperation = { source: string; token: number; controller: AbortController };
-type MonitorDetailCacheEvidence = { kind: 'detail'; detail: MonitorDetail } | { kind: 'missing'; id: number };
-
 export function useMonitorListCommands(
   source: string,
   reread: () => Promise<MonitorPage>,
@@ -76,8 +64,12 @@ export function useMonitorListCommands(
       const verification = await verifyMonitorMutation(action, ids, operation.controller.signal);
       if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
       publishMonitorDetailEvidence(queryClient, verification);
+      const grafanaCleanupFailed =
+        action === 'delete' ? await deleteMonitorGrafanaDashboards(ids, operation.controller.signal) : false;
+      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
       selection.remove(ids);
       notifyCommittedMutation(verification, message, t);
+      if (grafanaCleanupFailed) void message.warning(t('monitor.grafana.cleanupFailure'));
       // The mutation is already committed at this point. A failed list refresh
       // must surface as read evidence, not rewrite a successful command as failed.
       try {
@@ -90,10 +82,7 @@ export function useMonitorListCommands(
         void message.error(t('monitorActions.failed'));
       }
     } finally {
-      if (activeOperationRef.current?.token === operation.token) activeOperationRef.current = null;
-      if (currentSourceRef.current === source) {
-        setBusyOperation(current => (current?.token === operation.token ? undefined : current));
-      }
+      releaseListOperation(source, operation, currentSourceRef, activeOperationRef, setBusyOperation);
     }
   };
 
@@ -133,21 +122,17 @@ function ownsListOperation(
   return active?.token === expected.token && currentSource === expected.source;
 }
 
-async function verifyMonitorMutation(
-  action: MonitorAction,
-  ids: number[],
-  signal: AbortSignal
-): Promise<MonitorWriteVerification<MonitorDetailCacheEvidence[]>> {
-  if (action === 'copy') {
-    // The synchronous copy endpoint returns only a transactional success
-    // acknowledgement and no copied id, so exact-id reread is not available.
-    return acknowledgedMonitorWrite();
+function releaseListOperation(
+  source: string,
+  operation: ActiveListOperation,
+  currentSourceRef: React.MutableRefObject<string | undefined>,
+  activeOperationRef: React.MutableRefObject<ActiveListOperation | null>,
+  setBusyOperation: React.Dispatch<React.SetStateAction<ActiveListOperation | undefined>>
+) {
+  if (activeOperationRef.current?.token === operation.token) activeOperationRef.current = null;
+  if (currentSourceRef.current === source) {
+    setBusyOperation(current => (current?.token === operation.token ? undefined : current));
   }
-  const proofs = await Promise.all(ids.map(id => proveMonitorDetail(action, id, signal)));
-  const evidence = proofs.flatMap(proof => ('evidence' in proof && proof.evidence ? [proof.evidence] : []));
-  if (proofs.some(proof => proof.kind === 'error')) return invalidMonitorWriteEvidence(evidence);
-  if (proofs.some(proof => proof.kind === 'unavailable')) return unavailableMonitorWrite(evidence);
-  return verifiedMonitorWrite(evidence);
 }
 
 function notifyCommittedMutation(
@@ -158,25 +143,6 @@ function notifyCommittedMutation(
   void message.success(t('monitorActions.success'));
   if (verification.kind === 'unavailable') void message.warning(t('common.unavailable'));
   if (verification.kind === 'error') void message.error(t('common.routeError.description'));
-}
-
-async function proveMonitorDetail(
-  action: Exclude<MonitorAction, 'copy'>,
-  id: number,
-  signal: AbortSignal
-): Promise<Exclude<MonitorWriteVerification<MonitorDetailCacheEvidence>, { kind: 'acknowledged' }>> {
-  try {
-    const detail = await loadMonitorDetail(id, signal);
-    if (action === 'delete') return invalidMonitorWriteEvidence({ kind: 'detail', detail });
-    const expectedStatus = action === 'enable' ? monitorStatusCodes.available : monitorStatusCodes.paused;
-    return detail.monitor.status === expectedStatus
-      ? verifiedMonitorWrite({ kind: 'detail', detail })
-      : invalidMonitorWriteEvidence({ kind: 'detail', detail });
-  } catch (error) {
-    const kind = classifyMonitorDetailReadError(error);
-    if (action === 'delete' && kind === 'missing') return verifiedMonitorWrite({ kind: 'missing', id });
-    return kind === 'unavailable' ? unavailableMonitorWrite() : invalidMonitorWriteEvidence();
-  }
 }
 
 function publishMonitorDetailEvidence(

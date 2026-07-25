@@ -24,7 +24,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 import { MonitorContractError } from '../model/monitor-contract';
 
-const api = vi.hoisted(() => ({ loadMonitorDetail: vi.fn() }));
+const api = vi.hoisted(() => ({ deleteMonitorGrafanaDashboard: vi.fn(), loadMonitorDetail: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
@@ -43,6 +43,7 @@ const detail = {
 describe('useMonitorDetailController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.deleteMonitorGrafanaDashboard.mockResolvedValue(undefined);
     api.loadMonitorDetail.mockResolvedValue(detail);
   });
   afterEach(() => cleanup());
@@ -129,6 +130,60 @@ describe('useMonitorDetailController', () => {
         detail: { monitor: { id: 8, name: 'orders' } }
       })
     );
+  });
+
+  it('deletes the enabled Grafana dashboard and updates cached detail evidence', async () => {
+    api.loadMonitorDetail.mockResolvedValue({
+      ...detail,
+      grafanaDashboard: {
+        monitorId: 7,
+        folderUid: null,
+        slug: null,
+        status: null,
+        uid: 'ops',
+        url: 'https://grafana.example/d/ops',
+        version: 1,
+        enabled: true,
+        template: null
+      }
+    });
+    const view = renderController('/monitors/7');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+    await act(() => view.result.current.actions.deleteGrafanaDashboard());
+
+    expect(api.deleteMonitorGrafanaDashboard).toHaveBeenCalledWith(7, expect.any(AbortSignal));
+    expect(view.result.current.state).toMatchObject({
+      grafanaDeleting: false,
+      grafanaDeleteError: false,
+      detail: { kind: 'ready', detail: { grafanaDashboard: { enabled: false, url: null } } }
+    });
+  });
+
+  it('keeps dashboard evidence and exposes a safe failure state when deletion fails', async () => {
+    api.deleteMonitorGrafanaDashboard.mockRejectedValue(new Error('private backend failure'));
+    const grafanaDashboard = {
+      monitorId: 7,
+      folderUid: null,
+      slug: null,
+      status: null,
+      uid: 'ops',
+      url: 'https://grafana.example/d/ops',
+      version: 1,
+      enabled: true,
+      template: null
+    };
+    api.loadMonitorDetail.mockResolvedValue({ ...detail, grafanaDashboard });
+    const view = renderController('/monitors/7');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+    await act(() => view.result.current.actions.deleteGrafanaDashboard());
+
+    expect(view.result.current.state).toMatchObject({
+      grafanaDeleting: false,
+      grafanaDeleteError: true,
+      detail: { kind: 'ready', detail: { grafanaDashboard } }
+    });
   });
 });
 

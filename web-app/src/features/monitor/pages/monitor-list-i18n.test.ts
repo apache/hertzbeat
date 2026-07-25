@@ -47,6 +47,10 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitorMetrics.favoriteSelect).toBeTruthy();
       expect(locale.monitorMetrics.favoriteUnavailable).toBeTruthy();
       expect(locale.monitor.grafana.title).toBeTruthy();
+      expect(locale.monitor.grafana.delete).toBeTruthy();
+      expect(locale.monitor.grafana.deleteConfirm).toBeTruthy();
+      expect(locale.monitor.grafana.deleteFailure).toBeTruthy();
+      expect(locale.monitor.grafana.cleanupFailure).toBeTruthy();
       expect(locale.monitor.help).toBeTruthy();
       expect(locale.monitor.copyEndpoint).toBeTruthy();
       expect(locale.monitor.copyEndpointSuccess).toBeTruthy();

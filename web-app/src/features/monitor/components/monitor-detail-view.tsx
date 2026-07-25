@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Descriptions, Empty, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Descriptions, Empty, Popconfirm, Space, Spin, Tag, Typography } from 'antd';
 import type { DescriptionsProps } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -71,22 +71,47 @@ export function MonitorDetailView({
       </header>
       <Descriptions size="small" column={2} items={monitorDescriptionItems(t, monitor)} />
       {metricWorkbench}
-      <MonitorGrafanaDashboard dashboard={state.detail.detail.grafanaDashboard} />
+      <MonitorGrafanaDashboard
+        dashboard={state.detail.detail.grafanaDashboard}
+        deleting={state.grafanaDeleting}
+        deleteError={state.grafanaDeleteError}
+        onDelete={actions.deleteGrafanaDashboard}
+      />
     </div>
   );
 }
 
 function MonitorGrafanaDashboard({
-  dashboard
+  dashboard,
+  deleting,
+  deleteError,
+  onDelete
 }: {
   dashboard: Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail']['grafanaDashboard'];
+  deleting: boolean;
+  deleteError: boolean;
+  onDelete: () => Promise<void>;
 }) {
   const { t } = useTranslation();
   const url = safeMonitorGrafanaUrl(dashboard);
   if (!url) return null;
   return (
     <section className={styles.dashboard}>
-      <Typography.Title level={3}>{t('monitor.grafana.title')}</Typography.Title>
+      <div className={styles.dashboardHeading}>
+        <Typography.Title level={3}>{t('monitor.grafana.title')}</Typography.Title>
+        <Popconfirm
+          title={t('monitor.grafana.deleteConfirm')}
+          okText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          okButtonProps={{ danger: true }}
+          onConfirm={() => void onDelete()}
+        >
+          <Button danger loading={deleting}>
+            {t('monitor.grafana.delete')}
+          </Button>
+        </Popconfirm>
+      </div>
+      {deleteError ? <Alert type="error" showIcon message={t('monitor.grafana.deleteFailure')} /> : null}
       <iframe
         className={styles.dashboardFrame}
         src={url}
