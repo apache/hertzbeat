@@ -201,6 +201,7 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long conversationId) {
+        // Delete associated schedules first to prevent tasks from writing orphaned messages.
         sopScheduleDao.deleteByConversationId(conversationId);
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
         if (!messages.isEmpty()) {

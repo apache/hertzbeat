@@ -124,7 +124,7 @@ class ConversationServiceImplTest {
     }
 
     /**
-     * 删除会话时必须先清理关联计划，避免定时任务继续向已删除的会话推送消息。
+     * Deleting a conversation must remove its schedules before they can push more messages.
      */
     @Test
     void deleteConversationShouldRemoveSchedulesMessagesAndConversationInOrder() {
@@ -132,7 +132,7 @@ class ConversationServiceImplTest {
             .id(11L)
             .conversationId(CONVERSATION_ID)
             .role("user")
-            .content("待删除消息")
+            .content("message to delete")
             .build();
         when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID))
             .thenReturn(List.of(message));
