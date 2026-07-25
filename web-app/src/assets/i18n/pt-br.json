@@ -1959,6 +1959,28 @@
         "error": "Não foi possível exportar a configuração de monitor."
       }
     },
+    "import": {
+      "action": "Importar",
+      "title": "Importar configuração de monitor",
+      "description": "Importe definições de monitor de um arquivo HertzBeat JSON, XLSX ou YAML.",
+      "file": "Arquivo de configuração",
+      "choose": "Escolher arquivo",
+      "selected": "Selecionado: {{name}}",
+      "submit": "Importar configuração",
+      "success": "Configuração de monitor importada.",
+      "refreshFailure": "A importação foi concluída, mas a lista de monitores não pôde ser atualizada.",
+      "validation": {
+        "required": "Escolha um arquivo de configuração.",
+        "empty": "O arquivo selecionado está vazio.",
+        "unsupported": "Escolha um arquivo JSON, XLSX ou YAML."
+      },
+      "failure": {
+        "validation": "A configuração de monitor selecionada é inválida.",
+        "forbidden": "Sua conta não tem permissão para importar monitores.",
+        "unavailable": "A importação de monitores está temporariamente indisponível.",
+        "error": "Não foi possível importar a configuração de monitor."
+      }
+    },
     "status": {
       "label": "Status",
       "all": "Todos os estados",

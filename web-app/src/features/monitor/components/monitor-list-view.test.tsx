@@ -86,6 +86,7 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     operating: false,
     refreshing: false,
     canExport: false,
+    monitorImport: { canImport: false, draft: null, invalid: null, failure: null, busy: false },
     apps: { kind: 'ready', options: [] },
     monitors: { kind: 'loading' },
     ...patch
@@ -105,6 +106,10 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
     runBulk: () => undefined,
     exportSelected: () => Promise.resolve(true),
     exportAll: () => Promise.resolve(true),
+    openImport: () => undefined,
+    cancelImport: () => undefined,
+    selectImportFile: () => undefined,
+    submitImport: () => Promise.resolve(true),
     selectIds: () => undefined
   };
   return render(

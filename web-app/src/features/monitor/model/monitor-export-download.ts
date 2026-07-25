@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { MonitorExportArtifact } from '../api/monitor-export-api';
+import type { MonitorExportArtifact } from './monitor-export-model';
 
 export function saveMonitorExport(artifact: MonitorExportArtifact) {
   const objectUrl = URL.createObjectURL(artifact.data);

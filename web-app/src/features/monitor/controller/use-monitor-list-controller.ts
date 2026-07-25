@@ -34,6 +34,7 @@ import {
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
 import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorExport } from './use-monitor-export';
+import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
 import { useMonitorSelection } from './use-monitor-selection';
 
@@ -50,17 +51,19 @@ export function useMonitorListController() {
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
   const commands = useMonitorListCommands(source, reread, selection);
   const monitorExport = useMonitorExport(selection.selectedIds);
+  const monitorImport = useMonitorImport(reread, () => selection.selectIds([]));
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     state: {
       query,
       draft: draft.value,
-      operating: commands.operating || monitorExport.exporting,
+      operating: commands.operating || monitorExport.exporting || monitorImport.state.busy,
       selectedIds: selection.selectedIds,
       monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
       apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
       refreshing: monitors.isFetching,
-      canExport: monitorExport.canExport
+      canExport: monitorExport.canExport,
+      monitorImport: monitorImport.state
     },
     actions: {
       setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
@@ -82,6 +85,10 @@ export function useMonitorListController() {
       runBulk: commands.runBulk,
       exportSelected: monitorExport.exportSelected,
       exportAll: monitorExport.exportAll,
+      openImport: monitorImport.actions.open,
+      cancelImport: monitorImport.actions.cancel,
+      selectImportFile: monitorImport.actions.selectFile,
+      submitImport: monitorImport.actions.submit,
       selectIds: selection.selectIds
     }
   };

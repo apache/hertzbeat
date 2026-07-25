@@ -35,6 +35,7 @@ type MonitorListToolbarActions = {
   refresh: () => Promise<boolean>;
   create: () => void;
   exportAll: (format: MonitorExportFormat) => Promise<boolean>;
+  openImport: () => void;
 };
 
 type MonitorListToolbarProps = {
@@ -44,6 +45,7 @@ type MonitorListToolbarProps = {
   disabled: boolean;
   refreshing: boolean;
   canExport: boolean;
+  canImport: boolean;
   actions: MonitorListToolbarActions;
 };
 
@@ -56,13 +58,20 @@ export function MonitorListToolbar(props: MonitorListToolbarProps) {
         disabled={disabled}
         refreshing={refreshing}
         canExport={props.canExport}
+        canImport={props.canImport}
         actions={actions}
       />
     </div>
   );
 }
 
-function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<MonitorListToolbarProps, 'refreshing'>) {
+function MonitorFilterFields({
+  query,
+  draft,
+  apps,
+  disabled,
+  actions
+}: Omit<MonitorListToolbarProps, 'refreshing' | 'canExport' | 'canImport'>) {
   const { t } = useTranslation();
   return (
     <>
@@ -103,8 +112,9 @@ function MonitorToolbarActions({
   disabled,
   refreshing,
   actions,
-  canExport
-}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'canExport' | 'actions'>) {
+  canExport,
+  canImport
+}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'canExport' | 'canImport' | 'actions'>) {
   const { t } = useTranslation();
   return (
     <>
@@ -122,6 +132,11 @@ function MonitorToolbarActions({
       <Button type="primary" disabled={disabled} onClick={actions.create}>
         {t('monitor.editor.newTitle')}
       </Button>
+      {canImport ? (
+        <Button disabled={disabled} onClick={actions.openImport}>
+          {t('monitor.import.action')}
+        </Button>
+      ) : null}
       {canExport ? (
         <MonitorExportButton label={t('monitor.export.all')} disabled={disabled} onExport={actions.exportAll} />
       ) : null}

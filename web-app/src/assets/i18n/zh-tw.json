@@ -1936,6 +1936,28 @@
         "error": "無法匯出監控設定。"
       }
     },
+    "import": {
+      "action": "匯入",
+      "title": "匯入監控設定",
+      "description": "從 HertzBeat JSON、XLSX 或 YAML 檔案匯入監控定義。",
+      "file": "設定檔案",
+      "choose": "選擇檔案",
+      "selected": "已選擇：{{name}}",
+      "submit": "匯入設定",
+      "success": "監控設定已匯入。",
+      "refreshFailure": "匯入已成功，但無法重新整理監控清單。",
+      "validation": {
+        "required": "請選擇設定檔案。",
+        "empty": "所選檔案為空。",
+        "unsupported": "請選擇 JSON、XLSX 或 YAML 檔案。"
+      },
+      "failure": {
+        "validation": "所選監控設定無效。",
+        "forbidden": "目前帳號沒有匯入監控的權限。",
+        "unavailable": "監控匯入暫時無法使用。",
+        "error": "無法匯入監控設定。"
+      }
+    },
     "status": {
       "label": "狀態",
       "all": "全部狀態",

@@ -1897,6 +1897,28 @@
         "error": "无法导出监控配置。"
       }
     },
+    "import": {
+      "action": "导入",
+      "title": "导入监控配置",
+      "description": "从 HertzBeat JSON、XLSX 或 YAML 文件导入监控定义。",
+      "file": "配置文件",
+      "choose": "选择文件",
+      "selected": "已选择：{{name}}",
+      "submit": "导入配置",
+      "success": "监控配置已导入。",
+      "refreshFailure": "导入已成功，但无法刷新监控列表。",
+      "validation": {
+        "required": "请选择配置文件。",
+        "empty": "所选文件为空。",
+        "unsupported": "请选择 JSON、XLSX 或 YAML 文件。"
+      },
+      "failure": {
+        "validation": "所选监控配置无效。",
+        "forbidden": "当前账号没有导入监控的权限。",
+        "unavailable": "监控导入暂时不可用。",
+        "error": "无法导入监控配置。"
+      }
+    },
     "status": {
       "label": "状态",
       "all": "全部状态",

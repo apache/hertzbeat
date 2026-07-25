@@ -9,6 +9,7 @@ export const monitorExportFormats = ['JSON', 'EXCEL'] as const;
 
 export type MonitorExportFormat = (typeof monitorExportFormats)[number];
 export type MonitorExportScope = { kind: 'selected'; ids: number[] } | { kind: 'all' };
+export type MonitorExportArtifact = { data: Blob; filename: string };
 
 const monitorExportFallbackNames: Record<MonitorExportFormat, string> = {
   JSON: 'hertzbeat-monitors.json',

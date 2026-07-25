@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
 import { MonitorBulkActions } from './monitor-list-actions';
+import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListResults } from './monitor-list-results';
 import { MonitorListToolbar } from './monitor-list-toolbar';
 import styles from './monitor-list.module.css';
@@ -42,6 +43,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         disabled={state.operating}
         refreshing={state.refreshing}
         canExport={state.canExport}
+        canImport={state.monitorImport.canImport}
         actions={actions}
       />
       <MonitorBulkActions
@@ -57,6 +59,12 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         selectedIds={state.selectedIds}
         operating={state.operating}
         actions={actions}
+      />
+      <MonitorImportDialog
+        state={state.monitorImport}
+        onCancel={actions.cancelImport}
+        onFile={actions.selectImportFile}
+        onSubmit={actions.submitImport}
       />
     </div>
   );

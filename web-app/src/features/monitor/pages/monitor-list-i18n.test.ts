@@ -33,6 +33,12 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.export.failure.forbidden).toBeTruthy();
       expect(locale.monitor.export.failure.unavailable).toBeTruthy();
       expect(locale.monitor.export.failure.error).toBeTruthy();
+      expect(locale.monitor.import.action).toBeTruthy();
+      expect(locale.monitor.import.title).toBeTruthy();
+      expect(locale.monitor.import.validation.unsupported).toBeTruthy();
+      expect(locale.monitor.import.failure.forbidden).toBeTruthy();
+      expect(locale.monitor.import.failure.unavailable).toBeTruthy();
+      expect(locale.monitor.import.failure.error).toBeTruthy();
     }
   });
 });

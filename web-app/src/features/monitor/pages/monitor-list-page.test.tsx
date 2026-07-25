@@ -22,12 +22,19 @@ import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
+const { importMonitorConfig, loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
+  importMonitorConfig: vi.fn(),
   loadMonitorApps: vi.fn(),
   loadMonitors: vi.fn(),
   mutateMonitors: vi.fn()
+}));
+
+vi.mock('../api/monitor-import-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/monitor-import-api')>()),
+  importMonitorConfig
 }));
 
 vi.mock('../api/monitor-api', async importOriginal => ({
@@ -50,9 +57,11 @@ describe('MonitorListPage label query', () => {
     loadMonitorApps.mockReset();
     loadMonitors.mockReset();
     mutateMonitors.mockReset();
+    importMonitorConfig.mockReset();
     loadMonitorApps.mockResolvedValue([]);
     loadMonitors.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
     mutateMonitors.mockResolvedValue(undefined);
+    importMonitorConfig.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -133,6 +142,24 @@ describe('MonitorListPage label query', () => {
       expect(search).toContain('labels=team%3Acheckout');
     });
   });
+
+  it('keeps import explicit and refreshes the list after a successful administrator upload', async () => {
+    renderPage('/monitors');
+    await waitFor(() => expect(loadMonitors).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+    const file = new File(['[]'], 'monitors.json', { type: 'application/json' });
+    fireEvent.change(fileInput!, { target: { files: [file] } });
+
+    expect(screen.getByText('Selected: monitors.json')).toBeInTheDocument();
+    expect(importMonitorConfig).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Import configuration' }));
+
+    await waitFor(() => expect(importMonitorConfig).toHaveBeenCalledWith(file, expect.any(AbortSignal)));
+    await waitFor(() => expect(loadMonitors).toHaveBeenCalledTimes(2));
+  });
 });
 
 function renderPage(initialEntry: string) {
@@ -146,10 +173,24 @@ function renderPage(initialEntry: string) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
-          <App>
-            <MonitorListPage />
-            <LocationSearch />
-          </App>
+          <SessionContext.Provider
+            value={{
+              session: {
+                authenticated: true,
+                username: 'admin',
+                workspaceId: null,
+                roles: ['ADMIN'],
+                expiresAt: null
+              },
+              loading: false,
+              retry: () => undefined
+            }}
+          >
+            <App>
+              <MonitorListPage />
+              <LocationSearch />
+            </App>
+          </SessionContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>

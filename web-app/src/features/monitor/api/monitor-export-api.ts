@@ -9,11 +9,11 @@ import { apiFetch } from '@/core/http/http-client';
 
 import {
   monitorExportFilename,
+  type MonitorExportArtifact,
   type MonitorExportFormat,
   type MonitorExportScope
 } from '../model/monitor-export-model';
 
-export type MonitorExportArtifact = { data: Blob; filename: string };
 export type MonitorExportFailureKind = 'forbidden' | 'unavailable' | 'error';
 
 export class MonitorExportError extends Error {
@@ -30,7 +30,7 @@ export async function requestMonitorExport(
 ): Promise<MonitorExportArtifact> {
   let response: Response;
   try {
-    response = await apiFetch(buildMonitorExportPath(scope, format), { signal });
+    response = await apiFetch(buildMonitorExportPath(scope, format), signal ? { signal } : {});
   } catch {
     throw new MonitorExportError('unavailable');
   }
