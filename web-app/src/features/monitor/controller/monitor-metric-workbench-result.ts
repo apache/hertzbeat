@@ -18,6 +18,7 @@ export function buildMonitorMetricWorkbenchResult(input: {
   metricKey: string;
   history: MonitorMetricHistory;
   favorite: MonitorMetricWorkbenchController['state']['favorite'];
+  favoriteCollection: MonitorMetricWorkbenchController['state']['favoriteCollection'];
   favoriteBusy: boolean;
   realtime: MonitorMetricWorkbenchController['state']['realtime'];
   historical: MonitorMetricWorkbenchController['state']['historical'];
@@ -33,6 +34,7 @@ export function buildMonitorMetricWorkbenchResult(input: {
       history: input.history,
       refreshSeconds: input.refreshControl.refreshSeconds,
       favorite: input.favorite,
+      favoriteCollection: input.favoriteCollection,
       favoriteBusy: input.favoriteBusy,
       realtime: input.realtime,
       historical: input.historical

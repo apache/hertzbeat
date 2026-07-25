@@ -15,81 +15,14 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Select, Spin, Table, Tabs, Tag, Typography } from 'antd';
-import type { ReactNode } from 'react';
+import { Alert, Button, Empty, Select, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorMetricHistoryRanges } from '../model/monitor-detail-model';
-import type {
-  MonitorMetricWorkbenchController,
-  monitorHistoryRows,
-  monitorRealtimeRows
-} from '../model/monitor-detail-model';
+import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { MonitorMetricResults } from './monitor-metric-results';
 import { MonitorRefreshSelect } from './monitor-refresh-select';
 import styles from './monitor-metric-workbench.module.css';
-
-const historyTablePageSize = 20;
-
-function formatMetricTime(value?: number | null) {
-  return value == null
-    ? '—'
-    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
-}
-
-function MetricState({
-  kind,
-  children
-}: {
-  kind: 'loading' | 'empty' | 'unavailable' | 'error' | 'ready';
-  children: ReactNode;
-}) {
-  const { t } = useTranslation();
-  if (kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
-  if (kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  if (kind === 'empty') return <Empty description={t('monitorMetrics.empty')} />;
-  return children;
-}
-
-function RealtimeTable({ rows, pending }: { rows: ReturnType<typeof monitorRealtimeRows>; pending: boolean }) {
-  const { t } = useTranslation();
-  const columns = [
-    {
-      title: t('monitorMetrics.labels'),
-      dataIndex: 'labels',
-      render: (labels: Record<string, string>) => (
-        <div className={styles.labels}>
-          {Object.entries(labels).map(([key, value]) => (
-            <Tag key={key}>
-              {key}={value}
-            </Tag>
-          ))}
-        </div>
-      )
-    },
-    { title: t('monitorMetrics.time'), dataIndex: 'time', render: formatMetricTime },
-    { title: t('monitorMetrics.value'), dataIndex: 'value' }
-  ];
-  return <Table rowKey="key" size="small" loading={pending} dataSource={rows} columns={columns} pagination={false} />;
-}
-
-function HistoryTable({ rows, pending }: { rows: ReturnType<typeof monitorHistoryRows>; pending: boolean }) {
-  const { t } = useTranslation();
-  const columns = [
-    { title: t('monitorMetrics.series'), dataIndex: 'series', render: (value: string) => value || '—' },
-    { title: t('monitorMetrics.time'), dataIndex: 'time', render: formatMetricTime },
-    { title: t('monitorMetrics.value'), dataIndex: 'value' }
-  ];
-  return (
-    <Table
-      rowKey="key"
-      size="small"
-      loading={pending}
-      dataSource={rows}
-      columns={columns}
-      pagination={{ pageSize: historyTablePageSize }}
-    />
-  );
-}
 
 export function MonitorMetricWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
   const { t } = useTranslation();
@@ -149,7 +82,7 @@ function MonitorMetricReadyWorkbench({
       <MonitorMetricToolbar state={state} actions={actions} options={options} />
       {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
       {state.favorite.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
-      <MonitorMetricResults state={state} />
+      <MonitorMetricResults state={state} actions={actions} />
     </section>
   );
 }
@@ -191,33 +124,5 @@ function MonitorMetricToolbar({
       </Button>
       <Button onClick={actions.refresh}>{t('common.refresh')}</Button>
     </div>
-  );
-}
-
-function MonitorMetricResults({ state }: Pick<MonitorMetricWorkbenchController, 'state'>) {
-  const { t } = useTranslation();
-  return (
-    <Tabs
-      items={[
-        {
-          key: 'realtime',
-          label: t('monitorMetrics.realtime'),
-          children: (
-            <MetricState kind={state.realtime.kind}>
-              <RealtimeTable rows={state.realtime.rows} pending={state.realtime.kind === 'loading'} />
-            </MetricState>
-          )
-        },
-        {
-          key: 'history',
-          label: t('monitorMetrics.history'),
-          children: (
-            <MetricState kind={state.historical.kind}>
-              <HistoryTable rows={state.historical.rows} pending={state.historical.kind === 'loading'} />
-            </MetricState>
-          )
-        }
-      ]}
-    />
   );
 }

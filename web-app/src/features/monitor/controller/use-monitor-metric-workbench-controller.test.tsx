@@ -105,6 +105,21 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadRealtimeMetric).not.toHaveBeenCalled();
   });
 
+  it('exposes the canonical favorite collection without hiding retired metric tokens', async () => {
+    api.loadFavoriteMetrics.mockResolvedValue(['retired.value', 'summary.value']);
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() =>
+      expect(view.result.current.controller.state.favoriteCollection).toEqual({
+        kind: 'ready',
+        items: [
+          { key: 'retired.value', available: false },
+          { key: 'summary.value', available: true }
+        ]
+      })
+    );
+  });
+
   it('keeps refresh inert until monitor and metric context is available', async () => {
     const view = renderController(undefined, [], '/monitors/7');
 
@@ -190,6 +205,23 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary.value', true);
     expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: true });
+  });
+
+  it('removes a legacy group favorite through its canonical backend token', async () => {
+    api.loadFavoriteMetrics.mockResolvedValueOnce(['summary']).mockResolvedValueOnce([]);
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() =>
+      expect(view.result.current.controller.state.favorite).toEqual({
+        kind: 'ready',
+        value: true,
+        token: 'summary'
+      })
+    );
+
+    await act(() => view.result.current.controller.actions.toggleFavorite());
+
+    expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary', false);
+    expect(view.result.current.controller.state.favorite).toEqual({ kind: 'ready', value: false });
   });
 
   it('reports favoriteFailed only when the write itself is rejected', async () => {

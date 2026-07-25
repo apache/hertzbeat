@@ -77,6 +77,7 @@ export function useMonitorFavoriteMutation(input: {
         operation,
         desired: command.desired,
         metricKey,
+        canonicalToken: command.canonicalToken,
         currentSource,
         reread,
         pendingEvidence,
@@ -134,13 +135,24 @@ function prepareFavoriteMutation(
   ) {
     return undefined;
   }
-  return { source: { ...source, monitorId }, desired: !favorite.value };
+  const desired = !favorite.value;
+  return {
+    source: { ...source, monitorId },
+    desired,
+    canonicalToken: favoriteWriteToken(favorite, metricKey, desired)
+  };
+}
+
+function favoriteWriteToken(favorite: MonitorMetricFavoriteEvidence, metricKey: string, desired: boolean) {
+  if (desired || favorite.kind !== 'ready') return metricKey;
+  return favorite.token ?? metricKey;
 }
 
 async function executeFavoriteMutation(input: {
   operation: FavoriteOperation;
   desired: boolean;
   metricKey: string;
+  canonicalToken: string;
   currentSource: React.MutableRefObject<FavoriteSource | undefined>;
   reread: React.MutableRefObject<AbortController | undefined>;
   pendingEvidence: {
@@ -150,8 +162,19 @@ async function executeFavoriteMutation(input: {
   queryClient: QueryClient;
   t: (key: string) => string;
 }) {
-  const { operation, desired, metricKey, currentSource, reread, pendingEvidence, message, queryClient, t } = input;
-  const write = await attemptFavoriteWrite(operation.monitorId, metricKey, desired);
+  const {
+    operation,
+    desired,
+    metricKey,
+    canonicalToken,
+    currentSource,
+    reread,
+    pendingEvidence,
+    message,
+    queryClient,
+    t
+  } = input;
+  const write = await attemptFavoriteWrite(operation.monitorId, canonicalToken, desired);
   if (!ownsFavoriteSource(currentSource.current, operation)) return;
   if (write.kind === 'rejected') {
     void message.error(t('monitorMetrics.favoriteFailed'));
@@ -159,13 +182,13 @@ async function executeFavoriteMutation(input: {
   }
   void message.success(t('monitorMetrics.favoriteSaved'));
   reread.current = new AbortController();
-  const verification = await verifyFavoriteWrite(operation.monitorId, metricKey, desired, reread.current.signal);
+  const verification = await verifyFavoriteWrite(operation.monitorId, canonicalToken, desired, reread.current.signal);
   if (!ownsFavoriteSource(currentSource.current, operation)) return;
   if (verification.kind === 'verified') {
     queryClient.setQueryData(monitorQueryKeys.favorites(operation.monitorId), verification.evidence);
     return;
   }
-  pendingEvidence.wait({ sourceToken: operation.sourceToken, metricKey, desired });
+  pendingEvidence.wait({ sourceToken: operation.sourceToken, metricKey, canonicalToken, desired });
   void message.error(t(favoriteVerificationMessage(verification)));
   void queryClient.resetQueries({ queryKey: monitorQueryKeys.favorites(operation.monitorId), exact: true });
 }

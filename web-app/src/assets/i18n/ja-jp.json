@@ -995,6 +995,10 @@
     "description": "監視詳細から現在値と履歴を確認します。",
     "realtime": "リアルタイム",
     "history": "履歴",
+    "favorites": "お気に入り",
+    "favoriteEmpty": "お気に入りのメトリクスはありません。",
+    "favoriteSelect": "確認するお気に入りメトリクスを選択してください。",
+    "favoriteUnavailable": "現在の監視定義では利用できません",
     "autoRefresh": {
       "label": "自動更新",
       "seconds": "自動更新：{{count}}秒",

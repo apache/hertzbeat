@@ -87,7 +87,17 @@ export type MonitorMetricCatalogEvidence =
   | { kind: 'unavailable'; options: MonitorMetricOption[] }
   | { kind: 'error'; options: MonitorMetricOption[] }
   | { kind: 'ready'; options: MonitorMetricOption[] };
-export type MonitorMetricFavoriteEvidence = RemotePayloadState<{ value: boolean }, 'unavailable' | 'error'>;
+export type MonitorMetricFavoriteEvidence = RemotePayloadState<
+  { value: boolean; token?: string },
+  'unavailable' | 'error'
+>;
+export type MonitorMetricFavoriteItem = { key: string; available: boolean };
+export type MonitorMetricFavoriteCollectionEvidence =
+  | { kind: 'loading' }
+  | { kind: 'empty'; items: MonitorMetricFavoriteItem[] }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; items: MonitorMetricFavoriteItem[] };
 export type MonitorMetricRowsEvidence<T> =
   | { kind: 'loading'; rows: T[] }
   | { kind: 'empty'; rows: T[] }
@@ -101,6 +111,7 @@ export type MonitorMetricWorkbenchController = {
     history: MonitorMetricHistory;
     refreshSeconds: MonitorDetailRefreshSeconds;
     favorite: MonitorMetricFavoriteEvidence;
+    favoriteCollection: MonitorMetricFavoriteCollectionEvidence;
     favoriteBusy: boolean;
     realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
     historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;

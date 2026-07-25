@@ -34,6 +34,20 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+.favoriteCollection {
+  display: grid;
+  gap: 12px;
+}
+.favoriteList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.favoriteItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 @media (max-width: 760px) {
   .toolbar {
     grid-template-columns: 1fr 1fr;

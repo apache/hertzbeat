@@ -10,7 +10,11 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import type { MonitorMetricCatalogEvidence, MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import type {
+  MonitorMetricCatalogEvidence,
+  MonitorMetricFavoriteCollectionEvidence,
+  MonitorMetricWorkbenchController
+} from '../model/monitor-detail-model';
 import { MonitorMetricWorkbench } from './monitor-metric-workbench';
 
 const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
@@ -18,6 +22,11 @@ const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
   [{ kind: 'unavailable', options: [] }, 'common.unavailable'],
   [{ kind: 'error', options: [] }, 'common.routeError.description'],
   [{ kind: 'empty', options: [] }, 'monitorMetrics.noCatalog']
+];
+const favoriteCollectionCases: Array<[MonitorMetricFavoriteCollectionEvidence, string]> = [
+  [{ kind: 'unavailable' }, 'common.unavailable'],
+  [{ kind: 'error' }, 'common.routeError.description'],
+  [{ kind: 'empty', items: [] }, 'monitorMetrics.favoriteEmpty']
 ];
 
 describe('MonitorMetricWorkbench', () => {
@@ -101,6 +110,35 @@ describe('MonitorMetricWorkbench', () => {
 
     expect(value.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
   });
+
+  it('makes the favorite collection discoverable and selects only available favorite metrics', () => {
+    const value = controller({
+      favoriteCollection: {
+        kind: 'ready',
+        items: [
+          { key: 'retired.value', available: false },
+          { key: 'summary.value', available: true }
+        ]
+      }
+    });
+    renderWorkbench(value);
+
+    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
+    expect(screen.getByRole('button', { name: 'retired.value' })).toBeDisabled();
+    expect(screen.getByText(i18n.t('monitorMetrics.favoriteUnavailable'))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'summary.value' }));
+
+    expect(value.actions.setMetric).toHaveBeenCalledWith('summary.value');
+    expect(screen.getAllByRole('tab', { name: i18n.t('monitorMetrics.realtime') })).toHaveLength(2);
+    expect(screen.getAllByRole('tab', { name: i18n.t('monitorMetrics.history') })).toHaveLength(2);
+  });
+
+  it.each(favoriteCollectionCases)('renders distinct favorite collection %# evidence', (favoriteCollection, key) => {
+    renderWorkbench(controller({ favoriteCollection }));
+
+    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
+    expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
+  });
 });
 
 function controller(
@@ -113,6 +151,7 @@ function controller(
       history: '30m',
       refreshSeconds: 90,
       favorite: { kind: 'ready', value: false },
+      favoriteCollection: { kind: 'empty', items: [] },
       favoriteBusy: false,
       realtime: { kind: 'empty', rows: [] },
       historical: { kind: 'empty', rows: [] },

@@ -1,10 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { classifyMonitorMetricReadError } from '../api/monitor-api';
-import type { MonitorDetailMetric } from '../model/monitor-contract';
+import type { MonitorDetailMetric, MonitorMetricOption } from '../model/monitor-contract';
 import {
   monitorMetricOptions,
   type MonitorMetricCatalogEvidence,
+  type MonitorMetricFavoriteCollectionEvidence,
   type MonitorMetricFavoriteEvidence,
   type MonitorMetricRowsEvidence
 } from '../model/monitor-detail-model';
@@ -32,11 +33,47 @@ export function catalogEvidence(
   return options.length > 0 ? { kind: 'ready', options } : { kind: 'empty', options: [] };
 }
 
-export function favoriteEvidence(query: QueryEvidence<string[]>, metricKey: string): MonitorMetricFavoriteEvidence {
+export function favoriteEvidence(
+  query: QueryEvidence<string[]>,
+  metric: MonitorMetricOption | undefined
+): MonitorMetricFavoriteEvidence {
   if (query.isPending) return { kind: 'loading' };
   if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
   if (!query.data) return { kind: 'error' };
-  return { kind: 'ready', value: Boolean(metricKey && query.data.includes(metricKey)) };
+  if (!metric) return { kind: 'ready', value: false };
+  const token = [metric.key, metric.group, metric.field].find(candidate => query.data?.includes(candidate));
+  return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
+}
+
+export function favoriteCollectionEvidence(
+  query: QueryEvidence<string[]>,
+  options: MonitorMetricOption[]
+): MonitorMetricFavoriteCollectionEvidence {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
+  if (!query.data) return { kind: 'error' };
+  const items = resolveFavoriteItems(query.data, options);
+  return items.length > 0 ? { kind: 'ready', items } : { kind: 'empty', items: [] };
+}
+
+function resolveFavoriteItems(tokens: string[], options: MonitorMetricOption[]) {
+  // Older monitor definitions persisted a group, a field, or a full metric key.
+  // Resolve every supported form while retaining orphaned tokens as honest evidence.
+  const items: Array<{ key: string; available: boolean }> = [];
+  const emitted = new Set<string>();
+  for (const token of new Set(tokens)) {
+    const matches = options.filter(option => option.key === token || option.group === token || option.field === token);
+    if (matches.length === 0) {
+      items.push({ key: token, available: false });
+      continue;
+    }
+    for (const option of matches) {
+      if (emitted.has(option.key)) continue;
+      emitted.add(option.key);
+      items.push({ key: option.key, available: true });
+    }
+  }
+  return items;
 }
 
 export function metricEvidence<T, Row>(

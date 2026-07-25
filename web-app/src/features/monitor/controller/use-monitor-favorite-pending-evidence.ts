@@ -18,7 +18,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type FavoriteSource = { token: number } | undefined;
-export type FavoritePendingExpectation = { sourceToken: number; metricKey: string; desired: boolean };
+export type FavoritePendingExpectation = {
+  sourceToken: number;
+  metricKey: string;
+  canonicalToken: string;
+  desired: boolean;
+};
 
 /** Keeps an acknowledged favorite write visibly locked until canonical evidence converges. */
 export function useMonitorFavoritePendingEvidence(
@@ -40,7 +45,7 @@ export function useMonitorFavoritePendingEvidence(
       expectation &&
       source?.token === expectation.sourceToken &&
       canonicalFavorites !== undefined &&
-      canonicalFavorites.includes(expectation.metricKey) === expectation.desired
+      canonicalFavorites.includes(expectation.canonicalToken) === expectation.desired
     ) {
       reference.current = undefined;
       setPending(current => (current?.sourceToken === expectation.sourceToken ? undefined : current));

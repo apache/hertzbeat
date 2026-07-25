@@ -23,7 +23,12 @@ import {
   type MonitorMetricHistory,
   type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
-import { catalogEvidence, favoriteEvidence, metricEvidence } from './monitor-metric-query-evidence';
+import {
+  catalogEvidence,
+  favoriteCollectionEvidence,
+  favoriteEvidence,
+  metricEvidence
+} from './monitor-metric-query-evidence';
 import { monitorQueryKeys } from './monitor-query-keys';
 import {
   useMonitorFavoriteMutation,
@@ -61,7 +66,8 @@ export function useMonitorMetricWorkbenchController(
     refreshSeconds: refreshControl.refreshSeconds
   });
   const favoritesQuery = queries.favorites;
-  const favorite = favoriteEvidence(favoritesQuery, metricKey);
+  const favorite = favoriteEvidence(favoritesQuery, metric);
+  const favoriteCollection = favoriteCollectionEvidence(favoritesQuery, catalog.options);
   const realtimeQuery = queries.realtime;
   const historicalQuery = queries.historical;
   const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data, metric) : []));
@@ -81,6 +87,7 @@ export function useMonitorMetricWorkbenchController(
     metricKey,
     history,
     favorite,
+    favoriteCollection,
     favoriteBusy: favoriteMutation.busy,
     realtime,
     historical,

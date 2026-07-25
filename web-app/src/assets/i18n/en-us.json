@@ -998,6 +998,10 @@
     "description": "Inspect current values and stored history without leaving the monitor.",
     "realtime": "Realtime",
     "history": "History",
+    "favorites": "Favorites",
+    "favoriteEmpty": "No favorite metrics have been saved.",
+    "favoriteSelect": "Select a favorite metric to inspect its data.",
+    "favoriteUnavailable": "Unavailable in the current monitor definition",
     "autoRefresh": {
       "label": "Auto-refresh",
       "seconds": "Auto-refresh: {{count}} seconds",
