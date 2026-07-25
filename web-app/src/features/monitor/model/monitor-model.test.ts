@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildMonitorRoutePath,
   monitorAppOptions,
+  monitorPageIndexCorrection,
   monitorSelectionScope,
   monitorStatusKey,
   parseMonitorTimestamp,
@@ -174,5 +175,27 @@ describe('monitor list model', () => {
     const selection = { scope: monitorSelectionScope(query), ids };
 
     expect(reconcileMonitorSelection(selection, selection.scope)).toBe(ids);
+  });
+
+  it('corrects only an authoritatively out-of-range monitor page', () => {
+    const query = readMonitorQuery(new URLSearchParams('pageIndex=2&pageSize=10'));
+    expect(
+      monitorPageIndexCorrection(query, {
+        content: [],
+        totalElements: 20,
+        totalPages: 2,
+        number: 2,
+        size: 10
+      })
+    ).toBe(1);
+    expect(
+      monitorPageIndexCorrection(query, {
+        content: [],
+        totalElements: 30,
+        totalPages: 3,
+        number: 2,
+        size: 10
+      })
+    ).toBeUndefined();
   });
 });

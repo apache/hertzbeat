@@ -36,6 +36,7 @@ import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorExport } from './use-monitor-export';
 import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
+import { useMonitorPageCorrection } from './use-monitor-page-correction';
 import { useMonitorSelection } from './use-monitor-selection';
 
 /** Retains the established monitor-list cadence while leaving manual refresh available. */
@@ -59,6 +60,7 @@ export function useMonitorListController() {
   const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
   const draft = useQueryDraft(source, canonicalDraft);
   const { monitors, apps, reread } = useMonitorListResources(query);
+  useMonitorPageCorrection(query, monitors.data, setParams);
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
   const commands = useMonitorListCommands(source, reread, selection);

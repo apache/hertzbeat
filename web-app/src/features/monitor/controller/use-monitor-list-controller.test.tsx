@@ -427,6 +427,49 @@ describe('useMonitorListController URL evidence', () => {
     expect(api.loadMonitors).toHaveBeenCalledTimes(2);
   });
 
+  it('returns to the last populated page after deleting the final row on the current page', async () => {
+    api.loadMonitorDetail.mockRejectedValue(new ApiMessageError('missing', { status: 200, code: 3 }));
+    api.mutateMonitors.mockResolvedValue(undefined);
+    api.loadMonitors
+      .mockResolvedValueOnce({
+        content: [initialMonitorPage.content[0]],
+        totalElements: 11,
+        totalPages: 2,
+        number: 1,
+        size: 10
+      })
+      .mockResolvedValueOnce({
+        content: [],
+        totalElements: 10,
+        totalPages: 1,
+        number: 1,
+        size: 10
+      })
+      .mockResolvedValueOnce({
+        content: [{ ...initialMonitorPage.content[0], id: 8 }],
+        totalElements: 10,
+        totalPages: 1,
+        number: 0,
+        size: 10
+      });
+    const view = renderHook(
+      () => ({
+        controller: useMonitorListController(),
+        location: useLocation()
+      }),
+      { wrapper: wrapper(['/monitors?pageIndex=1&pageSize=10'], 0) }
+    );
+    await waitFor(() => expect(view.result.current.controller.state.monitors.kind).toBe('ready'));
+
+    await act(() => view.result.current.controller.actions.run('delete', [7]));
+
+    await waitFor(() => expect(view.result.current.location.search).toContain('pageIndex=0'));
+    expect(api.loadMonitors).toHaveBeenLastCalledWith(
+      expect.objectContaining({ pageIndex: 0, pageSize: 10 }),
+      expect.any(AbortSignal)
+    );
+  });
+
   it('does not delete a Grafana dashboard for non-delete monitor commands', async () => {
     api.mutateMonitors.mockResolvedValue(undefined);
     const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
