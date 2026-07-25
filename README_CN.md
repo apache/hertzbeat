@@ -553,6 +553,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hengyuss"><img src="https://avatars.githubusercontent.com/u/81064732?v=4?s=100" width="100px;" alt="hengyuss"/><br /><sub><b>hengyuss</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hengyuss" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://moduvoice.com/"><img src="https://avatars.githubusercontent.com/u/291867022?v=4?s=100" width="100px;" alt="moduvoice"/><br /><sub><b>moduvoice</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=moduvoice" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hutiefang76"><img src="https://avatars.githubusercontent.com/u/137664623?v=4?s=100" width="100px;" alt="hutiefang76"/><br /><sub><b>hutiefang76</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hutiefang76" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
