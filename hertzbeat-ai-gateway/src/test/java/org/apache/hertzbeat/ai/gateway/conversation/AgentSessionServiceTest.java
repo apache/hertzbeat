@@ -224,7 +224,7 @@ class AgentSessionServiceTest {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         PageRequest pageable = PageRequest.of(0, 20);
-        AgentTranscriptEntry entry = transcriptEntry(4L, TranscriptMessage.assistantText("done"));
+        AgentTranscriptEntry entry = transcriptEntry(4L, TranscriptMessage.assistantText("done", null));
         Page<AgentTranscriptEntry> page = new PageImpl<>(List.of(entry), pageable, 1);
         when(transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(eq(1L), eq(pageable)))
             .thenReturn(page);
@@ -267,7 +267,7 @@ class AgentSessionServiceTest {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         arrangeRecentTranscriptEntries(List.of(
-            transcriptEntry(4L, TranscriptMessage.assistantText("The alert is CPU related.")),
+            transcriptEntry(4L, TranscriptMessage.assistantText("The alert is CPU related.", null)),
             transcriptEntry(3L, TranscriptMessage.toolResult("call-1", "alert.history",
                 "partial alert data", "alert history query failed")),
             transcriptEntry(2L, assistantToolCall("call-1", "alert.history", "alertId=1001")),
@@ -312,13 +312,13 @@ class AgentSessionServiceTest {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         arrangeRecentTranscriptEntries(List.of(
-            transcriptEntry(8L, TranscriptMessage.assistantText("recent final answer")),
+            transcriptEntry(8L, TranscriptMessage.assistantText("recent final answer", null)),
             transcriptEntry(7L, toolResult("call-2", "monitorId=42 " + "recent-metric ".repeat(120))),
             transcriptEntry(6L, assistantToolCall("call-2", "query_metrics", "monitorId=42")),
             transcriptEntry(5L, TranscriptMessage.userText("recent request inspect monitor 42")),
-            transcriptEntry(4L, TranscriptMessage.assistantText("middle answer")),
+            transcriptEntry(4L, TranscriptMessage.assistantText("middle answer", null)),
             transcriptEntry(3L, TranscriptMessage.userText("middle request")),
-            transcriptEntry(2L, TranscriptMessage.assistantText("older answer")),
+            transcriptEntry(2L, TranscriptMessage.assistantText("older answer", null)),
             transcriptEntry(1L, TranscriptMessage.userText("older request alertId=1001"))));
         List<TranscriptMessage> history = service.findRecentTranscriptMessages(1L);
 
@@ -380,7 +380,7 @@ class AgentSessionServiceTest {
             eq(1L), eq(11L), eq(PageRequest.of(0, 100))))
             .thenReturn(List.of(
                 transcriptEntry(11L, TranscriptMessage.userText("tail question 1")),
-                transcriptEntry(12L, TranscriptMessage.assistantText("tail answer 1")),
+                transcriptEntry(12L, TranscriptMessage.assistantText("tail answer 1", null)),
                 checkpointEntry,
                 transcriptEntry(21L, TranscriptMessage.userText("tail question 2"))));
 
@@ -427,7 +427,7 @@ class AgentSessionServiceTest {
 
     private TranscriptMessage assistantToolCall(String callId, String toolName, String inputValue) {
         return TranscriptMessage.assistantToolCalls("", List.of(
-            TranscriptContent.toolCall(callId, toolName, toolInput(inputValue))));
+            TranscriptContent.toolCall(callId, toolName, toolInput(inputValue))), null);
     }
 
     private Map<String, Object> toolInput(String inputValue) {
@@ -445,7 +445,7 @@ class AgentSessionServiceTest {
         for (String callId : callIds) {
             toolCalls.add(TranscriptContent.toolCall(callId, "alert.history", Map.of("callId", callId)));
         }
-        return TranscriptMessage.assistantToolCalls("", toolCalls);
+        return TranscriptMessage.assistantToolCalls("", toolCalls, null);
     }
 
     private TranscriptMessage toolResult(String callId, String text) {

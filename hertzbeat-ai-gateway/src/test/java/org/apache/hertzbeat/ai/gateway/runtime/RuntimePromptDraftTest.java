@@ -37,7 +37,6 @@ class RuntimePromptDraftTest {
         RuntimePrompt prompt = RuntimePromptDraft.create()
                 .instructions("system password=hunter2")
                 .system(RuntimePrompt.Frame.RUNTIME, PromptText.create()
-                        .line("Use this as grounding data.")
                         .section("Time", section -> section
                                 .line("Current time", "1970-01-01T00:00:00Z")
                                 .line("Blank", "")))
@@ -51,7 +50,6 @@ class RuntimePromptDraftTest {
         assertEquals("system password=hunter2", prompt.getInstructions());
         assertEquals(2, prompt.getBlocks().size());
         assertTrue(runtimeContext.contains("## Runtime"));
-        assertTrue(runtimeContext.contains("Use this as grounding data."));
         assertFalse(runtimeContext.contains("<runtime_context>"));
         assertFalse(runtimeContext.contains("Trusted"));
         assertTrue(runtimeContext.contains("### Time"));

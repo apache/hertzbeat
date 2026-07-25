@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
@@ -60,7 +60,7 @@ class AgentGatewayModelComponentsTest {
             .run(context -> {
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
-                assertNotNull(client.currentModel());
+                assertTrue(client.isAgentClientConfigured());
             });
     }
 
@@ -74,7 +74,9 @@ class AgentGatewayModelComponentsTest {
             .run(context -> {
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
-                assertInstanceOf(CustomHertzBeatModel.class, client.currentModel());
+                assertTrue(client.isAgentClientConfigured());
+                assertInstanceOf(CustomHertzBeatModel.class,
+                    context.getBean(CustomProvider.class).lastCreatedModel());
             });
     }
 
@@ -102,6 +104,8 @@ class AgentGatewayModelComponentsTest {
 
     private static final class CustomProvider implements AgentModelProvider {
 
+        private HertzBeatModel lastCreatedModel;
+
         @Override
         public String type() {
             return "custom-provider";
@@ -109,7 +113,12 @@ class AgentGatewayModelComponentsTest {
 
         @Override
         public HertzBeatModel createModel(ModelProviderConfig config) {
-            return new CustomHertzBeatModel();
+            lastCreatedModel = new CustomHertzBeatModel();
+            return lastCreatedModel;
+        }
+
+        private HertzBeatModel lastCreatedModel() {
+            return lastCreatedModel;
         }
     }
 

@@ -67,9 +67,9 @@ class HertzBeatModelTest {
         assertEquals(AgentRuntimeModelResponse.ResponseType.FINAL_ANSWER, response.getType());
         assertEquals("Healthy.", response.getFinalAnswer());
         assertNull(response.getAssistantText());
-        assertEquals(11, response.getUsage().getPromptTokens());
-        assertEquals(7, response.getUsage().getCompletionTokens());
-        assertEquals(18, response.getUsage().getTotalTokens());
+        assertEquals(11, response.getUsage().promptTokens());
+        assertEquals(7, response.getUsage().completionTokens());
+        assertEquals(18, response.getUsage().totalTokens());
         assertNull(chatModel.prompt.getOptions().getModel());
         assertEquals(0.4D, chatModel.prompt.getOptions().getTemperature());
         assertEquals(2, chatModel.prompt.getInstructions().size());
@@ -132,9 +132,9 @@ class HertzBeatModelTest {
         assertEquals(AgentRuntimeModelResponse.ResponseType.FINAL_ANSWER, response.getType());
         assertEquals("Healthy now.", response.getFinalAnswer());
         assertNull(response.getAssistantText());
-        assertEquals(11, response.getUsage().getPromptTokens());
-        assertEquals(7, response.getUsage().getCompletionTokens());
-        assertEquals(18, response.getUsage().getTotalTokens());
+        assertEquals(11, response.getUsage().promptTokens());
+        assertEquals(7, response.getUsage().completionTokens());
+        assertEquals(18, response.getUsage().totalTokens());
         assertNull(chatModel.prompt.getOptions().getModel());
     }
 
@@ -222,7 +222,7 @@ class HertzBeatModelTest {
         assertNull(response.getFinalAnswer());
         assertTrue(response.getToolCalls().isEmpty());
         assertEquals("Runtime model returned neither a final answer nor tool calls.", response.getErrorMessage());
-        assertEquals(11, response.getUsage().getTotalTokens());
+        assertEquals(11, response.getUsage().totalTokens());
     }
 
     @Test
@@ -321,7 +321,7 @@ class HertzBeatModelTest {
             .prompt(prompt())
             .chatHistory(List.of(
                 TranscriptMessage.assistantToolCalls(null, List.of(TranscriptContent.toolCall(
-                    "call-failed", "ssh.inspect", Map.of("monitorId", 42)))),
+                    "call-failed", "ssh.inspect", Map.of("monitorId", 42))), null),
                 TranscriptMessage.toolResult("call-failed", "ssh.inspect",
                     "partial command output", "SSH authentication failed")))
             .build();

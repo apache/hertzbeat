@@ -113,17 +113,6 @@ public class AgentRuntimeModelResponse {
             }
         }
 
-        public long getPromptTokens() {
-            return promptTokens;
-        }
-
-        public long getCompletionTokens() {
-            return completionTokens;
-        }
-
-        public long getTotalTokens() {
-            return totalTokens;
-        }
     }
 
 }

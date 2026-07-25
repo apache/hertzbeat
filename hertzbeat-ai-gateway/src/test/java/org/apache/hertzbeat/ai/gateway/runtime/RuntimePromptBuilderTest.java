@@ -80,7 +80,7 @@ class RuntimePromptBuilderTest {
         AgentRuntimeContext context = new AgentRuntimeContextBuilder(
                 Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), () -> "trace-2").build(request, config);
 
-        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of());
+        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
         String instructions = prompt.getInstructions();
         String runtimeContext = runtimeContext(prompt);
 
@@ -181,7 +181,7 @@ class RuntimePromptBuilderTest {
                     Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), () -> "trace-entry-policy")
                     .build(request, new AgentRuntimeProperties());
 
-            RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of());
+            RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
 
             assertTrue(prompt.getInstructions().endsWith(expectedPolicy));
         });
@@ -201,7 +201,7 @@ class RuntimePromptBuilderTest {
         AgentRuntimeContext context = new AgentRuntimeContextBuilder(
                 Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), () -> "trace-empty").build(request, config);
 
-        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of());
+        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
 
         assertEquals(1, prompt.getBlocks().size());
         assertEquals(RuntimePrompt.Frame.RUNTIME, prompt.getBlocks().get(0).getFrame());
@@ -238,7 +238,7 @@ class RuntimePromptBuilderTest {
                 Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), () -> "trace-incident")
                 .build(request, new AgentRuntimeProperties());
 
-        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of());
+        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(), List.of());
         RuntimePrompt.Block incident = prompt.getBlocks().stream()
                 .filter(block -> block.getFrame() == RuntimePrompt.Frame.INCIDENT)
                 .findFirst()
@@ -282,7 +282,7 @@ class RuntimePromptBuilderTest {
                 .exposure(AgentToolExposure.MODEL_VISIBLE)
                 .build();
 
-        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(tool, changeTool));
+        RuntimePrompt prompt = new RuntimePromptBuilder().build(context, List.of(tool, changeTool), List.of());
         String toolProtocol = prompt.getBlocks().stream()
                 .filter(block -> block.getFrame() == RuntimePrompt.Frame.TOOL_PROTOCOL)
                 .findFirst()

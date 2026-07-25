@@ -98,10 +98,6 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
                 provider.getType(), provider.getCode(), provider.getModel());
     }
 
-    HertzBeatModel currentModel() {
-        return model.get();
-    }
-
     private ModelProviderConfig databaseProvider() {
         GeneralConfig config = generalConfigDao.findByType(GeneralConfigTypeEnum.provider.name());
         if (config == null || !StringUtils.hasText(config.getContent())) {

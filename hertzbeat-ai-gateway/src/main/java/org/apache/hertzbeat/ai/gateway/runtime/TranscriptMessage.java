@@ -75,20 +75,12 @@ public class TranscriptMessage {
             .build();
     }
 
-    public static TranscriptMessage assistantText(String text) {
-        return assistantText(text, null);
-    }
-
     public static TranscriptMessage assistantText(String text, AgentRuntimeModelResponse.Usage usage) {
         return TranscriptMessage.builder()
             .role(TranscriptRole.ASSISTANT)
             .content(List.of(TranscriptContent.text(text)))
             .usage(usage)
             .build();
-    }
-
-    public static TranscriptMessage assistantToolCalls(String text, List<TranscriptContent> toolCalls) {
-        return assistantToolCalls(text, toolCalls, null);
     }
 
     public static TranscriptMessage assistantToolCalls(String text, List<TranscriptContent> toolCalls,
