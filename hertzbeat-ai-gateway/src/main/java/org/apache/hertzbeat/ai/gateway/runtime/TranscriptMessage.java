@@ -54,6 +54,11 @@ public class TranscriptMessage {
     /** Model-visible error */
     private String errorMessage;
 
+    /**
+     * Provider usage for the complete primary model response that produced this assistant message.
+     */
+    private AgentRuntimeModelResponse.Usage usage;
+
     private boolean pruned;
 
     /** Durable ordering assigned when the message is appended to a session. */
@@ -71,13 +76,23 @@ public class TranscriptMessage {
     }
 
     public static TranscriptMessage assistantText(String text) {
+        return assistantText(text, null);
+    }
+
+    public static TranscriptMessage assistantText(String text, AgentRuntimeModelResponse.Usage usage) {
         return TranscriptMessage.builder()
             .role(TranscriptRole.ASSISTANT)
             .content(List.of(TranscriptContent.text(text)))
+            .usage(usage)
             .build();
     }
 
     public static TranscriptMessage assistantToolCalls(String text, List<TranscriptContent> toolCalls) {
+        return assistantToolCalls(text, toolCalls, null);
+    }
+
+    public static TranscriptMessage assistantToolCalls(String text, List<TranscriptContent> toolCalls,
+                                                       AgentRuntimeModelResponse.Usage usage) {
         List<TranscriptContent> content = new ArrayList<>();
         if (text != null && !text.isBlank()) {
             content.add(TranscriptContent.text(text));
@@ -90,6 +105,7 @@ public class TranscriptMessage {
         return TranscriptMessage.builder()
             .role(TranscriptRole.ASSISTANT)
             .content(content)
+            .usage(usage)
             .build();
     }
 

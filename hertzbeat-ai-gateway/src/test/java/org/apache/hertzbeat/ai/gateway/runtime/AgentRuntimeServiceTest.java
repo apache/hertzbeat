@@ -199,9 +199,7 @@ class AgentRuntimeServiceTest {
     }
 
     private AgentRuntimeProperties runtimeProperties() {
-        AgentRuntimeProperties properties = new AgentRuntimeProperties();
-        properties.setModel("test-model");
-        return properties;
+        return new AgentRuntimeProperties();
     }
 
     private AgentRuntimeRequest request() {

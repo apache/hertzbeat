@@ -359,6 +359,7 @@ class AgentRuntimeLoopTest {
         assertEquals(TranscriptMessage.TranscriptRole.ASSISTANT, assistantToolCall.getRole());
         assertEquals("monitor.get", assistantToolCall.toolCalls().get(0).getName());
         assertEquals(modelArguments(), assistantToolCall.toolCalls().get(0).getInput());
+        assertEquals(7L, assistantToolCall.getUsage().totalTokens());
         TranscriptMessage toolResult = secondRequest.getChatHistory().get(2);
         assertEquals(TranscriptMessage.TranscriptRole.TOOL_RESULT, toolResult.getRole());
         assertEquals("agc-loop", toolResult.getToolCallId());
@@ -375,10 +376,10 @@ class AgentRuntimeLoopTest {
                 sequenced(5L, TranscriptMessage.userText("recent request inspect monitor 42")),
                 sequenced(6L, TranscriptMessage.assistantText("recent answer")));
         RuntimeFixture runtime = runtime(config -> {
-            config.setHistoryContextTokenBudget(1800);
-            config.setHistoryReserveTokens(200);
-            config.setHistoryRecentTokenBudget(300);
-            config.setHistoryCompactionSummaryLimit(500);
+            config.getContext().setMaxTokens(1800);
+            config.getContext().getCompaction().setThresholdRatio(0.88D);
+            config.getContext().getCompaction().setRetainRecentTokens(300);
+            config.getContext().getCompaction().setSummaryTokenBudget(100);
         }, history);
         QueueModelClient modelClient = new QueueModelClient(List.of(
                 finalResponse("## Goal\nDiagnose monitor 42 using prior alert evidence."),
@@ -1040,7 +1041,6 @@ class AgentRuntimeLoopTest {
     private RuntimeFixture runtime(Consumer<AgentRuntimeProperties> customizer,
                                    List<TranscriptMessage> chatHistory) {
         AgentRuntimeProperties config = new AgentRuntimeProperties();
-        config.setModel("fake-model");
         customizer.accept(config);
         AgentRuntimeRequest request = AgentRuntimeRequest.builder()
                 .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
@@ -1066,7 +1066,6 @@ class AgentRuntimeLoopTest {
 
     private RuntimeFixture approvalResumeRuntime(List<TranscriptMessage> chatHistory) {
         AgentRuntimeProperties config = new AgentRuntimeProperties();
-        config.setModel("fake-model");
         AgentRuntimeRequest request = AgentRuntimeRequest.builder()
                 .entryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                 .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)

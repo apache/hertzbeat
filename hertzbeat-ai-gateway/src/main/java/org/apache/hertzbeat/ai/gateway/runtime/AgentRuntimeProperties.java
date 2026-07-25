@@ -25,7 +25,7 @@ import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Agent Gateway runtime configuration baseline.
+ * Agent runtime execution configuration baseline.
  */
 @Getter
 @Setter
@@ -33,16 +33,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = AgentRuntimeProperties.PREFIX)
 public class AgentRuntimeProperties {
 
-    public static final String PREFIX = "hertzbeat.agent.gateway.runtime";
-
-    private String provider = "openai-compatible";
-
-    private String model = "";
-
-    private String baseUrl = "";
-
-    @ToString.Exclude
-    private String apiKey = "";
+    public static final String PREFIX = "hertzbeat.agent.runtime";
 
     private double temperature = 0.2D;
 
@@ -56,37 +47,11 @@ public class AgentRuntimeProperties {
 
     private Duration toolTimeout = Duration.ofSeconds(180);
 
-    private int historyContextTokenBudget = 32000;
-
-    private int historyReserveTokens = 8000;
-
-    private int historyRecentTokenBudget = 12000;
-
-    private int historyCompactionSummaryLimit = 4000;
+    private ContextProperties context = new ContextProperties();
 
     private RetryProperties retry = new RetryProperties();
 
     private StreamProperties stream = new StreamProperties();
-
-    public void setProvider(String provider) {
-        // Configuration values may come from padded environment variables; trim at the binding boundary.
-        this.provider = provider == null ? "" : provider.trim();
-    }
-
-    public void setModel(String model) {
-        // Configuration values may come from padded environment variables; trim at the binding boundary.
-        this.model = model == null ? "" : model.trim();
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        // Configuration values may come from padded environment variables; trim at the binding boundary.
-        this.baseUrl = baseUrl == null ? "" : baseUrl.trim();
-    }
-
-    public void setApiKey(String apiKey) {
-        // Configuration values may come from padded environment variables; trim at the binding boundary.
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
-    }
 
     public void setTemperature(double temperature) {
         if (temperature < 0 || temperature > 2) {
@@ -115,21 +80,9 @@ public class AgentRuntimeProperties {
         this.toolTimeout = requirePositive("toolTimeout", toolTimeout);
     }
 
-    public void setHistoryContextTokenBudget(int historyContextTokenBudget) {
-        this.historyContextTokenBudget = requirePositive("historyContextTokenBudget", historyContextTokenBudget);
-    }
-
-    public void setHistoryReserveTokens(int historyReserveTokens) {
-        this.historyReserveTokens = requireNonNegative("historyReserveTokens", historyReserveTokens);
-    }
-
-    public void setHistoryRecentTokenBudget(int historyRecentTokenBudget) {
-        this.historyRecentTokenBudget = requirePositive("historyRecentTokenBudget", historyRecentTokenBudget);
-    }
-
-    public void setHistoryCompactionSummaryLimit(int historyCompactionSummaryLimit) {
-        this.historyCompactionSummaryLimit = requirePositive("historyCompactionSummaryLimit",
-            historyCompactionSummaryLimit);
+    public void setContext(ContextProperties context) {
+        // The runtime loop needs a complete context policy before calculating every model input window.
+        this.context = Objects.requireNonNull(context, "context must not be null");
     }
 
     public void setRetry(RetryProperties retry) {
@@ -140,6 +93,76 @@ public class AgentRuntimeProperties {
     public void setStream(StreamProperties stream) {
         // Runtime event publishing dereferences stream policy for every invocation.
         this.stream = Objects.requireNonNull(stream, "stream must not be null");
+    }
+
+    void validate() {
+        context.compactionThresholdTokens();
+    }
+
+    /**
+     * Runtime model context window and compaction settings.
+     */
+    @Getter
+    @Setter
+    @ToString
+    public static class ContextProperties {
+
+        /**
+         * Maximum token budget used to plan the model context window.
+         */
+        private long maxTokens = 32000;
+
+        private CompactionProperties compaction = new CompactionProperties();
+
+        public void setMaxTokens(long maxTokens) {
+            this.maxTokens = requirePositive("context.maxTokens", maxTokens);
+        }
+
+        public void setCompaction(CompactionProperties compaction) {
+            // Every context decision requires a complete compaction policy.
+            this.compaction = Objects.requireNonNull(compaction, "context.compaction must not be null");
+        }
+
+        long compactionThresholdTokens() {
+            long thresholdTokens = (long) Math.floor(maxTokens * compaction.getThresholdRatio());
+            if (compaction.getRetainRecentTokens() + compaction.getSummaryTokenBudget() >= thresholdTokens) {
+                throw new IllegalArgumentException(
+                    "context compaction retain and summary budgets must be below the compaction threshold");
+            }
+            return thresholdTokens;
+        }
+    }
+
+    /**
+     * Runtime history compaction policy.
+     */
+    @Getter
+    @Setter
+    @ToString
+    public static class CompactionProperties {
+
+        private double thresholdRatio = 0.9D;
+
+        private long retainRecentTokens = 12000;
+
+        private int summaryTokenBudget = 4000;
+
+        public void setThresholdRatio(double thresholdRatio) {
+            if (thresholdRatio <= 0 || thresholdRatio >= 1) {
+                throw new IllegalArgumentException("context.compaction.thresholdRatio must be between 0 and 1");
+            }
+            this.thresholdRatio = thresholdRatio;
+        }
+
+        public void setRetainRecentTokens(long retainRecentTokens) {
+            this.retainRecentTokens = requirePositive(
+                "context.compaction.retainRecentTokens", retainRecentTokens);
+        }
+
+        public void setSummaryTokenBudget(int summaryTokenBudget) {
+            this.summaryTokenBudget = requirePositive(
+                "context.compaction.summaryTokenBudget", summaryTokenBudget);
+        }
     }
 
     /**
@@ -179,6 +202,13 @@ public class AgentRuntimeProperties {
     }
 
     private static int requirePositive(String name, int value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(name + " must be > 0");
+        }
+        return value;
+    }
+
+    private static long requirePositive(String name, long value) {
         if (value <= 0) {
             throw new IllegalArgumentException(name + " must be > 0");
         }

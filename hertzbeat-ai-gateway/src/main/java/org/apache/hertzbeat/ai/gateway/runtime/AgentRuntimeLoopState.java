@@ -38,6 +38,7 @@ final class AgentRuntimeLoopState {
     private final Set<String> startedItemIds = new HashSet<>();
     private final Map<String, AgentToolDescriptor> discoveredTools = new LinkedHashMap<>();
 
+    private int usageBaselineStartIndex;
     private int modelRequestCount;
     private int toolCallCount;
     private long eventSequence;
@@ -49,6 +50,7 @@ final class AgentRuntimeLoopState {
         if (initialMessages != null) {
             initialMessages.stream().filter(Objects::nonNull).forEach(messages::add);
         }
+        usageBaselineStartIndex = messages.size();
     }
 
     void addTurnMessage(TranscriptMessage message) {
@@ -59,6 +61,7 @@ final class AgentRuntimeLoopState {
     void replaceMessages(List<TranscriptMessage> compactedMessages) {
         messages.clear();
         messages.addAll(compactedMessages);
+        usageBaselineStartIndex = messages.size();
     }
 
     void incrementModelRequestCount() {
@@ -111,6 +114,18 @@ final class AgentRuntimeLoopState {
 
     List<TranscriptMessage> messages() {
         return List.copyOf(messages);
+    }
+
+    int latestCurrentRunUsageMessageIndex() {
+        for (int i = messages.size() - 1; i >= usageBaselineStartIndex; i--) {
+            TranscriptMessage message = messages.get(i);
+            AgentRuntimeModelResponse.Usage usage = message.getUsage();
+            if (message.getRole() == TranscriptMessage.TranscriptRole.ASSISTANT
+                && usage != null && usage.totalTokens() > 0) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     void addDiscoveredTools(List<AgentToolDescriptor> tools) {

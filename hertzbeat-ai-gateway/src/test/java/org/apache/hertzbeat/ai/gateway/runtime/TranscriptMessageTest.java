@@ -17,11 +17,13 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -46,6 +48,22 @@ class TranscriptMessageTest {
                 .hasReplayContent());
         assertFalse(TranscriptMessage.toolResult("call-1", null, "result", null)
                 .hasReplayContent());
+    }
+
+    @Test
+    void assistantMessageShouldCarryProviderResponseUsage() {
+        AgentRuntimeModelResponse.Usage usage = AgentRuntimeModelResponse.Usage.builder()
+                .promptTokens(20)
+                .completionTokens(5)
+                .totalTokens(25)
+                .build();
+
+        TranscriptMessage message = TranscriptMessage.assistantText("diagnosis", usage);
+        String json = JsonUtil.toJson(message);
+        TranscriptMessage restored = JsonUtil.fromJson(json, TranscriptMessage.class);
+
+        assertEquals(usage, message.getUsage());
+        assertEquals(usage, restored.getUsage());
     }
 
     private TranscriptMessage assistantToolCall(String id, String name) {

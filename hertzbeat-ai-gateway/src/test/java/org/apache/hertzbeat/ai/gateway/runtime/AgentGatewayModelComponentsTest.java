@@ -52,10 +52,11 @@ class AgentGatewayModelComponentsTest {
     @Test
     void runtimeCredentialsShouldCreateHertzBeatModel() {
         contextRunner.withPropertyValues(
-            "hertzbeat.agent.gateway.runtime.provider=openai-compatible",
-            "hertzbeat.agent.gateway.runtime.model=gpt-runtime",
-            "hertzbeat.agent.gateway.runtime.base-url=https://model.example.test/v1",
-            "hertzbeat.agent.gateway.runtime.api-key=runtime-secret")
+            "hertzbeat.agent.provider.type=openai-compatible",
+            "hertzbeat.agent.provider.code=openai",
+            "hertzbeat.agent.provider.model=gpt-runtime",
+            "hertzbeat.agent.provider.base-url=https://model.example.test/v1",
+            "hertzbeat.agent.provider.api-key=runtime-secret")
             .run(context -> {
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
@@ -67,8 +68,9 @@ class AgentGatewayModelComponentsTest {
     void customProviderShouldCreateHertzBeatModelThroughRegistry() {
         contextRunner.withUserConfiguration(CustomProviderConfig.class)
             .withPropertyValues(
-                "hertzbeat.agent.gateway.runtime.provider=custom-provider",
-                "hertzbeat.agent.gateway.runtime.model=custom-model")
+                "hertzbeat.agent.provider.type=custom-provider",
+                "hertzbeat.agent.provider.code=custom-preset",
+                "hertzbeat.agent.provider.model=custom-model")
             .run(context -> {
                 ReloadableAgentRuntimeModelClient client = assertInstanceOf(ReloadableAgentRuntimeModelClient.class,
                     context.getBean(AgentRuntimeModelClient.class));
@@ -76,7 +78,7 @@ class AgentGatewayModelComponentsTest {
             });
     }
 
-    @EnableConfigurationProperties(AgentRuntimeProperties.class)
+    @EnableConfigurationProperties({AgentProviderProperties.class, AgentRuntimeProperties.class})
     @Import({
         OpenAiCompatibleAgentModelProvider.class,
         AgentModelProviderRegistry.class,
