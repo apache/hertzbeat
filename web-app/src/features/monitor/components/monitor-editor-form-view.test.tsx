@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { App } from 'antd';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { MonitorParamDefine } from '../model/monitor-contract';
@@ -120,6 +121,44 @@ describe('MonitorEditorFormView validation evidence', () => {
       })
     ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).not.toBeDisabled();
+  });
+
+  it('imports a Grafana dashboard template from an in-memory JSON file', async () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.app = 'prometheus';
+    controller.state.draft.grafanaDashboard.enabled = true;
+    const rendered = render(
+      <App>
+        <MonitorEditorFormView mode="new" controller={controller} />
+      </App>
+    );
+    const file = new File(['ignored by the test double'], 'dashboard.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: vi.fn().mockResolvedValue('{"title":"Operations"}') });
+
+    fireEvent.change(rendered.container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(controller.actions.updateGrafana).toHaveBeenCalledWith({ template: '{"title":"Operations"}' })
+    );
+  });
+
+  it('contains a Grafana template file read failure without changing the draft', async () => {
+    const controller = editorController([]);
+    controller.state.draft.monitor.app = 'prometheus';
+    controller.state.draft.grafanaDashboard.enabled = true;
+    const rendered = render(
+      <App>
+        <MonitorEditorFormView mode="new" controller={controller} />
+      </App>
+    );
+    const file = new File(['unreadable'], 'dashboard.json', { type: 'application/json' });
+    const readFile = vi.fn().mockRejectedValue(new Error('private file failure'));
+    Object.defineProperty(file, 'text', { value: readFile });
+
+    fireEvent.change(rendered.container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+
+    await waitFor(() => expect(readFile).toHaveBeenCalled());
+    expect(controller.actions.updateGrafana).not.toHaveBeenCalled();
   });
 });
 

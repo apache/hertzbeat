@@ -2008,6 +2008,9 @@
       "annotations": "註解",
       "grafanaEnabled": "Grafana 儀表板",
       "grafanaTemplate": "Grafana 儀表板 JSON",
+      "grafanaImport": "匯入儀表板 JSON",
+      "grafanaImportSuccess": "儀表板 JSON 已載入。",
+      "grafanaImportFailure": "無法讀取儀表板 JSON。",
       "map": {
         "add": "新增項目",
         "remove": "刪除項目",

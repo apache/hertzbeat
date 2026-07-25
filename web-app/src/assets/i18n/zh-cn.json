@@ -1969,6 +1969,9 @@
       "annotations": "注解",
       "grafanaEnabled": "Grafana 仪表板",
       "grafanaTemplate": "Grafana 仪表板 JSON",
+      "grafanaImport": "导入仪表盘 JSON",
+      "grafanaImportSuccess": "仪表盘 JSON 已载入。",
+      "grafanaImportFailure": "无法读取仪表盘 JSON。",
       "map": {
         "add": "添加条目",
         "remove": "删除条目",

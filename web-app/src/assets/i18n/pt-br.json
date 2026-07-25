@@ -2031,6 +2031,9 @@
       "annotations": "Anotações",
       "grafanaEnabled": "Painel do Grafana",
       "grafanaTemplate": "JSON do painel Grafana",
+      "grafanaImport": "Importar JSON do painel",
+      "grafanaImportSuccess": "JSON do painel carregado.",
+      "grafanaImportFailure": "Não foi possível ler o JSON do painel.",
       "map": {
         "add": "Adicionar item",
         "remove": "Remover item",

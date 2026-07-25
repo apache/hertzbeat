@@ -4,9 +4,10 @@ import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
-import { MonitorEditorCoreFields, MonitorGrafanaFields } from './monitor-editor-core-fields';
+import { MonitorEditorCoreFields } from './monitor-editor-core-fields';
 import { monitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
+import { MonitorGrafanaFields } from './monitor-grafana-fields';
 import { MonitorEditorMetadataFields } from './monitor-editor-metadata-fields';
 import { MonitorEditorParamSections } from './monitor-editor-param-sections';
 import { MonitorEditorValidationSummary } from './monitor-editor-validation-summary';

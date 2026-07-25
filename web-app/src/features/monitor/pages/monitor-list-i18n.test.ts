@@ -51,6 +51,9 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.copyEndpoint).toBeTruthy();
       expect(locale.monitor.copyEndpointSuccess).toBeTruthy();
       expect(locale.monitor.copyEndpointFailure).toBeTruthy();
+      expect(locale.monitor.editor.grafanaImport).toBeTruthy();
+      expect(locale.monitor.editor.grafanaImportSuccess).toBeTruthy();
+      expect(locale.monitor.editor.grafanaImportFailure).toBeTruthy();
     }
   });
 });

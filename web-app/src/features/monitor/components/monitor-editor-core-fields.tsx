@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Input, InputNumber, Select, Switch } from 'antd';
+import { Input, InputNumber, Select } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +9,6 @@ import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 import { monitorIntervalBounds } from '../model/monitor-editor-validation';
 import { monitorAppOptions } from '../model/monitor-model';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
-import styles from './monitor-editor-form-view.module.css';
 
 type CoreFieldProps = {
   mode: 'new' | 'edit';
@@ -132,42 +131,6 @@ function ScheduleFields({
             {...monitorIntervalBounds(draft.monitor.app)}
             value={draft.monitor.intervals ?? 60}
             onChange={intervals => update({ intervals })}
-          />
-        </label>
-      )}
-    </>
-  );
-}
-
-export function MonitorGrafanaFields({
-  draft,
-  disabled,
-  update
-}: {
-  draft: MonitorEditorDraft;
-  disabled: boolean;
-  update: MonitorEditorFormController['actions']['updateGrafana'];
-}) {
-  const { t } = useTranslation();
-  if (draft.monitor.app !== 'prometheus') return null;
-  return (
-    <>
-      <label>
-        {t('monitor.editor.grafanaEnabled')}
-        <Switch
-          checked={draft.grafanaDashboard.enabled}
-          disabled={disabled}
-          onChange={enabled => update({ enabled })}
-        />
-      </label>
-      {draft.grafanaDashboard.enabled && (
-        <label className={styles.wide}>
-          {t('monitor.editor.grafanaTemplate')}
-          <Input.TextArea
-            rows={8}
-            disabled={disabled}
-            value={draft.grafanaDashboard.template ?? ''}
-            onChange={event => update({ template: event.target.value })}
           />
         </label>
       )}

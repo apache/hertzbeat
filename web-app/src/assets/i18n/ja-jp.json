@@ -2029,6 +2029,9 @@
       "annotations": "注釈",
       "grafanaEnabled": "Grafana ダッシュボード",
       "grafanaTemplate": "Grafana ダッシュボード JSON",
+      "grafanaImport": "ダッシュボード JSON をインポート",
+      "grafanaImportSuccess": "ダッシュボード JSON を読み込みました。",
+      "grafanaImportFailure": "ダッシュボード JSON を読み込めませんでした。",
       "map": {
         "add": "項目を追加",
         "remove": "項目を削除",

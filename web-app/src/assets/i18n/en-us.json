@@ -1988,6 +1988,9 @@
       "annotations": "Annotations",
       "grafanaEnabled": "Grafana dashboard",
       "grafanaTemplate": "Grafana dashboard JSON",
+      "grafanaImport": "Import dashboard JSON",
+      "grafanaImportSuccess": "Dashboard JSON loaded.",
+      "grafanaImportFailure": "Dashboard JSON could not be read.",
       "map": {
         "add": "Add entry",
         "remove": "Remove entry",
