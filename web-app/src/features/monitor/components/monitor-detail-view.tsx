@@ -27,6 +27,7 @@ import type {
 } from '../model/monitor-detail-model';
 import { safeMonitorGrafanaUrl } from '../model/monitor-detail-model';
 import { monitorStatusColor, monitorStatusKey } from '../model/monitor-model';
+import { MonitorHelpLink } from './monitor-help-link';
 import styles from './monitor-detail-view.module.css';
 
 type Translator = (key: string) => string;
@@ -61,6 +62,7 @@ export function MonitorDetailView({
           <Typography.Text type="secondary">{monitor.instance}</Typography.Text>
         </div>
         <Space>
+          <MonitorHelpLink />
           <Button onClick={actions.back}>{t('common.back')}</Button>
           <Button type="primary" onClick={actions.edit}>
             {t('common.edit')}

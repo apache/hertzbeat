@@ -1908,6 +1908,7 @@
   "monitor": {
     "title": "Monitors",
     "description": "Inspect availability, endpoints, and monitor ownership.",
+    "help": "Help",
     "search": "Search name or endpoint",
     "application": "Application",
     "empty": "No monitors match the current query.",

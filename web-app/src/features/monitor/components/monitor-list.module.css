@@ -22,6 +22,12 @@
 .heading :global(.ant-typography) {
   margin: 0;
 }
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
 .toolbar {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto;
@@ -30,8 +36,8 @@
 .name {
   min-width: 0;
 }
-.name strong,
-.name span {
+.name > strong,
+.name > span {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -45,9 +51,18 @@
   border-block: 1px solid var(--ant-color-border-secondary);
   padding-block: 8px;
 }
-.name span {
+.name > span {
   color: var(--ant-color-text-secondary);
   font-size: 12px;
+}
+.rowLabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.rowLabels :global(.ant-tag) {
+  margin-inline-end: 0;
 }
 @media (max-width: 900px) {
   .toolbar {

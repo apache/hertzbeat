@@ -62,6 +62,15 @@ describe('MonitorDetailView', () => {
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
   });
 
+  it('keeps the monitor help guide available from detail', () => {
+    renderView(ready);
+
+    expect(screen.getByRole('link', { name: i18n.t('monitor.help') })).toHaveAttribute(
+      'href',
+      'https://hertzbeat.apache.org/docs/help/guide/'
+    );
+  });
+
   it.each([
     null,
     grafana(false, 'https://grafana.example/d/ops'),

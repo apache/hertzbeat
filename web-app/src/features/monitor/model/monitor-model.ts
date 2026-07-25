@@ -23,6 +23,8 @@ import { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 export { monitorPageSizes, type MonitorQuery } from './monitor-contract';
 export { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
+export const monitorHelpUrl = 'https://hertzbeat.apache.org/docs/help/guide/';
+
 export type MonitorScopedSelection = { scope: string; ids: number[] };
 
 export function monitorSelectionScope(query: MonitorQuery) {

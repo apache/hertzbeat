@@ -47,6 +47,7 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitorMetrics.favoriteSelect).toBeTruthy();
       expect(locale.monitorMetrics.favoriteUnavailable).toBeTruthy();
       expect(locale.monitor.grafana.title).toBeTruthy();
+      expect(locale.monitor.help).toBeTruthy();
     }
   });
 });

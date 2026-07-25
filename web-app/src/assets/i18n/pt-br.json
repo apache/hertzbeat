@@ -1951,6 +1951,7 @@
   "monitor": {
     "title": "Monitores",
     "description": "Inspecione disponibilidade, endpoints e propriedade dos monitores.",
+    "help": "Ajuda",
     "search": "Pesquisar nome ou endpoint",
     "application": "Aplicação",
     "empty": "Nenhum monitor corresponde à consulta.",

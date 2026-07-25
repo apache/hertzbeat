@@ -117,6 +117,7 @@ function columns(
         <div className={styles.name}>
           <strong>{row.name}</strong>
           <span>{row.instance}</span>
+          <MonitorLabels labels={row.labels} />
         </div>
       )
     },
@@ -141,6 +142,19 @@ function columns(
       render: (_value: unknown, row) => <MonitorRowActions monitor={row} open={open} run={run} disabled={operating} />
     }
   ];
+}
+
+function MonitorLabels({ labels }: { labels: Record<string, string> | null | undefined }) {
+  if (!labels) return null;
+  const entries = Object.entries(labels).sort(([left], [right]) => left.localeCompare(right));
+  if (entries.length === 0) return null;
+  return (
+    <div className={styles.rowLabels}>
+      {entries.map(([key, value]) => (
+        <Tag key={key}>{`${key}:${value}`}</Tag>
+      ))}
+    </div>
+  );
 }
 
 function monitorTableSortOrder(query: MonitorQuery, field: NonNullable<MonitorQuery['sort']>): SortOrder {

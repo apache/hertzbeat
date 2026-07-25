@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
+import { MonitorHelpLink } from './monitor-help-link';
 import { MonitorBulkActions } from './monitor-list-actions';
 import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListResults } from './monitor-list-results';
@@ -33,8 +34,11 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
-        <Typography.Title level={2}>{t('monitor.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('monitor.description')}</Typography.Text>
+        <div>
+          <Typography.Title level={2}>{t('monitor.title')}</Typography.Title>
+          <Typography.Text type="secondary">{t('monitor.description')}</Typography.Text>
+        </div>
+        <MonitorHelpLink />
       </header>
       <MonitorListToolbar
         query={state.query}

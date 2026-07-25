@@ -70,6 +70,38 @@ describe('MonitorListView evidence states', () => {
     expect(row).not.toHaveTextContent('—');
   });
 
+  it('keeps monitor labels visible in the primary row metadata', () => {
+    renderView({
+      monitors: {
+        kind: 'ready',
+        records: [
+          {
+            id: 7,
+            name: 'checkout',
+            app: 'website',
+            instance: 'prod',
+            status: 1,
+            labels: { team: 'payments', env: 'production' }
+          }
+        ],
+        total: 1
+      }
+    });
+
+    const row = screen.getByText('checkout').closest('tr');
+    expect(row).toHaveTextContent('env:production');
+    expect(row).toHaveTextContent('team:payments');
+  });
+
+  it('links operators to the monitor help guide', () => {
+    renderView({ monitors: { kind: 'empty' } });
+
+    expect(screen.getByRole('link', { name: i18n.t('monitor.help') })).toHaveAttribute(
+      'href',
+      'https://hertzbeat.apache.org/docs/help/guide/'
+    );
+  });
+
   it('shows administrator export actions for all and selected monitors', () => {
     renderView({ canExport: true, selectedIds: [7], monitors: { kind: 'empty' } });
 
