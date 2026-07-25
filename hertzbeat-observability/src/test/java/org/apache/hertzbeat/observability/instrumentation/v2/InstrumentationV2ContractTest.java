@@ -40,9 +40,11 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.SecretPlaceholder;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeEndpoint;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.apache.hertzbeat.observability.instrumentation.v2.controller.InstrumentationV2Controller;
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationCatalogService;
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationCatalogV2Service;
@@ -158,14 +160,16 @@ class InstrumentationV2ContractTest {
     }
 
     @Test
-    void intakeProfileIsIndependentExplicitAndDefensive() throws Exception {
+    void intakeProfileIsIndependentExplicitAndDisclosesTransportSecurity() throws Exception {
         IntakeProfile profile = new IntakeProfile(
                 "server-primary",
                 IntakeKind.SERVER,
                 Availability.AVAILABLE,
                 Gateway.SERVER,
                 List.of(OtlpTransport.HTTP_PROTOBUF),
-                Map.of(OtlpTransport.HTTP_PROTOBUF, "https://otel.example.test/v1"),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("https://otel.example.test/v1", TransportSecurity.TLS)),
                 "Authorization",
                 null,
                 null);
@@ -173,25 +177,68 @@ class InstrumentationV2ContractTest {
         String json = mapper.writeValueAsString(profile);
         assertTrue(json.contains("\"id\":\"server-primary\""));
         assertTrue(json.contains("\"kind\":\"server\""));
+        assertTrue(json.contains("\"endpoints\":{\"http_protobuf\":"
+                + "{\"url\":\"https://otel.example.test/v1\",\"security\":\"tls\"}}"));
+        assertFalse(json.contains("httpsEndpoints"));
         assertFalse(json.contains("token"));
         assertFalse(json.contains("collectorId"));
+        IntakeProfile plaintext = new IntakeProfile(
+                "collector:loopback",
+                IntakeKind.HERTZBEAT_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("http://127.0.0.1:4318", TransportSecurity.PLAINTEXT)),
+                "Authorization",
+                "loopback",
+                null);
+        assertEquals(
+                TransportSecurity.PLAINTEXT,
+                plaintext.endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
+        IntakeProfile mixed = new IntakeProfile(
+                "collector:mixed",
+                IntakeKind.HERTZBEAT_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(OtlpTransport.HTTP_PROTOBUF, OtlpTransport.GRPC),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("http://127.0.0.1:4318", TransportSecurity.PLAINTEXT),
+                        OtlpTransport.GRPC,
+                        new IntakeEndpoint("https://collector.example.test:4317", TransportSecurity.TLS)),
+                "Authorization",
+                "mixed",
+                null);
+        assertEquals(TransportSecurity.PLAINTEXT,
+                mixed.endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
+        assertEquals(TransportSecurity.TLS, mixed.endpoints().get(OtlpTransport.GRPC).security());
         assertThrows(IllegalArgumentException.class, () -> new IntakeProfile(
                 "unsafe",
                 IntakeKind.SERVER,
                 Availability.AVAILABLE,
                 Gateway.SERVER,
                 List.of(OtlpTransport.GRPC),
-                Map.of(OtlpTransport.GRPC, "http://inferred:4317"),
+                Map.of(
+                        OtlpTransport.GRPC,
+                        new IntakeEndpoint("ftp://explicit-but-unsupported:4317", TransportSecurity.PLAINTEXT)),
                 "Authorization",
                 null,
                 null));
+        assertThrows(IllegalArgumentException.class, () ->
+                new IntakeEndpoint("http://127.0.0.1:4318", TransportSecurity.TLS));
+        assertThrows(IllegalArgumentException.class, () ->
+                new IntakeEndpoint("https://otel.example.test:4318", TransportSecurity.PLAINTEXT));
         assertThrows(IllegalArgumentException.class, () -> new IntakeProfile(
                 "duplicate",
                 IntakeKind.EXTERNAL_OTEL_COLLECTOR,
                 Availability.AVAILABLE,
                 Gateway.EXTERNAL,
                 List.of(OtlpTransport.GRPC, OtlpTransport.GRPC),
-                Map.of(OtlpTransport.GRPC, "https://otel.example.test:4317"),
+                Map.of(
+                        OtlpTransport.GRPC,
+                        new IntakeEndpoint("https://otel.example.test:4317", TransportSecurity.TLS)),
                 "Authorization",
                 null,
                 null));

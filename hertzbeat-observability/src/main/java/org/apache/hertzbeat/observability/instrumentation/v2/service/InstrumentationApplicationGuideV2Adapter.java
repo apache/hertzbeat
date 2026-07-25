@@ -84,9 +84,15 @@ public class InstrumentationApplicationGuideV2Adapter {
     private CollectorTarget collector(IntakeProfile profile) {
         return new CollectorTarget(
                 profile.collectorId() == null ? profile.id() : profile.collectorId(),
-                profile.httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF),
-                profile.httpsEndpoints().get(OtlpTransport.GRPC),
+                endpointUrl(profile, OtlpTransport.HTTP_PROTOBUF),
+                endpointUrl(profile, OtlpTransport.GRPC),
                 profile.authHeaderName());
+    }
+
+    private String endpointUrl(IntakeProfile profile, OtlpTransport transport) {
+        return profile.endpoints().containsKey(transport)
+                ? profile.endpoints().get(transport).url()
+                : null;
     }
 
     private void addStep(List<GuideBlock> blocks, String recipeId, GuideStep step) {

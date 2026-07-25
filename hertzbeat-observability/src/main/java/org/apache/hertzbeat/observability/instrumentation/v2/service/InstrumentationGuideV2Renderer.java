@@ -33,6 +33,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.SecretPlaceholder;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.guide.InstrumentationSourceGuideV2Registry;
@@ -77,6 +78,12 @@ public class InstrumentationGuideV2Renderer {
         ServiceIdentity service = requireService(request.service());
         IntakeProfile profile = profileService.requireAvailable(request.intakeProfileId());
         Target target = target(profile);
+        List<GuideBlock> blocks = new ArrayList<>();
+        if (target.security() == TransportSecurity.PLAINTEXT
+                && "Authorization".equals(profile.authHeaderName())) {
+            blocks.add(plaintextAuthorizationWarning());
+        }
+        blocks.addAll(blocks(request, recipe, profile, target, service));
         return new RenderResponse(
                 2,
                 request.sourceKind(),
@@ -86,7 +93,7 @@ public class InstrumentationGuideV2Renderer {
                 recipe.signals(),
                 recipe.components(),
                 Map.of(TOKEN_NAME, SecretPlaceholder.authorizationToken()),
-                blocks(request, recipe, profile, target, service));
+                blocks);
     }
 
     private List<GuideBlock> blocks(
@@ -196,6 +203,19 @@ public class InstrumentationGuideV2Renderer {
                 List.of());
     }
 
+    private GuideBlock plaintextAuthorizationWarning() {
+        return new GuideBlock(
+                "plaintext_transport_warning",
+                BlockType.WARNING,
+                "instrumentation.v2.block.plaintext_transport_warning",
+                "instrumentation.v2.warning.plaintext_authorization",
+                "instrumentation.location.application_host",
+                null,
+                null,
+                null,
+                List.of());
+    }
+
     private RecipeOption requireRecipe(RenderRequest request) {
         if (request.recipeId() != null) {
             RecipeOption recipe = catalogService.requireRecipe(request.sourceKind(), request.recipeId());
@@ -258,13 +278,15 @@ public class InstrumentationGuideV2Renderer {
     }
 
     private Target target(IntakeProfile profile) {
-        if (profile.httpsEndpoints().containsKey(OtlpTransport.HTTP_PROTOBUF)) {
-            return new Target(profile.httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF), "http/protobuf");
+        if (profile.endpoints().containsKey(OtlpTransport.HTTP_PROTOBUF)) {
+            var endpoint = profile.endpoints().get(OtlpTransport.HTTP_PROTOBUF);
+            return new Target(endpoint.url(), "http/protobuf", endpoint.security());
         }
-        return new Target(profile.httpsEndpoints().get(OtlpTransport.GRPC), "grpc");
+        var endpoint = profile.endpoints().get(OtlpTransport.GRPC);
+        return new Target(endpoint.url(), "grpc", endpoint.security());
     }
 
-    private record Target(String endpoint, String protocol) {
+    private record Target(String endpoint, String protocol, TransportSecurity security) {
 
         String authority() {
             URI uri = URI.create(endpoint);

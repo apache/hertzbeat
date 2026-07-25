@@ -30,6 +30,7 @@ import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -39,26 +40,37 @@ class ManagerInstrumentationIntakeProfileStoreTest {
     @Test
     void mapsOnlyExistingExplicitAdvertisementsWithoutInferringEndpoints() {
         Collector server = collector("server-advertisement");
+        Collector loopback = collector("loopback");
         Collector edge = collector("edge");
         CollectorDao dao = mock(CollectorDao.class);
         CollectorIntakeAdvertisementReader reader = mock(CollectorIntakeAdvertisementReader.class);
-        when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server, edge)));
+        when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server, loopback, edge)));
         when(reader.read(server)).thenReturn(availableServer());
+        when(reader.read(loopback)).thenReturn(availableLoopback());
         when(reader.read(edge)).thenReturn(CollectorInstrumentationIntake.unavailable(
                 "edge", CollectorInstrumentationIntake.ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE));
 
         var profiles = new ManagerInstrumentationIntakeProfileStore(dao, reader).profiles();
 
-        assertEquals(2, profiles.size());
+        assertEquals(3, profiles.size());
         assertEquals("server:server-advertisement", profiles.getFirst().id());
         assertEquals(IntakeKind.SERVER, profiles.getFirst().kind());
         assertEquals("https://otel.example.test/v1", profiles.getFirst()
-                .httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF));
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        assertEquals(TransportSecurity.TLS, profiles.getFirst()
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
         assertNull(profiles.getFirst().collectorId());
         assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, profiles.get(1).kind());
-        assertEquals(Availability.UNAVAILABLE, profiles.get(1).availability());
-        assertEquals("edge", profiles.get(1).collectorId());
-        assertEquals(true, profiles.get(1).httpsEndpoints().isEmpty());
+        assertEquals(Availability.AVAILABLE, profiles.get(1).availability());
+        assertEquals("loopback", profiles.get(1).collectorId());
+        assertEquals("http://127.0.0.1:4318", profiles.get(1)
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        assertEquals(TransportSecurity.PLAINTEXT, profiles.get(1)
+                .endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
+        assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, profiles.get(2).kind());
+        assertEquals(Availability.UNAVAILABLE, profiles.get(2).availability());
+        assertEquals("edge", profiles.get(2).collectorId());
+        assertEquals(true, profiles.get(2).endpoints().isEmpty());
     }
 
     private Collector collector(String name) {
@@ -75,6 +87,19 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 CollectorInstrumentationIntake.Gateway.SERVER,
                 List.of(CollectorInstrumentationIntake.Capability.OTLP_HTTP_PROTOBUF),
                 "https://otel.example.test/v1",
+                null,
+                "Authorization",
+                null);
+    }
+
+    private CollectorInstrumentationIntake availableLoopback() {
+        return new CollectorInstrumentationIntake(
+                1,
+                "loopback",
+                CollectorInstrumentationIntake.State.AVAILABLE,
+                CollectorInstrumentationIntake.Gateway.COLLECTOR,
+                List.of(CollectorInstrumentationIntake.Capability.OTLP_HTTP_PROTOBUF),
+                "http://127.0.0.1:4318",
                 null,
                 "Authorization",
                 null);

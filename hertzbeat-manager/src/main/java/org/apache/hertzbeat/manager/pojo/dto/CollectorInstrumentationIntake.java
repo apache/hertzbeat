@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Safe public advertisement for one Collector's application-instrumentation intake.
  *
- * <p>The contract contains only explicitly advertised HTTPS endpoints and the standard header name. It never
+ * <p>The contract contains only explicitly advertised HTTP(S) endpoints and the standard header name. It never
  * derives an address from a request host, Collector address, or default port, and it never carries credential
  * material.</p>
  */
@@ -106,8 +106,8 @@ public record CollectorInstrumentationIntake(int schemaVersion, String collector
         if (hasHttp != (otlpHttpEndpoint != null) || hasGrpc != (otlpGrpcEndpoint != null)) {
             throw new IllegalArgumentException("Instrumentation intake endpoints must match capabilities");
         }
-        requireHttpsEndpoint(otlpHttpEndpoint, "OTLP HTTP endpoint");
-        requireHttpsEndpoint(otlpGrpcEndpoint, "OTLP gRPC endpoint");
+        requireHttpEndpoint(otlpHttpEndpoint, "OTLP HTTP endpoint");
+        requireHttpEndpoint(otlpGrpcEndpoint, "OTLP gRPC endpoint");
     }
 
     private static void validateUnavailable(Gateway gateway, List<Capability> capabilities,
@@ -128,7 +128,7 @@ public record CollectorInstrumentationIntake(int schemaVersion, String collector
         return collectorId;
     }
 
-    private static void requireHttpsEndpoint(String endpoint, String label) {
+    private static void requireHttpEndpoint(String endpoint, String label) {
         if (endpoint == null) {
             return;
         }
@@ -136,12 +136,16 @@ public record CollectorInstrumentationIntake(int schemaVersion, String collector
         try {
             uri = URI.create(endpoint);
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException(label + " must be an HTTPS URI");
+            throw new IllegalArgumentException(label + " must be an HTTP(S) URI");
         }
-        if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
+        if (!isHttpScheme(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
                 || uri.getRawQuery() != null || uri.getFragment() != null) {
-            throw new IllegalArgumentException(label + " must be an HTTPS URI without credentials or query data");
+            throw new IllegalArgumentException(label + " must be an HTTP(S) URI without credentials or query data");
         }
+    }
+
+    private static boolean isHttpScheme(String scheme) {
+        return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
     }
 
     /** Whether an explicit safe intake advertisement is available. */
