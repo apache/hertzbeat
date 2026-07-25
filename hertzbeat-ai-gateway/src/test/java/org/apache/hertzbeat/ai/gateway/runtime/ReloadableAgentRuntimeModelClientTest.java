@@ -25,11 +25,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.model.ChatModel;
 
 /**
  * Test case for {@link ReloadableAgentRuntimeModelClient}.
@@ -37,11 +42,11 @@ import org.junit.jupiter.api.Test;
 class ReloadableAgentRuntimeModelClientTest {
 
     @Test
-    void shouldReportUnavailableWithoutAnyModelClientSource() {
+    void shouldReportUnavailableWithoutAnyModelSource() {
         GeneralConfigDao configDao = mock(GeneralConfigDao.class);
 
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, new AgentRuntimeProperties(), null);
+                new ReloadableAgentRuntimeModelClient(configDao, new AgentRuntimeProperties(), providerRegistry());
 
         assertFalse(client.isAgentClientConfigured());
     }
@@ -51,18 +56,20 @@ class ReloadableAgentRuntimeModelClientTest {
         GeneralConfigDao configDao = mock(GeneralConfigDao.class);
         when(configDao.findByType("provider")).thenReturn(null);
         AgentRuntimeProperties properties = new AgentRuntimeProperties();
-        properties.setProvider("openai-compatible");
+        properties.setProvider("test-provider");
         properties.setBaseUrl("https://property.example.test/v1");
         properties.setModel("property-model");
         properties.setApiKey("property-secret");
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, properties, null);
-        AgentRuntimeModelClient propertyClient = client.currentClient();
-        assertNotNull(propertyClient);
+                new ReloadableAgentRuntimeModelClient(configDao, properties, providerRegistry());
+        HertzBeatModel propertyModel = client.currentModel();
+        assertNotNull(propertyModel);
         assertTrue(client.isAgentClientConfigured());
+        assertEquals("property-model", ((TaggedModel) propertyModel).model);
 
         ModelProviderConfig databaseProvider = new ModelProviderConfig();
-        databaseProvider.setCode("zai");
+        databaseProvider.setType("test-provider");
+        databaseProvider.setCode("database-preset");
         databaseProvider.setBaseUrl("https://database.example.test/v1");
         databaseProvider.setModel("database-model");
         databaseProvider.setApiKey("database-secret");
@@ -73,10 +80,66 @@ class ReloadableAgentRuntimeModelClientTest {
 
         client.onProviderConfigChanged();
 
-        assertNotSame(propertyClient, client.currentClient());
-        assertEquals("zai", properties.getProvider());
-        assertEquals("database-model", properties.getModel());
-        assertEquals("https://database.example.test/v1", properties.getBaseUrl());
+        assertNotSame(propertyModel, client.currentModel());
+        assertEquals("database-model", ((TaggedModel) client.currentModel()).model);
+        assertEquals("test-provider", properties.getProvider());
+        assertEquals("property-model", properties.getModel());
+        assertEquals("https://property.example.test/v1", properties.getBaseUrl());
         assertTrue(client.isAgentClientConfigured());
+    }
+
+    @Test
+    void removingDatabaseProviderShouldRestorePropertyProvider() {
+        GeneralConfigDao configDao = mock(GeneralConfigDao.class);
+        AtomicReference<GeneralConfig> databaseConfig = new AtomicReference<>();
+        when(configDao.findByType("provider")).thenAnswer(invocation -> databaseConfig.get());
+        AgentRuntimeProperties properties = new AgentRuntimeProperties();
+        properties.setProvider("test-provider");
+        properties.setModel("property-model");
+        properties.setApiKey("property-secret");
+        ReloadableAgentRuntimeModelClient client =
+                new ReloadableAgentRuntimeModelClient(configDao, properties, providerRegistry());
+
+        ModelProviderConfig provider = new ModelProviderConfig();
+        provider.setType("test-provider");
+        provider.setModel("database-model");
+        databaseConfig.set(GeneralConfig.builder()
+                .type("provider")
+                .content(JsonUtil.toJson(provider))
+                .build());
+        client.onProviderConfigChanged();
+        assertEquals("database-model", ((TaggedModel) client.currentModel()).model);
+
+        databaseConfig.set(null);
+        client.onProviderConfigChanged();
+
+        assertEquals("property-model", ((TaggedModel) client.currentModel()).model);
+    }
+
+    private AgentModelProviderRegistry providerRegistry() {
+        return new AgentModelProviderRegistry(List.of(new TestAgentModelProvider()));
+    }
+
+    private static final class TestAgentModelProvider implements AgentModelProvider {
+
+        @Override
+        public String type() {
+            return "test-provider";
+        }
+
+        @Override
+        public HertzBeatModel createModel(ModelProviderConfig config) {
+            return new TaggedModel(config.getModel());
+        }
+    }
+
+    private static final class TaggedModel extends HertzBeatModel {
+
+        private final String model;
+
+        private TaggedModel(String model) {
+            super(mock(ChatModel.class));
+            this.model = model;
+        }
     }
 }

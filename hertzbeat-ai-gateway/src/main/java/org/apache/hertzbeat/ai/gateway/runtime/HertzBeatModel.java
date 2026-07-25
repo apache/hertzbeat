@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelRequestOptionsFactory;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -42,15 +43,14 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.StringUtils;
 
 /**
- * Spring AI ChatModel adapter for the Agent Gateway runtime model boundary.
+ * HertzBeat model execution semantics backed by a Spring AI ChatModel.
  */
-public class SpringAiAgentRuntimeModelClient implements AgentRuntimeModelClient {
+public class HertzBeatModel {
 
     private static final int SUMMARY_LIMIT = 1024;
     private static final String RUNTIME_PROMPT_FRAME = "runtimeRuntimePrompt.Frame";
@@ -67,17 +67,28 @@ public class SpringAiAgentRuntimeModelClient implements AgentRuntimeModelClient 
 
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
+    private final AgentModelRequestOptionsFactory requestOptionsFactory;
 
-    public SpringAiAgentRuntimeModelClient(ChatModel chatModel) {
-        this(chatModel, new ObjectMapper());
+    public HertzBeatModel(ChatModel chatModel) {
+        this(chatModel, new ObjectMapper(), HertzBeatModel::genericRequestOptions);
     }
 
-    SpringAiAgentRuntimeModelClient(ChatModel chatModel, ObjectMapper objectMapper) {
+    public HertzBeatModel(ChatModel chatModel,
+                          AgentModelRequestOptionsFactory requestOptionsFactory) {
+        this(chatModel, new ObjectMapper(), requestOptionsFactory);
+    }
+
+    HertzBeatModel(ChatModel chatModel, ObjectMapper objectMapper) {
+        this(chatModel, objectMapper, HertzBeatModel::genericRequestOptions);
+    }
+
+    HertzBeatModel(ChatModel chatModel, ObjectMapper objectMapper,
+                   AgentModelRequestOptionsFactory requestOptionsFactory) {
         this.chatModel = chatModel;
         this.objectMapper = objectMapper;
+        this.requestOptionsFactory = requestOptionsFactory;
     }
 
-    @Override
     public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                             Consumer<String> textDeltaConsumer) {
         control.checkpoint();
@@ -122,7 +133,7 @@ public class SpringAiAgentRuntimeModelClient implements AgentRuntimeModelClient 
         addPromptBlocks(messages, runtimePrompt, RuntimePrompt.Role.SYSTEM);
         addPromptBlocks(messages, runtimePrompt, RuntimePrompt.Role.USER);
         addHistoryMessages(messages, request.getChatHistory());
-        ChatOptions options = chatOptions(request, toolCallbacks);
+        ChatOptions options = requestOptionsFactory.create(request, toolCallbacks);
         return new Prompt(messages, options);
     }
 
@@ -309,32 +320,27 @@ public class SpringAiAgentRuntimeModelClient implements AgentRuntimeModelClient 
         }
     }
 
-    private ChatOptions chatOptions(AgentRuntimeModelRequest request, List<ToolCallback> toolCallbacks) {
-        // Runtime config may leave model blank to use Spring AI's configured default model.
-        String model = StringUtils.hasText(request.getModel()) ? request.getModel() : null;
-        Double temperature = request.getTemperature();
-        Integer maxCompletionTokens = request.getMaxCompletionTokens();
-        if (maxCompletionTokens != null) {
-            OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
-                    .model(model)
-                    .temperature(temperature)
-                    .maxCompletionTokens(maxCompletionTokens);
-            if (!toolCallbacks.isEmpty()) {
-                builder.toolCallbacks(toolCallbacks);
+    private static ChatOptions genericRequestOptions(AgentRuntimeModelRequest request,
+                                                     List<ToolCallback> toolCallbacks) {
+        if (toolCallbacks.isEmpty()) {
+            ChatOptions.Builder builder = ChatOptions.builder();
+            if (request.getTemperature() != null) {
+                builder.temperature(request.getTemperature());
+            }
+            if (request.getMaxCompletionTokens() != null) {
+                builder.maxTokens(request.getMaxCompletionTokens());
             }
             return builder.build();
         }
-        if (toolCallbacks.isEmpty()) {
-            return ChatOptions.builder()
-                    .model(model)
-                    .temperature(temperature)
-                    .build();
+        ToolCallingChatOptions.Builder builder = ToolCallingChatOptions.builder()
+                .toolCallbacks(toolCallbacks);
+        if (request.getTemperature() != null) {
+            builder.temperature(request.getTemperature());
         }
-        return ToolCallingChatOptions.builder()
-                .model(model)
-                .temperature(temperature)
-                .toolCallbacks(toolCallbacks)
-                .build();
+        if (request.getMaxCompletionTokens() != null) {
+            builder.maxTokens(request.getMaxCompletionTokens());
+        }
+        return builder.build();
     }
 
     private AgentRuntimeModelResponse toRuntimeResponse(String text, List<AgentRuntimeToolCall> toolCalls,
@@ -464,7 +470,7 @@ public class SpringAiAgentRuntimeModelClient implements AgentRuntimeModelClient 
                 throw new AgentRuntimeModelException("Spring AI chat model stream returned no assistant message.",
                         true);
             }
-            return SpringAiAgentRuntimeModelClient.this.toRuntimeResponse(text.toString(), toolCalls, metadata);
+            return HertzBeatModel.this.toRuntimeResponse(text.toString(), toolCalls, metadata);
         }
     }
 

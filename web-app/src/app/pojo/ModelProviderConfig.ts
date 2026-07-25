@@ -18,8 +18,7 @@
  */
 
 export class ModelProviderConfig {
-  error!: string;
-  type!: string;
+  type: string = 'openai-compatible';
   code: string = 'openai';
   baseUrl: string = '';
   model: string = '';

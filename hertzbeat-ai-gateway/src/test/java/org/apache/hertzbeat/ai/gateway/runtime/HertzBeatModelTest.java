@@ -43,16 +43,15 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 /**
- * Test case for {@link SpringAiAgentRuntimeModelClient}.
+ * Test case for {@link HertzBeatModel}.
  */
-class SpringAiAgentRuntimeModelClientTest {
+class HertzBeatModelTest {
 
     @Test
     void finalAnswerShouldMapAssistantTextAndUsage() {
@@ -60,7 +59,7 @@ class SpringAiAgentRuntimeModelClientTest {
                 ChatResponseMetadata.builder()
                         .usage(new DefaultUsage(11, 7, 18))
                         .build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelResponse response = stream(client, request());
 
@@ -70,7 +69,7 @@ class SpringAiAgentRuntimeModelClientTest {
         assertEquals(11, response.getUsage().getPromptTokens());
         assertEquals(7, response.getUsage().getCompletionTokens());
         assertEquals(18, response.getUsage().getTotalTokens());
-        assertEquals("runtime-model", chatModel.prompt.getOptions().getModel());
+        assertNull(chatModel.prompt.getOptions().getModel());
         assertEquals(0.4D, chatModel.prompt.getOptions().getTemperature());
         assertEquals(2, chatModel.prompt.getInstructions().size());
         SystemMessage runtimeContext = assertInstanceOf(SystemMessage.class,
@@ -94,7 +93,7 @@ class SpringAiAgentRuntimeModelClientTest {
         String text = "  raw apiKey=visible " + "x".repeat(1500) + "  ";
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage(text),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelResponse response = stream(client, request());
 
@@ -104,15 +103,14 @@ class SpringAiAgentRuntimeModelClientTest {
     }
 
     @Test
-    void maxCompletionTokensShouldMapToOpenAiOptions() {
+    void maxCompletionTokensShouldMapToGenericOptions() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Healthy."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         stream(client, requestWithMaxCompletionTokens());
 
-        OpenAiChatOptions options = assertInstanceOf(OpenAiChatOptions.class, chatModel.prompt.getOptions());
-        assertEquals(1234, options.getMaxCompletionTokens());
+        assertEquals(1234, chatModel.prompt.getOptions().getMaxTokens());
     }
 
     @Test
@@ -125,7 +123,7 @@ class SpringAiAgentRuntimeModelClientTest {
                         ChatResponseMetadata.builder()
                                 .usage(new DefaultUsage(11, 7, 18))
                                 .build())));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
         List<String> deltas = new ArrayList<>();
 
         AgentRuntimeModelResponse response = client.stream(request(), control(), deltas::add);
@@ -137,14 +135,14 @@ class SpringAiAgentRuntimeModelClientTest {
         assertEquals(11, response.getUsage().getPromptTokens());
         assertEquals(7, response.getUsage().getCompletionTokens());
         assertEquals(18, response.getUsage().getTotalTokens());
-        assertEquals("runtime-model", chatModel.prompt.getOptions().getModel());
+        assertNull(chatModel.prompt.getOptions().getModel());
     }
 
     @Test
     void userPromptBlockShouldBeMappedFromPromptMessages() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Done."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         stream(client, requestWithUserContext());
 
@@ -171,7 +169,7 @@ class SpringAiAgentRuntimeModelClientTest {
                 .build();
         CapturingChatModel chatModel = new CapturingChatModel(response(assistantMessage,
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelResponse response = stream(client, request());
 
@@ -196,7 +194,7 @@ class SpringAiAgentRuntimeModelClientTest {
                 .build();
         CapturingChatModel chatModel = new CapturingChatModel(response(assistantMessage,
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelResponse response = stream(client, request());
 
@@ -217,7 +215,7 @@ class SpringAiAgentRuntimeModelClientTest {
                 ChatResponseMetadata.builder()
                         .usage(new DefaultUsage(11, 0, 11))
                         .build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelResponse response = stream(client, request());
 
@@ -233,14 +231,13 @@ class SpringAiAgentRuntimeModelClientTest {
     void availableToolsShouldBeExposedAsDisabledToolCallbacks() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Need a tool."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         stream(client, requestWithTools());
 
         ToolCallingChatOptions options = assertInstanceOf(ToolCallingChatOptions.class,
                 chatModel.prompt.getOptions());
-        OpenAiChatOptions openAiOptions = assertInstanceOf(OpenAiChatOptions.class, chatModel.prompt.getOptions());
-        assertEquals(1234, openAiOptions.getMaxCompletionTokens());
+        assertEquals(1234, options.getMaxTokens());
         assertEquals(1, options.getToolCallbacks().size());
         ToolCallback callback = options.getToolCallbacks().get(0);
         ToolDefinition definition = callback.getToolDefinition();
@@ -272,7 +269,7 @@ class SpringAiAgentRuntimeModelClientTest {
     void structuredHistoryShouldPreserveConversationOrder() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Done."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         stream(client, requestWithHistory());
 
@@ -322,9 +319,8 @@ class SpringAiAgentRuntimeModelClientTest {
     void failedToolHistoryShouldUseErrorMessageAsResponseData() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Done."),
             ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
         AgentRuntimeModelRequest request = AgentRuntimeModelRequest.builder()
-            .model("runtime-model")
             .prompt(prompt())
             .chatHistory(List.of(
                 TranscriptMessage.assistantToolCalls(null, List.of(TranscriptContent.toolCall(
@@ -344,9 +340,8 @@ class SpringAiAgentRuntimeModelClientTest {
     void compactionSummaryHistoryShouldBeMappedAsUserContext() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Done."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
         AgentRuntimeModelRequest request = AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .prompt(prompt())
                 .chatHistory(List.of(
                         TranscriptMessage.compactionSummary(
@@ -369,9 +364,8 @@ class SpringAiAgentRuntimeModelClientTest {
     void unknownHistoryRolesShouldBeSkipped() {
         CapturingChatModel chatModel = new CapturingChatModel(response(new AssistantMessage("Done."),
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
         AgentRuntimeModelRequest request = AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .prompt(prompt())
                 .chatHistory(List.of(
                         TranscriptMessage.builder()
@@ -400,7 +394,7 @@ class SpringAiAgentRuntimeModelClientTest {
                 .build();
         CapturingChatModel chatModel = new CapturingChatModel(response(assistantMessage,
                 ChatResponseMetadata.builder().build()));
-        SpringAiAgentRuntimeModelClient client = new SpringAiAgentRuntimeModelClient(chatModel);
+        HertzBeatModel client = new HertzBeatModel(chatModel);
 
         AgentRuntimeModelException exception = assertInstanceOf(AgentRuntimeModelException.class,
                 org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> stream(client, request())));
@@ -408,7 +402,7 @@ class SpringAiAgentRuntimeModelClientTest {
         assertFalse(exception.isRetryable());
     }
 
-    private AgentRuntimeModelResponse stream(SpringAiAgentRuntimeModelClient client,
+    private AgentRuntimeModelResponse stream(HertzBeatModel client,
                                              AgentRuntimeModelRequest request) {
         return client.stream(request, control(), delta -> { });
     }
@@ -419,7 +413,6 @@ class SpringAiAgentRuntimeModelClientTest {
 
     private AgentRuntimeModelRequest request() {
         return AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .temperature(0.4D)
                 .prompt(prompt())
                 .build();
@@ -427,7 +420,6 @@ class SpringAiAgentRuntimeModelClientTest {
 
     private AgentRuntimeModelRequest requestWithMaxCompletionTokens() {
         return AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .temperature(0.4D)
                 .maxCompletionTokens(1234)
                 .prompt(prompt())
@@ -436,7 +428,6 @@ class SpringAiAgentRuntimeModelClientTest {
 
     private AgentRuntimeModelRequest requestWithUserContext() {
         return AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .temperature(0.4D)
                 .prompt(RuntimePrompt.builder()
                         .instructions("system")
@@ -473,7 +464,6 @@ class SpringAiAgentRuntimeModelClientTest {
                 .exposure(AgentToolExposure.MODEL_VISIBLE)
                 .build();
         return AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .temperature(0.4D)
                 .maxCompletionTokens(1234)
                 .prompt(promptWithToolProtocol())
@@ -483,7 +473,6 @@ class SpringAiAgentRuntimeModelClientTest {
 
     private AgentRuntimeModelRequest requestWithHistory() {
         return AgentRuntimeModelRequest.builder()
-                .model("runtime-model")
                 .temperature(0.4D)
                 .prompt(prompt())
                 .chatHistory(List.of(
