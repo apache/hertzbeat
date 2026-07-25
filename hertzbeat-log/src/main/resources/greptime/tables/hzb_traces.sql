@@ -35,4 +35,4 @@ CREATE TABLE IF NOT EXISTS hzb_traces (
   "span_events" JSON NULL,
   "span_links" JSON NULL,
   PRIMARY KEY("service_name")
-) WITH (append_mode = true, table_data_model = 'greptime_trace_v1');
+) WITH ('append_mode' = 'true', 'table_data_model' = 'greptime_trace_v1');
