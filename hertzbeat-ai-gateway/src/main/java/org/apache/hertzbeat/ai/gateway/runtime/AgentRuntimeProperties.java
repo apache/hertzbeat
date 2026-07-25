@@ -164,7 +164,7 @@ public class AgentRuntimeProperties {
     }
 
     /**
-     * Runtime streaming controls for slow clients and visible text delta batching.
+     * Runtime streaming backpressure controls for slow clients.
      */
     @Getter
     @Setter
@@ -173,22 +173,8 @@ public class AgentRuntimeProperties {
 
         private int maxBufferedEvents = 1024;
 
-        private Duration deltaFlushInterval = Duration.ofMillis(20);
-
-        private int deltaFlushChars = 512;
-
-        private boolean cancelOnBackpressure = true;
-
         public void setMaxBufferedEvents(int maxBufferedEvents) {
             this.maxBufferedEvents = requirePositive("stream.maxBufferedEvents", maxBufferedEvents);
-        }
-
-        public void setDeltaFlushInterval(Duration deltaFlushInterval) {
-            this.deltaFlushInterval = requirePositive("stream.deltaFlushInterval", deltaFlushInterval);
-        }
-
-        public void setDeltaFlushChars(int deltaFlushChars) {
-            this.deltaFlushChars = requirePositive("stream.deltaFlushChars", deltaFlushChars);
         }
     }
 

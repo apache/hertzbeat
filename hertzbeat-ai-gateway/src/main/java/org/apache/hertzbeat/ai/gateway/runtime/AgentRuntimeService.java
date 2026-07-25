@@ -171,7 +171,7 @@ public class AgentRuntimeService {
             }
             if (sink.requestedFromDownstream() <= 0
                     && bufferedEvents.incrementAndGet() > maxBufferedEvents) {
-                signalBackpressureExceeded(sink, controlRef, streamProperties, event);
+                signalBackpressureExceeded(sink, controlRef, event);
                 return;
             }
             sink.next(event);
@@ -187,13 +187,10 @@ public class AgentRuntimeService {
 
     private void signalBackpressureExceeded(FluxSink<AgentRuntimeEvent> sink,
                                             AtomicReference<AgentRuntimeControl> controlRef,
-                                            AgentRuntimeProperties.StreamProperties streamProperties,
                                             AgentRuntimeEvent sourceEvent) {
-        if (streamProperties.isCancelOnBackpressure()) {
-            AgentRuntimeControl control = controlRef.get();
-            if (control != null) {
-                control.stop("Runtime stream exceeded the buffered event limit.");
-            }
+        AgentRuntimeControl control = controlRef.get();
+        if (control != null) {
+            control.stop("Runtime stream exceeded the buffered event limit.");
         }
         if (sink.isCancelled()) {
             return;

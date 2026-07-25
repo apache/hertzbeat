@@ -55,9 +55,6 @@ class AgentRuntimePropertiesTest {
             assertEquals(2, properties.getRetry().getMaxModelRetries());
             assertEquals(Duration.ofMillis(500), properties.getRetry().getInitialBackoff());
             assertEquals(1024, properties.getStream().getMaxBufferedEvents());
-            assertEquals(Duration.ofMillis(20), properties.getStream().getDeltaFlushInterval());
-            assertEquals(512, properties.getStream().getDeltaFlushChars());
-            assertEquals(true, properties.getStream().isCancelOnBackpressure());
         });
     }
 
@@ -80,10 +77,7 @@ class AgentRuntimePropertiesTest {
             "hertzbeat.agent.gateway.runtime.history-compaction-summary-limit=2048",
             "hertzbeat.agent.gateway.runtime.retry.max-model-retries=1",
             "hertzbeat.agent.gateway.runtime.retry.initial-backoff=125ms",
-            "hertzbeat.agent.gateway.runtime.stream.max-buffered-events=8",
-            "hertzbeat.agent.gateway.runtime.stream.delta-flush-interval=50ms",
-            "hertzbeat.agent.gateway.runtime.stream.delta-flush-chars=256",
-            "hertzbeat.agent.gateway.runtime.stream.cancel-on-backpressure=false")
+            "hertzbeat.agent.gateway.runtime.stream.max-buffered-events=8")
             .run(context -> {
                 AgentRuntimeProperties properties = context.getBean(AgentRuntimeProperties.class);
 
@@ -104,9 +98,6 @@ class AgentRuntimePropertiesTest {
                 assertEquals(1, properties.getRetry().getMaxModelRetries());
                 assertEquals(Duration.ofMillis(125), properties.getRetry().getInitialBackoff());
                 assertEquals(8, properties.getStream().getMaxBufferedEvents());
-                assertEquals(Duration.ofMillis(50), properties.getStream().getDeltaFlushInterval());
-                assertEquals(256, properties.getStream().getDeltaFlushChars());
-                assertEquals(false, properties.getStream().isCancelOnBackpressure());
                 assertFalse(properties.toString().contains("runtime-secret"));
             });
     }
