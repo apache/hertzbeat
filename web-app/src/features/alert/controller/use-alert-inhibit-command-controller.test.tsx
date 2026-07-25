@@ -37,6 +37,7 @@ import { useAlertInhibitCommandController } from './use-alert-inhibit-command-co
 
 const api = vi.hoisted(() => ({
   deleteAlertInhibit: vi.fn(),
+  deleteAlertInhibits: vi.fn(),
   loadAlertInhibit: vi.fn(),
   saveAlertInhibit: vi.fn(),
   updateAlertInhibitEnabled: vi.fn()
@@ -61,6 +62,7 @@ describe('Alert Inhibit command controller', () => {
     api.saveAlertInhibit.mockResolvedValue(undefined);
     api.updateAlertInhibitEnabled.mockResolvedValue(undefined);
     api.deleteAlertInhibit.mockResolvedValue(undefined);
+    api.deleteAlertInhibits.mockResolvedValue(undefined);
     reread.mockResolvedValue(alertInhibitPage({ search: '', pageIndex: 0, pageSize: 8 }, []));
   });
 
@@ -360,6 +362,19 @@ describe('Alert Inhibit command controller', () => {
     reread.mockResolvedValue(alertInhibitPage({ search: '', pageIndex: 0, pageSize: 8 }, [persistedAlertInhibit]));
     await act(async () => result.current.remove(7));
     expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('deletes selected policies in one write and proves every id missing', async () => {
+    const { result } = renderCommandController();
+    api.loadAlertInhibit.mockRejectedValue(new AlertInhibitMissingError());
+
+    await act(async () => result.current.removeMany([8, 7, 8]));
+
+    expect(api.deleteAlertInhibits).toHaveBeenCalledOnce();
+    expect(api.deleteAlertInhibits).toHaveBeenCalledWith([7, 8]);
+    expect(api.loadAlertInhibit).toHaveBeenCalledWith(7);
+    expect(api.loadAlertInhibit).toHaveBeenCalledWith(8);
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.operationSuccess');
   });
 
   it.each([

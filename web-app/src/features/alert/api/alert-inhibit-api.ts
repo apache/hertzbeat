@@ -21,6 +21,7 @@ import { alertInhibitApiRequest } from './alert-inhibit-api-failure';
 import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
+  normalizeAlertInhibitIds,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
@@ -59,7 +60,13 @@ export async function saveAlertInhibit(draft: AlertInhibitDraft): Promise<void> 
 }
 
 export async function deleteAlertInhibit(id: number): Promise<void> {
-  await alertInhibitApiRequest(() => apiMessageDelete(`/api/alert/inhibits?ids=${id}`));
+  await deleteAlertInhibits([id]);
+}
+
+export async function deleteAlertInhibits(ids: number[]): Promise<void> {
+  const params = new URLSearchParams();
+  normalizeAlertInhibitIds(ids).forEach(id => params.append('ids', String(id)));
+  await alertInhibitApiRequest(() => apiMessageDelete(`/api/alert/inhibits?${params.toString()}`));
 }
 
 export async function updateAlertInhibitEnabled(inhibit: AlertInhibit, enable: boolean): Promise<void> {

@@ -1529,6 +1529,8 @@
     "updated": "Atualizada",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de inibição?",
+    "deleteSelected": "Excluir selecionadas",
+    "deleteSelectedConfirm": "Excluir as {{count}} políticas de inibição selecionadas?",
     "validation": "Informe um nome, rótulos válidos de origem e destino e pelo menos um rótulo igual.",
     "loadFailed": "Não foi possível carregar a política de inibição.",
     "saveSuccess": "Política de inibição salva.",

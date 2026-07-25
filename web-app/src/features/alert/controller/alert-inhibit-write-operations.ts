@@ -1,20 +1,26 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { deleteAlertInhibit, saveAlertInhibit, updateAlertInhibitEnabled } from '../api/alert-inhibit-api';
+import {
+  deleteAlertInhibit,
+  deleteAlertInhibits,
+  saveAlertInhibit,
+  updateAlertInhibitEnabled
+} from '../api/alert-inhibit-api';
 import {
   AlertInhibitContractError,
   AlertInhibitUnavailableError,
   alertInhibitFailureKind,
   alertInhibitWriteOutcome,
   buildAlertInhibitPayload,
+  normalizeAlertInhibitIds,
   validateAlertInhibitDraft,
   type AlertInhibit,
   type AlertInhibitPage
 } from '../model/alert-inhibit-model';
 import {
   loadExactAlertInhibit,
-  proveAlertInhibitMissing,
-  requireAlertInhibitAbsent,
+  proveAlertInhibitsMissing,
+  requireAlertInhibitsAbsent,
   requireAlertInhibitConvergence
 } from '../api/alert-inhibit-write-proof';
 import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
@@ -66,9 +72,14 @@ export async function toggleAlertInhibit(context: AlertInhibitWriteContext, reco
 }
 
 export async function removeAlertInhibit(context: AlertInhibitWriteContext, id: number) {
+  return removeAlertInhibits(context, [id]);
+}
+
+export async function removeAlertInhibits(context: AlertInhibitWriteContext, ids: number[]) {
+  const commandIds = normalizeAlertInhibitIds(ids);
   const owner = context.operation.begin('operating');
   if (!owner) return;
-  const receipt: AlertInhibitReceipt = { kind: 'delete', phase: 'write', id };
+  const receipt: AlertInhibitReceipt = { kind: 'delete', phase: 'write', ids: commandIds };
   beginReceipt(context, owner, receipt);
   await runReceipt(context, owner, receipt);
 }
@@ -132,18 +143,20 @@ async function advanceReceipt(
   }
   const page = await context.reread();
   if (!context.operation.isCurrent(owner)) return false;
-  if (receipt.kind === 'delete') requireAlertInhibitAbsent(page, receipt.id);
+  if (receipt.kind === 'delete') requireAlertInhibitsAbsent(page, receipt.ids);
   return true;
 }
 
 async function mutate(receipt: AlertInhibitReceipt) {
   if (receipt.kind === 'save') return saveAlertInhibit(receipt.draft);
-  if (receipt.kind === 'delete') return deleteAlertInhibit(receipt.id);
+  if (receipt.kind === 'delete') {
+    return receipt.ids.length === 1 ? deleteAlertInhibit(receipt.ids[0]!) : deleteAlertInhibits(receipt.ids);
+  }
   return updateAlertInhibitEnabled(receipt.record, receipt.enable);
 }
 
 async function prove(receipt: AlertInhibitReceipt) {
-  if (receipt.kind === 'delete') return proveAlertInhibitMissing(receipt.id);
+  if (receipt.kind === 'delete') return proveAlertInhibitsMissing(receipt.ids);
   if (receipt.kind === 'toggle') {
     if (!receipt.expected) throw new AlertInhibitContractError('toggle proof is missing expected fields');
     return requireAlertInhibitConvergence(await loadExactAlertInhibit(receipt.record.id), receipt.expected);

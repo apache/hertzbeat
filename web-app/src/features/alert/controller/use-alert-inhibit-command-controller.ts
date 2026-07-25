@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { AlertInhibit, AlertInhibitPage } from '../model/alert-inhibit-model';
 import {
   removeAlertInhibit,
+  removeAlertInhibits,
   retryAlertInhibit,
   submitAlertInhibit,
   toggleAlertInhibit,
@@ -46,6 +47,7 @@ export function useAlertInhibitCommandController(rereadAuthoritatively: () => Pr
     actions: {
       ...editor.actions,
       remove: (id: number) => removeAlertInhibit(context, id),
+      removeMany: (ids: number[]) => removeAlertInhibits(context, ids),
       retry: () => retryAlertInhibit(context),
       submit: () => submitAlertInhibit(context),
       toggle: (inhibit: AlertInhibit, enable: boolean) => toggleAlertInhibit(context, inhibit, enable)

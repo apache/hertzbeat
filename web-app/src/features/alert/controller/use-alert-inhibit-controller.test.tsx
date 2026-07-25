@@ -112,8 +112,8 @@ describe('Alert Inhibit controller composition', () => {
     });
     await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1));
 
-    await act(async () => routed.router.navigate('/alerts/inhibits?search=latest&pageIndex=2&pageSize=8'));
-    const latestQuery = { search: 'latest', pageIndex: 2, pageSize: 8 };
+    await act(async () => routed.router.navigate('/alerts/inhibits?search=latest&pageIndex=0&pageSize=8'));
+    const latestQuery = { search: 'latest', pageIndex: 0, pageSize: 8 };
     await waitFor(() => expect(api.loadAlertInhibits).toHaveBeenCalledWith(latestQuery, expect.any(AbortSignal)));
     api.loadAlertInhibits.mockClear();
     act(() => write.resolve(undefined));

@@ -32,6 +32,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 import {
   deleteAlertInhibit,
+  deleteAlertInhibits,
   loadAlertInhibit,
   loadAlertInhibits,
   saveAlertInhibit,
@@ -107,6 +108,15 @@ describe('alert inhibit API', () => {
       equalLabels: ['service'],
       enable: false
     });
+  });
+
+  it('deletes a canonical id set in one request', async () => {
+    await expect(deleteAlertInhibits([9, 7, 9])).resolves.toBeUndefined();
+
+    expect(transport.apiMessageDelete).toHaveBeenCalledOnce();
+    expect(transport.apiMessageDelete).toHaveBeenCalledWith('/api/alert/inhibits?ids=7&ids=9');
+    await expect(deleteAlertInhibits([])).rejects.toThrow();
+    await expect(deleteAlertInhibits([0])).rejects.toThrow();
   });
 
   it('normalizes every transport entry before leaving the API', async () => {

@@ -44,7 +44,7 @@ export type AlertInhibitReceipt =
   | {
       kind: 'delete';
       phase: Exclude<AlertInhibitReceiptPhase, 'prepare'>;
-      id: number;
+      ids: number[];
     };
 
 export type AlertInhibitRecovery = {

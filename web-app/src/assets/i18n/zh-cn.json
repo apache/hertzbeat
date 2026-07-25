@@ -1506,6 +1506,8 @@
     "updated": "更新时间",
     "delete": "删除",
     "deleteConfirm": "确认删除这条抑制策略？",
+    "deleteSelected": "删除所选",
+    "deleteSelectedConfirm": "确认删除选中的 {{count}} 条抑制策略？",
     "validation": "请填写名称、有效的来源和目标标签，并选择至少一个相等标签。",
     "loadFailed": "抑制策略加载失败。",
     "saveSuccess": "抑制策略已保存。",

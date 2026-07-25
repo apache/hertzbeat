@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Button, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
@@ -28,23 +28,23 @@ import { useAlertInhibitController } from '../controller/use-alert-inhibit-contr
 import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
-  const { t } = useTranslation();
   const controller = useAlertInhibitController();
-  const { command, detail, draft, editorFailure, list, query, recovery, refreshing, search } = controller.state;
+  const { command, detail, draft, editorFailure, list, query, recovery, refreshing, search, selectedIds } =
+    controller.state;
   const saveRecovery = recovery?.kind === 'save' ? recovery : undefined;
   const routeRecovery = recovery?.kind === 'save' ? undefined : recovery;
   const busy = command !== 'idle';
+  const removeSelected = () => {
+    if (!busy && selectedIds.length > 0) void controller.removeMany(selectedIds);
+  };
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('alertInhibits.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('alertInhibits.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={busy} onClick={controller.create}>
-          {t('alertInhibits.new')}
-        </Button>
-      </header>
+      <AlertInhibitPageHeader
+        busy={busy}
+        selectedCount={selectedIds.length}
+        create={controller.create}
+        removeSelected={removeSelected}
+      />
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertInhibitToolbar
@@ -62,6 +62,8 @@ export function AlertInhibitPage() {
         busy={busy}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
+        selectedIds={selectedIds}
+        selectIds={controller.selectIds}
         edit={controller.edit}
         toggle={controller.toggle}
         remove={controller.remove}
@@ -83,5 +85,44 @@ export function AlertInhibitPage() {
         />
       )}
     </div>
+  );
+}
+
+function AlertInhibitPageHeader({
+  busy,
+  selectedCount,
+  create,
+  removeSelected
+}: {
+  busy: boolean;
+  selectedCount: number;
+  create: () => unknown;
+  removeSelected: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <header className={styles.heading}>
+      <div>
+        <Typography.Title level={2}>{t('alertInhibits.title')}</Typography.Title>
+        <Typography.Text type="secondary">{t('alertInhibits.description')}</Typography.Text>
+      </div>
+      <Space>
+        {selectedCount > 0 && (
+          <Popconfirm
+            title={t('alertInhibits.deleteSelectedConfirm', { count: selectedCount })}
+            disabled={busy}
+            okText={t('common.delete')}
+            onConfirm={removeSelected}
+          >
+            <Button danger disabled={busy}>
+              {t('alertInhibits.deleteSelected')}
+            </Button>
+          </Popconfirm>
+        )}
+        <Button type="primary" disabled={busy} onClick={create}>
+          {t('alertInhibits.new')}
+        </Button>
+      </Space>
+    </header>
   );
 }

@@ -29,6 +29,8 @@ type ResultsProps = {
   busy: boolean;
   pageIndex: number;
   pageSize: number;
+  selectedIds: number[];
+  selectIds: (ids: number[]) => unknown;
   edit: (id: number) => unknown;
   toggle: (inhibit: AlertInhibit, enabled: boolean) => unknown;
   remove: (id: number) => unknown;
@@ -157,6 +159,13 @@ export function AlertInhibitResults(props: ResultsProps) {
       loading={props.state.kind === 'loading'}
       dataSource={records}
       columns={buildColumns(t, props.busy, props.edit, props.toggle, props.remove)}
+      rowSelection={{
+        selectedRowKeys: props.selectedIds,
+        getCheckboxProps: () => ({ disabled: props.busy }),
+        onChange: keys => {
+          if (!props.busy) props.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+        }
+      }}
       scroll={{ x: 1200 }}
       pagination={{
         current: props.pageIndex + 1,

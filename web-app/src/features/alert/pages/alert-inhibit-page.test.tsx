@@ -27,9 +27,11 @@ const controller = vi.hoisted(() => ({
   edit: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  removeMany: vi.fn(),
   retry: vi.fn(),
   retryDetail: vi.fn(),
   setSearch: vi.fn(),
+  selectIds: vi.fn(),
   state: {},
   submit: vi.fn(),
   submitSearch: vi.fn(),
@@ -113,6 +115,21 @@ describe('AlertInhibitPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it('selects current-page policies and confirms one batch delete', () => {
+    const view = render(<AlertInhibitPage />);
+    const rowCheckbox = screen.getAllByRole('checkbox').at(1);
+    expect(rowCheckbox).toBeDefined();
+    fireEvent.click(rowCheckbox!);
+    expect(controller.selectIds).toHaveBeenCalledWith([7]);
+
+    controller.state = buildState({ selectedIds: [7] });
+    view.rerender(<AlertInhibitPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertInhibits.deleteSelected' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.delete' }));
+
+    expect(controller.removeMany).toHaveBeenCalledWith([7]);
   });
 
   it.each(['saving', 'operating'] as const)('makes the editor explicitly non-interactive while %s', command => {
@@ -235,6 +252,7 @@ function buildState(override: Record<string, unknown> = {}) {
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,
     search: '',
+    selectedIds: [],
     ...override
   };
 }

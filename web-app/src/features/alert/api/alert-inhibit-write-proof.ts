@@ -46,9 +46,14 @@ export async function proveAlertInhibitMissing(id: number) {
   throw new AlertInhibitContractError('deleted detail still exists');
 }
 
-export function requireAlertInhibitAbsent(page: AlertInhibitPage, id: number) {
-  if (page.content.some(record => record.id === id)) {
-    throw new AlertInhibitContractError('deleted id remains');
+export async function proveAlertInhibitsMissing(ids: number[]) {
+  await Promise.all(ids.map(proveAlertInhibitMissing));
+}
+
+export function requireAlertInhibitsAbsent(page: AlertInhibitPage, ids: number[]) {
+  const deletedIds = new Set(ids);
+  if (page.content.some(record => deletedIds.has(record.id))) {
+    throw new AlertInhibitContractError('a deleted id remains');
   }
 }
 

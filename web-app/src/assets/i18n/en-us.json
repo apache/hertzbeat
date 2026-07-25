@@ -1525,6 +1525,8 @@
     "updated": "Updated",
     "delete": "Delete",
     "deleteConfirm": "Delete this inhibition policy?",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm": "Delete {{count}} selected inhibition policies?",
     "validation": "Enter a name, valid source and target matchers, and at least one equal label.",
     "loadFailed": "The inhibition policy could not be loaded.",
     "saveSuccess": "Inhibition policy saved.",

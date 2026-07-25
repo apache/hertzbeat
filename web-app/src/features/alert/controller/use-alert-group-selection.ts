@@ -14,28 +14,11 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
-import { normalizeAlertGroupIds, writeAlertGroupQuery, type AlertGroupQuery } from '../model/alert-group-model';
+import { writeAlertGroupQuery, type AlertGroupQuery } from '../model/alert-group-model';
 import type { AlertGroupListState } from '../model/alert-group-state';
 
-type AlertGroupSelection = { scope: string; source: AlertGroupListState; ids: number[] };
-
 export function useAlertGroupSelection(query: AlertGroupQuery, list: AlertGroupListState) {
-  const scope = writeAlertGroupQuery(query).toString();
-  const [selection, setSelection] = useState<AlertGroupSelection>({ scope, source: list, ids: [] });
-  const visibleIds = useMemo(() => new Set(list.kind === 'ready' ? list.records.map(record => record.id) : []), [list]);
-  const selectedIds =
-    selection.scope === scope && selection.source === list ? selection.ids.filter(id => visibleIds.has(id)) : [];
-
-  const selectIds = useCallback(
-    (ids: number[]) => {
-      const visible = new Set(list.kind === 'ready' ? list.records.map(record => record.id) : []);
-      const selected = ids.filter(id => visible.has(id));
-      setSelection({ scope, source: list, ids: selected.length > 0 ? normalizeAlertGroupIds(selected) : [] });
-    },
-    [list, scope]
-  );
-
-  return { selectedIds, selectIds };
+  return useAuthoritativePageSelection(writeAlertGroupQuery(query).toString(), list);
 }

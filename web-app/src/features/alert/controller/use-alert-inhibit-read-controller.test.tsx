@@ -67,12 +67,17 @@ describe('Alert Inhibit read controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe(kind));
   });
 
-  it('keeps out-of-range nonzero evidence ready', async () => {
-    api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) =>
-      Promise.resolve({ ...alertInhibitPage(query, []), totalElements: 5, totalPages: 1 })
-    );
-    const { result } = renderReadController('/alerts/inhibits?pageIndex=2&pageSize=8');
-    await waitFor(() => expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 }));
+  it('returns authoritative out-of-range evidence to the last populated page', async () => {
+    api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) => {
+      if (query.pageIndex === 2) {
+        return Promise.resolve({ ...alertInhibitPage(query, []), totalElements: 5, totalPages: 1 });
+      }
+      return Promise.resolve({ ...alertInhibitPage(query, []), totalElements: 5, totalPages: 1 });
+    });
+    const routed = renderRoutedReadController(['/alerts/inhibits?pageIndex=2&pageSize=8']);
+
+    await waitFor(() => expect(routed.current().state.query.pageIndex).toBe(0));
+    expect(routed.router.state.location.search).toBe('?pageIndex=0&pageSize=8');
   });
 
   it('rejects a command projection when the visible query changes while its reread is pending', async () => {

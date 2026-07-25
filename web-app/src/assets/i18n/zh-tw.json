@@ -1506,6 +1506,8 @@
     "updated": "更新時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此抑制策略？",
+    "deleteSelected": "刪除所選",
+    "deleteSelectedConfirm": "確認刪除所選的 {{count}} 條抑制策略？",
     "validation": "請填寫名稱、有效的來源和目標標籤，並選擇至少一個相等標籤。",
     "loadFailed": "抑制策略載入失敗。",
     "saveSuccess": "抑制策略已儲存。",

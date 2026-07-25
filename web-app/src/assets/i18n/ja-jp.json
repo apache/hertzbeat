@@ -1527,6 +1527,8 @@
     "updated": "更新日時",
     "delete": "削除",
     "deleteConfirm": "この抑制ポリシーを削除しますか？",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択した {{count}} 件の抑制ポリシーを削除しますか？",
     "validation": "名前、有効な送信元と対象のラベル、および1つ以上の一致ラベルを入力してください。",
     "loadFailed": "抑制ポリシーを読み込めませんでした。",
     "saveSuccess": "抑制ポリシーを保存しました。",

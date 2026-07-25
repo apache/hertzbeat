@@ -2,21 +2,24 @@
 
 import { useAlertInhibitCommandController } from './use-alert-inhibit-command-controller';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
+import { useAlertInhibitSelection } from './use-alert-inhibit-selection';
 
 export function useAlertInhibitController() {
   const read = useAlertInhibitReadController();
   const command = useAlertInhibitCommandController(read.rereadAuthoritatively);
+  const selection = useAlertInhibitSelection(read.state.query, read.state.list);
   const unlessLocked =
     <Args extends unknown[]>(action: (...args: Args) => unknown) =>
     (...args: Args) => {
       if (!command.controls.isLocked()) return action(...args);
     };
   return {
-    state: { ...command.state, ...read.state },
+    state: { ...command.state, ...read.state, selectedIds: selection.selectedIds },
     setSearch: unlessLocked(read.actions.setSearch),
     submitSearch: unlessLocked(read.actions.submitSearch),
     changePage: unlessLocked(read.actions.changePage),
     refresh: unlessLocked(read.actions.refresh),
+    selectIds: unlessLocked(selection.selectIds),
     ...command.actions
   };
 }

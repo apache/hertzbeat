@@ -114,6 +114,14 @@ export function writeAlertInhibitQuery(query: AlertInhibitQuery) {
   return params;
 }
 
+/** Canonicalizes command identity before it reaches the transport boundary. */
+export function normalizeAlertInhibitIds(ids: number[]) {
+  if (ids.length === 0 || ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertInhibitContractError('alert inhibit ids must be positive safe integers');
+  }
+  return [...new Set(ids)].sort((left, right) => left - right);
+}
+
 export function createAlertInhibitDraft(): AlertInhibitDraft {
   return {
     name: '',
