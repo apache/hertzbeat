@@ -2833,6 +2833,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "brettgervasoni",
+      "name": "brettgervasoni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34056000?v=4",
+      "profile": "https://github.com/brettgervasoni",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
