@@ -56,7 +56,7 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
     public ManagedOtelRuntimeStatus status() {
         OtelRuntimeSnapshot snapshot = supervisor.snapshot();
         List<ManagedOtelRuntimeStatus.ManagedOtelSourceStatus> sources =
-                properties.isEnabled() ? supervisor.sourceStatuses() : List.of();
+                properties.isEnabled() ? sanitize(supervisor.sourceStatuses()) : List.of();
         RuntimeTelemetry telemetry = telemetry(snapshot, sources);
         FailureCode failureCode = failureCode(snapshot, telemetry);
         return new ManagedOtelRuntimeStatus(
@@ -74,6 +74,18 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
                 telemetry,
                 sources
         );
+    }
+
+    private List<ManagedOtelRuntimeStatus.ManagedOtelSourceStatus> sanitize(
+            List<ManagedOtelRuntimeStatus.ManagedOtelSourceStatus> sources) {
+        return sources.stream()
+                .map(source -> new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                        source.type(),
+                        source.name(),
+                        source.revision(),
+                        source.state(),
+                        diagnosticsReader.sanitize(source.lastError(), properties)))
+                .toList();
     }
 
     private RuntimeTelemetry telemetry(
