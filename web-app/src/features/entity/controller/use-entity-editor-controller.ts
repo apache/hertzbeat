@@ -50,6 +50,7 @@ export function useEntityEditorController(mode: 'new' | 'edit') {
     }
   });
   const change = (field: EntityEditorField, value: string) => {
+    if (save.isPending) return;
     setDraft(current => ({ ...current, [field]: value }));
     setErrors(current => withoutEditorError(current, field));
     save.reset();
@@ -62,6 +63,7 @@ export function useEntityEditorController(mode: 'new' | 'edit') {
     if (payload) save.mutate(payload);
   };
   const cancel = () => {
+    if (save.isPending) return;
     if (!isEntityEditorDirty(initial, draft)) return void navigate(cancelTarget);
     confirmDiscard(modal, t, () => navigate(cancelTarget));
   };

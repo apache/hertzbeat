@@ -50,6 +50,15 @@ describe('EntityEditorView', () => {
     expect(screen.getByText('Name is required.')).toBeInTheDocument();
     expect(screen.getByText('You do not have permission to save this resource.')).toBeInTheDocument();
   });
+
+  it('disables the complete form while a submitted snapshot is saving', () => {
+    renderView({ saving: true });
+
+    expect(screen.getByRole('combobox', { name: 'Resource type' })).toBeDisabled();
+    expect(screen.getByLabelText('Name')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Advanced details' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  });
 });
 
 function renderView(

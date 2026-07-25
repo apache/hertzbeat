@@ -101,6 +101,28 @@ describe('useEntityEditorController', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['entities', 'editor', 41], refetchType: 'none' });
   });
 
+  it('keeps the submitted draft authoritative until the write settles', async () => {
+    let resolveSave: ((id: number) => void) | undefined;
+    api.saveEditableEntity.mockReturnValueOnce(new Promise<number>(resolve => (resolveSave = resolve)));
+    const routed = renderController('new', '/entities/new');
+    act(() => {
+      routed.current().actions.change('type', 'service');
+      routed.current().actions.change('name', 'checkout');
+    });
+    act(() => routed.current().actions.submit());
+    await waitFor(() => expect(routed.current().state.saving).toBe(true));
+
+    act(() => {
+      routed.current().actions.change('name', 'post-submit-edit');
+      routed.current().actions.cancel();
+    });
+
+    expect(routed.current().state.draft.name).toBe('checkout');
+    expect(modal.confirm).not.toHaveBeenCalled();
+    act(() => resolveSave?.(41));
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/entities/41'));
+  });
+
   it('redacts permission failures into a stable view state', async () => {
     api.saveEditableEntity.mockRejectedValueOnce(new ApiMessageError('private server detail', { status: 403 }));
     const routed = renderController('new', '/entities/new');

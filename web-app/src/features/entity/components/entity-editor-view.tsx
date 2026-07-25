@@ -69,7 +69,7 @@ function ReadyEditor({ state, actions }: EntityEditorViewProps) {
       {state.saveFailure ? (
         <Alert showIcon type="error" message={t(`entity.editor.saveFailure.${state.saveFailure}`)} />
       ) : null}
-      <Form layout="vertical" onFinish={actions.submit} className={styles.editorForm ?? ''}>
+      <Form disabled={state.saving} layout="vertical" onFinish={actions.submit} className={styles.editorForm ?? ''}>
         <EntityEditorCoreFields {...fields} />
         <Button type="link" className={styles.disclosure ?? ''} onClick={() => setAdvanced(value => !value)}>
           {t(advanced ? 'entity.editor.hideAdvanced' : 'entity.editor.showAdvanced')}
