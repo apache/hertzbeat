@@ -132,6 +132,27 @@ describe('notice receiver controller composition', () => {
     act(() => write.resolve({ data: persistedNoticeReceiver }));
     await act(async () => submission);
   });
+
+  it('returns an out-of-range receiver page to the last authoritative result page', async () => {
+    refine.params = 'pageIndex=2&pageSize=8&name=ops';
+    refine.useList.mockReturnValue({
+      query: { error: null, isError: false, isFetching: false, isPending: false, refetch: refine.refetch },
+      result: { data: [], total: 10 }
+    });
+
+    renderHook(() => useNoticeReceiverController());
+
+    await waitFor(() =>
+      expect(refine.setParams).toHaveBeenCalledWith(
+        expect.objectContaining({
+          get: expect.any(Function)
+        }),
+        { replace: true }
+      )
+    );
+    const corrected = refine.setParams.mock.calls.at(-1)?.[0] as URLSearchParams;
+    expect(corrected.toString()).toBe('pageIndex=1&pageSize=8&name=ops');
+  });
 });
 
 function listHookResult(refetch: typeof refine.refetch) {

@@ -39,6 +39,13 @@ export function useNoticeReceiverQueryController() {
     [query, setSearchParams]
   );
 
+  const replacePageIndex = useCallback(
+    (pageIndex: number) => {
+      setSearchParams(writeNoticeReceiverQuery({ ...query, pageIndex }), { replace: true });
+    },
+    [query, setSearchParams]
+  );
+
   const setName = useCallback(
     (value: string) => {
       setDraft({ query, value });
@@ -46,5 +53,5 @@ export function useNoticeReceiverQueryController() {
     [query]
   );
 
-  return { query, name, setName, search, changePage };
+  return { query, name, setName, search, changePage, replacePageIndex };
 }

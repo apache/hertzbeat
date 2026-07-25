@@ -2,11 +2,13 @@
 
 import { useNoticeReceiverCommandController } from './use-notice-receiver-command-controller';
 import { useNoticeReceiverQueryController } from './notice-receiver-query-controller';
+import { useNoticeReceiverPageCorrection } from './use-notice-receiver-page-correction';
 import { useNoticeReceiverReadController } from './use-notice-receiver-read-controller';
 
 export function useNoticeReceiverController() {
   const query = useNoticeReceiverQueryController();
   const read = useNoticeReceiverReadController(query.query);
+  useNoticeReceiverPageCorrection(query.query, read.state.list, query.replacePageIndex);
   const command = useNoticeReceiverCommandController({
     loadExact: read.loadExact,
     rereadAuthoritatively: read.rereadAuthoritatively

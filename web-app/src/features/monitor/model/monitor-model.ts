@@ -16,6 +16,7 @@
  */
 
 import { buildMonitorDetailPath, buildMonitorEditPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import { authoritativePageIndexCorrection } from '@/shared/pagination';
 
 import { monitorStatusCodes, type MonitorPage, type MonitorQuery, type MonitorScrape } from './monitor-contract';
 import { readMonitorQuery, writeMonitorQuery } from './monitor-query';
@@ -46,8 +47,7 @@ export function reconcileMonitorSelection(selection: MonitorScopedSelection, sco
 
 export function monitorPageIndexCorrection(query: MonitorQuery, page?: MonitorPage) {
   if (!page || page.number !== query.pageIndex || query.pageIndex === 0) return undefined;
-  const lastPageIndex = Math.max(0, page.totalPages - 1);
-  return query.pageIndex > lastPageIndex ? lastPageIndex : undefined;
+  return authoritativePageIndexCorrection(query.pageIndex, page.totalPages);
 }
 
 type MonitorAppItem = {
