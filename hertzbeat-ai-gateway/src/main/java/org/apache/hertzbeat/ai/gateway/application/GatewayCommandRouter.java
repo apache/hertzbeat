@@ -20,10 +20,8 @@ package org.apache.hertzbeat.ai.gateway.application;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CancelRunCommand;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListToolsCommand;
 import org.springframework.stereotype.Service;
 
 /**
@@ -54,8 +52,6 @@ public class GatewayCommandRouter {
             case InvokeCommand invokeCommand -> agentCommandService.handle(invokeCommand);
             case ApprovalDecisionCommand approvalCommand -> approvalCommandService.decide(approvalCommand);
             case CancelRunCommand cancelCommand -> runCommandService.cancel(cancelCommand);
-            case ListToolsCommand listToolsCommand -> queryService.listTools(listToolsCommand);
-            case GetRunCommand getRunCommand -> queryService.getRun(getRunCommand);
             case GetSessionCommand getSessionCommand -> queryService.getSession(getSessionCommand);
         };
     }

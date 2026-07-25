@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListToolsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
@@ -69,13 +69,14 @@ class GatewayCommandRouterTest {
 
     @Test
     void queryCommandShouldRouteOnlyToQueryService() {
-        GatewaySingleResponse expected = response("tools");
-        ListToolsCommand command = new ListToolsCommand(envelope(), ReplyMode.FINAL_ONLY, "list-tools");
-        when(queryService.listTools(command)).thenReturn(expected);
+        GatewaySingleResponse expected = response("session");
+        GetSessionCommand command = new GetSessionCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "get-session", "ags-1");
+        when(queryService.getSession(command)).thenReturn(expected);
 
         assertSame(expected, router().handle(command));
 
-        verify(queryService).listTools(command);
+        verify(queryService).getSession(command);
         verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
     }
 

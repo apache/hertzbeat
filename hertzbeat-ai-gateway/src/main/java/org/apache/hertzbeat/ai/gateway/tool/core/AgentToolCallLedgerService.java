@@ -28,8 +28,6 @@ import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -155,23 +153,8 @@ public class AgentToolCallLedgerService {
         return toolCallDao.save(toolCall);
     }
 
-    public Optional<AgentToolCall> findToolCall(Long runId, String toolCallId) {
-        if (runId == null || toolCallId == null) {
-            return Optional.empty();
-        }
-        return toolCallDao.findByRunIdAndToolCallId(runId, toolCallId);
-    }
-
     public Optional<AgentToolCall> findApproval(String approvalId) {
         return toolCallDao.findByApprovalId(approvalId);
-    }
-
-    public Page<AgentToolCall> findRunToolCalls(Long runId, Pageable pageable) {
-        // Query APIs may receive a missing run id after lookup failure; expose an empty page instead of querying null.
-        if (runId == null) {
-            return Page.empty(pageable);
-        }
-        return toolCallDao.findByRunIdOrderByGmtCreateAsc(runId, pageable);
     }
 
     private AgentToolCall baseToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor, AgentPolicyResult policy) {

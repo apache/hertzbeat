@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.LinkedHashMap;
@@ -38,9 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 /**
  * Agent tool-call ledger service tests.
@@ -124,36 +120,6 @@ class AgentToolCallLedgerServiceTest {
         assertEquals(AgentApprovalStatus.APPROVED.name(), started.getApprovalStatus());
         assertEquals(AgentPolicyDecision.ALLOW.name(), started.getPolicyDecision());
         assertTrue(started.getInputJson().contains("\"pageSize\":1"));
-    }
-
-    @Test
-    void findToolCallShouldDelegateRawUidToDao() {
-        AgentToolCallLedgerService service = new AgentToolCallLedgerService(toolCallDao);
-        AgentToolCall toolCall = AgentToolCall.builder().toolCallId(" agc_1 ").build();
-        when(toolCallDao.findByRunIdAndToolCallId(1L, " agc_1 ")).thenReturn(Optional.of(toolCall));
-
-        Optional<AgentToolCall> result = service.findToolCall(1L, " agc_1 ");
-
-        assertSame(toolCall, result.orElseThrow());
-        verify(toolCallDao).findByRunIdAndToolCallId(1L, " agc_1 ");
-    }
-
-    @Test
-    void findRunToolCallsShouldQueryByRunId() {
-        AgentToolCallLedgerService service = new AgentToolCallLedgerService(toolCallDao);
-        PageRequest pageable = PageRequest.of(0, 20);
-        AgentToolCall toolCall = AgentToolCall.builder()
-            .toolCallId("agc_1")
-            .runId(2L)
-            .runUid("run_1")
-            .build();
-        Page<AgentToolCall> page = new PageImpl<>(List.of(toolCall), pageable, 1);
-        when(toolCallDao.findByRunIdOrderByGmtCreateAsc(2L, pageable)).thenReturn(page);
-
-        Page<AgentToolCall> result = service.findRunToolCalls(2L, pageable);
-
-        assertSame(page, result);
-        assertEquals("run_1", result.getContent().get(0).getRunUid());
     }
 
     @Test

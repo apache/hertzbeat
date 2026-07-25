@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.channel.webui;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,19 +25,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListToolsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCallLedgerService;
-import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
-import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.data.domain.Page;
@@ -60,17 +53,11 @@ public class QueryController {
 
     private final GatewayCommandRouter commandRouter;
     private final AgentSessionService sessionService;
-    private final AgentRunService runService;
-    private final AgentToolCallLedgerService toolCallLedgerService;
 
     public QueryController(GatewayCommandRouter commandRouter,
-                           AgentSessionService sessionService,
-                           AgentRunService runService,
-                           AgentToolCallLedgerService toolCallLedgerService) {
+                           AgentSessionService sessionService) {
         this.commandRouter = commandRouter;
         this.sessionService = sessionService;
-        this.runService = runService;
-        this.toolCallLedgerService = toolCallLedgerService;
     }
 
     @GetMapping("/sessions/{sessionId}")
@@ -107,52 +94,6 @@ public class QueryController {
                 ChannelId.ALERT.id(), actor, search, pageRequest(pageIndex, pageSize))));
     }
 
-    @GetMapping("/runs/{runUid}")
-    @Operation(summary = "Get Agent Gateway run")
-    public ResponseEntity<Message<GatewaySingleResponse>> getRun(
-            @Parameter(description = "Run UID") @PathVariable String runUid) {
-        return ResponseEntity.ok(Message.success((GatewaySingleResponse) commandRouter.handle(
-                GetRunCommand.builder()
-                        .envelope(envelope())
-                        .replyMode(ReplyMode.FINAL_ONLY)
-                        .commandId("get-run:" + runUid)
-                        .runUid(runUid)
-                        .build())));
-    }
-
-    @GetMapping("/runs/{runUid}/transcript")
-    @Operation(summary = "Get Agent Gateway run transcript entries")
-    public ResponseEntity<Message<Page<AgentTranscriptEntry>>> getRunTranscript(
-            @Parameter(description = "Run UID") @PathVariable String runUid,
-            @RequestParam(defaultValue = "0") int pageIndex,
-            @RequestParam(defaultValue = "50") int pageSize) {
-        return ResponseEntity.ok(Message.success(runService.findRun(runUid)
-                .map(run -> sessionService.findRunTranscriptEntries(run.getId(), pageRequest(pageIndex, pageSize)))
-                .orElseGet(() -> Page.empty(pageRequest(pageIndex, pageSize)))));
-    }
-
-    @GetMapping("/runs/{runUid}/tool-calls")
-    @Operation(summary = "Get Agent Gateway run tool calls")
-    public ResponseEntity<Message<Page<AgentToolCall>>> getRunToolCalls(
-            @Parameter(description = "Run UID") @PathVariable String runUid,
-            @RequestParam(defaultValue = "0") int pageIndex,
-            @RequestParam(defaultValue = "50") int pageSize) {
-        return ResponseEntity.ok(Message.success(runService.findRun(runUid)
-                .map(run -> toolCallLedgerService.findRunToolCalls(run.getId(), pageRequest(pageIndex, pageSize)))
-                .orElseGet(() -> Page.empty(pageRequest(pageIndex, pageSize)))));
-    }
-
-    @GetMapping("/sessions/{sessionUid}/runs")
-    @Operation(summary = "List Agent Gateway session runs")
-    public ResponseEntity<Message<Page<AgentRun>>> listSessionRuns(
-            @Parameter(description = "Session UID or numeric ID") @PathVariable String sessionUid,
-            @RequestParam(defaultValue = "0") int pageIndex,
-            @RequestParam(defaultValue = "50") int pageSize) {
-        return ResponseEntity.ok(Message.success(sessionService.findSession(sessionUid)
-                .map(session -> runService.findSessionRuns(session.getId(), pageRequest(pageIndex, pageSize)))
-                .orElseGet(() -> Page.empty(pageRequest(pageIndex, pageSize)))));
-    }
-
     @GetMapping("/sessions/{sessionUid}/transcript")
     @Operation(summary = "List Agent Gateway session transcript entries")
     public ResponseEntity<Message<Page<AgentTranscriptEntry>>> listSessionTranscript(
@@ -163,28 +104,6 @@ public class QueryController {
                 .map(session -> sessionService.findTranscriptEntries(session.getId(),
                         pageRequest(pageIndex, pageSize)))
                 .orElseGet(() -> Page.empty(pageRequest(pageIndex, pageSize)))));
-    }
-
-    @GetMapping("/runs/{runUid}/tool-calls/{toolCallId}")
-    @Operation(summary = "Get Agent Gateway tool call")
-    public ResponseEntity<Message<AgentToolCall>> getToolCall(
-            @Parameter(description = "Run UID") @PathVariable String runUid,
-            @Parameter(description = "Tool-call ID") @PathVariable String toolCallId) {
-        return runService.findRun(runUid)
-                .flatMap(run -> toolCallLedgerService.findToolCall(run.getId(), toolCallId))
-                .map(toolCall -> ResponseEntity.ok(Message.success(toolCall)))
-                .orElseGet(() -> ResponseEntity.ok(Message.fail(FAIL_CODE, "Agent tool call not found")));
-    }
-
-    @GetMapping("/tools")
-    @Operation(summary = "List Agent Gateway tools")
-    public ResponseEntity<Message<GatewaySingleResponse>> listTools() {
-        return ResponseEntity.ok(Message.success((GatewaySingleResponse) commandRouter.handle(
-                ListToolsCommand.builder()
-                        .envelope(envelope())
-                        .replyMode(ReplyMode.FINAL_ONLY)
-                        .commandId("list-tools")
-                        .build())));
     }
 
     private GatewayEnvelope envelope() {

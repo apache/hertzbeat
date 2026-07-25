@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,7 +32,6 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
@@ -47,9 +45,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 /**
  * Agent run service tests.
@@ -134,13 +129,9 @@ class AgentRunServiceTest {
     void findMethodsShouldDelegateToRunDao() {
         AgentRunService service = new AgentRunService(runDao, entityManager);
         AgentRun run = AgentRun.builder().id(1L).runUid("run_1").build();
-        PageRequest pageable = PageRequest.of(0, 10);
-        Page<AgentRun> page = new PageImpl<>(List.of(run), pageable, 1);
         when(runDao.findByRunUid("run_1")).thenReturn(Optional.of(run));
-        when(runDao.findBySessionIdOrderByGmtCreateDesc(eq(1L), eq(pageable))).thenReturn(page);
 
         assertSame(run, service.findRun("run_1").orElseThrow());
-        assertSame(page, service.findSessionRuns(1L, pageable));
     }
 
     @Test

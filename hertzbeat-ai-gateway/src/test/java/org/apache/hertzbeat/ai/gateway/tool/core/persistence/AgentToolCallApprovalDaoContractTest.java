@@ -80,10 +80,7 @@ class AgentToolCallApprovalDaoContractTest {
     }
 
     @Test
-    void toolCallDaoShouldExposeScopedToolCallAndApprovalLookupMethods() throws NoSuchMethodException {
-        assertEquals(Optional.class, AgentToolCallDao.class
-            .getMethod("findByRunIdAndToolCallId", Long.class, String.class)
-            .getReturnType());
+    void toolCallDaoShouldExposeApprovalLookupMethod() throws NoSuchMethodException {
         assertEquals(Optional.class, AgentToolCallDao.class.getMethod("findByApprovalId", String.class)
             .getReturnType());
     }

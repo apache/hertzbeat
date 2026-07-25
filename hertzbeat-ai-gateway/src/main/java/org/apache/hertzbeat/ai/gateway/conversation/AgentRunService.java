@@ -28,8 +28,6 @@ import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,10 +101,6 @@ public class AgentRunService {
             return Optional.empty();
         }
         return runDao.findByRunUid(normalized);
-    }
-
-    public Page<AgentRun> findSessionRuns(Long sessionId, Pageable pageable) {
-        return runDao.findBySessionIdOrderByGmtCreateDesc(sessionId, pageable);
     }
 
     private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId) {

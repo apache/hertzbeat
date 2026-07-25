@@ -34,19 +34,13 @@ import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetRunCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
-import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListToolsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCallLedgerService;
-import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
-import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -76,12 +70,6 @@ class QueryControllerTest {
     private AgentSessionService sessionService;
 
     @Mock
-    private AgentRunService runService;
-
-    @Mock
-    private AgentToolCallLedgerService toolCallLedgerService;
-
-    @Mock
     private SubjectSum subject;
 
     @Captor
@@ -93,23 +81,15 @@ class QueryControllerTest {
     }
 
     @Test
-    void listToolsAndQueryEndpointsShouldRouteThroughGatewayCommandRouter() {
+    void sessionQueryShouldRouteThroughGatewayCommandRouter() {
         QueryController controller = controller();
-        GatewaySingleResponse toolsResponse = response("list-tools", "tools");
-        GatewaySingleResponse runResponse = response("get-run:run-1", "run");
         GatewaySingleResponse sessionResponse = response("get-session:ags-1", "session");
         when(commandRouter.handle(commandCaptor.capture()))
-                .thenReturn(toolsResponse)
-                .thenReturn(runResponse)
                 .thenReturn(sessionResponse);
 
-        assertSame(toolsResponse, controller.listTools().getBody().getData());
-        assertSame(runResponse, controller.getRun("run-1").getBody().getData());
         assertSame(sessionResponse, controller.getSession("ags-1").getBody().getData());
 
-        assertInstanceOf(ListToolsCommand.class, commandCaptor.getAllValues().get(0));
-        assertInstanceOf(GetRunCommand.class, commandCaptor.getAllValues().get(1));
-        assertInstanceOf(GetSessionCommand.class, commandCaptor.getAllValues().get(2));
+        assertInstanceOf(GetSessionCommand.class, commandCaptor.getValue());
     }
 
     @Test
@@ -128,65 +108,26 @@ class QueryControllerTest {
     }
 
     @Test
-    void runAndToolCallApisShouldUseLowLevelQueryServicesWithoutGatewayRouter() {
+    void sessionTranscriptShouldUseSessionService() {
         QueryController controller = controller();
-        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).status("SUCCEEDED").build();
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
-        AgentToolCall toolCall = AgentToolCall.builder().toolCallId("agc-1").runUid("run-1").build();
-        PageRequest cappedPage = PageRequest.of(0, 200);
-        Page<AgentRun> runPage = new PageImpl<>(List.of(run), cappedPage, 1);
-        Page<AgentToolCall> toolCallPage = new PageImpl<>(List.of(toolCall), cappedPage, 1);
-        when(runService.findRun("run-1")).thenReturn(Optional.of(run));
-        when(toolCallLedgerService.findRunToolCalls(2L, cappedPage)).thenReturn(toolCallPage);
-        when(sessionService.findSession("ags-1")).thenReturn(Optional.of(session));
-        when(runService.findSessionRuns(1L, cappedPage)).thenReturn(runPage);
-        when(toolCallLedgerService.findToolCall(2L, "agc-1")).thenReturn(Optional.of(toolCall));
-
-        ResponseEntity<Message<Page<AgentToolCall>>> runToolCallResponse = controller.getRunToolCalls("run-1", 0, 999);
-        ResponseEntity<Message<Page<AgentRun>>> runsResponse = controller.listSessionRuns("ags-1", 0, 999);
-        ResponseEntity<Message<AgentToolCall>> toolCallResponse = controller.getToolCall("run-1", "agc-1");
-
-        assertSame(toolCallPage, runToolCallResponse.getBody().getData());
-        assertSame(runPage, runsResponse.getBody().getData());
-        assertSame(toolCall, toolCallResponse.getBody().getData());
-    }
-
-    @Test
-    void transcriptApisShouldUseSessionServiceAndToolLedgerSeparately() {
-        QueryController controller = controller();
-        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
-        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
-        AgentTranscriptEntry runTranscript = AgentTranscriptEntry.builder()
-                .runId(2L)
-                .sessionId(1L)
-                .messageRole(TranscriptMessage.TranscriptRole.TOOL_RESULT.wireValue())
-                .payloadJson(JsonUtil.toJson(TranscriptMessage.toolResult("call-1", "alert.history",
-                        "bounded", null)))
-                .build();
         AgentTranscriptEntry sessionTranscript = AgentTranscriptEntry.builder()
                 .sessionId(1L)
                 .messageRole(TranscriptMessage.TranscriptRole.ASSISTANT.wireValue())
                 .payloadJson(JsonUtil.toJson(TranscriptMessage.assistantText("diagnosis complete")))
                 .build();
         PageRequest defaultPage = PageRequest.of(0, 50);
-        PageRequest cappedPage = PageRequest.of(0, 200);
-        Page<AgentTranscriptEntry> runTranscriptPage = new PageImpl<>(List.of(runTranscript), cappedPage, 1);
         Page<AgentTranscriptEntry> sessionTranscriptPage = new PageImpl<>(List.of(sessionTranscript), defaultPage, 1);
-        when(runService.findRun("run-1")).thenReturn(Optional.of(run));
-        when(sessionService.findRunTranscriptEntries(2L, cappedPage)).thenReturn(runTranscriptPage);
         when(sessionService.findSession("ags-1")).thenReturn(Optional.of(session));
         when(sessionService.findTranscriptEntries(1L, defaultPage)).thenReturn(sessionTranscriptPage);
 
-        ResponseEntity<Message<Page<AgentTranscriptEntry>>> runTranscriptResponse =
-                controller.getRunTranscript("run-1", 0, 999);
         ResponseEntity<Message<Page<AgentTranscriptEntry>>> sessionTranscriptResponse =
                 controller.listSessionTranscript("ags-1", 0, 50);
 
-        assertSame(runTranscriptPage, runTranscriptResponse.getBody().getData());
         assertSame(sessionTranscriptPage, sessionTranscriptResponse.getBody().getData());
-        assertEquals("call-1", JsonUtil.fromJson(
-            runTranscriptResponse.getBody().getData().getContent().get(0).getPayloadJson(),
-            TranscriptMessage.class).getToolCallId());
+        assertEquals("diagnosis complete", JsonUtil.fromJson(
+            sessionTranscriptResponse.getBody().getData().getContent().get(0).getPayloadJson(),
+            TranscriptMessage.class).getContent().get(0).getText());
     }
 
     @Test
@@ -207,7 +148,7 @@ class QueryControllerTest {
     }
 
     private QueryController controller() {
-        return new QueryController(commandRouter, sessionService, runService, toolCallLedgerService);
+        return new QueryController(commandRouter, sessionService);
     }
 
     private GatewaySingleResponse response(String commandId, String message) {
