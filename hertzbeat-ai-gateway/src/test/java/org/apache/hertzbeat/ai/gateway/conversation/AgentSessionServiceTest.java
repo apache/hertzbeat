@@ -202,22 +202,6 @@ class AgentSessionServiceTest {
     }
 
     @Test
-    void findRunTranscriptEntriesShouldQueryRunTranscriptInOrder() {
-        AgentSessionService service = new AgentSessionService(
-            sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
-        PageRequest pageable = PageRequest.of(0, 20);
-        AgentTranscriptEntry entry = transcriptEntry(2L, assistantToolCall("call-1", "alert.history", "alertId=1001"));
-        Page<AgentTranscriptEntry> page = new PageImpl<>(List.of(entry), pageable, 1);
-        when(transcriptEntryDao.findByRunIdOrderBySessionSequenceAsc(eq(2L), eq(pageable)))
-            .thenReturn(page);
-
-        Page<AgentTranscriptEntry> result = service.findRunTranscriptEntries(2L, pageable);
-
-        assertSame(page, result);
-        assertEquals(2L, result.getContent().get(0).getRunId());
-    }
-
-    @Test
     void persistCompactionCheckpointShouldAppendDerivedSummary() {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);

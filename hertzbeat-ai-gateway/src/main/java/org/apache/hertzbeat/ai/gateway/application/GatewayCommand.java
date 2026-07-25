@@ -33,8 +33,6 @@ public sealed interface GatewayCommand permits
         GatewayCommand.InvokeCommand,
         GatewayCommand.ApprovalDecisionCommand,
         GatewayCommand.CancelRunCommand,
-        GatewayCommand.ListToolsCommand,
-        GatewayCommand.GetRunCommand,
         GatewayCommand.GetSessionCommand {
 
     GatewayEnvelope envelope();
@@ -104,43 +102,6 @@ public sealed interface GatewayCommand permits
             String reason) implements GatewayCommand {
 
         public CancelRunCommand {
-            envelope = Objects.requireNonNull(envelope, "envelope is required");
-            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
-            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(runUid)) {
-                throw new IllegalArgumentException("commandId and runUid are required");
-            }
-        }
-    }
-
-    /**
-     * Tool catalog query command.
-     */
-    @Builder
-    record ListToolsCommand(
-            GatewayEnvelope envelope,
-            ReplyMode replyMode,
-            String commandId) implements GatewayCommand {
-
-        public ListToolsCommand {
-            envelope = Objects.requireNonNull(envelope, "envelope is required");
-            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
-            if (!StringUtils.hasText(commandId)) {
-                throw new IllegalArgumentException("commandId is required");
-            }
-        }
-    }
-
-    /**
-     * Run query command.
-     */
-    @Builder
-    record GetRunCommand(
-            GatewayEnvelope envelope,
-            ReplyMode replyMode,
-            String commandId,
-            String runUid) implements GatewayCommand {
-
-        public GetRunCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(runUid)) {

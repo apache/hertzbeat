@@ -20,8 +20,6 @@ package org.apache.hertzbeat.ai.gateway.tool.core.persistence;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -37,19 +35,9 @@ public interface AgentToolCallDao extends JpaRepository<AgentToolCall, Long> {
     List<AgentToolCall> findByRunIdOrderByGmtCreateAsc(Long runId);
 
     /**
-     * Find paged tool calls for a run ordered by creation time.
-     */
-    Page<AgentToolCall> findByRunIdOrderByGmtCreateAsc(Long runId, Pageable pageable);
-
-    /**
      * Find tool calls for a session ordered by creation time.
      */
     List<AgentToolCall> findBySessionIdOrderByGmtCreateAsc(Long sessionId);
-
-    /**
-     * Find a tool call by its run-scoped model identifier.
-     */
-    Optional<AgentToolCall> findByRunIdAndToolCallId(Long runId, String toolCallId);
 
     /**
      * Find an approval-backed tool call by public approval ID.

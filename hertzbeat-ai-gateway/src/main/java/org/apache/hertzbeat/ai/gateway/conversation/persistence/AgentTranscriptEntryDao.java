@@ -52,9 +52,4 @@ public interface AgentTranscriptEntryDao extends JpaRepository<AgentTranscriptEn
      */
     List<AgentTranscriptEntry> findBySessionIdAndSessionSequenceGreaterThanEqualOrderBySessionSequenceAsc(
         Long sessionId, Long sessionSequence, Pageable pageable);
-
-    /**
-     * Find transcript entries for a run in session append order.
-     */
-    Page<AgentTranscriptEntry> findByRunIdOrderBySessionSequenceAsc(Long runId, Pageable pageable);
 }

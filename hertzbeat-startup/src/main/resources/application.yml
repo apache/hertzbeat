@@ -379,7 +379,7 @@ hertzbeat:
       code: openrouter
       model: tencent/hy3:free
       base-url: https://openrouter.ai/api/v1
-      api-key: ${HERTZBEAT_AGENT_PROVIDER_API_KEY:}
+      api-key: apikey
     runtime:
       temperature: 0.2
       max-completion-tokens: 4096

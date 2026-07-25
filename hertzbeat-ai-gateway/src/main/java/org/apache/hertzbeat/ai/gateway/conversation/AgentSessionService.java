@@ -146,10 +146,6 @@ public class AgentSessionService {
         return transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(sessionId, pageable);
     }
 
-    public Page<AgentTranscriptEntry> findRunTranscriptEntries(Long runId, Pageable pageable) {
-        return transcriptEntryDao.findByRunIdOrderBySessionSequenceAsc(runId, pageable);
-    }
-
     @Transactional
     public List<TranscriptMessage> findRecentTranscriptMessages(Long sessionId) {
         if (sessionId == null) {

@@ -19,8 +19,6 @@ package org.apache.hertzbeat.ai.gateway.conversation.persistence;
 
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -39,9 +37,4 @@ public interface AgentRunDao extends JpaRepository<AgentRun, Long> {
      * Find the existing run for a session event.
      */
     Optional<AgentRun> findBySessionIdAndMessageId(Long sessionId, String messageId);
-
-    /**
-     * Find runs for a session ordered by creation time descending.
-     */
-    Page<AgentRun> findBySessionIdOrderByGmtCreateDesc(Long sessionId, Pageable pageable);
 }
