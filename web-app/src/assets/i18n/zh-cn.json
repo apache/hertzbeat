@@ -2173,7 +2173,13 @@
       "detectSuccess": "连接检测通过。",
       "detectFailed": "连接检测失败。",
       "saveSuccess": "监控已保存。",
-      "saveFailed": "监控保存失败。"
+      "saveFailed": "监控保存失败。",
+      "portAdjusted": {
+        "https": "已为 HTTPS 将端口调整为 443。",
+        "http": "已为 HTTP 将端口调整为 80。",
+        "sftp": "已为 SFTP 将端口调整为 22。",
+        "ftp": "已为 FTP 将端口调整为 21。"
+      }
     }
   },
   "alert": {

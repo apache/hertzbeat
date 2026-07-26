@@ -2256,7 +2256,13 @@
       "detectSuccess": "連線檢測通過。",
       "detectFailed": "連線檢測失敗。",
       "saveSuccess": "監控已儲存。",
-      "saveFailed": "監控儲存失敗。"
+      "saveFailed": "監控儲存失敗。",
+      "portAdjusted": {
+        "https": "已為 HTTPS 將連接埠調整為 443。",
+        "http": "已為 HTTP 將連接埠調整為 80。",
+        "sftp": "已為 SFTP 將連接埠調整為 22。",
+        "ftp": "已為 FTP 將連接埠調整為 21。"
+      }
     }
   },
   "statusManagement": {

@@ -23,7 +23,8 @@ import {
   createMonitorEditorDraft,
   groupMonitorParamDefines,
   isMonitorParamVisible,
-  transitionMonitorEditorDraft
+  transitionMonitorEditorDraft,
+  transitionMonitorEditorParam
 } from './monitor-editor-draft';
 import { MonitorParamDraftError } from './monitor-editor-model';
 
@@ -99,6 +100,36 @@ describe('Monitor editor draft', () => {
     expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'basic' }])).toBe(true);
     expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'none' }])).toBe(false);
   });
+
+  it.each([
+    ['api', 'ssl', false, null, 80, 'http'],
+    ['api', 'ssl', true, null, 443, 'https'],
+    ['api', 'ssl', false, 443, 80, 'http'],
+    ['api', 'ssl', true, 80, 443, 'https'],
+    ['ftp', 'ssl', false, null, 21, 'ftp'],
+    ['ftp', 'ssl', true, null, 22, 'sftp'],
+    ['ftp', 'ssl', false, 22, 21, 'ftp'],
+    ['ftp', 'ssl', true, 21, 22, 'sftp'],
+    ['api', 'ssl', true, 8080, 8080, undefined],
+    ['ftp', 'ssl', true, 2121, 2121, undefined],
+    ['website', 'ssl', true, 80, 80, undefined],
+    ['api', 'verifySsl', true, 80, 80, undefined]
+  ] as const)(
+    'transitions %s %s=%s from port %s to %s',
+    (app, field, value, port, expectedPort, expectedAdjustment) => {
+      const draft = createMonitorEditorDraft(undefined, app, 'static', [
+        define({ app, field: 'port', type: 'number' }),
+        define({ app, field, type: 'boolean' })
+      ]);
+      draft.params = draft.params.map(param => (param.field === 'port' ? { ...param, paramValue: port } : param));
+
+      const result = transitionMonitorEditorParam(draft, field, value);
+
+      expect(result.draft.params.find(param => param.field === field)?.paramValue).toBe(value);
+      expect(result.draft.params.find(param => param.field === 'port')?.paramValue).toBe(expectedPort);
+      expect(result.adjustment).toBe(expectedAdjustment);
+    }
+  );
 
   it('transitions service-discovery params without carrying old credentials or instance', () => {
     const main = define({ field: 'port', type: 'number', defaultValue: '80' });

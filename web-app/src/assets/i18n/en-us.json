@@ -2197,7 +2197,13 @@
       "detectSuccess": "Connection test passed.",
       "detectFailed": "Connection test failed.",
       "saveSuccess": "Monitor saved.",
-      "saveFailed": "Monitor could not be saved."
+      "saveFailed": "Monitor could not be saved.",
+      "portAdjusted": {
+        "https": "Port changed to 443 for HTTPS.",
+        "http": "Port changed to 80 for HTTP.",
+        "sftp": "Port changed to 22 for SFTP.",
+        "ftp": "Port changed to 21 for FTP."
+      }
     }
   },
   "alert": {

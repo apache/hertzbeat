@@ -18,6 +18,7 @@
 import type { NavigateFunction } from 'react-router-dom';
 
 import { normalizeMonitorScrape, type MonitorEditorMode } from '../model/monitor-contract';
+import { transitionMonitorEditorParam, type MonitorPortAdjustment } from '../model/monitor-editor-draft';
 import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
 
 type DraftUpdater = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => void;
@@ -37,6 +38,7 @@ type MonitorEditorActionsInput = {
   cancel: () => void;
   retry: () => Promise<void>;
   isLocked: () => boolean;
+  notifyPortAdjustment: (adjustment: MonitorPortAdjustment) => void;
 };
 
 export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
@@ -55,11 +57,12 @@ export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
         ...current,
         grafanaDashboard: { ...current.grafanaDashboard, ...patch }
       })),
-    updateParam: (field: string, value: MonitorParamFormValue) =>
-      updateDraft(current => ({
-        ...current,
-        params: current.params.map(param => (param.field === field ? { ...param, paramValue: value } : param))
-      })),
+    updateParam: (field: string, value: MonitorParamFormValue) => {
+      if (input.isLocked()) return;
+      const adjustment = input.draft ? transitionMonitorEditorParam(input.draft, field, value).adjustment : undefined;
+      updateDraft(current => transitionMonitorEditorParam(current, field, value).draft);
+      if (adjustment) input.notifyPortAdjustment(adjustment);
+    },
     setParamValid: (field: string, valid: boolean) =>
       updateDraft(current => ({
         ...current,

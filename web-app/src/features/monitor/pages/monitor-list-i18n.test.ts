@@ -75,6 +75,10 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.editor.grafanaImport).toBeTruthy();
       expect(locale.monitor.editor.grafanaImportSuccess).toBeTruthy();
       expect(locale.monitor.editor.grafanaImportFailure).toBeTruthy();
+      expect(locale.monitor.editor.portAdjusted.https).toBeTruthy();
+      expect(locale.monitor.editor.portAdjusted.http).toBeTruthy();
+      expect(locale.monitor.editor.portAdjusted.sftp).toBeTruthy();
+      expect(locale.monitor.editor.portAdjusted.ftp).toBeTruthy();
     }
   });
 });

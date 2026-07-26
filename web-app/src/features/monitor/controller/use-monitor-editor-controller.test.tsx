@@ -32,7 +32,7 @@ const api = vi.hoisted(() => ({
   loadNewMonitorEvidence: vi.fn(),
   saveMonitor: vi.fn()
 }));
-const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const notify = vi.hoisted(() => ({ error: vi.fn(), info: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
@@ -439,6 +439,38 @@ describe('useMonitorEditorController', () => {
     expect(routed.current().state.draft?.params[0]?.paramValue).toEqual({ authorization: 'second' });
     expect(routed.current().state.draft?.invalidParamFields).not.toContain('headers');
   });
+
+  it.each([
+    ['new', 'api', 80, 443, 'monitor.editor.portAdjusted.https'],
+    ['edit', 'ftp', 21, 22, 'monitor.editor.portAdjusted.sftp']
+  ] as const)(
+    'shares the %s %s secure-port transition through editor actions',
+    async (mode, app, port, next, notice) => {
+      api.loadMonitorApps.mockResolvedValue([{ value: app, label: app.toUpperCase() }]);
+      api.loadMonitorParamDefines.mockResolvedValue([
+        { ...headersDefine, app, field: 'port', type: 'number', defaultValue: String(port) },
+        { ...headersDefine, app, field: 'ssl', type: 'boolean', defaultValue: 'false' }
+      ]);
+      if (mode === 'edit') {
+        api.loadMonitorDetail.mockResolvedValue({
+          ...detail,
+          monitor: { ...detail.monitor, app },
+          params: [
+            { id: 4, monitorId: 7, field: 'port', type: 0, paramValue: String(port) },
+            { id: 5, monitorId: 7, field: 'ssl', type: 1, paramValue: 'false' }
+          ]
+        });
+      }
+      const route = mode === 'new' ? `/monitors/new?app=${app}` : '/monitors/7/edit';
+      const routed = renderController(mode, route);
+      await waitFor(() => expect(routed.current().state.draft?.params).toHaveLength(2));
+
+      act(() => routed.current().actions.updateParam('ssl', true));
+
+      expect(routed.current().state.draft?.params.find(param => param.field === 'port')?.paramValue).toBe(next);
+      expect(notify.info).toHaveBeenCalledWith(notice);
+    }
+  );
 });
 
 function renderController(mode: 'new' | 'edit', entry: string) {
