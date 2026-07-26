@@ -1935,6 +1935,30 @@
         "error": "Alert rule configuration could not be exported."
       }
     },
+    "import": {
+      "open": "Import",
+      "title": "Import alert rules",
+      "description": "Choose a JSON, XLSX, or YAML alert rule document. Import may create multiple rules.",
+      "file": "Configuration file",
+      "choose": "Choose file",
+      "selected": "Selected: {{name}}",
+      "submit": "Import rules",
+      "inspect": "Refresh and inspect",
+      "success": "Alert rule configuration imported.",
+      "refreshFailure": "The import finished, but the current rule list could not be refreshed.",
+      "validation": {
+        "required": "Choose a configuration file.",
+        "empty": "The selected file is empty.",
+        "unsupported": "Choose a JSON, XLSX, or YAML file."
+      },
+      "failure": {
+        "validation": "The alert rule document was rejected. Check its format and contents.",
+        "forbidden": "Your account is not permitted to import alert rules.",
+        "unavailable": "Alert rule import is temporarily unavailable.",
+        "error": "The alert rule document could not be imported.",
+        "uncertain": "The import result is uncertain. Refresh and inspect the rule list before retrying."
+      }
+    },
     "operationSuccess": "Alert rule updated.",
     "operationFailed": "Alert rule operation failed.",
     "saveSuccess": "Alert rule saved.",

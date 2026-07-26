@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../model/alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
 import { useAlertRuleExport } from './use-alert-rule-export';
+import { useAlertRuleImport } from './use-alert-rule-import';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import { useAlertRuleListReadController } from './use-alert-rule-list-read-controller';
@@ -36,6 +37,7 @@ export function useAlertRuleListController() {
   const list = resolveListState(listQuery.isPending, listQuery.error, listQuery.data);
   const selection = useAlertRuleSelection(route.query, list);
   const exportOperation = useAlertRuleExport();
+  const importOperation = useAlertRuleImport(rereadLatest);
   const operations = useAlertRuleListOperations(rereadLatest, {
     success: () => {
       void message.success(t('alertRules.operationSuccess'));
@@ -52,8 +54,10 @@ export function useAlertRuleListController() {
       refreshing: listQuery.isFetching,
       search: route.search,
       selectedIds: selection.selectedIds,
-      exporting: exportOperation.exporting
+      exporting: exportOperation.exporting,
+      importState: importOperation.state
     },
+    importActions: importOperation.actions,
     selectIds: (ids: number[]) => {
       if (!operations.isLocked()) selection.selectIds(ids);
     },

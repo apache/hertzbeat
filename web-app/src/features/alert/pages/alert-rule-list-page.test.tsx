@@ -25,6 +25,13 @@ const controller = vi.hoisted(() => ({
   create: vi.fn(),
   edit: vi.fn(),
   exportSelected: vi.fn(),
+  importActions: {
+    cancel: vi.fn(),
+    inspect: vi.fn(),
+    open: vi.fn(),
+    selectFile: vi.fn(),
+    submit: vi.fn()
+  },
   refresh: vi.fn(),
   remove: vi.fn(),
   removeMany: vi.fn(),
@@ -137,6 +144,13 @@ describe('AlertRuleListPage', () => {
     expect(controller.exportSelected).toHaveBeenCalledWith([7], 'JSON');
   });
 
+  it('opens the rule import dialog from the list heading', () => {
+    render(<AlertRuleListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.import.open' }));
+
+    expect(controller.importActions.open).toHaveBeenCalledOnce();
+  });
+
   it('locks selection and rule writes while an export owns the selected snapshot', () => {
     controller.state = buildState({ exporting: true, selectedIds: [7] });
     render(<AlertRuleListPage />);
@@ -146,6 +160,26 @@ describe('AlertRuleListPage', () => {
     expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getAllByRole('checkbox')[1]).toBeDisabled();
+  });
+
+  it('locks list and query actions while an import request is active', () => {
+    controller.state = buildState({
+      importState: {
+        draft: { file: null },
+        invalid: null,
+        failure: null,
+        busy: true,
+        inspectionRequired: false
+      }
+    });
+    render(<AlertRuleListPage />);
+
+    expect(screen.getByPlaceholderText('alertRules.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getAllByRole('checkbox')[1]).toBeDisabled();
   });
 
@@ -208,6 +242,13 @@ function buildState(override: Record<string, unknown> = {}) {
   return {
     command: 'idle',
     exporting: false,
+    importState: {
+      draft: null,
+      invalid: null,
+      failure: null,
+      busy: false,
+      inspectionRequired: false
+    },
     list: { kind: 'ready', records: [record], total: 1 },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,

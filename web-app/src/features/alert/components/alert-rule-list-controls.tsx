@@ -16,6 +16,7 @@ type AlertRuleListHeadingProps = {
   exporting: boolean;
   selectedCount: number;
   create: () => void;
+  importRules: () => void;
   removeSelected: () => unknown;
   exportSelected: (format: AlertRuleExportFormat) => unknown;
 };
@@ -25,6 +26,7 @@ export function AlertRuleListHeading({
   exporting,
   selectedCount,
   create,
+  importRules,
   removeSelected,
   exportSelected
 }: AlertRuleListHeadingProps) {
@@ -43,6 +45,9 @@ export function AlertRuleListHeading({
           removeSelected={removeSelected}
           exportSelected={exportSelected}
         />
+        <Button disabled={busy} onClick={importRules}>
+          {t('alertRules.import.open')}
+        </Button>
         <Button type="primary" disabled={busy} onClick={create}>
           {t('alertRules.new')}
         </Button>
@@ -57,7 +62,7 @@ function AlertRuleSelectedActions({
   selectedCount,
   removeSelected,
   exportSelected
-}: Omit<AlertRuleListHeadingProps, 'create'>) {
+}: Omit<AlertRuleListHeadingProps, 'create' | 'importRules'>) {
   const { t } = useTranslation();
   if (selectedCount === 0) return null;
   const chooseFormat = (key: string) => {

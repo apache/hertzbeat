@@ -1916,6 +1916,30 @@
         "error": "无法导出告警规则配置。"
       }
     },
+    "import": {
+      "open": "导入",
+      "title": "导入告警规则",
+      "description": "选择 JSON、XLSX 或 YAML 告警规则文件。一次导入可能创建多条规则。",
+      "file": "配置文件",
+      "choose": "选择文件",
+      "selected": "已选择：{{name}}",
+      "submit": "导入规则",
+      "inspect": "刷新并检查",
+      "success": "告警规则配置已导入。",
+      "refreshFailure": "导入已完成，但无法刷新当前规则列表。",
+      "validation": {
+        "required": "请选择配置文件。",
+        "empty": "所选文件为空。",
+        "unsupported": "请选择 JSON、XLSX 或 YAML 文件。"
+      },
+      "failure": {
+        "validation": "告警规则文件被拒绝，请检查格式和内容。",
+        "forbidden": "当前账户无权导入告警规则。",
+        "unavailable": "告警规则导入暂时不可用。",
+        "error": "无法导入告警规则文件。",
+        "uncertain": "无法确定导入结果。再次尝试前，请刷新并检查规则列表。"
+      }
+    },
     "operationSuccess": "告警规则已更新。",
     "operationFailed": "告警规则操作失败。",
     "saveSuccess": "告警规则已保存。",

@@ -2,5 +2,6 @@
 
 export * from './alert-rule-draft';
 export * from './alert-rule-export-model';
+export * from './alert-rule-import-model';
 export * from './alert-rule-query';
 export * from './alert-rule-types';

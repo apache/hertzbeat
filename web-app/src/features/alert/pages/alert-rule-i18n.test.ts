@@ -22,6 +22,10 @@ describe('Alert Rule locale coverage', () => {
       expect(locale.alertRules.export.format.json).toBeTruthy();
       expect(locale.alertRules.export.format.excel).toBeTruthy();
       expect(locale.alertRules.export.failure.unavailable).toBeTruthy();
+      expect(locale.alertRules.import.open).toBeTruthy();
+      expect(locale.alertRules.import.validation.unsupported).toBeTruthy();
+      expect(locale.alertRules.import.failure.uncertain).toBeTruthy();
+      expect(locale.alertRules.import.inspect).toBeTruthy();
     }
   });
 });

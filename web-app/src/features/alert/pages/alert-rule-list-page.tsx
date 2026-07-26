@@ -18,6 +18,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
+import { AlertRuleImportDialog } from '../components/alert-rule-import-dialog';
 import { buildAlertRuleListColumns } from '../components/alert-rule-list-columns';
 import {
   AlertRuleListHeading,
@@ -31,9 +32,9 @@ import styles from '../shared/alert-rule-list.module.css';
 export function AlertRuleListPage() {
   const { t } = useTranslation();
   const controller = useAlertRuleListController();
-  const { command, exporting, list, query, refreshing, search, selectedIds } = controller.state;
+  const { command, exporting, importState, list, query, refreshing, search, selectedIds } = controller.state;
   const commandBusy = command !== 'idle';
-  const interactionLocked = commandBusy || exporting;
+  const interactionLocked = commandBusy || exporting || importState.busy;
   const recovering = command === 'recovering';
   return (
     <div className={styles.page}>
@@ -42,14 +43,22 @@ export function AlertRuleListPage() {
         exporting={exporting}
         selectedCount={selectedIds.length}
         create={controller.create}
+        importRules={controller.importActions.open}
         removeSelected={() => controller.removeMany(selectedIds)}
         exportSelected={format => controller.exportSelected(selectedIds, format)}
+      />
+      <AlertRuleImportDialog
+        state={importState}
+        onCancel={controller.importActions.cancel}
+        onFile={controller.importActions.selectFile}
+        onInspect={controller.importActions.inspect}
+        onSubmit={controller.importActions.submit}
       />
       <AlertManagementNav />
       <AlertRuleListToolbar
         search={search}
         refreshing={refreshing}
-        busy={commandBusy}
+        busy={interactionLocked}
         recovering={recovering}
         setSearch={controller.setSearch}
         submitSearch={controller.submitSearch}
@@ -69,7 +78,7 @@ export function AlertRuleListPage() {
         busy={interactionLocked}
         selectedIds={selectedIds}
         selectIds={controller.selectIds}
-        retryDisabled={commandBusy && !recovering}
+        retryDisabled={interactionLocked && !recovering}
         changePage={controller.changePage}
         retry={controller.refresh}
       />

@@ -1916,6 +1916,30 @@
         "error": "無法匯出警報規則設定。"
       }
     },
+    "import": {
+      "open": "匯入",
+      "title": "匯入警報規則",
+      "description": "選擇 JSON、XLSX 或 YAML 警報規則檔案。一次匯入可能建立多條規則。",
+      "file": "設定檔案",
+      "choose": "選擇檔案",
+      "selected": "已選擇：{{name}}",
+      "submit": "匯入規則",
+      "inspect": "重新整理並檢查",
+      "success": "警報規則設定已匯入。",
+      "refreshFailure": "匯入已完成，但無法重新整理目前的規則清單。",
+      "validation": {
+        "required": "請選擇設定檔案。",
+        "empty": "所選檔案為空。",
+        "unsupported": "請選擇 JSON、XLSX 或 YAML 檔案。"
+      },
+      "failure": {
+        "validation": "警報規則檔案遭拒，請檢查格式和內容。",
+        "forbidden": "目前帳戶無權匯入警報規則。",
+        "unavailable": "警報規則匯入暫時無法使用。",
+        "error": "無法匯入警報規則檔案。",
+        "uncertain": "無法確定匯入結果。再次嘗試前，請重新整理並檢查規則清單。"
+      }
+    },
     "operationSuccess": "警報規則已更新。",
     "operationFailed": "警報規則操作失敗。",
     "saveSuccess": "警報規則已儲存。",

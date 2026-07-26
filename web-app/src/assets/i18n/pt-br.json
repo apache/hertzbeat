@@ -1939,6 +1939,30 @@
         "error": "Não foi possível exportar a configuração das regras de alerta."
       }
     },
+    "import": {
+      "open": "Importar",
+      "title": "Importar regras de alerta",
+      "description": "Escolha um documento de regras em JSON, XLSX ou YAML. A importação pode criar várias regras.",
+      "file": "Arquivo de configuração",
+      "choose": "Escolher arquivo",
+      "selected": "Selecionado: {{name}}",
+      "submit": "Importar regras",
+      "inspect": "Atualizar e verificar",
+      "success": "Configuração de regras de alerta importada.",
+      "refreshFailure": "A importação terminou, mas a lista atual de regras não pôde ser atualizada.",
+      "validation": {
+        "required": "Escolha um arquivo de configuração.",
+        "empty": "O arquivo selecionado está vazio.",
+        "unsupported": "Escolha um arquivo JSON, XLSX ou YAML."
+      },
+      "failure": {
+        "validation": "O documento de regras foi rejeitado. Verifique o formato e o conteúdo.",
+        "forbidden": "Sua conta não pode importar regras de alerta.",
+        "unavailable": "A importação de regras de alerta está temporariamente indisponível.",
+        "error": "Não foi possível importar o documento de regras de alerta.",
+        "uncertain": "O resultado da importação é incerto. Atualize e verifique a lista antes de tentar novamente."
+      }
+    },
     "operationSuccess": "Regra de alerta atualizada.",
     "operationFailed": "Falha na operação da regra.",
     "saveSuccess": "Regra de alerta salva.",
