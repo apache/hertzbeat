@@ -24,6 +24,7 @@ import {
   type AlertSilenceViewState
 } from '../model/alert-silence-page-model';
 import { AlertManagementNav } from './alert-management-nav';
+import { AlertNoiseControlManagementContextBar } from './alert-noise-control-management-context';
 import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import { AlertSilenceEditor } from './alert-silence-editor';
 import { AlertSilenceResults } from './alert-silence-results';
@@ -55,6 +56,7 @@ export function AlertSilenceView({
       </header>
       <AlertManagementNav />
       <AlertNoiseControlNav />
+      <AlertSilenceManagement state={state} actions={actions} />
       <AlertSilenceToolbar
         search={state.search}
         refreshing={state.refreshing}
@@ -83,6 +85,26 @@ export function AlertSilenceView({
         />
       )}
     </div>
+  );
+}
+
+function AlertSilenceManagement({
+  state,
+  actions
+}: {
+  state: AlertSilenceViewState;
+  actions: AlertSilenceViewActions;
+}) {
+  return (
+    <AlertNoiseControlManagementContextBar
+      context={state.management.context}
+      missingCount={state.management.missingCount}
+      busy={state.busy}
+      translationRoot="alertSilences"
+      viewAll={actions.viewAllRules}
+      viewMatched={actions.viewMatchedRules}
+      returnToEntity={actions.returnToEntity}
+    />
   );
 }
 

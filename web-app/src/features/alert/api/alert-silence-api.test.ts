@@ -24,6 +24,7 @@ import {
   deleteAlertSilence,
   loadAlertSilence,
   loadAlertSilences,
+  loadMatchedAlertSilences,
   saveAlertSilence,
   updateAlertSilenceEnabled
 } from './alert-silence-api';
@@ -115,6 +116,18 @@ describe('alert silence API', () => {
     expect(apiMessageGet).toHaveBeenCalledWith(expect.any(String), { signal });
     await loadAlertSilence(7, signal);
     expect(apiMessageGet).toHaveBeenCalledWith('/api/alert/silence/7', { signal });
+  });
+
+  it('loads exact matched silences and counts missing ids', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce(persisted)
+      .mockRejectedValueOnce(new ApiMessageError('missing', { status: 404 }));
+
+    await expect(loadMatchedAlertSilences([7, 8], signal)).resolves.toEqual({
+      records: [persisted],
+      missingCount: 1
+    });
   });
 
   it('normalizes transport failures on every read and mutation path', async () => {

@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
   loadAlertSilence: vi.fn(),
   loadAlertSilences: vi.fn(),
+  loadMatchedAlertSilences: vi.fn(),
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
@@ -65,6 +66,7 @@ describe('AlertSilencePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadAlertSilences.mockResolvedValue({ content: [record], totalElements: 1 });
+    api.loadMatchedAlertSilences.mockResolvedValue({ records: [], missingCount: 0 });
     api.loadAlertSilence.mockResolvedValue(detailRecord);
     api.saveAlertSilence.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
@@ -88,6 +90,16 @@ describe('AlertSilencePage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent(
       '/alerts/silences?pageIndex=0&pageSize=15&search=database'
     );
+  });
+
+  it('renders the entity-matched silence context with honest empty evidence', async () => {
+    renderPage(
+      '/alerts/silences?entityId=7&entityName=Checkout&matchMode=entity-noise-controls&matchingRuleType=silence&pageIndex=0&pageSize=8'
+    );
+
+    expect(await screen.findByRole('region', { name: 'Entity silence context' })).toHaveTextContent('Checkout');
+    expect(screen.getByText('No current silence policies match this entity.')).toBeInTheDocument();
+    expect(api.loadAlertSilences).not.toHaveBeenCalled();
   });
 
   it('distinguishes unavailable and empty list states', async () => {

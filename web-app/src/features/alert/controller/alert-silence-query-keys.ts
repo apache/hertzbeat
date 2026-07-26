@@ -10,5 +10,6 @@ import type { AlertSilenceQuery } from '../model/alert-silence-model';
 const rootKey = ['alert-silence-policies'] as const;
 
 export const alertSilenceQueryKeys = {
-  list: (query: AlertSilenceQuery) => [...rootKey, 'list', query.search, query.pageIndex, query.pageSize] as const
+  list: (query: AlertSilenceQuery) => [...rootKey, 'list', query.search, query.pageIndex, query.pageSize] as const,
+  matched: (ids: number[]) => [...rootKey, 'matched', ...ids] as const
 };

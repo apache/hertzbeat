@@ -1571,6 +1571,17 @@
     "saveFailed": "靜默策略儲存失敗。",
     "operationSuccess": "靜默策略已更新。",
     "operationFailed": "靜默策略操作失敗。",
+    "management": {
+      "title": "實體靜默內容",
+      "matchedDescription": "僅顯示目前實體符合的靜默策略。",
+      "allDescription": "保留實體內容並顯示全部靜默策略。",
+      "entityFallback": "實體 {{id}}",
+      "empty": "目前實體沒有符合的靜默策略。",
+      "missing": "{{count}} 個符合策略已無法使用。",
+      "viewAll": "檢視全部策略",
+      "viewMatched": "檢視符合策略",
+      "return": "返回實體"
+    },
     "week": {
       "1": "週一",
       "2": "週二",

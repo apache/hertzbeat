@@ -18,10 +18,17 @@
 import type { AlertSilenceQuery } from './alert-silence-types';
 import { compactTablePageSizes } from '@/shared/pagination';
 
+import {
+  readAlertNoiseControlManagementContext,
+  writeAlertNoiseControlManagementContext,
+  type AlertNoiseControlManagementContext
+} from '../shared/alert-noise-control-management';
+
 export const alertSilencePageSizes = compactTablePageSizes;
 
 export type AlertSilenceFailure = 'missing' | 'unavailable' | 'error';
 export type AlertSilenceWriteOutcome = 'rejected' | 'uncertain';
+export type AlertSilenceManagementContext = AlertNoiseControlManagementContext;
 
 export type {
   AlertSilence,
@@ -77,6 +84,14 @@ export function writeAlertSilenceQuery(query: AlertSilenceQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   return params;
+}
+
+export function readAlertSilenceManagementContext(params: URLSearchParams): AlertSilenceManagementContext | null {
+  return readAlertNoiseControlManagementContext(params, 'silence');
+}
+
+export function writeAlertSilenceRoute(query: AlertSilenceQuery, context: AlertSilenceManagementContext | null) {
+  return writeAlertNoiseControlManagementContext(writeAlertSilenceQuery(query), context, 'silence');
 }
 
 export {

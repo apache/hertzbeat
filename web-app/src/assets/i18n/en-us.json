@@ -1590,6 +1590,17 @@
     "saveFailed": "Silence policy could not be saved.",
     "operationSuccess": "Silence policy updated.",
     "operationFailed": "Silence policy operation failed.",
+    "management": {
+      "title": "Entity silence context",
+      "matchedDescription": "Showing only silence policies that the entity currently matches.",
+      "allDescription": "Showing all silence policies while retaining the entity context.",
+      "entityFallback": "Entity {{id}}",
+      "empty": "No current silence policies match this entity.",
+      "missing": "{{count}} matching policies are no longer available.",
+      "viewAll": "View all policies",
+      "viewMatched": "View matched policies",
+      "return": "Return to entity"
+    },
     "week": {
       "1": "Mon",
       "2": "Tue",

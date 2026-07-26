@@ -1571,6 +1571,17 @@
     "saveFailed": "静默策略保存失败。",
     "operationSuccess": "静默策略已更新。",
     "operationFailed": "静默策略操作失败。",
+    "management": {
+      "title": "实体静默上下文",
+      "matchedDescription": "仅显示当前实体匹配的静默策略。",
+      "allDescription": "保留实体上下文并显示全部静默策略。",
+      "entityFallback": "实体 {{id}}",
+      "empty": "当前实体没有匹配的静默策略。",
+      "missing": "{{count}} 个匹配策略已不可用。",
+      "viewAll": "查看全部策略",
+      "viewMatched": "查看匹配策略",
+      "return": "返回实体"
+    },
     "week": {
       "1": "周一",
       "2": "周二",

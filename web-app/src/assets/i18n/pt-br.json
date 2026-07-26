@@ -1594,6 +1594,17 @@
     "saveFailed": "Não foi possível salvar a política de silêncio.",
     "operationSuccess": "Política de silêncio atualizada.",
     "operationFailed": "Falha na operação da política de silêncio.",
+    "management": {
+      "title": "Contexto de silêncio da entidade",
+      "matchedDescription": "Exibindo apenas políticas de silêncio que correspondem atualmente à entidade.",
+      "allDescription": "Exibindo todas as políticas de silêncio e preservando o contexto da entidade.",
+      "entityFallback": "Entidade {{id}}",
+      "empty": "Nenhuma política de silêncio atual corresponde a esta entidade.",
+      "missing": "{{count}} políticas correspondentes não estão mais disponíveis.",
+      "viewAll": "Ver todas as políticas",
+      "viewMatched": "Ver políticas correspondentes",
+      "return": "Voltar para a entidade"
+    },
     "week": {
       "1": "Seg",
       "2": "Ter",

@@ -17,7 +17,12 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 
-import type { AlertSilence, AlertSilenceDraft, AlertSilenceQuery } from './alert-silence-model';
+import type {
+  AlertSilence,
+  AlertSilenceDraft,
+  AlertSilenceManagementContext,
+  AlertSilenceQuery
+} from './alert-silence-model';
 
 export type AlertSilenceListEvidence = RemotePageState<AlertSilence, 'unavailable' | 'error'>;
 export type AlertSilenceOperationKind = 'create' | 'update' | 'toggle' | 'delete';
@@ -44,6 +49,10 @@ export type AlertSilenceViewState = {
   writeLocked: boolean;
   recovery: AlertSilenceRecovery | null;
   refreshing: boolean;
+  management: {
+    context: AlertSilenceManagementContext | null;
+    missingCount: number;
+  };
 };
 
 export type AlertSilenceViewActions = {
@@ -59,6 +68,9 @@ export type AlertSilenceViewActions = {
   save: () => Promise<void>;
   toggle: (silence: AlertSilence, enabled: boolean) => Promise<void>;
   remove: (id: number) => Promise<void>;
+  viewAllRules: () => void;
+  viewMatchedRules: () => void;
+  returnToEntity: () => void;
 };
 
 export function alertSilenceDetailDraft(detail: AlertSilenceDetailState) {

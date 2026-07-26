@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertInhibitEditor } from '../components/alert-inhibit-editor';
-import { AlertInhibitManagementContextBar } from '../components/alert-inhibit-management-context';
+import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
 import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
 import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
@@ -47,7 +47,7 @@ export function AlertInhibitPage() {
       />
       <AlertManagementNav />
       <AlertNoiseControlNav />
-      <AlertInhibitManagementContextBar {...managementContextProps(controller, management, busy)} />
+      <AlertInhibitManagement controller={controller} management={management} busy={busy} />
       <AlertInhibitToolbar
         busy={busy}
         search={search}
@@ -86,6 +86,23 @@ export function AlertInhibitPage() {
         />
       )}
     </div>
+  );
+}
+
+function AlertInhibitManagement({
+  controller,
+  management,
+  busy
+}: {
+  controller: ReturnType<typeof useAlertInhibitController>;
+  management: ReturnType<typeof useAlertInhibitController>['state']['management'];
+  busy: boolean;
+}) {
+  return (
+    <AlertNoiseControlManagementContextBar
+      translationRoot="alertInhibits"
+      {...managementContextProps(controller, management, busy)}
+    />
   );
 }
 

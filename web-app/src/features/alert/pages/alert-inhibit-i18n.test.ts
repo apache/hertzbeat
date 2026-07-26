@@ -25,6 +25,13 @@ describe('Alert Inhibit locales', () => {
       expect(locale.alertInhibits.management.viewAll).toBeTruthy();
       expect(locale.alertInhibits.management.viewMatched).toBeTruthy();
       expect(locale.alertInhibits.management.return).toBeTruthy();
+      expect(locale.alertSilences.management.title).toBeTruthy();
+      expect(locale.alertSilences.management.entityFallback).toContain('{{id}}');
+      expect(locale.alertSilences.management.empty).toBeTruthy();
+      expect(locale.alertSilences.management.missing).toContain('{{count}}');
+      expect(locale.alertSilences.management.viewAll).toBeTruthy();
+      expect(locale.alertSilences.management.viewMatched).toBeTruthy();
+      expect(locale.alertSilences.management.return).toBeTruthy();
     }
   });
 });

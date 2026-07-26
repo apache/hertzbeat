@@ -21,6 +21,7 @@ import { alertSilenceApiRequest } from './alert-silence-api-failure';
 import {
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
+  alertSilenceFailureKind,
   AlertSilenceContractError,
   type AlertSilence,
   type AlertSilenceDraft,
@@ -64,6 +65,25 @@ export async function loadAlertSilence(id: number, signal?: AbortSignal) {
     const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
     return parseAlertSilenceDetail(response);
   });
+}
+
+export async function loadMatchedAlertSilences(ids: number[], signal?: AbortSignal) {
+  const canonicalIds = [...new Set(ids.map(canonicalAlertSilenceId))].sort((left, right) => left - right);
+  if (canonicalIds.length === 0) throw new AlertSilenceContractError('matched silence ids must not be empty');
+  const records = await Promise.all(
+    canonicalIds.map(async id => {
+      try {
+        return await loadAlertSilence(id, signal);
+      } catch (error) {
+        if (alertSilenceFailureKind(error) === 'missing') return null;
+        throw error;
+      }
+    })
+  );
+  return {
+    records: records.filter((record): record is AlertSilence => record !== null),
+    missingCount: records.filter(record => record === null).length
+  };
 }
 
 export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {

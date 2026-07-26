@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
   loadAlertSilence: vi.fn(),
   loadAlertSilences: vi.fn(),
+  loadMatchedAlertSilences: vi.fn(),
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
@@ -84,6 +85,7 @@ describe('useAlertSilenceController', () => {
   beforeEach(() => {
     Object.values(api).forEach(mock => mock.mockReset());
     api.loadAlertSilences.mockResolvedValue(page());
+    api.loadMatchedAlertSilences.mockResolvedValue({ records: [], missingCount: 0 });
     api.saveAlertSilence.mockResolvedValue(undefined);
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
@@ -255,6 +257,29 @@ describe('useAlertSilenceController', () => {
     api.loadAlertSilences.mockResolvedValue(page([], 0, 0));
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('empty'));
+  });
+
+  it('loads only exact entity-matched silences and keeps the context while switching views', async () => {
+    api.loadMatchedAlertSilences.mockResolvedValue({
+      records: [{ ...record, id: 31, name: 'Checkout maintenance' }],
+      missingCount: 1
+    });
+    const view = renderController(
+      [
+        '/alerts/silences?entityId=7&entityName=Checkout&matchMode=entity-noise-controls&matchingRuleType=silence&matchingRuleIds=31%2C32&pageIndex=0&pageSize=8'
+      ],
+      0
+    );
+
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    expect(view.result.current.controller.state.management).toMatchObject({
+      context: { mode: 'matched', matchingRuleIds: [31, 32] },
+      missingCount: 1
+    });
+    expect(api.loadAlertSilences).not.toHaveBeenCalled();
+    act(() => view.result.current.controller.actions.viewAllRules());
+    await waitFor(() => expect(view.result.current.controller.state.management.context?.mode).toBe('all'));
+    expect(view.result.current.location.search).toContain('matchingRuleIds=31%2C32');
   });
 
   it('does not leave a committed create draft retryable when its projection read fails', async () => {

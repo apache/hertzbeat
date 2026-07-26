@@ -8,60 +8,53 @@
 import { Alert, Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertInhibitManagementContext } from '../model/alert-inhibit-model';
+import type { AlertNoiseControlManagementContext } from '../shared/alert-noise-control-management';
 import styles from '../shared/alert-policy-page.module.css';
 
-export function AlertInhibitManagementContextBar({
+type TranslationRoot = 'alertInhibits' | 'alertSilences';
+
+export function AlertNoiseControlManagementContextBar({
   context,
   missingCount,
   busy,
+  translationRoot,
   viewAll,
   viewMatched,
   returnToEntity
 }: {
-  context: AlertInhibitManagementContext | null;
+  context: AlertNoiseControlManagementContext | null;
   missingCount: number;
   busy: boolean;
+  translationRoot: TranslationRoot;
   viewAll: () => unknown;
   viewMatched: () => unknown;
   returnToEntity: () => unknown;
 }) {
   const { t } = useTranslation();
   if (!context) return null;
+  const key = (name: string) => `${translationRoot}.management.${name}`;
   return (
-    <section className={styles.managementContext} role="region" aria-label={t('alertInhibits.management.title')}>
+    <section className={styles.managementContext} role="region" aria-label={t(key('title'))}>
       <div>
         <Typography.Text strong>
-          {context.entityName ||
-            context.returnLabel ||
-            t('alertInhibits.management.entityFallback', { id: context.entityId })}
+          {context.entityName || context.returnLabel || t(key('entityFallback'), { id: context.entityId })}
         </Typography.Text>
         <Typography.Paragraph type="secondary">
-          {t(
-            context.mode === 'matched'
-              ? 'alertInhibits.management.matchedDescription'
-              : 'alertInhibits.management.allDescription'
-          )}
+          {t(key(context.mode === 'matched' ? 'matchedDescription' : 'allDescription'))}
         </Typography.Paragraph>
         {context.mode === 'matched' && context.matchingRuleIds.length === 0 ? (
-          <Alert showIcon type="info" message={t('alertInhibits.management.empty')} />
+          <Alert showIcon type="info" message={t(key('empty'))} />
         ) : null}
         {context.mode === 'matched' && missingCount > 0 ? (
-          <Alert showIcon type="warning" message={t('alertInhibits.management.missing', { count: missingCount })} />
+          <Alert showIcon type="warning" message={t(key('missing'), { count: missingCount })} />
         ) : null}
       </div>
       <Space wrap>
-        {context.mode === 'matched' ? (
-          <Button disabled={busy} onClick={() => void viewAll()}>
-            {t('alertInhibits.management.viewAll')}
-          </Button>
-        ) : (
-          <Button disabled={busy} onClick={() => void viewMatched()}>
-            {t('alertInhibits.management.viewMatched')}
-          </Button>
-        )}
+        <Button disabled={busy} onClick={() => void (context.mode === 'matched' ? viewAll() : viewMatched())}>
+          {t(key(context.mode === 'matched' ? 'viewAll' : 'viewMatched'))}
+        </Button>
         <Button disabled={busy} onClick={() => void returnToEntity()}>
-          {t('alertInhibits.management.return')}
+          {t(key('return'))}
         </Button>
       </Space>
     </section>

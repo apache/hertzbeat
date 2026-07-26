@@ -27,9 +27,11 @@ import {
   buildAlertSilencePayload,
   changeAlertSilenceType,
   createAlertSilenceDraft,
+  readAlertSilenceManagementContext,
   readAlertSilenceQuery,
   validateAlertSilenceDraft,
-  writeAlertSilenceQuery
+  writeAlertSilenceQuery,
+  writeAlertSilenceRoute
 } from './alert-silence-model';
 
 describe('alert silence model', () => {
@@ -59,6 +61,24 @@ describe('alert silence model', () => {
     expect(writeAlertSilenceQuery({ search: 'maintenance', pageIndex: 1, pageSize: 15 }).toString()).toBe(
       'pageIndex=1&pageSize=15&search=maintenance'
     );
+  });
+
+  it('round-trips a bounded entity-matched silence context', () => {
+    const params = new URLSearchParams(
+      'entityId=7&entityName=Checkout&returnTo=https%3A%2F%2Fevil.example&matchMode=entity-noise-controls&matchingRuleType=silence&matchingRuleIds=31%2Cbad%2C31%2C33'
+    );
+    const context = readAlertSilenceManagementContext(params);
+    if (!context) throw new Error('expected silence management context');
+
+    expect(context).toMatchObject({
+      entityId: 7,
+      returnTo: '/entities/7',
+      mode: 'matched',
+      matchingRuleIds: [31, 33]
+    });
+    expect(
+      writeAlertSilenceRoute({ search: '', pageIndex: 0, pageSize: 8 }, { ...context, mode: 'all' }).get('matchMode')
+    ).toBe('all');
   });
 
   it('builds a label-scoped one-time silence payload', () => {
