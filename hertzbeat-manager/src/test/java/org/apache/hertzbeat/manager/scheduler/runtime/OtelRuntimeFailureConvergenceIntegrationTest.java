@@ -19,9 +19,11 @@ package org.apache.hertzbeat.manager.scheduler.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -104,6 +106,22 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     @TempDir
     private Path tempDir;
     private final HttpClient httpClient = HttpClient.newHttpClient();
+
+    @Test
+    void stopsResetLoopAfterFirstUnexpectedAcceptFailure() throws Exception {
+        ServerSocket socket = mock(ServerSocket.class);
+        IOException failure = new IOException("fixture accept failed");
+        when(socket.isClosed()).thenReturn(false);
+        when(socket.accept()).thenThrow(failure);
+        AtomicInteger attempts = new AtomicInteger();
+        AtomicReference<IOException> observed = new AtomicReference<>();
+
+        ResetIntake.acceptAndReset(socket, attempts, observed);
+
+        verify(socket).accept();
+        assertEquals(0, attempts.get());
+        assertSame(failure, observed.get());
+    }
 
     @Test
     void reportsRealPortConflictThroughHeartbeatAndQueryThenRecovers(
@@ -845,20 +863,26 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
             resetSocket.setReuseAddress(true);
             resetSocket.bind(new InetSocketAddress("127.0.0.1", 0), 16);
             port = resetSocket.getLocalPort();
-            resetThread = new Thread(this::acceptAndReset, "otel-reset-intake");
+            resetThread = new Thread(
+                    () -> acceptAndReset(resetSocket, resetAttempts, resetFailure),
+                    "otel-reset-intake");
             resetThread.setDaemon(true);
             resetThread.start();
         }
 
-        private void acceptAndReset() {
-            while (!resetSocket.isClosed()) {
-                try (Socket connection = resetSocket.accept()) {
-                    resetAttempts.incrementAndGet();
+        private static void acceptAndReset(
+                ServerSocket socket,
+                AtomicInteger attempts,
+                AtomicReference<IOException> failure) {
+            while (!socket.isClosed()) {
+                try (Socket connection = socket.accept()) {
+                    attempts.incrementAndGet();
                     connection.setSoLinger(true, 0);
                 } catch (IOException exception) {
-                    if (!resetSocket.isClosed()) {
-                        resetFailure.compareAndSet(null, exception);
+                    if (!socket.isClosed()) {
+                        failure.compareAndSet(null, exception);
                     }
+                    break;
                 }
             }
         }
