@@ -111,12 +111,13 @@ function MonitorMetricToolbar({
       />
       <Select
         value={state.history}
+        disabled={!state.historySupported}
         onChange={actions.setHistory}
         options={monitorMetricHistoryRanges.map(value => ({ value, label: value }))}
       />
       <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
       <Button
-        disabled={state.favorite.kind !== 'ready' || state.favoriteBusy}
+        disabled={!state.historySupported || state.favorite.kind !== 'ready' || state.favoriteBusy}
         loading={state.favoriteBusy}
         onClick={() => void actions.toggleFavorite()}
       >

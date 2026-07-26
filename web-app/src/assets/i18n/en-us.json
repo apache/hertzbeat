@@ -1018,6 +1018,7 @@
     "description": "Inspect current values and stored history without leaving the monitor.",
     "realtime": "Realtime",
     "history": "History",
+    "historyUnsupported": "History is not available for this realtime-only metric group.",
     "favorites": "Favorites",
     "favoriteEmpty": "No favorite metrics have been saved.",
     "favoriteSelect": "Select a favorite metric to inspect its data.",

@@ -65,13 +65,19 @@ export function useMonitorMetricWorkbenchController(
     history,
     refreshSeconds: refreshControl.refreshSeconds
   });
+  const historySupported = metric?.historySupported !== false;
   const favoritesQuery = queries.favorites;
-  const favorite = favoriteEvidence(favoritesQuery, metric);
-  const favoriteCollection = favoriteCollectionEvidence(favoritesQuery, catalog.options);
+  const favorite = favoriteEvidence(favoritesQuery, historySupported ? metric : undefined);
+  const favoriteCollection = favoriteCollectionEvidence(
+    favoritesQuery,
+    catalog.options.filter(option => option.historySupported !== false)
+  );
   const realtimeQuery = queries.realtime;
   const historicalQuery = queries.historical;
   const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data) : []));
-  const historical = metricEvidence(historicalQuery, monitorHistoryRows);
+  const historical = historySupported
+    ? metricEvidence(historicalQuery, monitorHistoryRows)
+    : ({ kind: 'unsupported', rows: [] } as const);
   const favoriteMutation = useMonitorFavoriteMutation({
     monitorId: source.id,
     metricKey,
@@ -86,6 +92,7 @@ export function useMonitorMetricWorkbenchController(
     catalog,
     metricKey,
     history,
+    historySupported,
     favorite,
     favoriteCollection,
     favoriteBusy: favoriteMutation.busy,
@@ -93,17 +100,25 @@ export function useMonitorMetricWorkbenchController(
     historical,
     refreshControl,
     urlActions,
-    toggleFavorite: favoriteMutation.toggle,
-    refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric))
+    toggleFavorite: historySupported ? favoriteMutation.toggle : ignoreUnsupportedFavorite,
+    refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric), historySupported)
   });
 }
 
-function refreshMonitorMetricQueries(queries: ReturnType<typeof useMonitorMetricData>, canRefresh: boolean) {
+function ignoreUnsupportedFavorite() {
+  return Promise.resolve();
+}
+
+function refreshMonitorMetricQueries(
+  queries: ReturnType<typeof useMonitorMetricData>,
+  canRefresh: boolean,
+  historySupported: boolean
+) {
   // Refresh is one operator action, so do not issue a partial request set under incomplete context.
   if (!canRefresh) return;
   void queries.favorites.refetch();
   void queries.realtime.refetch();
-  void queries.historical.refetch();
+  if (historySupported) void queries.historical.refetch();
 }
 
 function useMonitorMetricCatalog(

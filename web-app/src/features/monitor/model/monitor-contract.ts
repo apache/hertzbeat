@@ -166,6 +166,7 @@ export type MonitorMetricOption = {
   group: string;
   field: string;
   unit?: string;
+  historySupported?: false;
 };
 export type MonitorMetricValue = {
   origin: string | null;

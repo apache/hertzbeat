@@ -46,6 +46,37 @@ describe('monitor detail model', () => {
     ).toEqual([{ key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' }]);
   });
 
+  it('adds one realtime-only representative only when a visible group has no numeric field', () => {
+    expect(
+      monitorMetricOptions([
+        {
+          name: 'mixed',
+          fields: [
+            { field: 'value', type: 0 },
+            { field: 'status', type: 1 }
+          ]
+        },
+        {
+          name: 'identity',
+          fields: [
+            { field: 'host', type: 1, label: true },
+            { field: 'version', type: 1 },
+            { field: 'status', type: 1 }
+          ]
+        },
+        { name: 'labelsOnly', fields: [{ field: 'host', type: 1, label: true }] }
+      ])
+    ).toEqual([
+      { key: 'mixed.value', group: 'mixed', field: 'value' },
+      {
+        key: 'identity.version',
+        group: 'identity',
+        field: 'version',
+        historySupported: false
+      }
+    ]);
+  });
+
   it('preserves every non-label realtime field as inspectable group evidence', () => {
     const empty = { mean: null, median: null, min: null, max: null };
     expect(

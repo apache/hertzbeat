@@ -45,6 +45,14 @@ const monitor = (id = 7): Monitor => ({ id, name: `monitor-${id}`, app: 'website
 const catalog = (name = 'summary') => ({
   metrics: [{ name, visible: true, fields: [{ type: 0, field: 'value', unit: 'ms', label: false }] }]
 });
+const metricValue = (origin: string | null, time: number | null) => ({
+  origin,
+  mean: null,
+  median: null,
+  min: null,
+  max: null,
+  time
+});
 // URL convergence crosses both the router and asynchronous catalog query, so it
 // needs a wider deadline when the complete test suite is sharing worker CPU.
 const routeConvergenceWait = { timeout: 10_000 } as const;
@@ -143,6 +151,69 @@ describe('useMonitorMetricWorkbenchController', () => {
     });
 
     expectMetricReadsNotCalled();
+  });
+
+  it('reads realtime but skips history and favorite writes for a realtime-only group', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue({
+      metrics: [
+        {
+          name: 'identity',
+          visible: true,
+          fields: [
+            { type: 1, field: 'host', unit: null, label: true },
+            { type: 1, field: 'version', unit: null, label: false },
+            { type: 1, field: 'status', unit: null, label: false }
+          ]
+        }
+      ]
+    });
+    api.loadRealtimeMetric.mockResolvedValue({
+      fields: [
+        { name: 'host', type: 1, unit: null, label: true },
+        { name: 'version', type: 1, unit: null, label: false },
+        { name: 'status', type: 1, unit: null, label: false }
+      ],
+      valueRows: [
+        {
+          labels: { host: 'edge-a' },
+          values: [metricValue('edge-a', 1000), metricValue('2.0.0', 1000), metricValue('UP', 1000)]
+        }
+      ]
+    });
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() =>
+      expect(view.result.current.controller.state.catalog).toMatchObject({
+        kind: 'ready',
+        options: [
+          {
+            key: 'identity.version',
+            group: 'identity',
+            field: 'version',
+            historySupported: false
+          }
+        ]
+      })
+    );
+    await waitFor(() => expect(view.result.current.controller.state.realtime.kind).toBe('ready'));
+    expect(view.result.current.controller.state).toMatchObject({
+      metricKey: 'identity.version',
+      historySupported: false,
+      historical: { kind: 'unsupported', rows: [] }
+    });
+    expect(api.loadRealtimeMetric).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({ group: 'identity', field: 'version', historySupported: false }),
+      expect.any(AbortSignal)
+    );
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
+
+    await act(() => view.result.current.controller.actions.toggleFavorite());
+    expect(api.updateFavoriteMetric).not.toHaveBeenCalled();
+
+    act(() => view.result.current.controller.actions.refresh());
+    await waitFor(() => expect(api.loadRealtimeMetric.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
   });
 
   it('manually refreshes favorites, realtime, and history even when auto-refresh is Off', async () => {

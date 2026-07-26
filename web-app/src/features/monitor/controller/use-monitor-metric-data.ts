@@ -20,6 +20,7 @@ export function useMonitorMetricData(input: {
 }) {
   const { monitor, metric, metricKey, history, refreshSeconds } = input;
   const refetchInterval = monitorDetailRefreshInterval(refreshSeconds);
+  const historySupported = metric?.historySupported !== false;
   // Monitor metric endpoints accept the route-local history range, not the shell's exact time window.
   // Keeping query keys aligned with those request inputs avoids refetching an identical request.
   // `enabled: false` still permits manual refetch; skipToken removes the unsafe query function entirely.
@@ -35,8 +36,11 @@ export function useMonitorMetricData(input: {
   });
   const historical = useQuery({
     queryKey: monitorQueryKeys.history(monitor, metricKey, history),
-    queryFn: monitor && metric ? ({ signal }) => loadHistoryMetric(monitor, metric, history, signal) : skipToken,
-    refetchInterval: activeRefreshInterval(Boolean(monitor && metric), refetchInterval)
+    queryFn:
+      monitor && metric && historySupported
+        ? ({ signal }) => loadHistoryMetric(monitor, metric, history, signal)
+        : skipToken,
+    refetchInterval: activeRefreshInterval(Boolean(monitor && metric && historySupported), refetchInterval)
   });
   return { favorites, realtime, historical };
 }

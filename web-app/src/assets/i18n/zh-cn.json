@@ -1003,6 +1003,7 @@
     "description": "无需离开监控详情即可查看当前值与历史数据。",
     "realtime": "实时",
     "history": "历史",
+    "historyUnsupported": "此仅实时指标组不支持历史数据。",
     "favorites": "收藏",
     "favoriteEmpty": "尚未收藏指标。",
     "favoriteSelect": "选择一个收藏指标以查看数据。",

@@ -93,10 +93,11 @@ function MetricState({
   kind,
   children
 }: {
-  kind: 'loading' | 'empty' | 'unavailable' | 'error' | 'ready';
+  kind: 'loading' | 'empty' | 'unsupported' | 'unavailable' | 'error' | 'ready';
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  if (kind === 'unsupported') return <Alert type="info" showIcon message={t('monitorMetrics.historyUnsupported')} />;
   if (kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
   if (kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
   if (kind === 'empty') return <Empty description={t('monitorMetrics.empty')} />;

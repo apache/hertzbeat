@@ -120,6 +120,19 @@ describe('MonitorMetricWorkbench', () => {
     expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
   });
 
+  it('marks realtime-only history unsupported and disables favorite interaction', () => {
+    const value = controller({
+      historySupported: false,
+      historical: { kind: 'unsupported', rows: [] }
+    });
+    renderWorkbench(value);
+
+    expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeDisabled();
+    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
+    expect(screen.getByText(i18n.t('monitorMetrics.historyUnsupported'))).toBeInTheDocument();
+    expect(value.actions.toggleFavorite).not.toHaveBeenCalled();
+  });
+
   it('shows the auto-refresh choices and forwards an Off selection', () => {
     const value = controller();
     renderWorkbench(value);
@@ -172,6 +185,7 @@ function controller(
       catalog: { kind: 'ready', options: [{ key: 'summary.value', group: 'summary', field: 'value' }] },
       metricKey: 'summary.value',
       history: '30m',
+      historySupported: true,
       refreshSeconds: 90,
       favorite: { kind: 'ready', value: false },
       favoriteCollection: { kind: 'empty', items: [] },

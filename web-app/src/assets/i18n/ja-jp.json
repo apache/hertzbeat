@@ -1015,6 +1015,7 @@
     "description": "監視詳細から現在値と履歴を確認します。",
     "realtime": "リアルタイム",
     "history": "履歴",
+    "historyUnsupported": "このリアルタイム専用メトリクスグループでは履歴を利用できません。",
     "favorites": "お気に入り",
     "favoriteEmpty": "お気に入りのメトリクスはありません。",
     "favoriteSelect": "確認するお気に入りメトリクスを選択してください。",

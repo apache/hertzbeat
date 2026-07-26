@@ -7,8 +7,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const query = vi.hoisted(() => ({ useQuery: vi.fn((options: object) => options) }));
-vi.mock('@tanstack/react-query', () => ({ skipToken: Symbol('skipToken'), useQuery: query.useQuery }));
+type QueryOptions = { queryFn?: unknown; refetchInterval?: number | false };
+const query = vi.hoisted(() => ({
+  skipToken: Symbol('skipToken'),
+  useQuery: vi.fn((options: QueryOptions) => options)
+}));
+vi.mock('@tanstack/react-query', () => ({ skipToken: query.skipToken, useQuery: query.useQuery }));
 
 import { useMonitorMetricData } from './use-monitor-metric-data';
 
@@ -34,5 +38,23 @@ describe('useMonitorMetricData refresh interval', () => {
     for (const [options] of query.useQuery.mock.calls) {
       expect(options).toMatchObject({ refetchInterval: false });
     }
+  });
+
+  it('keeps realtime active but skips history for a realtime-only representative', () => {
+    const realtimeOnly = { ...metric, historySupported: false as const };
+
+    useMonitorMetricData({
+      monitor,
+      metric: realtimeOnly,
+      metricKey: realtimeOnly.key,
+      history: '30m',
+      refreshSeconds: 30
+    });
+
+    const realtime = query.useQuery.mock.calls[1]?.[0];
+    const historical = query.useQuery.mock.calls[2]?.[0];
+    expect(realtime).toMatchObject({ refetchInterval: 30_000 });
+    expect(realtime.queryFn).not.toBe(query.skipToken);
+    expect(historical).toMatchObject({ queryFn: query.skipToken, refetchInterval: false });
   });
 });

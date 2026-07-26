@@ -43,6 +43,7 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitorMetrics.autoRefresh.seconds).toBeTruthy();
       expect(locale.monitorMetrics.autoRefresh.off).toBeTruthy();
       expect(locale.monitorMetrics.favorites).toBeTruthy();
+      expect(locale.monitorMetrics.historyUnsupported).toBeTruthy();
       expect(locale.monitorMetrics.favoriteEmpty).toBeTruthy();
       expect(locale.monitorMetrics.favoriteSelect).toBeTruthy();
       expect(locale.monitorMetrics.favoriteUnavailable).toBeTruthy();

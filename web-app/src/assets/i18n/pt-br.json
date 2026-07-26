@@ -1023,6 +1023,7 @@
     "description": "Consulte valores atuais e históricos no detalhe do monitor.",
     "realtime": "Tempo real",
     "history": "Histórico",
+    "historyUnsupported": "O histórico não está disponível para este grupo de métricas somente em tempo real.",
     "favorites": "Favoritos",
     "favoriteEmpty": "Nenhuma métrica favorita foi salva.",
     "favoriteSelect": "Selecione uma métrica favorita para consultar os dados.",

@@ -110,6 +110,7 @@ export type MonitorMetricFavoriteCollectionEvidence =
 export type MonitorMetricRowsEvidence<T> =
   | { kind: 'loading'; rows: T[] }
   | { kind: 'empty'; rows: T[] }
+  | { kind: 'unsupported'; rows: T[] }
   | { kind: 'unavailable'; rows: T[] }
   | { kind: 'error'; rows: T[] }
   | { kind: 'ready'; rows: T[] };
@@ -118,6 +119,7 @@ export type MonitorMetricWorkbenchController = {
     catalog: MonitorMetricCatalogEvidence;
     metricKey: string;
     history: MonitorMetricHistory;
+    historySupported: boolean;
     refreshSeconds: MonitorDetailRefreshSeconds;
     favorite: MonitorMetricFavoriteEvidence;
     favoriteCollection: MonitorMetricFavoriteCollectionEvidence;
@@ -141,18 +143,28 @@ export function parseMonitorMetricHistory(value: string | null): MonitorMetricHi
 export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
   return metrics.flatMap(metric => {
     if (metric.visible === false) return [];
-    return (metric.fields ?? []).flatMap(field =>
-      field.type === 0 && field.label !== true && field.field
-        ? [
-            {
-              key: `${metric.name}.${field.field}`,
-              group: metric.name,
-              field: field.field,
-              ...(field.unit ? { unit: field.unit } : {})
-            }
-          ]
-        : []
-    );
+    const fields = (metric.fields ?? []).filter(field => field.label !== true && field.field);
+    const numeric = fields
+      .filter(field => field.type === 0)
+      .map(field => ({
+        key: `${metric.name}.${field.field}`,
+        group: metric.name,
+        field: field.field!,
+        ...(field.unit ? { unit: field.unit } : {})
+      }));
+    if (numeric.length > 0) return numeric;
+    const representative = fields[0];
+    return representative?.field
+      ? [
+          {
+            key: `${metric.name}.${representative.field}`,
+            group: metric.name,
+            field: representative.field,
+            ...(representative.unit ? { unit: representative.unit } : {}),
+            historySupported: false as const
+          }
+        ]
+      : [];
   });
 }
 
