@@ -16,14 +16,12 @@
  */
 
 import { useMemo } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { useQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import {
-  buildMonitorCreatePath,
-  buildMonitorRoutePath,
   monitorAppOptions,
   monitorSelectionScope,
   readMonitorQuery,
@@ -34,6 +32,7 @@ import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-
 import { useMonitorExport } from './use-monitor-export';
 import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
+import { useMonitorListNavigation } from './use-monitor-list-navigation';
 import { useMonitorListResources } from './use-monitor-list-resources';
 import { useMonitorListSnapshot } from './use-monitor-list-snapshot';
 import { useMonitorPageCorrection } from './use-monitor-page-correction';
@@ -42,8 +41,6 @@ import { useMonitorSelection } from './use-monitor-selection';
 export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor-list-resources';
 
 export function useMonitorListController() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();
@@ -55,6 +52,7 @@ export function useMonitorListController() {
   const records = displayPage?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
   const commands = useMonitorListCommands(source, reread, selection);
+  const navigation = useMonitorListNavigation(query);
   const monitorExport = useMonitorExport(selection.selectedIds);
   const monitorImport = useMonitorImport(reread, () => selection.selectIds([]));
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
@@ -82,12 +80,8 @@ export function useMonitorListController() {
         updateQuery({ sort, order, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: commands.refresh,
-      create: () => {
-        void navigate(buildMonitorCreatePath(query.app, `${location.pathname}${location.search}`));
-      },
-      open: (id: number, mode: 'view' | 'edit') => {
-        void navigate(buildMonitorRoutePath(id, mode, `${location.pathname}${location.search}`));
-      },
+      create: navigation.create,
+      open: navigation.open,
       run: commands.run,
       runBulk: commands.runBulk,
       exportSelected: monitorExport.exportSelected,

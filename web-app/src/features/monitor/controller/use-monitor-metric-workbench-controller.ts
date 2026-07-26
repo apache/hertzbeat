@@ -14,21 +14,15 @@ import { useSearchParams } from 'react-router-dom';
 import { loadMonitorMetricCatalog } from '../api/monitor-api';
 import type { Monitor, MonitorDetailMetric } from '../model/monitor-contract';
 import {
-  monitorHistoryRows,
   monitorMetricHistoryRanges,
-  monitorRealtimeRows,
   parseMonitorMetricHistory,
   type MonitorDetailRefreshControl,
   type MonitorMetricCatalogEvidence,
   type MonitorMetricHistory,
   type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
-import {
-  catalogEvidence,
-  favoriteCollectionEvidence,
-  favoriteEvidence,
-  metricEvidence
-} from './monitor-metric-query-evidence';
+import { catalogEvidence } from './monitor-metric-query-evidence';
+import { monitorMetricWorkbenchEvidence } from './monitor-metric-workbench-evidence';
 import { monitorQueryKeys } from './monitor-query-keys';
 import {
   useMonitorFavoriteMutation,
@@ -66,16 +60,12 @@ export function useMonitorMetricWorkbenchController(
     history,
     refreshSeconds: refreshControl.refreshSeconds
   });
-  const historySupported = metric?.historySupported !== false;
+  const { favorite, favoriteCollection, historical, historySupported, realtime } = monitorMetricWorkbenchEvidence(
+    queries,
+    metric,
+    catalog
+  );
   const favoritesQuery = queries.favorites;
-  const favorite = favoriteEvidence(favoritesQuery, metric);
-  const favoriteCollection = favoriteCollectionEvidence(favoritesQuery, catalog.options);
-  const realtimeQuery = queries.realtime;
-  const historicalQuery = queries.historical;
-  const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data) : []));
-  const historical = historySupported
-    ? metricEvidence(historicalQuery, monitorHistoryRows)
-    : ({ kind: 'unsupported', rows: [] } as const);
   const favoriteMutation = useMonitorFavoriteMutation({
     monitorId: source.id,
     metricKey: metric?.historySupported === false ? metric.group : metricKey,

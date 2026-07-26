@@ -254,7 +254,11 @@ describe('useMonitorMetricWorkbenchController', () => {
   });
 
   it('manually refreshes favorites, realtime, and long-range history even when auto-refresh is Off', async () => {
-    const view = renderController(monitor(), [], '/monitors/7?refresh=0&history=12W');
+    const view = renderController(
+      monitor(),
+      [],
+      '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&refresh=0&history=12W'
+    );
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
     await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
     expect(api.loadHistoryMetric).toHaveBeenCalledWith(
@@ -274,6 +278,8 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadRealtimeMetric).toHaveBeenCalledTimes(1);
     expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1);
     expect(view.refreshDetail).toHaveBeenCalledOnce();
+    expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
+    expect(view.result.current.location.search).toContain('history=12W');
   });
 
   it('treats a successful query without its required payload as invalid evidence', async () => {

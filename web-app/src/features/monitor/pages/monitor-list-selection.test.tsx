@@ -122,6 +122,7 @@ describe('MonitorListPage scoped bulk selection', () => {
     const bulk = screen.getByText('1 selected').parentElement;
     expect(bulk).not.toBeNull();
     fireEvent.click(within(bulk!).getByRole('button', { name: 'Enable' }));
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
 
     await waitFor(() => expect(mutateMonitors).toHaveBeenCalledWith('enable', [8]));
   });
