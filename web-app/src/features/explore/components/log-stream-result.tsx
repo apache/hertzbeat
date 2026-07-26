@@ -43,9 +43,10 @@ export function LogStreamResult({
   t: TFunction;
   navigate: (path: string) => void;
 }) {
+  const terminal = isTerminalStreamStatus(stream.status);
   const actions = (
     <div className={styles.streamActions}>
-      <Button size="small" onClick={stream.togglePaused}>
+      <Button size="small" disabled={terminal} onClick={stream.togglePaused}>
         {t(stream.status === 'paused' ? 'exploreLog.resume' : 'exploreLog.pause')}
       </Button>
       <Button size="small" disabled={stream.rows.length === 0} onClick={stream.clear}>
@@ -67,7 +68,7 @@ export function LogStreamResult({
           meta={[{ label: t('exploreLog.streamStatus'), value: connection }]}
           actions={actions}
         >
-          <SignalEmptyState title={t('exploreLog.waiting')} hint={t('explore.description')} />
+          {terminal ? null : <SignalEmptyState title={t('exploreLog.waiting')} hint={t('explore.description')} />}
         </SignalResultFrame>
       ) : (
         <LogRows
@@ -82,6 +83,10 @@ export function LogStreamResult({
       )}
     </div>
   );
+}
+
+function isTerminalStreamStatus(status: LiveLogStatus) {
+  return status === 'unavailable' || status === 'error' || status === 'contract';
 }
 
 function StreamConnection({ status, t }: { status: LiveLogStatus; t: TFunction }) {

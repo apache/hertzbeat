@@ -135,6 +135,8 @@ describe('LogResult', () => {
     );
     expect(screen.getAllByText(i18n.t(messageKey)).length).toBeGreaterThan(0);
     expect(screen.queryByText(i18n.t('exploreLog.connecting'))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('exploreLog.waiting'))).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pause') })).toBeDisabled();
   });
 });
 
