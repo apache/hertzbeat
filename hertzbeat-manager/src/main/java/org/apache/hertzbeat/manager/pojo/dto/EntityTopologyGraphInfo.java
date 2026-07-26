@@ -19,7 +19,9 @@ package org.apache.hertzbeat.manager.pojo.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,11 +42,34 @@ public class EntityTopologyGraphInfo {
 
     private List<String> sourceKinds = new ArrayList<>();
 
+    private boolean partial;
+
+    private Set<String> partialReasons = new LinkedHashSet<>();
+
+    private EdgePage edgePage = new EdgePage();
+
     private List<Node> nodes = new ArrayList<>();
 
     private List<Edge> edges = new ArrayList<>();
 
     private List<TimelineEvent> impactTimeline = new ArrayList<>();
+
+    /**
+     * Page evidence for the filtered edge set represented by this graph.
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class EdgePage {
+
+        private int pageIndex;
+
+        private int pageSize;
+
+        private long totalElements;
+
+        private boolean hasNext;
+    }
 
     /**
      * RED metrics attached to topology nodes and edges.

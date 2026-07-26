@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
@@ -62,6 +63,9 @@ class TopologyControllerTest {
         graph.setFocusEntityId(10L);
         graph.setDepth(2);
         graph.setSourceKinds(List.of("entity-relation"));
+        graph.setPartial(true);
+        graph.setPartialReasons(Set.of("edge_page"));
+        graph.setEdgePage(new EntityTopologyGraphInfo.EdgePage(1, 25, 48, true));
         graph.setNodes(List.of(new EntityTopologyGraphInfo.Node(
                 "10", 10L, "checkout-api", "service", "commerce", "prod", "warning", true,
                 List.of("entity-relation"), new EntityTopologyGraphInfo.RedMetrics())));
@@ -88,6 +92,12 @@ class TopologyControllerTest {
                 .andExpect(jsonPath("$.data.apiBacked").value(true))
                 .andExpect(jsonPath("$.data.focusEntityId").value(10))
                 .andExpect(jsonPath("$.data.depth").value(2))
+                .andExpect(jsonPath("$.data.partial").value(true))
+                .andExpect(jsonPath("$.data.partialReasons[0]").value("edge_page"))
+                .andExpect(jsonPath("$.data.edgePage.pageIndex").value(1))
+                .andExpect(jsonPath("$.data.edgePage.pageSize").value(25))
+                .andExpect(jsonPath("$.data.edgePage.totalElements").value(48))
+                .andExpect(jsonPath("$.data.edgePage.hasNext").value(true))
                 .andExpect(jsonPath("$.data.nodes[0].entityName").value("checkout-api"))
                 .andExpect(jsonPath("$.data.edges[0].relationType").value("depends_on"));
 
