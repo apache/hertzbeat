@@ -109,31 +109,17 @@ function ReadyTopology({
 }: TopologyPageViewProps & {
   presentation: TopologyPresentation;
 }) {
-  const { t } = useTranslation();
   const compactInspector = useCompactTopologyInspector();
   const workspaceClass = [styles.workspace, compactInspector ? styles.workspaceCompact : undefined]
     .filter(Boolean)
     .join(' ');
   return (
     <>
-      {state.refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
-      {presentation.summary.partial ? (
-        <Alert
-          showIcon
-          type="warning"
-          message={t('topology.partial.title')}
-          description={
-            <ul>
-              {presentation.summary.partialReasons.map(reason => (
-                <li key={reason}>
-                  {t(reason === 'entity_seed_limit' ? 'topology.partial.entitySeedLimit' : 'topology.partial.edgePage')}
-                </li>
-              ))}
-            </ul>
-          }
-        />
-      ) : null}
-      <TopologyRuntimeEvidence state={runtimeState} />
+      <TopologyReadyEvidence
+        refreshFailure={state.refreshFailure}
+        presentation={presentation}
+        runtimeState={runtimeState}
+      />
       <div className={workspaceClass}>
         <TopologyGraphColumn
           state={state}
@@ -158,6 +144,40 @@ function ReadyTopology({
           onClose={actions.clearSelection}
         />
       </div>
+    </>
+  );
+}
+
+function TopologyReadyEvidence({
+  refreshFailure,
+  presentation,
+  runtimeState
+}: {
+  refreshFailure: TopologyPageViewProps['state']['refreshFailure'];
+  presentation: TopologyPresentation;
+  runtimeState: TopologyCanvasRuntimeState;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
+      {presentation.summary.partial ? (
+        <Alert
+          showIcon
+          type="warning"
+          message={t('topology.partial.title')}
+          description={
+            <ul>
+              {presentation.summary.partialReasons.map(reason => (
+                <li key={reason}>
+                  {t(reason === 'entity_seed_limit' ? 'topology.partial.entitySeedLimit' : 'topology.partial.edgePage')}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+      ) : null}
+      <TopologyRuntimeEvidence state={runtimeState} />
     </>
   );
 }

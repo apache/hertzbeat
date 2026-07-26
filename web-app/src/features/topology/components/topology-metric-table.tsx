@@ -23,7 +23,6 @@ type Props = {
 export function TopologyMetricTable({ rows, interaction, edgePage, actions }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
-  const { pageIndex, pageSize, totalElements, hasNext } = edgePage;
   return (
     <section className={styles.evidenceSection}>
       <div className={styles.evidenceHeading}>
@@ -43,45 +42,51 @@ export function TopologyMetricTable({ rows, interaction, edgePage, actions }: Pr
         </Button>
       </div>
       {expanded ? (
-        <div id="topology-evidence-table" className={styles.evidenceBody}>
-          <Table<TopologyMetricRow>
-            rowKey="rowKey"
-            size="small"
-            dataSource={rows}
-            columns={columns(t)}
-            rowClassName={row => (matches(row, interaction) ? styles.topologyRowActive! : '')}
-            onRow={row => ({
-              tabIndex: 0,
-              onClick: () => actions.drilldown(row),
-              onKeyDown: event => {
-                if (event.key === 'Enter') actions.drilldown(row);
-              },
-              onMouseEnter: () => hoverRow(row, actions),
-              onMouseLeave: actions.clearHover
-            })}
-            pagination={false}
-          />
-          <Space {...(styles.pagination ? { className: styles.pagination } : {})}>
-            <Button disabled={pageIndex === 0} onClick={() => actions.changePage(pageIndex - 1, pageSize)}>
-              {t('topology.pagination.previous')}
-            </Button>
-            <Typography.Text>{t('topology.pagination.page', { page: pageIndex + 1 })}</Typography.Text>
-            <Typography.Text type="secondary">
-              {t('topology.pagination.total', { total: totalElements })}
-            </Typography.Text>
-            <Button disabled={!hasNext} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
-              {t('topology.pagination.next')}
-            </Button>
-            <Select
-              value={pageSize}
-              aria-label={t('topology.pagination.pageSize')}
-              options={topologyPageSizes.map(value => ({ value, label: String(value) }))}
-              onChange={size => actions.changePage(0, size)}
-            />
-          </Space>
-        </div>
+        <TopologyMetricTableBody rows={rows} interaction={interaction} edgePage={edgePage} actions={actions} />
       ) : null}
     </section>
+  );
+}
+
+function TopologyMetricTableBody({ rows, interaction, edgePage, actions }: Props) {
+  const { t } = useTranslation();
+  const { pageIndex, pageSize, totalElements, hasNext } = edgePage;
+  return (
+    <div id="topology-evidence-table" className={styles.evidenceBody}>
+      <Table<TopologyMetricRow>
+        rowKey="rowKey"
+        size="small"
+        dataSource={rows}
+        columns={columns(t)}
+        rowClassName={row => (matches(row, interaction) ? styles.topologyRowActive! : '')}
+        onRow={row => ({
+          tabIndex: 0,
+          onClick: () => actions.drilldown(row),
+          onKeyDown: event => {
+            if (event.key === 'Enter') actions.drilldown(row);
+          },
+          onMouseEnter: () => hoverRow(row, actions),
+          onMouseLeave: actions.clearHover
+        })}
+        pagination={false}
+      />
+      <Space {...(styles.pagination ? { className: styles.pagination } : {})}>
+        <Button disabled={pageIndex === 0} onClick={() => actions.changePage(pageIndex - 1, pageSize)}>
+          {t('topology.pagination.previous')}
+        </Button>
+        <Typography.Text>{t('topology.pagination.page', { page: pageIndex + 1 })}</Typography.Text>
+        <Typography.Text type="secondary">{t('topology.pagination.total', { total: totalElements })}</Typography.Text>
+        <Button disabled={!hasNext} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
+          {t('topology.pagination.next')}
+        </Button>
+        <Select
+          value={pageSize}
+          aria-label={t('topology.pagination.pageSize')}
+          options={topologyPageSizes.map(value => ({ value, label: String(value) }))}
+          onChange={size => actions.changePage(0, size)}
+        />
+      </Space>
+    </div>
   );
 }
 

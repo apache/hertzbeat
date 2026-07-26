@@ -73,6 +73,55 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getAllByText('payments.example').length).toBeGreaterThan(1);
   });
 
+  it('keeps selected table evidence active while delegating pointer and keyboard drilldown', () => {
+    const drilldown = vi.fn();
+    const hoverEdge = vi.fn();
+    const clearHover = vi.fn();
+    render(
+      renderContent({
+        interaction: {
+          selected: { kind: 'edge', edgeId: 'edge-external' },
+          hover: { kind: 'none' }
+        },
+        actions: { ...baseActions, drilldown, hoverEdge, clearHover }
+      })
+    );
+
+    const evidenceTable = screen.getByRole('columnheader', { name: i18n.t('topology.table.kind') }).closest('table');
+    if (!evidenceTable) throw new Error('The topology evidence table is missing.');
+    const edgeRow = within(evidenceTable).getByRole('row', { name: /payments\.example/ });
+    expect(edgeRow.className).toContain('topologyRowActive');
+    fireEvent.mouseEnter(edgeRow);
+    fireEvent.click(edgeRow);
+    fireEvent.keyDown(edgeRow, { key: 'Enter' });
+    fireEvent.mouseLeave(edgeRow);
+
+    expect(hoverEdge).toHaveBeenCalledWith('edge-external');
+    expect(drilldown).toHaveBeenCalledTimes(2);
+    expect(drilldown).toHaveBeenLastCalledWith(expect.objectContaining({ edgeId: 'edge-external' }));
+    expect(clearHover).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the ready canvas mounted when runtime and refresh evidence change', () => {
+    const view = render(renderContent({ runtimeState: { kind: 'ready' } }));
+    const canvas = screen.getByTestId('topology-canvas');
+
+    view.rerender(
+      renderContent({
+        state: {
+          ...baseState,
+          refreshFailure: { kind: 'unavailable' }
+        },
+        runtimeState: { kind: 'failure' }
+      })
+    );
+
+    expect(screen.getByTestId('topology-canvas')).toBe(canvas);
+    expect(screen.getByText(i18n.t('topology.evidence.refreshFailure'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('topology.evidence.runtimeFailure'))).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+  });
+
   it('starts with the complete scope filter collapsed and keeps canvas actions available', () => {
     renderLinkedView();
     const canvasFrame = screen.getByTestId('topology-canvas').parentElement;
