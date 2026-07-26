@@ -37,11 +37,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.net.URI;
 import java.util.ResourceBundle;
 
 /**
@@ -93,7 +99,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity = 
             new ResponseEntity<>("null", HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
         
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
@@ -103,7 +109,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
                 new ResponseEntity<>("null", HttpStatus.INTERNAL_SERVER_ERROR);
 
-        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
 
 
         assertThrows(AlertNoticeException.class,
@@ -117,9 +123,25 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(eq(receiver.getHookUrl()), any(), eq(String.class))).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
 
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+
+    @Test
+    public void testHookUrlWithPercentEncodedQuerySentVerbatim() {
+        String hookUrl = "https://example.environment.api.powerplatform.com/workflows/wf1/triggers/manual/paths/invoke"
+                + "?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UejZsrJyaZwwAm_jArn7Ze0PIf";
+        receiver.setHookUrl(hookUrl);
+
+        RestTemplate realRestTemplate = new RestTemplate();
+        MockRestServiceServer mockServer = MockRestServiceServer.createServer(realRestTemplate);
+        mockServer.expect(requestTo(hookUrl)).andRespond(withSuccess());
+        ReflectionTestUtils.setField(webHookAlertNotifyHandler, "restTemplate", realRestTemplate);
+
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        mockServer.verify();
     }
 
     @Test
@@ -145,7 +167,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(URI.class), any(), eq(String.class))).thenReturn(responseEntity);
 
         // Test various valid URLs that should work
         receiver.setHookUrl("https://hooks.slack.com/services/T123/B456/complete-token");
@@ -170,7 +192,7 @@ class WebHookAlertNotifyHandlerImplTest {
         ResponseEntity<String> responseEntity =
             new ResponseEntity<>("null", HttpStatus.OK);
 
-        when(restTemplate.postForEntity(eq(receiver.getHookUrl()), any(), eq(String.class))).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(eq(URI.create(receiver.getHookUrl())), any(), eq(String.class))).thenReturn(responseEntity);
 
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
 

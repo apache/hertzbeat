@@ -104,17 +104,23 @@ class CommonHttpClientVirtualThreadTest {
 
     @Test
     void dispatchConnectionPoolCleanupClosesExpiredAndIdleConnections() throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch expiredConnectionsClosed = new CountDownLatch(1);
+        CountDownLatch idleConnectionsClosed = new CountDownLatch(1);
         PoolingHttpClientConnectionManager manager = mock(PoolingHttpClientConnectionManager.class);
         doAnswer(invocation -> {
-            latch.countDown();
+            expiredConnectionsClosed.countDown();
             return null;
         }).when(manager).closeExpiredConnections();
+        doAnswer(invocation -> {
+            idleConnectionsClosed.countDown();
+            return null;
+        }).when(manager).closeIdleConnections(40, TimeUnit.SECONDS);
         CommonHttpClient.setConnectionManagerForTest(manager);
 
         CommonHttpClient.dispatchConnectionPoolCleanup();
 
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(expiredConnectionsClosed.await(5, TimeUnit.SECONDS));
+        assertTrue(idleConnectionsClosed.await(5, TimeUnit.SECONDS));
         verify(manager, times(1)).closeExpiredConnections();
         verify(manager, times(1)).closeIdleConnections(40, TimeUnit.SECONDS);
     }
