@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildMonitorCreatePath,
   buildMonitorRoutePath,
   monitorAppOptions,
   monitorNavigationApps,
@@ -146,6 +147,12 @@ describe('monitor list model', () => {
     expect(safeMonitorReturnTo('/monitors-evil')).toBe('/monitors');
     expect(safeMonitorReturnTo('/monitors/7')).toBe('/monitors');
     expect(safeMonitorReturnTo('/monitors#selection')).toBe('/monitors');
+  });
+
+  it('preserves list query context when generic create still needs an application selection', () => {
+    expect(buildMonitorCreatePath('', '/monitors?status=2&pageIndex=3')).toBe(
+      '/monitors/new?returnTo=%2Fmonitors%3Fstatus%3D2%26pageIndex%3D3'
+    );
   });
 
   it('keeps only normalized monitor filters in return paths', () => {

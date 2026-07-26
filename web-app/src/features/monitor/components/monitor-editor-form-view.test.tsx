@@ -59,6 +59,32 @@ describe('MonitorEditorFormView validation evidence', () => {
     expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
   });
 
+  it('allows generic create to cancel while choosing an application', () => {
+    const controller = editorController([]);
+    const pickerController = {
+      ...controller,
+      state: { ...controller.state, draft: undefined }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={pickerController} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(controller.actions.cancel).toHaveBeenCalledOnce();
+  });
+
+  it('allows generic create to cancel when the application catalog is empty', () => {
+    const controller = editorController([]);
+    const emptyController = {
+      ...controller,
+      state: { ...controller.state, draft: undefined, apps: [] }
+    };
+
+    render(<MonitorEditorFormView mode="new" controller={emptyController} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(controller.actions.cancel).toHaveBeenCalledOnce();
+  });
+
   it('shows concrete field errors and removes them when controller issues converge', () => {
     const controller = editorController(['name', 'intervals', 'param:headers']);
     const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);

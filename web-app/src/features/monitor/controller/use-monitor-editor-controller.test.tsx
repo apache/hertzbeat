@@ -250,6 +250,34 @@ describe('useMonitorEditorController', () => {
     expect(api.loadMonitorParamDefines).not.toHaveBeenCalled();
   });
 
+  it('preserves safe return context through generic create application selection and cancel', async () => {
+    const routed = renderController('new', '/monitors/new?returnTo=%2Fmonitors%3Fstatus%3D2%26pageIndex%3D3');
+    await waitFor(() => expect(routed.current().state.draft).toBeUndefined());
+
+    act(() => routed.current().actions.changeSource({ app: 'website', scrape: 'static' }));
+    await waitFor(() => expect(routed.current().state.draft?.monitor.app).toBe('website'));
+    expect(routed.router.state.location.search).toContain('app=website');
+    expect(routed.router.state.location.search).toContain('returnTo=%2Fmonitors%3Fstatus%3D2%26pageIndex%3D3');
+
+    act(() => routed.current().actions.cancel());
+    expect(routed.router.state.location.pathname).toBe('/monitors');
+    expect(routed.router.state.location.search).toBe('?status=2&pageIndex=3');
+    expect(api.detectMonitor).not.toHaveBeenCalled();
+    expect(api.saveMonitor).not.toHaveBeenCalled();
+  });
+
+  it('falls back safely when generic create receives an external return target', async () => {
+    const routed = renderController('new', '/monitors/new?returnTo=https%3A%2F%2Fevil.example%2Fcollect');
+    await waitFor(() => expect(routed.current().state.draft).toBeUndefined());
+
+    act(() => routed.current().actions.cancel());
+
+    expect(routed.router.state.location.pathname).toBe('/monitors');
+    expect(routed.router.state.location.search).toBe('');
+    expect(api.detectMonitor).not.toHaveBeenCalled();
+    expect(api.saveMonitor).not.toHaveBeenCalled();
+  });
+
   it('rejects direct edit scrape drift but transitions an explicit in-page change', async () => {
     api.loadMonitorParamDefines.mockImplementation((app: string) =>
       Promise.resolve(

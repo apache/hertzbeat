@@ -147,10 +147,8 @@ export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', 
 
 export function buildMonitorCreatePath(app: string, returnTo: string) {
   const normalizedApp = app.trim();
-  if (!normalizedApp) return monitorRoutePaths.create;
-  const params = new URLSearchParams({
-    app: normalizedApp,
-    returnTo: safeMonitorReturnTo(returnTo)
-  });
+  const params = new URLSearchParams();
+  if (normalizedApp) params.set('app', normalizedApp);
+  params.set('returnTo', safeMonitorReturnTo(returnTo));
   return `${monitorRoutePaths.create}?${params.toString()}`;
 }

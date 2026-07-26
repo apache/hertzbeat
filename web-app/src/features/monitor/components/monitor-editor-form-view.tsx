@@ -50,7 +50,15 @@ export function MonitorEditorFormView({
     );
   }
   if (!draft) {
-    if (apps.length === 0) return <Alert type="warning" showIcon message={t('monitor.editor.appEmpty')} />;
+    if (apps.length === 0)
+      return (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('monitor.editor.appEmpty')}
+          action={<Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>}
+        />
+      );
     return (
       <div className={styles.form}>
         <label>
@@ -61,6 +69,9 @@ export function MonitorEditorFormView({
             onChange={app => controller.actions.changeSource({ app, scrape: 'static' })}
           />
         </label>
+        <div className={styles.actions}>
+          <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
+        </div>
       </div>
     );
   }
