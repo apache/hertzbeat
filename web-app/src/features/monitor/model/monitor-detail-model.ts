@@ -190,7 +190,7 @@ export function monitorRealtimeRows(data: MonitorRealtimeMetric) {
               field: field.name,
               unit: field.unit,
               value: displayMetricValue(value),
-              time: value.time
+              time: value.time ?? data.time ?? null
             }
           ]
         : [];

@@ -112,7 +112,7 @@ export function parseRealtimeMetric(
   requestedGroup: string
 ): MonitorRealtimeMetric {
   // The endpoint uses a nullish body, rather than a shaped object, for honest no-data.
-  if (value === null || value === undefined) return { fields: [], valueRows: [] };
+  if (value === null || value === undefined) return { time: null, fields: [], valueRows: [] };
   const result = realtimeSchema.safeParse(value);
   if (!result.success) throw new MonitorContractError();
   const wire = result.data;
@@ -128,7 +128,7 @@ export function parseRealtimeMetric(
     }
     return { labels: row.labels, values: row.values.map(mapMetricValue) };
   });
-  return { fields: wire.fields.map(field => ({ ...field })), valueRows };
+  return { time: wire.time, fields: wire.fields.map(field => ({ ...field })), valueRows };
 }
 
 export function parseHistoryMetric(

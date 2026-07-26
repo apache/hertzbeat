@@ -52,9 +52,10 @@ describe('Monitor metric read schemas', () => {
   });
 
   it('preserves canonical realtime no-data and nullable value fields', () => {
-    expect(parseRealtimeMetric(null, 7, 'summary')).toEqual({ fields: [], valueRows: [] });
-    expect(parseRealtimeMetric(undefined, 7, 'summary')).toEqual({ fields: [], valueRows: [] });
+    expect(parseRealtimeMetric(null, 7, 'summary')).toEqual({ time: null, fields: [], valueRows: [] });
+    expect(parseRealtimeMetric(undefined, 7, 'summary')).toEqual({ time: null, fields: [], valueRows: [] });
     expect(parseRealtimeMetric(realtimeWire(), 7, 'summary')).toEqual({
+      time: 0,
       fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
       valueRows: [
         {

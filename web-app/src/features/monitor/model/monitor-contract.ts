@@ -177,6 +177,7 @@ export type MonitorMetricValue = {
   time: number | null;
 };
 export type MonitorRealtimeMetric = {
+  time: number | null;
   fields: Array<{ name: string; type: number; unit: string | null; label: boolean }>;
   valueRows: Array<{ labels: Record<string, string>; values: MonitorMetricValue[] }>;
 };

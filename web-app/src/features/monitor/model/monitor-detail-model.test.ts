@@ -99,6 +99,7 @@ describe('monitor detail model', () => {
     const empty = { mean: null, median: null, min: null, max: null };
     expect(
       monitorRealtimeRows({
+        time: 2000,
         fields: [
           { name: 'hostCode', type: 1, unit: null, label: true },
           { name: 'responseTime', type: 0, unit: 'ms', label: false },
@@ -111,7 +112,7 @@ describe('monitor detail model', () => {
             values: [
               { ...empty, origin: 'a', time: 1000 },
               { ...empty, origin: '12', time: 0 },
-              { ...empty, origin: 'UP', time: 1000 },
+              { ...empty, origin: 'UP', time: null },
               { ...empty, origin: null, time: null }
             ]
           }
@@ -132,7 +133,7 @@ describe('monitor detail model', () => {
         field: 'status',
         unit: null,
         value: 'UP',
-        time: 1000
+        time: 2000
       },
       {
         key: '0:message',
@@ -140,6 +141,27 @@ describe('monitor detail model', () => {
         field: 'message',
         unit: null,
         value: '—',
+        time: 2000
+      }
+    ]);
+    expect(
+      monitorRealtimeRows({
+        time: null,
+        fields: [{ name: 'status', type: 1, unit: null, label: false }],
+        valueRows: [
+          {
+            labels: {},
+            values: [{ ...empty, origin: 'UP', time: null }]
+          }
+        ]
+      })
+    ).toEqual([
+      {
+        key: '0:status',
+        labels: {},
+        field: 'status',
+        unit: null,
+        value: 'UP',
         time: null
       }
     ]);

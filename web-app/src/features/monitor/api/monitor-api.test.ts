@@ -977,6 +977,7 @@ describe('monitor metric API contracts', () => {
         ignored: true
       });
     await expect(loadRealtimeMetric(7, metric, signal)).resolves.toEqual({
+      time: 0,
       fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
       valueRows: [
         {
@@ -1002,8 +1003,9 @@ describe('monitor metric API contracts', () => {
       fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
       valueRows: null
     });
-    await expect(loadRealtimeMetric(7, metric)).resolves.toEqual({ fields: [], valueRows: [] });
+    await expect(loadRealtimeMetric(7, metric)).resolves.toEqual({ time: null, fields: [], valueRows: [] });
     await expect(loadRealtimeMetric(7, metric)).resolves.toEqual({
+      time: 0,
       fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
       valueRows: []
     });
