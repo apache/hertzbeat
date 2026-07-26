@@ -108,6 +108,26 @@ describe('useEntityDetailController deletion', () => {
     });
     await waitFor(() => expect(routed.router.state.location.pathname).toBe('/entities'));
   });
+
+  it('opens the matched noise-control destination with entity ownership', async () => {
+    api.loadEntityDetail.mockResolvedValueOnce({
+      ...detail,
+      noiseControls: {
+        activeSilenceCount: 1,
+        matchingInhibitCount: 0,
+        activeSilences: [{ id: 31, name: 'Maintenance', type: 'silence', global: false, matchedLabels: [] }],
+        matchingInhibits: [],
+        possibleAlertSuppression: true
+      }
+    });
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.manageNoiseControls('silence'));
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/alerts/silences'));
+    expect(routed.router.state.location.search).toContain('entityId=7');
+    expect(routed.router.state.location.search).toContain('matchingRuleIds=31');
+  });
 });
 
 function renderController(entry: string) {
@@ -127,7 +147,8 @@ function renderController(entry: string) {
           </QueryClientProvider>
         )
       },
-      { path: '/entities', element: null }
+      { path: '/entities', element: null },
+      { path: '/alerts/silences', element: null }
     ],
     { initialEntries: [entry] }
   );

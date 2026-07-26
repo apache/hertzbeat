@@ -199,6 +199,8 @@
       "possibleSuppression": "符合的降噪規則可能解釋了此資源目前沒有可見作用中告警的原因。",
       "none": "目前沒有符合此資源的生效降噪規則。",
       "global": "全域",
+      "manageSilences": "管理靜默策略",
+      "manageInhibits": "管理抑制策略",
       "types": { "silence": "靜默", "inhibit": "抑制" }
     },
     "values": {
@@ -1524,7 +1526,7 @@
     "operationFailed": "抑制策略操作失敗。",
     "management": {
       "title": "實體抑制脈絡",
-      "matchedDescription": "僅顯示目前實體實際符合的抑制策略。",
+      "matchedDescription": "顯示後端為目前實體傳回的符合抑制策略證據。",
       "allDescription": "保留實體脈絡並顯示全部抑制策略。",
       "entityFallback": "實體 {{id}}",
       "empty": "目前沒有符合該實體的抑制策略。",
@@ -1573,7 +1575,7 @@
     "operationFailed": "靜默策略操作失敗。",
     "management": {
       "title": "實體靜默內容",
-      "matchedDescription": "僅顯示目前實體符合的靜默策略。",
+      "matchedDescription": "顯示後端為目前實體傳回的符合靜默策略證據。",
       "allDescription": "保留實體內容並顯示全部靜默策略。",
       "entityFallback": "實體 {{id}}",
       "empty": "目前實體沒有符合的靜默策略。",

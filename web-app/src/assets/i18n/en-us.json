@@ -204,6 +204,8 @@
       "possibleSuppression": "Matching noise controls may explain why this resource has no visible active alerts.",
       "none": "No active noise controls match this resource.",
       "global": "Global",
+      "manageSilences": "Manage silences",
+      "manageInhibits": "Manage inhibitions",
       "types": { "silence": "Silence", "inhibit": "Inhibition" }
     },
     "values": {
@@ -1543,7 +1545,7 @@
     "operationFailed": "Inhibition policy operation failed.",
     "management": {
       "title": "Entity inhibition context",
-      "matchedDescription": "Showing only inhibition policies that the entity currently matches.",
+      "matchedDescription": "Showing the matching inhibition policy evidence returned for this entity.",
       "allDescription": "Showing all inhibition policies while retaining the entity context.",
       "entityFallback": "Entity {{id}}",
       "empty": "No current inhibition policies match this entity.",
@@ -1592,7 +1594,7 @@
     "operationFailed": "Silence policy operation failed.",
     "management": {
       "title": "Entity silence context",
-      "matchedDescription": "Showing only silence policies that the entity currently matches.",
+      "matchedDescription": "Showing the matching silence policy evidence returned for this entity.",
       "allDescription": "Showing all silence policies while retaining the entity context.",
       "entityFallback": "Entity {{id}}",
       "empty": "No current silence policies match this entity.",

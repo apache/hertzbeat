@@ -199,6 +199,8 @@
       "possibleSuppression": "匹配的降噪规则可能解释了该资源当前没有可见活跃告警的原因。",
       "none": "当前没有匹配该资源的生效降噪规则。",
       "global": "全局",
+      "manageSilences": "管理静默策略",
+      "manageInhibits": "管理抑制策略",
       "types": { "silence": "静默", "inhibit": "抑制" }
     },
     "values": {
@@ -1524,7 +1526,7 @@
     "operationFailed": "抑制策略操作失败。",
     "management": {
       "title": "实体抑制上下文",
-      "matchedDescription": "仅显示当前实体实际匹配的抑制策略。",
+      "matchedDescription": "显示后端为当前实体返回的匹配抑制策略证据。",
       "allDescription": "保留实体上下文并显示全部抑制策略。",
       "entityFallback": "实体 {{id}}",
       "empty": "当前没有匹配该实体的抑制策略。",
@@ -1573,7 +1575,7 @@
     "operationFailed": "静默策略操作失败。",
     "management": {
       "title": "实体静默上下文",
-      "matchedDescription": "仅显示当前实体匹配的静默策略。",
+      "matchedDescription": "显示后端为当前实体返回的匹配静默策略证据。",
       "allDescription": "保留实体上下文并显示全部静默策略。",
       "entityFallback": "实体 {{id}}",
       "empty": "当前实体没有匹配的静默策略。",

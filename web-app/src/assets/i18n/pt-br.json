@@ -204,6 +204,8 @@
       "possibleSuppression": "Os controles de ruído correspondentes podem explicar por que este recurso não possui alertas ativos visíveis.",
       "none": "Nenhum controle de ruído ativo corresponde a este recurso.",
       "global": "Global",
+      "manageSilences": "Gerenciar silêncios",
+      "manageInhibits": "Gerenciar inibições",
       "types": { "silence": "Silêncio", "inhibit": "Inibição" }
     },
     "values": {
@@ -1547,7 +1549,7 @@
     "operationFailed": "Falha na operação da política de inibição.",
     "management": {
       "title": "Contexto de inibição da entidade",
-      "matchedDescription": "Mostrando apenas as políticas de inibição que correspondem à entidade no momento.",
+      "matchedDescription": "Exibindo a evidência de políticas de inibição correspondentes retornada para esta entidade.",
       "allDescription": "Mostrando todas as políticas de inibição e mantendo o contexto da entidade.",
       "entityFallback": "Entidade {{id}}",
       "empty": "Nenhuma política de inibição corresponde a esta entidade no momento.",
@@ -1596,7 +1598,7 @@
     "operationFailed": "Falha na operação da política de silêncio.",
     "management": {
       "title": "Contexto de silêncio da entidade",
-      "matchedDescription": "Exibindo apenas políticas de silêncio que correspondem atualmente à entidade.",
+      "matchedDescription": "Exibindo a evidência de políticas de silêncio correspondentes retornada para esta entidade.",
       "allDescription": "Exibindo todas as políticas de silêncio e preservando o contexto da entidade.",
       "entityFallback": "Entidade {{id}}",
       "empty": "Nenhuma política de silêncio atual corresponde a esta entidade.",

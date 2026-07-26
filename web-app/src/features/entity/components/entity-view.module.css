@@ -54,6 +54,15 @@
 .section h4 {
   margin: 0 0 8px;
 }
+.sectionHeading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sectionHeading h4 {
+  margin: 0;
+}
 @media (max-width: 1100px) {
   .filters,
   .advancedFilters {

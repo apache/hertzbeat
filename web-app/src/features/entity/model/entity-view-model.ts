@@ -1,7 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
-import { applicationRoutePaths, buildEntityEditPath, entityRoutePaths } from '@/shared/navigation/app-paths';
+import {
+  alertRoutePaths,
+  applicationRoutePaths,
+  buildEntityEditPath,
+  entityRoutePaths
+} from '@/shared/navigation/app-paths';
+import { compactTablePageSizes } from '@/shared/pagination';
 import type { EntityDetail, EntityQuery, EntitySummary } from './entity-contract';
 import {
   buildEntityDiscoveryPath,
@@ -31,6 +37,7 @@ export const defaultEntityQuery: EntityQuery = {
 export type EntityListEvidence = RemotePageState<EntitySummary, 'unavailable' | 'error'>;
 export type EntityDetailEvidence = RemotePayloadState<{ detail: EntityDetail }, 'missing' | 'unavailable' | 'error'>;
 export type EntityExploreSignal = 'metrics' | 'logs';
+export type EntityNoiseControlType = 'silence' | 'inhibit';
 
 export type EntityListViewState = {
   query: EntityQuery;
@@ -123,6 +130,25 @@ export function buildEntityExplorePath(detail: EntityDetail, signal: EntityExplo
   }
   if (detail.entity.environment) params.set('environment', detail.entity.environment);
   return `${applicationRoutePaths.explore}?${params.toString()}`;
+}
+
+export function buildEntityNoiseControlPath(detail: EntityDetail, ruleType: EntityNoiseControlType) {
+  const params = new URLSearchParams({
+    pageIndex: '0',
+    pageSize: String(compactTablePageSizes[0]),
+    entityId: String(detail.entity.id),
+    entityName: detail.entity.displayName || detail.entity.name,
+    returnTo: entityRoutePaths.detail.replace(':entityId', String(detail.entity.id)),
+    matchMode: 'entity-noise-controls',
+    matchingRuleType: ruleType
+  });
+  const rules = ruleType === 'silence' ? detail.noiseControls?.activeSilences : detail.noiseControls?.matchingInhibits;
+  // Summary counts can exceed these bounded backend previews. Carry only the
+  // exact rule identities returned as evidence; never synthesize the remainder.
+  const ids = rules?.map(rule => rule.id) ?? [];
+  if (ids.length > 0) params.set('matchingRuleIds', ids.join(','));
+  const path = ruleType === 'silence' ? alertRoutePaths.silences : alertRoutePaths.inhibits;
+  return `${path}?${params.toString()}`;
 }
 
 function uniqueMonitorInstance(detail: EntityDetail) {

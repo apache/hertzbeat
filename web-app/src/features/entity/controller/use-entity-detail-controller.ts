@@ -17,9 +17,11 @@ import {
   buildEntityEditRoute,
   buildEntityDefinitionRoute,
   buildEntityExplorePath,
+  buildEntityNoiseControlPath,
   safeEntityReturnTo,
   type EntityDetailEvidence,
-  type EntityExploreSignal
+  type EntityExploreSignal,
+  type EntityNoiseControlType
 } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
 
@@ -55,6 +57,9 @@ export function useEntityDetailController() {
       },
       explore: (signal: EntityExploreSignal) => {
         if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));
+      },
+      manageNoiseControls: (ruleType: EntityNoiseControlType) => {
+        if (evidence.kind === 'ready') void navigate(buildEntityNoiseControlPath(evidence.detail, ruleType));
       },
       remove: deletion.remove
     }

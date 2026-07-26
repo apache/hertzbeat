@@ -5,18 +5,35 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, List, Space, Tag, Typography } from 'antd';
+import { Alert, Button, List, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { EntityNoiseControlRule, EntityNoiseControlSummary } from '../model/entity-contract';
+import type { EntityNoiseControlType } from '../model/entity-view-model';
 import styles from './entity-view.module.css';
 
-export function EntityNoiseControlEvidence({ summary }: { summary: EntityNoiseControlSummary }) {
+export function EntityNoiseControlEvidence({
+  summary,
+  manage
+}: {
+  summary: EntityNoiseControlSummary;
+  manage: (ruleType: EntityNoiseControlType) => void;
+}) {
   const { t } = useTranslation();
   const rules = [...summary.activeSilences, ...summary.matchingInhibits];
   return (
     <section className={styles.section} aria-label={t('entity.noiseControls.title')}>
-      <Typography.Title level={4}>{t('entity.noiseControls.title')}</Typography.Title>
+      <div className={styles.sectionHeading}>
+        <Typography.Title level={4}>{t('entity.noiseControls.title')}</Typography.Title>
+        <Space>
+          <Button size="small" onClick={() => manage('silence')}>
+            {t('entity.noiseControls.manageSilences')}
+          </Button>
+          <Button size="small" onClick={() => manage('inhibit')}>
+            {t('entity.noiseControls.manageInhibits')}
+          </Button>
+        </Space>
+      </div>
       <Typography.Paragraph type="secondary">
         {t('entity.noiseControls.summary', {
           silenceCount: summary.activeSilenceCount,

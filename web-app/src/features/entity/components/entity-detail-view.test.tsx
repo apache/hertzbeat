@@ -98,44 +98,56 @@ describe('EntityDetailView', () => {
   });
 
   it('renders matching silence and inhibit evidence without inventing rules', () => {
-    renderView({
-      kind: 'ready',
-      detail: {
-        entity,
-        identities: [],
-        noiseControls: {
-          activeSilenceCount: 1,
-          matchingInhibitCount: 1,
-          activeSilences: [
-            {
-              id: 31,
-              name: 'Checkout maintenance',
-              type: 'silence',
-              global: false,
-              matchedLabels: ['service.name']
-            }
-          ],
-          matchingInhibits: [
-            {
-              id: 41,
-              name: 'Critical suppresses warning',
-              type: 'inhibit',
-              global: false,
-              matchedLabels: ['environment']
-            }
-          ],
-          possibleAlertSuppression: true
-        },
-        boundMonitors: [],
-        relations: []
-      }
-    });
+    const manageNoiseControls = vi.fn();
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          noiseControls: {
+            activeSilenceCount: 1,
+            matchingInhibitCount: 1,
+            activeSilences: [
+              {
+                id: 31,
+                name: 'Checkout maintenance',
+                type: 'silence',
+                global: false,
+                matchedLabels: ['service.name']
+              }
+            ],
+            matchingInhibits: [
+              {
+                id: 41,
+                name: 'Critical suppresses warning',
+                type: 'inhibit',
+                global: false,
+                matchedLabels: ['environment']
+              }
+            ],
+            possibleAlertSuppression: true
+          },
+          boundMonitors: [],
+          relations: []
+        }
+      },
+      undefined,
+      undefined,
+      false,
+      undefined,
+      manageNoiseControls
+    );
 
     const section = screen.getByRole('region', { name: i18n.t('entity.noiseControls.title') });
     expect(within(section).getByText('Checkout maintenance')).toBeInTheDocument();
     expect(within(section).getByText('Critical suppresses warning')).toBeInTheDocument();
     expect(within(section).getByText(i18n.t('entity.noiseControls.possibleSuppression'))).toBeInTheDocument();
     expect(within(section).queryByText('0')).not.toBeInTheDocument();
+    fireEvent.click(within(section).getByRole('button', { name: i18n.t('entity.noiseControls.manageSilences') }));
+    fireEvent.click(within(section).getByRole('button', { name: i18n.t('entity.noiseControls.manageInhibits') }));
+    expect(manageNoiseControls).toHaveBeenNthCalledWith(1, 'silence');
+    expect(manageNoiseControls).toHaveBeenNthCalledWith(2, 'inhibit');
   });
 
   it('offers resource deletion and renders only localized redacted failures', () => {
@@ -162,13 +174,21 @@ function renderView(
   explore = () => undefined,
   remove = () => undefined,
   deleting = false,
-  deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error'
+  deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error',
+  manageNoiseControls = () => undefined
 ) {
   return render(
     <I18nextProvider i18n={i18n}>
       <EntityDetailView
         state={{ evidence, deleting, ...(deleteFailure ? { deleteFailure } : {}) }}
-        actions={{ back: () => undefined, edit: () => undefined, definition: () => undefined, explore, remove }}
+        actions={{
+          back: () => undefined,
+          edit: () => undefined,
+          definition: () => undefined,
+          explore,
+          remove,
+          manageNoiseControls
+        }}
       />
     </I18nextProvider>
   );

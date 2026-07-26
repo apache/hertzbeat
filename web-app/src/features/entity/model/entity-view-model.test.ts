@@ -8,6 +8,7 @@ import {
   buildEntityDiscoveryRoute,
   buildEntityEditRoute,
   buildEntityExplorePath,
+  buildEntityNoiseControlPath,
   entityExploreSignals,
   safeEntityEditorReturnTo
 } from './entity-view-model';
@@ -72,5 +73,31 @@ describe('entity editor navigation', () => {
     expect(safeEntityEditorReturnTo('/entities/7?returnTo=https%3A%2F%2Fevil.example', 7)).toBe(
       '/entities/7?returnTo=%2Fentities'
     );
+  });
+});
+
+describe('entity noise-control navigation', () => {
+  it('builds a canonical matched-rule handoff from the entity evidence', () => {
+    const detail: EntityDetail = {
+      entity: { id: 7, type: 'service', name: 'checkout', displayName: 'Checkout API' },
+      identities: [],
+      noiseControls: {
+        activeSilenceCount: 5,
+        matchingInhibitCount: 1,
+        activeSilences: [
+          { id: 31, name: 'Maintenance', type: 'silence', global: false, matchedLabels: [] },
+          { id: 33, name: 'Global maintenance', type: 'silence', global: true, matchedLabels: [] }
+        ],
+        matchingInhibits: [{ id: 41, name: 'Critical first', type: 'inhibit', global: false, matchedLabels: [] }],
+        possibleAlertSuppression: true
+      },
+      boundMonitors: [],
+      relations: []
+    };
+
+    expect(buildEntityNoiseControlPath(detail, 'silence')).toBe(
+      '/alerts/silences?pageIndex=0&pageSize=8&entityId=7&entityName=Checkout+API&returnTo=%2Fentities%2F7&matchMode=entity-noise-controls&matchingRuleType=silence&matchingRuleIds=31%2C33'
+    );
+    expect(buildEntityNoiseControlPath(detail, 'inhibit')).toContain('matchingRuleType=inhibit&matchingRuleIds=41');
   });
 });

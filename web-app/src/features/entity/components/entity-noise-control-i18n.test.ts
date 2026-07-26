@@ -21,6 +21,8 @@ describe('Entity noise-control locales', () => {
       expect(locale.entity.noiseControls.summary).toContain('{{inhibitCount}}');
       expect(locale.entity.noiseControls.types.silence).toBeTruthy();
       expect(locale.entity.noiseControls.types.inhibit).toBeTruthy();
+      expect(locale.entity.noiseControls.manageSilences).toBeTruthy();
+      expect(locale.entity.noiseControls.manageInhibits).toBeTruthy();
     }
   });
 });

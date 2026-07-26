@@ -3,12 +3,21 @@
 import { Alert, Button, Empty, List, Space, Spin, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { EntityDetailEvidence, EntityExploreSignal } from '../model/entity-view-model';
+import type { EntityDetailEvidence, EntityExploreSignal, EntityNoiseControlType } from '../model/entity-view-model';
 import { entityExploreSignals } from '../model/entity-view-model';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityDetailMetadata } from './entity-detail-metadata';
 import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
 import styles from './entity-view.module.css';
+
+type EntityDetailViewActions = {
+  back: () => void;
+  edit: () => void;
+  definition: () => void;
+  explore: (signal: EntityExploreSignal) => void;
+  manageNoiseControls: (ruleType: EntityNoiseControlType) => void;
+  remove: () => void;
+};
 
 export function EntityDetailView({
   state,
@@ -19,13 +28,7 @@ export function EntityDetailView({
     deleting: boolean;
     deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
   };
-  actions: {
-    back: () => void;
-    edit: () => void;
-    definition: () => void;
-    explore: (signal: EntityExploreSignal) => void;
-    remove: () => void;
-  };
+  actions: EntityDetailViewActions;
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
@@ -48,13 +51,7 @@ function ReadyEntityDetail({
 }: {
   detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
   state: { deleting: boolean; deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error' };
-  actions: {
-    back: () => void;
-    edit: () => void;
-    definition: () => void;
-    explore: (signal: EntityExploreSignal) => void;
-    remove: () => void;
-  };
+  actions: EntityDetailViewActions;
 }) {
   const { t } = useTranslation();
   const signals = entityExploreSignals(detail);
@@ -85,7 +82,9 @@ function ReadyEntityDetail({
         <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
       ) : null}
       <EntityDetailMetadata detail={detail} />
-      {detail.noiseControls ? <EntityNoiseControlEvidence summary={detail.noiseControls} /> : null}
+      {detail.noiseControls ? (
+        <EntityNoiseControlEvidence summary={detail.noiseControls} manage={actions.manageNoiseControls} />
+      ) : null}
       <EntityEvidenceLists detail={detail} />
     </div>
   );
