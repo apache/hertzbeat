@@ -26,6 +26,10 @@ describe('Alert Rule locale coverage', () => {
       expect(locale.alertRules.import.validation.unsupported).toBeTruthy();
       expect(locale.alertRules.import.failure.uncertain).toBeTruthy();
       expect(locale.alertRules.import.inspect).toBeTruthy();
+      expect(locale.alertRules.datasource.checking).toBeTruthy();
+      expect(locale.alertRules.datasource.none).toBeTruthy();
+      expect(locale.alertRules.datasource.promqlOnly).toBeTruthy();
+      expect(locale.alertRules.datasource.sqlOnly).toBeTruthy();
     }
   });
 });

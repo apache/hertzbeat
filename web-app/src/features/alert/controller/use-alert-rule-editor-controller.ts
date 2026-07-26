@@ -11,6 +11,9 @@ import {
   alertRuleFailureKind,
   alertRuleDraftFromDetail,
   createAlertRuleDraft,
+  firstSupportedPeriodicDataType,
+  isAlertRuleStrategySupported,
+  type AlertRuleDataType,
   type AlertRuleDraft,
   type AlertRuleKind
 } from '../model/alert-rule-model';
@@ -23,6 +26,7 @@ import {
 } from './alert-rule-editor-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
+import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
 export type {
@@ -40,6 +44,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const routeSource = `${mode}:${ruleId}:${location.key}`;
   const routeToken = useMemo(() => Symbol(routeSource), [routeSource]);
   const identity = useAlertRuleEditorIdentity(routeToken);
+  const datasource = useAlertRuleDatasourceController();
   const initialDraft = useMemo(() => (mode === 'new' ? createAlertRuleDraft() : null), [mode]);
   const [routeState, setRouteState] = useState<AlertRuleRouteState>(() =>
     freshAlertRuleRouteState(routeSource, routeToken, initialDraft)
@@ -69,11 +74,33 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   };
   const changeKind = (kind: AlertRuleKind) => {
     if (!draft) return;
-    updateDraft({ kind, dataType: kind === 'realtime' && draft.dataType === 'trace' ? 'metric' : draft.dataType });
+    if (kind === 'realtime') {
+      updateDraft({ kind, dataType: draft.dataType === 'trace' ? 'metric' : draft.dataType });
+      return;
+    }
+    if (datasource.state.kind !== 'ready') return;
+    const dataType = isAlertRuleStrategySupported(datasource.state.status, kind, draft.dataType)
+      ? draft.dataType
+      : firstSupportedPeriodicDataType(datasource.state.status);
+    if (dataType) updateDraft({ kind, dataType });
+  };
+  const changeDataType = (dataType: AlertRuleDataType) => {
+    if (!draft) return;
+    if (draft.kind === 'realtime') {
+      if (dataType !== 'trace') updateDraft({ dataType });
+      return;
+    }
+    if (
+      datasource.state.kind === 'ready' &&
+      isAlertRuleStrategySupported(datasource.state.status, draft.kind, dataType)
+    ) {
+      updateDraft({ dataType });
+    }
   };
   return {
     state: {
       command: active.command,
+      datasource: datasource.state,
       detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
       draft,
       preview: active.preview,
@@ -81,12 +108,14 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       recovery: active.recovery
     },
     updateDraft,
+    changeDataType,
     changeKind,
     preview: preview.preview,
     save: command.save,
     retrySave: command.retry,
     retryDetail: () =>
       mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
+    retryDatasource: datasource.retry,
     cancel: () => {
       void navigate(alertRoutePaths.rules);
     }

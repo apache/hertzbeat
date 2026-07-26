@@ -26,6 +26,7 @@ import {
   type AlertRulePreviewState,
   type AlertRuleSaveRecovery
 } from '../controller/use-alert-rule-editor-controller';
+import type { AlertRuleDatasourceState } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 
 function DetailEvidence({ state, retry }: { state: AlertRuleEditorDetailState; retry: () => unknown }) {
@@ -65,6 +66,34 @@ function SaveEvidence({ failure }: { failure: AlertRuleEditorFailure | undefined
   const { t } = useTranslation();
   if (!failure) return null;
   return <Alert type="error" showIcon message={t(saveFailureMessageKey(failure))} />;
+}
+
+function DatasourceEvidence({ state, retry }: { state: AlertRuleDatasourceState; retry: () => unknown }) {
+  const { t } = useTranslation();
+  if (state.kind === 'ready' && state.status.hasPromqlExecutor && state.status.hasSqlExecutor) return null;
+  if (state.kind === 'loading') {
+    return <Alert type="info" showIcon message={t('alertRules.datasource.checking')} />;
+  }
+  if (state.kind === 'ready') {
+    return <Alert type="warning" showIcon message={t(datasourceMessageKey(state.status))} />;
+  }
+  return (
+    <Alert
+      type="error"
+      showIcon
+      message={t(state.kind === 'unavailable' ? 'common.unavailable' : 'common.routeError.description')}
+      action={
+        <Button size="small" onClick={() => void retry()}>
+          {t('common.retry')}
+        </Button>
+      }
+    />
+  );
+}
+
+function datasourceMessageKey(status: Extract<AlertRuleDatasourceState, { kind: 'ready' }>['status']) {
+  if (status.hasPromqlExecutor) return 'alertRules.datasource.promqlOnly';
+  return status.hasSqlExecutor ? 'alertRules.datasource.sqlOnly' : 'alertRules.datasource.none';
 }
 
 function SaveRecovery({
@@ -110,7 +139,7 @@ function saveFailureMessageKey(failure: AlertRuleEditorFailure) {
 export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
   const controller = useAlertRuleEditorController(mode);
-  const { command, detail, draft, preview, recovery, saveFailure } = controller.state;
+  const { command, datasource, detail, draft, preview, recovery, saveFailure } = controller.state;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
@@ -125,10 +154,13 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
           ) : (
             <SaveEvidence failure={saveFailure} />
           )}
+          <DatasourceEvidence state={datasource} retry={controller.retryDatasource} />
           <AlertRuleFields
             draft={draft}
             busy={command === 'saving' || recovery !== undefined}
+            datasource={datasource}
             update={controller.updateDraft}
+            changeDataType={controller.changeDataType}
             changeKind={controller.changeKind}
           />
           <PreviewEvidence state={preview} />

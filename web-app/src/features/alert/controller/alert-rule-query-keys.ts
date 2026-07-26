@@ -22,5 +22,6 @@ const rootKey = ['alert-rules'] as const;
 export const alertRuleQueryKeys = {
   list: (query: AlertRuleQuery) => [...rootKey, query] as const,
   // Null identifies a disabled detail read; every backend request uses a positive id.
-  detail: (id: number | null) => [...rootKey, 'detail', id] as const
+  detail: (id: number | null) => [...rootKey, 'detail', id] as const,
+  datasourceStatus: () => [...rootKey, 'datasource-status'] as const
 };

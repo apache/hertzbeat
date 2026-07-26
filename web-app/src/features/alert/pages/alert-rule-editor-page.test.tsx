@@ -23,8 +23,11 @@ import { AlertRuleEditorPage } from './alert-rule-editor-page';
 
 const controller = vi.hoisted(() => ({
   cancel: vi.fn(),
+  changeDataType: vi.fn(),
+  changeKind: vi.fn(),
   preview: vi.fn(),
   retryDetail: vi.fn(),
+  retryDatasource: vi.fn(),
   retrySave: vi.fn(),
   save: vi.fn(),
   state: {},
@@ -100,6 +103,31 @@ describe('AlertRuleEditorPage', () => {
     expect(controller.updateDraft).toHaveBeenCalledWith({ times: null });
   });
 
+  it.each([
+    [{ kind: 'loading' }, 'alertRules.datasource.checking'],
+    [{ kind: 'ready', status: { hasPromqlExecutor: false, hasSqlExecutor: false } }, 'alertRules.datasource.none'],
+    [{ kind: 'ready', status: { hasPromqlExecutor: true, hasSqlExecutor: false } }, 'alertRules.datasource.promqlOnly'],
+    [{ kind: 'ready', status: { hasPromqlExecutor: false, hasSqlExecutor: true } }, 'alertRules.datasource.sqlOnly']
+  ])('renders datasource capability state %#', (datasource, message) => {
+    controller.state = buildState({ datasource });
+    render(<AlertRuleEditorPage mode="new" />);
+    expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description']
+  ])('renders and retries datasource %s without retrying rule detail', (kind, message) => {
+    controller.state = buildState({ datasource: { kind } });
+    render(<AlertRuleEditorPage mode="new" />);
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+
+    expect(controller.retryDatasource).toHaveBeenCalledOnce();
+    expect(controller.retryDetail).not.toHaveBeenCalled();
+  });
+
   it('renders ready preview and delegates draft, preview, save, and cancel', () => {
     controller.state = buildState({ preview: { kind: 'ready', matchCount: 1 } });
     render(<AlertRuleEditorPage mode="new" />);
@@ -139,6 +167,10 @@ describe('AlertRuleEditorPage', () => {
 function buildState(override: Record<string, unknown> = {}) {
   return {
     command: 'idle',
+    datasource: {
+      kind: 'ready',
+      status: { hasPromqlExecutor: true, hasSqlExecutor: true }
+    },
     detail: { kind: 'ready' },
     draft: createAlertRuleDraft(),
     preview: { kind: 'idle' },

@@ -22,6 +22,7 @@ import {
   AlertRuleMissingError,
   alertRuleTypes,
   type AlertRule,
+  type AlertRuleDatasourceStatus,
   type AlertRulePage,
   type AlertRuleQuery
 } from '../model/alert-rule-model';
@@ -72,6 +73,10 @@ const alertRulePageSchema = z.object({
 });
 
 const alertRulePreviewSchema = z.array(z.record(z.string(), z.unknown()));
+const alertRuleDatasourceStatusSchema = z.object({
+  hasPromqlExecutor: z.boolean(),
+  hasSqlExecutor: z.boolean()
+});
 
 export function parseAlertRuleDetail(value: unknown): AlertRule {
   if (value == null) throw new AlertRuleMissingError();
@@ -103,6 +108,10 @@ export function parseAlertRulePreview(value: unknown): { matchCount: number } {
   // The editor only presents whether and how many rows matched. Discard the
   // backend rows here so arbitrary query output never becomes route state.
   return { matchCount: rows.length };
+}
+
+export function parseAlertRuleDatasourceStatus(value: unknown): AlertRuleDatasourceStatus {
+  return parseSchema(alertRuleDatasourceStatusSchema, value, 'Alert rule datasource status');
 }
 
 function mapAlertRule(source: z.output<typeof alertRuleSchema>): AlertRule {

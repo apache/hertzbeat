@@ -18,7 +18,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { AlertRuleContractError, AlertRuleMissingError, type AlertRuleQuery } from '../model/alert-rule-model';
-import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from './alert-rule-schema';
+import {
+  parseAlertRuleDatasourceStatus,
+  parseAlertRuleDetail,
+  parseAlertRulePage,
+  parseAlertRulePreview
+} from './alert-rule-schema';
 
 const query: AlertRuleQuery = { search: '', pageIndex: 0, pageSize: 8 };
 const persisted = {
@@ -220,5 +225,25 @@ describe('alert rule wire schemas', () => {
     expect(() => parseAlertRulePreview(null)).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([[]])).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([1])).toThrow(AlertRuleContractError);
+  });
+
+  it('allowlists the datasource capability flags used by the editor', () => {
+    expect(
+      parseAlertRuleDatasourceStatus({
+        hasPromqlExecutor: true,
+        hasSqlExecutor: false,
+        availableExecutors: ['greptime'],
+        serverOnly: 'discard'
+      })
+    ).toEqual({ hasPromqlExecutor: true, hasSqlExecutor: false });
+  });
+
+  it.each([
+    {},
+    { hasPromqlExecutor: true },
+    { hasPromqlExecutor: 'true', hasSqlExecutor: false },
+    { hasPromqlExecutor: true, hasSqlExecutor: null }
+  ])('rejects malformed datasource capability evidence %#', value => {
+    expect(() => parseAlertRuleDatasourceStatus(value)).toThrow(AlertRuleContractError);
   });
 });

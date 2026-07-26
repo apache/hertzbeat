@@ -28,7 +28,12 @@ import {
   type AlertRuleDraft,
   type AlertRuleQuery
 } from '../model/alert-rule-model';
-import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from './alert-rule-schema';
+import {
+  parseAlertRuleDatasourceStatus,
+  parseAlertRuleDetail,
+  parseAlertRulePage,
+  parseAlertRulePreview
+} from './alert-rule-schema';
 
 export function buildAlertRuleListPath(query: AlertRuleQuery) {
   const params = new URLSearchParams({
@@ -61,6 +66,15 @@ export async function loadAlertRule(id: string | number, signal?: AbortSignal) {
   const detail = parseAlertRuleDetail(response);
   if (detail.id !== normalizedId) throw new AlertRuleContractError('detail id does not match the endpoint');
   return detail;
+}
+
+export async function loadAlertRuleDatasourceStatus(signal?: AbortSignal) {
+  const path = '/api/alert/define/datasource/status';
+  const response = await alertRuleApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
+  return parseAlertRuleDatasourceStatus(response);
 }
 
 export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft): Promise<void> {

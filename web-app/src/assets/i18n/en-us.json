@@ -1978,6 +1978,12 @@
     "previewSuccess": "{{count}} matching series found.",
     "previewEmpty": "No matching series found.",
     "previewFailed": "The expression could not be evaluated.",
+    "datasource": {
+      "checking": "Checking periodic evaluation capabilities.",
+      "none": "No periodic evaluation executor is available. Realtime rules remain available.",
+      "promqlOnly": "PromQL evaluation is available. Periodic log and trace rules are disabled.",
+      "sqlOnly": "SQL evaluation is available. Periodic metric rules are disabled."
+    },
     "kind": {
       "label": "Evaluation",
       "realtime": "Realtime",

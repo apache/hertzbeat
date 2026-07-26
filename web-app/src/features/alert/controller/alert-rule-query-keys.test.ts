@@ -32,4 +32,8 @@ describe('Alert Rule Query Keys', () => {
     expect(alertRuleQueryKeys.detail(8)).toEqual(['alert-rules', 'detail', 8]);
     expect(alertRuleQueryKeys.detail(null)).toEqual(['alert-rules', 'detail', null]);
   });
+
+  it('keeps datasource capability evidence separate from rule records', () => {
+    expect(alertRuleQueryKeys.datasourceStatus()).toEqual(['alert-rules', 'datasource-status']);
+  });
 });

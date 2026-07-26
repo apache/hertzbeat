@@ -1959,6 +1959,12 @@
     "previewSuccess": "找到 {{count}} 條符合序列。",
     "previewEmpty": "沒有符合序列。",
     "previewFailed": "運算式計算失敗。",
+    "datasource": {
+      "checking": "正在檢查週期計算能力。",
+      "none": "目前沒有可用的週期計算執行器，仍可建立即時規則。",
+      "promqlOnly": "PromQL 計算可用，週期日誌和鏈路規則已停用。",
+      "sqlOnly": "SQL 計算可用，週期指標規則已停用。"
+    },
     "kind": {
       "label": "計算方式",
       "realtime": "即時",

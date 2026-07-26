@@ -1959,6 +1959,12 @@
     "previewSuccess": "找到 {{count}} 条匹配序列。",
     "previewEmpty": "没有匹配序列。",
     "previewFailed": "表达式计算失败。",
+    "datasource": {
+      "checking": "正在检查周期计算能力。",
+      "none": "当前没有可用的周期计算执行器，仍可创建实时规则。",
+      "promqlOnly": "PromQL 计算可用，周期日志和链路规则已禁用。",
+      "sqlOnly": "SQL 计算可用，周期指标规则已禁用。"
+    },
     "kind": {
       "label": "计算方式",
       "realtime": "实时",

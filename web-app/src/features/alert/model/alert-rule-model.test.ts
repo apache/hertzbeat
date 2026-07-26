@@ -26,6 +26,8 @@ import {
   alertRuleWriteOutcome,
   buildAlertRulePayload,
   createAlertRuleDraft,
+  firstSupportedPeriodicDataType,
+  isAlertRuleStrategySupported,
   readAlertRuleQuery,
   validateAlertRuleDraft,
   writeAlertRuleQuery,
@@ -163,6 +165,21 @@ describe('alert rule model', () => {
 
   it('requires name, expression, and message template', () => {
     expect(validateAlertRuleDraft(createAlertRuleDraft())).toEqual(['name', 'expr', 'template']);
+  });
+
+  it('maps periodic signal choices to the executor that can evaluate them', () => {
+    const promqlOnly = { hasPromqlExecutor: true, hasSqlExecutor: false };
+    const sqlOnly = { hasPromqlExecutor: false, hasSqlExecutor: true };
+    const none = { hasPromqlExecutor: false, hasSqlExecutor: false };
+
+    expect(isAlertRuleStrategySupported(promqlOnly, 'periodic', 'metric')).toBe(true);
+    expect(isAlertRuleStrategySupported(promqlOnly, 'periodic', 'log')).toBe(false);
+    expect(isAlertRuleStrategySupported(sqlOnly, 'periodic', 'log')).toBe(true);
+    expect(isAlertRuleStrategySupported(sqlOnly, 'periodic', 'trace')).toBe(true);
+    expect(isAlertRuleStrategySupported(none, 'realtime', 'metric')).toBe(true);
+    expect(firstSupportedPeriodicDataType(promqlOnly)).toBe('metric');
+    expect(firstSupportedPeriodicDataType(sqlOnly)).toBe('log');
+    expect(firstSupportedPeriodicDataType(none)).toBeNull();
   });
 
   it('classifies stable read failures without transport evidence', () => {

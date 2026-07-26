@@ -3,13 +3,22 @@
 import { Input, InputNumber, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertRuleDataType, AlertRuleDraft, AlertRuleKind } from '../model/alert-rule-model';
+import {
+  firstSupportedPeriodicDataType,
+  isAlertRuleStrategySupported,
+  type AlertRuleDatasourceState,
+  type AlertRuleDataType,
+  type AlertRuleDraft,
+  type AlertRuleKind
+} from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 
 type AlertRuleFieldsProps = {
   draft: AlertRuleDraft;
   busy: boolean;
+  datasource: AlertRuleDatasourceState;
   update: (patch: Partial<AlertRuleDraft>) => void;
+  changeDataType: (dataType: AlertRuleDataType) => void;
   changeKind: (kind: AlertRuleKind) => void;
 };
 
@@ -22,10 +31,18 @@ export function AlertRuleFields(props: AlertRuleFieldsProps) {
   );
 }
 
-function AlertRuleStrategyFields({ draft, busy, update, changeKind }: AlertRuleFieldsProps) {
+function AlertRuleStrategyFields({
+  draft,
+  busy,
+  datasource,
+  update,
+  changeDataType,
+  changeKind
+}: AlertRuleFieldsProps) {
   const { t } = useTranslation();
   const kinds: AlertRuleKind[] = ['realtime', 'periodic'];
   const dataTypes: AlertRuleDataType[] = draft.kind === 'periodic' ? ['metric', 'log', 'trace'] : ['metric', 'log'];
+  const periodicAvailable = datasource.kind === 'ready' && firstSupportedPeriodicDataType(datasource.status) !== null;
   return (
     <>
       <label>
@@ -38,7 +55,11 @@ function AlertRuleStrategyFields({ draft, busy, update, changeKind }: AlertRuleF
           disabled={busy}
           value={draft.kind}
           onChange={changeKind}
-          options={kinds.map(value => ({ value, label: t(`alertRules.kind.${value}`) }))}
+          options={kinds.map(value => ({
+            value,
+            label: t(`alertRules.kind.${value}`),
+            disabled: value === 'periodic' && draft.kind !== 'periodic' && !periodicAvailable
+          }))}
         />
       </label>
       <label>
@@ -46,8 +67,14 @@ function AlertRuleStrategyFields({ draft, busy, update, changeKind }: AlertRuleF
         <Select
           disabled={busy}
           value={draft.dataType}
-          onChange={dataType => update({ dataType })}
-          options={dataTypes.map(value => ({ value, label: t(`alertRules.dataType.${value}`) }))}
+          onChange={changeDataType}
+          options={dataTypes.map(value => ({
+            value,
+            label: t(`alertRules.dataType.${value}`),
+            disabled:
+              draft.kind === 'periodic' &&
+              (datasource.kind !== 'ready' || !isAlertRuleStrategySupported(datasource.status, draft.kind, value))
+          }))}
         />
       </label>
       <label>

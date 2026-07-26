@@ -1982,6 +1982,12 @@
     "previewSuccess": "{{count}} séries correspondentes.",
     "previewEmpty": "Nenhuma série correspondente.",
     "previewFailed": "Não foi possível avaliar a expressão.",
+    "datasource": {
+      "checking": "Verificando os recursos de avaliação periódica.",
+      "none": "Nenhum executor de avaliação periódica está disponível. As regras em tempo real continuam disponíveis.",
+      "promqlOnly": "A avaliação PromQL está disponível. Regras periódicas de logs e traces estão desativadas.",
+      "sqlOnly": "A avaliação SQL está disponível. Regras periódicas de métricas estão desativadas."
+    },
     "kind": {
       "label": "Avaliação",
       "realtime": "Tempo real",

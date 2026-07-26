@@ -1980,6 +1980,12 @@
     "previewSuccess": "{{count}} 件の系列が一致しました。",
     "previewEmpty": "一致する系列はありません。",
     "previewFailed": "式を評価できませんでした。",
+    "datasource": {
+      "checking": "周期評価機能を確認しています。",
+      "none": "周期評価エグゼキューターは利用できません。リアルタイムルールは引き続き利用できます。",
+      "promqlOnly": "PromQL 評価を利用できます。周期ログとトレースのルールは無効です。",
+      "sqlOnly": "SQL 評価を利用できます。周期メトリクスルールは無効です。"
+    },
     "kind": {
       "label": "評価方式",
       "realtime": "リアルタイム",

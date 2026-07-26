@@ -15,6 +15,12 @@ export type AlertRuleKind = 'realtime' | 'periodic';
 export type AlertRuleDataType = 'metric' | 'log' | 'trace';
 export type AlertRuleType = (typeof alertRuleTypes)[number];
 export type AlertRuleDatasource = 'promql' | 'sql';
+export type AlertRuleDatasourceStatus = {
+  hasPromqlExecutor: boolean;
+  hasSqlExecutor: boolean;
+};
+export type AlertRuleDatasourceState =
+  { kind: 'loading' | 'unavailable' | 'error' } | { kind: 'ready'; status: AlertRuleDatasourceStatus };
 
 export type AlertRule = {
   id: number;
@@ -82,4 +88,18 @@ export function normalizeAlertRuleIds(ids: readonly number[]) {
     throw new AlertRuleContractError('Alert Rule ids are invalid');
   }
   return [...new Set(ids)].sort((left, right) => left - right);
+}
+
+export function isAlertRuleStrategySupported(
+  status: AlertRuleDatasourceStatus,
+  kind: AlertRuleKind,
+  dataType: AlertRuleDataType
+) {
+  if (kind === 'realtime') return dataType !== 'trace';
+  return dataType === 'metric' ? status.hasPromqlExecutor : status.hasSqlExecutor;
+}
+
+export function firstSupportedPeriodicDataType(status: AlertRuleDatasourceStatus): AlertRuleDataType | null {
+  if (status.hasPromqlExecutor) return 'metric';
+  return status.hasSqlExecutor ? 'log' : null;
 }

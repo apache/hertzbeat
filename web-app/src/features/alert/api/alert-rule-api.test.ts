@@ -29,6 +29,7 @@ import {
   buildAlertRuleListPath,
   deleteAlertRules,
   loadAlertRule,
+  loadAlertRuleDatasourceStatus,
   loadAlertRules,
   previewAlertRule,
   saveAlertRule,
@@ -113,6 +114,21 @@ describe('alert rule API', () => {
 
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, buildAlertRuleListPath(query), { signal });
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/define/7', { signal });
+  });
+
+  it('loads strict datasource capability evidence with caller cancellation', async () => {
+    const signal = new AbortController().signal;
+    vi.mocked(apiMessageGet).mockResolvedValue({
+      hasPromqlExecutor: true,
+      hasSqlExecutor: false,
+      availableExecutors: ['greptime']
+    });
+
+    await expect(loadAlertRuleDatasourceStatus(signal)).resolves.toEqual({
+      hasPromqlExecutor: true,
+      hasSqlExecutor: false
+    });
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/alert/define/datasource/status', { signal });
   });
 
   it('rejects detail evidence whose id does not match the canonical endpoint', async () => {
@@ -221,6 +237,8 @@ describe('alert rule API', () => {
     await expect(loadAlertRules(query)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
     vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
     await expect(loadAlertRule(7)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertRuleDatasourceStatus()).rejects.toBeInstanceOf(AlertRuleRequestFailure);
     vi.mocked(apiMessagePost).mockRejectedValueOnce(transportFailure());
     await expect(saveAlertRule('new', draft)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
     vi.mocked(apiMessagePut).mockRejectedValueOnce(transportFailure());

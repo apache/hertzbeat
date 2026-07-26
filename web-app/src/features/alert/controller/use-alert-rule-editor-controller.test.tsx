@@ -31,6 +31,7 @@ import {
 import { useAlertRuleEditorController } from './use-alert-rule-editor-controller';
 
 const api = vi.hoisted(() => ({
+  loadAlertRuleDatasourceStatus: vi.fn(),
   loadAlertRule: vi.fn(),
   loadAlertRules: vi.fn(),
   previewAlertRule: vi.fn(),
@@ -64,6 +65,7 @@ const persisted: AlertRule = {
 describe('Alert Rule editor controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: true, hasSqlExecutor: true });
     api.loadAlertRule.mockResolvedValue(persisted);
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
     api.previewAlertRule.mockResolvedValue({ matchCount: 0 });
@@ -86,6 +88,22 @@ describe('Alert Rule editor controller', () => {
     expect(detailSignal?.aborted).toBe(true);
   });
 
+  it('aborts the datasource capability read when the editor unmounts', async () => {
+    let datasourceSignal: AbortSignal | undefined;
+    api.loadAlertRuleDatasourceStatus.mockImplementation((signal: AbortSignal) => {
+      datasourceSignal = signal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    });
+    const { unmount } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(datasourceSignal).toBeInstanceOf(AbortSignal));
+
+    unmount();
+
+    expect(datasourceSignal?.aborted).toBe(true);
+  });
+
   it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {
     const { result } = renderController('edit', `/alerts/rules/${encodeURIComponent(ruleId)}/edit`);
     await waitFor(() => expect(result.current.state.detail.kind).toBe('error'));
@@ -104,6 +122,67 @@ describe('Alert Rule editor controller', () => {
     await act(async () => result.current.retryDetail());
     await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
     expect(result.current.state.draft).toMatchObject({ id: 7, name: 'CPU' });
+  });
+
+  it('disables periodic authoring when no periodic executor is available', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: false
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    act(() => result.current.changeKind('periodic'));
+
+    expect(result.current.state.draft).toMatchObject({ kind: 'realtime', dataType: 'metric' });
+  });
+
+  it('selects and preserves only periodic signals supported by the current executors', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: true
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    act(() => result.current.changeKind('periodic'));
+    expect(result.current.state.draft).toMatchObject({ kind: 'periodic', dataType: 'log' });
+
+    act(() => result.current.changeDataType('metric'));
+    expect(result.current.state.draft?.dataType).toBe('log');
+    act(() => result.current.changeDataType('trace'));
+    expect(result.current.state.draft?.dataType).toBe('trace');
+  });
+
+  it('keeps datasource read failure distinct and retries only that read', async () => {
+    api.loadAlertRuleDatasourceStatus
+      .mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'))
+      .mockResolvedValueOnce({ hasPromqlExecutor: true, hasSqlExecutor: false });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('unavailable'));
+
+    await act(async () => result.current.retryDatasource());
+
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+    expect(api.loadAlertRuleDatasourceStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not rewrite a persisted periodic strategy when its executor is currently unavailable', async () => {
+    api.loadAlertRuleDatasourceStatus.mockResolvedValue({
+      hasPromqlExecutor: false,
+      hasSqlExecutor: false
+    });
+    api.loadAlertRule.mockResolvedValue({
+      ...persisted,
+      type: 'periodic_metric',
+      datasource: 'promql'
+    });
+    const { result } = renderController('edit');
+
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
+
+    expect(result.current.state.draft).toMatchObject({ kind: 'periodic', dataType: 'metric' });
   });
 
   it('resets a local draft when route history changes', async () => {
