@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Typography } from 'antd';
+import { Alert, Button, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+
 import { ObjectStoreEditor } from '../components/object-store-editor';
-import styles from '../components/object-store.module.css';
 import { useObjectStoreResourceController } from '../controller/object-store-resource-controller';
 
 export function ObjectStorePage() {
@@ -28,11 +29,8 @@ export function ObjectStorePage() {
   const { state } = controller;
 
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('objectStore.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('objectStore.description')}</Typography.Text>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader title={t('objectStore.title')} description={t('objectStore.description')} />
       {state.kind === 'unavailable' && (
         <Alert
           type="error"
@@ -77,7 +75,7 @@ export function ObjectStorePage() {
           />
         </>
       )}
-    </div>
+    </OperationalPage>
   );
 }
 

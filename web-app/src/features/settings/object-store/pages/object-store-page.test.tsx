@@ -62,6 +62,16 @@ describe('ObjectStorePage', () => {
 
   afterEach(cleanup);
 
+  it('owns title and description in a shared header without actions', () => {
+    renderObjectStorePage();
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'Object storage' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+  });
+
   it('renders the ready controller state and forwards editor actions', async () => {
     renderObjectStorePage();
 
