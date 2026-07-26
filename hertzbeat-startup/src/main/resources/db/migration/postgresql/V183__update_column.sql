@@ -145,3 +145,7 @@ CREATE INDEX idx_alert_analysis_enabled
 DELETE FROM hzb_config WHERE type = 'provider';
 
 ALTER TABLE hzb_config ALTER COLUMN content TYPE TEXT;
+
+DROP TABLE IF EXISTS hzb_ai_message;
+DROP TABLE IF EXISTS hzb_ai_conversation;
+DROP TABLE IF EXISTS hzb_sop_schedule;
