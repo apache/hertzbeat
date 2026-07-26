@@ -18,10 +18,12 @@
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.springframework.stereotype.Component;
@@ -34,11 +36,14 @@ import org.springframework.util.StringUtils;
 public class AgentModelProviderRegistry {
 
     private final Map<String, AgentModelProvider> providers;
+    private final List<AgentModelProviderOption> options;
 
     public AgentModelProviderRegistry(List<AgentModelProvider> providers) {
         // Spring supplies every provider bean at this composition boundary; a missing list is a wiring error.
         Objects.requireNonNull(providers, "providers must not be null");
         Map<String, AgentModelProvider> registered = new LinkedHashMap<>();
+        List<AgentModelProviderOption> registeredOptions = new java.util.ArrayList<>();
+        Set<String> registeredOptionIds = new LinkedHashSet<>();
         for (AgentModelProvider provider : providers) {
             // Provider beans are runtime extensions and must be complete before they enter the registry.
             Objects.requireNonNull(provider, "provider must not be null");
@@ -51,11 +56,31 @@ public class AgentModelProviderRegistry {
             if (previous != null) {
                 throw new IllegalArgumentException("Duplicate Agent model provider type: " + type);
             }
+            List<AgentModelProviderOption> providerOptions = provider.options();
+            // Provider options form a public configuration contract and cannot be omitted by an implementation.
+            Objects.requireNonNull(providerOptions, "provider options must not be null");
+            if (providerOptions.isEmpty()) {
+                throw new IllegalArgumentException("Agent model provider must expose at least one option: " + type);
+            }
+            for (AgentModelProviderOption option : providerOptions) {
+                validateOption(type, option, registeredOptionIds);
+                registeredOptions.add(option);
+            }
         }
         if (registered.isEmpty()) {
             throw new IllegalArgumentException("At least one Agent model provider is required");
         }
         this.providers = Map.copyOf(registered);
+        this.options = List.copyOf(registeredOptions);
+    }
+
+    /**
+     * List configuration presets contributed by all registered providers.
+     *
+     * @return immutable provider option list
+     */
+    public List<AgentModelProviderOption> options() {
+        return options;
     }
 
     /**
@@ -78,10 +103,24 @@ public class AgentModelProviderRegistry {
     String resolveType(ModelProviderConfig config) {
         String configuredType = config.getType();
         if (!StringUtils.hasText(configuredType)) {
-            // Provider records created before provider types existed all used the OpenAI-compatible Spring AI client.
-            return OpenAiCompatibleAgentModelProvider.TYPE;
+            throw new IllegalArgumentException("Agent model provider type must not be blank");
         }
         // Provider types are persisted identifiers and are matched case-insensitively at the registry boundary.
         return configuredType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void validateOption(String providerType, AgentModelProviderOption option, Set<String> registeredOptionIds) {
+        // Options are supplied by provider extensions and must be complete before being exposed through the API.
+        Objects.requireNonNull(option, "provider option must not be null");
+        if (!providerType.equals(option.type())) {
+            throw new IllegalArgumentException("Agent model provider option type must match its provider: " + providerType);
+        }
+        if (!StringUtils.hasText(option.code()) || !StringUtils.hasText(option.label())) {
+            throw new IllegalArgumentException("Agent model provider option code and label must not be blank");
+        }
+        String optionId = providerType + ":" + option.code();
+        if (!registeredOptionIds.add(optionId)) {
+            throw new IllegalArgumentException("Duplicate Agent model provider option: " + optionId);
+        }
     }
 }

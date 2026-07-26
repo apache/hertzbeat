@@ -41,12 +41,36 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
     private static final String DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
     private static final String DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+    private static final String DEFAULT_SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1";
     private static final String DEFAULT_ZHIPU_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
     private static final String DEFAULT_ZAI_BASE_URL = "https://api.z.ai/api/paas/v4";
+    private static final String DEFAULT_OPENAI_MODEL = "gpt-5";
+    private static final String DEFAULT_GLM_MODEL = "glm-4.6";
+    private static final String DEFAULT_SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-V3.2";
+    private static final List<String> REQUIRED_FIELDS = List.of("apiKey", "baseUrl", "model");
+    private static final List<AgentModelProviderOption> OPTIONS = List.of(
+            new AgentModelProviderOption(
+                    TYPE, "openai", "OpenAI", DEFAULT_OPENAI_BASE_URL, DEFAULT_OPENAI_MODEL, REQUIRED_FIELDS),
+            new AgentModelProviderOption(
+                    TYPE, "openrouter", "OpenRouter", DEFAULT_OPENROUTER_BASE_URL, null, REQUIRED_FIELDS),
+            new AgentModelProviderOption(
+                    TYPE, "siliconflow", "SiliconFlow",
+                    DEFAULT_SILICONFLOW_BASE_URL, DEFAULT_SILICONFLOW_MODEL, REQUIRED_FIELDS),
+            new AgentModelProviderOption(
+                    TYPE, "zhipu", "ZhiPu", DEFAULT_ZHIPU_BASE_URL, DEFAULT_GLM_MODEL, REQUIRED_FIELDS),
+            new AgentModelProviderOption(
+                    TYPE, "zai", "ZAI", DEFAULT_ZAI_BASE_URL, DEFAULT_GLM_MODEL, REQUIRED_FIELDS),
+            new AgentModelProviderOption(
+                    TYPE, "custom", "OpenAI Compatible", null, null, REQUIRED_FIELDS));
 
     @Override
     public String type() {
         return TYPE;
+    }
+
+    @Override
+    public List<AgentModelProviderOption> options() {
+        return OPTIONS;
     }
 
     @Override
@@ -60,11 +84,14 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         OpenAiChatModel chatModel = OpenAiChatModel.builder()
                 .options(defaultOptions)
                 .build();
-        return new HertzBeatModel(chatModel, this::requestOptions);
+        return new HertzBeatModel(chatModel,
+                (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks));
     }
 
-    ChatOptions requestOptions(AgentRuntimeModelRequest request, List<ToolCallback> toolCallbacks) {
-        OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder();
+    ChatOptions requestOptions(ModelProviderConfig config, AgentRuntimeModelRequest request,
+                               List<ToolCallback> toolCallbacks) {
+        OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
+                .model(config.getModel());
         if (request.getTemperature() != null) {
             builder.temperature(request.getTemperature());
         }
@@ -81,7 +108,7 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         if (!StringUtils.hasText(config.getApiKey())) {
             throw new IllegalArgumentException("OpenAI-compatible provider API key must not be blank");
         }
-        // Preset codes originate from UI selections and legacy records and are case-insensitive identifiers.
+        // Preset codes originate from UI selections and configuration inputs and are case-insensitive identifiers.
         String code = StringUtils.hasText(config.getCode())
                 ? config.getCode().trim().toLowerCase(Locale.ROOT) : "openai";
         config.setCode(code);
@@ -98,6 +125,7 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
         return switch (code) {
             case "openai", TYPE -> DEFAULT_OPENAI_BASE_URL;
             case "openrouter" -> DEFAULT_OPENROUTER_BASE_URL;
+            case "siliconflow" -> DEFAULT_SILICONFLOW_BASE_URL;
             case "zhipu", "bigmodel" -> DEFAULT_ZHIPU_BASE_URL;
             case "zai" -> DEFAULT_ZAI_BASE_URL;
             default -> throw new IllegalArgumentException(
@@ -107,8 +135,9 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
     private String defaultModel(String code) {
         return switch (code) {
-            case "openai", TYPE -> "gpt-5";
-            case "zhipu", "bigmodel", "zai" -> "glm-4.6";
+            case "openai", TYPE -> DEFAULT_OPENAI_MODEL;
+            case "siliconflow" -> DEFAULT_SILICONFLOW_MODEL;
+            case "zhipu", "bigmodel", "zai" -> DEFAULT_GLM_MODEL;
             default -> throw new IllegalArgumentException(
                     "OpenAI-compatible provider model must not be blank for preset: " + code);
         };

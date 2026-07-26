@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -37,7 +38,31 @@ class OpenAiCompatibleAgentModelProviderTest {
     private final OpenAiCompatibleAgentModelProvider provider = new OpenAiCompatibleAgentModelProvider();
 
     @Test
-    void legacyZaiPresetShouldReceiveCompatibleDefaults() {
+    void optionsShouldExposeEverySupportedCompatiblePreset() {
+        assertEquals(List.of("openai", "openrouter", "siliconflow", "zhipu", "zai", "custom"),
+                provider.options().stream().map(AgentModelProviderOption::code).toList());
+        AgentModelProviderOption openAi = provider.options().get(0);
+        assertEquals("openai-compatible", openAi.type());
+        assertEquals("gpt-5", openAi.defaultModel());
+        AgentModelProviderOption custom = provider.options().get(5);
+        assertNull(custom.defaultBaseUrl());
+        assertNull(custom.defaultModel());
+    }
+
+    @Test
+    void siliconFlowPresetShouldReceiveCompatibleDefaults() {
+        ModelProviderConfig config = config("SiliconFlow", null, null, "secret");
+
+        assertInstanceOf(HertzBeatModel.class, provider.createModel(config));
+
+        assertEquals("openai-compatible", config.getType());
+        assertEquals("siliconflow", config.getCode());
+        assertEquals("https://api.siliconflow.cn/v1", config.getBaseUrl());
+        assertEquals("deepseek-ai/DeepSeek-V3.2", config.getModel());
+    }
+
+    @Test
+    void zaiPresetShouldReceiveCompatibleDefaults() {
         ModelProviderConfig config = config("ZAI", null, null, "secret");
 
         assertInstanceOf(HertzBeatModel.class, provider.createModel(config));
@@ -62,6 +87,8 @@ class OpenAiCompatibleAgentModelProviderTest {
 
     @Test
     void requestOptionsShouldUseOpenAiCompletionTokenField() {
+        ModelProviderConfig config = config(
+                "siliconflow", "https://api.siliconflow.cn/v1", "deepseek-ai/DeepSeek-V3.2", "secret");
         AgentRuntimeModelRequest request = AgentRuntimeModelRequest.builder()
                 .prompt(RuntimePrompt.builder().instructions("system").build())
                 .temperature(0.2D)
@@ -69,8 +96,9 @@ class OpenAiCompatibleAgentModelProviderTest {
                 .build();
 
         OpenAiChatOptions options = assertInstanceOf(OpenAiChatOptions.class,
-                provider.requestOptions(request, List.of()));
+                provider.requestOptions(config, request, List.of()));
 
+        assertEquals("deepseek-ai/DeepSeek-V3.2", options.getModel());
         assertEquals(0.2D, options.getTemperature());
         assertEquals(4096, options.getMaxCompletionTokens());
     }

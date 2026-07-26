@@ -28,11 +28,10 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
-import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
-import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
 
@@ -43,10 +42,10 @@ class ReloadableAgentRuntimeModelClientTest {
 
     @Test
     void shouldReportUnavailableWithoutAnyModelSource() {
-        GeneralConfigDao configDao = mock(GeneralConfigDao.class);
+        ModelProviderConfigurationService configurationService = mock(ModelProviderConfigurationService.class);
 
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, new AgentProviderProperties(),
+                new ReloadableAgentRuntimeModelClient(configurationService, new AgentProviderProperties(),
                         new AgentModelProviderRegistry(List.of(new TestAgentModelProvider())));
 
         assertFalse(client.isAgentClientConfigured());
@@ -54,8 +53,7 @@ class ReloadableAgentRuntimeModelClientTest {
 
     @Test
     void databaseProviderShouldReplacePropertyProviderAfterConfigChange() {
-        GeneralConfigDao configDao = mock(GeneralConfigDao.class);
-        when(configDao.findByType("provider")).thenReturn(null);
+        ModelProviderConfigurationService configurationService = mock(ModelProviderConfigurationService.class);
         AgentProviderProperties properties = new AgentProviderProperties();
         properties.setType("test-provider");
         properties.setCode("property-preset");
@@ -64,7 +62,7 @@ class ReloadableAgentRuntimeModelClientTest {
         properties.setApiKey("property-secret");
         TestAgentModelProvider provider = new TestAgentModelProvider();
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, properties,
+                new ReloadableAgentRuntimeModelClient(configurationService, properties,
                         new AgentModelProviderRegistry(List.of(provider)));
         TaggedModel propertyModel = provider.lastCreatedModel();
         assertNotNull(propertyModel);
@@ -78,12 +76,9 @@ class ReloadableAgentRuntimeModelClientTest {
         databaseProvider.setBaseUrl("https://database.example.test/v1");
         databaseProvider.setModel("database-model");
         databaseProvider.setApiKey("database-secret");
-        when(configDao.findByType("provider")).thenReturn(GeneralConfig.builder()
-                .type("provider")
-                .content(JsonUtil.toJson(databaseProvider))
-                .build());
+        when(configurationService.getActiveConfiguration()).thenReturn(databaseProvider);
 
-        client.onProviderConfigChanged();
+        client.refreshConfiguration();
 
         TaggedModel databaseModel = provider.lastCreatedModel();
         assertNotSame(propertyModel, databaseModel);
@@ -98,9 +93,9 @@ class ReloadableAgentRuntimeModelClientTest {
 
     @Test
     void removingDatabaseProviderShouldRestorePropertyProvider() {
-        GeneralConfigDao configDao = mock(GeneralConfigDao.class);
-        AtomicReference<GeneralConfig> databaseConfig = new AtomicReference<>();
-        when(configDao.findByType("provider")).thenAnswer(invocation -> databaseConfig.get());
+        ModelProviderConfigurationService configurationService = mock(ModelProviderConfigurationService.class);
+        AtomicReference<ModelProviderConfig> databaseConfig = new AtomicReference<>();
+        when(configurationService.getActiveConfiguration()).thenAnswer(invocation -> databaseConfig.get());
         AgentProviderProperties properties = new AgentProviderProperties();
         properties.setType("test-provider");
         properties.setCode("property-preset");
@@ -108,21 +103,18 @@ class ReloadableAgentRuntimeModelClientTest {
         properties.setApiKey("property-secret");
         TestAgentModelProvider modelProvider = new TestAgentModelProvider();
         ReloadableAgentRuntimeModelClient client =
-                new ReloadableAgentRuntimeModelClient(configDao, properties,
+                new ReloadableAgentRuntimeModelClient(configurationService, properties,
                         new AgentModelProviderRegistry(List.of(modelProvider)));
 
         ModelProviderConfig provider = new ModelProviderConfig();
         provider.setType("test-provider");
         provider.setModel("database-model");
-        databaseConfig.set(GeneralConfig.builder()
-                .type("provider")
-                .content(JsonUtil.toJson(provider))
-                .build());
-        client.onProviderConfigChanged();
+        databaseConfig.set(provider);
+        client.refreshConfiguration();
         assertEquals("database-model", modelProvider.lastCreatedModel().model);
 
         databaseConfig.set(null);
-        client.onProviderConfigChanged();
+        client.refreshConfiguration();
 
         assertEquals("property-model", modelProvider.lastCreatedModel().model);
     }
@@ -134,6 +126,12 @@ class ReloadableAgentRuntimeModelClientTest {
         @Override
         public String type() {
             return "test-provider";
+        }
+
+        @Override
+        public List<AgentModelProviderOption> options() {
+            return List.of(new AgentModelProviderOption(
+                    type(), "test", "Test", null, null, List.of()));
         }
 
         @Override

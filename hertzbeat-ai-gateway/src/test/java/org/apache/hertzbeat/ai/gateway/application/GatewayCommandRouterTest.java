@@ -23,17 +23,21 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CreateModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderConfigurationsCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderOptionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
-import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
-import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
+import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -57,6 +61,9 @@ class GatewayCommandRouterTest {
     @Mock
     private GatewayQueryService queryService;
 
+    @Mock
+    private ModelProviderCommandService modelProviderCommandService;
+
     @Test
     void agentMessageShouldRouteOnlyToAgentCommandService() {
         GatewaySingleResponse expected = response("agent");
@@ -67,7 +74,7 @@ class GatewayCommandRouterTest {
         assertSame(expected, router().handle(command));
 
         verify(agentCommandService).handle(command);
-        verifyNoInteractions(approvalCommandService, runCommandService, queryService);
+        verifyNoInteractions(approvalCommandService, runCommandService, queryService, modelProviderCommandService);
     }
 
     @Test
@@ -80,7 +87,8 @@ class GatewayCommandRouterTest {
         assertSame(expected, router().handle(command));
 
         verify(queryService).getSession(command);
-        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService,
+                modelProviderCommandService);
     }
 
     @Test
@@ -93,7 +101,8 @@ class GatewayCommandRouterTest {
         assertSame(expected, router().handle(command));
 
         verify(queryService).listSessions(command);
-        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService,
+                modelProviderCommandService);
     }
 
     @Test
@@ -106,12 +115,52 @@ class GatewayCommandRouterTest {
         assertSame(expected, router().handle(command));
 
         verify(queryService).getSessionTranscript(command);
-        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService,
+                modelProviderCommandService);
+    }
+
+    @Test
+    void modelProviderOptionsShouldRouteOnlyToModelProviderCommandService() {
+        GatewaySingleResponse expected = response("provider-options");
+        ListModelProviderOptionsCommand command = new ListModelProviderOptionsCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "list-provider-options");
+        when(modelProviderCommandService.listOptions(command)).thenReturn(expected);
+
+        assertSame(expected, router().handle(command));
+
+        verify(modelProviderCommandService).listOptions(command);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService, queryService);
+    }
+
+    @Test
+    void modelProviderConfigurationShouldRouteOnlyToModelProviderCommandService() {
+        GatewaySingleResponse expected = response("provider-configuration");
+        ListModelProviderConfigurationsCommand command = new ListModelProviderConfigurationsCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "get-provider-config");
+        when(modelProviderCommandService.listConfigurations(command)).thenReturn(expected);
+
+        assertSame(expected, router().handle(command));
+
+        verify(modelProviderCommandService).listConfigurations(command);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService, queryService);
+    }
+
+    @Test
+    void modelProviderSaveShouldRouteOnlyToModelProviderCommandService() {
+        GatewaySingleResponse expected = response("provider-configuration-saved");
+        CreateModelProviderConfigurationCommand command = new CreateModelProviderConfigurationCommand(
+                envelope(), ReplyMode.FINAL_ONLY, "save-provider-config", new ModelProviderConfig());
+        when(modelProviderCommandService.createConfiguration(command)).thenReturn(expected);
+
+        assertSame(expected, router().handle(command));
+
+        verify(modelProviderCommandService).createConfiguration(command);
+        verifyNoInteractions(agentCommandService, approvalCommandService, runCommandService, queryService);
     }
 
     private GatewayCommandRouter router() {
         return new GatewayCommandRouter(agentCommandService, approvalCommandService,
-                runCommandService, queryService);
+                runCommandService, queryService, modelProviderCommandService);
     }
 
     private GatewayEnvelope envelope() {

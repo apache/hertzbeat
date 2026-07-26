@@ -22,13 +22,8 @@ import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
 import org.apache.hertzbeat.alert.service.AgentClientAvailability;
-import org.apache.hertzbeat.base.dao.GeneralConfigDao;
-import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
-import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.context.event.EventListener;
+import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -41,15 +36,15 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
 
     private static final String DEFAULT_PROVIDER_TYPE = "openai-compatible";
 
-    private final GeneralConfigDao generalConfigDao;
+    private final ModelProviderConfigurationService configurationService;
     private final AgentProviderProperties providerProperties;
     private final AgentModelProviderRegistry providerRegistry;
     private final AtomicReference<HertzBeatModel> model = new AtomicReference<>();
 
-    public ReloadableAgentRuntimeModelClient(GeneralConfigDao generalConfigDao,
+    public ReloadableAgentRuntimeModelClient(ModelProviderConfigurationService configurationService,
                                              AgentProviderProperties providerProperties,
                                              AgentModelProviderRegistry providerRegistry) {
-        this.generalConfigDao = generalConfigDao;
+        this.configurationService = configurationService;
         this.providerProperties = providerProperties;
         this.providerRegistry = providerRegistry;
         try {
@@ -74,8 +69,10 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
         return model.get() != null;
     }
 
-    @EventListener(AiProviderConfigChangeEvent.class)
-    public void onProviderConfigChanged() {
+    /**
+     * Refresh the runtime after the configuration service has committed a state change.
+     */
+    public void refreshConfiguration() {
         try {
             reload();
         } catch (RuntimeException exception) {
@@ -99,16 +96,7 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
     }
 
     private ModelProviderConfig databaseProvider() {
-        GeneralConfig config = generalConfigDao.findByType(GeneralConfigTypeEnum.provider.name());
-        if (config == null || !StringUtils.hasText(config.getContent())) {
-            return null;
-        }
-        ModelProviderConfig provider = JsonUtil.fromJson(config.getContent(), ModelProviderConfig.class);
-        if (provider == null) {
-            log.warn("Ignoring invalid AI provider configuration from database");
-            return null;
-        }
-        return provider;
+        return configurationService.getActiveConfiguration();
     }
 
     private ModelProviderConfig propertyProvider() {

@@ -20,10 +20,16 @@ package org.apache.hertzbeat.ai.gateway.application;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CancelRunCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.CreateModelProviderConfigurationCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.DeleteModelProviderConfigurationCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTranscriptCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderConfigurationsCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListModelProviderOptionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.SwitchModelProviderCommand;
+import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.UpdateModelProviderConfigurationCommand;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,16 +42,21 @@ public class GatewayCommandRouter {
     private final ApprovalCommandService approvalCommandService;
     private final RunCommandService runCommandService;
     private final GatewayQueryService queryService;
+    private final ModelProviderCommandService modelProviderCommandService;
 
     public GatewayCommandRouter(AgentCommandService agentCommandService,
                                 ApprovalCommandService approvalCommandService,
                                 RunCommandService runCommandService,
-                                GatewayQueryService queryService) {
+                                GatewayQueryService queryService,
+                                ModelProviderCommandService modelProviderCommandService) {
         this.agentCommandService = Objects.requireNonNull(agentCommandService, "agentCommandService is required");
         this.approvalCommandService = Objects.requireNonNull(approvalCommandService,
                 "approvalCommandService is required");
         this.runCommandService = Objects.requireNonNull(runCommandService, "runCommandService is required");
         this.queryService = Objects.requireNonNull(queryService, "queryService is required");
+        // Provider commands cannot be exposed unless their application service is wired.
+        this.modelProviderCommandService = Objects.requireNonNull(
+                modelProviderCommandService, "modelProviderCommandService is required");
     }
 
     public GatewayResponse handle(GatewayCommand command) {
@@ -58,6 +69,18 @@ public class GatewayCommandRouter {
             case ListSessionsCommand listSessionsCommand -> queryService.listSessions(listSessionsCommand);
             case GetSessionTranscriptCommand transcriptCommand ->
                     queryService.getSessionTranscript(transcriptCommand);
+            case ListModelProviderOptionsCommand optionsCommand ->
+                    modelProviderCommandService.listOptions(optionsCommand);
+            case ListModelProviderConfigurationsCommand configurationsCommand ->
+                    modelProviderCommandService.listConfigurations(configurationsCommand);
+            case CreateModelProviderConfigurationCommand createCommand ->
+                    modelProviderCommandService.createConfiguration(createCommand);
+            case UpdateModelProviderConfigurationCommand updateCommand ->
+                    modelProviderCommandService.updateConfiguration(updateCommand);
+            case DeleteModelProviderConfigurationCommand deleteCommand ->
+                    modelProviderCommandService.deleteConfiguration(deleteCommand);
+            case SwitchModelProviderCommand switchCommand ->
+                    modelProviderCommandService.switchConfiguration(switchCommand);
         };
     }
 }
