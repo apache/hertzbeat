@@ -120,17 +120,17 @@ describe('MonitorMetricWorkbench', () => {
     expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
   });
 
-  it('marks realtime-only history unsupported and disables favorite interaction', () => {
+  it('marks realtime-only history unsupported while retaining favorite interaction', () => {
     const value = controller({
       historySupported: false,
       historical: { kind: 'unsupported', rows: [] }
     });
     renderWorkbench(value);
 
-    expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') }));
+    expect(value.actions.toggleFavorite).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
     expect(screen.getByText(i18n.t('monitorMetrics.historyUnsupported'))).toBeInTheDocument();
-    expect(value.actions.toggleFavorite).not.toHaveBeenCalled();
   });
 
   it('shows the auto-refresh choices and forwards an Off selection', () => {

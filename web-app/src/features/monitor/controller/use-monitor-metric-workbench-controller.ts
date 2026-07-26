@@ -67,11 +67,8 @@ export function useMonitorMetricWorkbenchController(
   });
   const historySupported = metric?.historySupported !== false;
   const favoritesQuery = queries.favorites;
-  const favorite = favoriteEvidence(favoritesQuery, historySupported ? metric : undefined);
-  const favoriteCollection = favoriteCollectionEvidence(
-    favoritesQuery,
-    catalog.options.filter(option => option.historySupported !== false)
-  );
+  const favorite = favoriteEvidence(favoritesQuery, metric);
+  const favoriteCollection = favoriteCollectionEvidence(favoritesQuery, catalog.options);
   const realtimeQuery = queries.realtime;
   const historicalQuery = queries.historical;
   const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data) : []));
@@ -80,7 +77,7 @@ export function useMonitorMetricWorkbenchController(
     : ({ kind: 'unsupported', rows: [] } as const);
   const favoriteMutation = useMonitorFavoriteMutation({
     monitorId: source.id,
-    metricKey,
+    metricKey: metric?.historySupported === false ? metric.group : metricKey,
     favorite,
     canonicalFavorites: favoritesQuery.data,
     message,
@@ -100,13 +97,9 @@ export function useMonitorMetricWorkbenchController(
     historical,
     refreshControl,
     urlActions,
-    toggleFavorite: historySupported ? favoriteMutation.toggle : ignoreUnsupportedFavorite,
+    toggleFavorite: favoriteMutation.toggle,
     refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric), historySupported)
   });
-}
-
-function ignoreUnsupportedFavorite() {
-  return Promise.resolve();
 }
 
 function refreshMonitorMetricQueries(

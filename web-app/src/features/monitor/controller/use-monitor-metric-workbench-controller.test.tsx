@@ -159,7 +159,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     expectMetricReadsNotCalled();
   });
 
-  it('reads realtime but skips history and favorite writes for a realtime-only group', async () => {
+  it('reads realtime, skips history, and favorites a realtime-only group by its backend group token', async () => {
     api.loadMonitorMetricCatalog.mockResolvedValue({
       metrics: [
         {
@@ -186,6 +186,10 @@ describe('useMonitorMetricWorkbenchController', () => {
         }
       ]
     });
+    api.loadFavoriteMetrics
+      .mockResolvedValueOnce(['identity'])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(['identity']);
     const view = renderController(monitor(), [], '/monitors/7');
 
     await waitFor(() =>
@@ -205,6 +209,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(view.result.current.controller.state).toMatchObject({
       metricKey: 'identity.version',
       historySupported: false,
+      favorite: { kind: 'ready', value: true, token: 'identity' },
       historical: { kind: 'unsupported', rows: [] }
     });
     expect(api.loadRealtimeMetric).toHaveBeenCalledWith(
@@ -214,8 +219,32 @@ describe('useMonitorMetricWorkbenchController', () => {
     );
     expect(api.loadHistoryMetric).not.toHaveBeenCalled();
 
+    expect(view.result.current.controller.state.favoriteCollection).toEqual({
+      kind: 'ready',
+      items: [{ key: 'identity.version', available: true }]
+    });
+
     await act(() => view.result.current.controller.actions.toggleFavorite());
-    expect(api.updateFavoriteMetric).not.toHaveBeenCalled();
+    expect(api.updateFavoriteMetric).toHaveBeenNthCalledWith(1, 7, 'identity', false);
+    expect(view.result.current.controller.state.favorite).toEqual({ kind: 'ready', value: false });
+
+    await act(() => view.result.current.controller.actions.toggleFavorite());
+    expect(api.updateFavoriteMetric).toHaveBeenNthCalledWith(2, 7, 'identity', true);
+    expect(view.result.current.controller.state.favorite).toEqual({
+      kind: 'ready',
+      value: true,
+      token: 'identity'
+    });
+
+    api.updateFavoriteMetric.mockRejectedValueOnce(new ApiMessageError('write rejected', { status: 500 }));
+    await act(() => view.result.current.controller.actions.toggleFavorite());
+    expect(api.updateFavoriteMetric).toHaveBeenNthCalledWith(3, 7, 'identity', false);
+    expect(notifications.error).toHaveBeenCalledWith('monitorMetrics.favoriteFailed');
+    expect(view.result.current.controller.state.favorite).toEqual({
+      kind: 'ready',
+      value: true,
+      token: 'identity'
+    });
 
     act(() => view.result.current.controller.actions.refresh());
     await waitFor(() => expect(api.loadRealtimeMetric.mock.calls.length).toBeGreaterThanOrEqual(2));

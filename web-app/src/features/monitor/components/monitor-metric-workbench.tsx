@@ -117,7 +117,7 @@ function MonitorMetricToolbar({
       />
       <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
       <Button
-        disabled={!state.historySupported || state.favorite.kind !== 'ready' || state.favoriteBusy}
+        disabled={state.favorite.kind !== 'ready' || state.favoriteBusy}
         loading={state.favoriteBusy}
         onClick={() => void actions.toggleFavorite()}
       >
