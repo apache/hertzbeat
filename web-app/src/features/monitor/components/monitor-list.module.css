@@ -15,10 +15,30 @@
  * limitations under the License.
  */
 
-.toolbar {
+.filterBand {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 8px;
+}
+.filterFields {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 200px) minmax(140px, 160px) minmax(180px, 1fr);
+  gap: 8px;
+}
+.filterActions,
+.managementActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filterActions {
+  flex-wrap: nowrap;
+}
+.managementActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .name {
   min-width: 0;
@@ -69,8 +89,25 @@
 .disappearedRow {
   opacity: 0.55;
 }
-@media (max-width: 900px) {
-  .toolbar {
+@media (max-width: 1100px) {
+  .filterBand {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .filterActions {
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 800px) {
+  .filterFields {
     grid-template-columns: 1fr 1fr;
+  }
+  .filterActions,
+  .managementActions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 520px) {
+  .filterFields {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

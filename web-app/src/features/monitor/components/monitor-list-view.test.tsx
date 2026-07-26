@@ -30,16 +30,63 @@ describe('MonitorListView evidence states', () => {
   });
   afterEach(cleanup);
 
-  it('uses the shared operational page header for title copy and the help action', () => {
-    renderView({ monitors: { kind: 'empty' } });
+  it('owns management actions in the header and keeps query actions in one filter band', () => {
+    const create = vi.fn();
+    const openImport = vi.fn();
+    renderView(
+      {
+        canExport: true,
+        monitorImport: { canImport: true, draft: null, invalid: null, failure: null, busy: false },
+        monitors: { kind: 'empty' }
+      },
+      { create, openImport }
+    );
 
     const page = document.querySelector('[data-hb-operational-page]');
     const header = document.querySelector('[data-hb-operational-page-header]');
+    const management = header?.querySelector('[data-monitor-management-actions]');
+    const filters = screen.getByRole('search');
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: i18n.t('monitor.title') }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
-      screen.getByRole('link', { name: i18n.t('monitor.help') })
-    );
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(management);
+    expect(management).toContainElement(screen.getByRole('link', { name: i18n.t('monitor.help') }));
+    expect(management).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    expect(management).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.import.action') }));
+    expect(management).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.export.all') }));
+    expect(filters).toContainElement(screen.getByRole('button', { name: i18n.t('common.query') }));
+    expect(filters).toContainElement(screen.getByRole('button', { name: i18n.t('common.refresh') }));
+    expect(filters).not.toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    expect(filters).not.toContainElement(screen.getByRole('button', { name: i18n.t('monitor.import.action') }));
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.import.action') }));
+    expect(create).toHaveBeenCalledOnce();
+    expect(openImport).toHaveBeenCalledOnce();
+  });
+
+  it('keeps permission-gated header management actions absent', () => {
+    renderView({ canExport: false, monitors: { kind: 'empty' } });
+
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(header).toContainElement(screen.getByRole('link', { name: i18n.t('monitor.help') }));
+    expect(header).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    expect(screen.queryByRole('button', { name: i18n.t('monitor.import.action') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitor.export.all') })).not.toBeInTheDocument();
+  });
+
+  it('keeps management and filter commands disabled while an operation is active', () => {
+    renderView({
+      operating: true,
+      canExport: true,
+      monitorImport: { canImport: true, draft: null, invalid: null, failure: null, busy: false },
+      monitors: { kind: 'empty' }
+    });
+
+    expect(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('monitor.import.action') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('monitor.export.all') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('common.query') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('common.refresh') })).toBeDisabled();
   });
 
   it.each([

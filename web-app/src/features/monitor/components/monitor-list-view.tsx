@@ -21,9 +21,9 @@ import { OperationalPage, OperationalPageHeader } from '@/shared/operational-pag
 
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
-import { MonitorHelpLink } from './monitor-help-link';
 import { MonitorBulkActions } from './monitor-list-actions';
 import { MonitorImportDialog } from './monitor-import-dialog';
+import { MonitorListManagementActions } from './monitor-list-management-actions';
 import { MonitorListResults } from './monitor-list-results';
 import { MonitorListToolbar } from './monitor-list-toolbar';
 import styles from './monitor-list.module.css';
@@ -37,7 +37,16 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
       <OperationalPageHeader
         title={t('monitor.title')}
         description={t('monitor.description')}
-        actions={<MonitorHelpLink />}
+        actions={
+          <MonitorListManagementActions
+            disabled={state.operating}
+            canImport={state.monitorImport.canImport}
+            canExport={state.canExport}
+            create={actions.create}
+            openImport={actions.openImport}
+            exportAll={actions.exportAll}
+          />
+        }
       />
       <MonitorListToolbar
         query={state.query}
@@ -45,8 +54,6 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         apps={state.apps}
         disabled={state.operating}
         refreshing={state.refreshing}
-        canExport={state.canExport}
-        canImport={state.monitorImport.canImport}
         actions={actions}
       />
       <MonitorBulkActions

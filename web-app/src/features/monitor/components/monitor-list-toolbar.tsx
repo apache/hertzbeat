@@ -19,10 +19,8 @@ import { Alert, Button, Input, Select, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorStatusFilters, type MonitorQuery } from '../model/monitor-contract';
-import type { MonitorExportFormat } from '../model/monitor-export-model';
 import type { MonitorAppsEvidence } from '../model/monitor-list-model';
 
-import { MonitorExportButton } from './monitor-export-button';
 import styles from './monitor-list.module.css';
 
 type MonitorListToolbarActions = {
@@ -33,9 +31,6 @@ type MonitorListToolbarActions = {
   changeApp: (value: string) => void;
   changeStatus: (value: string) => void;
   refresh: () => Promise<boolean>;
-  create: () => void;
-  exportAll: (format: MonitorExportFormat) => Promise<boolean>;
-  openImport: () => void;
 };
 
 type MonitorListToolbarProps = {
@@ -44,34 +39,22 @@ type MonitorListToolbarProps = {
   apps: MonitorAppsEvidence;
   disabled: boolean;
   refreshing: boolean;
-  canExport: boolean;
-  canImport: boolean;
   actions: MonitorListToolbarActions;
 };
 
 export function MonitorListToolbar(props: MonitorListToolbarProps) {
   const { query, draft, apps, disabled, refreshing, actions } = props;
   return (
-    <div className={styles.toolbar}>
-      <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
-      <MonitorToolbarActions
-        disabled={disabled}
-        refreshing={refreshing}
-        canExport={props.canExport}
-        canImport={props.canImport}
-        actions={actions}
-      />
+    <div className={styles.filterBand} role="search" data-monitor-filter-band="">
+      <div className={styles.filterFields}>
+        <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
+      </div>
+      <MonitorFilterActions disabled={disabled} refreshing={refreshing} actions={actions} />
     </div>
   );
 }
 
-function MonitorFilterFields({
-  query,
-  draft,
-  apps,
-  disabled,
-  actions
-}: Omit<MonitorListToolbarProps, 'refreshing' | 'canExport' | 'canImport'>) {
+function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<MonitorListToolbarProps, 'refreshing'>) {
   const { t } = useTranslation();
   return (
     <>
@@ -108,16 +91,14 @@ function MonitorFilterFields({
   );
 }
 
-function MonitorToolbarActions({
+function MonitorFilterActions({
   disabled,
   refreshing,
-  actions,
-  canExport,
-  canImport
-}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'canExport' | 'canImport' | 'actions'>) {
+  actions
+}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'actions'>) {
   const { t } = useTranslation();
   return (
-    <>
+    <div className={styles.filterActions}>
       <Button type="primary" disabled={disabled} onClick={actions.submitFilters}>
         {t('common.query')}
       </Button>
@@ -129,18 +110,7 @@ function MonitorToolbarActions({
       >
         {t('common.refresh')}
       </Button>
-      <Button type="primary" disabled={disabled} onClick={actions.create}>
-        {t('monitor.editor.newTitle')}
-      </Button>
-      {canImport ? (
-        <Button disabled={disabled} onClick={actions.openImport}>
-          {t('monitor.import.action')}
-        </Button>
-      ) : null}
-      {canExport ? (
-        <MonitorExportButton label={t('monitor.export.all')} disabled={disabled} onExport={actions.exportAll} />
-      ) : null}
-    </>
+    </div>
   );
 }
 
