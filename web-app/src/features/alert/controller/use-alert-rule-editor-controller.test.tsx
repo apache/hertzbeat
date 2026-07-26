@@ -144,6 +144,55 @@ describe('Alert Rule editor controller', () => {
     expect(monitor.loadMonitorNavigationApps).toHaveBeenCalledTimes(1);
   });
 
+  it('accepts only loaded applications and targets from the current hierarchy', async () => {
+    monitor.loadMonitorNavigationApps.mockResolvedValue([
+      { category: 'application', value: 'springboot3', label: 'Spring Boot 3', hide: false }
+    ]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: 'application',
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: [
+        {
+          category: null,
+          value: 'summary',
+          label: 'Summary',
+          isLeaf: false,
+          hide: false,
+          type: null,
+          unit: null,
+          children: []
+        }
+      ]
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+
+    act(() => result.current.changeMetricApplication('missing'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({ kind: 'targeted', app: '' });
+
+    act(() => result.current.changeMetricApplication('springboot3'));
+    await waitFor(() => expect(result.current.state.metricTarget.hierarchy.kind).toBe('ready'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      kind: 'targeted',
+      app: 'springboot3',
+      target: null
+    });
+
+    act(() => result.current.changeMetricTarget({ kind: 'metric', app: 'springboot3', metric: 'missing' }));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({ target: null });
+
+    act(() => result.current.changeMetricTarget({ kind: 'availability', app: 'springboot3' }));
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__available__,"down")',
+      metricEditor: { target: { kind: 'availability', app: 'springboot3' } }
+    });
+  });
+
   it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {
     const { result } = renderController('edit', `/alerts/rules/${encodeURIComponent(ruleId)}/edit`);
     await waitFor(() => expect(result.current.state.detail.kind).toBe('error'));

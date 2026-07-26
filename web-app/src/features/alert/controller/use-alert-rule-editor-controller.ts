@@ -11,13 +11,17 @@ import {
   alertRuleFailureKind,
   alertRuleDraftFromDetail,
   buildAlertRuleStrategyPatch,
+  buildMetricAlertApplicationPatch,
+  buildMetricAlertTargetPatch,
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
+  isMetricAlertTargetInHierarchy,
   synchronizeMetricAlertDraftPatch,
   type AlertRuleDataType,
   type AlertRuleDraft,
-  type AlertRuleKind
+  type AlertRuleKind,
+  type RealtimeMetricTarget
 } from '../model/alert-rule-model';
 import {
   freshAlertRuleRouteState,
@@ -102,6 +106,16 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
     }
   };
+  const changeMetricApplication = (application: string) => {
+    if (!draft || metricTarget.state.apps.kind !== 'ready') return;
+    if (!metricTarget.state.apps.apps.some(app => app.value === application)) return;
+    updateDraft(buildMetricAlertApplicationPatch(draft, application));
+  };
+  const changeMetricTarget = (target: RealtimeMetricTarget) => {
+    if (!draft || metricTarget.state.hierarchy.kind !== 'ready') return;
+    if (!isMetricAlertTargetInHierarchy(metricTarget.state.hierarchy.hierarchy, target)) return;
+    updateDraft(buildMetricAlertTargetPatch(draft, target));
+  };
   return {
     state: {
       command: active.command,
@@ -116,6 +130,8 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     updateDraft,
     changeDataType,
     changeKind,
+    changeMetricApplication,
+    changeMetricTarget,
     preview: preview.preview,
     save: command.save,
     retrySave: command.retry,

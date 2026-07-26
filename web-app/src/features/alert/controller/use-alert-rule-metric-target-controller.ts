@@ -16,11 +16,11 @@ import { parseRealtimeMetricExpression, type AlertRuleDraft } from '../model/ale
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 type TargetFailure = 'unavailable' | 'error';
-type TargetApplicationsState =
+export type TargetApplicationsState =
   | { kind: 'idle' | 'loading' }
   | { kind: TargetFailure }
   | { kind: 'ready'; apps: ReturnType<typeof monitorNavigationApps> };
-type TargetHierarchyState =
+export type TargetHierarchyState =
   { kind: 'idle' | 'loading' } | { kind: TargetFailure } | { kind: 'ready'; hierarchy: MonitorAppHierarchyNode };
 
 export type AlertRuleMetricTargetState = {

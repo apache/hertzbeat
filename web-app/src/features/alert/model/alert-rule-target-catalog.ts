@@ -68,6 +68,20 @@ export function buildMetricAlertTargetCatalog(
   };
 }
 
+/** Rejects stale or ambiguous selections before they can enter the editor draft. */
+export function isMetricAlertTargetInHierarchy(hierarchy: MonitorAppHierarchyNode, target: RealtimeMetricTarget) {
+  try {
+    const catalog = buildMetricAlertTargetCatalog(hierarchy, {
+      // These labels are validation-only and never reach the UI.
+      availability: 'availability',
+      rowCount: 'row count'
+    });
+    return catalog.targets.some(option => sameTarget(option.target, target));
+  } catch {
+    return false;
+  }
+}
+
 function metricFields(metric: MonitorAppHierarchyNode, rowCountLabel: string) {
   const values = new Set<string>();
   const fields: MetricAlertField[] = [];
@@ -111,4 +125,9 @@ function requiredLabel(value: string, field: string) {
 
 function contract(message: string) {
   return new AlertRuleContractError(message);
+}
+
+function sameTarget(left: RealtimeMetricTarget, right: RealtimeMetricTarget) {
+  if (left.kind !== right.kind || left.app !== right.app) return false;
+  return left.kind === 'availability' || (right.kind === 'metric' && left.metric === right.metric);
 }

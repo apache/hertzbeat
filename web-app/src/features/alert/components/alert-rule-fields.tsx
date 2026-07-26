@@ -3,6 +3,7 @@
 import { Input, InputNumber, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-metric-target-controller';
 import {
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
@@ -12,6 +13,7 @@ import {
   type AlertRuleKind
 } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
+import { AlertRuleMetricTargetFields } from './alert-rule-metric-target-fields';
 
 type AlertRuleFieldsProps = {
   draft: AlertRuleDraft;
@@ -20,6 +22,11 @@ type AlertRuleFieldsProps = {
   update: (patch: Partial<AlertRuleDraft>) => void;
   changeDataType: (dataType: AlertRuleDataType) => void;
   changeKind: (kind: AlertRuleKind) => void;
+  metricTarget: AlertRuleMetricTargetState;
+  changeMetricApplication: (application: string) => void;
+  changeMetricTarget: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeTarget'];
+  retryMetricTargetApps: () => unknown;
+  retryMetricTargetHierarchy: () => unknown;
 };
 
 export function AlertRuleFields(props: AlertRuleFieldsProps) {
@@ -85,19 +92,41 @@ function AlertRuleStrategyFields({
   );
 }
 
-function AlertRuleDefinitionFields({ draft, busy, update }: AlertRuleFieldsProps) {
+function AlertRuleDefinitionFields({
+  draft,
+  busy,
+  metricTarget,
+  update,
+  changeMetricApplication,
+  changeMetricTarget,
+  retryMetricTargetApps,
+  retryMetricTargetHierarchy
+}: AlertRuleFieldsProps) {
   const { t } = useTranslation();
   return (
     <>
-      <label className={styles.wide}>
-        {t('alertRules.expression')}
-        <Input.TextArea
-          disabled={busy}
-          rows={5}
-          value={draft.expr}
-          onChange={event => update({ expr: event.target.value })}
+      {draft.kind === 'realtime' && draft.dataType === 'metric' ? (
+        <AlertRuleMetricTargetFields
+          busy={busy}
+          draft={draft}
+          state={metricTarget}
+          update={update}
+          changeApplication={changeMetricApplication}
+          changeTarget={changeMetricTarget}
+          retryApps={retryMetricTargetApps}
+          retryHierarchy={retryMetricTargetHierarchy}
         />
-      </label>
+      ) : (
+        <label className={styles.wide}>
+          {t('alertRules.expression')}
+          <Input.TextArea
+            disabled={busy}
+            rows={5}
+            value={draft.expr}
+            onChange={event => update({ expr: event.target.value })}
+          />
+        </label>
+      )}
       <label className={styles.wide}>
         {t('alertRules.template')}
         <Input.TextArea

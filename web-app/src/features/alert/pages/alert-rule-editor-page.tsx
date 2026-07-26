@@ -159,9 +159,14 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
             draft={draft}
             busy={command === 'saving' || recovery !== undefined}
             datasource={datasource}
+            metricTarget={controller.state.metricTarget}
             update={controller.updateDraft}
             changeDataType={controller.changeDataType}
             changeKind={controller.changeKind}
+            changeMetricApplication={controller.changeMetricApplication}
+            changeMetricTarget={controller.changeMetricTarget}
+            retryMetricTargetApps={controller.retryMetricTargetApps}
+            retryMetricTargetHierarchy={controller.retryMetricTargetHierarchy}
           />
           <PreviewEvidence state={preview} />
           <div className={styles.actions}>

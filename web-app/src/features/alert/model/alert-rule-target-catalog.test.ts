@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import type { MonitorAppHierarchyNode } from '@/features/monitor';
 
 import { AlertRuleContractError } from './alert-rule-types';
-import { buildMetricAlertTargetCatalog } from './alert-rule-target-catalog';
+import { buildMetricAlertTargetCatalog, isMetricAlertTargetInHierarchy } from './alert-rule-target-catalog';
 
 const hierarchy: MonitorAppHierarchyNode = {
   category: 'application',
@@ -119,5 +119,22 @@ describe('metric alert target catalog', () => {
         { availability: 'Availability', rowCount: 'Row count' }
       )
     ).toThrow(AlertRuleContractError);
+  });
+
+  it('accepts only targets projected by the current unambiguous hierarchy', () => {
+    expect(isMetricAlertTargetInHierarchy(hierarchy, { kind: 'availability', app: 'springboot3' })).toBe(true);
+    expect(isMetricAlertTargetInHierarchy(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'summary' })).toBe(
+      true
+    );
+    expect(isMetricAlertTargetInHierarchy(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'missing' })).toBe(
+      false
+    );
+    expect(isMetricAlertTargetInHierarchy(hierarchy, { kind: 'availability', app: 'linux' })).toBe(false);
+    expect(
+      isMetricAlertTargetInHierarchy(
+        { ...hierarchy, children: [hierarchy.children[0]!, hierarchy.children[0]!] },
+        { kind: 'availability', app: 'springboot3' }
+      )
+    ).toBe(false);
   });
 });

@@ -45,6 +45,9 @@
 .wide {
   grid-column: 1 / -1;
 }
+.form > :global(.ant-alert).wide {
+  grid-column: 1 / -1;
+}
 .actions {
   display: flex;
   justify-content: flex-end;

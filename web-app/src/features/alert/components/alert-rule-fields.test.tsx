@@ -54,9 +54,14 @@ function renderFields(
       draft={{ ...createAlertRuleDraft(), ...patch }}
       busy={false}
       datasource={datasource}
+      metricTarget={{ apps: { kind: 'idle' }, hierarchy: { kind: 'idle' } }}
       update={vi.fn()}
       changeDataType={changeDataType}
       changeKind={changeKind}
+      changeMetricApplication={vi.fn()}
+      changeMetricTarget={vi.fn()}
+      retryMetricTargetApps={vi.fn()}
+      retryMetricTargetHierarchy={vi.fn()}
     />
   );
   return { changeDataType, changeKind };
