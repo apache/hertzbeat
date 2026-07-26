@@ -25,6 +25,22 @@ pnpm start
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
+## Writing Blog Posts
+
+Add a concise `description` to the front matter of new blog posts. It is used
+for blog cards and page metadata, so it should summarize the article rather
+than repeat its title, salutation, or first section heading.
+
+```yaml
+---
+title: Apache HertzBeat 1.8.0 Release
+description: Apache HertzBeat 1.8.0 adds AI tooling, new monitoring integrations, and major performance improvements.
+---
+```
+
+Aim for one sentence of roughly 100–160 characters in English or 50–80
+characters in Chinese. Localized posts should provide a localized description.
+
 ## Team Page
 
 ### Member
