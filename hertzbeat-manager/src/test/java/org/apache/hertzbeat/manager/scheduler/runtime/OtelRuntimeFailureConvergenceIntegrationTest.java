@@ -36,6 +36,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -45,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeBinaryResolver;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeConfigRenderer;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeConfigTransaction;
@@ -88,9 +90,16 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String COLLECTOR_ID = "collector-port-conflict";
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
     private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
+    private static final String QUEUE_PROOF_METRIC = "hertzbeat_queue_proof_metric";
+    private static final int QUEUE_CAPACITY = 2048;
+    private static final int QUEUE_OVERFLOW_MARGIN = 16;
+    private static final int POINTS_PER_EXPORT_BATCH = 1024;
+    private static final long MAXIMUM_QUEUE_LOAD_BYTES = 48L * 1024 * 1024;
+    private static final Duration MAXIMUM_QUEUE_LOAD_DURATION = Duration.ofSeconds(45);
 
     @TempDir
     private Path tempDir;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     @Test
     void reportsRealPortConflictThroughHeartbeatAndQueryThenRecovers(
@@ -234,19 +243,173 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         assertFalse(runtimeLog.contains(tempDir.toString()));
     }
 
+    @Test
+    void reportsRealExporterQueueCapacityThroughHeartbeatAndQueryThenDrains(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        QueueIntake intake = new QueueIntake();
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeDiagnosticsReader diagnosticsReader = new OtelRuntimeDiagnosticsReader(classifier);
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                diagnosticsReader,
+                classifier);
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            assertTrue(runtimePid > 0);
+            QueueLoad load = fillQueue(properties, statusProvider);
+            assertFullQueue(load, runtimePid, intake, diagnosticsReader, properties);
+            reportHeartbeat(manageServer, load.status());
+            assertQueueQuery(query(queryApi), intake.port(), "QUEUE_FULL");
+
+            long sentBeforeRecovery = load.status().telemetry().sent().metrics().value();
+            intake.accept();
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && availableGreaterThan(status.telemetry().sent().metrics(), sentBeforeRecovery),
+                    Duration.ofSeconds(60));
+            assertRecoveredQueue(recovered, runtimePid, intake);
+            reportHeartbeat(manageServer, recovered);
+            assertQueueQuery(query(queryApi), intake.port(), "NONE");
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertSafeQueue(output.getAll(), intake.port());
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(QUEUE_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
     private void sendMetric(String endpoint) throws Exception {
+        sendMetricPayload(endpoint, """
+                {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
+                  "name":"hertzbeat_auth_proof_metric",
+                  "gauge":{"dataPoints":[{"asDouble":1.0}]}
+                }]}]}]}
+                """);
+    }
+
+    private void sendMetricPayload(String endpoint, String payload) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://" + endpoint + "/v1/metrics"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("""
-                        {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
-                          "name":"hertzbeat_auth_proof_metric",
-                          "gauge":{"dataPoints":[{"asDouble":1.0}]}
-                        }]}]}]}
-                        """))
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
-        HttpResponse<Void> response = HttpClient.newHttpClient()
-                .send(request, HttpResponse.BodyHandlers.discarding());
+        HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
         assertEquals(200, response.statusCode());
+    }
+
+    private QueueLoad fillQueue(
+            OtelRuntimeProperties properties,
+            OtelRuntimeStatusProvider statusProvider) throws Exception {
+        String payload = queueMetricPayload();
+        long maximumLoadBytes = (long) payload.getBytes(StandardCharsets.UTF_8).length
+                * (QUEUE_CAPACITY + QUEUE_OVERFLOW_MARGIN);
+        assertTrue(maximumLoadBytes <= MAXIMUM_QUEUE_LOAD_BYTES);
+        long started = System.nanoTime();
+        int requests = 0;
+        ManagedOtelRuntimeStatus full = null;
+        for (int request = 0; request < QUEUE_CAPACITY + QUEUE_OVERFLOW_MARGIN; request++) {
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), payload);
+            requests++;
+            if ((request + 1) % 32 == 0) {
+                ManagedOtelRuntimeStatus sample = statusProvider.status();
+                if (queueIsFull(sample) && positive(sample.telemetry().enqueueFailed().metrics())) {
+                    full = sample;
+                    break;
+                }
+            }
+        }
+        if (full == null) {
+            full = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.QUEUE_FULL
+                            && queueIsFull(status)
+                            && positive(status.telemetry().enqueueFailed().metrics()),
+                    Duration.ofSeconds(20));
+        }
+        return new QueueLoad(
+                full,
+                requests,
+                Duration.ofNanos(System.nanoTime() - started));
+    }
+
+    private void assertFullQueue(
+            QueueLoad load,
+            long runtimePid,
+            QueueIntake intake,
+            OtelRuntimeDiagnosticsReader diagnosticsReader,
+            OtelRuntimeProperties properties) {
+        ManagedOtelRuntimeStatus full = load.status();
+        assertTrue(load.duration().compareTo(MAXIMUM_QUEUE_LOAD_DURATION) <= 0);
+        assertTrue(load.requests() <= QUEUE_CAPACITY + QUEUE_OVERFLOW_MARGIN);
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.QUEUE_FULL, full.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, full.state());
+        assertEquals(runtimePid, full.pid());
+        assertEquals(0, full.restartCount());
+        assertEquals(1, full.desiredRevision());
+        assertEquals(1, full.activeRevision());
+        assertEquals(ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED, full.intakeCredentialState());
+        assertTrue(intake.authorizationWasValid());
+        assertTrue(intake.rejectedRequests() > 0);
+        assertTrue(full.telemetry().accepted().metrics().value()
+                >= (long) load.requests() * POINTS_PER_EXPORT_BATCH);
+        assertTrue(full.telemetry().queueSizeBySignal().metrics().value()
+                >= full.telemetry().queueCapacityBySignal().metrics().value());
+        assertEquals(QUEUE_CAPACITY, full.telemetry().queueCapacityBySignal().metrics().value());
+        assertFalse(diagnosticsReader.latestFailure(properties)
+                == ManagedOtelRuntimeStatus.FailureCode.STORAGE_FULL);
+    }
+
+    private void assertRecoveredQueue(
+            ManagedOtelRuntimeStatus recovered,
+            long runtimePid,
+            QueueIntake intake) {
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, recovered.state());
+        assertEquals(runtimePid, recovered.pid());
+        assertEquals(0, recovered.restartCount());
+        assertEquals(1, recovered.desiredRevision());
+        assertEquals(1, recovered.activeRevision());
+        assertTrue(intake.acceptedRequests() > 0);
+    }
+
+    private void assertQueueQuery(String query, int intakePort, String failureCode) {
+        assertTrue(query.contains("\"failureCode\":\"" + failureCode + "\""));
+        assertTrue(query.contains("\"name\":\"" + COLLECTOR_ID + "\""));
+        assertSafeQueue(query, intakePort);
+    }
+
+    private String queueMetricPayload() {
+        StringBuilder payload = new StringBuilder(24 * 1024);
+        payload.append("{\"resourceMetrics\":[{\"scopeMetrics\":[{\"metrics\":[{\"name\":\"")
+                .append(QUEUE_PROOF_METRIC)
+                .append("\",\"gauge\":{\"dataPoints\":[");
+        for (int index = 0; index < POINTS_PER_EXPORT_BATCH; index++) {
+            if (index > 0) {
+                payload.append(',');
+            }
+            payload.append("{\"asInt\":\"1\"}");
+        }
+        return payload.append("]}}]}]}]}").toString();
     }
 
     private void assertSafeAuthentication(String content, int intakePort) {
@@ -255,6 +418,35 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         assertFalse(content.contains("/api/otlp"));
         assertFalse(content.contains("127.0.0.1:" + intakePort));
         assertFalse(content.contains(tempDir.toString()));
+    }
+
+    private void assertSafeQueue(String content, int intakePort) {
+        assertSafe(content);
+        assertFalse(content.contains(QUEUE_PROOF_METRIC));
+        assertFalse(content.contains("/api/otlp"));
+        assertFalse(content.contains("127.0.0.1:" + intakePort));
+        assertFalse(content.contains(tempDir.toString()));
+    }
+
+    private boolean queueIsFull(ManagedOtelRuntimeStatus status) {
+        ManagedOtelRuntimeStatus.ObservedLong size = status.telemetry().queueSizeBySignal().metrics();
+        ManagedOtelRuntimeStatus.ObservedLong capacity = status.telemetry().queueCapacityBySignal().metrics();
+        return size.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE
+                && capacity.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE
+                && capacity.value() == QUEUE_CAPACITY
+                && size.value() >= capacity.value();
+    }
+
+    private boolean positive(ManagedOtelRuntimeStatus.ObservedLong value) {
+        return value.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && value.value() > 0;
+    }
+
+    private boolean zero(ManagedOtelRuntimeStatus.ObservedLong value) {
+        return value.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && value.value() == 0;
+    }
+
+    private boolean availableGreaterThan(ManagedOtelRuntimeStatus.ObservedLong value, long baseline) {
+        return value.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && value.value() > baseline;
     }
 
     private OtelRuntimeProperties properties(String runtimeBinary, List<Integer> ports) {
@@ -364,6 +556,23 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         return observed;
     }
 
+    private ManagedOtelRuntimeStatus awaitRuntimeStatus(
+            OtelRuntimeStatusProvider provider,
+            Predicate<ManagedOtelRuntimeStatus> expected,
+            Duration timeout) throws InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        ManagedOtelRuntimeStatus observed;
+        do {
+            observed = provider.status();
+            if (expected.test(observed)) {
+                return observed;
+            }
+            Thread.sleep(100);
+        } while (System.nanoTime() < deadline);
+        assertTrue(expected.test(observed), JsonUtil.toJson(observed));
+        return observed;
+    }
+
     private static ServerSocket occupiedListener() throws IOException {
         ServerSocket listener = new ServerSocket();
         listener.setReuseAddress(false);
@@ -419,6 +628,71 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
                 } else {
                     rejectedRequests.incrementAndGet();
                     exchange.sendResponseHeaders(401, -1);
+                }
+            }
+        }
+
+        void accept() {
+            accepting.set(true);
+        }
+
+        int port() {
+            return server.getAddress().getPort();
+        }
+
+        int rejectedRequests() {
+            return rejectedRequests.get();
+        }
+
+        int acceptedRequests() {
+            return acceptedRequests.get();
+        }
+
+        boolean authorizationWasValid() {
+            return authorizationWasValid.get();
+        }
+
+        @Override
+        public void close() {
+            if (server != null) {
+                server.stop(0);
+            }
+        }
+    }
+
+    private record QueueLoad(
+            ManagedOtelRuntimeStatus status,
+            int requests,
+            Duration duration) {
+    }
+
+    private static final class QueueIntake implements AutoCloseable {
+
+        private final AtomicBoolean accepting = new AtomicBoolean();
+        private final AtomicBoolean authorizationWasValid = new AtomicBoolean(true);
+        private final AtomicInteger rejectedRequests = new AtomicInteger();
+        private final AtomicInteger acceptedRequests = new AtomicInteger();
+        private HttpServer server;
+
+        void start() throws IOException {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/api/otlp", this::handle);
+            server.start();
+        }
+
+        private void handle(HttpExchange exchange) throws IOException {
+            try (exchange) {
+                if (!("Bearer " + INTAKE_TOKEN).equals(
+                        exchange.getRequestHeaders().getFirst("Authorization"))) {
+                    authorizationWasValid.set(false);
+                }
+                exchange.getRequestBody().transferTo(OutputStream.nullOutputStream());
+                if (accepting.get()) {
+                    acceptedRequests.incrementAndGet();
+                    exchange.sendResponseHeaders(200, -1);
+                } else {
+                    rejectedRequests.incrementAndGet();
+                    exchange.sendResponseHeaders(503, -1);
                 }
             }
         }
