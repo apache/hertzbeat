@@ -21,6 +21,19 @@ describe('bulletin page', () => {
     expect(current.actions.refresh).toHaveBeenCalledOnce();
   });
 
+  it('keeps query drafting and explicit submission on the page controller boundary', () => {
+    const current = pageController();
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+    const search = screen.getByPlaceholderText('bulletin.search');
+    fireEvent.change(search, { target: { value: 'gateway' } });
+    fireEvent.keyDown(search, { key: 'Enter', code: 'Enter' });
+
+    expect(current.actions.setSearch).toHaveBeenCalledWith('gateway');
+    expect(current.actions.submitSearch).toHaveBeenCalledOnce();
+  });
+
   it('offers a visible keyboard-operable metrics action', () => {
     const current = pageController();
     controller.useBulletinController.mockReturnValue(current.value);
