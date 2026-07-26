@@ -3,8 +3,11 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: kerwin612
 author_title: Le Zhang
 author_url: https://github.com/kerwin612
-tags: [opensource, practice]
+tags: [community]
+description: Le Zhang 介绍如何通过界面优化、公共组件重构和交互改进，持续提升 HertzBeat 的易用性与代码可维护性。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome kerwin612
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

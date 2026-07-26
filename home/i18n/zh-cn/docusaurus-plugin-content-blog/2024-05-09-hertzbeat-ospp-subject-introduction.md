@@ -1,3 +1,9 @@
+---
+tags: [community]
+description: 了解 HertzBeat 开源之夏项目，包括监控模板市场与采集器调度方向、预期成果，以及参与项目所需的技术基础。
+cover_headline: OSPP 2024 Project Topics
+---
+
 # 【开源之夏】HertzBeat 课题介绍
 
 ## 什么是 HertzBeat ？

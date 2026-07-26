@@ -1,10 +1,12 @@
 ---
 title: How to Participate in Developing Custom Collectors
+description: Learn the HertzBeat collector architecture and how to extend protocols, define monitoring templates, collect metrics, and integrate custom collectors.
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [engineering, tutorials]
 keywords: [open source monitoring system, alerting system]
+cover_headline: Developing Custom Collectors
 ---
 
 ## Introduction to the Collector Module
