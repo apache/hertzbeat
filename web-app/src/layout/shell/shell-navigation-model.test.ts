@@ -37,11 +37,47 @@ describe('shell navigation model', () => {
     expect(activeNavigationTrail(tree, '/alerts/rules/42/edit')).toEqual(['workspace', 'alerts', 'alert-rules']);
   });
 
+  it('selects a dynamic monitor application only when its canonical query matches', () => {
+    const tree = buildShellNavigation([
+      ...resources,
+      resource('monitor-category:db', undefined, 'monitors', 100),
+      resource('monitor-app:mysql', '/monitors?app=mysql', 'monitor-category:db', 1_000)
+    ]);
+
+    expect(activeNavigationTrail(tree, '/monitors?app=mysql')).toEqual([
+      'workspace',
+      'monitors',
+      'monitor-category:db',
+      'monitor-app:mysql'
+    ]);
+    expect(activeNavigationTrail(tree, '/monitors?app=redis')).toEqual(['workspace', 'monitors']);
+  });
+
   it('keeps unknown capability entries visible but explicitly disabled', () => {
     const tree = buildShellNavigation(resources);
     const unknown = tree[0]?.children.find(item => item.name === 'unknown-capability');
 
     expect(unknown).toMatchObject({ capability: 'unknown', disabled: true });
+  });
+
+  it('keeps a backend-owned application label as display data rather than an i18n key', () => {
+    const [item] = buildShellNavigation([
+      {
+        ...resource('monitor-app:mysql', '/monitors?app=mysql'),
+        meta: {
+          shell: {
+            capability: 'supported',
+            label: 'MySQL',
+            labelKey: 'monitor.apps.mysql',
+            navigation: true,
+            order: 1,
+            timePolicy: 'none'
+          }
+        }
+      }
+    ]);
+
+    expect(item).toMatchObject({ label: 'MySQL', labelKey: 'monitor.apps.mysql' });
   });
 
   it('uses typed action overrides and falls back to the resource policy for every other action', () => {
@@ -82,6 +118,16 @@ describe('shell navigation model', () => {
         order: 20,
         timePolicy: 'none',
         actionTimePolicies: { typo: 'global' }
+      })
+    ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        label: 7,
+        labelKey: 'monitor.apps.mysql',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none'
       })
     ).toBeUndefined();
   });

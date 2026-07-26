@@ -120,6 +120,15 @@ export async function loadMonitorApps(signal?: AbortSignal) {
   return parseMonitorApps(value);
 }
 
+/** Loads the localized application labels used by the authenticated shell navigation. */
+export async function loadMonitorNavigationApps(locale: string, signal?: AbortSignal) {
+  const normalizedLocale = locale.trim();
+  if (!normalizedLocale) throw new MonitorContractError('Monitor navigation locale is required');
+  const params = new URLSearchParams({ lang: normalizedLocale });
+  const value = await apiMessageGet(`/api/apps/hierarchy?${params.toString()}`, signal ? { signal } : undefined);
+  return parseMonitorApps(value);
+}
+
 export async function loadMonitorDetail(id: string | number, signal?: AbortSignal) {
   const requestedId = monitorDetailId(id);
   if (requestedId === undefined) throw new MonitorMissingError();

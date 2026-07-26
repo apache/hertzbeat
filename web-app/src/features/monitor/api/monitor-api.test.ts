@@ -47,6 +47,7 @@ import {
   loadMonitorCollectors,
   loadMonitorDetail,
   loadMonitorMetricCatalog,
+  loadMonitorNavigationApps,
   loadMonitorParamDefines,
   loadMonitors,
   loadNewMonitorEvidence,
@@ -223,6 +224,17 @@ describe('monitor list API contracts', () => {
     const apps = await loadMonitorApps();
     expect(apps).toEqual([{ value: 'custom', category: null, label: null, hide: null }]);
     expect(monitorAppOptions(apps)).toEqual([{ value: 'custom', label: 'custom' }]);
+  });
+
+  it('requests localized application labels for shell navigation', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue([{ category: 'db', value: 'mysql', label: 'Database', hide: false }]);
+
+    await expect(loadMonitorNavigationApps('pt-BR', signal)).resolves.toEqual([
+      { category: 'db', value: 'mysql', label: 'Database', hide: false }
+    ]);
+
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy?lang=pt-BR', { signal });
   });
 
   it('uses a non-replayable POST for enable while preserving the established mutation methods', async () => {

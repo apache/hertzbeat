@@ -57,10 +57,35 @@ type MonitorAppItem = {
   hide?: boolean | null;
 };
 
+export type MonitorNavigationApp = {
+  category?: string;
+  label: string | null;
+  value: string;
+};
+
 export function monitorAppOptions(items: MonitorAppItem[]) {
   return items
     .filter(isSelectableMonitorApp)
     .map(item => ({ value: item.value as string, label: item.label || (item.value as string) }));
+}
+
+/** Applies the backend menu contract without changing which apps remain creatable. */
+export function monitorNavigationApps(items: readonly MonitorAppItem[]) {
+  const visible = new Map<string, MonitorNavigationApp>();
+  items.forEach(item => {
+    const value = item.value?.trim();
+    const category = item.category?.trim();
+    if (!value || item.hide || category === '__system__' || visible.has(value)) return;
+    visible.set(value, {
+      ...(category ? { category } : {}),
+      label: item.label?.trim() || null,
+      value
+    });
+  });
+  return [...visible.values()].sort((left, right) => {
+    const categoryOrder = (left.category ?? '').localeCompare(right.category ?? '');
+    return categoryOrder || (left.label ?? left.value).localeCompare(right.label ?? right.value);
+  });
 }
 
 // Backend `hide` controls main-menu layout only; it does not disable Monitor creation.

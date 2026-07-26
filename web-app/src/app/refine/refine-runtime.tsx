@@ -19,19 +19,22 @@ import { Refine } from '@refinedev/core';
 import { useNotificationProvider } from '@refinedev/antd';
 import routerProvider from '@refinedev/react-router';
 import { QueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
 import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
+import type { MonitorApp } from '@/features/monitor/navigation';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
 import { objectStoreDataProvider } from '@/features/settings/object-store/refine';
 import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config/refine';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
-import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
+import { MonitorNavigationResourceLoader } from './monitor-navigation-resource-loader';
+import { buildRefineResources, shellAccessControlProvider } from './refine-resource-registry';
 import { SessionQueryRuntime } from './session-query-runtime';
 
 function createAppQueryClient() {
@@ -66,26 +69,44 @@ export function RefineRuntime() {
   return (
     <SessionQueryRuntime createQueryClient={createAppQueryClient}>
       {({ generation, queryClient }) => (
-        <Refine
+        <RefineGenerationRuntime
           key={generation}
-          dataProvider={dataProviders}
-          accessControlProvider={shellAccessControlProvider}
           notificationProvider={notificationProvider}
-          resources={refineResources}
-          routerProvider={routerProvider}
-          options={{
-            disableRouteChangeHandler: true,
-            disableTelemetry: true,
-            mutationMode: 'pessimistic',
-            syncWithLocation: false,
-            reactQuery: { clientConfig: queryClient }
-          }}
-        >
-          <SessionProvider>
-            <Outlet />
-          </SessionProvider>
-        </Refine>
+          queryClient={queryClient}
+        />
       )}
     </SessionQueryRuntime>
+  );
+}
+
+function RefineGenerationRuntime({
+  notificationProvider,
+  queryClient
+}: {
+  notificationProvider: ReturnType<typeof useNotificationProvider>;
+  queryClient: QueryClient;
+}) {
+  const [monitorApps, setMonitorApps] = useState<readonly MonitorApp[]>([]);
+  const resources = useMemo(() => buildRefineResources(monitorApps), [monitorApps]);
+  return (
+    <Refine
+      dataProvider={dataProviders}
+      accessControlProvider={shellAccessControlProvider}
+      notificationProvider={notificationProvider}
+      resources={resources}
+      routerProvider={routerProvider}
+      options={{
+        disableRouteChangeHandler: true,
+        disableTelemetry: true,
+        mutationMode: 'pessimistic',
+        syncWithLocation: false,
+        reactQuery: { clientConfig: queryClient }
+      }}
+    >
+      <SessionProvider>
+        <MonitorNavigationResourceLoader onChange={setMonitorApps} />
+        <Outlet />
+      </SessionProvider>
+    </Refine>
   );
 }

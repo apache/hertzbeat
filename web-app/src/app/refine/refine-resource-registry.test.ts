@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { routeRegistry } from '@/app/route-registry';
 import { uiSessionSchema } from '@/core/auth/session-contract';
 import { readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
-import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
+import { buildRefineResources, refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
   it('matches canonical resource paths and labels exactly', () => {
@@ -70,6 +70,50 @@ describe('Refine shell resource registry', () => {
     expect(workspace.indexOf('topology')).toBeLessThan(workspace.indexOf('explore'));
   });
 
+  it('restores visible backend monitor applications as stable nested navigation resources', () => {
+    const resources = buildRefineResources([
+      { category: 'db', value: 'postgresql', label: 'PostgreSQL', hide: false },
+      { category: 'db', value: 'mysql', label: 'MySQL', hide: false },
+      { category: 'db', value: 'mysql', label: 'Duplicate MySQL', hide: false },
+      { category: 'custom', value: 'private', label: 'Private', hide: true },
+      { category: null, value: 'website', label: 'Website', hide: false },
+      { category: 'extension', value: 'vendor', label: 'Vendor', hide: false },
+      { category: '__system__', value: 'internal', label: 'Internal', hide: false }
+    ]);
+
+    expect(resourceIdentity(resources, 'monitor-category:db')).toEqual({
+      label: undefined,
+      labelKey: 'monitor.categories.db',
+      parent: 'monitors',
+      list: undefined
+    });
+    expect(resourceIdentity(resources, 'monitor-app:mysql')).toEqual({
+      label: 'MySQL',
+      labelKey: 'monitor.apps.mysql',
+      parent: 'monitor-category:db',
+      list: '/monitors?app=mysql'
+    });
+    expect(resourceIdentity(resources, 'monitor-app:postgresql')).toEqual({
+      label: 'PostgreSQL',
+      labelKey: 'monitor.apps.postgresql',
+      parent: 'monitor-category:db',
+      list: '/monitors?app=postgresql'
+    });
+    expect(resourceIdentity(resources, 'monitor-app:website')).toEqual({
+      label: 'Website',
+      labelKey: 'monitor.apps.website',
+      parent: 'monitors',
+      list: '/monitors?app=website'
+    });
+    expect(resourceIdentity(resources, 'monitor-category:extension')).toMatchObject({
+      label: 'extension',
+      labelKey: 'monitor.categories.extension'
+    });
+    expect(resources.filter(resource => resource.name === 'monitor-app:mysql')).toHaveLength(1);
+    expect(resources.find(resource => resource.name === 'monitor-app:private')).toBeUndefined();
+    expect(resources.find(resource => resource.name === 'monitor-app:internal')).toBeUndefined();
+  });
+
   it('admits a normalized lowercase session role to an ADMIN resource', async () => {
     const session = uiSessionSchema.parse({
       authenticated: true,
@@ -110,4 +154,14 @@ function shellMeta(name: string) {
 
 function compareResourceRoute(left: { list: string }, right: { list: string }) {
   return left.list.localeCompare(right.list);
+}
+
+function resourceIdentity(resources: ReturnType<typeof buildRefineResources>, name: string) {
+  const resource = resources.find(candidate => candidate.name === name);
+  return {
+    label: resource?.meta?.shell?.label,
+    labelKey: resource?.meta?.shell?.labelKey,
+    parent: resource?.meta?.parent,
+    list: resource?.list
+  };
 }

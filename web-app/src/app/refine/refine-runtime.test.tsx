@@ -28,7 +28,7 @@ import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSession } from '@/core/auth/session-context';
 import { sessionQueryKey } from '@/core/auth/session-api';
@@ -45,13 +45,16 @@ import { AppProviders } from '../providers';
 import { appRoutes } from '../app-routes';
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 
-const { authenticatedSession } = vi.hoisted(() => ({
+const { authenticatedSession, monitorApi } = vi.hoisted(() => ({
   authenticatedSession: {
     authenticated: true,
     username: 'operator',
     roles: ['ADMIN'],
     workspaceId: 'default',
     expiresAt: null
+  },
+  monitorApi: {
+    loadMonitorNavigationApps: vi.fn()
   }
 }));
 
@@ -59,8 +62,18 @@ vi.mock('@/core/auth/session-api', async () => {
   const actual = await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api');
   return { ...actual, getSession: vi.fn().mockResolvedValue(authenticatedSession) };
 });
+vi.mock('@/features/monitor/navigation', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/monitor/navigation')>()),
+  ...monitorApi
+}));
 
 afterEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  monitorApi.loadMonitorNavigationApps.mockReset();
+  monitorApi.loadMonitorNavigationApps.mockResolvedValue([
+    { category: 'db', value: 'mysql', label: 'MySQL', hide: false }
+  ]);
+});
 
 describe('production Refine runtime', () => {
   it('shares one Refine-owned QueryClient under the single data router', async () => {
@@ -109,6 +122,12 @@ describe('production Refine runtime', () => {
       `${noticeRuleResourceName}|/settings/notifications/rules|${noticeRuleResourceName}`
     );
     expect(screen.getByTestId('notice-rule-provider')).toHaveTextContent('shared');
+    await waitFor(() =>
+      expect(screen.getByTestId('monitor-app-resource')).toHaveTextContent(
+        'monitor-app:mysql|/monitors?app=mysql|monitor-category:db'
+      )
+    );
+    expect(monitorApi.loadMonitorNavigationApps).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -140,6 +159,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
   const noticeReceiverResource = resources.find(resource => resource.name === noticeReceiverResourceName);
   const noticeRuleResource = resources.find(resource => resource.name === noticeRuleResourceName);
+  const monitorAppResource = resources.find(resource => resource.name === 'monitor-app:mysql');
   const labelProvider = resolveProviderState(dataProvider, labelResourceName, labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(dataProvider, 'object-store', objectStoreDataProvider, false);
   const labelResourceText = formatResource(labelResource);
@@ -190,6 +210,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="notice-receiver-provider">{noticeReceiverProvider}</output>
       <output data-testid="notice-rule-resource">{noticeRuleResourceText}</output>
       <output data-testid="notice-rule-provider">{noticeRuleProvider}</output>
+      <output data-testid="monitor-app-resource">{formatNavigationResource(monitorAppResource)}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}
@@ -203,6 +224,11 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
 function formatResource(resource: ReturnType<typeof useResourceParams>['resources'][number] | undefined) {
   if (!resource) return '||';
   return `${resource.name}|${String(resource.list ?? '')}|${String(resource.meta?.dataProviderName ?? '')}`;
+}
+
+function formatNavigationResource(resource: ReturnType<typeof useResourceParams>['resources'][number] | undefined) {
+  if (!resource) return '||';
+  return `${resource.name}|${String(resource.list ?? '')}|${String(resource.meta?.parent ?? '')}`;
 }
 
 function resolveProviderState(

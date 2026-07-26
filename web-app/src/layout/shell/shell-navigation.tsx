@@ -26,7 +26,10 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
   const location = useLocation();
   const { resources } = useResourceParams();
   const tree = useMemo(() => buildShellNavigation(resources), [resources]);
-  const trail = useMemo(() => activeNavigationTrail(tree, location.pathname), [location.pathname, tree]);
+  const trail = useMemo(
+    () => activeNavigationTrail(tree, `${location.pathname}${location.search}`),
+    [location.pathname, location.search, tree]
+  );
   const [open, setOpen] = useState<Set<string>>(() => new Set(tree.map(item => item.name)));
   const visibleOpen = useMemo(() => new Set([...open, ...trail.slice(0, -1)]), [open, trail]);
 
@@ -115,7 +118,7 @@ function NavigationBranch(props: NavigationBranchProps) {
   const hasChildren = item.children.length > 0;
   const isOpen = open.has(item.name);
   const active = activeTrail.includes(item.name);
-  const label = t(item.labelKey);
+  const label = item.label ?? t(item.labelKey);
 
   if (collapsed && depth > 0) return null;
   if (collapsed && !item.route && hasChildren) {

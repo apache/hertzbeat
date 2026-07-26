@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildMonitorRoutePath,
   monitorAppOptions,
+  monitorNavigationApps,
   monitorPageIndexCorrection,
   monitorSelectionScope,
   monitorStatusKey,
@@ -110,6 +111,21 @@ describe('monitor list model', () => {
       { value: 'website', label: 'Website' },
       { value: 'prometheus', label: 'Prometheus' },
       { value: 'mysql', label: 'MySQL' }
+    ]);
+  });
+
+  it('normalizes only visible navigation applications with stable identity and ordering', () => {
+    expect(
+      monitorNavigationApps([
+        { category: ' db ', value: ' postgresql ', label: ' PostgreSQL ', hide: false },
+        { category: 'db', value: 'mysql', label: 'MySQL', hide: false },
+        { category: 'db', value: 'mysql', label: 'Duplicate', hide: false },
+        { category: 'custom', value: 'private', label: 'Private', hide: true },
+        { category: '__system__', value: 'internal', label: 'Internal', hide: false }
+      ])
+    ).toEqual([
+      { category: 'db', value: 'mysql', label: 'MySQL' },
+      { category: 'db', value: 'postgresql', label: 'PostgreSQL' }
     ]);
   });
 

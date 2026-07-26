@@ -26,6 +26,7 @@ import type { AccessControlProvider, ResourceProps } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
+import { monitorNavigationApps, type MonitorApp } from '@/features/monitor/navigation';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
 import { noticeRuleResourceName } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
@@ -37,6 +38,7 @@ import {
   type ShellResourceMeta,
   type ShellTimePolicy
 } from '@/layout/shell/shell-navigation-model';
+import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 
 import { alertSilenceResourceName } from './resources/alert-silence-data-provider';
 
@@ -47,6 +49,7 @@ type NavigationResource = {
   edit?: string;
   show?: string;
   labelKey: string;
+  label?: string;
   icon: ReactNode;
   parent?: string;
   order: number;
@@ -81,7 +84,25 @@ const groupResources = [
   })
 ];
 
-export const refineResources: ResourceProps[] = [
+const translatedMonitorCategories = new Set([
+  'bigdata',
+  'cache',
+  'cn',
+  'custom',
+  'db',
+  'llm',
+  'mid',
+  'network',
+  'os',
+  'program',
+  'server',
+  'service',
+  'webserver'
+]);
+const monitorCategoryOrderStart = 100;
+const monitorApplicationOrderStart = 1_000;
+
+const staticRefineResources: ResourceProps[] = [
   ...groupResources,
   routedNavigationResource('dashboard', {
     parent: 'shell-workspace',
@@ -245,6 +266,12 @@ export const refineResources: ResourceProps[] = [
   })
 ];
 
+export function buildRefineResources(apps: readonly MonitorApp[] = []): ResourceProps[] {
+  return [...staticRefineResources, ...buildMonitorNavigationResources(apps)];
+}
+
+export const refineResources = buildRefineResources();
+
 export const shellAccessControlProvider: AccessControlProvider = {
   can: ({ params }) => Promise.resolve(resolveShellAccess(params))
 };
@@ -252,26 +279,76 @@ export const shellAccessControlProvider: AccessControlProvider = {
 function navigationResource(resource: NavigationResource): ResourceProps {
   const shell: ShellResourceMeta = {
     capability: resource.capability ?? 'supported',
+    ...optionalResourceLabel(resource.label),
     labelKey: resource.labelKey,
     navigation: true,
     order: resource.order,
     timePolicy: resource.timePolicy ?? (resource.parent === 'settings' || !resource.list ? 'none' : 'unknown'),
     ...(resource.actionTimePolicies ? { actionTimePolicies: resource.actionTimePolicies } : {})
   };
-  const meta = {
+  return {
+    name: resource.name,
+    meta: navigationResourceMeta(resource, shell),
+    ...navigationResourceRoutes(resource)
+  };
+}
+
+function navigationResourceMeta(resource: NavigationResource, shell: ShellResourceMeta) {
+  return {
     icon: resource.icon,
     shell,
     ...(resource.dataProviderName ? { dataProviderName: resource.dataProviderName } : {}),
     ...(resource.parent ? { parent: resource.parent } : {})
   };
+}
+
+function navigationResourceRoutes(resource: NavigationResource) {
   return {
-    name: resource.name,
-    meta,
     ...(resource.list ? { list: resource.list } : {}),
     ...(resource.create ? { create: resource.create } : {}),
     ...(resource.edit ? { edit: resource.edit } : {}),
     ...(resource.show ? { show: resource.show } : {})
   };
+}
+
+function optionalResourceLabel(label: string | undefined) {
+  return label ? { label } : {};
+}
+
+function buildMonitorNavigationResources(apps: readonly MonitorApp[]) {
+  const visibleApps = monitorNavigationApps(apps);
+  const categories = [...new Set(visibleApps.flatMap(app => (app.category ? [app.category] : [])))].sort();
+  const categoryResources = categories.map((category, index) =>
+    navigationResource({
+      name: monitorCategoryResourceName(category),
+      ...(translatedMonitorCategories.has(category) ? {} : { label: category }),
+      labelKey: `monitor.categories.${category}`,
+      icon: <AppstoreOutlined />,
+      parent: 'monitors',
+      order: monitorCategoryOrderStart + index
+    })
+  );
+  const applicationResources = visibleApps.map((app, index) =>
+    navigationResource({
+      name: monitorAppResourceName(app.value),
+      label: app.label ?? app.value,
+      labelKey: `monitor.apps.${app.value}`,
+      list: buildMonitorListPath({ app: app.value }),
+      icon: <MonitorOutlined />,
+      parent: app.category ? monitorCategoryResourceName(app.category) : 'monitors',
+      order: monitorApplicationOrderStart + index,
+      timePolicy: 'none'
+    })
+  );
+  return [...categoryResources, ...applicationResources];
+}
+
+function monitorCategoryResourceName(category: string) {
+  return `monitor-category:${encodeURIComponent(category)}`;
+}
+
+function monitorAppResourceName(app: string) {
+  return `monitor-app:${encodeURIComponent(app)}`;
 }
 
 function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedNavigationResource) {

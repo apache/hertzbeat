@@ -56,6 +56,22 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.copyEndpoint).toBeTruthy();
       expect(locale.monitor.copyEndpointSuccess).toBeTruthy();
       expect(locale.monitor.copyEndpointFailure).toBeTruthy();
+      expect(Object.keys(locale.monitor.categories).sort()).toEqual([
+        'bigdata',
+        'cache',
+        'cn',
+        'custom',
+        'db',
+        'llm',
+        'mid',
+        'network',
+        'os',
+        'program',
+        'server',
+        'service',
+        'webserver'
+      ]);
+      expect(Object.values(locale.monitor.categories).every(Boolean)).toBe(true);
       expect(locale.monitor.editor.grafanaImport).toBeTruthy();
       expect(locale.monitor.editor.grafanaImportSuccess).toBeTruthy();
       expect(locale.monitor.editor.grafanaImportFailure).toBeTruthy();
