@@ -17,11 +17,12 @@
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
-import type { Monitor, MonitorAction, MonitorQuery } from './monitor-contract';
+import type { MonitorAction, MonitorQuery } from './monitor-contract';
 import type { MonitorExportFormat } from './monitor-export-model';
 import type { MonitorImportState } from './monitor-import-model';
+import type { MonitorListRow } from './monitor-list-snapshot';
 
-export type MonitorListEvidence = RemotePageState<Monitor, 'unavailable' | 'error'>;
+export type MonitorListEvidence = RemotePageState<MonitorListRow, 'unavailable' | 'error'>;
 
 export type MonitorAppsEvidence = RemotePayloadState<
   { options: Array<{ value: string; label: string }> },

@@ -21,7 +21,7 @@ import type { SortOrder, TableRowSelection } from 'antd/es/table/interface';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { isMonitorSortField, type Monitor, type MonitorAction } from '../model/monitor-contract';
+import { isMonitorSortField, monitorStatusCodes, type MonitorAction } from '../model/monitor-contract';
 import type { MonitorListEvidence } from '../model/monitor-list-model';
 import {
   monitorPageSizes,
@@ -30,9 +30,11 @@ import {
   parseMonitorTimestamp,
   type MonitorQuery
 } from '../model/monitor-model';
+import { isMonitorRowDisappeared, type MonitorListRow } from '../model/monitor-list-snapshot';
 
 import { MonitorRowActions } from './monitor-list-actions';
 import { monitorIdentityColumns } from './monitor-list-identity-columns';
+import styles from './monitor-list.module.css';
 
 type MonitorResultActions = {
   changePage: (page: number, pageSize: number) => void;
@@ -67,19 +69,20 @@ export function MonitorListResults({
   if (evidence.kind === 'empty') return <Empty description={t('monitor.empty')} />;
   if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
-  const rowSelection: TableRowSelection<Monitor> = {
+  const rowSelection: TableRowSelection<MonitorListRow> = {
     selectedRowKeys: selectedIds,
     preserveSelectedRowKeys: true,
-    getCheckboxProps: () => ({ disabled: operating }),
+    getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };
   return (
-    <Table<Monitor>
+    <Table<MonitorListRow>
       rowKey="id"
       size="small"
       dataSource={evidence.records}
       columns={columns(t, query, actions, operating)}
       rowSelection={rowSelection}
+      rowClassName={row => (isMonitorRowDisappeared(row) ? styles.disappearedRow : '')}
       onChange={monitorTableChange(actions.changeSort)}
       pagination={{
         current: query.pageIndex + 1,
@@ -95,7 +98,7 @@ export function MonitorListResults({
 
 function monitorTableChange(
   changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void
-): NonNullable<TableProps<Monitor>['onChange']> {
+): NonNullable<TableProps<MonitorListRow>['onChange']> {
   return (_pagination, _filters, sorter, extra) => {
     if (extra.action !== 'sort') return;
     const active = Array.isArray(sorter) ? sorter.find(candidate => candidate.order) : sorter;
@@ -111,7 +114,7 @@ function columns(
   query: MonitorQuery,
   actions: MonitorResultActions,
   operating: boolean
-): ColumnsType<Monitor> {
+): ColumnsType<MonitorListRow> {
   return [
     ...monitorIdentityColumns(t, monitorTableSortOrder(query, 'name'), actions, operating),
     {
@@ -119,7 +122,10 @@ function columns(
       dataIndex: 'status',
       sorter: true,
       sortOrder: monitorTableSortOrder(query, 'status'),
-      render: (value: number) => <Tag color={monitorStatusColor(value)}>{t(monitorStatusKey(value))}</Tag>
+      render: (value: number, row) => {
+        const status = isMonitorRowDisappeared(row) ? monitorStatusCodes.unavailable : value;
+        return <Tag color={monitorStatusColor(status)}>{t(monitorStatusKey(status))}</Tag>;
+      }
     },
     {
       title: t('monitor.updated'),
@@ -132,7 +138,12 @@ function columns(
       title: t('common.actions'),
       width: 370,
       render: (_value: unknown, row) => (
-        <MonitorRowActions monitor={row} open={actions.open} run={actions.run} disabled={operating} />
+        <MonitorRowActions
+          monitor={row}
+          open={actions.open}
+          run={actions.run}
+          disabled={operating || isMonitorRowDisappeared(row)}
+        />
       )
     }
   ];

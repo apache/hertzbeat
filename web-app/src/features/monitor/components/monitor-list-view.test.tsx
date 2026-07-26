@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -91,6 +91,45 @@ describe('MonitorListView evidence states', () => {
     const row = screen.getByText('checkout').closest('tr');
     expect(row).toHaveTextContent('env:production');
     expect(row).toHaveTextContent('team:payments');
+  });
+
+  it('disables selection and every row command while a monitor is disappeared', () => {
+    const actions = {
+      open: vi.fn(),
+      run: vi.fn(),
+      selectIds: vi.fn()
+    };
+    renderView(
+      {
+        monitors: {
+          kind: 'ready',
+          records: [
+            {
+              id: 8,
+              name: 'disappeared-monitor',
+              app: 'website',
+              instance: 'gone',
+              status: 1,
+              displayState: 'disappeared',
+              disappearedAt: 1_000
+            }
+          ],
+          total: 0
+        }
+      },
+      actions
+    );
+
+    const row = screen.getByText('disappeared-monitor').closest('tr');
+    expect(row).not.toBeNull();
+    expect(within(row!).getByRole('checkbox')).toBeDisabled();
+    for (const name of ['View', 'Edit', 'Copy', 'Pause', 'Delete']) {
+      expect(within(row!).getByRole('button', { name })).toBeDisabled();
+    }
+    expect(row).toHaveTextContent(i18n.t('monitor.status.unavailable'));
+    expect(actions.open).not.toHaveBeenCalled();
+    expect(actions.run).not.toHaveBeenCalled();
+    expect(actions.selectIds).not.toHaveBeenCalled();
   });
 
   it('preserves endpoint copy, application drilldown, and discovery target semantics', () => {

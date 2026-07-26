@@ -79,6 +79,9 @@
 .rowLabels :global(.ant-tag) {
   margin-inline-end: 0;
 }
+.disappearedRow {
+  opacity: 0.55;
+}
 @media (max-width: 900px) {
   .toolbar {
     grid-template-columns: 1fr 1fr;

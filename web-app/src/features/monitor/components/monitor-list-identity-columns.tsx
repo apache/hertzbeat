@@ -22,6 +22,7 @@ import type { TFunction } from 'i18next';
 
 import type { Monitor } from '../model/monitor-contract';
 import { monitorDiscoveryTypeKey } from '../model/monitor-model';
+import type { MonitorListRow } from '../model/monitor-list-snapshot';
 
 import styles from './monitor-list.module.css';
 
@@ -35,7 +36,7 @@ export function monitorIdentityColumns(
   nameSortOrder: SortOrder,
   actions: MonitorIdentityActions,
   operating: boolean
-): ColumnsType<Monitor> {
+): ColumnsType<MonitorListRow> {
   return [
     {
       title: t('monitor.name'),

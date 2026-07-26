@@ -53,6 +53,21 @@ describe('useMonitorSelection', () => {
     rerender({ rows: [monitor(7), monitor(8)] });
     expect(result.current.selectedIds).toEqual([]);
   });
+
+  it('keeps a disappeared selection reversible but excludes it from every command target', () => {
+    const { result, rerender } = renderHook(({ rows }) => useMonitorSelection('checkout', 'page-1', rows), {
+      initialProps: { rows: [monitor(7), monitor(8)] }
+    });
+    act(() => result.current.selectIds([7, 8]));
+
+    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'disappeared' as const }] });
+
+    expect(result.current.selectedIds).toEqual([7]);
+    expect(result.current.validatedIds()).toEqual([7]);
+
+    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'active' as const }] });
+    expect(result.current.selectedIds).toEqual([7, 8]);
+  });
 });
 
 function monitor(id: number) {

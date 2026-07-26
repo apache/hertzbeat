@@ -175,7 +175,7 @@ describe('useMonitorListController URL evidence', () => {
     await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('empty'));
   });
 
-  it('retains the legacy two-minute refresh interval in the canonical list query options', () => {
+  it('keeps the two-minute interval explicit so automatic reads can be reconciled', () => {
     const sorted = {
       search: '',
       app: '',
@@ -187,7 +187,7 @@ describe('useMonitorListController URL evidence', () => {
       pageSize: 10
     };
     expect(monitorListAutoRefreshMs).toBe(120_000);
-    expect(monitorListQueryOptions(sorted).refetchInterval).toBe(monitorListAutoRefreshMs);
+    expect(monitorListQueryOptions(sorted).refetchInterval).toBeUndefined();
   });
 
   it('copies a static monitor endpoint and contains clipboard failures', async () => {

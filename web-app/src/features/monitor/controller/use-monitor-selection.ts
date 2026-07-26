@@ -19,12 +19,14 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { Monitor } from '../model/monitor-contract';
 import { reconcileMonitorSelection, type MonitorScopedSelection } from '../model/monitor-model';
+import { isMonitorRowDisappeared, type MonitorListRow } from '../model/monitor-list-snapshot';
 
 type MonitorSelectionSnapshot = {
   selection: MonitorScopedSelection;
   scope: string;
   page: string;
   visibleIds: readonly number[];
+  disabledIds: readonly number[];
 };
 
 export type MonitorSelectionController = {
@@ -35,12 +37,17 @@ export type MonitorSelectionController = {
   validatedIds: () => number[];
 };
 
-export function useMonitorSelection(scope: string, page: string, content?: Monitor[]): MonitorSelectionController {
+export function useMonitorSelection(
+  scope: string,
+  page: string,
+  content?: MonitorListRow[]
+): MonitorSelectionController {
   const rows = useMemo(() => content ?? [], [content]);
   const visibleIds = useMemo(() => rows.map(row => row.id), [rows]);
+  const disabledIds = useMemo(() => rows.filter(isMonitorRowDisappeared).map(row => row.id), [rows]);
   const [selection, setSelection] = useState<MonitorScopedSelection>({ scope, ids: [] });
-  const latest = useRef<MonitorSelectionSnapshot>({ selection, scope, page, visibleIds });
-  const selectedIds = reconcileMonitorSelection(selection, scope);
+  const latest = useRef<MonitorSelectionSnapshot>({ selection, scope, page, visibleIds, disabledIds });
+  const selectedIds = actionableSelection(selection, scope, disabledIds);
 
   useLayoutEffect(() => {
     const previous = latest.current;
@@ -49,9 +56,10 @@ export function useMonitorSelection(scope: string, page: string, content?: Monit
       selection: selection.scope === scope ? selection : { scope, ids: [] },
       scope,
       page,
-      visibleIds
+      visibleIds,
+      disabledIds
     };
-  }, [page, scope, selection, visibleIds]);
+  }, [disabledIds, page, scope, selection, visibleIds]);
 
   const selectIds = useCallback(
     (ids: number[]) => {
@@ -70,10 +78,15 @@ export function useMonitorSelection(scope: string, page: string, content?: Monit
 
   const validatedIds = useCallback(() => {
     const current = latest.current;
-    return reconcileMonitorSelection(current.selection, current.scope);
+    return actionableSelection(current.selection, current.scope, current.disabledIds);
   }, []);
 
   return { rows, selectedIds, selectIds, remove, validatedIds };
+}
+
+function actionableSelection(selection: MonitorScopedSelection, scope: string, disabledIds: readonly number[]) {
+  const disabled = new Set(disabledIds);
+  return reconcileMonitorSelection(selection, scope).filter(id => !disabled.has(id));
 }
 
 function reconcileSelectionAfterRead(

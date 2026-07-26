@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -32,24 +31,15 @@ import {
   type MonitorQuery
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
-import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorExport } from './use-monitor-export';
 import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
+import { useMonitorListResources } from './use-monitor-list-resources';
+import { useMonitorListSnapshot } from './use-monitor-list-snapshot';
 import { useMonitorPageCorrection } from './use-monitor-page-correction';
 import { useMonitorSelection } from './use-monitor-selection';
 
-/** Retains the established monitor-list cadence while leaving manual refresh available. */
-export const monitorListAutoRefreshMs = 120_000;
-
-export function monitorListQueryOptions(query: MonitorQuery) {
-  return queryOptions({
-    queryKey: monitorQueryKeys.list(query),
-    queryFn: ({ signal }) => loadMonitors(query, signal),
-    retry: false,
-    refetchInterval: monitorListAutoRefreshMs
-  });
-}
+export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor-list-resources';
 
 export function useMonitorListController() {
   const navigate = useNavigate();
@@ -59,9 +49,10 @@ export function useMonitorListController() {
   const source = writeMonitorQuery(query).toString();
   const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
   const draft = useQueryDraft(source, canonicalDraft);
-  const { monitors, apps, reread } = useMonitorListResources(query);
+  const { monitors, apps, readMode, reread } = useMonitorListResources(query);
   useMonitorPageCorrection(query, monitors.data, setParams);
-  const records = monitors.data?.content;
+  const displayPage = useMonitorListSnapshot(source, monitors.data, readMode, monitors.dataUpdatedAt);
+  const records = displayPage?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
   const commands = useMonitorListCommands(source, reread, selection);
   const monitorExport = useMonitorExport(selection.selectedIds);
@@ -73,7 +64,7 @@ export function useMonitorListController() {
       draft: draft.value,
       operating: commands.operating || monitorExport.exporting || monitorImport.state.busy,
       selectedIds: selection.selectedIds,
-      monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
+      monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, displayPage),
       apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
       refreshing: monitors.isFetching,
       canExport: monitorExport.canExport,
@@ -110,23 +101,6 @@ export function useMonitorListController() {
       clearSelection: () => selection.selectIds([])
     }
   };
-}
-
-function useMonitorListResources(query: MonitorQuery) {
-  const queryClient = useQueryClient();
-  const monitors = useQuery(monitorListQueryOptions(query));
-  const apps = useQuery({
-    queryKey: monitorQueryKeys.apps(),
-    queryFn: ({ signal }) => loadMonitorApps(signal),
-    retry: false
-  });
-  const reread = () =>
-    queryClient.fetchQuery({
-      queryKey: monitorQueryKeys.list(query),
-      queryFn: ({ signal }) => loadMonitors(query, signal),
-      staleTime: 0
-    });
-  return { monitors, apps, reread };
 }
 
 function resolveMonitorEvidence(
