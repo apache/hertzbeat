@@ -117,6 +117,22 @@ function ReadyTopology({
   return (
     <>
       {state.refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
+      {presentation.summary.partial ? (
+        <Alert
+          showIcon
+          type="warning"
+          message={t('topology.partial.title')}
+          description={
+            <ul>
+              {presentation.summary.partialReasons.map(reason => (
+                <li key={reason}>
+                  {t(reason === 'entity_seed_limit' ? 'topology.partial.entitySeedLimit' : 'topology.partial.edgePage')}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+      ) : null}
       <TopologyRuntimeEvidence state={runtimeState} />
       <div className={workspaceClass}>
         <TopologyGraphColumn

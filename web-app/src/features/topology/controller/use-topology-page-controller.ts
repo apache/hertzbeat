@@ -146,7 +146,7 @@ function resolveTopologyEvidence(
   if (!valid) return { kind: 'contract' };
   if (presentation) {
     const empty = presentation.graph.nodes.length === 0 && presentation.graph.edges.length === 0;
-    return { kind: empty ? 'empty' : 'ready', presentation };
+    return { kind: empty && !presentation.summary.partial ? 'empty' : 'ready', presentation };
   }
   if (failure) return { kind: failure.kind };
   return { kind: 'loading' };

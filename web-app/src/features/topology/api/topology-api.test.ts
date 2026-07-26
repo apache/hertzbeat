@@ -16,6 +16,14 @@ const graph = {
   apiBacked: true,
   focusEntityId: 10,
   depth: 2,
+  partial: true,
+  partialReasons: ['entity_seed_limit', 'edge_page'],
+  edgePage: {
+    pageIndex: 0,
+    pageSize: 1,
+    totalElements: 2,
+    hasNext: true
+  },
   sourceKinds: ['entity-relation', 'otlp-trace-call'],
   nodes: [
     {
@@ -130,6 +138,25 @@ describe('topology API', () => {
   });
 
   it('strictly rejects malformed graph and nested metric contracts without substituting an empty graph', async () => {
+    const { partial: _partial, ...missingCompleteness } = graph;
+    http.apiMessageGet.mockResolvedValue(missingCompleteness);
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({ ...graph, partialReasons: ['edge_page', 'edge_page'] });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({ ...graph, edgePage: { ...graph.edgePage, hasNext: false } });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({ ...graph, edgePage: { ...graph.edgePage, pageIndex: 2_147_483_648 } });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({ ...graph, edgePage: { ...graph.edgePage, pageSize: 201 } });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({ ...graph, edgePage: { ...graph.edgePage, totalElements: 0 } });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+    http.apiMessageGet.mockResolvedValue({
+      ...graph,
+      edges: [],
+      edgePage: { pageIndex: 0, pageSize: 2, totalElements: 10, hasNext: true }
+    });
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
     http.apiMessageGet.mockResolvedValue({ ...graph, unexpected: true });
     await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
     http.apiMessageGet.mockResolvedValue({ ...graph, apiBacked: false });

@@ -37,6 +37,14 @@ describe('topology presentation', () => {
       apiBacked: true,
       focusEntityId: 1,
       depth: 1,
+      partial: false,
+      partialReasons: [],
+      edgePage: {
+        pageIndex: 0,
+        pageSize: 25,
+        totalElements: 1,
+        hasNext: false
+      },
       sourceKinds: ['entity-relation'],
       nodeCount: 2,
       edgeCount: 1,
@@ -118,6 +126,14 @@ function topologyGraph(): TopologyGraph {
     apiBacked: true,
     focusEntityId: 1,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: {
+      pageIndex: 0,
+      pageSize: 25,
+      totalElements: 1,
+      hasNext: false
+    },
     sourceKinds: ['entity-relation'],
     nodes: [topologyNode(1, true), topologyNode(2, false)],
     edges: [

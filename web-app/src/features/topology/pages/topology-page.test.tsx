@@ -99,6 +99,9 @@ function graph(): TopologyGraph {
     apiBacked: true,
     focusEntityId: 1,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 0, hasNext: false },
     sourceKinds: [],
     nodes: [
       {

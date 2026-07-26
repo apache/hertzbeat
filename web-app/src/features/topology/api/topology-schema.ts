@@ -5,8 +5,10 @@ import { z } from 'zod';
 import { TopologyContractError } from '../model/topology-model';
 import type {
   TopologyEdge,
+  TopologyEdgePage,
   TopologyGraph,
   TopologyNode,
+  TopologyPartialReason,
   TopologyRedMetrics,
   TopologyTimelineEvent
 } from '../model/topology-contract';
@@ -20,6 +22,19 @@ const nonblankSchema = z
 const nullableTextSchema = nonblankSchema.nullable();
 const nullableMetricSchema = z.number().finite().nonnegative().nullable();
 const nullableCountSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable();
+const javaIntegerMax = 2_147_483_647;
+const topologyEdgePageSizeMax = 200;
+const countSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+const javaIntegerSchema = z.number().int().nonnegative().max(javaIntegerMax);
+const partialReasonSchema = z.enum(['entity_seed_limit', 'edge_page']);
+const edgePageSchema: z.ZodType<TopologyEdgePage> = z
+  .object({
+    pageIndex: javaIntegerSchema,
+    pageSize: javaIntegerSchema.max(topologyEdgePageSizeMax),
+    totalElements: countSchema,
+    hasNext: z.boolean()
+  })
+  .strict();
 
 const redMetricsSchema: z.ZodType<TopologyRedMetrics> = z
   .object({
@@ -88,6 +103,9 @@ const topologyGraphSchema: z.ZodType<TopologyGraph> = z
     apiBacked: z.literal(true),
     focusEntityId: nullableIdSchema,
     depth: z.number().int().min(1).max(2),
+    partial: z.boolean(),
+    partialReasons: z.array(partialReasonSchema).max(2),
+    edgePage: edgePageSchema,
     sourceKinds: z.array(nonblankSchema),
     nodes: z.array(nodeSchema),
     edges: z.array(edgeSchema),
@@ -102,7 +120,17 @@ export function parseTopologyGraph(value: unknown): TopologyGraph {
   return result.data;
 }
 
-function requireGraphInvariants(graph: { nodes: TopologyNode[]; edges: TopologyEdge[] }, context: z.RefinementCtx) {
+function requireGraphInvariants(
+  graph: {
+    partial: boolean;
+    partialReasons: TopologyPartialReason[];
+    edgePage: TopologyEdgePage;
+    nodes: TopologyNode[];
+    edges: TopologyEdge[];
+  },
+  context: z.RefinementCtx
+) {
+  requireCompletenessInvariants(graph, context);
   const nodeIds = new Set<string>();
   graph.nodes.forEach((node, index) => {
     if (nodeIds.has(node.id)) {
@@ -123,4 +151,60 @@ function requireGraphInvariants(graph: { nodes: TopologyNode[]; edges: TopologyE
       context.addIssue({ code: 'custom', path: ['edges', index, 'targetNodeId'], message: 'Target node is missing' });
     }
   });
+}
+
+function requireCompletenessInvariants(
+  graph: {
+    partial: boolean;
+    partialReasons: TopologyPartialReason[];
+    edgePage: TopologyEdgePage;
+    edges: TopologyEdge[];
+  },
+  context: z.RefinementCtx
+) {
+  const canonicalReasons: TopologyPartialReason[] = ['entity_seed_limit', 'edge_page'];
+  const uniqueReasons = [...new Set(graph.partialReasons)];
+  const orderedReasons = canonicalReasons.filter(reason => uniqueReasons.includes(reason));
+  if (
+    uniqueReasons.length !== graph.partialReasons.length ||
+    orderedReasons.some((reason, index) => graph.partialReasons[index] !== reason)
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['partialReasons'],
+      message: 'Partial reasons must be stable and unique'
+    });
+  }
+  const hasPartialReasons = graph.partialReasons.length > 0;
+  if (graph.partial !== hasPartialReasons) {
+    context.addIssue({ code: 'custom', path: ['partial'], message: 'Partial state must match its reasons' });
+  }
+
+  const { pageIndex, pageSize, totalElements, hasNext } = graph.edgePage;
+  const expectedHasNext = pageSize > 0 && (pageIndex + 1) * pageSize < totalElements;
+  if (hasNext !== expectedHasNext) {
+    context.addIssue({
+      code: 'custom',
+      path: ['edgePage', 'hasNext'],
+      message: 'Edge page continuation is inconsistent'
+    });
+  }
+  if (pageSize === 0 && totalElements !== graph.edges.length) {
+    context.addIssue({ code: 'custom', path: ['edgePage'], message: 'Unpaged edge evidence must be complete' });
+  }
+  if (totalElements < graph.edges.length) {
+    context.addIssue({ code: 'custom', path: ['edgePage', 'totalElements'], message: 'Edge total is below the page' });
+  }
+  const expectedPageLength = Math.min(pageSize, Math.max(totalElements - pageIndex * pageSize, 0));
+  if (pageSize > 0 && graph.edges.length !== expectedPageLength) {
+    context.addIssue({ code: 'custom', path: ['edges'], message: 'Edge page length is inconsistent' });
+  }
+  const edgePagePartial = pageIndex > 0 || hasNext;
+  if (graph.partialReasons.includes('edge_page') !== edgePagePartial) {
+    context.addIssue({
+      code: 'custom',
+      path: ['partialReasons'],
+      message: 'Edge page reason must match page evidence'
+    });
+  }
 }

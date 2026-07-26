@@ -75,6 +75,17 @@ describe('topology page controller evidence and time scope', () => {
     await waitFor(() => expect(ready.current().state.evidence.kind).toBe('ready'));
   });
 
+  it('keeps an empty partial edge page ready so the operator can return to previous evidence', async () => {
+    api.loadTopologyGraph.mockResolvedValue({
+      ...topologyGraph([]),
+      partial: true,
+      partialReasons: ['edge_page'],
+      edgePage: { pageIndex: 2, pageSize: 25, totalElements: 30, hasNext: false }
+    });
+    const view = renderController('/topology?pageIndex=2&pageSize=25');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+  });
+
   it('updates upstream query fields through the canonical model and resets pagination', async () => {
     const view = renderController(
       '/topology?focusEntityId=7&depth=1&environment=prod&sourceKind=otel&relationType=calls&hideInternal=false&pageIndex=4&pageSize=25'
@@ -151,6 +162,9 @@ function topologyGraph(nodeIds: string[]): TopologyGraph {
     apiBacked: true,
     focusEntityId: nodeIds[0] ? Number(nodeIds[0]) : null,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 0, hasNext: false },
     sourceKinds: [],
     nodes: nodeIds.map(topologyNode),
     edges: [],

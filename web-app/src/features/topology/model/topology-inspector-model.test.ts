@@ -87,6 +87,9 @@ function topologyGraph(): TopologyGraph {
     apiBacked: true,
     focusEntityId: 2,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 3, hasNext: false },
     sourceKinds: ['otel'],
     nodes: [node('orders', 1), node('checkout', 2), node('database', 3)],
     edges: [

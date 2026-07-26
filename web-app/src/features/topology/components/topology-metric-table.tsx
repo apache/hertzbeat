@@ -6,6 +6,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { TopologyEdgePage } from '../model/topology-contract';
 import type { TopologyPageActions } from '../model/topology-page-contract';
 import { topologyPageSizes } from '../model/topology-model';
 import type { TopologyMetricRow, TopologyInteraction } from '../model/topology-view-model';
@@ -15,15 +16,14 @@ import styles from './topology-page.module.css';
 type Props = {
   rows: TopologyMetricRow[];
   interaction: TopologyInteraction;
-  edgeCount: number;
-  pageIndex: number;
-  pageSize: number;
+  edgePage: TopologyEdgePage;
   actions: Pick<TopologyPageActions, 'changePage' | 'clearHover' | 'drilldown' | 'hoverEdge' | 'hoverNode'>;
 };
 
-export function TopologyMetricTable({ rows, interaction, edgeCount, pageIndex, pageSize, actions }: Props) {
+export function TopologyMetricTable({ rows, interaction, edgePage, actions }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
+  const { pageIndex, pageSize, totalElements, hasNext } = edgePage;
   return (
     <section className={styles.evidenceSection}>
       <div className={styles.evidenceHeading}>
@@ -66,7 +66,10 @@ export function TopologyMetricTable({ rows, interaction, edgeCount, pageIndex, p
               {t('topology.pagination.previous')}
             </Button>
             <Typography.Text>{t('topology.pagination.page', { page: pageIndex + 1 })}</Typography.Text>
-            <Button disabled={edgeCount < pageSize} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
+            <Typography.Text type="secondary">
+              {t('topology.pagination.total', { total: totalElements })}
+            </Typography.Text>
+            <Button disabled={!hasNext} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
               {t('topology.pagination.next')}
             </Button>
             <Select

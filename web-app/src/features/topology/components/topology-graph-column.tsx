@@ -69,9 +69,7 @@ export function TopologyGraphColumn({
       <TopologyMetricTable
         rows={presentation.metricRows}
         interaction={interaction}
-        edgeCount={presentation.summary.edgeCount}
-        pageIndex={state.query?.pageIndex ?? 0}
-        pageSize={state.query?.pageSize ?? 25}
+        edgePage={presentation.summary.edgePage}
         actions={actions}
       />
     </main>

@@ -64,7 +64,14 @@
     "summary": {
       "nodes": "节点",
       "edges": "边",
+      "displayedNodes": "当前显示节点",
+      "displayedEdges": "当前显示边",
       "window": "时间窗口"
+    },
+    "partial": {
+      "title": "当前视图仅显示部分拓扑证据。",
+      "entitySeedLimit": "已达到资源种子上限，当前视图之外可能还有节点和关系。",
+      "edgePage": "当前仅显示一页边证据，请使用分页控件检查更多证据。"
     },
     "evidence": {
       "loading": "正在加载拓扑证据…",
@@ -127,6 +134,7 @@
       "previous": "上一页边",
       "next": "下一页边",
       "page": "边第 {{page}} 页",
+      "total": "共 {{total}} 条匹配边",
       "pageSize": "每页边数"
     },
     "values": {

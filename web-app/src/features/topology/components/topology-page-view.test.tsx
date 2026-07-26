@@ -121,11 +121,34 @@ describe('TopologyPageView evidence', () => {
     renderLinkedView();
     const contextBand = screen.getByRole('banner');
 
-    expect(within(contextBand).getByText(i18n.t('topology.summary.nodes'))).toBeInTheDocument();
-    expect(within(contextBand).getByText(i18n.t('topology.summary.edges'))).toBeInTheDocument();
+    expect(within(contextBand).getByText(i18n.t('topology.summary.displayedNodes'))).toBeInTheDocument();
+    expect(within(contextBand).getByText(i18n.t('topology.summary.displayedEdges'))).toBeInTheDocument();
     expect(within(contextBand).getByText(i18n.t('topology.summary.window'))).toBeInTheDocument();
     expect(contextBand).not.toHaveTextContent('healthy');
     expect(contextBand).not.toHaveTextContent(i18n.t('topology.metrics.errorRate'));
+  });
+
+  it('labels displayed counts and explains each authoritative partial reason', () => {
+    const partialPresentation = buildTopologyPresentation({
+      ...topologyGraph(),
+      partial: true,
+      partialReasons: ['entity_seed_limit', 'edge_page'],
+      edgePage: { pageIndex: 1, pageSize: 25, totalElements: 51, hasNext: true }
+    });
+    render(
+      renderContent({
+        state: {
+          ...baseState,
+          query: { ...baseState.query!, pageIndex: 1, pageSize: 25 },
+          evidence: { kind: 'ready', presentation: partialPresentation }
+        }
+      })
+    );
+
+    expect(screen.getByText(i18n.t('topology.summary.displayedNodes'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('topology.summary.displayedEdges'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('topology.partial.entitySeedLimit'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('topology.partial.edgePage'))).toBeInTheDocument();
   });
 
   it('keeps the evidence table interactive after collapsing and reopening its lower section', () => {
@@ -280,17 +303,57 @@ describe('TopologyPageView evidence', () => {
     expect(onFit).toHaveBeenCalledOnce();
   });
 
-  it('pages edge evidence without fabricating a total and resets page size at the first page', () => {
+  it('pages edge evidence only from authoritative hasNext and shows total page evidence', () => {
     const changePage = vi.fn();
+    const finalPage = buildTopologyPresentation({
+      ...topologyGraph(),
+      partial: true,
+      partialReasons: ['edge_page'],
+      edgePage: { pageIndex: 0, pageSize: 1, totalElements: 1, hasNext: false }
+    });
     render(
       renderContent({
-        state: { ...baseState, query: { ...baseState.query!, pageSize: 1 } },
+        state: {
+          ...baseState,
+          query: { ...baseState.query!, pageSize: 1 },
+          evidence: { kind: 'ready', presentation: finalPage }
+        },
         actions: { ...baseActions, changePage }
       })
     );
     expect(screen.getByRole('button', { name: i18n.t('topology.pagination.previous') })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.pagination.next') }));
-    expect(changePage).toHaveBeenCalledWith(1, 1);
+    expect(screen.getByRole('button', { name: i18n.t('topology.pagination.next') })).toBeDisabled();
+    expect(screen.getByText(i18n.t('topology.pagination.total', { total: 1 }))).toBeInTheDocument();
+    expect(changePage).not.toHaveBeenCalled();
+  });
+
+  it('keeps a partial empty edge page inspectable and allows returning to the previous page', () => {
+    const changePage = vi.fn();
+    const emptyPage = buildTopologyPresentation({
+      ...topologyGraph(),
+      nodes: [],
+      edges: [],
+      partial: true,
+      partialReasons: ['edge_page'],
+      edgePage: { pageIndex: 2, pageSize: 25, totalElements: 30, hasNext: false }
+    });
+    render(
+      renderContent({
+        state: {
+          ...baseState,
+          query: { ...baseState.query!, pageIndex: 2, pageSize: 25 },
+          evidence: { kind: 'ready', presentation: emptyPage }
+        },
+        actions: { ...baseActions, changePage }
+      })
+    );
+
+    expect(screen.getByTestId('topology-canvas')).toBeInTheDocument();
+    const previous = screen.getByRole('button', { name: i18n.t('topology.pagination.previous') });
+    expect(previous).toBeEnabled();
+    expect(screen.getByRole('button', { name: i18n.t('topology.pagination.next') })).toBeDisabled();
+    fireEvent.click(previous);
+    expect(changePage).toHaveBeenCalledWith(1, 25);
   });
 
   it('accepts only integer focus entity values at the input boundary', () => {
@@ -460,6 +523,9 @@ function topologyGraph(): TopologyGraph {
     apiBacked: true,
     focusEntityId: 1,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 1, hasNext: false },
     sourceKinds: ['otel'],
     nodes: [
       {

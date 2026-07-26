@@ -23,8 +23,8 @@ export function TopologyContextBand({
         <Typography.Text type="secondary">{t('topology.context.subtitle')}</Typography.Text>
       </div>
       <div className={styles.contextFacts}>
-        <ContextFact label={t('topology.summary.nodes')} value={String(presentation.summary.nodeCount)} />
-        <ContextFact label={t('topology.summary.edges')} value={String(presentation.summary.edgeCount)} />
+        <ContextFact label={t('topology.summary.displayedNodes')} value={String(presentation.summary.nodeCount)} />
+        <ContextFact label={t('topology.summary.displayedEdges')} value={String(presentation.summary.edgeCount)} />
         <ContextFact
           label={t('topology.summary.window')}
           value={formatTopologyWindow(query?.window, i18n.resolvedLanguage || i18n.language)}

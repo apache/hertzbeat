@@ -64,7 +64,14 @@
     "summary": {
       "nodes": "節點",
       "edges": "邊",
+      "displayedNodes": "目前顯示節點",
+      "displayedEdges": "目前顯示邊",
       "window": "時間範圍"
+    },
+    "partial": {
+      "title": "目前檢視僅顯示部分拓撲證據。",
+      "entitySeedLimit": "已達到資源種子上限，目前檢視之外可能還有節點和關係。",
+      "edgePage": "目前僅顯示一頁邊證據，請使用分頁控制項檢查更多證據。"
     },
     "evidence": {
       "loading": "正在載入拓撲證據…",
@@ -127,6 +134,7 @@
       "previous": "上一頁邊",
       "next": "下一頁邊",
       "page": "邊第 {{page}} 頁",
+      "total": "共 {{total}} 條符合的邊",
       "pageSize": "每頁邊數"
     },
     "values": {

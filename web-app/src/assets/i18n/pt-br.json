@@ -64,7 +64,14 @@
     "summary": {
       "nodes": "Nós",
       "edges": "Arestas",
+      "displayedNodes": "Nós exibidos",
+      "displayedEdges": "Arestas exibidas",
       "window": "Janela"
+    },
+    "partial": {
+      "title": "Esta visualização mostra evidências parciais da topologia.",
+      "entitySeedLimit": "O limite de entidades iniciais foi atingido. Outros nós e relações podem existir fora desta visualização.",
+      "edgePage": "Somente a página atual de arestas é exibida. Use a paginação para inspecionar mais evidências."
     },
     "evidence": {
       "loading": "Carregando evidências de topologia…",
@@ -127,6 +134,7 @@
       "previous": "Página anterior de arestas",
       "next": "Próxima página de arestas",
       "page": "Página de arestas {{page}}",
+      "total": "{{total}} arestas correspondentes",
       "pageSize": "Arestas por página"
     },
     "values": {

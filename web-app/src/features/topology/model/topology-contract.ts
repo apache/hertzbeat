@@ -54,10 +54,22 @@ export type TopologyTimelineEvent = {
   occurredAt: string;
 };
 
+export type TopologyPartialReason = 'entity_seed_limit' | 'edge_page';
+
+export type TopologyEdgePage = {
+  pageIndex: number;
+  pageSize: number;
+  totalElements: number;
+  hasNext: boolean;
+};
+
 export type TopologyGraph = {
   apiBacked: true;
   focusEntityId: number | null;
   depth: number;
+  partial: boolean;
+  partialReasons: TopologyPartialReason[];
+  edgePage: TopologyEdgePage;
   sourceKinds: string[];
   nodes: TopologyNode[];
   edges: TopologyEdge[];

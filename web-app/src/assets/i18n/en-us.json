@@ -64,7 +64,14 @@
     "summary": {
       "nodes": "Nodes",
       "edges": "Edges",
+      "displayedNodes": "Displayed nodes",
+      "displayedEdges": "Displayed edges",
       "window": "Window"
+    },
+    "partial": {
+      "title": "This view shows partial topology evidence.",
+      "entitySeedLimit": "The entity seed limit was reached. Additional nodes and relations may exist outside this view.",
+      "edgePage": "Only the current edge page is shown. Use the edge pagination controls to inspect more evidence."
     },
     "evidence": {
       "loading": "Loading topology evidence…",
@@ -127,6 +134,7 @@
       "previous": "Previous edge page",
       "next": "Next edge page",
       "page": "Edge page {{page}}",
+      "total": "{{total}} matching edges",
       "pageSize": "Edges per page"
     },
     "values": {

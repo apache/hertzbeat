@@ -1,6 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { TopologyEdge, TopologyGraph, TopologyNode, TopologyRedMetrics } from './topology-contract';
+import type {
+  TopologyEdge,
+  TopologyEdgePage,
+  TopologyGraph,
+  TopologyNode,
+  TopologyPartialReason,
+  TopologyRedMetrics
+} from './topology-contract';
 
 export type TopologyMetricRow =
   | {
@@ -32,6 +39,9 @@ export type TopologyPresentation = {
     apiBacked: true;
     focusEntityId: number | null;
     depth: number;
+    partial: boolean;
+    partialReasons: TopologyPartialReason[];
+    edgePage: TopologyEdgePage;
     sourceKinds: string[];
     nodeCount: number;
     edgeCount: number;
@@ -75,6 +85,9 @@ export function buildTopologyPresentation(graph: TopologyGraph): TopologyPresent
       apiBacked: graph.apiBacked,
       focusEntityId: graph.focusEntityId,
       depth: graph.depth,
+      partial: graph.partial,
+      partialReasons: graph.partialReasons,
+      edgePage: graph.edgePage,
       sourceKinds: graph.sourceKinds,
       nodeCount: graph.nodes.length,
       edgeCount: graph.edges.length,

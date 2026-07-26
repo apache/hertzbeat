@@ -183,6 +183,9 @@ function topologyGraph(nodeIds: string[]): TopologyGraph {
     apiBacked: true,
     focusEntityId: nodeIds[0] ? Number(nodeIds[0]) : null,
     depth: 1,
+    partial: false,
+    partialReasons: [],
+    edgePage: { pageIndex: 0, pageSize: 25, totalElements: 0, hasNext: false },
     sourceKinds: [],
     nodes: nodeIds.map(id => ({
       id,
