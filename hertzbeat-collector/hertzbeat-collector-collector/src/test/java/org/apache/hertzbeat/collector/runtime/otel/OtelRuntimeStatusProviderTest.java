@@ -288,6 +288,37 @@ class OtelRuntimeStatusProviderTest {
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, provider.status().failureCode());
     }
 
+    @Test
+    void prefersLivePortConflictOverGenericReadinessFailure() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                OtelRuntimeState.DEGRADED, -1, 1, Instant.parse("2026-07-15T06:00:00Z"),
+                "HertzBeat telemetry runtime did not become ready"));
+        when(supervisor.activeRevision()).thenReturn(0L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.latestFailure(properties))
+                .thenReturn(ManagedOtelRuntimeStatus.FailureCode.PORT_CONFLICT);
+        when(diagnosticsReader.sanitize(
+                "HertzBeat telemetry runtime did not become ready", properties))
+                .thenReturn("HertzBeat telemetry runtime did not become ready");
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                mock(OtelRuntimeTelemetryClient.class),
+                diagnosticsReader,
+                new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus status = provider.status();
+
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.PORT_CONFLICT, status.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.DEGRADED, status.state());
+        assertEquals(-1, status.pid());
+        assertEquals(1, status.restartCount());
+    }
+
     private static Stream<Arguments> lifecycleFailures() {
         return Stream.of(
                 Arguments.of(OtelRuntimeState.DEGRADED, "configuration validation failed",

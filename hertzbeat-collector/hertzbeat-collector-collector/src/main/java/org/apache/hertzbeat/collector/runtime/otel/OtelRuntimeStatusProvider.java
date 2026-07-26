@@ -106,6 +106,10 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
                 && snapshot.state() != OtelRuntimeState.RUNNING) {
             return diagnosticFailure;
         }
+        if (diagnosticFailure == FailureCode.PORT_CONFLICT
+                && snapshot.state() != OtelRuntimeState.RUNNING) {
+            return diagnosticFailure;
+        }
         if (supervisorFailure != FailureCode.NONE && supervisorFailure != FailureCode.UNKNOWN) {
             return supervisorFailure;
         }

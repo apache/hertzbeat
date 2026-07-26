@@ -285,6 +285,41 @@ class OtelRuntimeSupervisorTest {
     }
 
     @Test
+    void recoveredDesiredRevisionClearsTransientReadinessFailure() throws Exception {
+        properties.setRestartDelay(Duration.ofHours(1));
+        properties.setStartupTimeout(Duration.ofMillis(50));
+        Path candidate = Files.createFile(tempDir.resolve("same-revision.yaml.candidate"));
+        Path active = tempDir.resolve("same-revision.yaml");
+        Path lastKnownGood = tempDir.resolve("same-revision.yaml.last-known-good");
+        OtelRuntimeConfigTransaction.PreparedConfig prepared =
+                new OtelRuntimeConfigTransaction.PreparedConfig(
+                        candidate, active, lastKnownGood, 1, 1);
+        when(configTransaction.prepare(properties)).thenReturn(prepared);
+        when(configTransaction.commit(prepared)).thenReturn(active);
+        when(configTransaction.rollback(prepared)).thenReturn(true);
+        Process failedRuntime = runningProcess(4201, new CompletableFuture<>());
+        when(failedRuntime.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        Process recoveredRuntime = runningProcess(4202, new CompletableFuture<>());
+        Process candidateValidation = successfulValidation();
+        Process recoveredValidation = successfulValidation();
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(candidateValidation, failedRuntime, recoveredValidation, recoveredRuntime);
+        when(healthClient.isHealthy(any(), any())).thenReturn(false, true);
+        supervisor = new OtelRuntimeSupervisor(
+                properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        assertEquals(4202, supervisor.snapshot().pid());
+        assertEquals(1, supervisor.snapshot().restartCount());
+        assertEquals("", supervisor.snapshot().lastError());
+        assertEquals(1, supervisor.activeRevision());
+        assertEquals(ManagedOtelRuntimeStatus.SourceState.ACTIVE,
+                supervisor.sourceStatuses().getFirst().state());
+    }
+
+    @Test
     void normalStopTerminatesChildWithoutSchedulingRecovery() throws Exception {
         CompletableFuture<Process> exit = new CompletableFuture<>();
         Process runtime = runningProcess(4201, exit);
