@@ -1,10 +1,13 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Qingran Zhao shares his path from using HertzBeat in operations to contributing storage integrations, import and export tools, monitoring templates, and alert channels.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome New Committer
+cover_kicker: New Committer
 ---
 
 ! [hertzBeat](/img/blog/new-committer.png)

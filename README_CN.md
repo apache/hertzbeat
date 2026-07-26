@@ -19,13 +19,13 @@
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 
-**官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
+**官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 **邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅邮件列表
 
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。
 
 ### 特点
 
@@ -39,70 +39,26 @@
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 
-> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。    
+> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。
 
 ----
 
 ----
 
-## 🥐 模块  
+## 🥐 模块
 
-![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
-## ⛄ 已支持    
+## 🐕 快速开始
 
-> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 模板，用户可以导入这些模板来支持对应类型的监控!    
-> 欢迎大家一起贡献你使用过程中自定义的通用指标模板。
-
-- [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
-  [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
-  [Jvm](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-fullsite.yml),
-  [Ssl Certificate](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-springboot2.yml),
-  [FTP Server](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-springboot3.yml),
-  [Udp Port](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-udp_port.yml), [Dns](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-dns.yml),
-  [Pop3](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ntp.yml),
-  [Api Code](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-smtp.yml),
-  [Nginx](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nginx.yml)
-- [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-postgresql.yml),
-  [MariaDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis.yml),
-  [ElasticSearch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-sqlserver.yml),
-  [Oracle](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mongodb.yml),
-  [DM](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-opengauss.yml),
-  [ClickHouse](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-iotdb.yml),
-  [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml)
-  [Doris BE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_fe.yml),
-  [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebula_graph.yml)
-- [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
-  [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml),
-  [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-coreos.yml),
-  [OpenSUSE](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rockylinux.yml),
-  [Red Hat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-freebsd.yml),
-  [AlmaLinux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-debian.yml)
-- [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml),
-  [Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rabbitmq.yml),
-  [Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kafka.yml),
-  [ShenYu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-dynamic_tp.yml),
-  [Jetty](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-activemq.yml),
-  [Spring Gateway](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-emqx.yml),
-  [AirFlow](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hive.yml),
-  [Spark](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hadoop.yml)
-- [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml)
-- [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
-  [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
-  [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义指标模板。
-- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
-
-## 🐕 快速开始  
-
-- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
+- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。
 
 ### 🍞 HertzBeat 安装
 > HertzBeat 支持通过源码安装启动，Docker 容器运行和安装包方式安装部署，CPU 架构支持 x86/arm64。
 
-##### 方式一：Docker 方式快速安装  
+##### 方式一：Docker 方式快速安装
 
-1. `docker` 环境仅需一条命令即可开始     
+1. `docker` 环境仅需一条命令即可开始
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
@@ -164,7 +120,7 @@
 
 通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
+详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
 
 ##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
@@ -176,8 +132,8 @@
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:   
-[贡献者指南](CONTRIBUTING.md)    
+Thanks these wonderful people, welcome to join us:
+[贡献者指南](CONTRIBUTING.md)
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -548,6 +504,34 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://shadwal.space/"><img src="https://avatars.githubusercontent.com/u/119167601?v=4?s=100" width="100px;" alt="Sahil Shadwal"/><br /><sub><b>Sahil Shadwal</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Sahil-Shadwal" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BhanuNidumolu"><img src="https://avatars.githubusercontent.com/u/180380413?v=4?s=100" width="100px;" alt="N.Bhanu Prasad"/><br /><sub><b>N.Bhanu Prasad</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=BhanuNidumolu" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://prakashh-portfolio.vercel.app/"><img src="https://avatars.githubusercontent.com/u/183058331?v=4?s=100" width="100px;" alt="Prakash Kumar"/><br /><sub><b>Prakash Kumar</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Prakash1185" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/orangeCatDeveloper"><img src="https://avatars.githubusercontent.com/u/95899648?v=4?s=100" width="100px;" alt="NekoPunch"/><br /><sub><b>NekoPunch</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=orangeCatDeveloper" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=orangeCatDeveloper" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://wy471x.github.io/"><img src="https://avatars.githubusercontent.com/u/52033069?v=4?s=100" width="100px;" alt="wy471x"/><br /><sub><b>wy471x</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wy471x" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hengyuss"><img src="https://avatars.githubusercontent.com/u/81064732?v=4?s=100" width="100px;" alt="hengyuss"/><br /><sub><b>hengyuss</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hengyuss" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://moduvoice.com/"><img src="https://avatars.githubusercontent.com/u/291867022?v=4?s=100" width="100px;" alt="moduvoice"/><br /><sub><b>moduvoice</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=moduvoice" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hutiefang76"><img src="https://avatars.githubusercontent.com/u/137664623?v=4?s=100" width="100px;" alt="hutiefang76"/><br /><sub><b>hutiefang76</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hutiefang76" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zylatent.com/"><img src="https://avatars.githubusercontent.com/u/250777154?v=4?s=100" width="100px;" alt="柳含知 Liu Hanzhi"/><br /><sub><b>柳含知 Liu Hanzhi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ZhouYinLong-lab" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wilmerdooley"><img src="https://avatars.githubusercontent.com/u/259930736?v=4?s=100" width="100px;" alt="wilmerdooley"/><br /><sub><b>wilmerdooley</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wilmerdooley" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Zmjjeff7"><img src="https://avatars.githubusercontent.com/u/175370943?v=4?s=100" width="100px;" alt="Zhenhong Guo"/><br /><sub><b>Zhenhong Guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Zmjjeff7" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abhyudayareddy"><img src="https://avatars.githubusercontent.com/u/54602866?v=4?s=100" width="100px;" alt="abhyudayareddy"/><br /><sub><b>abhyudayareddy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=abhyudayareddy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/neon-hippo"><img src="https://avatars.githubusercontent.com/u/165560498?v=4?s=100" width="100px;" alt="neon-hippo"/><br /><sub><b>neon-hippo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=neon-hippo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/P-Peaceful"><img src="https://avatars.githubusercontent.com/u/52856161?v=4?s=100" width="100px;" alt="P_Peaceful"/><br /><sub><b>P_Peaceful</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=P-Peaceful" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=P-Peaceful" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhusaidong"><img src="https://avatars.githubusercontent.com/u/3039961?v=4?s=100" width="100px;" alt="zhusaidong"/><br /><sub><b>zhusaidong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhusaidong" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhehenlu"><img src="https://avatars.githubusercontent.com/u/31504542?v=4?s=100" width="100px;" alt="zhlu"/><br /><sub><b>zhlu</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhehenlu" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=zhehenlu" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/brettgervasoni"><img src="https://avatars.githubusercontent.com/u/34056000?v=4?s=100" width="100px;" alt="brettgervasoni"/><br /><sub><b>brettgervasoni</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=brettgervasoni" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Darshan-paul"><img src="https://avatars.githubusercontent.com/u/211450705?v=4?s=100" width="100px;" alt="Darshan-paul"/><br /><sub><b>Darshan-paul</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Darshan-paul" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/04cb"><img src="https://avatars.githubusercontent.com/u/111667698?v=4?s=100" width="100px;" alt="layla"/><br /><sub><b>layla</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=04cb" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/miantalha45"><img src="https://avatars.githubusercontent.com/u/155809113?v=4?s=100" width="100px;" alt="Talha Amjad"/><br /><sub><b>Talha Amjad</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=miantalha45" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://turanalmammadov.com/"><img src="https://avatars.githubusercontent.com/u/16321061?v=4?s=100" width="100px;" alt="Turan Almammadov"/><br /><sub><b>Turan Almammadov</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=turanalmammadov" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=turanalmammadov" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhaoyangplus"><img src="https://avatars.githubusercontent.com/u/245090302?v=4?s=100" width="100px;" alt="zhaoyangplus"/><br /><sub><b>zhaoyangplus</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhaoyangplus" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yexuanyang"><img src="https://avatars.githubusercontent.com/u/73885401?v=4?s=100" width="100px;" alt="Yang Yexuan"/><br /><sub><b>Yang Yexuan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yexuanyang" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/markguo123"><img src="https://avatars.githubusercontent.com/u/155072651?v=4?s=100" width="100px;" alt="markguo123"/><br /><sub><b>markguo123</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=markguo123" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/leo-934"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="leo"/><br /><sub><b>leo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=leo-934" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=leo-934" title="Documentation">📖</a> <a href="#blog-leo-934" title="Blogposts">📝</a></td>
     </tr>
   </tbody>
 </table>
@@ -555,11 +539,11 @@ Thanks these wonderful people, welcome to join us:
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
-<!-- ALL-CONTRIBUTORS-LIST:END -->  
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## 💬 社区交流
 
-##### Channel 
+##### Channel
 
 [订阅邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : 发送邮件至 `dev-subscribe@hertzbeat.apache.org` 来订阅邮件列表.
 
