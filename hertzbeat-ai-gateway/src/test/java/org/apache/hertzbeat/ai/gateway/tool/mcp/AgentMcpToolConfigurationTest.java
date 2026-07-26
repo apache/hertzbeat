@@ -23,12 +23,15 @@ import static org.mockito.Mockito.mock;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertAnalysisPolicyToolService;
 import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertRuleToolService;
+import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertSilenceToolService;
 import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertToolService;
+import org.apache.hertzbeat.ai.gateway.tool.collector.AgentCollectorToolService;
 import org.apache.hertzbeat.ai.gateway.tool.database.AgentDatabaseDiagnosticService;
+import org.apache.hertzbeat.ai.gateway.tool.log.AgentLogToolService;
 import org.apache.hertzbeat.ai.gateway.tool.metrics.AgentMetricsToolService;
 import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorToolService;
-import org.apache.hertzbeat.ai.gateway.tool.collector.AgentCollectorToolService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
@@ -43,6 +46,9 @@ class AgentMcpToolConfigurationTest {
                 mock(AgentMonitorToolService.class),
                 mock(AgentAlertToolService.class),
                 mock(AgentAlertRuleToolService.class),
+                mock(AgentAlertSilenceToolService.class),
+                mock(AgentAlertAnalysisPolicyToolService.class),
+                mock(AgentLogToolService.class),
                 mock(AgentMetricsToolService.class),
                 mock(AgentDatabaseDiagnosticService.class),
                 mock(AgentCollectorToolService.class));
@@ -55,6 +61,16 @@ class AgentMcpToolConfigurationTest {
         assertTrue(names.contains("monitor.create"));
         assertTrue(names.contains("alert.query"));
         assertTrue(names.contains("alert_rule.create"));
+        assertTrue(names.contains("alert_silence.list"));
+        assertTrue(names.contains("alert_silence.get"));
+        assertTrue(names.contains("alert_silence.create_once"));
+        assertTrue(names.contains("alert_silence.toggle"));
+        assertTrue(names.contains("alert_silence.delete"));
+        assertTrue(names.contains("alert_analysis_policy.create"));
+        assertTrue(names.contains("alert_analysis_policy.list"));
+        assertTrue(names.contains("alert_analysis_policy.toggle"));
+        assertTrue(names.contains("alert_analysis_policy.delete"));
+        assertTrue(names.contains("logs.query"));
         assertTrue(names.contains("metrics.realtime"));
         assertTrue(names.contains("database.explain_query"));
         assertTrue(names.contains("collector.collect_once"));
