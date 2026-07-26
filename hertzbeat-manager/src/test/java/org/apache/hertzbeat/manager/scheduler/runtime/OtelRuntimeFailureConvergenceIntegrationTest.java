@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeBinaryResolver;
@@ -91,6 +93,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
     private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
     private static final String RATE_LIMIT_PROOF_METRIC = "hertzbeat_rate_limit_proof_metric";
+    private static final String RESET_PROOF_METRIC = "hertzbeat_reset_proof_metric";
     private static final String QUEUE_PROOF_METRIC = "hertzbeat_queue_proof_metric";
     private static final int QUEUE_CAPACITY = 2048;
     private static final int QUEUE_OVERFLOW_MARGIN = 16;
@@ -306,6 +309,68 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     }
 
     @Test
+    void reportsRealExporterConnectionResetThroughHeartbeatAndQueryThenRecovers(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        ResetIntake intake = new ResetIntake();
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), singleMetricPayload(RESET_PROOF_METRIC));
+            await(() -> intake.resetAttempts() > 0, Duration.ofSeconds(20));
+            ManagedOtelRuntimeStatus reset = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
+                    Duration.ofSeconds(20));
+            assertStableRuntimeIdentity(reset, runtimePid);
+            assertTrue(positive(reset.telemetry().queueSizeBySignal().metrics()));
+            reportHeartbeat(manageServer, reset);
+            assertResetQuery(query(queryApi), intake.port(), "BACKEND_UNAVAILABLE");
+
+            long sentBeforeRecovery = reset.telemetry().sent().metrics().value();
+            intake.recover();
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && availableGreaterThan(status.telemetry().sent().metrics(), sentBeforeRecovery),
+                    Duration.ofSeconds(40));
+            assertStableRuntimeIdentity(recovered, runtimePid);
+            assertTrue(intake.authorizationWasValid());
+            assertTrue(intake.acceptedRequests() > 0);
+            reportHeartbeat(manageServer, recovered);
+            assertResetQuery(query(queryApi), intake.port(), "NONE");
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertTrue(intake.isResetThreadTerminated());
+        assertSafeReset(output.getAll(), intake.port());
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(RESET_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    @Test
     void reportsRealExporterQueueCapacityThroughHeartbeatAndQueryThenDrains(
             CapturedOutput output) throws Exception {
         String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
@@ -513,6 +578,20 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private void assertSafeRetriable(String content, int intakePort) {
         assertSafe(content);
         assertFalse(content.contains(RATE_LIMIT_PROOF_METRIC));
+        assertFalse(content.contains("/api/otlp"));
+        assertFalse(content.contains("127.0.0.1:" + intakePort));
+        assertFalse(content.contains(tempDir.toString()));
+    }
+
+    private void assertResetQuery(String query, int intakePort, String failureCode) {
+        assertTrue(query.contains("\"failureCode\":\"" + failureCode + "\""));
+        assertTrue(query.contains("\"name\":\"" + COLLECTOR_ID + "\""));
+        assertSafeReset(query, intakePort);
+    }
+
+    private void assertSafeReset(String content, int intakePort) {
+        assertSafe(content);
+        assertFalse(content.contains(RESET_PROOF_METRIC));
         assertFalse(content.contains("/api/otlp"));
         assertFalse(content.contains("127.0.0.1:" + intakePort));
         assertFalse(content.contains(tempDir.toString()));
@@ -746,6 +825,114 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         public void close() {
             if (server != null) {
                 server.stop(0);
+            }
+        }
+    }
+
+    private static final class ResetIntake implements AutoCloseable {
+
+        private final AtomicInteger resetAttempts = new AtomicInteger();
+        private final AtomicInteger acceptedRequests = new AtomicInteger();
+        private final AtomicBoolean authorizationWasValid = new AtomicBoolean(true);
+        private final AtomicReference<IOException> resetFailure = new AtomicReference<>();
+        private ServerSocket resetSocket;
+        private Thread resetThread;
+        private HttpServer recoveredServer;
+        private int port;
+
+        void start() throws IOException {
+            resetSocket = new ServerSocket();
+            resetSocket.setReuseAddress(true);
+            resetSocket.bind(new InetSocketAddress("127.0.0.1", 0), 16);
+            port = resetSocket.getLocalPort();
+            resetThread = new Thread(this::acceptAndReset, "otel-reset-intake");
+            resetThread.setDaemon(true);
+            resetThread.start();
+        }
+
+        private void acceptAndReset() {
+            while (!resetSocket.isClosed()) {
+                try (Socket connection = resetSocket.accept()) {
+                    resetAttempts.incrementAndGet();
+                    connection.setSoLinger(true, 0);
+                } catch (IOException exception) {
+                    if (!resetSocket.isClosed()) {
+                        resetFailure.compareAndSet(null, exception);
+                    }
+                }
+            }
+        }
+
+        void recover() throws IOException, InterruptedException {
+            stopResetServer();
+            IOException bindFailure = null;
+            for (int attempt = 0; attempt < 20; attempt++) {
+                try {
+                    recoveredServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+                    recoveredServer.createContext("/api/otlp", this::accept);
+                    recoveredServer.start();
+                    return;
+                } catch (IOException exception) {
+                    bindFailure = exception;
+                    Thread.sleep(100);
+                }
+            }
+            throw bindFailure;
+        }
+
+        private void accept(HttpExchange exchange) throws IOException {
+            try (exchange) {
+                if (!("Bearer " + INTAKE_TOKEN).equals(
+                        exchange.getRequestHeaders().getFirst("Authorization"))) {
+                    authorizationWasValid.set(false);
+                }
+                exchange.getRequestBody().transferTo(OutputStream.nullOutputStream());
+                acceptedRequests.incrementAndGet();
+                exchange.sendResponseHeaders(200, -1);
+            }
+        }
+
+        private void stopResetServer() throws IOException, InterruptedException {
+            if (resetSocket != null && !resetSocket.isClosed()) {
+                resetSocket.close();
+            }
+            if (resetThread != null) {
+                resetThread.join(2000);
+            }
+            IOException failure = resetFailure.get();
+            if (failure != null) {
+                throw failure;
+            }
+        }
+
+        int port() {
+            return port;
+        }
+
+        int resetAttempts() {
+            return resetAttempts.get();
+        }
+
+        int acceptedRequests() {
+            return acceptedRequests.get();
+        }
+
+        boolean authorizationWasValid() {
+            return authorizationWasValid.get();
+        }
+
+        boolean isResetThreadTerminated() {
+            return resetThread == null || !resetThread.isAlive();
+        }
+
+        @Override
+        public void close() throws IOException, InterruptedException {
+            try {
+                stopResetServer();
+            } finally {
+                if (recoveredServer != null) {
+                    recoveredServer.stop(0);
+                }
             }
         }
     }
