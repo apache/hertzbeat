@@ -29,6 +29,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeFaultLoadSupport.BackendFault;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeFaultLoadSupport.LoadObservation;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeFaultLoadSupport.LoadProfile;
@@ -109,8 +111,11 @@ class OtelRuntimeFaultLoadIntegrationTest {
         String beforeRebuild = "file line before supervisor rebuild";
         String whileStopped = "file line while supervisor stopped";
         String historical = "historical file line must stay suppressed";
+        Set<Long> supervisorThreadsBefore = threadIdsNamed("hertzbeat-otel-runtime-supervisor");
+        Set<Long> backendThreadsBefore = threadIdsStartingWith("otel-fault-backend-");
         Path logDirectory = Files.createDirectories(tempDir.resolve("application-logs"));
         Path applicationLog = Files.writeString(logDirectory.resolve("payments.log"), historical + '\n');
+        long firstPid = -1;
         long rebuiltPid = -1;
         OtelRuntimeFaultBackend backend = new OtelRuntimeFaultBackend();
         try (backend) {
@@ -128,7 +133,6 @@ class OtelRuntimeFaultLoadIntegrationTest {
             OtelRuntimeSupervisor firstSupervisor = OtelRuntimeFaultLoadSupport.supervisor(properties);
             OtelRuntimeStatusProvider firstStatusProvider = OtelRuntimeFaultLoadSupport.statusProvider(
                     properties, firstSupervisor);
-            long firstPid;
             LoadObservation observation;
             try {
                 firstSupervisor.start();
@@ -145,7 +149,10 @@ class OtelRuntimeFaultLoadIntegrationTest {
             } finally {
                 firstSupervisor.close();
             }
+            assertTrue(firstPid > 0);
             OtelRuntimeFaultLoadSupport.awaitProcessStopped(firstPid, Duration.ofSeconds(5));
+            awaitThreadIds(
+                    "hertzbeat-otel-runtime-supervisor", supervisorThreadsBefore, Duration.ofSeconds(5));
 
             Files.writeString(applicationLog, whileStopped + '\n', StandardOpenOption.APPEND);
             OtelRuntimeSupervisor rebuiltSupervisor = OtelRuntimeFaultLoadSupport.supervisor(properties);
@@ -177,11 +184,57 @@ class OtelRuntimeFaultLoadIntegrationTest {
                 rebuiltSupervisor.close();
             }
         }
+        assertTrue(firstPid > 0);
         assertTrue(rebuiltPid > 0);
+        OtelRuntimeFaultLoadSupport.awaitProcessStopped(firstPid, Duration.ofSeconds(5));
         OtelRuntimeFaultLoadSupport.awaitProcessStopped(rebuiltPid, Duration.ofSeconds(5));
+        awaitThreadIds(
+                "hertzbeat-otel-runtime-supervisor", supervisorThreadsBefore, Duration.ofSeconds(5));
+        awaitThreadIdsStartingWith("otel-fault-backend-", backendThreadsBefore, Duration.ofSeconds(5));
         assertTrue(backend.isStopped());
         assertTrue(backend.largestWorkerCount() <= OtelRuntimeFaultBackend.WORKER_LIMIT);
         assertTrue(backend.maximumTaskQueueDepth() <= OtelRuntimeFaultBackend.TASK_QUEUE_LIMIT);
+    }
+
+    private static Set<Long> threadIdsNamed(String name) {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(Thread::isAlive)
+                .filter(thread -> name.equals(thread.getName()))
+                .map(Thread::threadId)
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<Long> threadIdsStartingWith(String prefix) {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(Thread::isAlive)
+                .filter(thread -> thread.getName().startsWith(prefix))
+                .map(Thread::threadId)
+                .collect(Collectors.toSet());
+    }
+
+    private static void awaitThreadIds(String name, Set<Long> expected, Duration timeout)
+            throws InterruptedException {
+        awaitThreadIds(() -> threadIdsNamed(name), expected, timeout);
+    }
+
+    private static void awaitThreadIdsStartingWith(String prefix, Set<Long> expected, Duration timeout)
+            throws InterruptedException {
+        awaitThreadIds(() -> threadIdsStartingWith(prefix), expected, timeout);
+    }
+
+    private static void awaitThreadIds(
+            java.util.function.Supplier<Set<Long>> observed, Set<Long> expected, Duration timeout)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        Set<Long> actual;
+        do {
+            actual = observed.get();
+            if (actual.equals(expected)) {
+                return;
+            }
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        assertEquals(expected, actual);
     }
 
     private String runtimeBinary() {
