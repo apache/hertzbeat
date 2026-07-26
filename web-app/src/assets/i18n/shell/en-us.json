@@ -59,7 +59,18 @@
       "empty": "No active alerts",
       "unavailable": "Recent alerts are unavailable",
       "error": "Recent alerts could not be read",
-      "openCenter": "Open Alert Center"
+      "openCenter": "Open Alert Center",
+      "soundLoading": "Loading alert sound setting",
+      "soundUnavailable": "Alert sound setting is unavailable",
+      "soundError": "Alert sound setting could not be read",
+      "soundSaving": "Updating alert sound setting",
+      "soundSaveFailed": "Alert sound setting could not be updated",
+      "soundMuted": "Alert sound is muted",
+      "soundEnabled": "Alert sound is enabled",
+      "soundEnabledBrowserDenied": "Alert sound is enabled; browser notifications are blocked",
+      "soundEnabledBrowserUnsupported": "Alert sound is enabled; browser notifications are unsupported",
+      "browserTitle": "HertzBeat alert",
+      "browserBody": "A new active alert needs attention."
     },
     "capability": {
       "supported": "Available",

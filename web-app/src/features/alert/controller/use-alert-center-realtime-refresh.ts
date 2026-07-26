@@ -8,11 +8,15 @@
 import { useEffect } from 'react';
 
 import { openAlertGroupStream } from '../api/alert-api';
+import type { AlertEventSignal } from '../api/alert-event-schema';
 
 const alertRefreshCoalesceMs = 250;
 const alertFallbackPollingMs = 30_000;
 
-export function useAlertCenterRealtimeRefresh(refresh: () => Promise<unknown>) {
+export function useAlertCenterRealtimeRefresh(
+  refresh: () => Promise<unknown>,
+  onAlert?: (event: AlertEventSignal | null) => void
+) {
   useEffect(() => {
     let closed = false;
     let running = false;
@@ -57,17 +61,7 @@ export function useAlertCenterRealtimeRefresh(refresh: () => Promise<unknown>) {
       if (!fallbackTimer) fallbackTimer = setInterval(scheduleRefresh, alertFallbackPollingMs);
     };
 
-    let stream: { close: () => void } | undefined;
-    try {
-      stream = openAlertGroupStream({
-        onOpen: stopFallback,
-        onAlert: scheduleRefresh,
-        onRetrying: () => undefined,
-        onUnavailable: startFallback
-      });
-    } catch {
-      startFallback();
-    }
+    const stream = connectAlertStream(stopFallback, startFallback, scheduleRefresh, onAlert);
 
     return () => {
       closed = true;
@@ -75,5 +69,27 @@ export function useAlertCenterRealtimeRefresh(refresh: () => Promise<unknown>) {
       stopFallback();
       stream?.close();
     };
-  }, [refresh]);
+  }, [onAlert, refresh]);
+}
+
+function connectAlertStream(
+  stopFallback: () => void,
+  startFallback: () => void,
+  scheduleRefresh: () => void,
+  onAlert?: (event: AlertEventSignal | null) => void
+) {
+  try {
+    return openAlertGroupStream({
+      onOpen: stopFallback,
+      onAlert: event => {
+        onAlert?.(event);
+        scheduleRefresh();
+      },
+      onRetrying: () => undefined,
+      onUnavailable: startFallback
+    });
+  } catch {
+    startFallback();
+    return undefined;
+  }
 }

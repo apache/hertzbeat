@@ -34,7 +34,9 @@ describe('ShellAlertNotifications', () => {
                 updatedAt: '2026-07-25 10:20:00'
               }
             ]
-          }
+          },
+          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
         }}
         t={t}
         onOpenAlerts={open}
@@ -52,7 +54,12 @@ describe('ShellAlertNotifications', () => {
   it('does not turn unavailable summary evidence into a fake zero badge', async () => {
     render(
       <ShellAlertNotifications
-        state={{ count: { kind: 'unavailable' }, list: { kind: 'unavailable' } }}
+        state={{
+          count: { kind: 'unavailable' },
+          list: { kind: 'unavailable' },
+          sound: { kind: 'unavailable' },
+          toggleSound: vi.fn()
+        }}
         t={t}
         onOpenAlerts={vi.fn()}
       />
@@ -66,7 +73,12 @@ describe('ShellAlertNotifications', () => {
   it('renders an explicit empty state only after a successful read', async () => {
     render(
       <ShellAlertNotifications
-        state={{ count: { kind: 'ready', total: 0 }, list: { kind: 'empty' } }}
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
         t={t}
         onOpenAlerts={vi.fn()}
       />
@@ -74,5 +86,38 @@ describe('ShellAlertNotifications', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alerts' }));
     expect(await screen.findByText('shell.alerts.empty')).toBeInTheDocument();
+  });
+
+  it('exposes one compact server-backed sound action with honest disabled evidence', () => {
+    const toggleSound = vi.fn();
+    const { rerender } = render(
+      <ShellAlertNotifications
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.alerts.soundMuted' }));
+    expect(toggleSound).toHaveBeenCalledOnce();
+
+    rerender(
+      <ShellAlertNotifications
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'unavailable' },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'shell.alerts.soundUnavailable' })).toBeDisabled();
   });
 });

@@ -59,7 +59,18 @@
       "empty": "Nenhum alerta ativo",
       "unavailable": "Alertas recentes estão indisponíveis",
       "error": "Não foi possível ler os alertas recentes",
-      "openCenter": "Abrir a Central de Alertas"
+      "openCenter": "Abrir a Central de Alertas",
+      "soundLoading": "Carregando a configuração de som dos alertas",
+      "soundUnavailable": "A configuração de som dos alertas está indisponível",
+      "soundError": "Não foi possível ler a configuração de som dos alertas",
+      "soundSaving": "Atualizando a configuração de som dos alertas",
+      "soundSaveFailed": "Não foi possível atualizar a configuração de som dos alertas",
+      "soundMuted": "O som dos alertas está silenciado",
+      "soundEnabled": "O som dos alertas está ativado",
+      "soundEnabledBrowserDenied": "O som dos alertas está ativado; as notificações do navegador estão bloqueadas",
+      "soundEnabledBrowserUnsupported": "O som dos alertas está ativado; as notificações do navegador não são compatíveis",
+      "browserTitle": "Alerta do HertzBeat",
+      "browserBody": "Um novo alerta ativo precisa de atenção."
     },
     "capability": {
       "supported": "Disponível",

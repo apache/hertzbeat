@@ -5,8 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { BellOutlined } from '@ant-design/icons';
-import { Badge, Button, Empty, Popover, Spin, Tag } from 'antd';
+import { AudioMutedOutlined, BellOutlined, SoundOutlined } from '@ant-design/icons';
+import { Badge, Button, Empty, Popover, Spin, Tag, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 
 import type { ShellAlertNotificationState } from '@/features/alert/shell';
@@ -25,17 +25,51 @@ export function ShellAlertNotifications({
   const total = state.count.kind === 'ready' ? state.count.total : 0;
   const label = total > 0 ? t('shell.actions.alertsWithCount', { count: total }) : t('shell.actions.alerts');
   return (
-    <Popover
-      placement="bottomRight"
-      trigger="click"
-      title={<strong>{t('shell.alerts.title')}</strong>}
-      content={<AlertNotificationContent state={state} t={t} onOpenAlerts={onOpenAlerts} />}
-    >
-      <Badge count={total} overflowCount={99} size="small">
-        <Button className={styles.headerAction ?? ''} type="text" aria-label={label} icon={<BellOutlined />} />
-      </Badge>
-    </Popover>
+    <div className={styles.alertNotificationActions}>
+      <Popover
+        placement="bottomRight"
+        trigger="click"
+        title={<strong>{t('shell.alerts.title')}</strong>}
+        content={<AlertNotificationContent state={state} t={t} onOpenAlerts={onOpenAlerts} />}
+      >
+        <Badge count={total} overflowCount={99} size="small">
+          <Button className={styles.headerAction ?? ''} type="text" aria-label={label} icon={<BellOutlined />} />
+        </Badge>
+      </Popover>
+      <SoundControl state={state} t={t} />
+    </div>
   );
+}
+
+function SoundControl({ state, t }: { state: ShellAlertNotificationState; t: TFunction }) {
+  const label = soundControlLabel(state.sound, t);
+  const muted = state.sound.kind !== 'ready' || state.sound.muted;
+  const disabled = state.sound.kind !== 'ready' || state.sound.saving;
+  return (
+    <Tooltip title={label}>
+      <Button
+        className={styles.headerAction ?? ''}
+        type="text"
+        aria-label={label}
+        disabled={disabled}
+        loading={state.sound.kind === 'ready' && state.sound.saving}
+        icon={muted ? <AudioMutedOutlined /> : <SoundOutlined />}
+        onClick={() => void state.toggleSound()}
+      />
+    </Tooltip>
+  );
+}
+
+function soundControlLabel(state: ShellAlertNotificationState['sound'], t: TFunction) {
+  if (state.kind === 'loading') return t('shell.alerts.soundLoading');
+  if (state.kind === 'unavailable') return t('shell.alerts.soundUnavailable');
+  if (state.kind === 'error') return t('shell.alerts.soundError');
+  if (state.saving) return t('shell.alerts.soundSaving');
+  if (state.failure === 'save_failed') return t('shell.alerts.soundSaveFailed');
+  if (state.muted) return t('shell.alerts.soundMuted');
+  if (state.permission === 'denied') return t('shell.alerts.soundEnabledBrowserDenied');
+  if (state.permission === 'unsupported') return t('shell.alerts.soundEnabledBrowserUnsupported');
+  return t('shell.alerts.soundEnabled');
 }
 
 function AlertNotificationContent({

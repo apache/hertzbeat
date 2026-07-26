@@ -187,6 +187,11 @@ button.timePolicy:hover {
   width: min(360px, calc(100vw - 32px));
 }
 
+.alertNotificationActions {
+  display: flex;
+  align-items: center;
+}
+
 .alertPopover > button:last-child {
   margin-top: 6px;
   border-top: 1px solid var(--hb-border-subtle);

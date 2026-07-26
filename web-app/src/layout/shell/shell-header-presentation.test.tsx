@@ -139,7 +139,12 @@ describe('ShellHeaderActions account menu', () => {
     render(
       <ShellHeaderActions
         accountName="operator"
-        alertNotifications={{ count: { kind: 'ready', total: 0 }, list: { kind: 'empty' } }}
+        alertNotifications={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
         loggingOut={false}
         showRefresh={false}
         t={t}

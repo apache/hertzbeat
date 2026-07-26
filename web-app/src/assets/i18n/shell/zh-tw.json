@@ -59,7 +59,18 @@
       "empty": "目前沒有活動告警",
       "unavailable": "最近告警暫時無法使用",
       "error": "無法讀取最近告警",
-      "openCenter": "進入告警中心"
+      "openCenter": "進入告警中心",
+      "soundLoading": "正在載入告警聲音設定",
+      "soundUnavailable": "告警聲音設定暫時無法使用",
+      "soundError": "無法讀取告警聲音設定",
+      "soundSaving": "正在更新告警聲音設定",
+      "soundSaveFailed": "無法更新告警聲音設定",
+      "soundMuted": "告警聲音已靜音",
+      "soundEnabled": "告警聲音已開啟",
+      "soundEnabledBrowserDenied": "告警聲音已開啟；瀏覽器通知被阻擋",
+      "soundEnabledBrowserUnsupported": "告警聲音已開啟；瀏覽器不支援系統通知",
+      "browserTitle": "HertzBeat 告警",
+      "browserBody": "有新的活動告警需要處理。"
     },
     "capability": {
       "supported": "可用",

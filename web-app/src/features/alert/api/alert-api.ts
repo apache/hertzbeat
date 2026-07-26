@@ -21,6 +21,7 @@ import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contr
 
 import { AlertContractError, writeAlertQuery, type AlertQuery } from '../model/alert-model';
 import { alertApiRequest } from './alert-api-failure';
+import { parseAlertEventSignal, type AlertEventSignal } from './alert-event-schema';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
 export function buildAlertListPath(query: AlertQuery) {
@@ -54,7 +55,7 @@ export function deleteAlertGroups(ids: number[]) {
 
 export function openAlertGroupStream(handlers: {
   onOpen: () => void;
-  onAlert: () => void;
+  onAlert: (event: AlertEventSignal | null) => void;
   onRetrying: () => void;
   onUnavailable: () => void;
 }) {
@@ -63,9 +64,9 @@ export function openAlertGroupStream(handlers: {
     onOpen: handlers.onOpen,
     onRetrying: handlers.onRetrying,
     onUnavailable: handlers.onUnavailable,
-    // Alert bodies stay at the transport boundary; the list and summary are
-    // projected again from their canonical APIs after receiving only a signal.
-    onEvent: () => handlers.onAlert()
+    // Raw alert bodies stay at the transport boundary. Only id and status may
+    // drive an in-memory notification; canonical APIs still own rendered data.
+    onEvent: (_name, data) => handlers.onAlert(parseAlertEventSignal(data))
   });
 }
 

@@ -59,7 +59,18 @@
       "empty": "当前没有活动告警",
       "unavailable": "最近告警暂不可用",
       "error": "无法读取最近告警",
-      "openCenter": "进入告警中心"
+      "openCenter": "进入告警中心",
+      "soundLoading": "正在加载告警声音设置",
+      "soundUnavailable": "告警声音设置暂不可用",
+      "soundError": "无法读取告警声音设置",
+      "soundSaving": "正在更新告警声音设置",
+      "soundSaveFailed": "无法更新告警声音设置",
+      "soundMuted": "告警声音已静音",
+      "soundEnabled": "告警声音已开启",
+      "soundEnabledBrowserDenied": "告警声音已开启；浏览器通知被阻止",
+      "soundEnabledBrowserUnsupported": "告警声音已开启；浏览器不支持系统通知",
+      "browserTitle": "HertzBeat 告警",
+      "browserBody": "有新的活动告警需要处理。"
     },
     "capability": {
       "supported": "可用",

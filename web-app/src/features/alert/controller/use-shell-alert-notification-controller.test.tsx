@@ -10,6 +10,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { BrowserAlertNotificationRuntime } from '@/core/notification/browser-alert-notification';
+
 import { AlertRequestFailure, type AlertQuery } from '../model/alert-model';
 import { useShellAlertNotificationController } from './use-shell-alert-notification-controller';
 
@@ -18,8 +20,21 @@ const api = vi.hoisted(() => ({
   loadAlertSummary: vi.fn(),
   openAlertGroupStream: vi.fn()
 }));
+const soundApi = vi.hoisted(() => ({
+  loadShellAlertMute: vi.fn(),
+  saveShellAlertMute: vi.fn()
+}));
 
 vi.mock('../api/alert-api', () => api);
+vi.mock('../api/shell-alert-notification-api', () => soundApi);
+
+const notificationRuntime: BrowserAlertNotificationRuntime = {
+  readPermission: vi.fn(),
+  requestPermission: vi.fn(),
+  show: vi.fn(),
+  playSound: vi.fn()
+};
+const openAlerts = vi.fn();
 
 describe('shell alert notification controller', () => {
   beforeEach(() => {
@@ -43,6 +58,11 @@ describe('shell alert notification controller', () => {
       })
     );
     api.openAlertGroupStream.mockReturnValue({ close: vi.fn() });
+    soundApi.loadShellAlertMute.mockResolvedValue({ muted: true });
+    soundApi.saveShellAlertMute.mockImplementation((muted: boolean) => Promise.resolve({ muted }));
+    vi.mocked(notificationRuntime.readPermission).mockReturnValue('default');
+    vi.mocked(notificationRuntime.requestPermission).mockResolvedValue('granted');
+    openAlerts.mockReset();
   });
 
   afterEach(() => vi.useRealTimers());
@@ -90,6 +110,73 @@ describe('shell alert notification controller', () => {
     await waitFor(() => expect(result.current.count).toEqual({ kind: 'ready', total: 0 }));
   });
 
+  it('requests browser permission only from explicit unmute and persists the server setting', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+    expect(notificationRuntime.requestPermission).not.toHaveBeenCalled();
+
+    await act(async () => result.current.toggleSound());
+
+    expect(notificationRuntime.requestPermission).toHaveBeenCalledOnce();
+    expect(soundApi.saveShellAlertMute).toHaveBeenCalledWith(false);
+    await waitFor(() =>
+      expect(result.current.sound).toMatchObject({ kind: 'ready', muted: false, permission: 'granted' })
+    );
+    await act(async () => result.current.toggleSound());
+
+    expect(notificationRuntime.requestPermission).toHaveBeenCalledOnce();
+    expect(soundApi.saveShellAlertMute.mock.calls).toEqual([[false], [true]]);
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+    expect(api.openAlertGroupStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies once per firing group while unmuted without retaining alert content', async () => {
+    soundApi.loadShellAlertMute.mockResolvedValue({ muted: false });
+    vi.mocked(notificationRuntime.readPermission).mockReturnValue('granted');
+    let handlers: { onAlert: (event: { id: number; status: 'firing' | 'resolved' } | null) => void } | undefined;
+    api.openAlertGroupStream.mockImplementation(next => {
+      handlers = next;
+      return { close: vi.fn() };
+    });
+    renderController();
+    await waitFor(() => expect(soundApi.loadShellAlertMute).toHaveBeenCalledOnce());
+
+    act(() => {
+      handlers?.onAlert({ id: 7, status: 'firing' });
+      handlers?.onAlert({ id: 7, status: 'firing' });
+      handlers?.onAlert({ id: 8, status: 'resolved' });
+      handlers?.onAlert(null);
+    });
+
+    expect(notificationRuntime.playSound).toHaveBeenCalledOnce();
+    expect(notificationRuntime.playSound).toHaveBeenCalledWith('/assets/audio/default-alert-EN.mp3');
+    expect(notificationRuntime.show).toHaveBeenCalledOnce();
+    const shown = vi.mocked(notificationRuntime.show).mock.calls[0]?.[0];
+    expect(shown).toMatchObject({
+      title: 'HertzBeat alert',
+      body: 'A new active alert needs attention.',
+      icon: '/assets/logo.svg'
+    });
+    shown?.onClick();
+    expect(openAlerts).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a failed or unavailable server setting honest and safely muted', async () => {
+    soundApi.loadShellAlertMute.mockRejectedValueOnce(new AlertRequestFailure('unavailable'));
+    const unavailable = renderController();
+    await waitFor(() => expect(unavailable.result.current.sound).toEqual({ kind: 'unavailable' }));
+    await act(async () => unavailable.result.current.toggleSound());
+    expect(soundApi.saveShellAlertMute).not.toHaveBeenCalled();
+    unavailable.unmount();
+
+    soundApi.loadShellAlertMute.mockResolvedValueOnce({ muted: true });
+    soundApi.saveShellAlertMute.mockRejectedValueOnce(new AlertRequestFailure('error', 'rejected'));
+    const failed = renderController();
+    await waitFor(() => expect(failed.result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+    await act(async () => failed.result.current.toggleSound());
+    expect(failed.result.current.sound).toMatchObject({ kind: 'ready', muted: true, failure: 'save_failed' });
+  });
+
   it('makes the shell the realtime refresh owner for shared Alert Center queries', async () => {
     let handlers:
       | {
@@ -116,5 +203,15 @@ function renderController() {
   const wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return renderHook(useShellAlertNotificationController, { wrapper });
+  return renderHook(
+    () =>
+      useShellAlertNotificationController({
+        locale: 'en-US',
+        notificationTitle: 'HertzBeat alert',
+        notificationBody: 'A new active alert needs attention.',
+        onOpenAlerts: openAlerts,
+        runtime: notificationRuntime
+      }),
+    { wrapper }
+  );
 }

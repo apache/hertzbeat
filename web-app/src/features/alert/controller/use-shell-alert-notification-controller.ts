@@ -8,6 +8,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import {
+  browserAlertNotificationRuntime,
+  type BrowserAlertNotificationRuntime
+} from '@/core/notification/browser-alert-notification';
+
 import { loadAlertGroups, loadAlertSummary } from '../api/alert-api';
 import { alertFailureKind, type AlertQuery } from '../model/alert-model';
 import {
@@ -18,6 +23,7 @@ import {
 } from '../model/shell-alert-notification-model';
 import { alertCenterQueryKeys } from './alert-center-query-keys';
 import { useAlertCenterRealtimeRefresh } from './use-alert-center-realtime-refresh';
+import { useShellAlertSoundController } from './use-shell-alert-sound-controller';
 
 const shellAlertQuery: AlertQuery = {
   search: '',
@@ -30,8 +36,22 @@ const shellAlertQuery: AlertQuery = {
   pageSize: 8
 };
 
-export function useShellAlertNotificationController(): ShellAlertNotificationState {
+type ShellAlertNotificationOptions = {
+  locale: string | undefined;
+  notificationTitle: string;
+  notificationBody: string;
+  onOpenAlerts: () => void;
+  runtime?: BrowserAlertNotificationRuntime;
+};
+
+export function useShellAlertNotificationController(
+  options: ShellAlertNotificationOptions
+): ShellAlertNotificationState {
   const client = useQueryClient();
+  const sound = useShellAlertSoundController({
+    ...options,
+    runtime: options.runtime ?? browserAlertNotificationRuntime
+  });
   const countQuery = useQuery({
     queryKey: alertCenterQueryKeys.summary(),
     queryFn: ({ signal }) => loadAlertSummary(signal),
@@ -47,10 +67,12 @@ export function useShellAlertNotificationController(): ShellAlertNotificationSta
     [client]
   );
   // One shell-owned stream refreshes the header and every mounted Alert Center query.
-  useAlertCenterRealtimeRefresh(refreshAlerts);
+  useAlertCenterRealtimeRefresh(refreshAlerts, sound.onAlert);
   return {
     count: readCountState(countQuery.isPending, countQuery.error, countQuery.data),
-    list: readListState(listQuery.isPending, listQuery.error, listQuery.data?.content)
+    list: readListState(listQuery.isPending, listQuery.error, listQuery.data?.content),
+    sound: sound.state,
+    toggleSound: sound.toggleSound
   };
 }
 

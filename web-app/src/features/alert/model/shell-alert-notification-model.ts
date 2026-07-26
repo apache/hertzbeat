@@ -5,6 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import type { BrowserAlertPermission } from '@/core/notification/browser-alert-notification';
+
 import type { AlertGroup, AlertSeverity } from './alert-model';
 
 const shellAlertPreviewLimit = 5;
@@ -27,9 +29,23 @@ export type ShellAlertListState =
   | { kind: 'unavailable' }
   | { kind: 'error' };
 
+export type ShellAlertSoundState =
+  | { kind: 'loading' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | {
+      kind: 'ready';
+      muted: boolean;
+      saving: boolean;
+      permission: BrowserAlertPermission;
+      failure: 'save_failed' | null;
+    };
+
 export type ShellAlertNotificationState = {
   count: ShellAlertCountState;
   list: ShellAlertListState;
+  sound: ShellAlertSoundState;
+  toggleSound: () => Promise<void>;
 };
 
 /** Projects only the compact evidence needed by the global header. */

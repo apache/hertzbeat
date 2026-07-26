@@ -166,7 +166,7 @@ describe('alert API', () => {
     expect(apiMessageDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('owns the alert event stream path and forwards only the event signal', () => {
+  it('owns the alert event stream path and projects only safe notification evidence', () => {
     const handlers = {
       onOpen: vi.fn(),
       onAlert: vi.fn(),
@@ -185,8 +185,14 @@ describe('alert API', () => {
 
     const transport = openBrowserEventStream.mock.calls[0]?.[1] as
       { onEvent: (name: string, data: string) => void } | undefined;
-    transport?.onEvent('ALERT_EVENT', 'private alert body');
+    transport?.onEvent(
+      'ALERT_EVENT',
+      JSON.stringify({ id: 7, status: 'firing', content: 'private alert body', labels: { token: 'private' } })
+    );
     expect(handlers.onAlert).toHaveBeenCalledOnce();
-    expect(handlers.onAlert).toHaveBeenCalledWith();
+    expect(handlers.onAlert).toHaveBeenCalledWith({ id: 7, status: 'firing' });
+
+    transport?.onEvent('ALERT_EVENT', 'private malformed body');
+    expect(handlers.onAlert).toHaveBeenLastCalledWith(null);
   });
 });

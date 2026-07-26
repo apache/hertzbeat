@@ -59,7 +59,18 @@
       "empty": "アクティブなアラートはありません",
       "unavailable": "最近のアラートを利用できません",
       "error": "最近のアラートを読み取れませんでした",
-      "openCenter": "アラートセンターを開く"
+      "openCenter": "アラートセンターを開く",
+      "soundLoading": "アラート音の設定を読み込み中",
+      "soundUnavailable": "アラート音の設定を利用できません",
+      "soundError": "アラート音の設定を読み取れませんでした",
+      "soundSaving": "アラート音の設定を更新中",
+      "soundSaveFailed": "アラート音の設定を更新できませんでした",
+      "soundMuted": "アラート音はミュートされています",
+      "soundEnabled": "アラート音は有効です",
+      "soundEnabledBrowserDenied": "アラート音は有効ですが、ブラウザー通知はブロックされています",
+      "soundEnabledBrowserUnsupported": "アラート音は有効ですが、ブラウザー通知には対応していません",
+      "browserTitle": "HertzBeat アラート",
+      "browserBody": "対応が必要な新しいアクティブアラートがあります。"
     },
     "capability": {
       "supported": "利用可能",

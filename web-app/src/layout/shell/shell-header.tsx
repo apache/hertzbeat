@@ -25,7 +25,12 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { session } = useSession();
   const location = useLocation();
   const actions = useShellHeaderActionController();
-  const alertNotifications = useShellAlertNotificationController();
+  const alertNotifications = useShellAlertNotificationController({
+    locale: i18n.resolvedLanguage,
+    notificationTitle: t('shell.alerts.browserTitle'),
+    notificationBody: t('shell.alerts.browserBody'),
+    onOpenAlerts: actions.openAlerts
+  });
   const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';
 
