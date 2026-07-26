@@ -22,6 +22,22 @@ describe('PluginPage', () => {
     controller.value = pluginController();
   });
 
+  it('owns Upload in the shared header and list commands in the search band', () => {
+    render(<PluginPage />);
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const commandBand = screen.getByRole('search');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'plugins.title' }));
+    expect(headerActions).toContainElement(screen.getByRole('button', { name: 'plugins.upload' }));
+    expect(header).not.toContainElement(screen.getByRole('button', { name: 'common.refresh' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'common.refresh' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'plugins.deleteSelected' }));
+    expect(commandBand).not.toContainElement(screen.getByRole('button', { name: 'plugins.upload' }));
+  });
+
   it.each([
     ['loading', 'plugins.loading'],
     ['empty', 'plugins.empty'],

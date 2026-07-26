@@ -8,6 +8,8 @@
 import { Alert, Button, Empty, Input, Skeleton, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+
 import { PluginDeleteDialog, PluginUploadDialog } from '../components/plugin-dialogs';
 import { PluginList } from '../components/plugin-list';
 import { PluginParamDialog } from '../components/plugin-param-dialog';
@@ -18,20 +20,20 @@ export function PluginPage() {
   const { t } = useTranslation();
   const controller = usePluginController();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('plugins.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('plugins.description')}</Typography.Text>
-        </div>
-        <Button
-          type="primary"
-          disabled={!controller.canWrite || controller.busy}
-          onClick={controller.actions.openUpload}
-        >
-          {t('plugins.upload')}
-        </Button>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('plugins.title')}
+        description={t('plugins.description')}
+        actions={
+          <Button
+            type="primary"
+            disabled={!controller.canWrite || controller.busy}
+            onClick={controller.actions.openUpload}
+          >
+            {t('plugins.upload')}
+          </Button>
+        }
+      />
       {!controller.canWrite && <Alert type="info" showIcon message={t('plugins.readOnly')} />}
       {controller.mutationFailure && !controller.deleteTarget && (
         <Alert type="error" showIcon message={t(`plugins.failure.${controller.mutationFailure}`)} />
@@ -58,14 +60,14 @@ export function PluginPage() {
         onConfirm={() => void controller.actions.confirmDelete()}
       />
       <PluginParamDialog controller={controller.params} />
-    </div>
+    </OperationalPage>
   );
 }
 
 function PluginToolbar({ controller }: { controller: ReturnType<typeof usePluginController> }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
+    <div role="search" className={styles.commandBand}>
       <Input.Search
         className={styles.search}
         allowClear

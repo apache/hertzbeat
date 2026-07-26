@@ -1,17 +1,6 @@
-.page {
-  display: grid;
-  gap: 16px;
-}
-
-.heading {
+.commandBand {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.toolbar {
-  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
