@@ -1004,7 +1004,13 @@
   "monitorActions": {
     "copy": "Copiar",
     "enable": "Ativar",
+    "rowEnableConfirm": "Ativar {{name}}?",
+    "selectedEnableConfirm_one": "Ativar {{count}} monitor selecionado?",
+    "selectedEnableConfirm_other": "Ativar {{count}} monitores selecionados?",
     "pause": "Pausar",
+    "rowPauseConfirm": "Pausar {{name}}?",
+    "selectedPauseConfirm_one": "Pausar {{count}} monitor selecionado?",
+    "selectedPauseConfirm_other": "Pausar {{count}} monitores selecionados?",
     "delete": "Excluir",
     "deleteConfirm": "Excluir os dados dos monitores selecionados?",
     "selected": "{{count}} selecionados",

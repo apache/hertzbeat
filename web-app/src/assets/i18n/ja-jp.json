@@ -996,7 +996,13 @@
   "monitorActions": {
     "copy": "コピー",
     "enable": "有効化",
+    "rowEnableConfirm": "{{name}} を有効にしますか？",
+    "selectedEnableConfirm_one": "選択した {{count}} 件の監視を有効にしますか？",
+    "selectedEnableConfirm_other": "選択した {{count}} 件の監視を有効にしますか？",
     "pause": "一時停止",
+    "rowPauseConfirm": "{{name}} を一時停止しますか？",
+    "selectedPauseConfirm_one": "選択した {{count}} 件の監視を一時停止しますか？",
+    "selectedPauseConfirm_other": "選択した {{count}} 件の監視を一時停止しますか？",
     "delete": "削除",
     "deleteConfirm": "選択した監視データを削除しますか？",
     "selected": "{{count}} 件を選択",

@@ -999,7 +999,13 @@
   "monitorActions": {
     "copy": "Copy",
     "enable": "Enable",
+    "rowEnableConfirm": "Enable {{name}}?",
+    "selectedEnableConfirm_one": "Enable {{count}} selected monitor?",
+    "selectedEnableConfirm_other": "Enable {{count}} selected monitors?",
     "pause": "Pause",
+    "rowPauseConfirm": "Pause {{name}}?",
+    "selectedPauseConfirm_one": "Pause {{count}} selected monitor?",
+    "selectedPauseConfirm_other": "Pause {{count}} selected monitors?",
     "delete": "Delete",
     "deleteConfirm": "Delete the selected monitor data?",
     "selected": "{{count}} selected",

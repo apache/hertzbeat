@@ -51,6 +51,12 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.grafana.deleteConfirm).toBeTruthy();
       expect(locale.monitor.grafana.deleteFailure).toBeTruthy();
       expect(locale.monitor.grafana.cleanupFailure).toBeTruthy();
+      expect(locale.monitorActions.rowEnableConfirm).toBeTruthy();
+      expect(locale.monitorActions.rowPauseConfirm).toBeTruthy();
+      expect(locale.monitorActions.selectedEnableConfirm_one).toBeTruthy();
+      expect(locale.monitorActions.selectedEnableConfirm_other).toBeTruthy();
+      expect(locale.monitorActions.selectedPauseConfirm_one).toBeTruthy();
+      expect(locale.monitorActions.selectedPauseConfirm_other).toBeTruthy();
       expect(locale.monitorActions.clearSelection).toBeTruthy();
       expect(locale.monitor.help).toBeTruthy();
       expect(locale.monitor.copyEndpoint).toBeTruthy();

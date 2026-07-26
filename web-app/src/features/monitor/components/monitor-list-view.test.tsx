@@ -214,6 +214,88 @@ describe('MonitorListView evidence states', () => {
 
     expect(changeSort).toHaveBeenCalledWith('name', 'asc');
   });
+
+  it.each([
+    ['available', 1, 'pause'],
+    ['paused', 0, 'enable']
+  ] as const)('confirms the %s row transition before writing', (_label, status, action) => {
+    const run = vi.fn();
+    renderView(
+      {
+        monitors: {
+          kind: 'ready',
+          records: [{ id: 7, name: 'checkout', app: 'website', instance: 'prod', status }],
+          total: 1
+        }
+      },
+      { run }
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t(`monitorActions.${action}`) }));
+    expect(run).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        i18n.t(action === 'enable' ? 'monitorActions.rowEnableConfirm' : 'monitorActions.rowPauseConfirm', {
+          name: 'checkout'
+        })
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(run).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t(`monitorActions.${action}`) }));
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(run).toHaveBeenCalledWith(action, [7]);
+  });
+
+  it.each(['enable', 'pause'] as const)('confirms the bulk %s transition before writing', action => {
+    const runBulk = vi.fn();
+    renderView({ selectedIds: [7], monitors: { kind: 'empty' } }, { runBulk });
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t(`monitorActions.${action}`) }));
+    expect(runBulk).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        i18n.t(action === 'enable' ? 'monitorActions.selectedEnableConfirm' : 'monitorActions.selectedPauseConfirm', {
+          count: 1
+        })
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(runBulk).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t(`monitorActions.${action}`) }));
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(runBulk).toHaveBeenCalledWith(action);
+  });
+
+  it.each(['row', 'bulk'] as const)('keeps the existing %s delete confirmation', scope => {
+    const run = vi.fn();
+    const runBulk = vi.fn();
+    renderView(
+      scope === 'row'
+        ? {
+            monitors: {
+              kind: 'ready',
+              records: [{ id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1 }],
+              total: 1
+            }
+          }
+        : { selectedIds: [7], monitors: { kind: 'empty' } },
+      { run, runBulk }
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorActions.delete') }));
+    expect(run).not.toHaveBeenCalled();
+    expect(runBulk).not.toHaveBeenCalled();
+    expect(screen.getByText(i18n.t('monitorActions.deleteConfirm'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    if (scope === 'row') expect(run).toHaveBeenCalledWith('delete', [7]);
+    else expect(runBulk).toHaveBeenCalledWith('delete');
+  });
 });
 
 function renderView(

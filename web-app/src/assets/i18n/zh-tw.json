@@ -984,7 +984,13 @@
   "monitorActions": {
     "copy": "複製",
     "enable": "啟用",
+    "rowEnableConfirm": "確認啟用 {{name}}？",
+    "selectedEnableConfirm_one": "確認啟用所選 {{count}} 項監控？",
+    "selectedEnableConfirm_other": "確認啟用所選 {{count}} 項監控？",
     "pause": "暫停",
+    "rowPauseConfirm": "確認暫停 {{name}}？",
+    "selectedPauseConfirm_one": "確認暫停所選 {{count}} 項監控？",
+    "selectedPauseConfirm_other": "確認暫停所選 {{count}} 項監控？",
     "delete": "刪除",
     "deleteConfirm": "確認刪除所選監控資料？",
     "selected": "已選擇 {{count}} 項",

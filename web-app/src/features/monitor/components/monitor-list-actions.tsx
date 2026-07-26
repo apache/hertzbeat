@@ -39,6 +39,7 @@ export function MonitorRowActions({
 }) {
   const { t } = useTranslation();
   const toggle: MonitorAction = monitor.status === monitorStatusCodes.paused ? 'enable' : 'pause';
+  const toggleConfirmKey = toggle === 'enable' ? 'monitorActions.rowEnableConfirm' : 'monitorActions.rowPauseConfirm';
   return (
     <Space size={2}>
       <Button type="link" disabled={disabled} onClick={() => open(monitor.id, 'view')}>
@@ -50,9 +51,11 @@ export function MonitorRowActions({
       <Button type="link" disabled={disabled} onClick={() => void run('copy', [monitor.id])}>
         {t('monitorActions.copy')}
       </Button>
-      <Button type="link" disabled={disabled} onClick={() => void run(toggle, [monitor.id])}>
-        {t(`monitorActions.${toggle}`)}
-      </Button>
+      <Popconfirm title={t(toggleConfirmKey, { name: monitor.name })} onConfirm={() => void run(toggle, [monitor.id])}>
+        <Button type="link" disabled={disabled}>
+          {t(`monitorActions.${toggle}`)}
+        </Button>
+      </Popconfirm>
       <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete', [monitor.id])}>
         <Button type="link" danger disabled={disabled}>
           {t('monitorActions.delete')}
@@ -83,12 +86,18 @@ export function MonitorBulkActions({
     <div className={styles.bulk}>
       <Typography.Text>{t('monitorActions.selected', { count: selectedIds.length })}</Typography.Text>
       <Space>
-        <Button disabled={disabled} onClick={() => void run('enable')}>
-          {t('monitorActions.enable')}
-        </Button>
-        <Button disabled={disabled} onClick={() => void run('pause')}>
-          {t('monitorActions.pause')}
-        </Button>
+        <Popconfirm
+          title={t('monitorActions.selectedEnableConfirm', { count: selectedIds.length })}
+          onConfirm={() => void run('enable')}
+        >
+          <Button disabled={disabled}>{t('monitorActions.enable')}</Button>
+        </Popconfirm>
+        <Popconfirm
+          title={t('monitorActions.selectedPauseConfirm', { count: selectedIds.length })}
+          onConfirm={() => void run('pause')}
+        >
+          <Button disabled={disabled}>{t('monitorActions.pause')}</Button>
+        </Popconfirm>
         {canExport ? (
           <MonitorExportButton label={t('monitor.export.selected')} disabled={disabled} onExport={exportSelected} />
         ) : null}
