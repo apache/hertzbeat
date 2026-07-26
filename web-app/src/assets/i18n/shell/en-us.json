@@ -53,6 +53,21 @@
       "language": "Switch language",
       "user": "User actions"
     },
+    "account": {
+      "settings": "System settings",
+      "lock": "Lock session",
+      "about": "About HertzBeat",
+      "logout": "Sign out"
+    },
+    "about": {
+      "title": "About HertzBeat",
+      "version": "Version {{version}}",
+      "description": "Apache HertzBeat is an open-source real-time monitoring system.",
+      "website": "Website",
+      "documentation": "Documentation",
+      "repository": "Source code",
+      "issues": "Report an issue"
+    },
     "alerts": {
       "title": "Active alerts",
       "loading": "Loading recent alerts",

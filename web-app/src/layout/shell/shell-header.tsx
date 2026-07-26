@@ -59,6 +59,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
           onOpenAlerts={actions.openAlerts}
           onToggleTheme={actions.toggleTheme}
           onChangeLanguage={() => void actions.changeLanguage()}
+          onOpenSettings={actions.openSettings}
           onLock={() => {
             if (session) actions.lock(session, `${location.pathname}${location.search}${location.hash}`);
           }}

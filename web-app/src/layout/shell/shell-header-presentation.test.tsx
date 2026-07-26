@@ -133,7 +133,7 @@ describe('ShellStatusSpine', () => {
 describe('ShellHeaderActions account menu', () => {
   afterEach(cleanup);
 
-  it('offers Lock as a sibling of logout and dispatches the selected action only', async () => {
+  it('keeps Lock in the account menu and dispatches the selected action only', async () => {
     const onLock = vi.fn();
     const onLogout = vi.fn();
     render(
@@ -150,6 +150,7 @@ describe('ShellHeaderActions account menu', () => {
         t={t}
         onRefresh={vi.fn()}
         onOpenAlerts={vi.fn()}
+        onOpenSettings={vi.fn()}
         onToggleTheme={vi.fn()}
         onChangeLanguage={vi.fn()}
         onLock={onLock}
@@ -158,7 +159,7 @@ describe('ShellHeaderActions account menu', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'shell.actions.user' }));
-    fireEvent.click(await screen.findByText('auth.lock.action'));
+    fireEvent.click(await screen.findByText('shell.account.lock'));
     expect(onLock).toHaveBeenCalledOnce();
     expect(onLogout).not.toHaveBeenCalled();
   });

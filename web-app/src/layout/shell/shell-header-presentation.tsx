@@ -5,15 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import {
-  BgColorsOutlined,
-  GlobalOutlined,
-  LockOutlined,
-  LogoutOutlined,
-  ReloadOutlined,
-  UserOutlined
-} from '@ant-design/icons';
-import { Avatar, Button, Dropdown, Tooltip } from 'antd';
+import { BgColorsOutlined, GlobalOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 
@@ -25,6 +18,7 @@ import type {
 import type { ShellAlertNotificationState } from '@/features/alert/shell';
 
 import styles from './hertzbeat-shell.module.css';
+import { ShellAccountMenu } from './shell-account-menu';
 import { ShellAlertNotifications } from './shell-alert-notifications';
 
 export function ShellStatusSpine({
@@ -87,6 +81,7 @@ type ShellHeaderActionsProps = {
   onOpenAlerts: () => void;
   onToggleTheme: () => void;
   onChangeLanguage: () => void;
+  onOpenSettings: () => void;
   onLock: () => void;
   onLogout: () => void;
 };
@@ -101,6 +96,7 @@ export function ShellHeaderActions({
   onOpenAlerts,
   onToggleTheme,
   onChangeLanguage,
+  onOpenSettings,
   onLock,
   onLogout
 }: ShellHeaderActionsProps) {
@@ -110,30 +106,16 @@ export function ShellHeaderActions({
       <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
       <HeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={onToggleTheme} />
       <HeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={onChangeLanguage} />
-      <Dropdown
-        trigger={['click']}
-        menu={{
-          items: [
-            { key: 'lock', icon: <LockOutlined />, label: t('auth.lock.action'), disabled: loggingOut },
-            { key: 'logout', icon: <LogoutOutlined />, label: t('auth.logout'), disabled: loggingOut }
-          ],
-          onClick: info => dispatchAccountAction(info.key, onLock, onLogout)
-        }}
-      >
-        <Button className={styles.accountButton ?? ''} type="text" aria-label={t('shell.actions.user')}>
-          <Avatar size={24} icon={!accountName ? <UserOutlined /> : undefined}>
-            {accountName.slice(0, 1).toUpperCase()}
-          </Avatar>
-          <span>{accountName}</span>
-        </Button>
-      </Dropdown>
+      <ShellAccountMenu
+        accountName={accountName}
+        loggingOut={loggingOut}
+        t={t}
+        onOpenSettings={onOpenSettings}
+        onLock={onLock}
+        onLogout={onLogout}
+      />
     </div>
   );
-}
-
-function dispatchAccountAction(key: string, onLock: () => void, onLogout: () => void) {
-  if (key === 'lock') onLock();
-  if (key === 'logout') onLogout();
 }
 
 type StatusSlotProps = {

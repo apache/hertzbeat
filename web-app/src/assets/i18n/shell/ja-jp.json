@@ -53,6 +53,21 @@
       "language": "言語を切り替える",
       "user": "ユーザー操作"
     },
+    "account": {
+      "settings": "システム設定",
+      "lock": "セッションをロック",
+      "about": "HertzBeat について",
+      "logout": "ログアウト"
+    },
+    "about": {
+      "title": "HertzBeat について",
+      "version": "バージョン {{version}}",
+      "description": "Apache HertzBeat はオープンソースのリアルタイム監視システムです。",
+      "website": "ウェブサイト",
+      "documentation": "ドキュメント",
+      "repository": "ソースコード",
+      "issues": "問題を報告"
+    },
     "alerts": {
       "title": "アクティブアラート",
       "loading": "最近のアラートを読み込み中",

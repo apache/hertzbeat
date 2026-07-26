@@ -53,6 +53,21 @@
       "language": "Alternar idioma",
       "user": "Ações do usuário"
     },
+    "account": {
+      "settings": "Configurações do sistema",
+      "lock": "Bloquear sessão",
+      "about": "Sobre o HertzBeat",
+      "logout": "Sair"
+    },
+    "about": {
+      "title": "Sobre o HertzBeat",
+      "version": "Versão {{version}}",
+      "description": "O Apache HertzBeat é um sistema de monitoramento em tempo real de código aberto.",
+      "website": "Site",
+      "documentation": "Documentação",
+      "repository": "Código-fonte",
+      "issues": "Relatar um problema"
+    },
     "alerts": {
       "title": "Alertas ativos",
       "loading": "Carregando alertas recentes",

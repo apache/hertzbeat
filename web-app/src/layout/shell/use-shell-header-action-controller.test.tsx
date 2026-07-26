@@ -60,6 +60,9 @@ vi.mock('@/shared/navigation/app-paths', () => ({
   alertRoutePaths: { center: '/canonical-alerts' },
   applicationRoutePaths: { lock: '/passport/lock' }
 }));
+vi.mock('@/shared/settings/settings-routes', () => ({
+  settingsPaths: { system: '/canonical-settings' }
+}));
 
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
 
@@ -80,6 +83,7 @@ describe('useShellHeaderActionController', () => {
     act(() => result.current.toggleTheme());
     await act(() => result.current.changeLanguage());
     await act(() => result.current.openAlerts());
+    await act(() => result.current.openSettings());
 
     expect(runtime.requestRefresh).not.toHaveBeenCalled();
     expect(runtime.invalidateQueries).toHaveBeenCalledWith({ type: 'active' });
@@ -87,6 +91,7 @@ describe('useShellHeaderActionController', () => {
     expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });
     expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-alerts', type: 'push' });
+    expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-settings', type: 'push' });
   });
 
   it('publishes and persists only the latest rapid locale selection', async () => {

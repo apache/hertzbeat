@@ -53,6 +53,21 @@
       "language": "切換語言",
       "user": "使用者操作"
     },
+    "account": {
+      "settings": "系統設定",
+      "lock": "鎖定工作階段",
+      "about": "關於 HertzBeat",
+      "logout": "登出"
+    },
+    "about": {
+      "title": "關於 HertzBeat",
+      "version": "版本 {{version}}",
+      "description": "Apache HertzBeat 是一套開源的即時監控系統。",
+      "website": "官方網站",
+      "documentation": "文件",
+      "repository": "原始碼",
+      "issues": "回報問題"
+    },
     "alerts": {
       "title": "活動告警",
       "loading": "正在載入最近告警",

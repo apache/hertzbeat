@@ -271,6 +271,26 @@ button.timePolicy:hover {
   text-overflow: ellipsis;
 }
 
+.aboutDialog :global(.ant-modal-body) {
+  display: grid;
+  gap: 16px;
+}
+
+.aboutDialog :global(.ant-typography) {
+  margin: 0;
+}
+
+.aboutIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aboutIdentity > div {
+  display: grid;
+  gap: 2px;
+}
+
 .shellBody {
   display: grid;
   grid-template-columns: var(--hb-shell-sidebar-width) minmax(0, 1fr);

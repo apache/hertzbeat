@@ -53,6 +53,21 @@
       "language": "切换语言",
       "user": "用户操作"
     },
+    "account": {
+      "settings": "系统设置",
+      "lock": "锁定会话",
+      "about": "关于 HertzBeat",
+      "logout": "退出登录"
+    },
+    "about": {
+      "title": "关于 HertzBeat",
+      "version": "版本 {{version}}",
+      "description": "Apache HertzBeat 是一款开源的实时监控系统。",
+      "website": "官方网站",
+      "documentation": "文档",
+      "repository": "源代码",
+      "issues": "反馈问题"
+    },
     "alerts": {
       "title": "活动告警",
       "loading": "正在加载最近告警",

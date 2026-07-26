@@ -20,6 +20,7 @@ import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import { persistSystemPreferences, readRuntimeLocale } from '@/core/runtime-preferences';
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import { alertRoutePaths, applicationRoutePaths } from '@/shared/navigation/app-paths';
+import { settingsPaths } from '@/shared/settings/settings-routes';
 import { useSharedTime } from '@/shared/time';
 
 export function useShellHeaderActionController() {
@@ -51,6 +52,7 @@ export function useShellHeaderActionController() {
   };
   const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');
   const openAlerts = () => go({ to: alertRoutePaths.center, type: 'push' });
+  const openSettings = () => go({ to: settingsPaths.system, type: 'push' });
   const lock = (session: Parameters<typeof buildSessionLockMarker>[0], returnTo: string) => {
     const marker = buildSessionLockMarker(session, returnTo);
     if (!marker || !persistSessionLockMarker(marker)) {
@@ -68,6 +70,7 @@ export function useShellHeaderActionController() {
     changeLanguage,
     toggleTheme,
     openAlerts,
+    openSettings,
     lock,
     logout
   };
