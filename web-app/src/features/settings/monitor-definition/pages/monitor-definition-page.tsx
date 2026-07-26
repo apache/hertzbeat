@@ -8,6 +8,8 @@
 import { Alert, Button, Empty, Input, Modal, Skeleton, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+
 import { MonitorDefinitionCatalog } from '../components/monitor-definition-catalog';
 import { MonitorDefinitionWorkspaceView } from '../components/monitor-definition-workspace';
 import { useMonitorDefinitionController } from '../controller/use-monitor-definition-controller';
@@ -18,21 +20,21 @@ export function MonitorDefinitionPage() {
   const { t } = useTranslation();
   const controller = useMonitorDefinitionController();
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <Typography.Title level={2}>{t('monitorDefinitions.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('monitorDefinitions.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={!controller.canWrite} onClick={controller.actions.openCreate}>
-          {t('monitorDefinitions.create')}
-        </Button>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('monitorDefinitions.title')}
+        description={t('monitorDefinitions.description')}
+        actions={
+          <Button type="primary" disabled={!controller.canWrite} onClick={controller.actions.openCreate}>
+            {t('monitorDefinitions.create')}
+          </Button>
+        }
+      />
       {!controller.canWrite && <Alert showIcon type="info" message={t('monitorDefinitions.readOnly')} />}
       {controller.notice && (
         <Alert showIcon type="success" message={t(`monitorDefinitions.disposition.${controller.notice}`)} />
       )}
-      <Space.Compact className={styles.search}>
+      <Space.Compact role="search" className={styles.commandBand}>
         <Input
           allowClear
           value={controller.search}
@@ -52,7 +54,7 @@ export function MonitorDefinitionPage() {
         onValidate={() => void controller.actions.validate()}
       />
       <DeleteDialog controller={controller} />
-    </div>
+    </OperationalPage>
   );
 }
 

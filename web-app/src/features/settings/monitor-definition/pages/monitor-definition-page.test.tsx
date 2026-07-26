@@ -41,7 +41,16 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    expect(screen.getByRole('heading', { name: 'Monitor definitions' })).toBeInTheDocument();
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const commandBand = screen.getByRole('search');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'Monitor definitions' }));
+    expect(headerActions).toContainElement(screen.getByRole('button', { name: 'Create definition' }));
+    expect(header).not.toContainElement(screen.getByRole('button', { name: 'Refresh' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
+    expect(commandBand).not.toContainElement(screen.getByRole('button', { name: 'Create definition' }));
     expect(screen.getByText('MySQL')).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Search definitions'), { target: { value: 'mysql' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));

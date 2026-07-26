@@ -1,21 +1,5 @@
 /* Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. */
 
-.page {
-  display: grid;
-  gap: 16px;
-}
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.header :global(.ant-typography) {
-  margin-bottom: 4px;
-}
-
-.search {
+.commandBand {
   width: min(520px, 100%);
 }
