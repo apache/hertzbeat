@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import { EmailServerEditor, SmsServerEditor } from '../components/message-server-editors';
 import {
@@ -42,11 +43,8 @@ export function MessageServerPage() {
   const { t } = useTranslation();
   const controller = useMessageServerController();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('messageServer.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('messageServer.description')}</Typography.Text>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader title={t('messageServer.title')} description={t('messageServer.description')} />
       <div className={styles.channels}>
         <EmailChannel controller={controller} />
         <SmsChannel controller={controller} />
@@ -88,7 +86,7 @@ export function MessageServerPage() {
           }}
         />
       )}
-    </div>
+    </OperationalPage>
   );
 }
 

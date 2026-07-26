@@ -15,18 +15,6 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  min-width: 0;
-  gap: 20px;
-}
-.heading {
-  display: grid;
-  gap: 4px;
-}
-.heading :global(.ant-typography) {
-  margin: 0;
-}
 .channels {
   border-block: 1px solid var(--ant-color-border-secondary);
 }

@@ -28,6 +28,17 @@ import { createEmailServerDraft } from '../model/message-server-model';
 describe('MessageServerPage', () => {
   afterEach(cleanup);
 
+  it('owns title and description in a shared header without management actions', () => {
+    controller.value = state({ kind: 'missing' }, { kind: 'missing' });
+    render(<MessageServerPage />);
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'messageServer.title' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+  });
+
   it('keeps invalid email evidence distinct while the missing SMS channel remains usable', () => {
     controller.value = state({ kind: 'invalid' }, { kind: 'missing' });
     render(<MessageServerPage />);
