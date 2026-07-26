@@ -50,6 +50,16 @@ describe('SystemConfigPage', () => {
   });
   afterEach(cleanup);
 
+  it('owns title and description in a shared header without actions', () => {
+    renderPage();
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'System settings' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+  });
+
   it('renders the ready controller state without owning server queries', async () => {
     renderPage();
     expect(await screen.findByText('UTC (UTC+00:00) UTC')).toBeInTheDocument();

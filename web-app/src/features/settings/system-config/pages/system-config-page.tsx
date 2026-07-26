@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Typography } from 'antd';
+import { Alert, Button, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import { SystemConfigEditor } from '../components/system-config-editor';
 import { useSystemConfigResourceController } from '../controller/system-config-resource-controller';
-import styles from './system-config-page.module.css';
 
 export function SystemConfigPage() {
   const { t } = useTranslation();
@@ -28,11 +29,8 @@ export function SystemConfigPage() {
   const { state } = controller;
 
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('systemConfig.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('systemConfig.description')}</Typography.Text>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader title={t('systemConfig.title')} description={t('systemConfig.description')} />
       {state.kind === 'unavailable' && (
         <Alert
           type="error"
@@ -76,7 +74,7 @@ export function SystemConfigPage() {
           />
         </>
       )}
-    </div>
+    </OperationalPage>
   );
 }
 
