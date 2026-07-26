@@ -1,10 +1,12 @@
 ---
-title: HertzBeat v1.4.3 released, prometheus-compatible! 
+title: HertzBeat v1.4.3 released, prometheus-compatible!
+description: HertzBeat 1.4.3 expands Prometheus compatibility, adds VictoriaMetrics storage and Spring Gateway monitoring, and improves metric localization.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system]
+cover_headline: HertzBeat 1.4.3
 ---
 
 ## What is HertzBeat?

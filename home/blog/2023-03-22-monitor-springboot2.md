@@ -3,8 +3,9 @@ title: Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
 keywords: [opensource monitoring, SpringBoot monitoring, alert]
+cover_headline: Monitoring SpringBoot 2
 ---
 
 ## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the SpringBoot2 application, and it will be done in 5 minutes

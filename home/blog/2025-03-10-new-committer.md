@@ -1,9 +1,10 @@
 ---
 title: Warmly Welcome HertzBeat's New Community Committer!
+description: Lixin Diao shares how he moved from small bug fixes to becoming a HertzBeat Committer and offers practical entry points for first-time open-source contributors.
 author: yunfan24
 author_title: Lixin Diao
 author_url: https://github.com/yunfan24
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,8 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+cover_headline: Welcome yunfan24
+cover_kicker: New Committer
 ---
 🎉 Hello everyone. I'm very glad to receive an invitation from the Apache HertzBeat™ community and officially become a Committer of the project!
 

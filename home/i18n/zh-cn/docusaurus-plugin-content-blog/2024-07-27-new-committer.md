@@ -3,8 +3,11 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: Calvin979
 author_title: Calvin979
 author_url: https://github.com/Calvin979
-tags: [opensource, practice]
+tags: [community]
+description: Calvin 回顾从修正文档起步，到为 HertzBeat 贡献 DNS、注册中心监控和 HTTP 服务发现功能的成长经历。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome Calvin979
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

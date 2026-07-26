@@ -1,9 +1,11 @@
 ---
-title: HertzBeat v1.2.3！Support Prometheus,ShenYu and IotDb    
+title: HertzBeat v1.2.3！Support Prometheus,ShenYu and IotDb
+description: HertzBeat 1.2.3 adds Prometheus exporter collection, Apache ShenYu and IoTDB monitoring, SMS notifications, and usability improvements.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+cover_headline: HertzBeat 1.2.3
 ---
 
 ## v1.2.3
