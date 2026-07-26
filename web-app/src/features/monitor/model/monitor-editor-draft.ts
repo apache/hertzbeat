@@ -25,8 +25,6 @@ import {
 } from './monitor-editor-model';
 import { monitorParamFormValue, numberDefineRange } from './monitor-param-codec';
 
-export type MonitorPortAdjustment = 'https' | 'http' | 'sftp' | 'ftp';
-
 export function buildMonitorParams(defines: MonitorParamDefine[], existing: MonitorParam[] = []): MonitorParamDraft[] {
   const values = new Map(existing.map(param => [param.field, param]));
   return defines.map(define => {
@@ -140,23 +138,20 @@ export function transitionMonitorEditorParam(
   draft: MonitorEditorDraft,
   field: string,
   value: MonitorParamFormValue
-): { draft: MonitorEditorDraft; adjustment: MonitorPortAdjustment | undefined } {
+): MonitorEditorDraft {
   const targetExists = draft.params.some(param => param.field === field);
   const params = draft.params.map<MonitorParamDraft>(param =>
     param.field === field ? { ...param, paramValue: value } : param
   );
   const transition = targetExists ? securePortTransition(draft.monitor.app, field, value) : undefined;
-  if (!transition) return { draft: { ...draft, params }, adjustment: undefined };
+  if (!transition) return { ...draft, params };
   const port = params.find(param => param.field === 'port');
   if (!port || (port.paramValue !== null && port.paramValue !== transition.from)) {
-    return { draft: { ...draft, params }, adjustment: undefined };
+    return { ...draft, params };
   }
   return {
-    draft: {
-      ...draft,
-      params: params.map(param => (param.field === 'port' ? { ...param, paramValue: transition.to } : param))
-    },
-    adjustment: transition.adjustment
+    ...draft,
+    params: params.map(param => (param.field === 'port' ? { ...param, paramValue: transition.to } : param))
   };
 }
 
@@ -169,13 +164,13 @@ export function groupMonitorParamDefines(defines: MonitorParamDefine[]) {
 
 function securePortTransition(app: string, field: string, value: MonitorParamFormValue) {
   if (field !== 'ssl' || typeof value !== 'boolean') return undefined;
-  if (app === 'api') return value ? portTransition(80, 443, 'https') : portTransition(443, 80, 'http');
-  if (app === 'ftp') return value ? portTransition(21, 22, 'sftp') : portTransition(22, 21, 'ftp');
+  if (app === 'api') return value ? portTransition(80, 443) : portTransition(443, 80);
+  if (app === 'ftp') return value ? portTransition(21, 22) : portTransition(22, 21);
   return undefined;
 }
 
-function portTransition(from: number, to: number, adjustment: MonitorPortAdjustment) {
-  return { from, to, adjustment };
+function portTransition(from: number, to: number) {
+  return { from, to };
 }
 
 function defaultValue(define: MonitorParamDefine) {

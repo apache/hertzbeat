@@ -441,36 +441,50 @@ describe('useMonitorEditorController', () => {
   });
 
   it.each([
-    ['new', 'api', 80, 443, 'monitor.editor.portAdjusted.https'],
-    ['edit', 'ftp', 21, 22, 'monitor.editor.portAdjusted.sftp']
-  ] as const)(
-    'shares the %s %s secure-port transition through editor actions',
-    async (mode, app, port, next, notice) => {
-      api.loadMonitorApps.mockResolvedValue([{ value: app, label: app.toUpperCase() }]);
-      api.loadMonitorParamDefines.mockResolvedValue([
-        { ...headersDefine, app, field: 'port', type: 'number', defaultValue: String(port) },
-        { ...headersDefine, app, field: 'ssl', type: 'boolean', defaultValue: 'false' }
-      ]);
-      if (mode === 'edit') {
-        api.loadMonitorDetail.mockResolvedValue({
-          ...detail,
-          monitor: { ...detail.monitor, app },
-          params: [
-            { id: 4, monitorId: 7, field: 'port', type: 0, paramValue: String(port) },
-            { id: 5, monitorId: 7, field: 'ssl', type: 1, paramValue: 'false' }
-          ]
-        });
-      }
-      const route = mode === 'new' ? `/monitors/new?app=${app}` : '/monitors/7/edit';
-      const routed = renderController(mode, route);
-      await waitFor(() => expect(routed.current().state.draft?.params).toHaveLength(2));
-
-      act(() => routed.current().actions.updateParam('ssl', true));
-
-      expect(routed.current().state.draft?.params.find(param => param.field === 'port')?.paramValue).toBe(next);
-      expect(notify.info).toHaveBeenCalledWith(notice);
+    ['new', 'api', 80, 443],
+    ['edit', 'ftp', 21, 22]
+  ] as const)('shares the %s %s secure-port transition through editor actions', async (mode, app, port, next) => {
+    api.loadMonitorApps.mockResolvedValue([{ value: app, label: app.toUpperCase() }]);
+    api.loadMonitorParamDefines.mockResolvedValue([
+      { ...headersDefine, app, field: 'port', type: 'number', defaultValue: String(port) },
+      { ...headersDefine, app, field: 'ssl', type: 'boolean', defaultValue: 'false' }
+    ]);
+    if (mode === 'edit') {
+      api.loadMonitorDetail.mockResolvedValue({
+        ...detail,
+        monitor: { ...detail.monitor, app },
+        params: [
+          { id: 4, monitorId: 7, field: 'port', type: 0, paramValue: String(port) },
+          { id: 5, monitorId: 7, field: 'ssl', type: 1, paramValue: 'false' }
+        ]
+      });
     }
-  );
+    const route = mode === 'new' ? `/monitors/new?app=${app}` : '/monitors/7/edit';
+    const routed = renderController(mode, route);
+    await waitFor(() => expect(routed.current().state.draft?.params).toHaveLength(2));
+
+    act(() => routed.current().actions.updateParam('ssl', true));
+
+    expect(routed.current().state.draft?.params.find(param => param.field === 'port')?.paramValue).toBe(next);
+  });
+
+  it('does not report a default-port adjustment after a same-event custom port change', async () => {
+    api.loadMonitorApps.mockResolvedValue([{ value: 'api', label: 'API' }]);
+    api.loadMonitorParamDefines.mockResolvedValue([
+      { ...headersDefine, app: 'api', field: 'port', type: 'number', defaultValue: '80' },
+      { ...headersDefine, app: 'api', field: 'ssl', type: 'boolean', defaultValue: 'false' }
+    ]);
+    const routed = renderController('new', '/monitors/new?app=api');
+    await waitFor(() => expect(routed.current().state.draft?.params).toHaveLength(2));
+
+    act(() => {
+      routed.current().actions.updateParam('port', 8080);
+      routed.current().actions.updateParam('ssl', true);
+    });
+
+    expect(routed.current().state.draft?.params.find(param => param.field === 'port')?.paramValue).toBe(8080);
+    expect(notify.info).not.toHaveBeenCalled();
+  });
 });
 
 function renderController(mode: 'new' | 'edit', entry: string) {

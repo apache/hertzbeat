@@ -2277,13 +2277,7 @@
       "detectSuccess": "接続テストに成功しました。",
       "detectFailed": "接続テストに失敗しました。",
       "saveSuccess": "監視を保存しました。",
-      "saveFailed": "監視を保存できませんでした。",
-      "portAdjusted": {
-        "https": "HTTPS 用にポートを 443 に変更しました。",
-        "http": "HTTP 用にポートを 80 に変更しました。",
-        "sftp": "SFTP 用にポートを 22 に変更しました。",
-        "ftp": "FTP 用にポートを 21 に変更しました。"
-      }
+      "saveFailed": "監視を保存できませんでした。"
     }
   },
   "statusManagement": {

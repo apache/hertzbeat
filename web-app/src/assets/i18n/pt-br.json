@@ -2279,13 +2279,7 @@
       "detectSuccess": "Teste de conexão aprovado.",
       "detectFailed": "Falha no teste de conexão.",
       "saveSuccess": "Monitor salvo.",
-      "saveFailed": "Não foi possível salvar o monitor.",
-      "portAdjusted": {
-        "https": "A porta foi alterada para 443 para HTTPS.",
-        "http": "A porta foi alterada para 80 para HTTP.",
-        "sftp": "A porta foi alterada para 22 para SFTP.",
-        "ftp": "A porta foi alterada para 21 para FTP."
-      }
+      "saveFailed": "Não foi possível salvar o monitor."
     }
   },
   "statusManagement": {

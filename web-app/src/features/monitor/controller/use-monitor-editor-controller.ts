@@ -57,10 +57,7 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     save: commands.save,
     cancel: commands.cancel,
     retry: resources.retry,
-    isLocked: commands.isLocked,
-    notifyPortAdjustment: adjustment => {
-      void message.info(t(`monitor.editor.portAdjusted.${adjustment}`));
-    }
+    isLocked: commands.isLocked
   });
   return {
     state: {
