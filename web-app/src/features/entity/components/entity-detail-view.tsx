@@ -7,6 +7,7 @@ import type { EntityDetailEvidence, EntityExploreSignal } from '../model/entity-
 import { entityExploreSignals } from '../model/entity-view-model';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityDetailMetadata } from './entity-detail-metadata';
+import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
 import styles from './entity-view.module.css';
 
 export function EntityDetailView({
@@ -84,6 +85,7 @@ function ReadyEntityDetail({
         <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
       ) : null}
       <EntityDetailMetadata detail={detail} />
+      {detail.noiseControls ? <EntityNoiseControlEvidence summary={detail.noiseControls} /> : null}
       <EntityEvidenceLists detail={detail} />
     </div>
   );

@@ -9,6 +9,7 @@ import {
   type EntityEvidenceSummary,
   type EntityIdentity,
   type EntityMonitor,
+  type EntityNoiseControlSummary,
   type EntityPage,
   type EntityRecord,
   type EntityRelation,
@@ -95,6 +96,27 @@ const evidenceSchema = z.object({
   logHintCount: count.optional(),
   lastEvidenceAt: count.nullish()
 });
+const noiseControlRuleSchema = z.object({
+  id: positiveId,
+  name: text,
+  type: z.enum(['silence', 'inhibit']),
+  global: z.boolean(),
+  matchedLabels: z.array(text),
+  updatedAt: count.nullish()
+});
+const noiseControlSummarySchema = z
+  .object({
+    activeSilenceCount: count,
+    matchingInhibitCount: count,
+    activeSilences: z.array(noiseControlRuleSchema),
+    matchingInhibits: z.array(noiseControlRuleSchema),
+    possibleAlertSuppression: z.boolean()
+  })
+  // The backend returns at most three preview rules, while the counts describe every match.
+  .refine(value => value.activeSilences.every(rule => rule.type === 'silence'))
+  .refine(value => value.matchingInhibits.every(rule => rule.type === 'inhibit'))
+  .refine(value => value.activeSilenceCount >= value.activeSilences.length)
+  .refine(value => value.matchingInhibitCount >= value.matchingInhibits.length);
 const detailSchema = z.object({
   entity: z.object({
     entity: entitySchema,
@@ -104,6 +126,7 @@ const detailSchema = z.object({
   }),
   status: statusSchema.nullish(),
   evidenceSummary: evidenceSchema.nullish(),
+  noiseControlSummary: noiseControlSummarySchema.nullish(),
   boundMonitors: z.array(monitorSchema).nullish(),
   topologyNeighbors: z.array(relationSchema).nullish()
 });
@@ -123,9 +146,23 @@ export function parseEntityDetail(value: unknown): EntityDetail {
     identities: (wire.entity.identities ?? []).map(value => clean(value) as EntityIdentity),
     ...(wire.status ? { status: clean(wire.status) as EntityStatus } : {}),
     ...(wire.evidenceSummary ? { evidence: clean(wire.evidenceSummary) as EntityEvidenceSummary } : {}),
+    ...(wire.noiseControlSummary ? { noiseControls: cleanNoiseControlSummary(wire.noiseControlSummary) } : {}),
     boundMonitors: (wire.boundMonitors ?? []).map(value => clean(value) as EntityMonitor),
     relations: (wire.topologyNeighbors ?? []).map(value => clean(value) as EntityRelation)
   };
+}
+
+function cleanNoiseControlSummary(value: z.output<typeof noiseControlSummarySchema>): EntityNoiseControlSummary {
+  return {
+    ...value,
+    activeSilences: value.activeSilences.map(cleanNoiseControlRule),
+    matchingInhibits: value.matchingInhibits.map(cleanNoiseControlRule)
+  };
+}
+
+function cleanNoiseControlRule(rule: z.output<typeof noiseControlRuleSchema>) {
+  const { updatedAt, ...required } = rule;
+  return { ...required, ...(updatedAt == null ? {} : { updatedAt }) };
 }
 
 function mapSummary(wire: z.output<typeof summarySchema>): EntitySummary {

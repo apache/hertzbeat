@@ -104,6 +104,31 @@ describe('entity API', () => {
         logHintCount: 2,
         lastEvidenceAt: 123
       },
+      noiseControlSummary: {
+        activeSilenceCount: 1,
+        matchingInhibitCount: 1,
+        activeSilences: [
+          {
+            id: 31,
+            name: 'Checkout maintenance',
+            type: 'silence',
+            global: false,
+            matchedLabels: ['service.name'],
+            updatedAt: 1784786400000
+          }
+        ],
+        matchingInhibits: [
+          {
+            id: 41,
+            name: 'Critical suppresses warning',
+            type: 'inhibit',
+            global: false,
+            matchedLabels: ['service.name', 'environment'],
+            updatedAt: 1784786500000
+          }
+        ],
+        possibleAlertSuppression: true
+      },
       boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website', instance: 'checkout', status: 2 }],
       topologyNeighbors: [
         {
@@ -122,9 +147,33 @@ describe('entity API', () => {
       entity: { id: 7, name: 'checkout' },
       identities: [{ identityType: 'otlp' }],
       status: { status: 'degraded' },
+      noiseControls: {
+        activeSilenceCount: 1,
+        matchingInhibitCount: 1,
+        possibleAlertSuppression: true,
+        activeSilences: [{ id: 31, type: 'silence' }],
+        matchingInhibits: [{ id: 41, type: 'inhibit' }]
+      },
       boundMonitors: [{ id: 3 }],
       relations: [{ entityId: 8 }]
     });
+  });
+
+  it('rejects malformed noise-control evidence instead of hiding it', async () => {
+    apiMessageGet.mockResolvedValue({
+      entity: { entity, identities: [], monitorBinds: [], relations: [] },
+      noiseControlSummary: {
+        activeSilenceCount: 0,
+        matchingInhibitCount: 1,
+        activeSilences: [],
+        matchingInhibits: [{ id: 41, name: 'Bad rule', type: 'other', global: false, matchedLabels: [] }],
+        possibleAlertSuppression: false
+      },
+      boundMonitors: [],
+      topologyNeighbors: []
+    });
+
+    await expect(loadEntityDetail(7)).rejects.toBeInstanceOf(EntityContractError);
   });
 
   it('rejects malformed list and detail evidence', async () => {

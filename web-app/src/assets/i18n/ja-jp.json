@@ -198,6 +198,14 @@
       "identities": "識別根拠数",
       "logHints": "ログ検索の手掛かり"
     },
+    "noiseControls": {
+      "title": "アラートノイズ制御",
+      "summary": "有効なサイレンス {{silenceCount}} 件 · 一致する抑制 {{inhibitCount}} 件",
+      "possibleSuppression": "一致するノイズ制御により、このリソースの有効なアラートが表示されていない可能性があります。",
+      "none": "このリソースに一致する有効なノイズ制御はありません。",
+      "global": "グローバル",
+      "types": { "silence": "サイレンス", "inhibit": "抑制" }
+    },
     "values": {
       "type": {
         "service": "サービス",

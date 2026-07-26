@@ -93,11 +93,29 @@ export type EntityEvidenceSummary = {
   lastEvidenceAt?: number;
 };
 
+export type EntityNoiseControlRule = {
+  id: number;
+  name: string;
+  type: 'silence' | 'inhibit';
+  global: boolean;
+  matchedLabels: string[];
+  updatedAt?: number;
+};
+
+export type EntityNoiseControlSummary = {
+  activeSilenceCount: number;
+  matchingInhibitCount: number;
+  activeSilences: EntityNoiseControlRule[];
+  matchingInhibits: EntityNoiseControlRule[];
+  possibleAlertSuppression: boolean;
+};
+
 export type EntityDetail = {
   entity: EntityRecord;
   identities: EntityIdentity[];
   status?: EntityStatus;
   evidence?: EntityEvidenceSummary;
+  noiseControls?: EntityNoiseControlSummary;
   boundMonitors: EntityMonitor[];
   relations: EntityRelation[];
 };

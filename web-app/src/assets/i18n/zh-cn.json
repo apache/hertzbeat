@@ -193,6 +193,14 @@
       "identities": "识别依据数",
       "logHints": "日志查询线索"
     },
+    "noiseControls": {
+      "title": "告警降噪",
+      "summary": "{{silenceCount}} 条生效静默 · {{inhibitCount}} 条匹配抑制",
+      "possibleSuppression": "匹配的降噪规则可能解释了该资源当前没有可见活跃告警的原因。",
+      "none": "当前没有匹配该资源的生效降噪规则。",
+      "global": "全局",
+      "types": { "silence": "静默", "inhibit": "抑制" }
+    },
     "values": {
       "type": {
         "service": "服务",

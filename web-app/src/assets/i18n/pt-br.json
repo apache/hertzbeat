@@ -198,6 +198,14 @@
       "identities": "Quantidade de evidências de identificação",
       "logHints": "Indícios para consulta de logs"
     },
+    "noiseControls": {
+      "title": "Controles de ruído de alertas",
+      "summary": "{{silenceCount}} silêncios ativos · {{inhibitCount}} inibições correspondentes",
+      "possibleSuppression": "Os controles de ruído correspondentes podem explicar por que este recurso não possui alertas ativos visíveis.",
+      "none": "Nenhum controle de ruído ativo corresponde a este recurso.",
+      "global": "Global",
+      "types": { "silence": "Silêncio", "inhibit": "Inibição" }
+    },
     "values": {
       "type": {
         "service": "Serviço",

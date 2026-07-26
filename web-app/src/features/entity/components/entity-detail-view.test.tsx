@@ -97,6 +97,47 @@ describe('EntityDetailView', () => {
     expect(within(evidence).queryByText('0')).not.toBeInTheDocument();
   });
 
+  it('renders matching silence and inhibit evidence without inventing rules', () => {
+    renderView({
+      kind: 'ready',
+      detail: {
+        entity,
+        identities: [],
+        noiseControls: {
+          activeSilenceCount: 1,
+          matchingInhibitCount: 1,
+          activeSilences: [
+            {
+              id: 31,
+              name: 'Checkout maintenance',
+              type: 'silence',
+              global: false,
+              matchedLabels: ['service.name']
+            }
+          ],
+          matchingInhibits: [
+            {
+              id: 41,
+              name: 'Critical suppresses warning',
+              type: 'inhibit',
+              global: false,
+              matchedLabels: ['environment']
+            }
+          ],
+          possibleAlertSuppression: true
+        },
+        boundMonitors: [],
+        relations: []
+      }
+    });
+
+    const section = screen.getByRole('region', { name: i18n.t('entity.noiseControls.title') });
+    expect(within(section).getByText('Checkout maintenance')).toBeInTheDocument();
+    expect(within(section).getByText('Critical suppresses warning')).toBeInTheDocument();
+    expect(within(section).getByText(i18n.t('entity.noiseControls.possibleSuppression'))).toBeInTheDocument();
+    expect(within(section).queryByText('0')).not.toBeInTheDocument();
+  });
+
   it('offers resource deletion and renders only localized redacted failures', () => {
     const remove = vi.fn();
     renderView(

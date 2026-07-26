@@ -193,6 +193,14 @@
       "identities": "識別依據數",
       "logHints": "日誌查詢線索"
     },
+    "noiseControls": {
+      "title": "告警降噪",
+      "summary": "{{silenceCount}} 條生效靜默 · {{inhibitCount}} 條符合抑制",
+      "possibleSuppression": "符合的降噪規則可能解釋了此資源目前沒有可見作用中告警的原因。",
+      "none": "目前沒有符合此資源的生效降噪規則。",
+      "global": "全域",
+      "types": { "silence": "靜默", "inhibit": "抑制" }
+    },
     "values": {
       "type": {
         "service": "服務",

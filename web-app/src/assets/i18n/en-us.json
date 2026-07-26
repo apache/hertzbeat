@@ -198,6 +198,14 @@
       "identities": "Recognition evidence count",
       "logHints": "Log query hints"
     },
+    "noiseControls": {
+      "title": "Alert noise controls",
+      "summary": "{{silenceCount}} active silences · {{inhibitCount}} matching inhibitions",
+      "possibleSuppression": "Matching noise controls may explain why this resource has no visible active alerts.",
+      "none": "No active noise controls match this resource.",
+      "global": "Global",
+      "types": { "silence": "Silence", "inhibit": "Inhibition" }
+    },
     "values": {
       "type": {
         "service": "Service",
