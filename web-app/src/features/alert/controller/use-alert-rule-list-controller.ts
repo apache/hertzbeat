@@ -24,6 +24,7 @@ import { createAlertRuleListActions } from './alert-rule-list-actions';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import { useAlertRuleListReadController } from './use-alert-rule-list-read-controller';
+import { useAlertRuleSelection } from './use-alert-rule-selection';
 
 export function useAlertRuleListController() {
   const { t } = useTranslation();
@@ -31,6 +32,8 @@ export function useAlertRuleListController() {
   const navigate = useNavigate();
   const route = useAlertRuleListQueryController();
   const { listQuery, rereadLatest } = useAlertRuleListReadController(route.query);
+  const list = resolveListState(listQuery.isPending, listQuery.error, listQuery.data);
+  const selection = useAlertRuleSelection(route.query, list);
   const operations = useAlertRuleListOperations(rereadLatest, {
     success: () => {
       void message.success(t('alertRules.operationSuccess'));
@@ -42,10 +45,14 @@ export function useAlertRuleListController() {
   return {
     state: {
       command: operations.command,
-      list: resolveListState(listQuery.isPending, listQuery.error, listQuery.data),
+      list,
       query: route.query,
       refreshing: listQuery.isFetching,
-      search: route.search
+      search: route.search,
+      selectedIds: selection.selectedIds
+    },
+    selectIds: (ids: number[]) => {
+      if (!operations.isLocked()) selection.selectIds(ids);
     },
     ...createAlertRuleListActions({ route, operations, navigate, rereadLatest })
   };

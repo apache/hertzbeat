@@ -75,3 +75,11 @@ export function alertRuleWriteOutcome(error: unknown): AlertRuleWriteOutcome {
   if (error instanceof AlertRuleContractError) return 'rejected';
   return error instanceof AlertRuleRequestFailure ? error.writeOutcome : 'uncertain';
 }
+
+/** Canonicalizes selected IDs before they become batch-write evidence. */
+export function normalizeAlertRuleIds(ids: readonly number[]) {
+  if (ids.length === 0 || ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertRuleContractError('Alert Rule ids are invalid');
+  }
+  return [...new Set(ids)].sort((left, right) => left - right);
+}

@@ -1927,6 +1927,8 @@
     "updated": "Atualizada",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta regra de alerta?",
+    "deleteSelected": "Excluir selecionadas",
+    "deleteSelectedConfirm": "Excluir {{count}} regras de alerta selecionadas?",
     "operationSuccess": "Regra de alerta atualizada.",
     "operationFailed": "Falha na operação da regra.",
     "saveSuccess": "Regra de alerta salva.",

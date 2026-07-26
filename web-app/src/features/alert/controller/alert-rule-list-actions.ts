@@ -56,6 +56,7 @@ export function createAlertRuleListActions({
         void navigate(buildAlertRuleEditPath(id));
       }),
     toggle: operations.toggle,
-    remove: operations.remove
+    remove: operations.remove,
+    removeMany: operations.removeMany
   };
 }

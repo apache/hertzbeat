@@ -1925,6 +1925,8 @@
     "updated": "更新日時",
     "delete": "削除",
     "deleteConfirm": "このアラートルールを削除しますか？",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択した {{count}} 件のアラートルールを削除しますか？",
     "operationSuccess": "アラートルールを更新しました。",
     "operationFailed": "アラートルールの操作に失敗しました。",
     "saveSuccess": "アラートルールを保存しました。",

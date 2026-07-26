@@ -25,6 +25,7 @@ import {
   alertRuleFailureKind,
   alertRuleWriteOutcome,
   buildAlertRuleTogglePayload,
+  normalizeAlertRuleIds,
   type AlertRule,
   type AlertRulePage
 } from '../model/alert-rule-model';
@@ -45,7 +46,7 @@ type DeleteReceipt = {
   kind: 'delete';
   key: string;
   phase: OperationPhase;
-  id: number;
+  ids: number[];
 };
 
 type OperationReceipt = ToggleReceipt | DeleteReceipt;
@@ -97,6 +98,11 @@ export function useAlertRuleListOperations(rereadLatest: () => Promise<AlertRule
     }
   };
 
+  const removeMany = (ids: readonly number[]) => {
+    const commandIds = normalizeAlertRuleIds(ids);
+    return run({ kind: 'delete', key: `delete:${commandIds.join(',')}`, phase: 'write', ids: commandIds });
+  };
+
   return {
     command: resolveOperationCommand(gate.pending, recoveryPending),
     isLocked: () => gate.isLocked() || receiptRef.current !== undefined,
@@ -106,7 +112,8 @@ export function useAlertRuleListOperations(rereadLatest: () => Promise<AlertRule
       return receipt ? run(receipt) : Promise.resolve();
     },
     toggle: (rule: AlertRule, enabled: boolean) => run(createToggleReceipt(rule, enabled)),
-    remove: (id: number) => run({ kind: 'delete', key: `delete:${id}`, phase: 'write', id })
+    remove: (id: number) => removeMany([id]),
+    removeMany
   };
 }
 
@@ -136,7 +143,7 @@ async function advance(
   }
   const page = await rereadLatest();
   if (!isCurrent()) return false;
-  if (receipt.kind === 'delete' && page.content.some(rule => rule.id === receipt.id)) {
+  if (receipt.kind === 'delete' && page.content.some(rule => receipt.ids.includes(rule.id))) {
     throw new AlertRuleContractError('deleted id remains');
   }
   return true;
@@ -144,11 +151,11 @@ async function advance(
 
 function write(receipt: OperationReceipt) {
   if (receipt.kind === 'toggle') return updateAlertRuleEnabled(receipt.rule, receipt.enabled);
-  return deleteAlertRules([receipt.id]);
+  return deleteAlertRules(receipt.ids);
 }
 
 async function prove(receipt: OperationReceipt) {
-  if (receipt.kind === 'delete') return proveMissing(receipt.id);
+  if (receipt.kind === 'delete') return Promise.all(receipt.ids.map(proveMissing));
   const canonical = await loadAlertRule(receipt.rule.id);
   requireWritableConvergence(canonical, receipt.expected);
 }

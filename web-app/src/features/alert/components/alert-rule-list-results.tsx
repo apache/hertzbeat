@@ -17,6 +17,8 @@ type AlertRuleListResultsProps = {
   pageIndex: number;
   pageSize: number;
   busy: boolean;
+  selectedIds: number[];
+  selectIds: (ids: number[]) => void;
   retryDisabled: boolean;
   changePage: (page: number, pageSize: number) => void;
   retry: () => unknown;
@@ -42,6 +44,13 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
       loading={props.state.kind === 'loading'}
       dataSource={records}
       columns={props.columns}
+      rowSelection={{
+        selectedRowKeys: props.selectedIds,
+        getCheckboxProps: () => ({ disabled: props.busy }),
+        onChange: keys => {
+          if (!props.busy) props.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+        }
+      }}
       scroll={{ x: 1200 }}
       pagination={{
         current: props.pageIndex + 1,

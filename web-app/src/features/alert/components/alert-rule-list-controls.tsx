@@ -5,12 +5,22 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Typography } from 'antd';
+import { Alert, Button, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import styles from '../shared/alert-rule-list.module.css';
 
-export function AlertRuleListHeading({ busy, create }: { busy: boolean; create: () => void }) {
+export function AlertRuleListHeading({
+  busy,
+  selectedCount,
+  create,
+  removeSelected
+}: {
+  busy: boolean;
+  selectedCount: number;
+  create: () => void;
+  removeSelected: () => unknown;
+}) {
   const { t } = useTranslation();
   return (
     <header className={styles.heading}>
@@ -18,9 +28,24 @@ export function AlertRuleListHeading({ busy, create }: { busy: boolean; create: 
         <Typography.Title level={2}>{t('alertRules.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('alertRules.description')}</Typography.Text>
       </div>
-      <Button type="primary" disabled={busy} onClick={create}>
-        {t('alertRules.new')}
-      </Button>
+      <Space>
+        {selectedCount > 0 && (
+          <Popconfirm
+            title={t('alertRules.deleteSelectedConfirm', { count: selectedCount })}
+            okText={t('common.delete')}
+            cancelText={t('common.cancel')}
+            okButtonProps={{ danger: true, disabled: busy }}
+            onConfirm={removeSelected}
+          >
+            <Button danger disabled={busy}>
+              {t('alertRules.deleteSelected')}
+            </Button>
+          </Popconfirm>
+        )}
+        <Button type="primary" disabled={busy} onClick={create}>
+          {t('alertRules.new')}
+        </Button>
+      </Space>
     </header>
   );
 }

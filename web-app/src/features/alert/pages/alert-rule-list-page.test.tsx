@@ -26,6 +26,8 @@ const controller = vi.hoisted(() => ({
   edit: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  removeMany: vi.fn(),
+  selectIds: vi.fn(),
   setSearch: vi.fn(),
   state: {},
   submitSearch: vi.fn(),
@@ -111,6 +113,20 @@ describe('AlertRuleListPage', () => {
     expect(controller.toggle).toHaveBeenCalledWith(record, false);
   });
 
+  it('delegates current-page selection and confirms one batch delete', async () => {
+    const selection = render(<AlertRuleListPage />);
+    fireEvent.click(screen.getAllByRole('checkbox')[1]!);
+    expect(controller.selectIds).toHaveBeenCalledWith([7]);
+
+    selection.unmount();
+    controller.state = buildState({ selectedIds: [7] });
+    render(<AlertRuleListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.deleteSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'common.delete' }));
+
+    expect(controller.removeMany).toHaveBeenCalledWith([7]);
+  });
+
   it('locks every list and query control while a command owns the page', () => {
     controller.state = buildState({ command: 'operating' });
     render(<AlertRuleListPage />);
@@ -173,6 +189,7 @@ function buildState(override: Record<string, unknown> = {}) {
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,
     search: '',
+    selectedIds: [],
     ...override
   };
 }

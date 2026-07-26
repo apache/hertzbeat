@@ -1904,6 +1904,8 @@
     "updated": "更新時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此警報規則？",
+    "deleteSelected": "刪除選取項目",
+    "deleteSelectedConfirm": "確認刪除選取的 {{count}} 條警報規則？",
     "operationSuccess": "警報規則已更新。",
     "operationFailed": "警報規則操作失敗。",
     "saveSuccess": "警報規則已儲存。",

@@ -31,12 +31,17 @@ import styles from '../shared/alert-rule-list.module.css';
 export function AlertRuleListPage() {
   const { t } = useTranslation();
   const controller = useAlertRuleListController();
-  const { command, list, query, refreshing, search } = controller.state;
+  const { command, list, query, refreshing, search, selectedIds } = controller.state;
   const busy = command !== 'idle';
   const recovering = command === 'recovering';
   return (
     <div className={styles.page}>
-      <AlertRuleListHeading busy={busy} create={controller.create} />
+      <AlertRuleListHeading
+        busy={busy}
+        selectedCount={selectedIds.length}
+        create={controller.create}
+        removeSelected={() => controller.removeMany(selectedIds)}
+      />
       <AlertManagementNav />
       <AlertRuleListToolbar
         search={search}
@@ -59,6 +64,8 @@ export function AlertRuleListPage() {
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
         busy={busy}
+        selectedIds={selectedIds}
+        selectIds={controller.selectIds}
         retryDisabled={busy && !recovering}
         changePage={controller.changePage}
         retry={controller.refresh}

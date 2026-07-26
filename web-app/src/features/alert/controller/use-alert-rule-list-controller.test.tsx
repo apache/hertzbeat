@@ -160,6 +160,44 @@ describe('Alert Rule list controller', () => {
     expect(notify.success).not.toHaveBeenCalled();
   });
 
+  it('owns current-page selection and deletes every selected id in one command', async () => {
+    const second = { ...persisted, id: 8, name: 'Memory' };
+    api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [persisted, second])))
+      .mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
+    api.loadAlertRule.mockRejectedValue(new AlertRuleMissingError());
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+
+    act(() => result.current.selectIds([8, 7, 8, 99]));
+    expect(result.current.state.selectedIds).toEqual([7, 8]);
+    await act(async () => result.current.removeMany(result.current.state.selectedIds));
+
+    expect(api.deleteAlertRules).toHaveBeenCalledTimes(1);
+    expect(api.deleteAlertRules).toHaveBeenCalledWith([7, 8]);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledTimes(1);
+  });
+
+  it('never repeats an uncertain batch delete while every selected id is proved', async () => {
+    const second = { ...persisted, id: 8, name: 'Memory' };
+    api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [persisted, second])))
+      .mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
+    api.deleteAlertRules.mockRejectedValueOnce(unavailableRequestFailure());
+    api.loadAlertRule.mockRejectedValue(new AlertRuleMissingError());
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+
+    await act(async () => result.current.removeMany([8, 7]));
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.removeMany([7, 8]));
+
+    expect(api.deleteAlertRules).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledTimes(1);
+  });
+
   it('admits only one same-tick list command across toggle and delete', async () => {
     const write = deferred<void>();
     api.updateAlertRuleEnabled.mockReturnValueOnce(write.promise);

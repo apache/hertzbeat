@@ -1904,6 +1904,8 @@
     "updated": "更新时间",
     "delete": "删除",
     "deleteConfirm": "确认删除这条告警规则？",
+    "deleteSelected": "删除选中项",
+    "deleteSelectedConfirm": "确认删除选中的 {{count}} 条告警规则？",
     "operationSuccess": "告警规则已更新。",
     "operationFailed": "告警规则操作失败。",
     "saveSuccess": "告警规则已保存。",

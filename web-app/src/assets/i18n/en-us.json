@@ -1923,6 +1923,8 @@
     "updated": "Updated",
     "delete": "Delete",
     "deleteConfirm": "Delete this alert rule?",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm": "Delete {{count}} selected alert rules?",
     "operationSuccess": "Alert rule updated.",
     "operationFailed": "Alert rule operation failed.",
     "saveSuccess": "Alert rule saved.",

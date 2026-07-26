@@ -23,6 +23,7 @@ import {
   buildAlertRulePayload,
   buildAlertRulePreviewRequest,
   buildAlertRuleTogglePayload,
+  normalizeAlertRuleIds,
   type AlertRule,
   type AlertRuleDraft,
   type AlertRuleQuery
@@ -71,8 +72,7 @@ export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft)
 }
 
 export async function deleteAlertRules(ids: number[]): Promise<void> {
-  if (ids.length === 0) throw new AlertRuleContractError('delete requires at least one id');
-  const uniqueIds = [...new Set(ids.map(normalizeId))];
+  const uniqueIds = normalizeAlertRuleIds(ids.map(normalizeId));
   const params = new URLSearchParams();
   uniqueIds.forEach(id => params.append('ids', String(id)));
   await alertRuleApiRequest(() => apiMessageDelete(`/api/alert/defines?${params.toString()}`));

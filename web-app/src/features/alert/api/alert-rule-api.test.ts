@@ -160,7 +160,7 @@ describe('alert rule API', () => {
     await expect(deleteAlertRules([7, Number.MAX_SAFE_INTEGER + 1])).rejects.toThrow(AlertRuleContractError);
     expect(apiMessageDelete).not.toHaveBeenCalled();
 
-    await deleteAlertRules([7, 7, 9, 7, 9]);
+    await deleteAlertRules([9, 7, 9, 7]);
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/alert/defines?ids=7&ids=9');
   });
 
