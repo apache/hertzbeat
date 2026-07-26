@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Select, Typography } from 'antd';
+import { Alert, Input, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-metric-target-controller';
@@ -16,6 +16,7 @@ import {
   type RealtimeMetricTarget
 } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
+import { AlertRuleMetricTargetEvidence } from './alert-rule-metric-target-evidence';
 
 type AlertRuleMetricTargetFieldsProps = {
   busy: boolean;
@@ -67,7 +68,12 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
         />
       </label>
       <TargetField {...props} catalog={catalog} selectedApp={selectedApp} />
-      <TargetEvidence {...props} catalog={catalog} />
+      <AlertRuleMetricTargetEvidence
+        state={props.state}
+        catalog={catalog}
+        retryApps={props.retryApps}
+        retryHierarchy={props.retryHierarchy}
+      />
       {editor?.kind === 'targeted' && editor.target?.kind === 'availability' ? (
         <Typography.Text className={styles.wide} type="secondary">
           {t('alertRules.metricTarget.availabilityDescription')}
@@ -115,64 +121,6 @@ function TargetField(
 function selectedTargetValue(editor: AlertRuleDraft['metricEditor']) {
   if (editor?.kind !== 'targeted' || !editor.target) return undefined;
   return editor.target.kind === 'availability' ? 'availability' : `metric:${editor.target.metric}`;
-}
-
-function TargetEvidence(
-  props: AlertRuleMetricTargetFieldsProps & {
-    catalog: MetricAlertTargetCatalog | null;
-  }
-) {
-  const { t } = useTranslation();
-  if (props.state.apps.kind === 'ready' && props.state.apps.apps.length === 0) {
-    return <Alert className={styles.wide} type="info" showIcon message={t('alertRules.metricTarget.appsEmpty')} />;
-  }
-  if (props.state.apps.kind === 'unavailable' || props.state.apps.kind === 'error') {
-    return (
-      <RetryEvidence
-        message={t(
-          props.state.apps.kind === 'unavailable'
-            ? 'alertRules.metricTarget.appsUnavailable'
-            : 'alertRules.metricTarget.appsError'
-        )}
-        retry={props.retryApps}
-      />
-    );
-  }
-  if (props.state.hierarchy.kind === 'unavailable' || props.state.hierarchy.kind === 'error') {
-    return (
-      <RetryEvidence
-        message={t(
-          props.state.hierarchy.kind === 'unavailable'
-            ? 'alertRules.metricTarget.hierarchyUnavailable'
-            : 'alertRules.metricTarget.hierarchyError'
-        )}
-        retry={props.retryHierarchy}
-      />
-    );
-  }
-  if (props.state.hierarchy.kind === 'ready' && !props.catalog) {
-    return (
-      <Alert className={styles.wide} type="error" showIcon message={t('alertRules.metricTarget.hierarchyError')} />
-    );
-  }
-  return null;
-}
-
-function RetryEvidence({ message, retry }: { message: string; retry: () => unknown }) {
-  const { t } = useTranslation();
-  return (
-    <Alert
-      className={styles.wide}
-      type="error"
-      showIcon
-      message={message}
-      action={
-        <Button size="small" onClick={() => void retry()}>
-          {t('common.retry')}
-        </Button>
-      }
-    />
-  );
 }
 
 function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsProps) {
