@@ -145,6 +145,7 @@ describe('ShellHeaderActions account menu', () => {
           sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
           toggleSound: vi.fn()
         }}
+        fullscreen={{ available: true, active: false, busy: false }}
         loggingOut={false}
         showRefresh={false}
         t={t}
@@ -152,6 +153,7 @@ describe('ShellHeaderActions account menu', () => {
         onOpenAlerts={vi.fn()}
         onOpenSettings={vi.fn()}
         onToggleTheme={vi.fn()}
+        onToggleFullscreen={vi.fn()}
         onChangeLanguage={vi.fn()}
         onLock={onLock}
         onLogout={onLogout}
@@ -162,5 +164,38 @@ describe('ShellHeaderActions account menu', () => {
     fireEvent.click(await screen.findByText('shell.account.lock'));
     expect(onLock).toHaveBeenCalledOnce();
     expect(onLogout).not.toHaveBeenCalled();
+  });
+
+  it('restores the established fullscreen action and changes its accessible label after entry', () => {
+    const onToggleFullscreen = vi.fn();
+    const props = {
+      accountName: 'operator',
+      alertNotifications: {
+        count: { kind: 'ready', total: 0 } as const,
+        list: { kind: 'empty' } as const,
+        sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null } as const,
+        toggleSound: vi.fn()
+      },
+      loggingOut: false,
+      showRefresh: false,
+      t,
+      onRefresh: vi.fn(),
+      onOpenAlerts: vi.fn(),
+      onOpenSettings: vi.fn(),
+      onToggleTheme: vi.fn(),
+      onToggleFullscreen,
+      onChangeLanguage: vi.fn(),
+      onLock: vi.fn(),
+      onLogout: vi.fn()
+    };
+    const { rerender } = render(
+      <ShellHeaderActions {...props} fullscreen={{ available: true, active: false, busy: false }} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.fullscreenEnter' }));
+    expect(onToggleFullscreen).toHaveBeenCalledOnce();
+
+    rerender(<ShellHeaderActions {...props} fullscreen={{ available: true, active: true, busy: false }} />);
+    expect(screen.getByRole('button', { name: 'shell.actions.fullscreenExit' })).toBeInTheDocument();
   });
 });

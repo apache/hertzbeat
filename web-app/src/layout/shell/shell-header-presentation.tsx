@@ -5,10 +5,14 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { BgColorsOutlined, GlobalOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Button, Tooltip } from 'antd';
+import {
+  BgColorsOutlined,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
+  GlobalOutlined,
+  ReloadOutlined
+} from '@ant-design/icons';
 import type { TFunction } from 'i18next';
-import type { ReactNode } from 'react';
 
 import type {
   RuntimeStatusErrorCode,
@@ -20,6 +24,8 @@ import type { ShellAlertNotificationState } from '@/features/alert/shell';
 import styles from './hertzbeat-shell.module.css';
 import { ShellAccountMenu } from './shell-account-menu';
 import { ShellAlertNotifications } from './shell-alert-notifications';
+import { ShellHeaderAction } from './shell-header-action';
+import type { ShellFullscreenState } from './use-shell-fullscreen-action';
 
 export function ShellStatusSpine({
   locale,
@@ -74,12 +80,14 @@ export function ShellStatusSpine({
 type ShellHeaderActionsProps = {
   accountName: string;
   alertNotifications: ShellAlertNotificationState;
+  fullscreen: ShellFullscreenState;
   loggingOut: boolean;
   showRefresh: boolean;
   t: TFunction;
   onRefresh: () => void;
   onOpenAlerts: () => void;
   onToggleTheme: () => void;
+  onToggleFullscreen: () => void;
   onChangeLanguage: () => void;
   onOpenSettings: () => void;
   onLock: () => void;
@@ -89,12 +97,14 @@ type ShellHeaderActionsProps = {
 export function ShellHeaderActions({
   accountName,
   alertNotifications,
+  fullscreen,
   loggingOut,
   showRefresh,
   t,
   onRefresh,
   onOpenAlerts,
   onToggleTheme,
+  onToggleFullscreen,
   onChangeLanguage,
   onOpenSettings,
   onLock,
@@ -102,10 +112,20 @@ export function ShellHeaderActions({
 }: ShellHeaderActionsProps) {
   return (
     <div className={styles.headerActions}>
-      {showRefresh && <HeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={onRefresh} />}
+      {showRefresh && (
+        <ShellHeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={onRefresh} />
+      )}
       <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
-      <HeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={onToggleTheme} />
-      <HeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={onChangeLanguage} />
+      <ShellHeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={onToggleTheme} />
+      {fullscreen.available ? (
+        <ShellHeaderAction
+          disabled={fullscreen.busy}
+          label={t(fullscreen.active ? 'shell.actions.fullscreenExit' : 'shell.actions.fullscreenEnter')}
+          icon={fullscreen.active ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+          onClick={onToggleFullscreen}
+        />
+      ) : null}
+      <ShellHeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={onChangeLanguage} />
       <ShellAccountMenu
         accountName={accountName}
         loggingOut={loggingOut}
@@ -173,13 +193,5 @@ function collectorReportContext(lastReportedAt: string | null | undefined, local
 function formatObservedAt(value: string, locale: string | undefined) {
   return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(
     Date.parse(value)
-  );
-}
-
-function HeaderAction({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
-  return (
-    <Tooltip title={label}>
-      <Button className={styles.headerAction ?? ''} type="text" aria-label={label} icon={icon} onClick={onClick} />
-    </Tooltip>
   );
 }

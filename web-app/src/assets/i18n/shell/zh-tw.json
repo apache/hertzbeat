@@ -50,6 +50,9 @@
       "alerts": "開啟告警",
       "alertsWithCount": "開啟告警，目前 {{count}} 筆",
       "theme": "切換主題",
+      "fullscreenEnter": "進入全螢幕",
+      "fullscreenExit": "退出全螢幕",
+      "fullscreenFailed": "無法進入全螢幕",
       "language": "切換語言",
       "user": "使用者操作"
     },

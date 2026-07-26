@@ -50,6 +50,9 @@
       "alerts": "Abrir alertas",
       "alertsWithCount": "Abrir alertas, {{count}} ativos",
       "theme": "Alternar tema",
+      "fullscreenEnter": "Entrar em tela cheia",
+      "fullscreenExit": "Sair da tela cheia",
+      "fullscreenFailed": "Não foi possível abrir a tela cheia",
       "language": "Alternar idioma",
       "user": "Ações do usuário"
     },

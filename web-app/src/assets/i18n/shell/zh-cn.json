@@ -50,6 +50,9 @@
       "alerts": "打开告警",
       "alertsWithCount": "打开告警，当前 {{count}} 条",
       "theme": "切换主题",
+      "fullscreenEnter": "进入全屏",
+      "fullscreenExit": "退出全屏",
+      "fullscreenFailed": "无法进入全屏",
       "language": "切换语言",
       "user": "用户操作"
     },

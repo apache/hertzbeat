@@ -12,6 +12,7 @@ import { sessionLockStorageKey } from '@/core/auth/session-lock-storage';
 
 const runtime = vi.hoisted(() => ({
   changeLocale: vi.fn<(locale: string, options?: { signal?: AbortSignal }) => Promise<boolean>>(),
+  fullscreenToggle: vi.fn(),
   go: vi.fn(),
   invalidateQueries: vi.fn(),
   logout: vi.fn(),
@@ -63,6 +64,12 @@ vi.mock('@/shared/navigation/app-paths', () => ({
 vi.mock('@/shared/settings/settings-routes', () => ({
   settingsPaths: { system: '/canonical-settings' }
 }));
+vi.mock('./use-shell-fullscreen-action', () => ({
+  useShellFullscreenAction: () => ({
+    state: { available: true, active: false, busy: false },
+    toggle: runtime.fullscreenToggle
+  })
+}));
 
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
 
@@ -73,6 +80,7 @@ describe('useShellHeaderActionController', () => {
     runtime.readLocale.mockReturnValue('en-US');
     runtime.invalidateQueries.mockResolvedValue(undefined);
     runtime.changeLocale.mockResolvedValue(true);
+    runtime.fullscreenToggle.mockResolvedValue('changed');
     runtime.logout.mockResolvedValue(undefined);
   });
 
@@ -92,6 +100,16 @@ describe('useShellHeaderActionController', () => {
     expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-alerts', type: 'push' });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-settings', type: 'push' });
+  });
+
+  it('reports a safe localized failure when the browser rejects full screen', async () => {
+    runtime.fullscreenToggle.mockResolvedValueOnce('error');
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    await act(() => result.current.toggleFullscreen());
+
+    expect(runtime.messageError).toHaveBeenCalledOnce();
+    expect(runtime.messageError).toHaveBeenCalledWith('shell.actions.fullscreenFailed');
   });
 
   it('publishes and persists only the latest rapid locale selection', async () => {

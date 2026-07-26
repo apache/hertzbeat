@@ -50,6 +50,9 @@
       "alerts": "Open alerts",
       "alertsWithCount": "Open alerts, {{count}} active",
       "theme": "Switch theme",
+      "fullscreenEnter": "Enter full screen",
+      "fullscreenExit": "Exit full screen",
+      "fullscreenFailed": "Full screen could not be opened",
       "language": "Switch language",
       "user": "User actions"
     },

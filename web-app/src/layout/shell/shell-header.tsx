@@ -52,12 +52,14 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
         <ShellHeaderActions
           accountName={accountName}
           alertNotifications={alertNotifications}
+          fullscreen={actions.fullscreen}
           loggingOut={actions.loggingOut}
           showRefresh={actions.sharedTime.policy !== 'unknown'}
           t={t}
           onRefresh={() => void actions.refresh()}
           onOpenAlerts={actions.openAlerts}
           onToggleTheme={actions.toggleTheme}
+          onToggleFullscreen={() => void actions.toggleFullscreen()}
           onChangeLanguage={() => void actions.changeLanguage()}
           onOpenSettings={actions.openSettings}
           onLock={() => {

@@ -50,6 +50,9 @@
       "alerts": "アラートを開く",
       "alertsWithCount": "アラートを開く、アクティブ {{count}} 件",
       "theme": "テーマを切り替える",
+      "fullscreenEnter": "全画面表示にする",
+      "fullscreenExit": "全画面表示を終了",
+      "fullscreenFailed": "全画面表示を開けませんでした",
       "language": "言語を切り替える",
       "user": "ユーザー操作"
     },

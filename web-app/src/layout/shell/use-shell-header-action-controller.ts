@@ -23,6 +23,8 @@ import { alertRoutePaths, applicationRoutePaths } from '@/shared/navigation/app-
 import { settingsPaths } from '@/shared/settings/settings-routes';
 import { useSharedTime } from '@/shared/time';
 
+import { useShellFullscreenAction } from './use-shell-fullscreen-action';
+
 export function useShellHeaderActionController() {
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
@@ -40,6 +42,7 @@ export function useShellHeaderActionController() {
   }, [message, t]);
   const { loggingOut, logout } = useLogoutAction(completeLogout, reportLogoutFailure);
   const changeLanguage = useLocaleChangeAction(theme, i18n.resolvedLanguage);
+  const fullscreen = useShellFullscreenAction();
 
   const refresh = async () => {
     // Time-owned queries observe refreshRevision/window. Invalidating them as
@@ -51,6 +54,11 @@ export function useShellHeaderActionController() {
     await queryClient.invalidateQueries({ type: 'active' });
   };
   const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');
+  const toggleFullscreen = async () => {
+    const result = await fullscreen.toggle();
+    if (result === 'error') void message.error(t('shell.actions.fullscreenFailed'));
+    return result;
+  };
   const openAlerts = () => go({ to: alertRoutePaths.center, type: 'push' });
   const openSettings = () => go({ to: settingsPaths.system, type: 'push' });
   const lock = (session: Parameters<typeof buildSessionLockMarker>[0], returnTo: string) => {
@@ -65,10 +73,12 @@ export function useShellHeaderActionController() {
 
   return {
     sharedTime,
+    fullscreen: fullscreen.state,
     loggingOut,
     refresh,
     changeLanguage,
     toggleTheme,
+    toggleFullscreen,
     openAlerts,
     openSettings,
     lock,
