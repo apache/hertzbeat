@@ -39,7 +39,6 @@ import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,9 +62,6 @@ class AgentToolRegistryExecutionTest {
     private AgentToolCallLedgerService toolCallLedgerService;
 
     @Mock
-    private AgentMonitorSensitiveParamService sensitiveParamService;
-
-    @Mock
     private AgentInteractionInputService interactionInputService;
 
     private final AtomicReference<AgentToolExecutionContext> monitorContext = new AtomicReference<>();
@@ -75,8 +71,6 @@ class AgentToolRegistryExecutionTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(sensitiveParamService.removeSensitiveArguments(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(sensitiveParamService.mergeAndTake(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(interactionInputService.validateReference(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(interactionInputService.mergeAndTake(any())).thenAnswer(invocation -> invocation.getArgument(0));
         registry = new AgentToolRegistry();
@@ -96,7 +90,7 @@ class AgentToolRegistryExecutionTest {
                 return output(AgentToolStatus.SUCCEEDED, "{\"status\":\"change-ok\"}");
             }));
         orchestrator = new AgentToolExecutionOrchestrator(
-                registry, policyService, toolCallLedgerService, sensitiveParamService, interactionInputService);
+                registry, policyService, toolCallLedgerService, interactionInputService);
         stubLedger();
     }
 

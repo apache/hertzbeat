@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
-import java.util.Map;
 import java.util.Objects;
 import lombok.Builder;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
@@ -86,8 +85,7 @@ public sealed interface GatewayCommand permits
             ReplyMode replyMode,
             String commandId,
             String approvalId,
-            AgentApprovalDecision decision,
-            Map<String, Object> sensitiveParams) implements GatewayCommand {
+            AgentApprovalDecision decision) implements GatewayCommand {
 
         public ApprovalDecisionCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
@@ -96,7 +94,6 @@ public sealed interface GatewayCommand permits
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(approvalId)) {
                 throw new IllegalArgumentException("commandId and approvalId are required");
             }
-            sensitiveParams = sensitiveParams == null ? Map.of() : Map.copyOf(sensitiveParams);
         }
     }
 

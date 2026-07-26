@@ -27,7 +27,6 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeApprovalRegistry;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolCallLedgerService;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.springframework.stereotype.Service;
 
@@ -42,14 +41,11 @@ public class ApprovalCommandService {
 
     private final AgentToolCallLedgerService toolCallLedgerService;
     private final AgentRuntimeApprovalRegistry approvalRegistry;
-    private final AgentMonitorSensitiveParamService sensitiveParamService;
 
     public ApprovalCommandService(AgentToolCallLedgerService toolCallLedgerService,
-                                  AgentRuntimeApprovalRegistry approvalRegistry,
-                                  AgentMonitorSensitiveParamService sensitiveParamService) {
+                                  AgentRuntimeApprovalRegistry approvalRegistry) {
         this.toolCallLedgerService = toolCallLedgerService;
         this.approvalRegistry = approvalRegistry;
-        this.sensitiveParamService = sensitiveParamService;
     }
 
     public GatewaySingleResponse decide(ApprovalDecisionCommand command) {
@@ -57,22 +53,10 @@ public class ApprovalCommandService {
             return response(command, null, List.of(errorEvent(command, null,
                     "Agent approval is not waiting in an active runtime loop.")));
         }
-        AgentToolCall approval;
-        if (command.decision() == AgentApprovalDecision.APPROVED) {
-            sensitiveParamService.submit(command.approvalId(), command.envelope().getActor(),
-                    command.sensitiveParams());
-            try {
-                approval = toolCallLedgerService.approve(command.approvalId(), command.envelope().getActor());
-            } catch (RuntimeException exception) {
-                sensitiveParamService.clear(command.approvalId());
-                throw exception;
-            }
-        } else {
-            sensitiveParamService.clear(command.approvalId());
-            approval = toolCallLedgerService.reject(command.approvalId(), command.envelope().getActor());
-        }
+        AgentToolCall approval = command.decision() == AgentApprovalDecision.APPROVED
+                ? toolCallLedgerService.approve(command.approvalId(), command.envelope().getActor())
+                : toolCallLedgerService.reject(command.approvalId(), command.envelope().getActor());
         if (!approvalRegistry.complete(approval.getApprovalId(), command.decision())) {
-            sensitiveParamService.clear(command.approvalId());
             return response(command, approval, List.of(errorEvent(command, approval,
                     "Agent approval runtime loop is no longer active.")));
         }

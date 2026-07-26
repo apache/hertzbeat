@@ -1328,7 +1328,7 @@ class AgentRuntimeLoopTest {
         private final FakeToolCatalogService catalog;
 
         private FakeToolExecutionOrchestrator(FakeToolCatalogService catalog) {
-            super(new AgentToolRegistry(), null, null, null, null);
+            super(new AgentToolRegistry(), null, null, null);
             this.catalog = catalog;
         }
 
