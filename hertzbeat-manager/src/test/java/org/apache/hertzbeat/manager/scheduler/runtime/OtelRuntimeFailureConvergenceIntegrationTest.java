@@ -42,6 +42,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
@@ -101,6 +102,9 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String RATE_LIMIT_PROOF_METRIC = "hertzbeat_rate_limit_proof_metric";
     private static final String UNAVAILABLE_PROOF_METRIC = "hertzbeat_unavailable_proof_metric";
     private static final String RESTART_PROOF_METRIC = "hertzbeat_restart_proof_metric";
+    private static final String CORRUPTION_PROOF_METRIC = "hertzbeat_corruption_proof_metric";
+    private static final String CORRUPTION_RECOVERY_PROOF_METRIC =
+            "hertzbeat_corruption_recovery_proof_metric";
     private static final String RESET_PROOF_METRIC = "hertzbeat_reset_proof_metric";
     private static final String QUEUE_PROOF_METRIC = "hertzbeat_queue_proof_metric";
     private static final int QUEUE_CAPACITY = 2048;
@@ -496,6 +500,123 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     }
 
     @Test
+    void reportsCorruptedPersistentQueueThenDiscardsBacklogAndRecoversManually(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        RetriableIntake intake = new RetriableIntake(503, true);
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        properties.setMaxRestarts(1);
+        properties.setRestartDelay(Duration.ofHours(1));
+        Path storage = resolveStorage(properties);
+        OtelRuntimeSupervisor queueingSupervisor = supervisor(properties);
+        long queueingPid = -1;
+        try {
+            queueingSupervisor.start();
+            queueingPid = queueingSupervisor.snapshot().pid();
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), singleMetricPayload(CORRUPTION_PROOF_METRIC));
+            await(() -> intake.rejectedRequests() > 0, Duration.ofSeconds(20));
+            OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+            OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                    properties,
+                    queueingSupervisor,
+                    new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                    new OtelRuntimeDiagnosticsReader(classifier),
+                    classifier);
+            awaitRuntimeStatus(
+                    statusProvider,
+                    status -> positive(status.telemetry().queueSizeBySignal().metrics()),
+                    Duration.ofSeconds(20));
+            assertFalse(storageFiles(storage).isEmpty());
+        } finally {
+            queueingSupervisor.close();
+        }
+        long stoppedQueueingPid = queueingPid;
+        assertTrue(stoppedQueueingPid > 0);
+        await(() -> !ProcessHandle.of(stoppedQueueingPid).map(ProcessHandle::isAlive).orElse(false),
+                Duration.ofSeconds(5));
+        corruptStorageFiles(storage);
+
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        long recoveredPid = -1;
+        try {
+            supervisor.start();
+            ManagedOtelRuntimeStatus corrupted = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.STORAGE_CORRUPTED,
+                    Duration.ofSeconds(20));
+            assertEquals(ManagedOtelRuntimeStatus.RuntimeState.FAILED, corrupted.state());
+            assertEquals(-1, corrupted.pid());
+            assertEquals(1, corrupted.restartCount());
+            assertEquals(1, corrupted.desiredRevision());
+            assertEquals(0, corrupted.activeRevision());
+            reportHeartbeat(manageServer, corrupted);
+            String corruptedQuery = query(queryApi);
+            assertStorageQuery(corruptedQuery, intake.port(), "STORAGE_CORRUPTED");
+            assertRuntimeIdentityInQuery(corruptedQuery, corrupted);
+
+            clearStorageFiles(storage);
+            intake.accept();
+            supervisor.start();
+            ManagedOtelRuntimeStatus restarted = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.state() == ManagedOtelRuntimeStatus.RuntimeState.RUNNING
+                            && status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && status.pid() > 0
+                            && status.restartCount() == 1
+                            && status.desiredRevision() == 1
+                            && status.activeRevision() == 1
+                            && zero(status.telemetry().queueSizeBySignal().metrics()),
+                    Duration.ofSeconds(40));
+            assertEquals(0, intake.acceptedRequests());
+            sendMetricPayload(
+                    properties.getOtlpHttpEndpoint(),
+                    singleMetricPayload(CORRUPTION_RECOVERY_PROOF_METRIC));
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.pid() == restarted.pid()
+                            && status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && positive(status.telemetry().sent().metrics())
+                            && intake.acceptedRequests() > 0,
+                    Duration.ofSeconds(20));
+            recoveredPid = recovered.pid();
+            reportHeartbeat(manageServer, recovered);
+            String recoveredQuery = query(queryApi);
+            assertStorageQuery(recoveredQuery, intake.port(), "NONE");
+            assertRuntimeIdentityInQuery(recoveredQuery, recovered);
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+        long terminatedPid = recoveredPid;
+        assertTrue(terminatedPid > 0);
+        await(() -> !ProcessHandle.of(terminatedPid).map(ProcessHandle::isAlive).orElse(false),
+                Duration.ofSeconds(5));
+        await(() -> noThreadNamed("hertzbeat-otel-runtime-supervisor"), Duration.ofSeconds(5));
+        assertTrue(intake.isStopped());
+        assertSafeStorage(output.getAll(), intake.port());
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(CORRUPTION_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(CORRUPTION_RECOVERY_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    @Test
     void reportsRealExporterConnectionResetThroughHeartbeatAndQueryThenRecovers(
             CapturedOutput output) throws Exception {
         String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
@@ -754,6 +875,12 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         assertTrue(query.contains("\"restartCount\":" + status.restartCount()));
     }
 
+    private void assertStorageQuery(String query, int intakePort, String failureCode) {
+        assertTrue(query.contains("\"failureCode\":\"" + failureCode + "\""));
+        assertTrue(query.contains("\"name\":\"" + COLLECTOR_ID + "\""));
+        assertSafeStorage(query, intakePort);
+    }
+
     private void assertSafeAuthentication(String content, int intakePort) {
         assertSafe(content);
         assertFalse(content.contains(AUTH_PROOF_METRIC));
@@ -773,6 +900,16 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private void assertSafeRetriable(String content, int intakePort, String proofMetric) {
         assertSafe(content);
         assertFalse(content.contains(proofMetric));
+        assertFalse(content.contains("/api/otlp"));
+        assertFalse(content.contains("127.0.0.1:" + intakePort));
+        assertFalse(content.contains(tempDir.toString()));
+    }
+
+    private void assertSafeStorage(String content, int intakePort) {
+        assertSafe(content);
+        assertFalse(content.contains(CORRUPTION_PROOF_METRIC));
+        assertFalse(content.contains(CORRUPTION_RECOVERY_PROOF_METRIC));
+        assertFalse(content.contains("corrupted persistent queue"));
         assertFalse(content.contains("/api/otlp"));
         assertFalse(content.contains("127.0.0.1:" + intakePort));
         assertFalse(content.contains(tempDir.toString()));
@@ -969,6 +1106,34 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static boolean noThreadNamed(String name) {
         return Thread.getAllStackTraces().keySet().stream()
                 .noneMatch(thread -> thread.isAlive() && name.equals(thread.getName()));
+    }
+
+    private static List<Path> storageFiles(Path storage) throws IOException {
+        if (!Files.isDirectory(storage)) {
+            return List.of();
+        }
+        try (var paths = Files.walk(storage)) {
+            return paths.filter(Files::isRegularFile).toList();
+        }
+    }
+
+    private static Path resolveStorage(OtelRuntimeProperties properties) {
+        Path configured = properties.getFileStorageDirectory();
+        return (configured.isAbsolute() ? configured : properties.getHome().resolve(configured))
+                .toAbsolutePath()
+                .normalize();
+    }
+
+    private static void corruptStorageFiles(Path storage) throws IOException {
+        for (Path file : storageFiles(storage)) {
+            Files.writeString(file, "corrupted persistent queue", StandardOpenOption.TRUNCATE_EXISTING);
+        }
+    }
+
+    private static void clearStorageFiles(Path storage) throws IOException {
+        for (Path file : storageFiles(storage)) {
+            Files.delete(file);
+        }
     }
 
     private static final class AuthenticationIntake implements AutoCloseable {
