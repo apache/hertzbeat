@@ -31,6 +31,7 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ShellHeader } from './shell-header';
 
 const sessionApi = vi.hoisted(() => ({ logoutSession: vi.fn() }));
+const monitorImportTasks = vi.hoisted(() => ({ useShellMonitorImportTaskNotifications: vi.fn() }));
 vi.mock('@/core/auth/session-api', async () => ({
   ...(await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api')),
   logoutSession: sessionApi.logoutSession
@@ -54,6 +55,7 @@ vi.mock('@/features/alert/shell', () => ({
     toggleSound: vi.fn()
   })
 }));
+vi.mock('@/features/monitor/shell', () => monitorImportTasks);
 
 describe('ShellHeader logout', () => {
   beforeAll(async () => {
@@ -109,6 +111,7 @@ describe('ShellHeader logout', () => {
       </I18nextProvider>
     );
 
+    expect(monitorImportTasks.useShellMonitorImportTaskNotifications).toHaveBeenCalledOnce();
     queryClients[0]?.setQueryData(['protected', 'user-a'], 'operator-a');
     fireEvent.click(screen.getByRole('button', { name: i18n.t('shell.actions.user') }));
     fireEvent.click(await screen.findByText(i18n.t('auth.logout')));

@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
+import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
@@ -25,6 +26,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { session } = useSession();
   const location = useLocation();
   const actions = useShellHeaderActionController();
+  useShellMonitorImportTaskNotifications();
   const alertNotifications = useShellAlertNotificationController({
     locale: i18n.resolvedLanguage,
     notificationTitle: t('shell.alerts.browserTitle'),

@@ -72,6 +72,12 @@
       "browserTitle": "HertzBeat アラート",
       "browserBody": "対応が必要な新しいアクティブアラートがあります。"
     },
+    "importTasks": {
+      "title": "監視設定のインポート",
+      "progress": "{{taskName}} をインポート中：{{progress}}%",
+      "success": "{{taskName}} をインポートしました。",
+      "failure": "{{taskName}} をインポートできませんでした。"
+    },
     "capability": {
       "supported": "利用可能",
       "unknown": "機能不明",

@@ -72,6 +72,12 @@
       "browserTitle": "Alerta do HertzBeat",
       "browserBody": "Um novo alerta ativo precisa de atenção."
     },
+    "importTasks": {
+      "title": "Importação de monitoramento",
+      "progress": "Importando {{taskName}}: {{progress}}%",
+      "success": "{{taskName}} foi importado.",
+      "failure": "Não foi possível importar {{taskName}}."
+    },
     "capability": {
       "supported": "Disponível",
       "unknown": "Capacidade desconhecida",

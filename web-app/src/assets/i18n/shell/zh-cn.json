@@ -72,6 +72,12 @@
       "browserTitle": "HertzBeat 告警",
       "browserBody": "有新的活动告警需要处理。"
     },
+    "importTasks": {
+      "title": "监控导入",
+      "progress": "正在导入 {{taskName}}：{{progress}}%",
+      "success": "{{taskName}} 已导入。",
+      "failure": "{{taskName}} 导入失败。"
+    },
     "capability": {
       "supported": "可用",
       "unknown": "能力未知",

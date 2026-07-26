@@ -72,6 +72,12 @@
       "browserTitle": "HertzBeat alert",
       "browserBody": "A new active alert needs attention."
     },
+    "importTasks": {
+      "title": "Monitor import",
+      "progress": "Importing {{taskName}}: {{progress}}%",
+      "success": "{{taskName}} was imported.",
+      "failure": "{{taskName}} could not be imported."
+    },
     "capability": {
       "supported": "Available",
       "unknown": "Capability unknown",

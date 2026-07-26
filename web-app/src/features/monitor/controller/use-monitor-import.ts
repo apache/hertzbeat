@@ -103,7 +103,8 @@ function useMonitorImportOperation(reread: () => Promise<unknown>) {
       await importMonitorConfig(file, controller.signal);
       if (!mounted.current) return true;
       accept();
-      void message.success(t('monitor.import.success'));
+      // Manager SSE owns task progress and completion. Dialog closure plus the
+      // canonical reread remain deterministic if the supplemental stream is down.
       try {
         await reread();
       } catch {
