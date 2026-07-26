@@ -78,6 +78,35 @@ describe('LabelPage', () => {
   });
   afterEach(cleanup);
 
+  it('owns New Label in the shared header and query commands in the search band', async () => {
+    renderLabelPage();
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const commandBand = screen.getByRole('search');
+    const create = screen.getByRole('button', { name: 'New label' });
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'Labels' }));
+    expect(headerActions).toContainElement(create);
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Query' }));
+    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
+    expect(commandBand).not.toContainElement(create);
+
+    fireEvent.change(screen.getByPlaceholderText('Search labels'), { target: { value: ' production ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(create);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('route')).toHaveTextContent(
+        '/settings/labels?pageIndex=0&pageSize=20&search=production'
+      )
+    );
+    expect(resource.refresh).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
   it('validates input and closes create only after the resource success callback', async () => {
     renderLabelPage();
     expect(await screen.findByText('env:prod')).toBeInTheDocument();

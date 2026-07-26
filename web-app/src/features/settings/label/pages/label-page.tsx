@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Input, Typography } from 'antd';
+import { Alert, Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 import { useStringQueryDraft } from '@/shared/query-context';
 
 import { LabelEditor } from '../components/label-editor';
@@ -41,11 +42,16 @@ export function LabelPage() {
     setSearch(search);
   };
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('labels.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('labels.description')}</Typography.Text>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('labels.title')}
+        description={t('labels.description')}
+        actions={
+          <Button type="primary" disabled={writeLocked} onClick={editor.actions.create}>
+            {t('labels.new')}
+          </Button>
+        }
+      />
       <LabelRecoveryAlert
         command={resource.recoveryCommand}
         recovery={resource.recovery}
@@ -56,8 +62,6 @@ export function LabelPage() {
         draftSearch={draftSearch}
         refreshing={resource.refreshing}
         saving={resource.isSaving}
-        writeLocked={writeLocked}
-        onCreate={editor.actions.create}
         onRefresh={resource.refresh}
         onSearchChange={setDraftSearch}
         onSubmitSearch={submitSearch}
@@ -83,7 +87,7 @@ export function LabelPage() {
           onSubmit={editor.actions.submit}
         />
       )}
-    </div>
+    </OperationalPage>
   );
 }
 
@@ -118,8 +122,6 @@ type LabelToolbarProps = {
   draftSearch: string;
   refreshing: boolean;
   saving: boolean;
-  writeLocked: boolean;
-  onCreate: () => boolean;
   onRefresh: () => void;
   onSearchChange: (value: string) => void;
   onSubmitSearch: () => void;
@@ -128,8 +130,9 @@ type LabelToolbarProps = {
 function LabelToolbar(props: LabelToolbarProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
+    <div role="search" className={styles.commandBand}>
       <Input
+        className={styles.searchInput}
         allowClear
         disabled={props.saving}
         value={props.draftSearch}
@@ -142,9 +145,6 @@ function LabelToolbar(props: LabelToolbarProps) {
       </Button>
       <Button disabled={props.saving} loading={props.refreshing} onClick={props.onRefresh}>
         {t('common.refresh')}
-      </Button>
-      <Button type="primary" disabled={props.writeLocked} onClick={props.onCreate}>
-        {t('labels.new')}
       </Button>
     </div>
   );
