@@ -5,49 +5,41 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Popconfirm, Space, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertGroup } from '../model/alert-model';
 import styles from '../shared/alert-center.module.css';
+import { AlertCenterConfirmedAction } from './alert-center-confirmed-action';
 
 type BulkActions = {
+  acknowledge: () => void | Promise<unknown>;
   clear: () => void;
   remove: () => void | Promise<unknown>;
   reopen: () => void | Promise<unknown>;
   resolve: () => void | Promise<unknown>;
+  unacknowledge: () => void | Promise<unknown>;
 };
 
 export function AlertCenterBulkActions({
   busy,
-  selectedCount,
+  selectedGroups,
   actions
 }: {
   busy: boolean;
-  selectedCount: number;
+  selectedGroups: AlertGroup[];
   actions: BulkActions;
 }) {
   const { t } = useTranslation();
+  const counts = countSelectedStatuses(selectedGroups);
+  const selectedCount = selectedGroups.length;
   if (selectedCount === 0) return null;
   return (
     <div className={styles.bulkActions}>
       <Typography.Text>{t('alert.selected', { count: selectedCount })}</Typography.Text>
       <Space wrap size="small">
-        <ConfirmedAction
-          label={t('alert.resolveSelected')}
-          confirm={t('alert.resolveSelectedConfirm', { count: selectedCount })}
-          confirmLabel={t('alert.confirmResolve')}
-          disabled={busy}
-          run={actions.resolve}
-        />
-        <ConfirmedAction
-          label={t('alert.reopenSelected')}
-          confirm={t('alert.reopenSelectedConfirm', { count: selectedCount })}
-          confirmLabel={t('alert.confirmReopen')}
-          disabled={busy}
-          run={actions.reopen}
-        />
-        <ConfirmedAction
+        <AlertCenterBulkStatusActions busy={busy} counts={counts} actions={actions} />
+        <AlertCenterConfirmedAction
           danger
           label={t('alert.deleteSelected')}
           confirm={t('alert.deleteSelectedConfirm', { count: selectedCount })}
@@ -63,72 +55,66 @@ export function AlertCenterBulkActions({
   );
 }
 
-export function AlertCenterRowActions({
+function AlertCenterBulkStatusActions({
   busy,
-  group,
-  remove,
-  reopen,
-  resolve
+  counts,
+  actions
 }: {
   busy: boolean;
-  group: AlertGroup;
-  remove: (group: AlertGroup) => void | Promise<unknown>;
-  reopen: (group: AlertGroup) => void | Promise<unknown>;
-  resolve: (group: AlertGroup) => void | Promise<unknown>;
+  counts: ReturnType<typeof countSelectedStatuses>;
+  actions: BulkActions;
 }) {
   const { t } = useTranslation();
-  const resolved = group.status === 'resolved';
   return (
-    <Space size={0}>
-      <ConfirmedAction
-        type="link"
-        label={t(resolved ? 'alert.reopen' : 'alert.resolve')}
-        confirm={t(resolved ? 'alert.reopenConfirm' : 'alert.resolveConfirm')}
-        confirmLabel={t(resolved ? 'alert.confirmReopen' : 'alert.confirmResolve')}
-        disabled={busy}
-        run={() => (resolved ? reopen(group) : resolve(group))}
-      />
-      <ConfirmedAction
-        type="link"
-        danger
-        label={t('alert.delete')}
-        confirm={t('alert.deleteConfirm')}
-        confirmLabel={t('alert.confirmDelete')}
-        disabled={busy}
-        run={() => remove(group)}
-      />
-    </Space>
+    <>
+      {counts.firing > 0 ? (
+        <>
+          <AlertCenterConfirmedAction
+            label={t('alert.acknowledgeSelected')}
+            confirm={t('alert.acknowledgeSelectedConfirm', { count: counts.firing })}
+            confirmLabel={t('alert.confirmAcknowledge')}
+            disabled={busy}
+            run={actions.acknowledge}
+          />
+          <AlertCenterConfirmedAction
+            label={t('alert.resolveSelected')}
+            confirm={t('alert.resolveSelectedConfirm', { count: counts.firing })}
+            confirmLabel={t('alert.confirmResolve')}
+            disabled={busy}
+            run={actions.resolve}
+          />
+        </>
+      ) : null}
+      {counts.acknowledged > 0 ? (
+        <AlertCenterConfirmedAction
+          label={t('alert.unacknowledgeSelected')}
+          confirm={t('alert.unacknowledgeSelectedConfirm', { count: counts.acknowledged })}
+          confirmLabel={t('alert.confirmUnacknowledge')}
+          disabled={busy}
+          run={actions.unacknowledge}
+        />
+      ) : null}
+      {counts.resolved > 0 ? (
+        <AlertCenterConfirmedAction
+          label={t('alert.reopenSelected')}
+          confirm={t('alert.reopenSelectedConfirm', { count: counts.resolved })}
+          confirmLabel={t('alert.confirmReopen')}
+          disabled={busy}
+          run={actions.reopen}
+        />
+      ) : null}
+    </>
   );
 }
 
-function ConfirmedAction({
-  confirm,
-  confirmLabel,
-  danger = false,
-  disabled,
-  label,
-  run,
-  type = 'default'
-}: {
-  confirm: string;
-  confirmLabel: string;
-  danger?: boolean;
-  disabled: boolean;
-  label: string;
-  run: () => void | Promise<unknown>;
-  type?: 'default' | 'link';
-}) {
-  return (
-    <Popconfirm
-      title={confirm}
-      okText={confirmLabel}
-      disabled={disabled}
-      okButtonProps={{ danger, disabled }}
-      onConfirm={() => !disabled && void run()}
-    >
-      <Button size="small" type={type} danger={danger} disabled={disabled}>
-        {label}
-      </Button>
-    </Popconfirm>
+function countSelectedStatuses(groups: AlertGroup[]) {
+  return groups.reduce(
+    (counts, group) => {
+      if (group.status === 'firing') counts.firing += 1;
+      if (group.status === 'acknowledged') counts.acknowledged += 1;
+      if (group.status === 'resolved') counts.resolved += 1;
+      return counts;
+    },
+    { firing: 0, acknowledged: 0, resolved: 0 }
   );
 }

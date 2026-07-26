@@ -28,26 +28,13 @@ import { AlertCenterToolbar } from '../components/alert-center-toolbar';
 import { useAlertCenterController } from '../controller/use-alert-center-controller';
 
 export function AlertCenterPage() {
-  const { t } = useTranslation();
   const controller = useAlertCenterController();
   const { command, draft, list, query, recovery, refreshing, summary } = controller.state;
   const busy = command !== 'idle' || recovery !== null;
 
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('alert.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('alert.description')}</Typography.Text>
-        </div>
-        <Button
-          onClick={() => {
-            void controller.manageRules();
-          }}
-        >
-          {t('alertRules.manage')}
-        </Button>
-      </header>
+      <AlertCenterHeading manageRules={controller.manageRules} />
       <AlertManagementNav />
       <AlertCenterToolbar
         disabled={busy}
@@ -63,16 +50,19 @@ export function AlertCenterPage() {
       <AlertCenterSummary state={summary} retry={controller.retrySummary} />
       <AlertCenterBulkActions
         busy={busy}
-        selectedCount={controller.state.selectedIds.length}
+        selectedGroups={selectedAlertGroups(list, controller.state.selectedIds)}
         actions={{
+          acknowledge: controller.acknowledgeSelected,
           clear: controller.clearSelection,
           remove: controller.removeSelected,
           reopen: controller.reopenSelected,
-          resolve: controller.resolveSelected
+          resolve: controller.resolveSelected,
+          unacknowledge: controller.unacknowledgeSelected
         }}
       />
       <AlertCenterRecovery recovery={recovery} retrying={command === 'recovering'} retry={controller.retryOperation} />
       <AlertCenterResults
+        onAcknowledge={controller.acknowledge}
         busy={busy}
         state={list}
         pageIndex={query.pageIndex}
@@ -82,9 +72,32 @@ export function AlertCenterPage() {
         onRemove={controller.remove}
         onReopen={controller.reopen}
         onResolve={controller.resolve}
+        onUnacknowledge={controller.unacknowledge}
         onSelectIds={controller.selectIds}
         retry={controller.retryList}
       />
     </div>
   );
+}
+
+function AlertCenterHeading({ manageRules }: { manageRules: () => unknown }) {
+  const { t } = useTranslation();
+  return (
+    <header className={styles.heading}>
+      <div>
+        <Typography.Title level={2}>{t('alert.title')}</Typography.Title>
+        <Typography.Text type="secondary">{t('alert.description')}</Typography.Text>
+      </div>
+      <Button onClick={() => void manageRules()}>{t('alertRules.manage')}</Button>
+    </header>
+  );
+}
+
+function selectedAlertGroups(
+  list: ReturnType<typeof useAlertCenterController>['state']['list'],
+  selectedIds: number[]
+) {
+  if (list.kind !== 'ready') return [];
+  const selected = new Set(selectedIds);
+  return list.records.filter(group => selected.has(group.id));
 }

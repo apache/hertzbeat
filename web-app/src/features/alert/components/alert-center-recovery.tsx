@@ -38,5 +38,5 @@ export function AlertCenterRecovery({
 
 function operationFailureKey(recovery: AlertCenterOperationRecovery) {
   if (recovery.kind === 'delete') return 'alert.deleteFailed';
-  return recovery.status === 'resolved' ? 'alert.resolveFailed' : 'alert.reopenFailed';
+  return `alert.${recovery.action}Failed`;
 }

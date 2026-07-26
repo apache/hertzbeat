@@ -178,9 +178,12 @@ describe('alert API', () => {
     await expect(updateAlertGroupStatus([7], 'firing')).resolves.toBeUndefined();
     expect(apiMessagePut).toHaveBeenLastCalledWith('/api/alerts/group/status/firing?ids=7', null);
 
+    await expect(updateAlertGroupStatus([11], 'acknowledged')).resolves.toBeUndefined();
+    expect(apiMessagePut).toHaveBeenLastCalledWith('/api/alerts/group/status/acknowledged?ids=11', null);
+
     await expect(updateAlertGroupStatus([], 'resolved')).rejects.toBeInstanceOf(AlertContractError);
-    await expect(updateAlertGroupStatus([7], 'acknowledged' as 'resolved')).rejects.toBeInstanceOf(AlertContractError);
-    expect(apiMessagePut).toHaveBeenCalledTimes(2);
+    await expect(updateAlertGroupStatus([7], 'pending' as 'resolved')).rejects.toBeInstanceOf(AlertContractError);
+    expect(apiMessagePut).toHaveBeenCalledTimes(3);
   });
 
   it('owns the alert event stream path and projects only safe notification evidence', () => {

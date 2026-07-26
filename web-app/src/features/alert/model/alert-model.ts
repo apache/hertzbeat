@@ -20,8 +20,8 @@ import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination
 export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
 export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as const;
-export const alertRecordStatuses = ['firing', 'resolved'] as const;
-export const alertGroupTargetStatuses = ['firing', 'resolved'] as const;
+export const alertRecordStatuses = ['firing', 'acknowledged', 'resolved'] as const;
+export const alertGroupTargetStatuses = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
 
 export type AlertStatus = (typeof alertStatuses)[number];

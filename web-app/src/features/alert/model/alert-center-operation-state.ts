@@ -7,7 +7,10 @@
 
 import type { AlertGroupTargetStatus } from './alert-model';
 
-export type AlertCenterOperationCommand = 'deleting' | 'resolving' | 'reopening' | 'recovering' | 'idle';
+export type AlertCenterStatusAction = 'acknowledge' | 'unacknowledge' | 'resolve' | 'reopen';
+
+export type AlertCenterOperationCommand =
+  'deleting' | 'acknowledging' | 'unacknowledging' | 'resolving' | 'reopening' | 'recovering' | 'idle';
 
 type RecoveryEvidence = {
   ids: number[];
@@ -16,4 +19,9 @@ type RecoveryEvidence = {
 };
 
 export type AlertCenterOperationRecovery =
-  (RecoveryEvidence & { kind: 'delete' }) | (RecoveryEvidence & { kind: 'status'; status: AlertGroupTargetStatus });
+  | (RecoveryEvidence & { kind: 'delete' })
+  | (RecoveryEvidence & {
+      kind: 'status';
+      action: AlertCenterStatusAction;
+      status: AlertGroupTargetStatus;
+    });

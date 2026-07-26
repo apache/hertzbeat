@@ -38,9 +38,9 @@ export function useAlertCenterOperationController(
 }
 
 function operationMessageKey(
-  receipt: { kind: 'delete' } | { kind: 'status'; status: 'resolved' | 'firing' },
+  receipt: { kind: 'delete' } | { kind: 'status'; action: 'acknowledge' | 'unacknowledge' | 'resolve' | 'reopen' },
   outcome: 'Success' | 'Failed'
 ) {
   if (receipt.kind === 'delete') return `alert.delete${outcome}`;
-  return `alert.${receipt.status === 'resolved' ? 'resolve' : 'reopen'}${outcome}`;
+  return `alert.${receipt.action}${outcome}`;
 }

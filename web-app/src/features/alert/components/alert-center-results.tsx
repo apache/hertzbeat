@@ -30,13 +30,14 @@ import {
   type AlertStatus
 } from '../model/alert-model';
 import type { AlertListState } from '../model/alert-center-view-model';
-import { AlertCenterRowActions } from './alert-center-actions';
 import { AlertCenterGroupDetails } from './alert-center-group-details';
+import { AlertCenterRowActions } from './alert-center-row-actions';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
 type Translator = (key: string) => string;
 
 type AlertCenterResultsProps = {
+  onAcknowledge: (group: AlertGroup) => void | Promise<unknown>;
   busy: boolean;
   state: AlertListState;
   pageIndex: number;
@@ -46,11 +47,13 @@ type AlertCenterResultsProps = {
   onRemove: (group: AlertGroup) => void | Promise<unknown>;
   onReopen: (group: AlertGroup) => void | Promise<unknown>;
   onResolve: (group: AlertGroup) => void | Promise<unknown>;
+  onUnacknowledge: (group: AlertGroup) => void | Promise<unknown>;
   onSelectIds: (ids: number[]) => void;
   retry: () => unknown;
 };
 
 export function AlertCenterResults({
+  onAcknowledge,
   busy,
   state,
   pageIndex,
@@ -60,6 +63,7 @@ export function AlertCenterResults({
   onRemove,
   onReopen,
   onResolve,
+  onUnacknowledge,
   onSelectIds,
   retry
 }: AlertCenterResultsProps) {
@@ -80,7 +84,7 @@ export function AlertCenterResults({
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
-      columns={buildColumns(t, busy, onRemove, onResolve, onReopen)}
+      columns={buildColumns(t, busy, onAcknowledge, onRemove, onResolve, onReopen, onUnacknowledge)}
       rowSelection={rowSelection}
       expandable={{
         expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
@@ -115,9 +119,11 @@ function renderResultFallback(state: AlertListState, t: Translator, retry: () =>
 function buildColumns(
   t: Translator,
   busy: boolean,
+  onAcknowledge: (group: AlertGroup) => void | Promise<unknown>,
   onRemove: (group: AlertGroup) => void | Promise<unknown>,
   onResolve: (group: AlertGroup) => void | Promise<unknown>,
-  onReopen: (group: AlertGroup) => void | Promise<unknown>
+  onReopen: (group: AlertGroup) => void | Promise<unknown>,
+  onUnacknowledge: (group: AlertGroup) => void | Promise<unknown>
 ): ColumnsType<AlertGroup> {
   return [
     { title: t('alert.name'), render: (_value, row) => alertName(row) },
@@ -157,7 +163,15 @@ function buildColumns(
       title: t('common.actions'),
       width: 210,
       render: (_value, group) => (
-        <AlertCenterRowActions busy={busy} group={group} remove={onRemove} resolve={onResolve} reopen={onReopen} />
+        <AlertCenterRowActions
+          acknowledge={onAcknowledge}
+          busy={busy}
+          group={group}
+          remove={onRemove}
+          resolve={onResolve}
+          reopen={onReopen}
+          unacknowledge={onUnacknowledge}
+        />
       )
     }
   ];

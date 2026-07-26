@@ -24,6 +24,8 @@ import type { AlertGroup, AlertSummary, ServerLocalDateTime } from '../model/ale
 import { AlertCenterPage } from './alert-center-page';
 
 const controller = vi.hoisted(() => ({
+  acknowledge: vi.fn(),
+  acknowledgeSelected: vi.fn(),
   changePage: vi.fn(),
   changeSeverity: vi.fn(),
   changeStatus: vi.fn(),
@@ -42,7 +44,9 @@ const controller = vi.hoisted(() => ({
   selectIds: vi.fn(),
   setDraft: vi.fn(),
   state: {},
-  submitFilters: vi.fn()
+  submitFilters: vi.fn(),
+  unacknowledge: vi.fn(),
+  unacknowledgeSelected: vi.fn()
 }));
 
 vi.mock('../controller/use-alert-center-controller', () => ({ useAlertCenterController: () => controller }));
@@ -149,9 +153,21 @@ describe('AlertCenterPage', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
     expect(controller.selectIds).toHaveBeenCalledWith([1]);
 
-    controller.state = buildState({ selectedIds: [1] });
+    const selectedRecords = [
+      { ...record, status: 'firing' as const },
+      { ...record, id: 2, status: 'acknowledged' as const },
+      { ...record, id: 3, status: 'resolved' as const }
+    ];
+    controller.state = buildState({
+      list: { kind: 'ready', records: selectedRecords, total: selectedRecords.length },
+      selectedIds: [1, 2, 3]
+    });
     cleanup();
     render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.acknowledgeSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmAcknowledge' }));
+    expect(controller.acknowledgeSelected).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'alert.resolveSelected' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
@@ -160,6 +176,10 @@ describe('AlertCenterPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'alert.reopenSelected' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmReopen' }));
     expect(controller.reopenSelected).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.unacknowledgeSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmUnacknowledge' }));
+    expect(controller.unacknowledgeSelected).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'alert.deleteSelected' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmDelete' }));
@@ -181,6 +201,26 @@ describe('AlertCenterPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'alert.reopen' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmReopen' }));
     expect(controller.reopen).toHaveBeenCalledWith({ ...record, status: 'resolved' });
+  });
+
+  it('restores acknowledge and unacknowledge for their exact alert states', async () => {
+    const firing = { ...record, status: 'firing' as const };
+    controller.state = buildState({ list: { kind: 'ready', records: [firing], total: 1 } });
+    const view = render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.acknowledge' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmAcknowledge' }));
+    expect(controller.acknowledge).toHaveBeenCalledWith(firing);
+    view.unmount();
+
+    const acknowledged = { ...record, status: 'acknowledged' as const };
+    controller.state = buildState({ list: { kind: 'ready', records: [acknowledged], total: 1 } });
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.unacknowledge' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmUnacknowledge' }));
+    expect(controller.unacknowledge).toHaveBeenCalledWith(acknowledged);
+    expect(screen.queryByRole('button', { name: 'alert.resolve' })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -206,6 +246,24 @@ describe('AlertCenterPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(controller.retryOperation).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'alert.delete' })).toBeDisabled();
+  });
+
+  it('keeps unacknowledge recovery distinct from reopening a resolved alert', () => {
+    controller.state = buildState({
+      command: 'idle',
+      recovery: {
+        kind: 'status',
+        action: 'unacknowledge',
+        ids: [1],
+        status: 'firing',
+        phase: 'proof',
+        failure: 'error'
+      }
+    });
+    render(<AlertCenterPage />);
+
+    expect(screen.getByText('alert.unacknowledgeFailed')).toBeInTheDocument();
+    expect(screen.queryByText('alert.reopenFailed')).not.toBeInTheDocument();
   });
 
   it('keeps an out-of-range ready page as a table instead of an empty result', () => {

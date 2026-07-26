@@ -267,6 +267,43 @@ describe('Alert Center controller', () => {
     expect(api.notification).toHaveBeenCalledWith({ type: 'success', message: 'alert.resolveSuccess' });
     expect(result.current.state).toMatchObject({ command: 'idle', recovery: null, selectedIds: [] });
   });
+
+  it('acknowledges only selected firing groups and unacknowledges only acknowledged groups', async () => {
+    const statuses = new Map<number, 'firing' | 'acknowledged' | 'resolved'>([
+      [7, 'firing'],
+      [9, 'acknowledged'],
+      [11, 'resolved']
+    ]);
+    api.updateAlertGroupStatus.mockImplementation((ids: number[], status: 'firing' | 'acknowledged' | 'resolved') => {
+      ids.forEach(id => statuses.set(id, status));
+      return Promise.resolve();
+    });
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve({
+        ...page(query),
+        content: [...statuses].map(([id, status]) => alertGroup(id, status)),
+        totalElements: 3,
+        totalPages: 1
+      })
+    );
+    const acknowledgeView = renderController();
+    await waitFor(() => expect(acknowledgeView.result.current.state.list.kind).toBe('ready'));
+    act(() => acknowledgeView.result.current.selectIds([11, 9, 7]));
+    await act(() => acknowledgeView.result.current.acknowledgeSelected());
+    expect(api.updateAlertGroupStatus).toHaveBeenLastCalledWith([7], 'acknowledged');
+    acknowledgeView.unmount();
+    statuses.set(7, 'firing');
+
+    const unacknowledgeView = renderController();
+    await waitFor(() => expect(unacknowledgeView.result.current.state.list.kind).toBe('ready'));
+    act(() => unacknowledgeView.result.current.selectIds([11, 9, 7]));
+    await act(() => unacknowledgeView.result.current.unacknowledgeSelected());
+    expect(api.updateAlertGroupStatus).toHaveBeenLastCalledWith([9], 'firing');
+    expect(api.notification).toHaveBeenLastCalledWith({
+      type: 'success',
+      message: 'alert.unacknowledgeSuccess'
+    });
+  });
 });
 
 function renderController(entry = '/alerts?pageIndex=0&pageSize=8') {
@@ -312,7 +349,7 @@ function page(query: AlertQuery): AlertPage {
   return { content: [], totalElements: 0, totalPages: 0, number: query.pageIndex, size: query.pageSize };
 }
 
-function alertGroup(id: number, status: 'firing' | 'resolved') {
+function alertGroup(id: number, status: 'firing' | 'acknowledged' | 'resolved') {
   return {
     id,
     status,

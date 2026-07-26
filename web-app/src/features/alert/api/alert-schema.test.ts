@@ -207,6 +207,24 @@ describe('alert center wire schemas', () => {
     });
   });
 
+  it('accepts the acknowledged group and child evidence produced by the status endpoint', () => {
+    const acknowledged = {
+      ...group,
+      status: 'acknowledged',
+      alerts: group.alerts.map(alert => ({ ...alert, status: 'acknowledged' }))
+    };
+
+    expect(
+      parseAlertGroupPage(
+        { content: [acknowledged], totalElements: 1, totalPages: 1, number: 0, size: 8 },
+        firstPageQuery
+      ).content[0]
+    ).toMatchObject({
+      status: 'acknowledged',
+      alerts: [{ status: 'acknowledged' }]
+    });
+  });
+
   it('keeps a canonical empty page distinct from malformed page evidence', () => {
     expect(
       parseAlertGroupPage(

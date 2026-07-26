@@ -104,6 +104,24 @@ describe('alert center operation command', () => {
     expect(reread).toHaveBeenCalledTimes(1);
   });
 
+  it('retains unacknowledge intent while retrying proof for the shared firing target', async () => {
+    operations.updateAlertGroupStatus.mockRejectedValueOnce(new AlertRequestFailure('error', 'uncertain'));
+    const hook = renderOperation();
+
+    await act(async () => hook.result.current.updateStatus([7], 'firing', 'unacknowledge'));
+
+    expect(hook.result.current.recovery).toMatchObject({
+      action: 'unacknowledge',
+      ids: [7],
+      kind: 'status',
+      phase: 'proof',
+      status: 'firing'
+    });
+    await act(async () => hook.result.current.retry());
+    expect(operations.updateAlertGroupStatus).toHaveBeenCalledTimes(1);
+    expect(success).toHaveBeenCalledWith(expect.objectContaining({ action: 'unacknowledge' }));
+  });
+
   it('retries only projection after acknowledged proof', async () => {
     reread.mockRejectedValueOnce(new AlertRequestFailure('unavailable')).mockResolvedValueOnce(undefined);
     const hook = renderOperation();
