@@ -259,6 +259,17 @@ describe('LabelPage', () => {
     expect(resource.deleteLabel).toHaveBeenCalledWith(serverLabel);
   });
 
+  it('keeps table pagination delegated to the canonical label query', async () => {
+    resource.listState = { kind: 'ready', records: [serverLabel], total: 41 };
+    renderLabelPage();
+
+    fireEvent.click(await screen.findByTitle('2'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('route')).toHaveTextContent('/settings/labels?pageIndex=1&pageSize=20')
+    );
+  });
+
   it.each([
     [{ kind: 'loading' }, 'label-loading'],
     [{ kind: 'empty' }, 'No labels match the current query.'],
