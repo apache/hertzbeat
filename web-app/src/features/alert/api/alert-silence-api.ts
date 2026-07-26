@@ -22,7 +22,7 @@ import {
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
   alertSilenceFailureKind,
-  AlertSilenceContractError,
+  normalizeAlertSilenceIds,
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilenceQuery
@@ -44,11 +44,13 @@ function buildAlertSilenceListPath(query: AlertSilenceQuery) {
 }
 
 function buildAlertSilenceDetailPath(id: number) {
-  return `${alertSilenceEndpoint}/${canonicalAlertSilenceId(id)}`;
+  return `${alertSilenceEndpoint}/${normalizeAlertSilenceIds([id])[0]}`;
 }
 
-function buildAlertSilenceDeletePath(id: number) {
-  return `${alertSilenceCollectionEndpoint}?ids=${canonicalAlertSilenceId(id)}`;
+function buildAlertSilenceDeletePath(ids: readonly number[]) {
+  const params = new URLSearchParams();
+  normalizeAlertSilenceIds(ids).forEach(id => params.append('ids', String(id)));
+  return `${alertSilenceCollectionEndpoint}?${params.toString()}`;
 }
 
 export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
@@ -68,8 +70,7 @@ export async function loadAlertSilence(id: number, signal?: AbortSignal) {
 }
 
 export async function loadMatchedAlertSilences(ids: number[], signal?: AbortSignal) {
-  const canonicalIds = [...new Set(ids.map(canonicalAlertSilenceId))].sort((left, right) => left - right);
-  if (canonicalIds.length === 0) throw new AlertSilenceContractError('matched silence ids must not be empty');
+  const canonicalIds = normalizeAlertSilenceIds(ids);
   const records = await Promise.all(
     canonicalIds.map(async id => {
       try {
@@ -96,18 +97,15 @@ export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> 
 }
 
 export async function deleteAlertSilence(id: number): Promise<void> {
-  const path = buildAlertSilenceDeletePath(id);
+  await deleteAlertSilences([id]);
+}
+
+export async function deleteAlertSilences(ids: readonly number[]): Promise<void> {
+  const path = buildAlertSilenceDeletePath(ids);
   await alertSilenceApiRequest(() => apiMessageDelete(path));
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
   const payload = buildAlertSilenceTogglePayload(silence, enable);
   await alertSilenceApiRequest(() => apiMessagePut(alertSilenceEndpoint, payload));
-}
-
-function canonicalAlertSilenceId(value: unknown) {
-  if (!Number.isSafeInteger(value) || Number(value) <= 0) {
-    throw new AlertSilenceContractError('Alert Silence id must be a positive safe integer');
-  }
-  return Number(value);
 }

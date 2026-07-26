@@ -1572,6 +1572,8 @@
     "updated": "更新時間",
     "delete": "刪除",
     "deleteConfirm": "確認刪除此靜默策略？",
+    "deleteSelected": "刪除所選",
+    "deleteSelectedConfirm": "確認刪除選取的 {{count}} 筆靜默策略？",
     "validation": "請完整填寫名稱、作用範圍、生效日期和有效時間範圍。",
     "loadFailed": "靜默策略載入失敗。",
     "missing": "靜默策略已不存在。",

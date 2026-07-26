@@ -29,11 +29,15 @@ export function AlertSilenceResults({
   evidence,
   query,
   writeLocked,
+  selectedIds,
+  selectIds,
   actions
 }: {
   evidence: AlertSilenceListEvidence;
   query: AlertSilenceQuery;
   writeLocked: boolean;
+  selectedIds: number[];
+  selectIds: (ids: number[]) => void;
   actions: {
     changePage: (page: number, size: number) => void;
     edit: (id: number) => void;
@@ -57,14 +61,24 @@ export function AlertSilenceResults({
       size="small"
       dataSource={evidence.records}
       columns={columns(t, writeLocked, actions)}
+      rowSelection={{
+        selectedRowKeys: selectedIds,
+        getCheckboxProps: () => ({ disabled: writeLocked }),
+        onChange: keys => {
+          if (!writeLocked) selectIds(keys.filter((key): key is number => typeof key === 'number'));
+        }
+      }}
       scroll={{ x: 1310 }}
       pagination={{
         current: query.pageIndex + 1,
         pageSize: query.pageSize,
         pageSizeOptions: [...alertSilencePageSizes],
         showSizeChanger: true,
+        disabled: writeLocked,
         total: evidence.total,
-        onChange: actions.changePage
+        onChange: (page, pageSize) => {
+          if (!writeLocked) actions.changePage(page, pageSize);
+        }
       }}
     />
   );

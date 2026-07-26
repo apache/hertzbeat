@@ -37,6 +37,7 @@ import { normalizeAlertSilenceApiFailure } from '../api/alert-silence-api-failur
 
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
+  deleteAlertSilences: vi.fn(),
   loadAlertSilence: vi.fn(),
   loadAlertSilences: vi.fn(),
   loadMatchedAlertSilences: vi.fn(),
@@ -89,6 +90,7 @@ describe('useAlertSilenceController', () => {
     api.saveAlertSilence.mockResolvedValue(undefined);
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
+    api.deleteAlertSilences.mockResolvedValue(undefined);
   });
   afterEach(() => {
     cleanup();
@@ -412,6 +414,23 @@ describe('useAlertSilenceController', () => {
     });
   });
 
+  it('deletes selected policies in one write and proves every id missing', async () => {
+    api.loadAlertSilences
+      .mockResolvedValueOnce(page([record, { ...record, id: 8 }], 0, 2))
+      .mockResolvedValueOnce(page([], 0, 0));
+    api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    act(() => view.result.current.controller.actions.selectIds([8, 7, 8]));
+    expect(view.result.current.controller.state.selectedIds).toEqual([7, 8]);
+    await act(() => view.result.current.controller.actions.removeMany([8, 7, 8]));
+
+    expect(api.deleteAlertSilences).toHaveBeenCalledWith([7, 8]);
+    expect(api.loadAlertSilence).toHaveBeenCalledWith(7);
+    expect(api.loadAlertSilence).toHaveBeenCalledWith(8);
+  });
+
   it('does not publish a stale write failure after controller unmount', async () => {
     const write = deferred<void>();
     api.saveAlertSilence.mockReturnValue(write.promise);
@@ -567,6 +586,7 @@ describe('useAlertSilenceController', () => {
 
   it('recovers an uncertain delete through exact missing proof without repeating DELETE', async () => {
     api.deleteAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    api.loadAlertSilences.mockResolvedValueOnce(page()).mockResolvedValueOnce(page([], 0, 0));
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
 

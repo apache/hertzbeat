@@ -1593,6 +1593,8 @@
     "updated": "更新日時",
     "delete": "削除",
     "deleteConfirm": "このサイレンスポリシーを削除しますか？",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択したサイレンスポリシー {{count}} 件を削除しますか？",
     "validation": "名前、対象、有効な曜日、有効な時間帯を入力してください。",
     "loadFailed": "サイレンスポリシーを読み込めませんでした。",
     "missing": "サイレンスポリシーは存在しません。",

@@ -35,6 +35,7 @@ import {
 import { alertSilenceQueryKeys } from './alert-silence-query-keys';
 import { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
 import { useAlertSilenceMutations } from './use-alert-silence-mutations';
+import { useAlertSilenceSelection } from './use-alert-silence-selection';
 import type { AlertSilenceProjectionFailure } from './use-alert-silence-operation-gate';
 import {
   fetchAlertSilenceVisibleProjection,
@@ -68,6 +69,11 @@ export function useAlertSilenceController() {
   const detail = useAlertSilenceDetailController(mutations.isActive, mutations.isLocked);
   const draft = alertSilenceDetailDraft(detail.detail);
   const managementActions = createAlertSilenceManagementActions(management, query, setParams, navigate);
+  const list = resolveControllerList(projection, mutations, overflow);
+  const selection = useAlertSilenceSelection(query, list);
+  const selectIds = (ids: number[]) => {
+    if (!mutations.isLocked()) selection.selectIds(ids);
+  };
   return {
     state: {
       query,
@@ -77,13 +83,8 @@ export function useAlertSilenceController() {
       writeLocked: mutations.isLocked(),
       recovery: mutations.recovery,
       refreshing: projection.refreshing,
-      list: resolveListEvidence(
-        mutations.projectionFailure,
-        projection.pending,
-        projection.error,
-        projection.page,
-        overflow
-      ),
+      list,
+      selectedIds: selection.selectedIds,
       management: { context: management, missingCount: projection.missingCount }
     },
     actions: {
@@ -91,6 +92,7 @@ export function useAlertSilenceController() {
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: () => refreshAlertSilences(mutations.recovery?.retryable === true, mutations.retry, rereadList),
+      selectIds,
       create: detail.create,
       edit: detail.edit,
       cancel: detail.cancel,
@@ -99,9 +101,24 @@ export function useAlertSilenceController() {
       save: () => mutations.save(draft, detail.captureCloseCurrentSession()),
       toggle: mutations.toggle,
       remove: mutations.remove,
+      removeMany: mutations.removeMany,
       ...managementActions
     }
   };
+}
+
+function resolveControllerList(
+  projection: ReturnType<typeof useAlertSilenceVisibleProjection>,
+  mutations: ReturnType<typeof useAlertSilenceMutations>,
+  overflow: boolean
+) {
+  return resolveListEvidence(
+    mutations.projectionFailure,
+    projection.pending,
+    projection.error,
+    projection.page,
+    overflow
+  );
 }
 
 function createAlertSilenceProjectionReader(queryClient: ReturnType<typeof useQueryClient>) {

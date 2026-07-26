@@ -1595,6 +1595,8 @@
     "updated": "Atualizada",
     "delete": "Excluir",
     "deleteConfirm": "Excluir esta política de silêncio?",
+    "deleteSelected": "Excluir selecionadas",
+    "deleteSelectedConfirm": "Excluir {{count}} políticas de silêncio selecionadas?",
     "validation": "Preencha o nome, o escopo, os dias ativos e uma janela de tempo válida.",
     "loadFailed": "Não foi possível carregar a política de silêncio.",
     "missing": "A política de silêncio não existe mais.",

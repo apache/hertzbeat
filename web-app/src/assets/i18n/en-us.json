@@ -1591,6 +1591,8 @@
     "updated": "Updated",
     "delete": "Delete",
     "deleteConfirm": "Delete this silence policy?",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm": "Delete {{count}} selected silence policies?",
     "validation": "Complete the name, scope, active days, and a valid time window.",
     "loadFailed": "The silence policy could not be loaded.",
     "missing": "The silence policy no longer exists.",

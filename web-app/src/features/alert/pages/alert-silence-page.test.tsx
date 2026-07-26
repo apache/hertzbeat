@@ -25,6 +25,7 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
+  deleteAlertSilences: vi.fn(),
   loadAlertSilence: vi.fn(),
   loadAlertSilences: vi.fn(),
   loadMatchedAlertSilences: vi.fn(),
@@ -70,6 +71,7 @@ describe('AlertSilencePage', () => {
     api.loadAlertSilence.mockResolvedValue(detailRecord);
     api.saveAlertSilence.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
+    api.deleteAlertSilences.mockResolvedValue(undefined);
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
   });
 
@@ -254,6 +256,24 @@ describe('AlertSilencePage', () => {
     fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
     await waitFor(() => expect(api.deleteAlertSilence).toHaveBeenCalledWith(7));
+  });
+
+  it('selects current-page policies and confirms one batch delete', async () => {
+    const second = { ...record, id: 8, name: 'API maintenance' };
+    api.loadAlertSilences.mockResolvedValue({ content: [record, second], totalElements: 2 });
+    api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
+    renderPage();
+
+    const checkboxes = await screen.findAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]!);
+    fireEvent.click(checkboxes[2]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }));
+    const confirmation = await screen.findByText('Delete 2 selected silence policies?');
+    const popover = confirmation.closest('.ant-popover');
+    if (!(popover instanceof HTMLElement)) throw new Error('Batch deletion confirmation is missing');
+    fireEvent.click(within(popover).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(api.deleteAlertSilences).toHaveBeenCalledWith([7, 8]));
   });
 
   it('does not present missing match counts or enabled state as zero or healthy', async () => {

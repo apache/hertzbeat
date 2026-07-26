@@ -17,6 +17,7 @@
 
 import type { AlertSilenceQuery } from './alert-silence-types';
 import { compactTablePageSizes } from '@/shared/pagination';
+import { AlertSilenceContractError } from './alert-silence-write-model';
 
 import {
   readAlertNoiseControlManagementContext,
@@ -68,6 +69,15 @@ export function alertSilenceFailureKind(error: unknown): AlertSilenceFailure {
 /** Only an explicit HTTP 4xx proves that a write was rejected before commit. */
 export function alertSilenceWriteOutcome(error: unknown): AlertSilenceWriteOutcome {
   return error instanceof AlertSilenceRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
+/** Canonicalizes singular and batch commands before they reach transport. */
+export function normalizeAlertSilenceIds(ids: readonly number[]) {
+  const values = [...new Set(ids)].sort((left, right) => left - right);
+  if (values.length === 0 || values.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertSilenceContractError('Alert Silence ids must be positive safe integers');
+  }
+  return values;
 }
 
 export function readAlertSilenceQuery(params: URLSearchParams): AlertSilenceQuery {

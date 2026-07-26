@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Button, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -39,21 +39,12 @@ export function AlertSilenceView({
   state: AlertSilenceViewState;
   actions: AlertSilenceViewActions;
 }) {
-  const { t } = useTranslation();
   const draft = alertSilenceDetailDraft(state.detail);
   const editorRecovery = draft && isSaveRecovery(state.recovery) ? state.recovery : null;
   const pageRecovery = editorRecovery ? null : state.recovery;
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={state.writeLocked} onClick={actions.create}>
-          {t('alertSilences.new')}
-        </Button>
-      </header>
+      <AlertSilenceHeader state={state} actions={actions} />
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertSilenceManagement state={state} actions={actions} />
@@ -69,6 +60,8 @@ export function AlertSilenceView({
         evidence={state.list}
         query={state.query}
         writeLocked={state.writeLocked}
+        selectedIds={state.selectedIds}
+        selectIds={actions.selectIds}
         actions={actions}
       />
       {draft && (
@@ -85,6 +78,35 @@ export function AlertSilenceView({
         />
       )}
     </div>
+  );
+}
+
+function AlertSilenceHeader({ state, actions }: { state: AlertSilenceViewState; actions: AlertSilenceViewActions }) {
+  const { t } = useTranslation();
+  return (
+    <header className={styles.heading}>
+      <div>
+        <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
+        <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
+      </div>
+      <Space>
+        {state.selectedIds.length > 0 && (
+          <Popconfirm
+            title={t('alertSilences.deleteSelectedConfirm', { count: state.selectedIds.length })}
+            disabled={state.writeLocked}
+            okText={t('common.delete')}
+            onConfirm={() => void actions.removeMany(state.selectedIds)}
+          >
+            <Button danger disabled={state.writeLocked}>
+              {t('alertSilences.deleteSelected')}
+            </Button>
+          </Popconfirm>
+        )}
+        <Button type="primary" disabled={state.writeLocked} onClick={actions.create}>
+          {t('alertSilences.new')}
+        </Button>
+      </Space>
+    </header>
   );
 }
 

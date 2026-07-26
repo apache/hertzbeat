@@ -1572,6 +1572,8 @@
     "updated": "更新时间",
     "delete": "删除",
     "deleteConfirm": "确认删除这条静默策略？",
+    "deleteSelected": "删除所选",
+    "deleteSelectedConfirm": "确认删除选中的 {{count}} 条静默策略？",
     "validation": "请完整填写名称、作用范围、生效日期和有效时间窗口。",
     "loadFailed": "静默策略加载失败。",
     "missing": "静默策略已不存在。",

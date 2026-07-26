@@ -22,6 +22,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 
 import {
   deleteAlertSilence,
+  deleteAlertSilences,
   loadAlertSilence,
   loadAlertSilences,
   loadMatchedAlertSilences,
@@ -70,6 +71,7 @@ describe('alert silence API', () => {
     await saveAlertSilence({ ...draft, id: 7 });
     await updateAlertSilenceEnabled(persisted, false);
     await deleteAlertSilence(7);
+    await deleteAlertSilences([8, 7, 8]);
 
     expect(apiMessageGet).toHaveBeenCalledWith(
       '/api/alert/silences?pageIndex=1&pageSize=15&sort=id&order=desc&search=prod'
@@ -78,7 +80,8 @@ describe('alert silence API', () => {
     expect(apiMessagePost).toHaveBeenCalledWith('/api/alert/silence', expect.objectContaining({ name: 'Maintenance' }));
     expect(apiMessagePut).toHaveBeenCalledWith('/api/alert/silence', expect.objectContaining({ id: 7 }));
     expect(apiMessagePut).toHaveBeenCalledWith('/api/alert/silence', expect.objectContaining({ id: 7, enable: false }));
-    expect(apiMessageDelete).toHaveBeenCalledWith('/api/alert/silences?ids=7');
+    expect(apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/alert/silences?ids=7');
+    expect(apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/alert/silences?ids=7&ids=8');
   });
 
   it('redacts invalid response details and exposes missing detail separately', async () => {
@@ -160,6 +163,7 @@ describe('alert silence API', () => {
     await expect(saveAlertSilence({ ...draft, id: 7 })).resolves.toBeUndefined();
     await expect(updateAlertSilenceEnabled(persisted, false)).resolves.toBeUndefined();
     await expect(deleteAlertSilence(7)).resolves.toBeUndefined();
+    await expect(deleteAlertSilences([8, 7])).resolves.toBeUndefined();
   });
 
   it('allowlists the toggle request without echoing response-only and audit fields', async () => {
@@ -195,6 +199,7 @@ describe('alert silence API', () => {
     for (const id of [0, -1, Number.MAX_SAFE_INTEGER + 1]) {
       await expect(loadAlertSilence(id)).rejects.toBeInstanceOf(AlertSilenceContractError);
       await expect(deleteAlertSilence(id)).rejects.toBeInstanceOf(AlertSilenceContractError);
+      await expect(deleteAlertSilences([7, id])).rejects.toBeInstanceOf(AlertSilenceContractError);
       await expect(saveAlertSilence({ ...draft, id })).rejects.toBeInstanceOf(AlertSilenceContractError);
     }
 

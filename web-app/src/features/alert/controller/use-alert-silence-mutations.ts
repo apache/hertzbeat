@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   deleteAlertSilence,
+  deleteAlertSilences,
   loadAlertSilence,
   saveAlertSilence,
   updateAlertSilenceEnabled
@@ -28,6 +29,7 @@ import {
   AlertSilenceContractError,
   alertSilenceFailureKind,
   buildAlertSilencePayload,
+  normalizeAlertSilenceIds,
   validateAlertSilenceDraft,
   type AlertSilence,
   type AlertSilenceDraft,
@@ -70,19 +72,22 @@ export function useAlertSilenceMutations(
       },
       operationFeedback
     );
-  const remove = (id: number) =>
-    gate.run(
+  const removeMany = (ids: readonly number[]) => {
+    const commandIds = normalizeAlertSilenceIds(ids);
+    return gate.run(
       {
         kind: 'delete',
-        write: () => deleteAlertSilence(id),
-        prove: () => requireMissingSilence(id),
+        write: () => (commandIds.length === 1 ? deleteAlertSilence(commandIds[0]!) : deleteAlertSilences(commandIds)),
+        prove: () => requireMissingSilences(commandIds),
         project: async () => {
-          await rereadList();
+          requireAlertSilencesAbsent(await rereadList(), commandIds);
         }
       },
       operationFeedback
     );
-  return { ...gate, save, toggle, remove };
+  };
+  const remove = (id: number) => removeMany([id]);
+  return { ...gate, save, toggle, remove, removeMany };
 }
 
 function buildSaveOperation(
@@ -120,6 +125,17 @@ async function requireMissingSilence(id: number) {
     throw reason;
   }
   throw new AlertSilenceContractError('Deleted silence still exists');
+}
+
+async function requireMissingSilences(ids: readonly number[]) {
+  await Promise.all(ids.map(requireMissingSilence));
+}
+
+function requireAlertSilencesAbsent(page: AlertSilencePage, ids: readonly number[]) {
+  const deletedIds = new Set(ids);
+  if (page.content.some(record => deletedIds.has(record.id))) {
+    throw new AlertSilenceContractError('Deleted Alert Silence remains in the visible projection');
+  }
 }
 
 function requireCreatedProjection(page: AlertSilencePage, draft: AlertSilenceDraft) {

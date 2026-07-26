@@ -45,6 +45,7 @@ export type AlertSilenceViewState = {
   search: string;
   detail: AlertSilenceDetailState;
   list: AlertSilenceListEvidence;
+  selectedIds: number[];
   busy: boolean;
   writeLocked: boolean;
   recovery: AlertSilenceRecovery | null;
@@ -68,6 +69,8 @@ export type AlertSilenceViewActions = {
   save: () => Promise<void>;
   toggle: (silence: AlertSilence, enabled: boolean) => Promise<void>;
   remove: (id: number) => Promise<void>;
+  removeMany: (ids: readonly number[]) => Promise<void>;
+  selectIds: (ids: number[]) => void;
   viewAllRules: () => void;
   viewMatchedRules: () => void;
   returnToEntity: () => void;
