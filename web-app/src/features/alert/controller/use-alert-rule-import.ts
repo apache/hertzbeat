@@ -6,16 +6,15 @@
  */
 
 import { App } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AlertRuleImportError, importAlertRuleDefinitions } from '../api/alert-rule-import-api';
 import {
   validateAlertRuleImportFile,
-  type AlertRuleImportFailure,
   type AlertRuleImportInvalidKind,
   type AlertRuleImportState
 } from '../model/alert-rule-import-model';
+import { useAlertRuleImportOperation } from './use-alert-rule-import-operation';
 
 export function useAlertRuleImport(reread: () => Promise<unknown>) {
   const { message } = App.useApp();
@@ -78,84 +77,4 @@ export function useAlertRuleImport(reread: () => Promise<unknown>) {
     } satisfies AlertRuleImportState,
     actions: { open, cancel, selectFile, submit, inspect }
   };
-}
-
-function useAlertRuleImportOperation(reread: () => Promise<unknown>) {
-  const { message } = App.useApp();
-  const { t } = useTranslation();
-  const [failure, setFailure] = useState<AlertRuleImportFailure | null>(null);
-  const [busy, setBusy] = useState(false);
-  const active = useRef(false);
-  const request = useRef<AbortController | null>(null);
-  const mounted = useRef(true);
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      request.current?.abort();
-    };
-  }, []);
-
-  const execute = async (file: File) => {
-    if (active.current) return false;
-    const controller = new AbortController();
-    active.current = true;
-    request.current = controller;
-    setBusy(true);
-    setFailure(null);
-    try {
-      await importAlertRuleDefinitions(file, controller.signal);
-      if (!mounted.current) return false;
-      try {
-        await reread();
-      } catch {
-        if (mounted.current) void message.warning(t('alertRules.import.refreshFailure'));
-      }
-      return true;
-    } catch (error) {
-      if (mounted.current) setFailure(importFailure(error));
-      return false;
-    } finally {
-      if (request.current === controller) {
-        active.current = false;
-        request.current = null;
-      }
-      if (mounted.current) setBusy(false);
-    }
-  };
-
-  const inspect = async () => {
-    if (active.current || failure?.outcome !== 'uncertain') return false;
-    active.current = true;
-    setBusy(true);
-    try {
-      await reread();
-      if (!mounted.current) return false;
-      setFailure(null);
-      return true;
-    } catch {
-      if (mounted.current) void message.warning(t('alertRules.import.refreshFailure'));
-      return false;
-    } finally {
-      active.current = false;
-      if (mounted.current) setBusy(false);
-    }
-  };
-
-  return {
-    busy,
-    failure,
-    inspectionRequired: failure?.outcome === 'uncertain',
-    clearRejectedFailure: () => {
-      if (failure?.outcome !== 'uncertain') setFailure(null);
-    },
-    execute,
-    inspect
-  };
-}
-
-function importFailure(error: unknown): AlertRuleImportFailure {
-  if (error instanceof AlertRuleImportError) return { kind: error.kind, outcome: error.outcome };
-  return { kind: 'error', outcome: 'uncertain' };
 }

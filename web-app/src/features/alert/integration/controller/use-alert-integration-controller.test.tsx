@@ -26,7 +26,7 @@ describe('useAlertIntegrationController', () => {
 
     act(() => void result.current.actions.selectSource('prometheus'));
     await waitFor(() => expect(result.current.source?.id).toBe('prometheus'));
-    expect(result.current.contract?.endpoint).toBe(`${window.location.origin}/api/alerts/report/prometheus`);
+    expect(result.current.contract?.endpoint).toBe(`${window.location.origin}/api/v2/alerts`);
     expect(result.current.copyState).toBeNull();
   });
 

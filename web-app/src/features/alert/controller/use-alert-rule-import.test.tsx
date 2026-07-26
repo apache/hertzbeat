@@ -118,6 +118,26 @@ describe('Alert Rule import controller', () => {
     expect(api.importAlertRuleDefinitions).toHaveBeenCalledTimes(1);
   });
 
+  it('aborts the active import and never rereads after ownership unmounts', async () => {
+    let signal: AbortSignal | undefined;
+    api.importAlertRuleDefinitions.mockImplementation((_file: File, currentSignal: AbortSignal) => {
+      signal = currentSignal;
+      return new Promise(() => undefined);
+    });
+    const reread = vi.fn();
+    const view = renderHook(() => useAlertRuleImport(reread));
+
+    act(() => view.result.current.actions.open());
+    act(() => view.result.current.actions.selectFile(new File(['[]'], 'rules.json')));
+    act(() => void view.result.current.actions.submit());
+    expect(signal).toBeInstanceOf(AbortSignal);
+
+    view.unmount();
+
+    expect(signal?.aborted).toBe(true);
+    expect(reread).not.toHaveBeenCalled();
+  });
+
   it('keeps a successful import closed when the supplemental reread fails', async () => {
     const reread = vi.fn().mockRejectedValue(new Error('offline'));
     const view = renderHook(() => useAlertRuleImport(reread));

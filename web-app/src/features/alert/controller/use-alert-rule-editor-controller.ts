@@ -1,34 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { skipToken, useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-
-import { alertRoutePaths } from '@/shared/navigation/app-paths';
-
-import { loadAlertRule } from '../api/alert-rule-api';
-import {
-  alertRuleFailureKind,
-  alertRuleDraftFromDetail,
-  buildAlertRuleStrategyPatch,
-  createAlertRuleDraft,
-  firstSupportedPeriodicDataType,
-  isAlertRuleStrategySupported,
-  synchronizeMetricAlertDraftPatch,
-  type AlertRuleDataType,
-  type AlertRuleDraft,
-  type AlertRuleKind
-} from '../model/alert-rule-model';
+import { synchronizeMetricAlertDraftPatch, type AlertRuleDraft } from '../model/alert-rule-model';
+import { createAlertRuleStrategyCommands } from './alert-rule-editor-strategy-commands';
 import { createAlertRuleMetricEditorCommands } from './alert-rule-metric-editor-commands';
-import {
-  freshAlertRuleRouteState,
-  type AlertRuleEditorDetailState,
-  type AlertRuleRouteState
-} from './alert-rule-editor-state';
-import { alertRuleQueryKeys } from './alert-rule-query-keys';
+import type { AlertRuleRouteState } from './alert-rule-editor-state';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
 import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
-import { useAlertRuleEditorIdentity } from './use-alert-rule-editor-identity';
+import { useAlertRuleEditorRoute } from './use-alert-rule-editor-route';
 import { useAlertRuleMetricBindingController } from './use-alert-rule-metric-binding-controller';
 import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
@@ -41,85 +19,36 @@ export type {
 } from './alert-rule-editor-state';
 
 export function useAlertRuleEditorController(mode: 'new' | 'edit') {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { ruleId = '' } = useParams();
-  const validId = canonicalId(ruleId);
-  const routeSource = `${mode}:${ruleId}:${location.key}`;
-  const routeToken = useMemo(() => Symbol(routeSource), [routeSource]);
-  const identity = useAlertRuleEditorIdentity(routeToken);
+  const route = useAlertRuleEditorRoute(mode);
   const datasource = useAlertRuleDatasourceController();
-  const initialDraft = useMemo(() => (mode === 'new' ? createAlertRuleDraft() : null), [mode]);
-  const [routeState, setRouteState] = useState<AlertRuleRouteState>(() =>
-    freshAlertRuleRouteState(routeSource, routeToken, initialDraft)
-  );
-  const detailQuery = useAlertRuleDetail(mode, validId);
-  const canonicalDraft = resolveCanonicalDraft(mode, initialDraft, detailQuery.data);
-  const active =
-    routeState.source === routeSource && routeState.token === routeToken
-      ? routeState
-      : freshAlertRuleRouteState(routeSource, routeToken, canonicalDraft);
-  const draft = active.draft ?? canonicalDraft;
+  const draft = route.draft;
   const metricTarget = useAlertRuleMetricTargetController(draft);
-  const updateRoute = (patch: Partial<AlertRuleRouteState>) =>
-    setRouteState(current => {
-      const base =
-        current.source === routeSource && current.token === routeToken
-          ? current
-          : freshAlertRuleRouteState(routeSource, routeToken, draft);
-      return { ...base, ...patch };
-    });
-  const command = useAlertRuleCommandController(mode, draft, identity, updateRoute);
-  const preview = useAlertRulePreviewController(draft, identity, updateRoute);
+  const command = useAlertRuleCommandController(mode, draft, route.identity, route.updateRoute);
+  const preview = useAlertRulePreviewController(draft, route.identity, route.updateRoute);
   const updateDraft = (patch: Partial<AlertRuleDraft>) => {
     if (!draft || command.isLocked()) return;
-    identity.invalidate();
+    route.identity.invalidate();
     preview.invalidate();
-    updateRoute(updatedDraftState(draft, patch));
+    route.updateRoute(updatedDraftState(draft, patch));
   };
-  const changeKind = (kind: AlertRuleKind) => {
-    if (!draft) return;
-    if (kind === 'realtime') {
-      const dataType = draft.dataType === 'trace' ? 'metric' : draft.dataType;
-      updateDraft(buildAlertRuleStrategyPatch(draft, kind, dataType));
-      return;
-    }
-    if (datasource.state.kind !== 'ready') return;
-    const dataType = isAlertRuleStrategySupported(datasource.state.status, kind, draft.dataType)
-      ? draft.dataType
-      : firstSupportedPeriodicDataType(datasource.state.status);
-    if (dataType) updateDraft(buildAlertRuleStrategyPatch(draft, kind, dataType));
-  };
-  const changeDataType = (dataType: AlertRuleDataType) => {
-    if (!draft) return;
-    if (draft.kind === 'realtime') {
-      if (dataType !== 'trace') updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
-      return;
-    }
-    if (
-      datasource.state.kind === 'ready' &&
-      isAlertRuleStrategySupported(datasource.state.status, draft.kind, dataType)
-    ) {
-      updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
-    }
-  };
+  const strategy = createAlertRuleStrategyCommands(draft, datasource.state, updateDraft);
   const metricEditor = createAlertRuleMetricEditorCommands(draft, metricTarget.state, updateDraft);
   const metricBindings = useAlertRuleMetricBindingController(draft, metricTarget.state, updateDraft);
   return {
     state: {
-      command: active.command,
+      command: route.active.command,
       datasource: datasource.state,
-      detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
+      detail: route.detail,
       draft,
       metricBindings: metricBindings.state,
       metricTarget: metricTarget.state,
-      preview: active.preview,
-      saveFailure: active.saveFailure,
-      recovery: active.recovery
+      preview: route.active.preview,
+      saveFailure: route.active.saveFailure,
+      recovery: route.active.recovery
     },
     updateDraft,
-    changeDataType,
-    changeKind,
+    changeDataType: strategy.changeDataType,
+    changeKind: strategy.changeKind,
     ...metricEditor,
     openMetricBindings: metricBindings.open,
     cancelMetricBindings: metricBindings.cancel,
@@ -130,14 +59,11 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     preview: preview.preview,
     save: command.save,
     retrySave: command.retry,
-    retryDetail: () =>
-      mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
+    retryDetail: route.retryDetail,
     retryDatasource: datasource.retry,
     retryMetricTargetApps: metricTarget.retryApps,
     retryMetricTargetHierarchy: metricTarget.retryHierarchy,
-    cancel: () => {
-      void navigate(alertRoutePaths.rules);
-    }
+    cancel: route.cancel
   };
 }
 
@@ -148,42 +74,4 @@ function updatedDraftState(draft: AlertRuleDraft, patch: Partial<AlertRuleDraft>
     saveFailure: undefined,
     recovery: undefined
   };
-}
-
-function resolveCanonicalDraft(
-  mode: 'new' | 'edit',
-  initialDraft: AlertRuleDraft | null,
-  detail: Parameters<typeof alertRuleDraftFromDetail>[0] | undefined
-) {
-  if (mode === 'new') return initialDraft;
-  return detail ? alertRuleDraftFromDetail(detail) : null;
-}
-
-function useAlertRuleDetail(mode: 'new' | 'edit', validId: number | null) {
-  const detailId = mode === 'edit' ? validId : null;
-  return useQuery({
-    queryKey: alertRuleQueryKeys.detail(detailId),
-    queryFn: detailId === null ? skipToken : ({ signal }) => loadAlertRule(detailId, signal),
-    retry: false
-  });
-}
-
-function resolveDetail(
-  mode: 'new' | 'edit',
-  id: number | null,
-  pending: boolean,
-  error: Error | null,
-  draft: AlertRuleDraft | null
-): AlertRuleEditorDetailState {
-  if (mode === 'new') return draft ? { kind: 'ready' } : { kind: 'error' };
-  if (id === null) return { kind: 'error' };
-  if (pending) return { kind: 'loading' };
-  if (error) return { kind: alertRuleFailureKind(error) };
-  return draft ? { kind: 'ready' } : { kind: 'loading' };
-}
-
-function canonicalId(value: string) {
-  if (!/^[1-9]\d*$/.test(value)) return null;
-  const id = Number(value);
-  return Number.isSafeInteger(id) ? id : null;
 }
