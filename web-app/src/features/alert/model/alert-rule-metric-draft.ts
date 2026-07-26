@@ -8,6 +8,7 @@
 import {
   parseMetricAlertCondition,
   serializeCompleteMetricAlertCondition,
+  type MetricAlertConditionGroup,
   type MetricAlertField
 } from './alert-rule-condition';
 import type { AlertRuleDraft, MetricAlertAuthoring, MetricAlertEditorDraft } from './alert-rule-draft-contract';

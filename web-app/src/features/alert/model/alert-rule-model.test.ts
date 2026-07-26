@@ -98,6 +98,13 @@ describe('alert rule model', () => {
     });
   });
 
+  it('maps persisted strategy types without adding metric editor state to non-realtime-metric drafts', () => {
+    const periodic = alertRuleDraftFromDetail({ ...persisted, type: 'periodic_trace', datasource: 'sql' });
+
+    expect(periodic).toMatchObject({ kind: 'periodic', dataType: 'trace' });
+    expect(Object.hasOwn(periodic, 'metricEditor')).toBe(false);
+  });
+
   it('preserves Java-nullable thresholds and text through an unrelated realtime edit', () => {
     const nullable: AlertRule = {
       ...persisted,

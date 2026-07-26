@@ -9,6 +9,7 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { hasUnsafeAlertRuleSourceCharacter } from './alert-rule-source-safety';
 import { AlertRuleContractError } from './alert-rule-types';
 
 export type RealtimeMetricTarget =
@@ -215,7 +216,7 @@ function bindingClause(items: string[]) {
 
 function reservedValue(value: string, field: string) {
   const normalized = value.trim();
-  if (!normalized || /["\\\u0000-\u001f]/.test(normalized)) throw contract(`${field} is invalid`);
+  if (!normalized || hasUnsafeAlertRuleSourceCharacter(normalized)) throw contract(`${field} is invalid`);
   return normalized;
 }
 

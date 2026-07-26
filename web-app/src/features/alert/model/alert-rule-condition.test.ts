@@ -83,6 +83,19 @@ describe('metric alert structured condition', () => {
     ).toBe('equals(status, " DOWN ")');
   });
 
+  it('rejects control characters that cannot be represented in quoted condition source', () => {
+    expect(() =>
+      serializeMetricAlertCondition(
+        {
+          kind: 'group',
+          join: 'and',
+          items: [{ kind: 'condition', field: 'status', operator: 'equals', value: `DOWN${String.fromCharCode(0)}NOW` }]
+        },
+        fields
+      )
+    ).toThrow(AlertRuleContractError);
+  });
+
   it('enforces the retired editor depth and per-group rule limits', () => {
     const tooDeep: MetricAlertConditionGroup = {
       kind: 'group',

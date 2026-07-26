@@ -32,13 +32,14 @@ function useAlertRuleImportCommandContext(reread: () => Promise<unknown>) {
   const [failure, setFailure] = useState<AlertRuleImportFailure | null>(null);
   const [busy, setBusy] = useState(false);
   const active = useRef(false);
-  const request = useRef<AbortController | null>(null);
+  const request = useRef<{ controller: AbortController | null }>({ controller: null });
   const mounted = useRef(true);
   useEffect(() => {
+    const requestOwner = request.current;
     mounted.current = true;
     return () => {
       mounted.current = false;
-      request.current?.abort();
+      requestOwner.controller?.abort();
     };
   }, []);
   return { active, busy, failure, message, mounted, reread, request, setBusy, setFailure, t };
@@ -50,7 +51,7 @@ async function executeAlertRuleImport(file: File, context: AlertRuleImportComman
   if (context.active.current) return false;
   const controller = new AbortController();
   context.active.current = true;
-  context.request.current = controller;
+  context.request.current.controller = controller;
   context.setBusy(true);
   context.setFailure(null);
   try {
@@ -66,9 +67,9 @@ async function executeAlertRuleImport(file: File, context: AlertRuleImportComman
     if (context.mounted.current) context.setFailure(importFailure(error));
     return false;
   } finally {
-    if (context.request.current === controller) {
+    if (context.request.current.controller === controller) {
       context.active.current = false;
-      context.request.current = null;
+      context.request.current.controller = null;
     }
     if (context.mounted.current) context.setBusy(false);
   }

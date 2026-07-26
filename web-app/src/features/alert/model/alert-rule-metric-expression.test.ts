@@ -92,6 +92,14 @@ describe('realtime metric alert expression', () => {
     ).toThrow(AlertRuleContractError);
     expect(() =>
       buildRealtimeMetricExpression({
+        target: { kind: 'metric', app: `spring${String.fromCharCode(31)}boot`, metric: 'summary' },
+        monitorIds: [],
+        monitorLabels: [],
+        condition: 'responseTime > 100'
+      })
+    ).toThrow(AlertRuleContractError);
+    expect(() =>
+      buildRealtimeMetricExpression({
         target: { kind: 'metric', app: 'springboot', metric: 'summary' },
         monitorIds: [0],
         monitorLabels: [],

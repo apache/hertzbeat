@@ -103,7 +103,7 @@ describe('Alert Rule import controller', () => {
     expect(view.result.current.state.draft).toBeNull();
   });
 
-  it('admits only one import while React is still publishing busy state', async () => {
+  it('admits only one import while React is still publishing busy state', () => {
     api.importAlertRuleDefinitions.mockImplementation(() => new Promise(() => undefined));
     const view = renderHook(() => useAlertRuleImport(vi.fn()));
     const file = new File(['[]'], 'rules.json');
@@ -118,7 +118,7 @@ describe('Alert Rule import controller', () => {
     expect(api.importAlertRuleDefinitions).toHaveBeenCalledTimes(1);
   });
 
-  it('aborts the active import and never rereads after ownership unmounts', async () => {
+  it('aborts the active import and never rereads after ownership unmounts', () => {
     let signal: AbortSignal | undefined;
     api.importAlertRuleDefinitions.mockImplementation((_file: File, currentSignal: AbortSignal) => {
       signal = currentSignal;

@@ -18,11 +18,7 @@ import {
 } from '@/features/monitor';
 
 import { parseRealtimeMetricExpression, type AlertRuleDraft } from '../model/alert-rule-model';
-import type {
-  AlertRuleMetricTargetState,
-  TargetApplicationsState,
-  TargetHierarchyState
-} from '../model/alert-rule-metric-target-state';
+import type { TargetApplicationsState, TargetHierarchyState } from '../model/alert-rule-metric-target-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 type TargetFailure = 'unavailable' | 'error';

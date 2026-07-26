@@ -235,7 +235,7 @@ describe('metric alert draft transitions', () => {
       metricEditor: { monitorIds: [7], monitorLabels: ['team:ops'], authoring: { mode: 'structured' } }
     });
     expect(() => buildMetricAlertBindingsPatch(targetDraft, [0], [], fields)).toThrow();
-    expect(() => buildMetricAlertBindingsPatch(targetDraft, [], ['bad\"label'], fields)).toThrow();
+    expect(() => buildMetricAlertBindingsPatch(targetDraft, [], ['bad"label'], fields)).toThrow();
   });
 
   it('composes availability bindings without inventing a threshold', () => {
@@ -272,6 +272,7 @@ describe('metric alert draft transitions', () => {
         authoring: { mode: 'expert', condition: 'usage > 90' }
       }
     });
+    if (!draft.metricEditor) throw new Error('expected persisted metric editor');
     expect(
       synchronizeMetricAlertDraftPatch(draft, {
         expr: '',

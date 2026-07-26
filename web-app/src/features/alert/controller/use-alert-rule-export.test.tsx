@@ -43,7 +43,7 @@ describe('Alert Rule export controller', () => {
     expect(notify.success).toHaveBeenCalledWith('alertRules.export.success');
   });
 
-  it('admits only one export and aborts it when the controller unmounts', async () => {
+  it('admits only one export and aborts it when the controller unmounts', () => {
     let observedSignal: AbortSignal | undefined;
     api.requestAlertRuleExport.mockImplementation((_ids, _format, signal) => {
       observedSignal = signal;

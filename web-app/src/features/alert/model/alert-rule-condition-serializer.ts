@@ -12,6 +12,7 @@ import type {
   MetricAlertField,
   MetricAlertNumericOperator
 } from './alert-rule-condition-contract';
+import { hasUnsafeAlertRuleSourceCharacter } from './alert-rule-source-safety';
 import { AlertRuleContractError } from './alert-rule-types';
 
 type OperatorsForType = (type: number) => readonly MetricAlertConditionOperator[];
@@ -74,7 +75,7 @@ function serializeCondition(
 }
 
 function safeStringValue(value: string) {
-  if (!value || /["\\\u0000-\u001f]/.test(value)) throw contract('string condition value is invalid');
+  if (!value || hasUnsafeAlertRuleSourceCharacter(value)) throw contract('string condition value is invalid');
   return value;
 }
 

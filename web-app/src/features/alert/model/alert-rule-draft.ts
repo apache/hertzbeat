@@ -4,13 +4,23 @@ import {
   AlertRuleContractError,
   alertRuleTypes,
   type AlertRule,
+  type AlertRuleDataType,
   type AlertRuleDatasource,
+  type AlertRuleKind,
   type AlertRuleType
 } from './alert-rule-types';
 import type { AlertRuleDraft } from './alert-rule-draft-contract';
 import { createMetricAlertEditorDraft, metricAlertEditorFromExpression } from './alert-rule-metric-draft';
 
 export type { AlertRuleDraft } from './alert-rule-draft-contract';
+
+const strategyForType: Record<AlertRuleType, { kind: AlertRuleKind; dataType: AlertRuleDataType }> = {
+  realtime_metric: { kind: 'realtime', dataType: 'metric' },
+  periodic_metric: { kind: 'periodic', dataType: 'metric' },
+  realtime_log: { kind: 'realtime', dataType: 'log' },
+  periodic_log: { kind: 'periodic', dataType: 'log' },
+  periodic_trace: { kind: 'periodic', dataType: 'trace' }
+};
 
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {
@@ -86,7 +96,7 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
 
 export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
   const resolvedType = rule.type ?? 'realtime_metric';
-  const [kind, dataType] = resolvedType.split('_') as [AlertRuleKind, AlertRuleDataType];
+  const { kind, dataType } = strategyForType[resolvedType];
   return {
     id: rule.id,
     name: rule.name,
@@ -101,7 +111,7 @@ export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
     enable: rule.enable,
     period: rule.period,
     times: rule.times,
-    metricEditor: resolvedType === 'realtime_metric' ? metricAlertEditorFromExpression(rule.expr ?? '') : undefined,
+    ...(resolvedType === 'realtime_metric' ? { metricEditor: metricAlertEditorFromExpression(rule.expr ?? '') } : {}),
     persisted: {
       type: rule.type,
       datasource: rule.datasource,

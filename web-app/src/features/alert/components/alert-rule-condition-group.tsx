@@ -40,9 +40,7 @@ export function AlertRuleConditionGroup(props: ConditionGroupProps) {
             value,
             label: t(`alertRules.metricCondition.${value}`)
           }))}
-          onChange={join =>
-            props.change(updateMetricAlertConditionGroupJoin(props.root, props.path, join as 'and' | 'or'))
-          }
+          onChange={join => props.change(updateMetricAlertConditionGroupJoin(props.root, props.path, join))}
         />
         <Button
           aria-label={t('alertRules.metricCondition.addCondition')}
