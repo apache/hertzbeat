@@ -26,6 +26,7 @@ import {
   AlertRuleMissingError,
   AlertRuleRequestFailure,
   type AlertRule,
+  periodicLogStarterExpression,
   type AlertRuleQuery
 } from '../model/alert-rule-model';
 import { useAlertRuleEditorController } from './use-alert-rule-editor-controller';
@@ -146,12 +147,17 @@ describe('Alert Rule editor controller', () => {
     await waitFor(() => expect(result.current.state.datasource.kind).toBe('ready'));
 
     act(() => result.current.changeKind('periodic'));
-    expect(result.current.state.draft).toMatchObject({ kind: 'periodic', dataType: 'log' });
+    expect(result.current.state.draft).toMatchObject({
+      kind: 'periodic',
+      dataType: 'log',
+      expr: periodicLogStarterExpression
+    });
 
+    act(() => result.current.updateDraft({ expr: 'SELECT count(*) FROM custom_logs' }));
     act(() => result.current.changeDataType('metric'));
     expect(result.current.state.draft?.dataType).toBe('log');
     act(() => result.current.changeDataType('trace'));
-    expect(result.current.state.draft?.dataType).toBe('trace');
+    expect(result.current.state.draft).toMatchObject({ dataType: 'trace', expr: '' });
   });
 
   it('keeps datasource read failure distinct and retries only that read', async () => {

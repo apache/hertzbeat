@@ -32,8 +32,13 @@ export type AlertRuleDraft = {
   enable: boolean;
   period: number | null;
   times: number | null;
+  /** Transient editor evidence; explicit payload builders never serialize it. */
+  strategyChanged?: boolean;
   persisted?: AlertRuleWritableSnapshot;
 };
+
+export const periodicLogStarterExpression =
+  "SELECT count(*) AS errorCount FROM hertzbeat_logs WHERE time_unix_nano >= NOW() - INTERVAL '30 second' AND severity_text = 'ERROR' HAVING count(*) > 2";
 
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {
@@ -59,7 +64,7 @@ export function buildAlertRulePayload(draft: AlertRuleDraft) {
     name: draft.name.trim(),
     type: preserveNullStrategy(draft, selectedType),
     datasource: resolveDatasource(draft, selectedType),
-    expr: resolveNullableText(draft.expr, draft.persisted?.expr),
+    expr: resolveNullableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr),
     period: draft.period,
     times: draft.times,
     labels: resolveLabels(draft),
@@ -95,7 +100,8 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
   const invalid: Array<'name' | 'type' | 'expr' | 'template' | 'labels' | 'annotations' | 'period' | 'times'> = [];
   if (!validBoundedText(draft.name, 100)) invalid.push('name');
   if (!validDraftType(draft)) invalid.push('type');
-  if (!validWritableText(draft.expr, draft.persisted?.expr, 2048)) invalid.push('expr');
+  if (!validWritableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr, 2048))
+    invalid.push('expr');
   if (!validWritableText(draft.template, draft.persisted?.template, 2048)) invalid.push('template');
   if (!tryParseLabels(draft.labelsText)) invalid.push('labels');
   if (!validNullableMap(draft.annotations)) invalid.push('annotations');
@@ -133,6 +139,25 @@ export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
   };
 }
 
+/**
+ * Retires expressions when the operator crosses evaluation grammars. The
+ * previous persisted strategy can no longer justify nullable or stale input.
+ */
+export function buildAlertRuleStrategyPatch(
+  draft: AlertRuleDraft,
+  kind: AlertRuleKind,
+  dataType: AlertRuleDataType
+): Partial<AlertRuleDraft> {
+  if (draft.kind === kind && draft.dataType === dataType) return {};
+  return {
+    kind,
+    dataType,
+    expr: kind === 'periodic' && dataType === 'log' ? periodicLogStarterExpression : '',
+    period: kind === 'periodic' ? (draft.period ?? 300) : draft.period,
+    strategyChanged: true
+  };
+}
+
 function typeForDraft(draft: AlertRuleDraft): AlertRuleType {
   const value = `${draft.kind}_${draft.dataType}`;
   if (!alertRuleTypes.includes(value as AlertRuleType)) throw contract('unsupported alert rule strategy');
@@ -145,13 +170,13 @@ function datasourceFor(type: AlertRuleType): AlertRuleDatasource {
 
 function preserveNullStrategy(draft: AlertRuleDraft, selected: AlertRuleType) {
   // Preserve a legacy null strategy until the operator changes the visible strategy.
-  return draft.persisted?.type === null && selected === 'realtime_metric' ? null : selected;
+  return !draft.strategyChanged && draft.persisted?.type === null && selected === 'realtime_metric' ? null : selected;
 }
 
 function resolveDatasource(draft: AlertRuleDraft, selected: AlertRuleType) {
   // Datasource is persistence evidence and changes only with the visible strategy.
   const displayedOriginal = draft.persisted?.type ?? 'realtime_metric';
-  if (draft.persisted && selected === displayedOriginal) return draft.persisted.datasource;
+  if (!draft.strategyChanged && draft.persisted && selected === displayedOriginal) return draft.persisted.datasource;
   return datasourceFor(selected);
 }
 

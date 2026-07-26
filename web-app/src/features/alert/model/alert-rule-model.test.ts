@@ -24,10 +24,12 @@ import {
   AlertRuleMissingError,
   AlertRuleRequestFailure,
   alertRuleWriteOutcome,
+  buildAlertRuleStrategyPatch,
   buildAlertRulePayload,
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
+  periodicLogStarterExpression,
   readAlertRuleQuery,
   validateAlertRuleDraft,
   writeAlertRuleQuery,
@@ -180,6 +182,46 @@ describe('alert rule model', () => {
     expect(firstSupportedPeriodicDataType(promqlOnly)).toBe('metric');
     expect(firstSupportedPeriodicDataType(sqlOnly)).toBe('log');
     expect(firstSupportedPeriodicDataType(none)).toBeNull();
+  });
+
+  it('retires incompatible expressions when the evaluation grammar changes', () => {
+    const draft = { ...createAlertRuleDraft(), expr: 'usage > 90', period: null };
+
+    expect(buildAlertRuleStrategyPatch(draft, 'periodic', 'log')).toEqual({
+      kind: 'periodic',
+      dataType: 'log',
+      expr: periodicLogStarterExpression,
+      period: 300,
+      strategyChanged: true
+    });
+    expect(buildAlertRuleStrategyPatch({ ...draft, kind: 'periodic', dataType: 'log' }, 'periodic', 'trace')).toEqual({
+      kind: 'periodic',
+      dataType: 'trace',
+      expr: '',
+      period: 300,
+      strategyChanged: true
+    });
+  });
+
+  it('does not revive nullable persisted expression evidence after a strategy change', () => {
+    const nullable = alertRuleDraftFromDetail({
+      ...persisted,
+      type: null,
+      datasource: null,
+      expr: null
+    });
+    const changed = {
+      ...nullable,
+      ...buildAlertRuleStrategyPatch(nullable, 'periodic', 'metric')
+    };
+    const changedBack = {
+      ...changed,
+      ...buildAlertRuleStrategyPatch(changed, 'realtime', 'metric')
+    };
+
+    expect(validateAlertRuleDraft(changed)).toContain('expr');
+    expect(validateAlertRuleDraft(changedBack)).toContain('expr');
+    expect(() => buildAlertRulePayload(changedBack)).toThrow(AlertRuleContractError);
   });
 
   it('classifies stable read failures without transport evidence', () => {

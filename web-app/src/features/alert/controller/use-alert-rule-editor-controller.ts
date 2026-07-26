@@ -10,6 +10,7 @@ import { loadAlertRule } from '../api/alert-rule-api';
 import {
   alertRuleFailureKind,
   alertRuleDraftFromDetail,
+  buildAlertRuleStrategyPatch,
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
@@ -75,26 +76,27 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const changeKind = (kind: AlertRuleKind) => {
     if (!draft) return;
     if (kind === 'realtime') {
-      updateDraft({ kind, dataType: draft.dataType === 'trace' ? 'metric' : draft.dataType });
+      const dataType = draft.dataType === 'trace' ? 'metric' : draft.dataType;
+      updateDraft(buildAlertRuleStrategyPatch(draft, kind, dataType));
       return;
     }
     if (datasource.state.kind !== 'ready') return;
     const dataType = isAlertRuleStrategySupported(datasource.state.status, kind, draft.dataType)
       ? draft.dataType
       : firstSupportedPeriodicDataType(datasource.state.status);
-    if (dataType) updateDraft({ kind, dataType });
+    if (dataType) updateDraft(buildAlertRuleStrategyPatch(draft, kind, dataType));
   };
   const changeDataType = (dataType: AlertRuleDataType) => {
     if (!draft) return;
     if (draft.kind === 'realtime') {
-      if (dataType !== 'trace') updateDraft({ dataType });
+      if (dataType !== 'trace') updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
       return;
     }
     if (
       datasource.state.kind === 'ready' &&
       isAlertRuleStrategySupported(datasource.state.status, draft.kind, dataType)
     ) {
-      updateDraft({ dataType });
+      updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
     }
   };
   return {
