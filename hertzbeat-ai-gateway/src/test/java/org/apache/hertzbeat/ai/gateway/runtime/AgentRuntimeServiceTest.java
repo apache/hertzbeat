@@ -223,7 +223,7 @@ class AgentRuntimeServiceTest {
     private static final class EmptyToolExecutionOrchestrator extends AgentToolExecutionOrchestrator {
 
         private EmptyToolExecutionOrchestrator() {
-            super(new AgentToolRegistry(), null, null, null, null);
+            super(new AgentToolRegistry(), null, null, null);
         }
 
         @Override

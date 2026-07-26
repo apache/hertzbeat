@@ -44,7 +44,6 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingle
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -65,9 +64,6 @@ class WebUiControllerTest {
 
     @Mock
     private GatewayCommandRouter commandRouter;
-
-    @Mock
-    private AgentMonitorSensitiveParamService sensitiveParamService;
 
     @Mock
     private AgentInteractionInputService interactionInputService;
@@ -169,7 +165,7 @@ class WebUiControllerTest {
     }
 
     private WebUiController controller() {
-        return new WebUiController(commandRouter, sensitiveParamService, interactionInputService);
+        return new WebUiController(commandRouter, interactionInputService);
     }
 
     private void bindSubject() {

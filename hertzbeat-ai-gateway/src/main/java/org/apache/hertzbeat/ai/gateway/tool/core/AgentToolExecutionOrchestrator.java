@@ -22,7 +22,6 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredTool;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -39,17 +38,14 @@ public class AgentToolExecutionOrchestrator {
     private final AgentToolRegistry registry;
     private final AgentPolicyService policyService;
     private final AgentToolCallLedgerService toolCallLedgerService;
-    private final AgentMonitorSensitiveParamService sensitiveParamService;
     private final AgentInteractionInputService interactionInputService;
 
     public AgentToolExecutionOrchestrator(AgentToolRegistry registry, AgentPolicyService policyService,
                                            AgentToolCallLedgerService toolCallLedgerService,
-                                           AgentMonitorSensitiveParamService sensitiveParamService,
                                            AgentInteractionInputService interactionInputService) {
         this.registry = registry;
         this.policyService = policyService;
         this.toolCallLedgerService = toolCallLedgerService;
-        this.sensitiveParamService = sensitiveParamService;
         this.interactionInputService = interactionInputService;
     }
 
@@ -86,8 +82,8 @@ public class AgentToolExecutionOrchestrator {
 
     private PreparedToolExecution prepareExecution(AgentToolExecutionRequest request) {
         // This public boundary must fail before creating ledger rows or invoking handlers with incomplete context.
-        AgentToolExecutionRequest requiredRequest = sensitiveParamService.removeSensitiveArguments(
-                Objects.requireNonNull(request, "Agent tool execution request is required"));
+        AgentToolExecutionRequest requiredRequest =
+                Objects.requireNonNull(request, "Agent tool execution request is required");
         requiredRequest = interactionInputService.validateReference(requiredRequest);
         String toolName = requiredRequest.getToolName();
         RegisteredTool handler = registry.find(toolName)
@@ -140,8 +136,7 @@ public class AgentToolExecutionOrchestrator {
     private AgentToolExecutionResult executeApprovedHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
         AgentToolCall toolCall = toolCallLedgerService.recordApprovedToolResumed(execution.request(),
             execution.descriptor(), policy);
-        AgentToolExecutionRequest request = sensitiveParamService.mergeAndTake(execution.request());
-        request = interactionInputService.mergeAndTake(request);
+        AgentToolExecutionRequest request = interactionInputService.mergeAndTake(execution.request());
         return executeRecordedHandler(new PreparedToolExecution(request, execution.handler(), execution.descriptor()),
                 toolCall);
     }

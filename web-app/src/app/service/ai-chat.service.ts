@@ -150,10 +150,8 @@ export class AiChatService {
     return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/runs/${encodeURIComponent(runUid)}/stop`, {});
   }
 
-  approve(approvalId: string, sensitiveParams: Record<string, unknown> = {}): Observable<Message<GatewayResponse>> {
-    return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/approvals/${encodeURIComponent(approvalId)}/approve`, {
-      sensitiveParams
-    });
+  approve(approvalId: string): Observable<Message<GatewayResponse>> {
+    return this.http.post<Message<GatewayResponse>>(`${this.agentUri}/approvals/${encodeURIComponent(approvalId)}/approve`, {});
   }
 
   reject(approvalId: string): Observable<Message<GatewayResponse>> {

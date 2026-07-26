@@ -36,7 +36,6 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ApprovalDecisi
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
@@ -64,9 +63,6 @@ class WebUiApprovalTest {
     private SubjectSum subject;
 
     @Mock
-    private AgentMonitorSensitiveParamService sensitiveParamService;
-
-    @Mock
     private AgentInteractionInputService interactionInputService;
 
     @Captor
@@ -83,7 +79,7 @@ class WebUiApprovalTest {
         GatewaySingleResponse expected = singleResponse("approved");
         when(commandRouter.handle(commandCaptor.capture())).thenReturn(expected);
 
-        ResponseEntity<Message<GatewaySingleResponse>> response = controller().approve("agp-1", null);
+        ResponseEntity<Message<GatewaySingleResponse>> response = controller().approve("agp-1");
 
         assertEquals(SUCCESS_CODE, response.getBody().getCode());
         assertSame(expected, response.getBody().getData());
@@ -115,7 +111,7 @@ class WebUiApprovalTest {
     @Test
     void approvalShouldRequireAuthenticatedSubject() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> controller().approve("agp-1", null));
+                () -> controller().approve("agp-1"));
 
         assertEquals("Authenticated subject is required", exception.getMessage());
         verifyNoInteractions(commandRouter);
@@ -153,6 +149,6 @@ class WebUiApprovalTest {
     }
 
     private WebUiController controller() {
-        return new WebUiController(commandRouter, sensitiveParamService, interactionInputService);
+        return new WebUiController(commandRouter, interactionInputService);
     }
 }

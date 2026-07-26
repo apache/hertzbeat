@@ -46,15 +46,12 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService;
-import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorSensitiveParamService.SensitiveParamDefinition;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,14 +68,11 @@ import reactor.core.publisher.Flux;
 public class WebUiController {
 
     private final GatewayCommandRouter commandRouter;
-    private final AgentMonitorSensitiveParamService sensitiveParamService;
     private final AgentInteractionInputService interactionInputService;
 
     public WebUiController(GatewayCommandRouter commandRouter,
-                           AgentMonitorSensitiveParamService sensitiveParamService,
                            AgentInteractionInputService interactionInputService) {
         this.commandRouter = commandRouter;
-        this.sensitiveParamService = sensitiveParamService;
         this.interactionInputService = interactionInputService;
     }
 
@@ -116,27 +110,16 @@ public class WebUiController {
                         .build())));
     }
 
-    @GetMapping("/approvals/{approvalId}/sensitive-params")
-    @Operation(summary = "Get sensitive parameter definitions for an Agent approval")
-    public ResponseEntity<Message<List<SensitiveParamDefinition>>> sensitiveParams(
-            @Parameter(description = "Approval ID") @PathVariable String approvalId) {
-        return ResponseEntity.ok(Message.success(sensitiveParamService.definitions(
-                approvalId, ActorSupport.requireCurrentSurenessActor())));
-    }
-
     @PostMapping("/approvals/{approvalId}/approve")
     @Operation(summary = "Approve Agent Gateway approval")
     public ResponseEntity<Message<GatewaySingleResponse>> approve(
-            @Parameter(description = "Approval ID") @PathVariable String approvalId,
-            @RequestBody(required = false) ApprovalRequest approvalRequest) {
+            @Parameter(description = "Approval ID") @PathVariable String approvalId) {
         ApprovalDecisionCommand command = ApprovalDecisionCommand.builder()
                 .envelope(envelope())
                 .replyMode(ReplyMode.FINAL_ONLY)
                 .commandId(approvalId)
                 .approvalId(approvalId)
                 .decision(AgentApprovalDecision.APPROVED)
-                // The approval body is optional when no sensitive values need to be supplied.
-                .sensitiveParams(approvalRequest == null ? Map.of() : approvalRequest.sensitiveParams())
                 .build();
         return ResponseEntity.ok(Message.success((GatewaySingleResponse) commandRouter.handle(command)));
     }
@@ -211,16 +194,6 @@ public class WebUiController {
                 : "Agent Gateway stream failed";
         return new GatewayEvent(GatewayEventType.ERROR, "webui:error", null, null, null, null,
                 new ErrorPayload(null, message), System.currentTimeMillis());
-    }
-
-    /**
-     * Sensitive values submitted only at the approval boundary.
-     */
-    public record ApprovalRequest(Map<String, Object> sensitiveParams) {
-
-        public ApprovalRequest {
-            sensitiveParams = sensitiveParams == null ? Map.of() : Map.copyOf(sensitiveParams);
-        }
     }
 
     /** Values supplied to a pending interaction request. */
