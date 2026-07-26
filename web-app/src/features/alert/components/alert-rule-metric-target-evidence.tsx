@@ -8,8 +8,8 @@
 import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-metric-target-controller';
 import type { MetricAlertTargetCatalog } from '../model/alert-rule-model';
+import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
 
 type TargetEvidenceProps = {

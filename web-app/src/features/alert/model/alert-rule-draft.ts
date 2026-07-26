@@ -5,34 +5,12 @@ import {
   alertRuleTypes,
   type AlertRule,
   type AlertRuleDatasource,
-  type AlertRuleDataType,
-  type AlertRuleKind,
   type AlertRuleType
 } from './alert-rule-types';
-import type { AlertRuleWritableSnapshot } from './alert-rule-draft-snapshot';
-import {
-  createMetricAlertEditorDraft,
-  metricAlertEditorFromExpression,
-  type MetricAlertEditorDraft
-} from './alert-rule-metric-draft';
+import type { AlertRuleDraft } from './alert-rule-draft-contract';
+import { createMetricAlertEditorDraft, metricAlertEditorFromExpression } from './alert-rule-metric-draft';
 
-export type AlertRuleDraft = {
-  id?: number;
-  name: string;
-  kind: AlertRuleKind;
-  dataType: AlertRuleDataType;
-  expr: string;
-  template: string;
-  labelsText: string;
-  annotations: Record<string, string> | null;
-  enable: boolean;
-  period: number | null;
-  times: number | null;
-  /** Transient editor evidence; explicit payload builders never serialize it. */
-  strategyChanged?: boolean;
-  metricEditor?: MetricAlertEditorDraft;
-  persisted?: AlertRuleWritableSnapshot;
-};
+export type { AlertRuleDraft } from './alert-rule-draft-contract';
 
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {

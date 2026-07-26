@@ -1,22 +1,18 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { AlertRuleDraft } from '../model/alert-rule-model';
+import type {
+  AlertRuleEditorFailure,
+  AlertRulePreviewState,
+  AlertRuleSaveRecovery
+} from '../model/alert-rule-editor-evidence';
 
-export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
-export type AlertRuleEditorDetailState = { kind: 'loading' } | { kind: AlertRuleEditorFailure } | { kind: 'ready' };
-export type AlertRulePreviewState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'ready'; matchCount: number }
-  | { kind: 'unavailable' }
-  | { kind: 'error' };
-
-export type AlertRuleSaveRecovery = {
-  phase: 'proof' | 'commit-uncertain';
-  failure: 'unavailable' | 'error';
-  retryable: boolean;
-};
+export type {
+  AlertRuleEditorDetailState,
+  AlertRuleEditorFailure,
+  AlertRulePreviewState,
+  AlertRuleSaveRecovery
+} from '../model/alert-rule-editor-evidence';
 
 export type AlertRuleRouteState = {
   source: string;

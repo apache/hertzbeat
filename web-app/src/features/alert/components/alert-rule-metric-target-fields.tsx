@@ -8,7 +8,6 @@
 import { Alert, Input, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-metric-target-controller';
 import {
   buildMetricAlertTargetCatalog,
   type AlertRuleDraft,
@@ -17,6 +16,7 @@ import {
   type MetricAlertTargetCatalog,
   type RealtimeMetricTarget
 } from '../model/alert-rule-model';
+import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleMetricTargetEvidence } from './alert-rule-metric-target-evidence';
 import { AlertRuleMetricConditionEditor } from './alert-rule-metric-condition-editor';

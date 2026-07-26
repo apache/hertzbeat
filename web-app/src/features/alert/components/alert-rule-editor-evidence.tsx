@@ -13,7 +13,7 @@ import type {
   AlertRuleEditorFailure,
   AlertRulePreviewState,
   AlertRuleSaveRecovery
-} from '../controller/use-alert-rule-editor-controller';
+} from '../model/alert-rule-editor-evidence';
 import type { AlertRuleDatasourceState } from '../model/alert-rule-model';
 
 export function AlertRuleDetailEvidence(props: { state: AlertRuleEditorDetailState; retry: () => unknown }) {

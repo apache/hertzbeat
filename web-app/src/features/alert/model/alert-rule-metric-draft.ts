@@ -5,13 +5,12 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertRuleDraft } from './alert-rule-draft';
 import {
   parseMetricAlertCondition,
   serializeCompleteMetricAlertCondition,
-  type MetricAlertConditionGroup,
   type MetricAlertField
 } from './alert-rule-condition';
+import type { AlertRuleDraft, MetricAlertAuthoring, MetricAlertEditorDraft } from './alert-rule-draft-contract';
 import {
   buildRealtimeMetricExpression,
   parseRealtimeMetricExpression,
@@ -19,19 +18,7 @@ import {
 } from './alert-rule-metric-expression';
 import { AlertRuleContractError } from './alert-rule-types';
 
-export type MetricAlertAuthoring =
-  { mode: 'structured'; condition: MetricAlertConditionGroup } | { mode: 'expert'; condition: string };
-
-export type MetricAlertEditorDraft =
-  | { kind: 'unparsed'; expression: string }
-  | {
-      kind: 'targeted';
-      app: string;
-      target: RealtimeMetricTarget | null;
-      monitorIds: number[];
-      monitorLabels: string[];
-      authoring: MetricAlertAuthoring;
-    };
+export type { MetricAlertAuthoring, MetricAlertEditorDraft } from './alert-rule-draft-contract';
 
 export function createMetricAlertEditorDraft(): MetricAlertEditorDraft {
   return {

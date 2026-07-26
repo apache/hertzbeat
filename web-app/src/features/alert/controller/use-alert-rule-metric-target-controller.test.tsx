@@ -22,10 +22,7 @@ const monitor = vi.hoisted(() => ({
 }));
 vi.mock('@/features/monitor', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor')>()),
-  loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy
-}));
-vi.mock('@/features/monitor/navigation', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/monitor/navigation')>()),
+  loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy,
   loadMonitorNavigationApps: monitor.loadMonitorNavigationApps
 }));
 vi.mock('react-i18next', () => ({

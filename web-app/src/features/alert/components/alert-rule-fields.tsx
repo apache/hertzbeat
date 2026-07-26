@@ -3,7 +3,6 @@
 import { Input, InputNumber, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-metric-target-controller';
 import {
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
@@ -12,6 +11,7 @@ import {
   type AlertRuleDraft,
   type AlertRuleKind
 } from '../model/alert-rule-model';
+import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleMetricBindingField, type MetricBindingViewState } from './alert-rule-metric-binding-field';
 import { AlertRuleMetricTargetFields } from './alert-rule-metric-target-fields';

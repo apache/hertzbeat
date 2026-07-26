@@ -22,10 +22,11 @@ export {
   classifyMonitorReadError,
   loadMonitorAppHierarchy,
   loadMonitorApps,
+  loadMonitorNavigationApps,
   loadMonitorMetricCatalog,
   loadMonitors
 } from './api/monitor-api';
 export { loadMonitorsByApp } from './api/monitor-app-list-api';
 export { MonitorContractError } from './model/monitor-contract';
-export { monitorStatusColor, monitorStatusKey } from './model/monitor-model';
+export { monitorNavigationApps, monitorStatusColor, monitorStatusKey } from './model/monitor-model';
 export type { Monitor, MonitorAppHierarchyNode } from './model/monitor-contract';

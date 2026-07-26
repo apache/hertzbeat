@@ -12,31 +12,22 @@
 import { AlertRuleContractError } from './alert-rule-types';
 import { parseMetricAlertConditionSource } from './alert-rule-condition-parser';
 import { serializeMetricAlertConditionSource } from './alert-rule-condition-serializer';
+import type {
+  MetricAlertConditionGroup,
+  MetricAlertConditionOperator,
+  MetricAlertField,
+  MetricAlertNumericOperator,
+  MetricAlertStringOperator
+} from './alert-rule-condition-contract';
 
-export type MetricAlertField = {
-  value: string;
-  label: string;
-  type: number;
-  unit: string | null;
-};
-
-export type MetricAlertNumericOperator = '>' | '<' | '==' | '!=' | '<=' | '>=';
-export type MetricAlertStringOperator = 'equals' | '!equals' | 'contains' | '!contains' | 'matches' | '!matches';
-export type MetricAlertConditionOperator =
-  MetricAlertNumericOperator | MetricAlertStringOperator | 'exists' | '!exists';
-
-export type MetricAlertCondition = {
-  kind: 'condition';
-  field: string;
-  operator: MetricAlertConditionOperator;
-  value: string | number | null;
-};
-
-export type MetricAlertConditionGroup = {
-  kind: 'group';
-  join: 'and' | 'or';
-  items: Array<MetricAlertCondition | MetricAlertConditionGroup>;
-};
+export type {
+  MetricAlertCondition,
+  MetricAlertConditionGroup,
+  MetricAlertConditionOperator,
+  MetricAlertField,
+  MetricAlertNumericOperator,
+  MetricAlertStringOperator
+} from './alert-rule-condition-contract';
 
 const numericOperators: readonly MetricAlertNumericOperator[] = ['>', '<', '==', '!=', '<=', '>='];
 const stringOperators: readonly MetricAlertStringOperator[] = [

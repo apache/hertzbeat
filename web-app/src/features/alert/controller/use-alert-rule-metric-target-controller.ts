@@ -9,24 +9,28 @@ import { skipToken, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { resolveLocale } from '@/core/i18n/i18n';
-import { classifyMonitorReadError, loadMonitorAppHierarchy, type MonitorAppHierarchyNode } from '@/features/monitor';
-import { loadMonitorNavigationApps, monitorNavigationApps, type MonitorApp } from '@/features/monitor/navigation';
+import {
+  classifyMonitorReadError,
+  loadMonitorAppHierarchy,
+  loadMonitorNavigationApps,
+  monitorNavigationApps,
+  type MonitorAppHierarchyNode
+} from '@/features/monitor';
 
 import { parseRealtimeMetricExpression, type AlertRuleDraft } from '../model/alert-rule-model';
+import type {
+  AlertRuleMetricTargetState,
+  TargetApplicationsState,
+  TargetHierarchyState
+} from '../model/alert-rule-metric-target-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 type TargetFailure = 'unavailable' | 'error';
-export type TargetApplicationsState =
-  | { kind: 'idle' | 'loading' }
-  | { kind: TargetFailure }
-  | { kind: 'ready'; apps: ReturnType<typeof monitorNavigationApps> };
-export type TargetHierarchyState =
-  { kind: 'idle' | 'loading' } | { kind: TargetFailure } | { kind: 'ready'; hierarchy: MonitorAppHierarchyNode };
-
-export type AlertRuleMetricTargetState = {
-  apps: TargetApplicationsState;
-  hierarchy: TargetHierarchyState;
-};
+export type {
+  AlertRuleMetricTargetState,
+  TargetApplicationsState,
+  TargetHierarchyState
+} from '../model/alert-rule-metric-target-state';
 
 /** Owns cancellable Monitor catalog evidence for realtime metric authoring. */
 export function useAlertRuleMetricTargetController(draft: AlertRuleDraft | null) {

@@ -11,7 +11,7 @@ import type {
   MetricAlertConditionOperator,
   MetricAlertField,
   MetricAlertNumericOperator
-} from './alert-rule-condition';
+} from './alert-rule-condition-contract';
 import { AlertRuleContractError } from './alert-rule-types';
 
 type OperatorsForType = (type: number) => readonly MetricAlertConditionOperator[];
