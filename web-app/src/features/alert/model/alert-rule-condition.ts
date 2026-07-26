@@ -57,8 +57,10 @@ export const metricAlertFieldTypes = {
 } as const;
 const supportedFieldTypes = new Set<number>(Object.values(metricAlertFieldTypes));
 const safeFieldPattern = /^[A-Za-z_][A-Za-z0-9_.]*$/;
-const maximumGroupDepth = 3;
-const maximumItemsPerGroup = 5;
+export const metricAlertConditionLimits = {
+  maximumDepth: 3,
+  maximumItemsPerGroup: 5
+} as const;
 
 export function isMetricAlertFieldIdentifier(value: string) {
   return safeFieldPattern.test(value);
@@ -79,8 +81,8 @@ export function serializeMetricAlertCondition(group: MetricAlertConditionGroup, 
     group,
     fieldMap,
     metricAlertOperatorsForType,
-    maximumGroupDepth,
-    maximumItemsPerGroup
+    metricAlertConditionLimits.maximumDepth,
+    metricAlertConditionLimits.maximumItemsPerGroup
   );
 }
 
@@ -99,8 +101,8 @@ export function parseMetricAlertCondition(
       source,
       metricFieldMap(fields),
       metricAlertOperatorsForType,
-      maximumGroupDepth,
-      maximumItemsPerGroup
+      metricAlertConditionLimits.maximumDepth,
+      metricAlertConditionLimits.maximumItemsPerGroup
     );
   } catch {
     return null;
