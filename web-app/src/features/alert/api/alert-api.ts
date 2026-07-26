@@ -15,14 +15,24 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePut } from '@/core/http/api-message';
 import { openBrowserEventStream } from '@/core/http/event-stream';
 import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 
-import { AlertContractError, writeAlertQuery, type AlertQuery } from '../model/alert-model';
+import {
+  AlertContractError,
+  alertGroupTargetStatuses,
+  normalizeAlertGroupIds,
+  writeAlertQuery,
+  type AlertGroupTargetStatus,
+  type AlertQuery
+} from '../model/alert-model';
 import { alertApiRequest } from './alert-api-failure';
 import { parseAlertEventSignal, type AlertEventSignal } from './alert-event-schema';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
+
+const alertGroupEndpoint = '/api/alerts/group';
+const alertGroupStatusEndpoint = `${alertGroupEndpoint}/status`;
 
 export function buildAlertListPath(query: AlertQuery) {
   const params = writeAlertQuery(query);
@@ -50,7 +60,16 @@ export function loadAlertGroups(query: AlertQuery, signal?: AbortSignal) {
 }
 
 export function deleteAlertGroups(ids: number[]) {
-  return alertApiRequest(() => apiMessageDelete(buildAlertDeletePath(ids)));
+  return alertApiRequest(() => apiMessageDelete(buildAlertGroupCommandPath(alertGroupEndpoint, ids)));
+}
+
+export function updateAlertGroupStatus(ids: number[], status: AlertGroupTargetStatus) {
+  if (!alertGroupTargetStatuses.includes(status)) {
+    return Promise.reject(new AlertContractError('Alert group target status is invalid'));
+  }
+  return alertApiRequest(() =>
+    apiMessagePut(buildAlertGroupCommandPath(`${alertGroupStatusEndpoint}/${status}`, ids), null)
+  );
 }
 
 export function openAlertGroupStream(handlers: {
@@ -70,12 +89,8 @@ export function openAlertGroupStream(handlers: {
   });
 }
 
-function buildAlertDeletePath(ids: number[]) {
-  const uniqueIds = [...new Set(ids)].sort((left, right) => left - right);
-  if (uniqueIds.length === 0 || uniqueIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
-    throw new AlertContractError('Alert group ids are invalid');
-  }
+function buildAlertGroupCommandPath(endpoint: string, ids: number[]) {
   const params = new URLSearchParams();
-  uniqueIds.forEach(id => params.append('ids', String(id)));
-  return `/api/alerts/group?${params.toString()}`;
+  normalizeAlertGroupIds(ids).forEach(id => params.append('ids', String(id)));
+  return `${endpoint}?${params.toString()}`;
 }

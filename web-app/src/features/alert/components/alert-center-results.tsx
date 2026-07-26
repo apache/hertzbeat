@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Popconfirm, Table, Tag } from 'antd';
+import { Alert, Empty, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
+import type { ReactNode } from 'react';
 
 import styles from '../shared/alert-center.module.css';
 import {
@@ -28,6 +30,7 @@ import {
   type AlertStatus
 } from '../model/alert-model';
 import type { AlertListState } from '../model/alert-center-view-model';
+import { AlertCenterRowActions } from './alert-center-actions';
 import { AlertCenterGroupDetails } from './alert-center-group-details';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
@@ -38,8 +41,12 @@ type AlertCenterResultsProps = {
   state: AlertListState;
   pageIndex: number;
   pageSize: number;
+  selectedIds: number[];
   onPageChange: (page: number, pageSize: number) => void;
   onRemove: (group: AlertGroup) => void | Promise<unknown>;
+  onReopen: (group: AlertGroup) => void | Promise<unknown>;
+  onResolve: (group: AlertGroup) => void | Promise<unknown>;
+  onSelectIds: (ids: number[]) => void;
   retry: () => unknown;
 };
 
@@ -48,42 +55,33 @@ export function AlertCenterResults({
   state,
   pageIndex,
   pageSize,
+  selectedIds,
   onPageChange,
   onRemove,
+  onReopen,
+  onResolve,
+  onSelectIds,
   retry
 }: AlertCenterResultsProps) {
   const { t } = useTranslation();
-  if (state.kind === 'unavailable') {
-    return (
-      <Alert
-        type="warning"
-        showIcon
-        message={t('alert.listUnavailable')}
-        action={<AlertCenterRetryButton onClick={retry} />}
-      />
-    );
-  }
-  if (state.kind === 'error') {
-    return (
-      <Alert
-        type="error"
-        showIcon
-        message={t('alert.listLoadFailed')}
-        action={<AlertCenterRetryButton onClick={retry} />}
-      />
-    );
-  }
-  if (state.kind === 'empty') return <Empty description={t('alert.empty')} />;
+  const fallback = renderResultFallback(state, t, retry);
+  if (fallback) return fallback;
 
   const records = state.kind === 'ready' ? state.records : [];
   const total = state.kind === 'ready' ? state.total : 0;
+  const rowSelection: TableRowSelection<AlertGroup> = {
+    selectedRowKeys: selectedIds,
+    getCheckboxProps: () => ({ disabled: busy }),
+    onChange: keys => onSelectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
+  };
   return (
     <Table<AlertGroup>
       rowKey="id"
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
-      columns={buildColumns(t, busy, onRemove)}
+      columns={buildColumns(t, busy, onRemove, onResolve, onReopen)}
+      rowSelection={rowSelection}
       expandable={{
         expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
         rowExpandable: group => group.alerts.length > 0
@@ -101,10 +99,25 @@ export function AlertCenterResults({
   );
 }
 
+function renderResultFallback(state: AlertListState, t: Translator, retry: () => unknown): ReactNode {
+  if (state.kind === 'empty') return <Empty description={t('alert.empty')} />;
+  if (state.kind !== 'unavailable' && state.kind !== 'error') return null;
+  return (
+    <Alert
+      type={state.kind === 'unavailable' ? 'warning' : 'error'}
+      showIcon
+      message={t(state.kind === 'unavailable' ? 'alert.listUnavailable' : 'alert.listLoadFailed')}
+      action={<AlertCenterRetryButton onClick={retry} />}
+    />
+  );
+}
+
 function buildColumns(
   t: Translator,
   busy: boolean,
-  onRemove: (group: AlertGroup) => void | Promise<unknown>
+  onRemove: (group: AlertGroup) => void | Promise<unknown>,
+  onResolve: (group: AlertGroup) => void | Promise<unknown>,
+  onReopen: (group: AlertGroup) => void | Promise<unknown>
 ): ColumnsType<AlertGroup> {
   return [
     { title: t('alert.name'), render: (_value, row) => alertName(row) },
@@ -142,19 +155,9 @@ function buildColumns(
     },
     {
       title: t('common.actions'),
-      width: 100,
+      width: 210,
       render: (_value, group) => (
-        <Popconfirm
-          title={t('alert.deleteConfirm')}
-          okText={t('alert.confirmDelete')}
-          disabled={busy}
-          okButtonProps={{ danger: true, disabled: busy }}
-          onConfirm={() => !busy && void onRemove(group)}
-        >
-          <Button type="link" danger disabled={busy}>
-            {t('alert.delete')}
-          </Button>
-        </Popconfirm>
+        <AlertCenterRowActions busy={busy} group={group} remove={onRemove} resolve={onResolve} reopen={onReopen} />
       )
     }
   ];

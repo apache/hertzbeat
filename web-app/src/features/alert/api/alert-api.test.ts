@@ -6,15 +6,17 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMessageDelete, apiMessageGet, openBrowserEventStream } = vi.hoisted(() => ({
+const { apiMessageDelete, apiMessageGet, apiMessagePut, openBrowserEventStream } = vi.hoisted(() => ({
   apiMessageDelete: vi.fn(),
   apiMessageGet: vi.fn(),
+  apiMessagePut: vi.fn(),
   openBrowserEventStream: vi.fn()
 }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
   apiMessageDelete,
-  apiMessageGet
+  apiMessageGet,
+  apiMessagePut
 }));
 vi.mock('@/core/http/event-stream', () => ({ openBrowserEventStream }));
 
@@ -25,7 +27,8 @@ import {
   deleteAlertGroups,
   loadAlertGroups,
   loadAlertSummary,
-  openAlertGroupStream
+  openAlertGroupStream,
+  updateAlertGroupStatus
 } from './alert-api';
 import { AlertContractError, AlertRequestFailure } from '../model/alert-model';
 
@@ -164,6 +167,20 @@ describe('alert API', () => {
 
     await expect(deleteAlertGroups([0])).rejects.toBeInstanceOf(AlertContractError);
     expect(apiMessageDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('owns the allowlisted group-status path and canonicalizes ids before transport', async () => {
+    apiMessagePut.mockResolvedValue(undefined);
+
+    await expect(updateAlertGroupStatus([9, 7, 9], 'resolved')).resolves.toBeUndefined();
+    expect(apiMessagePut).toHaveBeenCalledWith('/api/alerts/group/status/resolved?ids=7&ids=9', null);
+
+    await expect(updateAlertGroupStatus([7], 'firing')).resolves.toBeUndefined();
+    expect(apiMessagePut).toHaveBeenLastCalledWith('/api/alerts/group/status/firing?ids=7', null);
+
+    await expect(updateAlertGroupStatus([], 'resolved')).rejects.toBeInstanceOf(AlertContractError);
+    await expect(updateAlertGroupStatus([7], 'acknowledged' as 'resolved')).rejects.toBeInstanceOf(AlertContractError);
+    expect(apiMessagePut).toHaveBeenCalledTimes(2);
   });
 
   it('owns the alert event stream path and projects only safe notification evidence', () => {

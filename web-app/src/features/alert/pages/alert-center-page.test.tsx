@@ -27,12 +27,19 @@ const controller = vi.hoisted(() => ({
   changePage: vi.fn(),
   changeSeverity: vi.fn(),
   changeStatus: vi.fn(),
+  clearSelection: vi.fn(),
   manageRules: vi.fn(),
   remove: vi.fn(),
+  removeSelected: vi.fn(),
+  reopen: vi.fn(),
+  reopenSelected: vi.fn(),
+  resolve: vi.fn(),
+  resolveSelected: vi.fn(),
   refresh: vi.fn(),
   retryList: vi.fn(),
-  retryDelete: vi.fn(),
+  retryOperation: vi.fn(),
   retrySummary: vi.fn(),
+  selectIds: vi.fn(),
   setDraft: vi.fn(),
   state: {},
   submitFilters: vi.fn()
@@ -136,6 +143,46 @@ describe('AlertCenterPage', () => {
     expect(controller.remove).toHaveBeenCalledWith(record);
   });
 
+  it('restores row selection and confirms all Angular bulk alert operations', async () => {
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    expect(controller.selectIds).toHaveBeenCalledWith([1]);
+
+    controller.state = buildState({ selectedIds: [1] });
+    cleanup();
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.resolveSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
+    expect(controller.resolveSelected).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.reopenSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmReopen' }));
+    expect(controller.reopenSelected).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.deleteSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmDelete' }));
+    expect(controller.removeSelected).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers resolve for active rows and reopen for resolved rows', async () => {
+    const view = render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.resolve' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
+    expect(controller.resolve).toHaveBeenCalledWith(record);
+    view.unmount();
+
+    controller.state = buildState({
+      list: { kind: 'ready', records: [{ ...record, status: 'resolved' }], total: 1 }
+    });
+    render(<AlertCenterPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alert.reopen' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmReopen' }));
+    expect(controller.reopen).toHaveBeenCalledWith({ ...record, status: 'resolved' });
+  });
+
   it.each([
     ['unavailable', 'alert.listUnavailable'],
     ['error', 'alert.listLoadFailed']
@@ -151,13 +198,13 @@ describe('AlertCenterPage', () => {
   it('keeps uncertain delete proof visible and retries without another UI write', () => {
     controller.state = buildState({
       command: 'idle',
-      recovery: { id: 1, phase: 'proof', failure: 'unavailable' }
+      recovery: { kind: 'delete', ids: [1], phase: 'proof', failure: 'unavailable' }
     });
     render(<AlertCenterPage />);
 
     expect(screen.getByText('common.unavailable')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
-    expect(controller.retryDelete).toHaveBeenCalledTimes(1);
+    expect(controller.retryOperation).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'alert.delete' })).toBeDisabled();
   });
 
@@ -199,6 +246,7 @@ function buildState(override: Record<string, unknown> = {}) {
     refreshing: false,
     command: 'idle',
     recovery: null,
+    selectedIds: [],
     summary: { kind: 'ready', summary },
     ...override
   };

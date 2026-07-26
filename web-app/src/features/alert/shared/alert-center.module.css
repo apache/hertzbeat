@@ -39,6 +39,16 @@
   gap: 24px;
   padding-block: 4px;
 }
+.bulkActions {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
 .metric {
   min-width: 110px;
 }

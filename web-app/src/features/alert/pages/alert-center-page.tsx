@@ -19,6 +19,7 @@ import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
+import { AlertCenterBulkActions } from '../components/alert-center-actions';
 import styles from '../shared/alert-center.module.css';
 import { AlertCenterResults } from '../components/alert-center-results';
 import { AlertCenterRecovery } from '../components/alert-center-recovery';
@@ -60,14 +61,28 @@ export function AlertCenterPage() {
         onRefresh={controller.refresh}
       />
       <AlertCenterSummary state={summary} retry={controller.retrySummary} />
-      <AlertCenterRecovery recovery={recovery} retrying={command === 'recovering'} retry={controller.retryDelete} />
+      <AlertCenterBulkActions
+        busy={busy}
+        selectedCount={controller.state.selectedIds.length}
+        actions={{
+          clear: controller.clearSelection,
+          remove: controller.removeSelected,
+          reopen: controller.reopenSelected,
+          resolve: controller.resolveSelected
+        }}
+      />
+      <AlertCenterRecovery recovery={recovery} retrying={command === 'recovering'} retry={controller.retryOperation} />
       <AlertCenterResults
         busy={busy}
         state={list}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
+        selectedIds={controller.state.selectedIds}
         onPageChange={controller.changePage}
         onRemove={controller.remove}
+        onReopen={controller.reopen}
+        onResolve={controller.resolve}
+        onSelectIds={controller.selectIds}
         retry={controller.retryList}
       />
     </div>

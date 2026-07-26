@@ -12,9 +12,9 @@ import type { AlertGroup, AlertPage, AlertQuery } from '../model/alert-model';
 const api = vi.hoisted(() => ({ loadAlertGroups: vi.fn() }));
 vi.mock('../api/alert-api', () => ({ loadAlertGroups: api.loadAlertGroups }));
 
-import { proveAlertGroupMissing } from './alert-center-delete-proof';
+import { proveAlertGroupsMissing, proveAlertGroupsStatus } from './alert-center-operation-proof';
 
-describe('alert center delete proof', () => {
+describe('alert center operation proof', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('scans the unfiltered canonical collection before proving an id missing', async () => {
@@ -29,7 +29,7 @@ describe('alert center delete proof', () => {
       )
       .mockResolvedValueOnce(page(1, [group(26)], 26, 2));
 
-    await expect(proveAlertGroupMissing(99)).resolves.toBeUndefined();
+    await expect(proveAlertGroupsMissing([98, 99])).resolves.toBeUndefined();
     expect(api.loadAlertGroups).toHaveBeenNthCalledWith(1, proofQuery(0));
     expect(api.loadAlertGroups).toHaveBeenNthCalledWith(2, proofQuery(1));
   });
@@ -37,10 +37,21 @@ describe('alert center delete proof', () => {
   it('rejects proof while the exact id remains', async () => {
     api.loadAlertGroups.mockResolvedValueOnce(page(0, [group(7)], 1, 1));
 
-    await expect(proveAlertGroupMissing(7)).rejects.toMatchObject({
-      name: 'AlertDeleteProofError',
+    await expect(proveAlertGroupsMissing([7])).rejects.toMatchObject({
+      name: 'AlertCenterProofError',
       kind: 'present'
     });
+  });
+
+  it('requires every exact id to converge to the requested status', async () => {
+    api.loadAlertGroups.mockResolvedValueOnce(page(0, [group(7, 'resolved'), group(9, 'resolved')], 2, 1));
+    await expect(proveAlertGroupsStatus([9, 7], 'resolved')).resolves.toBeUndefined();
+
+    api.loadAlertGroups.mockResolvedValueOnce(page(0, [group(7, 'resolved')], 1, 1));
+    await expect(proveAlertGroupsStatus([7, 9], 'resolved')).rejects.toMatchObject({ kind: 'missing' });
+
+    api.loadAlertGroups.mockResolvedValueOnce(page(0, [group(7, 'firing')], 1, 1));
+    await expect(proveAlertGroupsStatus([7], 'resolved')).rejects.toMatchObject({ kind: 'mismatch' });
   });
 });
 
@@ -61,10 +72,10 @@ function page(pageIndex: number, content: AlertGroup[], totalElements: number, t
   return { content, totalElements, totalPages, number: pageIndex, size: 25 };
 }
 
-function group(id: number): AlertGroup {
+function group(id: number, status: AlertGroup['status'] = 'firing'): AlertGroup {
   return {
     id,
-    status: 'firing',
+    status,
     groupLabels: null,
     commonLabels: null,
     commonAnnotations: null,

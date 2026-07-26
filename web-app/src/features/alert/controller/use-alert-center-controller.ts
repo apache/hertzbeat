@@ -20,6 +20,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 import { useQueryDraft } from '@/shared/query-context';
+import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
 import {
   alertFailureKind,
@@ -39,7 +40,7 @@ import type {
   AlertSummaryState
 } from '../model/alert-center-view-model';
 import { useAlertCenterData } from './use-alert-center-data';
-import { useAlertCenterDeleteController } from './use-alert-center-delete-controller';
+import { useAlertCenterOperationController } from './use-alert-center-operation-controller';
 import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
 
 export function useAlertCenterController() {
@@ -52,7 +53,9 @@ export function useAlertCenterController() {
   const data = useAlertCenterData(query);
   const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
   useAlertCenterPageCorrection(query, listQuery.data, setParams);
-  const deletion = useAlertCenterDeleteController(refetchList, refetchSummary);
+  const list = resolveListState(listQuery);
+  const selection = useAuthoritativePageSelection(source, list);
+  const operation = useAlertCenterOperationController(refetchList, refetchSummary);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));
@@ -60,24 +63,17 @@ export function useAlertCenterController() {
   const setDraft = (field: AlertDraftField, value: string) => {
     draft.setValue({ ...draft.value, [field]: value });
   };
-  const submitFilters = () => {
-    updateQuery({
-      search: draft.value.search.trim(),
-      serviceName: draft.value.serviceName.trim(),
-      serviceNamespace: draft.value.serviceNamespace.trim(),
-      environment: draft.value.environment.trim(),
-      pageIndex: 0
-    });
-  };
+  const submitFilters = () => submitAlertFilters(draft.value, updateQuery);
 
   const state: AlertCenterState = {
-    command: deletion.command,
+    command: operation.command,
     draft: draft.value,
-    list: resolveListState(listQuery),
+    list,
     query,
     refreshing: summaryQuery.isFetching || listQuery.isFetching,
-    summary: resolveSummaryState(summaryQuery),
-    recovery: deletion.recovery
+    recovery: operation.recovery,
+    selectedIds: selection.selectedIds,
+    summary: resolveSummaryState(summaryQuery)
   };
 
   return {
@@ -93,11 +89,28 @@ export function useAlertCenterController() {
       }),
     retryList: refetchList,
     retrySummary: refetchSummary,
-    retryDelete: deletion.retry,
-    remove: (group: { id: number }) => deletion.remove(group.id),
+    selectIds: selection.selectIds,
+    clearSelection: () => selection.selectIds([]),
+    retryOperation: operation.retry,
+    remove: (group: { id: number }) => operation.remove([group.id]),
+    removeSelected: () => operation.remove(selection.selectedIds),
+    resolve: (group: { id: number }) => operation.updateStatus([group.id], 'resolved'),
+    resolveSelected: () => operation.updateStatus(selection.selectedIds, 'resolved'),
+    reopen: (group: { id: number }) => operation.updateStatus([group.id], 'firing'),
+    reopenSelected: () => operation.updateStatus(selection.selectedIds, 'firing'),
     refresh,
     manageRules: () => void navigate(alertRoutePaths.rules)
   };
+}
+
+function submitAlertFilters(draft: AlertFilterDraft, updateQuery: (patch: Partial<AlertQuery>) => void) {
+  updateQuery({
+    search: draft.search.trim(),
+    serviceName: draft.serviceName.trim(),
+    serviceNamespace: draft.serviceNamespace.trim(),
+    environment: draft.environment.trim(),
+    pageIndex: 0
+  });
 }
 
 function useAlertFilterDraft(query: AlertQuery, source: string) {

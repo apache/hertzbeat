@@ -10,27 +10,37 @@ import { useNotification } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 
 import { AlertContractError, type AlertPage } from '../model/alert-model';
-import { useAlertCenterDelete } from './use-alert-center-delete';
+import { useAlertCenterOperation } from './use-alert-center-operation';
 
-export function useAlertCenterDeleteController(
+export function useAlertCenterOperationController(
   rereadList: () => Promise<QueryObserverResult<AlertPage, Error>>,
   refreshSummary: () => unknown
 ) {
   const notification = useNotification();
   const { t } = useTranslation();
-  return useAlertCenterDelete({
+  return useAlertCenterOperation({
     reread: async () => {
       const result = await rereadList();
       if (result.isError) throw result.error;
-      if (!result.data) throw new AlertContractError('Alert delete projection is missing');
+      if (!result.data) throw new AlertContractError('Alert center projection is missing');
     },
-    success: () => {
-      notification.open?.({ type: 'success', message: t('alert.deleteSuccess') });
+    success: receipt => {
+      notification.open?.({ type: 'success', message: t(operationMessageKey(receipt, 'Success')) });
       void refreshSummary();
     },
-    failure: kind => {
-      const message = kind === 'unavailable' ? t('common.unavailable') : t('alert.deleteFailed');
-      notification.open?.({ type: 'error', message });
+    failure: (kind, receipt) => {
+      notification.open?.({
+        type: 'error',
+        message: kind === 'unavailable' ? t('common.unavailable') : t(operationMessageKey(receipt, 'Failed'))
+      });
     }
   });
+}
+
+function operationMessageKey(
+  receipt: { kind: 'delete' } | { kind: 'status'; status: 'resolved' | 'firing' },
+  outcome: 'Success' | 'Failed'
+) {
+  if (receipt.kind === 'delete') return `alert.delete${outcome}`;
+  return `alert.${receipt.status === 'resolved' ? 'resolve' : 'reopen'}${outcome}`;
 }

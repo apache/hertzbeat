@@ -8,24 +8,25 @@
 import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertCenterDeleteRecovery } from '../model/alert-center-operation-state';
+import type { AlertCenterOperationRecovery } from '../model/alert-center-operation-state';
 
 export function AlertCenterRecovery({
   recovery,
   retrying,
   retry
 }: {
-  recovery: AlertCenterDeleteRecovery | null;
+  recovery: AlertCenterOperationRecovery | null;
   retrying: boolean;
   retry: () => unknown;
 }) {
   const { t } = useTranslation();
   if (!recovery) return null;
+  const failureKey = operationFailureKey(recovery);
   return (
     <Alert
       type="warning"
       showIcon
-      message={t(recovery.failure === 'unavailable' ? 'common.unavailable' : 'alert.deleteFailed')}
+      message={t(recovery.failure === 'unavailable' ? 'common.unavailable' : failureKey)}
       action={
         <Button size="small" loading={retrying} disabled={retrying} onClick={() => void retry()}>
           {t('common.retry')}
@@ -33,4 +34,9 @@ export function AlertCenterRecovery({
       }
     />
   );
+}
+
+function operationFailureKey(recovery: AlertCenterOperationRecovery) {
+  if (recovery.kind === 'delete') return 'alert.deleteFailed';
+  return recovery.status === 'resolved' ? 'alert.resolveFailed' : 'alert.reopenFailed';
 }

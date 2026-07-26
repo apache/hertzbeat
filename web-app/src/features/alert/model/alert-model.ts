@@ -21,10 +21,12 @@ export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
 export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertRecordStatuses = ['firing', 'resolved'] as const;
+export const alertGroupTargetStatuses = ['firing', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
 
 export type AlertStatus = (typeof alertStatuses)[number];
 export type AlertRecordStatus = (typeof alertRecordStatuses)[number];
+export type AlertGroupTargetStatus = (typeof alertGroupTargetStatuses)[number];
 export type AlertStatusFilter = '' | (typeof alertStatusFilters)[number];
 export type AlertSeverity = '' | (typeof alertSeverities)[number];
 declare const serverLocalDateTimeBrand: unique symbol;
@@ -103,6 +105,15 @@ export function alertFailureKind(error: unknown): AlertFailureKind {
 
 export function alertWriteOutcome(error: unknown): AlertWriteOutcome {
   return error instanceof AlertRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
+/** Canonicalizes every batch command before it reaches the transport boundary. */
+export function normalizeAlertGroupIds(ids: readonly number[]) {
+  const uniqueIds = [...new Set(ids)].sort((left, right) => left - right);
+  if (uniqueIds.length === 0 || uniqueIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new AlertContractError('Alert group ids are invalid');
+  }
+  return uniqueIds;
 }
 
 export function readAlertQuery(params: URLSearchParams): AlertQuery {

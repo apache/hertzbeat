@@ -5,8 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-export type AlertCenterDeleteRecovery = {
-  id: number;
+import type { AlertGroupTargetStatus } from './alert-model';
+
+export type AlertCenterOperationCommand = 'deleting' | 'resolving' | 'reopening' | 'recovering' | 'idle';
+
+type RecoveryEvidence = {
+  ids: number[];
   phase: 'proof' | 'projection';
   failure: 'unavailable' | 'error';
 };
+
+export type AlertCenterOperationRecovery =
+  (RecoveryEvidence & { kind: 'delete' }) | (RecoveryEvidence & { kind: 'status'; status: AlertGroupTargetStatus });

@@ -35,14 +35,16 @@ const api = vi.hoisted(() => ({
   loadAlertGroups: vi.fn(),
   loadAlertSummary: vi.fn(),
   notification: vi.fn(),
-  openAlertGroupStream: vi.fn()
+  openAlertGroupStream: vi.fn(),
+  updateAlertGroupStatus: vi.fn()
 }));
 
 vi.mock('../api/alert-api', () => ({
   deleteAlertGroups: api.deleteAlertGroups,
   loadAlertGroups: api.loadAlertGroups,
   loadAlertSummary: api.loadAlertSummary,
-  openAlertGroupStream: api.openAlertGroupStream
+  openAlertGroupStream: api.openAlertGroupStream,
+  updateAlertGroupStatus: api.updateAlertGroupStatus
 }));
 vi.mock('@refinedev/core', () => ({ useNotification: () => ({ open: api.notification }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -63,6 +65,7 @@ describe('Alert Center controller', () => {
     api.loadAlertSummary.mockResolvedValue(summary);
     api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve(page(query)));
     api.openAlertGroupStream.mockReturnValue({ close: vi.fn() });
+    api.updateAlertGroupStatus.mockResolvedValue(undefined);
   });
 
   afterEach(() => vi.restoreAllMocks());
@@ -239,6 +242,31 @@ describe('Alert Center controller', () => {
     });
     expect(result.current.state).toMatchObject({ command: 'idle', recovery: null });
   });
+
+  it('selects groups and resolves them through one canonical status operation', async () => {
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve({
+        ...page(query),
+        content: [
+          alertGroup(7, api.updateAlertGroupStatus.mock.calls.length ? 'resolved' : 'firing'),
+          alertGroup(9, api.updateAlertGroupStatus.mock.calls.length ? 'resolved' : 'firing')
+        ],
+        totalElements: 2,
+        totalPages: 1
+      })
+    );
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+
+    act(() => result.current.selectIds([9, 7, 9]));
+    expect(result.current.state.selectedIds).toEqual([7, 9]);
+
+    await act(async () => result.current.resolveSelected());
+
+    expect(api.updateAlertGroupStatus).toHaveBeenCalledWith([7, 9], 'resolved');
+    expect(api.notification).toHaveBeenCalledWith({ type: 'success', message: 'alert.resolveSuccess' });
+    expect(result.current.state).toMatchObject({ command: 'idle', recovery: null, selectedIds: [] });
+  });
 });
 
 function renderController(entry = '/alerts?pageIndex=0&pageSize=8') {
@@ -282,6 +310,19 @@ function renderRoutedController(entries: string[], strict = false) {
 
 function page(query: AlertQuery): AlertPage {
   return { content: [], totalElements: 0, totalPages: 0, number: query.pageIndex, size: query.pageSize };
+}
+
+function alertGroup(id: number, status: 'firing' | 'resolved') {
+  return {
+    id,
+    status,
+    groupLabels: null,
+    commonLabels: null,
+    commonAnnotations: null,
+    alertFingerprints: null,
+    alerts: [],
+    gmtUpdate: null
+  } as const;
 }
 
 function deferred<T>() {
