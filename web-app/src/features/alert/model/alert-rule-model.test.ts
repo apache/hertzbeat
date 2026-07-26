@@ -176,6 +176,44 @@ describe('alert rule model', () => {
     expect(validateAlertRuleDraft(createAlertRuleDraft())).toEqual(['name', 'expr', 'template']);
   });
 
+  it.each([
+    ['realtime', 'metric', null],
+    ['realtime', 'log', null],
+    ['periodic', 'metric', 300],
+    ['periodic', 'log', 300],
+    ['periodic', 'trace', 300]
+  ] as const)('accepts the complete %s %s required-field combination', (kind, dataType, period) => {
+    expect(
+      validateAlertRuleDraft({
+        ...createAlertRuleDraft(),
+        name: 'Complete rule',
+        kind,
+        dataType,
+        expr: 'value > 1',
+        template: 'Alert',
+        period,
+        times: null
+      })
+    ).toEqual([]);
+  });
+
+  it('reports every invalid required field in stable write-contract order', () => {
+    expect(
+      validateAlertRuleDraft({
+        ...createAlertRuleDraft(),
+        name: ' ',
+        kind: 'realtime',
+        dataType: 'trace',
+        expr: '',
+        template: '',
+        labelsText: 'broken',
+        annotations: { ' ': 'invalid' },
+        period: 0,
+        times: 0
+      })
+    ).toEqual(['name', 'type', 'expr', 'template', 'labels', 'annotations', 'period', 'times']);
+  });
+
   it('maps periodic signal choices to the executor that can evaluate them', () => {
     const promqlOnly = { hasPromqlExecutor: true, hasSqlExecutor: false };
     const sqlOnly = { hasPromqlExecutor: false, hasSqlExecutor: true };

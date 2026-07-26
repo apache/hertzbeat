@@ -80,18 +80,34 @@ export function buildAlertRulePreviewRequest(draft: AlertRuleDraft) {
 }
 
 export function validateAlertRuleDraft(draft: AlertRuleDraft) {
-  const invalid: Array<'name' | 'type' | 'expr' | 'template' | 'labels' | 'annotations' | 'period' | 'times'> = [];
-  if (!validBoundedText(draft.name, 100)) invalid.push('name');
-  if (!validDraftType(draft)) invalid.push('type');
-  if (!validWritableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr, 2048))
-    invalid.push('expr');
-  if (!validWritableText(draft.template, draft.persisted?.template, 2048)) invalid.push('template');
-  if (!tryParseLabels(draft.labelsText)) invalid.push('labels');
-  if (!validNullableMap(draft.annotations)) invalid.push('annotations');
-  if (draft.kind === 'periodic' ? !isPositiveJavaInteger(draft.period) : !isNullablePositiveJavaInteger(draft.period))
-    invalid.push('period');
-  if (!isNullablePositiveJavaInteger(draft.times)) invalid.push('times');
+  const invalid: InvalidAlertRuleDraftField[] = [];
+  recordInvalidDraftField(invalid, 'name', !validBoundedText(draft.name, 100));
+  recordInvalidDraftField(invalid, 'type', !validDraftType(draft));
+  recordInvalidDraftField(invalid, 'expr', !validDraftExpression(draft));
+  recordInvalidDraftField(invalid, 'template', !validWritableText(draft.template, draft.persisted?.template, 2048));
+  recordInvalidDraftField(invalid, 'labels', !tryParseLabels(draft.labelsText));
+  recordInvalidDraftField(invalid, 'annotations', !validNullableMap(draft.annotations));
+  recordInvalidDraftField(invalid, 'period', !validDraftPeriod(draft));
+  recordInvalidDraftField(invalid, 'times', !isNullablePositiveJavaInteger(draft.times));
   return invalid;
+}
+
+type InvalidAlertRuleDraftField = 'name' | 'type' | 'expr' | 'template' | 'labels' | 'annotations' | 'period' | 'times';
+
+function recordInvalidDraftField(
+  invalid: InvalidAlertRuleDraftField[],
+  field: InvalidAlertRuleDraftField,
+  condition: boolean
+) {
+  if (condition) invalid.push(field);
+}
+
+function validDraftExpression(draft: AlertRuleDraft) {
+  return validWritableText(draft.expr, draft.strategyChanged ? undefined : draft.persisted?.expr, 2048);
+}
+
+function validDraftPeriod(draft: AlertRuleDraft) {
+  return draft.kind === 'periodic' ? isPositiveJavaInteger(draft.period) : isNullablePositiveJavaInteger(draft.period);
 }
 
 export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {

@@ -63,25 +63,47 @@ function parseCondition(
   fields: Map<string, MetricAlertField>,
   operatorsForType: OperatorsForType
 ): MetricAlertCondition | null {
+  return (
+    parseExistenceCondition(expression, fields, operatorsForType) ??
+    parseStringCondition(expression, fields, operatorsForType) ??
+    parseNumericCondition(expression, fields, operatorsForType)
+  );
+}
+
+function parseExistenceCondition(
+  expression: string,
+  fields: Map<string, MetricAlertField>,
+  operatorsForType: OperatorsForType
+) {
   const exists = expression.match(/^(!?exists)\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\)$/);
-  if (exists?.[1] && exists[2]) {
-    return parsedCondition(fields, operatorsForType, exists[2], exists[1] as MetricAlertConditionOperator, null);
-  }
+  if (!exists?.[1] || !exists[2]) return null;
+  return parsedCondition(fields, operatorsForType, exists[2], exists[1] as MetricAlertConditionOperator, null);
+}
+
+function parseStringCondition(
+  expression: string,
+  fields: Map<string, MetricAlertField>,
+  operatorsForType: OperatorsForType
+) {
   const string = expression.match(
     /^(!?equals|!?contains|!?matches)\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*,\s*"([^"\\\r\n]+)"\s*\)$/
   );
-  if (string?.[1] && string[2] && string[3]) {
-    return parsedCondition(fields, operatorsForType, string[2], string[1] as MetricAlertConditionOperator, string[3]);
-  }
+  if (!string?.[1] || !string[2] || !string[3]) return null;
+  return parsedCondition(fields, operatorsForType, string[2], string[1] as MetricAlertConditionOperator, string[3]);
+}
+
+function parseNumericCondition(
+  expression: string,
+  fields: Map<string, MetricAlertField>,
+  operatorsForType: OperatorsForType
+) {
   const numeric = expression.match(
     /^([A-Za-z_][A-Za-z0-9_.]*)\s*(>=|<=|==|!=|>|<)\s*(-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?)$/
   );
-  if (numeric?.[1] && numeric[2] && numeric[3]) {
-    const value = Number(numeric[3]);
-    if (!Number.isFinite(value)) return null;
-    return parsedCondition(fields, operatorsForType, numeric[1], numeric[2] as MetricAlertConditionOperator, value);
-  }
-  return null;
+  if (!numeric?.[1] || !numeric[2] || !numeric[3]) return null;
+  const value = Number(numeric[3]);
+  if (!Number.isFinite(value)) return null;
+  return parsedCondition(fields, operatorsForType, numeric[1], numeric[2] as MetricAlertConditionOperator, value);
 }
 
 function parsedCondition(
@@ -100,22 +122,12 @@ function splitLogical(source: string): { items: string[]; operators: Array<'and'
   const items: string[] = [];
   const operators: Array<'and' | 'or'> = [];
   let start = 0;
-  let depth = 0;
-  let quote: '"' | "'" | null = null;
-  let escaped = false;
+  const state = createLogicalScanState();
   for (let index = 0; index < source.length; index += 1) {
     const char = source[index]!;
-    if (quote) {
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") quote = char;
-    else if (char === '(') depth += 1;
-    else if (char === ')') depth -= 1;
-    if (depth < 0) return null;
-    if (depth !== 0) continue;
+    advanceLogicalScanState(state, char);
+    if (state.depth < 0) return null;
+    if (state.quote || state.depth !== 0) continue;
     const operator = logicalOperatorAt(source, index);
     if (!operator) continue;
     const item = source.slice(start, index).trim();
@@ -125,11 +137,33 @@ function splitLogical(source: string): { items: string[]; operators: Array<'and'
     index += operator.length - 1;
     start = index + 1;
   }
-  if (quote || depth !== 0) return null;
+  if (state.quote || state.depth !== 0) return null;
   const finalItem = source.slice(start).trim();
   if (!finalItem) return null;
   items.push(finalItem);
   return { items, operators };
+}
+
+type LogicalScanState = {
+  depth: number;
+  quote: '"' | "'" | null;
+  escaped: boolean;
+};
+
+function createLogicalScanState(): LogicalScanState {
+  return { depth: 0, quote: null, escaped: false };
+}
+
+function advanceLogicalScanState(state: LogicalScanState, char: string) {
+  if (state.quote) {
+    if (state.escaped) state.escaped = false;
+    else if (char === '\\') state.escaped = true;
+    else if (char === state.quote) state.quote = null;
+    return;
+  }
+  if (char === '"' || char === "'") state.quote = char;
+  else if (char === '(') state.depth += 1;
+  else if (char === ')') state.depth -= 1;
 }
 
 function logicalOperatorAt(source: string, index: number): 'and' | 'or' | null {
@@ -158,19 +192,22 @@ function unwrapOuterGroup(source: string) {
 function outerGroupBody(source: string): string | null {
   const value = source.trim();
   if (!value.startsWith('(') || !value.endsWith(')')) return null;
-  let depth = 0;
-  let quote: '"' | "'" | null = null;
+  const state = createLogicalScanState();
   for (let index = 0; index < value.length; index += 1) {
     const char = value[index]!;
-    if (quote) {
-      if (char === quote && value[index - 1] !== '\\') quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") quote = char;
-    else if (char === '(') depth += 1;
-    else if (char === ')') depth -= 1;
-    if (depth === 0 && index < value.length - 1) return null;
-    if (depth < 0) return null;
+    advanceOuterGroupScanState(state, char, value[index - 1]);
+    if (state.depth === 0 && index < value.length - 1) return null;
+    if (state.depth < 0) return null;
   }
-  return depth === 0 && !quote ? value.slice(1, -1).trim() : null;
+  return state.depth === 0 && !state.quote ? value.slice(1, -1).trim() : null;
+}
+
+function advanceOuterGroupScanState(state: LogicalScanState, char: string, previous: string | undefined) {
+  if (state.quote) {
+    if (char === state.quote && previous !== '\\') state.quote = null;
+    return;
+  }
+  if (char === '"' || char === "'") state.quote = char;
+  else if (char === '(') state.depth += 1;
+  else if (char === ')') state.depth -= 1;
 }

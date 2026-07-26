@@ -53,6 +53,33 @@ describe('realtime metric alert expression', () => {
     });
   });
 
+  it('keeps top-level operators inside threshold quotes and nested parentheses', () => {
+    const expression =
+      'equals(__app__,"springboot3") && equals(__metrics__,"summary") && ' +
+      'message == "retry && keep \\"quoted\\"" && (status == 1 && attempts < 3)';
+
+    expect(parseRealtimeMetricExpression(expression)).toEqual({
+      target: { kind: 'metric', app: 'springboot3', metric: 'summary' },
+      monitorIds: [],
+      monitorLabels: [],
+      condition: 'message == "retry && keep \\"quoted\\"" && (status == 1 && attempts < 3)'
+    });
+  });
+
+  it('round-trips nested monitor and label OR groups without changing threshold grouping', () => {
+    const context: RealtimeMetricExpressionContext = {
+      target: { kind: 'metric', app: 'springboot3', metric: 'summary' },
+      monitorIds: [11, 7],
+      monitorLabels: ['region:eu', 'team:ops'],
+      condition: '(responseTime > 100 && (status == 1 || status == 2))'
+    };
+
+    expect(parseRealtimeMetricExpression(buildRealtimeMetricExpression(context))).toEqual({
+      ...context,
+      monitorIds: [7, 11]
+    });
+  });
+
   it('round-trips the availability target without inventing a threshold', () => {
     const context: RealtimeMetricExpressionContext = {
       target: { kind: 'availability', app: 'linux' },
@@ -79,6 +106,20 @@ describe('realtime metric alert expression', () => {
       )
     ).toBeNull();
     expect(parseRealtimeMetricExpression('usage > 90')).toBeNull();
+    expect(
+      parseRealtimeMetricExpression(
+        'equals(__app__,"linux") && equals(__metrics__,"cpu") && (usage > 90 && status == 1'
+      )
+    ).toBeNull();
+    expect(
+      parseRealtimeMetricExpression('equals(__app__,"linux") && equals(__metrics__,"cpu") && usage > 90 &&')
+    ).toBeNull();
+    expect(
+      parseRealtimeMetricExpression(
+        'equals(__app__,"linux") && equals(__metrics__,"cpu") && ' +
+          '(equals(__instance__, "7") or equals(__instance__, "8")) trailing && usage > 90'
+      )
+    ).toBeNull();
   });
 
   it('rejects values that the backend reserved-variable matcher cannot represent safely', () => {

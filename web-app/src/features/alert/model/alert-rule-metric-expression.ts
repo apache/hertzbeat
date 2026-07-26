@@ -9,6 +9,7 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import { splitAlertRuleExpressionTopLevel, unwrapAlertRuleExpressionGroup } from './alert-rule-expression-scanner';
 import { hasUnsafeAlertRuleSourceCharacter } from './alert-rule-source-safety';
 import { AlertRuleContractError } from './alert-rule-types';
 
@@ -76,67 +77,120 @@ export function normalizeRealtimeMetricBindings(monitorIds: number[], monitorLab
 export function parseRealtimeMetricExpression(expression: string): RealtimeMetricExpressionContext | null {
   const source = expression.trim();
   if (!source || source.length > maximumAlertExpressionLength) return null;
-  const clauses = splitTopLevel(source, '&&');
+  const clauses = splitAlertRuleExpressionTopLevel(source, '&&');
   if (!clauses) return null;
 
-  let app: string | undefined;
-  let metric: string | undefined;
-  let availability = false;
-  let monitorIds: number[] = [];
-  let monitorLabels: string[] = [];
-  const condition: string[] = [];
-
+  const state = createRealtimeMetricParseState();
   for (const clause of clauses) {
-    const appMatch = clause.match(appClausePattern);
-    if (appMatch) {
-      if (app !== undefined) return null;
-      app = appMatch[1];
-      continue;
-    }
-    const metricMatch = clause.match(metricClausePattern);
-    if (metricMatch) {
-      if (metric !== undefined || availability) return null;
-      metric = metricMatch[1];
-      continue;
-    }
-    if (availabilityClausePattern.test(clause)) {
-      if (availability || metric !== undefined) return null;
-      availability = true;
-      continue;
-    }
-    if (clause.includes('__instance__')) {
-      if (monitorIds.length > 0) return null;
-      const parsed = parseBindingGroup(clause, monitorClausePattern, value => Number(value));
-      if (!parsed || parsed.some(id => !Number.isSafeInteger(id) || id <= 0)) return null;
-      monitorIds = uniqueSorted(parsed);
-      continue;
-    }
-    if (clause.includes('__labels__')) {
-      if (monitorLabels.length > 0) return null;
-      const parsed = parseBindingGroup(clause, labelClausePattern, value => value);
-      if (!parsed) return null;
-      monitorLabels = uniqueSorted(parsed);
-      continue;
-    }
-    if (reservedContextPattern.test(clause)) return null;
-    condition.push(clause);
+    const outcome = consumeRealtimeMetricClause(clause, state);
+    if (outcome === 'invalid') return null;
+    if (outcome === 'condition') state.condition.push(clause);
   }
+  return completeRealtimeMetricContext(state);
+}
 
-  if (!app || availability === (metric !== undefined)) return null;
-  const threshold = condition.join(' && ').trim();
-  if (availability && threshold) return null;
-  if (!availability && !threshold) return null;
+type RealtimeMetricParseState = {
+  app: string | undefined;
+  metric: string | undefined;
+  availability: boolean;
+  monitorIds: number[];
+  monitorLabels: string[];
+  condition: string[];
+};
+
+type ClauseOutcome = 'accepted' | 'condition' | 'invalid' | 'unmatched';
+
+function createRealtimeMetricParseState(): RealtimeMetricParseState {
   return {
-    target: availability ? { kind: 'availability', app } : { kind: 'metric', app, metric: metric! },
-    monitorIds,
-    monitorLabels,
+    app: undefined,
+    metric: undefined,
+    availability: false,
+    monitorIds: [],
+    monitorLabels: [],
+    condition: []
+  };
+}
+
+function consumeRealtimeMetricClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  const consumers = [
+    consumeApplicationClause,
+    consumeMetricClause,
+    consumeAvailabilityClause,
+    consumeMonitorClause,
+    consumeLabelClause
+  ] as const;
+  for (const consume of consumers) {
+    const outcome = consume(clause, state);
+    if (outcome !== 'unmatched') return outcome;
+  }
+  return reservedContextPattern.test(clause) ? 'invalid' : 'condition';
+}
+
+function consumeApplicationClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  const match = clause.match(appClausePattern);
+  if (!match) return 'unmatched';
+  if (state.app !== undefined) return 'invalid';
+  state.app = match[1];
+  return 'accepted';
+}
+
+function consumeMetricClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  const match = clause.match(metricClausePattern);
+  if (!match) return 'unmatched';
+  if (state.metric !== undefined || state.availability) return 'invalid';
+  state.metric = match[1];
+  return 'accepted';
+}
+
+function consumeAvailabilityClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  if (!availabilityClausePattern.test(clause)) return 'unmatched';
+  if (state.availability || state.metric !== undefined) return 'invalid';
+  state.availability = true;
+  return 'accepted';
+}
+
+function consumeMonitorClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  if (!clause.includes('__instance__')) return 'unmatched';
+  if (state.monitorIds.length > 0) return 'invalid';
+  const parsed = parseBindingGroup(clause, monitorClausePattern, value => Number(value));
+  if (!parsed || parsed.some(id => !Number.isSafeInteger(id) || id <= 0)) return 'invalid';
+  state.monitorIds = uniqueSorted(parsed);
+  return 'accepted';
+}
+
+function consumeLabelClause(clause: string, state: RealtimeMetricParseState): ClauseOutcome {
+  if (!clause.includes('__labels__')) return 'unmatched';
+  if (state.monitorLabels.length > 0) return 'invalid';
+  const parsed = parseBindingGroup(clause, labelClausePattern, value => value);
+  if (!parsed) return 'invalid';
+  state.monitorLabels = uniqueSorted(parsed);
+  return 'accepted';
+}
+
+function completeRealtimeMetricContext(state: RealtimeMetricParseState): RealtimeMetricExpressionContext | null {
+  if (!state.app || state.availability === (state.metric !== undefined)) return null;
+  const threshold = state.condition.join(' && ').trim();
+  if (state.availability) {
+    if (threshold) return null;
+    return {
+      target: { kind: 'availability', app: state.app },
+      monitorIds: state.monitorIds,
+      monitorLabels: state.monitorLabels,
+      condition: threshold
+    };
+  }
+  if (!state.metric || !threshold) return null;
+  return {
+    target: { kind: 'metric', app: state.app, metric: state.metric },
+    monitorIds: state.monitorIds,
+    monitorLabels: state.monitorLabels,
     condition: threshold
   };
 }
 
 function parseBindingGroup<T>(clause: string, itemPattern: RegExp, convert: (value: string) => T): T[] | null {
-  const body = unwrapGroup(clause);
-  const items = splitTopLevel(body, 'or');
+  const body = unwrapAlertRuleExpressionGroup(clause);
+  const items = splitAlertRuleExpressionTopLevel(body, 'or');
   if (!items || items.length === 0) return null;
   const result: T[] = [];
   for (const item of items) {
@@ -145,68 +199,6 @@ function parseBindingGroup<T>(clause: string, itemPattern: RegExp, convert: (val
     result.push(convert(match[1]));
   }
   return result;
-}
-
-function splitTopLevel(source: string, operator: '&&' | 'or'): string[] | null {
-  const result: string[] = [];
-  let start = 0;
-  let depth = 0;
-  let quote: '"' | "'" | null = null;
-  let escaped = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index]!;
-    if (quote) {
-      if (escaped) escaped = false;
-      else if (char === '\\') escaped = true;
-      else if (char === quote) quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === '(') depth += 1;
-    if (char === ')') {
-      depth -= 1;
-      if (depth < 0) return null;
-    }
-    if (depth === 0 && source.startsWith(operator, index) && hasOperatorBoundary(source, operator, index)) {
-      const item = source.slice(start, index).trim();
-      if (!item) return null;
-      result.push(item);
-      index += operator.length - 1;
-      start = index + 1;
-    }
-  }
-  if (quote || depth !== 0) return null;
-  const finalItem = source.slice(start).trim();
-  if (!finalItem) return null;
-  result.push(finalItem);
-  return result;
-}
-
-function hasOperatorBoundary(source: string, operator: '&&' | 'or', index: number) {
-  if (operator === '&&') return true;
-  return /\s/.test(source[index - 1] ?? '') && /\s/.test(source[index + operator.length] ?? '');
-}
-
-function unwrapGroup(value: string) {
-  const source = value.trim();
-  if (!source.startsWith('(') || !source.endsWith(')')) return source;
-  let depth = 0;
-  let quote: '"' | "'" | null = null;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index]!;
-    if (quote) {
-      if (char === quote && source[index - 1] !== '\\') quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") quote = char;
-    else if (char === '(') depth += 1;
-    else if (char === ')') depth -= 1;
-    if (depth === 0 && index < source.length - 1) return source;
-  }
-  return source.slice(1, -1).trim();
 }
 
 function bindingClause(items: string[]) {

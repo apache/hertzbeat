@@ -49,6 +49,44 @@ describe('metric alert structured condition', () => {
     expect(parseMetricAlertCondition(expression, fields)).toEqual(condition);
   });
 
+  it('keeps logical words inside quoted values and requires parentheses around a nested join', () => {
+    expect(
+      parseMetricAlertCondition(
+        'equals(status, "WARN and retry or fail") and (__row__ >= 1 or responseTime < 5)',
+        fields
+      )
+    ).toEqual({
+      kind: 'group',
+      join: 'and',
+      items: [
+        { kind: 'condition', field: 'status', operator: 'equals', value: 'WARN and retry or fail' },
+        {
+          kind: 'group',
+          join: 'or',
+          items: [
+            { kind: 'condition', field: '__row__', operator: '>=', value: 1 },
+            { kind: 'condition', field: 'responseTime', operator: '<', value: 5 }
+          ]
+        }
+      ]
+    });
+    expect(
+      parseMetricAlertCondition('equals(status, "WARN and retry") and __row__ >= 1 or responseTime < 5', fields)
+    ).toBeNull();
+  });
+
+  it('unwraps complete nested groups but rejects malformed parentheses and escaped quoted source', () => {
+    expect(parseMetricAlertCondition('(((responseTime > 10)))', fields)).toEqual({
+      kind: 'group',
+      join: 'and',
+      items: [{ kind: 'condition', field: 'responseTime', operator: '>', value: 10 }]
+    });
+    expect(parseMetricAlertCondition('(responseTime > 10) and', fields)).toBeNull();
+    expect(parseMetricAlertCondition('(responseTime > 10', fields)).toBeNull();
+    expect(parseMetricAlertCondition('responseTime > 10)', fields)).toBeNull();
+    expect(parseMetricAlertCondition('equals(status, "WARN\\" and retry")', fields)).toBeNull();
+  });
+
   it('keeps numeric, string, and existence operators bound to field types', () => {
     expect(() =>
       serializeMetricAlertCondition(
