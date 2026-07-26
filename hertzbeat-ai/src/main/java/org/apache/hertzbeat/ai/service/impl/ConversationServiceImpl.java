@@ -23,6 +23,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.ai.dao.ChatMessageDao;
+import org.apache.hertzbeat.ai.dao.SopScheduleDao;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
 import org.apache.hertzbeat.ai.pojo.dto.SecurityData;
@@ -56,6 +57,9 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Autowired
     private ChatMessageDao messageDao;
+
+    @Autowired
+    private SopScheduleDao sopScheduleDao;
 
     @Autowired
     private ChatClientProviderService chatClientProviderService;
@@ -197,6 +201,8 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long conversationId) {
+        // Delete associated schedules first to prevent tasks from writing orphaned messages.
+        sopScheduleDao.deleteByConversationId(conversationId);
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
         if (!messages.isEmpty()) {
             messageDao.deleteAll(messages);
