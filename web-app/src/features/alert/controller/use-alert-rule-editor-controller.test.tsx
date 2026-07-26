@@ -38,16 +38,33 @@ const api = vi.hoisted(() => ({
   previewAlertRule: vi.fn(),
   saveAlertRule: vi.fn()
 }));
+const monitor = vi.hoisted(() => ({
+  loadMonitorAppHierarchy: vi.fn(),
+  loadMonitorNavigationApps: vi.fn()
+}));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 vi.mock('../api/alert-rule-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
   ...api
 }));
+vi.mock('@/features/monitor', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/monitor')>()),
+  loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy
+}));
+vi.mock('@/features/monitor/navigation', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/monitor/navigation')>()),
+  loadMonitorNavigationApps: monitor.loadMonitorNavigationApps
+}));
 vi.mock('antd', async importOriginal => ({
   ...(await importOriginal<typeof import('antd')>()),
   App: { useApp: () => ({ message: notify }) }
 }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'en-US', resolvedLanguage: 'en-US' }
+  })
+}));
 
 const persisted: AlertRule = {
   id: 7,
@@ -71,6 +88,17 @@ describe('Alert Rule editor controller', () => {
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
     api.previewAlertRule.mockResolvedValue({ matchCount: 0 });
     api.saveAlertRule.mockResolvedValue(undefined);
+    monitor.loadMonitorNavigationApps.mockResolvedValue([]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: null,
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: []
+    });
   });
 
   it('forwards TanStack cancellation and aborts the detail read on unmount', async () => {
@@ -103,6 +131,17 @@ describe('Alert Rule editor controller', () => {
     unmount();
 
     expect(datasourceSignal?.aborted).toBe(true);
+  });
+
+  it('exposes metric target evidence only while realtime metric authoring owns the editor', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+
+    expect(result.current.state.metricTarget.hierarchy).toEqual({ kind: 'idle' });
+    act(() => result.current.changeDataType('log'));
+
+    expect(result.current.state.metricTarget.apps).toEqual({ kind: 'idle' });
+    expect(monitor.loadMonitorNavigationApps).toHaveBeenCalledTimes(1);
   });
 
   it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {

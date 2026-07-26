@@ -16,6 +16,7 @@
  */
 
 import type { AlertRuleQuery } from '../model/alert-rule-model';
+import type { SupportedLocale } from '@/core/i18n/i18n';
 
 const rootKey = ['alert-rules'] as const;
 
@@ -23,5 +24,7 @@ export const alertRuleQueryKeys = {
   list: (query: AlertRuleQuery) => [...rootKey, query] as const,
   // Null identifies a disabled detail read; every backend request uses a positive id.
   detail: (id: number | null) => [...rootKey, 'detail', id] as const,
-  datasourceStatus: () => [...rootKey, 'datasource-status'] as const
+  datasourceStatus: () => [...rootKey, 'datasource-status'] as const,
+  targetApps: (locale: SupportedLocale) => [...rootKey, 'target-apps', locale] as const,
+  targetHierarchy: (app: string, locale: SupportedLocale) => [...rootKey, 'target-hierarchy', app, locale] as const
 };

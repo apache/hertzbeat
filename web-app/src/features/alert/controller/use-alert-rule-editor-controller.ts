@@ -28,6 +28,7 @@ import {
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
 import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
+import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
 export type {
@@ -57,6 +58,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       ? routeState
       : freshAlertRuleRouteState(routeSource, routeToken, canonicalDraft);
   const draft = active.draft ?? canonicalDraft;
+  const metricTarget = useAlertRuleMetricTargetController(draft);
   const updateRoute = (patch: Partial<AlertRuleRouteState>) =>
     setRouteState(current => {
       const base =
@@ -105,6 +107,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       datasource: datasource.state,
       detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
       draft,
+      metricTarget: metricTarget.state,
       preview: active.preview,
       saveFailure: active.saveFailure,
       recovery: active.recovery
@@ -118,6 +121,8 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     retryDetail: () =>
       mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
     retryDatasource: datasource.retry,
+    retryMetricTargetApps: metricTarget.retryApps,
+    retryMetricTargetHierarchy: metricTarget.retryHierarchy,
     cancel: () => {
       void navigate(alertRoutePaths.rules);
     }
