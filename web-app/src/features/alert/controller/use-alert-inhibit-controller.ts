@@ -6,7 +6,7 @@ import { useAlertInhibitSelection } from './use-alert-inhibit-selection';
 
 export function useAlertInhibitController() {
   const read = useAlertInhibitReadController();
-  const command = useAlertInhibitCommandController(read.rereadAuthoritatively);
+  const command = useAlertInhibitCommandController(read.rereadAuthoritatively, read.state.management.context);
   const selection = useAlertInhibitSelection(read.state.query, read.state.list);
   const unlessLocked =
     <Args extends unknown[]>(action: (...args: Args) => unknown) =>

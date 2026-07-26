@@ -25,6 +25,11 @@ describe('Alert Inhibit locales', () => {
       expect(locale.alertInhibits.management.viewAll).toBeTruthy();
       expect(locale.alertInhibits.management.viewMatched).toBeTruthy();
       expect(locale.alertInhibits.management.return).toBeTruthy();
+      expect(locale.alertInhibits.entityPrefill.name).toContain('{{entity}}');
+      expect(locale.alertInhibits.entityPrefill.received).toBeTruthy();
+      expect(locale.alertInhibits.entityPrefill.manual).toBeTruthy();
+      expect(locale.alertInhibits.entityPrefill.unavailable).toBeTruthy();
+      expect(locale.alertInhibits.entityPrefill.error).toBeTruthy();
       expect(locale.alertSilences.management.title).toBeTruthy();
       expect(locale.alertSilences.management.entityFallback).toContain('{{id}}');
       expect(locale.alertSilences.management.empty).toBeTruthy();

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   deleteAlertInhibit: vi.fn(),
   deleteAlertInhibits: vi.fn(),
   loadAlertInhibit: vi.fn(),
+  loadAlertInhibitPrefillAlerts: vi.fn(),
   saveAlertInhibit: vi.fn(),
   updateAlertInhibitEnabled: vi.fn()
 }));
@@ -53,12 +54,21 @@ vi.mock('antd', async importOriginal => ({
   ...(await importOriginal<typeof import('antd')>()),
   App: { useApp: () => ({ message: notify }) }
 }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: { entity?: string }) =>
+      key === 'alertInhibits.entityPrefill.name' ? `${values?.entity} inhibit` : key
+  })
+}));
 
 describe('Alert Inhibit command controller', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
+    api.loadAlertInhibitPrefillAlerts.mockResolvedValue([
+      { labels: { service: 'checkout', environment: 'prod', severity: 'critical' } },
+      { labels: { service: 'checkout', environment: 'prod', severity: 'warning' } }
+    ]);
     api.saveAlertInhibit.mockResolvedValue(undefined);
     api.updateAlertInhibitEnabled.mockResolvedValue(undefined);
     api.deleteAlertInhibit.mockResolvedValue(undefined);
@@ -93,6 +103,95 @@ describe('Alert Inhibit command controller', () => {
       phase: 'commit-uncertain',
       retryable: false
     });
+  });
+
+  it('opens an entity-owned create draft only after alert-label prefill settles', async () => {
+    const { result } = renderCommandController({
+      entityId: 7,
+      entityName: 'Checkout API',
+      returnTo: '/entities/7',
+      returnLabel: '',
+      mode: 'matched',
+      matchingRuleIds: []
+    });
+
+    act(() => result.current.create());
+    await waitFor(() => expect(result.current.state.prefill).toBe('received'));
+
+    expect(api.loadAlertInhibitPrefillAlerts).toHaveBeenCalledWith(7, expect.any(AbortSignal));
+    expect(result.current.state.draft).toMatchObject({
+      name: 'Checkout API inhibit',
+      sourceLabelsText: 'environment:prod, service:checkout',
+      targetLabelsText: 'environment:prod, service:checkout',
+      equalLabels: ['service']
+    });
+  });
+
+  it('opens an honest manual draft when entity alerts have no safe common labels', async () => {
+    api.loadAlertInhibitPrefillAlerts.mockResolvedValueOnce([]);
+    const { result } = renderCommandController(entityManagementContext());
+
+    act(() => result.current.create());
+    await waitFor(() => expect(result.current.state.prefill).toBe('manual'));
+
+    expect(result.current.state.draft).toMatchObject({
+      name: 'Checkout API inhibit',
+      sourceLabelsText: '',
+      targetLabelsText: '',
+      equalLabels: []
+    });
+  });
+
+  it('keeps unavailable prefill distinct and does not infer label conditions', async () => {
+    api.loadAlertInhibitPrefillAlerts.mockRejectedValueOnce(new AlertInhibitRequestFailure('unavailable', 'uncertain'));
+    const { result } = renderCommandController(entityManagementContext());
+
+    act(() => result.current.create());
+    await waitFor(() => expect(result.current.state.prefill).toBe('unavailable'));
+
+    expect(result.current.state.draft).toMatchObject({
+      sourceLabelsText: '',
+      targetLabelsText: '',
+      equalLabels: []
+    });
+  });
+
+  it('deduplicates same-tick prefill and retires its late result after unmount', async () => {
+    const alerts = deferred<Array<{ labels: Record<string, string> }>>();
+    api.loadAlertInhibitPrefillAlerts.mockReturnValueOnce(alerts.promise);
+    const { result, unmount } = renderCommandController(entityManagementContext());
+    act(() => {
+      result.current.create();
+      result.current.create();
+    });
+
+    expect(api.loadAlertInhibitPrefillAlerts).toHaveBeenCalledOnce();
+    const signal = api.loadAlertInhibitPrefillAlerts.mock.calls[0]?.[1] as AbortSignal;
+    unmount();
+    expect(signal.aborted).toBe(true);
+    await act(async () => {
+      alerts.resolve([{ labels: { service: 'checkout' } }]);
+      await alerts.promise;
+    });
+  });
+
+  it('does not publish prefill after navigation changes the entity context', async () => {
+    const alerts = deferred<Array<{ labels: Record<string, string> }>>();
+    api.loadAlertInhibitPrefillAlerts.mockReturnValueOnce(alerts.promise);
+    const { result, rerender } = renderHook(({ management }) => useAlertInhibitCommandController(reread, management), {
+      initialProps: { management: entityManagementContext() }
+    });
+    act(() => result.current.actions.create());
+    rerender({ management: { ...entityManagementContext(), entityId: 8, entityName: 'Billing API' } });
+
+    await act(async () => {
+      alerts.resolve([{ labels: { service: 'checkout' } }]);
+      await alerts.promise;
+    });
+
+    expect(result.current.state.prefill).toBe('idle');
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.command).toBe('idle');
   });
 
   it('retires a pending submit when the controller unmounts', async () => {
@@ -517,9 +616,20 @@ function uncertainRequestFailure() {
   return new AlertInhibitRequestFailure('error', 'uncertain');
 }
 
-function renderCommandController() {
+function renderCommandController(management: Parameters<typeof useAlertInhibitCommandController>[1] = null) {
   return renderHook(() => {
-    const command = useAlertInhibitCommandController(reread);
+    const command = useAlertInhibitCommandController(reread, management);
     return { state: command.state, ...command.actions };
   });
+}
+
+function entityManagementContext() {
+  return {
+    entityId: 7,
+    entityName: 'Checkout API',
+    returnTo: '/entities/7',
+    returnLabel: '',
+    mode: 'matched' as const,
+    matchingRuleIds: []
+  };
 }

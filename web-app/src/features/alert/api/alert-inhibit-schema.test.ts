@@ -18,7 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AlertInhibitContractError, AlertInhibitMissingError } from '../model/alert-inhibit-model';
-import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
+import { parseAlertInhibitDetail, parseAlertInhibitPage, parseAlertInhibitPrefillAlerts } from './alert-inhibit-schema';
 
 const persisted = {
   id: 9,
@@ -160,5 +160,21 @@ describe('alert inhibit wire schemas', () => {
         { search: '', pageIndex: 2, pageSize: 8 }
       )
     ).toEqual({ content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 });
+  });
+
+  it('accepts only the bounded first firing-alert page with unique identities', () => {
+    const page = {
+      content: [{ id: 71, labels: { service: 'checkout' } }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 20
+    };
+    expect(parseAlertInhibitPrefillAlerts(page)).toEqual([{ labels: { service: 'checkout' } }]);
+    expect(() =>
+      parseAlertInhibitPrefillAlerts({ ...page, content: [page.content[0], page.content[0]], totalElements: 2 })
+    ).toThrow(AlertInhibitContractError);
+    expect(() => parseAlertInhibitPrefillAlerts({ ...page, number: 1 })).toThrow(AlertInhibitContractError);
+    expect(() => parseAlertInhibitPrefillAlerts({ ...page, size: 8 })).toThrow(AlertInhibitContractError);
   });
 });

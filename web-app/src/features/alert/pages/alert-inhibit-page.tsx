@@ -20,19 +20,18 @@ import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
-import { AlertInhibitEditor } from '../components/alert-inhibit-editor';
 import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
 import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
 import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
 import { useAlertInhibitController } from '../controller/use-alert-inhibit-controller';
+import { AlertInhibitDraftEditor } from './alert-inhibit-draft-editor';
 import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
   const controller = useAlertInhibitController();
-  const { command, detail, draft, editorFailure, list, management, query, recovery, refreshing, search, selectedIds } =
-    controller.state;
-  const { saveRecovery, routeRecovery } = splitRecovery(recovery);
+  const { command, detail, list, management, query, recovery, refreshing, search, selectedIds } = controller.state;
+  const routeRecovery = recovery?.kind === 'save' ? undefined : recovery;
   const busy = command !== 'idle';
   const removeSelected = () => {
     if (!busy && selectedIds.length > 0) void controller.removeMany(selectedIds);
@@ -71,20 +70,7 @@ export function AlertInhibitPage() {
         changePage={controller.changePage}
         retry={controller.refresh}
       />
-      {draft && (
-        <AlertInhibitEditor
-          draft={draft}
-          busy={busy}
-          saving={command === 'saving'}
-          failure={editorFailure}
-          recovery={saveRecovery}
-          retrying={command !== 'recovering'}
-          update={controller.updateDraft}
-          close={controller.closeDraft}
-          submit={controller.submit}
-          retry={controller.retry}
-        />
-      )}
+      <AlertInhibitDraftEditor controller={controller} />
     </div>
   );
 }
@@ -104,13 +90,6 @@ function AlertInhibitManagement({
       {...managementContextProps(controller, management, busy)}
     />
   );
-}
-
-function splitRecovery(recovery: ReturnType<typeof useAlertInhibitController>['state']['recovery']) {
-  return {
-    saveRecovery: recovery?.kind === 'save' ? recovery : undefined,
-    routeRecovery: recovery?.kind === 'save' ? undefined : recovery
-  };
 }
 
 function managementContextProps(

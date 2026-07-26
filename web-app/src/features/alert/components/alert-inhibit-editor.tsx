@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import type { AlertInhibitDraft } from '../model/alert-inhibit-model';
 import styles from '../shared/alert-policy-page.module.css';
 import type { AlertInhibitFailure } from '../model/alert-inhibit-model';
-import type { AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
+import type { AlertInhibitPrefillState, AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
 import { AlertInhibitRecovery } from './alert-inhibit-recovery';
 
 const COMMON_LABELS = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
@@ -31,6 +31,7 @@ type AlertInhibitEditorProps = {
   busy: boolean;
   saving: boolean;
   failure: AlertInhibitFailure | undefined;
+  prefill: AlertInhibitPrefillState;
   recovery: RecoveryState | undefined;
   retrying: boolean;
   update: (patch: Partial<AlertInhibitDraft>) => void;
@@ -107,11 +108,24 @@ function AlertInhibitFields({ draft, busy, update }: Pick<AlertInhibitEditorProp
   );
 }
 
+function AlertInhibitPrefillEvidence({ state }: { state: AlertInhibitPrefillState }) {
+  const { t } = useTranslation();
+  if (state === 'idle' || state === 'loading') return null;
+  return <Alert type={prefillAlertType(state)} showIcon message={t(`alertInhibits.entityPrefill.${state}`)} />;
+}
+
+function prefillAlertType(state: Exclude<AlertInhibitPrefillState, 'idle' | 'loading'>) {
+  if (state === 'received') return 'success';
+  if (state === 'manual') return 'info';
+  return state === 'unavailable' ? 'warning' : 'error';
+}
+
 export function AlertInhibitEditor({
   draft,
   busy,
   saving,
   failure,
+  prefill,
   recovery,
   retrying,
   update,
@@ -139,6 +153,7 @@ export function AlertInhibitEditor({
         if (!busy) void submit();
       }}
     >
+      {!draft.id && <AlertInhibitPrefillEvidence state={prefill} />}
       {recovery ? (
         <AlertInhibitRecovery recovery={recovery} retrying={retrying} retry={retry} />
       ) : failure ? (

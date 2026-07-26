@@ -3,7 +3,7 @@
 import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertInhibit, AlertInhibitPage } from '../model/alert-inhibit-model';
+import type { AlertInhibit, AlertInhibitManagementContext, AlertInhibitPage } from '../model/alert-inhibit-model';
 import {
   removeAlertInhibit,
   removeAlertInhibits,
@@ -14,12 +14,17 @@ import {
 } from './alert-inhibit-write-operations';
 import { useAlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import { useAlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
+import { useAlertInhibitPrefillController } from './use-alert-inhibit-prefill-controller';
 
-export function useAlertInhibitCommandController(rereadAuthoritatively: () => Promise<AlertInhibitPage>) {
+export function useAlertInhibitCommandController(
+  rereadAuthoritatively: () => Promise<AlertInhibitPage>,
+  management: AlertInhibitManagementContext | null = null
+) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const operation = useAlertInhibitOperationController();
   const editor = useAlertInhibitEditorController(operation);
+  const prefill = useAlertInhibitPrefillController(management, editor, operation);
   const notify = {
     validation: () => void message.warning(t('alertInhibits.validation')),
     saveSuccess: () => void message.success(t('alertInhibits.saveSuccess')),
@@ -38,6 +43,7 @@ export function useAlertInhibitCommandController(rereadAuthoritatively: () => Pr
   return {
     state: {
       command: operation.command,
+      prefill: prefill.state,
       recovery: operation.getRecovery(),
       ...editor.state
     },
@@ -46,6 +52,7 @@ export function useAlertInhibitCommandController(rereadAuthoritatively: () => Pr
     },
     actions: {
       ...editor.actions,
+      create: prefill.create,
       remove: (id: number) => removeAlertInhibit(context, id),
       removeMany: (ids: number[]) => removeAlertInhibits(context, ids),
       retry: () => retryAlertInhibit(context),

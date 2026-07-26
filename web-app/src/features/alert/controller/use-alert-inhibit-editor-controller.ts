@@ -93,11 +93,14 @@ export function useAlertInhibitEditorController(operation: AlertInhibitOperation
   const draftStore = useAlertInhibitDraftStore();
   const [editorFailure, setEditorFailure] = useState<AlertInhibitFailure>();
   const detailEditor = useAlertInhibitDetailEditor(operation, draftStore.publish, () => setEditorFailure(undefined));
+  const openCreateDraft = (draft: AlertInhibitDraft) => {
+    detailEditor.invalidate();
+    draftStore.publish(draft);
+    setEditorFailure(undefined);
+  };
   const create = () => {
     if (operation.isLocked()) return;
-    detailEditor.invalidate();
-    draftStore.publish(createAlertInhibitDraft());
-    setEditorFailure(undefined);
+    openCreateDraft(createAlertInhibitDraft());
   };
   const closeDraft = () => {
     if (operation.isLocked()) return;
@@ -113,6 +116,7 @@ export function useAlertInhibitEditorController(operation: AlertInhibitOperation
     controls: {
       getDraft: draftStore.get,
       invalidateDetail: detailEditor.invalidate,
+      openCreateDraft,
       setDraft: draftStore.publish,
       setEditorFailure
     },

@@ -22,12 +22,14 @@ import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   alertInhibitFailureKind,
+  alertInhibitPrefillPageSize,
   normalizeAlertInhibitIds,
+  AlertInhibitContractError,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
 } from '../model/alert-inhibit-model';
-import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
+import { parseAlertInhibitDetail, parseAlertInhibitPage, parseAlertInhibitPrefillAlerts } from './alert-inhibit-schema';
 
 function buildAlertInhibitListPath(query: AlertInhibitQuery) {
   const params = new URLSearchParams({
@@ -56,6 +58,23 @@ export async function loadAlertInhibit(id: number, signal?: AbortSignal) {
     signal
   );
   return parseAlertInhibitDetail(response);
+}
+
+export async function loadAlertInhibitPrefillAlerts(entityId: number, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(entityId) || entityId <= 0) {
+    throw new AlertInhibitContractError('entity id must be a positive safe integer');
+  }
+  const params = new URLSearchParams({
+    pageIndex: '0',
+    pageSize: String(alertInhibitPrefillPageSize),
+    status: 'firing'
+  });
+  const path = `/api/entities/${entityId}/alerts?${params.toString()}`;
+  const response = await alertInhibitApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
+  return parseAlertInhibitPrefillAlerts(response);
 }
 
 export async function loadMatchedAlertInhibits(ids: number[], signal?: AbortSignal) {

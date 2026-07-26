@@ -1543,6 +1543,13 @@
     "saveFailed": "Inhibition policy could not be saved.",
     "operationSuccess": "Inhibition policy updated.",
     "operationFailed": "Inhibition policy operation failed.",
+    "entityPrefill": {
+      "name": "{{entity}} inhibition",
+      "received": "Source, target, and equal-label conditions were prefilled from labels shared by the entity's firing alerts. Review them before saving.",
+      "manual": "The entity's firing alerts do not share enough labels for a safe inhibition rule. Complete the conditions manually.",
+      "unavailable": "Firing alerts are temporarily unavailable. No label conditions were inferred; complete the rule manually.",
+      "error": "Firing alert evidence could not be verified. No label conditions were inferred; complete the rule manually."
+    },
     "management": {
       "title": "Entity inhibition context",
       "matchedDescription": "Showing the matching inhibition policy evidence returned for this entity.",

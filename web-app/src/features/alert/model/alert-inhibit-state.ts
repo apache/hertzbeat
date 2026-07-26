@@ -23,6 +23,7 @@ export type AlertInhibitDetailState =
   { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertInhibitFailure; id: number };
 
 export type AlertInhibitListState = RemotePageState<AlertInhibit, 'unavailable' | 'error'>;
+export type AlertInhibitPrefillState = 'idle' | 'loading' | 'received' | 'manual' | 'unavailable' | 'error';
 
 type AlertInhibitReceiptPhase = 'prepare' | 'write' | 'proof' | 'projection';
 type AlertInhibitWritable = Omit<AlertInhibit, 'enable'> & { enable: boolean };

@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import {
   alertInhibitFailureKind,
   alertInhibitWriteOutcome,
+  buildAlertInhibitPrefillDraft,
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   createAlertInhibitDraft,
@@ -48,6 +49,40 @@ const persisted = {
 };
 
 describe('alert inhibit model', () => {
+  it('prefills exact common alert labels without copying severity into the target', () => {
+    const result = buildAlertInhibitPrefillDraft('Checkout API inhibit', [
+      { labels: { service: 'checkout', environment: 'prod', severity: 'critical' } },
+      { labels: { service: 'checkout', environment: 'prod', severity: 'warning' } }
+    ]);
+
+    expect(result).toEqual({
+      kind: 'received',
+      draft: {
+        name: 'Checkout API inhibit',
+        sourceLabelsText: 'environment:prod, service:checkout',
+        targetLabelsText: 'environment:prod, service:checkout',
+        equalLabels: ['service'],
+        enable: true
+      }
+    });
+  });
+
+  it('keeps authoring manual when shared labels are blank or unsafe as equal-label evidence', () => {
+    expect(
+      buildAlertInhibitPrefillDraft('Checkout API inhibit', [
+        { labels: { service: '', environment: 'prod' } },
+        { labels: { service: '', environment: 'prod' } }
+      ])
+    ).toMatchObject({
+      kind: 'manual',
+      draft: { sourceLabelsText: 'environment:prod', targetLabelsText: 'environment:prod', equalLabels: [] }
+    });
+    expect(buildAlertInhibitPrefillDraft('Checkout API inhibit', [])).toMatchObject({
+      kind: 'manual',
+      draft: { sourceLabelsText: '', targetLabelsText: '', equalLabels: [] }
+    });
+  });
+
   it('normalizes and serializes the operator-owned query contract', () => {
     expect(readAlertInhibitQuery(new URLSearchParams('search=%20critical%20&pageIndex=1&pageSize=15'))).toEqual({
       search: 'critical',

@@ -180,6 +180,24 @@ describe('AlertInhibitPage', () => {
     expect(editor.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
   });
 
+  it.each(['received', 'manual', 'unavailable', 'error'] as const)(
+    'explains entity authoring prefill state %s',
+    prefill => {
+      controller.state = buildState({
+        prefill,
+        draft: {
+          name: 'Policy',
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabels: [],
+          enable: true
+        }
+      });
+      render(<AlertInhibitPage />);
+      expect(screen.getByText(`alertInhibits.entityPrefill.${prefill}`)).toBeInTheDocument();
+    }
+  );
+
   it.each(['saving', 'operating', 'recovering'] as const)('locks every route control while %s', command => {
     controller.state = buildState({
       command,
@@ -274,6 +292,7 @@ function buildState(override: Record<string, unknown> = {}) {
     detail: { kind: 'idle' },
     draft: null,
     editorFailure: undefined,
+    prefill: 'idle',
     recovery: undefined,
     list: { kind: 'ready', records: [record], total: 1 },
     query: { search: '', pageIndex: 0, pageSize: 8 },

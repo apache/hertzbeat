@@ -20,7 +20,9 @@ import { z } from 'zod';
 import {
   AlertInhibitContractError,
   AlertInhibitMissingError,
+  alertInhibitPrefillPageSize,
   type AlertInhibit,
+  type AlertInhibitPrefillAlert,
   type AlertInhibitPage,
   type AlertInhibitQuery
 } from '../model/alert-inhibit-model';
@@ -64,6 +66,14 @@ const alertInhibitPageSchema = z.object({
   size: positiveIntegerSchema
 });
 
+const prefillAlertPageSchema = z.object({
+  content: z.array(z.object({ id: positiveIntegerSchema, labels: nullableLabelMapSchema })),
+  totalElements: nonNegativeIntegerSchema,
+  totalPages: nonNegativeIntegerSchema,
+  number: z.literal(0),
+  size: z.literal(alertInhibitPrefillPageSize)
+});
+
 export function parseAlertInhibitDetail(value: unknown): AlertInhibit {
   if (value == null) throw new AlertInhibitMissingError();
   return mapAlertInhibit(parseSchema(alertInhibitSchema, value, 'Alert inhibit detail'));
@@ -89,6 +99,21 @@ export function parseAlertInhibitPage(value: unknown, query: AlertInhibitQuery):
     throw new AlertInhibitContractError('Duplicate ids are not allowed');
   }
   return { ...page, content: page.content.map(mapAlertInhibit) };
+}
+
+export function parseAlertInhibitPrefillAlerts(value: unknown): AlertInhibitPrefillAlert[] {
+  const page = parseSchema(prefillAlertPageSchema, value, 'Alert inhibit entity alert page');
+  if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
+    throw new AlertInhibitContractError('Entity alert totalPages is inconsistent');
+  }
+  const expectedSize = Math.min(page.size, page.totalElements);
+  if (page.content.length !== expectedSize) {
+    throw new AlertInhibitContractError('Entity alert page content is inconsistent');
+  }
+  if (new Set(page.content.map(alert => alert.id)).size !== page.content.length) {
+    throw new AlertInhibitContractError('Duplicate entity alert ids are not allowed');
+  }
+  return page.content.map(alert => ({ labels: alert.labels }));
 }
 
 function mapAlertInhibit(source: z.output<typeof alertInhibitSchema>): AlertInhibit {

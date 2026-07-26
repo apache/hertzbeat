@@ -25,6 +25,7 @@ import {
 import { formatLabelMatchers, parseLabelMatchers } from '../shared/alert-label-matchers';
 
 export const alertInhibitPageSizes = compactTablePageSizes;
+export const alertInhibitPrefillPageSize = 20;
 
 export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertInhibitManagementContext = AlertNoiseControlManagementContext;
@@ -54,6 +55,11 @@ export type AlertInhibit = {
 };
 
 export type AlertInhibitPage = PagedCollection<AlertInhibit>;
+export type AlertInhibitPrefillAlert = { labels: Record<string, string> | null };
+export type AlertInhibitPrefillResult = {
+  kind: 'received' | 'manual';
+  draft: AlertInhibitDraft;
+};
 
 export class AlertInhibitContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -145,6 +151,40 @@ export function createAlertInhibitDraft(): AlertInhibitDraft {
     equalLabels: [],
     enable: true
   };
+}
+
+export function buildAlertInhibitPrefillDraft(
+  draftName: string,
+  alerts: AlertInhibitPrefillAlert[]
+): AlertInhibitPrefillResult {
+  const commonLabels = exactCommonLabels(alerts);
+  const targetLabels = { ...commonLabels };
+  delete targetLabels.severity;
+  const equalLabels = Object.keys(commonLabels).filter(label => alertInhibitEqualLabelCandidates.has(label));
+  return {
+    kind: Object.keys(commonLabels).length > 0 && equalLabels.length > 0 ? 'received' : 'manual',
+    draft: {
+      ...createAlertInhibitDraft(),
+      name: draftName,
+      sourceLabelsText: formatLabelMatchers(commonLabels),
+      targetLabelsText: formatLabelMatchers(targetLabels),
+      equalLabels
+    }
+  };
+}
+
+const alertInhibitEqualLabelCandidates = new Set(['alertname', 'instance', 'job', 'service', 'host', 'env']);
+
+function exactCommonLabels(alerts: AlertInhibitPrefillAlert[]) {
+  if (alerts.length === 0) return {};
+  return Object.fromEntries(
+    Object.entries(alerts[0]?.labels ?? {})
+      .filter(
+        ([key, value]) =>
+          Boolean(key.trim()) && Boolean(value.trim()) && alerts.every(alert => alert.labels?.[key] === value)
+      )
+      .sort(([left], [right]) => left.localeCompare(right))
+  );
 }
 
 export function buildAlertInhibitPayload(draft: AlertInhibitDraft) {

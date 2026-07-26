@@ -1547,6 +1547,13 @@
     "saveFailed": "Não foi possível salvar a política de inibição.",
     "operationSuccess": "Política de inibição atualizada.",
     "operationFailed": "Falha na operação da política de inibição.",
+    "entityPrefill": {
+      "name": "Inibição de {{entity}}",
+      "received": "As condições de origem, destino e rótulos iguais foram preenchidas com os rótulos comuns dos alertas ativos da entidade. Revise antes de salvar.",
+      "manual": "Os alertas ativos da entidade não compartilham rótulos suficientes para criar uma regra de inibição segura. Preencha as condições manualmente.",
+      "unavailable": "Os alertas ativos estão temporariamente indisponíveis. Nenhuma condição foi inferida; preencha a regra manualmente.",
+      "error": "Não foi possível verificar as evidências dos alertas ativos. Nenhuma condição foi inferida; preencha a regra manualmente."
+    },
     "management": {
       "title": "Contexto de inibição da entidade",
       "matchedDescription": "Exibindo a evidência de políticas de inibição correspondentes retornada para esta entidade.",

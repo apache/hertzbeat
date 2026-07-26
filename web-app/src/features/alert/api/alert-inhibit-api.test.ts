@@ -34,6 +34,7 @@ import {
   deleteAlertInhibit,
   deleteAlertInhibits,
   loadAlertInhibit,
+  loadAlertInhibitPrefillAlerts,
   loadAlertInhibits,
   loadMatchedAlertInhibits,
   saveAlertInhibit,
@@ -98,6 +99,25 @@ describe('alert inhibit API', () => {
     });
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/alert/inhibit/9', { signal });
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/inhibit/10', { signal });
+  });
+
+  it('loads a bounded page of firing entity alerts for authoring evidence', async () => {
+    const signal = new AbortController().signal;
+    transport.apiMessageGet.mockResolvedValue({
+      content: [{ id: 71, labels: { service: 'checkout' } }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 20
+    });
+
+    await expect(loadAlertInhibitPrefillAlerts(7, signal)).resolves.toEqual([{ labels: { service: 'checkout' } }]);
+    expect(transport.apiMessageGet).toHaveBeenCalledWith(
+      '/api/entities/7/alerts?pageIndex=0&pageSize=20&status=firing',
+      { signal }
+    );
+    await expect(loadAlertInhibitPrefillAlerts(0)).rejects.toThrow();
+    expect(transport.apiMessageGet).toHaveBeenCalledTimes(1);
   });
 
   it('returns void from POST, PUT, toggle, and DELETE acknowledgements', async () => {
