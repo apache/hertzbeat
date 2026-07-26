@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
+import { focusManager, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { loadMonitorApps, loadMonitors } from '../api/monitor-api';
@@ -51,6 +51,7 @@ export function useMonitorListResources(query: MonitorQuery) {
 
   useEffect(() => {
     const timer = setInterval(() => {
+      if (!focusManager.isFocused()) return;
       if (readMode.current === 'idle') readMode.current = 'automatic';
       void queryClient.fetchQuery({ ...options, staleTime: 0 }).catch(() => undefined);
     }, monitorListAutoRefreshMs);
