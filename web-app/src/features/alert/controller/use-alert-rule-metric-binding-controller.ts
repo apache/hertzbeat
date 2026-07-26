@@ -6,7 +6,7 @@
  */
 
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { classifyMonitorReadError, loadMonitorsByApp, MonitorContractError, type Monitor } from '@/features/monitor';
 
@@ -35,8 +35,12 @@ export function useAlertRuleMetricBindingController(
   updateDraft: UpdateDraft
 ) {
   const context = bindingContext(draft, targetState);
+  const contextKey = context?.key ?? null;
   const [session, setSession] = useState<BindingSession | null>(null);
   const activeSession = context && session?.key === context.key ? session : null;
+  useEffect(() => {
+    setSession(current => (current && current.key !== contextKey ? null : current));
+  }, [contextKey]);
   const query = useQuery({
     queryKey: alertRuleQueryKeys.targetBindings(context?.app ?? ''),
     queryFn: activeSession && context ? ({ signal }) => loadMonitorsByApp(context.app, signal) : skipToken,

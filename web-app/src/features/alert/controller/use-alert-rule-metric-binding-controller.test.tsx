@@ -124,7 +124,7 @@ describe('Alert Rule metric binding controller', () => {
     expect(updateDraft).toHaveBeenCalledWith(buildMetricAlertBindingsPatch(draft, [], [], []));
   });
 
-  it('retires staged bindings when the application or target changes', async () => {
+  it('permanently retires staged bindings when the application or target changes', async () => {
     const updateDraft = vi.fn();
     const first = targetedDraft('availability');
     const rendered = renderBinding(first, updateDraft);
@@ -132,11 +132,31 @@ describe('Alert Rule metric binding controller', () => {
     await waitFor(() => expect(rendered.result.current.state.evidence.kind).toBe('ready'));
     act(() => rendered.result.current.changeMonitorIds([7]));
 
-    rendered.rerender({ draft: targetedDraft('metric') });
+    rendered.rerender({ draft: targetedDraft('metric'), state: targetState });
 
     expect(rendered.result.current.state.open).toBe(false);
     act(() => rendered.result.current.confirm());
     expect(updateDraft).not.toHaveBeenCalled();
+
+    rendered.rerender({ draft: first, state: targetState });
+
+    expect(rendered.result.current.state.open).toBe(false);
+    expect(rendered.result.current.state.selectedMonitorIds).toEqual([]);
+  });
+
+  it('permanently retires a metric session when hierarchy evidence temporarily leaves ready', async () => {
+    const draft = targetedDraft('metric');
+    const rendered = renderBinding(draft, vi.fn());
+    act(() => rendered.result.current.open());
+    await waitFor(() => expect(rendered.result.current.state.evidence.kind).toBe('ready'));
+    act(() => rendered.result.current.changeMonitorIds([7]));
+
+    rendered.rerender({ draft, state: loadingTargetState });
+    expect(rendered.result.current.state.open).toBe(false);
+
+    rendered.rerender({ draft, state: targetState });
+    expect(rendered.result.current.state.open).toBe(false);
+    expect(rendered.result.current.state.selectedMonitorIds).toEqual([]);
   });
 
   it('cannot open inactive, untargeted, or unsafe raw metric drafts', () => {
@@ -156,8 +176,9 @@ function renderBinding(initialDraft: AlertRuleDraft, updateDraft: (patch: Partia
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   return renderHook(
-    ({ draft }: { draft: AlertRuleDraft }) => useAlertRuleMetricBindingController(draft, targetState, updateDraft),
-    { initialProps: { draft: initialDraft }, wrapper }
+    ({ draft, state }: { draft: AlertRuleDraft; state: AlertRuleMetricTargetState }) =>
+      useAlertRuleMetricBindingController(draft, state, updateDraft),
+    { initialProps: { draft: initialDraft, state: targetState }, wrapper }
   );
 }
 
@@ -243,4 +264,9 @@ const hierarchy: MonitorAppHierarchyNode = {
 const targetState: AlertRuleMetricTargetState = {
   apps: { kind: 'ready', apps: [] },
   hierarchy: { kind: 'ready', hierarchy }
+};
+
+const loadingTargetState: AlertRuleMetricTargetState = {
+  apps: { kind: 'ready', apps: [] },
+  hierarchy: { kind: 'loading' }
 };
