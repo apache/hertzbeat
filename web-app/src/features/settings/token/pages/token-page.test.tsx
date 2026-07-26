@@ -86,8 +86,14 @@ describe('TokenPage', () => {
   it('renders the page identity and delegates token generation from the header', () => {
     renderTokenPage();
 
-    expect(screen.getByRole('heading', { name: i18n.t('token.title') })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('token.generate') }));
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const generate = screen.getByRole('button', { name: i18n.t('token.generate') });
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: i18n.t('token.title') }));
+    expect(headerActions).toContainElement(generate);
+    fireEvent.click(generate);
 
     expect(controller.openGenerator).toHaveBeenCalledTimes(1);
   });
@@ -149,6 +155,10 @@ describe('TokenPage', () => {
 
     renderTokenPage();
 
+    const headerActions = document.querySelector('[data-hb-operational-page-actions]');
+    if (!(headerActions instanceof HTMLElement)) throw new Error('Token header actions were not rendered.');
+    const headerGenerate = within(headerActions).getByRole('button', { name: i18n.t('token.generate') });
+    expect(headerGenerate).toHaveClass('ant-btn-loading');
     const nameInput = screen.getByPlaceholderText('For example, production Collector');
     const generator = nameInput.closest('[role="dialog"]');
     if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
@@ -170,6 +180,10 @@ describe('TokenPage', () => {
 
     renderTokenPage();
 
+    const headerActions = document.querySelector('[data-hb-operational-page-actions]');
+    if (!(headerActions instanceof HTMLElement)) throw new Error('Token header actions were not rendered.');
+    const headerGenerate = within(headerActions).getByRole('button', { name: i18n.t('token.generate') });
+    expect(headerGenerate).toBeDisabled();
     expect(screen.getByText('Token data is unavailable.')).toBeInTheDocument();
     expect(screen.queryByText('Token generated')).not.toBeInTheDocument();
     const generator = screen.getByPlaceholderText('For example, production Collector').closest('[role="dialog"]');

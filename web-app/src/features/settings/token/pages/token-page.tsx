@@ -15,21 +15,35 @@
  * limitations under the License.
  */
 
+import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+
 import { TokenList } from '../components/token-list';
 import { GeneratedTokenModal, TokenGeneratorModal } from '../components/token-modals';
-import { TokenPageHeader } from '../components/token-page-header';
-import styles from '../components/token.module.css';
 import { useTokenResourceController } from '../controller/token-resource-controller';
 
 export function TokenPage() {
+  const { t } = useTranslation();
   const controller = useTokenResourceController();
 
   return (
-    <div className={styles.page}>
-      <TokenPageHeader
-        blocked={controller.state.generationRecovery !== null}
-        generating={controller.state.generating}
-        onGenerate={controller.openGenerator}
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('token.title')}
+        description={t('token.description')}
+        actions={
+          <Button
+            type="primary"
+            aria-label={t('token.generate')}
+            disabled={controller.state.generationRecovery !== null}
+            loading={controller.state.generating}
+            onClick={controller.openGenerator}
+          >
+            {t('token.generate')}
+          </Button>
+        }
       />
       <TokenList
         list={controller.state.list}
@@ -59,6 +73,6 @@ export function TokenPage() {
           onClose={controller.closeGeneratedToken}
         />
       )}
-    </div>
+    </OperationalPage>
   );
 }
