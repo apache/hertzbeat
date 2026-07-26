@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.mcp;
 
+import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertAnalysisPolicyToolService;
 import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertRuleToolService;
+import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertSilenceToolService;
 import org.apache.hertzbeat.ai.gateway.tool.alert.AgentAlertToolService;
+import org.apache.hertzbeat.ai.gateway.tool.collector.AgentCollectorToolService;
 import org.apache.hertzbeat.ai.gateway.tool.database.AgentDatabaseDiagnosticService;
+import org.apache.hertzbeat.ai.gateway.tool.log.AgentLogToolService;
 import org.apache.hertzbeat.ai.gateway.tool.metrics.AgentMetricsToolService;
 import org.apache.hertzbeat.ai.gateway.tool.monitor.AgentMonitorToolService;
-import org.apache.hertzbeat.ai.gateway.tool.collector.AgentCollectorToolService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
@@ -38,12 +41,15 @@ public class AgentMcpToolConfiguration {
     public ToolCallbackProvider hertzbeatMcpTools(AgentMonitorToolService monitorTools,
                                                   AgentAlertToolService alertTools,
                                                   AgentAlertRuleToolService alertRuleTools,
+                                                  AgentAlertSilenceToolService alertSilenceTools,
+                                                  AgentAlertAnalysisPolicyToolService alertAnalysisPolicyTools,
+                                                  AgentLogToolService logTools,
                                                   AgentMetricsToolService metricsTools,
                                                   AgentDatabaseDiagnosticService databaseTools,
                                                   AgentCollectorToolService collectorTools) {
-        return MethodToolCallbackProvider.builder()
-                .toolObjects(monitorTools, alertTools, alertRuleTools,
-                        metricsTools, databaseTools, collectorTools)
+        return MethodToolCallbackProvider.builder().toolObjects(
+                        monitorTools, alertTools, alertRuleTools, alertSilenceTools, alertAnalysisPolicyTools,
+                        logTools, metricsTools, databaseTools, collectorTools)
                 .build();
     }
 }
