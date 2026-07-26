@@ -71,14 +71,22 @@ export function buildMetricAlertTargetCatalog(
 /** Rejects stale or ambiguous selections before they can enter the editor draft. */
 export function isMetricAlertTargetInHierarchy(hierarchy: MonitorAppHierarchyNode, target: RealtimeMetricTarget) {
   try {
-    const catalog = buildMetricAlertTargetCatalog(hierarchy, {
-      // These labels are validation-only and never reach the UI.
-      availability: 'availability',
-      rowCount: 'row count'
-    });
+    const catalog = validationCatalog(hierarchy);
     return catalog.targets.some(option => sameTarget(option.target, target));
   } catch {
     return false;
+  }
+}
+
+export function metricAlertFieldsForTarget(
+  hierarchy: MonitorAppHierarchyNode,
+  target: RealtimeMetricTarget
+): MetricAlertField[] | null {
+  if (target.kind !== 'metric') return null;
+  try {
+    return validationCatalog(hierarchy).targets.find(option => sameTarget(option.target, target))?.fields ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -130,4 +138,12 @@ function contract(message: string) {
 function sameTarget(left: RealtimeMetricTarget, right: RealtimeMetricTarget) {
   if (left.kind !== right.kind || left.app !== right.app) return false;
   return left.kind === 'availability' || (right.kind === 'metric' && left.metric === right.metric);
+}
+
+function validationCatalog(hierarchy: MonitorAppHierarchyNode) {
+  return buildMetricAlertTargetCatalog(hierarchy, {
+    // These labels are validation-only and never reach the UI.
+    availability: 'availability',
+    rowCount: 'row count'
+  });
 }

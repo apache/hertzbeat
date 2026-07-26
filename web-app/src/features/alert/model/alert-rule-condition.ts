@@ -87,6 +87,19 @@ export function serializeMetricAlertCondition(group: MetricAlertConditionGroup, 
 }
 
 /**
+ * Returns null while a guided condition is incomplete. This lets the UI retain
+ * transient input without producing or discarding a writable rule.
+ */
+export function serializeCompleteMetricAlertCondition(group: MetricAlertConditionGroup, fields: MetricAlertField[]) {
+  if (group.items.length === 0) return null;
+  try {
+    return serializeMetricAlertCondition(group, fields);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Parses the structured subset conservatively. Unsupported or ambiguous input
  * returns null so callers can retain the source in expert mode.
  */

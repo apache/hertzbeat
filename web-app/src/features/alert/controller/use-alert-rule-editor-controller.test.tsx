@@ -193,6 +193,61 @@ describe('Alert Rule editor controller', () => {
     });
   });
 
+  it('owns structured and expert metric thresholds through the selected field catalog', async () => {
+    monitor.loadMonitorNavigationApps.mockResolvedValue([
+      { category: 'application', value: 'springboot3', label: 'Spring Boot 3', hide: false }
+    ]);
+    monitor.loadMonitorAppHierarchy.mockResolvedValue({
+      category: 'application',
+      value: 'springboot3',
+      label: 'Spring Boot 3',
+      isLeaf: false,
+      hide: false,
+      type: null,
+      unit: null,
+      children: [
+        {
+          category: null,
+          value: 'summary',
+          label: 'Summary',
+          isLeaf: false,
+          hide: false,
+          type: null,
+          unit: null,
+          children: []
+        }
+      ]
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(result.current.state.metricTarget.apps.kind).toBe('ready'));
+    act(() => result.current.changeMetricApplication('springboot3'));
+    await waitFor(() => expect(result.current.state.metricTarget.hierarchy.kind).toBe('ready'));
+    act(() => result.current.changeMetricTarget({ kind: 'metric', app: 'springboot3', metric: 'summary' }));
+
+    act(() =>
+      result.current.changeMetricStructuredCondition({
+        kind: 'group',
+        join: 'and',
+        items: [{ kind: 'condition', field: '__row__', operator: '>', value: 1 }]
+      })
+    );
+    expect(result.current.state.draft).toMatchObject({
+      expr: 'equals(__app__,"springboot3") && equals(__metrics__,"summary") && __row__ > 1',
+      metricEditor: { authoring: { mode: 'structured' } }
+    });
+
+    act(() => result.current.changeMetricAuthoringMode('expert'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      authoring: { mode: 'expert', condition: '__row__ > 1' }
+    });
+    act(() => result.current.changeMetricExpertCondition('__row__ > 2'));
+    expect(result.current.state.draft?.expr).toContain('__row__ > 2');
+    act(() => result.current.changeMetricAuthoringMode('structured'));
+    expect(result.current.state.draft?.metricEditor).toMatchObject({
+      authoring: { mode: 'structured', condition: { items: [{ value: 2 }] } }
+    });
+  });
+
   it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {
     const { result } = renderController('edit', `/alerts/rules/${encodeURIComponent(ruleId)}/edit`);
     await waitFor(() => expect(result.current.state.detail.kind).toBe('error'));

@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
@@ -11,28 +11,24 @@ import {
   alertRuleFailureKind,
   alertRuleDraftFromDetail,
   buildAlertRuleStrategyPatch,
-  buildMetricAlertApplicationPatch,
-  buildMetricAlertTargetPatch,
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
-  isMetricAlertTargetInHierarchy,
   synchronizeMetricAlertDraftPatch,
   type AlertRuleDataType,
   type AlertRuleDraft,
-  type AlertRuleKind,
-  type RealtimeMetricTarget
+  type AlertRuleKind
 } from '../model/alert-rule-model';
+import { createAlertRuleMetricEditorCommands } from './alert-rule-metric-editor-commands';
 import {
   freshAlertRuleRouteState,
   type AlertRuleEditorDetailState,
-  type AlertRuleEditorIdentityController,
-  type AlertRuleEditorOperationIdentity,
   type AlertRuleRouteState
 } from './alert-rule-editor-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
 import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
+import { useAlertRuleEditorIdentity } from './use-alert-rule-editor-identity';
 import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
@@ -106,16 +102,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       updateDraft(buildAlertRuleStrategyPatch(draft, draft.kind, dataType));
     }
   };
-  const changeMetricApplication = (application: string) => {
-    if (!draft || metricTarget.state.apps.kind !== 'ready') return;
-    if (!metricTarget.state.apps.apps.some(app => app.value === application)) return;
-    updateDraft(buildMetricAlertApplicationPatch(draft, application));
-  };
-  const changeMetricTarget = (target: RealtimeMetricTarget) => {
-    if (!draft || metricTarget.state.hierarchy.kind !== 'ready') return;
-    if (!isMetricAlertTargetInHierarchy(metricTarget.state.hierarchy.hierarchy, target)) return;
-    updateDraft(buildMetricAlertTargetPatch(draft, target));
-  };
+  const metricEditor = createAlertRuleMetricEditorCommands(draft, metricTarget.state, updateDraft);
   return {
     state: {
       command: active.command,
@@ -130,8 +117,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     updateDraft,
     changeDataType,
     changeKind,
-    changeMetricApplication,
-    changeMetricTarget,
+    ...metricEditor,
     preview: preview.preview,
     save: command.save,
     retrySave: command.retry,
@@ -171,32 +157,6 @@ function useAlertRuleDetail(mode: 'new' | 'edit', validId: number | null) {
     queryFn: detailId === null ? skipToken : ({ signal }) => loadAlertRule(detailId, signal),
     retry: false
   });
-}
-
-function useAlertRuleEditorIdentity(routeToken: symbol): AlertRuleEditorIdentityController {
-  const routeTokenRef = useRef<symbol | null>(routeToken);
-  const editorEpochRef = useRef(0);
-  useLayoutEffect(() => {
-    routeTokenRef.current = routeToken;
-  }, [routeToken]);
-  useEffect(
-    () => () => {
-      routeTokenRef.current = null;
-      editorEpochRef.current += 1;
-    },
-    []
-  );
-  const capture = (): AlertRuleEditorOperationIdentity => ({
-    routeToken,
-    editorEpoch: editorEpochRef.current
-  });
-  return {
-    capture,
-    invalidate: () => {
-      editorEpochRef.current += 1;
-    },
-    isCurrent: owner => routeTokenRef.current === owner.routeToken && editorEpochRef.current === owner.editorEpoch
-  };
 }
 
 function resolveDetail(

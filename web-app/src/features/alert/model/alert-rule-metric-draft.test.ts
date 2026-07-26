@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import {
   alertRuleDraftFromDetail,
   buildMetricAlertApplicationPatch,
+  buildMetricAlertAuthoringModePatch,
   buildMetricAlertExpertConditionPatch,
   buildMetricAlertStructuredConditionPatch,
   buildMetricAlertTargetPatch,
@@ -17,6 +18,7 @@ import {
   recoverMetricAlertStructuredAuthoring,
   synchronizeMetricAlertDraftPatch,
   type AlertRule,
+  type AlertRuleDraft,
   type MetricAlertField
 } from './alert-rule-model';
 
@@ -143,13 +145,59 @@ describe('metric alert draft transitions', () => {
     expect(
       buildMetricAlertExpertConditionPatch(
         { ...draft, ...recoverMetricAlertStructuredAuthoring(draft, fields) },
-        'responseTime > 200'
+        '  responseTime > 200  '
       )
     ).toMatchObject({
       expr: 'equals(__app__,"springboot3") && equals(__metrics__,"summary") && responseTime > 200',
-      metricEditor: { authoring: { mode: 'expert', condition: 'responseTime > 200' } }
+      metricEditor: { authoring: { mode: 'expert', condition: '  responseTime > 200  ' } }
     });
     expect(recoverMetricAlertStructuredAuthoring(alertRuleDraftFromDetail(rule('custom(value)')), fields)).toEqual({});
+  });
+
+  it('switches authoring modes only when the threshold can be represented without reinterpretation', () => {
+    const draft = alertRuleDraftFromDetail(
+      rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && responseTime > 100')
+    );
+    const structured = { ...draft, ...buildMetricAlertAuthoringModePatch(draft, 'structured', fields) };
+    expect(structured.metricEditor).toMatchObject({
+      authoring: { mode: 'structured', condition: { items: [{ field: 'responseTime', value: 100 }] } }
+    });
+    expect(buildMetricAlertAuthoringModePatch(structured, 'expert', fields)).toMatchObject({
+      expr: draft.expr,
+      metricEditor: { authoring: { mode: 'expert', condition: 'responseTime > 100' } }
+    });
+    const incomplete = {
+      ...structured,
+      metricEditor: {
+        ...targetedMetricEditor(structured),
+        authoring: {
+          mode: 'structured' as const,
+          condition: { kind: 'group' as const, join: 'and' as const, items: [] }
+        }
+      }
+    };
+    expect(buildMetricAlertAuthoringModePatch(incomplete, 'expert', fields)).toEqual({});
+
+    const unknown = alertRuleDraftFromDetail(
+      rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && custom(value)')
+    );
+    expect(buildMetricAlertAuthoringModePatch(unknown, 'structured', fields)).toEqual({});
+  });
+
+  it('keeps an incomplete structured threshold transient and clears the writable expression', () => {
+    const draft = alertRuleDraftFromDetail(
+      rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && responseTime > 100')
+    );
+    const condition = {
+      kind: 'group' as const,
+      join: 'and' as const,
+      items: [{ kind: 'condition' as const, field: 'status', operator: 'equals' as const, value: '' }]
+    };
+
+    expect(buildMetricAlertStructuredConditionPatch(draft, condition, fields)).toMatchObject({
+      expr: '',
+      metricEditor: { authoring: { mode: 'structured', condition } }
+    });
   });
 
   it('keeps the transient owner synchronized when the existing raw textarea changes expression', () => {
@@ -192,4 +240,9 @@ function rule(expr: string): AlertRule {
     template: 'Alert',
     enable: true
   };
+}
+
+function targetedMetricEditor(draft: AlertRuleDraft) {
+  if (draft.metricEditor?.kind !== 'targeted') throw new Error('expected targeted metric editor');
+  return draft.metricEditor;
 }

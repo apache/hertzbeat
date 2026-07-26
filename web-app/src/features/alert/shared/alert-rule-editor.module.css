@@ -48,6 +48,59 @@
 .form > :global(.ant-alert).wide {
   grid-column: 1 / -1;
 }
+.conditionEditor {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  padding-top: 12px;
+}
+.conditionEditorHeader,
+.conditionGroupHeader,
+.conditionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conditionEditorHeader {
+  justify-content: space-between;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+.conditionGroup {
+  display: grid;
+  gap: 8px;
+}
+.conditionGroupHeader > :global(.ant-select) {
+  width: 104px;
+}
+.conditionRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(140px, 0.8fr) minmax(180px, 1fr) 32px;
+}
+.conditionRow > :global(.ant-input-number) {
+  width: 100%;
+}
+.conditionNested {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 8px;
+  border-left: 2px solid var(--ant-color-border-secondary);
+  padding-left: 12px;
+}
+.conditionNoValue,
+.conditionEmpty {
+  color: var(--ant-color-text-tertiary);
+  font-size: 13px;
+}
+.conditionNoValue {
+  padding: 6px 11px;
+}
+.conditionExpert {
+  display: grid;
+  gap: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -61,5 +114,12 @@
   }
   .wide {
     grid-column: auto;
+  }
+  .conditionRow {
+    grid-template-columns: 1fr;
+  }
+  .conditionGroupHeader {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

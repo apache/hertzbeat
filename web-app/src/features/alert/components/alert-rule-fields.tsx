@@ -24,6 +24,9 @@ type AlertRuleFieldsProps = {
   changeKind: (kind: AlertRuleKind) => void;
   metricTarget: AlertRuleMetricTargetState;
   changeMetricApplication: (application: string) => void;
+  changeMetricAuthoringMode: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeAuthoringMode'];
+  changeMetricExpertCondition: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeExpertCondition'];
+  changeMetricStructuredCondition: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeStructuredCondition'];
   changeMetricTarget: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeTarget'];
   retryMetricTargetApps: () => unknown;
   retryMetricTargetHierarchy: () => unknown;
@@ -98,6 +101,9 @@ function AlertRuleDefinitionFields({
   metricTarget,
   update,
   changeMetricApplication,
+  changeMetricAuthoringMode,
+  changeMetricExpertCondition,
+  changeMetricStructuredCondition,
   changeMetricTarget,
   retryMetricTargetApps,
   retryMetricTargetHierarchy
@@ -112,6 +118,9 @@ function AlertRuleDefinitionFields({
           state={metricTarget}
           update={update}
           changeApplication={changeMetricApplication}
+          changeAuthoringMode={changeMetricAuthoringMode}
+          changeExpertCondition={changeMetricExpertCondition}
+          changeStructuredCondition={changeMetricStructuredCondition}
           changeTarget={changeMetricTarget}
           retryApps={retryMetricTargetApps}
           retryHierarchy={retryMetricTargetHierarchy}

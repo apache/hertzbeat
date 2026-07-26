@@ -8,7 +8,7 @@
 import type { AlertRuleDraft } from './alert-rule-draft';
 import {
   parseMetricAlertCondition,
-  serializeMetricAlertCondition,
+  serializeCompleteMetricAlertCondition,
   type MetricAlertConditionGroup,
   type MetricAlertField
 } from './alert-rule-condition';
@@ -133,10 +133,8 @@ export function buildMetricAlertStructuredConditionPatch(
   fields: MetricAlertField[]
 ): Partial<AlertRuleDraft> {
   const editor = targetedMetricEditor(draft);
-  const expression =
-    condition.items.length === 0
-      ? ''
-      : composeTargetedExpression(editor, serializeMetricAlertCondition(condition, fields));
+  const threshold = serializeCompleteMetricAlertCondition(condition, fields);
+  const expression = threshold ? composeTargetedExpression(editor, threshold) : '';
   return {
     expr: expression,
     metricEditor: {
@@ -144,6 +142,19 @@ export function buildMetricAlertStructuredConditionPatch(
       authoring: { mode: 'structured', condition }
     }
   };
+}
+
+export function buildMetricAlertAuthoringModePatch(
+  draft: AlertRuleDraft,
+  mode: MetricAlertAuthoring['mode'],
+  fields: MetricAlertField[]
+): Partial<AlertRuleDraft> {
+  const editor = targetedMetricEditor(draft);
+  if (editor.authoring.mode === mode) return {};
+  if (mode === 'structured') return recoverMetricAlertStructuredAuthoring(draft, fields);
+  if (editor.authoring.mode !== 'structured') return {};
+  const threshold = serializeCompleteMetricAlertCondition(editor.authoring.condition, fields);
+  return threshold === null ? {} : buildMetricAlertExpertConditionPatch(draft, threshold);
 }
 
 export function buildMetricAlertExpertConditionPatch(
@@ -156,7 +167,7 @@ export function buildMetricAlertExpertConditionPatch(
     expr: normalized ? composeTargetedExpression(editor, normalized) : '',
     metricEditor: {
       ...editor,
-      authoring: { mode: 'expert', condition: normalized }
+      authoring: { mode: 'expert', condition }
     }
   };
 }

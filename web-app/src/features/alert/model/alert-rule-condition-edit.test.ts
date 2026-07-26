@@ -49,6 +49,7 @@ describe('metric alert condition editing', () => {
       value: null
     });
     expect(updateMetricAlertConditionValue(string, [0], 'DOWN').items[0]).toMatchObject({ value: 'DOWN' });
+    expect(updateMetricAlertConditionValue(numeric, [0], null).items[0]).toMatchObject({ value: null });
   });
 
   it('adds nested groups, changes joins, and removes only the addressed item', () => {

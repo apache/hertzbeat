@@ -59,6 +59,9 @@ function renderFields(
       changeDataType={changeDataType}
       changeKind={changeKind}
       changeMetricApplication={vi.fn()}
+      changeMetricAuthoringMode={vi.fn()}
+      changeMetricExpertCondition={vi.fn()}
+      changeMetricStructuredCondition={vi.fn()}
       changeMetricTarget={vi.fn()}
       retryMetricTargetApps={vi.fn()}
       retryMetricTargetHierarchy={vi.fn()}

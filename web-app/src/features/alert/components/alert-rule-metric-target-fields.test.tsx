@@ -143,6 +143,9 @@ function renderTarget(
       state={metricTarget}
       update={update}
       changeApplication={changeApplication}
+      changeAuthoringMode={vi.fn()}
+      changeExpertCondition={vi.fn()}
+      changeStructuredCondition={vi.fn()}
       changeTarget={changeTarget}
       retryApps={retryApps}
       retryHierarchy={retryHierarchy}

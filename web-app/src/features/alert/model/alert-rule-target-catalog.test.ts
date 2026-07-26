@@ -10,7 +10,11 @@ import { describe, expect, it } from 'vitest';
 import type { MonitorAppHierarchyNode } from '@/features/monitor';
 
 import { AlertRuleContractError } from './alert-rule-types';
-import { buildMetricAlertTargetCatalog, isMetricAlertTargetInHierarchy } from './alert-rule-target-catalog';
+import {
+  buildMetricAlertTargetCatalog,
+  isMetricAlertTargetInHierarchy,
+  metricAlertFieldsForTarget
+} from './alert-rule-target-catalog';
 
 const hierarchy: MonitorAppHierarchyNode = {
   category: 'application',
@@ -136,5 +140,15 @@ describe('metric alert target catalog', () => {
         { kind: 'availability', app: 'springboot3' }
       )
     ).toBe(false);
+  });
+
+  it('returns fields only for the selected metric target', () => {
+    expect(metricAlertFieldsForTarget(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'summary' })).toEqual([
+      { value: 'responseTime', label: 'Response time', type: 0, unit: 'ms' },
+      { value: 'status', label: 'status', type: 1, unit: null },
+      { value: '__row__', label: 'row count', type: 0, unit: null }
+    ]);
+    expect(metricAlertFieldsForTarget(hierarchy, { kind: 'availability', app: 'springboot3' })).toBeNull();
+    expect(metricAlertFieldsForTarget(hierarchy, { kind: 'metric', app: 'springboot3', metric: 'missing' })).toBeNull();
   });
 });

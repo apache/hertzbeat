@@ -168,6 +168,7 @@ function initialValue(operator: MetricAlertConditionOperator) {
 function normalizeValue(operator: MetricAlertConditionOperator, value: string | number | null) {
   if (operator === 'exists' || operator === '!exists') return null;
   if (['>', '<', '==', '!=', '<=', '>='].includes(operator)) {
+    if (value === null) return null;
     if (typeof value !== 'number' || !Number.isFinite(value)) throw contract('numeric condition value is invalid');
     return value;
   }

@@ -12,11 +12,14 @@ import type { AlertRuleMetricTargetState } from '../controller/use-alert-rule-me
 import {
   buildMetricAlertTargetCatalog,
   type AlertRuleDraft,
+  type MetricAlertAuthoring,
+  type MetricAlertConditionGroup,
   type MetricAlertTargetCatalog,
   type RealtimeMetricTarget
 } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleMetricTargetEvidence } from './alert-rule-metric-target-evidence';
+import { AlertRuleMetricConditionEditor } from './alert-rule-metric-condition-editor';
 
 type AlertRuleMetricTargetFieldsProps = {
   busy: boolean;
@@ -24,6 +27,9 @@ type AlertRuleMetricTargetFieldsProps = {
   state: AlertRuleMetricTargetState;
   update: (patch: Partial<AlertRuleDraft>) => void;
   changeApplication: (application: string) => void;
+  changeAuthoringMode: (mode: MetricAlertAuthoring['mode']) => void;
+  changeExpertCondition: (condition: string) => void;
+  changeStructuredCondition: (condition: MetricAlertConditionGroup) => void;
   changeTarget: (target: RealtimeMetricTarget) => void;
   retryApps: () => unknown;
   retryHierarchy: () => unknown;
@@ -49,6 +55,7 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
 
   const selectedApp = editor?.kind === 'targeted' ? editor.app : '';
   const catalog = catalogFromState(props.state, t);
+  const selectedTarget = selectedTargetOption(editor, catalog);
   return (
     <>
       <label>
@@ -78,8 +85,16 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
         <Typography.Text className={styles.wide} type="secondary">
           {t('alertRules.metricTarget.availabilityDescription')}
         </Typography.Text>
-      ) : (
-        <ExpressionField {...props} />
+      ) : null}
+      {selectedTarget?.target.kind === 'metric' && (
+        <AlertRuleMetricConditionEditor
+          busy={props.busy}
+          draft={props.draft}
+          fields={selectedTarget.fields}
+          changeStructured={props.changeStructuredCondition}
+          changeExpert={props.changeExpertCondition}
+          changeMode={props.changeAuthoringMode}
+        />
       )}
     </>
   );
@@ -121,6 +136,16 @@ function TargetField(
 function selectedTargetValue(editor: AlertRuleDraft['metricEditor']) {
   if (editor?.kind !== 'targeted' || !editor.target) return undefined;
   return editor.target.kind === 'availability' ? 'availability' : `metric:${editor.target.metric}`;
+}
+
+function selectedTargetOption(editor: AlertRuleDraft['metricEditor'], catalog: MetricAlertTargetCatalog | null) {
+  if (editor?.kind !== 'targeted' || !editor.target || !catalog) return null;
+  return (
+    catalog.targets.find(option => {
+      if (option.target.kind !== editor.target?.kind || option.target.app !== editor.target.app) return false;
+      return option.target.kind === 'availability' || option.target.metric === editor.target.metric;
+    }) ?? null
+  );
 }
 
 function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsProps) {
