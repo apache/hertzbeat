@@ -54,15 +54,29 @@ function renderFields(
       draft={{ ...createAlertRuleDraft(), ...patch }}
       busy={false}
       datasource={datasource}
+      metricBindings={{
+        eligible: false,
+        open: false,
+        evidence: { kind: 'idle' },
+        selectedMonitorIds: [],
+        selectedLabels: [],
+        labelChoices: []
+      }}
       metricTarget={{ apps: { kind: 'idle' }, hierarchy: { kind: 'idle' } }}
       update={vi.fn()}
       changeDataType={changeDataType}
       changeKind={changeKind}
       changeMetricApplication={vi.fn()}
       changeMetricAuthoringMode={vi.fn()}
+      changeMetricBindingIds={vi.fn()}
+      changeMetricBindingLabels={vi.fn()}
       changeMetricExpertCondition={vi.fn()}
       changeMetricStructuredCondition={vi.fn()}
       changeMetricTarget={vi.fn()}
+      openMetricBindings={vi.fn()}
+      cancelMetricBindings={vi.fn()}
+      confirmMetricBindings={vi.fn()}
+      retryMetricBindings={vi.fn()}
       retryMetricTargetApps={vi.fn()}
       retryMetricTargetHierarchy={vi.fn()}
     />

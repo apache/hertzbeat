@@ -1965,6 +1965,19 @@
       "hierarchyError": "無法載入此應用的指標。",
       "legacyExpression": "此舊運算式無法安全轉換為引導編輯器格式。在你主動編輯前，它會保持原樣。"
     },
+    "metricBindings": {
+      "title": "監控綁定",
+      "description": "將此規則限制到選定的監控實例或標籤。",
+      "manage": "管理綁定",
+      "instances": "監控實例",
+      "labels": "監控標籤",
+      "loading": "正在載入監控選項。",
+      "empty": "此應用尚未設定監控。",
+      "unavailable": "監控選項暫時無法使用。",
+      "contractError": "監控選項與預期的應用契約不一致。",
+      "error": "無法載入監控選項。",
+      "noLabels": "沒有可用的監控標籤。"
+    },
     "metricCondition": {
       "title": "觸發條件",
       "structured": "引導模式",

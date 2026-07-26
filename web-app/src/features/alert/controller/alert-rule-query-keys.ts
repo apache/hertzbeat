@@ -26,5 +26,6 @@ export const alertRuleQueryKeys = {
   detail: (id: number | null) => [...rootKey, 'detail', id] as const,
   datasourceStatus: () => [...rootKey, 'datasource-status'] as const,
   targetApps: (locale: SupportedLocale) => [...rootKey, 'target-apps', locale] as const,
-  targetHierarchy: (app: string, locale: SupportedLocale) => [...rootKey, 'target-hierarchy', app, locale] as const
+  targetHierarchy: (app: string, locale: SupportedLocale) => [...rootKey, 'target-hierarchy', app, locale] as const,
+  targetBindings: (app: string) => [...rootKey, 'target-bindings', app] as const
 };

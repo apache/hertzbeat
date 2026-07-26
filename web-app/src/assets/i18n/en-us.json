@@ -1984,6 +1984,19 @@
       "hierarchyError": "Metrics for this application could not be loaded.",
       "legacyExpression": "This legacy expression cannot be represented safely by the guided editor. It will remain unchanged unless you edit it."
     },
+    "metricBindings": {
+      "title": "Monitor bindings",
+      "description": "Limit this rule to selected monitor instances or labels.",
+      "manage": "Manage bindings",
+      "instances": "Monitor instances",
+      "labels": "Monitor labels",
+      "loading": "Loading monitor choices.",
+      "empty": "No monitors are configured for this application.",
+      "unavailable": "Monitor choices are temporarily unavailable.",
+      "contractError": "Monitor choices did not match the expected application contract.",
+      "error": "Monitor choices could not be loaded.",
+      "noLabels": "No monitor labels are available."
+    },
     "metricCondition": {
       "title": "Threshold",
       "structured": "Guided",

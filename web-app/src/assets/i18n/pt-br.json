@@ -1988,6 +1988,19 @@
       "hierarchyError": "Não foi possível carregar as métricas desta aplicação.",
       "legacyExpression": "Esta expressão existente não pode ser representada com segurança pelo editor guiado. Ela será preservada até você editá-la."
     },
+    "metricBindings": {
+      "title": "Vínculos de monitores",
+      "description": "Limite esta regra às instâncias ou etiquetas de monitor selecionadas.",
+      "manage": "Gerenciar vínculos",
+      "instances": "Instâncias de monitor",
+      "labels": "Etiquetas de monitor",
+      "loading": "Carregando opções de monitores.",
+      "empty": "Nenhum monitor está configurado para esta aplicação.",
+      "unavailable": "As opções de monitores estão temporariamente indisponíveis.",
+      "contractError": "As opções de monitores não correspondem ao contrato esperado da aplicação.",
+      "error": "Não foi possível carregar as opções de monitores.",
+      "noLabels": "Nenhuma etiqueta de monitor está disponível."
+    },
     "metricCondition": {
       "title": "Limite",
       "structured": "Guiado",

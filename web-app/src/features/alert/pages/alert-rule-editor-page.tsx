@@ -56,15 +56,22 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
             draft={draft}
             busy={command === 'saving' || recovery !== undefined}
             datasource={datasource}
+            metricBindings={controller.state.metricBindings}
             metricTarget={controller.state.metricTarget}
             update={controller.updateDraft}
             changeDataType={controller.changeDataType}
             changeKind={controller.changeKind}
             changeMetricApplication={controller.changeMetricApplication}
             changeMetricAuthoringMode={controller.changeMetricAuthoringMode}
+            changeMetricBindingIds={controller.changeMetricBindingIds}
+            changeMetricBindingLabels={controller.changeMetricBindingLabels}
             changeMetricExpertCondition={controller.changeMetricExpertCondition}
             changeMetricStructuredCondition={controller.changeMetricStructuredCondition}
             changeMetricTarget={controller.changeMetricTarget}
+            openMetricBindings={controller.openMetricBindings}
+            cancelMetricBindings={controller.cancelMetricBindings}
+            confirmMetricBindings={controller.confirmMetricBindings}
+            retryMetricBindings={controller.retryMetricBindings}
             retryMetricTargetApps={controller.retryMetricTargetApps}
             retryMetricTargetHierarchy={controller.retryMetricTargetHierarchy}
           />

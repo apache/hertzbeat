@@ -1965,6 +1965,19 @@
       "hierarchyError": "无法加载该应用的指标。",
       "legacyExpression": "该旧表达式无法安全转换为引导编辑器格式。在你主动编辑前，它会保持原样。"
     },
+    "metricBindings": {
+      "title": "监控绑定",
+      "description": "将此规则限制到选定的监控实例或标签。",
+      "manage": "管理绑定",
+      "instances": "监控实例",
+      "labels": "监控标签",
+      "loading": "正在加载监控选项。",
+      "empty": "此应用尚未配置监控。",
+      "unavailable": "监控选项暂时不可用。",
+      "contractError": "监控选项与预期的应用契约不一致。",
+      "error": "无法加载监控选项。",
+      "noLabels": "没有可用的监控标签。"
+    },
     "metricCondition": {
       "title": "触发条件",
       "structured": "引导模式",

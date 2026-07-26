@@ -13,6 +13,7 @@ import {
   type AlertRuleKind
 } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
+import { AlertRuleMetricBindingField, type MetricBindingViewState } from './alert-rule-metric-binding-field';
 import { AlertRuleMetricTargetFields } from './alert-rule-metric-target-fields';
 
 type AlertRuleFieldsProps = {
@@ -23,11 +24,18 @@ type AlertRuleFieldsProps = {
   changeDataType: (dataType: AlertRuleDataType) => void;
   changeKind: (kind: AlertRuleKind) => void;
   metricTarget: AlertRuleMetricTargetState;
+  metricBindings: MetricBindingViewState;
   changeMetricApplication: (application: string) => void;
   changeMetricAuthoringMode: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeAuthoringMode'];
   changeMetricExpertCondition: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeExpertCondition'];
   changeMetricStructuredCondition: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeStructuredCondition'];
   changeMetricTarget: Parameters<typeof AlertRuleMetricTargetFields>[0]['changeTarget'];
+  openMetricBindings: () => void;
+  cancelMetricBindings: () => void;
+  confirmMetricBindings: () => void;
+  changeMetricBindingIds: (ids: number[]) => void;
+  changeMetricBindingLabels: (labels: string[]) => void;
+  retryMetricBindings: () => unknown;
   retryMetricTargetApps: () => unknown;
   retryMetricTargetHierarchy: () => unknown;
 };
@@ -99,12 +107,19 @@ function AlertRuleDefinitionFields({
   draft,
   busy,
   metricTarget,
+  metricBindings,
   update,
   changeMetricApplication,
   changeMetricAuthoringMode,
   changeMetricExpertCondition,
   changeMetricStructuredCondition,
   changeMetricTarget,
+  openMetricBindings,
+  cancelMetricBindings,
+  confirmMetricBindings,
+  changeMetricBindingIds,
+  changeMetricBindingLabels,
+  retryMetricBindings,
   retryMetricTargetApps,
   retryMetricTargetHierarchy
 }: AlertRuleFieldsProps) {
@@ -112,19 +127,31 @@ function AlertRuleDefinitionFields({
   return (
     <>
       {draft.kind === 'realtime' && draft.dataType === 'metric' ? (
-        <AlertRuleMetricTargetFields
-          busy={busy}
-          draft={draft}
-          state={metricTarget}
-          update={update}
-          changeApplication={changeMetricApplication}
-          changeAuthoringMode={changeMetricAuthoringMode}
-          changeExpertCondition={changeMetricExpertCondition}
-          changeStructuredCondition={changeMetricStructuredCondition}
-          changeTarget={changeMetricTarget}
-          retryApps={retryMetricTargetApps}
-          retryHierarchy={retryMetricTargetHierarchy}
-        />
+        <>
+          <AlertRuleMetricTargetFields
+            busy={busy}
+            draft={draft}
+            state={metricTarget}
+            update={update}
+            changeApplication={changeMetricApplication}
+            changeAuthoringMode={changeMetricAuthoringMode}
+            changeExpertCondition={changeMetricExpertCondition}
+            changeStructuredCondition={changeMetricStructuredCondition}
+            changeTarget={changeMetricTarget}
+            retryApps={retryMetricTargetApps}
+            retryHierarchy={retryMetricTargetHierarchy}
+          />
+          <AlertRuleMetricBindingField
+            busy={busy}
+            state={metricBindings}
+            open={openMetricBindings}
+            cancel={cancelMetricBindings}
+            confirm={confirmMetricBindings}
+            changeMonitorIds={changeMetricBindingIds}
+            changeLabels={changeMetricBindingLabels}
+            retry={retryMetricBindings}
+          />
+        </>
       ) : (
         <label className={styles.wide}>
           {t('alertRules.expression')}

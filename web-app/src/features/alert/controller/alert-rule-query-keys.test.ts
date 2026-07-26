@@ -36,4 +36,8 @@ describe('Alert Rule Query Keys', () => {
   it('keeps datasource capability evidence separate from rule records', () => {
     expect(alertRuleQueryKeys.datasourceStatus()).toEqual(['alert-rules', 'datasource-status']);
   });
+
+  it('scopes monitor binding choices to the selected application', () => {
+    expect(alertRuleQueryKeys.targetBindings('springboot3')).toEqual(['alert-rules', 'target-bindings', 'springboot3']);
+  });
 });

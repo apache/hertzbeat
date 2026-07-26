@@ -29,6 +29,7 @@ import { alertRuleQueryKeys } from './alert-rule-query-keys';
 import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
 import { useAlertRuleDatasourceController } from './use-alert-rule-datasource-controller';
 import { useAlertRuleEditorIdentity } from './use-alert-rule-editor-identity';
+import { useAlertRuleMetricBindingController } from './use-alert-rule-metric-binding-controller';
 import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
@@ -103,12 +104,14 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     }
   };
   const metricEditor = createAlertRuleMetricEditorCommands(draft, metricTarget.state, updateDraft);
+  const metricBindings = useAlertRuleMetricBindingController(draft, metricTarget.state, updateDraft);
   return {
     state: {
       command: active.command,
       datasource: datasource.state,
       detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
       draft,
+      metricBindings: metricBindings.state,
       metricTarget: metricTarget.state,
       preview: active.preview,
       saveFailure: active.saveFailure,
@@ -118,6 +121,12 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     changeDataType,
     changeKind,
     ...metricEditor,
+    openMetricBindings: metricBindings.open,
+    cancelMetricBindings: metricBindings.cancel,
+    confirmMetricBindings: metricBindings.confirm,
+    changeMetricBindingIds: metricBindings.changeMonitorIds,
+    changeMetricBindingLabels: metricBindings.changeLabels,
+    retryMetricBindings: metricBindings.retry,
     preview: preview.preview,
     save: command.save,
     retrySave: command.retry,
