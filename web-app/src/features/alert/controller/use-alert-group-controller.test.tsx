@@ -42,6 +42,7 @@ const api = vi.hoisted(() => ({
   updateAlertGroupEnabled: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const settings = vi.hoisted(() => ({ loadLabelSuggestions: vi.fn() }));
 
 vi.mock('../api/alert-group-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-group-api')>()),
@@ -52,6 +53,7 @@ vi.mock('antd', async importOriginal => ({
   App: { useApp: () => ({ message: notify }) }
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/features/settings', () => settings);
 
 const persisted: AlertGroupConverge = {
   id: 7,
@@ -74,6 +76,7 @@ describe('Alert Group controller', () => {
     api.saveAlertGroup.mockResolvedValue(undefined);
     api.updateAlertGroupEnabled.mockResolvedValue(undefined);
     api.deleteAlertGroups.mockResolvedValue(undefined);
+    settings.loadLabelSuggestions.mockResolvedValue({ keys: ['environment'], valuesByKey: {} });
   });
 
   it('forwards TanStack cancellation to the list read', async () => {

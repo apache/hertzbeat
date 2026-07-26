@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AlertGroupPage } from './alert-group-page';
@@ -109,6 +109,22 @@ describe('AlertGroupPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it('offers canonical server label keys without disabling manual tags', () => {
+    controller.state = buildState({
+      draft: {
+        name: 'New',
+        groupLabels: [],
+        groupWait: 30,
+        groupInterval: 300,
+        repeatInterval: 14_400,
+        enable: true
+      }
+    });
+    render(<AlertGroupPage />);
+    fireEvent.mouseDown(within(screen.getByRole('dialog')).getByRole('combobox'));
+    expect(screen.getByText('environment')).toBeInTheDocument();
   });
 
   it('restores current-page selection and confirms one batch delete', () => {
@@ -241,6 +257,10 @@ function buildState(override: Record<string, unknown> = {}) {
     draft: null,
     editorFailure: undefined,
     list: { kind: 'ready', records: [record], total: 1 },
+    labelSuggestions: {
+      kind: 'received',
+      keys: ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env', 'environment']
+    },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,
     recovery: undefined,

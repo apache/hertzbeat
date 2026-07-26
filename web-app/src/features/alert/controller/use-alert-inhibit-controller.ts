@@ -3,10 +3,12 @@
 import { useAlertInhibitCommandController } from './use-alert-inhibit-command-controller';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 import { useAlertInhibitSelection } from './use-alert-inhibit-selection';
+import { useAlertLabelSuggestionController } from './use-alert-label-suggestion-controller';
 
 export function useAlertInhibitController() {
   const read = useAlertInhibitReadController();
   const command = useAlertInhibitCommandController(read.rereadAuthoritatively, read.state.management.context);
+  const labelSuggestions = useAlertLabelSuggestionController();
   const selection = useAlertInhibitSelection(read.state.query, read.state.list);
   const unlessLocked =
     <Args extends unknown[]>(action: (...args: Args) => unknown) =>
@@ -14,7 +16,7 @@ export function useAlertInhibitController() {
       if (!command.controls.isLocked()) return action(...args);
     };
   return {
-    state: { ...command.state, ...read.state, selectedIds: selection.selectedIds },
+    state: { ...command.state, ...read.state, labelSuggestions, selectedIds: selection.selectedIds },
     setSearch: unlessLocked(read.actions.setSearch),
     submitSearch: unlessLocked(read.actions.submitSearch),
     changePage: unlessLocked(read.actions.changePage),

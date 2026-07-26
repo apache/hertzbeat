@@ -157,6 +157,7 @@ export function AlertGroupPage() {
           proofFailure={state.createProofFailure}
           recovery={saveRecovery}
           retrying={state.command !== 'recovering'}
+          labelKeys={state.labelSuggestions.keys}
           update={controller.updateDraft}
           close={controller.closeDraft}
           submit={controller.submit}

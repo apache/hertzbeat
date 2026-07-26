@@ -36,6 +36,7 @@ const api = vi.hoisted(() => ({
   saveAlertInhibit: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const settings = vi.hoisted(() => ({ loadLabelSuggestions: vi.fn() }));
 
 vi.mock('../api/alert-inhibit-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
@@ -46,6 +47,7 @@ vi.mock('antd', async importOriginal => ({
   App: { useApp: () => ({ message: notify }) }
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/features/settings', () => settings);
 
 describe('Alert Inhibit controller composition', () => {
   beforeEach(() => {
@@ -55,6 +57,7 @@ describe('Alert Inhibit controller composition', () => {
     );
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
     api.saveAlertInhibit.mockResolvedValue(undefined);
+    settings.loadLabelSuggestions.mockResolvedValue({ keys: ['environment'], valuesByKey: {} });
   });
 
   it('keeps an acknowledged create without identity open as commit-uncertain', async () => {

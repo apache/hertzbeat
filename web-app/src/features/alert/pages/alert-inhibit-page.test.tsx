@@ -120,6 +120,21 @@ describe('AlertInhibitPage', () => {
     expect(controller.edit).toHaveBeenCalledWith(7);
   });
 
+  it('offers canonical server label keys without disabling manual tags', () => {
+    controller.state = buildState({
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: '',
+        targetLabelsText: '',
+        equalLabels: [],
+        enable: true
+      }
+    });
+    render(<AlertInhibitPage />);
+    fireEvent.mouseDown(within(screen.getByRole('dialog')).getByRole('combobox'));
+    expect(screen.getByText('environment')).toBeInTheDocument();
+  });
+
   it('explains entity-matched mode and delegates all, matched, and return actions', () => {
     controller.state = buildState({
       management: {
@@ -295,6 +310,10 @@ function buildState(override: Record<string, unknown> = {}) {
     prefill: 'idle',
     recovery: undefined,
     list: { kind: 'ready', records: [record], total: 1 },
+    labelSuggestions: {
+      kind: 'received',
+      keys: ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env', 'environment']
+    },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,
     search: '',

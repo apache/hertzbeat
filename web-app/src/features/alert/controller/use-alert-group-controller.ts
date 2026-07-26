@@ -10,11 +10,13 @@ import { useAlertGroupPageCorrection } from './use-alert-group-page-correction';
 import { useAlertGroupQueryController } from './use-alert-group-query-controller';
 import { useAlertGroupReadController } from './use-alert-group-read-controller';
 import { useAlertGroupSelection } from './use-alert-group-selection';
+import { useAlertLabelSuggestionController } from './use-alert-label-suggestion-controller';
 
 export function useAlertGroupController() {
   const queryController = useAlertGroupQueryController();
   const readController = useAlertGroupReadController(queryController.state.query);
   const commandController = useAlertGroupCommandController(readController.rereadList);
+  const labelSuggestions = useAlertLabelSuggestionController();
   const selection = useAlertGroupSelection(queryController.state.query, readController.state.list);
   useAlertGroupPageCorrection(queryController.state.query, readController.state.list, queryController.replacePageIndex);
 
@@ -23,6 +25,7 @@ export function useAlertGroupController() {
       ...commandController.state,
       ...queryController.state,
       ...readController.state,
+      labelSuggestions,
       selectedIds: selection.selectedIds
     },
     ...queryController.actions,

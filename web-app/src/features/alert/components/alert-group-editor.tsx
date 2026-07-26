@@ -13,7 +13,6 @@ import type { AlertGroupOperationRecovery } from '../model/alert-group-operation
 import styles from '../shared/alert-policy-page.module.css';
 import { AlertGroupRecovery } from './alert-group-recovery';
 
-const commonGroupLabels = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
 const draftDefaults = createAlertGroupDraft();
 // Alert Group timing fields use seconds; these values define safe keyboard/spinner increments.
 const durationStepSeconds = { wait: 30, interval: 300, repeat: 3_600 } as const;
@@ -27,6 +26,7 @@ type AlertGroupEditorProps = {
   proofFailure: 'unavailable' | 'error' | undefined;
   recovery: AlertGroupOperationRecovery | undefined;
   retrying: boolean;
+  labelKeys: string[];
   update: (patch: Partial<AlertGroupDraft>) => void;
   close: () => void;
   submit: () => unknown;
@@ -59,7 +59,7 @@ export function AlertGroupEditor(props: AlertGroupEditorProps) {
     >
       <EditorFailure failure={props.failure} acknowledged={props.createAcknowledged} proof={props.proofFailure} />
       <AlertGroupRecovery recovery={props.recovery} retrying={props.retrying} retry={props.retry} />
-      <AlertGroupFields draft={props.draft} disabled={fieldsLocked} update={props.update} />
+      <AlertGroupFields draft={props.draft} disabled={fieldsLocked} labelKeys={props.labelKeys} update={props.update} />
     </Modal>
   );
 }
@@ -96,10 +96,12 @@ function EditorFailure({
 function AlertGroupFields({
   draft,
   disabled,
+  labelKeys,
   update
 }: {
   draft: AlertGroupDraft;
   disabled: boolean;
+  labelKeys: string[];
   update: (patch: Partial<AlertGroupDraft>) => void;
 }) {
   const { t } = useTranslation();
@@ -109,18 +111,7 @@ function AlertGroupFields({
         {t('alertGroups.name')}
         <Input disabled={disabled} value={draft.name} onChange={event => update({ name: event.target.value })} />
       </label>
-      <label className={styles.wide}>
-        {t('alertGroups.labels')}
-        <Select
-          disabled={disabled}
-          mode="tags"
-          maxCount={10}
-          value={draft.groupLabels}
-          tokenSeparators={[',']}
-          options={commonGroupLabels.map(value => ({ value, label: value }))}
-          onChange={groupLabels => update({ groupLabels })}
-        />
-      </label>
+      <AlertGroupLabelField draft={draft} disabled={disabled} labelKeys={labelKeys} update={update} />
       <DurationField
         disabled={disabled}
         fallback={draftDefaults.groupWait}
@@ -150,6 +141,34 @@ function AlertGroupFields({
         <Switch disabled={disabled} checked={draft.enable} onChange={enable => update({ enable })} />
       </label>
     </div>
+  );
+}
+
+function AlertGroupLabelField({
+  draft,
+  disabled,
+  labelKeys,
+  update
+}: {
+  draft: AlertGroupDraft;
+  disabled: boolean;
+  labelKeys: string[];
+  update: (patch: Partial<AlertGroupDraft>) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className={styles.wide}>
+      {t('alertGroups.labels')}
+      <Select
+        disabled={disabled}
+        mode="tags"
+        maxCount={10}
+        value={draft.groupLabels}
+        tokenSeparators={[',']}
+        options={labelKeys.map(value => ({ value, label: value }))}
+        onChange={groupLabels => update({ groupLabels })}
+      />
+    </label>
   );
 }
 

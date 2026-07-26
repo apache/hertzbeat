@@ -20,6 +20,7 @@ export function AlertInhibitDraftEditor({ controller }: { controller: ReturnType
       prefill={prefill}
       recovery={recovery?.kind === 'save' ? recovery : undefined}
       retrying={command !== 'recovering'}
+      labelKeys={controller.state.labelSuggestions.keys}
       update={controller.updateDraft}
       close={controller.closeDraft}
       submit={controller.submit}

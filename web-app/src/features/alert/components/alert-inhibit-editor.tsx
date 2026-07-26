@@ -24,8 +24,6 @@ import type { AlertInhibitFailure } from '../model/alert-inhibit-model';
 import type { AlertInhibitPrefillState, AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
 import { AlertInhibitRecovery } from './alert-inhibit-recovery';
 
-const COMMON_LABELS = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
-
 type AlertInhibitEditorProps = {
   draft: AlertInhibitDraft;
   busy: boolean;
@@ -34,6 +32,7 @@ type AlertInhibitEditorProps = {
   prefill: AlertInhibitPrefillState;
   recovery: RecoveryState | undefined;
   retrying: boolean;
+  labelKeys: string[];
   update: (patch: Partial<AlertInhibitDraft>) => void;
   close: () => void;
   submit: () => unknown;
@@ -65,7 +64,12 @@ function MatcherField({ disabled, label, help, value, update }: MatcherFieldProp
   );
 }
 
-function AlertInhibitFields({ draft, busy, update }: Pick<AlertInhibitEditorProps, 'draft' | 'busy' | 'update'>) {
+function AlertInhibitFields({
+  draft,
+  busy,
+  labelKeys,
+  update
+}: Pick<AlertInhibitEditorProps, 'draft' | 'busy' | 'labelKeys' | 'update'>) {
   const { t } = useTranslation();
   return (
     <div className={styles.form}>
@@ -95,7 +99,7 @@ function AlertInhibitFields({ draft, busy, update }: Pick<AlertInhibitEditorProp
           maxCount={10}
           value={draft.equalLabels}
           tokenSeparators={[',']}
-          options={COMMON_LABELS.map(value => ({ value, label: value }))}
+          options={labelKeys.map(value => ({ value, label: value }))}
           onChange={equalLabels => update({ equalLabels })}
         />
         <span className={styles.hint}>{t('alertInhibits.equalHelp')}</span>
@@ -128,6 +132,7 @@ export function AlertInhibitEditor({
   prefill,
   recovery,
   retrying,
+  labelKeys,
   update,
   close,
   submit,
@@ -163,7 +168,7 @@ export function AlertInhibitEditor({
           message={failure === 'unavailable' ? t('common.unavailable') : t('alertInhibits.saveFailed')}
         />
       ) : null}
-      <AlertInhibitFields draft={draft} busy={busy} update={update} />
+      <AlertInhibitFields draft={draft} busy={busy} labelKeys={labelKeys} update={update} />
     </Modal>
   );
 }
