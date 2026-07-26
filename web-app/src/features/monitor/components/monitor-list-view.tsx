@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
@@ -32,14 +33,12 @@ export type MonitorListViewProps = { state: MonitorListViewState; actions: Monit
 export function MonitorListView({ state, actions }: MonitorListViewProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('monitor.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('monitor.description')}</Typography.Text>
-        </div>
-        <MonitorHelpLink />
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('monitor.title')}
+        description={t('monitor.description')}
+        actions={<MonitorHelpLink />}
+      />
       <MonitorListToolbar
         query={state.query}
         draft={state.draft}
@@ -71,6 +70,6 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         onFile={actions.selectImportFile}
         onSubmit={actions.submitImport}
       />
-    </div>
+    </OperationalPage>
   );
 }

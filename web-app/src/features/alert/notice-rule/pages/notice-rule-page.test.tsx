@@ -14,6 +14,18 @@ describe('notice rule page', () => {
   afterEach(cleanup);
   beforeEach(() => controller.useNoticeRuleController.mockReturnValue(view('invalid', 'ready')));
 
+  it('uses the shared operational page header for title copy and create', () => {
+    render(<NoticeRulePage />);
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeRules.title' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+      screen.getByRole('button', { name: 'noticeRules.new' })
+    );
+  });
+
   it('renders invalid list evidence instead of a fake empty table', () => {
     render(<NoticeRulePage />);
     expect(screen.getByText('noticeRules.read.invalid')).toBeInTheDocument();

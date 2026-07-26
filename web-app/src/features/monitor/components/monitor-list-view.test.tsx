@@ -30,6 +30,18 @@ describe('MonitorListView evidence states', () => {
   });
   afterEach(cleanup);
 
+  it('uses the shared operational page header for title copy and the help action', () => {
+    renderView({ monitors: { kind: 'empty' } });
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: i18n.t('monitor.title') }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+      screen.getByRole('link', { name: i18n.t('monitor.help') })
+    );
+  });
+
   it.each([
     ['loading', 'status', ''],
     ['empty', '', 'monitor.empty'],

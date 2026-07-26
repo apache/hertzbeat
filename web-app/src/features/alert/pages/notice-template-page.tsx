@@ -15,35 +15,48 @@
  * limitations under the License.
  */
 
+import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+
 import { NoticeTemplateOverlays } from '../components/notice-template-overlays';
 import { NoticeTemplateRecoveryAlert } from '../components/notice-template-recovery-alert';
 import { NoticeTemplateResults } from '../components/notice-template-results';
 import { NoticeTemplateToolbar } from '../components/notice-template-toolbar';
 import { useNoticeTemplateController } from '../controller/notice-template-controller';
-import styles from '../shared/alert-policy-page.module.css';
 import pageStyles from '../shared/notice-template-page.module.css';
 
 const NOTICE_TEMPLATE_HEADING_ID = 'notice-template-heading';
 
 export function NoticeTemplatePage() {
+  const { t } = useTranslation();
   const controller = useNoticeTemplateController();
   const { state } = controller;
   const commandBusy = state.command === 'saving' || state.command === 'deleting' || state.command === 'recovering';
   const busy = commandBusy || state.recovery !== null;
 
   return (
-    <div className={styles.page}>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('noticeTemplates.title')}
+        titleId={NOTICE_TEMPLATE_HEADING_ID}
+        description={t('noticeTemplates.description')}
+        actions={
+          <Button type="primary" disabled={busy} onClick={controller.create}>
+            {t('noticeTemplates.new')}
+          </Button>
+        }
+      />
       <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
         <NoticeTemplateToolbar
           busy={busy}
-          headingId={NOTICE_TEMPLATE_HEADING_ID}
           name={state.name}
           preset={state.query.preset}
           onNameChange={controller.setName}
           onPresetChange={controller.changePreset}
           onQuery={controller.query}
           onRefresh={controller.refresh}
-          onCreate={controller.create}
         />
         <NoticeTemplateRecoveryAlert
           busy={commandBusy}
@@ -77,6 +90,6 @@ export function NoticeTemplatePage() {
         onDraftSubmit={controller.submit}
         onPreviewClose={controller.closePreview}
       />
-    </div>
+    </OperationalPage>
   );
 }

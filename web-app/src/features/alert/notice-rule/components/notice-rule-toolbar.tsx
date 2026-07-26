@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Input, Typography } from 'antd';
+import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPageHeader } from '@/shared/operational-page';
 
 import styles from '../../shared/alert-policy-page.module.css';
 
@@ -33,15 +35,15 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
   const { t } = useTranslation();
   return (
     <>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('noticeRules.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('noticeRules.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
-          {t('noticeRules.new')}
-        </Button>
-      </header>
+      <OperationalPageHeader
+        title={t('noticeRules.title')}
+        description={t('noticeRules.description')}
+        actions={
+          <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
+            {t('noticeRules.new')}
+          </Button>
+        }
+      />
       <div className={styles.toolbar}>
         <Input
           allowClear

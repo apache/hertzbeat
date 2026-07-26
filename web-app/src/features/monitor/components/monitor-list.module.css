@@ -15,19 +15,6 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
 .toolbar {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto;

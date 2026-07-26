@@ -26,11 +26,6 @@
   overflow: hidden;
 }
 
-.heading {
-  padding: 16px;
-  border-bottom: 1px solid var(--hb-border-subtle);
-}
-
 .toolbar {
   display: grid;
   grid-template-columns: 180px minmax(260px, 1fr) auto auto;

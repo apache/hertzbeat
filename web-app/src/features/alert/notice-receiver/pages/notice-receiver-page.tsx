@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import styles from '../../shared/alert-policy-page.module.css';
+import { OperationalPage } from '@/shared/operational-page';
+
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import {
   NoticeReceiverHeading,
@@ -14,7 +15,7 @@ export function NoticeReceiverPage() {
   const { state, actions } = useNoticeReceiverController();
   const recovering = state.command === 'recovering';
   return (
-    <div className={styles.page}>
+    <OperationalPage>
       <NoticeReceiverHeading busy={state.busy} create={actions.create} />
       <NoticeReceiverToolbar
         name={state.name}
@@ -56,6 +57,6 @@ export function NoticeReceiverPage() {
             : { test: () => void actions.sendTest() })}
         />
       ) : null}
-    </div>
+    </OperationalPage>
   );
 }

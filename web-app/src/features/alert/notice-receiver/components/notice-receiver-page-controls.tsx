@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Input, Typography } from 'antd';
+import { Alert, Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPageHeader } from '@/shared/operational-page';
 
 import styles from '../../shared/alert-policy-page.module.css';
 import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../model/notice-receiver-operation-state';
@@ -9,15 +11,15 @@ import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../m
 export function NoticeReceiverHeading({ busy, create }: { busy: boolean; create: () => void }) {
   const { t } = useTranslation();
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('noticeReceivers.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('noticeReceivers.description')}</Typography.Text>
-      </div>
-      <Button type="primary" disabled={busy} onClick={create}>
-        {t('noticeReceivers.new')}
-      </Button>
-    </header>
+    <OperationalPageHeader
+      title={t('noticeReceivers.title')}
+      description={t('noticeReceivers.description')}
+      actions={
+        <Button type="primary" disabled={busy} onClick={create}>
+          {t('noticeReceivers.new')}
+        </Button>
+      }
+    />
   );
 }
 

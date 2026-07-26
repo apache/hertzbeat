@@ -16,6 +16,18 @@ describe('NoticeReceiverPage', () => {
   beforeEach(() => controller.useNoticeReceiverController.mockReturnValue(view('unavailable')));
   afterEach(cleanup);
 
+  it('uses the shared operational page header for title copy and create', () => {
+    render(<NoticeReceiverPage />);
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeReceivers.title' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+      screen.getByRole('button', { name: 'noticeReceivers.new' })
+    );
+  });
+
   it('renders storage unavailability distinctly instead of a fake empty table', () => {
     render(<NoticeReceiverPage />);
     expect(screen.getByText('noticeReceivers.read.unavailable')).toBeInTheDocument();

@@ -3,7 +3,8 @@
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../../shared/alert-policy-page.module.css';
+import { OperationalPage } from '@/shared/operational-page';
+
 import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
 import { NoticeRuleTable } from '../components/notice-rule-table';
@@ -35,7 +36,7 @@ export function NoticeRulePage() {
     toggle: actions.toggle
   };
   return (
-    <div className={styles.page}>
+    <OperationalPage>
       <NoticeRuleToolbar
         name={state.name}
         createDisabled={!dependenciesReady || busy}
@@ -72,6 +73,6 @@ export function NoticeRulePage() {
           retry={actions.retry}
         />
       ) : null}
-    </div>
+    </OperationalPage>
   );
 }

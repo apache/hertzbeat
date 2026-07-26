@@ -70,6 +70,19 @@ describe('NoticeTemplatePage', () => {
   });
   afterEach(cleanup);
 
+  it('uses the shared operational page header while preserving workspace labeling', () => {
+    renderPage();
+
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeTemplates.title' }));
+    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+      screen.getByRole('button', { name: 'noticeTemplates.new' })
+    );
+    expect(screen.getByRole('region', { name: 'noticeTemplates.title' })).toBeInTheDocument();
+  });
+
   it('delegates toolbar, row, and pagination interactions to the controller', async () => {
     renderPage();
 
