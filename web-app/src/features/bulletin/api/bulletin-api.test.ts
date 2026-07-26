@@ -5,12 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   captureBulletinCreateBaseline,
   createBulletin,
-  deleteBulletin,
+  deleteBulletins,
   loadBulletin,
   loadBulletinMetrics,
   loadBulletins,
   proveBulletinCreated,
-  proveBulletinDeleted,
+  proveBulletinsDeleted,
   proveBulletinUpdated,
   updateBulletin
 } from './bulletin-api';
@@ -125,8 +125,24 @@ describe('bulletin api', () => {
     await expect(updateBulletin({ id: 7, ...draft, name: 'Renamed' })).resolves.toBeUndefined();
     expect(http.apiMessagePut).toHaveBeenCalledWith('/api/bulletin', { id: 7, ...draft, name: 'Renamed' });
 
-    await expect(deleteBulletin(7)).resolves.toBeUndefined();
+    await expect(deleteBulletins([7])).resolves.toBeUndefined();
     expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/bulletin?ids=7');
+  });
+
+  it('canonicalizes one batch delete into repeated ids and proves every identity absent', async () => {
+    await expect(deleteBulletins([9, 7, 9])).resolves.toBeUndefined();
+    expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/bulletin?ids=7&ids=9');
+
+    http.apiMessageGet.mockResolvedValue(null);
+    await expect(proveBulletinsDeleted([9, 7, 9])).resolves.toBeUndefined();
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/bulletin/7');
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/bulletin/9');
+  });
+
+  it('rejects empty or invalid batch identities before transport', async () => {
+    await expect(deleteBulletins([])).rejects.toThrow();
+    await expect(deleteBulletins([7, 0])).rejects.toThrow();
+    expect(http.apiMessageDelete).not.toHaveBeenCalled();
   });
 
   it('exposes proof-only continuations that never repeat a mutation', async () => {
@@ -146,7 +162,7 @@ describe('bulletin api', () => {
     const beforeIds = await captureBulletinCreateBaseline(draft.name);
     await expect(proveBulletinCreated(draft, beforeIds)).resolves.toMatchObject({ id: 7 });
     await expect(proveBulletinUpdated({ id: 7, ...draft, name: 'Renamed' })).resolves.toMatchObject({ id: 7 });
-    await expect(proveBulletinDeleted(7)).resolves.toBeUndefined();
+    await expect(proveBulletinsDeleted([7])).resolves.toBeUndefined();
 
     expect(http.apiMessagePost).not.toHaveBeenCalled();
     expect(http.apiMessagePut).not.toHaveBeenCalled();

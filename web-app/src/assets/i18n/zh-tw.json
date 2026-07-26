@@ -938,6 +938,9 @@
     "saveSuccess": "看板已儲存並驗證。",
     "deleteSuccess": "看板已刪除並驗證。",
     "deleteConfirm": "確定刪除此看板？",
+    "deleteSelected": "刪除所選項目",
+    "deleteSelectedConfirm": "確定刪除選取的 {{count}} 個看板？",
+    "deleteSelectedSuccess": "所選看板已刪除並驗證。",
     "list": { "invalid": "看板列表回應無效。", "unavailable": "看板儲存不可用。", "error": "無法載入看板。" },
     "dependencies": {
       "invalid": "監控中繼資料無效。",

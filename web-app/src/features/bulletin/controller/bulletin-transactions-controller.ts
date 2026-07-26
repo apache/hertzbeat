@@ -6,13 +6,13 @@ import { useCallback, useRef, type Dispatch, type RefObject, type SetStateAction
 
 import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof';
 import { classifyBulletinFailure, type BulletinFailureKind } from '../model/bulletin-failure';
-import type { Bulletin } from '../model/bulletin-model';
+import { normalizeBulletinIds, type Bulletin } from '../model/bulletin-model';
 import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
 import { refreshBulletinListProjection } from './bulletin-list-projection';
 import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
 import { getValidBulletinDraft } from './bulletin-transaction-validation';
 import {
-  deleteBulletinWithProof,
+  deleteBulletinsWithProof,
   retryBulletinProof,
   saveBulletinWithProof,
   type BulletinProofResult
@@ -38,8 +38,10 @@ export function useBulletinTransactions(context: TransactionContext) {
   const client = useQueryClient();
   const notification = useNotification();
   const confirmedDeletedIds = useRef(new Set<number>());
+  const removeMany = useBulletinRemove(context, client, notification, confirmedDeletedIds);
   return {
-    remove: useBulletinRemove(context, client, notification, confirmedDeletedIds),
+    remove: (record: Bulletin) => removeMany([record.id], false),
+    removeMany: (ids: readonly number[]) => removeMany(ids, true),
     retry: useBulletinRecovery(context, client, notification, confirmedDeletedIds),
     save: useBulletinSave(context, client, notification)
   };
@@ -83,16 +85,23 @@ function useBulletinRemove(
   confirmedDeletedIdsRef: RefObject<Set<number>>
 ) {
   return useCallback(
-    async (record: Bulletin) => {
+    async (ids: readonly number[], batch: boolean) => {
+      let canonicalIds: number[];
+      try {
+        canonicalIds = normalizeBulletinIds(ids);
+      } catch (reason) {
+        notify(notification, context.t, 'deleteError', classifyBulletinFailure(reason));
+        return false;
+      }
       const confirmedDeletedIds = confirmedDeletedIdsRef.current;
-      if (confirmedDeletedIds.has(record.id)) return false;
+      if (canonicalIds.some(id => confirmedDeletedIds.has(id))) return false;
       const owner = context.gate.begin('deleting');
       if (!owner) return false;
       context.editor.controls.invalidateDetail();
       try {
-        const confirmed = await deleteBulletinWithProof(record.id, context.gate, owner);
+        const confirmed = await deleteBulletinsWithProof(canonicalIds, batch, context.gate, owner);
         if (!confirmed || !context.gate.isCurrent(owner)) return false;
-        await confirmDelete(record.id, context, client, notification, confirmedDeletedIds, owner);
+        await confirmDelete(canonicalIds, batch, context, client, notification, confirmedDeletedIds, owner);
         return true;
       } catch (reason) {
         if (context.gate.isCurrent(owner)) {
@@ -156,7 +165,7 @@ async function confirmProofResult(
     await confirmSave(result.saved, context, client, notification, owner);
     return;
   }
-  await confirmDelete(result.id, context, client, notification, confirmedDeletedIds, owner);
+  await confirmDelete(result.ids, result.batch, context, client, notification, confirmedDeletedIds, owner);
 }
 
 async function confirmSave(
@@ -174,7 +183,8 @@ async function confirmSave(
 }
 
 async function confirmDelete(
-  id: number,
+  ids: readonly number[],
+  batch: boolean,
   context: TransactionContext,
   client: ReturnType<typeof useQueryClient>,
   notification: ReturnType<typeof useNotification>,
@@ -182,9 +192,12 @@ async function confirmDelete(
   owner: Parameters<BulletinOperationGate['isCurrent']>[0]
 ) {
   if (!context.gate.isCurrent(owner)) return;
-  confirmedDeletedIds.add(id);
-  if (context.selectedId === id) context.setSelectedId(null);
-  notification.open?.({ message: context.t('bulletin.deleteSuccess'), type: 'success' });
+  ids.forEach(id => confirmedDeletedIds.add(id));
+  if (context.selectedId != null && ids.includes(context.selectedId)) context.setSelectedId(null);
+  notification.open?.({
+    message: context.t(batch ? 'bulletin.deleteSelectedSuccess' : 'bulletin.deleteSuccess'),
+    type: 'success'
+  });
   await retainProjectionFailure(context, client, owner);
 }
 

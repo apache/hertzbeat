@@ -33,6 +33,27 @@ describe('bulletin page', () => {
     expect(current.actions.select).toHaveBeenCalledWith(7);
   });
 
+  it('selects the authoritative page and confirms one batch delete', async () => {
+    const current = pageController({ selectedIds: [7] });
+    controller.useBulletinController.mockReturnValue(current.value);
+    render(<BulletinPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'bulletin.deleteSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'common.delete' }));
+
+    expect(current.actions.removeMany).toHaveBeenCalledWith([7]);
+  });
+
+  it('delegates table checkbox selection to the authoritative page controller', () => {
+    const current = pageController();
+    controller.useBulletinController.mockReturnValue(current.value);
+    render(<BulletinPage />);
+
+    fireEvent.click(screen.getAllByRole('checkbox')[1]!);
+
+    expect(current.actions.selectIds).toHaveBeenCalledWith([7]);
+  });
+
   it('does not admit selection or row commands while a write owns the editor', () => {
     const current = pageController({ command: 'saving', selectedId: 7 });
     controller.useBulletinController.mockReturnValue(current.value);
@@ -42,6 +63,10 @@ describe('bulletin page', () => {
     expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeDisabled();
+    expect(screen.getByPlaceholderText('bulletin.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getAllByRole('checkbox').every(checkbox => checkbox.hasAttribute('disabled'))).toBe(true);
     fireEvent.click(screen.getByText('Ops'));
     expect(current.actions.select).not.toHaveBeenCalled();
   });
@@ -69,7 +94,8 @@ describe('bulletin page', () => {
 function pageController({
   command = 'idle',
   recovery = null,
-  selectedId = null
+  selectedId = null,
+  selectedIds = []
 }: {
   command?: 'idle' | 'saving';
   recovery?: null | {
@@ -78,6 +104,7 @@ function pageController({
     failure: 'unavailable';
   };
   selectedId?: number | null;
+  selectedIds?: number[];
 } = {}) {
   const actions = {
     changePage: vi.fn(),
@@ -86,9 +113,11 @@ function pageController({
     edit: vi.fn(),
     refresh: vi.fn(),
     remove: vi.fn(),
+    removeMany: vi.fn(),
     retry: vi.fn(),
     save: vi.fn(),
     select: vi.fn(),
+    selectIds: vi.fn(),
     setSearch: vi.fn(),
     submitSearch: vi.fn(),
     updateDraft: vi.fn()
@@ -106,7 +135,8 @@ function pageController({
         recovery,
         refreshing: false,
         search: '',
-        selectedId
+        selectedId,
+        selectedIds
       },
       actions
     }

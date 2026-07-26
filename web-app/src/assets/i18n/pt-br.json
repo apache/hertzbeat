@@ -954,6 +954,9 @@
     "saveSuccess": "Quadro salvo e verificado.",
     "deleteSuccess": "Quadro excluído e verificado.",
     "deleteConfirm": "Excluir este quadro?",
+    "deleteSelected": "Excluir selecionados",
+    "deleteSelectedConfirm": "Excluir {{count}} quadros selecionados?",
+    "deleteSelectedSuccess": "Quadros selecionados excluídos e verificados.",
     "list": {
       "invalid": "A resposta da lista é inválida.",
       "unavailable": "O armazenamento está indisponível.",

@@ -3,18 +3,19 @@
 import {
   captureBulletinCreateBaseline,
   createBulletin,
-  deleteBulletin,
+  deleteBulletins,
   proveBulletinCreated,
-  proveBulletinDeleted,
+  proveBulletinsDeleted,
   proveBulletinUpdated,
   updateBulletin
 } from '../api/bulletin-api';
 import { classifyBulletinFailure, isBulletinWriteRejection } from '../model/bulletin-failure';
-import type { Bulletin, BulletinDraft } from '../model/bulletin-model';
+import { normalizeBulletinIds, type Bulletin, type BulletinDraft } from '../model/bulletin-model';
 import type { BulletinRecovery } from '../model/bulletin-operation-state';
 import type { BulletinOperationGate, BulletinOperationOwner } from './bulletin-editor-controller';
 
-export type BulletinProofResult = { operation: 'save'; saved: Bulletin } | { operation: 'delete'; id: number };
+export type BulletinProofResult =
+  { operation: 'save'; saved: Bulletin } | { operation: 'delete'; ids: number[]; batch: boolean };
 
 export async function saveBulletinWithProof(
   draft: BulletinDraft,
@@ -26,12 +27,22 @@ export async function saveBulletinWithProof(
     : updateWithProof(copyUpdate(draft), gate, owner);
 }
 
-export async function deleteBulletinWithProof(id: number, gate: BulletinOperationGate, owner: BulletinOperationOwner) {
-  // Retain the exact identity before DELETE so every later continuation is GET-only.
-  const recovery: BulletinRecovery = { stage: 'delete-proof', id, failure: 'error' };
+export async function deleteBulletinsWithProof(
+  ids: readonly number[],
+  batch: boolean,
+  gate: BulletinOperationGate,
+  owner: BulletinOperationOwner
+) {
+  // Retain every identity before DELETE so every later continuation is GET-only.
+  const recovery: BulletinRecovery = {
+    stage: 'delete-proof',
+    ids: normalizeBulletinIds(ids),
+    batch,
+    failure: 'error'
+  };
   if (!gate.setRecovery(owner, recovery)) return false;
   try {
-    await deleteBulletin(id);
+    await deleteBulletins(recovery.ids);
   } catch (reason) {
     if (isBulletinWriteRejection(reason)) {
       gate.clearRecovery(owner);
@@ -50,7 +61,7 @@ export async function retryBulletinProof(
 ): Promise<BulletinProofResult | null> {
   if (recovery.stage === 'delete-proof') {
     await proveDelete(recovery, gate, owner);
-    return gate.isCurrent(owner) ? { operation: 'delete', id: recovery.id } : null;
+    return gate.isCurrent(owner) ? { operation: 'delete', ids: [...recovery.ids], batch: recovery.batch } : null;
   }
   const saved = await proveSave(recovery, gate, owner);
   return gate.isCurrent(owner) ? { operation: 'save', saved } : null;
@@ -119,7 +130,7 @@ async function proveDelete(
   owner: BulletinOperationOwner
 ) {
   try {
-    await proveBulletinDeleted(recovery.id);
+    await proveBulletinsDeleted(recovery.ids);
     gate.clearRecovery(owner);
   } catch (reason) {
     gate.setRecovery(owner, { ...recovery, failure: classifyBulletinFailure(reason) });

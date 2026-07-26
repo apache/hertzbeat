@@ -16,11 +16,11 @@ import type { BulletinDraft } from '../model/bulletin-model';
 const mocks = vi.hoisted(() => ({
   captureBulletinCreateBaseline: vi.fn(),
   createBulletin: vi.fn(),
-  deleteBulletin: vi.fn(),
+  deleteBulletins: vi.fn(),
   invalidateQueries: vi.fn(),
   notification: vi.fn(),
   proveBulletinCreated: vi.fn(),
-  proveBulletinDeleted: vi.fn(),
+  proveBulletinsDeleted: vi.fn(),
   proveBulletinUpdated: vi.fn(),
   refreshMetrics: vi.fn(),
   updateBulletin: vi.fn()
@@ -39,9 +39,9 @@ vi.mock('../api/bulletin-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/bulletin-api')>()),
   captureBulletinCreateBaseline: mocks.captureBulletinCreateBaseline,
   createBulletin: mocks.createBulletin,
-  deleteBulletin: mocks.deleteBulletin,
+  deleteBulletins: mocks.deleteBulletins,
   proveBulletinCreated: mocks.proveBulletinCreated,
-  proveBulletinDeleted: mocks.proveBulletinDeleted,
+  proveBulletinsDeleted: mocks.proveBulletinsDeleted,
   proveBulletinUpdated: mocks.proveBulletinUpdated,
   updateBulletin: mocks.updateBulletin
 }));
@@ -56,10 +56,10 @@ describe('Bulletin transactions controller', () => {
     vi.clearAllMocks();
     mocks.captureBulletinCreateBaseline.mockResolvedValue([]);
     mocks.createBulletin.mockResolvedValue(undefined);
-    mocks.deleteBulletin.mockResolvedValue(undefined);
+    mocks.deleteBulletins.mockResolvedValue(undefined);
     mocks.invalidateQueries.mockResolvedValue(undefined);
     mocks.proveBulletinCreated.mockResolvedValue(bulletin(7, 'Operations'));
-    mocks.proveBulletinDeleted.mockResolvedValue(undefined);
+    mocks.proveBulletinsDeleted.mockResolvedValue(undefined);
     mocks.proveBulletinUpdated.mockResolvedValue(bulletin(7, 'Operations'));
     mocks.refreshMetrics.mockResolvedValue(undefined);
     mocks.updateBulletin.mockResolvedValue(undefined);
@@ -127,7 +127,7 @@ describe('Bulletin transactions controller', () => {
     await act(async () => Promise.resolve());
 
     expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
-    expect(mocks.deleteBulletin).not.toHaveBeenCalled();
+    expect(mocks.deleteBulletins).not.toHaveBeenCalled();
     act(() => pending.resolve(bulletin(7, 'Operations')));
     await act(async () => first);
   });
@@ -175,8 +175,8 @@ describe('Bulletin transactions controller', () => {
       await expect(hook.result.current.remove(record)).resolves.toBe(true);
     });
 
-    expect(mocks.deleteBulletin).toHaveBeenCalledWith(record.id);
-    expect(mocks.proveBulletinDeleted).toHaveBeenCalledWith(record.id);
+    expect(mocks.deleteBulletins).toHaveBeenCalledWith([record.id]);
+    expect(mocks.proveBulletinsDeleted).toHaveBeenCalledWith([record.id]);
     expect(context.setSelectedId).toHaveBeenCalledWith(null);
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: bulletinQueryKeys.lists(),
@@ -187,6 +187,43 @@ describe('Bulletin transactions controller', () => {
       message: 'bulletin.deleteSuccess',
       type: 'success'
     });
+  });
+
+  it('deletes one canonical selected batch and clears a selected metrics owner in that batch', async () => {
+    const context = createContext({ selectedId: 9 });
+    context.refresh.mockResolvedValue(true);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => {
+      await expect(hook.result.current.removeMany([9, 7, 9])).resolves.toBe(true);
+    });
+
+    expect(mocks.deleteBulletins).toHaveBeenCalledWith([7, 9]);
+    expect(mocks.proveBulletinsDeleted).toHaveBeenCalledWith([7, 9]);
+    expect(context.setSelectedId).toHaveBeenCalledWith(null);
+    expect(mocks.notification).toHaveBeenLastCalledWith({
+      message: 'bulletin.deleteSelectedSuccess',
+      type: 'success'
+    });
+  });
+
+  it('retains batch delete proof and never repeats an ambiguous DELETE', async () => {
+    const context = createContext({ selectedId: 9 });
+    context.refresh.mockResolvedValue(true);
+    mocks.deleteBulletins.mockRejectedValue(new BulletinRequestFailure('unavailable', 'uncertain'));
+    mocks.proveBulletinsDeleted
+      .mockRejectedValueOnce(new BulletinRequestFailure('unavailable', 'uncertain'))
+      .mockResolvedValueOnce(undefined);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.removeMany([9, 7])).resolves.toBe(false));
+    expect(context.getRecovery()).toMatchObject({ stage: 'delete-proof', ids: [7, 9] });
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
+
+    expect(mocks.deleteBulletins).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinsDeleted).toHaveBeenCalledTimes(2);
+    expect(context.getRecovery()).toBeNull();
   });
 
   it('retires a confirmed delete even when the list projection refresh fails', async () => {
@@ -200,7 +237,7 @@ describe('Bulletin transactions controller', () => {
       await expect(hook.result.current.remove(record)).resolves.toBe(false);
     });
 
-    expect(mocks.deleteBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteBulletins).toHaveBeenCalledTimes(1);
     expect(context.setSelectedId).toHaveBeenCalledWith(null);
     expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.deleteSuccess', type: 'success' });
     expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.deleteError.error', type: 'error' });
@@ -280,8 +317,8 @@ describe('Bulletin transactions controller', () => {
   it('retains ambiguous delete proof and never repeats DELETE during recovery', async () => {
     const context = createContext({ selectedId: 7 });
     context.refresh.mockResolvedValue(true);
-    mocks.deleteBulletin.mockRejectedValue(new BulletinRequestFailure('unavailable', 'uncertain'));
-    mocks.proveBulletinDeleted
+    mocks.deleteBulletins.mockRejectedValue(new BulletinRequestFailure('unavailable', 'uncertain'));
+    mocks.proveBulletinsDeleted
       .mockRejectedValueOnce(new BulletinRequestFailure('unavailable', 'uncertain'))
       .mockResolvedValueOnce(undefined);
     const hook = renderHook(() => useBulletinTransactions(context.value));
@@ -289,12 +326,12 @@ describe('Bulletin transactions controller', () => {
 
     await act(async () => expect(hook.result.current.remove(record)).resolves.toBe(false));
     await act(async () => expect(hook.result.current.remove(record)).resolves.toBe(false));
-    expect(context.getRecovery()).toMatchObject({ stage: 'delete-proof', id: 7 });
+    expect(context.getRecovery()).toMatchObject({ stage: 'delete-proof', ids: [7], batch: false });
 
     await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
 
-    expect(mocks.deleteBulletin).toHaveBeenCalledTimes(1);
-    expect(mocks.proveBulletinDeleted).toHaveBeenCalledTimes(2);
+    expect(mocks.deleteBulletins).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinsDeleted).toHaveBeenCalledTimes(2);
     expect(context.getRecovery()).toBeNull();
   });
 

@@ -946,6 +946,9 @@
     "saveSuccess": "ボードを保存して確認しました。",
     "deleteSuccess": "ボードを削除して確認しました。",
     "deleteConfirm": "このボードを削除しますか？",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択した {{count}} 件のボードを削除しますか？",
+    "deleteSelectedSuccess": "選択したボードを削除して確認しました。",
     "list": {
       "invalid": "ボード一覧の応答が無効です。",
       "unavailable": "ボードストレージを利用できません。",

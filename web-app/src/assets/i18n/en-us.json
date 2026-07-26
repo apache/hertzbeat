@@ -949,6 +949,9 @@
     "saveSuccess": "Bulletin saved and verified.",
     "deleteSuccess": "Bulletin deleted and verified.",
     "deleteConfirm": "Delete this bulletin?",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedConfirm": "Delete {{count}} selected bulletins?",
+    "deleteSelectedSuccess": "Selected bulletins deleted and verified.",
     "list": {
       "invalid": "The bulletin list response is invalid.",
       "unavailable": "Bulletin storage is unavailable.",

@@ -938,6 +938,9 @@
     "saveSuccess": "看板已保存并验证。",
     "deleteSuccess": "看板已删除并验证。",
     "deleteConfirm": "确认删除此看板？",
+    "deleteSelected": "删除所选项",
+    "deleteSelectedConfirm": "确认删除选中的 {{count}} 个看板？",
+    "deleteSelectedSuccess": "所选看板已删除并验证。",
     "list": { "invalid": "看板列表响应无效。", "unavailable": "看板存储不可用。", "error": "无法加载看板。" },
     "dependencies": {
       "invalid": "监控元数据无效。",

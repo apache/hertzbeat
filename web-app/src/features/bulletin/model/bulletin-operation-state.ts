@@ -11,5 +11,5 @@ type FailedProof = { failure: BulletinFailureKind };
 export type BulletinRecovery =
   | (FailedProof & { stage: 'create-proof'; draft: BulletinDraft; beforeIds: number[] })
   | (FailedProof & { stage: 'update-proof'; draft: BulletinDraft & { id: number } })
-  | (FailedProof & { stage: 'delete-proof'; id: number })
+  | (FailedProof & { stage: 'delete-proof'; ids: number[]; batch: boolean })
   | (FailedProof & { stage: 'projection' });

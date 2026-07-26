@@ -7,7 +7,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BulletinRequestFailure } from '../model/bulletin-failure';
 import type { BulletinQuery } from '../model/bulletin-model';
-import { useBulletinListController, useBulletinSelection, type BulletinListState } from './bulletin-list-controller';
+import {
+  useBulletinBatchSelection,
+  useBulletinListController,
+  useBulletinSelection,
+  type BulletinListState
+} from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
@@ -113,6 +118,30 @@ describe('Bulletin list controller', () => {
         .find({ queryKey: bulletinQueryKeys.metrics(7) })
         ?.getObserversCount()
     ).toBe(0);
+  });
+
+  it('retires batch selection when the authoritative page scope changes', () => {
+    const firstQuery = { search: '', pageIndex: 0, pageSize: 8 };
+    const secondQuery = { ...firstQuery, pageIndex: 1 };
+    const hook = renderHook(
+      ({ list, query }: { list: BulletinListState; query: BulletinQuery }) => useBulletinBatchSelection(query, list),
+      {
+        initialProps: {
+          list: { kind: 'ready', records: [oldRecord], total: 1 } as BulletinListState,
+          query: firstQuery
+        }
+      }
+    );
+
+    act(() => hook.result.current.selectIds([7]));
+    expect(hook.result.current.selectedIds).toEqual([7]);
+
+    hook.rerender({
+      list: { kind: 'ready', records: [freshRecord], total: 1 },
+      query: secondQuery
+    });
+
+    expect(hook.result.current.selectedIds).toEqual([]);
   });
 
   it.each([

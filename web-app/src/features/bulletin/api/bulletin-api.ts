@@ -20,6 +20,7 @@ import {
   buildBulletinListPath,
   buildBulletinPayload,
   isBulletinPageComplete,
+  normalizeBulletinIds,
   sameBulletin
 } from '../model/bulletin-model';
 import { bulletinApiRequest } from './bulletin-api-failure';
@@ -73,8 +74,11 @@ export async function updateBulletin(draft: BulletinDraft) {
   await bulletinApiRequest('update', () => apiMessagePut('/api/bulletin', buildBulletinPayload(draft)));
 }
 
-export async function deleteBulletin(id: number) {
-  await bulletinApiRequest('delete', () => apiMessageDelete(`/api/bulletin?ids=${id}`));
+export async function deleteBulletins(ids: readonly number[]) {
+  const canonicalIds = normalizeBulletinIds(ids);
+  const query = new URLSearchParams();
+  canonicalIds.forEach(id => query.append('ids', String(id)));
+  await bulletinApiRequest('delete', () => apiMessageDelete(`/api/bulletin?${query.toString()}`));
 }
 
 export async function captureBulletinCreateBaseline(name: string) {
@@ -103,7 +107,7 @@ export async function proveBulletinUpdated(draft: BulletinDraft & { id: number }
   });
 }
 
-export async function proveBulletinDeleted(id: number) {
+async function proveBulletinDeleted(id: number) {
   return bulletinApiRequest('read-detail', async () => {
     try {
       await loadBulletin(id);
@@ -113,6 +117,11 @@ export async function proveBulletinDeleted(id: number) {
     }
     throw new BulletinContractError('Delete evidence did not converge');
   });
+}
+
+export async function proveBulletinsDeleted(ids: readonly number[]) {
+  const canonicalIds = normalizeBulletinIds(ids);
+  await Promise.all(canonicalIds.map(id => proveBulletinDeleted(id)));
 }
 
 async function loadExactNameBulletins(name: string) {

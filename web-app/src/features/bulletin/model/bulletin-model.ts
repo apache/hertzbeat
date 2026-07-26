@@ -3,6 +3,8 @@
 import type { OptionalRemoteValueState } from '@/shared/remote-state';
 import { compactTablePageSizes } from '@/shared/pagination';
 
+import { BulletinRequestFailure } from './bulletin-failure';
+
 export const bulletinPageSizes = compactTablePageSizes;
 
 export type BulletinQuery = { search: string; pageIndex: number; pageSize: number };
@@ -61,6 +63,14 @@ export function writeBulletinQuery(query: BulletinQuery) {
 
 export function buildBulletinListPath(query: BulletinQuery) {
   return `/api/bulletin?${writeBulletinQuery(query).toString()}`;
+}
+
+/** Canonicalizes operator-selected identities before they become write evidence. */
+export function normalizeBulletinIds(ids: readonly number[]) {
+  if (ids.length === 0 || ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new BulletinRequestFailure('invalid', 'rejected', { code: 'invalid_ids' });
+  }
+  return [...new Set(ids)].sort((left, right) => left - right);
 }
 
 export function createBulletinDraft(): BulletinDraft {

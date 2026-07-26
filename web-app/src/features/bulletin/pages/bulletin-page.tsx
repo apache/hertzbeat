@@ -22,21 +22,37 @@ export function BulletinPage() {
           <Typography.Title level={2}>{t('bulletin.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('bulletin.description')}</Typography.Text>
         </div>
-        <Button type="primary" disabled={busy} onClick={actions.create}>
-          {t('bulletin.create')}
-        </Button>
+        <Space>
+          {state.selectedIds.length > 0 && (
+            <Popconfirm
+              title={t('bulletin.deleteSelectedConfirm', { count: state.selectedIds.length })}
+              okText={t('common.delete')}
+              cancelText={t('common.cancel')}
+              okButtonProps={{ danger: true }}
+              onConfirm={() => actions.removeMany(state.selectedIds)}
+            >
+              <Button danger disabled={busy}>
+                {t('bulletin.deleteSelected')}
+              </Button>
+            </Popconfirm>
+          )}
+          <Button type="primary" disabled={busy} onClick={actions.create}>
+            {t('bulletin.create')}
+          </Button>
+        </Space>
       </header>
       <Space.Compact className={styles.toolbar}>
         <Input
           value={state.search}
           placeholder={t('bulletin.search')}
+          disabled={busy}
           onChange={event => actions.setSearch(event.target.value)}
           onPressEnter={actions.submitSearch}
         />
-        <Button type="primary" onClick={actions.submitSearch}>
+        <Button type="primary" disabled={busy} onClick={actions.submitSearch}>
           {t('common.query')}
         </Button>
-        <Button loading={state.refreshing} onClick={() => void actions.refresh()}>
+        <Button loading={state.refreshing} disabled={busy} onClick={() => void actions.refresh()}>
           {t('common.refresh')}
         </Button>
       </Space.Compact>
@@ -54,6 +70,7 @@ export function BulletinPage() {
         query={state.query}
         records={state.list.kind === 'ready' ? state.list.records : []}
         selectedId={state.selectedId}
+        selectedIds={state.selectedIds}
       />
       <section className={styles.metrics}>
         <Typography.Title level={3}>{t('bulletin.metrics.title')}</Typography.Title>
@@ -80,9 +97,10 @@ type BulletinTableProps = {
   query: ReturnType<typeof useBulletinController>['state']['query'];
   records: Bulletin[];
   selectedId: number | null;
+  selectedIds: number[];
 };
 
-function BulletinTable({ actions, busy, columns, list, query, records, selectedId }: BulletinTableProps) {
+function BulletinTable({ actions, busy, columns, list, query, records, selectedId, selectedIds }: BulletinTableProps) {
   if (list.kind !== 'loading' && list.kind !== 'ready') return null;
   return (
     <Table<Bulletin>
@@ -91,6 +109,13 @@ function BulletinTable({ actions, busy, columns, list, query, records, selectedI
       dataSource={records}
       rowClassName={record => (record.id === selectedId ? (styles.selectedRow ?? '') : '')}
       onRow={record => (busy ? {} : { onClick: () => actions.select(record.id) })}
+      rowSelection={{
+        selectedRowKeys: selectedIds,
+        getCheckboxProps: () => ({ disabled: busy }),
+        onChange: keys => {
+          if (!busy) actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+        }
+      }}
       pagination={
         list.kind === 'ready'
           ? {
@@ -99,6 +124,7 @@ function BulletinTable({ actions, busy, columns, list, query, records, selectedI
               total: list.total,
               showSizeChanger: true,
               pageSizeOptions: [...bulletinPageSizes],
+              disabled: busy,
               onChange: actions.changePage
             }
           : false

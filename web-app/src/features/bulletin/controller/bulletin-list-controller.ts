@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useReducer, type Dispatch, type SetStateAction } from 'react';
 
 import type { RemotePageState } from '@/shared/remote-state';
+import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
 import { loadBulletins } from '../api/bulletin-api';
 import { classifyBulletinFailure } from '../model/bulletin-failure';
@@ -83,6 +84,11 @@ export function useBulletinSelection(query: BulletinQuery, list: BulletinListSta
     [scope]
   );
   return { selectedId: activeSelectedId, setSelectedId };
+}
+
+export function useBulletinBatchSelection(query: BulletinQuery, list: BulletinListState) {
+  const source = list.kind === 'invalid' ? ({ kind: 'error' } as const) : list;
+  return useAuthoritativePageSelection(writeBulletinQuery(query).toString(), source);
 }
 
 function reduceBulletinSelection(state: BulletinSelection, action: BulletinSelectionAction): BulletinSelection {

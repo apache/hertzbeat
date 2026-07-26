@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useBulletinDependencies } from './bulletin-dependencies-controller';
 import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
-import { useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
+import { useBulletinBatchSelection, useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
 import { useBulletinQueryController } from './bulletin-query-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
@@ -16,6 +16,7 @@ export function useBulletinController() {
   const query = useBulletinQueryController();
   const list = useBulletinListController(query.query);
   const selection = useBulletinSelection(query.query, list.state);
+  const batchSelection = useBulletinBatchSelection(query.query, list.state);
   const gate = useBulletinOperationGate();
   const editor = useBulletinEditorController(gate, failure => {
     notification.open?.({ message: t(`bulletin.read.${failure}`), type: 'error' });
@@ -43,7 +44,8 @@ export function useBulletinController() {
       recovery: gate.recovery,
       refreshing: list.refreshing,
       search: query.search,
-      selectedId: selection.selectedId
+      selectedId: selection.selectedId,
+      selectedIds: batchSelection.selectedIds
     },
     actions: {
       changePage: query.changePage,
@@ -52,9 +54,11 @@ export function useBulletinController() {
       edit: editor.actions.edit,
       refresh: list.refresh,
       remove: transactions.remove,
+      removeMany: transactions.removeMany,
       retry: transactions.retry,
       save: transactions.save,
       select: selection.setSelectedId,
+      selectIds: batchSelection.selectIds,
       setSearch: query.setSearch,
       submitSearch: query.submitSearch,
       updateDraft: editor.actions.update
