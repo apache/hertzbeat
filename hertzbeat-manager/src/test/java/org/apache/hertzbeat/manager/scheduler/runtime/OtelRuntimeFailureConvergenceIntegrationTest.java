@@ -95,6 +95,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
     private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
     private static final String RATE_LIMIT_PROOF_METRIC = "hertzbeat_rate_limit_proof_metric";
+    private static final String UNAVAILABLE_PROOF_METRIC = "hertzbeat_unavailable_proof_metric";
     private static final String RESET_PROOF_METRIC = "hertzbeat_reset_proof_metric";
     private static final String QUEUE_PROOF_METRIC = "hertzbeat_queue_proof_metric";
     private static final int QUEUE_CAPACITY = 2048;
@@ -300,7 +301,8 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
             assertTrue(intake.authorizationWasValid());
             assertTrue(positive(limited.telemetry().queueSizeBySignal().metrics()));
             reportHeartbeat(manageServer, limited);
-            assertRetriableQuery(query(queryApi), intake.port(), "BACKEND_UNAVAILABLE");
+            assertRetriableQuery(
+                    query(queryApi), intake.port(), "BACKEND_UNAVAILABLE", RATE_LIMIT_PROOF_METRIC);
 
             long sentBeforeRecovery = limited.telemetry().sent().metrics().value();
             intake.accept();
@@ -313,16 +315,82 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
             assertStableRuntimeIdentity(recovered, runtimePid);
             assertTrue(intake.acceptedRequests() > 0);
             reportHeartbeat(manageServer, recovered);
-            assertRetriableQuery(query(queryApi), intake.port(), "NONE");
+            assertRetriableQuery(query(queryApi), intake.port(), "NONE", RATE_LIMIT_PROOF_METRIC);
         } finally {
             supervisor.close();
             intake.close();
         }
         assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
-        assertSafeRetriable(output.getAll(), intake.port());
+        assertSafeRetriable(output.getAll(), intake.port(), RATE_LIMIT_PROOF_METRIC);
         String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
         assertSafe(runtimeLog);
         assertFalse(runtimeLog.contains(RATE_LIMIT_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    @Test
+    void reportsRealExporterUnavailableThroughHeartbeatAndQueryThenRecovers(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        RetriableIntake intake = new RetriableIntake(503, true);
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), singleMetricPayload(UNAVAILABLE_PROOF_METRIC));
+            await(() -> intake.rejectedRequests() > 0, Duration.ofSeconds(20));
+            ManagedOtelRuntimeStatus unavailable = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
+                    Duration.ofSeconds(20));
+            assertStableRuntimeIdentity(unavailable, runtimePid);
+            assertTrue(intake.authorizationWasValid());
+            assertTrue(positive(unavailable.telemetry().queueSizeBySignal().metrics()));
+            assertEquals(QUEUE_CAPACITY,
+                    unavailable.telemetry().queueCapacityBySignal().metrics().value());
+            assertTrue(unavailable.telemetry().queueSizeBySignal().metrics().value()
+                    < unavailable.telemetry().queueCapacityBySignal().metrics().value());
+            reportHeartbeat(manageServer, unavailable);
+            assertRetriableQuery(
+                    query(queryApi), intake.port(), "BACKEND_UNAVAILABLE", UNAVAILABLE_PROOF_METRIC);
+
+            long sentBeforeRecovery = unavailable.telemetry().sent().metrics().value();
+            intake.accept();
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && availableGreaterThan(status.telemetry().sent().metrics(), sentBeforeRecovery),
+                    Duration.ofSeconds(40));
+            assertStableRuntimeIdentity(recovered, runtimePid);
+            assertTrue(intake.acceptedRequests() > 0);
+            reportHeartbeat(manageServer, recovered);
+            assertRetriableQuery(query(queryApi), intake.port(), "NONE", UNAVAILABLE_PROOF_METRIC);
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertSafeRetriable(output.getAll(), intake.port(), UNAVAILABLE_PROOF_METRIC);
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(UNAVAILABLE_PROOF_METRIC));
         assertFalse(runtimeLog.contains(tempDir.toString()));
     }
 
@@ -571,10 +639,11 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         assertEquals(1, status.activeRevision());
     }
 
-    private void assertRetriableQuery(String query, int intakePort, String failureCode) {
+    private void assertRetriableQuery(
+            String query, int intakePort, String failureCode, String proofMetric) {
         assertTrue(query.contains("\"failureCode\":\"" + failureCode + "\""));
         assertTrue(query.contains("\"name\":\"" + COLLECTOR_ID + "\""));
-        assertSafeRetriable(query, intakePort);
+        assertSafeRetriable(query, intakePort, proofMetric);
     }
 
     private void assertSafeAuthentication(String content, int intakePort) {
@@ -593,9 +662,9 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         assertFalse(content.contains(tempDir.toString()));
     }
 
-    private void assertSafeRetriable(String content, int intakePort) {
+    private void assertSafeRetriable(String content, int intakePort, String proofMetric) {
         assertSafe(content);
-        assertFalse(content.contains(RATE_LIMIT_PROOF_METRIC));
+        assertFalse(content.contains(proofMetric));
         assertFalse(content.contains("/api/otlp"));
         assertFalse(content.contains("127.0.0.1:" + intakePort));
         assertFalse(content.contains(tempDir.toString()));

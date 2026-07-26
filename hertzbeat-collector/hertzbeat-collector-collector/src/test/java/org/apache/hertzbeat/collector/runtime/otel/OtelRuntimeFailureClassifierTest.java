@@ -40,6 +40,7 @@ class OtelRuntimeFailureClassifierTest {
                 Arguments.of("listen tcp 127.0.0.1:4318: bind: address already in use", failure("port_conflict")),
                 Arguments.of("export failed: connection refused", failure("backend_unavailable")),
                 Arguments.of("request failed with HTTP status code 429", failure("backend_unavailable")),
+                Arguments.of("request failed with HTTP status code 503", failure("backend_unavailable")),
                 Arguments.of("export failed with HTTP 401 Unauthorized", failure("authentication_failed")),
                 Arguments.of("sending queue is full", failure("queue_full")),
                 Arguments.of("database reached maximum size", failure("storage_full")),
