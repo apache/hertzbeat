@@ -90,6 +90,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String COLLECTOR_ID = "collector-port-conflict";
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
     private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
+    private static final String RATE_LIMIT_PROOF_METRIC = "hertzbeat_rate_limit_proof_metric";
     private static final String QUEUE_PROOF_METRIC = "hertzbeat_queue_proof_metric";
     private static final int QUEUE_CAPACITY = 2048;
     private static final int QUEUE_OVERFLOW_MARGIN = 16;
@@ -244,12 +245,73 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     }
 
     @Test
+    void reportsRealExporterRateLimitThroughHeartbeatAndQueryThenRecovers(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        RetriableIntake intake = new RetriableIntake(429, true);
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), singleMetricPayload(RATE_LIMIT_PROOF_METRIC));
+            await(() -> intake.rejectedRequests() > 0, Duration.ofSeconds(20));
+            ManagedOtelRuntimeStatus limited = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
+                    Duration.ofSeconds(20));
+            assertStableRuntimeIdentity(limited, runtimePid);
+            assertTrue(intake.authorizationWasValid());
+            assertTrue(positive(limited.telemetry().queueSizeBySignal().metrics()));
+            reportHeartbeat(manageServer, limited);
+            assertRetriableQuery(query(queryApi), intake.port(), "BACKEND_UNAVAILABLE");
+
+            long sentBeforeRecovery = limited.telemetry().sent().metrics().value();
+            intake.accept();
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && availableGreaterThan(status.telemetry().sent().metrics(), sentBeforeRecovery),
+                    Duration.ofSeconds(40));
+            assertStableRuntimeIdentity(recovered, runtimePid);
+            assertTrue(intake.acceptedRequests() > 0);
+            reportHeartbeat(manageServer, recovered);
+            assertRetriableQuery(query(queryApi), intake.port(), "NONE");
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertSafeRetriable(output.getAll(), intake.port());
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(RATE_LIMIT_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    @Test
     void reportsRealExporterQueueCapacityThroughHeartbeatAndQueryThenDrains(
             CapturedOutput output) throws Exception {
         String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
         Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
                 () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
-        QueueIntake intake = new QueueIntake();
+        RetriableIntake intake = new RetriableIntake(503, false);
         intake.start();
         List<Integer> ports = availablePorts(5);
         OtelRuntimeProperties properties = properties(runtimeBinary, ports);
@@ -356,7 +418,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private void assertFullQueue(
             QueueLoad load,
             long runtimePid,
-            QueueIntake intake,
+            RetriableIntake intake,
             OtelRuntimeDiagnosticsReader diagnosticsReader,
             OtelRuntimeProperties properties) {
         ManagedOtelRuntimeStatus full = load.status();
@@ -383,7 +445,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private void assertRecoveredQueue(
             ManagedOtelRuntimeStatus recovered,
             long runtimePid,
-            QueueIntake intake) {
+            RetriableIntake intake) {
         assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, recovered.state());
         assertEquals(runtimePid, recovered.pid());
         assertEquals(0, recovered.restartCount());
@@ -412,6 +474,26 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         return payload.append("]}}]}]}]}").toString();
     }
 
+    private String singleMetricPayload(String metricName) {
+        return "{\"resourceMetrics\":[{\"scopeMetrics\":[{\"metrics\":[{\"name\":\""
+                + metricName
+                + "\",\"gauge\":{\"dataPoints\":[{\"asDouble\":1.0}]}}]}]}]}";
+    }
+
+    private void assertStableRuntimeIdentity(ManagedOtelRuntimeStatus status, long runtimePid) {
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, status.state());
+        assertEquals(runtimePid, status.pid());
+        assertEquals(0, status.restartCount());
+        assertEquals(1, status.desiredRevision());
+        assertEquals(1, status.activeRevision());
+    }
+
+    private void assertRetriableQuery(String query, int intakePort, String failureCode) {
+        assertTrue(query.contains("\"failureCode\":\"" + failureCode + "\""));
+        assertTrue(query.contains("\"name\":\"" + COLLECTOR_ID + "\""));
+        assertSafeRetriable(query, intakePort);
+    }
+
     private void assertSafeAuthentication(String content, int intakePort) {
         assertSafe(content);
         assertFalse(content.contains(AUTH_PROOF_METRIC));
@@ -423,6 +505,14 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private void assertSafeQueue(String content, int intakePort) {
         assertSafe(content);
         assertFalse(content.contains(QUEUE_PROOF_METRIC));
+        assertFalse(content.contains("/api/otlp"));
+        assertFalse(content.contains("127.0.0.1:" + intakePort));
+        assertFalse(content.contains(tempDir.toString()));
+    }
+
+    private void assertSafeRetriable(String content, int intakePort) {
+        assertSafe(content);
+        assertFalse(content.contains(RATE_LIMIT_PROOF_METRIC));
         assertFalse(content.contains("/api/otlp"));
         assertFalse(content.contains("127.0.0.1:" + intakePort));
         assertFalse(content.contains(tempDir.toString()));
@@ -666,13 +756,20 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
             Duration duration) {
     }
 
-    private static final class QueueIntake implements AutoCloseable {
+    private static final class RetriableIntake implements AutoCloseable {
 
+        private final int rejectedStatus;
+        private final boolean retryAfter;
         private final AtomicBoolean accepting = new AtomicBoolean();
         private final AtomicBoolean authorizationWasValid = new AtomicBoolean(true);
         private final AtomicInteger rejectedRequests = new AtomicInteger();
         private final AtomicInteger acceptedRequests = new AtomicInteger();
         private HttpServer server;
+
+        private RetriableIntake(int rejectedStatus, boolean retryAfter) {
+            this.rejectedStatus = rejectedStatus;
+            this.retryAfter = retryAfter;
+        }
 
         void start() throws IOException {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
@@ -692,7 +789,10 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
                     exchange.sendResponseHeaders(200, -1);
                 } else {
                     rejectedRequests.incrementAndGet();
-                    exchange.sendResponseHeaders(503, -1);
+                    if (retryAfter) {
+                        exchange.getResponseHeaders().set("Retry-After", "1");
+                    }
+                    exchange.sendResponseHeaders(rejectedStatus, -1);
                 }
             }
         }

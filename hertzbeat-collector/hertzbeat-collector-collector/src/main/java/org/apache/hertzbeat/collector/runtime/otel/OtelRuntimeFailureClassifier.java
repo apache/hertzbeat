@@ -48,7 +48,7 @@ public class OtelRuntimeFailureClassifier {
             return FailureCode.AUTHENTICATION_FAILED;
         }
         if (containsAny(value, "connection refused", "connection reset", "no such host", "deadline exceeded",
-                "backend unavailable", "transport is closing")) {
+                "backend unavailable", "transport is closing", "status code 429")) {
             return FailureCode.BACKEND_UNAVAILABLE;
         }
         if (containsAny(value, "exited unexpectedly", "runtime crashed", "signal: killed")) {
