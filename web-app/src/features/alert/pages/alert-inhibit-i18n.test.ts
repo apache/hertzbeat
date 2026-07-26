@@ -18,6 +18,13 @@ describe('Alert Inhibit locales', () => {
     for (const locale of [enUs, jaJp, ptBr, zhCn, zhTw]) {
       expect(locale.alertInhibits.deleteSelected).toBeTruthy();
       expect(locale.alertInhibits.deleteSelectedConfirm).toContain('{{count}}');
+      expect(locale.alertInhibits.management.title).toBeTruthy();
+      expect(locale.alertInhibits.management.entityFallback).toContain('{{id}}');
+      expect(locale.alertInhibits.management.empty).toBeTruthy();
+      expect(locale.alertInhibits.management.missing).toContain('{{count}}');
+      expect(locale.alertInhibits.management.viewAll).toBeTruthy();
+      expect(locale.alertInhibits.management.viewMatched).toBeTruthy();
+      expect(locale.alertInhibits.management.return).toBeTruthy();
     }
   });
 });

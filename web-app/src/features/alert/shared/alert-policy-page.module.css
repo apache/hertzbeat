@@ -37,6 +37,21 @@
   grid-template-columns: minmax(260px, 1fr) auto auto;
   gap: 8px;
 }
+.managementContext {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+.managementContext :global(.ant-typography) {
+  margin: 0;
+}
+.managementContext :global(.ant-alert) {
+  margin-top: 8px;
+}
 .labels {
   display: flex;
   flex-wrap: wrap;
@@ -68,6 +83,9 @@
   font-size: 12px;
 }
 @media (max-width: 800px) {
+  .managementContext {
+    flex-direction: column;
+  }
   .form {
     grid-template-columns: 1fr;
   }

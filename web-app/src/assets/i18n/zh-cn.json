@@ -1521,7 +1521,18 @@
     "saveSuccess": "抑制策略已保存。",
     "saveFailed": "抑制策略保存失败。",
     "operationSuccess": "抑制策略已更新。",
-    "operationFailed": "抑制策略操作失败。"
+    "operationFailed": "抑制策略操作失败。",
+    "management": {
+      "title": "实体抑制上下文",
+      "matchedDescription": "仅显示当前实体实际匹配的抑制策略。",
+      "allDescription": "保留实体上下文并显示全部抑制策略。",
+      "entityFallback": "实体 {{id}}",
+      "empty": "当前没有匹配该实体的抑制策略。",
+      "missing": "有 {{count}} 条匹配策略已不可用。",
+      "viewAll": "查看全部策略",
+      "viewMatched": "查看匹配策略",
+      "return": "返回实体"
+    }
   },
   "alertSilences": {
     "title": "告警静默",

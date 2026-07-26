@@ -35,6 +35,7 @@ import {
   deleteAlertInhibits,
   loadAlertInhibit,
   loadAlertInhibits,
+  loadMatchedAlertInhibits,
   saveAlertInhibit,
   updateAlertInhibitEnabled
 } from './alert-inhibit-api';
@@ -83,6 +84,20 @@ describe('alert inhibit API', () => {
     await loadAlertInhibits({ search: '', pageIndex: 0, pageSize: 8 }, signal);
 
     expect(transport.apiMessageGet).toHaveBeenCalledWith(expect.any(String), { signal });
+  });
+
+  it('loads exact matched rules, counts missing ids, and forwards cancellation', async () => {
+    const signal = new AbortController().signal;
+    transport.apiMessageGet
+      .mockResolvedValueOnce(persisted)
+      .mockRejectedValueOnce(new ApiMessageError('missing', { status: 404 }));
+
+    await expect(loadMatchedAlertInhibits([9, 10], signal)).resolves.toEqual({
+      records: [persisted],
+      missingCount: 1
+    });
+    expect(transport.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/alert/inhibit/9', { signal });
+    expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/inhibit/10', { signal });
   });
 
   it('returns void from POST, PUT, toggle, and DELETE acknowledgements', async () => {

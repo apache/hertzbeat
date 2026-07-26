@@ -10,5 +10,6 @@ import type { AlertInhibitQuery } from '../model/alert-inhibit-model';
 const rootKey = ['alert-inhibit-policies'] as const;
 
 export const alertInhibitQueryKeys = {
-  list: (query: AlertInhibitQuery) => [...rootKey, 'list', query.search, query.pageIndex, query.pageSize] as const
+  list: (query: AlertInhibitQuery) => [...rootKey, 'list', query.search, query.pageIndex, query.pageSize] as const,
+  matched: (ids: number[]) => [...rootKey, 'matched', ...ids] as const
 };

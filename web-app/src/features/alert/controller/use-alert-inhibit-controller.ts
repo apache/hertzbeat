@@ -19,6 +19,9 @@ export function useAlertInhibitController() {
     submitSearch: unlessLocked(read.actions.submitSearch),
     changePage: unlessLocked(read.actions.changePage),
     refresh: unlessLocked(read.actions.refresh),
+    viewAllRules: unlessLocked(read.actions.viewAllRules),
+    viewMatchedRules: unlessLocked(read.actions.viewMatchedRules),
+    returnToEntity: unlessLocked(read.actions.returnToEntity),
     selectIds: unlessLocked(selection.selectIds),
     ...command.actions
   };

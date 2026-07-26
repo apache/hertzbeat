@@ -1521,7 +1521,18 @@
     "saveSuccess": "抑制策略已儲存。",
     "saveFailed": "抑制策略儲存失敗。",
     "operationSuccess": "抑制策略已更新。",
-    "operationFailed": "抑制策略操作失敗。"
+    "operationFailed": "抑制策略操作失敗。",
+    "management": {
+      "title": "實體抑制脈絡",
+      "matchedDescription": "僅顯示目前實體實際符合的抑制策略。",
+      "allDescription": "保留實體脈絡並顯示全部抑制策略。",
+      "entityFallback": "實體 {{id}}",
+      "empty": "目前沒有符合該實體的抑制策略。",
+      "missing": "有 {{count}} 條符合策略已無法使用。",
+      "viewAll": "檢視全部策略",
+      "viewMatched": "檢視符合策略",
+      "return": "返回實體"
+    }
   },
   "alertSilences": {
     "title": "警報靜默",

@@ -1540,7 +1540,18 @@
     "saveSuccess": "Inhibition policy saved.",
     "saveFailed": "Inhibition policy could not be saved.",
     "operationSuccess": "Inhibition policy updated.",
-    "operationFailed": "Inhibition policy operation failed."
+    "operationFailed": "Inhibition policy operation failed.",
+    "management": {
+      "title": "Entity inhibition context",
+      "matchedDescription": "Showing only inhibition policies that the entity currently matches.",
+      "allDescription": "Showing all inhibition policies while retaining the entity context.",
+      "entityFallback": "Entity {{id}}",
+      "empty": "No current inhibition policies match this entity.",
+      "missing": "{{count}} matching policies are no longer available.",
+      "viewAll": "View all policies",
+      "viewMatched": "View matched policies",
+      "return": "Return to entity"
+    }
   },
   "alertSilences": {
     "title": "Alert silences",

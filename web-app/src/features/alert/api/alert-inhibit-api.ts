@@ -21,6 +21,7 @@ import { alertInhibitApiRequest } from './alert-inhibit-api-failure';
 import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
+  alertInhibitFailureKind,
   normalizeAlertInhibitIds,
   type AlertInhibit,
   type AlertInhibitDraft,
@@ -48,9 +49,31 @@ export async function loadAlertInhibits(query: AlertInhibitQuery, signal?: Abort
   return parseAlertInhibitPage(response, query);
 }
 
-export async function loadAlertInhibit(id: number) {
-  const response = await alertInhibitApiRequest(() => apiMessageGet(`/api/alert/inhibit/${id}`));
+export async function loadAlertInhibit(id: number, signal?: AbortSignal) {
+  const path = `/api/alert/inhibit/${id}`;
+  const response = await alertInhibitApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
   return parseAlertInhibitDetail(response);
+}
+
+export async function loadMatchedAlertInhibits(ids: number[], signal?: AbortSignal) {
+  const canonicalIds = normalizeAlertInhibitIds(ids);
+  const records = await Promise.all(
+    canonicalIds.map(async id => {
+      try {
+        return await loadAlertInhibit(id, signal);
+      } catch (error) {
+        if (alertInhibitFailureKind(error) === 'missing') return null;
+        throw error;
+      }
+    })
+  );
+  return {
+    records: records.filter((record): record is AlertInhibit => record !== null),
+    missingCount: records.filter(record => record === null).length
+  };
 }
 
 export async function saveAlertInhibit(draft: AlertInhibitDraft): Promise<void> {

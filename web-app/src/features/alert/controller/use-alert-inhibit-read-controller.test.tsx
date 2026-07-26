@@ -29,7 +29,7 @@ import {
 import { alertInhibitPage, deferred } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 
-const api = vi.hoisted(() => ({ loadAlertInhibits: vi.fn() }));
+const api = vi.hoisted(() => ({ loadAlertInhibits: vi.fn(), loadMatchedAlertInhibits: vi.fn() }));
 
 vi.mock('../api/alert-inhibit-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
@@ -41,6 +41,7 @@ describe('Alert Inhibit read controller', () => {
     api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) =>
       Promise.resolve(alertInhibitPage(query, []))
     );
+    api.loadMatchedAlertInhibits.mockResolvedValue({ records: [], missingCount: 0 });
   });
 
   it('owns canonical URL drafts, POP convergence, and page-size reset', async () => {
@@ -125,6 +126,41 @@ describe('Alert Inhibit read controller', () => {
       { search: '', pageIndex: 0, pageSize: 8 },
       expect.any(AbortSignal)
     );
+  });
+
+  it('loads and pages only exact entity-matched rules without issuing a global list request', async () => {
+    api.loadMatchedAlertInhibits.mockResolvedValue({
+      records: [
+        { id: 41, name: 'Checkout warning', sourceLabels: {}, targetLabels: {}, equalLabels: [], enable: true },
+        { id: 43, name: 'Database warning', sourceLabels: {}, targetLabels: {}, equalLabels: [], enable: true }
+      ],
+      missingCount: 1
+    });
+    const { result } = renderReadController(
+      '/alerts/inhibits?entityId=7&entityName=Checkout&returnTo=%2Fentities%2F7&matchMode=entity-noise-controls&matchingRuleType=inhibit&matchingRuleIds=41%2C42%2C43&pageIndex=0&pageSize=8&search=checkout'
+    );
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+    expect(result.current.state.list).toMatchObject({ records: [{ id: 41 }], total: 1 });
+    expect(result.current.state.management).toMatchObject({ context: { mode: 'matched' }, missingCount: 1 });
+    expect(api.loadAlertInhibits).not.toHaveBeenCalled();
+    expect(api.loadMatchedAlertInhibits).toHaveBeenCalledWith([41, 42, 43], expect.any(AbortSignal));
+  });
+
+  it('keeps entity context while switching views and returns only to the validated entity path', async () => {
+    const routed = renderRoutedReadController([
+      '/alerts/inhibits?entityId=7&entityName=Checkout&returnTo=https%3A%2F%2Fevil.example&matchMode=entity-noise-controls&matchingRuleType=inhibit&matchingRuleIds=41%2C43&pageIndex=0&pageSize=8'
+    ]);
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+
+    act(() => routed.current().actions.viewAllRules());
+    await waitFor(() => expect(routed.current().state.management.context?.mode).toBe('all'));
+    expect(new URLSearchParams(routed.router.state.location.search).get('matchingRuleIds')).toBe('41,43');
+
+    act(() => routed.current().actions.viewMatchedRules());
+    await waitFor(() => expect(routed.current().state.management.context?.mode).toBe('matched'));
+    act(() => routed.current().actions.returnToEntity());
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/entities/7'));
   });
 });
 

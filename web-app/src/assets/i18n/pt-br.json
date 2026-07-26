@@ -1544,7 +1544,18 @@
     "saveSuccess": "Política de inibição salva.",
     "saveFailed": "Não foi possível salvar a política de inibição.",
     "operationSuccess": "Política de inibição atualizada.",
-    "operationFailed": "Falha na operação da política de inibição."
+    "operationFailed": "Falha na operação da política de inibição.",
+    "management": {
+      "title": "Contexto de inibição da entidade",
+      "matchedDescription": "Mostrando apenas as políticas de inibição que correspondem à entidade no momento.",
+      "allDescription": "Mostrando todas as políticas de inibição e mantendo o contexto da entidade.",
+      "entityFallback": "Entidade {{id}}",
+      "empty": "Nenhuma política de inibição corresponde a esta entidade no momento.",
+      "missing": "{{count}} políticas correspondentes não estão mais disponíveis.",
+      "viewAll": "Ver todas as políticas",
+      "viewMatched": "Ver políticas correspondentes",
+      "return": "Voltar para a entidade"
+    }
   },
   "alertSilences": {
     "title": "Silêncios de alertas",

@@ -36,7 +36,10 @@ const controller = vi.hoisted(() => ({
   submit: vi.fn(),
   submitSearch: vi.fn(),
   toggle: vi.fn(),
-  updateDraft: vi.fn()
+  updateDraft: vi.fn(),
+  viewAllRules: vi.fn(),
+  viewMatchedRules: vi.fn(),
+  returnToEntity: vi.fn()
 }));
 vi.mock('../controller/use-alert-inhibit-controller', () => ({ useAlertInhibitController: () => controller }));
 vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
@@ -115,6 +118,30 @@ describe('AlertInhibitPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it('explains entity-matched mode and delegates all, matched, and return actions', () => {
+    controller.state = buildState({
+      management: {
+        context: {
+          entityId: 7,
+          entityName: 'Checkout API',
+          returnTo: '/entities/7',
+          returnLabel: 'Checkout API',
+          mode: 'matched',
+          matchingRuleIds: [41, 43]
+        },
+        missingCount: 1
+      }
+    });
+    render(<AlertInhibitPage />);
+
+    expect(screen.getByRole('region', { name: 'alertInhibits.management.title' })).toHaveTextContent('Checkout API');
+    expect(screen.getByText('alertInhibits.management.missing')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'alertInhibits.management.viewAll' }));
+    fireEvent.click(screen.getByRole('button', { name: 'alertInhibits.management.return' }));
+    expect(controller.viewAllRules).toHaveBeenCalled();
+    expect(controller.returnToEntity).toHaveBeenCalled();
   });
 
   it('selects current-page policies and confirms one batch delete', () => {
@@ -253,6 +280,7 @@ function buildState(override: Record<string, unknown> = {}) {
     refreshing: false,
     search: '',
     selectedIds: [],
+    management: { context: null, missingCount: 0 },
     ...override
   };
 }

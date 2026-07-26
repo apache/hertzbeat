@@ -1542,7 +1542,18 @@
     "saveSuccess": "抑制ポリシーを保存しました。",
     "saveFailed": "抑制ポリシーを保存できませんでした。",
     "operationSuccess": "抑制ポリシーを更新しました。",
-    "operationFailed": "抑制ポリシーの操作に失敗しました。"
+    "operationFailed": "抑制ポリシーの操作に失敗しました。",
+    "management": {
+      "title": "エンティティの抑制コンテキスト",
+      "matchedDescription": "このエンティティに現在一致する抑制ポリシーのみを表示しています。",
+      "allDescription": "エンティティのコンテキストを維持したまま、すべての抑制ポリシーを表示しています。",
+      "entityFallback": "エンティティ {{id}}",
+      "empty": "このエンティティに現在一致する抑制ポリシーはありません。",
+      "missing": "一致したポリシーのうち {{count}} 件は利用できなくなりました。",
+      "viewAll": "すべてのポリシーを表示",
+      "viewMatched": "一致したポリシーを表示",
+      "return": "エンティティに戻る"
+    }
   },
   "alertSilences": {
     "title": "アラートサイレンス",

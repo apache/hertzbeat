@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertInhibitEditor } from '../components/alert-inhibit-editor';
+import { AlertInhibitManagementContextBar } from '../components/alert-inhibit-management-context';
 import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
 import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
@@ -29,10 +30,9 @@ import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
   const controller = useAlertInhibitController();
-  const { command, detail, draft, editorFailure, list, query, recovery, refreshing, search, selectedIds } =
+  const { command, detail, draft, editorFailure, list, management, query, recovery, refreshing, search, selectedIds } =
     controller.state;
-  const saveRecovery = recovery?.kind === 'save' ? recovery : undefined;
-  const routeRecovery = recovery?.kind === 'save' ? undefined : recovery;
+  const { saveRecovery, routeRecovery } = splitRecovery(recovery);
   const busy = command !== 'idle';
   const removeSelected = () => {
     if (!busy && selectedIds.length > 0) void controller.removeMany(selectedIds);
@@ -47,6 +47,7 @@ export function AlertInhibitPage() {
       />
       <AlertManagementNav />
       <AlertNoiseControlNav />
+      <AlertInhibitManagementContextBar {...managementContextProps(controller, management, busy)} />
       <AlertInhibitToolbar
         busy={busy}
         search={search}
@@ -86,6 +87,28 @@ export function AlertInhibitPage() {
       )}
     </div>
   );
+}
+
+function splitRecovery(recovery: ReturnType<typeof useAlertInhibitController>['state']['recovery']) {
+  return {
+    saveRecovery: recovery?.kind === 'save' ? recovery : undefined,
+    routeRecovery: recovery?.kind === 'save' ? undefined : recovery
+  };
+}
+
+function managementContextProps(
+  controller: ReturnType<typeof useAlertInhibitController>,
+  management: ReturnType<typeof useAlertInhibitController>['state']['management'],
+  busy: boolean
+) {
+  return {
+    context: management.context,
+    missingCount: management.missingCount,
+    busy,
+    viewAll: controller.viewAllRules,
+    viewMatched: controller.viewMatchedRules,
+    returnToEntity: controller.returnToEntity
+  };
 }
 
 function AlertInhibitPageHeader({

@@ -23,7 +23,9 @@ import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   createAlertInhibitDraft,
+  readAlertInhibitManagementContext,
   readAlertInhibitQuery,
+  writeAlertInhibitRoute,
   writeAlertInhibitQuery,
   validateAlertInhibitDraft,
   AlertInhibitContractError,
@@ -55,6 +57,44 @@ describe('alert inhibit model', () => {
     expect(writeAlertInhibitQuery({ search: 'critical', pageIndex: 1, pageSize: 15 }).toString()).toBe(
       'pageIndex=1&pageSize=15&search=critical'
     );
+  });
+
+  it('keeps an entity-owned matched-rule context canonical and reloadable', () => {
+    const params = new URLSearchParams(
+      'entityId=7&entityName=Checkout%20API&returnTo=%2Fentities%2F7%3FreturnTo%3D%252Fentities&returnLabel=Checkout%20API&matchMode=entity-noise-controls&matchingRuleType=inhibit&matchingRuleIds=41%2Cbad%2C41%2C43'
+    );
+
+    const context = readAlertInhibitManagementContext(params);
+    if (!context) throw new Error('expected entity management context');
+
+    expect(context).toEqual({
+      entityId: 7,
+      entityName: 'Checkout API',
+      returnTo: '/entities/7',
+      returnLabel: 'Checkout API',
+      mode: 'matched',
+      matchingRuleIds: [41, 43]
+    });
+    expect(
+      writeAlertInhibitRoute({ search: '', pageIndex: 0, pageSize: 8 }, { ...context, mode: 'all' }).toString()
+    ).toContain('matchMode=all');
+  });
+
+  it('rejects cross-entity return targets and unrelated rule contexts', () => {
+    expect(
+      readAlertInhibitManagementContext(
+        new URLSearchParams(
+          'entityId=7&returnTo=https%3A%2F%2Fevil.example&matchMode=entity-noise-controls&matchingRuleType=inhibit&matchingRuleIds=41'
+        )
+      )
+    ).toMatchObject({ entityId: 7, returnTo: '/entities/7', mode: 'matched' });
+    expect(
+      readAlertInhibitManagementContext(
+        new URLSearchParams(
+          'entityId=7&returnTo=%2Fentities%2F8&matchMode=entity-noise-controls&matchingRuleType=silence&matchingRuleIds=41'
+        )
+      )
+    ).toEqual(null);
   });
 
   it('parses label matchers and removes duplicate equal labels', () => {
