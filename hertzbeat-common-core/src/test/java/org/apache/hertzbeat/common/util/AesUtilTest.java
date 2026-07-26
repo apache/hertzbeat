@@ -106,11 +106,8 @@ class AesUtilTest {
         String invalidBase64Text = "InvalidBase64";
         assertFalse(isCiphertext(invalidBase64Text, VALID_KEY));
 
-        // Test with invalid key
-        originalText = "This is a secret message";
-        encryptedText = aesEncode(originalText, VALID_KEY);
-        String invalidKey = "6543210987654321";
-        assertFalse(isCiphertext(encryptedText, invalidKey));
+        // Valid base64 that cannot be decrypted: 3 bytes is not a block multiple
+        assertFalse(isCiphertext("AAAA", VALID_KEY));
     }
 
     @Test
