@@ -160,15 +160,25 @@ function displayMetricValue(value: MonitorMetricValue) {
   return value.origin ?? value.mean ?? value.median ?? value.max ?? value.min ?? '—';
 }
 
-export function monitorRealtimeRows(data: MonitorRealtimeMetric, metric: MonitorMetricOption) {
-  const fieldIndex = data.fields.findIndex(field => field.name === metric.field && !field.label);
-  if (fieldIndex < 0) return [];
-  return data.valueRows.flatMap((row, rowIndex) => {
-    const value = row.values[fieldIndex];
-    return value
-      ? [{ key: String(rowIndex), labels: row.labels, value: displayMetricValue(value), time: value.time }]
-      : [];
-  });
+export function monitorRealtimeRows(data: MonitorRealtimeMetric) {
+  return data.valueRows.flatMap((row, rowIndex) =>
+    data.fields.flatMap((field, fieldIndex) => {
+      if (field.label) return [];
+      const value = row.values[fieldIndex];
+      return value
+        ? [
+            {
+              key: `${rowIndex}:${field.name}`,
+              labels: row.labels,
+              field: field.name,
+              unit: field.unit,
+              value: displayMetricValue(value),
+              time: value.time
+            }
+          ]
+        : [];
+    })
+  );
 }
 
 export function monitorHistoryRows(data: MonitorHistoryMetric) {

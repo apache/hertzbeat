@@ -70,7 +70,7 @@ export function useMonitorMetricWorkbenchController(
   const favoriteCollection = favoriteCollectionEvidence(favoritesQuery, catalog.options);
   const realtimeQuery = queries.realtime;
   const historicalQuery = queries.historical;
-  const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data, metric) : []));
+  const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data) : []));
   const historical = metricEvidence(historicalQuery, monitorHistoryRows);
   const favoriteMutation = useMonitorFavoriteMutation({
     monitorId: source.id,

@@ -46,29 +46,57 @@ describe('monitor detail model', () => {
     ).toEqual([{ key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' }]);
   });
 
-  it('normalizes realtime and history values into inspectable rows', () => {
+  it('preserves every non-label realtime field as inspectable group evidence', () => {
     const empty = { mean: null, median: null, min: null, max: null };
-    const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime' };
     expect(
-      monitorRealtimeRows(
-        {
-          fields: [
-            { name: 'status', type: 0, unit: null, label: false },
-            { name: 'responseTime', type: 0, unit: 'ms', label: false }
-          ],
-          valueRows: [
-            {
-              labels: { host: 'a' },
-              values: [
-                { ...empty, origin: '200', time: 1000 },
-                { ...empty, origin: '12', time: 0 }
-              ]
-            }
-          ]
-        },
-        metric
-      )
-    ).toEqual([{ key: '0', labels: { host: 'a' }, value: '12', time: 0 }]);
+      monitorRealtimeRows({
+        fields: [
+          { name: 'hostCode', type: 1, unit: null, label: true },
+          { name: 'responseTime', type: 0, unit: 'ms', label: false },
+          { name: 'status', type: 1, unit: null, label: false },
+          { name: 'message', type: 1, unit: null, label: false }
+        ],
+        valueRows: [
+          {
+            labels: { hostCode: 'a' },
+            values: [
+              { ...empty, origin: 'a', time: 1000 },
+              { ...empty, origin: '12', time: 0 },
+              { ...empty, origin: 'UP', time: 1000 },
+              { ...empty, origin: null, time: null }
+            ]
+          }
+        ]
+      })
+    ).toEqual([
+      {
+        key: '0:responseTime',
+        labels: { hostCode: 'a' },
+        field: 'responseTime',
+        unit: 'ms',
+        value: '12',
+        time: 0
+      },
+      {
+        key: '0:status',
+        labels: { hostCode: 'a' },
+        field: 'status',
+        unit: null,
+        value: 'UP',
+        time: 1000
+      },
+      {
+        key: '0:message',
+        labels: { hostCode: 'a' },
+        field: 'message',
+        unit: null,
+        value: '—',
+        time: null
+      }
+    ]);
+  });
+
+  it('normalizes history values into inspectable rows', () => {
     expect(
       monitorHistoryRows({
         values: { 'host=a': [{ origin: null, mean: '11', median: null, min: null, max: null, time: 1000 }] }

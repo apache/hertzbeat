@@ -119,6 +119,8 @@ function RealtimeTable({ rows, pending }: { rows: ReturnType<typeof monitorRealt
         </div>
       )
     },
+    { title: t('monitorMetrics.field'), dataIndex: 'field' },
+    { title: t('monitorMetrics.unit'), dataIndex: 'unit', render: (value: string | null) => value ?? '—' },
     { title: t('monitorMetrics.time'), dataIndex: 'time', render: formatMetricTime },
     { title: t('monitorMetrics.value'), dataIndex: 'value' }
   ];

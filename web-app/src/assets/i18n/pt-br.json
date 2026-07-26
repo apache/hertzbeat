@@ -1039,6 +1039,8 @@
     "noCatalog": "Este monitor não possui métricas numéricas.",
     "empty": "Nenhum valor disponível para a consulta.",
     "labels": "Rótulos",
+    "field": "Campo",
+    "unit": "Unidade",
     "series": "Série",
     "time": "Hora",
     "value": "Valor"

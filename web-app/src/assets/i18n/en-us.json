@@ -1034,6 +1034,8 @@
     "noCatalog": "This monitor exposes no numeric metric catalog.",
     "empty": "No metric values are available for this query.",
     "labels": "Labels",
+    "field": "Field",
+    "unit": "Unit",
     "series": "Series",
     "time": "Time",
     "value": "Value"

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -36,26 +36,49 @@ describe('MonitorMetricWorkbench', () => {
   });
   afterEach(cleanup);
 
-  it('renders the selected realtime field and preserves epoch zero', () => {
+  it('renders all realtime group fields with units, honest nulls, and epoch zero', () => {
     renderWorkbench(
       controller({
         realtime: {
           kind: 'ready',
           rows: [
             {
-              key: '0',
+              key: '0:responseTime',
               labels: { host: 'a' },
+              field: 'responseTime',
+              unit: 'ms',
               value: '12',
               time: 0
+            },
+            {
+              key: '0:status',
+              labels: { host: 'a' },
+              field: 'status',
+              unit: null,
+              value: 'UP',
+              time: 1000
+            },
+            {
+              key: '0:message',
+              labels: { host: 'a' },
+              field: 'message',
+              unit: null,
+              value: '—',
+              time: null
             }
           ]
         }
       })
     );
-    expect(screen.getByText('12')).toBeInTheDocument();
+    const responseTimeRow = screen.getByText('responseTime').closest('tr');
+    expect(responseTimeRow).not.toBeNull();
+    expect(within(responseTimeRow!).getByText('ms')).toBeInTheDocument();
+    expect(within(responseTimeRow!).getByText('12')).toBeInTheDocument();
     expect(
       screen.getByText(new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(0))
     ).toBeInTheDocument();
+    expect(within(screen.getByText('status').closest('tr')!).getByText('UP')).toBeInTheDocument();
+    expect(within(screen.getByText('message').closest('tr')!).getAllByText('—')).toHaveLength(3);
   });
 
   it.each([
