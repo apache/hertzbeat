@@ -28,6 +28,14 @@
 .heading :global(.ant-typography) {
   margin: 0;
 }
+.metadataTags :global(.ant-tag) {
+  display: inline-flex;
+  gap: 6px;
+  margin-inline-end: 0;
+}
+.metadataTags :global(.ant-tag span:first-child) {
+  color: var(--hb-text-secondary);
+}
 .dashboard {
   display: grid;
   gap: 12px;

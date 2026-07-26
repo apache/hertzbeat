@@ -1962,6 +1962,16 @@
     "name": "Monitor",
     "updated": "Updated",
     "detail": "Monitor detail",
+    "metadata": {
+      "id": "Monitor ID",
+      "schedule": "Schedule",
+      "collector": "Collector",
+      "interval": "Every {{seconds}} seconds",
+      "created": "Created",
+      "updated": "Updated",
+      "labels": "Labels",
+      "annotations": "Annotations"
+    },
     "grafana": {
       "title": "Grafana dashboard",
       "delete": "Delete dashboard",

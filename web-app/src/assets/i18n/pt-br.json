@@ -2035,6 +2035,16 @@
     "name": "Monitor",
     "updated": "Atualizado",
     "detail": "Detalhes do monitor",
+    "metadata": {
+      "id": "ID do monitor",
+      "schedule": "Agendamento",
+      "collector": "Coletor",
+      "interval": "A cada {{seconds}} segundos",
+      "created": "Criado",
+      "updated": "Atualizado",
+      "labels": "Rótulos",
+      "annotations": "Anotações"
+    },
     "grafana": {
       "title": "Painel do Grafana",
       "delete": "Excluir painel",

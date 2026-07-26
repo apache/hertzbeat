@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Descriptions, Empty, Popconfirm, Space, Spin, Tag, Typography } from 'antd';
-import type { DescriptionsProps } from 'antd';
+import { Alert, Button, Empty, Popconfirm, Space, Spin, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -26,12 +25,9 @@ import type {
   MonitorDetailViewState
 } from '../model/monitor-detail-model';
 import { safeMonitorGrafanaUrl } from '../model/monitor-detail-model';
-import { monitorStatusColor, monitorStatusKey } from '../model/monitor-model';
+import { MonitorDetailMetadata } from './monitor-detail-metadata';
 import { MonitorHelpLink } from './monitor-help-link';
 import styles from './monitor-detail-view.module.css';
-
-type Translator = (key: string) => string;
-type DetailMonitor = Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail']['monitor'];
 
 export function MonitorDetailView({
   state,
@@ -69,7 +65,7 @@ export function MonitorDetailView({
           </Button>
         </Space>
       </header>
-      <Descriptions size="small" column={2} items={monitorDescriptionItems(t, monitor)} />
+      <MonitorDetailMetadata monitor={monitor} collector={state.detail.detail.collector} />
       {metricWorkbench}
       <MonitorGrafanaDashboard
         dashboard={state.detail.detail.grafanaDashboard}
@@ -121,18 +117,4 @@ function MonitorGrafanaDashboard({
       />
     </section>
   );
-}
-
-function monitorDescriptionItems(t: Translator, monitor: DetailMonitor): NonNullable<DescriptionsProps['items']> {
-  return [
-    {
-      key: 'status',
-      label: t('monitor.status.label'),
-      children: <Tag color={monitorStatusColor(monitor.status)}>{t(monitorStatusKey(monitor.status))}</Tag>
-    },
-    { key: 'app', label: t('monitor.application'), children: monitor.app },
-    { key: 'instance', label: t('monitor.editor.endpoint'), children: monitor.instance },
-    { key: 'interval', label: t('monitor.editor.interval'), children: monitor.intervals ?? '—' },
-    { key: 'description', label: t('monitor.editor.descriptionLabel'), children: monitor.description || '—', span: 2 }
-  ];
 }

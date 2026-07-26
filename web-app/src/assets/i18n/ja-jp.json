@@ -2033,6 +2033,16 @@
     "name": "監視",
     "updated": "更新日時",
     "detail": "監視詳細",
+    "metadata": {
+      "id": "監視 ID",
+      "schedule": "スケジュール",
+      "collector": "コレクター",
+      "interval": "{{seconds}} 秒ごと",
+      "created": "作成日時",
+      "updated": "更新日時",
+      "labels": "ラベル",
+      "annotations": "注釈"
+    },
     "grafana": {
       "title": "Grafana ダッシュボード",
       "delete": "ダッシュボードを削除",

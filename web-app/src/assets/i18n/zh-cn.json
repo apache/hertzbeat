@@ -1943,6 +1943,16 @@
     "name": "监控",
     "updated": "更新时间",
     "detail": "监控详情",
+    "metadata": {
+      "id": "监控 ID",
+      "schedule": "调度方式",
+      "collector": "采集器",
+      "interval": "每 {{seconds}} 秒",
+      "created": "创建时间",
+      "updated": "更新时间",
+      "labels": "标签",
+      "annotations": "注解"
+    },
     "grafana": {
       "title": "Grafana 仪表盘",
       "delete": "删除仪表盘",

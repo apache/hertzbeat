@@ -2012,6 +2012,16 @@
     "name": "監控",
     "updated": "更新時間",
     "detail": "監控詳情",
+    "metadata": {
+      "id": "監控 ID",
+      "schedule": "排程方式",
+      "collector": "採集器",
+      "interval": "每 {{seconds}} 秒",
+      "created": "建立時間",
+      "updated": "更新時間",
+      "labels": "標籤",
+      "annotations": "註解"
+    },
     "grafana": {
       "title": "Grafana 儀表板",
       "delete": "刪除儀表板",

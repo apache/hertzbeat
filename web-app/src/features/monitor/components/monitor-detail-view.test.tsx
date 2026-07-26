@@ -58,8 +58,35 @@ describe('MonitorDetailView', () => {
   it('renders strict ready evidence and passes embedded metrics through', () => {
     renderView(ready);
     expect(screen.getByText('checkout')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('monitor.metadata.interval', { seconds: 0 }))).toBeInTheDocument();
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
+  });
+
+  it('preserves the established monitor identity, schedule, labels, annotations, and audit timestamps', () => {
+    renderView({
+      ...ready,
+      detail: {
+        ...ready.detail,
+        monitor: {
+          ...ready.detail.monitor,
+          scheduleType: 'cron',
+          cronExpression: '0 */5 * * * *',
+          labels: { environment: 'production' },
+          annotations: { owner: 'platform' },
+          gmtCreate: 0,
+          gmtUpdate: '2026-07-25T10:30:00Z'
+        }
+      }
+    });
+
+    expect(screen.getByText(i18n.t('monitor.metadata.id'))).toBeInTheDocument();
+    expect(screen.getByText('0 */5 * * * *')).toBeInTheDocument();
+    expect(screen.getByText('environment')).toBeInTheDocument();
+    expect(screen.getByText('production')).toBeInTheDocument();
+    expect(screen.getByText('owner')).toBeInTheDocument();
+    expect(screen.getByText('platform')).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('monitor.metadata.created'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('monitor.metadata.updated'))).toBeInTheDocument();
   });
 
   it('keeps the monitor help guide available from detail', () => {
