@@ -5,22 +5,29 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Popconfirm, Space, Typography } from 'antd';
+import { Alert, Button, Dropdown, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { alertRuleExportFormats, type AlertRuleExportFormat } from '../model/alert-rule-export-model';
 import styles from '../shared/alert-rule-list.module.css';
 
-export function AlertRuleListHeading({
-  busy,
-  selectedCount,
-  create,
-  removeSelected
-}: {
+type AlertRuleListHeadingProps = {
   busy: boolean;
+  exporting: boolean;
   selectedCount: number;
   create: () => void;
   removeSelected: () => unknown;
-}) {
+  exportSelected: (format: AlertRuleExportFormat) => unknown;
+};
+
+export function AlertRuleListHeading({
+  busy,
+  exporting,
+  selectedCount,
+  create,
+  removeSelected,
+  exportSelected
+}: AlertRuleListHeadingProps) {
   const { t } = useTranslation();
   return (
     <header className={styles.heading}>
@@ -29,24 +36,63 @@ export function AlertRuleListHeading({
         <Typography.Text type="secondary">{t('alertRules.description')}</Typography.Text>
       </div>
       <Space>
-        {selectedCount > 0 && (
-          <Popconfirm
-            title={t('alertRules.deleteSelectedConfirm', { count: selectedCount })}
-            okText={t('common.delete')}
-            cancelText={t('common.cancel')}
-            okButtonProps={{ danger: true, disabled: busy }}
-            onConfirm={removeSelected}
-          >
-            <Button danger disabled={busy}>
-              {t('alertRules.deleteSelected')}
-            </Button>
-          </Popconfirm>
-        )}
+        <AlertRuleSelectedActions
+          busy={busy}
+          exporting={exporting}
+          selectedCount={selectedCount}
+          removeSelected={removeSelected}
+          exportSelected={exportSelected}
+        />
         <Button type="primary" disabled={busy} onClick={create}>
           {t('alertRules.new')}
         </Button>
       </Space>
     </header>
+  );
+}
+
+function AlertRuleSelectedActions({
+  busy,
+  exporting,
+  selectedCount,
+  removeSelected,
+  exportSelected
+}: Omit<AlertRuleListHeadingProps, 'create'>) {
+  const { t } = useTranslation();
+  if (selectedCount === 0) return null;
+  const chooseFormat = (key: string) => {
+    const format = alertRuleExportFormats.find(candidate => candidate === key);
+    if (format) exportSelected(format);
+  };
+  return (
+    <>
+      <Dropdown
+        trigger={['click']}
+        menu={{
+          items: alertRuleExportFormats.map(format => ({
+            key: format,
+            label: t(`alertRules.export.format.${format.toLowerCase()}`)
+          })),
+          onClick: ({ key }) => chooseFormat(key)
+        }}
+        disabled={busy || exporting}
+      >
+        <Button loading={exporting} disabled={busy}>
+          {t('alertRules.export.selected')}
+        </Button>
+      </Dropdown>
+      <Popconfirm
+        title={t('alertRules.deleteSelectedConfirm', { count: selectedCount })}
+        okText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true, disabled: busy }}
+        onConfirm={removeSelected}
+      >
+        <Button danger disabled={busy}>
+          {t('alertRules.deleteSelected')}
+        </Button>
+      </Popconfirm>
+    </>
   );
 }
 

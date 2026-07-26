@@ -1925,6 +1925,16 @@
     "deleteConfirm": "Delete this alert rule?",
     "deleteSelected": "Delete selected",
     "deleteSelectedConfirm": "Delete {{count}} selected alert rules?",
+    "export": {
+      "selected": "Export selected",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "Alert rule configuration downloaded.",
+      "failure": {
+        "forbidden": "Your account is not permitted to export alert rules.",
+        "unavailable": "Alert rule export is temporarily unavailable.",
+        "error": "Alert rule configuration could not be exported."
+      }
+    },
     "operationSuccess": "Alert rule updated.",
     "operationFailed": "Alert rule operation failed.",
     "saveSuccess": "Alert rule saved.",

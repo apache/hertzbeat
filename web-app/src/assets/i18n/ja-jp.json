@@ -1927,6 +1927,16 @@
     "deleteConfirm": "このアラートルールを削除しますか？",
     "deleteSelected": "選択項目を削除",
     "deleteSelectedConfirm": "選択した {{count}} 件のアラートルールを削除しますか？",
+    "export": {
+      "selected": "選択項目をエクスポート",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "アラートルール設定をダウンロードしました。",
+      "failure": {
+        "forbidden": "アラートルールをエクスポートする権限がありません。",
+        "unavailable": "アラートルールのエクスポートは一時的に利用できません。",
+        "error": "アラートルール設定をエクスポートできませんでした。"
+      }
+    },
     "operationSuccess": "アラートルールを更新しました。",
     "operationFailed": "アラートルールの操作に失敗しました。",
     "saveSuccess": "アラートルールを保存しました。",

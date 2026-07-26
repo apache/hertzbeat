@@ -1929,6 +1929,16 @@
     "deleteConfirm": "Excluir esta regra de alerta?",
     "deleteSelected": "Excluir selecionadas",
     "deleteSelectedConfirm": "Excluir {{count}} regras de alerta selecionadas?",
+    "export": {
+      "selected": "Exportar selecionadas",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "Configuração de regras de alerta baixada.",
+      "failure": {
+        "forbidden": "Sua conta não pode exportar regras de alerta.",
+        "unavailable": "A exportação de regras de alerta está temporariamente indisponível.",
+        "error": "Não foi possível exportar a configuração das regras de alerta."
+      }
+    },
     "operationSuccess": "Regra de alerta atualizada.",
     "operationFailed": "Falha na operação da regra.",
     "saveSuccess": "Regra de alerta salva.",

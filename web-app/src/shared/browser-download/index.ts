@@ -5,10 +5,4 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { saveBrowserDownload } from '@/shared/browser-download';
-
-import type { MonitorExportArtifact } from './monitor-export-model';
-
-export function saveMonitorExport(artifact: MonitorExportArtifact) {
-  saveBrowserDownload(artifact);
-}
+export { safeDownloadFilename, saveBrowserDownload, type BrowserDownloadArtifact } from './browser-download';

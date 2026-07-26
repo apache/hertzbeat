@@ -24,6 +24,7 @@ const controller = vi.hoisted(() => ({
   changePage: vi.fn(),
   create: vi.fn(),
   edit: vi.fn(),
+  exportSelected: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
   removeMany: vi.fn(),
@@ -127,6 +128,27 @@ describe('AlertRuleListPage', () => {
     expect(controller.removeMany).toHaveBeenCalledWith([7]);
   });
 
+  it('exports selected rules in the chosen format', async () => {
+    controller.state = buildState({ selectedIds: [7] });
+    render(<AlertRuleListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.export.selected' }));
+    fireEvent.click(await screen.findByText('alertRules.export.format.json'));
+
+    expect(controller.exportSelected).toHaveBeenCalledWith([7], 'JSON');
+  });
+
+  it('locks selection and rule writes while an export owns the selected snapshot', () => {
+    controller.state = buildState({ exporting: true, selectedIds: [7] });
+    render(<AlertRuleListPage />);
+
+    expect(screen.getByRole('button', { name: /alertRules\.export\.selected/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.deleteSelected' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getAllByRole('checkbox')[1]).toBeDisabled();
+  });
+
   it('locks every list and query control while a command owns the page', () => {
     controller.state = buildState({ command: 'operating' });
     render(<AlertRuleListPage />);
@@ -185,6 +207,7 @@ describe('AlertRuleListPage', () => {
 function buildState(override: Record<string, unknown> = {}) {
   return {
     command: 'idle',
+    exporting: false,
     list: { kind: 'ready', records: [record], total: 1 },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,

@@ -18,6 +18,10 @@ describe('Alert Rule locale coverage', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw]) {
       expect(locale.alertRules.deleteSelected).toBeTruthy();
       expect(locale.alertRules.deleteSelectedConfirm).toContain('{{count}}');
+      expect(locale.alertRules.export.selected).toBeTruthy();
+      expect(locale.alertRules.export.format.json).toBeTruthy();
+      expect(locale.alertRules.export.format.excel).toBeTruthy();
+      expect(locale.alertRules.export.failure.unavailable).toBeTruthy();
     }
   });
 });

@@ -1906,6 +1906,16 @@
     "deleteConfirm": "确认删除这条告警规则？",
     "deleteSelected": "删除选中项",
     "deleteSelectedConfirm": "确认删除选中的 {{count}} 条告警规则？",
+    "export": {
+      "selected": "导出选中项",
+      "format": { "json": "JSON", "excel": "Excel" },
+      "success": "告警规则配置已下载。",
+      "failure": {
+        "forbidden": "当前账户无权导出告警规则。",
+        "unavailable": "告警规则导出暂时不可用。",
+        "error": "无法导出告警规则配置。"
+      }
+    },
     "operationSuccess": "告警规则已更新。",
     "operationFailed": "告警规则操作失败。",
     "saveSuccess": "告警规则已保存。",

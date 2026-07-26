@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../model/alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
+import { useAlertRuleExport } from './use-alert-rule-export';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import { useAlertRuleListReadController } from './use-alert-rule-list-read-controller';
@@ -34,6 +35,7 @@ export function useAlertRuleListController() {
   const { listQuery, rereadLatest } = useAlertRuleListReadController(route.query);
   const list = resolveListState(listQuery.isPending, listQuery.error, listQuery.data);
   const selection = useAlertRuleSelection(route.query, list);
+  const exportOperation = useAlertRuleExport();
   const operations = useAlertRuleListOperations(rereadLatest, {
     success: () => {
       void message.success(t('alertRules.operationSuccess'));
@@ -49,11 +51,13 @@ export function useAlertRuleListController() {
       query: route.query,
       refreshing: listQuery.isFetching,
       search: route.search,
-      selectedIds: selection.selectedIds
+      selectedIds: selection.selectedIds,
+      exporting: exportOperation.exporting
     },
     selectIds: (ids: number[]) => {
       if (!operations.isLocked()) selection.selectIds(ids);
     },
+    exportSelected: exportOperation.exportSelected,
     ...createAlertRuleListActions({ route, operations, navigate, rereadLatest })
   };
 }

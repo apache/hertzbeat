@@ -31,22 +31,25 @@ import styles from '../shared/alert-rule-list.module.css';
 export function AlertRuleListPage() {
   const { t } = useTranslation();
   const controller = useAlertRuleListController();
-  const { command, list, query, refreshing, search, selectedIds } = controller.state;
-  const busy = command !== 'idle';
+  const { command, exporting, list, query, refreshing, search, selectedIds } = controller.state;
+  const commandBusy = command !== 'idle';
+  const interactionLocked = commandBusy || exporting;
   const recovering = command === 'recovering';
   return (
     <div className={styles.page}>
       <AlertRuleListHeading
-        busy={busy}
+        busy={interactionLocked}
+        exporting={exporting}
         selectedCount={selectedIds.length}
         create={controller.create}
         removeSelected={() => controller.removeMany(selectedIds)}
+        exportSelected={format => controller.exportSelected(selectedIds, format)}
       />
       <AlertManagementNav />
       <AlertRuleListToolbar
         search={search}
         refreshing={refreshing}
-        busy={busy}
+        busy={commandBusy}
         recovering={recovering}
         setSearch={controller.setSearch}
         submitSearch={controller.submitSearch}
@@ -56,17 +59,17 @@ export function AlertRuleListPage() {
       <AlertRuleListResults
         state={list}
         columns={buildAlertRuleListColumns(t, {
-          busy,
+          busy: interactionLocked,
           edit: controller.edit,
           toggle: controller.toggle,
           remove: controller.remove
         })}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
-        busy={busy}
+        busy={interactionLocked}
         selectedIds={selectedIds}
         selectIds={controller.selectIds}
-        retryDisabled={busy && !recovering}
+        retryDisabled={commandBusy && !recovering}
         changePage={controller.changePage}
         retry={controller.refresh}
       />
