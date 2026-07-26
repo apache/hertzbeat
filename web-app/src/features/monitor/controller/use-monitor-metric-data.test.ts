@@ -7,7 +7,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type QueryOptions = { queryFn?: unknown; refetchInterval?: number | false };
+type QueryOptions = { queryKey?: readonly unknown[]; queryFn?: unknown; refetchInterval?: number | false };
 const query = vi.hoisted(() => ({
   skipToken: Symbol('skipToken'),
   useQuery: vi.fn((options: QueryOptions) => options)
@@ -56,5 +56,22 @@ describe('useMonitorMetricData refresh interval', () => {
     expect(realtime).toMatchObject({ refetchInterval: 30_000 });
     expect(realtime.queryFn).not.toBe(query.skipToken);
     expect(historical).toMatchObject({ queryFn: query.skipToken, refetchInterval: false });
+  });
+
+  it('keeps the exact long range in the history query key', () => {
+    useMonitorMetricData({ monitor, metric, metricKey: metric.key, history: '12W', refreshSeconds: 30 });
+
+    expect(query.useQuery.mock.calls[2]?.[0]?.queryKey).toEqual([
+      'monitor',
+      'metrics',
+      'history',
+      7,
+      'prod',
+      'checkout',
+      'website',
+      undefined,
+      'summary.value',
+      '12W'
+    ]);
   });
 });

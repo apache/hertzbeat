@@ -22,14 +22,32 @@ import {
   monitorDetailRefreshChoices,
   monitorDetailRefreshInterval,
   monitorHistoryRows,
+  monitorMetricHistoryRanges,
+  monitorMetricHistoryUsesInterval,
   monitorMetricOptions,
   monitorRealtimeRows,
   parseMonitorDetailRefresh,
+  parseMonitorMetricHistory,
   parseMonitorRouteId,
   safeMonitorGrafanaUrl
 } from './monitor-detail-model';
 
 describe('monitor detail model', () => {
+  it('keeps exact history wire tokens and aggregates only uppercase week ranges', () => {
+    expect(monitorMetricHistoryRanges).toEqual(['30m', '1h', '6h', '24h', '1W', '4W', '12W']);
+    expect(monitorMetricHistoryRanges.map(monitorMetricHistoryUsesInterval)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]);
+    expect(parseMonitorMetricHistory('12W')).toBe('12W');
+    expect(parseMonitorMetricHistory('12w')).toBe('30m');
+  });
+
   it('extracts visible numeric metric fields', () => {
     expect(
       monitorMetricOptions([

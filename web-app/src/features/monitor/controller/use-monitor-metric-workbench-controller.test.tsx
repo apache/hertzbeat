@@ -72,7 +72,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     const view = renderController(
       monitor(),
       [],
-      '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&metric=bad.value&history=bad'
+      '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&metric=bad.value&history=12w'
     );
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'), routeConvergenceWait);
     await waitFor(
@@ -80,6 +80,7 @@ describe('useMonitorMetricWorkbenchController', () => {
       routeConvergenceWait
     );
     expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
+    expect(view.result.current.location.search).toContain('history=30m');
     act(() => {
       void view.result.current.navigate('/monitors/7?metric=summary.value&history=1h');
     });
@@ -92,6 +93,11 @@ describe('useMonitorMetricWorkbenchController', () => {
       void view.result.current.navigate(-1);
     });
     await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'), routeConvergenceWait);
+    act(() => {
+      void view.result.current.navigate('/monitors/7?metric=summary.value&history=12W');
+    });
+    await waitFor(() => expect(view.result.current.controller.state.history).toBe('12W'), routeConvergenceWait);
+    expect(view.result.current.location.search).toContain('history=12W');
 
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog('other'));
     view.rerender({ monitor: monitor(8), embedded: [] });
@@ -216,10 +222,16 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadHistoryMetric).not.toHaveBeenCalled();
   });
 
-  it('manually refreshes favorites, realtime, and history even when auto-refresh is Off', async () => {
-    const view = renderController(monitor(), [], '/monitors/7?refresh=0');
+  it('manually refreshes favorites, realtime, and long-range history even when auto-refresh is Off', async () => {
+    const view = renderController(monitor(), [], '/monitors/7?refresh=0&history=12W');
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
     await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
+    expect(api.loadHistoryMetric).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 7 }),
+      expect.objectContaining({ key: 'summary.value' }),
+      '12W',
+      expect.any(AbortSignal)
+    );
     vi.clearAllMocks();
 
     await act(async () => {

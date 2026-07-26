@@ -147,6 +147,19 @@ describe('MonitorMetricWorkbench', () => {
     expect(value.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
   });
 
+  it('offers the exact uppercase long history range tokens', () => {
+    const value = controller();
+    renderWorkbench(value);
+
+    const historySelect = screen.getAllByRole('combobox')[1]!;
+    fireEvent.mouseDown(historySelect);
+    fireEvent.click(screen.getByText('4W'));
+
+    expect(value.actions.setHistory).toHaveBeenCalledWith('4W', expect.objectContaining({ value: '4W' }));
+    expect(screen.getByText('1W')).toBeInTheDocument();
+    expect(screen.getByText('12W')).toBeInTheDocument();
+  });
+
   it('makes the favorite collection discoverable and selects only available favorite metrics', () => {
     const value = controller({
       favoriteCollection: {

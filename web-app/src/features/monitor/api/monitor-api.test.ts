@@ -295,10 +295,24 @@ describe('monitor metric API paths', () => {
 
     expect(buildRealtimeMetricPath(7, metric.group)).toBe('/api/monitor/7/metrics/summary');
     expect(buildFavoriteMetricPath(7, metric.key)).toBe('/api/metrics/favorite/7/summary.responseTime');
-    expect(buildHistoryMetricPath(monitor, metric, '6h')).toBe(
-      '/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=6h&interval=false'
-    );
     expect(buildMetricCatalogPath(monitor)).toBe('/api/apps/website/define');
+  });
+
+  it.each([
+    ['30m', false],
+    ['1h', false],
+    ['6h', false],
+    ['24h', false],
+    ['1W', true],
+    ['4W', true],
+    ['12W', true]
+  ] as const)('sends history=%s with interval=%s', (history, interval) => {
+    const monitor = { id: 7, app: 'website', name: 'home', instance: 'example.com:443', status: 1 };
+    const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
+
+    expect(buildHistoryMetricPath(monitor, metric, history)).toBe(
+      `/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=${history}&interval=${interval}`
+    );
   });
 });
 

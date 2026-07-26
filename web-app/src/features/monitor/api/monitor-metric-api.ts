@@ -17,6 +17,7 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import type { Monitor, MonitorMetricOption } from '../model/monitor-contract';
+import { monitorMetricHistoryUsesInterval, type MonitorMetricHistory } from '../model/monitor-detail-model';
 import {
   parseFavoriteMetrics,
   parseHistoryMetric,
@@ -41,11 +42,11 @@ export function buildFavoriteMetricPath(monitorId: number, metricKey?: string) {
     : `/api/metrics/favorite/${monitorId}/${encodeURIComponent(metricKey)}`;
 }
 
-export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOption, history: string) {
+export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOption, history: MonitorMetricHistory) {
   const sourceApp = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
   const app = sourceApp === 'prometheus' ? `_prometheus_${monitor.name}` : sourceApp;
   const fullMetric = `${app}.${metric.group}.${metric.field}`;
-  const params = new URLSearchParams({ history, interval: 'false' });
+  const params = new URLSearchParams({ history, interval: String(monitorMetricHistoryUsesInterval(history)) });
   return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
 }
 
@@ -72,7 +73,7 @@ export async function loadRealtimeMetric(monitorId: number, metric: MonitorMetri
 export async function loadHistoryMetric(
   monitor: Monitor,
   metric: MonitorMetricOption,
-  history: string,
+  history: MonitorMetricHistory,
   signal?: AbortSignal
 ) {
   const value = await apiMessageGet(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
