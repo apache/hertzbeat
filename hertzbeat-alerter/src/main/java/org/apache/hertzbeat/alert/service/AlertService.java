@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -51,6 +52,22 @@ public interface AlertService {
      * @return search result    
      */
     Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+
+    /**
+     * Find one individual alert by its exact persistent identifier.
+     *
+     * @param id alert identifier
+     * @return matching alert
+     */
+    Optional<SingleAlert> findSingleAlert(long id);
+
+    /**
+     * Find one grouped alert by its exact persistent identifier.
+     *
+     * @param id grouped alert identifier
+     * @return matching grouped alert
+     */
+    Optional<GroupAlert> findGroupAlert(long id);
 
     /**
      * delete the group alarm according to the alarm ID

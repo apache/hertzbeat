@@ -18,444 +18,371 @@
  -->
 
 <div class="chat-container">
-  <!-- Sidebar with conversation list -->
-  <div class="chat-sidebar" [class.collapsed]="sidebarCollapsed">
-    <div class="sidebar-header">
-      <h3>{{ 'menu.extras.ai.chat' | i18n }}</h3>
-      <button nz-button nzType="primary" nzSize="small" (click)="createNewConversation()" [disabled]="isSendingMessage">
-        <i nz-icon nzType="plus"></i>
-        {{ 'ai.chat.new-chat' | i18n }}
-      </button>
-    </div>
+  <main class="chat-main" [class.has-composer]="sessionType === 'chat'">
+    <div class="messages-region">
+      <section class="messages-container" #messagesContainer (scroll)="onMessagesScroll()">
+        <div *ngIf="isLoadingSessions" class="loading-container">
+          <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+          <p>{{ 'ai.chat.loading' | i18n }}</p>
+        </div>
 
-    <div class="conversation-list">
-      <div
-        *ngFor="let conversation of conversations"
-        class="conversation-item"
-        [class.active]="currentConversation?.id === conversation.id"
-        (click)="selectConversation(conversation)"
-      >
-        <div class="conversation-content">
-          <div class="conversation-title">
-            {{ getConversationTitle(conversation) }}
-          </div>
-          <div class="conversation-time">
-            {{ conversation.gmtUpdate | date : 'MMM d, HH:mm' }}
+        <div *ngIf="turns.length === 0 && !isLoadingSessions" class="welcome-message">
+          <div class="welcome-content">
+            <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
+            <h3>{{ 'ai.chat.welcome.title' | i18n }}</h3>
+            <p>{{ 'ai.chat.welcome.description' | i18n }}</p>
           </div>
         </div>
-        <button nz-button nzType="text" nzSize="small" nzDanger (click)="deleteConversation(conversation, $event)" class="delete-btn">
-          <i nz-icon nzType="delete"></i>
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Main chat area -->
-  <div class="chat-main">
-    <!-- Header -->
-    <div class="chat-header">
-      <button nz-button nzType="text" (click)="toggleSidebar()" class="sidebar-toggle">
-        <i nz-icon [nzType]="sidebarCollapsed ? 'menu-unfold' : 'menu-fold'"></i>
-      </button>
+        <section *ngFor="let turn of turns; trackBy: trackTurn" class="chat-turn">
+          <article class="message user-message">
+            <div class="message-avatar"><i nz-icon nzType="user"></i></div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-role">{{ 'ai.chat.user' | i18n }}</span>
+                <span class="message-time">{{ formatTime(turn.user.createdAt) }}</span>
+              </div>
+              <div class="message-text">{{ turn.user.content }}</div>
+            </div>
+          </article>
 
-      <div class="chat-title">
-        <h2 *ngIf="currentConversation">
-          {{ getConversationTitle(currentConversation) }}
-        </h2>
-        <h2 *ngIf="!currentConversation">{{ 'ai.chat.title' | i18n }}</h2>
-      </div>
+          <article class="message assistant-message">
+            <div class="message-avatar"><i nz-icon nzType="robot"></i></div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-role">{{ 'ai.chat.assistant' | i18n }}</span>
+                <span class="message-time">{{ formatTime(turn.assistant.createdAt) }}</span>
+              </div>
 
-      <!-- Spacer to push actions to the left of page-level buttons -->
-      <div class="header-spacer"></div>
+              <div
+                *ngIf="turn.assistant.items.length === 0 && (turn.assistant.status === 'pending' || turn.assistant.status === 'running')"
+                class="run-status"
+              >
+                <span class="status-pulse"></span>
+                <span>{{ 'ai.chat.thinking' | i18n }}</span>
+              </div>
 
-      <div class="chat-header-actions" *ngIf="currentConversation">
-        <button
-          nz-button
-          nzType="primary"
-          nzSize="small"
-          nzGhost
-          (click)="onShowScheduleModal()"
-          nz-tooltip
-          [nzTooltipTitle]="'ai.chat.schedule.tooltip' | i18n"
-        >
-          <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
-          <span>{{ 'ai.chat.schedule.button' | i18n }}</span>
-        </button>
-      </div>
-    </div>
+              <ng-container *ngFor="let item of turn.assistant.items; trackBy: trackRunItem">
+                <div *ngIf="item.type === 'text' && item.content" class="message-text assistant-text">
+                  <markdown class="markdown-content" [data]="item.content"></markdown>
+                  <span *ngIf="item.status === 'streaming' && turn.assistant.status === 'running'" class="stream-cursor"></span>
+                </div>
 
-    <!-- Messages area -->
-    <div class="messages-container" #messagesContainer>
-      <!-- Loading indicator -->
-      <div *ngIf="isLoadingConversations" class="loading-container">
-        <nz-spin nzSimple [nzSize]="'large'">
-          <ng-template #indicator>
-            <i nz-icon nzType="loading" nzSpin></i>
-          </ng-template>
-        </nz-spin>
-        <p>{{ 'ai.chat.loading' | i18n }}</p>
-      </div>
+                <div *ngIf="item.type === 'tool'" class="tool-activity" [class.failed]="item.status === 'failed'">
+                  <div class="tool-summary">
+                    <i *ngIf="item.status === 'running'" nz-icon nzType="loading" nzSpin></i>
+                    <i *ngIf="item.status === 'waiting_approval'" nz-icon nzType="safety-certificate"></i>
+                    <i *ngIf="item.status === 'completed'" nz-icon nzType="check-circle" nzTheme="fill"></i>
+                    <i *ngIf="item.status === 'failed'" nz-icon nzType="close-circle" nzTheme="fill"></i>
+                    <span *ngIf="item.status === 'running'">{{ 'ai.chat.tool.running' | i18n }}</span>
+                    <span *ngIf="item.status === 'waiting_approval'">{{ 'ai.chat.tool.waiting-approval' | i18n }}</span>
+                    <span *ngIf="item.status === 'completed'">{{ 'ai.chat.tool.completed' | i18n }}</span>
+                    <span *ngIf="item.status === 'failed'">{{ 'ai.chat.tool.failed' | i18n }}</span>
+                    <code [nz-tooltip]="item.toolName">{{ item.toolName }}</code>
+                    <button
+                      *ngIf="item.toolInput"
+                      type="button"
+                      class="tool-input-toggle"
+                      [attr.aria-expanded]="item.toolInputExpanded"
+                      (click)="toggleToolInput(item)"
+                    >
+                      {{ 'ai.chat.tool.arguments' | i18n }}
+                      <i nz-icon [nzType]="item.toolInputExpanded ? 'up' : 'down'"></i>
+                    </button>
+                  </div>
 
-      <!-- Welcome message -->
-      <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
-        <div class="welcome-content">
-          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
-          <h3 class="welcome-title">{{ 'ai.chat.welcome.title' | i18n }}</h3>
-          <p class="welcome-description">
-            {{ 'ai.chat.welcome.description' | i18n }}
-          </p>
-          <ul class="capabilities-list">
-            <li>{{ 'ai.chat.welcome.capabilities.monitor' | i18n }}</li>
-            <li>{{ 'ai.chat.welcome.capabilities.manage' | i18n }}</li>
-            <li>{{ 'ai.chat.welcome.capabilities.metrics' | i18n }}</li>
-            <li>{{ 'ai.chat.welcome.capabilities.alerts' | i18n }}</li>
-            <li>{{ 'ai.chat.welcome.capabilities.config' | i18n }}</li>
-            <li>{{ 'ai.chat.welcome.capabilities.troubleshoot' | i18n }}</li>
-          </ul>
-        </div>
-      </div>
+                  <div *ngIf="item.toolInput && item.toolInputExpanded" class="tool-input">
+                    <div class="tool-input-label">{{ 'ai.chat.tool.arguments' | i18n }}</div>
+                    <pre><code>{{ formatToolInput(item.toolInput) }}</code></pre>
+                  </div>
 
-      <!-- Chat messages -->
-      <div
-        *ngFor="let message of messages; let i = index"
-        class="message"
-        [class.user-message]="message.role === 'user'"
-        [class.system-push-message]="message.role === 'system_push'"
-      >
-        <div class="message-avatar">
-          <i nz-icon [nzType]="message.role === 'user' ? 'user' : message.role === 'system_push' ? 'bell' : 'robot'"></i>
-        </div>
-        <div class="message-content">
-          <div class="message-header">
-            <span class="message-role">
-              <ng-container [ngSwitch]="message.role">
-                <span *ngSwitchCase="'user'">{{ 'ai.chat.user' | i18n }}</span>
-                <span *ngSwitchCase="'system_push'">🔔 定时推送</span>
-                <span *ngSwitchDefault>{{ 'ai.chat.assistant' | i18n }}</span>
+                  <div *ngIf="item.interaction" class="interaction-panel">
+                    <div class="interaction-heading">
+                      <div>
+                        <strong>{{ item.interaction.title }}</strong>
+                        <p *ngIf="item.interaction.description">{{ item.interaction.description }}</p>
+                      </div>
+                      <span class="secure-input-hint"
+                        ><i nz-icon nzType="safety-certificate"></i>{{ 'ai.chat.input-request.secure' | i18n }}</span
+                      >
+                    </div>
+                    <div *ngIf="item.interaction.status !== 'submitted'" class="interaction-fields">
+                      <label *ngFor="let field of item.interaction.fields">
+                        <span>{{ field.label }}<em *ngIf="field.required">*</em></span>
+                        <input
+                          nz-input
+                          [type]="field.type === 'secret' ? 'password' : field.type === 'number' ? 'number' : 'text'"
+                          [(ngModel)]="item.interaction.values[field.field]"
+                          [placeholder]="field.placeholder || field.label"
+                          [autocomplete]="field.type === 'secret' ? 'new-password' : 'off'"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      *ngIf="item.interaction.status !== 'submitted'"
+                      nz-button
+                      nzType="primary"
+                      [disabled]="!canSubmitInteraction(item.interaction)"
+                      [nzLoading]="item.interaction.status === 'submitting'"
+                      (click)="submitInteraction(item.interaction)"
+                    >
+                      {{ 'ai.chat.input-request.submit' | i18n }}
+                    </button>
+                    <div *ngIf="item.interaction.status === 'submitted'" class="interaction-submitted">
+                      <i nz-icon nzType="check-circle" nzTheme="fill"></i>{{ 'ai.chat.input-request.submitted' | i18n }}
+                    </div>
+                  </div>
+
+                  <div *ngIf="item.approval" class="approval-panel">
+                    <ng-container *ngIf="item.approval.status === 'waiting' || item.approval.status === 'resolving'">
+                      <p>{{ item.approval.message }}</p>
+                      <div class="approval-actions">
+                        <button
+                          nz-button
+                          nzType="primary"
+                          [disabled]="!canApprove(item.approval)"
+                          [nzLoading]="item.approval.status === 'resolving'"
+                          (click)="resolveApproval(true)"
+                        >
+                          {{ 'ai.chat.approval.approve' | i18n }}
+                        </button>
+                        <button nz-button nzDanger [disabled]="item.approval.status === 'resolving'" (click)="resolveApproval(false)">
+                          {{ 'ai.chat.approval.reject' | i18n }}
+                        </button>
+                      </div>
+                    </ng-container>
+                    <div *ngIf="item.approval.status === 'approved'" class="approval-result approved">
+                      <i nz-icon nzType="check"></i>{{ 'ai.chat.approval.approved' | i18n }}
+                    </div>
+                    <div *ngIf="item.approval.status === 'rejected'" class="approval-result rejected">
+                      <i nz-icon nzType="stop"></i>{{ 'ai.chat.approval.rejected' | i18n }}
+                    </div>
+                  </div>
+                </div>
               </ng-container>
-            </span>
-            <span class="message-time">{{ formatTime(message.gmtCreate) }}</span>
-            <span
-              *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
-              class="streaming-indicator"
-            >
-              <i nz-icon nzType="loading" nzSpin style="font-size: 12px"></i>
-              <span style="font-size: 11px">Typing...</span>
-            </span>
-          </div>
-          <div class="message-text">
-            <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
-            <markdown *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content"> </markdown>
+
+              <div *ngIf="turn.assistant.error" class="run-error">
+                <i nz-icon nzType="exclamation-circle"></i>
+                <span>{{ turn.assistant.error }}</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <button
+        *ngIf="showScrollToBottom && sessionType !== 'chat'"
+        nz-button
+        nzShape="circle"
+        class="scroll-to-bottom"
+        (click)="scrollToLatest()"
+      >
+        <i nz-icon nzType="arrow-down"></i>
+      </button>
+    </div>
+
+    <footer *ngIf="sessionType === 'chat'" class="input-area">
+      <button *ngIf="showScrollToBottom" nz-button nzShape="circle" class="scroll-to-bottom" (click)="scrollToLatest()">
+        <i nz-icon nzType="arrow-down"></i>
+      </button>
+      <div class="input-composer">
+        <textarea
+          nz-input
+          [(ngModel)]="newMessage"
+          (keydown)="onKeyPress($event)"
+          [disabled]="isSendingMessage"
+          [placeholder]="'ai.chat.input.placeholder' | i18n"
+          [nzAutosize]="{ minRows: 1, maxRows: 6 }"
+          maxlength="1000"
+          rows="1"
+        ></textarea>
+
+        <div class="composer-controls">
+          <button
+            type="button"
+            nz-button
+            nzShape="circle"
+            class="context-button"
+            nz-tooltip
+            [nzTooltipTitle]="'ai.chat.input.context' | i18n"
+            [attr.aria-label]="'ai.chat.input.context' | i18n"
+          >
+            <i nz-icon nzType="plus"></i>
+          </button>
+
+          <div class="composer-actions">
             <button
-              *ngIf="message.securityForm && message.securityForm.show"
-              [disabled]="message.securityForm.complete"
-              (click)="openSecurityForm(message.securityForm)"
+              type="button"
               nz-button
-              nzType="primary"
+              nzType="text"
+              nz-dropdown
+              class="model-config-button"
+              nzTrigger="click"
+              nzPlacement="topRight"
+              [nzDropdownMenu]="providerMenu"
+              [nzClickHide]="false"
+              [nzDisabled]="providerOptionsLoading || providerSwitching"
+              [nzLoading]="providerSwitching"
+              [(nzVisible)]="providerMenuVisible"
             >
-              {{ (message.securityForm.complete ? 'ai.chat.security.form.complete' : 'ai.chat.security.form.button') | i18n }}
+              <span>{{ activeModelLabel }}</span>
+              <i nz-icon nzType="down"></i>
+            </button>
+
+            <nz-dropdown-menu #providerMenu="nzDropdownMenu">
+              <div class="provider-menu">
+                <div class="provider-menu-label">{{ 'ai.chat.config.list.title' | i18n }}</div>
+
+                <div class="provider-option-row" [class.active]="activeProviderUid === null">
+                  <button type="button" class="provider-option" [disabled]="providerSwitching" (click)="switchModelProvider(null)">
+                    <span class="provider-list-copy">
+                      <strong>{{ 'ai.chat.config.provider.default' | i18n }}</strong>
+                    </span>
+                  </button>
+                </div>
+
+                <div *ngFor="let config of providerConfigs" class="provider-option-row" [class.active]="activeProviderUid === config.uid">
+                  <button type="button" class="provider-option" [disabled]="providerSwitching" (click)="switchModelProvider(config.uid)">
+                    <span class="provider-list-copy">
+                      <strong>{{ providerConfigLabel(config) }}</strong>
+                    </span>
+                  </button>
+                  <span class="provider-list-actions">
+                    <button
+                      type="button"
+                      class="provider-action-button"
+                      [attr.aria-label]="'ai.chat.config.edit' | i18n"
+                      (click)="$event.stopPropagation(); openEditModelProvider(config)"
+                    >
+                      <i nz-icon nzType="edit"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="provider-action-button provider-delete-button"
+                      [attr.aria-label]="'ai.chat.config.delete.action' | i18n"
+                      (click)="$event.stopPropagation(); confirmDeleteModelProvider(config)"
+                    >
+                      <i nz-icon nzType="delete"></i>
+                    </button>
+                  </span>
+                </div>
+
+                <div class="provider-menu-divider"></div>
+                <button type="button" class="provider-add-item" (click)="openCreateModelProvider()">
+                  <i nz-icon nzType="plus"></i>
+                  <span>{{ 'ai.chat.config.add' | i18n }}</span>
+                </button>
+              </div>
+            </nz-dropdown-menu>
+
+            <button
+              *ngIf="!isSendingMessage"
+              type="button"
+              nz-button
+              nzShape="circle"
+              class="send-button"
+              [disabled]="!newMessage.trim()"
+              [attr.aria-label]="'ai.chat.input.send' | i18n"
+              (click)="sendMessage()"
+            >
+              <i nz-icon nzType="arrow-up"></i>
+            </button>
+
+            <button
+              *ngIf="isSendingMessage"
+              type="button"
+              nz-button
+              nzShape="circle"
+              class="stop-button"
+              [nzLoading]="isStopping"
+              [disabled]="!activeRunUid"
+              [attr.aria-label]="'ai.chat.stop' | i18n"
+              (click)="stopRun()"
+            >
+              <i nz-icon nzType="stop" nzTheme="fill"></i>
             </button>
           </div>
-          <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
-            <span>{{ 'ai.chat.typing' | i18n }}</span>
-          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Input area -->
-    <div class="input-area">
-      <div class="input-container">
-        <nz-textarea-count [nzMaxCharacterCount]="1000">
-          <textarea
-            nz-input
-            [(ngModel)]="newMessage"
-            (keypress)="onKeyPress($event)"
-            [disabled]="isSendingMessage"
-            placeholder="{{ 'ai.chat.input.placeholder' | i18n }}"
-            rows="3"
-            style="resize: none"
-          ></textarea>
-        </nz-textarea-count>
-        <button nz-button nzType="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || isSendingMessage" class="send-button">
-          <i nz-icon [nzType]="isSendingMessage ? 'loading' : 'send'" [nzSpin]="isSendingMessage"></i>
-        </button>
-      </div>
-      <div class="input-hint">
-        <small>{{ 'ai.chat.input.hint' | i18n }}</small>
-        <button nz-button nzType="link" nzSize="small" (click)="onShowConfigModal()" style="float: right">
-          <i nz-icon nzType="setting"></i>
-          {{ 'ai.chat.modify-api-key' | i18n }}
-        </button>
-      </div>
-    </div>
-  </div>
+    </footer>
+  </main>
 </div>
 
-<!-- OpenAI Configuration Modal -->
 <nz-modal
   [(nzVisible)]="showConfigModal"
-  [nzTitle]="'ai.chat.config.title' | i18n"
-  (nzOnCancel)="onCloseConfigModal()"
-  (nzOnOk)="onSaveAiProviderConfig()"
-  nzMaskClosable="false"
-  [nzClosable]="false"
-  nzWidth="700px"
+  [nzTitle]="(editingProvider ? 'ai.chat.config.edit.title' : 'ai.chat.config.add.title') | i18n"
+  [nzMaskClosable]="false"
   [nzOkLoading]="configLoading"
   [nzOkText]="'ai.chat.config.save' | i18n"
+  [nzOkDisabled]="!selectedProviderOption"
   [nzCancelText]="'ai.chat.config.cancel' | i18n"
+  nzWidth="680px"
+  (nzOnCancel)="closeModelConfig()"
+  (nzOnOk)="saveModelProviderConfig()"
 >
-  <div *nzModalContent class="-inner-content">
+  <div *nzModalContent class="model-config-content">
     <form nz-form nzLayout="vertical">
-      <!-- Provider Selection -->
       <nz-form-item>
-        <nz-form-label nzRequired="true">{{ 'ai.chat.config.provider' | i18n }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'ai.chat.config.provider.required' | i18n">
+        <nz-form-label nzRequired>{{ 'ai.chat.config.provider' | i18n }}</nz-form-label>
+        <nz-form-control>
           <nz-select
-            [(ngModel)]="aiProviderConfig.code"
+            [(ngModel)]="selectedProviderOption"
             name="provider"
-            [nzPlaceHolder]="'ai.chat.config.provider.help' | i18n"
+            [nzPlaceHolder]="'ai.chat.config.provider.required' | i18n"
+            [nzLoading]="providerOptionsLoading"
             (ngModelChange)="onProviderChange($event)"
-            style="width: 100%"
           >
-            <nz-option *ngFor="let option of providerOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+            <nz-option *ngFor="let option of providerOptions" [nzValue]="option" [nzLabel]="option.label"></nz-option>
           </nz-select>
-          <p class="form-help">Choose your AI provider (OpenAI, ZhiPu, or ZAI)</p>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- API Key -->
       <nz-form-item>
-        <nz-form-label nzRequired="true">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'ai.chat.config.api-key.required' | i18n">
-          <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
+        <nz-form-label [nzRequired]="isProviderFieldRequired('apiKey')">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <input
+            nz-input
+            [(ngModel)]="aiProviderConfig.apiKey"
+            name="apiKey"
+            type="password"
+            [disabled]="!selectedProviderOption"
+            placeholder="sk-..."
+            autocomplete="new-password"
+          />
+          <p *ngIf="canPreserveSavedApiKey()" class="form-help">{{ 'ai.chat.config.api-key.preserve' | i18n }}</p>
           <p class="form-help">{{ 'ai.chat.config.api-key.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Base URL -->
       <nz-form-item>
-        <nz-form-label>{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
+        <nz-form-label [nzRequired]="isProviderFieldRequired('baseUrl')">{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
         <nz-form-control>
-          <nz-input-group [nzSuffix]="resetBtn">
-            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
-            <ng-template #resetBtn>
-              <button
-                nz-button
-                nzType="link"
-                nzSize="small"
-                (click)="resetToDefaults()"
-                [nzTooltipTitle]="'ai.chat.config.reset' | i18n"
-                nz-tooltip
-              >
-                <i nz-icon nzType="reload"></i>
-              </button>
-            </ng-template>
+          <nz-input-group [nzSuffix]="resetProviderDefaults">
+            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" [disabled]="!selectedProviderOption" />
           </nz-input-group>
+          <ng-template #resetProviderDefaults>
+            <button
+              type="button"
+              nz-button
+              nzType="text"
+              nz-tooltip
+              [disabled]="!selectedProviderOption"
+              [nzTooltipTitle]="'ai.chat.config.reset' | i18n"
+              (click)="resetModelProviderDefaults()"
+            >
+              <i nz-icon nzType="reload"></i>
+            </button>
+          </ng-template>
           <p class="form-help">{{ 'ai.chat.config.base-url.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Model -->
       <nz-form-item>
-        <nz-form-label>{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
+        <nz-form-label [nzRequired]="isProviderFieldRequired('model')">{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
         <nz-form-control>
-          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4" />
+          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" [disabled]="!selectedProviderOption" />
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
-      </nz-form-item>
-      <!-- AI Participation Mode -->
-      <nz-form-item>
-        <nz-form-label>{{ 'ai.chat.config.participation.model' | i18n }}</nz-form-label>
-        <nz-form-control>
-          <nz-select
-            class="mobile-hide"
-            name="participationModel"
-            [nzPlaceHolder]="'ai.chat.config.participation.model' | i18n"
-            [(ngModel)]="aiProviderConfig.participationModel"
-          >
-            <nz-option [nzLabel]="'ai.chat.config.participation.model.protected' | i18n" [nzValue]="'PROTECTED'"></nz-option>
-            <nz-option [nzLabel]="'ai.chat.config.participation.model.trusted' | i18n" [nzValue]="'TRUSTED'"></nz-option>
-          </nz-select>
-          <p class="form-help">{{ 'ai.chat.config.participation.model.help' | i18n }}</p>
-        </nz-form-control>
-      </nz-form-item>
-    </form>
-  </div>
-</nz-modal>
-
-<!-- Security Form Modal -->
-<nz-modal
-  [(nzVisible)]="showSecurityFormModal"
-  [nzTitle]="'ai.chat.security.form.title' | i18n"
-  (nzOnCancel)="onSecurityFormCancel()"
-  (nzOnOk)="onSecurityFormSubmit()"
-  nzMaskClosable="false"
->
-  <div *nzModalContent class="-inner-content">
-    <form nz-form #form="ngForm">
-      <ng-container *ngFor="let paramDefine of securityParamDefine">
-        <nz-form-item>
-          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }}</nz-form-label>
-          <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="securityParams[paramDefine.field].paramValue" />
-          </nz-form-control>
-        </nz-form-item>
-      </ng-container>
-    </form>
-  </div>
-</nz-modal>
-
-<!-- Schedule Configuration Modal -->
-<nz-modal
-  [(nzVisible)]="showScheduleModal"
-  [nzTitle]="'ai.chat.schedule.title' | i18n"
-  (nzOnCancel)="onCloseScheduleModal()"
-  [nzFooter]="null"
-  nzWidth="600px"
->
-  <div *nzModalContent class="schedule-modal-content">
-    <!-- Existing Schedules List -->
-    <div class="schedule-list" *ngIf="schedules.length > 0">
-      <h4>{{ 'ai.chat.schedule.configured' | i18n }}</h4>
-      <nz-table #scheduleTable [nzData]="schedules" [nzShowPagination]="false" nzSize="small">
-        <thead>
-          <tr>
-            <th>{{ 'ai.chat.schedule.skill' | i18n }}</th>
-            <th>{{ 'ai.chat.schedule.cron' | i18n }}</th>
-            <th>{{ 'ai.chat.schedule.status' | i18n }}</th>
-            <th>{{ 'ai.chat.schedule.action' | i18n }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let schedule of scheduleTable.data">
-            <td>{{ schedule.sopName }}</td>
-            <td>{{ schedule.cronExpression }}</td>
-            <td>
-              <nz-switch [(ngModel)]="schedule.enabled" (ngModelChange)="onToggleSchedule(schedule)"></nz-switch>
-            </td>
-            <td>
-              <button
-                nz-button
-                nzType="text"
-                nzSize="small"
-                (click)="onEditSchedule(schedule)"
-                nz-tooltip
-                [nzTooltipTitle]="'common.button.edit' | i18n"
-              >
-                <i nz-icon nzType="edit"></i>
-              </button>
-              <button
-                nz-button
-                nzType="text"
-                nzDanger
-                nzSize="small"
-                (click)="onDeleteSchedule(schedule)"
-                nz-tooltip
-                [nzTooltipTitle]="'common.button.delete' | i18n"
-              >
-                <i nz-icon nzType="delete"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </nz-table>
-    </div>
-
-    <nz-divider *ngIf="schedules.length > 0"></nz-divider>
-
-    <!-- Edit Schedule Form -->
-    <div *ngIf="editingSchedule">
-      <h4>{{ 'ai.chat.schedule.edit' | i18n }}</h4>
-      <form nz-form nzLayout="vertical">
-        <nz-form-item>
-          <nz-form-label>{{ 'ai.chat.schedule.skill' | i18n }}</nz-form-label>
-          <nz-form-control>
-            <input nz-input [value]="editingSchedule.sopName" disabled />
-          </nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label nzRequired>{{ 'ai.chat.schedule.cron.label' | i18n }}</nz-form-label>
-          <nz-form-control>
-            <input nz-input [(ngModel)]="editingSchedule.cronExpression" name="editCronExpression" placeholder="0 0 9 * * ?" />
-          </nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <button
-            nz-button
-            nzType="primary"
-            (click)="onUpdateSchedule()"
-            [nzLoading]="scheduleLoading"
-            [disabled]="!editingSchedule.cronExpression"
-            style="margin-right: 8px"
-          >
-            <i nz-icon nzType="save"></i> {{ 'common.button.save' | i18n }}
-          </button>
-          <button nz-button (click)="onCancelEdit()">
-            {{ 'common.button.cancel' | i18n }}
-          </button>
-        </nz-form-item>
-      </form>
-      <nz-divider></nz-divider>
-    </div>
-
-    <!-- Add New Schedule Form -->
-    <h4>{{ schedules.length > 0 ? ('ai.chat.schedule.add' | i18n) : ('ai.chat.schedule.create' | i18n) }}</h4>
-    <form nz-form nzLayout="vertical">
-      <nz-form-item>
-        <nz-form-label nzRequired>{{ 'ai.chat.schedule.skill.select' | i18n }}</nz-form-label>
-        <nz-form-control>
-          <nz-select
-            [(ngModel)]="newSchedule.sopName"
-            name="sopName"
-            [nzPlaceHolder]="'ai.chat.schedule.skill.placeholder' | i18n"
-            style="width: 100%"
-          >
-            <nz-option *ngFor="let skill of availableSkills" [nzValue]="skill.name" [nzLabel]="skill.name + ' - ' + skill.description">
-            </nz-option>
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label nzRequired>{{ 'ai.chat.schedule.cron.label' | i18n }}</nz-form-label>
-        <nz-form-control>
-          <nz-input-group [nzSuffix]="cronHelpTpl">
-            <input nz-input [(ngModel)]="newSchedule.cronExpression" name="cronExpression" placeholder="0 0 9 * * ?" />
-          </nz-input-group>
-          <ng-template #cronHelpTpl>
-            <i
-              nz-icon
-              nzType="question-circle"
-              nz-tooltip
-              [nzTooltipTitle]="
-                ('ai.chat.schedule.cron.help' | i18n) +
-                '&#10;' +
-                ('ai.chat.schedule.cron.example.daily' | i18n) +
-                '&#10;' +
-                ('ai.chat.schedule.cron.example.weekly' | i18n)
-              "
-            ></i>
-          </ng-template>
-          <p class="form-help">
-            {{ 'ai.chat.schedule.cron.common' | i18n }} <code>0 0 9 * * ?</code> | {{ 'ai.chat.schedule.cron.monday' | i18n }}
-            <code>0 0 9 ? * MON</code>
-          </p>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <button
-          nz-button
-          nzType="primary"
-          (click)="onCreateSchedule()"
-          [nzLoading]="scheduleLoading"
-          [disabled]="!newSchedule.sopName || !newSchedule.cronExpression"
-        >
-          <i nz-icon nzType="plus"></i> {{ 'ai.chat.schedule.create' | i18n }}
-        </button>
       </nz-form-item>
     </form>
   </div>

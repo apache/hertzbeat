@@ -373,3 +373,28 @@ hertzbeat:
       concurrency-limit: 256
       reject-when-limit-reached: true
       task-termination-timeout: 5000
+  agent:
+    provider:
+      type: openai-compatible
+      code: openrouter
+      model: tencent/hy3:free
+      base-url: https://openrouter.ai/api/v1
+      api-key: apikey
+    runtime:
+      temperature: 0.2
+      max-completion-tokens: 4096
+      max-steps: 2048
+      max-tool-calls: 1024
+      model-request-timeout: 360s
+      tool-timeout: 180s
+      context:
+        max-tokens: 32000
+        compaction:
+          threshold-ratio: 0.9
+          retain-recent-tokens: 12000
+          summary-token-budget: 4000
+      retry:
+        max-model-retries: 2
+        initial-backoff: 500ms
+      stream:
+        max-buffered-events: 1024

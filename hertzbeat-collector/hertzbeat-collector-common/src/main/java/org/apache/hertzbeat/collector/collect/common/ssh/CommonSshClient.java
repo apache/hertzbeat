@@ -21,6 +21,7 @@ import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.sshd.client.ClientBuilder;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.kex.BuiltinDHFactories;
@@ -37,6 +38,8 @@ public class CommonSshClient {
 
     static {
         SSH_CLIENT = SshClient.setUpDefaultClient();
+        // HertzBeat connections are fully defined by monitor parameters, not the collector host's SSH config.
+        SSH_CLIENT.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
         // accept all server key verifier, will print warn log : Server at {} presented unverified {} key: {}
         AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
         SSH_CLIENT.setServerKeyVerifier(verifier);

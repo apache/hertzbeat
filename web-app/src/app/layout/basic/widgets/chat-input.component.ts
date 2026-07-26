@@ -1,8 +1,7 @@
-import { Component, Input, Output, EventEmitter, Inject } from '@angular/core';
-import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
 
-import { AiChatModalService } from '../../../shared/services/ai-chat-modal.service';
+import { AiSessionStore } from '../../../shared/services/ai-session.store';
 
 @Component({
   selector: 'header-ai-chat',
@@ -70,11 +69,17 @@ export class HeaderAiChatComponent {
 
   inputMessage = '';
 
-  constructor(private aiChatModalService: AiChatModalService, @Inject(ALAIN_I18N_TOKEN) private i18n: I18NService) {}
+  constructor(private router: Router, private sessionStore: AiSessionStore) {}
 
   onSubmit(): void {
-    if (this.inputMessage.trim()) {
-      this.aiChatModalService.openChatModal(this.inputMessage.trim());
+    const initialMessage = this.inputMessage.trim();
+    if (initialMessage) {
+      this.sessionStore.startNewConversation(initialMessage);
+      this.router.navigate(['/ai/chat/new'], { queryParams: { request: Date.now() } }).then(navigated => {
+        if (!navigated) {
+          this.sessionStore.clearInitialMessage();
+        }
+      });
       this.inputMessage = '';
     }
   }

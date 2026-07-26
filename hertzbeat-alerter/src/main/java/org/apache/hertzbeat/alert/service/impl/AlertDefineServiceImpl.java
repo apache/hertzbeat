@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -188,7 +189,14 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (StringUtils.hasText(search)) {
             searchList = JsonUtil.fromJson(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
         }
-        List<String> finalSearchList = searchList;
+        return getAlertDefines(defineIds, searchList, null, null, sort, order, pageIndex, pageSize);
+    }
+
+    @Override
+    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, List<String> searchTerms, String monitorType,
+                                             Boolean enabled, String sort, String order,
+                                             int pageIndex, int pageSize) {
+        List<String> finalSearchList = searchTerms == null ? List.of() : List.copyOf(searchTerms);
         // build search condition
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
@@ -214,6 +222,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 }
                 // all search keywords are connected with or
                 andList.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
+            }
+            if (enabled != null) {
+                andList.add(criteriaBuilder.equal(root.get("enable"), enabled));
+            }
+            if (StringUtils.hasText(monitorType)) {
+                String appExpression = "%equals(__app__,\"" + monitorType.toLowerCase(Locale.ROOT) + "\")%";
+                andList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), appExpression));
             }
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));

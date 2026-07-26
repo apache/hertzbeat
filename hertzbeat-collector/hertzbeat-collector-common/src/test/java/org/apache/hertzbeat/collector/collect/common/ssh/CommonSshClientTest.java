@@ -18,16 +18,16 @@
 package org.apache.hertzbeat.collector.collect.common.ssh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.core.CoreModuleProperties;
 import org.junit.jupiter.api.Test;
 
-/**
- * Test case for {@link CommonSshClient}
- */
+/** Test shared SSH client configuration. */
 class CommonSshClientTest {
 
     @Test
@@ -38,5 +38,11 @@ class CommonSshClientTest {
         assertEquals(Duration.ofSeconds(30), CoreModuleProperties.HEARTBEAT_INTERVAL.getRequired(sshClient));
         assertEquals(2, CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.getRequired(sshClient));
         assertTrue(CoreModuleProperties.SOCKET_KEEPALIVE.getRequired(sshClient));
+    }
+
+    @Test
+    void shouldIgnoreCollectorHostSshConfig() {
+        assertSame(HostConfigEntryResolver.EMPTY,
+            CommonSshClient.getSshClient().getHostConfigEntryResolver());
     }
 }

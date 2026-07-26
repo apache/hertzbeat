@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
 import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,13 +42,21 @@ public class AlarmCommonReduce implements DisposableBean {
 
     private final ManagedExecutor workerExecutor;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce) {
-        this(alarmGroupReduce, VirtualThreadProperties.defaults());
+        this(alarmGroupReduce, VirtualThreadProperties.defaults(), event -> { });
+    }
+
+    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce, VirtualThreadProperties virtualThreadProperties) {
+        this(alarmGroupReduce, virtualThreadProperties, event -> { });
     }
 
     @Autowired
-    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce, VirtualThreadProperties virtualThreadProperties) {
+    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce, VirtualThreadProperties virtualThreadProperties,
+                             ApplicationEventPublisher eventPublisher) {
         this.alarmGroupReduce = alarmGroupReduce;
+        this.eventPublisher = eventPublisher;
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
         this.workerExecutor = initWorkExecutor(properties);
@@ -88,6 +97,7 @@ public class AlarmCommonReduce implements DisposableBean {
                 for (SingleAlert alert : alerts) {
                     String fingerprint = generateAlertFingerprint(alert.getLabels());
                     alert.setFingerprint(fingerprint);
+                    eventPublisher.publishEvent(new SingleAlert.CreatedEvent(alert.clone()));
                 }
                 // Process the group alert
                 alarmGroupReduce.processGroupAlert(groupLabels, alerts);
@@ -103,6 +113,7 @@ public class AlarmCommonReduce implements DisposableBean {
                 // Generate alert fingerprint
                 String fingerprint = generateAlertFingerprint(alert.getLabels());
                 alert.setFingerprint(fingerprint);
+                eventPublisher.publishEvent(new SingleAlert.CreatedEvent(alert.clone()));
                 alarmGroupReduce.processGroupAlert(alert);
             } catch (Exception e) {
                 log.error("Reduce alarm failed: {}", e.getMessage());

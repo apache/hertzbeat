@@ -187,6 +187,12 @@
           "link": "/alert/integration/webhook"
         },
         {
+          "text": "Analysis",
+          "i18n": "menu.alert.analysis",
+          "icon": "anticon-robot",
+          "link": "/alert/analysis"
+        },
+        {
           "text": "Group",
           "i18n": "menu.alert.group",
           "icon": "anticon-filter",
