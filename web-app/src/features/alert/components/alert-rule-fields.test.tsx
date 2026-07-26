@@ -41,6 +41,26 @@ describe('Alert Rule strategy fields', () => {
     fireEvent.click(await screen.findByRole('option', { name: 'alertRules.dataType.metric' }));
     expect(actions.changeDataType).not.toHaveBeenCalled();
   });
+
+  it('keeps periodic expression and evaluation fields editable through the shared draft command', () => {
+    const actions = renderFields(
+      {
+        kind: 'ready',
+        status: { hasPromqlExecutor: true, hasSqlExecutor: true }
+      },
+      { kind: 'periodic', dataType: 'metric' }
+    );
+
+    fireEvent.change(screen.getByLabelText('alertRules.expression'), { target: { value: 'up == 0' } });
+    fireEvent.change(screen.getByLabelText('alertRules.template'), { target: { value: 'Unavailable' } });
+    fireEvent.change(screen.getByLabelText('alertRules.labels'), { target: { value: 'severity=critical' } });
+
+    expect(screen.getByLabelText('alertRules.period')).toBeInTheDocument();
+    expect(screen.getByLabelText('alertRules.times')).toBeInTheDocument();
+    expect(actions.update).toHaveBeenCalledWith({ expr: 'up == 0' });
+    expect(actions.update).toHaveBeenCalledWith({ template: 'Unavailable' });
+    expect(actions.update).toHaveBeenCalledWith({ labelsText: 'severity=critical' });
+  });
 });
 
 function renderFields(
@@ -49,6 +69,7 @@ function renderFields(
 ) {
   const changeDataType = vi.fn();
   const changeKind = vi.fn();
+  const update = vi.fn();
   render(
     <AlertRuleFields
       draft={{ ...createAlertRuleDraft(), ...patch }}
@@ -63,7 +84,7 @@ function renderFields(
         labelChoices: []
       }}
       metricTarget={{ apps: { kind: 'idle' }, hierarchy: { kind: 'idle' } }}
-      update={vi.fn()}
+      update={update}
       changeDataType={changeDataType}
       changeKind={changeKind}
       changeMetricApplication={vi.fn()}
@@ -81,5 +102,5 @@ function renderFields(
       retryMetricTargetHierarchy={vi.fn()}
     />
   );
-  return { changeDataType, changeKind };
+  return { changeDataType, changeKind, update };
 }

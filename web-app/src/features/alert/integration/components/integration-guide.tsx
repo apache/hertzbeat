@@ -25,52 +25,78 @@ export function IntegrationGuide(props: {
 }) {
   return (
     <div className={styles.guide}>
-      <GuideStep number={1} title={props.t('alertIntegrations.endpointTitle')}>
-        <Typography.Paragraph>{props.t('alertIntegrations.endpointDescription')}</Typography.Paragraph>
-        <dl className={styles.facts}>
-          <div>
-            <dt>{props.t('alertIntegrations.method')}</dt>
-            <dd>POST</dd>
-          </div>
-          <div>
-            <dt>{props.t('alertIntegrations.backendSource')}</dt>
-            <dd>{props.source.backendSource}</dd>
-          </div>
-        </dl>
-        <ContractBlock
-          label={props.t('alertIntegrations.endpoint')}
-          value={props.endpoint}
-          outcome={copyOutcome(props.copyState, 'endpoint')}
-          t={props.t}
-          onCopy={props.onCopyEndpoint}
-        />
-      </GuideStep>
-      <GuideStep number={2} title={props.t('alertIntegrations.authorizationTitle')}>
-        <Typography.Paragraph>{props.t('alertIntegrations.authorizationDescription')}</Typography.Paragraph>
-        <ContractBlock
-          label={props.t('alertIntegrations.authorizationHeader')}
-          value={props.authorizationHeader}
-          outcome={copyOutcome(props.copyState, 'authorization')}
-          t={props.t}
-          onCopy={props.onCopyAuthorization}
-        />
-        <TokenSettingsLink
-          href={props.tokenSettingsPath}
-          label={props.t('alertIntegrations.manageTokens')}
-          onOpen={props.onOpenTokenSettings}
-        />
-      </GuideStep>
-      <GuideStep number={3} title={props.t('alertIntegrations.senderTitle')}>
-        <Typography.Paragraph>
-          {props.t('alertIntegrations.senderDescription', { source: props.t(props.source.nameKey) })}
-        </Typography.Paragraph>
-        <Typography.Paragraph>{props.t(props.source.configurationKey)}</Typography.Paragraph>
-        <Alert type="warning" showIcon message={props.t('alertIntegrations.gatewayWarning')} />
-      </GuideStep>
-      <GuideStep number={4} title={props.t('alertIntegrations.verifyTitle')}>
-        <Alert type="info" showIcon message={props.t('alertIntegrations.healthDisclaimer')} />
-      </GuideStep>
+      <EndpointGuideStep {...props} />
+      <AuthorizationGuideStep {...props} />
+      <SenderGuideStep {...props} />
+      <VerificationGuideStep t={props.t} />
     </div>
+  );
+}
+
+type IntegrationGuideProps = Parameters<typeof IntegrationGuide>[0];
+
+function EndpointGuideStep(props: IntegrationGuideProps) {
+  return (
+    <GuideStep number={1} title={props.t('alertIntegrations.endpointTitle')}>
+      <Typography.Paragraph>{props.t('alertIntegrations.endpointDescription')}</Typography.Paragraph>
+      <dl className={styles.facts}>
+        <div>
+          <dt>{props.t('alertIntegrations.method')}</dt>
+          <dd>POST</dd>
+        </div>
+        <div>
+          <dt>{props.t('alertIntegrations.backendSource')}</dt>
+          <dd>{props.source.backendSource}</dd>
+        </div>
+      </dl>
+      <ContractBlock
+        label={props.t('alertIntegrations.endpoint')}
+        value={props.endpoint}
+        outcome={copyOutcome(props.copyState, 'endpoint')}
+        t={props.t}
+        onCopy={props.onCopyEndpoint}
+      />
+    </GuideStep>
+  );
+}
+
+function AuthorizationGuideStep(props: IntegrationGuideProps) {
+  return (
+    <GuideStep number={2} title={props.t('alertIntegrations.authorizationTitle')}>
+      <Typography.Paragraph>{props.t('alertIntegrations.authorizationDescription')}</Typography.Paragraph>
+      <ContractBlock
+        label={props.t('alertIntegrations.authorizationHeader')}
+        value={props.authorizationHeader}
+        outcome={copyOutcome(props.copyState, 'authorization')}
+        t={props.t}
+        onCopy={props.onCopyAuthorization}
+      />
+      <TokenSettingsLink
+        href={props.tokenSettingsPath}
+        label={props.t('alertIntegrations.manageTokens')}
+        onOpen={props.onOpenTokenSettings}
+      />
+    </GuideStep>
+  );
+}
+
+function SenderGuideStep(props: IntegrationGuideProps) {
+  return (
+    <GuideStep number={3} title={props.t('alertIntegrations.senderTitle')}>
+      <Typography.Paragraph>
+        {props.t('alertIntegrations.senderDescription', { source: props.t(props.source.nameKey) })}
+      </Typography.Paragraph>
+      <Typography.Paragraph>{props.t(props.source.configurationKey)}</Typography.Paragraph>
+      <Alert type="warning" showIcon message={props.t('alertIntegrations.gatewayWarning')} />
+    </GuideStep>
+  );
+}
+
+function VerificationGuideStep({ t }: Pick<IntegrationGuideProps, 't'>) {
+  return (
+    <GuideStep number={4} title={t('alertIntegrations.verifyTitle')}>
+      <Alert type="info" showIcon message={t('alertIntegrations.healthDisclaimer')} />
+    </GuideStep>
   );
 }
 

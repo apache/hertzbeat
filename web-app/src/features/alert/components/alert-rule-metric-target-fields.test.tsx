@@ -125,6 +125,30 @@ describe('Alert Rule metric target fields', () => {
     });
     expect(update).toHaveBeenCalledWith({ expr: 'custom(next)' });
   });
+
+  it('shows availability guidance only for the selected availability target', () => {
+    const draft = targetedDraft({ app: 'springboot3' });
+    if (draft.metricEditor?.kind !== 'targeted') throw new Error('expected targeted metric editor fixture');
+    draft.metricEditor = {
+      ...draft.metricEditor,
+      target: { kind: 'availability', app: 'springboot3' }
+    };
+    renderTarget(
+      draft,
+      {
+        apps: {
+          kind: 'ready',
+          apps: [{ category: 'application', value: 'springboot3', label: 'Spring Boot 3' }]
+        },
+        hierarchy: { kind: 'ready', hierarchy }
+      },
+      vi.fn(),
+      vi.fn()
+    );
+
+    expect(screen.getByText('alertRules.metricTarget.availabilityDescription')).toBeInTheDocument();
+    expect(screen.queryByText('alertRules.metricCondition.mode.structured')).not.toBeInTheDocument();
+  });
 });
 
 function renderTarget(

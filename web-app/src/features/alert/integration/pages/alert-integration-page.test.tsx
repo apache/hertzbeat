@@ -30,6 +30,12 @@ describe('AlertIntegrationPage', () => {
     );
     expect(screen.getByText('alertIntegrations.gatewayWarning')).toBeInTheDocument();
     expect(screen.getByText('alertIntegrations.healthDisclaimer')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 3 }).map(heading => heading.textContent)).toEqual([
+      'alertIntegrations.endpointTitle',
+      'alertIntegrations.authorizationTitle',
+      'alertIntegrations.senderTitle',
+      'alertIntegrations.verifyTitle'
+    ]);
     fireEvent.click(screen.getByRole('link', { name: 'alertIntegrations.manageTokens' }));
     expect(screen.getByTestId('token-target')).toBeInTheDocument();
   });

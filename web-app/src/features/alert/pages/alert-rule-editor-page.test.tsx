@@ -174,6 +174,9 @@ describe('AlertRuleEditorPage', () => {
     }
     for (const select of screen.getAllByRole('combobox')) expect(select).toBeDisabled();
     expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /common\.save/ })).toHaveClass('ant-btn-loading');
   });
 });
 

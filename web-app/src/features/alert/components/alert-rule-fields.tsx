@@ -103,66 +103,64 @@ function AlertRuleStrategyFields({
   );
 }
 
-function AlertRuleDefinitionFields({
-  draft,
-  busy,
-  metricTarget,
-  metricBindings,
-  update,
-  changeMetricApplication,
-  changeMetricAuthoringMode,
-  changeMetricExpertCondition,
-  changeMetricStructuredCondition,
-  changeMetricTarget,
-  openMetricBindings,
-  cancelMetricBindings,
-  confirmMetricBindings,
-  changeMetricBindingIds,
-  changeMetricBindingLabels,
-  retryMetricBindings,
-  retryMetricTargetApps,
-  retryMetricTargetHierarchy
-}: AlertRuleFieldsProps) {
+function AlertRuleDefinitionFields(props: AlertRuleFieldsProps) {
+  return (
+    <>
+      <AlertRuleConditionFields {...props} />
+      <AlertRuleNotificationFields draft={props.draft} busy={props.busy} update={props.update} />
+    </>
+  );
+}
+
+function AlertRuleConditionFields(props: AlertRuleFieldsProps) {
   const { t } = useTranslation();
   return (
     <>
-      {draft.kind === 'realtime' && draft.dataType === 'metric' ? (
+      {props.draft.kind === 'realtime' && props.draft.dataType === 'metric' ? (
         <>
           <AlertRuleMetricTargetFields
-            busy={busy}
-            draft={draft}
-            state={metricTarget}
-            update={update}
-            changeApplication={changeMetricApplication}
-            changeAuthoringMode={changeMetricAuthoringMode}
-            changeExpertCondition={changeMetricExpertCondition}
-            changeStructuredCondition={changeMetricStructuredCondition}
-            changeTarget={changeMetricTarget}
-            retryApps={retryMetricTargetApps}
-            retryHierarchy={retryMetricTargetHierarchy}
+            busy={props.busy}
+            draft={props.draft}
+            state={props.metricTarget}
+            update={props.update}
+            changeApplication={props.changeMetricApplication}
+            changeAuthoringMode={props.changeMetricAuthoringMode}
+            changeExpertCondition={props.changeMetricExpertCondition}
+            changeStructuredCondition={props.changeMetricStructuredCondition}
+            changeTarget={props.changeMetricTarget}
+            retryApps={props.retryMetricTargetApps}
+            retryHierarchy={props.retryMetricTargetHierarchy}
           />
           <AlertRuleMetricBindingField
-            busy={busy}
-            state={metricBindings}
-            open={openMetricBindings}
-            cancel={cancelMetricBindings}
-            confirm={confirmMetricBindings}
-            changeMonitorIds={changeMetricBindingIds}
-            changeLabels={changeMetricBindingLabels}
-            retry={retryMetricBindings}
+            busy={props.busy}
+            state={props.metricBindings}
+            open={props.openMetricBindings}
+            cancel={props.cancelMetricBindings}
+            confirm={props.confirmMetricBindings}
+            changeMonitorIds={props.changeMetricBindingIds}
+            changeLabels={props.changeMetricBindingLabels}
+            retry={props.retryMetricBindings}
           />
         </>
       ) : (
         <label className={styles.wide}>
           {t('alertRules.expression')}
           <Input.TextArea
-            disabled={busy}
+            disabled={props.busy}
             rows={5}
-            value={draft.expr}
-            onChange={event => update({ expr: event.target.value })}
+            value={props.draft.expr}
+            onChange={event => props.update({ expr: event.target.value })}
           />
         </label>
       )}
+    </>
+  );
+}
+
+function AlertRuleNotificationFields({ draft, busy, update }: Pick<AlertRuleFieldsProps, 'draft' | 'busy' | 'update'>) {
+  const { t } = useTranslation();
+  return (
+    <>
       <label className={styles.wide}>
         {t('alertRules.template')}
         <Input.TextArea

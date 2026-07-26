@@ -48,39 +48,7 @@ export function NoticeTemplatePage() {
           </Button>
         }
       />
-      <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
-        <NoticeTemplateToolbar
-          busy={busy}
-          name={state.name}
-          preset={state.query.preset}
-          onNameChange={controller.setName}
-          onPresetChange={controller.changePreset}
-          onQuery={controller.query}
-          onRefresh={controller.refresh}
-        />
-        <NoticeTemplateRecoveryAlert
-          busy={commandBusy}
-          recovery={state.recovery}
-          retry={() => void controller.retryRecovery()}
-        />
-        <div className={pageStyles.results}>
-          <NoticeTemplateResults
-            busy={busy}
-            retryDisabled={commandBusy}
-            state={state.list}
-            pageIndex={state.query.pageIndex}
-            pageSize={state.query.pageSize}
-            onPageChange={controller.changePage}
-            onRetry={() => {
-              if (state.recovery?.stage === 'projection') void controller.retryRecovery();
-              else controller.refresh();
-            }}
-            onView={controller.setPreview}
-            onEdit={controller.edit}
-            onRemove={controller.remove}
-          />
-        </div>
-      </section>
+      <NoticeTemplateWorkspace controller={controller} busy={busy} commandBusy={commandBusy} />
       <NoticeTemplateOverlays
         busy={busy}
         draft={state.draft}
@@ -91,5 +59,54 @@ export function NoticeTemplatePage() {
         onPreviewClose={controller.closePreview}
       />
     </OperationalPage>
+  );
+}
+
+type NoticeTemplateController = ReturnType<typeof useNoticeTemplateController>;
+
+function NoticeTemplateWorkspace({
+  controller,
+  busy,
+  commandBusy
+}: {
+  controller: NoticeTemplateController;
+  busy: boolean;
+  commandBusy: boolean;
+}) {
+  const { state } = controller;
+  return (
+    <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
+      <NoticeTemplateToolbar
+        busy={busy}
+        name={state.name}
+        preset={state.query.preset}
+        onNameChange={controller.setName}
+        onPresetChange={controller.changePreset}
+        onQuery={controller.query}
+        onRefresh={controller.refresh}
+      />
+      <NoticeTemplateRecoveryAlert
+        busy={commandBusy}
+        recovery={state.recovery}
+        retry={() => void controller.retryRecovery()}
+      />
+      <div className={pageStyles.results}>
+        <NoticeTemplateResults
+          busy={busy}
+          retryDisabled={commandBusy}
+          state={state.list}
+          pageIndex={state.query.pageIndex}
+          pageSize={state.query.pageSize}
+          onPageChange={controller.changePage}
+          onRetry={() => {
+            if (state.recovery?.stage === 'projection') void controller.retryRecovery();
+            else controller.refresh();
+          }}
+          onView={controller.setPreview}
+          onEdit={controller.edit}
+          onRemove={controller.remove}
+        />
+      </div>
+    </section>
   );
 }

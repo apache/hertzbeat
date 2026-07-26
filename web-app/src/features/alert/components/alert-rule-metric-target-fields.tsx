@@ -53,6 +53,12 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
     );
   }
 
+  return <GuidedMetricTargetFields {...props} />;
+}
+
+function GuidedMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
+  const { t } = useTranslation();
+  const editor = props.draft.metricEditor;
   const selectedApp = editor?.kind === 'targeted' ? editor.app : '';
   const catalog = catalogFromState(props.state, t);
   const selectedTarget = selectedTargetOption(editor, catalog);

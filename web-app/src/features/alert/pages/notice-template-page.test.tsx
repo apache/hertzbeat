@@ -132,6 +132,7 @@ describe('NoticeTemplatePage', () => {
     const workspace = screen.getByRole('region', { name: 'noticeTemplates.title' });
     expect(workspace).toContainElement(screen.getByRole('combobox', { name: 'noticeTemplates.source' }));
     expect(workspace).toContainElement(screen.getByText('noticeTemplates.empty'));
+    expect(workspace).not.toContainElement(screen.getByRole('button', { name: 'noticeTemplates.new' }));
   });
 
   it('submits and closes the controller-owned draft', async () => {
