@@ -320,6 +320,33 @@ button.timePolicy:hover {
   scrollbar-gutter: stable;
 }
 
+.navigationScroll,
+.navigationFlyout,
+.alertNotificationList {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hb-border-subtle) transparent;
+}
+
+.navigationScroll::-webkit-scrollbar,
+.navigationFlyout::-webkit-scrollbar,
+.alertNotificationList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.navigationScroll::-webkit-scrollbar-track,
+.navigationFlyout::-webkit-scrollbar-track,
+.alertNotificationList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.navigationScroll::-webkit-scrollbar-thumb,
+.navigationFlyout::-webkit-scrollbar-thumb,
+.alertNotificationList::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-border-subtle);
+}
+
 .navigationBranch {
   min-width: 0;
 }
