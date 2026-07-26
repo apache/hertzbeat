@@ -39,6 +39,7 @@ import { useMonitorMetricData } from './use-monitor-metric-data';
 
 type MonitorMetricWorkbenchOptions = {
   notifications?: Notifications;
+  refreshDetail: () => void;
   refreshControl: MonitorDetailRefreshControl;
 };
 
@@ -98,7 +99,10 @@ export function useMonitorMetricWorkbenchController(
     refreshControl,
     urlActions,
     toggleFavorite: favoriteMutation.toggle,
-    refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric), historySupported)
+    refresh: () => {
+      options.refreshDetail();
+      refreshMonitorMetricQueries(queries, Boolean(monitor && metric), historySupported);
+    }
   });
 }
 

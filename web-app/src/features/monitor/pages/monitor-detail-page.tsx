@@ -24,6 +24,7 @@ export function MonitorDetailPage() {
   const detail = useMonitorDetailController();
   const ready = detail.state.detail.kind === 'ready' ? detail.state.detail.detail : undefined;
   const metrics = useMonitorMetricWorkbenchController(ready?.monitor, ready?.metrics ?? [], {
+    refreshDetail: detail.actions.refresh,
     refreshControl: {
       refreshSeconds: detail.state.refreshSeconds,
       setRefreshSeconds: detail.actions.setRefreshSeconds

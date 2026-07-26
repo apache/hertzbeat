@@ -89,6 +89,33 @@ describe('useMonitorDetailController', () => {
     expect(view.location()).toContain('refresh=0');
   });
 
+  it('uses the selected detail refresh cadence, disables it for Off, and supports a manual refresh', async () => {
+    vi.useFakeTimers();
+    try {
+      const view = renderController('/monitors/7?refresh=10');
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(api.loadMonitorDetail).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(api.loadMonitorDetail).toHaveBeenCalledTimes(2);
+
+      act(() => view.result.current.actions.setRefreshSeconds(0));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(api.loadMonitorDetail).toHaveBeenCalledTimes(2);
+
+      await act(() => view.result.current.actions.refresh());
+      expect(api.loadMonitorDetail).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it.each([
     [new ApiMessageError('missing', { status: 404 }), 'missing'],
     [new ApiMessageError('missing', { status: 200, code: 15 }), 'missing'],
@@ -121,6 +148,38 @@ describe('useMonitorDetailController', () => {
     });
     expect(view.result.current.state.detail.kind).toBe('loading');
     await act(async () => {
+      requests[1]!.resolve({ ...detail, monitor: { ...detail.monitor, id: 8, name: 'orders' } });
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(view.result.current.state.detail).toMatchObject({
+        kind: 'ready',
+        detail: { monitor: { id: 8, name: 'orders' } }
+      })
+    );
+  });
+
+  it('aborts an in-flight manual detail refresh when the monitor route changes', async () => {
+    const view = renderController('/monitors/7');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    const requests: Array<{ id: number; signal: AbortSignal; resolve: (value: typeof detail) => void }> = [];
+    api.loadMonitorDetail.mockImplementation(
+      (id, signal) =>
+        new Promise(resolve => {
+          requests.push({ id, signal, resolve });
+        })
+    );
+
+    act(() => view.result.current.actions.refresh());
+    await waitFor(() => expect(requests).toHaveLength(1));
+    act(() => {
+      void view.navigate('/monitors/8');
+    });
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]).toMatchObject({ id: 7 });
+    expect(requests[0]?.signal.aborted).toBe(true);
+    await act(async () => {
+      requests[0]!.resolve({ ...detail, monitor: { ...detail.monitor, name: 'stale' } });
       requests[1]!.resolve({ ...detail, monitor: { ...detail.monitor, id: 8, name: 'orders' } });
       await Promise.resolve();
     });

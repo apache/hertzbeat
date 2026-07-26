@@ -22,6 +22,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { classifyMonitorDetailReadError, deleteMonitorGrafanaDashboard, loadMonitorDetail } from '../api/monitor-api';
 import type { MonitorDetail } from '../model/monitor-contract';
 import {
+  monitorDetailRefreshInterval,
   monitorDetailRefreshChoices,
   parseMonitorDetailRefresh,
   parseMonitorRouteId,
@@ -43,6 +44,7 @@ export function useMonitorDetailController() {
   const query = useQuery({
     queryKey: monitorQueryKeys.detail(id),
     queryFn: id === undefined ? skipToken : ({ signal }) => loadMonitorDetail(id, signal),
+    refetchInterval: id === undefined ? false : monitorDetailRefreshInterval(refreshSeconds),
     retry: false
   });
   return {
@@ -59,6 +61,9 @@ export function useMonitorDetailController() {
       },
       edit: () => {
         if (id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
+      },
+      refresh: () => {
+        if (id !== undefined) void query.refetch();
       },
       deleteGrafanaDashboard: dashboardDelete.run,
       setRefreshSeconds: (value: MonitorDetailRefreshChoice) => {

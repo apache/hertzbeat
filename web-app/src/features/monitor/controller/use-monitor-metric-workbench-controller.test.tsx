@@ -143,6 +143,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     });
 
     expectMetricReadsNotCalled();
+    expect(view.refreshDetail).toHaveBeenCalledOnce();
   });
 
   it('keeps refresh inert when the monitor has no metric selection', async () => {
@@ -157,6 +158,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     });
 
     expectMetricReadsNotCalled();
+    expect(view.refreshDetail).toHaveBeenCalledOnce();
   });
 
   it('reads realtime, skips history, and favorites a realtime-only group by its backend group token', async () => {
@@ -271,6 +273,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(1);
     expect(api.loadRealtimeMetric).toHaveBeenCalledTimes(1);
     expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1);
+    expect(view.refreshDetail).toHaveBeenCalledOnce();
   });
 
   it('treats a successful query without its required payload as invalid evidence', async () => {
@@ -510,13 +513,15 @@ describe('useMonitorMetricWorkbenchController', () => {
 function renderController(
   initialMonitor: Monitor | undefined,
   embedded: Parameters<typeof useMonitorMetricWorkbenchController>[1],
-  entry: string
+  entry: string,
+  refreshDetail = vi.fn()
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return renderHook(
+  const rendered = renderHook(
     ({ monitor: current, embedded: currentEmbedded }) => ({
       controller: useMonitorMetricWorkbenchController(current, currentEmbedded, {
         notifications,
+        refreshDetail,
         refreshControl: {
           refreshSeconds: defaultMonitorDetailRefreshSeconds,
           setRefreshSeconds: vi.fn()
@@ -536,6 +541,7 @@ function renderController(
       )
     }
   );
+  return { ...rendered, refreshDetail };
 }
 
 function expectMetricReadsNotCalled() {
