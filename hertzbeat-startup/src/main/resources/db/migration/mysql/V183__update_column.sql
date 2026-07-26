@@ -135,3 +135,7 @@ CREATE TABLE hzb_alert_analysis_policy (
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_alert_analysis_enabled (enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DELETE FROM hzb_config WHERE type = 'provider';
+
+ALTER TABLE hzb_config MODIFY COLUMN content TEXT;

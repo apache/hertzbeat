@@ -751,10 +751,12 @@
       align-items: center;
       max-width: 260px;
       height: 34px;
-      padding: 0 8px;
-      color: @text-color-secondary;
+      padding: 0 10px;
+      color: @text-color;
+      font-weight: 500;
       font-size: 13px;
-      border-radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+      border-radius: 10px;
       transform: none !important;
 
       span {
@@ -772,7 +774,7 @@
       &:focus,
       &:active {
         color: #3f51b5;
-        background: #f0f2f5;
+        background: #e6e9f5;
         transform: none !important;
       }
     }
@@ -816,6 +818,176 @@
     color: @text-color-secondary;
     font-size: 12px;
     line-height: 1.5;
+  }
+}
+
+.provider-menu {
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(480px, calc(100vh - 96px));
+  padding: 8px;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  background: #fff;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 14%), 0 2px 8px rgb(0 0 0 / 6%);
+
+  .provider-menu-label {
+    padding: 6px 10px 8px;
+    color: @text-color-secondary;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .provider-option-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 10px;
+    transition: background 120ms ease;
+
+    &:hover {
+      background: #e6e9f5;
+    }
+
+    &.active::before {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 3px;
+      height: 20px;
+      background: var(--sidebar-accent, #3f51b5);
+      border-radius: 0 3px 3px 0;
+      transform: translateY(-50%);
+      content: '';
+      pointer-events: none;
+    }
+
+    &:focus-within {
+      background: #e6e9f5;
+      outline: 2px solid rgb(0 0 0 / 10%);
+      outline-offset: -2px;
+    }
+
+    &:hover .provider-option,
+    &:focus-within .provider-option {
+      color: #3f51b5;
+    }
+
+    &:hover .provider-list-actions,
+    &:focus-within .provider-list-actions {
+      width: 64px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .provider-option {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 12px;
+    color: @text-color;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+  }
+
+  .provider-list-copy {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+
+    strong {
+      display: block;
+      overflow: hidden;
+      color: @text-color;
+      font-weight: 500;
+      font-size: 13px;
+      line-height: 20px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .provider-list-actions {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 4px;
+    align-items: center;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 120ms ease, opacity 120ms ease;
+    pointer-events: none;
+  }
+
+  .provider-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: @text-color-secondary;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: @text-color;
+      background: rgb(0 0 0 / 7%);
+      outline: none;
+    }
+  }
+
+  .provider-delete-button {
+    &:hover,
+    &:focus-visible {
+      color: @error-color;
+      background: rgb(255 77 79 / 8%);
+    }
+  }
+
+  .provider-menu-divider {
+    height: 1px;
+    margin: 6px 4px;
+    background: @border-color-split;
+  }
+
+  .provider-add-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    color: @text-color;
+    font-weight: 500;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: #3f51b5;
+      background: #e6e9f5;
+      outline: none;
+    }
   }
 }
 
@@ -952,7 +1124,59 @@
   }
 }
 
+[data-theme='dark'] {
+  .provider-menu {
+    background: #242424;
+    border-color: rgb(255 255 255 / 10%);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 38%), 0 2px 8px rgb(0 0 0 / 28%);
+
+    .provider-option-row {
+      &:hover,
+      &:focus-within {
+        background: #303030;
+      }
+
+      &:hover .provider-option,
+      &:focus-within .provider-option {
+        color: rgb(255 255 255 / 85%);
+      }
+    }
+
+    .provider-action-button {
+      &:hover,
+      &:focus-visible {
+        background: rgb(255 255 255 / 10%);
+      }
+    }
+
+    .provider-delete-button {
+      &:hover,
+      &:focus-visible {
+        background: rgb(255 77 79 / 14%);
+      }
+    }
+
+    .provider-menu-divider {
+      background: rgb(255 255 255 / 10%);
+    }
+
+    .provider-add-item {
+      &:hover,
+      &:focus-visible {
+        color: rgb(255 255 255 / 85%);
+        background: #303030;
+      }
+    }
+  }
+}
+
 @media (max-width: 767px) {
+  .provider-menu .provider-list-actions {
+    width: 64px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .chat-container {
     .chat-sidebar {
       width: 240px;

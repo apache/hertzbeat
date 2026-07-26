@@ -211,10 +211,83 @@
           </button>
 
           <div class="composer-actions">
-            <button type="button" nz-button nzType="text" class="model-config-button" (click)="openModelConfig()">
+            <button
+              type="button"
+              nz-button
+              nzType="text"
+              nz-dropdown
+              class="model-config-button"
+              nzTrigger="click"
+              nzPlacement="topRight"
+              [nzDropdownMenu]="providerMenu"
+              [nzClickHide]="false"
+              [nzDisabled]="providerOptionsLoading || providerSwitching"
+              [nzLoading]="providerSwitching"
+              [(nzVisible)]="providerMenuVisible"
+            >
               <span>{{ activeModelLabel }}</span>
               <i nz-icon nzType="down"></i>
             </button>
+
+            <nz-dropdown-menu #providerMenu="nzDropdownMenu">
+              <div class="provider-menu">
+                <div class="provider-menu-label">{{ 'ai.chat.config.list.title' | i18n }}</div>
+
+                <div class="provider-option-row" [class.active]="activeProviderUid === null">
+                  <button
+                    type="button"
+                    class="provider-option"
+                    [disabled]="providerSwitching"
+                    (click)="switchModelProvider(null)"
+                  >
+                    <span class="provider-list-copy">
+                      <strong>{{ 'ai.chat.config.provider.default' | i18n }}</strong>
+                    </span>
+                  </button>
+                </div>
+
+                <div
+                  *ngFor="let config of providerConfigs"
+                  class="provider-option-row"
+                  [class.active]="activeProviderUid === config.uid"
+                >
+                  <button
+                    type="button"
+                    class="provider-option"
+                    [disabled]="providerSwitching"
+                    (click)="switchModelProvider(config.uid)"
+                  >
+                    <span class="provider-list-copy">
+                      <strong>{{ providerConfigLabel(config) }}</strong>
+                    </span>
+                  </button>
+                  <span class="provider-list-actions">
+                    <button
+                      type="button"
+                      class="provider-action-button"
+                      [attr.aria-label]="'ai.chat.config.edit' | i18n"
+                      (click)="$event.stopPropagation(); openEditModelProvider(config)"
+                    >
+                      <i nz-icon nzType="edit"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="provider-action-button provider-delete-button"
+                      [attr.aria-label]="'ai.chat.config.delete.action' | i18n"
+                      (click)="$event.stopPropagation(); confirmDeleteModelProvider(config)"
+                    >
+                      <i nz-icon nzType="delete"></i>
+                    </button>
+                  </span>
+                </div>
+
+                <div class="provider-menu-divider"></div>
+                <button type="button" class="provider-add-item" (click)="openCreateModelProvider()">
+                  <i nz-icon nzType="plus"></i>
+                  <span>{{ 'ai.chat.config.add' | i18n }}</span>
+                </button>
+              </div>
+            </nz-dropdown-menu>
 
             <button
               *ngIf="!isSendingMessage"
@@ -251,10 +324,11 @@
 
 <nz-modal
   [(nzVisible)]="showConfigModal"
-  [nzTitle]="'ai.chat.config.title' | i18n"
+  [nzTitle]="(editingProvider ? 'ai.chat.config.edit.title' : 'ai.chat.config.add.title') | i18n"
   [nzMaskClosable]="false"
   [nzOkLoading]="configLoading"
   [nzOkText]="'ai.chat.config.save' | i18n"
+  [nzOkDisabled]="!selectedProviderOption"
   [nzCancelText]="'ai.chat.config.cancel' | i18n"
   nzWidth="680px"
   (nzOnCancel)="closeModelConfig()"
@@ -266,37 +340,39 @@
         <nz-form-label nzRequired>{{ 'ai.chat.config.provider' | i18n }}</nz-form-label>
         <nz-form-control>
           <nz-select
-            [(ngModel)]="aiProviderConfig.code"
+            [(ngModel)]="selectedProviderOption"
             name="provider"
-            [nzPlaceHolder]="'ai.chat.config.provider.help' | i18n"
+            [nzPlaceHolder]="'ai.chat.config.provider.required' | i18n"
+            [nzLoading]="providerOptionsLoading"
             (ngModelChange)="onProviderChange($event)"
           >
-            <nz-option *ngFor="let option of providerOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+            <nz-option *ngFor="let option of providerOptions" [nzValue]="option" [nzLabel]="option.label"></nz-option>
           </nz-select>
-          <p class="form-help">{{ 'ai.chat.config.provider.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzRequired>{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
+        <nz-form-label [nzRequired]="isProviderFieldRequired('apiKey')">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
         <nz-form-control>
           <input
             nz-input
             [(ngModel)]="aiProviderConfig.apiKey"
             name="apiKey"
             type="password"
+            [disabled]="!selectedProviderOption"
             placeholder="sk-..."
             autocomplete="new-password"
           />
+          <p *ngIf="canPreserveSavedApiKey()" class="form-help">{{ 'ai.chat.config.api-key.preserve' | i18n }}</p>
           <p class="form-help">{{ 'ai.chat.config.api-key.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label>{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
+        <nz-form-label [nzRequired]="isProviderFieldRequired('baseUrl')">{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
         <nz-form-control>
           <nz-input-group [nzSuffix]="resetProviderDefaults">
-            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" />
+            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" [disabled]="!selectedProviderOption" />
           </nz-input-group>
           <ng-template #resetProviderDefaults>
             <button
@@ -304,6 +380,7 @@
               nz-button
               nzType="text"
               nz-tooltip
+              [disabled]="!selectedProviderOption"
               [nzTooltipTitle]="'ai.chat.config.reset' | i18n"
               (click)="resetModelProviderDefaults()"
             >
@@ -315,9 +392,9 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label>{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
+        <nz-form-label [nzRequired]="isProviderFieldRequired('model')">{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
         <nz-form-control>
-          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" />
+          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" [disabled]="!selectedProviderOption" />
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>

@@ -18,34 +18,24 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Model Provider Configuration
+ * Persisted model provider configurations and their active selection.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "LLM Model Provider configuration")
-public class ModelProviderConfig {
+@Schema(description = "Saved LLM provider configurations and active selection")
+public class ModelProviderConfigState {
 
-    @Schema(title = "Stable identifier of a saved provider configuration")
-    private String uid;
+    @Schema(title = "Active provider configuration UID; null selects the YAML default")
+    private String activeProviderUid;
 
-    @Schema(title = "Spring AI provider type, like openai-compatible, anthropic, ollama")
-    private String type;
-
-    @Schema(title = "Provider preset code, like openai, zai, bigmodel")
-    private String code;
-
-    @Schema(title = "custom the provider server base url")
-    private String baseUrl;
-
-    @Schema(title = "use the model id name, eg: gpt-5, glm-4.6")
-    private String model;
-
-    @Schema(title = "API Key", description = "API key", example = "sk-...")
-    private String apiKey;
+    @Schema(title = "Saved provider configurations")
+    private List<ModelProviderConfig> providers = new ArrayList<>();
 }

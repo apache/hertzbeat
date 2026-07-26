@@ -17,14 +17,15 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
-import java.util.Objects;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Builder;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.springframework.util.StringUtils;
 
 /**
@@ -36,7 +37,13 @@ public sealed interface GatewayCommand permits
         GatewayCommand.CancelRunCommand,
         GatewayCommand.GetSessionCommand,
         GatewayCommand.ListSessionsCommand,
-        GatewayCommand.GetSessionTranscriptCommand {
+        GatewayCommand.GetSessionTranscriptCommand,
+        GatewayCommand.ListModelProviderOptionsCommand,
+        GatewayCommand.ListModelProviderConfigurationsCommand,
+        GatewayCommand.CreateModelProviderConfigurationCommand,
+        GatewayCommand.UpdateModelProviderConfigurationCommand,
+        GatewayCommand.DeleteModelProviderConfigurationCommand,
+        GatewayCommand.SwitchModelProviderCommand {
 
     GatewayEnvelope envelope();
 
@@ -188,6 +195,161 @@ public sealed interface GatewayCommand permits
                 throw new IllegalArgumentException("Session page index and size are invalid");
             }
             pageSize = Math.min(pageSize, 200);
+        }
+    }
+
+    /**
+     * Registered model provider option query.
+     */
+    @Builder
+    record ListModelProviderOptionsCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId) implements GatewayCommand {
+
+        public ListModelProviderOptionsCommand {
+            // Channel commands require trusted invocation metadata and an explicit delivery mode.
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId)) {
+                throw new IllegalArgumentException("commandId is required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider option queries require final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider option query actor is required");
+            }
+        }
+    }
+
+    /**
+     * Saved model provider configuration query.
+     */
+    @Builder
+    record ListModelProviderConfigurationsCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId) implements GatewayCommand {
+
+        public ListModelProviderConfigurationsCommand {
+            // Channel commands require trusted invocation metadata and an explicit delivery mode.
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId)) {
+                throw new IllegalArgumentException("commandId is required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider configuration queries require final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider configuration query actor is required");
+            }
+        }
+    }
+
+    /**
+     * Saved model provider configuration creation.
+     */
+    @Builder
+    record CreateModelProviderConfigurationCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            ModelProviderConfig config) implements GatewayCommand {
+
+        public CreateModelProviderConfigurationCommand {
+            // Channel commands require trusted invocation metadata and an explicit delivery mode.
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId)) {
+                throw new IllegalArgumentException("commandId is required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider configuration creation requires final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider configuration creation actor is required");
+            }
+            // A create command owns the complete provider DTO so validation and normalization happen once downstream.
+            config = Objects.requireNonNull(config, "model provider config is required");
+        }
+    }
+
+    /**
+     * Saved model provider configuration update.
+     */
+    @Builder
+    record UpdateModelProviderConfigurationCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            String providerUid,
+            ModelProviderConfig config) implements GatewayCommand {
+
+        public UpdateModelProviderConfigurationCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(providerUid)) {
+                throw new IllegalArgumentException("commandId and providerUid are required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider configuration updates require final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider configuration update actor is required");
+            }
+            config = Objects.requireNonNull(config, "model provider config is required");
+        }
+    }
+
+    /**
+     * Saved model provider configuration deletion.
+     */
+    @Builder
+    record DeleteModelProviderConfigurationCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            String providerUid) implements GatewayCommand {
+
+        public DeleteModelProviderConfigurationCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId) || !StringUtils.hasText(providerUid)) {
+                throw new IllegalArgumentException("commandId and providerUid are required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider configuration deletions require final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider configuration deletion actor is required");
+            }
+        }
+    }
+
+    /**
+     * Active model provider selection. A null UID selects the YAML default.
+     */
+    @Builder
+    record SwitchModelProviderCommand(
+            GatewayEnvelope envelope,
+            ReplyMode replyMode,
+            String commandId,
+            String providerUid) implements GatewayCommand {
+
+        public SwitchModelProviderCommand {
+            envelope = Objects.requireNonNull(envelope, "envelope is required");
+            replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            if (!StringUtils.hasText(commandId)) {
+                throw new IllegalArgumentException("commandId is required");
+            }
+            if (replyMode != ReplyMode.FINAL_ONLY) {
+                throw new IllegalArgumentException("Model provider switches require final-only replies");
+            }
+            if (!ActorSupport.hasIdentity(envelope.getActor())) {
+                throw new IllegalArgumentException("Model provider switch actor is required");
+            }
         }
     }
 

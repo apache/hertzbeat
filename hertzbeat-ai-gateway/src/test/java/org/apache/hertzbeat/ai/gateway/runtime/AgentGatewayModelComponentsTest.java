@@ -22,10 +22,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProvider;
+import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderOption;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.AgentModelProviderRegistry;
 import org.apache.hertzbeat.ai.gateway.runtime.provider.OpenAiCompatibleAgentModelProvider;
-import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -89,8 +90,8 @@ class AgentGatewayModelComponentsTest {
     static class BindingConfig {
 
         @Bean
-        GeneralConfigDao generalConfigDao() {
-            return mock(GeneralConfigDao.class);
+        ModelProviderConfigurationService modelProviderConfigurationService() {
+            return mock(ModelProviderConfigurationService.class);
         }
     }
 
@@ -109,6 +110,12 @@ class AgentGatewayModelComponentsTest {
         @Override
         public String type() {
             return "custom-provider";
+        }
+
+        @Override
+        public java.util.List<AgentModelProviderOption> options() {
+            return java.util.List.of(new AgentModelProviderOption(
+                    type(), "custom-preset", "Custom", null, null, java.util.List.of()));
         }
 
         @Override

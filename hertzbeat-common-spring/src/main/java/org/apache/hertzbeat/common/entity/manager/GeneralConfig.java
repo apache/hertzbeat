@@ -57,7 +57,7 @@ public class GeneralConfig {
     private String type;
 
     @Schema(title = "Config content", description = "Config content，formatjson", accessMode = READ_WRITE)
-    @Column(length = 8192)
+    @Column(length = 65535)
     private String content;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

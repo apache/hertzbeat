@@ -15,17 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.event;
+package org.apache.hertzbeat.manager.service;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEvent;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
 
 /**
- * Ai Provider configuration change event
+ * Owns saved model provider configurations and their active selection.
  */
-public class AiProviderConfigChangeEvent extends ApplicationEvent {
+public interface ModelProviderConfigurationService {
 
-    public AiProviderConfigChangeEvent(ApplicationContext source) {
-        super(source);
-    }
+    ModelProviderConfigState getState();
+
+    ModelProviderConfig getConfiguration(String uid);
+
+    ModelProviderConfig getActiveConfiguration();
+
+    ModelProviderConfigState createConfiguration(ModelProviderConfig config);
+
+    ModelProviderConfigState updateConfiguration(String uid, ModelProviderConfig config);
+
+    ModelProviderConfigState deleteConfiguration(String uid);
+
+    ModelProviderConfigState switchActiveConfiguration(String uid);
 }

@@ -18,33 +18,27 @@
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
 import java.util.List;
-import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
-import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 
 /**
- * Creates a HertzBeat model for one Spring AI model provider type.
+ * User-selectable configuration preset exposed by an Agent model provider.
+ *
+ * @param type provider implementation type
+ * @param code provider-specific preset code
+ * @param label user-facing preset name
+ * @param defaultBaseUrl default endpoint, or {@code null} when it must be supplied
+ * @param defaultModel default model, or {@code null} when it must be supplied
+ * @param requiredFields configuration fields required by this preset
  */
-public interface AgentModelProvider {
+public record AgentModelProviderOption(
+        String type,
+        String code,
+        String label,
+        String defaultBaseUrl,
+        String defaultModel,
+        List<String> requiredFields) {
 
-    /**
-     * Stable configuration identifier for this provider implementation.
-     *
-     * @return provider type
-     */
-    String type();
-
-    /**
-     * Configuration presets supported by this provider implementation.
-     *
-     * @return user-selectable provider presets
-     */
-    List<AgentModelProviderOption> options();
-
-    /**
-     * Validate the effective provider configuration and create its HertzBeat model.
-     *
-     * @param config effective model provider configuration
-     * @return configured HertzBeat model
-     */
-    HertzBeatModel createModel(ModelProviderConfig config);
+    public AgentModelProviderOption {
+        // Required fields are extension-owned metadata; snapshot them at the provider registration boundary.
+        requiredFields = List.copyOf(requiredFields);
+    }
 }

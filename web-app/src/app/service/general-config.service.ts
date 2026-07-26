@@ -22,9 +22,10 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
-import { ModelProviderConfig } from '../pojo/ModelProviderConfig';
+import { ModelProviderConfig, ModelProviderConfigState, ProviderOption } from '../pojo/ModelProviderConfig';
 
 const general_config_uri = '/config';
+const model_provider_uri = '/agent/model-providers';
 
 @Injectable({
   providedIn: 'root'
@@ -40,12 +41,31 @@ export class GeneralConfigService {
     return this.http.get<Message<any>>(`${general_config_uri}/${type}`);
   }
 
-  public saveModelProviderConfig(body: ModelProviderConfig): Observable<Message<any>> {
-    return this.http.post<Message<any>>(`${general_config_uri}/provider`, body);
+  public createModelProviderConfig(body: ModelProviderConfig): Observable<Message<ModelProviderConfigState>> {
+    return this.http.post<Message<ModelProviderConfigState>>(`${model_provider_uri}/configurations`, body);
   }
 
-  public getModelProviderConfig(): Observable<Message<ModelProviderConfig>> {
-    return this.http.get<Message<ModelProviderConfig>>(`${general_config_uri}/provider`);
+  public updateModelProviderConfig(uid: string, body: ModelProviderConfig): Observable<Message<ModelProviderConfigState>> {
+    return this.http.put<Message<ModelProviderConfigState>>(`${model_provider_uri}/configurations/${encodeURIComponent(uid)}`, body);
+  }
+
+  public deleteModelProviderConfig(uid: string): Observable<Message<ModelProviderConfigState>> {
+    return this.http.delete<Message<ModelProviderConfigState>>(`${model_provider_uri}/configurations/${encodeURIComponent(uid)}`);
+  }
+
+  public switchModelProvider(uid: string | null): Observable<Message<ModelProviderConfigState>> {
+    if (uid === null) {
+      return this.http.delete<Message<ModelProviderConfigState>>(`${model_provider_uri}/active`);
+    }
+    return this.http.put<Message<ModelProviderConfigState>>(`${model_provider_uri}/active/${encodeURIComponent(uid)}`, {});
+  }
+
+  public getModelProviderConfigs(): Observable<Message<ModelProviderConfigState>> {
+    return this.http.get<Message<ModelProviderConfigState>>(`${model_provider_uri}/configurations`);
+  }
+
+  public getModelProviderOptions(): Observable<Message<ProviderOption[]>> {
+    return this.http.get<Message<ProviderOption[]>>(`${model_provider_uri}/options`);
   }
 
   public updateAppTemplateConfig(body: any, app: string): Observable<Message<void>> {

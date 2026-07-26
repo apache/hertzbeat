@@ -22,10 +22,17 @@ import { ActivatedRoute } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { combineLatest, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
+import {
+  ModelProviderConfig,
+  ModelProviderConfigState,
+  ModelProviderConfigView,
+  ProviderConfigField,
+  ProviderOption
+} from '../../../pojo/ModelProviderConfig';
 import { AgentSession, AgentTranscriptEntry, AiChatService, GatewayEvent, TranscriptMessage } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
@@ -123,10 +130,17 @@ export class ChatComponent implements OnInit, OnDestroy {
   activeRunUid?: string;
   pendingApproval?: PendingApproval;
   showScrollToBottom = false;
+  providerMenuVisible = false;
   showConfigModal = false;
   configLoading = false;
+  providerSwitching = false;
+  providerOptionsLoading = true;
   aiProviderConfig = new ModelProviderConfig();
-  readonly providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
+  providerOptions: ProviderOption[] = [];
+  providerConfigs: ModelProviderConfigView[] = [];
+  activeProviderUid: string | null = null;
+  editingProvider?: ModelProviderConfigView;
+  selectedProviderOption?: ProviderOption;
 
   private streamSubscription?: Subscription;
   private routeSubscription?: Subscription;
@@ -139,6 +153,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(
     private aiChatService: AiChatService,
     private message: NzMessageService,
+    private modal: NzModalService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
@@ -149,7 +164,6 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    this.onProviderChange(this.aiProviderConfig.code);
     this.loadModelProviderConfig();
     this.routeSubscription = combineLatest([this.route.data, this.route.paramMap, this.route.queryParamMap]).subscribe(([data, params]) => {
       this.sessionType = (data['sessionType'] as AiSessionType | undefined) || 'chat';
@@ -207,42 +221,75 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   get activeModelLabel(): string {
-    const provider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code)?.label;
-    if (provider && this.aiProviderConfig.model) {
-      return `${provider} / ${this.aiProviderConfig.model}`;
+    const activeProvider = this.providerConfigs.find(config => config.uid === this.activeProviderUid);
+    if (!activeProvider) {
+      return this.i18nSvc.fanyi('ai.chat.config.provider.default');
     }
-    return this.aiProviderConfig.model || provider || this.i18nSvc.fanyi('ai.chat.config.model');
+    const provider = this.findProviderOption(activeProvider)?.label;
+    if (provider && activeProvider.model) {
+      return `${provider} / ${activeProvider.model}`;
+    }
+    return activeProvider.model || provider || activeProvider.code || activeProvider.type || this.i18nSvc.fanyi('ai.chat.config.model');
   }
 
-  openModelConfig(): void {
+  openCreateModelProvider(): void {
+    this.providerMenuVisible = false;
+    this.editingProvider = undefined;
+    this.selectedProviderOption = undefined;
+    this.aiProviderConfig = new ModelProviderConfig();
+    this.showConfigModal = true;
+  }
+
+  openEditModelProvider(config: ModelProviderConfigView): void {
+    this.providerMenuVisible = false;
+    this.editingProvider = config;
+    this.aiProviderConfig = {
+      ...new ModelProviderConfig(),
+      uid: config.uid,
+      type: config.type,
+      code: config.code,
+      baseUrl: config.baseUrl,
+      model: config.model
+    };
+    this.selectedProviderOption = this.findProviderOption(config);
+    if (this.selectedProviderOption) {
+      this.aiProviderConfig.type = this.selectedProviderOption.type;
+      this.aiProviderConfig.baseUrl ||= this.selectedProviderOption.defaultBaseUrl || '';
+      this.aiProviderConfig.model ||= this.selectedProviderOption.defaultModel || '';
+    }
     this.showConfigModal = true;
   }
 
   closeModelConfig(): void {
     this.showConfigModal = false;
+    this.editingProvider = undefined;
+    this.selectedProviderOption = undefined;
+    this.aiProviderConfig = new ModelProviderConfig();
   }
 
   saveModelProviderConfig(): void {
-    if (!this.aiProviderConfig.code) {
+    if (!this.selectedProviderOption || !this.aiProviderConfig.type || !this.aiProviderConfig.code) {
       this.message.error(this.i18nSvc.fanyi('ai.chat.error.provider'));
       return;
     }
-    if (!this.aiProviderConfig.apiKey) {
+    if (this.isProviderFieldRequired('apiKey') && !this.aiProviderConfig.apiKey && !this.canPreserveSavedApiKey()) {
       this.message.error(this.i18nSvc.fanyi('ai.chat.error.api.key'));
       return;
     }
-    if (!this.aiProviderConfig.baseUrl) {
+    if (this.isProviderFieldRequired('baseUrl') && !this.aiProviderConfig.baseUrl) {
       this.message.error(this.i18nSvc.fanyi('ai.chat.error.base.url'));
       return;
     }
-    if (!this.aiProviderConfig.model) {
+    if (this.isProviderFieldRequired('model') && !this.aiProviderConfig.model) {
       this.message.error(this.i18nSvc.fanyi('ai.chat.error.model'));
       return;
     }
 
     this.configLoading = true;
-    this.generalConfigSvc
-      .saveModelProviderConfig(this.aiProviderConfig)
+    const saveRequest = this.editingProvider
+      ? this.generalConfigSvc.updateModelProviderConfig(this.editingProvider.uid, this.aiProviderConfig)
+      : this.generalConfigSvc.createModelProviderConfig(this.aiProviderConfig);
+    saveRequest
       .pipe(
         finalize(() => {
           this.configLoading = false;
@@ -251,35 +298,106 @@ export class ChatComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: response => {
-          if (response.code === 0) {
+          if (response.code === 0 && response.data) {
+            this.applyProviderState(response.data);
             this.showConfigModal = false;
+            this.editingProvider = undefined;
+            this.selectedProviderOption = undefined;
+            this.aiProviderConfig = new ModelProviderConfig();
             this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
           } else {
             this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${response.msg}`);
           }
         },
         error: error => {
-          this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${error.message}`);
+          const detail = error.error?.msg || error.message;
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${detail}`);
         }
       });
   }
 
-  onProviderChange(provider: string): void {
-    const selectedProvider = this.providerOptions.find(option => option.value === provider);
-    if (!selectedProvider) {
+  switchModelProvider(uid: string | null): void {
+    this.providerMenuVisible = false;
+    if (this.activeProviderUid === uid) {
       return;
     }
-    this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
-    this.aiProviderConfig.model = selectedProvider.defaultModel;
+    this.providerSwitching = true;
+    this.generalConfigSvc
+      .switchModelProvider(uid)
+      .pipe(
+        finalize(() => {
+          this.providerSwitching = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: response => {
+          if (response.code === 0 && response.data) {
+            this.applyProviderState(response.data);
+          } else {
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.switch.failed')} ${response.msg}`);
+          }
+        },
+        error: error => {
+          const detail = error.error?.msg || error.message;
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.switch.failed')} ${detail}`);
+        }
+      });
+  }
+
+  confirmDeleteModelProvider(config: ModelProviderConfigView): void {
+    this.providerMenuVisible = false;
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('ai.chat.config.delete.title'),
+      nzContent: this.providerConfigLabel(config),
+      nzOkDanger: true,
+      nzOnOk: () => this.deleteModelProvider(config.uid)
+    });
+  }
+
+  providerConfigLabel(config: ModelProviderConfigView): string {
+    const provider = this.findProviderOption(config)?.label || config.code || config.type;
+    return config.model ? `${provider} / ${config.model}` : provider;
+  }
+
+  onProviderChange(provider?: ProviderOption): void {
+    if (!provider) {
+      return;
+    }
+    const providerChanged = this.aiProviderConfig.code !== provider.code || this.aiProviderConfig.type !== provider.type;
+    if (!providerChanged) {
+      return;
+    }
+    this.aiProviderConfig = {
+      ...new ModelProviderConfig(),
+      type: provider.type,
+      code: provider.code,
+      baseUrl: provider.defaultBaseUrl || '',
+      model: provider.defaultModel || ''
+    };
   }
 
   resetModelProviderDefaults(): void {
-    const selectedProvider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code);
-    if (!selectedProvider) {
+    if (!this.selectedProviderOption) {
       return;
     }
-    this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
-    this.aiProviderConfig.model = selectedProvider.defaultModel;
+    this.aiProviderConfig = {
+      ...this.aiProviderConfig,
+      baseUrl: this.selectedProviderOption.defaultBaseUrl || '',
+      model: this.selectedProviderOption.defaultModel || ''
+    };
+  }
+
+  isProviderFieldRequired(field: ProviderConfigField): boolean {
+    return this.selectedProviderOption?.requiredFields.includes(field) ?? false;
+  }
+
+  canPreserveSavedApiKey(): boolean {
+    return (
+      !!this.editingProvider?.apiKeyConfigured &&
+      this.editingProvider.type === this.aiProviderConfig.type &&
+      this.editingProvider.code === this.aiProviderConfig.code
+    );
   }
 
   private loadSession(sessionUid: string): void {
@@ -314,25 +432,55 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   private loadModelProviderConfig(): void {
-    this.generalConfigSvc.getModelProviderConfig().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.aiProviderConfig = { ...new ModelProviderConfig(), ...response.data };
-          const provider = this.providerOptions.find(option => option.value === this.aiProviderConfig.code);
-          // Older provider records may omit fields that the backend resolves to provider defaults.
-          if (provider) {
-            if (!this.aiProviderConfig.baseUrl) {
-              this.aiProviderConfig.baseUrl = provider.defaultBaseUrl;
-            }
-            if (!this.aiProviderConfig.model) {
-              this.aiProviderConfig.model = provider.defaultModel;
-            }
+    combineLatest([this.generalConfigSvc.getModelProviderOptions(), this.generalConfigSvc.getModelProviderConfigs()])
+      .pipe(
+        finalize(() => {
+          this.providerOptionsLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: ([optionsResponse, configResponse]) => {
+          this.providerOptions = optionsResponse.code === 0 ? optionsResponse.data || [] : [];
+          if (configResponse.code === 0 && configResponse.data) {
+            this.applyProviderState(configResponse.data);
           }
+          this.cdr.markForCheck();
+        },
+        error: () => this.cdr.markForCheck()
+      });
+  }
+
+  private applyProviderState(state: ModelProviderConfigState): void {
+    this.activeProviderUid = state.activeProviderUid;
+    this.providerConfigs = state.providers || [];
+  }
+
+  private deleteModelProvider(uid: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.generalConfigSvc.deleteModelProviderConfig(uid).subscribe({
+        next: response => {
+          if (response.code === 0 && response.data) {
+            this.applyProviderState(response.data);
+            this.message.success(this.i18nSvc.fanyi('ai.chat.config.delete.success'));
+            this.cdr.markForCheck();
+            resolve();
+          } else {
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.delete.failed')} ${response.msg}`);
+            reject();
+          }
+        },
+        error: error => {
+          const detail = error.error?.msg || error.message;
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.delete.failed')} ${detail}`);
+          reject(error);
         }
-        this.cdr.markForCheck();
-      },
-      error: () => this.cdr.markForCheck()
+      });
     });
+  }
+
+  private findProviderOption(config: Pick<ModelProviderConfig, 'type' | 'code'>): ProviderOption | undefined {
+    return this.providerOptions.find(option => option.type === config.type && option.code === config.code);
   }
 
   sendMessage(): void {

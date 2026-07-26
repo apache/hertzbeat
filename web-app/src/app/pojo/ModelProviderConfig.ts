@@ -18,38 +18,35 @@
  */
 
 export class ModelProviderConfig {
-  type: string = 'openai-compatible';
-  code: string = 'openai';
+  uid?: string;
+  type: string = '';
+  code: string = '';
   baseUrl: string = '';
   model: string = '';
-  apiKey!: string;
-  participationModel: string = 'PROTECTED';
+  apiKey: string = '';
 }
+
+export type ProviderConfigField = 'apiKey' | 'baseUrl' | 'model';
 
 export interface ProviderOption {
-  value: string;
+  type: string;
+  code: string;
   label: string;
-  defaultBaseUrl: string;
-  defaultModel: string;
+  defaultBaseUrl?: string;
+  defaultModel?: string;
+  requiredFields: ProviderConfigField[];
 }
 
-export const PROVIDER_OPTIONS: ProviderOption[] = [
-  {
-    value: 'openai',
-    label: 'OpenAI',
-    defaultBaseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4'
-  },
-  {
-    value: 'zai',
-    label: 'ZAI',
-    defaultBaseUrl: 'https://api.z.ai/api/paas/v4',
-    defaultModel: 'glm-4.6'
-  },
-  {
-    value: 'zhipu',
-    label: 'ZhiPu',
-    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    defaultModel: 'glm-4.6'
-  }
-];
+export interface ModelProviderConfigView {
+  uid: string;
+  type: string;
+  code: string;
+  baseUrl: string;
+  model: string;
+  apiKeyConfigured: boolean;
+}
+
+export interface ModelProviderConfigState {
+  activeProviderUid: string | null;
+  providers: ModelProviderConfigView[];
+}

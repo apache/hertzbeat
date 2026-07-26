@@ -141,3 +141,7 @@ CREATE TABLE IF NOT EXISTS hzb_alert_analysis_policy (
 );
 CREATE INDEX IF NOT EXISTS idx_alert_analysis_enabled
     ON hzb_alert_analysis_policy(enabled);
+
+DELETE FROM hzb_config WHERE type = 'provider';
+
+ALTER TABLE hzb_config ALTER COLUMN content CLOB;

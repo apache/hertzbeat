@@ -141,3 +141,7 @@ CREATE TABLE hzb_alert_analysis_policy (
 );
 CREATE INDEX idx_alert_analysis_enabled
     ON hzb_alert_analysis_policy(enabled);
+
+DELETE FROM hzb_config WHERE type = 'provider';
+
+ALTER TABLE hzb_config ALTER COLUMN content TYPE TEXT;

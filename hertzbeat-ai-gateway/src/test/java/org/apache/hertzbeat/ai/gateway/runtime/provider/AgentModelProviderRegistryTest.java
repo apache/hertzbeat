@@ -33,10 +33,10 @@ import org.junit.jupiter.api.Test;
 class AgentModelProviderRegistryTest {
 
     @Test
-    void legacyBlankTypeShouldResolveToOpenAiCompatibleProvider() {
+    void blankProviderTypeShouldFailFast() {
         AgentModelProviderRegistry registry = registry("openai-compatible", mock(HertzBeatModel.class));
 
-        assertEquals("openai-compatible", registry.resolveType(config(null)));
+        assertThrows(IllegalArgumentException.class, () -> registry.resolveType(config(null)));
     }
 
     @Test
@@ -53,19 +53,41 @@ class AgentModelProviderRegistryTest {
 
         assertThrows(IllegalArgumentException.class, () -> registry.createModel(config("ollama")));
         assertThrows(IllegalArgumentException.class, () -> new AgentModelProviderRegistry(List.of(
-                provider("ollama", mock(HertzBeatModel.class)),
-                provider("OLLAMA", mock(HertzBeatModel.class)))));
+                provider("ollama", mock(HertzBeatModel.class), List.of()),
+                provider("OLLAMA", mock(HertzBeatModel.class), List.of()))));
+    }
+
+    @Test
+    void registeredProviderOptionsShouldBeExposed() {
+        AgentModelProviderRegistry registry = registry("anthropic", mock(HertzBeatModel.class));
+
+        assertEquals(List.of("test"), registry.options().stream().map(AgentModelProviderOption::code).toList());
+        assertEquals("anthropic", registry.options().get(0).type());
+    }
+
+    @Test
+    void providerSpecificConfigurationFieldsShouldBeExposedWithoutRegistryValidation() {
+        AgentModelProviderRegistry registry = new AgentModelProviderRegistry(List.of(
+                provider("anthropic", mock(HertzBeatModel.class), List.of("organizationId"))));
+
+        assertEquals(List.of("organizationId"), registry.options().get(0).requiredFields());
     }
 
     private AgentModelProviderRegistry registry(String type, HertzBeatModel model) {
-        return new AgentModelProviderRegistry(List.of(provider(type, model)));
+        return new AgentModelProviderRegistry(List.of(provider(type, model, List.of())));
     }
 
-    private AgentModelProvider provider(String type, HertzBeatModel model) {
+    private AgentModelProvider provider(String type, HertzBeatModel model, List<String> requiredFields) {
         return new AgentModelProvider() {
             @Override
             public String type() {
                 return type;
+            }
+
+            @Override
+            public List<AgentModelProviderOption> options() {
+                return List.of(new AgentModelProviderOption(
+                        type, "test", "Test", null, null, requiredFields));
             }
 
             @Override
