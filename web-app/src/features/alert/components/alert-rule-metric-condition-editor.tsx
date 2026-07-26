@@ -31,14 +31,9 @@ type MetricConditionEditorProps = {
 /** Edits only the threshold; reserved target clauses remain model-owned. */
 export function AlertRuleMetricConditionEditor(props: MetricConditionEditorProps) {
   const { t } = useTranslation();
-  const editor = props.draft.metricEditor;
-  if (editor?.kind !== 'targeted' || editor.target?.kind !== 'metric') return null;
-  const canStructure =
-    editor.authoring.mode === 'structured' ||
-    parseMetricAlertCondition(editor.authoring.condition, props.fields) !== null;
-  const canUseExpert =
-    editor.authoring.mode === 'expert' ||
-    serializeCompleteMetricAlertCondition(editor.authoring.condition, props.fields) !== null;
+  const context = metricConditionEditorContext(props.draft, props.fields);
+  if (!context) return null;
+  const { canStructure, canUseExpert, editor } = context;
   return (
     <section className={`${styles.wide} ${styles.conditionEditor}`}>
       <header className={styles.conditionEditorHeader}>
@@ -62,30 +57,55 @@ export function AlertRuleMetricConditionEditor(props: MetricConditionEditorProps
           </Button>
         </Space.Compact>
       </header>
-      {editor.authoring.mode === 'structured' ? (
-        <AlertRuleConditionGroup
-          busy={props.busy}
-          root={editor.authoring.condition}
-          group={editor.authoring.condition}
-          path={[]}
-          fields={props.fields}
-          change={props.changeStructured}
-        />
-      ) : (
-        <>
-          {!canStructure && <Alert type="warning" showIcon message={t('alertRules.metricCondition.expertOnly')} />}
-          <label className={styles.conditionExpert}>
-            {t('alertRules.metricCondition.expertExpression')}
-            <Input.TextArea
-              aria-label={t('alertRules.metricCondition.expertExpression')}
-              disabled={props.busy}
-              rows={4}
-              value={editor.authoring.condition}
-              onChange={event => props.changeExpert(event.target.value)}
-            />
-          </label>
-        </>
-      )}
+      <MetricConditionAuthoring {...props} editor={editor} canStructure={canStructure} />
     </section>
+  );
+}
+
+type TargetedMetricEditor = Extract<NonNullable<AlertRuleDraft['metricEditor']>, { kind: 'targeted' }>;
+
+function metricConditionEditorContext(draft: AlertRuleDraft, fields: MetricAlertField[]) {
+  const editor = draft.metricEditor;
+  if (editor?.kind !== 'targeted' || editor.target?.kind !== 'metric') return null;
+  return {
+    editor,
+    canStructure:
+      editor.authoring.mode === 'structured' || parseMetricAlertCondition(editor.authoring.condition, fields) !== null,
+    canUseExpert:
+      editor.authoring.mode === 'expert' ||
+      serializeCompleteMetricAlertCondition(editor.authoring.condition, fields) !== null
+  };
+}
+
+function MetricConditionAuthoring(
+  props: MetricConditionEditorProps & { editor: TargetedMetricEditor; canStructure: boolean }
+) {
+  const { t } = useTranslation();
+  if (props.editor.authoring.mode === 'structured') {
+    return (
+      <AlertRuleConditionGroup
+        busy={props.busy}
+        root={props.editor.authoring.condition}
+        group={props.editor.authoring.condition}
+        path={[]}
+        fields={props.fields}
+        change={props.changeStructured}
+      />
+    );
+  }
+  return (
+    <>
+      {!props.canStructure && <Alert type="warning" showIcon message={t('alertRules.metricCondition.expertOnly')} />}
+      <label className={styles.conditionExpert}>
+        {t('alertRules.metricCondition.expertExpression')}
+        <Input.TextArea
+          aria-label={t('alertRules.metricCondition.expertExpression')}
+          disabled={props.busy}
+          rows={4}
+          value={props.editor.authoring.condition}
+          onChange={event => props.changeExpert(event.target.value)}
+        />
+      </label>
+    </>
   );
 }

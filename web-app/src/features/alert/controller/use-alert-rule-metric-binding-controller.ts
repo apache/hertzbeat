@@ -6,7 +6,7 @@
  */
 
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { classifyMonitorReadError, loadMonitorsByApp, MonitorContractError, type Monitor } from '@/features/monitor';
 
@@ -27,6 +27,7 @@ type BindingEvidence =
 type BindingContext = { app: string; fields: MetricAlertField[]; key: string };
 type BindingSession = { key: string; monitorIds: number[]; labels: string[]; initialLabels: string[] };
 type UpdateDraft = (patch: Partial<AlertRuleDraft>) => void;
+type SetBindingSession = (session: BindingSession | null) => void;
 
 /** Owns remote binding evidence and a discardable modal editing session. */
 export function useAlertRuleMetricBindingController(
@@ -36,11 +37,7 @@ export function useAlertRuleMetricBindingController(
 ) {
   const context = bindingContext(draft, targetState);
   const contextKey = context?.key ?? null;
-  const [session, setSession] = useState<BindingSession | null>(null);
-  const activeSession = context && session?.key === context.key ? session : null;
-  useEffect(() => {
-    setSession(current => (current && current.key !== contextKey ? null : current));
-  }, [contextKey]);
+  const { session: activeSession, setSession } = useContextBoundBindingSession(contextKey);
   const query = useQuery({
     queryKey: alertRuleQueryKeys.targetBindings(context?.app ?? ''),
     queryFn: activeSession && context ? ({ signal }) => loadMonitorsByApp(context.app, signal) : skipToken,
@@ -49,45 +46,109 @@ export function useAlertRuleMetricBindingController(
   const evidence = activeSession ? resolveEvidence(query) : { kind: 'idle' as const };
 
   return {
-    state: {
-      eligible: context !== null,
-      open: activeSession !== null,
+    state: bindingControllerState(context, activeSession, evidence),
+    ...bindingCommands({
+      activeSession,
+      context,
+      draft,
       evidence,
-      selectedMonitorIds: activeSession?.monitorIds ?? [],
-      selectedLabels: activeSession?.labels ?? [],
-      labelChoices: activeSession ? bindingLabels(activeSession, evidence) : []
-    },
-    open: () => {
-      if (!context || !draft || draft.metricEditor?.kind !== 'targeted') return;
-      setSession({
-        key: context.key,
-        monitorIds: [...draft.metricEditor.monitorIds],
-        labels: [...draft.metricEditor.monitorLabels],
-        initialLabels: [...draft.metricEditor.monitorLabels]
-      });
-    },
-    cancel: () => setSession(null),
-    confirm: () => {
-      if (!draft || !context || !activeSession || !isConfirmable(evidence)) return;
-      updateDraft(buildMetricAlertBindingsPatch(draft, activeSession.monitorIds, activeSession.labels, context.fields));
-      setSession(null);
-    },
-    changeMonitorIds: (monitorIds: number[]) => {
-      if (evidence.kind !== 'ready' || !activeSession) return;
-      const available = new Set(evidence.monitors.map(monitor => monitor.id));
-      if (monitorIds.some(id => !available.has(id))) return;
-      setSession({ ...activeSession, monitorIds: [...monitorIds] });
-    },
-    changeLabels: (labels: string[]) => {
-      if (!isConfirmable(evidence) || !activeSession) return;
-      const available = new Set(bindingLabels(activeSession, evidence));
-      if (labels.some(label => !available.has(label))) return;
-      setSession({ ...activeSession, labels: [...labels] });
-    },
+      refetch: query.refetch,
+      setSession,
+      updateDraft
+    })
+  };
+}
+
+type BindingSessionStore = {
+  contextKey: string | null;
+  session: BindingSession | null;
+};
+
+function useContextBoundBindingSession(contextKey: string | null) {
+  const [store, setStore] = useState<BindingSessionStore>(() => ({ contextKey, session: null }));
+  const setSession: SetBindingSession = session => setStore({ contextKey, session });
+  if (store.contextKey !== contextKey) {
+    // Guarded previous-context adjustment retires stale edits before descendants observe this render.
+    setStore({ contextKey, session: null });
+    return { session: null, setSession };
+  }
+  return { session: store.session, setSession };
+}
+
+function bindingControllerState(
+  context: BindingContext | null,
+  session: BindingSession | null,
+  evidence: BindingEvidence
+) {
+  return {
+    eligible: context !== null,
+    open: session !== null,
+    evidence,
+    selectedMonitorIds: session?.monitorIds ?? [],
+    selectedLabels: session?.labels ?? [],
+    labelChoices: session ? bindingLabels(session, evidence) : []
+  };
+}
+
+type BindingCommandContext = {
+  activeSession: BindingSession | null;
+  context: BindingContext | null;
+  draft: AlertRuleDraft | null;
+  evidence: BindingEvidence;
+  refetch: () => Promise<unknown>;
+  setSession: SetBindingSession;
+  updateDraft: UpdateDraft;
+};
+
+function bindingCommands(command: BindingCommandContext) {
+  return {
+    open: () => openBindingSession(command),
+    cancel: () => command.setSession(null),
+    confirm: () => confirmBindingSession(command),
+    changeMonitorIds: (monitorIds: number[]) => changeBindingMonitorIds(command, monitorIds),
+    changeLabels: (labels: string[]) => changeBindingLabels(command, labels),
     retry: async () => {
-      if (activeSession) await query.refetch();
+      if (command.activeSession) await command.refetch();
     }
   };
+}
+
+function openBindingSession(command: BindingCommandContext) {
+  const editor = command.draft?.metricEditor;
+  if (!command.context || editor?.kind !== 'targeted') return;
+  command.setSession({
+    key: command.context.key,
+    monitorIds: [...editor.monitorIds],
+    labels: [...editor.monitorLabels],
+    initialLabels: [...editor.monitorLabels]
+  });
+}
+
+function confirmBindingSession(command: BindingCommandContext) {
+  if (!command.draft || !command.context || !command.activeSession || !isConfirmable(command.evidence)) return;
+  command.updateDraft(
+    buildMetricAlertBindingsPatch(
+      command.draft,
+      command.activeSession.monitorIds,
+      command.activeSession.labels,
+      command.context.fields
+    )
+  );
+  command.setSession(null);
+}
+
+function changeBindingMonitorIds(command: BindingCommandContext, monitorIds: number[]) {
+  if (command.evidence.kind !== 'ready' || !command.activeSession) return;
+  const available = new Set(command.evidence.monitors.map(monitor => monitor.id));
+  if (monitorIds.some(id => !available.has(id))) return;
+  command.setSession({ ...command.activeSession, monitorIds: [...monitorIds] });
+}
+
+function changeBindingLabels(command: BindingCommandContext, labels: string[]) {
+  if (!isConfirmable(command.evidence) || !command.activeSession) return;
+  const available = new Set(bindingLabels(command.activeSession, command.evidence));
+  if (labels.some(label => !available.has(label))) return;
+  command.setSession({ ...command.activeSession, labels: [...labels] });
 }
 
 function bindingContext(draft: AlertRuleDraft | null, state: AlertRuleMetricTargetState): BindingContext | null {
@@ -98,10 +159,19 @@ function bindingContext(draft: AlertRuleDraft | null, state: AlertRuleMetricTarg
   if (editor.target.kind === 'availability') {
     return { app: editor.app, fields: [], key: `${editor.app}:availability` };
   }
+  return metricBindingContext(editor.app, editor.target, state);
+}
+
+function metricBindingContext(
+  app: string,
+  target: { kind: 'metric'; app: string; metric: string },
+  state: AlertRuleMetricTargetState
+): BindingContext | null {
   if (state.hierarchy.kind !== 'ready') return null;
   try {
-    const fields = metricAlertFieldsForTarget(state.hierarchy.hierarchy, editor.target);
-    return { app: editor.app, fields, key: `${editor.app}:metric:${editor.target.metric}` };
+    const fields = metricAlertFieldsForTarget(state.hierarchy.hierarchy, target);
+    if (!fields) return null;
+    return { app, fields, key: `${app}:metric:${target.metric}` };
   } catch {
     return null;
   }

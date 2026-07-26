@@ -144,6 +144,40 @@ describe('Alert Rule metric binding controller', () => {
     expect(rendered.result.current.state.selectedMonitorIds).toEqual([]);
   });
 
+  it('never exposes an old session while a new context opens, cancels, and confirms', async () => {
+    const updateDraft = vi.fn();
+    const first = targetedDraft('availability', [7], ['team:platform']);
+    const second = targetedDraft('availability', [], [], 'linux');
+    const rendered = renderBinding(first, updateDraft);
+    act(() => rendered.result.current.open());
+    await waitFor(() => expect(rendered.result.current.state.evidence.kind).toBe('ready'));
+    act(() => rendered.result.current.changeMonitorIds([8]));
+
+    rendered.rerender({ draft: second, state: targetState });
+    expect(rendered.result.current.state).toMatchObject({
+      open: false,
+      evidence: { kind: 'idle' },
+      selectedMonitorIds: [],
+      selectedLabels: []
+    });
+    act(() => rendered.result.current.confirm());
+    expect(updateDraft).not.toHaveBeenCalled();
+
+    act(() => rendered.result.current.open());
+    await waitFor(() => expect(rendered.result.current.state.evidence.kind).toBe('ready'));
+    expect(rendered.result.current.state.selectedMonitorIds).toEqual([]);
+    act(() => rendered.result.current.cancel());
+    expect(rendered.result.current.state.open).toBe(false);
+
+    act(() => rendered.result.current.open());
+    await waitFor(() => expect(rendered.result.current.state.evidence.kind).toBe('ready'));
+    act(() => rendered.result.current.confirm());
+    expect(updateDraft).toHaveBeenCalledWith(buildMetricAlertBindingsPatch(second, [], [], []));
+
+    rendered.rerender({ draft: first, state: targetState });
+    expect(rendered.result.current.state.open).toBe(false);
+  });
+
   it('permanently retires a metric session when hierarchy evidence temporarily leaves ready', async () => {
     const draft = targetedDraft('metric');
     const rendered = renderBinding(draft, vi.fn());
@@ -157,6 +191,21 @@ describe('Alert Rule metric binding controller', () => {
     rendered.rerender({ draft, state: targetState });
     expect(rendered.result.current.state.open).toBe(false);
     expect(rendered.result.current.state.selectedMonitorIds).toEqual([]);
+  });
+
+  it('rejects a metric target that is no longer present in ready hierarchy evidence', () => {
+    const draft = targetedDraft('metric');
+    const rendered = renderBinding(draft, vi.fn());
+
+    rendered.rerender({ draft, state: missingMetricTargetState });
+    act(() => rendered.result.current.open());
+
+    expect(rendered.result.current.state).toMatchObject({
+      eligible: false,
+      open: false,
+      evidence: { kind: 'idle' }
+    });
+    expect(monitorApi.loadMonitorsByApp).not.toHaveBeenCalled();
   });
 
   it('cannot open inactive, untargeted, or unsafe raw metric drafts', () => {
@@ -185,18 +234,19 @@ function renderBinding(initialDraft: AlertRuleDraft, updateDraft: (patch: Partia
 function targetedDraft(
   target: 'availability' | 'metric',
   monitorIds: number[] = [],
-  monitorLabels: string[] = []
+  monitorLabels: string[] = [],
+  app = 'springboot3'
 ): AlertRuleDraft {
   const metricTarget =
     target === 'availability'
-      ? { kind: 'availability' as const, app: 'springboot3' }
-      : { kind: 'metric' as const, app: 'springboot3', metric: 'summary' };
+      ? { kind: 'availability' as const, app }
+      : { kind: 'metric' as const, app, metric: 'summary' };
   return {
     ...createAlertRuleDraft(),
-    expr: target === 'availability' ? 'equals(__app__,"springboot3") && equals(__available__,"down")' : '',
+    expr: target === 'availability' ? `equals(__app__,"${app}") && equals(__available__,"down")` : '',
     metricEditor: {
       kind: 'targeted',
-      app: 'springboot3',
+      app,
       target: metricTarget,
       monitorIds,
       monitorLabels,
@@ -269,4 +319,9 @@ const targetState: AlertRuleMetricTargetState = {
 const loadingTargetState: AlertRuleMetricTargetState = {
   apps: { kind: 'ready', apps: [] },
   hierarchy: { kind: 'loading' }
+};
+
+const missingMetricTargetState: AlertRuleMetricTargetState = {
+  apps: { kind: 'ready', apps: [] },
+  hierarchy: { kind: 'ready', hierarchy: { ...hierarchy, children: [] } }
 };

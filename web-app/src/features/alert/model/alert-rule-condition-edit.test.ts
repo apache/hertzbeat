@@ -52,6 +52,17 @@ describe('metric alert condition editing', () => {
     expect(updateMetricAlertConditionValue(numeric, [0], null).items[0]).toMatchObject({ value: null });
   });
 
+  it('resets operator and value shape whenever the condition field or operator type changes', () => {
+    const numeric = updateMetricAlertConditionValue(addMetricAlertCondition(group(), [], fields), [0], 250);
+    const string = changeMetricAlertConditionField(numeric, [0], 'status', fields);
+    const existence = changeMetricAlertConditionOperator(string, [0], 'exists', fields);
+    const numericAgain = changeMetricAlertConditionField(existence, [0], 'responseTime', fields);
+
+    expect(string.items[0]).toMatchObject({ field: 'status', operator: 'equals', value: '' });
+    expect(existence.items[0]).toMatchObject({ field: 'status', operator: 'exists', value: null });
+    expect(numericAgain.items[0]).toMatchObject({ field: 'responseTime', operator: '>', value: 0 });
+  });
+
   it('adds nested groups, changes joins, and removes only the addressed item', () => {
     const root = addMetricAlertConditionGroup(addMetricAlertCondition(group(), [], fields), [], fields);
     const joined = updateMetricAlertConditionGroupJoin(root, [1], 'or');
