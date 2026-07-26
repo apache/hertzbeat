@@ -41,7 +41,10 @@ describe('CollectorPage', () => {
     resource.useCollectorController.mockReturnValue(controller);
     renderPage();
 
-    expect(screen.getByRole('heading', { name: 'Collector management' })).toBeInTheDocument();
+    const page = document.querySelector('[data-hb-operational-page]');
+    const header = document.querySelector('[data-hb-operational-page-header]');
+    expect(page).toContainElement(header);
+    expect(header).toContainElement(screen.getByRole('heading', { name: 'Collector management' }));
     expect(screen.getAllByText('10.0.0.7')).toHaveLength(2);
     fireEvent.change(screen.getByPlaceholderText('Search collectors'), { target: { value: ' west ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));

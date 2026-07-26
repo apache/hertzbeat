@@ -5,8 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Typography } from 'antd';
+import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import { CollectorActionDialog } from '../components/collector-action-dialog';
 import { CollectorIntakeDialog } from '../components/collector-intake-dialog';
@@ -23,15 +25,12 @@ export function CollectorPage() {
   const selected = controller.selected;
   const submitSearch = () => controller.actions.submitName();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('collectors.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('collectors.description')}</Typography.Text>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader title={t('collectors.title')} description={t('collectors.description')} />
       {!controller.intakeEditor && !controller.runtimeEditor && controller.mutationFailure && (
         <MutationFailure failure={controller.mutationFailure} />
       )}
-      <div className={styles.toolbar}>
+      <div className={styles.commandBand}>
         <CollectorToolbar
           name={controller.nameDraft}
           selected={selected}
@@ -56,7 +55,7 @@ export function CollectorPage() {
         onRuntime={name => void controller.actions.openRuntimeConfig(name)}
       />
       <CollectorDialogs controller={controller} />
-    </div>
+    </OperationalPage>
   );
 }
 
