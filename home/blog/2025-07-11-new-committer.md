@@ -3,7 +3,7 @@ title: Welcome HertzBeat's New Community Committer!
 author: bigcyy
 author_title: Yang Chen
 author_url: https://github.com/bigcyy
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +12,8 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+cover_headline: Welcome bigcyy
+cover_kicker: New Committer
 ---
 
 Hello everyone, I'm Yang Chen, currently a graduate student at Chongqing University of Posts and Telecommunications. I'm deeply honored to receive recognition and invitation from the Apache HertzBeat™ community to officially become a project Committer. This marks the true beginning of my open-source journey!

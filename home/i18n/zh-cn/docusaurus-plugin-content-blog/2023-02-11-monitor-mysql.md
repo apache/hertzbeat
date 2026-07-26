@@ -3,8 +3,9 @@ title: 使用开源实时监控工具 HertzBeat 对 Mysql 数据库监控告警�
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
 keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
+cover_headline: Monitoring MySQL
 ---
 
 ## 使用开源实时监控工具 HertzBeat 对 Mysql 数据库监控告警实践，5分钟搞定

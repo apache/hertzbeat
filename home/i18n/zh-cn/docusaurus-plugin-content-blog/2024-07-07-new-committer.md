@@ -3,8 +3,11 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: crossoverJie
 author_title: crossoverJie
 author_url: https://github.com/crossoverjie
-tags: [opensource, practice]
+tags: [community]
+description: crossoverJie 分享如何将可观测性与其他 Apache 社区经验带入 HertzBeat，完善单元测试、采集代码质量和社区实践。
 keywords: [open source monitoring system, alerting system]
+cover_headline: Welcome crossoverJie
+cover_kicker: New Committer
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

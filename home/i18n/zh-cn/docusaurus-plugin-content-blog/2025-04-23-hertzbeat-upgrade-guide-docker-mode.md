@@ -1,3 +1,9 @@
+---
+tags: [tutorials]
+description: 通过备份配置与数据、替换容器镜像和验证迁移结果，安全升级基于 Docker 部署的 HertzBeat 服务。
+cover_headline: Upgrade Guide Docker Mode
+---
+
 # HertzBeat 升级指导-(Docker Mode)
 
 ## Docker 方式升级 - Mysql 数据库
