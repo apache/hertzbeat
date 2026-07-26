@@ -9,16 +9,12 @@ import {
   type AlertRuleKind,
   type AlertRuleType
 } from './alert-rule-types';
-
-type AlertRuleWritableSnapshot = {
-  type: AlertRuleType | null;
-  datasource: AlertRuleDatasource | null;
-  expr: string | null;
-  period: number | null;
-  times: number | null;
-  labels: Record<string, string> | null;
-  template: string | null;
-};
+import type { AlertRuleWritableSnapshot } from './alert-rule-draft-snapshot';
+import {
+  createMetricAlertEditorDraft,
+  metricAlertEditorFromExpression,
+  type MetricAlertEditorDraft
+} from './alert-rule-metric-draft';
 
 export type AlertRuleDraft = {
   id?: number;
@@ -34,11 +30,9 @@ export type AlertRuleDraft = {
   times: number | null;
   /** Transient editor evidence; explicit payload builders never serialize it. */
   strategyChanged?: boolean;
+  metricEditor?: MetricAlertEditorDraft;
   persisted?: AlertRuleWritableSnapshot;
 };
-
-export const periodicLogStarterExpression =
-  "SELECT count(*) AS errorCount FROM hertzbeat_logs WHERE time_unix_nano >= NOW() - INTERVAL '30 second' AND severity_text = 'ERROR' HAVING count(*) > 2";
 
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {
@@ -51,7 +45,8 @@ export function createAlertRuleDraft(): AlertRuleDraft {
     annotations: {},
     enable: true,
     period: 300,
-    times: 3
+    times: 3,
+    metricEditor: createMetricAlertEditorDraft()
   };
 }
 
@@ -112,7 +107,8 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
 }
 
 export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
-  const [kind, dataType] = (rule.type ?? 'realtime_metric').split('_') as [AlertRuleKind, AlertRuleDataType];
+  const resolvedType = rule.type ?? 'realtime_metric';
+  const [kind, dataType] = resolvedType.split('_') as [AlertRuleKind, AlertRuleDataType];
   return {
     id: rule.id,
     name: rule.name,
@@ -127,6 +123,7 @@ export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
     enable: rule.enable,
     period: rule.period,
     times: rule.times,
+    metricEditor: resolvedType === 'realtime_metric' ? metricAlertEditorFromExpression(rule.expr ?? '') : undefined,
     persisted: {
       type: rule.type,
       datasource: rule.datasource,
@@ -136,25 +133,6 @@ export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
       labels: cloneNullableMap(rule.labels),
       template: rule.template
     }
-  };
-}
-
-/**
- * Retires expressions when the operator crosses evaluation grammars. The
- * previous persisted strategy can no longer justify nullable or stale input.
- */
-export function buildAlertRuleStrategyPatch(
-  draft: AlertRuleDraft,
-  kind: AlertRuleKind,
-  dataType: AlertRuleDataType
-): Partial<AlertRuleDraft> {
-  if (draft.kind === kind && draft.dataType === dataType) return {};
-  return {
-    kind,
-    dataType,
-    expr: kind === 'periodic' && dataType === 'log' ? periodicLogStarterExpression : '',
-    period: kind === 'periodic' ? (draft.period ?? 300) : draft.period,
-    strategyChanged: true
   };
 }
 

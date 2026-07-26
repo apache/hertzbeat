@@ -14,6 +14,7 @@ import {
   createAlertRuleDraft,
   firstSupportedPeriodicDataType,
   isAlertRuleStrategySupported,
+  synchronizeMetricAlertDraftPatch,
   type AlertRuleDataType,
   type AlertRuleDraft,
   type AlertRuleKind
@@ -131,7 +132,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
 
 function updatedDraftState(draft: AlertRuleDraft, patch: Partial<AlertRuleDraft>): Partial<AlertRuleRouteState> {
   return {
-    draft: { ...draft, ...patch },
+    draft: { ...draft, ...synchronizeMetricAlertDraftPatch(draft, patch) },
     preview: { kind: 'idle' },
     saveFailure: undefined,
     recovery: undefined

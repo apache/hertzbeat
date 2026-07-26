@@ -33,7 +33,7 @@ export function useAlertRuleMetricTargetController(draft: AlertRuleDraft | null)
   const { i18n } = useTranslation();
   const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const enabled = draft?.kind === 'realtime' && draft.dataType === 'metric';
-  const selectedApp = enabled ? selectedMetricApp(draft.expr) : '';
+  const selectedApp = enabled ? selectedMetricApp(draft) : '';
   const apps = useQuery({
     queryKey: alertRuleQueryKeys.targetApps(locale),
     queryFn: ({ signal }) => loadVisibleApplications(locale, signal),
@@ -63,8 +63,9 @@ async function loadVisibleApplications(locale: string, signal: AbortSignal) {
   return monitorNavigationApps(await loadMonitorNavigationApps(locale, signal));
 }
 
-function selectedMetricApp(expression: string) {
-  return parseRealtimeMetricExpression(expression)?.target.app ?? '';
+function selectedMetricApp(draft: AlertRuleDraft) {
+  if (draft.metricEditor?.kind === 'targeted') return draft.metricEditor.app;
+  return parseRealtimeMetricExpression(draft.expr)?.target.app ?? '';
 }
 
 function resolveApplicationsState(

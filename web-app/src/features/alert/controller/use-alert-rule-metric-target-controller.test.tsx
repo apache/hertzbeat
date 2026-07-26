@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 import { MonitorContractError, type MonitorAppHierarchyNode } from '@/features/monitor';
 
-import { createAlertRuleDraft } from '../model/alert-rule-model';
+import { createAlertRuleDraft, synchronizeMetricAlertDraftPatch } from '../model/alert-rule-model';
 import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 
 const monitor = vi.hoisted(() => ({
@@ -113,11 +113,14 @@ function renderTarget(selectedApp: string) {
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   return renderHook(
-    ({ selectedApp: app }) =>
-      useAlertRuleMetricTargetController({
-        ...createAlertRuleDraft(),
-        expr: app ? `equals(__app__,"${app}") && equals(__metrics__,"summary") && responseTime > 100` : ''
-      }),
+    ({ selectedApp: app }) => {
+      const draft = createAlertRuleDraft();
+      const expr = app ? `equals(__app__,"${app}") && equals(__metrics__,"summary") && responseTime > 100` : '';
+      return useAlertRuleMetricTargetController({
+        ...draft,
+        ...synchronizeMetricAlertDraftPatch(draft, { expr })
+      });
+    },
     { initialProps: { selectedApp }, wrapper }
   );
 }
