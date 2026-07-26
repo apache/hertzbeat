@@ -60,6 +60,10 @@ const safeFieldPattern = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 const maximumGroupDepth = 3;
 const maximumItemsPerGroup = 5;
 
+export function isMetricAlertFieldIdentifier(value: string) {
+  return safeFieldPattern.test(value);
+}
+
 export function metricAlertOperatorsForType(type: number): readonly MetricAlertConditionOperator[] {
   if (type === metricAlertFieldTypes.number || type === metricAlertFieldTypes.time)
     return [...numericOperators, ...existenceOperators];
@@ -106,7 +110,7 @@ export function parseMetricAlertCondition(
 function metricFieldMap(fields: MetricAlertField[]) {
   const result = new Map<string, MetricAlertField>();
   for (const field of fields) {
-    if (!safeFieldPattern.test(field.value) || !supportedFieldTypes.has(field.type) || result.has(field.value))
+    if (!isMetricAlertFieldIdentifier(field.value) || !supportedFieldTypes.has(field.type) || result.has(field.value))
       throw contract('metric field catalog is invalid');
     result.set(field.value, field);
   }
