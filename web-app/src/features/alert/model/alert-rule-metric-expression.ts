@@ -21,6 +21,8 @@ export type RealtimeMetricExpressionContext = {
   condition: string;
 };
 
+export type RealtimeMetricBindings = Pick<RealtimeMetricExpressionContext, 'monitorIds' | 'monitorLabels'>;
+
 const reservedContextPattern = /__(?:app|metrics|available|instance|labels)__/;
 const appClausePattern = /^equals\(\s*__app__\s*,\s*"([^"\\\r\n]+)"\s*\)$/;
 const metricClausePattern = /^equals\(\s*__metrics__\s*,\s*"([^"\\\r\n]+)"\s*\)$/;
@@ -47,8 +49,7 @@ export function buildRealtimeMetricExpression(context: RealtimeMetricExpressionC
     throw contract('metric target requires a threshold');
   }
 
-  const monitorIds = uniqueMonitorIds(context.monitorIds);
-  const monitorLabels = uniqueReservedValues(context.monitorLabels, 'monitor label');
+  const { monitorIds, monitorLabels } = normalizeRealtimeMetricBindings(context.monitorIds, context.monitorLabels);
   const clauses = [
     ...target,
     bindingClause(monitorIds.map(id => `equals(__instance__, "${id}")`)),
@@ -58,6 +59,13 @@ export function buildRealtimeMetricExpression(context: RealtimeMetricExpressionC
   const expression = clauses.join(' && ');
   if (expression.length > maximumAlertExpressionLength) throw contract('realtime metric expression is too long');
   return expression;
+}
+
+export function normalizeRealtimeMetricBindings(monitorIds: number[], monitorLabels: string[]): RealtimeMetricBindings {
+  return {
+    monitorIds: uniqueMonitorIds(monitorIds),
+    monitorLabels: uniqueReservedValues(monitorLabels, 'monitor label')
+  };
 }
 
 /**

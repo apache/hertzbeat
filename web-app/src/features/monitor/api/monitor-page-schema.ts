@@ -54,6 +54,18 @@ const monitorPageSchema = z.object({
 
 type MonitorListItemWire = z.output<typeof monitorListItemSchema>;
 
+export function parseMonitorAppList(value: unknown, requestedApp: string): Monitor[] {
+  const app = requestedApp.trim();
+  if (!app) throw new MonitorContractError('Monitor application is required');
+  const result = z.array(monitorListItemSchema).safeParse(value);
+  if (!result.success) throw new MonitorContractError();
+  const ids = new Set(result.data.map(item => item.id));
+  if (ids.size !== result.data.length || result.data.some(item => item.app !== app)) {
+    throw new MonitorContractError('Monitor application evidence is inconsistent with the request');
+  }
+  return result.data.map(mapMonitorListItem);
+}
+
 export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPage {
   const result = monitorPageSchema.safeParse(value);
   if (!result.success) throw new MonitorContractError();

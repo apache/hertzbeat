@@ -11,6 +11,7 @@ import {
   alertRuleDraftFromDetail,
   buildMetricAlertApplicationPatch,
   buildMetricAlertAuthoringModePatch,
+  buildMetricAlertBindingsPatch,
   buildMetricAlertExpertConditionPatch,
   buildMetricAlertStructuredConditionPatch,
   buildMetricAlertTargetPatch,
@@ -197,6 +198,60 @@ describe('metric alert draft transitions', () => {
     expect(buildMetricAlertStructuredConditionPatch(draft, condition, fields)).toMatchObject({
       expr: '',
       metricEditor: { authoring: { mode: 'structured', condition } }
+    });
+  });
+
+  it('composes canonical monitor and label bindings without losing the threshold owner', () => {
+    const draft = alertRuleDraftFromDetail(
+      rule('equals(__app__,"springboot3") && equals(__metrics__,"summary") && responseTime > 100')
+    );
+
+    expect(
+      buildMetricAlertBindingsPatch(draft, [9, 7, 9], ['team:ops', ' env:prod ', 'team:ops'], fields)
+    ).toMatchObject({
+      expr:
+        'equals(__app__,"springboot3") && equals(__metrics__,"summary") && ' +
+        '(equals(__instance__, "7") or equals(__instance__, "9")) && ' +
+        '(contains(__labels__, "env:prod") or contains(__labels__, "team:ops")) && responseTime > 100',
+      metricEditor: {
+        monitorIds: [7, 9],
+        monitorLabels: ['env:prod', 'team:ops'],
+        authoring: { mode: 'expert', condition: 'responseTime > 100' }
+      }
+    });
+  });
+
+  it('retains incomplete guided bindings transiently and rejects unsafe identities', () => {
+    const appDraft = {
+      ...createAlertRuleDraft(),
+      ...buildMetricAlertApplicationPatch(createAlertRuleDraft(), 'springboot3')
+    };
+    const targetDraft = {
+      ...appDraft,
+      ...buildMetricAlertTargetPatch(appDraft, { kind: 'metric', app: 'springboot3', metric: 'summary' })
+    };
+    expect(buildMetricAlertBindingsPatch(targetDraft, [7], ['team:ops'], fields)).toMatchObject({
+      expr: '',
+      metricEditor: { monitorIds: [7], monitorLabels: ['team:ops'], authoring: { mode: 'structured' } }
+    });
+    expect(() => buildMetricAlertBindingsPatch(targetDraft, [0], [], fields)).toThrow();
+    expect(() => buildMetricAlertBindingsPatch(targetDraft, [], ['bad\"label'], fields)).toThrow();
+  });
+
+  it('composes availability bindings without inventing a threshold', () => {
+    const appDraft = {
+      ...createAlertRuleDraft(),
+      ...buildMetricAlertApplicationPatch(createAlertRuleDraft(), 'springboot3')
+    };
+    const availabilityDraft = {
+      ...appDraft,
+      ...buildMetricAlertTargetPatch(appDraft, { kind: 'availability', app: 'springboot3' })
+    };
+
+    expect(buildMetricAlertBindingsPatch(availabilityDraft, [7], ['team:ops'], fields)).toMatchObject({
+      expr:
+        'equals(__app__,"springboot3") && equals(__available__,"down") && ' +
+        'equals(__instance__, "7") && contains(__labels__, "team:ops")'
     });
   });
 
