@@ -1127,6 +1127,18 @@
     "manageTokens": "API トークンを管理",
     "senderTitle": "送信元を設定する",
     "senderDescription": "{{source}} が必要なヘッダーとネイティブアラートペイロードを送信するよう設定します。",
+    "configuration": {
+      "webhook": "送信元の HTTP クライアントで、表示されたエンドポイントへアラート JSON を POST し、Content-Type: application/json と必須の Authorization ヘッダーを設定します。",
+      "prometheus": "prometheus.yml の alerting.alertmanagers.static_configs.targets に表示されたエンドポイントのホストとポートを入力し、同じ scheme と必須の Bearer 認証を設定して Prometheus を再読み込みします。Prometheus は /api/v2/alerts へ自動的に POST します。",
+      "alertmanager": "alertmanager.yml の receivers.webhook_configs に表示されたエンドポイントを追加し、send_resolved を有効化して http_config に必須の Bearer 認証を設定し、Alertmanager を再起動します。",
+      "skywalking": "alarm-settings.yml の hooks.webhook.default.urls に表示されたエンドポイントを追加し、SkyWalking OAP Server を再読み込みまたは再起動します。",
+      "uptime-kuma": "「Settings > Notifications > Set Notifications」で Webhook を選び、表示されたエンドポイントを Post URL に設定して application/json プリセットを選択し、保存して監視対象へ関連付けます。",
+      "zabbix": "「Administration > Media types」で Webhook を作成し、表示されたエンドポイントを URL パラメーターにしてスクリプトからアラート JSON を POST します。そのメディアタイプをユーザーとトリガーアクションへ関連付けます。",
+      "tencent": "Tencent Cloud Monitor の「Alarm Management > Notification Templates」でテンプレートを作成し、API Callback に表示されたエンドポイントを設定してアラートポリシーへ関連付けます。",
+      "alibabacloud-sls": "Alibaba Cloud SLS の「Alerts > Notification objects > Webhook integration」で Universal Webhook を作成し、POST と表示されたエンドポイントを設定して通知またはアクションポリシーから選択します。",
+      "huaweicloud-ces": "Huawei Cloud Eye で JSON 通知テンプレートと表示されたエンドポイントを使う HTTP/HTTPS 受信者を作成し、受信者を通知グループとポリシーへ追加して購読要求を確認します。",
+      "volcengine": "Volcengine Cloud Monitor の Callback Address Management で表示されたエンドポイントを使う General Address Callback を作成し、「Manual Notification > Alert Callback」から有効なアラートポリシーへ関連付けます。"
+    },
     "gatewayWarning": "送信元が Authorization ヘッダーを設定できない場合は、管理者が管理する信頼済みゲートウェイを使用してください。トークンを URL に含めないでください。",
     "verifyTitle": "配信を確認する",
     "healthDisclaimer": "この手順の表示だけでは連携の正常性は証明されません。制御されたアラートを送信し、HertzBeat で受信を確認してください。",

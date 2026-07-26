@@ -1115,6 +1115,18 @@
     "manageTokens": "管理 API 令牌",
     "senderTitle": "配置发送方",
     "senderDescription": "配置 {{source}}，使用必需请求头将其原生告警负载发送到端点。",
+    "configuration": {
+      "webhook": "在发送方的 HTTP 客户端中，将告警 JSON 以 POST 方式发送到页面显示的端点，并设置 Content-Type: application/json 和必需的 Authorization 请求头。",
+      "prometheus": "在 prometheus.yml 的 alerting.alertmanagers.static_configs.targets 中填写页面端点的主机和端口，设置一致的 scheme 与必需的 Bearer 认证，然后重新加载 Prometheus。Prometheus 会自动 POST 到 /api/v2/alerts。",
+      "alertmanager": "在 alertmanager.yml 的 receivers.webhook_configs 中填写页面显示的端点，启用 send_resolved，在 http_config 中配置必需的 Bearer 认证，然后重启 Alertmanager。",
+      "skywalking": "在 alarm-settings.yml 的 hooks.webhook.default.urls 中填写页面显示的端点，然后重新加载或重启 SkyWalking OAP Server。",
+      "uptime-kuma": "打开“设置 > 通知 > 设置通知”，选择 Webhook，将页面显示的端点填入 Post URL，选择 application/json 预设，保存并绑定到监控项。",
+      "zabbix": "在“管理 > 媒介类型”中创建 Webhook，将页面显示的端点作为 URL 参数，并用脚本 POST 告警 JSON；随后把该媒介绑定到用户和触发器动作。",
+      "tencent": "在腾讯云监控的“告警管理 > 通知模板”中创建模板，将 API 回调设置为页面显示的端点，并把模板绑定到告警策略。",
+      "alibabacloud-sls": "在阿里云 SLS 的“告警 > 通知对象 > Webhook 集成”中创建通用 Webhook，选择 POST 并填写页面显示的端点，然后在通知或行动策略中选择它。",
+      "huaweicloud-ces": "在华为云 Cloud Eye 中创建 JSON 通知模板和使用页面显示端点的 HTTP/HTTPS 接收人，将接收人加入通知组和策略，并确认订阅请求。",
+      "volcengine": "在火山引擎云监控的回调地址管理中，用页面显示的端点创建“通用地址回调”，再通过“手动通知 > 告警回调”绑定到已启用的告警策略。"
+    },
     "gatewayWarning": "如果发送方无法设置 Authorization 请求头，请使用管理员维护的可信网关。切勿将令牌放入 URL。",
     "verifyTitle": "验证投递",
     "healthDisclaimer": "显示这些说明并不能证明集成健康。请发送受控告警并确认 HertzBeat 已接收。",

@@ -1135,6 +1135,18 @@
     "manageTokens": "Gerenciar tokens de API",
     "senderTitle": "Configure o emissor",
     "senderDescription": "Configure {{source}} para enviar sua carga nativa de alerta ao endpoint com o cabeçalho obrigatório.",
+    "configuration": {
+      "webhook": "No cliente HTTP do emissor, envie o JSON do alerta por POST ao endpoint exibido com Content-Type: application/json e o cabeçalho Authorization obrigatório.",
+      "prometheus": "No prometheus.yml, em alerting.alertmanagers.static_configs.targets, informe o host e a porta do endpoint exibido, defina o mesmo scheme e a autenticação Bearer obrigatória e recarregue o Prometheus. O Prometheus envia POST para /api/v2/alerts automaticamente.",
+      "alertmanager": "No alertmanager.yml, adicione o endpoint exibido em receivers.webhook_configs, habilite send_resolved, configure a autenticação Bearer obrigatória em http_config e reinicie o Alertmanager.",
+      "skywalking": "No alarm-settings.yml, adicione o endpoint exibido em hooks.webhook.default.urls e recarregue ou reinicie o servidor SkyWalking OAP.",
+      "uptime-kuma": "Abra Settings > Notifications > Set Notifications, escolha Webhook, use o endpoint exibido como Post URL com a predefinição application/json, salve e associe ao monitor.",
+      "zabbix": "Em Administration > Media types, crie um Webhook cujo parâmetro URL seja o endpoint exibido e cujo script envie o JSON do alerta por POST; associe o tipo de mídia a um usuário e a uma ação de gatilho.",
+      "tencent": "No Tencent Cloud Monitor, crie um modelo em Alarm Management > Notification Templates, defina o API Callback como o endpoint exibido e associe o modelo à política de alerta.",
+      "alibabacloud-sls": "No Alibaba Cloud SLS, abra Alerts > Notification objects > Webhook integration, crie um Universal Webhook com POST e o endpoint exibido e selecione-o na política de notificação ou ação.",
+      "huaweicloud-ces": "No Huawei Cloud Eye, crie um modelo de notificação JSON e um destinatário HTTP/HTTPS com o endpoint exibido, adicione-o a um grupo e política de notificação e confirme a solicitação de assinatura.",
+      "volcengine": "No Callback Address Management do Volcengine Cloud Monitor, crie um General Address Callback com o endpoint exibido e associe-o a uma política habilitada em Manual Notification > Alert Callback."
+    },
     "gatewayWarning": "Se o emissor não puder definir o cabeçalho Authorization, use um gateway confiável gerenciado por um administrador. Nunca coloque um token na URL.",
     "verifyTitle": "Verifique a entrega",
     "healthDisclaimer": "A exibição destas instruções não comprova que a integração está saudável. Envie um alerta controlado e confirme o recebimento no HertzBeat.",

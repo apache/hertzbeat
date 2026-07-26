@@ -64,6 +64,7 @@ export function IntegrationGuide(props: {
         <Typography.Paragraph>
           {props.t('alertIntegrations.senderDescription', { source: props.t(props.source.nameKey) })}
         </Typography.Paragraph>
+        <Typography.Paragraph>{props.t(props.source.configurationKey)}</Typography.Paragraph>
         <Alert type="warning" showIcon message={props.t('alertIntegrations.gatewayWarning')} />
       </GuideStep>
       <GuideStep number={4} title={props.t('alertIntegrations.verifyTitle')}>

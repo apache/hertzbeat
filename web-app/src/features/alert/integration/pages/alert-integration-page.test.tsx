@@ -36,11 +36,14 @@ describe('AlertIntegrationPage', () => {
 
   it('switches sources through accessible controls', async () => {
     renderPage('/alerts/integrations/webhook');
+    expect(screen.getByText('alertIntegrations.configuration.webhook')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'alertIntegrations.sources.prometheus' }));
 
-    await waitFor(() =>
-      expect(screen.getByText(`${window.location.origin}/api/alerts/report/prometheus`)).toBeInTheDocument()
-    );
+    await waitFor(() => {
+      expect(screen.getByText(`${window.location.origin}/api/v2/alerts`)).toBeInTheDocument();
+      expect(screen.getByText('alertIntegrations.configuration.prometheus')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('alertIntegrations.configuration.webhook')).not.toBeInTheDocument();
   });
 
   it('renders the normal 404 surface for an unknown source', () => {

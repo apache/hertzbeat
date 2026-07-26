@@ -1134,6 +1134,18 @@
     "manageTokens": "Manage API tokens",
     "senderTitle": "Configure the sender",
     "senderDescription": "Configure {{source}} to send its native alert payload to the endpoint with the required header.",
+    "configuration": {
+      "webhook": "In the sender's HTTP client, POST its alert JSON to the displayed endpoint with Content-Type: application/json and the required Authorization header.",
+      "prometheus": "In prometheus.yml under alerting.alertmanagers.static_configs.targets, enter the host and port from the displayed endpoint, set the matching scheme and required bearer authorization, then reload Prometheus. Prometheus POSTs to /api/v2/alerts automatically.",
+      "alertmanager": "In alertmanager.yml, add the displayed endpoint to receivers.webhook_configs, enable send_resolved, configure the required bearer authorization under http_config, and restart Alertmanager.",
+      "skywalking": "In alarm-settings.yml, add the displayed endpoint under hooks.webhook.default.urls, then reload or restart the SkyWalking OAP server.",
+      "uptime-kuma": "Open Settings > Notifications > Set Notifications, choose Webhook, use the displayed endpoint as the Post URL with the application/json preset, save it, and bind it to the monitor.",
+      "zabbix": "Under Administration > Media types, create a Webhook media type whose URL parameter is the displayed endpoint and whose script POSTs the alert JSON; then bind that media type to a user and trigger action.",
+      "tencent": "In Tencent Cloud Monitor, create a notification template under Alarm Management > Notification Templates, set its API Callback to the displayed endpoint, and bind the template to the alert policy.",
+      "alibabacloud-sls": "In Alibaba Cloud SLS, open Alerts > Notification objects > Webhook integration, create a Universal Webhook using POST and the displayed endpoint, then select it from the notification or action policy.",
+      "huaweicloud-ces": "In Huawei Cloud Eye, create a JSON notification template and an HTTP/HTTPS recipient using the displayed endpoint, add the recipient to a notification group and policy, and confirm the subscription request.",
+      "volcengine": "In Volcengine Cloud Monitor Callback Address Management, create a General Address Callback with the displayed endpoint, then bind it to an enabled alert policy through Manual Notification > Alert Callback."
+    },
     "gatewayWarning": "If the sender cannot set the Authorization header, use an administrator-managed trusted gateway. Never place a token in the URL.",
     "verifyTitle": "Verify delivery",
     "healthDisclaimer": "Rendering these instructions does not prove the integration is healthy. Send a controlled alert and verify that HertzBeat receives it.",

@@ -7,7 +7,7 @@
 
 export const alertIntegrationSources = [
   source('webhook', 'default', '/api/alerts/report', '/assets/logo.svg'),
-  reportSource('prometheus', '/assets/img/integration/prometheus.svg'),
+  source('prometheus', 'prometheus', '/api/v2/alerts', '/assets/img/integration/prometheus.svg'),
   reportSource('alertmanager', '/assets/img/integration/prometheus.svg'),
   reportSource('skywalking', '/assets/img/integration/skywalking.svg'),
   reportSource('uptime-kuma', '/assets/img/integration/uptime-kuma.svg'),
@@ -50,5 +50,12 @@ function source<const Id extends string, const Backend extends string>(
   ingressPath: string,
   iconPath: string
 ) {
-  return { id, backendSource, ingressPath, iconPath, nameKey: `alertIntegrations.sources.${id}` as const };
+  return {
+    id,
+    backendSource,
+    ingressPath,
+    iconPath,
+    nameKey: `alertIntegrations.sources.${id}` as const,
+    configurationKey: `alertIntegrations.configuration.${id}` as const
+  };
 }
