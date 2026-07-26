@@ -183,6 +183,73 @@ button.timePolicy:hover {
   background: var(--hb-bg-hover) !important;
 }
 
+.alertPopover {
+  width: min(360px, calc(100vw - 32px));
+}
+
+.alertPopover > button:last-child {
+  margin-top: 6px;
+  border-top: 1px solid var(--hb-border-subtle);
+  border-radius: 0;
+}
+
+.alertPopoverState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 96px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.alertNotificationList {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.alertNotificationItem {
+  display: grid;
+  gap: 3px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.alertNotificationItem:last-child {
+  border-bottom: 0;
+}
+
+.alertNotificationItem > span,
+.alertNotificationItem > small {
+  overflow: hidden;
+  color: var(--hb-text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alertNotificationTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.alertNotificationTitle > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hb-text-primary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alertNotificationTitle :global(.ant-tag) {
+  flex: none;
+  margin-inline-end: 0;
+}
+
 .accountButton {
   display: flex;
   align-items: center;

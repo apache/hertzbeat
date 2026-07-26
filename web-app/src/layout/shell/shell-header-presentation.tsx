@@ -6,7 +6,6 @@
  */
 
 import {
-  BellOutlined,
   BgColorsOutlined,
   GlobalOutlined,
   LockOutlined,
@@ -23,8 +22,10 @@ import type {
   RuntimeStatusPresentation,
   RuntimeStatusViewModel
 } from '@/features/runtime-status';
+import type { ShellAlertNotificationState } from '@/features/alert/shell';
 
 import styles from './hertzbeat-shell.module.css';
+import { ShellAlertNotifications } from './shell-alert-notifications';
 
 export function ShellStatusSpine({
   locale,
@@ -78,6 +79,7 @@ export function ShellStatusSpine({
 
 type ShellHeaderActionsProps = {
   accountName: string;
+  alertNotifications: ShellAlertNotificationState;
   loggingOut: boolean;
   showRefresh: boolean;
   t: TFunction;
@@ -91,6 +93,7 @@ type ShellHeaderActionsProps = {
 
 export function ShellHeaderActions({
   accountName,
+  alertNotifications,
   loggingOut,
   showRefresh,
   t,
@@ -104,7 +107,7 @@ export function ShellHeaderActions({
   return (
     <div className={styles.headerActions}>
       {showRefresh && <HeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={onRefresh} />}
-      <HeaderAction label={t('shell.actions.alerts')} icon={<BellOutlined />} onClick={onOpenAlerts} />
+      <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
       <HeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={onToggleTheme} />
       <HeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={onChangeLanguage} />
       <Dropdown

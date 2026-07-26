@@ -20,6 +20,7 @@ import type { AlertQuery } from '../model/alert-model';
 const rootKey = ['alert-center'] as const;
 
 export const alertCenterQueryKeys = {
+  root: () => rootKey,
   summary: () => [...rootKey, 'summary'] as const,
   groups: (query: AlertQuery) =>
     [

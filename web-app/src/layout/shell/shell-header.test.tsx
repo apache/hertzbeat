@@ -46,6 +46,12 @@ vi.mock('@/shared/time', async () => ({
   ...(await vi.importActual<typeof import('@/shared/time')>('@/shared/time')),
   useSharedTime: () => ({ headerMode: 'hidden', requestRefresh: vi.fn() })
 }));
+vi.mock('@/features/alert/shell', () => ({
+  useShellAlertNotificationController: () => ({
+    count: { kind: 'ready', total: 0 },
+    list: { kind: 'empty' }
+  })
+}));
 
 describe('ShellHeader logout', () => {
   beforeAll(async () => {

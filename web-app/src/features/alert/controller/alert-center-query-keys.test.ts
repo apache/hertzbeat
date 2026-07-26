@@ -45,6 +45,7 @@ describe('Alert Center Query Keys', () => {
       2,
       15
     ]);
+    expect(alertCenterQueryKeys.root()).toEqual(['alert-center']);
     expect(alertCenterQueryKeys.summary()).toEqual(['alert-center', 'summary']);
   });
 });

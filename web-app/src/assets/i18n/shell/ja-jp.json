@@ -48,9 +48,18 @@
     "actions": {
       "refresh": "現在のデータを更新",
       "alerts": "アラートを開く",
+      "alertsWithCount": "アラートを開く、アクティブ {{count}} 件",
       "theme": "テーマを切り替える",
       "language": "言語を切り替える",
       "user": "ユーザー操作"
+    },
+    "alerts": {
+      "title": "アクティブアラート",
+      "loading": "最近のアラートを読み込み中",
+      "empty": "アクティブなアラートはありません",
+      "unavailable": "最近のアラートを利用できません",
+      "error": "最近のアラートを読み取れませんでした",
+      "openCenter": "アラートセンターを開く"
     },
     "capability": {
       "supported": "利用可能",

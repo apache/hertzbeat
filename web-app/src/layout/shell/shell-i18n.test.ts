@@ -32,6 +32,15 @@ describe('shell locale contract', () => {
     expect(expected).toContain('reason.collector_status_unavailable');
     expect(expected).toContain('state.degraded');
   });
+
+  it('keeps shell alert notification copy aligned across all five locales', () => {
+    const expected = flatten({ actions: en.shell.actions, alerts: en.shell.alerts });
+    for (const locale of [ja, pt, zhCn, zhTw]) {
+      expect(flatten({ actions: locale.shell.actions, alerts: locale.shell.alerts })).toEqual(expected);
+    }
+    expect(expected).toContain('actions.alertsWithCount');
+    expect(expected).toContain('alerts.unavailable');
+  });
 });
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {

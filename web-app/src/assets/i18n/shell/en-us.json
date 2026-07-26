@@ -48,9 +48,18 @@
     "actions": {
       "refresh": "Refresh active data",
       "alerts": "Open alerts",
+      "alertsWithCount": "Open alerts, {{count}} active",
       "theme": "Switch theme",
       "language": "Switch language",
       "user": "User actions"
+    },
+    "alerts": {
+      "title": "Active alerts",
+      "loading": "Loading recent alerts",
+      "empty": "No active alerts",
+      "unavailable": "Recent alerts are unavailable",
+      "error": "Recent alerts could not be read",
+      "openCenter": "Open Alert Center"
     },
     "capability": {
       "supported": "Available",

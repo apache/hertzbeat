@@ -48,9 +48,18 @@
     "actions": {
       "refresh": "刷新当前数据",
       "alerts": "打开告警",
+      "alertsWithCount": "打开告警，当前 {{count}} 条",
       "theme": "切换主题",
       "language": "切换语言",
       "user": "用户操作"
+    },
+    "alerts": {
+      "title": "活动告警",
+      "loading": "正在加载最近告警",
+      "empty": "当前没有活动告警",
+      "unavailable": "最近告警暂不可用",
+      "error": "无法读取最近告警",
+      "openCenter": "进入告警中心"
     },
     "capability": {
       "supported": "可用",

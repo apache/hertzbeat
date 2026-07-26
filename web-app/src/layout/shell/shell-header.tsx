@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
@@ -24,6 +25,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { session } = useSession();
   const location = useLocation();
   const actions = useShellHeaderActionController();
+  const alertNotifications = useShellAlertNotificationController();
   const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';
 
@@ -42,6 +44,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
         <ShellTimeControl time={actions.sharedTime} t={t} locale={i18n.resolvedLanguage} />
         <ShellHeaderActions
           accountName={accountName}
+          alertNotifications={alertNotifications}
           loggingOut={actions.loggingOut}
           showRefresh={actions.sharedTime.policy !== 'unknown'}
           t={t}

@@ -139,6 +139,7 @@ describe('ShellHeaderActions account menu', () => {
     render(
       <ShellHeaderActions
         accountName="operator"
+        alertNotifications={{ count: { kind: 'ready', total: 0 }, list: { kind: 'empty' } }}
         loggingOut={false}
         showRefresh={false}
         t={t}

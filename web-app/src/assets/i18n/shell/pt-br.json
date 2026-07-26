@@ -48,9 +48,18 @@
     "actions": {
       "refresh": "Atualizar dados ativos",
       "alerts": "Abrir alertas",
+      "alertsWithCount": "Abrir alertas, {{count}} ativos",
       "theme": "Alternar tema",
       "language": "Alternar idioma",
       "user": "Ações do usuário"
+    },
+    "alerts": {
+      "title": "Alertas ativos",
+      "loading": "Carregando alertas recentes",
+      "empty": "Nenhum alerta ativo",
+      "unavailable": "Alertas recentes estão indisponíveis",
+      "error": "Não foi possível ler os alertas recentes",
+      "openCenter": "Abrir a Central de Alertas"
     },
     "capability": {
       "supported": "Disponível",

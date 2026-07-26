@@ -11,7 +11,6 @@ import { useCallback } from 'react';
 import { loadAlertGroups, loadAlertSummary } from '../api/alert-api';
 import type { AlertQuery } from '../model/alert-model';
 import { alertCenterQueryKeys } from './alert-center-query-keys';
-import { useAlertCenterRealtimeRefresh } from './use-alert-center-realtime-refresh';
 
 export function useAlertCenterData(query: AlertQuery) {
   const summary = useQuery({
@@ -26,6 +25,5 @@ export function useAlertCenterData(query: AlertQuery) {
   const { refetch: refetchSummary } = summary;
   const refresh = useCallback(() => Promise.all([refetchSummary(), refetchList()]), [refetchList, refetchSummary]);
 
-  useAlertCenterRealtimeRefresh(refresh);
   return { list, summary, refetchList, refetchSummary, refresh };
 }
