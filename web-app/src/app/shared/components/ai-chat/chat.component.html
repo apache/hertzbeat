@@ -234,29 +234,15 @@
                 <div class="provider-menu-label">{{ 'ai.chat.config.list.title' | i18n }}</div>
 
                 <div class="provider-option-row" [class.active]="activeProviderUid === null">
-                  <button
-                    type="button"
-                    class="provider-option"
-                    [disabled]="providerSwitching"
-                    (click)="switchModelProvider(null)"
-                  >
+                  <button type="button" class="provider-option" [disabled]="providerSwitching" (click)="switchModelProvider(null)">
                     <span class="provider-list-copy">
                       <strong>{{ 'ai.chat.config.provider.default' | i18n }}</strong>
                     </span>
                   </button>
                 </div>
 
-                <div
-                  *ngFor="let config of providerConfigs"
-                  class="provider-option-row"
-                  [class.active]="activeProviderUid === config.uid"
-                >
-                  <button
-                    type="button"
-                    class="provider-option"
-                    [disabled]="providerSwitching"
-                    (click)="switchModelProvider(config.uid)"
-                  >
+                <div *ngFor="let config of providerConfigs" class="provider-option-row" [class.active]="activeProviderUid === config.uid">
+                  <button type="button" class="provider-option" [disabled]="providerSwitching" (click)="switchModelProvider(config.uid)">
                     <span class="provider-list-copy">
                       <strong>{{ providerConfigLabel(config) }}</strong>
                     </span>
