@@ -24,17 +24,26 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeBinaryResolver;
 import org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeConfigRenderer;
@@ -73,11 +82,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(OutputCaptureExtension.class)
-class OtelRuntimePortConflictIntegrationTest {
+class OtelRuntimeFailureConvergenceIntegrationTest {
 
     private static final String RUNTIME_BINARY_ENV = "HERTZBEAT_OTEL_RUNTIME_BINARY";
     private static final String COLLECTOR_ID = "collector-port-conflict";
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
+    private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
 
     @TempDir
     private Path tempDir;
@@ -146,6 +156,105 @@ class OtelRuntimePortConflictIntegrationTest {
                 assertFalse(output.getAll().contains("127.0.0.1:" + port));
             }
         }
+    }
+
+    @Test
+    void reportsRealExporterAuthenticationFailureThroughHeartbeatAndQueryThenRecovers(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        AuthenticationIntake intake = new AuthenticationIntake();
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeDiagnosticsReader diagnosticsReader = new OtelRuntimeDiagnosticsReader(classifier);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                diagnosticsReader,
+                classifier);
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            assertTrue(runtimePid > 0);
+            sendMetric(properties.getOtlpHttpEndpoint());
+            await(() -> intake.rejectedRequests() > 0, Duration.ofSeconds(20));
+            await(() -> diagnosticsReader.latestFailure(properties)
+                    == ManagedOtelRuntimeStatus.FailureCode.AUTHENTICATION_FAILED, Duration.ofSeconds(20));
+
+            ManagedOtelRuntimeStatus rejected = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.AUTHENTICATION_FAILED,
+                    Duration.ofSeconds(20));
+            reportHeartbeat(manageServer, rejected);
+            String rejectedQuery = query(queryApi);
+            assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, rejected.state());
+            assertEquals(runtimePid, rejected.pid());
+            assertEquals(0, rejected.restartCount());
+            assertTrue(intake.authorizationWasValid());
+            assertTrue(rejected.telemetry().sendFailed().metrics().value() > 0);
+            assertEquals(0, rejected.telemetry().queueSize().value());
+            assertTrue(rejectedQuery.contains("\"failureCode\":\"AUTHENTICATION_FAILED\""));
+            assertTrue(rejectedQuery.contains("\"pid\":" + runtimePid));
+            assertSafeAuthentication(rejectedQuery, intake.port());
+
+            intake.accept();
+            sendMetric(properties.getOtlpHttpEndpoint());
+            await(() -> intake.acceptedRequests() > 0, Duration.ofSeconds(20));
+            ManagedOtelRuntimeStatus recovered = awaitStatus(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.NONE,
+                    Duration.ofSeconds(20));
+            reportHeartbeat(manageServer, recovered);
+            String recoveredQuery = query(queryApi);
+            assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, recovered.state());
+            assertEquals(runtimePid, recovered.pid());
+            assertEquals(0, recovered.restartCount());
+            assertTrue(recovered.telemetry().sent().metrics().value() > 0);
+            assertEquals(0, recovered.telemetry().queueSize().value());
+            assertTrue(recoveredQuery.contains("\"failureCode\":\"NONE\""));
+            assertSafeAuthentication(recoveredQuery, intake.port());
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertSafeAuthentication(output.getAll(), intake.port());
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(AUTH_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    private void sendMetric(String endpoint) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://" + endpoint + "/v1/metrics"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("""
+                        {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
+                          "name":"hertzbeat_auth_proof_metric",
+                          "gauge":{"dataPoints":[{"asDouble":1.0}]}
+                        }]}]}]}
+                        """))
+                .build();
+        HttpResponse<Void> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.discarding());
+        assertEquals(200, response.statusCode());
+    }
+
+    private void assertSafeAuthentication(String content, int intakePort) {
+        assertSafe(content);
+        assertFalse(content.contains(AUTH_PROOF_METRIC));
+        assertFalse(content.contains("/api/otlp"));
+        assertFalse(content.contains("127.0.0.1:" + intakePort));
+        assertFalse(content.contains(tempDir.toString()));
     }
 
     private OtelRuntimeProperties properties(String runtimeBinary, List<Integer> ports) {
@@ -242,12 +351,17 @@ class OtelRuntimePortConflictIntegrationTest {
             OtelRuntimeStatusProvider provider,
             ManagedOtelRuntimeStatus.FailureCode expected,
             Duration timeout) throws InterruptedException {
-        ManagedOtelRuntimeStatus[] observed = new ManagedOtelRuntimeStatus[1];
-        await(() -> {
-            observed[0] = provider.status();
-            return observed[0].failureCode() == expected;
-        }, timeout);
-        return observed[0];
+        long deadline = System.nanoTime() + timeout.toNanos();
+        ManagedOtelRuntimeStatus observed;
+        do {
+            observed = provider.status();
+            if (observed.failureCode() == expected) {
+                return observed;
+            }
+            Thread.sleep(100);
+        } while (System.nanoTime() < deadline);
+        assertEquals(expected, observed.failureCode(), JsonUtil.toJson(observed));
+        return observed;
     }
 
     private static ServerSocket occupiedListener() throws IOException {
@@ -277,5 +391,63 @@ class OtelRuntimePortConflictIntegrationTest {
             Thread.sleep(100);
         }
         assertTrue(condition.getAsBoolean(), "Condition was not met within " + timeout);
+    }
+
+    private static final class AuthenticationIntake implements AutoCloseable {
+
+        private final AtomicBoolean accepting = new AtomicBoolean();
+        private final AtomicBoolean authorizationWasValid = new AtomicBoolean(true);
+        private final AtomicInteger rejectedRequests = new AtomicInteger();
+        private final AtomicInteger acceptedRequests = new AtomicInteger();
+        private HttpServer server;
+
+        void start() throws IOException {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/api/otlp", this::handle);
+            server.start();
+        }
+
+        private void handle(HttpExchange exchange) throws IOException {
+            try (exchange) {
+                authorizationWasValid.compareAndSet(
+                        true, ("Bearer " + INTAKE_TOKEN).equals(
+                                exchange.getRequestHeaders().getFirst("Authorization")));
+                exchange.getRequestBody().transferTo(OutputStream.nullOutputStream());
+                if (accepting.get()) {
+                    acceptedRequests.incrementAndGet();
+                    exchange.sendResponseHeaders(200, -1);
+                } else {
+                    rejectedRequests.incrementAndGet();
+                    exchange.sendResponseHeaders(401, -1);
+                }
+            }
+        }
+
+        void accept() {
+            accepting.set(true);
+        }
+
+        int port() {
+            return server.getAddress().getPort();
+        }
+
+        int rejectedRequests() {
+            return rejectedRequests.get();
+        }
+
+        int acceptedRequests() {
+            return acceptedRequests.get();
+        }
+
+        boolean authorizationWasValid() {
+            return authorizationWasValid.get();
+        }
+
+        @Override
+        public void close() {
+            if (server != null) {
+                server.stop(0);
+            }
+        }
     }
 }

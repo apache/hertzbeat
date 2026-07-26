@@ -38,6 +38,18 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
     private long enqueueFailedMetrics;
     private long enqueueFailedLogs;
     private long enqueueFailedTraces;
+    // A permanent 401/403 dequeues the batch immediately, while Runtime counters and log lines are cumulative.
+    // Correlate new send failures with a later successful send so the stable status can both appear and recover.
+    private long authenticationPid = -1;
+    private long authenticationFailedMetrics;
+    private long authenticationFailedLogs;
+    private long authenticationFailedTraces;
+    private long authenticationSentMetrics;
+    private long authenticationSentLogs;
+    private long authenticationSentTraces;
+    private boolean authenticationFailureActive;
+    private boolean authenticationRequiresSuccessfulSend;
+    private boolean authenticationDiagnosticConsumed;
 
     public OtelRuntimeStatusProvider(
             OtelRuntimeProperties properties,
@@ -113,8 +125,8 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
         if (supervisorFailure != FailureCode.NONE && supervisorFailure != FailureCode.UNKNOWN) {
             return supervisorFailure;
         }
-        if (diagnosticFailure == FailureCode.AUTHENTICATION_FAILED && positive(telemetry.queueSize())) {
-            return diagnosticFailure;
+        if (authenticationFailure(snapshot.pid(), diagnosticFailure, telemetry)) {
+            return FailureCode.AUTHENTICATION_FAILED;
         }
         if (queueFull(telemetry)) {
             return FailureCode.QUEUE_FULL;
@@ -129,6 +141,51 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
         // Historical startup failures can remain in the bounded log tail after recovery. Only
         // current lifecycle diagnostics or exporter failures corroborated by live telemetry apply.
         return supervisorFailure;
+    }
+
+    private synchronized boolean authenticationFailure(
+            long pid, FailureCode diagnosticFailure, RuntimeTelemetry telemetry) {
+        if (pid != authenticationPid) {
+            authenticationPid = pid;
+            authenticationFailedMetrics = 0;
+            authenticationFailedLogs = 0;
+            authenticationFailedTraces = 0;
+            authenticationFailureActive = false;
+            authenticationDiagnosticConsumed = false;
+        }
+        boolean sendFailureAdvanced = advanced(telemetry.sendFailed().metrics(), authenticationFailedMetrics)
+                || advanced(telemetry.sendFailed().logs(), authenticationFailedLogs)
+                || advanced(telemetry.sendFailed().traces(), authenticationFailedTraces);
+        authenticationFailedMetrics = observedOrPrevious(
+                telemetry.sendFailed().metrics(), authenticationFailedMetrics);
+        authenticationFailedLogs = observedOrPrevious(
+                telemetry.sendFailed().logs(), authenticationFailedLogs);
+        authenticationFailedTraces = observedOrPrevious(
+                telemetry.sendFailed().traces(), authenticationFailedTraces);
+        boolean queued = positive(telemetry.queueSize());
+        if (!authenticationFailureActive
+                && diagnosticFailure == FailureCode.AUTHENTICATION_FAILED
+                && (sendFailureAdvanced || queued && !authenticationDiagnosticConsumed)) {
+            authenticationFailureActive = true;
+            authenticationRequiresSuccessfulSend = sendFailureAdvanced;
+            authenticationDiagnosticConsumed = true;
+            authenticationSentMetrics = observedOrZero(telemetry.sent().metrics());
+            authenticationSentLogs = observedOrZero(telemetry.sent().logs());
+            authenticationSentTraces = observedOrZero(telemetry.sent().traces());
+        }
+        if (!authenticationFailureActive) {
+            if (diagnosticFailure != FailureCode.AUTHENTICATION_FAILED) {
+                authenticationDiagnosticConsumed = false;
+            }
+            return false;
+        }
+        boolean successfulSendAdvanced = advanced(telemetry.sent().metrics(), authenticationSentMetrics)
+                || advanced(telemetry.sent().logs(), authenticationSentLogs)
+                || advanced(telemetry.sent().traces(), authenticationSentTraces);
+        if (!queued && (!authenticationRequiresSuccessfulSend || successfulSendAdvanced)) {
+            authenticationFailureActive = false;
+        }
+        return authenticationFailureActive;
     }
 
     private synchronized boolean enqueueFailureAdvanced(
@@ -154,6 +211,10 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
 
     private long observedOrPrevious(ObservedLong current, long previous) {
         return available(current) ? current.value() : previous;
+    }
+
+    private long observedOrZero(ObservedLong current) {
+        return available(current) ? current.value() : 0;
     }
 
     private boolean queueFull(RuntimeTelemetry telemetry) {
