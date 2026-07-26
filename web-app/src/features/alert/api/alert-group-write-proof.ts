@@ -63,7 +63,7 @@ export async function proveAlertGroupCreated(proof: AlertGroupCreateProof) {
   return created;
 }
 
-export async function proveAlertGroupMissing(id: number) {
+async function proveAlertGroupMissing(id: number) {
   try {
     await loadAlertGroup(id);
   } catch (reason) {

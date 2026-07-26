@@ -36,7 +36,7 @@ export function requireAlertInhibitConvergence(actual: AlertInhibit, expected: W
   }
 }
 
-export async function proveAlertInhibitMissing(id: number) {
+async function proveAlertInhibitMissing(id: number) {
   try {
     await loadAlertInhibit(id);
   } catch (reason) {

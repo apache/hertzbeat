@@ -100,7 +100,7 @@ export type MonitorMetricFavoriteEvidence = RemotePayloadState<
   { value: boolean; token?: string },
   'unavailable' | 'error'
 >;
-export type MonitorMetricFavoriteItem = { key: string; available: boolean };
+type MonitorMetricFavoriteItem = { key: string; available: boolean };
 export type MonitorMetricFavoriteCollectionEvidence =
   | { kind: 'loading' }
   | { kind: 'empty'; items: MonitorMetricFavoriteItem[] }

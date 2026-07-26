@@ -13,8 +13,6 @@ export type ShellFullscreenState = {
   busy: boolean;
 };
 
-export type ShellFullscreenToggleResult = 'changed' | 'unavailable' | 'busy' | 'error';
-
 type FullscreenRuntime = {
   available: () => boolean;
   active: () => boolean;

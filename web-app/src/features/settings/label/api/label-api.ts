@@ -45,8 +45,6 @@ export class LabelCanonicalProofLimitError extends LabelContractError {
   }
 }
 
-export type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
-
 export async function loadLabels(query: LabelListRequest, signal?: AbortSignal) {
   const response = await labelApiRequest(() =>
     signal ? apiMessageGet(buildLabelListPath(query), { signal }) : apiMessageGet(buildLabelListPath(query))

@@ -25,7 +25,7 @@ export const alertGroupTargetStatuses = ['firing', 'acknowledged', 'resolved'] a
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
 
 export type AlertStatus = (typeof alertStatuses)[number];
-export type AlertRecordStatus = (typeof alertRecordStatuses)[number];
+type AlertRecordStatus = (typeof alertRecordStatuses)[number];
 export type AlertGroupTargetStatus = (typeof alertGroupTargetStatuses)[number];
 export type AlertStatusFilter = '' | (typeof alertStatusFilters)[number];
 export type AlertSeverity = '' | (typeof alertSeverities)[number];

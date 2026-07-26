@@ -7,7 +7,7 @@
 
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
-export const defaultAlertLabelKeys = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'] as const;
+const defaultAlertLabelKeys = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'] as const;
 
 export type AlertLabelSuggestionState = {
   kind: 'loading' | 'received' | 'fallback';
