@@ -48,7 +48,7 @@ export function MonitorDefinitionPage() {
         workspace={controller.workspace}
         onCancel={controller.actions.closeWorkspace}
         onChange={controller.actions.setDefinition}
-        onRefreshConflict={() => void controller.actions.refreshConflict()}
+        onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
         onRetry={() => void controller.actions.retryWorkspace()}
         onSave={() => void controller.actions.save()}
         onValidate={() => void controller.actions.validate()}

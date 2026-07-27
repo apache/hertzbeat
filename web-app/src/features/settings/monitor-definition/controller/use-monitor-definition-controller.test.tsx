@@ -163,12 +163,42 @@ describe('useMonitorDefinitionController', () => {
     await act(() => result.current.actions.save());
     expect(result.current.workspace).toMatchObject({ kind: 'edit', failure: 'revision-conflict' });
 
-    await act(() => result.current.actions.refreshConflict());
+    await act(() => result.current.actions.refreshAuthoritativeDraft());
     expect(result.current.workspace).toMatchObject({
       kind: 'edit',
       draft: { definition: 'app: mysql\nname: server', revision: newerRevision },
       failure: null
     });
+  });
+
+  it('reconciles the catalog after an uncertain update while preserving the draft for review', async () => {
+    api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain'));
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(() => result.current.actions.openEdit('mysql'));
+    act(() => result.current.actions.setDefinition('app: mysql\nname: uncertain'));
+
+    await act(() => result.current.actions.save());
+
+    expect(result.current.workspace).toMatchObject({
+      kind: 'edit',
+      draft: { definition: 'app: mysql\nname: uncertain', revision },
+      failure: 'state-uncertain'
+    });
+    await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
+  });
+
+  it('reconciles the catalog after an uncertain delete while preserving its confirmation evidence', async () => {
+    api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain'));
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.requestDelete(item));
+
+    await act(() => result.current.actions.confirmDelete());
+
+    expect(result.current.deleteFailure).toBe('state-uncertain');
+    expect(result.current.deleteTarget).toEqual(item);
+    await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
   });
 
   it('reports both delete dispositions and enforces local ADMIN write admission', async () => {

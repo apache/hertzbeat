@@ -9,7 +9,10 @@ import { Alert, Button, Drawer, Input, Skeleton, Space, Tag, Typography } from '
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { monitorDefinitionFailureMessageKey } from '../model/monitor-definition-model';
+import {
+  monitorDefinitionCanRefreshAuthoritativeDraft,
+  monitorDefinitionFailureMessageKey
+} from '../model/monitor-definition-model';
 import type { MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
 import styles from './monitor-definition-workspace.module.css';
 
@@ -17,7 +20,7 @@ export function MonitorDefinitionWorkspaceView(props: {
   workspace: MonitorDefinitionWorkspace | null;
   onCancel: () => void;
   onChange: (value: string) => void;
-  onRefreshConflict: () => void;
+  onRefreshAuthoritativeDraft: () => void;
   onRetry: () => void;
   onSave: () => void;
   onValidate: () => void;
@@ -74,8 +77,8 @@ function DefinitionEditor(
           showIcon
           message={t(monitorDefinitionFailureMessageKey(workspace.failure))}
           action={
-            workspace.failure === 'revision-conflict' ? (
-              <Button onClick={props.onRefreshConflict}>{t('monitorDefinitions.refreshConflict')}</Button>
+            monitorDefinitionCanRefreshAuthoritativeDraft(workspace) ? (
+              <Button onClick={props.onRefreshAuthoritativeDraft}>{t('monitorDefinitions.refreshConflict')}</Button>
             ) : undefined
           }
         />

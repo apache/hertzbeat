@@ -8,10 +8,11 @@
 import { useRef, useState } from 'react';
 
 import { deleteMonitorDefinition, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
-import type {
-  MonitorDefinitionCatalogItem,
-  MonitorDefinitionDeleteDisposition,
-  MonitorDefinitionFailureKind
+import {
+  monitorDefinitionNeedsCatalogReconciliation,
+  type MonitorDefinitionCatalogItem,
+  type MonitorDefinitionDeleteDisposition,
+  type MonitorDefinitionFailureKind
 } from '../model/monitor-definition-model';
 
 export function useMonitorDefinitionDelete(canWrite: boolean, onChanged: () => void) {
@@ -40,7 +41,9 @@ export function useMonitorDefinitionDelete(canWrite: boolean, onChanged: () => v
       setDeleteTarget(null);
       onChanged();
     } catch (error) {
-      setDeleteFailure(error instanceof MonitorDefinitionRequestError ? error.kind : 'error');
+      const failure = error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
+      if (monitorDefinitionNeedsCatalogReconciliation(failure)) onChanged();
+      setDeleteFailure(failure);
     } finally {
       owner.current = false;
       setDeletePending(false);

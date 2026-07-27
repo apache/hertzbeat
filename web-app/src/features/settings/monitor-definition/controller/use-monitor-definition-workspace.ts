@@ -18,6 +18,7 @@ import {
   buildCreateDraft,
   buildUpdateDraft,
   monitorDefinitionDraftRequiredFailure,
+  monitorDefinitionNeedsCatalogReconciliation,
   type MonitorDefinitionDetail,
   type MonitorDefinitionDraft,
   type MonitorDefinitionFailureKind,
@@ -56,7 +57,8 @@ export function useMonitorDefinitionWorkspace(options: { canWrite: boolean; lang
   };
   const validate = () => runEditorCommand('validate', workspace, options, command, active, setWorkspace);
   const save = () => runEditorCommand('save', workspace, options, command, active, setWorkspace);
-  const refreshConflict = () => runEditorCommand('refresh', workspace, options, command, active, setWorkspace);
+  const refreshAuthoritativeDraft = () =>
+    runEditorCommand('refresh', workspace, options, command, active, setWorkspace);
   const retryWorkspace = () =>
     workspace?.kind === 'error'
       ? loadWorkspace(workspace.mode, workspace.app, options.language, command, setWorkspace)
@@ -69,7 +71,7 @@ export function useMonitorDefinitionWorkspace(options: { canWrite: boolean; lang
       openCreate,
       openEdit,
       openView,
-      refreshConflict,
+      refreshAuthoritativeDraft,
       retryWorkspace,
       save,
       setDefinition,
@@ -122,10 +124,20 @@ async function runEditorCommand(
     if (operation === 'save') options.onChanged();
   } catch (error) {
     if (owner !== command.current) return;
-    publish({ ...workspace, pending: null, failure: failureKind(error) });
+    const failure = failureKind(error);
+    reconcileUncertainSave(operation, failure, options.onChanged);
+    publish({ ...workspace, pending: null, failure });
   } finally {
     active.current = false;
   }
+}
+
+function reconcileUncertainSave(
+  operation: Exclude<Pending, 'load' | null>,
+  failure: MonitorDefinitionFailureKind,
+  onChanged: () => void
+) {
+  if (operation === 'save' && monitorDefinitionNeedsCatalogReconciliation(failure)) onChanged();
 }
 
 function publishEditorResult(

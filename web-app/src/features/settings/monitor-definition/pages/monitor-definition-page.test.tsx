@@ -94,8 +94,26 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.setDefinition).toHaveBeenCalledWith('app: mysql\nname: changed');
     expect(controller.actions.validate).toHaveBeenCalledOnce();
     expect(controller.actions.save).toHaveBeenCalledOnce();
-    expect(controller.actions.refreshConflict).toHaveBeenCalledOnce();
+    expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
     expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
+  });
+
+  it('offers authoritative refresh for an uncertain update draft', () => {
+    const controller = buildController({
+      workspace: {
+        kind: 'edit',
+        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
+        failure: 'state-uncertain',
+        pending: null,
+        validation: null
+      }
+    });
+    owner.useController.mockReturnValue(controller);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh latest definition' }));
+
+    expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
   });
 
   it('renders localized required evidence for a blank definition draft', () => {
@@ -158,7 +176,7 @@ function buildController(overrides: Record<string, unknown> = {}) {
       openEdit: vi.fn(),
       openView: vi.fn(),
       refresh: vi.fn(),
-      refreshConflict: vi.fn(),
+      refreshAuthoritativeDraft: vi.fn(),
       retryWorkspace: vi.fn(),
       requestDelete: vi.fn(),
       save: vi.fn(),
