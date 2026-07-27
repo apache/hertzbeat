@@ -203,6 +203,14 @@
                         --add-opens=java.base/java.nio=ALL-UNNAMED
                     </jvmArguments>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

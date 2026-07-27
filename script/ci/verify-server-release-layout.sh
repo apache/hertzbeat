@@ -23,6 +23,8 @@ cd "$repo_root"
 
 dockerfile=script/docker/server/Dockerfile
 workflow=.github/workflows/backend-build-test.yml
+startup_pom=hertzbeat-startup/pom.xml
+shutdown_script=script/assembly/server/bin/shutdown.sh
 failed=0
 
 required_java=$(sed -n 's:.*<java.version>\([0-9][0-9]*\)</java.version>.*:\1:p' pom.xml | head -1)
@@ -42,6 +44,19 @@ if [ -n "$required_java" ]; then
       failed=1
     fi
   done
+fi
+
+startup_boot_plugin=$(sed -n '/<artifactId>spring-boot-maven-plugin<\/artifactId>/,/<\/plugin>/p' "$startup_pom")
+if ! echo "$startup_boot_plugin" | grep -q '<skip>true</skip>'; then
+  echo "server release must keep a thin startup JAR for the packaged classpath launchers" >&2
+  failed=1
+fi
+
+if grep -Eq 'kill[[:space:]]+-9' "$shutdown_script" \
+  || ! grep -q 'CONF_DIR=' "$shutdown_script" \
+  || ! grep -q 'STOP_TIMEOUT=' "$shutdown_script"; then
+  echo "server shutdown must target its deployment and allow graceful termination" >&2
+  failed=1
 fi
 
 ignored_paths=$(awk '
