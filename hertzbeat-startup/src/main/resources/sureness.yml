@@ -92,6 +92,7 @@ resourceRole:
   - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/otlp/**===post===[admin,user]
   - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs/sse/**===get===[admin,user,guest]
   - /api/signal/saved-view/**===get===[admin,user,guest]
   - /api/signal/saved-view===put===[admin,user]
   - /api/signal/saved-view/**===delete===[admin,user]
@@ -124,7 +125,6 @@ resourceRole:
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*
-  - /api/logs/sse/**===*
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post
