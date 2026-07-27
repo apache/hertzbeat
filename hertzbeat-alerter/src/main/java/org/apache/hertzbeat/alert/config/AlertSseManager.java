@@ -20,12 +20,15 @@
 package org.apache.hertzbeat.alert.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,15 +38,23 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-public class AlertSseManager {
+public class AlertSseManager implements ApplicationListener<ContextClosedEvent> {
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Object lifecycleMonitor = new Object();
+    private boolean closing;
 
     public SseEmitter createEmitter(Long clientId) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitter.onCompletion(() -> removeEmitter(clientId));
         emitter.onTimeout(() -> removeEmitter(clientId));
         emitter.onError((ex) -> removeEmitter(clientId));
-        emitters.put(clientId, emitter);
+        synchronized (lifecycleMonitor) {
+            if (closing) {
+                emitter.complete();
+                return emitter;
+            }
+            emitters.put(clientId, emitter);
+        }
         return emitter;
     }
 
@@ -72,6 +83,19 @@ public class AlertSseManager {
         }
         // execute clear
         removeEmitter(clientId);
+    }
+
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        // Complete requests before the embedded server enters graceful shutdown;
+        // otherwise long-lived SSE responses can consume the entire shutdown grace period.
+        Map<Long, SseEmitter> activeEmitters;
+        synchronized (lifecycleMonitor) {
+            closing = true;
+            activeEmitters = new HashMap<>(emitters);
+            emitters.clear();
+        }
+        activeEmitters.forEach(this::tryCompleteAndClean);
     }
 
     private void removeEmitter(Long clientId) {

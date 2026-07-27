@@ -19,6 +19,8 @@ package org.apache.hertzbeat.alert.config;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.lang.reflect.Field;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * alert sse manager test
@@ -63,7 +66,28 @@ public class AlertSseManagerTest {
 
         assertThrows(RuntimeException.class, () -> alertSseManager.broadcast("{\"id\":1,\"content\":\"Test alert\"}"));
         Map<Long, SseEmitter> currentEmitters = (Map<Long, SseEmitter>) emittersField.get(alertSseManager);
-        assertFalse(currentEmitters.containsKey(1L), "Emitter should still exist because complete() threw exception");
+        assertFalse(currentEmitters.containsKey(1L), "Emitter must be removed even when complete() throws");
+    }
+
+    @Test
+    void closesActiveEmittersBeforeApplicationShutdown() throws Exception {
+        SseEmitter emitter = mock(SseEmitter.class);
+        Map<Long, SseEmitter> emitters = emitters(alertSseManager);
+        emitters.put(1L, emitter);
+
+        alertSseManager.onApplicationEvent(new ContextClosedEvent(mock(ConfigurableApplicationContext.class)));
+        alertSseManager.createEmitter(2L);
+
+        verify(emitter).complete();
+        assertFalse(emitters.containsKey(1L));
+        assertFalse(emitters.containsKey(2L), "Shutdown must not retain a concurrent late subscriber");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, SseEmitter> emitters(AlertSseManager manager) throws Exception {
+        Field emittersField = AlertSseManager.class.getDeclaredField("emitters");
+        emittersField.setAccessible(true);
+        return (Map<Long, SseEmitter>) emittersField.get(manager);
     }
 
 }
