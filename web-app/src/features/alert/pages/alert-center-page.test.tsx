@@ -92,6 +92,11 @@ const record: AlertGroup = {
   ],
   gmtUpdate: '2026-07-17 08:09:10' as ServerLocalDateTime
 };
+const selectedRecords: AlertGroup[] = [
+  { ...record, status: 'firing' },
+  { ...record, id: 2, status: 'acknowledged' },
+  { ...record, id: 3, status: 'resolved' }
+];
 
 describe('AlertCenterPage', () => {
   beforeEach(() => {
@@ -147,43 +152,30 @@ describe('AlertCenterPage', () => {
     expect(controller.remove).toHaveBeenCalledWith(record);
   });
 
-  it('restores row selection and confirms all Angular bulk alert operations', async () => {
+  it('restores Angular row selection for the visible alert group', () => {
     render(<AlertCenterPage />);
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
     expect(controller.selectIds).toHaveBeenCalledWith([1]);
+  });
 
-    const selectedRecords = [
-      { ...record, status: 'firing' as const },
-      { ...record, id: 2, status: 'acknowledged' as const },
-      { ...record, id: 3, status: 'resolved' as const }
-    ];
+  it.each([
+    ['acknowledge', 'alert.acknowledgeSelected', 'alert.confirmAcknowledge', controller.acknowledgeSelected],
+    ['resolve', 'alert.resolveSelected', 'alert.confirmResolve', controller.resolveSelected],
+    ['reopen', 'alert.reopenSelected', 'alert.confirmReopen', controller.reopenSelected],
+    ['unacknowledge', 'alert.unacknowledgeSelected', 'alert.confirmUnacknowledge', controller.unacknowledgeSelected],
+    ['delete', 'alert.deleteSelected', 'alert.confirmDelete', controller.removeSelected]
+  ])('confirms the Angular bulk %s operation in isolation', async (_operation, actionLabel, confirmLabel, command) => {
     controller.state = buildState({
       list: { kind: 'ready', records: selectedRecords, total: selectedRecords.length },
       selectedIds: [1, 2, 3]
     });
-    cleanup();
     render(<AlertCenterPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'alert.acknowledgeSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmAcknowledge' }));
-    expect(controller.acknowledgeSelected).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'alert.resolveSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
-    expect(controller.resolveSelected).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'alert.reopenSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmReopen' }));
-    expect(controller.reopenSelected).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'alert.unacknowledgeSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmUnacknowledge' }));
-    expect(controller.unacknowledgeSelected).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'alert.deleteSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmDelete' }));
-    expect(controller.removeSelected).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: actionLabel }));
+    fireEvent.click(await screen.findByRole('button', { name: confirmLabel }));
+    expect(command).toHaveBeenCalledOnce();
+    expect(command.mock.calls[0]).toEqual([]);
   });
 
   it('offers resolve for active rows and reopen for resolved rows', async () => {
