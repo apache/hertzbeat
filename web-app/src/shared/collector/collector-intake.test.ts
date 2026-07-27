@@ -33,6 +33,24 @@ describe('Collector intake advertisement request', () => {
     });
   });
 
+  it('accepts an explicit safe HTTP endpoint for trusted private or local intake', () => {
+    expect(
+      parseCollectorIntakeAdvertisementRequest({
+        schemaVersion: 1,
+        gateway: 'collector',
+        capabilities: ['otlp_grpc'],
+        otlpHttpEndpoint: null,
+        otlpGrpcEndpoint: 'http://10.0.0.7:4317'
+      })
+    ).toEqual({
+      schemaVersion: 1,
+      gateway: 'collector',
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http://10.0.0.7:4317'
+    });
+  });
+
   it.each([
     { capabilities: [], otlpHttpEndpoint: null, otlpGrpcEndpoint: null },
     {
@@ -49,7 +67,7 @@ describe('Collector intake advertisement request', () => {
     {
       capabilities: ['otlp_grpc'],
       otlpHttpEndpoint: null,
-      otlpGrpcEndpoint: 'http://telemetry.example.test:4317'
+      otlpGrpcEndpoint: 'ftp://telemetry.example.test:4317'
     },
     {
       capabilities: ['otlp_grpc'],
@@ -65,6 +83,11 @@ describe('Collector intake advertisement request', () => {
       capabilities: ['otlp_grpc'],
       otlpHttpEndpoint: null,
       otlpGrpcEndpoint: 'https://telemetry.example.test:4317#secret'
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http://'
     },
     {
       capabilities: ['otlp_grpc'],
@@ -88,6 +111,11 @@ describe('Collector intake safe state', () => {
       capabilities: ['otlp_grpc'],
       otlpHttpEndpoint: null,
       otlpGrpcEndpoint: 'https://telemetry.example.test:4317'
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http://10.0.0.7:4317'
     }
   ] as const)('accepts a capability-matched single endpoint', intake => {
     expect(parseCollectorInstrumentationIntake(availableIntake(intake), 'edge')).toEqual({

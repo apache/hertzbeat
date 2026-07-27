@@ -1255,13 +1255,14 @@
       "capabilities": "能力",
       "httpCapability": "OTLP HTTP/protobuf",
       "grpcCapability": "OTLP gRPC",
-      "httpEndpoint": "OTLP HTTP/protobuf HTTPS 端点",
-      "grpcEndpoint": "OTLP gRPC HTTPS 端点",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTP(S) 端点",
+      "grpcEndpoint": "OTLP gRPC HTTP(S) 端点",
+      "endpointGuidance": "HTTP 适用于受信任的内网或本地部署。公网端点建议使用 HTTPS。",
       "save": "保存声明",
       "clear": "清除声明",
       "clearTitle": "清除 {{name}} 的接收声明？",
       "clearDescription": "该采集器将停止声明这些插桩数据端点。",
-      "invalid": "请使用与所选能力严格对应的 HTTPS 端点。",
+      "invalid": "请使用与所选能力严格对应的安全 HTTP 或 HTTPS 端点。",
       "success": "采集器接收声明已刷新。"
     },
     "runtime": {

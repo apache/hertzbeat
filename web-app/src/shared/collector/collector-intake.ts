@@ -49,7 +49,7 @@ const trimmedTextSchema = z
 const collectorIdSchema = trimmedTextSchema
   .max(128)
   .refine(value => !Array.from(value).some(character => /\p{Cc}/u.test(character)));
-const publicHttpsEndpointSchema = trimmedTextSchema.refine(isPublicHttpsEndpoint);
+const safeHttpEndpointSchema = trimmedTextSchema.refine(isSafeCollectorIntakeEndpoint);
 const capabilitySchema = z
   .array(z.enum(COLLECTOR_INTAKE_CAPABILITIES))
   .min(1)
@@ -65,8 +65,8 @@ const collectorIntakeAdvertisementRequestSchema = z
     schemaVersion: z.literal(1),
     gateway: z.enum(['collector', 'server']),
     capabilities: capabilitySchema,
-    otlpHttpEndpoint: publicHttpsEndpointSchema.nullable(),
-    otlpGrpcEndpoint: publicHttpsEndpointSchema.nullable()
+    otlpHttpEndpoint: safeHttpEndpointSchema.nullable(),
+    otlpGrpcEndpoint: safeHttpEndpointSchema.nullable()
   })
   .strict()
   .superRefine((request, context) => {
@@ -91,8 +91,8 @@ export const availableCollectorIntakeSchema = z
     state: z.literal('available'),
     gateway: z.enum(['collector', 'server']),
     capabilities: capabilitySchema,
-    otlpHttpEndpoint: publicHttpsEndpointSchema.nullable(),
-    otlpGrpcEndpoint: publicHttpsEndpointSchema.nullable(),
+    otlpHttpEndpoint: safeHttpEndpointSchema.nullable(),
+    otlpGrpcEndpoint: safeHttpEndpointSchema.nullable(),
     authorizationHeader: z.literal('Authorization'),
     errorCode: z.null()
   })
@@ -155,11 +155,11 @@ export function parseExactCollectorInstrumentationIntake(
   return null;
 }
 
-function isPublicHttpsEndpoint(value: string) {
+export function isSafeCollectorIntakeEndpoint(value: string) {
   try {
     const endpoint = new URL(value);
     return (
-      endpoint.protocol === 'https:' &&
+      (endpoint.protocol === 'http:' || endpoint.protocol === 'https:') &&
       Boolean(endpoint.hostname) &&
       !endpoint.username &&
       !endpoint.password &&

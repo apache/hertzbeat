@@ -251,7 +251,7 @@ describe('useCollectorController', () => {
     act(() => result.current.actions.openIntake('edge'));
 
     await act(async () =>
-      result.current.actions.saveIntake({ ...intakeRequest(), otlpGrpcEndpoint: 'http://unsafe.example.test' })
+      result.current.actions.saveIntake({ ...intakeRequest(), otlpGrpcEndpoint: 'ftp://unsafe.example.test' })
     );
 
     expect(saveIntake).not.toHaveBeenCalled();
@@ -287,7 +287,7 @@ describe('useCollectorController', () => {
     await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
     act(() => result.current.actions.openIntake('edge'));
     await act(async () =>
-      result.current.actions.saveIntake({ ...intakeRequest(), otlpGrpcEndpoint: 'http://unsafe.example.test' })
+      result.current.actions.saveIntake({ ...intakeRequest(), otlpGrpcEndpoint: 'ftp://unsafe.example.test' })
     );
     expect(result.current.intakeFailure).toBe('validation');
 
@@ -498,6 +498,23 @@ describe('useCollectorController', () => {
 
     expect(result.current.runtimeEditor).toBeNull();
     expect(result.current.runtimeLoading).toBe(false);
+  });
+
+  it('rereads authoritative runtime config after cancel without writing the discarded draft', async () => {
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime
+      .mockResolvedValueOnce(runtimeConfig({ environment: 'production' }))
+      .mockResolvedValueOnce(runtimeConfig({ revision: 8, environment: 'staging' }));
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+    act(() => result.current.actions.cancelRuntimeConfig());
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+
+    expect(loadRuntime).toHaveBeenCalledTimes(2);
+    expect(result.current.runtimeEditor?.config).toMatchObject({ revision: 8, environment: 'staging' });
+    expect(saveRuntime).not.toHaveBeenCalled();
   });
 
   it('does not let a cancelled Collector GET close a newer Collector editor', async () => {

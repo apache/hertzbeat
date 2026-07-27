@@ -87,6 +87,7 @@ function IntakeEditorModal(props: Props & { record: CollectorRecord; onRequestCl
         showIcon
         message={t(`collectors.intake.state.${state}`)}
       />
+      <Alert type="info" showIcon message={t('collectors.intake.endpointGuidance')} />
       <Form
         form={form}
         layout="vertical"

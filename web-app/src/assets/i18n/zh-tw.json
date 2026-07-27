@@ -1255,13 +1255,14 @@
       "capabilities": "能力",
       "httpCapability": "OTLP HTTP/protobuf",
       "grpcCapability": "OTLP gRPC",
-      "httpEndpoint": "OTLP HTTP/protobuf HTTPS 端點",
-      "grpcEndpoint": "OTLP gRPC HTTPS 端點",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTP(S) 端點",
+      "grpcEndpoint": "OTLP gRPC HTTP(S) 端點",
+      "endpointGuidance": "HTTP 適用於受信任的內部網路或本機部署。公開端點建議使用 HTTPS。",
       "save": "儲存宣告",
       "clear": "清除宣告",
       "clearTitle": "清除 {{name}} 的接收宣告？",
       "clearDescription": "該採集器將停止宣告這些插樁資料端點。",
-      "invalid": "請使用與所選能力嚴格對應的 HTTPS 端點。",
+      "invalid": "請使用與所選能力嚴格對應的安全 HTTP 或 HTTPS 端點。",
       "success": "採集器接收宣告已重新整理。"
     },
     "runtime": {

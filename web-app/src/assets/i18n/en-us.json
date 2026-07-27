@@ -1274,13 +1274,14 @@
       "capabilities": "Capabilities",
       "httpCapability": "OTLP HTTP/protobuf",
       "grpcCapability": "OTLP gRPC",
-      "httpEndpoint": "OTLP HTTP/protobuf HTTPS endpoint",
-      "grpcEndpoint": "OTLP gRPC HTTPS endpoint",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTP(S) endpoint",
+      "grpcEndpoint": "OTLP gRPC HTTP(S) endpoint",
+      "endpointGuidance": "HTTP is suitable for trusted private networks or local deployments. Use HTTPS for public endpoints.",
       "save": "Save advertisement",
       "clear": "Clear advertisement",
       "clearTitle": "Clear intake advertisement for {{name}}?",
       "clearDescription": "The Collector will stop advertising these instrumentation endpoints.",
-      "invalid": "Use HTTPS endpoints that exactly match the selected capabilities.",
+      "invalid": "Use safe HTTP or HTTPS endpoints that exactly match the selected capabilities.",
       "success": "Collector intake advertisement refreshed."
     },
     "runtime": {

@@ -7,6 +7,8 @@
 
 import { z } from 'zod';
 
+import { isSafeCollectorIntakeEndpoint } from '@/shared/collector';
+
 import { BLOCK_TYPES } from '../model/instrumentation-v2-contract';
 
 export const text = z.string().min(1);
@@ -32,6 +34,11 @@ export const explicitHttps = z.string().superRefine((value, context) => {
     context.addIssue({ code: 'custom', message: 'URL is invalid' });
   }
 });
+// Only administrator-published Collector intake may use trusted HTTP.
+// Documentation, source, artifact, download, and guide URLs stay HTTPS-only.
+export const explicitCollectorIntakeEndpoint = z
+  .string()
+  .refine(isSafeCollectorIntakeEndpoint, 'Collector intake URL must be explicit safe HTTP(S)');
 export const signalValues = <T extends z.ZodType>(value: T) =>
   z.object({ metrics: value, logs: value, traces: value }).strict();
 export const service = z

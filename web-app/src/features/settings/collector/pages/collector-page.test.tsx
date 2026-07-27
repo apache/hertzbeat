@@ -79,7 +79,7 @@ describe('CollectorPage', () => {
     expect(within(dialog).getByLabelText('Gateway')).toBeInTheDocument();
     expect(within(dialog).getByText('Server')).toBeInTheDocument();
     expect(within(dialog).getByRole('checkbox', { name: 'OTLP gRPC' })).toBeChecked();
-    expect(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint')).toHaveValue(
+    expect(within(dialog).getByLabelText('OTLP gRPC HTTP(S) endpoint')).toHaveValue(
       'https://telemetry.example.test:4317'
     );
     expect(within(dialog).queryByLabelText(/token/i)).not.toBeInTheDocument();
@@ -109,28 +109,47 @@ describe('CollectorPage', () => {
     expect(controller.actions.clearIntake).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps invalid Save feedback visible inside the intake dialog without transport', async () => {
+  it('accepts safe HTTP intake while keeping unsafe URL feedback local', async () => {
     const controller = buildController({ intakeEditor: { record: collector('edge', false, intakeAvailable()) } });
     resource.useCollectorController.mockReturnValue(controller);
     renderPage();
     const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
 
-    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint'), {
-      target: { value: 'http://unsafe.example.test:4317' }
+    expect(
+      within(dialog).getByText(
+        'HTTP is suitable for trusted private networks or local deployments. Use HTTPS for public endpoints.'
+      )
+    ).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTP(S) endpoint'), {
+      target: { value: 'http://10.0.0.7:4317' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save advertisement' }));
+    await waitFor(() =>
+      expect(controller.actions.saveIntake).toHaveBeenCalledWith({
+        schemaVersion: 1,
+        gateway: 'server',
+        capabilities: ['otlp_grpc'],
+        otlpHttpEndpoint: null,
+        otlpGrpcEndpoint: 'http://10.0.0.7:4317'
+      })
+    );
+
+    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTP(S) endpoint'), {
+      target: { value: 'ftp://unsafe.example.test:4317' }
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save advertisement' }));
 
     await waitFor(() =>
       expect(
-        within(dialog).getByText('Use HTTPS endpoints that exactly match the selected capabilities.')
+        within(dialog).getByText('Use safe HTTP or HTTPS endpoints that exactly match the selected capabilities.')
       ).toBeInTheDocument()
     );
-    expect(controller.actions.saveIntake).not.toHaveBeenCalled();
-    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint'), {
+    expect(controller.actions.saveIntake).toHaveBeenCalledTimes(1);
+    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTP(S) endpoint'), {
       target: { value: 'https://telemetry.example.test:4317' }
     });
     expect(
-      within(dialog).queryByText('Use HTTPS endpoints that exactly match the selected capabilities.')
+      within(dialog).queryByText('Use safe HTTP or HTTPS endpoints that exactly match the selected capabilities.')
     ).not.toBeInTheDocument();
   });
 
@@ -155,7 +174,7 @@ describe('CollectorPage', () => {
     expect(screen.getByText('Advertisement is currently unavailable.')).toBeInTheDocument();
     const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for invalid' });
     expect(within(dialog).getByRole('button', { name: 'Clear advertisement' })).toBeInTheDocument();
-    expect(within(dialog).queryByLabelText('OTLP gRPC HTTPS endpoint')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('OTLP gRPC HTTP(S) endpoint')).not.toBeInTheDocument();
   });
 
   it('edits only managed runtime core fields and keeps source policy as a redacted summary', async () => {
@@ -387,6 +406,34 @@ describe('CollectorPage', () => {
     expect(
       within(dialog).getByText('The Collector change was rejected. Review its current server state.')
     ).toBeInTheDocument();
+  });
+
+  it('reopens a canceled runtime draft from the authoritative server config without writing', () => {
+    const first = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig({ environment: 'production' }) }
+    });
+    resource.useCollectorController.mockReturnValue(first);
+    const view = renderPage();
+
+    let dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    fireEvent.change(within(dialog).getByLabelText('Environment'), { target: { value: 'canceled-draft' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(first.actions.cancelRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(first.actions.saveRuntimeConfig).not.toHaveBeenCalled();
+
+    resource.useCollectorController.mockReturnValue(buildController({ runtimeEditor: null }));
+    view.rerender(<CollectorPageTestRoot />);
+    expect(screen.queryByRole('dialog', { name: 'Managed runtime for edge' })).not.toBeInTheDocument();
+
+    const reopened = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig({ environment: 'staging' }) }
+    });
+    resource.useCollectorController.mockReturnValue(reopened);
+    view.rerender(<CollectorPageTestRoot />);
+
+    dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(within(dialog).getByLabelText('Environment')).toHaveValue('staging');
+    expect(reopened.actions.saveRuntimeConfig).not.toHaveBeenCalled();
   });
 
   it('makes legacy upgrade intent explicit and keeps a failed GET distinct from loading', () => {
@@ -655,7 +702,11 @@ function fileLogEditor(overrides: Record<string, unknown> = {}) {
 }
 
 function renderPage() {
-  return render(
+  return render(<CollectorPageTestRoot />);
+}
+
+function CollectorPageTestRoot() {
+  return (
     <I18nextProvider i18n={i18n}>
       <MemoryRouter initialEntries={['/settings/collectors']}>
         <App>

@@ -1270,13 +1270,14 @@
       "capabilities": "機能",
       "httpCapability": "OTLP HTTP/protobuf",
       "grpcCapability": "OTLP gRPC",
-      "httpEndpoint": "OTLP HTTP/protobuf HTTPS エンドポイント",
-      "grpcEndpoint": "OTLP gRPC HTTPS エンドポイント",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTP(S) エンドポイント",
+      "grpcEndpoint": "OTLP gRPC HTTP(S) エンドポイント",
+      "endpointGuidance": "HTTP は信頼されたプライベートネットワークまたはローカル環境に適しています。公開エンドポイントには HTTPS を推奨します。",
       "save": "広告を保存",
       "clear": "広告をクリア",
       "clearTitle": "{{name}} の受信広告をクリアしますか？",
       "clearDescription": "このコレクターは計装エンドポイントの広告を停止します。",
-      "invalid": "選択した機能に正確に対応する HTTPS エンドポイントを使用してください。",
+      "invalid": "選択した機能に正確に対応する安全な HTTP または HTTPS エンドポイントを使用してください。",
       "success": "コレクターの受信広告を更新しました。"
     },
     "runtime": {

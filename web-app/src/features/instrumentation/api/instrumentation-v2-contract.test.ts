@@ -184,6 +184,9 @@ describe('instrumentation v2 wire contracts', () => {
   it.each([
     ['https://example.test/otlp', 'plaintext'],
     ['http://example.test/otlp', 'tls'],
+    ['ftp://example.test/otlp', 'plaintext'],
+    ['http://', 'plaintext'],
+    [' http://example.test/otlp', 'plaintext'],
     ['https://user@example.test/otlp', 'tls'],
     ['https://example.test/otlp?token=secret', 'tls'],
     ['https://example.test/otlp#fragment', 'tls']

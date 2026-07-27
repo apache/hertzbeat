@@ -65,9 +65,15 @@ type Props = {
 type DialogMode = 'runtime' | 'prometheus' | 'fileLog';
 
 export function CollectorRuntimeConfigDialog(props: Props) {
+  if (!props.record) return null;
+  // The record-scoped child owns the Form store. Closing the editor unmounts
+  // canceled values, so reopen starts from the next authoritative server read.
+  return <CollectorRuntimeConfigSession key={props.record.name} {...props} record={props.record} />;
+}
+
+function CollectorRuntimeConfigSession(props: Props & { record: CollectorRecord }) {
   const { t } = useTranslation();
   const [form] = Form.useForm<ManagedRuntimeCoreDraft>();
-  if (!props.record) return null;
   const mode = dialogMode(props);
   const locked = props.saving || props.prometheus.saving || props.fileLog.saving;
   return (

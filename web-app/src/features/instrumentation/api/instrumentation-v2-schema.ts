@@ -11,6 +11,7 @@ import { DETECTION_STATUSES, POLLING_DECISIONS, SIGNALS, SOURCE_KINDS } from '..
 import {
   capability,
   component,
+  explicitCollectorIntakeEndpoint,
   guideBlock,
   profileError,
   service,
@@ -29,21 +30,22 @@ const selection = {
   platform: text.optional()
 };
 const intakeEndpoint = z
-  .object({ url: z.string(), security: z.enum(['tls', 'plaintext']) })
+  .object({ url: explicitCollectorIntakeEndpoint, security: z.enum(['tls', 'plaintext']) })
   .strict()
   .superRefine((value, context) => {
-    try {
-      const url = new URL(value.url);
-      const matchesSecurity =
-        (url.protocol === 'https:' && value.security === 'tls') ||
-        (url.protocol === 'http:' && value.security === 'plaintext');
-      if (!matchesSecurity || url.username || url.password || url.search || url.hash) {
-        context.addIssue({ code: 'custom', message: 'endpoint URL and security evidence are inconsistent' });
-      }
-    } catch {
-      context.addIssue({ code: 'custom', message: 'endpoint URL is invalid' });
+    if (!intakeSecurityMatches(value.url, value.security)) {
+      context.addIssue({ code: 'custom', message: 'endpoint URL and security evidence are inconsistent' });
     }
   });
+
+function intakeSecurityMatches(value: string, security: 'tls' | 'plaintext') {
+  try {
+    const protocol = new URL(value).protocol;
+    return (protocol === 'https:' && security === 'tls') || (protocol === 'http:' && security === 'plaintext');
+  } catch {
+    return false;
+  }
+}
 const intakeProfile = z
   .object({
     id: text,
