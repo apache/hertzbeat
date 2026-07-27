@@ -20,18 +20,23 @@ import { describe, expect, it } from 'vitest';
 import { validateMonitorImportFile } from './monitor-import-model';
 
 describe('monitor import model', () => {
-  it.each(['monitors.json', 'monitors.xlsx', 'monitors.yaml', 'MONITORS.JSON'])(
-    'accepts a non-empty backend-supported %s file',
-    name => {
-      const file = new File(['content'], name);
-      expect(validateMonitorImportFile(file)).toEqual({ valid: true, file });
-    }
-  );
+  it.each([
+    'monitors.json',
+    'monitors.xlsx',
+    'monitors.yaml',
+    'monitors.yml',
+    'MONITORS.JSON',
+    'MONITORS.YAML',
+    'MONITORS.YML'
+  ])('accepts a non-empty backend-supported %s file', name => {
+    const file = new File(['content'], name);
+    expect(validateMonitorImportFile(file)).toEqual({ valid: true, file });
+  });
 
   it('distinguishes required, empty, and unsupported files without reading their contents', () => {
     expect(validateMonitorImportFile(null)).toEqual({ valid: false, reason: 'required' });
     expect(validateMonitorImportFile(new File([], 'monitors.json'))).toEqual({ valid: false, reason: 'empty' });
-    expect(validateMonitorImportFile(new File(['content'], 'monitors.yml'))).toEqual({
+    expect(validateMonitorImportFile(new File(['content'], 'monitors'))).toEqual({
       valid: false,
       reason: 'unsupported'
     });

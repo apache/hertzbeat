@@ -86,7 +86,7 @@ describe('useMonitorImport', () => {
   it('preserves validation and safe API failure kinds', async () => {
     const admin = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }), { wrapper });
     act(() => admin.result.current.actions.open());
-    act(() => admin.result.current.actions.selectFile(new File(['x'], 'monitors.yml')));
+    act(() => admin.result.current.actions.selectFile(new File(['x'], 'monitors.toml')));
     await act(() => admin.result.current.actions.submit());
     expect(admin.result.current.state.invalid).toBe('unsupported');
 

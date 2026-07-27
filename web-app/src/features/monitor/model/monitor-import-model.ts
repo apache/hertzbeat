@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const monitorImportExtensions = ['.json', '.xlsx', '.yaml'] as const;
+const monitorImportFileExtensions = ['.json', '.xlsx', '.yaml', '.yml'] as const;
 
-export const monitorImportAccept = monitorImportExtensions.join(',');
+export const monitorImportAccept = monitorImportFileExtensions.join(',');
 
 export type MonitorImportInvalidKind = 'required' | 'empty' | 'unsupported';
 export type MonitorImportFailureKind = 'validation' | 'forbidden' | 'unavailable' | 'error';
@@ -36,7 +36,7 @@ export function validateMonitorImportFile(
   if (!file) return { valid: false, reason: 'required' };
   if (file.size === 0) return { valid: false, reason: 'empty' };
   const name = file.name.toLowerCase();
-  if (!monitorImportExtensions.some(extension => name.endsWith(extension))) {
+  if (!monitorImportFileExtensions.some(extension => name.endsWith(extension))) {
     return { valid: false, reason: 'unsupported' };
   }
   return { valid: true, file };

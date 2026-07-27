@@ -58,6 +58,12 @@ describe('MonitorImportDialog', () => {
     expect(screen.getByText('Choose a JSON, XLSX, or YAML file.')).toBeInTheDocument();
     expect(screen.getByText('Monitor import is temporarily unavailable.')).toBeInTheDocument();
   });
+
+  it('guides the file picker to every supported monitor configuration extension', () => {
+    renderDialog({ draft: { file: null } });
+
+    expect(document.querySelector('input[type="file"]')).toHaveAttribute('accept', '.json,.xlsx,.yaml,.yml');
+  });
 });
 
 function renderDialog(
