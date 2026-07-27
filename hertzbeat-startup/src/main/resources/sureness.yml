@@ -138,8 +138,17 @@ excludedResource:
   # web ui resource
   - /===get
   - /assets/**===get
+  - /alerts/**===get
+  - /bulletin/**===get
   - /dashboard/**===get
+  - /entities/**===get
+  - /explore/**===get
+  - /ingestion/**===get
   - /monitors/**===get
+  - /observability/**===get
+  - /overview/**===get
+  - /settings/**===get
+  - /topology/**===get
   - /alert/**===get
   - /account/**===get
   - /setting/**===get

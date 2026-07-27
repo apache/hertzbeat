@@ -384,6 +384,33 @@ class ReleaseReadinessRuntimeAssemblyTest {
         assertSurenessRule(sureness, "/api/signal/dashboard-panel-draft/**", "delete", List.of("admin", "user"));
     }
 
+    @Test
+    void packagedReactRoutesBypassApiAuthentication() throws IOException {
+        String sureness = readRepoFile("hertzbeat-startup/src/main/resources/sureness.yml");
+
+        for (String routeRoot : List.of(
+                "alerts",
+                "bulletin",
+                "dashboard",
+                "entities",
+                "explore",
+                "ingestion",
+                "log",
+                "monitors",
+                "observability",
+                "overview",
+                "passport",
+                "setting",
+                "settings",
+                "status",
+                "topology"
+        )) {
+            assertThat(sureness)
+                    .as("packaged React route should bypass API authentication: /" + routeRoot + "/**")
+                    .contains("- /" + routeRoot + "/**===get");
+        }
+    }
+
     private static List<String> tagValues(String content, String tagName) {
         Pattern pattern = Pattern.compile("<" + tagName + ">\\s*([^<]+?)\\s*</" + tagName + ">");
         return pattern.matcher(content)
