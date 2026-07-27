@@ -21,6 +21,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deleteMonitorGrafanaDashboards, mutateMonitors } from '../api/monitor-api';
+import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import { type MonitorAction, type MonitorPage } from '../model/monitor-contract';
 import type { MonitorWriteVerification } from '../model/monitor-write-verification';
 import { verifyMonitorMutation, type MonitorDetailCacheEvidence } from './monitor-command-verification';
@@ -32,7 +33,8 @@ type ActiveListOperation = { source: string; token: number; controller: AbortCon
 export function useMonitorListCommands(
   source: string,
   reread: () => Promise<MonitorPage>,
-  selection: Pick<MonitorSelectionController, 'remove' | 'validatedIds'>
+  selection: Pick<MonitorSelectionController, 'remove' | 'validatedIds'>,
+  capabilities: Pick<MonitorCapabilities, 'canWrite'>
 ) {
   const { t } = useTranslation();
   const { message } = App.useApp();
@@ -44,17 +46,8 @@ export function useMonitorListCommands(
   const copyInstance = useMonitorInstanceCopy();
   useListOperationScope(source, currentSourceRef, activeOperationRef, setBusyOperation);
 
-  const refresh = async () => {
-    try {
-      await reread();
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   const run = async (action: MonitorAction, ids: number[]) => {
-    if (activeOperationRef.current || ids.length === 0) return;
+    if (!canStartListCommand(action, ids, capabilities, activeOperationRef.current)) return;
     const operation = { source, token: ++sequence.current, controller: new AbortController() };
     activeOperationRef.current = operation;
     setBusyOperation(operation);
@@ -88,11 +81,30 @@ export function useMonitorListCommands(
 
   return {
     operating: busyOperation?.source === source,
-    refresh,
+    refresh: () => refreshMonitorList(reread),
     copyInstance,
     run,
     runBulk: (action: MonitorAction) => run(action, selection.validatedIds())
   };
+}
+
+async function refreshMonitorList(reread: () => Promise<MonitorPage>) {
+  try {
+    await reread();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function canStartListCommand(
+  action: MonitorAction,
+  ids: number[],
+  capabilities: Pick<MonitorCapabilities, 'canWrite'>,
+  active: ActiveListOperation | null
+) {
+  if (active || ids.length === 0) return false;
+  return action !== 'copy' || capabilities.canWrite;
 }
 
 function useListOperationScope(

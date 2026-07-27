@@ -25,6 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ApiMessageError } from '@/core/http/api-message';
+import { SessionContext } from '@/core/auth/session-context';
 
 const api = vi.hoisted(() => ({
   deleteMonitorGrafanaDashboards: vi.fn(),
@@ -660,11 +661,19 @@ describe('useMonitorListController URL evidence', () => {
 function wrapper(entries: string[], initialIndex: number, client = testQueryClient()) {
   return ({ children }: PropsWithChildren) => (
     <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
-          <App>{children}</App>
-        </MemoryRouter>
-      </QueryClientProvider>
+      <SessionContext.Provider
+        value={{
+          session: { authenticated: true, username: 'admin', workspaceId: null, roles: ['ADMIN'], expiresAt: null },
+          loading: false,
+          retry: () => undefined
+        }}
+      >
+        <QueryClientProvider client={client}>
+          <MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
+            <App>{children}</App>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </SessionContext.Provider>
     </I18nextProvider>
   );
 }

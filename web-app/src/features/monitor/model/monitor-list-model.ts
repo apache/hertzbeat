@@ -18,6 +18,7 @@
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import type { MonitorAction, MonitorQuery } from './monitor-contract';
+import type { MonitorCapabilities } from './monitor-capability-model';
 import type { MonitorExportFormat } from './monitor-export-model';
 import type { MonitorImportState } from './monitor-import-model';
 import type { MonitorListRow } from './monitor-list-snapshot';
@@ -37,6 +38,7 @@ export type MonitorListViewState = {
   monitors: MonitorListEvidence;
   apps: MonitorAppsEvidence;
   refreshing: boolean;
+  capabilities: MonitorCapabilities;
   canExport: boolean;
   monitorImport: MonitorImportState;
 };

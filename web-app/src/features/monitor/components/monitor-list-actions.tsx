@@ -30,12 +30,14 @@ export function MonitorRowActions({
   monitor,
   open,
   run,
-  disabled
+  disabled,
+  canWrite
 }: {
   monitor: Monitor;
   open: (id: number, mode: 'view' | 'edit') => void;
   run: Runner;
   disabled: boolean;
+  canWrite: boolean;
 }) {
   const { t } = useTranslation();
   const toggle: MonitorAction = monitor.status === monitorStatusCodes.paused ? 'enable' : 'pause';
@@ -48,9 +50,11 @@ export function MonitorRowActions({
       <Button type="link" disabled={disabled} onClick={() => open(monitor.id, 'edit')}>
         {t('common.edit')}
       </Button>
-      <Button type="link" disabled={disabled} onClick={() => void run('copy', [monitor.id])}>
-        {t('monitorActions.copy')}
-      </Button>
+      {canWrite ? (
+        <Button type="link" disabled={disabled} onClick={() => void run('copy', [monitor.id])}>
+          {t('monitorActions.copy')}
+        </Button>
+      ) : null}
       <Popconfirm title={t(toggleConfirmKey, { name: monitor.name })} onConfirm={() => void run(toggle, [monitor.id])}>
         <Button type="link" disabled={disabled}>
           {t(`monitorActions.${toggle}`)}

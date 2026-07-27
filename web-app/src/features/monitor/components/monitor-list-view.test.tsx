@@ -377,6 +377,7 @@ function renderView(
     selectedIds: [],
     operating: false,
     refreshing: false,
+    capabilities: { canRead: true, canWrite: true, canDelete: true, canExport: true },
     canExport: false,
     monitorImport: { canImport: false, draft: null, invalid: null, failure: null, busy: false },
     apps: { kind: 'ready', options: [] },

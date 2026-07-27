@@ -18,9 +18,11 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useSession } from '@/core/auth/session-context';
 import { useQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
+import { monitorCapabilities } from '../model/monitor-capability-model';
 import {
   monitorAppOptions,
   monitorSelectionScope,
@@ -41,6 +43,8 @@ import { useMonitorSelection } from './use-monitor-selection';
 export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor-list-resources';
 
 export function useMonitorListController() {
+  const session = useSession().session;
+  const capabilities = monitorCapabilities(session?.roles ?? []);
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();
@@ -51,7 +55,7 @@ export function useMonitorListController() {
   const displayPage = useMonitorListSnapshot(source, monitors.data, readMode, monitors.dataUpdatedAt);
   const records = displayPage?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
-  const commands = useMonitorListCommands(source, reread, selection);
+  const commands = useMonitorListCommands(source, reread, selection, capabilities);
   const navigation = useMonitorListNavigation(query);
   const monitorExport = useMonitorExport(selection.selectedIds);
   const monitorImport = useMonitorImport(reread, () => selection.selectIds([]));
@@ -65,6 +69,7 @@ export function useMonitorListController() {
       monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, displayPage),
       apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
       refreshing: monitors.isFetching,
+      capabilities,
       canExport: monitorExport.canExport,
       monitorImport: monitorImport.state
     },

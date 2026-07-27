@@ -68,6 +68,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         query={state.query}
         selectedIds={state.selectedIds}
         operating={state.operating}
+        canWrite={state.capabilities.canWrite}
         actions={actions}
       />
       <MonitorImportDialog

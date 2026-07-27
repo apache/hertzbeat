@@ -53,12 +53,14 @@ export function MonitorListResults({
   query,
   selectedIds,
   operating,
+  canWrite,
   actions
 }: {
   evidence: MonitorListEvidence;
   query: MonitorQuery;
   selectedIds: number[];
   operating: boolean;
+  canWrite: boolean;
   actions: MonitorResultActions;
 }) {
   const { t } = useTranslation();
@@ -82,7 +84,7 @@ export function MonitorListResults({
       rowKey="id"
       size="small"
       dataSource={evidence.records}
-      columns={columns(t, query, actions, operating)}
+      columns={columns(t, query, actions, operating, canWrite)}
       rowSelection={rowSelection}
       rowClassName={row => (isMonitorRowDisappeared(row) ? disappearedRowClassName : '')}
       onChange={monitorTableChange(actions.changeSort)}
@@ -115,7 +117,8 @@ function columns(
   t: TFunction,
   query: MonitorQuery,
   actions: MonitorResultActions,
-  operating: boolean
+  operating: boolean,
+  canWrite: boolean
 ): ColumnsType<MonitorListRow> {
   return [
     ...monitorIdentityColumns(t, monitorTableSortOrder(query, 'name'), actions, operating),
@@ -145,6 +148,7 @@ function columns(
           open={actions.open}
           run={actions.run}
           disabled={operating || isMonitorRowDisappeared(row)}
+          canWrite={canWrite}
         />
       )
     }
