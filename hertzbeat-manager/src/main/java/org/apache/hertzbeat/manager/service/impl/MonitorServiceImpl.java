@@ -64,6 +64,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryExp
 import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelService;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -799,7 +800,7 @@ public class MonitorServiceImpl implements MonitorService {
         // Get the source monitor information
         Optional<Monitor> monitorOptional = oldMonitorCatalogQueryService.findMonitorById(id);
         if (monitorOptional.isEmpty()) {
-            throw new IllegalArgumentException("Monitor not found: " + id);
+            throw new MonitorCopySourceNotFoundException();
         }
         Monitor sourceMonitor = monitorOptional.get();
         // Get the parameters of source monitor

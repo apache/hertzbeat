@@ -74,6 +74,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryExp
 import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelService;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import static org.mockito.Mockito.argThat;
@@ -1282,6 +1283,13 @@ class MonitorServiceTest {
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
+    }
+
+    @Test
+    void copyMonitorMissingSourceUsesNamedDomainException() {
+        when(monitorDao.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(MonitorCopySourceNotFoundException.class, () -> monitorService.copyMonitor(1L));
     }
 
     @Test

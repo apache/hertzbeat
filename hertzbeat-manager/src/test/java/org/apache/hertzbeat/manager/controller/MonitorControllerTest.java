@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -246,6 +250,34 @@ class MonitorControllerTest {
                 .andReturn();
 
         Mockito.verify(monitorService).copyMonitor(6565463543L);
+    }
+
+    @Test
+    void copyMonitorMissingSourceReturnsStableSafeFailure() throws Exception {
+        Mockito.doThrow(new MonitorCopySourceNotFoundException())
+                .when(monitorService).copyMonitor(6565463543L);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/copy/{id}", 6565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Source monitor was not found."))
+                .andExpect(content().string(not(containsString("6565463543"))))
+                .andExpect(content().string(not(containsString("private-source-details"))));
+    }
+
+    @Test
+    void copyMonitorGenericExceptionReturnsStableSafeFailureOnLegacyAlias() throws Exception {
+        Mockito.doThrow(new IllegalArgumentException(
+                        "database password=private-copy-secret for monitor 6565463543"))
+                .when(monitorService).copyMonitor(6565463543L);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/copy")
+                        .param("id", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Copy monitor failed."))
+                .andExpect(content().string(not(containsString("6565463543"))))
+                .andExpect(content().string(not(containsString("private-copy-secret"))));
     }
 
     @Test
