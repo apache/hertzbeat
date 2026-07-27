@@ -8,11 +8,13 @@ import type { NoticeRuleOperationRecovery } from '../model/notice-rule-operation
 /** Presents retained proof ownership without claiming that an uncertain write failed. */
 export function NoticeRuleRecovery({
   recovery,
-  retrying,
+  canRetry,
+  retryBusy,
   retry
 }: {
   recovery: NoticeRuleOperationRecovery | undefined;
-  retrying: boolean;
+  canRetry: boolean;
+  retryBusy: boolean;
   retry: () => unknown;
 }) {
   const { t } = useTranslation();
@@ -23,8 +25,8 @@ export function NoticeRuleRecovery({
       showIcon
       message={t(recovery.failure === 'error' ? 'common.routeError.description' : 'common.unavailable')}
       action={
-        recovery.retryable ? (
-          <Button size="small" disabled={retrying} loading={retrying} onClick={() => void retry()}>
+        recovery.retryable && canRetry ? (
+          <Button size="small" disabled={retryBusy} loading={retryBusy} onClick={() => void retry()}>
             {t('common.retry')}
           </Button>
         ) : undefined

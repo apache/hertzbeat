@@ -13,6 +13,7 @@ import {
 import { noticeRuleReceiverPatch } from '../model/notice-rule-delivery-model';
 import { noticeRuleFailureKind, type NoticeRuleDetailState } from '../model/notice-rule-failure';
 import type { NoticeRuleActionCapabilities } from '../model/notice-rule-action-capability';
+import { canPersistNoticeRule } from './notice-rule-action-admission';
 import type { NoticeRuleCommandGate } from './notice-rule-command-gate';
 
 type NoticeRuleEditorOptions = {
@@ -63,11 +64,16 @@ export function useNoticeRuleEditorController({
         : null
     );
   };
+  const retireUnauthorized = (capabilities: NoticeRuleActionCapabilities) => {
+    if (!capabilities.canEdit) detail.invalidate();
+    setDraft(current => (canPersistNoticeRule(capabilities, current) ? current : null));
+  };
   return {
     draft,
     detail: detail.state,
     setDraft,
     invalidateDetail: detail.invalidate,
+    retireUnauthorized,
     actions: { close, create, edit, retryDetail: detail.retry, selectReceivers, updateDraft }
   };
 }
@@ -93,7 +99,7 @@ function useNoticeRuleDetail({
   const invalidate = () => {
     detailEpochRef.current += 1;
     pendingDetailRef.current = undefined;
-    if (gate.isOwnerAlive()) setState({ kind: 'idle' });
+    if (gate.isMounted()) setState({ kind: 'idle' });
   };
   const edit = (id: number): Promise<void> => {
     if (gate.isLocked()) return Promise.resolve();
@@ -108,11 +114,11 @@ function useNoticeRuleDetail({
       try {
         const detail = await loadDetail(id);
         // Only the newest epoch may publish detail into the editor.
-        if (!gate.isOwnerAlive() || detailEpochRef.current !== epoch) return;
+        if (!gate.isMounted() || detailEpochRef.current !== epoch) return;
         setState({ kind: 'idle' });
         setDraft(noticeRuleDraftFromDetail(detail));
       } catch (reason) {
-        if (gate.isOwnerAlive() && detailEpochRef.current === epoch) {
+        if (gate.isMounted() && detailEpochRef.current === epoch) {
           setState({ kind: noticeRuleFailureKind(reason), id });
         }
       } finally {

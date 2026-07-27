@@ -12,6 +12,7 @@ import {
   type NoticeRule,
   type NoticeRuleListState
 } from '../model/notice-rule-model';
+import type { NoticeRuleActionCapabilities } from '../model/notice-rule-action-capability';
 
 type NoticeRuleTableActions = {
   changePage: (page: number, pageSize: number) => void;
@@ -23,6 +24,7 @@ type NoticeRuleTableActions = {
 type NoticeRuleTableProps = {
   actions: NoticeRuleTableActions;
   busy: boolean;
+  capabilities: NoticeRuleActionCapabilities;
   dependenciesReady: boolean;
   pageIndex: number;
   pageSize: number;
@@ -30,7 +32,10 @@ type NoticeRuleTableProps = {
   togglingRuleId: number | null;
 };
 
-type ColumnContext = Pick<NoticeRuleTableProps, 'actions' | 'busy' | 'dependenciesReady' | 'togglingRuleId'> & {
+type ColumnContext = Pick<
+  NoticeRuleTableProps,
+  'actions' | 'busy' | 'capabilities' | 'dependenciesReady' | 'togglingRuleId'
+> & {
   t: TFunction;
 };
 
@@ -42,6 +47,7 @@ export function NoticeRuleTable(props: NoticeRuleTableProps) {
       columns={noticeRuleColumns({
         actions: props.actions,
         busy: props.busy,
+        capabilities: props.capabilities,
         dependenciesReady: props.dependenciesReady,
         t,
         togglingRuleId: props.togglingRuleId
@@ -59,7 +65,7 @@ function noticeRuleColumns(context: ColumnContext): ColumnsType<NoticeRule> {
     { title: context.t('noticeRules.schedule'), width: 210, render: (_value, rule) => scheduleText(context.t, rule) },
     { title: context.t('noticeRules.updated'), width: 190, render: (_value, rule) => formatRuleTime(rule) },
     enabledColumn(context),
-    actionColumn(context)
+    ...(context.capabilities.canEdit || context.capabilities.canDelete ? [actionColumn(context)] : [])
   ];
 }
 
@@ -104,14 +110,19 @@ function enabledColumn(context: ColumnContext): ColumnsType<NoticeRule>[number] 
     key: 'enabled',
     width: 100,
     fixed: 'right',
-    render: (_value, rule) => (
-      <Switch
-        checked={rule.enable}
-        disabled={context.busy || !context.dependenciesReady}
-        loading={context.togglingRuleId === rule.id}
-        onClick={enable => context.actions.toggle(rule, enable)}
-      />
-    )
+    render: (_value, rule) =>
+      context.capabilities.canToggle ? (
+        <Switch
+          checked={rule.enable}
+          disabled={context.busy || !context.dependenciesReady}
+          loading={context.togglingRuleId === rule.id}
+          onClick={enable => context.actions.toggle(rule, enable)}
+        />
+      ) : (
+        <Tag color={rule.enable ? 'success' : 'default'}>
+          {context.t(rule.enable ? 'noticeRules.enabled' : 'noticeRules.disabled')}
+        </Tag>
+      )
   };
 }
 
@@ -123,18 +134,22 @@ function actionColumn(context: ColumnContext): ColumnsType<NoticeRule>[number] {
     fixed: 'right',
     render: (_value, rule) => (
       <Space>
-        <Button
-          type="link"
-          disabled={context.busy || !context.dependenciesReady}
-          onClick={() => context.actions.edit(rule.id)}
-        >
-          {context.t('common.edit')}
-        </Button>
-        <Popconfirm title={context.t('noticeRules.deleteConfirm')} onConfirm={() => context.actions.remove(rule)}>
-          <Button type="link" danger disabled={context.busy}>
-            {context.t('noticeRules.delete')}
+        {context.capabilities.canEdit ? (
+          <Button
+            type="link"
+            disabled={context.busy || !context.dependenciesReady}
+            onClick={() => context.actions.edit(rule.id)}
+          >
+            {context.t('common.edit')}
           </Button>
-        </Popconfirm>
+        ) : null}
+        {context.capabilities.canDelete ? (
+          <Popconfirm title={context.t('noticeRules.deleteConfirm')} onConfirm={() => context.actions.remove(rule)}>
+            <Button type="link" danger disabled={context.busy}>
+              {context.t('noticeRules.delete')}
+            </Button>
+          </Popconfirm>
+        ) : null}
       </Space>
     )
   };

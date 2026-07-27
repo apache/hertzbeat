@@ -24,6 +24,7 @@ import styles from '../../shared/alert-policy-page.module.css';
 
 type NoticeRuleToolbarProps = {
   name: string;
+  canCreate: boolean;
   createDisabled: boolean;
   onNameChange: (value: string) => void;
   onQuery: () => void;
@@ -39,9 +40,11 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
         title={t('noticeRules.title')}
         description={t('noticeRules.description')}
         actions={
-          <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
-            {t('noticeRules.new')}
-          </Button>
+          props.canCreate ? (
+            <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
+              {t('noticeRules.new')}
+            </Button>
+          ) : undefined
         }
       />
       <div className={styles.toolbar}>

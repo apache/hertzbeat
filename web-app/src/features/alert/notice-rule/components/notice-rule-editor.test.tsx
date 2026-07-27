@@ -169,7 +169,8 @@ function editorElement(
       close={vi.fn()}
       submit={vi.fn()}
       recovery={recovery}
-      retrying={false}
+      canRetry={Boolean(recovery?.retryable)}
+      retryBusy={false}
       retry={vi.fn()}
     />
   );

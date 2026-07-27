@@ -1842,6 +1842,7 @@
     "templateHelp": "Selecione destinatários do mesmo tipo de canal para usar um modelo personalizado.",
     "templateCompatible": "Apenas modelos compatíveis com o canal selecionado são exibidos.",
     "enabled": "Ativada",
+    "disabled": "Desativada",
     "advanced": "Condições avançadas de envio",
     "forwardAll": "Enviar todos os alertas",
     "labels": "Filtros de rótulo",

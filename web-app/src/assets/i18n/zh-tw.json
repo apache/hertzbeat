@@ -1819,6 +1819,7 @@
     "templateHelp": "選擇相同渠道類型的接收人後可使用自訂範本。",
     "templateCompatible": "只顯示與所選渠道相容的範本。",
     "enabled": "啟用",
+    "disabled": "停用",
     "advanced": "進階傳送條件",
     "forwardAll": "傳送全部警報",
     "labels": "警報標籤條件",

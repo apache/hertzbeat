@@ -1838,6 +1838,7 @@
     "templateHelp": "Choose receivers of one channel type to use a custom template.",
     "templateCompatible": "Only templates compatible with the selected channel are shown.",
     "enabled": "Enabled",
+    "disabled": "Disabled",
     "advanced": "Advanced delivery conditions",
     "forwardAll": "Forward all alerts",
     "labels": "Alert label matchers",

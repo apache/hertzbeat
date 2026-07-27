@@ -136,6 +136,9 @@ function view(
 ) {
   return {
     state: {
+      capabilities: { canCreate: true, canEdit: true, canToggle: true, canDelete: true },
+      canRetryOperation: true,
+      canSubmitDraft: false,
       command: 'idle',
       detail,
       draft: null,

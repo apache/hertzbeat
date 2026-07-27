@@ -1840,6 +1840,7 @@
     "templateHelp": "同じチャネル種別の通知先を選択するとカスタムテンプレートを使用できます。",
     "templateCompatible": "選択したチャネルに対応するテンプレートのみ表示します。",
     "enabled": "有効",
+    "disabled": "無効",
     "advanced": "高度な配信条件",
     "forwardAll": "すべてのアラートを配信",
     "labels": "アラートラベル条件",

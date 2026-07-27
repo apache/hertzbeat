@@ -1819,6 +1819,7 @@
     "templateHelp": "选择同一渠道类型的接收人后可使用自定义模板。",
     "templateCompatible": "这里只显示与所选渠道兼容的模板。",
     "enabled": "启用",
+    "disabled": "停用",
     "advanced": "高级发送条件",
     "forwardAll": "转发全部告警",
     "labels": "告警标签条件",

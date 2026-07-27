@@ -38,7 +38,8 @@ type NoticeRuleEditorProps = {
   close: () => void;
   submit: () => void;
   recovery: NoticeRuleOperationRecovery | undefined;
-  retrying: boolean;
+  canRetry: boolean;
+  retryBusy: boolean;
   retry: () => unknown;
 };
 
@@ -62,7 +63,12 @@ export function NoticeRuleEditor(props: NoticeRuleEditorProps) {
       onCancel={close}
       onOk={submit}
     >
-      <NoticeRuleRecovery recovery={props.recovery} retrying={props.retrying} retry={props.retry} />
+      <NoticeRuleRecovery
+        recovery={props.recovery}
+        canRetry={props.canRetry}
+        retryBusy={props.retryBusy}
+        retry={props.retry}
+      />
       <div className={styles.form}>
         <NoticeRuleDeliveryFields
           draft={draft}

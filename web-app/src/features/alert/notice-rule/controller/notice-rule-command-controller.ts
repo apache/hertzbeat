@@ -17,6 +17,8 @@ import {
   toggleNoticeRule
 } from './notice-rule-write-operations';
 import { useNoticeRuleActionCapabilities } from './use-notice-rule-action-capabilities';
+import { useNoticeRuleRoleLossRetirement } from './use-notice-rule-role-loss-retirement';
+import { canPerformRetainedNoticeRuleAction } from './notice-rule-action-admission';
 
 export function useNoticeRuleCommandController({
   list,
@@ -59,7 +61,10 @@ export function useNoticeRuleCommandController({
     }
   });
   const context = { capabilities, list, options, provider, gate, editor, loadDetail, notify };
+  useNoticeRuleRoleLossRetirement({ capabilities, editor, gate });
   return {
+    capabilities,
+    canRetryOperation: canPerformRetainedNoticeRuleAction(capabilities, gate.retainedReceipt()),
     gate,
     editor,
     actions: {

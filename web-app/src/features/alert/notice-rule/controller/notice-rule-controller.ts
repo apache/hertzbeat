@@ -9,6 +9,7 @@ import { useNoticeRuleCommandController } from './notice-rule-command-controller
 import { useNoticeRulePageCorrection } from './use-notice-rule-page-correction';
 import { useNoticeRuleQueryController } from './notice-rule-query-controller';
 import { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
+import { canPersistNoticeRule } from './notice-rule-action-admission';
 
 export function useNoticeRuleController() {
   const queryController = useNoticeRuleQueryController();
@@ -21,6 +22,9 @@ export function useNoticeRuleController() {
   return {
     state: {
       command: gate.command,
+      capabilities: commandController.capabilities,
+      canRetryOperation: commandController.canRetryOperation,
+      canSubmitDraft: canPersistNoticeRule(commandController.capabilities, editor.draft),
       detail: editor.detail,
       draft: editor.draft,
       list: list.state,

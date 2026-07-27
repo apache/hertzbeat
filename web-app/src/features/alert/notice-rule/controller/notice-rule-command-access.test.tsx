@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -82,7 +82,7 @@ describe('notice rule command action admission', () => {
     expect(mocks.refetch).not.toHaveBeenCalled();
   });
 
-  it('denies a user retry for a retained administrator delete before proof and reread', async () => {
+  it('retires administrator delete recovery when the session becomes user', async () => {
     mocks.deleteOne.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
     const view = renderController();
     await act(async () => view.result.current.actions.remove(rule));
@@ -91,10 +91,81 @@ describe('notice rule command action admission', () => {
     mocks.capabilities = userActions();
     view.rerender();
 
+    expect(view.result.current.gate.recovery).toBeUndefined();
     await act(async () => view.result.current.actions.retry());
     expect(mocks.deleteOne).toHaveBeenCalledOnce();
     expect(mocks.getOne).not.toHaveBeenCalled();
     expect(mocks.refetch).not.toHaveBeenCalled();
+  });
+
+  it('retires a user create preflight on guest downgrade before mutation', async () => {
+    const preflight = deferred<{ data: (typeof rule)[]; total: number }>();
+    mocks.getList.mockReturnValueOnce(preflight.promise);
+    mocks.capabilities = userActions();
+    const view = renderController();
+    act(() => view.result.current.editor.actions.create());
+    act(() =>
+      view.result.current.editor.actions.updateDraft({
+        name: 'Proof',
+        receiverIds: [11],
+        templateId: 21
+      })
+    );
+    let operation!: Promise<boolean>;
+    act(() => {
+      operation = view.result.current.actions.submit();
+    });
+
+    mocks.capabilities = guestActions();
+    view.rerender();
+    expect(view.result.current.editor.draft).toBeNull();
+    act(() => preflight.resolve({ data: [], total: 0 }));
+    await act(async () => operation);
+
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.refetch).not.toHaveBeenCalled();
+  });
+
+  it('does not project a completed toggle after guest downgrade retires its owner', async () => {
+    const write = deferred<{ data: typeof rule }>();
+    mocks.update.mockReturnValueOnce(write.promise);
+    mocks.capabilities = userActions();
+    const view = renderController();
+    let operation!: Promise<boolean>;
+    act(() => {
+      operation = view.result.current.actions.toggle(rule, false);
+    });
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce());
+
+    mocks.capabilities = guestActions();
+    view.rerender();
+    act(() => write.resolve({ data: { ...rule, enable: false } }));
+    await act(async () => operation);
+
+    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(view.result.current.gate.recovery).toBeUndefined();
+  });
+
+  it('retires pending edit detail on guest downgrade but not an equivalent user rerender', async () => {
+    const first = deferred<{ data: typeof rule }>();
+    mocks.getOne.mockReturnValueOnce(first.promise);
+    mocks.capabilities = userActions();
+    const view = renderController();
+    let edit!: Promise<void>;
+    act(() => {
+      edit = view.result.current.editor.actions.edit(31);
+    });
+    mocks.capabilities = { ...userActions() };
+    view.rerender();
+    expect(view.result.current.editor.detail).toEqual({ kind: 'loading', id: 31 });
+
+    mocks.capabilities = guestActions();
+    view.rerender();
+    act(() => first.resolve({ data: rule }));
+    await act(async () => edit);
+
+    expect(view.result.current.editor.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.editor.draft).toBeNull();
   });
 });
 
@@ -130,4 +201,12 @@ function userActions() {
 
 function guestActions() {
   return { canCreate: false, canEdit: false, canToggle: false, canDelete: false };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }

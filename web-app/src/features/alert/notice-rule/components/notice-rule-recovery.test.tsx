@@ -17,7 +17,8 @@ describe('Notice Rule recovery', () => {
           failure: 'commit-uncertain',
           retryable: false
         }}
-        retrying={false}
+        canRetry={false}
+        retryBusy={false}
         retry={vi.fn()}
       />
     );

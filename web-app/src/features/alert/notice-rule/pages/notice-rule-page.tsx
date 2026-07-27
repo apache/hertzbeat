@@ -22,7 +22,8 @@ function optionAlert(kind: OptionKind) {
 
 export function NoticeRulePage() {
   const { t } = useTranslation();
-  const { state, actions } = useNoticeRuleController();
+  const controller = useNoticeRuleController();
+  const { state, actions } = controller;
   const alert = optionAlert(state.options.kind);
   const busy = state.command !== 'idle';
   const dependenciesReady = state.options.kind === 'ready';
@@ -39,6 +40,7 @@ export function NoticeRulePage() {
     <OperationalPage>
       <NoticeRuleToolbar
         name={state.name}
+        canCreate={state.capabilities.canCreate}
         createDisabled={!dependenciesReady || busy}
         onNameChange={actions.setName}
         onQuery={actions.search}
@@ -47,32 +49,57 @@ export function NoticeRulePage() {
       />
       {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
       <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
-      <NoticeRuleRecovery recovery={routeRecovery} retrying={state.command !== 'recovering'} retry={actions.retry} />
+      <NoticeRuleRecovery
+        recovery={routeRecovery}
+        canRetry={state.canRetryOperation}
+        retryBusy={state.command !== 'recovering'}
+        retry={actions.retry}
+      />
       <NoticeRuleTable
         actions={tableActions}
         busy={busy}
+        capabilities={state.capabilities}
         dependenciesReady={dependenciesReady}
         state={state.list}
         pageIndex={state.query.pageIndex}
         pageSize={state.query.pageSize}
         togglingRuleId={state.togglingRuleId}
       />
-      {state.draft ? (
-        <NoticeRuleEditor
-          draft={state.draft}
-          receivers={state.receivers}
-          templates={state.templates}
-          saving={state.saving}
-          dependenciesReady={dependenciesReady}
-          selectReceivers={actions.selectReceivers}
-          update={actions.updateDraft}
-          close={actions.close}
-          submit={() => void actions.submit()}
-          recovery={editorRecovery}
-          retrying={state.command !== 'recovering'}
-          retry={actions.retry}
-        />
-      ) : null}
+      <NoticeRuleEditorBoundary
+        controller={controller}
+        dependenciesReady={dependenciesReady}
+        recovery={editorRecovery}
+      />
     </OperationalPage>
+  );
+}
+
+function NoticeRuleEditorBoundary({
+  controller,
+  dependenciesReady,
+  recovery
+}: {
+  controller: ReturnType<typeof useNoticeRuleController>;
+  dependenciesReady: boolean;
+  recovery: ReturnType<typeof useNoticeRuleController>['state']['recovery'];
+}) {
+  const { state, actions } = controller;
+  if (!state.draft || !state.canSubmitDraft) return null;
+  return (
+    <NoticeRuleEditor
+      draft={state.draft}
+      receivers={state.receivers}
+      templates={state.templates}
+      saving={state.saving}
+      dependenciesReady={dependenciesReady}
+      selectReceivers={actions.selectReceivers}
+      update={actions.updateDraft}
+      close={actions.close}
+      submit={() => void actions.submit()}
+      recovery={recovery}
+      canRetry={state.canRetryOperation}
+      retryBusy={state.command !== 'recovering'}
+      retry={actions.retry}
+    />
   );
 }
