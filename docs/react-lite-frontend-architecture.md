@@ -96,8 +96,7 @@ redirects in the route registry and never duplicate a page implementation.
   features.
 - Vitest, React Testing Library, MSW, and Playwright for behavior-level tests.
 - Node 22 and pnpm 10 for development and CI. Release assemblies run only the
-  JVM; the optional standalone web image serves static assets with Nginx and
-  never ships a Node runtime.
+  JVM and never ship a Node runtime or a separate frontend service.
 
 Vite emits `web-app/dist`. Release assemblies copy that directory to the
 external distribution `dist/`, matching `apache/master`. Spring serves the SPA
