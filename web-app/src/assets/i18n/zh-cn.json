@@ -1271,7 +1271,34 @@
       "configureNamed": "配置 {{name}} 托管运行时",
       "title": "{{name}} 的托管运行时",
       "save": "保存运行时配置",
-      "success": "采集器托管运行时配置已刷新。",
+      "success": "管理端配置已保存。",
+      "report": {
+        "column": "托管运行时",
+        "notReported": "未上报",
+        "revisions": "期望 {{desiredRevision}} · 活跃 {{activeRevision}}",
+        "reportedAt": "上报于 {{time}}",
+        "failure": "故障 {{failureCode}}",
+        "state": {
+          "STOPPED": "已停止",
+          "STARTING": "启动中",
+          "RUNNING": "运行中",
+          "DEGRADED": "降级",
+          "STOPPING": "停止中",
+          "FAILED": "失败"
+        }
+      },
+      "application": {
+        "applied": "{{collector}} 已应用运行时修订版 {{revision}}；运行时状态为 {{state}}。",
+        "rejected": "{{collector}} 拒绝了运行时修订版 {{revision}}（{{failureCode}}）；当前活动修订版仍为 {{activeRevision}}。",
+        "superseded": "{{collector}} 的运行时修订版 {{revision}} 已被修订版 {{desiredRevision}} 取代。",
+        "waiting": "管理端已保存 {{collector}} 的运行时修订版 {{revision}}；采集器报告期望修订版 {{desiredRevision}}、活动修订版 {{activeRevision}}。",
+        "unknown": {
+          "not-reported": "管理端已保存 {{collector}} 的运行时修订版 {{revision}}；正在等待采集器报告。",
+          "permission": "管理端已保存 {{collector}} 的运行时修订版 {{revision}}，但没有读取运行时报告的权限。",
+          "unavailable": "管理端已保存 {{collector}} 的运行时修订版 {{revision}}，但运行时报告当前不可用。",
+          "error": "管理端已保存 {{collector}} 的运行时修订版 {{revision}}，但无法确定运行时是否收敛。"
+        }
+      },
       "environment": "环境",
       "hostMetrics": "主机指标",
       "intervalSeconds": "主机指标间隔（秒）",

@@ -33,6 +33,7 @@ type Options = {
   queryRef: { current: CollectorQuery };
   records: CollectorRecord[];
   locked: boolean;
+  onManagementSaved: (collector: string, revision: number) => void;
 };
 type RuntimeControls = {
   operationRef: { current: number };
@@ -105,6 +106,7 @@ async function saveRuntimeConfig(
   if (status === 'stale-query') return closeRuntime(controls);
   controls.setPhase('idle');
   if (result) return controls.setFailure(result);
+  options.onManagementSaved(receipt.record.name, request.revision);
   controls.receiptRef.current = null;
   controls.setEditor(null);
   notifySuccess();

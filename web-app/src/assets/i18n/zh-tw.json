@@ -1271,7 +1271,34 @@
       "configureNamed": "設定 {{name}} 受管執行階段",
       "title": "{{name}} 的受管執行階段",
       "save": "儲存執行階段設定",
-      "success": "採集器受管執行階段設定已重新整理。",
+      "success": "管理端設定已儲存。",
+      "report": {
+        "column": "受管執行階段",
+        "notReported": "未回報",
+        "revisions": "期望 {{desiredRevision}} · 使用中 {{activeRevision}}",
+        "reportedAt": "回報於 {{time}}",
+        "failure": "故障 {{failureCode}}",
+        "state": {
+          "STOPPED": "已停止",
+          "STARTING": "啟動中",
+          "RUNNING": "執行中",
+          "DEGRADED": "降級",
+          "STOPPING": "停止中",
+          "FAILED": "失敗"
+        }
+      },
+      "application": {
+        "applied": "{{collector}} 已套用執行階段修訂版 {{revision}}；執行階段狀態為 {{state}}。",
+        "rejected": "{{collector}} 拒絕了執行階段修訂版 {{revision}}（{{failureCode}}）；目前作用中修訂版仍為 {{activeRevision}}。",
+        "superseded": "{{collector}} 的執行階段修訂版 {{revision}} 已被修訂版 {{desiredRevision}} 取代。",
+        "waiting": "管理端已儲存 {{collector}} 的執行階段修訂版 {{revision}}；採集器回報期望修訂版 {{desiredRevision}}、作用中修訂版 {{activeRevision}}。",
+        "unknown": {
+          "not-reported": "管理端已儲存 {{collector}} 的執行階段修訂版 {{revision}}；正在等待採集器回報。",
+          "permission": "管理端已儲存 {{collector}} 的執行階段修訂版 {{revision}}，但沒有讀取執行階段回報的權限。",
+          "unavailable": "管理端已儲存 {{collector}} 的執行階段修訂版 {{revision}}，但執行階段回報目前無法使用。",
+          "error": "管理端已儲存 {{collector}} 的執行階段修訂版 {{revision}}，但無法判定執行階段是否收斂。"
+        }
+      },
       "environment": "環境",
       "hostMetrics": "主機指標",
       "intervalSeconds": "主機指標間隔（秒）",

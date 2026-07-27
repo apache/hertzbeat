@@ -42,6 +42,7 @@ type Options<Draft> = {
   adapter: RuntimeSourceAdapter<Draft>;
   owner: RuntimeSourceOwner;
   coordinator: RuntimeSourceCoordinator;
+  onManagementSaved: (collector: string, revision: number) => void;
 };
 
 export function createRuntimeSourceCoordinator(): RuntimeSourceCoordinator {
@@ -143,6 +144,7 @@ async function saveSourceSession<Draft>(
   }
   setSaving(false);
   if (result) return setFailure(result);
+  options.onManagementSaved(editor.record.name, request.revision);
   setEditor(null);
   options.coordinator.release(options.owner);
   options.closeRuntime();

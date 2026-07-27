@@ -14,6 +14,7 @@ import {
   clearCollectorInstrumentationIntake,
   loadCollectorManagementPage,
   loadCollectorMutationProofPage,
+  loadCollectorRuntimeReport,
   mutateCollectors,
   saveCollectorInstrumentationIntake
 } from './collector-management-api';
@@ -71,16 +72,27 @@ describe('Collector management API', () => {
     );
   });
 
-  it('does not retain secret-bearing runtime diagnostics in collector query data', async () => {
+  it('projects only safe runtime convergence evidence without retaining diagnostics', async () => {
     get.mockResolvedValue(
       page([
         {
           ...summary('edge'),
           runtimeStatus: {
             schemaVersion: 2,
+            enabled: true,
             state: 'RUNNING',
-            lastError: 'authorization=must-not-enter-query-data'
-          }
+            desiredRevision: 8,
+            activeRevision: 7,
+            pid: 4242,
+            intakeCredentialState: 'CONFIGURED',
+            restartCount: 1,
+            changedAt: '2026-07-22T10:01:00Z',
+            lastError: 'authorization=must-not-enter-query-data',
+            failureCode: 'CONFIGURATION_ERROR',
+            telemetry: { privateDiagnostic: 'must-not-enter-query-data' },
+            sources: []
+          },
+          runtimeStatusReportedAt: '2026-07-22T10:01:05Z'
         }
       ])
     );
@@ -88,7 +100,50 @@ describe('Collector management API', () => {
     const result = await loadCollectorManagementPage({ name: '', pageIndex: 2, pageSize: 15 });
 
     expect(result.content[0]).not.toHaveProperty('runtimeStatus');
+    expect(result.content[0]).toMatchObject({
+      runtimeReport: {
+        schemaVersion: 2,
+        enabled: true,
+        state: 'RUNNING',
+        desiredRevision: 8,
+        activeRevision: 7,
+        failureCode: 'CONFIGURATION_ERROR',
+        rejectedRevisions: [],
+        reportedAt: '2026-07-22T10:01:05Z'
+      }
+    });
     expect(JSON.stringify(result)).not.toContain('must-not-enter-query-data');
+  });
+
+  it('finds the exact Collector runtime report across filtered backend pages', async () => {
+    get
+      .mockResolvedValueOnce({
+        content: Array.from({ length: 25 }, (_, index) => summary(`edge-canary-${index}`)),
+        totalElements: 26,
+        totalPages: 2,
+        number: 0,
+        size: 25
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            ...summary('edge'),
+            runtimeStatus: runtimeStatus(8, 8),
+            runtimeStatusReportedAt: '2026-07-22T10:01:05Z'
+          }
+        ],
+        totalElements: 26,
+        totalPages: 2,
+        number: 1,
+        size: 25
+      });
+
+    await expect(loadCollectorRuntimeReport(' edge ')).resolves.toMatchObject({
+      desiredRevision: 8,
+      activeRevision: 8
+    });
+    expect(get).toHaveBeenNthCalledWith(1, '/api/collector?pageIndex=0&pageSize=25&name=edge', undefined);
+    expect(get).toHaveBeenNthCalledWith(2, '/api/collector?pageIndex=1&pageSize=25&name=edge', undefined);
   });
 
   it('accepts an out-of-range empty Spring page only for authoritative mutation proof', async () => {
@@ -212,6 +267,24 @@ function summary(name: string) {
       authorizationHeader: null,
       errorCode: 'intake_not_advertised'
     }
+  };
+}
+
+function runtimeStatus(desiredRevision: number, activeRevision: number) {
+  return {
+    schemaVersion: 2,
+    enabled: true,
+    state: 'RUNNING',
+    desiredRevision,
+    activeRevision,
+    pid: 4242,
+    intakeCredentialState: 'CONFIGURED',
+    restartCount: 1,
+    changedAt: '2026-07-22T10:01:00Z',
+    lastError: '',
+    failureCode: 'NONE',
+    telemetry: {},
+    sources: []
   };
 }
 

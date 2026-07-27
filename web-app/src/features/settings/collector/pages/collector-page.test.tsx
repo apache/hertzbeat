@@ -14,6 +14,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { CollectorInstrumentationIntake } from '@/shared/collector';
 import { requireDomElement } from '@/test/dom-element';
+import type { CollectorRuntimeReport } from '../model/collector-runtime-report-model';
 
 const resource = vi.hoisted(() => ({
   useCollectorController: vi.fn()
@@ -68,6 +69,45 @@ describe('CollectorPage', () => {
     expect(
       screen.queryByRole('button', { name: /main-default-collector (online|offline|delete)/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('wires controller application and record runtime reports into the page', () => {
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeApplication: {
+          kind: 'management-saved',
+          collector: 'edge',
+          revision: 8,
+          application: {
+            kind: 'applied',
+            revision: 8,
+            state: 'RUNNING',
+            reportedAt: '2026-07-22T10:01:05Z'
+          }
+        },
+        listState: {
+          kind: 'ready',
+          records: [
+            collector('edge', false, intakeUnavailable(), {
+              schemaVersion: 2,
+              enabled: true,
+              state: 'DEGRADED',
+              desiredRevision: 8,
+              activeRevision: 7,
+              failureCode: 'BACKEND_UNAVAILABLE',
+              rejectedRevisions: [],
+              reportedAt: '2026-07-22T10:01:05Z'
+            }),
+            collector('main-default-collector', true)
+          ],
+          total: 2
+        }
+      })
+    );
+    renderPage();
+
+    expect(screen.getByText('edge applied runtime revision 8; runtime state is RUNNING.')).toBeInTheDocument();
+    expect(screen.getByText('DEGRADED')).toBeInTheDocument();
   });
 
   it('edits or clears only the explicit safe intake advertisement and exposes no Token field', async () => {
@@ -559,6 +599,7 @@ function buildController(overrides: Record<string, unknown> = {}) {
     runtimeLoading: false,
     runtimeSaving: false,
     runtimeFailure: null,
+    runtimeApplication: null,
     prometheusEditor: null,
     prometheusSaving: false,
     prometheusFailure: null,
@@ -607,7 +648,8 @@ function buildController(overrides: Record<string, unknown> = {}) {
 function collector(
   name: string,
   immutable = false,
-  instrumentationIntake: CollectorInstrumentationIntake = intakeUnavailable()
+  instrumentationIntake: CollectorInstrumentationIntake = intakeUnavailable(),
+  runtimeReport: CollectorRuntimeReport | null = null
 ) {
   return {
     name,
@@ -619,7 +661,7 @@ function collector(
     pinMonitorNum: 2,
     dispatchMonitorNum: 3,
     updatedAt: '2026-07-22T10:00:00',
-    runtimeStatusReportedAt: null,
+    runtimeReport,
     instrumentationIntake
   };
 }

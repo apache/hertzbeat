@@ -15,6 +15,7 @@ import {
 
 import { CollectorContractError, immutableCollectorName, type CollectorPage } from '../model/collector-model';
 import type { CollectorQuery } from '../model/collector-query-model';
+import { parseCollectorRuntimeReport } from './collector-runtime-status-schema';
 
 const safeText = z
   .string()
@@ -99,7 +100,7 @@ function parseCollectorPage(value: unknown, query: CollectorQuery, allowOutOfRan
       pinMonitorNum: summary.pinMonitorNum,
       dispatchMonitorNum: summary.dispatchMonitorNum,
       updatedAt: summary.collector.gmtUpdate,
-      runtimeStatusReportedAt: summary.runtimeStatusReportedAt,
+      runtimeReport: parseCollectorRuntimeReport(summary.runtimeStatus, summary.runtimeStatusReportedAt),
       instrumentationIntake: parseCollectorInstrumentationIntake(summary.instrumentationIntake, summary.collector.name)
     })),
     totalElements: page.totalElements,

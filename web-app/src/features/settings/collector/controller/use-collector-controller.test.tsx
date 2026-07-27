@@ -24,6 +24,7 @@ import {
 } from '../api/collector-management-api';
 import { loadCollectorRuntimeConfig, saveCollectorRuntimeConfig } from '../api/collector-runtime-config-api';
 import type { ManagedOtelRuntimeConfig } from '../api/collector-runtime-config-schema';
+import { waitForCollectorRuntimeApplication } from './collector-runtime-report-convergence';
 import { useCollectorController } from './use-collector-controller';
 
 vi.mock('../api/collector-management-api', () => ({
@@ -37,6 +38,16 @@ vi.mock('../api/collector-runtime-config-api', () => ({
   loadCollectorRuntimeConfig: vi.fn(),
   saveCollectorRuntimeConfig: vi.fn()
 }));
+vi.mock('./collector-runtime-report-convergence', () => ({
+  waitForCollectorRuntimeApplication: vi.fn().mockImplementation((_collector: string, revision: number) =>
+    Promise.resolve({
+      kind: 'applied',
+      revision,
+      state: 'RUNNING',
+      reportedAt: '2026-07-22T10:01:05Z'
+    })
+  )
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const load = vi.mocked(loadCollectorManagementPage);
@@ -46,6 +57,7 @@ const saveIntake = vi.mocked(saveCollectorInstrumentationIntake);
 const clearIntake = vi.mocked(clearCollectorInstrumentationIntake);
 const loadRuntime = vi.mocked(loadCollectorRuntimeConfig);
 const saveRuntime = vi.mocked(saveCollectorRuntimeConfig);
+const waitForRuntimeApplication = vi.mocked(waitForCollectorRuntimeApplication);
 let navigateRoute: NavigateFunction | undefined;
 
 describe('useCollectorController', () => {
@@ -371,6 +383,15 @@ describe('useCollectorController', () => {
     );
 
     expect(saveRuntime).toHaveBeenCalledWith('edge', update);
+    await waitFor(() => expect(waitForRuntimeApplication).toHaveBeenCalledWith('edge', 5, expect.any(Object)));
+    await waitFor(() =>
+      expect(result.current.runtimeApplication).toMatchObject({
+        kind: 'management-saved',
+        collector: 'edge',
+        revision: 5,
+        application: { kind: 'applied', revision: 5 }
+      })
+    );
     expect(loadRuntime).toHaveBeenNthCalledWith(2, 'edge');
     expect(saveRuntime.mock.calls[0]?.[1]).toMatchObject({
       schemaVersion: 3,
@@ -968,7 +989,7 @@ function collector(name: string, instrumentationIntake: CollectorInstrumentation
     pinMonitorNum: 0,
     dispatchMonitorNum: 0,
     updatedAt: null,
-    runtimeStatusReportedAt: null,
+    runtimeReport: null,
     instrumentationIntake
   };
 }

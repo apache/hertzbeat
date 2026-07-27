@@ -12,6 +12,10 @@ import { CollectorContractError, immutableCollectorName, type CollectorMutationA
 import type { CollectorQuery } from '../model/collector-query-model';
 import { parseCollectorManagementPage, parseCollectorMutationProofPage } from './collector-management-schema';
 
+// The manager name filter is fuzzy, so exact identity may appear after page one.
+// A fixed page bound keeps each lookup modest while totalPages prevents truncation.
+const collectorRuntimeLookupPageSize = 25 as const;
+
 export { CollectorContractError } from '../model/collector-model';
 
 export const collectorEndpoint = '/api/collector';
@@ -22,6 +26,21 @@ export async function loadCollectorManagementPage(query: CollectorQuery, signal?
 
 export async function loadCollectorMutationProofPage(query: CollectorQuery, signal?: AbortSignal) {
   return loadCollectorPage(query, signal, parseCollectorMutationProofPage);
+}
+
+export async function loadCollectorRuntimeReport(collector: string, signal?: AbortSignal) {
+  const collectorId = normalizeCollectorId(collector);
+  let pageIndex = 0;
+  while (true) {
+    const page = await loadCollectorManagementPage(
+      { name: collectorId, pageIndex, pageSize: collectorRuntimeLookupPageSize },
+      signal
+    );
+    const exact = page.content.find(record => record.name === collectorId);
+    if (exact) return exact.runtimeReport;
+    pageIndex += 1;
+    if (pageIndex >= page.totalPages) throw new CollectorContractError();
+  }
 }
 
 async function loadCollectorPage(

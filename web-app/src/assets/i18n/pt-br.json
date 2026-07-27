@@ -1294,7 +1294,34 @@
       "configureNamed": "Configurar runtime gerenciado de {{name}}",
       "title": "Runtime gerenciado de {{name}}",
       "save": "Salvar configuração de runtime",
-      "success": "A configuração do runtime gerenciado do coletor foi atualizada.",
+      "success": "Configuração de gerenciamento salva.",
+      "report": {
+        "column": "Runtime gerenciado",
+        "notReported": "Não reportado",
+        "revisions": "Desejada {{desiredRevision}} · Ativa {{activeRevision}}",
+        "reportedAt": "Reportado em {{time}}",
+        "failure": "Falha {{failureCode}}",
+        "state": {
+          "STOPPED": "PARADO",
+          "STARTING": "INICIANDO",
+          "RUNNING": "EM EXECUÇÃO",
+          "DEGRADED": "DEGRADADO",
+          "STOPPING": "PARANDO",
+          "FAILED": "FALHOU"
+        }
+      },
+      "application": {
+        "applied": "{{collector}} aplicou a revisão de runtime {{revision}}; o estado do runtime é {{state}}.",
+        "rejected": "{{collector}} rejeitou a revisão de runtime {{revision}} ({{failureCode}}); a revisão ativa permanece {{activeRevision}}.",
+        "superseded": "A revisão de runtime {{revision}} de {{collector}} foi substituída pela revisão {{desiredRevision}}.",
+        "waiting": "O gerenciamento salvou a revisão de runtime {{revision}} de {{collector}}; o coletor informa revisão desejada {{desiredRevision}} e ativa {{activeRevision}}.",
+        "unknown": {
+          "not-reported": "O gerenciamento salvou a revisão de runtime {{revision}} de {{collector}}; aguardando um relatório do coletor.",
+          "permission": "O gerenciamento salvou a revisão de runtime {{revision}} de {{collector}}, mas a permissão para ler o relatório foi negada.",
+          "unavailable": "O gerenciamento salvou a revisão de runtime {{revision}} de {{collector}}, mas os relatórios estão indisponíveis.",
+          "error": "O gerenciamento salvou a revisão de runtime {{revision}} de {{collector}}, mas não foi possível determinar a convergência."
+        }
+      },
       "environment": "Ambiente",
       "hostMetrics": "Métricas do host",
       "intervalSeconds": "Intervalo das métricas do host (segundos)",

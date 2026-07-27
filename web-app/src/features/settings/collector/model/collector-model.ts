@@ -6,6 +6,7 @@
  */
 
 import type { CollectorInstrumentationIntake } from '@/shared/collector';
+import type { CollectorRuntimeReport } from './collector-runtime-report-model';
 
 export const immutableCollectorName = 'main-default-collector';
 
@@ -19,7 +20,7 @@ export type CollectorRecord = {
   pinMonitorNum: number;
   dispatchMonitorNum: number;
   updatedAt: string | null;
-  runtimeStatusReportedAt: string | null;
+  runtimeReport: CollectorRuntimeReport | null;
   instrumentationIntake: CollectorInstrumentationIntake;
 };
 

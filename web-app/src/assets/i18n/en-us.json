@@ -1290,7 +1290,34 @@
       "configureNamed": "Configure {{name}} managed runtime",
       "title": "Managed runtime for {{name}}",
       "save": "Save runtime config",
-      "success": "Collector managed runtime configuration refreshed.",
+      "success": "Management configuration saved.",
+      "report": {
+        "column": "Managed runtime",
+        "notReported": "Not reported",
+        "revisions": "Desired {{desiredRevision}} · Active {{activeRevision}}",
+        "reportedAt": "Reported {{time}}",
+        "failure": "Failure {{failureCode}}",
+        "state": {
+          "STOPPED": "STOPPED",
+          "STARTING": "STARTING",
+          "RUNNING": "RUNNING",
+          "DEGRADED": "DEGRADED",
+          "STOPPING": "STOPPING",
+          "FAILED": "FAILED"
+        }
+      },
+      "application": {
+        "applied": "{{collector}} applied runtime revision {{revision}}; runtime state is {{state}}.",
+        "rejected": "{{collector}} rejected runtime revision {{revision}} ({{failureCode}}); active revision remains {{activeRevision}}.",
+        "superseded": "{{collector}} runtime revision {{revision}} was superseded by revision {{desiredRevision}}.",
+        "waiting": "Management saved {{collector}} runtime revision {{revision}}; Collector reports desired {{desiredRevision}} and active {{activeRevision}}.",
+        "unknown": {
+          "not-reported": "Management saved {{collector}} runtime revision {{revision}}; waiting for a Collector report.",
+          "permission": "Management saved {{collector}} runtime revision {{revision}}, but runtime report permission was denied.",
+          "unavailable": "Management saved {{collector}} runtime revision {{revision}}, but runtime reports are unavailable.",
+          "error": "Management saved {{collector}} runtime revision {{revision}}, but runtime convergence could not be determined."
+        }
+      },
       "environment": "Environment",
       "hostMetrics": "Host metrics",
       "intervalSeconds": "Host metrics interval (seconds)",

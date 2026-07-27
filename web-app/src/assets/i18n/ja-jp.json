@@ -1286,7 +1286,34 @@
       "configureNamed": "{{name}} の管理ランタイムを設定",
       "title": "{{name}} の管理ランタイム",
       "save": "ランタイム設定を保存",
-      "success": "コレクターの管理ランタイム設定を更新しました。",
+      "success": "管理側の設定を保存しました。",
+      "report": {
+        "column": "管理ランタイム",
+        "notReported": "未報告",
+        "revisions": "希望 {{desiredRevision}} · 稼働中 {{activeRevision}}",
+        "reportedAt": "報告日時 {{time}}",
+        "failure": "障害 {{failureCode}}",
+        "state": {
+          "STOPPED": "停止",
+          "STARTING": "起動中",
+          "RUNNING": "稼働中",
+          "DEGRADED": "縮退",
+          "STOPPING": "停止中",
+          "FAILED": "失敗"
+        }
+      },
+      "application": {
+        "applied": "{{collector}} はランタイムリビジョン {{revision}} を適用しました。ランタイム状態: {{state}}。",
+        "rejected": "{{collector}} はランタイムリビジョン {{revision}} を拒否しました（{{failureCode}}）。アクティブなリビジョンは {{activeRevision}} のままです。",
+        "superseded": "{{collector}} のランタイムリビジョン {{revision}} はリビジョン {{desiredRevision}} に置き換えられました。",
+        "waiting": "管理側は {{collector}} のランタイムリビジョン {{revision}} を保存しました。コレクターの報告は希望 {{desiredRevision}}、アクティブ {{activeRevision}} です。",
+        "unknown": {
+          "not-reported": "管理側は {{collector}} のランタイムリビジョン {{revision}} を保存しました。コレクターの報告を待っています。",
+          "permission": "管理側は {{collector}} のランタイムリビジョン {{revision}} を保存しましたが、ランタイム報告を読み取る権限がありません。",
+          "unavailable": "管理側は {{collector}} のランタイムリビジョン {{revision}} を保存しましたが、ランタイム報告を利用できません。",
+          "error": "管理側は {{collector}} のランタイムリビジョン {{revision}} を保存しましたが、ランタイムの収束を確認できませんでした。"
+        }
+      },
       "environment": "環境",
       "hostMetrics": "ホストメトリクス",
       "intervalSeconds": "ホストメトリクス間隔（秒）",

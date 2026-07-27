@@ -14,6 +14,7 @@ import type { CollectorListState, CollectorMutationAction, CollectorRecord } fro
 import { collectorPageSizes, type CollectorPageSize, type CollectorQuery } from '../model/collector-query-model';
 import { CollectorIntakeStateTag } from './collector-intake-state-tag';
 import { CollectorRowActions } from './collector-row-actions';
+import { CollectorRuntimeReportFacts } from './collector-runtime-report-facts';
 
 type Props = {
   state: CollectorListState;
@@ -133,6 +134,12 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
       key: 'intake',
       width: 168,
       render: (_, record) => <CollectorIntakeStateTag intake={record.instrumentationIntake} />
+    },
+    {
+      title: t('collectors.runtime.report.column'),
+      key: 'runtime',
+      width: 240,
+      render: (_, record) => <CollectorRuntimeReportFacts report={record.runtimeReport} />
     },
     { title: t('collectors.address'), dataIndex: 'address', key: 'address' },
     {

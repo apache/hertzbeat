@@ -14,6 +14,7 @@ import { CollectorActionDialog } from '../components/collector-action-dialog';
 import { CollectorIntakeDialog } from '../components/collector-intake-dialog';
 import { CollectorList } from '../components/collector-list';
 import { CollectorRuntimeConfigDialog } from '../components/collector-runtime-config-dialog';
+import { CollectorRuntimeApplicationAlert } from '../components/collector-runtime-application-alert';
 import { CollectorToolbar } from '../components/collector-toolbar';
 import { useCollectorController } from '../controller/use-collector-controller';
 import type { CollectorMutationFailure } from '../model/collector-model';
@@ -30,6 +31,7 @@ export function CollectorPage() {
       {!controller.intakeEditor && !controller.runtimeEditor && controller.mutationFailure && (
         <MutationFailure failure={controller.mutationFailure} />
       )}
+      <CollectorRuntimeApplicationAlert state={controller.runtimeApplication} />
       <div className={styles.commandBand}>
         <CollectorToolbar
           name={controller.nameDraft}
