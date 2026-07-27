@@ -20,6 +20,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { requireDomElement } from '@/test/dom-element';
+
 import { noticeTemplateResourceRecord } from '../notice-template-model';
 import { NoticeTemplatePage } from './notice-template-page';
 
@@ -73,11 +75,14 @@ describe('NoticeTemplatePage', () => {
   it('uses the shared operational page header while preserving workspace labeling', () => {
     renderPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeTemplates.title' }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+    expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(
       screen.getByRole('button', { name: 'noticeTemplates.new' })
     );
     expect(screen.getByRole('region', { name: 'noticeTemplates.title' })).toBeInTheDocument();

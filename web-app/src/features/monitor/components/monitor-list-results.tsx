@@ -36,6 +36,8 @@ import { MonitorRowActions } from './monitor-list-actions';
 import { monitorIdentityColumns } from './monitor-list-identity-columns';
 import styles from './monitor-list.module.css';
 
+const disappearedRowClassName = styles.disappearedRow ?? '';
+
 type MonitorResultActions = {
   changePage: (page: number, pageSize: number) => void;
   changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
@@ -82,7 +84,7 @@ export function MonitorListResults({
       dataSource={evidence.records}
       columns={columns(t, query, actions, operating)}
       rowSelection={rowSelection}
-      rowClassName={row => (isMonitorRowDisappeared(row) ? styles.disappearedRow : '')}
+      rowClassName={row => (isMonitorRowDisappeared(row) ? disappearedRowClassName : '')}
       onChange={monitorTableChange(actions.changeSort)}
       pagination={{
         current: query.pageIndex + 1,

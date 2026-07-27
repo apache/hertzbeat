@@ -22,6 +22,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { requireDomElement } from '@/test/dom-element';
 
 const controller = vi.hoisted(() => ({
   closeGeneratedToken: vi.fn(),
@@ -86,9 +87,15 @@ describe('TokenPage', () => {
   it('renders the page identity and delegates token generation from the header', () => {
     renderTokenPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
-    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const headerActions = requireDomElement(
+      header.querySelector('[data-hb-operational-page-actions]'),
+      'Operational page actions'
+    );
     const generate = screen.getByRole('button', { name: i18n.t('token.generate') });
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: i18n.t('token.title') }));

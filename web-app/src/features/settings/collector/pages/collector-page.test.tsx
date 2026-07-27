@@ -13,6 +13,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { CollectorInstrumentationIntake } from '@/shared/collector';
+import { requireDomElement } from '@/test/dom-element';
 
 const resource = vi.hoisted(() => ({
   useCollectorController: vi.fn()
@@ -41,8 +42,11 @@ describe('CollectorPage', () => {
     resource.useCollectorController.mockReturnValue(controller);
     renderPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Collector management' }));
     expect(screen.getAllByText('10.0.0.7')).toHaveLength(2);

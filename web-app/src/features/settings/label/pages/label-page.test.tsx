@@ -22,6 +22,7 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { requireDomElement } from '@/test/dom-element';
 
 import { LabelPage } from './label-page';
 
@@ -81,9 +82,15 @@ describe('LabelPage', () => {
   it('owns New Label in the shared header and query commands in the search band', async () => {
     renderLabelPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
-    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const headerActions = requireDomElement(
+      header.querySelector('[data-hb-operational-page-actions]'),
+      'Operational page actions'
+    );
     const commandBand = screen.getByRole('search');
     const create = screen.getByRole('button', { name: 'New label' });
     expect(page).toContainElement(header);

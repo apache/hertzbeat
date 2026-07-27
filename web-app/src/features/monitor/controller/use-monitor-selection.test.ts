@@ -18,6 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import type { MonitorListRow } from '../model/monitor-list-snapshot';
 import { useMonitorSelection } from './use-monitor-selection';
 
 describe('useMonitorSelection', () => {
@@ -60,16 +61,16 @@ describe('useMonitorSelection', () => {
     });
     act(() => result.current.selectIds([7, 8]));
 
-    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'disappeared' as const }] });
+    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'disappeared' }] });
 
     expect(result.current.selectedIds).toEqual([7]);
     expect(result.current.validatedIds()).toEqual([7]);
 
-    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'active' as const }] });
+    rerender({ rows: [monitor(7), { ...monitor(8), displayState: 'active' }] });
     expect(result.current.selectedIds).toEqual([7, 8]);
   });
 });
 
-function monitor(id: number) {
+function monitor(id: number): MonitorListRow {
   return { id, name: `monitor-${id}`, app: 'website', instance: `instance-${id}`, status: 1 };
 }

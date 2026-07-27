@@ -18,6 +18,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { requireDomElement } from '@/test/dom-element';
+
 const controller = vi.hoisted<{ value: unknown }>(() => ({ value: undefined }));
 vi.mock('../controller/use-message-server-controller', () => ({ useMessageServerController: () => controller.value }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -32,11 +34,14 @@ describe('MessageServerPage', () => {
     controller.value = state({ kind: 'missing' }, { kind: 'missing' });
     render(<MessageServerPage />);
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'messageServer.title' }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+    expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
   });
 
   it('keeps invalid email evidence distinct while the missing SMS channel remains usable', () => {

@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { requireDomElement } from '@/test/dom-element';
+
 import { createNoticeReceiverDraft, type NoticeReceiverDraft } from '../model/notice-receiver-model';
 import type { NoticeReceiverTestRecovery } from '../model/notice-receiver-operation-state';
 
@@ -19,11 +21,14 @@ describe('NoticeReceiverPage', () => {
   it('uses the shared operational page header for title copy and create', () => {
     render(<NoticeReceiverPage />);
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'noticeReceivers.title' }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(
+    expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(
       screen.getByRole('button', { name: 'noticeReceivers.new' })
     );
   });

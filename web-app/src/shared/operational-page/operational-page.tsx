@@ -36,7 +36,7 @@ export function OperationalPageHeader({
       data-hb-operational-page-header=""
     >
       <div className={styles.copy}>
-        <Typography.Title id={titleId} level={2}>
+        <Typography.Title {...(titleId === undefined ? {} : { id: titleId })} level={2}>
           {title}
         </Typography.Title>
         {description != null ? <Typography.Text type="secondary">{description}</Typography.Text> : null}

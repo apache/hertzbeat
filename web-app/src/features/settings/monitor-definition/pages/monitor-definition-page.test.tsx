@@ -13,6 +13,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { requireDomElement } from '@/test/dom-element';
 
 const owner = vi.hoisted(() => ({ useController: vi.fn() }));
 vi.mock('../controller/use-monitor-definition-controller', () => ({
@@ -41,9 +42,15 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
-    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const headerActions = requireDomElement(
+      header.querySelector('[data-hb-operational-page-actions]'),
+      'Operational page actions'
+    );
     const commandBand = screen.getByRole('search');
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Monitor definitions' }));

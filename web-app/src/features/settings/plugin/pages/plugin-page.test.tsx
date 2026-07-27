@@ -10,6 +10,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { requireDomElement } from '@/test/dom-element';
+
 const controller = vi.hoisted((): { value: unknown } => ({ value: undefined }));
 vi.mock('../controller/use-plugin-controller', () => ({ usePluginController: () => controller.value }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -25,9 +27,15 @@ describe('PluginPage', () => {
   it('owns Upload in the shared header and list commands in the search band', () => {
     render(<PluginPage />);
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
-    const headerActions = header?.querySelector('[data-hb-operational-page-actions]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const headerActions = requireDomElement(
+      header.querySelector('[data-hb-operational-page-actions]'),
+      'Operational page actions'
+    );
     const commandBand = screen.getByRole('search');
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'plugins.title' }));

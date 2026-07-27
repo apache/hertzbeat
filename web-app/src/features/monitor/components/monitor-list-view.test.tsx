@@ -20,6 +20,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { requireDomElement } from '@/test/dom-element';
 
 import { MonitorListView, type MonitorListViewProps } from './monitor-list-view';
 
@@ -42,13 +43,19 @@ describe('MonitorListView evidence states', () => {
       { create, openImport }
     );
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
-    const management = header?.querySelector('[data-monitor-management-actions]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const management = requireDomElement(
+      header.querySelector('[data-monitor-management-actions]'),
+      'Monitor management actions'
+    );
     const filters = screen.getByRole('search');
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: i18n.t('monitor.title') }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).toContainElement(management);
+    expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(management);
     expect(management).toContainElement(screen.getByRole('link', { name: i18n.t('monitor.help') }));
     expect(management).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
     expect(management).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.import.action') }));
@@ -67,7 +74,10 @@ describe('MonitorListView evidence states', () => {
   it('keeps permission-gated header management actions absent', () => {
     renderView({ canExport: false, monitors: { kind: 'empty' } });
 
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(header).toContainElement(screen.getByRole('link', { name: i18n.t('monitor.help') }));
     expect(header).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
     expect(screen.queryByRole('button', { name: i18n.t('monitor.import.action') })).not.toBeInTheDocument();

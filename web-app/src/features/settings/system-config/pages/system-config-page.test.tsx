@@ -22,6 +22,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { requireDomElement } from '@/test/dom-element';
 
 const controller = vi.hoisted(() => ({
   discard: vi.fn(),
@@ -53,11 +54,14 @@ describe('SystemConfigPage', () => {
   it('owns title and description in a shared header without actions', () => {
     renderPage();
 
-    const page = document.querySelector('[data-hb-operational-page]');
-    const header = document.querySelector('[data-hb-operational-page-header]');
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'System settings' }));
-    expect(header?.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+    expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
   });
 
   it('renders the ready controller state without owning server queries', async () => {
