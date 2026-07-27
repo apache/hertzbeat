@@ -51,6 +51,22 @@ describe('application data router', () => {
     expect(legacyRoutes).toEqual(legacyRouteCatalog.map(route => route.path).sort());
   });
 
+  it('places legacy redirects in the same authenticated layout boundary as their canonical targets', () => {
+    const authenticatedRoute = appRoutes[0]?.children?.find(route => route.id === 'authenticated');
+    const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
+    const directLegacyIds = (authenticatedRoute?.children ?? [])
+      .filter(route => route.id?.startsWith('legacy-'))
+      .map(route => route.id)
+      .sort();
+    const basicLegacyIds = (basicRoute?.children ?? [])
+      .filter(route => route.id?.startsWith('legacy-'))
+      .map(route => route.id)
+      .sort();
+
+    expect(directLegacyIds).toEqual(legacyIdsForLayout('blank'));
+    expect(basicLegacyIds).toEqual(legacyIdsForLayout('basic'));
+  });
+
   it('leaves excluded legacy product areas on the wildcard 404 route', () => {
     const legacyPaths = new Set(legacyRouteCatalog.map(route => route.path));
 
@@ -79,7 +95,7 @@ describe('application data router', () => {
     const authenticatedRoute = appRoutes[0]?.children?.find(route => route.id === 'authenticated');
     const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
     const authenticatedCanonicalRoutes = (authenticatedRoute?.children ?? []).filter(
-      route => route.id && route.id !== 'basic-layout'
+      route => route.id && route.id !== 'basic-layout' && !route.id.startsWith('legacy-')
     );
     expect(isValidElement(authenticatedRoute?.element)).toBe(true);
     if (!isValidElement(authenticatedRoute?.element)) throw new Error('The authenticated route gate is missing.');
@@ -132,4 +148,11 @@ function isAdministrativeRoute(route: RouteObject) {
 
 function compareRouteId(left: { id: string | undefined }, right: { id: string | undefined }) {
   return (left.id ?? '').localeCompare(right.id ?? '');
+}
+
+function legacyIdsForLayout(layout: 'basic' | 'blank') {
+  return legacyRouteCatalog
+    .filter(definition => getAppRoute(definition.targetRouteId).layout === layout)
+    .map(definition => definition.id)
+    .sort();
 }

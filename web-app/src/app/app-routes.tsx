@@ -70,6 +70,7 @@ export const appRoutes: RouteObject[] = [
               return { Component: InstrumentationPage };
             }
           },
+          ...legacyRedirectRoutes('blank'),
           {
             id: 'basic-layout',
             element: <BasicLayout />,
@@ -318,11 +319,7 @@ export const appRoutes: RouteObject[] = [
                 ...getAppRouteIdentity('settings'),
                 element: <Navigate replace to={getAppRoute('notice-receivers').path} />
               },
-              ...legacyRouteCatalog.map(definition => ({
-                id: definition.id,
-                path: definition.path,
-                element: <LegacyRouteRedirect definition={definition} />
-              })),
+              ...legacyRedirectRoutes('basic'),
               {
                 ...getAppRouteIdentity('bulletin'),
                 lazy: async () => {
@@ -344,3 +341,13 @@ export const appRoutes: RouteObject[] = [
     ]
   }
 ];
+
+function legacyRedirectRoutes(layout: 'basic' | 'blank'): RouteObject[] {
+  return legacyRouteCatalog
+    .filter(definition => getAppRoute(definition.targetRouteId).layout === layout)
+    .map(definition => ({
+      id: definition.id,
+      path: definition.path,
+      element: <LegacyRouteRedirect definition={definition} />
+    }));
+}

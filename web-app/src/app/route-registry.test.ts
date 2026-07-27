@@ -42,44 +42,93 @@ describe('route registry', () => {
         targetRouteId,
         fixedSearch
       }))
-    ).toEqual(
-      expect.arrayContaining([
-        { id: 'legacy-overview', path: '/overview', targetRouteId: 'dashboard', fixedSearch: [] },
-        {
-          id: 'legacy-log-stream',
-          path: '/log/stream',
-          targetRouteId: 'explore',
-          fixedSearch: [
-            ['signal', 'logs'],
-            ['mode', 'live']
-          ]
-        },
-        {
-          id: 'legacy-log-integration',
-          path: '/log/integration/:source',
-          targetRouteId: 'instrumentation',
-          fixedSearch: []
-        },
-        {
-          id: 'legacy-log-manage',
-          path: '/log/manage',
-          targetRouteId: 'explore',
-          fixedSearch: [['signal', 'logs']]
-        },
-        {
-          id: 'legacy-ingestion-otlp',
-          path: '/ingestion/otlp',
-          targetRouteId: 'instrumentation',
-          fixedSearch: []
-        },
-        {
-          id: 'legacy-ingestion-otlp-child',
-          path: '/ingestion/otlp/*',
-          targetRouteId: 'instrumentation',
-          fixedSearch: []
-        }
-      ])
-    );
+    ).toEqual([
+      { id: 'legacy-overview', path: '/overview', targetRouteId: 'dashboard', fixedSearch: [] },
+      {
+        id: 'legacy-log-stream',
+        path: '/log/stream',
+        targetRouteId: 'explore',
+        fixedSearch: [
+          ['signal', 'logs'],
+          ['mode', 'live']
+        ]
+      },
+      {
+        id: 'legacy-log-integration',
+        path: '/log/integration/:source',
+        targetRouteId: 'instrumentation',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-log-manage',
+        path: '/log/manage',
+        targetRouteId: 'explore',
+        fixedSearch: [['signal', 'logs']]
+      },
+      {
+        id: 'legacy-ingestion-otlp',
+        path: '/ingestion/otlp',
+        targetRouteId: 'instrumentation',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-ingestion-otlp-child',
+        path: '/ingestion/otlp/*',
+        targetRouteId: 'instrumentation',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-notice-receivers',
+        path: '/alerts/notifications/receivers',
+        targetRouteId: 'notice-receivers',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-notice-templates',
+        path: '/alerts/notifications/templates',
+        targetRouteId: 'notice-templates',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-notice-rules',
+        path: '/alerts/notifications/rules',
+        targetRouteId: 'notice-rules',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-message-server',
+        path: '/setting/settings/server',
+        targetRouteId: 'message-server',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-system-settings',
+        path: '/setting/settings/config',
+        targetRouteId: 'system-settings',
+        fixedSearch: []
+      },
+      { id: 'legacy-labels', path: '/setting/labels', targetRouteId: 'labels', fixedSearch: [] },
+      {
+        id: 'legacy-object-store',
+        path: '/setting/settings/object-store',
+        targetRouteId: 'object-store',
+        fixedSearch: []
+      },
+      { id: 'legacy-plugins', path: '/setting/plugin', targetRouteId: 'plugins', fixedSearch: [] },
+      { id: 'legacy-collectors', path: '/setting/collector', targetRouteId: 'collectors', fixedSearch: [] },
+      {
+        id: 'legacy-monitor-definitions',
+        path: '/setting/define',
+        targetRouteId: 'monitor-definitions',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-status-management',
+        path: '/setting/status',
+        targetRouteId: 'status-management',
+        fixedSearch: []
+      }
+    ]);
   });
 
   it('defines every monitor and alert-rule workflow page in the canonical catalog', () => {

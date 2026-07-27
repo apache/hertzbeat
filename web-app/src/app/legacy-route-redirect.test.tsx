@@ -29,10 +29,19 @@ describe('LegacyRouteRedirect', () => {
     ['/ingestion/otlp?tab=java', '/observability/integration?tab=java'],
     ['/ingestion/otlp/grpc/java?tab=setup#sdk', '/observability/integration?tab=setup#sdk'],
     ['/alerts/notifications/receivers?pageIndex=2#receiver', '/settings/notifications/receivers?pageIndex=2#receiver'],
+    ['/alerts/notifications/templates?channel=email', '/settings/notifications/templates?channel=email'],
+    ['/alerts/notifications/rules?enabled=true', '/settings/notifications/rules?enabled=true'],
+    ['/setting/settings/server?type=email', '/settings/notifications/channels?type=email'],
+    ['/setting/settings/config?tab=mail', '/settings/system?tab=mail'],
+    ['/setting/settings/object-store?tab=s3', '/settings/storage/object-store?tab=s3'],
+    ['/setting/labels?search=production', '/settings/labels?search=production'],
+    ['/setting/plugin?search=jdbc', '/settings/plugins?search=jdbc'],
     [
       '/setting/collector?pageIndex=2&status=online#collector-7',
       '/settings/collectors?pageIndex=2&status=online#collector-7'
-    ]
+    ],
+    ['/setting/define?app=linux', '/settings/monitor-definitions?app=linux'],
+    ['/setting/status?workspace=default', '/settings/status-page?workspace=default']
   ])('redirects %s to %s', async (source, expected) => {
     renderLegacyRoutes(source);
 
@@ -59,6 +68,18 @@ describe('LegacyRouteRedirect', () => {
     expect(
       JSON.stringify([...log.mock.calls, ...info.mock.calls, ...warn.mock.calls, ...error.mock.calls])
     ).not.toContain(secret);
+  });
+
+  it('drops external redirect parameters while retaining sanitized local navigation context', async () => {
+    renderLegacyRoutes(
+      '/overview?redirect=https%3A%2F%2Fevil.example&returnTo=%2Fsettings%2Flabels%3Ftoken%3Dsecret&theme=compact'
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/dashboard?returnTo=%2Fsettings%2Flabels&theme=compact')
+    );
+    expect(screen.getByTestId('location')).not.toHaveTextContent('evil.example');
+    expect(screen.getByTestId('location')).not.toHaveTextContent('secret');
   });
 
   it.each(['/actions', '/incidents', '/events', '/ai', '/mcp', '/ui-lab'])(
