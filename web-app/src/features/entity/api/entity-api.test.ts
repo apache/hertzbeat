@@ -13,6 +13,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { EntityContractError, type EntityQuery } from '../model/entity-contract';
 import {
   buildEntityListPath,
+  classifyEntityDetailError,
   classifyEntityDeleteError,
   deleteEntity,
   loadEntityDetail,
@@ -195,9 +196,20 @@ describe('entity API', () => {
     [new ApiMessageError('private conflict detail', { status: 409 }), 'validation'],
     [new ApiMessageError('private unavailable detail', { status: 503 }), 'unavailable'],
     [new ApiMessageError('private missing detail', { status: 404 }), 'missing'],
+    [new ApiMessageError('private missing detail', { code: 3, status: 200 }), 'missing'],
     [new ApiMessageError('private deleted detail', { code: 15, status: 200 }), 'missing'],
     [new Error('private generic detail'), 'error']
   ] as const)('classifies delete failures without exposing backend text', (failure, expected) => {
     expect(classifyEntityDeleteError(failure)).toBe(expected);
+  });
+
+  it.each([
+    [new ApiMessageError('private missing detail', { status: 404 }), 'missing'],
+    [new ApiMessageError('private missing detail', { code: 3, status: 200 }), 'missing'],
+    [new ApiMessageError('private legacy detail', { code: 15, status: 200 }), 'missing'],
+    [new ApiMessageError('private unavailable detail', { status: 503 }), 'unavailable'],
+    [new Error('private generic detail'), 'error']
+  ] as const)('classifies detail failures without exposing backend text', (failure, expected) => {
+    expect(classifyEntityDetailError(failure)).toBe(expected);
   });
 });

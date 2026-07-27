@@ -12,6 +12,17 @@ class EntityMissingError extends Error {
   }
 }
 
+const entityMissingResponseCodes = new Set([3, 15]);
+
+// HertzBeat reports domain-level missing records inside an HTTP 200 envelope.
+// Code 3 is the current backend contract; code 15 keeps rolling upgrades readable.
+function isEntityMissingResponse(error: ApiMessageError) {
+  return (
+    error.status === 404 ||
+    (error.status === 200 && error.code !== undefined && entityMissingResponseCodes.has(error.code))
+  );
+}
+
 export function buildEntityListPath(query: EntityQuery) {
   return `/api/entities?${writeEntityQuery(query).toString()}`;
 }
@@ -50,10 +61,7 @@ export function classifyEntityReadError(error: unknown): 'unavailable' | 'error'
 }
 
 export function classifyEntityDetailError(error: unknown): 'missing' | 'unavailable' | 'error' {
-  if (
-    error instanceof EntityMissingError ||
-    (error instanceof ApiMessageError && (error.status === 404 || (error.status === 200 && error.code === 15)))
-  ) {
+  if (error instanceof EntityMissingError || (error instanceof ApiMessageError && isEntityMissingResponse(error))) {
     return 'missing';
   }
   return classifyEntityReadError(error);
@@ -63,7 +71,7 @@ export function classifyEntityDeleteError(
   error: unknown
 ): 'missing' | 'permission' | 'validation' | 'unavailable' | 'error' {
   if (error instanceof ApiMessageError) {
-    if (error.status === 404 || (error.status === 200 && error.code === 15)) return 'missing';
+    if (isEntityMissingResponse(error)) return 'missing';
     if (error.status === 403) return 'permission';
     if (error.code === 1 || [400, 409, 422].includes(error.status ?? 0)) return 'validation';
     if (error.cause !== undefined || [0, 502, 503, 504].includes(error.status ?? 0)) return 'unavailable';
