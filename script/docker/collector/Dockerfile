@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:25-jdk
 
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 

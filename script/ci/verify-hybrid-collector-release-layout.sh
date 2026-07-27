@@ -21,6 +21,7 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$repo_root"
 
 dockerfile=script/docker/collector/Dockerfile.native
+jvm_dockerfile=script/docker/collector/Dockerfile
 foreground=script/assembly/collector/bin-native/foreground.sh
 systemd_unit=script/assembly/collector/systemd/hertzbeat-collector.service
 systemd_installer=script/assembly/collector/systemd/install-systemd.sh
@@ -36,7 +37,7 @@ jvm_package_verifier=script/ci/verify-hybrid-collector-jvm-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
-for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
+for required in "$dockerfile" "$jvm_dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
   "$release_assets" "$release_workflow" \
   "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
@@ -45,6 +46,13 @@ for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer"
     exit 1
   fi
 done
+
+required_java=$(sed -n 's:.*<java.version>\([0-9][0-9]*\)</java.version>.*:\1:p' pom.xml | head -1)
+jvm_runtime_java=$(sed -n 's#^FROM eclipse-temurin:\([0-9][0-9]*\)-.*#\1#p' "$jvm_dockerfile" | head -1)
+if [ -z "$required_java" ] || [ -z "$jvm_runtime_java" ] || [ "$jvm_runtime_java" -lt "$required_java" ]; then
+  echo "JVM Hybrid Collector image runtime must match the repository Java target" >&2
+  exit 1
+fi
 
 grep -q '^FROM debian:bookworm-slim' "$dockerfile"
 grep -q 'ARG TARGETARCH' "$dockerfile"
