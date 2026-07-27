@@ -18,10 +18,14 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -120,6 +124,30 @@ class DbAlertStoreHandlerImplTest {
         verify(singleAlertDao).save(any(SingleAlert.class));
         verify(groupAlertDao).save(groupAlert);
         assertEquals(1L, groupAlert.getId());
+    }
+
+    @Test
+    void preservesCommonLabelKeysWhoseCurrentValueIsNull() {
+        groupAlert.setGroupKey("collector-integrated-e2e");
+        Map<String, String> currentLabels = new LinkedHashMap<>();
+        currentLabels.put("collectorName", "integrated-e2e");
+        currentLabels.put("collectorVersion", null);
+        groupAlert.setCommonLabels(currentLabels);
+        singleAlert.setFingerprint("collector-integrated-e2e");
+
+        GroupAlert existingGroup = new GroupAlert();
+        existingGroup.setCommonLabels(Map.of(
+                "collectorName", "integrated-e2e",
+                "collectorVersion", "1.8.0"));
+        when(groupAlertDao.findByGroupKey(groupAlert.getGroupKey())).thenReturn(existingGroup);
+        when(singleAlertDao.save(singleAlert)).thenReturn(singleAlert);
+        when(groupAlertDao.save(groupAlert)).thenReturn(groupAlert);
+
+        GroupAlert stored = dbAlertStoreHandler.store(groupAlert);
+
+        assertTrue(stored.getCommonLabels().containsKey("collectorVersion"));
+        assertNull(stored.getCommonLabels().get("collectorVersion"));
+        assertEquals("integrated-e2e", stored.getCommonLabels().get("collectorName"));
     }
 
 }

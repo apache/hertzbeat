@@ -19,11 +19,11 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
@@ -106,22 +106,14 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
                 if (existCommonLabels != null) {
                     Map<String, String> commonLabels = groupAlert.getCommonLabels();
                     if (commonLabels != null) {
-                        // filter common label in commonLabels and existCommonLabels
-                        commonLabels = commonLabels.entrySet().stream()
-                                .filter(entry -> existCommonLabels.containsKey(entry.getKey()))
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                        groupAlert.setCommonLabels(commonLabels);
+                        groupAlert.setCommonLabels(retainHistoricalKeys(commonLabels, existCommonLabels));
                     }
                 }
                 Map<String, String> existCommonAnnotations = existGroupAlert.getCommonAnnotations();
                 if (existCommonAnnotations != null) {
                     Map<String, String> commonAnnotations = groupAlert.getCommonAnnotations();
                     if (commonAnnotations != null) {
-                        // filter common annotation in commonAnnotations and existCommonAnnotations
-                        commonAnnotations = commonAnnotations.entrySet().stream()
-                                .filter(entry -> existCommonAnnotations.containsKey(entry.getKey()))
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                        groupAlert.setCommonAnnotations(commonAnnotations);
+                        groupAlert.setCommonAnnotations(retainHistoricalKeys(commonAnnotations, existCommonAnnotations));
                     }
                 }
             }
@@ -131,5 +123,24 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             savedGroupAlert.setAlerts(groupAlert.getAlerts());
             return savedGroupAlert;
         }
+    }
+
+    /**
+     * Keeps the current values for keys that belong to the persisted group.
+     *
+     * <p>Alert dimensions can legitimately be unknown and therefore null. A
+     * mutable map is used here because the stream collectors reject null
+     * values and would turn a Collector recovery notification into a storage
+     * failure.</p>
+     */
+    private static Map<String, String> retainHistoricalKeys(
+            Map<String, String> current, Map<String, String> persisted) {
+        Map<String, String> retained = new LinkedHashMap<>();
+        current.forEach((key, value) -> {
+            if (persisted.containsKey(key)) {
+                retained.put(key, value);
+            }
+        });
+        return retained;
     }
 }

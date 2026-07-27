@@ -18,11 +18,15 @@
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import java.time.Duration;
@@ -36,6 +40,7 @@ import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeConfigService;
 import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 class HeartbeatProcessorRuntimeStatusTest {
 
@@ -71,6 +76,35 @@ class HeartbeatProcessorRuntimeStatusTest {
         new HeartbeatProcessor(manageServer).handle(mock(ChannelHandlerContext.class), heartbeat);
 
         verifyNoInteractions(registry);
+    }
+
+    @Test
+    void acceptsLegacyZeroHeartbeatWithoutInvalidStatusWarning() {
+        ManageServer manageServer = mock(ManageServer.class);
+        CollectorRuntimeStatusRegistry registry = mock(CollectorRuntimeStatusRegistry.class);
+        when(manageServer.isChannelActive("legacy-zero")).thenReturn(true);
+        when(manageServer.getRuntimeStatusRegistry()).thenReturn(registry);
+        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                .setIdentity("legacy-zero")
+                .setType(ClusterMsg.MessageType.HEARTBEAT)
+                .setMsg(ByteString.copyFromUtf8("0"))
+                .build();
+        Logger logger = (Logger) LoggerFactory.getLogger(HeartbeatProcessor.class);
+        ListAppender<ILoggingEvent> events = new ListAppender<>();
+        events.start();
+        logger.addAppender(events);
+
+        try {
+            new HeartbeatProcessor(manageServer).handle(mock(ChannelHandlerContext.class), heartbeat);
+        } finally {
+            logger.detachAppender(events);
+            events.stop();
+        }
+
+        verifyNoInteractions(registry);
+        assertFalse(events.list.stream()
+                .anyMatch(event -> event.getFormattedMessage()
+                        .startsWith("Ignoring invalid telemetry runtime status")));
     }
 
     @Test

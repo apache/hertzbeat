@@ -34,6 +34,8 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 @Slf4j
 public class HeartbeatProcessor implements NettyRemotingProcessor {
 
+    private static final ByteString LEGACY_RUNTIME_STATUS_PLACEHOLDER = ByteString.copyFromUtf8("0");
+
     private final ManageServer manageServer;
 
     public HeartbeatProcessor(final ManageServer manageServer) {
@@ -68,7 +70,7 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
     }
 
     private ManagedOtelRuntimeStatus reportRuntimeStatus(String identity, ClusterMsg.Message message) {
-        if (message.getMsg().isEmpty()) {
+        if (message.getMsg().isEmpty() || LEGACY_RUNTIME_STATUS_PLACEHOLDER.equals(message.getMsg())) {
             return null;
         }
         try {
