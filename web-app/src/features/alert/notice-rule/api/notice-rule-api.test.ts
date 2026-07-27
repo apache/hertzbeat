@@ -113,10 +113,18 @@ describe('notice rule API', () => {
     });
   });
 
+  it('rejects an empty template dependency set because the backend always supplies preset templates', async () => {
+    http.get.mockResolvedValueOnce([]);
+
+    await expect(loadAllNoticeTemplates()).rejects.toMatchObject({
+      code: 'NOTICE_RULE_TEMPLATE_OPTIONS_INVALID'
+    });
+  });
+
   it('forwards caller cancellation to both option transports', async () => {
     const signal = new AbortController().signal;
     receiverApi.loadAll.mockResolvedValueOnce([]);
-    http.get.mockResolvedValueOnce([]);
+    http.get.mockResolvedValueOnce([{ id: null, name: 'EmailTemplate', type: 1, preset: true, content: '${content}' }]);
 
     await loadAllNoticeReceivers(signal);
     await loadAllNoticeTemplates(signal);

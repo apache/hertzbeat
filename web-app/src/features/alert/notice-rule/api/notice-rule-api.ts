@@ -64,7 +64,9 @@ export async function loadAllNoticeTemplates(signal?: AbortSignal) {
           : apiMessageGet(`${noticeTemplatesEndpoint}/all`))
       );
       const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
-      if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+      if (templates.length === 0 || new Set(ids).size !== ids.length) {
+        throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+      }
       return templates;
     },
     'collection',

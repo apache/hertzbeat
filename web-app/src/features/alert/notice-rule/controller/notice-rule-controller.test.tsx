@@ -98,6 +98,18 @@ describe('notice rule controller', () => {
     expect(result.current.state.draft).toBeNull();
   });
 
+  it('surfaces an empty backend template dependency as invalid and blocks create', () => {
+    mocks.options.set(
+      'notice-templates:all',
+      failed(new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID'))
+    );
+    const { result } = renderHook(() => useNoticeRuleController());
+
+    expect(result.current.state.options.kind).toBe('invalid');
+    act(() => result.current.actions.create());
+    expect(result.current.state.draft).toBeNull();
+  });
+
   it('blocks detail edit when dependencies are not ready', async () => {
     mocks.options.set('notice-receivers:all', failed(new NoticeRuleRequestFailure('unavailable')));
     const { result } = renderHook(() => useNoticeRuleController());
@@ -158,6 +170,22 @@ describe('notice rule controller', () => {
     expect(mocks.create).not.toHaveBeenCalled();
     expect(mocks.notification).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.validation' }));
     expect(result.current.state.draft).not.toBeNull();
+  });
+
+  it('cancels create and edit drafts without issuing a write', async () => {
+    const { result } = renderHook(() => useNoticeRuleController());
+    act(() => result.current.actions.create());
+    act(() => result.current.actions.updateDraft({ name: 'Unsaved', receiverIds: [11] }));
+    act(() => result.current.actions.close());
+    expect(result.current.state.draft).toBeNull();
+    expect(mocks.create).not.toHaveBeenCalled();
+
+    await act(async () => result.current.actions.edit(31));
+    act(() => result.current.actions.updateDraft({ name: 'Still unsaved' }));
+    act(() => result.current.actions.close());
+    expect(result.current.state.draft).toBeNull();
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.deleteOne).not.toHaveBeenCalled();
   });
 
   it('keeps the editor open and preserves unavailable classification when plain refetch evidence fails', async () => {

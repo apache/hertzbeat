@@ -51,6 +51,25 @@ describe('notice rule data provider', () => {
     api.save.mockResolvedValue(undefined);
   });
 
+  it('maps server pagination and the trimmed name filter to the backend list query', async () => {
+    api.loadPage.mockResolvedValueOnce({
+      content: [rule],
+      totalElements: 17,
+      totalPages: 2,
+      number: 1,
+      size: 15
+    });
+
+    await expect(
+      noticeRuleDataProvider.getList({
+        resource: 'notice-rules',
+        pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
+        filters: [{ field: 'name', operator: 'contains', value: '  Proof  ' }]
+      })
+    ).resolves.toEqual({ data: [rule], total: 17 });
+    expect(api.loadPage).toHaveBeenCalledWith({ name: 'Proof', pageIndex: 1, pageSize: 15 });
+  });
+
   it('proves create with exactly one new canonical ID from complete before and after scans', async () => {
     api.loadAll.mockResolvedValueOnce([]).mockResolvedValueOnce([rule]);
     const response = await noticeRuleDataProvider.create({ resource: 'notice-rules', variables });
@@ -106,6 +125,17 @@ describe('notice rule data provider', () => {
     await expect(noticeRuleDataProvider.deleteOne({ resource: 'notice-rules', id: 31 })).resolves.toEqual({
       data: rule
     });
+  });
+
+  it('returns the canonical edit readback after the backend DTO converges', async () => {
+    const updateVariables = { ...variables, draft: { ...draft, id: 31 } };
+    api.loadOne.mockResolvedValueOnce(rule);
+
+    await expect(
+      noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables })
+    ).resolves.toEqual({ data: rule });
+    expect(api.save).toHaveBeenCalledWith(updateVariables.draft, updateVariables.receivers, updateVariables.templates);
+    expect(api.loadOne).toHaveBeenCalledWith(31);
   });
 
   it('preserves explicit domain evidence instead of rebuilding it from HTTP-shaped fields', async () => {
