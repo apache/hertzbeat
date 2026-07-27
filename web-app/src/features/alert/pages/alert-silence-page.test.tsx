@@ -42,6 +42,7 @@ import {
   AlertSilenceMissingError,
   AlertSilenceRequestFailure,
   buildAlertSilencePayload,
+  type AlertSilence,
   type AlertSilenceDraft
 } from '../model/alert-silence-model';
 
@@ -56,6 +57,7 @@ const record = {
   periodEnd: '2026-07-16T12:00:00Z'
 };
 const detailRecord = { ...record, enable: true, times: 2, labels: null, days: null };
+let lastSavedCanonical: AlertSilence | undefined;
 
 describe('AlertSilencePage', () => {
   beforeAll(async () => {
@@ -66,12 +68,19 @@ describe('AlertSilencePage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    lastSavedCanonical = undefined;
     api.loadAlertSilences.mockResolvedValue({ content: [record], totalElements: 1 });
     api.loadMatchedAlertSilences.mockResolvedValue({ records: [], missingCount: 0 });
-    api.loadAlertSilence.mockResolvedValue(detailRecord);
-    api.saveAlertSilence.mockResolvedValue(undefined);
-    api.deleteAlertSilence.mockResolvedValue(undefined);
-    api.deleteAlertSilences.mockResolvedValue(undefined);
+    api.loadAlertSilence.mockImplementation(id =>
+      Promise.resolve(lastSavedCanonical?.id === id ? lastSavedCanonical : detailRecord)
+    );
+    api.saveAlertSilence.mockImplementation(draft => Promise.resolve((lastSavedCanonical = canonicalFromDraft(draft))));
+    api.deleteAlertSilence.mockImplementation(id =>
+      Promise.resolve({ status: 'deleted', deletedIds: [id], missingIds: [] })
+    );
+    api.deleteAlertSilences.mockImplementation(ids =>
+      Promise.resolve({ status: 'deleted', deletedIds: ids, missingIds: [] })
+    );
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
   });
 
@@ -155,9 +164,9 @@ describe('AlertSilencePage', () => {
   });
 
   it('disables New silence while a save is in flight', async () => {
-    let resolveSave!: () => void;
+    let resolveSave!: (record: AlertSilence) => void;
     api.saveAlertSilence.mockReturnValue(
-      new Promise<void>(resolve => {
+      new Promise<AlertSilence>(resolve => {
         resolveSave = resolve;
       })
     );
@@ -171,7 +180,10 @@ describe('AlertSilencePage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalled());
     expect(create).toBeDisabled();
-    resolveSave();
+    const draft = api.saveAlertSilence.mock.calls[0]?.[0];
+    if (!draft) throw new Error('Create draft was not written');
+    lastSavedCanonical = canonicalFromDraft(draft);
+    resolveSave(lastSavedCanonical);
     await waitFor(() => expect(create).toBeEnabled());
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -304,6 +316,10 @@ function createdPageFromLastWrite() {
     content: [{ id: 8, times: null, ...buildAlertSilencePayload(draft) }],
     totalElements: 1
   };
+}
+
+function canonicalFromDraft(draft: AlertSilenceDraft): AlertSilence {
+  return { id: draft.id ?? 8, times: null, ...buildAlertSilencePayload(draft) };
 }
 
 function renderPage(entry = '/alerts/silences') {

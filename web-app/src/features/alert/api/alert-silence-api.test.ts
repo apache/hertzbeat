@@ -53,10 +53,13 @@ const persisted = {
 describe('alert silence API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    apiMessageDelete.mockResolvedValue(undefined);
+    apiMessageDelete.mockImplementation((path: string) => {
+      const ids = new URL(path, 'http://localhost').searchParams.getAll('ids').map(Number);
+      return Promise.resolve({ status: 'deleted', deletedIds: ids, missingIds: [] });
+    });
     apiMessageGet.mockResolvedValue(undefined);
-    apiMessagePost.mockResolvedValue(undefined);
-    apiMessagePut.mockResolvedValue(undefined);
+    apiMessagePost.mockResolvedValue({ ...persisted, id: 8 });
+    apiMessagePut.mockResolvedValue(persisted);
   });
 
   it('uses the controller list, detail, create, update, toggle, and batch delete contracts', async () => {
@@ -153,17 +156,42 @@ describe('alert silence API', () => {
     await expect(deleteAlertSilence(7)).rejects.toBeInstanceOf(AlertSilenceRequestFailure);
   });
 
-  it('returns void acknowledgements from every mutation', async () => {
-    apiMessagePost.mockResolvedValue({ leaked: true });
-    apiMessagePut.mockResolvedValue({ leaked: true });
-    apiMessageDelete.mockResolvedValue({ leaked: true });
+  it('returns canonical save and authoritative delete acknowledgements', async () => {
+    apiMessagePost.mockResolvedValue({ ...persisted, id: 8 });
+    apiMessagePut.mockResolvedValue(persisted);
+    apiMessageDelete
+      .mockResolvedValueOnce({ status: 'deleted', deletedIds: [7], missingIds: [] })
+      .mockResolvedValueOnce({ status: 'partial', deletedIds: [7], missingIds: [8] });
     const draft = { ...createAlertSilenceDraft(), name: 'Maintenance' };
 
-    await expect(saveAlertSilence(draft)).resolves.toBeUndefined();
-    await expect(saveAlertSilence({ ...draft, id: 7 })).resolves.toBeUndefined();
+    await expect(saveAlertSilence(draft)).resolves.toEqual({ ...persisted, id: 8 });
+    await expect(saveAlertSilence({ ...draft, id: 7 })).resolves.toEqual(persisted);
     await expect(updateAlertSilenceEnabled(persisted, false)).resolves.toBeUndefined();
-    await expect(deleteAlertSilence(7)).resolves.toBeUndefined();
-    await expect(deleteAlertSilences([8, 7])).resolves.toBeUndefined();
+    await expect(deleteAlertSilence(7)).resolves.toEqual({
+      status: 'deleted',
+      deletedIds: [7],
+      missingIds: []
+    });
+    await expect(deleteAlertSilences([8, 7])).resolves.toEqual({
+      status: 'partial',
+      deletedIds: [7],
+      missingIds: [8]
+    });
+  });
+
+  it('rejects malformed mutation acknowledgements as uncertain contract failures', async () => {
+    const draft = { ...createAlertSilenceDraft(), name: 'Maintenance' };
+    apiMessagePost.mockResolvedValue({ ...persisted, id: 0 });
+    await expect(saveAlertSilence(draft)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+
+    apiMessageDelete.mockResolvedValue({ status: 'deleted', deletedIds: [7], missingIds: [7] });
+    await expect(deleteAlertSilence(7)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('allowlists the toggle request without echoing response-only and audit fields', async () => {

@@ -27,7 +27,7 @@ import {
   type AlertSilenceDraft,
   type AlertSilenceQuery
 } from '../model/alert-silence-model';
-import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
+import { parseAlertSilenceDeleteReceipt, parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
 const alertSilenceEndpoint = '/api/alert/silence';
 const alertSilenceCollectionEndpoint = '/api/alert/silences';
@@ -87,22 +87,28 @@ export async function loadMatchedAlertSilences(ids: number[], signal?: AbortSign
   };
 }
 
-export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
+export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<AlertSilence> {
   const payload = buildAlertSilencePayload(draft);
-  if (draft.id !== undefined) {
-    await alertSilenceApiRequest(() => apiMessagePut(alertSilenceEndpoint, payload));
-  } else {
-    await alertSilenceApiRequest(() => apiMessagePost(alertSilenceEndpoint, payload));
-  }
+  return alertSilenceApiRequest(async () => {
+    const response =
+      draft.id === undefined
+        ? await apiMessagePost(alertSilenceEndpoint, payload)
+        : await apiMessagePut(alertSilenceEndpoint, payload);
+    return parseAlertSilenceDetail(response);
+  });
 }
 
-export async function deleteAlertSilence(id: number): Promise<void> {
-  await deleteAlertSilences([id]);
+export async function deleteAlertSilence(id: number) {
+  return deleteAlertSilences([id]);
 }
 
-export async function deleteAlertSilences(ids: readonly number[]): Promise<void> {
-  const path = buildAlertSilenceDeletePath(ids);
-  await alertSilenceApiRequest(() => apiMessageDelete(path));
+export async function deleteAlertSilences(ids: readonly number[]) {
+  const commandIds = normalizeAlertSilenceIds(ids);
+  const path = buildAlertSilenceDeletePath(commandIds);
+  return alertSilenceApiRequest(async () => {
+    const response = await apiMessageDelete(path);
+    return parseAlertSilenceDeleteReceipt(response, commandIds);
+  });
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {

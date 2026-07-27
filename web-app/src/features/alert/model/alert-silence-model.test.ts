@@ -184,10 +184,12 @@ describe('alert silence model', () => {
     });
 
     expect(draft).toMatchObject({ labelsText: '', days: [], periodStart: '', periodEnd: '' });
-    expect(buildAlertSilencePayload({ ...draft, name: 'Renamed maintenance' })).toMatchObject({
+    expect(buildAlertSilencePayload({ ...draft, name: 'Renamed maintenance' })).toEqual({
       id: 41,
       name: 'Renamed maintenance',
-      times: null,
+      enable: true,
+      matchAll: true,
+      type: 0,
       labels: null,
       days: null,
       periodStart: null,
@@ -220,7 +222,6 @@ describe('alert silence model', () => {
       enable: false,
       matchAll: false,
       type: 1,
-      times: 9,
       labels: legacy.labels,
       days: legacy.days,
       periodStart: legacy.periodStart,

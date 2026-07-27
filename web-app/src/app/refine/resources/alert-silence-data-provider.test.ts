@@ -69,9 +69,7 @@ describe('Alert Silence Refine data provider', () => {
   it('is read-only because the page controller is the only mutation transaction owner', async () => {
     api.loadAlertSilence.mockResolvedValue(record);
     api.loadAlertSilences.mockResolvedValue(page);
-    api.saveAlertSilence.mockResolvedValue(undefined);
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
-    api.deleteAlertSilence.mockResolvedValue(undefined);
 
     await expect(
       alertSilenceDataProvider.create({ resource: 'alert-silences', variables: draft })

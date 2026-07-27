@@ -31,10 +31,11 @@ type AlertSilenceOperation = {
   write: () => Promise<void>;
   onCommitted?: () => void;
   // `prove` must establish the exact resource state after an uncertain write.
-  // `recoverProjection` is only for rereading a write that is already known to have committed.
   prove?: () => Promise<void>;
+  // Create cannot recover an uncertain POST until its acknowledgement yielded
+  // an identity; edit and delete can prove their pre-existing command IDs.
+  canRecoverUncertainWrite?: () => boolean;
   project: () => Promise<void>;
-  recoverProjection?: () => Promise<void>;
 };
 type ReceiptPhase = AlertSilenceRecovery['phase'];
 type RetainedReceipt = {
@@ -95,7 +96,7 @@ export function useAlertSilenceOperationGate() {
     const retained = receipt.current;
     if (owner.current !== null || !retained || retained.phase === 'commit-uncertain') return;
     const commandOwner = claimOwner(runtime, ++nextOwner.current);
-    await advanceReceipt(runtime, commandOwner, retained, true);
+    await advanceReceipt(runtime, commandOwner, retained);
   };
   const isActive = () => owner.current !== null;
   const isLocked = () => owner.current !== null || receipt.current !== null;
@@ -119,7 +120,7 @@ async function executeWrite(
       const retained: RetainedReceipt = {
         operation,
         feedback,
-        phase: operation.prove ? 'proof' : 'commit-uncertain',
+        phase: operation.prove && operation.canRecoverUncertainWrite?.() !== false ? 'proof' : 'commit-uncertain',
         committed: false
       };
       retainReceipt(runtime, retained);
@@ -139,12 +140,7 @@ async function executeWrite(
   await advanceReceipt(runtime, owner, retained);
 }
 
-async function advanceReceipt(
-  runtime: GateRuntime,
-  owner: OperationOwner,
-  retained: RetainedReceipt,
-  recovering = false
-) {
+async function advanceReceipt(runtime: GateRuntime, owner: OperationOwner, retained: RetainedReceipt) {
   try {
     // Recovery advances the retained receipt; it never executes the mutation again.
     if (retained.phase === 'proof') {
@@ -153,10 +149,7 @@ async function advanceReceipt(
       retained.phase = 'projection';
       if (!retained.committed) publishCommit(runtime, retained);
     }
-    const project = recovering
-      ? (retained.operation.recoverProjection ?? retained.operation.project)
-      : retained.operation.project;
-    await project();
+    await retained.operation.project();
     if (owns(owner, runtime.owner, runtime.mounted)) clearReceipt(runtime);
   } catch (reason) {
     if (owns(owner, runtime.owner, runtime.mounted)) {

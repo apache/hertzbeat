@@ -21,6 +21,7 @@ import {
   AlertSilenceContractError,
   AlertSilenceMissingError,
   type AlertSilence,
+  type AlertSilenceDeleteReceipt,
   type AlertSilencePage,
   type AlertSilenceQuery
 } from '../model/alert-silence-model';
@@ -71,6 +72,11 @@ const alertSilencePageSchema = z.object({
   number: nonNegativeIntegerSchema,
   size: positiveIntegerSchema
 });
+const alertSilenceDeleteReceiptSchema = z.object({
+  status: z.enum(['deleted', 'missing', 'partial']),
+  deletedIds: z.array(positiveIntegerSchema),
+  missingIds: z.array(positiveIntegerSchema)
+});
 
 export function parseAlertSilenceDetail(value: unknown): AlertSilence {
   if (value == null) throw new AlertSilenceMissingError();
@@ -97,6 +103,24 @@ export function parseAlertSilencePage(value: unknown, query: AlertSilenceQuery):
     throw new AlertSilenceContractError('Duplicate ids are not allowed');
   }
   return { ...page, content: page.content.map(mapAlertSilence) };
+}
+
+export function parseAlertSilenceDeleteReceipt(
+  value: unknown,
+  requestedIds: readonly number[]
+): AlertSilenceDeleteReceipt {
+  const receipt = parseSchema(alertSilenceDeleteReceiptSchema, value, 'Alert silence delete receipt');
+  const deletedIds = [...receipt.deletedIds].sort((left, right) => left - right);
+  const missingIds = [...receipt.missingIds].sort((left, right) => left - right);
+  const acknowledgedIds = [...deletedIds, ...missingIds].sort((left, right) => left - right);
+  if (
+    new Set(acknowledgedIds).size !== acknowledgedIds.length ||
+    !arraysEqual(acknowledgedIds, requestedIds) ||
+    receipt.status !== deleteStatus(deletedIds.length, missingIds.length)
+  ) {
+    throw new AlertSilenceContractError('Delete receipt does not match the command');
+  }
+  return { status: receipt.status, deletedIds, missingIds };
 }
 
 function mapAlertSilence(source: z.output<typeof alertSilenceSchema>): AlertSilence {
@@ -165,4 +189,13 @@ function daysInMonth(year: number, month: number) {
 
 function isLeapYear(year: number) {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+
+function deleteStatus(deletedCount: number, missingCount: number): AlertSilenceDeleteReceipt['status'] {
+  if (deletedCount === 0) return 'missing';
+  return missingCount === 0 ? 'deleted' : 'partial';
+}
+
+function arraysEqual(left: readonly number[], right: readonly number[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }

@@ -34,6 +34,7 @@ export type AlertSilenceManagementContext = AlertNoiseControlManagementContext;
 export type {
   AlertSilence,
   AlertSilenceDraft,
+  AlertSilenceDeleteReceipt,
   AlertSilencePage,
   AlertSilenceQuery,
   AlertSilenceType

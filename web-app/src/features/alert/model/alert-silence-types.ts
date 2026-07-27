@@ -23,7 +23,6 @@ export type AlertSilenceType = 0 | 1;
 type AlertSilenceWritableSnapshot = {
   matchAll: boolean;
   type: AlertSilenceType;
-  times: number | null;
   labels: Record<string, string> | null;
   days: number[] | null;
   periodStart: string | null;
@@ -61,3 +60,9 @@ export type AlertSilence = {
 };
 
 export type AlertSilencePage = PagedCollection<AlertSilence>;
+
+export type AlertSilenceDeleteReceipt = {
+  status: 'deleted' | 'missing' | 'partial';
+  deletedIds: number[];
+  missingIds: number[];
+};

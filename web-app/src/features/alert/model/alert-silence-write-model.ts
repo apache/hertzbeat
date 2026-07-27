@@ -58,7 +58,6 @@ export function buildAlertSilencePayload(draft: AlertSilenceDraft) {
     enable: draft.enable,
     matchAll: draft.matchAll,
     type: draft.type,
-    ...(draft.persisted ? { times: draft.persisted.times } : {}),
     labels: resolveLabels(draft),
     days: resolveAlertSilenceDays(draft),
     ...resolveAlertSilencePeriod(draft)
@@ -108,7 +107,6 @@ export function alertSilenceDraftFromDetail(silence: AlertSilence): AlertSilence
     persisted: {
       matchAll: silence.matchAll,
       type: silence.type,
-      times: silence.times ?? null,
       labels: cloneNullableMap(silence.labels),
       days: cloneNullableAlertSilenceDays(silence.days),
       periodStart: silence.periodStart,

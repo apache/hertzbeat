@@ -70,6 +70,7 @@ const editable = {
   periodStart: '2026-07-16T10:00:00Z',
   periodEnd: '2026-07-16T12:00:00Z'
 };
+let savedCanonical: AlertSilence = record;
 const page = (content: AlertSilence[] = [record], number = 0, total = content.length) => ({
   content,
   totalElements: total,
@@ -84,13 +85,30 @@ describe('useAlertSilenceController', () => {
     await loadLocale('en-US');
   });
   beforeEach(() => {
+    savedCanonical = record;
     Object.values(api).forEach(mock => mock.mockReset());
     api.loadAlertSilences.mockResolvedValue(page());
     api.loadMatchedAlertSilences.mockResolvedValue({ records: [], missingCount: 0 });
-    api.saveAlertSilence.mockResolvedValue(undefined);
+    api.saveAlertSilence.mockImplementation(draft =>
+      Promise.resolve(
+        (savedCanonical = {
+          ...record,
+          ...buildAlertSilencePayload(draft),
+          id: draft.id ?? 8,
+          times: null
+        })
+      )
+    );
+    api.loadAlertSilence.mockImplementation(id =>
+      Promise.resolve(id === savedCanonical.id ? savedCanonical : { ...record, id })
+    );
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
-    api.deleteAlertSilence.mockResolvedValue(undefined);
-    api.deleteAlertSilences.mockResolvedValue(undefined);
+    api.deleteAlertSilence.mockImplementation(id =>
+      Promise.resolve({ status: 'deleted', deletedIds: [id], missingIds: [] })
+    );
+    api.deleteAlertSilences.mockImplementation(ids =>
+      Promise.resolve({ status: 'deleted', deletedIds: ids, missingIds: [] })
+    );
   });
   afterEach(() => {
     cleanup();
@@ -321,40 +339,32 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.busy).toBe(false);
   });
 
-  it('closes a committed create before projection validation and displayed reread finish', async () => {
-    const proof = deferred<ReturnType<typeof page>>();
-    api.loadAlertSilences.mockResolvedValueOnce(page()).mockReturnValueOnce(proof.promise);
+  it('retains the canonical create identity through exact detail proof and the visible reread', async () => {
+    api.loadAlertSilences.mockResolvedValueOnce(page());
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     const draft = alertSilenceDetailDraft(view.result.current.controller.state.detail);
     if (!draft) throw new Error('Create draft was not opened');
-    const created = { id: 8, times: null, ...buildAlertSilencePayload(draft) };
+    const created = { ...record, ...buildAlertSilencePayload(draft), id: 8, times: null };
     api.loadAlertSilences.mockResolvedValueOnce(page([created]));
-    let save!: Promise<void>;
-    act(() => {
-      save = view.result.current.controller.actions.save();
-    });
-    await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledTimes(2));
-    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
-    expect(view.result.current.controller.state.busy).toBe(true);
-    await act(async () => {
-      proof.resolve(page([created]));
-      await save;
-    });
-    expect(api.loadAlertSilences).toHaveBeenCalledTimes(3);
+
+    await act(() => view.result.current.controller.actions.save());
+
+    expect(api.loadAlertSilence).toHaveBeenCalledWith(8);
+    expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
+    expect(api.loadAlertSilences).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: '', pageIndex: 0, pageSize: 8 }),
+      expect.any(AbortSignal)
+    );
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
     expect(view.result.current.controller.state.busy).toBe(false);
   });
 
   it('uses a synchronous mutex for same-tick save attempts', async () => {
-    let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(
-      new Promise<void>(resolve => {
-        resolveSave = resolve;
-      })
-    );
+    const write = deferred<AlertSilence>();
+    api.saveAlertSilence.mockReturnValue(write.promise);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -367,7 +377,7 @@ describe('useAlertSilenceController', () => {
     });
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
     await act(async () => {
-      resolveSave();
+      write.resolve({ ...record, id: 8, name: 'Created' });
       await Promise.all([first, second]);
     });
   });
@@ -394,7 +404,7 @@ describe('useAlertSilenceController', () => {
   });
 
   it('uses the same synchronous owner for same-tick delete attempts', async () => {
-    const write = deferred<void>();
+    const write = deferred<{ status: 'deleted'; deletedIds: number[]; missingIds: number[] }>();
     api.deleteAlertSilence.mockReturnValue(write.promise);
     api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
     const view = renderController(['/alerts/silences'], 0);
@@ -409,12 +419,12 @@ describe('useAlertSilenceController', () => {
 
     expect(api.deleteAlertSilence).toHaveBeenCalledTimes(1);
     await act(async () => {
-      write.resolve();
+      write.resolve({ status: 'deleted', deletedIds: [7], missingIds: [] });
       await Promise.all([first, second]);
     });
   });
 
-  it('deletes selected policies in one write and proves every id missing', async () => {
+  it('deletes selected policies in one write and accepts the authoritative receipt', async () => {
     api.loadAlertSilences
       .mockResolvedValueOnce(page([record, { ...record, id: 8 }], 0, 2))
       .mockResolvedValueOnce(page([], 0, 0));
@@ -427,12 +437,25 @@ describe('useAlertSilenceController', () => {
     await act(() => view.result.current.controller.actions.removeMany([8, 7, 8]));
 
     expect(api.deleteAlertSilences).toHaveBeenCalledWith([7, 8]);
-    expect(api.loadAlertSilence).toHaveBeenCalledWith(7);
-    expect(api.loadAlertSilence).toHaveBeenCalledWith(8);
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+  });
+
+  it('uses the authoritative delete receipt and visible reread without a transient detail failure', async () => {
+    api.deleteAlertSilence.mockResolvedValue({ status: 'deleted', deletedIds: [7], missingIds: [] });
+    api.loadAlertSilences.mockResolvedValueOnce(page()).mockResolvedValueOnce(page([], 0, 0));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(() => view.result.current.controller.actions.remove(7));
+
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+    expect(view.result.current.controller.state.recovery).toBeNull();
+    expect(view.result.current.controller.state.list.kind).toBe('empty');
+    expect(screen.queryByText(i18n.t('alertSilences.operationFailed'))).not.toBeInTheDocument();
   });
 
   it('does not publish a stale write failure after controller unmount', async () => {
-    const write = deferred<void>();
+    const write = deferred<AlertSilence>();
     api.saveAlertSilence.mockReturnValue(write.promise);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
@@ -465,7 +488,7 @@ describe('useAlertSilenceController', () => {
     ['business envelope', normalizeAlertSilenceApiFailure(new ApiMessageError('failed', { code: 15, status: 200 }))],
     ['unknown', new Error('private provider failure')]
   ] as const)('locks an uncertain create after a %s failure and never repeats its POST', async (_label, reason) => {
-    api.saveAlertSilence.mockRejectedValueOnce(reason).mockResolvedValueOnce(undefined);
+    api.saveAlertSilence.mockRejectedValueOnce(reason).mockResolvedValueOnce({ ...record, id: 8, name: 'Created' });
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -600,12 +623,8 @@ describe('useAlertSilenceController', () => {
   });
 
   it('does not replace an in-flight save draft with a new draft', async () => {
-    let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(
-      new Promise<void>(resolve => {
-        resolveSave = resolve;
-      })
-    );
+    const write = deferred<AlertSilence>();
+    api.saveAlertSilence.mockReturnValue(write.promise);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -618,18 +637,14 @@ describe('useAlertSilenceController', () => {
     act(() => view.result.current.controller.actions.create());
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
     await act(async () => {
-      resolveSave();
+      write.resolve({ ...record, id: 8, name: 'Created' });
       await save;
     });
   });
 
   it('does not update or replace controlled draft values while save is in flight', async () => {
-    let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(
-      new Promise<void>(resolve => {
-        resolveSave = resolve;
-      })
-    );
+    const write = deferred<AlertSilence>();
+    api.saveAlertSilence.mockReturnValue(write.promise);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -648,7 +663,7 @@ describe('useAlertSilenceController', () => {
     });
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
     await act(async () => {
-      resolveSave();
+      write.resolve({ ...record, id: 8, name: 'Created' });
       await save;
     });
   });

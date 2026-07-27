@@ -32,6 +32,7 @@ import {
   normalizeAlertSilenceIds,
   validateAlertSilenceDraft,
   type AlertSilence,
+  type AlertSilenceDeleteReceipt,
   type AlertSilenceDraft,
   type AlertSilencePage
 } from '../model/alert-silence-model';
@@ -43,10 +44,7 @@ const operationFeedback = {
 } as const;
 const saveFeedback = { success: 'alertSilences.saveSuccess', error: 'alertSilences.saveFailed' } as const;
 
-export function useAlertSilenceMutations(
-  rereadList: () => Promise<AlertSilencePage>,
-  readCreatedProjection: (draft: AlertSilenceDraft) => Promise<AlertSilencePage>
-) {
+export function useAlertSilenceMutations(rereadList: () => Promise<AlertSilencePage>) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const gate = useAlertSilenceOperationGate();
@@ -57,7 +55,7 @@ export function useAlertSilenceMutations(
       return;
     }
     const current = draft;
-    await gate.run(buildSaveOperation(current, onCommitted, rereadList, readCreatedProjection), saveFeedback);
+    await gate.run(buildSaveOperation(current, onCommitted, rereadList), saveFeedback);
   };
   const toggle = (silence: AlertSilence, enabled: boolean) =>
     gate.run(
@@ -74,11 +72,21 @@ export function useAlertSilenceMutations(
     );
   const removeMany = (ids: readonly number[]) => {
     const commandIds = normalizeAlertSilenceIds(ids);
+    let receipt: AlertSilenceDeleteReceipt | undefined;
     return gate.run(
       {
         kind: 'delete',
-        write: () => (commandIds.length === 1 ? deleteAlertSilence(commandIds[0]!) : deleteAlertSilences(commandIds)),
-        prove: () => requireMissingSilences(commandIds),
+        write: async () => {
+          receipt =
+            commandIds.length === 1 ? await deleteAlertSilence(commandIds[0]!) : await deleteAlertSilences(commandIds);
+        },
+        prove: async () => {
+          if (receipt) {
+            requireDeleteReceipt(receipt, commandIds);
+          } else {
+            await requireMissingSilences(commandIds);
+          }
+        },
         project: async () => {
           requireAlertSilencesAbsent(await rereadList(), commandIds);
         }
@@ -93,27 +101,29 @@ export function useAlertSilenceMutations(
 function buildSaveOperation(
   draft: AlertSilenceDraft,
   onCommitted: () => void,
-  rereadList: () => Promise<AlertSilencePage>,
-  readCreatedProjection: (draft: AlertSilenceDraft) => Promise<AlertSilencePage>
+  rereadList: () => Promise<AlertSilencePage>
 ) {
   const id = draft.id;
   const creating = id === undefined;
+  let canonical: AlertSilence | undefined;
   return {
     kind: creating ? ('create' as const) : ('update' as const),
-    write: () => saveAlertSilence(draft),
-    onCommitted,
-    ...(id === undefined ? {} : { prove: async () => requireDraftConvergence(await loadAlertSilence(id), draft) }),
-    project: async () => {
-      if (creating) requireCreatedProjection(await readCreatedProjection(draft), draft);
-      await rereadList();
+    write: async () => {
+      canonical = await saveAlertSilence(draft);
     },
-    ...(creating
-      ? {
-          recoverProjection: async () => {
-            await rereadList();
-          }
-        }
-      : {})
+    onCommitted,
+    canRecoverUncertainWrite: () => id !== undefined || canonical !== undefined,
+    prove: async () => {
+      const canonicalId = canonical?.id ?? id;
+      if (canonicalId === undefined) {
+        throw new AlertSilenceContractError('Created Alert Silence identity is unavailable');
+      }
+      if (canonical) requireDraftConvergence(canonical, draft, canonicalId);
+      requireDraftConvergence(await loadAlertSilence(canonicalId), draft, canonicalId);
+    },
+    project: async () => {
+      await rereadList();
+    }
   };
 }
 
@@ -138,19 +148,16 @@ function requireAlertSilencesAbsent(page: AlertSilencePage, ids: readonly number
   }
 }
 
-function requireCreatedProjection(page: AlertSilencePage, draft: AlertSilenceDraft) {
+function requireDraftConvergence(actual: AlertSilence, draft: AlertSilenceDraft, id: number) {
   const payload = buildAlertSilencePayload(draft);
-  // An identical pre-existing row may satisfy this visibility check because
-  // the POST contract does not return the new id. The HTTP success remains the
-  // commit authority, so a miss must never make the write retryable.
-  const converged = page.content.some(actual => silenceMatches(actual, { ...actual, ...payload, id: actual.id }));
-  if (!converged) throw new AlertSilenceContractError('Created Alert Silence is absent from the list projection');
+  requireSilenceConvergence(actual, { ...actual, ...payload, id });
 }
 
-function requireDraftConvergence(actual: AlertSilence, draft: AlertSilenceDraft) {
-  if (draft.id === undefined) throw new AlertSilenceContractError('edit convergence requires id');
-  const payload = buildAlertSilencePayload(draft);
-  requireSilenceConvergence(actual, { ...actual, ...payload, id: draft.id });
+function requireDeleteReceipt(receipt: AlertSilenceDeleteReceipt, ids: readonly number[]) {
+  const acknowledgedIds = [...receipt.deletedIds, ...receipt.missingIds].sort((left, right) => left - right);
+  if (!arraysEqual(acknowledgedIds, ids)) {
+    throw new AlertSilenceContractError('Delete receipt does not match the command');
+  }
 }
 
 function requireSilenceConvergence(actual: AlertSilence, expected: AlertSilence) {
@@ -179,7 +186,7 @@ function mapsEqual(left: Record<string, string> | null, right: Record<string, st
   return keys.length === Object.keys(right).length && keys.every(key => left[key] === right[key]);
 }
 
-function arraysEqual(left: number[] | null, right: number[] | null) {
+function arraysEqual(left: readonly number[] | null, right: readonly number[] | null) {
   if (left === null || right === null) return left === right;
   return left.length === right.length && left.every((item, index) => item === right[index]);
 }

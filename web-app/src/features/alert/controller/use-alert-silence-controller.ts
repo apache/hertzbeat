@@ -21,18 +21,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { loadAlertSilences } from '../api/alert-silence-api';
 import { alertSilenceDetailDraft, type AlertSilenceListEvidence } from '../model/alert-silence-page-model';
 import {
   readAlertSilenceQuery,
   readAlertSilenceManagementContext,
   alertSilenceFailureKind,
   writeAlertSilenceRoute,
-  type AlertSilenceDraft,
   type AlertSilencePage,
   type AlertSilenceQuery
 } from '../model/alert-silence-model';
-import { alertSilenceQueryKeys } from './alert-silence-query-keys';
 import { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
 import { useAlertSilenceMutations } from './use-alert-silence-mutations';
 import { useAlertSilenceSelection } from './use-alert-silence-selection';
@@ -42,8 +39,6 @@ import {
   useAlertSilenceVisibleProjection,
   type AlertSilenceVisibleProjection
 } from './alert-silence-visible-projection';
-
-const createdProjectionPageSize = 25;
 
 export function useAlertSilenceController() {
   const navigate = useNavigate();
@@ -64,8 +59,7 @@ export function useAlertSilenceController() {
   const updateQuery = (patch: Partial<AlertSilenceQuery>) =>
     setParams(writeAlertSilenceRoute({ ...query, ...patch }, management));
   const rereadList = () => fetchAlertSilenceVisibleProjection(queryClient, latestProjection.current);
-  const readCreatedProjection = createAlertSilenceProjectionReader(queryClient);
-  const mutations = useAlertSilenceMutations(rereadList, readCreatedProjection);
+  const mutations = useAlertSilenceMutations(rereadList);
   const detail = useAlertSilenceDetailController(mutations.isActive, mutations.isLocked);
   const draft = alertSilenceDetailDraft(detail.detail);
   const managementActions = createAlertSilenceManagementActions(management, query, setParams, navigate);
@@ -121,17 +115,6 @@ function resolveControllerList(
   );
 }
 
-function createAlertSilenceProjectionReader(queryClient: ReturnType<typeof useQueryClient>) {
-  return (draft: AlertSilenceDraft) => {
-    const projectionQuery = createdProjectionQuery(draft);
-    return queryClient.fetchQuery({
-      queryKey: alertSilenceQueryKeys.list(projectionQuery),
-      queryFn: ({ signal }) => loadAlertSilences(projectionQuery, signal),
-      staleTime: 0
-    });
-  };
-}
-
 function createAlertSilenceManagementActions(
   management: ReturnType<typeof readAlertSilenceManagementContext>,
   query: AlertSilenceQuery,
@@ -161,12 +144,6 @@ async function refreshAlertSilences(
   } catch {
     // React Query keeps the visible list error; refresh must not hide it.
   }
-}
-
-function createdProjectionQuery(draft: AlertSilenceDraft): AlertSilenceQuery {
-  // POST returns no identity. A successful response commits the command; this
-  // bounded search only checks that the list projection can expose its fields.
-  return { search: draft.name.trim(), pageIndex: 0, pageSize: createdProjectionPageSize };
 }
 
 function useAlertSilencePageCorrection(
