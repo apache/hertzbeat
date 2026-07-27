@@ -26,7 +26,6 @@ import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListManagementActions } from './monitor-list-management-actions';
 import { MonitorListResults } from './monitor-list-results';
 import { MonitorListToolbar } from './monitor-list-toolbar';
-import styles from './monitor-list.module.css';
 
 export type MonitorListViewProps = { state: MonitorListViewState; actions: MonitorListViewActions };
 

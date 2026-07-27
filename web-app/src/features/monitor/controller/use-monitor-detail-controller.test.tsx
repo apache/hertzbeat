@@ -109,7 +109,7 @@ describe('useMonitorDetailController', () => {
       });
       expect(api.loadMonitorDetail).toHaveBeenCalledTimes(2);
 
-      await act(() => view.result.current.actions.refresh());
+      act(() => view.result.current.actions.refresh());
       expect(api.loadMonitorDetail).toHaveBeenCalledTimes(3);
     } finally {
       vi.useRealTimers();

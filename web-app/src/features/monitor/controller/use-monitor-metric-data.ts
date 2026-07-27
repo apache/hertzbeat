@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery, type QueryFunctionContext } from '@tanstack/react-query';
 
 import { loadFavoriteMetrics, loadHistoryMetric, loadRealtimeMetric } from '../api/monitor-api';
 import type { Monitor, MonitorMetricOption } from '../model/monitor-contract';
@@ -24,25 +24,53 @@ export function useMonitorMetricData(input: {
   // Monitor metric endpoints accept the route-local history range, not the shell's exact time window.
   // Keeping query keys aligned with those request inputs avoids refetching an identical request.
   // `enabled: false` still permits manual refetch; skipToken removes the unsafe query function entirely.
-  const favorites = useQuery({
+  const favorites = useQuery(favoriteMetricQueryOptions(monitor, refetchInterval));
+  const realtime = useQuery(realtimeMetricQueryOptions(monitor, metric, refetchInterval));
+  const historical = useQuery(
+    historyMetricQueryOptions(monitor, metric, metricKey, history, historySupported, refetchInterval)
+  );
+  return { favorites, realtime, historical };
+}
+
+function favoriteMetricQueryOptions(monitor: Monitor | undefined, refetchInterval: number | false) {
+  return {
     queryKey: monitorQueryKeys.favorites(monitor?.id),
-    queryFn: monitor ? ({ signal }) => loadFavoriteMetrics(monitor.id, signal) : skipToken,
+    queryFn: monitor ? ({ signal }: QueryFunctionContext) => loadFavoriteMetrics(monitor.id, signal) : skipToken,
     refetchInterval: activeRefreshInterval(Boolean(monitor), refetchInterval)
-  });
-  const realtime = useQuery({
+  } as const;
+}
+
+function realtimeMetricQueryOptions(
+  monitor: Monitor | undefined,
+  metric: MonitorMetricOption | undefined,
+  refetchInterval: number | false
+) {
+  return {
     queryKey: monitorQueryKeys.realtime(monitor?.id, metric?.group, metric?.field),
-    queryFn: monitor && metric ? ({ signal }) => loadRealtimeMetric(monitor.id, metric, signal) : skipToken,
+    queryFn:
+      monitor && metric
+        ? ({ signal }: QueryFunctionContext) => loadRealtimeMetric(monitor.id, metric, signal)
+        : skipToken,
     refetchInterval: activeRefreshInterval(Boolean(monitor && metric), refetchInterval)
-  });
-  const historical = useQuery({
+  } as const;
+}
+
+function historyMetricQueryOptions(
+  monitor: Monitor | undefined,
+  metric: MonitorMetricOption | undefined,
+  metricKey: string,
+  history: MonitorMetricHistory,
+  historySupported: boolean,
+  refetchInterval: number | false
+) {
+  return {
     queryKey: monitorQueryKeys.history(monitor, metricKey, history),
     queryFn:
       monitor && metric && historySupported
-        ? ({ signal }) => loadHistoryMetric(monitor, metric, history, signal)
+        ? ({ signal }: QueryFunctionContext) => loadHistoryMetric(monitor, metric, history, signal)
         : skipToken,
     refetchInterval: activeRefreshInterval(Boolean(monitor && metric && historySupported), refetchInterval)
-  });
-  return { favorites, realtime, historical };
+  } as const;
 }
 
 function activeRefreshInterval(active: boolean, interval: number | false) {
