@@ -22,7 +22,11 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMonitorListController } from '@/features/monitor/controller/use-monitor-list-controller';
-import { buildMonitorRoutePath, safeMonitorReturnTo } from '@/features/monitor/model/monitor-model';
+import {
+  buildMonitorCreatePath,
+  buildMonitorRoutePath,
+  safeMonitorReturnTo
+} from '@/features/monitor/model/monitor-model';
 import { buildExplorePath } from '@/features/explore/model/explore-model';
 import { useLabelQueryController } from '@/features/settings/label/controller/label-query-controller';
 import { buildLabelMonitorPath } from '@/features/settings/label/model/label-model';
@@ -133,7 +137,7 @@ describe('remaining route ownership', () => {
     const monitor = renderController(canonical.monitor.list, useMonitorListController);
     await waitFor(() => expect(monitor.result.current.state.monitors.kind).toBe('empty'));
     act(() => monitor.result.current.actions.create());
-    expect(navigate).toHaveBeenLastCalledWith(canonical.monitor.create);
+    expect(navigate).toHaveBeenLastCalledWith(buildMonitorCreatePath('', canonical.monitor.list));
   });
 
   it('canonicalizes the label query only on the shared label route and drops sensitive parameters', async () => {

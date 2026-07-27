@@ -60,6 +60,16 @@ const ruleProof = vi.hoisted(() => ({
   proveCreatedAlertRule: vi.fn(),
   proveUpdatedAlertRule: vi.fn()
 }));
+const metricTargetController = vi.hoisted(() => ({
+  useAlertRuleMetricTargetController: vi.fn(() => ({
+    state: {
+      apps: { kind: 'idle' as const },
+      hierarchy: { kind: 'idle' as const }
+    },
+    retryApps: vi.fn(),
+    retryHierarchy: vi.fn()
+  }))
+}));
 
 vi.mock('@/shared/navigation/app-paths', async importOriginal => ({
   ...(await importOriginal<typeof import('@/shared/navigation/app-paths')>()),
@@ -75,6 +85,7 @@ vi.mock('@/features/alert/api/alert-rule-write-proof', async importOriginal => (
   ...(await importOriginal<typeof import('@/features/alert/api/alert-rule-write-proof')>()),
   ...ruleProof
 }));
+vi.mock('@/features/alert/controller/use-alert-rule-metric-target-controller', () => metricTargetController);
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigate
