@@ -25,6 +25,7 @@ import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import { type MonitorAction, type MonitorPage } from '../model/monitor-contract';
 import type { MonitorWriteVerification } from '../model/monitor-write-verification';
 import { verifyMonitorMutation, type MonitorDetailCacheEvidence } from './monitor-command-verification';
+import { reconcileFailedMonitorCopy } from './monitor-copy-failure-reconciliation';
 import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
@@ -70,10 +71,10 @@ export function useMonitorListCommands(
       } catch {
         return;
       }
-    } catch {
-      if (ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) {
-        void message.error(t('monitorActions.failed'));
-      }
+    } catch (error) {
+      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
+      void message.error(t('monitorActions.failed'));
+      await reconcileFailedMonitorCopy(action, error, reread);
     } finally {
       releaseListOperation(source, operation, currentSourceRef, activeOperationRef, setBusyOperation);
     }
