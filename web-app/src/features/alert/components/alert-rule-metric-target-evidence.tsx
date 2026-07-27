@@ -12,6 +12,8 @@ import type { MetricAlertTargetCatalog } from '../model/alert-rule-model';
 import type { AlertRuleMetricTargetState } from '../model/alert-rule-metric-target-state';
 import styles from '../shared/alert-rule-editor.module.css';
 
+const wideClassName = styles.wide ?? '';
+
 type TargetEvidenceProps = {
   state: AlertRuleMetricTargetState;
   catalog: MetricAlertTargetCatalog | null;
@@ -23,7 +25,7 @@ type TargetEvidenceProps = {
 export function AlertRuleMetricTargetEvidence(props: TargetEvidenceProps) {
   const { t } = useTranslation();
   if (props.state.apps.kind === 'ready' && props.state.apps.apps.length === 0) {
-    return <Alert className={styles.wide} type="info" showIcon message={t('alertRules.metricTarget.appsEmpty')} />;
+    return <Alert className={wideClassName} type="info" showIcon message={t('alertRules.metricTarget.appsEmpty')} />;
   }
   if (props.state.apps.kind === 'unavailable' || props.state.apps.kind === 'error') {
     return (
@@ -51,7 +53,7 @@ export function AlertRuleMetricTargetEvidence(props: TargetEvidenceProps) {
   }
   if (props.state.hierarchy.kind === 'ready' && !props.catalog) {
     return (
-      <Alert className={styles.wide} type="error" showIcon message={t('alertRules.metricTarget.hierarchyError')} />
+      <Alert className={wideClassName} type="error" showIcon message={t('alertRules.metricTarget.hierarchyError')} />
     );
   }
   return null;
@@ -61,7 +63,7 @@ function RetryEvidence({ message, retry }: { message: string; retry: () => unkno
   const { t } = useTranslation();
   return (
     <Alert
-      className={styles.wide}
+      className={wideClassName}
       type="error"
       showIcon
       message={message}

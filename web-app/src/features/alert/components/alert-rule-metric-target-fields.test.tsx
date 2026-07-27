@@ -79,6 +79,33 @@ describe('Alert Rule metric target fields', () => {
     await waitFor(() => expect(changeTarget).toHaveBeenCalledWith({ kind: 'availability', app: 'springboot3' }));
   });
 
+  it('forwards a metric target selected from the typed catalog option', async () => {
+    const changeTarget = vi.fn();
+    renderTarget(
+      targetedDraft({ app: 'springboot3' }),
+      {
+        apps: {
+          kind: 'ready',
+          apps: [{ category: 'application', value: 'springboot3', label: 'Spring Boot 3' }]
+        },
+        hierarchy: { kind: 'ready', hierarchy }
+      },
+      vi.fn(),
+      changeTarget
+    );
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'alertRules.metricTarget.target' }));
+    fireEvent.click(await screen.findByText('Summary'));
+
+    await waitFor(() =>
+      expect(changeTarget).toHaveBeenCalledWith({
+        kind: 'metric',
+        app: 'springboot3',
+        metric: 'summary'
+      })
+    );
+  });
+
   it('keeps an unavailable hierarchy distinct and retryable without hiding the selected app', () => {
     const retryHierarchy = vi.fn();
     renderTarget(

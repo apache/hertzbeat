@@ -27,7 +27,7 @@ export function buildAlertRuleStrategyPatch(
     dataType,
     expr: kind === 'periodic' && dataType === 'log' ? periodicLogStarterExpression : '',
     period: kind === 'periodic' ? (draft.period ?? 300) : draft.period,
-    metricEditor: kind === 'realtime' && dataType === 'metric' ? createMetricAlertEditorDraft() : undefined,
+    ...(kind === 'realtime' && dataType === 'metric' ? { metricEditor: createMetricAlertEditorDraft() } : {}),
     strategyChanged: true
   };
 }

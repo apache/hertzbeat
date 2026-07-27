@@ -232,19 +232,29 @@ describe('alert rule model', () => {
   it('retires incompatible expressions when the evaluation grammar changes', () => {
     const draft = { ...createAlertRuleDraft(), expr: 'usage > 90', period: null };
 
-    expect(buildAlertRuleStrategyPatch(draft, 'periodic', 'log')).toEqual({
+    const periodicPatch = buildAlertRuleStrategyPatch(draft, 'periodic', 'log');
+    expect(periodicPatch).toStrictEqual({
       kind: 'periodic',
       dataType: 'log',
       expr: periodicLogStarterExpression,
       period: 300,
       strategyChanged: true
     });
+    expect(periodicPatch).not.toHaveProperty('metricEditor');
     expect(buildAlertRuleStrategyPatch({ ...draft, kind: 'periodic', dataType: 'log' }, 'periodic', 'trace')).toEqual({
       kind: 'periodic',
       dataType: 'trace',
       expr: '',
       period: 300,
       strategyChanged: true
+    });
+
+    expect(buildAlertRuleStrategyPatch({ ...draft, kind: 'periodic' }, 'realtime', 'metric')).toMatchObject({
+      metricEditor: {
+        kind: 'targeted',
+        app: '',
+        target: null
+      }
     });
   });
 

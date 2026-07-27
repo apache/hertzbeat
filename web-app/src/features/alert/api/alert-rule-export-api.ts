@@ -30,7 +30,8 @@ export async function requestAlertRuleExport(
 ): Promise<AlertRuleExportArtifact> {
   let response: Response;
   try {
-    response = await apiFetch(buildAlertRuleExportPath(ids, format), { signal });
+    const path = buildAlertRuleExportPath(ids, format);
+    response = await (signal ? apiFetch(path, { signal }) : apiFetch(path));
   } catch {
     throw new AlertRuleExportError('unavailable');
   }

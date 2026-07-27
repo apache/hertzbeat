@@ -13,6 +13,11 @@ import { AlertRuleMetricConditionEditor } from './alert-rule-metric-condition-ed
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
+type ConditionEditorActions = Pick<
+  Parameters<typeof AlertRuleMetricConditionEditor>[0],
+  'changeStructured' | 'changeExpert' | 'changeMode'
+>;
+
 const fields: MetricAlertField[] = [
   { value: 'responseTime', label: 'Response time', type: 0, unit: 'ms' },
   { value: 'status', label: 'Status', type: 1, unit: null }
@@ -22,7 +27,7 @@ describe('Alert Rule metric condition editor', () => {
   afterEach(cleanup);
 
   it('adds structured conditions and nested groups through typed transitions', () => {
-    const changeStructured = vi.fn();
+    const changeStructured = vi.fn<ConditionEditorActions['changeStructured']>();
     renderEditor(structuredDraft(), { changeStructured });
 
     fireEvent.click(screen.getByRole('button', { name: 'alertRules.metricCondition.addCondition' }));
@@ -48,8 +53,8 @@ describe('Alert Rule metric condition editor', () => {
   });
 
   it('edits only the threshold in expert mode and offers safe structured recovery', () => {
-    const changeExpert = vi.fn();
-    const changeMode = vi.fn();
+    const changeExpert = vi.fn<ConditionEditorActions['changeExpert']>();
+    const changeMode = vi.fn<ConditionEditorActions['changeMode']>();
     renderEditor(expertDraft('responseTime > 100'), { changeExpert, changeMode });
 
     fireEvent.change(screen.getByRole('textbox', { name: 'alertRules.metricCondition.expertExpression' }), {
@@ -67,22 +72,15 @@ describe('Alert Rule metric condition editor', () => {
   });
 });
 
-function renderEditor(
-  draft: AlertRuleDraft,
-  actions: {
-    changeStructured?: ReturnType<typeof vi.fn>;
-    changeExpert?: ReturnType<typeof vi.fn>;
-    changeMode?: ReturnType<typeof vi.fn>;
-  }
-) {
+function renderEditor(draft: AlertRuleDraft, actions: Partial<ConditionEditorActions>) {
   render(
     <AlertRuleMetricConditionEditor
       busy={false}
       draft={draft}
       fields={fields}
-      changeStructured={actions.changeStructured ?? vi.fn()}
-      changeExpert={actions.changeExpert ?? vi.fn()}
-      changeMode={actions.changeMode ?? vi.fn()}
+      changeStructured={actions.changeStructured ?? vi.fn<ConditionEditorActions['changeStructured']>()}
+      changeExpert={actions.changeExpert ?? vi.fn<ConditionEditorActions['changeExpert']>()}
+      changeMode={actions.changeMode ?? vi.fn<ConditionEditorActions['changeMode']>()}
     />
   );
 }

@@ -12,6 +12,10 @@ import type { Monitor } from '@/features/monitor';
 
 import styles from '../shared/alert-rule-editor.module.css';
 
+const bindingFieldClassName = `${styles.wide ?? ''} ${styles.bindingField ?? ''}`;
+const bindingInstancesClassName = styles.bindingInstances ?? '';
+const bindingLabelsClassName = styles.bindingLabels ?? '';
+
 type MetricBindingEvidence =
   | { kind: 'idle' | 'loading' | 'empty' }
   | { kind: 'unavailable' | 'contract-error' | 'error' }
@@ -42,7 +46,7 @@ export function AlertRuleMetricBindingField(props: MetricBindingFieldProps) {
   if (!props.state.eligible) return null;
   const confirmable = props.state.evidence.kind === 'ready' || props.state.evidence.kind === 'empty';
   return (
-    <section className={`${styles.wide} ${styles.bindingField}`}>
+    <section className={bindingFieldClassName}>
       <div>
         <Typography.Text>{t('alertRules.metricBindings.title')}</Typography.Text>
         <Typography.Text type="secondary">{t('alertRules.metricBindings.description')}</Typography.Text>
@@ -95,7 +99,7 @@ function BindingDialogBody(props: MetricBindingFieldProps) {
       <fieldset>
         <legend>{t('alertRules.metricBindings.instances')}</legend>
         <Checkbox.Group
-          className={styles.bindingInstances}
+          className={bindingInstancesClassName}
           value={props.state.selectedMonitorIds}
           onChange={values => props.changeMonitorIds(values.map(Number))}
         >
@@ -119,7 +123,7 @@ function BindingLabels(props: MetricBindingFieldProps) {
       <legend>{t('alertRules.metricBindings.labels')}</legend>
       {props.state.labelChoices.length ? (
         <Checkbox.Group
-          className={styles.bindingLabels}
+          className={bindingLabelsClassName}
           value={props.state.selectedLabels}
           options={props.state.labelChoices}
           onChange={values => props.changeLabels(values.map(String))}

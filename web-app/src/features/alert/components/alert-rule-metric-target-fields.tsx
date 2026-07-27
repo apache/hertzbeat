@@ -21,6 +21,8 @@ import styles from '../shared/alert-rule-editor.module.css';
 import { AlertRuleMetricTargetEvidence } from './alert-rule-metric-target-evidence';
 import { AlertRuleMetricConditionEditor } from './alert-rule-metric-condition-editor';
 
+const wideClassName = styles.wide ?? '';
+
 type AlertRuleMetricTargetFieldsProps = {
   busy: boolean;
   draft: AlertRuleDraft;
@@ -35,6 +37,14 @@ type AlertRuleMetricTargetFieldsProps = {
   retryHierarchy: () => unknown;
 };
 
+type MetricTarget = Extract<RealtimeMetricTarget, { kind: 'metric' }>;
+
+type TargetSelectOption = {
+  value: string;
+  label: string;
+  target: RealtimeMetricTarget;
+};
+
 /** Renders the guided target boundary without rewriting unknown legacy expressions. */
 export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
   const { t } = useTranslation();
@@ -43,7 +53,7 @@ export function AlertRuleMetricTargetFields(props: AlertRuleMetricTargetFieldsPr
     return (
       <>
         <Alert
-          className={styles.wide}
+          className={wideClassName}
           type="warning"
           showIcon
           message={t('alertRules.metricTarget.legacyExpression')}
@@ -66,12 +76,12 @@ function GuidedMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
     <>
       <label>
         {t('alertRules.metricTarget.application')}
-        <Select
+        <Select<string>
           aria-label={t('alertRules.metricTarget.application')}
           disabled={props.busy || props.state.apps.kind !== 'ready'}
           loading={props.state.apps.kind === 'loading'}
           placeholder={t('alertRules.metricTarget.applicationPlaceholder')}
-          value={selectedApp || undefined}
+          value={selectedApp || null}
           options={
             props.state.apps.kind === 'ready'
               ? props.state.apps.apps.map(app => ({ value: app.value, label: app.label ?? app.value }))
@@ -88,7 +98,7 @@ function GuidedMetricTargetFields(props: AlertRuleMetricTargetFieldsProps) {
         retryHierarchy={props.retryHierarchy}
       />
       {editor?.kind === 'targeted' && editor.target?.kind === 'availability' ? (
-        <Typography.Text className={styles.wide} type="secondary">
+        <Typography.Text className={wideClassName} type="secondary">
           {t('alertRules.metricTarget.availabilityDescription')}
         </Typography.Text>
       ) : null}
@@ -118,7 +128,7 @@ function TargetField(
   return (
     <label>
       {t('alertRules.metricTarget.target')}
-      <Select
+      <Select<string, TargetSelectOption>
         aria-label={t('alertRules.metricTarget.target')}
         disabled={props.busy || !props.selectedApp || !props.catalog}
         loading={props.state.hierarchy.kind === 'loading'}
@@ -132,7 +142,7 @@ function TargetField(
           })) ?? []
         }
         onChange={(_, option) => {
-          if (!Array.isArray(option) && option.target) props.changeTarget(option.target);
+          if (isSingleTargetOption(option)) props.changeTarget(option.target);
         }}
       />
     </label>
@@ -140,24 +150,20 @@ function TargetField(
 }
 
 function selectedTargetValue(editor: AlertRuleDraft['metricEditor']) {
-  if (editor?.kind !== 'targeted' || !editor.target) return undefined;
+  if (editor?.kind !== 'targeted' || !editor.target) return null;
   return editor.target.kind === 'availability' ? 'availability' : `metric:${editor.target.metric}`;
 }
 
 function selectedTargetOption(editor: AlertRuleDraft['metricEditor'], catalog: MetricAlertTargetCatalog | null) {
   if (editor?.kind !== 'targeted' || !editor.target || !catalog) return null;
-  return (
-    catalog.targets.find(option => {
-      if (option.target.kind !== editor.target?.kind || option.target.app !== editor.target.app) return false;
-      return option.target.kind === 'availability' || option.target.metric === editor.target.metric;
-    }) ?? null
-  );
+  const selectedTarget = editor.target;
+  return catalog.targets.find(option => sameTarget(option.target, selectedTarget)) ?? null;
 }
 
 function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsProps) {
   const { t } = useTranslation();
   return (
-    <label className={styles.wide}>
+    <label className={wideClassName}>
       {t('alertRules.expression')}
       <Input.TextArea
         aria-label={t('alertRules.expression')}
@@ -168,6 +174,21 @@ function ExpressionField({ busy, draft, update }: AlertRuleMetricTargetFieldsPro
       />
     </label>
   );
+}
+
+function isSingleTargetOption(
+  option: TargetSelectOption | TargetSelectOption[] | undefined
+): option is TargetSelectOption {
+  return option !== undefined && !Array.isArray(option);
+}
+
+function isMetricTarget(target: RealtimeMetricTarget): target is MetricTarget {
+  return target.kind === 'metric';
+}
+
+function sameTarget(left: RealtimeMetricTarget, right: RealtimeMetricTarget) {
+  if (left.kind !== right.kind || left.app !== right.app) return false;
+  return !isMetricTarget(left) || (isMetricTarget(right) && left.metric === right.metric);
 }
 
 function catalogFromState(

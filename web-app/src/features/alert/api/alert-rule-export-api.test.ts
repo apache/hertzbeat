@@ -34,8 +34,17 @@ describe('Alert Rule export API', () => {
     const artifact = await requestAlertRuleExport([7], 'JSON');
     expect(artifact.filename).toBe('hertzbeat_alertDefine.json');
     expect(artifact.data.size).toBe(5);
+    expect(http.apiFetch).toHaveBeenCalledWith('/api/alert/defines/export?ids=7&type=JSON');
+  });
+
+  it('forwards an explicit cancellation signal without weakening the request options contract', async () => {
+    const controller = new AbortController();
+    http.apiFetch.mockResolvedValue(new Response('rules'));
+
+    await requestAlertRuleExport([7], 'JSON', controller.signal);
+
     expect(http.apiFetch).toHaveBeenCalledWith('/api/alert/defines/export?ids=7&type=JSON', {
-      signal: undefined
+      signal: controller.signal
     });
   });
 
