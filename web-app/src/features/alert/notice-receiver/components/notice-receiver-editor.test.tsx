@@ -27,6 +27,7 @@ describe('NoticeReceiverEditor', () => {
         testing={false}
         update={update}
         busy={false}
+        canTest
         selectType={vi.fn()}
         setSecretCleared={setSecretCleared}
         close={vi.fn()}
@@ -52,6 +53,7 @@ describe('NoticeReceiverEditor', () => {
         saving
         testing={false}
         busy
+        canTest
         update={vi.fn()}
         selectType={vi.fn()}
         setSecretCleared={vi.fn()}
@@ -83,6 +85,7 @@ describe('NoticeReceiverEditor', () => {
         saving={false}
         testing={false}
         busy={false}
+        canTest
         update={vi.fn()}
         selectType={vi.fn()}
         setSecretCleared={vi.fn()}
@@ -95,6 +98,38 @@ describe('NoticeReceiverEditor', () => {
     expect(screen.getByDisplayValue('WeCom')).toHaveAttribute('maxlength', '100');
   });
 
+  it('hides normal and retained test controls when test admission is unavailable', () => {
+    const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
+    const base = {
+      draft,
+      saving: false,
+      testing: false,
+      busy: false,
+      canTest: false,
+      update: vi.fn(),
+      selectType: vi.fn(),
+      setSecretCleared: vi.fn(),
+      close: vi.fn(),
+      submit: vi.fn()
+    };
+    const view = render(<NoticeReceiverEditor {...base} test={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'noticeReceivers.test' })).not.toBeInTheDocument();
+    expect(screen.getByText('common.save').closest('button')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeInTheDocument();
+
+    view.rerender(
+      <NoticeReceiverEditor
+        {...base}
+        busy
+        testRecovery={{ phase: 'delivery-uncertain', failure: 'unavailable' }}
+        retryTest={vi.fn()}
+        dismissTestRecovery={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+  });
+
   it('requires an explicit retry or cancel after test delivery becomes uncertain', () => {
     const retryTest = vi.fn();
     const dismissTestRecovery = vi.fn();
@@ -104,6 +139,7 @@ describe('NoticeReceiverEditor', () => {
         saving={false}
         testing={false}
         busy
+        canTest
         testRecovery={{ phase: 'delivery-uncertain', failure: 'unavailable' }}
         update={vi.fn()}
         selectType={vi.fn()}
@@ -129,6 +165,7 @@ describe('NoticeReceiverEditor', () => {
         saving={false}
         testing
         busy
+        canTest
         testRecovery={{ phase: 'delivery-uncertain', failure: 'error' }}
         update={vi.fn()}
         selectType={vi.fn()}

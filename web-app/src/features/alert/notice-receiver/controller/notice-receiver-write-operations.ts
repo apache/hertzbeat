@@ -1,5 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
 import {
   validateNoticeReceiverDraft,
   type NoticeReceiver,
@@ -20,6 +21,7 @@ import {
   requireNoticeReceiverConverged
 } from '../model/notice-receiver-evidence';
 import type { NoticeReceiverWriteReceipt } from '../model/notice-receiver-operation-state';
+import { canRetryNoticeReceiver, canSubmitNoticeReceiver } from './notice-receiver-action-admission';
 import type { NoticeReceiverEditorController } from './use-notice-receiver-editor-controller';
 import type {
   NoticeReceiverOperationController,
@@ -39,6 +41,7 @@ type NoticeReceiverNotifications = {
 export type NoticeReceiverUpdateDraft = NoticeReceiverDraft & { id: number };
 
 export type NoticeReceiverWriteContext = {
+  capabilities: NoticeActionCapabilities;
   create: (draft: NoticeReceiverDraft) => Promise<NoticeReceiver>;
   update: (draft: NoticeReceiverUpdateDraft) => Promise<NoticeReceiver>;
   remove: (record: NoticeReceiver) => Promise<NoticeReceiver>;
@@ -51,7 +54,7 @@ export type NoticeReceiverWriteContext = {
 
 export async function submitNoticeReceiver(context: NoticeReceiverWriteContext) {
   const draft = context.editor.controls.getDraft();
-  if (!draft) return false;
+  if (!draft || !canSubmitNoticeReceiver(context.capabilities, draft)) return false;
   if (validateNoticeReceiverDraft(draft).length) {
     context.notify.validation();
     return false;
@@ -70,6 +73,7 @@ export async function submitNoticeReceiver(context: NoticeReceiverWriteContext) 
 }
 
 export async function removeNoticeReceiver(context: NoticeReceiverWriteContext, record: NoticeReceiver) {
+  if (!context.capabilities.canDelete) return false;
   const owner = context.operation.begin('removing');
   if (!owner) return false;
   const receipt: NoticeReceiverWriteReceipt = { kind: 'delete', phase: 'write', record };
@@ -79,6 +83,7 @@ export async function removeNoticeReceiver(context: NoticeReceiverWriteContext, 
 }
 
 export async function retryNoticeReceiver(context: NoticeReceiverWriteContext) {
+  if (!canRetryNoticeReceiver(context.capabilities, context.operation.getReceipt())) return false;
   const resumed = context.operation.resume();
   if (!resumed) return false;
   return runWrite(context, resumed.owner, resumed.receipt);

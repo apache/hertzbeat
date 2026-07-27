@@ -42,6 +42,9 @@ vi.mock('../api/notice-receiver-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/notice-receiver-api')>()),
   testNoticeReceiver: vi.fn()
 }));
+vi.mock('../../controller/use-notice-action-capabilities', () => ({
+  useNoticeActionCapabilities: () => ({ canCreate: true, canEdit: true, canTest: true, canDelete: true })
+}));
 
 import { useNoticeReceiverController } from './notice-receiver-controller';
 

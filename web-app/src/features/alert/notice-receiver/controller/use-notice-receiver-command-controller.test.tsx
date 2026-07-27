@@ -12,6 +12,7 @@ import type { NoticeReceiverMutation } from '../model/notice-receiver-model';
 import {
   defaultNoticeReceiverQuery,
   deferred,
+  adminNoticeActions,
   persistedNoticeReceiver,
   validNoticeReceiverDraft
 } from './notice-receiver-controller-test-fixtures';
@@ -480,7 +481,7 @@ describe('notice receiver command controller', () => {
 });
 
 function renderCommandController() {
-  return renderHook(() => useNoticeReceiverCommandController({ loadExact, rereadAuthoritatively }));
+  return renderHook(() => useNoticeReceiverCommandController({ loadExact, rereadAuthoritatively }, adminNoticeActions));
 }
 
 function openValidDraft(actions: {

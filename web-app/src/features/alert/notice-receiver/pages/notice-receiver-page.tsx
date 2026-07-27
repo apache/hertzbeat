@@ -10,25 +10,32 @@ import {
 } from '../components/notice-receiver-page-controls';
 import { NoticeReceiverResults } from '../components/notice-receiver-results';
 import { useNoticeReceiverController } from '../controller/notice-receiver-controller';
+import { canSubmitNoticeReceiver } from '../controller/notice-receiver-action-admission';
 
 export function NoticeReceiverPage() {
   const { state, actions } = useNoticeReceiverController();
   const recovering = state.command === 'recovering';
   return (
     <OperationalPage>
-      <NoticeReceiverHeading busy={state.busy} create={actions.create} />
+      <NoticeReceiverHeading busy={state.busy} canCreate={state.capabilities.canCreate} create={actions.create} />
       <NoticeReceiverToolbar
         name={state.name}
         refreshing={state.refreshing}
         busy={state.busy}
         recovering={recovering}
-        recoveryRetryable={state.recovery?.retryable ?? false}
+        recoveryRetryable={(state.recovery?.retryable ?? false) && state.canRetryOperation}
         setName={actions.setName}
         search={actions.search}
         refresh={actions.refresh}
       />
-      <NoticeReceiverRecovery recovery={state.recovery} busy={!recovering} retry={actions.retry} />
+      <NoticeReceiverRecovery
+        canRetry={state.canRetryOperation}
+        recovery={state.recovery}
+        busy={!recovering}
+        retry={actions.retry}
+      />
       <NoticeReceiverResults
+        actionPolicy={state.capabilities}
         state={state.list}
         busy={state.busy}
         pageIndex={state.query.pageIndex}
@@ -37,12 +44,13 @@ export function NoticeReceiverPage() {
         remove={record => void actions.remove(record)}
         onPageChange={actions.changePage}
       />
-      {state.draft ? (
+      {state.draft && canSubmitNoticeReceiver(state.capabilities, state.draft) ? (
         <NoticeReceiverEditor
           draft={state.draft}
           saving={state.saving}
           testing={state.testing}
           busy={state.busy}
+          canTest={state.capabilities.canTest}
           update={actions.updateDraft}
           selectType={actions.selectType}
           setSecretCleared={actions.setSecretCleared}

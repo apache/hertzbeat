@@ -20,6 +20,7 @@ type NoticeReceiverEditorBaseProps = {
   saving: boolean;
   testing: boolean;
   busy: boolean;
+  canTest: boolean;
   update: (patch: Partial<NoticeReceiverDraft>) => void;
   selectType: (type: NoticeReceiverType) => void;
   setSecretCleared: (key: NoticeReceiverSecretKey, cleared: boolean) => void;
@@ -111,14 +112,16 @@ function NoticeReceiverForm(props: NoticeReceiverEditorProps) {
           setSecretCleared={props.setSecretCleared}
         />
       ))}
-      <Button
-        className={`${styles.test} ${styles.wide}`}
-        loading={props.testing}
-        disabled={props.testing || (props.busy && !props.testRecovery)}
-        onClick={props.testRecovery ? props.retryTest : props.test}
-      >
-        {t(props.testRecovery ? 'common.retry' : 'noticeReceivers.test')}
-      </Button>
+      {props.canTest ? (
+        <Button
+          className={`${styles.test} ${styles.wide}`}
+          loading={props.testing}
+          disabled={props.testing || (props.busy && !props.testRecovery)}
+          onClick={props.testRecovery ? props.retryTest : props.test}
+        >
+          {t(props.testRecovery ? 'common.retry' : 'noticeReceivers.test')}
+        </Button>
+      ) : null}
     </div>
   );
 }

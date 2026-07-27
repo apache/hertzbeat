@@ -1,18 +1,23 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { useNoticeActionCapabilities } from '../../controller/use-notice-action-capabilities';
 import { useNoticeReceiverCommandController } from './use-notice-receiver-command-controller';
 import { useNoticeReceiverQueryController } from './notice-receiver-query-controller';
 import { useNoticeReceiverPageCorrection } from './use-notice-receiver-page-correction';
 import { useNoticeReceiverReadController } from './use-notice-receiver-read-controller';
 
 export function useNoticeReceiverController() {
+  const capabilities = useNoticeActionCapabilities();
   const query = useNoticeReceiverQueryController();
   const read = useNoticeReceiverReadController(query.query);
   useNoticeReceiverPageCorrection(query.query, read.state.list, query.replacePageIndex);
-  const command = useNoticeReceiverCommandController({
-    loadExact: read.loadExact,
-    rereadAuthoritatively: read.rereadAuthoritatively
-  });
+  const command = useNoticeReceiverCommandController(
+    {
+      loadExact: read.loadExact,
+      rereadAuthoritatively: read.rereadAuthoritatively
+    },
+    capabilities
+  );
   const unlessLocked = (action: () => void) => {
     if (!command.controls.isLocked()) action();
   };
@@ -22,7 +27,7 @@ export function useNoticeReceiverController() {
     return read.refresh();
   };
   return {
-    state: { query: query.query, name: query.name, ...read.state, ...command.state },
+    state: { capabilities, query: query.query, name: query.name, ...read.state, ...command.state },
     actions: {
       setName: (value: string) => unlessLocked(() => query.setName(value)),
       search: () => unlessLocked(query.search),

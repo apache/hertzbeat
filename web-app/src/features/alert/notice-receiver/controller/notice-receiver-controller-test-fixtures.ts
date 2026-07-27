@@ -16,6 +16,9 @@ export const persistedNoticeReceiver = {
 };
 
 export const defaultNoticeReceiverQuery: NoticeReceiverQuery = { name: '', pageIndex: 0, pageSize: 8 };
+export const adminNoticeActions = { canCreate: true, canEdit: true, canTest: true, canDelete: true };
+export const userNoticeActions = { canCreate: true, canEdit: true, canTest: true, canDelete: false };
+export const guestNoticeActions = { canCreate: false, canEdit: false, canTest: false, canDelete: false };
 
 export function validNoticeReceiverDraft() {
   return {

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
+import { classifyNoticeReceiverDetailFailure, type NoticeReceiverFailureKind } from '../model/notice-receiver-failure';
 import {
   createNoticeReceiverDraft,
   noticeReceiverDraftFromDetail,
@@ -13,7 +15,7 @@ import {
   type NoticeReceiverSecretKey,
   type NoticeReceiverType
 } from '../model/notice-receiver-model';
-import { classifyNoticeReceiverDetailFailure, type NoticeReceiverFailureKind } from '../model/notice-receiver-failure';
+import { canSubmitNoticeReceiver } from './notice-receiver-action-admission';
 import {
   useNoticeReceiverOperationController,
   type NoticeReceiverOperationController
@@ -21,6 +23,17 @@ import {
 
 export { useNoticeReceiverOperationController as useNoticeReceiverOperationGate };
 export type NoticeReceiverOperationGate = NoticeReceiverOperationController;
+
+type NoticeReceiverEditorOptions = {
+  capabilities: NoticeActionCapabilities;
+  gate: NoticeReceiverOperationGate;
+  loadExact: (id: number) => Promise<NoticeReceiver>;
+  onReadFailure?: (kind: NoticeReceiverFailureKind) => void;
+};
+
+type NoticeReceiverDetailEditorOptions = Required<NoticeReceiverEditorOptions> & {
+  publishDraft: (draft: NoticeReceiverDraft | null) => void;
+};
 
 function useNoticeReceiverDraftStore() {
   const [draft, setDraft] = useState<NoticeReceiverDraft | null>(null);
@@ -33,12 +46,13 @@ function useNoticeReceiverDraftStore() {
   return { draft, get: () => draftRef.current, publish };
 }
 
-function useNoticeReceiverDetailEditor(
-  gate: NoticeReceiverOperationGate,
-  loadExact: (id: number) => Promise<NoticeReceiver>,
-  publishDraft: (draft: NoticeReceiverDraft | null) => void,
-  onReadFailure: (kind: NoticeReceiverFailureKind) => void
-) {
+function useNoticeReceiverDetailEditor({
+  capabilities,
+  gate,
+  loadExact,
+  publishDraft,
+  onReadFailure
+}: NoticeReceiverDetailEditorOptions) {
   const mountedRef = useRef(true);
   const detailEpochRef = useRef(0);
   const pendingDetailRef = useRef<{ id: number; epoch: number; promise: Promise<boolean> } | undefined>(undefined);
@@ -55,7 +69,7 @@ function useNoticeReceiverDetailEditor(
     pendingDetailRef.current = undefined;
   };
   const edit = (id: number): Promise<boolean> => {
-    if (gate.isLocked()) return Promise.resolve(false);
+    if (!capabilities.canEdit || gate.isLocked()) return Promise.resolve(false);
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
     const epoch = detailEpochRef.current + 1;
     detailEpochRef.current = epoch;
@@ -83,22 +97,29 @@ function useNoticeReceiverDetailEditor(
   return { edit, invalidate: invalidateDetail };
 }
 
-export function useNoticeReceiverEditorController(
-  gate: NoticeReceiverOperationGate,
-  loadExact: (id: number) => Promise<NoticeReceiver>,
-  onReadFailure: (kind: NoticeReceiverFailureKind) => void = () => undefined
-) {
+export function useNoticeReceiverEditorController({
+  capabilities,
+  gate,
+  loadExact,
+  onReadFailure = () => undefined
+}: NoticeReceiverEditorOptions) {
   const draftStore = useNoticeReceiverDraftStore();
-  const detailEditor = useNoticeReceiverDetailEditor(gate, loadExact, draftStore.publish, onReadFailure);
+  const detailEditor = useNoticeReceiverDetailEditor({
+    capabilities,
+    gate,
+    loadExact,
+    publishDraft: draftStore.publish,
+    onReadFailure
+  });
   const mutateDraft = (mutate: (draft: NoticeReceiverDraft) => NoticeReceiverDraft) => {
     if (gate.isLocked()) return false;
     const current = draftStore.get();
-    if (!current) return false;
+    if (!current || !canSubmitNoticeReceiver(capabilities, current)) return false;
     draftStore.publish(mutate(current));
     return true;
   };
   const create = () => {
-    if (gate.isLocked()) return false;
+    if (!capabilities.canCreate || gate.isLocked()) return false;
     detailEditor.invalidate();
     draftStore.publish(createNoticeReceiverDraft());
     return true;

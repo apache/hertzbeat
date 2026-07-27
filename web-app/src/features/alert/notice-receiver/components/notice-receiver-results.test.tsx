@@ -33,6 +33,7 @@ describe('NoticeReceiverResults', () => {
   it('does not publish a fake zero total while the collection is loading', () => {
     render(
       <NoticeReceiverResults
+        actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
         state={{ kind: 'loading' }}
         busy={false}
         pageIndex={0}
@@ -50,6 +51,7 @@ describe('NoticeReceiverResults', () => {
   it('locks pagination while a command or recovery owns the list', () => {
     render(
       <NoticeReceiverResults
+        actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
         state={{ kind: 'loading' }}
         busy
         pageIndex={0}
@@ -75,6 +77,7 @@ describe('NoticeReceiverResults', () => {
     };
     const page = render(
       <NoticeReceiverResults
+        actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
         state={{ kind: 'ready', records: [record], total: 1 }}
         busy={false}
         pageIndex={0}
@@ -89,6 +92,7 @@ describe('NoticeReceiverResults', () => {
 
     page.rerender(
       <NoticeReceiverResults
+        actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
         state={{ kind: 'ready', records: [record], total: 1 }}
         busy
         pageIndex={0}

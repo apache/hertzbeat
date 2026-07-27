@@ -43,6 +43,7 @@ function createOperationController(runtime: OperationRuntime) {
     resume: () => resumeWrite(runtime),
     resumeTest: () => resumeTest(runtime),
     dismissTest: () => dismissTest(runtime),
+    retire: () => retireOperation(runtime),
     getReceipt: () => runtime.receiptRef.current,
     getRecovery: () => currentWriteRecovery(runtime),
     getTestRecovery: () => testRecoveryFor(runtime.receiptRef.current),
@@ -105,6 +106,15 @@ function dismissTest(runtime: OperationRuntime) {
   runtime.recoveryRef.current = false;
   runtime.setCommand('idle');
   return true;
+}
+
+function retireOperation(runtime: OperationRuntime) {
+  const retained = Boolean(runtime.ownerRef.current || runtime.receiptRef.current);
+  runtime.ownerRef.current = undefined;
+  runtime.receiptRef.current = undefined;
+  runtime.recoveryRef.current = false;
+  if (runtime.command !== 'idle') runtime.setCommand('idle');
+  return retained;
 }
 
 function isCurrentOperation(runtime: OperationRuntime, owner: NoticeReceiverOperationOwner) {

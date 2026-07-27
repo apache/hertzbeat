@@ -5,11 +5,13 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
 import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
 import { noticeReceiverPageSizes, receiverTypeDefinitions, type NoticeReceiver } from '../model/notice-receiver-model';
 import { noticeReceiverSettingSummary } from '../model/notice-receiver-summary';
 
 export function NoticeReceiverResults({
+  actionPolicy,
   state,
   busy,
   pageIndex,
@@ -18,6 +20,7 @@ export function NoticeReceiverResults({
   remove,
   onPageChange
 }: {
+  actionPolicy: NoticeActionCapabilities;
   state: NoticeReceiverListState;
   busy: boolean;
   pageIndex: number;
@@ -40,7 +43,7 @@ export function NoticeReceiverResults({
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
-      columns={receiverColumns(t, busy, edit, remove)}
+      columns={receiverColumns({ t, actionPolicy, busy, edit, remove })}
       scroll={{ x: 1060 }}
       pagination={{
         current: pageIndex + 1,
@@ -55,13 +58,16 @@ export function NoticeReceiverResults({
   );
 }
 
-function receiverColumns(
-  t: TFunction,
-  busy: boolean,
-  edit: (id: number) => void,
-  remove: (record: NoticeReceiver) => void
-): ColumnsType<NoticeReceiver> {
-  return [
+type ReceiverColumnOptions = {
+  t: TFunction;
+  actionPolicy: NoticeActionCapabilities;
+  busy: boolean;
+  edit: (id: number) => void;
+  remove: (record: NoticeReceiver) => void;
+};
+
+function receiverColumns({ t, actionPolicy, busy, edit, remove }: ReceiverColumnOptions): ColumnsType<NoticeReceiver> {
+  const columns: ColumnsType<NoticeReceiver> = [
     { title: t('noticeReceivers.name'), dataIndex: 'name', width: 240 },
     {
       title: t('noticeReceivers.type'),
@@ -80,27 +86,35 @@ function receiverColumns(
         );
       }
     },
-    { title: t('noticeReceivers.updated'), width: 190, render: (_value, receiver) => formatReceiverTime(receiver) },
+    { title: t('noticeReceivers.updated'), width: 190, render: (_value, receiver) => formatReceiverTime(receiver) }
+  ];
+  if (!hasNoticeReceiverRowActions(actionPolicy)) return columns;
+  return [
+    ...columns,
     {
       title: t('common.actions'),
       width: 150,
       render: (_value, receiver) => (
         <Space>
-          <Button type="link" disabled={busy} onClick={() => edit(receiver.id)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm
-            disabled={busy}
-            title={t('noticeReceivers.deleteConfirm')}
-            okButtonProps={{ disabled: busy }}
-            onConfirm={() => {
-              if (!busy) remove(receiver);
-            }}
-          >
-            <Button type="link" danger disabled={busy}>
-              {t('noticeReceivers.delete')}
+          {actionPolicy.canEdit ? (
+            <Button type="link" disabled={busy} onClick={() => edit(receiver.id)}>
+              {t('common.edit')}
             </Button>
-          </Popconfirm>
+          ) : null}
+          {actionPolicy.canDelete ? (
+            <Popconfirm
+              disabled={busy}
+              title={t('noticeReceivers.deleteConfirm')}
+              okButtonProps={{ disabled: busy }}
+              onConfirm={() => {
+                if (!busy) remove(receiver);
+              }}
+            >
+              <Button type="link" danger disabled={busy}>
+                {t('noticeReceivers.delete')}
+              </Button>
+            </Popconfirm>
+          ) : null}
         </Space>
       )
     }
@@ -120,4 +134,8 @@ function formatReceiverTime(receiver: NoticeReceiver) {
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return '—';
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);
+}
+
+function hasNoticeReceiverRowActions(capabilities: NoticeActionCapabilities) {
+  return capabilities.canEdit || capabilities.canDelete;
 }

@@ -8,16 +8,26 @@ import { OperationalPageHeader } from '@/shared/operational-page';
 import styles from '../../shared/alert-policy-page.module.css';
 import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../model/notice-receiver-operation-state';
 
-export function NoticeReceiverHeading({ busy, create }: { busy: boolean; create: () => void }) {
+export function NoticeReceiverHeading({
+  busy,
+  canCreate,
+  create
+}: {
+  busy: boolean;
+  canCreate: boolean;
+  create: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <OperationalPageHeader
       title={t('noticeReceivers.title')}
       description={t('noticeReceivers.description')}
       actions={
-        <Button type="primary" disabled={busy} onClick={create}>
-          {t('noticeReceivers.new')}
-        </Button>
+        canCreate ? (
+          <Button type="primary" disabled={busy} onClick={create}>
+            {t('noticeReceivers.new')}
+          </Button>
+        ) : undefined
       }
     />
   );
@@ -68,10 +78,12 @@ export function NoticeReceiverToolbar({
 }
 
 export function NoticeReceiverRecovery({
+  canRetry,
   recovery,
   busy,
   retry
 }: {
+  canRetry: boolean;
   recovery: NoticeReceiverRecoveryState | undefined;
   busy: boolean;
   retry: () => unknown;
@@ -86,9 +98,11 @@ export function NoticeReceiverRecovery({
       showIcon
       message={message}
       action={
-        <Button size="small" disabled={busy || !recovery.retryable} onClick={() => void retry()}>
-          {t('common.retry')}
-        </Button>
+        canRetry ? (
+          <Button size="small" disabled={busy || !recovery.retryable} onClick={() => void retry()}>
+            {t('common.retry')}
+          </Button>
+        ) : undefined
       }
     />
   );

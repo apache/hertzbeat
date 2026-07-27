@@ -13,6 +13,8 @@ import {
   useNoticeReceiverOperationGate
 } from './use-notice-receiver-editor-controller';
 
+const editorCapabilities = { canCreate: true, canEdit: true, canTest: true, canDelete: true };
+
 describe('notice receiver editor controller', () => {
   const loadExact = vi.fn();
 
@@ -140,7 +142,11 @@ describe('notice receiver editor controller', () => {
     const { result } = renderHook(
       () => {
         const gate = useNoticeReceiverOperationGate();
-        const editor = useNoticeReceiverEditorController(gate, loadExact);
+        const editor = useNoticeReceiverEditorController({
+          capabilities: editorCapabilities,
+          gate,
+          loadExact
+        });
         return { editor, gate };
       },
       { wrapper: StrictMode }
@@ -160,7 +166,12 @@ function renderEditorController(
 ) {
   return renderHook(() => {
     const gate = useNoticeReceiverOperationGate();
-    const editor = useNoticeReceiverEditorController(gate, loadExact, onReadFailure);
+    const editor = useNoticeReceiverEditorController({
+      capabilities: editorCapabilities,
+      gate,
+      loadExact,
+      ...(onReadFailure ? { onReadFailure } : {})
+    });
     return { editor, gate };
   });
 }

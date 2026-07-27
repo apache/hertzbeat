@@ -33,6 +33,24 @@ describe('NoticeReceiverPage', () => {
     );
   });
 
+  it.each([
+    ['guest', { canCreate: false, canEdit: false, canTest: false, canDelete: false }, false, false],
+    ['user', { canCreate: true, canEdit: true, canTest: true, canDelete: false }, true, false],
+    ['administrator', { canCreate: true, canEdit: true, canTest: true, canDelete: true }, true, true]
+  ] as const)('shows only admitted receiver actions for %s', (_role, capabilities, showsEditorActions, canDelete) => {
+    const current = view('ready', true);
+    current.state.capabilities = capabilities;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.queryByRole('button', { name: 'noticeReceivers.new' }) !== null).toBe(showsEditorActions);
+    expect(screen.queryByRole('button', { name: 'common.edit' }) !== null).toBe(showsEditorActions);
+    expect(screen.queryByRole('button', { name: 'noticeReceivers.delete' }) !== null).toBe(canDelete);
+    expect(screen.getByText('Pager')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('noticeReceivers.search')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeInTheDocument();
+  });
+
   it('renders storage unavailability distinctly instead of a fake empty table', () => {
     render(<NoticeReceiverPage />);
     expect(screen.getByText('noticeReceivers.read.unavailable')).toBeInTheDocument();
@@ -92,6 +110,18 @@ describe('NoticeReceiverPage', () => {
     expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
   });
 
+  it('hides retained delete retry when the current role cannot delete', () => {
+    const current = view('ready', true, 'recovering');
+    current.state.capabilities = { canCreate: true, canEdit: true, canTest: true, canDelete: false };
+    current.state.recovery = { kind: 'delete', phase: 'projection', retryable: true };
+    current.state.canRetryOperation = false;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByText('noticeReceivers.deleteError.unavailable')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+  });
+
   it('wires uncertain test delivery to explicit retry or cancel actions', () => {
     const current = view('ready', true, 'recovering');
     current.state.recovery = undefined;
@@ -114,13 +144,14 @@ describe('NoticeReceiverPage', () => {
 function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'saving' : 'idle') {
   const recovery:
     | {
-        kind: 'save';
+        kind: 'save' | 'delete';
         phase: 'proof' | 'projection' | 'commit-uncertain';
         retryable: boolean;
       }
     | undefined = command === 'recovering' ? { kind: 'save', phase: 'projection', retryable: true } : undefined;
   return {
     state: {
+      capabilities: { canCreate: true, canEdit: true, canTest: true, canDelete: true },
       query: { name: '', pageIndex: 0, pageSize: 8 },
       name: '',
       draft: null as NoticeReceiverDraft | null,
@@ -135,6 +166,7 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
             }
           : { kind },
       command,
+      canRetryOperation: true,
       recovery,
       testRecovery: undefined as NoticeReceiverTestRecovery | undefined,
       busy,
