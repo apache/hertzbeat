@@ -39,10 +39,10 @@ class EntityDefinitionDraftWorkspaceSourceOwnershipTest {
         String draftSource = Files.readString(ENTITY_DEFINITION_DRAFT_SERVICE);
         String mappingSource = Files.readString(ENTITY_DEFINITION_MAPPING_SERVICE);
 
-        assertFalse(draftSource.contains("private final EntityWorkspaceAccessService entityWorkspaceAccessService"),
-                "Definition draft orchestration should not own request-workspace lookup");
         assertFalse(draftSource.contains("entityWorkspaceAccessService.currentRequestWorkspaceId()"),
                 "Definition draft orchestration should not thread raw request workspace ids");
+        assertTrue(draftSource.contains("findAccessibleEntitiesByIdsForRequestWorkspace("),
+                "Preview identity collision checks should use request-scoped workspace access");
 
         assertTrue(draftSource.contains("entityDefinitionMappingService.toEntityDto(definition, entityId)"),
                 "Default definition drafts should let mapping resolve request workspace");

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,10 +47,12 @@ class EntityListWorkspaceSourceOwnershipTest {
         assertFalse(listSource.contains("entityWorkspaceAccessService.filterEntitiesByRequestWorkspace"),
                 "Entity list read-model should not post-filter persisted catalog rows");
 
-        assertTrue(listSource.contains("sort, order, pageIndex, pageSize);"),
-                "Default entity list queries should let catalog query resolve request workspace");
-        assertTrue(listSource.contains("sort, order, pageIndex, pageSize, requestWorkspaceId);"),
-                "Explicit workspace compatibility should remain available");
+        assertEquals(2, listSource.split("entityCatalogQueryService\\.findEntityPage\\(", -1).length - 1,
+                "Both entity-list overloads should delegate to the catalog query boundary");
+        assertTrue(listSource.contains("int safePageIndex = normalizePageIndex(pageIndex);"),
+                "Entity list read-model should normalize page indexes before catalog queries");
+        assertTrue(listSource.contains("int safePageSize = normalizePageSize(pageSize);"),
+                "Entity list read-model should normalize page sizes before catalog queries");
 
         assertTrue(querySource.contains("private final EntityWorkspaceAccessService entityWorkspaceAccessService"),
                 "Catalog query boundary should own request-workspace lookup for entity list pages");

@@ -39,10 +39,10 @@ class EntityIntegrationHintWorkspaceSourceOwnershipTest {
         String hintSource = Files.readString(ENTITY_INTEGRATION_HINT_SERVICE);
         String identitySource = Files.readString(ENTITY_IDENTITY_RESOLUTION_SERVICE);
 
-        assertFalse(hintSource.contains("EntityWorkspaceAccessService"),
-                "Integration hints should not own request workspace lookup");
         assertFalse(hintSource.contains("currentRequestWorkspaceId()"),
                 "Integration hints should not thread raw request workspace ids");
+        assertTrue(hintSource.contains("findAccessibleEntitiesByIdsForRequestWorkspace("),
+                "Existing bound candidates should use request-scoped workspace access");
         assertTrue(hintSource.contains("entityIdentityResolutionService.resolveMonitorBindingCandidates(monitor)"));
         assertFalse(hintSource.contains("resolveMonitorBindingCandidates(monitor,"),
                 "Integration hints should use the identity resolution request-workspace overload");

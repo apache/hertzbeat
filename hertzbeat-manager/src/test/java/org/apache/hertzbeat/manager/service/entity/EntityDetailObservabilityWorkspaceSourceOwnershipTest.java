@@ -39,10 +39,13 @@ class EntityDetailObservabilityWorkspaceSourceOwnershipTest {
         String detailSource = Files.readString(ENTITY_DETAIL_OBSERVABILITY_READ_MODEL_SERVICE);
         String noiseSource = Files.readString(ENTITY_NOISE_CONTROL_READ_MODEL_SERVICE);
 
-        assertFalse(detailSource.contains("private final EntityWorkspaceAccessService entityWorkspaceAccessService"),
-                "Entity detail observability assembly should not own request-workspace lookup");
         assertFalse(detailSource.contains("entityWorkspaceAccessService.currentRequestWorkspaceId()"),
                 "Entity detail observability assembly should not thread raw request workspace ids");
+        assertTrue(detailSource.contains("entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace("),
+                "Topology previews should use request-scoped workspace access");
+        assertTrue(detailSource.contains("entityWorkspaceAccessService.findAccessibleEntitiesByIds("
+                        + "neighborIds, requestWorkspaceId)"),
+                "Explicit workspace compatibility should remain available for topology previews");
 
         assertTrue(detailSource.contains("entityStatusRefreshService.refreshEntityStatusWithEvidence(entity)"),
                 "Runtime evidence should resolve request workspace at the status-refresh boundary");
