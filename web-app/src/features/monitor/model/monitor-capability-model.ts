@@ -23,6 +23,7 @@ export type MonitorCapabilities = {
   canRead: boolean;
   canWrite: boolean;
   canDelete: boolean;
+  canDeleteGrafanaDashboard: boolean;
   canExport: boolean;
   canSelect: boolean;
 };
@@ -31,11 +32,13 @@ export type MonitorCapabilities = {
 export function monitorCapabilities(roles: readonly string[]): MonitorCapabilities {
   const canWrite = hasAnyRole(roles, monitorWriteRoles);
   const canDelete = hasAnyRole(roles, monitorAdministratorRoles);
+  const canDeleteGrafanaDashboard = hasAnyRole(roles, monitorAdministratorRoles);
   const canExport = hasAnyRole(roles, monitorAdministratorRoles);
   return {
     canRead: hasAnyRole(roles, monitorReadRoles),
     canWrite,
     canDelete,
+    canDeleteGrafanaDashboard,
     canExport,
     canSelect: canWrite || canDelete || canExport
   };

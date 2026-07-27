@@ -25,10 +25,12 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { MonitorContractError } from '../model/monitor-contract';
 
 const api = vi.hoisted(() => ({ deleteMonitorGrafanaDashboard: vi.fn(), loadMonitorDetail: vi.fn() }));
+const capability = vi.hoisted(() => ({ useMonitorCapabilities: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
 }));
+vi.mock('./use-monitor-capabilities', () => capability);
 
 import { useMonitorDetailController } from './use-monitor-detail-controller';
 
@@ -43,6 +45,7 @@ const detail = {
 describe('useMonitorDetailController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    capability.useMonitorCapabilities.mockReturnValue({ canWrite: true, canDeleteGrafanaDashboard: true });
     api.deleteMonitorGrafanaDashboard.mockResolvedValue(undefined);
     api.loadMonitorDetail.mockResolvedValue(detail);
   });

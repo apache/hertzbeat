@@ -21,10 +21,50 @@ import { monitorCapabilities } from './monitor-capability-model';
 
 describe('monitor capability model', () => {
   it.each([
-    [['ADMIN'], { canRead: true, canWrite: true, canDelete: true, canExport: true, canSelect: true }],
-    [['USER'], { canRead: true, canWrite: true, canDelete: false, canExport: false, canSelect: true }],
-    [['GUEST'], { canRead: true, canWrite: false, canDelete: false, canExport: false, canSelect: false }],
-    [[], { canRead: false, canWrite: false, canDelete: false, canExport: false, canSelect: false }]
+    [
+      ['ADMIN'],
+      {
+        canRead: true,
+        canWrite: true,
+        canDelete: true,
+        canDeleteGrafanaDashboard: true,
+        canExport: true,
+        canSelect: true
+      }
+    ],
+    [
+      ['USER'],
+      {
+        canRead: true,
+        canWrite: true,
+        canDelete: false,
+        canDeleteGrafanaDashboard: false,
+        canExport: false,
+        canSelect: true
+      }
+    ],
+    [
+      ['GUEST'],
+      {
+        canRead: true,
+        canWrite: false,
+        canDelete: false,
+        canDeleteGrafanaDashboard: false,
+        canExport: false,
+        canSelect: false
+      }
+    ],
+    [
+      [],
+      {
+        canRead: false,
+        canWrite: false,
+        canDelete: false,
+        canDeleteGrafanaDashboard: false,
+        canExport: false,
+        canSelect: false
+      }
+    ]
   ] as const)('matches the backend monitor policy for roles %s', (roles, expected) => {
     expect(monitorCapabilities(roles)).toEqual(expected);
   });

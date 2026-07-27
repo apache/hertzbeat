@@ -15,16 +15,20 @@ import { useMonitorCapabilities } from './use-monitor-capabilities';
 
 describe('useMonitorCapabilities', () => {
   it.each([
-    [['ADMIN'], true],
-    [['USER'], true],
-    [['GUEST'], false]
-  ] as const)('adapts session roles %s through the central monitor policy', (roles, canWrite) => {
-    const view = renderHook(() => useMonitorCapabilities(), {
-      wrapper: createSessionWrapper([...roles])
-    });
+    [['ADMIN'], true, true],
+    [['USER'], true, false],
+    [['GUEST'], false, false]
+  ] as const)(
+    'adapts session roles %s through the central monitor policy',
+    (roles, canWrite, canDeleteGrafanaDashboard) => {
+      const view = renderHook(() => useMonitorCapabilities(), {
+        wrapper: createSessionWrapper([...roles])
+      });
 
-    expect(view.result.current.canWrite).toBe(canWrite);
-  });
+      expect(view.result.current.canWrite).toBe(canWrite);
+      expect(view.result.current.canDeleteGrafanaDashboard).toBe(canDeleteGrafanaDashboard);
+    }
+  );
 });
 
 function createSessionWrapper(roles: string[]) {

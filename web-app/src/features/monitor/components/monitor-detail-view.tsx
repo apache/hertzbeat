@@ -60,9 +60,11 @@ export function MonitorDetailView({
         <Space>
           <MonitorHelpLink />
           <Button onClick={actions.back}>{t('common.back')}</Button>
-          <Button type="primary" onClick={actions.edit}>
-            {t('common.edit')}
-          </Button>
+          {state.canEdit ? (
+            <Button type="primary" onClick={actions.edit}>
+              {t('common.edit')}
+            </Button>
+          ) : null}
         </Space>
       </header>
       <MonitorDetailMetadata monitor={monitor} collector={state.detail.detail.collector} />
@@ -71,6 +73,7 @@ export function MonitorDetailView({
         dashboard={state.detail.detail.grafanaDashboard}
         deleting={state.grafanaDeleting}
         deleteError={state.grafanaDeleteError}
+        canDelete={state.canDeleteGrafanaDashboard}
         onDelete={actions.deleteGrafanaDashboard}
       />
     </div>
@@ -81,11 +84,13 @@ function MonitorGrafanaDashboard({
   dashboard,
   deleting,
   deleteError,
+  canDelete,
   onDelete
 }: {
   dashboard: Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail']['grafanaDashboard'];
   deleting: boolean;
   deleteError: boolean;
+  canDelete: boolean;
   onDelete: () => Promise<void>;
 }) {
   const { t } = useTranslation();
@@ -95,17 +100,19 @@ function MonitorGrafanaDashboard({
     <section className={styles.dashboard}>
       <div className={styles.dashboardHeading}>
         <Typography.Title level={3}>{t('monitor.grafana.title')}</Typography.Title>
-        <Popconfirm
-          title={t('monitor.grafana.deleteConfirm')}
-          okText={t('common.delete')}
-          cancelText={t('common.cancel')}
-          okButtonProps={{ danger: true }}
-          onConfirm={() => void onDelete()}
-        >
-          <Button danger loading={deleting}>
-            {t('monitor.grafana.delete')}
-          </Button>
-        </Popconfirm>
+        {canDelete ? (
+          <Popconfirm
+            title={t('monitor.grafana.deleteConfirm')}
+            okText={t('common.delete')}
+            cancelText={t('common.cancel')}
+            okButtonProps={{ danger: true }}
+            onConfirm={() => void onDelete()}
+          >
+            <Button danger loading={deleting}>
+              {t('monitor.grafana.delete')}
+            </Button>
+          </Popconfirm>
+        ) : null}
       </div>
       {deleteError ? <Alert type="error" showIcon message={t('monitor.grafana.deleteFailure')} /> : null}
       <iframe

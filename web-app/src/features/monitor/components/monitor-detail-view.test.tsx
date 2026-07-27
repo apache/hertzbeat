@@ -99,6 +99,24 @@ describe('MonitorDetailView', () => {
   });
 
   it.each([
+    ['administrator', true, true],
+    ['user', true, false],
+    ['guest', false, false]
+  ] as const)('shows only the admitted direct actions for %s detail access', (_role, canEdit, canDelete) => {
+    renderView(
+      {
+        ...ready,
+        detail: { ...ready.detail, grafanaDashboard: grafana(true, 'https://grafana.example/d/ops') }
+      },
+      { canEdit, canDeleteGrafanaDashboard: canDelete }
+    );
+
+    expect(screen.queryByRole('button', { name: i18n.t('common.edit') }) !== null).toBe(canEdit);
+    expect(screen.queryByRole('button', { name: i18n.t('monitor.grafana.delete') }) !== null).toBe(canDelete);
+    expect(screen.getByTitle(i18n.t('monitor.grafana.title'))).toBeInTheDocument();
+  });
+
+  it.each([
     null,
     grafana(false, 'https://grafana.example/d/ops'),
     grafana(true, ''),
@@ -162,6 +180,8 @@ function grafana(enabled: boolean, url: string | null) {
 function renderView(
   detail: Parameters<typeof MonitorDetailView>[0]['state']['detail'],
   overrides: {
+    canEdit?: boolean;
+    canDeleteGrafanaDashboard?: boolean;
     deleteGrafanaDashboard?: () => Promise<void>;
     grafanaDeleteError?: boolean;
   } = {}
@@ -172,6 +192,8 @@ function renderView(
         state={{
           detail,
           returnTo: '/monitors',
+          canEdit: overrides.canEdit ?? true,
+          canDeleteGrafanaDashboard: overrides.canDeleteGrafanaDashboard ?? true,
           grafanaDeleting: false,
           grafanaDeleteError: overrides.grafanaDeleteError ?? false
         }}

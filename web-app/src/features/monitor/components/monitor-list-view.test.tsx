@@ -73,7 +73,14 @@ describe('MonitorListView evidence states', () => {
 
   it('keeps permission-gated header management actions absent', () => {
     renderView({
-      capabilities: { canRead: true, canWrite: false, canDelete: false, canExport: false, canSelect: false },
+      capabilities: {
+        canRead: true,
+        canWrite: false,
+        canDelete: false,
+        canDeleteGrafanaDashboard: false,
+        canExport: false,
+        canSelect: false
+      },
       canExport: false,
       monitors: { kind: 'empty' }
     });
@@ -381,7 +388,14 @@ function renderView(
     selectedIds: [],
     operating: false,
     refreshing: false,
-    capabilities: { canRead: true, canWrite: true, canDelete: true, canExport: true, canSelect: true },
+    capabilities: {
+      canRead: true,
+      canWrite: true,
+      canDelete: true,
+      canDeleteGrafanaDashboard: true,
+      canExport: true,
+      canSelect: true
+    },
     canExport: false,
     monitorImport: { canImport: false, draft: null, invalid: null, failure: null, busy: false },
     apps: { kind: 'ready', options: [] },

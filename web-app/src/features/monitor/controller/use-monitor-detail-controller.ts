@@ -30,9 +30,11 @@ import {
   type MonitorDetailRefreshChoice
 } from '../model/monitor-detail-model';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-model';
+import { useMonitorCapabilities } from './use-monitor-capabilities';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorDetailController() {
+  const capabilities = useMonitorCapabilities();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { monitorId } = useParams();
@@ -40,7 +42,7 @@ export function useMonitorDetailController() {
   const id = parseMonitorRouteId(monitorId);
   const returnTo = safeMonitorReturnTo(searchParams.get('returnTo'));
   const refreshSeconds = parseMonitorDetailRefresh(searchParams.get('refresh'));
-  const dashboardDelete = useGrafanaDashboardDelete(id, queryClient);
+  const dashboardDelete = useGrafanaDashboardDelete(id, queryClient, capabilities.canDeleteGrafanaDashboard);
   const query = useQuery({
     queryKey: monitorQueryKeys.detail(id),
     queryFn: id === undefined ? skipToken : ({ signal }) => loadMonitorDetail(id, signal),
@@ -52,6 +54,8 @@ export function useMonitorDetailController() {
       detail: resolveMonitorDetail(id, query.isPending, query.error, query.data),
       returnTo,
       refreshSeconds,
+      canEdit: capabilities.canWrite,
+      canDeleteGrafanaDashboard: capabilities.canDeleteGrafanaDashboard,
       grafanaDeleting: dashboardDelete.deleting,
       grafanaDeleteError: dashboardDelete.error
     },
@@ -60,7 +64,7 @@ export function useMonitorDetailController() {
         void navigate(returnTo);
       },
       edit: () => {
-        if (id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
+        if (capabilities.canWrite && id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
       },
       refresh: () => {
         if (id !== undefined) void query.refetch();
@@ -76,7 +80,11 @@ export function useMonitorDetailController() {
   };
 }
 
-function useGrafanaDashboardDelete(id: number | undefined, queryClient: ReturnType<typeof useQueryClient>) {
+function useGrafanaDashboardDelete(
+  id: number | undefined,
+  queryClient: ReturnType<typeof useQueryClient>,
+  canDeleteGrafanaDashboard: boolean
+) {
   const operation = useRef<AbortController | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
@@ -88,7 +96,7 @@ function useGrafanaDashboardDelete(id: number | undefined, queryClient: ReturnTy
     [id]
   );
   const run = async () => {
-    if (id === undefined || operation.current) return;
+    if (!canDeleteGrafanaDashboard || id === undefined || operation.current) return;
     const controller = new AbortController();
     operation.current = controller;
     setDeleting(true);

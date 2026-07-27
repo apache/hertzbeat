@@ -39,6 +39,8 @@ export type MonitorDetailRefreshSeconds = (typeof monitorDetailRefreshValues)[nu
 export type MonitorDetailViewState = {
   detail: MonitorDetailEvidence;
   returnTo: string;
+  canEdit: boolean;
+  canDeleteGrafanaDashboard: boolean;
   grafanaDeleting: boolean;
   grafanaDeleteError: boolean;
 };
