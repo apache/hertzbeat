@@ -79,8 +79,10 @@ describe('useMonitorMetricWorkbenchController', () => {
       () => expect(view.result.current.controller.state).toMatchObject({ metricKey: 'summary.value', history: '30m' }),
       routeConvergenceWait
     );
-    expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
-    expect(view.result.current.location.search).toContain('history=30m');
+    await waitFor(() => {
+      expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
+      expect(view.result.current.location.search).toContain('history=30m');
+    }, routeConvergenceWait);
     act(() => {
       void view.result.current.navigate('/monitors/7?metric=summary.value&history=1h');
     });
@@ -105,7 +107,10 @@ describe('useMonitorMetricWorkbenchController', () => {
       () => expect(view.result.current.controller.state.metricKey).toBe('other.value'),
       routeConvergenceWait
     );
-    expect(view.result.current.location.search).toContain('metric=other.value');
+    await waitFor(
+      () => expect(view.result.current.location.search).toContain('metric=other.value'),
+      routeConvergenceWait
+    );
   });
 
   it('exposes explicit catalog fallback and favorite unknown evidence', async () => {
