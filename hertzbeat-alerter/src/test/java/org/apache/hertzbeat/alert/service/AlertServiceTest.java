@@ -227,6 +227,14 @@ class AlertServiceTest {
     }
 
     @Test
+    void editGroupAlertStatusRejectsUnsupportedStatusBeforeQueriesOrWrites() {
+        assertThrows(AlertGroupStatusNotSupportedException.class,
+                () -> alertService.editGroupAlertStatus("private-arbitrary-status", List.of(1L)));
+
+        verifyNoInteractions(groupAlertDao, singleAlertDao);
+    }
+
+    @Test
     void getGroupAlertsFiltersByServiceNamespaceAndEnvironmentLabels() {
         GroupAlert matching = GroupAlert.builder()
                 .id(1L)

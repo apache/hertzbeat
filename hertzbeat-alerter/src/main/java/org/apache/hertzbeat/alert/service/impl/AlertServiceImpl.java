@@ -34,6 +34,7 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -190,6 +191,7 @@ public class AlertServiceImpl implements AlertService {
         if (!StringUtils.hasText(status) || ids == null || ids.isEmpty()) {
             return;
         }
+        requireSupportedGroupAlertStatus(status);
         List<Long> requestedIds = ids.stream().distinct().toList();
         if (requestedIds.contains(null)) {
             throw new AlertGroupNotFoundException();
@@ -224,6 +226,14 @@ public class AlertServiceImpl implements AlertService {
         groupAlertDao.saveAll(groupAlerts);
         if (!singleAlerts.isEmpty()) {
             singleAlertDao.saveAll(singleAlerts);
+        }
+    }
+
+    private static void requireSupportedGroupAlertStatus(String status) {
+        if (!CommonConstants.ALERT_STATUS_FIRING.equals(status)
+                && !CommonConstants.ALERT_STATUS_ACKNOWLEDGED.equals(status)
+                && !CommonConstants.ALERT_STATUS_RESOLVED.equals(status)) {
+            throw new AlertGroupStatusNotSupportedException();
         }
     }
 

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -51,6 +52,7 @@ public class AlertsController {
 
     private static final String ALERT_GROUP_NOT_FOUND_MESSAGE = "Alert group was not found.";
     private static final String ALERT_GROUP_DELETE_FAILED_MESSAGE = "Alert group delete failed.";
+    private static final String ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE = "Alert group status is not supported.";
     private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
 
     @Autowired
@@ -114,6 +116,8 @@ public class AlertsController {
                 alertService.editGroupAlertStatus(status, ids);
             }
             return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupStatusNotSupportedException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE));
         } catch (AlertGroupNotFoundException exception) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
         } catch (Exception exception) {

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -211,6 +212,32 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.msg").value("Alert group status update failed."))
                 .andExpect(content().string(not(containsString("private-alert-token"))))
                 .andExpect(content().string(not(containsString("private-alert-payload"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusRejectsUnsupportedPathValueWithStableSafeFailure() throws Exception {
+        Mockito.doThrow(new AlertGroupStatusNotSupportedException())
+                .when(alertService).editGroupAlertStatus("private-arbitrary-status", List.of(6565463543L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/private-arbitrary-status")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group status is not supported."))
+                .andExpect(content().string(not(containsString("private-arbitrary-status"))))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusKeepsEmptyIdsAsLegacySuccessNoOp() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/private-arbitrary-status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"));
+
+        Mockito.verifyNoInteractions(alertService);
     }
 
     @Test
