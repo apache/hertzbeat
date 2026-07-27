@@ -1105,6 +1105,7 @@
       "notFound": "監視定義は存在しません。",
       "appInvalid": "定義のアプリ ID が無効です。",
       "invalid": "定義 YAML が無効です。",
+      "definitionRequired": "定義 YAML は必須です。",
       "createConflict": "このアプリ ID の定義は既に存在します。",
       "expectedAppRequired": "更新対象が必要です。",
       "expectedAppUnexpected": "新しい定義には固有のアプリ ID が必要です。",

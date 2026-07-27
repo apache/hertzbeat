@@ -57,6 +57,7 @@ export type MonitorDefinitionFailureKind =
   | 'not-found'
   | 'app-invalid'
   | 'invalid'
+  | 'definition-required'
   | 'create-conflict'
   | 'expected-app-required'
   | 'expected-app-unexpected'
@@ -93,6 +94,12 @@ export function buildUpdateDraft(detail: MonitorDefinitionDetail): MonitorDefini
   };
 }
 
+export function monitorDefinitionDraftRequiredFailure(
+  draft: MonitorDefinitionDraft
+): MonitorDefinitionFailureKind | null {
+  return draft.definition.trim() ? null : 'definition-required';
+}
+
 export function userCanWriteMonitorDefinitions(roles: readonly string[]) {
   return roles.includes('ADMIN');
 }
@@ -101,6 +108,7 @@ const failureMessageKeys: Record<MonitorDefinitionFailureKind, string> = {
   'not-found': 'monitorDefinitions.failure.notFound',
   'app-invalid': 'monitorDefinitions.failure.appInvalid',
   invalid: 'monitorDefinitions.failure.invalid',
+  'definition-required': 'monitorDefinitions.failure.definitionRequired',
   'create-conflict': 'monitorDefinitions.failure.createConflict',
   'expected-app-required': 'monitorDefinitions.failure.expectedAppRequired',
   'expected-app-unexpected': 'monitorDefinitions.failure.expectedAppUnexpected',

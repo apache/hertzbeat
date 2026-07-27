@@ -98,6 +98,23 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
   });
 
+  it('renders localized required evidence for a blank definition draft', () => {
+    owner.useController.mockReturnValue(
+      buildController({
+        workspace: {
+          kind: 'edit',
+          draft: { mode: 'create', expectedApp: null, definition: '' },
+          failure: 'definition-required',
+          pending: null,
+          validation: null
+        }
+      })
+    );
+    renderPage();
+
+    expect(screen.getByText('Definition YAML is required.')).toBeInTheDocument();
+  });
+
   it('distinguishes loading, empty, error, read-only permission, and delete disposition states', () => {
     owner.useController.mockReturnValue(buildController({ listState: { kind: 'loading' }, items: [] }));
     const page = renderPage();

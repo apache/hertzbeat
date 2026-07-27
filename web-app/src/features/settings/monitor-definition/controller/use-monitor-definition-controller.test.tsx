@@ -105,6 +105,22 @@ describe('useMonitorDefinitionController', () => {
     expect(api.update).toHaveBeenCalledWith('mysql', 'app: mysql\nname: changed', revision, 'en-US');
   });
 
+  it('reports required YAML locally and sends no validate or save request for a blank create draft', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.openCreate());
+
+    await act(() => result.current.actions.validate());
+    expect(result.current.workspace).toMatchObject({ kind: 'edit', failure: 'definition-required', pending: null });
+    expect(api.validate).not.toHaveBeenCalled();
+
+    act(() => result.current.actions.setDefinition(' \n\t '));
+    await act(() => result.current.actions.save());
+    expect(result.current.workspace).toMatchObject({ kind: 'edit', failure: 'definition-required', pending: null });
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.update).not.toHaveBeenCalled();
+  });
+
   it('admits only one editor command in the same render and cannot close it while pending', async () => {
     let finishValidation:
       ((value: { schemaVersion: 1; valid: true; app: string; origin: 'custom' }) => void) | undefined;

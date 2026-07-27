@@ -17,6 +17,7 @@ import {
 import {
   buildCreateDraft,
   buildUpdateDraft,
+  monitorDefinitionDraftRequiredFailure,
   type MonitorDefinitionDetail,
   type MonitorDefinitionDraft,
   type MonitorDefinitionFailureKind,
@@ -105,6 +106,12 @@ async function runEditorCommand(
   publish: (value: MonitorDefinitionWorkspace) => void
 ) {
   if (!options.canWrite || workspace?.kind !== 'edit' || workspace.pending || active.current) return;
+  // Reject only missing YAML locally; the server remains the semantic YAML validator.
+  const requiredFailure = operation === 'refresh' ? null : monitorDefinitionDraftRequiredFailure(workspace.draft);
+  if (requiredFailure) {
+    publish({ ...workspace, failure: requiredFailure, pending: null, validation: null });
+    return;
+  }
   active.current = true;
   const owner = ++command.current;
   publish({ ...workspace, pending: operation, failure: null });

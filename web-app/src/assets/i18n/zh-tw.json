@@ -1093,6 +1093,7 @@
       "notFound": "該監控定義已不存在。",
       "appInvalid": "定義的應用程式識別無效。",
       "invalid": "定義 YAML 無效。",
+      "definitionRequired": "必須填寫定義 YAML。",
       "createConflict": "此應用程式識別的定義已存在。",
       "expectedAppRequired": "更新時必須指定目標應用程式。",
       "expectedAppUnexpected": "新定義必須宣告自己的應用程式識別。",

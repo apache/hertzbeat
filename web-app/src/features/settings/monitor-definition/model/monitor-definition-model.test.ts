@@ -11,6 +11,7 @@ import {
   buildCreateDraft,
   buildUpdateDraft,
   filterMonitorDefinitions,
+  monitorDefinitionDraftRequiredFailure,
   monitorDefinitionFailureMessageKey,
   userCanWriteMonitorDefinitions
 } from './monitor-definition-model';
@@ -53,11 +54,24 @@ describe('monitor definition model', () => {
     });
   });
 
+  it('requires non-blank definition YAML before an editor command', () => {
+    expect(monitorDefinitionDraftRequiredFailure(buildCreateDraft())).toBe('definition-required');
+    expect(monitorDefinitionDraftRequiredFailure({ mode: 'create', expectedApp: null, definition: ' \n\t ' })).toBe(
+      'definition-required'
+    );
+    expect(
+      monitorDefinitionDraftRequiredFailure({ mode: 'create', expectedApp: null, definition: 'name:\n  en-US: Custom' })
+    ).toBeNull();
+  });
+
   it('keeps writes ADMIN-only and maps stable failures to i18n keys', () => {
     expect(userCanWriteMonitorDefinitions(['ADMIN'])).toBe(true);
     expect(userCanWriteMonitorDefinitions(['USER'])).toBe(false);
     expect(monitorDefinitionFailureMessageKey('revision-conflict')).toBe('monitorDefinitions.failure.revisionConflict');
     expect(monitorDefinitionFailureMessageKey('state-uncertain')).toBe('monitorDefinitions.failure.stateUncertain');
     expect(monitorDefinitionFailureMessageKey('forbidden')).toBe('monitorDefinitions.failure.forbidden');
+    expect(monitorDefinitionFailureMessageKey('definition-required')).toBe(
+      'monitorDefinitions.failure.definitionRequired'
+    );
   });
 });

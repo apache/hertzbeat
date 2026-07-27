@@ -1113,6 +1113,7 @@
       "notFound": "A definição de monitor não existe mais.",
       "appInvalid": "A identidade do aplicativo da definição é inválida.",
       "invalid": "O YAML da definição é inválido.",
+      "definitionRequired": "O YAML da definição é obrigatório.",
       "createConflict": "Já existe uma definição com esta identidade de aplicativo.",
       "expectedAppRequired": "Um destino de atualização é obrigatório.",
       "expectedAppUnexpected": "Uma nova definição deve declarar sua própria identidade de aplicativo.",

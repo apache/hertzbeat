@@ -1112,6 +1112,7 @@
       "notFound": "The monitor definition no longer exists.",
       "appInvalid": "The definition app identity is invalid.",
       "invalid": "The definition YAML is invalid.",
+      "definitionRequired": "Definition YAML is required.",
       "createConflict": "A definition with this app identity already exists.",
       "expectedAppRequired": "An update target is required.",
       "expectedAppUnexpected": "A new definition must declare its own app identity.",

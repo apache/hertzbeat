@@ -1093,6 +1093,7 @@
       "notFound": "该监控定义已不存在。",
       "appInvalid": "定义的应用标识无效。",
       "invalid": "定义 YAML 无效。",
+      "definitionRequired": "必须填写定义 YAML。",
       "createConflict": "该应用标识的定义已存在。",
       "expectedAppRequired": "更新时必须指定目标应用。",
       "expectedAppUnexpected": "新定义必须声明自身的应用标识。",
