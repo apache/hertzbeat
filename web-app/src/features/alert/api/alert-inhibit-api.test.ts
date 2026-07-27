@@ -33,6 +33,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import {
   deleteAlertInhibit,
   deleteAlertInhibits,
+  loadAllAlertInhibits,
   loadAlertInhibit,
   loadAlertInhibitPrefillAlerts,
   loadAlertInhibits,
@@ -85,6 +86,87 @@ describe('alert inhibit API', () => {
     await loadAlertInhibits({ search: '', pageIndex: 0, pageSize: 8 }, signal);
 
     expect(transport.apiMessageGet).toHaveBeenCalledWith(expect.any(String), { signal });
+  });
+
+  it('walks every authoritative page for create identity proof', async () => {
+    const records = Array.from({ length: 26 }, (_, index) => ({ ...persisted, id: index + 1 }));
+    transport.apiMessageGet
+      .mockResolvedValueOnce({
+        content: records.slice(0, 25),
+        totalElements: 26,
+        totalPages: 2,
+        number: 0,
+        size: 25
+      })
+      .mockResolvedValueOnce({
+        content: records.slice(25),
+        totalElements: 26,
+        totalPages: 2,
+        number: 1,
+        size: 25
+      });
+
+    await expect(loadAllAlertInhibits()).resolves.toEqual(records);
+    expect(transport.apiMessageGet).toHaveBeenNthCalledWith(
+      1,
+      '/api/alert/inhibits?pageIndex=0&pageSize=25&sort=id&order=desc'
+    );
+    expect(transport.apiMessageGet).toHaveBeenNthCalledWith(
+      2,
+      '/api/alert/inhibits?pageIndex=1&pageSize=25&sort=id&order=desc'
+    );
+  });
+
+  it('rejects an oversized, changing, or globally duplicate proof page set', async () => {
+    const fullPage = Array.from({ length: 25 }, (_, index) => ({ ...persisted, id: index + 1 }));
+    transport.apiMessageGet.mockResolvedValueOnce({
+      content: fullPage,
+      totalElements: 501,
+      totalPages: 21,
+      number: 0,
+      size: 25
+    });
+    await expect(loadAllAlertInhibits()).rejects.toThrow('bounded scan limit');
+    expect(transport.apiMessageGet).toHaveBeenCalledOnce();
+
+    transport.apiMessageGet.mockReset();
+    transport.apiMessageGet
+      .mockResolvedValueOnce({
+        content: fullPage,
+        totalElements: 26,
+        totalPages: 2,
+        number: 0,
+        size: 25
+      })
+      .mockResolvedValueOnce({
+        content: [
+          { ...persisted, id: 26 },
+          { ...persisted, id: 27 }
+        ],
+        totalElements: 27,
+        totalPages: 2,
+        number: 1,
+        size: 25
+      });
+    await expect(loadAllAlertInhibits()).rejects.toThrow('page set changed');
+
+    transport.apiMessageGet.mockReset();
+    transport.apiMessageGet
+      .mockResolvedValueOnce({
+        content: fullPage,
+        totalElements: 26,
+        totalPages: 2,
+        number: 0,
+        size: 25
+      })
+      .mockResolvedValueOnce({
+        content: [{ ...persisted, id: 1 }],
+        totalElements: 26,
+        totalPages: 2,
+        number: 1,
+        size: 25
+      });
+    await expect(loadAllAlertInhibits()).rejects.toThrow('full scan');
   });
 
   it('loads exact matched rules, counts missing ids, and forwards cancellation', async () => {

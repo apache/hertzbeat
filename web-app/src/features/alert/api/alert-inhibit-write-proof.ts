@@ -1,10 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { loadAlertInhibit } from './alert-inhibit-api';
+import { loadAlertInhibit, loadAllAlertInhibits } from './alert-inhibit-api';
 import {
   AlertInhibitContractError,
+  AlertInhibitUnavailableError,
   alertInhibitFailureKind,
+  buildAlertInhibitPayload,
   type AlertInhibit,
+  type AlertInhibitDraft,
   type AlertInhibitPage
 } from '../model/alert-inhibit-model';
 
@@ -34,6 +37,34 @@ export function requireAlertInhibitConvergence(actual: AlertInhibit, expected: W
   ) {
     throw new AlertInhibitContractError('canonical writable fields did not converge');
   }
+}
+
+export async function snapshotAlertInhibitIds() {
+  return new Set((await loadAllAlertInhibits()).map(record => record.id));
+}
+
+export async function identifyCreatedAlertInhibit(previousIds: Set<number> | undefined, draft: AlertInhibitDraft) {
+  if (!previousIds) {
+    throw new AlertInhibitUnavailableError('created inhibit is missing its pre-write identity snapshot');
+  }
+  const created = (await loadAllAlertInhibits()).filter(
+    record => !previousIds.has(record.id) && alertInhibitMatchesDraft(record, draft)
+  );
+  if (created.length !== 1) {
+    throw new AlertInhibitUnavailableError('created inhibit does not have one exact new canonical identity');
+  }
+  return created[0]!.id;
+}
+
+function alertInhibitMatchesDraft(actual: AlertInhibit, draft: AlertInhibitDraft) {
+  const expected = buildAlertInhibitPayload(draft);
+  return (
+    actual.name === expected.name &&
+    mapsEqual(actual.sourceLabels, expected.sourceLabels) &&
+    mapsEqual(actual.targetLabels, expected.targetLabels) &&
+    setsEqual(actual.equalLabels, expected.equalLabels) &&
+    actual.enable === expected.enable
+  );
 }
 
 async function proveAlertInhibitMissing(id: number) {

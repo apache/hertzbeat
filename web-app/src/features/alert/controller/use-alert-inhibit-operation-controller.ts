@@ -68,7 +68,7 @@ export function useAlertInhibitOperationController() {
 
 function recoveryFor(receipt: AlertInhibitReceipt): AlertInhibitRecovery {
   if (receipt.kind === 'save' && receipt.phase === 'proof' && receipt.id === undefined) {
-    return { kind: 'save', phase: 'commit-uncertain', retryable: false };
+    return { kind: 'save', phase: 'commit-uncertain', retryable: true };
   }
   return { kind: receipt.kind, phase: receipt.phase === 'projection' ? 'projection' : 'proof', retryable: true };
 }

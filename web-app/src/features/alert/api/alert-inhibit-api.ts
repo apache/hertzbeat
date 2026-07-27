@@ -23,6 +23,9 @@ import {
   buildAlertInhibitTogglePayload,
   alertInhibitFailureKind,
   alertInhibitPrefillPageSize,
+  alertInhibitScanPageSize,
+  maximumAlertInhibitScanPages,
+  maximumAlertInhibitScanRecords,
   normalizeAlertInhibitIds,
   AlertInhibitContractError,
   type AlertInhibit,
@@ -49,6 +52,27 @@ export async function loadAlertInhibits(query: AlertInhibitQuery, signal?: Abort
     signal
   );
   return parseAlertInhibitPage(response, query);
+}
+
+export async function loadAllAlertInhibits() {
+  const query = { search: '', pageIndex: 0, pageSize: alertInhibitScanPageSize };
+  const first = await loadAlertInhibits(query);
+  if (first.totalElements > maximumAlertInhibitScanRecords || first.totalPages > maximumAlertInhibitScanPages) {
+    throw new AlertInhibitContractError('Alert inhibit proof exceeds the bounded scan limit');
+  }
+  const pages = [first];
+  for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
+    const page = await loadAlertInhibits({ ...query, pageIndex });
+    if (page.totalElements !== first.totalElements || page.totalPages !== first.totalPages) {
+      throw new AlertInhibitContractError('Alert inhibit page set changed during proof');
+    }
+    pages.push(page);
+  }
+  const records = pages.flatMap(page => page.content);
+  if (records.length !== first.totalElements || new Set(records.map(record => record.id)).size !== records.length) {
+    throw new AlertInhibitContractError('Alert inhibit full scan is inconsistent');
+  }
+  return records;
 }
 
 export async function loadAlertInhibit(id: number, signal?: AbortSignal) {

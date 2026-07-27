@@ -31,9 +31,10 @@ type AlertInhibitWritable = Omit<AlertInhibit, 'enable'> & { enable: boolean };
 export type AlertInhibitReceipt =
   | {
       kind: 'save';
-      phase: Exclude<AlertInhibitReceiptPhase, 'prepare'>;
+      phase: AlertInhibitReceiptPhase;
       draft: AlertInhibitDraft;
       id?: number;
+      previousIds?: Set<number>;
     }
   | {
       kind: 'toggle';

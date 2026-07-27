@@ -23,16 +23,18 @@ describe('AlertInhibitRecovery', () => {
     expect(retry).toHaveBeenCalledTimes(1);
   });
 
-  it('does not render a fake action for commit-uncertain recovery', () => {
+  it('offers proof-only retry for commit-uncertain create recovery', () => {
+    const retry = vi.fn();
     render(
       <AlertInhibitRecovery
-        recovery={{ kind: 'save', phase: 'commit-uncertain', retryable: false }}
+        recovery={{ kind: 'save', phase: 'commit-uncertain', retryable: true }}
         retrying={false}
-        retry={vi.fn()}
+        retry={retry}
       />
     );
 
     expect(screen.getByText('common.unavailable')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 });

@@ -270,7 +270,7 @@ describe('AlertInhibitPage', () => {
     expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'common.retry' })).toBeDisabled();
   });
 
-  it('keeps create-without-id recovery visible but non-retryable', () => {
+  it('keeps create-without-id recovery visible and proof-retryable', () => {
     controller.state = buildState({
       command: 'recovering',
       draft: {
@@ -280,12 +280,13 @@ describe('AlertInhibitPage', () => {
         equalLabels: ['service'],
         enable: true
       },
-      recovery: { kind: 'save', phase: 'commit-uncertain', retryable: false }
+      recovery: { kind: 'save', phase: 'commit-uncertain', retryable: true }
     });
     render(<AlertInhibitPage />);
 
     expect(within(screen.getByRole('dialog')).getByText('common.unavailable')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'common.retry' }));
+    expect(controller.retry).toHaveBeenCalled();
   });
 
   it('keeps toggle and delete recovery outside the editor', () => {

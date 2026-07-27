@@ -38,6 +38,7 @@ import { useAlertInhibitCommandController } from './use-alert-inhibit-command-co
 const api = vi.hoisted(() => ({
   deleteAlertInhibit: vi.fn(),
   deleteAlertInhibits: vi.fn(),
+  loadAllAlertInhibits: vi.fn(),
   loadAlertInhibit: vi.fn(),
   loadAlertInhibitPrefillAlerts: vi.fn(),
   saveAlertInhibit: vi.fn(),
@@ -65,6 +66,7 @@ describe('Alert Inhibit command controller', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
+    api.loadAllAlertInhibits.mockResolvedValue([]);
     api.loadAlertInhibitPrefillAlerts.mockResolvedValue([
       { labels: { service: 'checkout', environment: 'prod', severity: 'critical' } },
       { labels: { service: 'checkout', environment: 'prod', severity: 'warning' } }
@@ -92,7 +94,7 @@ describe('Alert Inhibit command controller', () => {
       void result.current.remove(persistedAlertInhibit.id);
     });
 
-    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1));
     expect(api.updateAlertInhibitEnabled).not.toHaveBeenCalled();
     expect(api.deleteAlertInhibit).not.toHaveBeenCalled();
     act(() => write.resolve(undefined));
@@ -101,7 +103,7 @@ describe('Alert Inhibit command controller', () => {
     expect(result.current.state.recovery).toEqual({
       kind: 'save',
       phase: 'commit-uncertain',
-      retryable: false
+      retryable: true
     });
   });
 
@@ -205,6 +207,7 @@ describe('Alert Inhibit command controller', () => {
     act(() => {
       submission = result.current.submit();
     });
+    await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalledOnce());
     unmount();
     act(() => write.resolve(undefined));
     await act(async () => submission);
@@ -229,6 +232,7 @@ describe('Alert Inhibit command controller', () => {
     act(() => {
       submission = result.current.submit();
     });
+    await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalledOnce());
     unmount();
     act(() => rejectWrite(new Error('late failure')));
     await act(async () => submission);
@@ -512,7 +516,52 @@ describe('Alert Inhibit command controller', () => {
     expect(result.current.state.draft).toBeNull();
   });
 
-  it('keeps an acknowledged create without a server id commit-uncertain and non-retryable', async () => {
+  it('proves an acknowledged create from complete before and after snapshots', async () => {
+    const created = { ...persistedAlertInhibit, id: 8 };
+    api.loadAllAlertInhibits
+      .mockResolvedValueOnce([persistedAlertInhibit])
+      .mockResolvedValueOnce([persistedAlertInhibit, created]);
+    api.loadAlertInhibit.mockResolvedValueOnce(created);
+    reread.mockResolvedValueOnce(alertInhibitPage({ search: '', pageIndex: 0, pageSize: 8 }, [created]));
+    const { result } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    await act(async () => result.current.submit());
+
+    expect(api.loadAllAlertInhibits).toHaveBeenCalledTimes(2);
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledWith(8);
+    expect(reread).toHaveBeenCalledOnce();
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(result.current.state.draft).toBeNull();
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.saveSuccess');
+  });
+
+  it('rejects an oversized preflight snapshot without issuing POST', async () => {
+    api.loadAllAlertInhibits.mockRejectedValueOnce(
+      new AlertInhibitContractError('Alert inhibit proof exceeds the bounded scan limit')
+    );
+    const { result } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    await act(async () => result.current.submit());
+
+    expect(api.loadAllAlertInhibits).toHaveBeenCalledOnce();
+    expect(api.saveAlertInhibit).not.toHaveBeenCalled();
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(result.current.state.draft).not.toBeNull();
+  });
+
+  it('keeps ambiguous create identity retryable and never repeats POST', async () => {
+    const created = { ...persistedAlertInhibit, id: 8 };
+    const duplicate = { ...persistedAlertInhibit, id: 9 };
+    api.loadAllAlertInhibits
+      .mockResolvedValueOnce([persistedAlertInhibit])
+      .mockResolvedValueOnce([persistedAlertInhibit, created, duplicate])
+      .mockResolvedValueOnce([persistedAlertInhibit, created]);
+    api.loadAlertInhibit.mockResolvedValueOnce(created);
     const { result } = renderCommandController();
     act(() => result.current.create());
     act(() => result.current.updateDraft(validAlertInhibitDraft()));
@@ -522,14 +571,54 @@ describe('Alert Inhibit command controller', () => {
     expect(result.current.state.recovery).toEqual({
       kind: 'save',
       phase: 'commit-uncertain',
-      retryable: false
+      retryable: true
     });
     expect(result.current.state.draft).not.toBeNull();
-    expect(reread).not.toHaveBeenCalled();
-    expect(notify.success).not.toHaveBeenCalled();
-    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+    expect(api.loadAlertInhibit).not.toHaveBeenCalled();
     await act(async () => result.current.retry());
     expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAllAlertInhibits).toHaveBeenCalledTimes(3);
+    expect(api.loadAlertInhibit).toHaveBeenCalledWith(8);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it.each([
+    ['unavailable', unavailableRequestFailure()],
+    ['bounded scan', new AlertInhibitContractError('Alert inhibit proof exceeds the bounded scan limit')]
+  ])('retries %s create proof by reads only', async (_label, proofFailure) => {
+    const created = { ...persistedAlertInhibit, id: 8 };
+    api.loadAllAlertInhibits
+      .mockResolvedValueOnce([persistedAlertInhibit])
+      .mockRejectedValueOnce(proofFailure)
+      .mockResolvedValueOnce([persistedAlertInhibit, created]);
+    api.loadAlertInhibit.mockResolvedValueOnce(created);
+    const { result } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    await act(async () => result.current.submit());
+    expect(result.current.state.recovery).toEqual({
+      kind: 'save',
+      phase: 'commit-uncertain',
+      retryable: true
+    });
+    await act(async () => result.current.retry());
+
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAllAlertInhibits).toHaveBeenCalledTimes(3);
+    expect(result.current.state.draft).toBeNull();
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.saveSuccess');
+  });
+
+  it('cancels a create draft without scanning or writing', () => {
+    const { result } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+    act(() => result.current.closeDraft());
+
+    expect(result.current.state.draft).toBeNull();
+    expect(api.loadAllAlertInhibits).not.toHaveBeenCalled();
+    expect(api.saveAlertInhibit).not.toHaveBeenCalled();
   });
 
   it('recovers an ambiguous toggle by exact proof without repeating PUT', async () => {

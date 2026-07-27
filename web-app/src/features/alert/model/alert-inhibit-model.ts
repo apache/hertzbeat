@@ -26,6 +26,9 @@ import { formatLabelMatchers, parseLabelMatchers } from '../shared/alert-label-m
 
 export const alertInhibitPageSizes = compactTablePageSizes;
 export const alertInhibitPrefillPageSize = 20;
+export const alertInhibitScanPageSize = Math.max(...alertInhibitPageSizes);
+export const maximumAlertInhibitScanRecords = 500;
+export const maximumAlertInhibitScanPages = Math.ceil(maximumAlertInhibitScanRecords / alertInhibitScanPageSize);
 
 export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertInhibitManagementContext = AlertNoiseControlManagementContext;

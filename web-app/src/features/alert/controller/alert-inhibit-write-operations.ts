@@ -8,7 +8,6 @@ import {
 } from '../api/alert-inhibit-api';
 import {
   AlertInhibitContractError,
-  AlertInhibitUnavailableError,
   alertInhibitFailureKind,
   alertInhibitWriteOutcome,
   buildAlertInhibitPayload,
@@ -18,10 +17,12 @@ import {
   type AlertInhibitPage
 } from '../model/alert-inhibit-model';
 import {
+  identifyCreatedAlertInhibit as identifyCreated,
   loadExactAlertInhibit,
   proveAlertInhibitsMissing,
   requireAlertInhibitsAbsent,
-  requireAlertInhibitConvergence
+  requireAlertInhibitConvergence,
+  snapshotAlertInhibitIds
 } from '../api/alert-inhibit-write-proof';
 import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
 import type { AlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
@@ -47,15 +48,12 @@ export type AlertInhibitWriteContext = {
 
 export async function submitAlertInhibit(context: AlertInhibitWriteContext) {
   const draft = context.editor.controls.getDraft();
-  if (!draft || validateAlertInhibitDraft(draft).length > 0) {
-    context.notify.validation();
-    return;
-  }
+  if (!draft || validateAlertInhibitDraft(draft).length > 0) return context.notify.validation();
   const owner = context.operation.begin('saving');
   if (!owner) return;
   const receipt: AlertInhibitReceipt = {
     kind: 'save',
-    phase: 'write',
+    phase: draft.id === undefined ? 'prepare' : 'write',
     draft,
     ...(draft.id === undefined ? {} : { id: draft.id })
   };
@@ -125,6 +123,12 @@ async function advanceReceipt(
   receipt: AlertInhibitReceipt
 ) {
   // A retained receipt moves forward only; Retry never repeats a write whose outcome may be committed.
+  if (receipt.kind === 'save' && receipt.phase === 'prepare') {
+    const previousIds = await snapshotAlertInhibitIds();
+    if (!context.operation.isCurrent(owner)) return false;
+    receipt.previousIds = previousIds;
+    receipt.phase = 'write';
+  }
   if (receipt.kind === 'toggle' && receipt.phase === 'prepare') {
     receipt.record = await loadExactAlertInhibit(receipt.record.id);
     if (!context.operation.isCurrent(owner)) return false;
@@ -161,9 +165,7 @@ async function prove(receipt: AlertInhibitReceipt) {
     if (!receipt.expected) throw new AlertInhibitContractError('toggle proof is missing expected fields');
     return requireAlertInhibitConvergence(await loadExactAlertInhibit(receipt.record.id), receipt.expected);
   }
-  if (receipt.id === undefined) {
-    throw new AlertInhibitUnavailableError('created inhibit has no server-issued identity for exact proof');
-  }
+  if (receipt.id === undefined) receipt.id = await identifyCreated(receipt.previousIds, receipt.draft);
   return requireAlertInhibitConvergence(await loadExactAlertInhibit(receipt.id), {
     ...buildAlertInhibitPayload(receipt.draft),
     id: receipt.id
@@ -176,7 +178,7 @@ function recoverOrReject(
   receipt: AlertInhibitReceipt,
   reason: unknown
 ) {
-  if (receipt.phase === 'prepare' || (receipt.phase === 'write' && isDefiniteWriteRejection(reason))) {
+  if (receipt.phase === 'prepare' || (receipt.phase === 'write' && alertInhibitWriteOutcome(reason) === 'rejected')) {
     context.operation.clear(owner);
     return;
   }
@@ -193,9 +195,9 @@ function completeReceipt(
   if (receipt.kind === 'save') {
     context.editor.controls.setDraft(null);
     context.notify.saveSuccess();
-  } else {
-    context.notify.operationSuccess();
+    return;
   }
+  context.notify.operationSuccess();
 }
 
 function notifyFailure(context: AlertInhibitWriteContext, receipt: AlertInhibitReceipt, reason: unknown) {
@@ -206,11 +208,7 @@ function notifyFailure(context: AlertInhibitWriteContext, receipt: AlertInhibitR
   if (receipt.kind === 'save') {
     context.editor.controls.setEditorFailure(kind);
     context.notify.saveFailure(kind);
-  } else {
-    context.notify.operationFailure(kind);
+    return;
   }
-}
-
-function isDefiniteWriteRejection(reason: unknown) {
-  return alertInhibitWriteOutcome(reason) === 'rejected';
+  context.notify.operationFailure(kind);
 }

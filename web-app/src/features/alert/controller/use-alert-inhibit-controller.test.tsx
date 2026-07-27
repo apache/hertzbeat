@@ -31,6 +31,7 @@ import {
 import { useAlertInhibitController } from './use-alert-inhibit-controller';
 
 const api = vi.hoisted(() => ({
+  loadAllAlertInhibits: vi.fn(),
   loadAlertInhibit: vi.fn(),
   loadAlertInhibits: vi.fn(),
   saveAlertInhibit: vi.fn()
@@ -55,6 +56,7 @@ describe('Alert Inhibit controller composition', () => {
     api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) =>
       Promise.resolve(alertInhibitPage(query, []))
     );
+    api.loadAllAlertInhibits.mockResolvedValue([]);
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
     api.saveAlertInhibit.mockResolvedValue(undefined);
     settings.loadLabelSuggestions.mockResolvedValue({ keys: ['environment'], valuesByKey: {} });
@@ -71,7 +73,7 @@ describe('Alert Inhibit controller composition', () => {
     expect(result.current.state.recovery).toEqual({
       kind: 'save',
       phase: 'commit-uncertain',
-      retryable: false
+      retryable: true
     });
     expect(notify.success).not.toHaveBeenCalled();
   });
