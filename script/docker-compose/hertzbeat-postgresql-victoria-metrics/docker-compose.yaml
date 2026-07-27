@@ -35,7 +35,7 @@ services:
       - '15432:5432'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-root}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in your .env file}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD (e.g., in .env or your environment)
       TZ: Asia/Shanghai
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
