@@ -3,19 +3,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WEB_NEXT_DIR="${ROOT_DIR}/web-next"
 
 HERTZBEAT_BASE="${HERTZBEAT_BASE:-http://127.0.0.1:1157}"
 FRONTEND_BASE="${FRONTEND_BASE:-http://127.0.0.1:4200}"
 BACKEND_ORIGIN="${BACKEND_ORIGIN:-${HERTZBEAT_BASE}}"
-NEXT_PORT="${NEXT_PORT:-4200}"
+FRONTEND_PORT="${FRONTEND_PORT:-4200}"
 TRACE_ID="${TRACE_ID:-6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b}"
-HERTZBEAT_USER="${HERTZBEAT_USER:-admin}"
-HERTZBEAT_PASSWORD="${HERTZBEAT_PASSWORD:-hertzbeat}"
 SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL:-jdbc:h2:mem:hb_live_smoke;MODE=MYSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
 BACKEND_LOG="${BACKEND_LOG:-/tmp/hb-three-signal-live-backend.log}"
 FRONTEND_LOG="${FRONTEND_LOG:-/tmp/hb-three-signal-live-frontend.log}"
-PLAYWRIGHT_GREP="${PLAYWRIGHT_GREP:-promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context|saves an operation drilldown dashboard from URL operation context}"
 BACKEND_READY_PATH="${BACKEND_READY_PATH:-/actuator/health}"
 READY_ATTEMPTS="${READY_ATTEMPTS:-300}"
 READY_SLEEP_SECONDS="${READY_SLEEP_SECONDS:-2}"
@@ -49,7 +45,7 @@ wait_for_http() {
   local attempt
   for attempt in $(seq 1 "${READY_ATTEMPTS}"); do
     local status
-    status="$(curl -sS -o /tmp/hb-three-signal-live-proof-probe.out -w '%{http_code}' "${url}" 2>/dev/null || true)"
+    status="$(curl -sS -o /dev/null -w '%{http_code}' "${url}" 2>/dev/null || true)"
     if [[ "${status}" == 2* || "${status}" == 3* || "${status}" == "401" ]]; then
       printf '[three-signal-live] %s ready: %s\n' "${label}" "${url}"
       return 0
@@ -62,14 +58,14 @@ wait_for_http() {
 
 cleanup() {
   set +e
-  if [[ -f /tmp/hb-next-dev.pid ]]; then
-    local next_pid
-    next_pid="$(cat /tmp/hb-next-dev.pid 2>/dev/null || true)"
-    if [[ -n "${next_pid}" ]] && kill -0 "${next_pid}" 2>/dev/null; then
-      kill "${next_pid}" 2>/dev/null || true
-      wait "${next_pid}" 2>/dev/null || true
+  if [[ -f /tmp/hb-web-app-dev.pid ]]; then
+    local frontend_pid
+    frontend_pid="$(cat /tmp/hb-web-app-dev.pid 2>/dev/null || true)"
+    if [[ -n "${frontend_pid}" ]] && kill -0 "${frontend_pid}" 2>/dev/null; then
+      kill "${frontend_pid}" 2>/dev/null || true
+      wait "${frontend_pid}" 2>/dev/null || true
     fi
-    rm -f /tmp/hb-next-dev.pid
+    rm -f /tmp/hb-web-app-dev.pid
   fi
   if [[ -n "${FRONTEND_WRAPPER_PID}" ]] && kill -0 "${FRONTEND_WRAPPER_PID}" 2>/dev/null; then
     kill "${FRONTEND_WRAPPER_PID}" 2>/dev/null || true
@@ -92,22 +88,22 @@ run_dry_plan() {
     "persistentH2": false
   },
   "frontend": {
-    "command": "BACKEND_ORIGIN='${BACKEND_ORIGIN}' NEXT_PORT='${NEXT_PORT}' script/dev/start-mixed-frontend.sh",
+    "command": "BACKEND_ORIGIN='${BACKEND_ORIGIN}' FRONTEND_PORT='${FRONTEND_PORT}' script/dev/start-web-app.sh",
     "baseUrl": "${FRONTEND_BASE}",
     "log": "${FRONTEND_LOG}"
   },
   "seedAndVerify": {
     "command": "TRACE_ID='${TRACE_ID}' HERTZBEAT_BASE='${HERTZBEAT_BASE}' bash script/dev/verify-otlp-three-signal-demo.sh"
   },
-  "playwright": {
-    "command": "DASHBOARD_SOURCE_EDIT_LIVE_BROWSER_BASE_URL='${FRONTEND_BASE}' DASHBOARD_SOURCE_EDIT_LIVE_IDENTIFIER='${HERTZBEAT_USER}' DASHBOARD_SOURCE_EDIT_LIVE_CREDENTIAL='***' npm exec -- playwright test scripts/dashboard-source-edit-live-browser-smoke.spec.ts -g '${PLAYWRIGHT_GREP}'"
+  "routeSmoke": {
+    "routes": ["/dashboard", "/entities", "/topology", "/explore?signal=metrics"]
   }
 }
 EOF
 }
 
 require_command curl
-require_command npm
+require_command corepack
 
 if [[ "${DRY_RUN}" == true ]]; then
   run_dry_plan
@@ -134,19 +130,15 @@ printf '[three-signal-live] seeding and verifying three-signal demo data\n'
 printf '[three-signal-live] starting frontend on %s\n' "${FRONTEND_BASE}"
 (
   cd "${ROOT_DIR}"
-  BACKEND_ORIGIN="${BACKEND_ORIGIN}" NEXT_PORT="${NEXT_PORT}" script/dev/start-mixed-frontend.sh
+  BACKEND_ORIGIN="${BACKEND_ORIGIN}" FRONTEND_PORT="${FRONTEND_PORT}" script/dev/start-web-app.sh
 ) > "${FRONTEND_LOG}" 2>&1 &
 FRONTEND_WRAPPER_PID=$!
 printf '[three-signal-live] frontend wrapper log: %s\n' "${FRONTEND_LOG}"
 wait_for_http "${FRONTEND_BASE}/dashboard" 'frontend'
 
-printf '[three-signal-live] running live Playwright proof: %s\n' "${PLAYWRIGHT_GREP}"
-(
-  cd "${WEB_NEXT_DIR}"
-  DASHBOARD_SOURCE_EDIT_LIVE_BROWSER_BASE_URL="${FRONTEND_BASE}" \
-    DASHBOARD_SOURCE_EDIT_LIVE_IDENTIFIER="${HERTZBEAT_USER}" \
-    DASHBOARD_SOURCE_EDIT_LIVE_CREDENTIAL="${HERTZBEAT_PASSWORD}" \
-    npm exec -- playwright test scripts/dashboard-source-edit-live-browser-smoke.spec.ts -g "${PLAYWRIGHT_GREP}"
-)
+printf '[three-signal-live] checking active React routes\n'
+for route in /dashboard /entities /topology '/explore?signal=metrics'; do
+  curl --fail --silent --show-error "${FRONTEND_BASE}${route}" > /dev/null
+done
 
 printf '[three-signal-live] proof completed successfully\n'

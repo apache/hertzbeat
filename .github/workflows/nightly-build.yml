@@ -17,6 +17,13 @@
 
 name: Nightly CI
 
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   schedule:
     # trigger at 00:00 everyday
@@ -27,15 +34,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     if: ${{ github.repository == 'apache/hertzbeat' }}
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
     - name: Build the Frontend
       run: |
-        cd web-next
-        npm ci
-        npm run build
+        corepack enable
+        corepack prepare pnpm@10.9.0 --activate
+        cd web-app
+        pnpm install --frozen-lockfile
+        pnpm build
         
     - name: Build the Backend
       run: |

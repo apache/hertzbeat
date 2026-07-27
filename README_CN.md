@@ -152,9 +152,9 @@
 
 ##### 方式三：本地代码启动
 
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `hertzbeat-startup` 和前端工程 `web-next`
-2. 后端：需要 `maven3+`, `java21` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
-3. 前端：需要 `Node.js >= 22` 和 `npm` 环境，待本地后端启动后，在 `web-next` 目录下执行 `npm ci && npm run dev`
+1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `hertzbeat-startup` 和前端工程 `web-app`
+2. 后端：需要 `maven3+`、Java 25 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
+3. 前端：需要 `Node.js 22` 和 `pnpm 10` 环境，待本地后端启动后，在 `web-app` 目录下执行 `corepack pnpm@10.9.0 install --frozen-lockfile && corepack pnpm@10.9.0 dev`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)

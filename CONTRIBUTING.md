@@ -27,12 +27,12 @@ Even small corrections to typos are very welcome :)
 ### Getting HertzBeat up and running   
 
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
-> This is a front-end and back-end separation project. To start the local code, the back-end [startup](hertzbeat-startup) and the front-end [web-next](web-next) must be started separately.
+> This is a front-end and back-end separation project. To start the local code, the back-end [startup](hertzbeat-startup) and the front-end [web-app](web-app) must be started separately.
 
 
 #### Backend start
 
-1. Requires `maven3+`, `java21` and `lombok` environments
+1. Requires `maven3+`, Java 25 and `lombok` environments
 
 2. (Optional) Modify the configuration file: `hertzbeat-startup/src/main/resources/application.yml`
 
@@ -44,13 +44,13 @@ Even small corrections to typos are very welcome :)
 
 #### Frontend start
 
-1. Need `Node.js >= 22` and `npm`
+1. Need `Node.js 22` and `pnpm 10`
 
-2. Cd to the `web-next` directory: `cd web-next`
+2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install dependencies: `npm ci`
+3. Install dependencies: `corepack pnpm@10.9.0 install --frozen-lockfile`
 
-4. After the local backend is started, start the local frontend in the `web-next` directory: `npm run dev`
+4. After the local backend is started, start the local frontend in the `web-app` directory: `corepack pnpm@10.9.0 dev`
 
 5. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
@@ -176,11 +176,11 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 ### 让 HertzBeat 运行起来   
 
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
-> 此为前后端分离项目，本地代码启动需将后端[hertzbeat-startup](hertzbeat-startup)和前端[web-next](web-next)分别启动生效。
+> 此为前后端分离项目，本地代码启动需将后端[hertzbeat-startup](hertzbeat-startup)和前端[web-app](web-app)分别启动生效。
 
 #### 后端启动
 
-1. 需要 `maven3+`, `java21` 和 `lombok` 环境
+1. 需要 `maven3+`、Java 25 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 
@@ -193,13 +193,13 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 #### 前端启动
 
-1. 需要 `Node.js >= 22` 和 `npm`
+1. 需要 `Node.js 22` 和 `pnpm 10`
 
-2. 进入 `web-next` 目录: `cd web-next`
+2. 进入 `web-app` 目录: `cd web-app`
 
-3. 安装依赖: `npm ci`
+3. 安装依赖: `corepack pnpm@10.9.0 install --frozen-lockfile`
 
-4. 待本地后端启动后，在 `web-next` 目录下启动本地前端: `npm run dev`
+4. 待本地后端启动后，在 `web-app` 目录下启动本地前端: `corepack pnpm@10.9.0 dev`
 
 5. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
 

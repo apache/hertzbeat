@@ -2,15 +2,15 @@
 
 This document is for the GitHub community alpha preview branch. It is not a
 stable Apache HertzBeat release checklist. Use it to try the new entity-centered
-observability and Next.js frontend work, report issues, and help harden the
-project toward a beta.
+observability and Vite React frontend, report issues, and help harden the project
+toward a beta.
 
 ## What Is In Scope
 
 - Entity-centered observability read models for metrics, logs, traces, topology,
   alerts, owners, runbooks, and handoff context.
-- Next.js `web-next` frontend work for the new shell, entity detail, topology,
-  and UI Lab surfaces.
+- Vite React `web-app` workflows for the operational shell, entity management,
+  topology, instrumentation, and the three-signal query workspace.
 - OTLP trace/log/metric query paths backed by the existing warehouse and
   Greptime integrations.
 - Local demo topology relation seeding for the small Checkout API -> Payment API
@@ -18,7 +18,7 @@ project toward a beta.
 
 ## Local Source Quickstart
 
-1. Start the backend from `hertzbeat-startup` with Java 21.
+1. Start the backend from `hertzbeat-startup` with Java 25.
 
    Keep the Arrow JVM open option when running locally:
 
@@ -28,12 +28,12 @@ project toward a beta.
 
    The local backend listens on `http://127.0.0.1:1157` by default.
 
-2. Start the Next.js frontend:
+2. Start the Vite React frontend:
 
    ```shell
-   cd web-next
-   npm install
-   npm run dev
+   cd web-app
+   corepack pnpm@10.9.0 install --frozen-lockfile
+   corepack pnpm@10.9.0 dev
    ```
 
    The preview frontend listens on `http://127.0.0.1:4200`.
@@ -60,42 +60,25 @@ Startup source package proof:
 ./mvnw -pl hertzbeat-startup -am -DskipTests package
 ```
 
-Next.js topology, entity detail, shell, session, and shared UI changes:
+Topology, entity, observability, shell, session, and shared UI changes:
 
 ```shell
-cd web-next
-npm exec -- vitest run app/topology/page.test.tsx app/ui-lab/page.test.tsx packages/hertzbeat-ui/src/index.test.tsx packages/hertzbeat-ui/src/topology-g6.test.tsx packages/hertzbeat-ui/src/topology-companion.interaction.test.tsx packages/hertzbeat-ui/src/topology-metric-table.interaction.test.tsx components/pages/entity-detail-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/auth-recovery.chrome.test.ts lib/app-frame-state.test.ts lib/entity-contract.test.ts lib/entity-detail/view-model.test.ts lib/hertzbeat-2-gap-audit.test.ts lib/topology-surface/controller.test.ts lib/topology-surface/query-state.test.ts lib/topology-surface/view-model.test.ts --config vitest.config.ts --pool=forks --maxWorkers=1 --minWorkers=1 --testTimeout=120000 --hookTimeout=120000
+cd web-app
+corepack pnpm@10.9.0 test -- \
+  src/features/entity src/features/topology src/features/instrumentation \
+  src/features/explore
 ```
 
-Focused frontend lint for touched alpha files:
+Complete frontend release gate:
 
 ```shell
-cd web-next
-ESLINT_USE_FLAT_CONFIG=false npm exec -- eslint app components lib packages/hertzbeat-ui/src scripts/topology-g6-browser-smoke.spec.ts test --ext .ts,.tsx
+cd web-app
+corepack pnpm@10.9.0 verify
 ```
 
-## Optional Local Smoke
-
-The topology G6 browser smoke is intentionally opt-in. It skips unless the
-route and credentials are supplied by the developer:
-
-```shell
-cd web-next
-TOPOLOGY_G6_BROWSER_USERNAME=admin \
-TOPOLOGY_G6_BROWSER_PASSWORD=hertzbeat \
-TOPOLOGY_G6_BROWSER_ROUTE='/topology?environment=prod&timeRange=last-1h&viewMode=service-call&sourceKind=otlp-trace-call&depth=2&groupBy=source-kind' \
-npm exec -- playwright test scripts/topology-g6-browser-smoke.spec.ts
-```
-
-Optional strict assertions can be added with:
-
-- `TOPOLOGY_G6_BROWSER_EXPECTED_NODES`
-- `TOPOLOGY_G6_BROWSER_EXPECTED_EDGES`
-- `TOPOLOGY_G6_BROWSER_FOCUS_NODE_ID`
-- `TOPOLOGY_G6_BROWSER_EXPECTED_RUNTIME_VERSION`
-- `TOPOLOGY_G6_BROWSER_EXPECTED_INITIAL_FIT_STRATEGY`
-- `TOPOLOGY_G6_BROWSER_EXPECTED_WIDE_ZOOM`
-- `TOPOLOGY_G6_BROWSER_EXPECTED_OPERATOR_BOUNDS`
+Visible changes also require a production build, a real backend, and a Browser
+check of the affected workflow. Do not use mocked topology or signal data as
+release evidence.
 
 ## Three-Signal SigNoz-Alignment Alpha Cutoff
 
@@ -144,9 +127,9 @@ TRACE_ID=6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b bash script/dev/run-three-signal-live-
 ```
 
 That proof starts a non-persistent H2 backend, seeds OTLP metrics/logs/traces,
-verifies entity binding and signal query breakouts, starts `web-next`, and runs
-live browser checks for saved-view dashboard replay, service overview, and
-operation drilldown.
+verifies entity binding and signal query breakouts, starts `web-app`, and checks
+that the active React routes are served. Product-level browser acceptance remains
+a separate real-backend validation step.
 
 ## Local Scale Proof Data
 
@@ -166,8 +149,8 @@ required alpha setup.
 
 ## Known Alpha Limitations
 
-- The Next.js frontend is still an alpha preview and may not yet match every
-  legacy Angular workflow.
+- The Vite React frontend is still an alpha preview. Parity claims require
+  route, action, API read/write, refresh, context-handoff, and Browser evidence.
 - Three-signal work is scoped to the alpha cutoff above. Do not describe it as
   full SigNoz parity unless a later release adds and proves the omitted product
   capabilities.

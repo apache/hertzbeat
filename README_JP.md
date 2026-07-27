@@ -155,9 +155,9 @@
 
 ##### 方式３：ローカルの実行
 
-1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-next`を起動する必要があります。
-2. バックエンド：`maven3+`、`Java21`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
-3. フロントエンド：`Node.js >= 22` と `npm` の環境が必要です。ローカルのバックエンドが立ち上がったら、`web-next` ディレクトリで `npm ci && npm run dev` を実行します。
+1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
+2. バックエンド：`maven3+`、Java 25、`lombok`の環境が必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
+3. フロントエンド：`Node.js 22` と `pnpm 10` の環境が必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `corepack pnpm@10.9.0 install --frozen-lockfile && corepack pnpm@10.9.0 dev` を実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
 詳細ステップ [貢献ガイド](CONTRIBUTING.md)

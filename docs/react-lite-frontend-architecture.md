@@ -19,9 +19,8 @@
 
 ## Status And Reference Baselines
 
-This document is the implementation contract for replacing `web-next` with a
-maintainable React single-page application. It deliberately does not treat the
-current Next.js directory as the target architecture.
+This document is the implementation contract for the maintainable React
+single-page application that replaces the deprecated Next.js frontend.
 
 - Implementation baseline: `2.0.0` at `2de48d2caa43fa58fd93e71b0e22e7d4f431c9d5`.
 - Angular behavior and release reference: `apache/master` at
@@ -44,9 +43,9 @@ Use the following precedence for implementation decisions:
    GreptimeDB integration, and the current HttpOnly UI session boundary.
 3. The Angular three-signal transition defines the simple onboarding and
    query workflow that does not require a user to understand storage internals.
-4. `web-next` may supply proven DTOs and pure algorithms. Its page structure,
-   private UI framework, BFF, compatibility scaffolding, and implementation-
-   detail tests are not migration sources.
+4. The removed Next.js implementation supplied only proven DTOs and pure
+   algorithms. Its page structure, private UI framework, BFF, compatibility
+   scaffolding, and implementation-detail tests were not migration sources.
 
 ## Scope Allowlist
 
@@ -96,7 +95,9 @@ redirects in the route registry and never duplicate a page implementation.
 - ECharts, G6, CodeMirror, and the log virtualizer load only in their owning
   features.
 - Vitest, React Testing Library, MSW, and Playwright for behavior-level tests.
-- Node 22 and pnpm 10 for development and CI. Production runs only the JVM.
+- Node 22 and pnpm 10 for development and CI. Release assemblies run only the
+  JVM; the optional standalone web image serves static assets with Nginx and
+  never ships a Node runtime.
 
 Vite emits `web-app/dist`. Release assemblies copy that directory to the
 external distribution `dist/`, matching `apache/master`. Spring serves the SPA
@@ -162,8 +163,8 @@ must retain their own non-HTML errors.
 - No tests that read production source and assert source strings.
 - Knip and an explicit dependency-boundary check run in CI.
 - Production frontend target: no more than 80,000 lines; hard limit 100,000.
-- The final migration must delete at least 40 percent of the current production
-  frontend source and must not retain `web-next`.
+- The final migration must delete at least 40 percent of the previous
+  production frontend source and must not retain the deprecated Next.js tree.
 - Initial shell JavaScript: at most 450 KiB gzip. ECharts, G6, and CodeMirror
   are forbidden from the shell chunk.
 

@@ -14,10 +14,11 @@ Start every Product Design workflow from saved context:
 - Local screenshot/reference assets:
   `$CODEX_HOME/state/plugins/product-design/assets/`
 - Repo guidance: `AGENTS.md` and the latest active slice in `progress.md`
-- Frontend implementation: `web-next/app`, `web-next/components`,
-  `web-next/lib`, and `web-next/packages/hertzbeat-ui`
-- Theme and UI constraints: `web-next/app/globals.css`, shared
-  `@hertzbeat/ui` primitives, `lucide-react` icons, and runtime i18n catalogs
+- Frontend implementation: `web-app/src/app`, `web-app/src/layout`,
+  `web-app/src/features`, and `web-app/src/shared`
+- Theme and UI constraints: `web-app/src/app/theme`, feature CSS modules,
+  shared Ant Design primitives, source-backed icon packages, and runtime i18n
+  catalogs
 
 Saved context should include the HertzBeat product position, operator audience,
 competitive references, design preferences, code paths, screenshots, design

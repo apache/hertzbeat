@@ -33,10 +33,10 @@ New-Item -ItemType Directory -Path $distPath -Force
 
 Push-Location -Path $projectPath
 
-Write-Host "Installing dependencies and building web-next..."
-Push-Location -Path "web-next"
-npm ci
-npm run build
+Write-Host "Installing dependencies and building web-app..."
+Push-Location -Path "web-app"
+corepack pnpm@10.9.0 install --frozen-lockfile
+corepack pnpm@10.9.0 build
 Pop-Location
 
 Write-Host "Building project with Maven..."

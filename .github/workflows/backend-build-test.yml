@@ -20,13 +20,20 @@
 
 name: Backend CI
 
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ master, dev, action*, '2.*' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-next/**'
+      - 'web-app/**'
       - 'script/**'
       - 'material/**'
   pull_request:
@@ -34,13 +41,14 @@ on:
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-next/**'
+      - 'web-app/**'
       - 'script/**'
       - 'material/**'
 
 jobs:
   backend-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: ./script/ci/github-actions/setup-deps
