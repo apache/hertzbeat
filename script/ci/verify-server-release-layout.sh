@@ -33,6 +33,17 @@ if [ -z "$required_java" ] || [ -z "$runtime_java" ] || [ "$runtime_java" -lt "$
   failed=1
 fi
 
+if [ -n "$required_java" ]; then
+  for module_pom in hertzbeat-*/pom.xml hertzbeat-*/*/pom.xml; do
+    [ -f "$module_pom" ] || continue
+    module_java=$(sed -n 's:.*<java.version>\([0-9][0-9]*\)</java.version>.*:\1:p' "$module_pom" | head -1)
+    if [ -n "$module_java" ] && [ "$module_java" -lt "$required_java" ]; then
+      echo "$module_pom must not lower the root Java compiler target" >&2
+      failed=1
+    fi
+  done
+fi
+
 ignored_paths=$(awk '
   /^[[:space:]]+paths-ignore:[[:space:]]*$/ { in_paths_ignore = 1; next }
   in_paths_ignore && /^[[:space:]]+- / { print; next }
