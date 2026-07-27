@@ -247,4 +247,21 @@ public final class JsonUtil {
             return null;
         }
     }
+
+    /**
+     * Convert a value without logging conversion details.
+     * @param fromValue source value
+     * @param toValueType target type
+     * @return converted value or null if conversion fails
+     */
+    public static <T> T convertValueQuietly(Object fromValue, Class<T> toValueType) {
+        if (fromValue == null) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.convertValue(fromValue, toValueType);
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
 }
