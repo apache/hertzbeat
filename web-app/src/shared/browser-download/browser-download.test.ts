@@ -31,17 +31,17 @@ describe('browser download', () => {
     const remove = vi.fn();
     const link = { click, remove, href: '', download: '', rel: '' };
     vi.spyOn(document, 'createElement').mockReturnValue(link as unknown as HTMLAnchorElement);
-    vi.spyOn(document.body, 'append').mockImplementation(() => undefined);
+    const append = vi.spyOn(document.body, 'append').mockImplementation(() => undefined);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:download');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
     saveBrowserDownload({ data: new Blob(['rules']), filename: 'rules.json' });
 
     expect(link).toMatchObject({ href: 'blob:download', download: 'rules.json', rel: 'noopener' });
-    expect(document.body.append).toHaveBeenCalledWith(link);
+    expect(append).toHaveBeenCalledWith(link);
     expect(click).toHaveBeenCalledOnce();
     expect(remove).toHaveBeenCalledOnce();
     vi.runAllTimers();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:download');
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:download');
   });
 });

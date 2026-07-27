@@ -162,49 +162,72 @@ function requireCompletenessInvariants(
   },
   context: z.RefinementCtx
 ) {
-  const canonicalReasons: TopologyPartialReason[] = ['entity_seed_limit', 'edge_page'];
-  const uniqueReasons = [...new Set(graph.partialReasons)];
-  const orderedReasons = canonicalReasons.filter(reason => uniqueReasons.includes(reason));
-  if (
-    uniqueReasons.length !== graph.partialReasons.length ||
-    orderedReasons.some((reason, index) => graph.partialReasons[index] !== reason)
-  ) {
+  if (!hasStablePartialReasons(graph.partialReasons)) {
     context.addIssue({
       code: 'custom',
       path: ['partialReasons'],
       message: 'Partial reasons must be stable and unique'
     });
   }
-  const hasPartialReasons = graph.partialReasons.length > 0;
-  if (graph.partial !== hasPartialReasons) {
+  if (!partialFlagMatchesReasons(graph.partial, graph.partialReasons)) {
     context.addIssue({ code: 'custom', path: ['partial'], message: 'Partial state must match its reasons' });
   }
 
-  const { pageIndex, pageSize, totalElements, hasNext } = graph.edgePage;
-  const expectedHasNext = pageSize > 0 && (pageIndex + 1) * pageSize < totalElements;
-  if (hasNext !== expectedHasNext) {
+  if (!pageContinuationMatches(graph.edgePage)) {
     context.addIssue({
       code: 'custom',
       path: ['edgePage', 'hasNext'],
       message: 'Edge page continuation is inconsistent'
     });
   }
-  if (pageSize === 0 && totalElements !== graph.edges.length) {
+  if (!unpagedEdgesAreComplete(graph.edgePage, graph.edges.length)) {
     context.addIssue({ code: 'custom', path: ['edgePage'], message: 'Unpaged edge evidence must be complete' });
   }
-  if (totalElements < graph.edges.length) {
+  if (!edgeTotalCoversPage(graph.edgePage, graph.edges.length)) {
     context.addIssue({ code: 'custom', path: ['edgePage', 'totalElements'], message: 'Edge total is below the page' });
   }
-  const expectedPageLength = Math.min(pageSize, Math.max(totalElements - pageIndex * pageSize, 0));
-  if (pageSize > 0 && graph.edges.length !== expectedPageLength) {
+  if (!edgePageLengthMatches(graph.edgePage, graph.edges.length)) {
     context.addIssue({ code: 'custom', path: ['edges'], message: 'Edge page length is inconsistent' });
   }
-  const edgePagePartial = pageIndex > 0 || hasNext;
-  if (graph.partialReasons.includes('edge_page') !== edgePagePartial) {
+  if (!edgePageReasonMatches(graph.partialReasons, graph.edgePage)) {
     context.addIssue({
       code: 'custom',
       path: ['partialReasons'],
       message: 'Edge page reason must match page evidence'
     });
   }
+}
+
+function hasStablePartialReasons(reasons: TopologyPartialReason[]) {
+  const canonicalReasons: TopologyPartialReason[] = ['entity_seed_limit', 'edge_page'];
+  const uniqueReasons = [...new Set(reasons)];
+  const orderedReasons = canonicalReasons.filter(reason => uniqueReasons.includes(reason));
+  return uniqueReasons.length === reasons.length && orderedReasons.every((reason, index) => reasons[index] === reason);
+}
+
+function partialFlagMatchesReasons(partial: boolean, reasons: TopologyPartialReason[]) {
+  return partial === reasons.length > 0;
+}
+
+function pageContinuationMatches(page: TopologyEdgePage) {
+  const expectedHasNext = page.pageSize > 0 && (page.pageIndex + 1) * page.pageSize < page.totalElements;
+  return page.hasNext === expectedHasNext;
+}
+
+function unpagedEdgesAreComplete(page: TopologyEdgePage, edgeCount: number) {
+  return page.pageSize !== 0 || page.totalElements === edgeCount;
+}
+
+function edgeTotalCoversPage(page: TopologyEdgePage, edgeCount: number) {
+  return page.totalElements >= edgeCount;
+}
+
+function edgePageLengthMatches(page: TopologyEdgePage, edgeCount: number) {
+  const expectedLength = Math.min(page.pageSize, Math.max(page.totalElements - page.pageIndex * page.pageSize, 0));
+  return page.pageSize === 0 || edgeCount === expectedLength;
+}
+
+function edgePageReasonMatches(reasons: TopologyPartialReason[], page: TopologyEdgePage) {
+  const hasPartialPage = page.pageIndex > 0 || page.hasNext;
+  return reasons.includes('edge_page') === hasPartialPage;
 }

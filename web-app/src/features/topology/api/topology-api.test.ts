@@ -138,7 +138,8 @@ describe('topology API', () => {
   });
 
   it('strictly rejects malformed graph and nested metric contracts without substituting an empty graph', async () => {
-    const { partial: _partial, ...missingCompleteness } = graph;
+    const missingCompleteness = { ...graph };
+    Reflect.deleteProperty(missingCompleteness, 'partial');
     http.apiMessageGet.mockResolvedValue(missingCompleteness);
     await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
     http.apiMessageGet.mockResolvedValue({ ...graph, partialReasons: ['edge_page', 'edge_page'] });
@@ -188,6 +189,74 @@ describe('topology API', () => {
 
 describe('topology graph invariants', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it.each([
+    [
+      'complete unpaged evidence',
+      {
+        ...graph,
+        partial: false,
+        partialReasons: [],
+        edgePage: { pageIndex: 0, pageSize: 0, totalElements: 1, hasNext: false }
+      }
+    ],
+    [
+      'entity-limited but edge-complete evidence',
+      {
+        ...graph,
+        partial: true,
+        partialReasons: ['entity_seed_limit'],
+        edgePage: { pageIndex: 0, pageSize: 0, totalElements: 1, hasNext: false }
+      }
+    ],
+    [
+      'first incomplete edge page',
+      {
+        ...graph,
+        partial: true,
+        partialReasons: ['edge_page']
+      }
+    ],
+    [
+      'last page after earlier edge evidence',
+      {
+        ...graph,
+        partial: true,
+        partialReasons: ['edge_page'],
+        edgePage: { pageIndex: 1, pageSize: 1, totalElements: 2, hasNext: false }
+      }
+    ]
+  ])('accepts honest completeness boundary: %s', async (_name, validGraph) => {
+    http.apiMessageGet.mockResolvedValue(validGraph);
+    await expect(loadTopologyGraph({ depth: 1 })).resolves.toMatchObject(validGraph);
+  });
+
+  it.each([
+    ['partial flag without reasons', { ...graph, partialReasons: [] }],
+    ['reasons without partial flag', { ...graph, partial: false }],
+    ['noncanonical reason order', { ...graph, partialReasons: ['edge_page', 'entity_seed_limit'] }],
+    [
+      'later page without edge reason',
+      {
+        ...graph,
+        partial: false,
+        partialReasons: [],
+        edgePage: { pageIndex: 1, pageSize: 1, totalElements: 2, hasNext: false }
+      }
+    ],
+    [
+      'edge reason without page evidence',
+      {
+        ...graph,
+        partial: true,
+        partialReasons: ['edge_page'],
+        edgePage: { pageIndex: 0, pageSize: 0, totalElements: 1, hasNext: false }
+      }
+    ]
+  ])('rejects dishonest completeness boundary: %s', async (_name, invalidGraph) => {
+    http.apiMessageGet.mockResolvedValue(invalidGraph);
+    await expect(loadTopologyGraph({ depth: 1 })).rejects.toBeInstanceOf(TopologyContractError);
+  });
 
   it.each([
     ['duplicate node IDs', { ...graph, nodes: [...graph.nodes, { ...graph.nodes[0] }] }],
