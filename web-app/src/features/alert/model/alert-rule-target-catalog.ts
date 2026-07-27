@@ -16,7 +16,7 @@ import {
 import type { RealtimeMetricTarget } from './alert-rule-metric-expression';
 import { AlertRuleContractError } from './alert-rule-types';
 
-export type MetricAlertTargetOption = {
+type MetricAlertTargetOption = {
   target: RealtimeMetricTarget;
   label: string;
   fields: MetricAlertField[];

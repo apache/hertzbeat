@@ -7,12 +7,7 @@ import type {
   AlertRuleSaveRecovery
 } from '../model/alert-rule-editor-evidence';
 
-export type {
-  AlertRuleEditorDetailState,
-  AlertRuleEditorFailure,
-  AlertRulePreviewState,
-  AlertRuleSaveRecovery
-} from '../model/alert-rule-editor-evidence';
+export type { AlertRuleEditorDetailState, AlertRuleSaveRecovery } from '../model/alert-rule-editor-evidence';
 
 export type AlertRuleRouteState = {
   source: string;

@@ -9,7 +9,7 @@ import type { MonitorAppHierarchyNode } from '@/features/monitor';
 
 type AlertRuleMetricTargetFailure = 'unavailable' | 'error';
 
-export type AlertRuleMetricTargetApplication = {
+type AlertRuleMetricTargetApplication = {
   category?: string;
   label: string | null;
   value: string;

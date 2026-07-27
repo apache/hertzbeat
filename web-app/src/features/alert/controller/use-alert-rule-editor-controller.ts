@@ -11,13 +11,6 @@ import { useAlertRuleMetricBindingController } from './use-alert-rule-metric-bin
 import { useAlertRuleMetricTargetController } from './use-alert-rule-metric-target-controller';
 import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
-export type {
-  AlertRuleEditorDetailState,
-  AlertRuleEditorFailure,
-  AlertRulePreviewState,
-  AlertRuleSaveRecovery
-} from './alert-rule-editor-state';
-
 export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const route = useAlertRuleEditorRoute(mode);
   const datasource = useAlertRuleDatasourceController();

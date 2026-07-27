@@ -24,9 +24,7 @@ export type {
   MetricAlertCondition,
   MetricAlertConditionGroup,
   MetricAlertConditionOperator,
-  MetricAlertField,
-  MetricAlertNumericOperator,
-  MetricAlertStringOperator
+  MetricAlertField
 } from './alert-rule-condition-contract';
 
 const numericOperators: readonly MetricAlertNumericOperator[] = ['>', '<', '==', '!=', '<=', '>='];

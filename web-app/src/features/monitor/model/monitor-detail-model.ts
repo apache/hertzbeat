@@ -85,8 +85,6 @@ export function safeMonitorGrafanaUrl(dashboard: Pick<MonitorGrafanaDashboard, '
   }
 }
 
-export type { MonitorMetricOption } from './monitor-contract';
-
 export const monitorMetricHistoryRanges = ['30m', '1h', '6h', '24h', '1W', '4W', '12W'] as const;
 export type MonitorMetricHistory = (typeof monitorMetricHistoryRanges)[number];
 const monitorMetricIntervalRanges = new Set<MonitorMetricHistory>(['1W', '4W', '12W']);

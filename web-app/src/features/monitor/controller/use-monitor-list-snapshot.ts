@@ -26,7 +26,7 @@ import {
   type MonitorListSnapshot
 } from '../model/monitor-list-snapshot';
 
-export type MonitorListReadMode = 'idle' | 'automatic' | 'authoritative';
+type MonitorListReadMode = 'idle' | 'automatic' | 'authoritative';
 export type MonitorListReadModeRef = MutableRefObject<MonitorListReadMode>;
 
 type OwnedSnapshot = {
