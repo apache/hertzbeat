@@ -65,8 +65,15 @@ public class KafkaCollectE2eTest {
 
     @AfterAll
     public static void tearDown() {
-        kafkaContainer.stop();
-        zookeeperContainer.stop();
+        try {
+            if (kafkaContainer != null) {
+                kafkaContainer.stop();
+            }
+        } finally {
+            if (zookeeperContainer != null) {
+                zookeeperContainer.stop();
+            }
+        }
     }
 
     @BeforeEach
