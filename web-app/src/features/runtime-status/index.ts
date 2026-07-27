@@ -19,5 +19,7 @@ export { useRuntimeStatusController } from './controller/use-runtime-status-cont
 export type {
   RuntimeStatusPresentation,
   RuntimeStatusErrorCode,
+  RuntimeCollectorsStatus,
+  RuntimeStatusRequestFailure,
   RuntimeStatusViewModel
 } from './model/runtime-status-contract';

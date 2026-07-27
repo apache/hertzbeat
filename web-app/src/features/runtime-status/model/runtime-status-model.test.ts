@@ -17,27 +17,34 @@
 
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import type { RuntimeStatusSnapshot } from './runtime-status-contract';
-import { unavailableRuntimeStatus } from './runtime-status-model';
+import type { RuntimeStatusRequestFailure, RuntimeStatusSnapshot } from './runtime-status-contract';
+import { runtimeStatusViewModel } from './runtime-status-model';
 
 describe('runtime status model', () => {
-  it('fails closed without inventing an observation or healthy Collector counts', () => {
-    expect(unavailableRuntimeStatus()).toEqual({
-      observedAt: null,
-      server: { status: 'unavailable', errorCode: 'server_unavailable' },
-      storage: { kind: 'greptime', status: 'unavailable', errorCode: 'storage_unavailable' },
-      collectors: {
-        status: 'unavailable',
-        total: null,
-        online: null,
-        runtimeHealthy: null,
-        lastReportedAt: null,
-        errorCode: 'collector_status_unavailable'
-      }
+  it('publishes only resolved authoritative evidence', () => {
+    const snapshot = runtimeStatusFixture();
+    expect(runtimeStatusViewModel({ pending: true, snapshot, failure: null })).toEqual({
+      state: 'loading',
+      snapshot: null
+    });
+    expect(runtimeStatusViewModel({ pending: false, snapshot, failure: null })).toEqual({
+      state: 'ready',
+      snapshot
     });
   });
 
+  it('drops cached evidence on request failure without inventing section status', () => {
+    expect(runtimeStatusViewModel({ pending: false, snapshot: runtimeStatusFixture(), failure: 'permission' })).toEqual(
+      {
+        state: 'request-failed',
+        snapshot: null,
+        failure: 'permission'
+      }
+    );
+  });
+
   it('keeps section error evidence distinct in the domain model', () => {
+    expectTypeOf<RuntimeStatusRequestFailure>().toEqualTypeOf<'permission' | 'unavailable' | 'contract' | 'error'>();
     expectTypeOf<RuntimeStatusSnapshot['server']['errorCode']>().toEqualTypeOf<'server_unavailable' | null>();
     expectTypeOf<RuntimeStatusSnapshot['storage']['errorCode']>().toEqualTypeOf<
       'storage_unavailable' | 'storage_query_failed' | null
@@ -47,3 +54,19 @@ describe('runtime status model', () => {
     >();
   });
 });
+
+function runtimeStatusFixture(): RuntimeStatusSnapshot {
+  return {
+    observedAt: '2026-07-22T01:02:03Z',
+    server: { status: 'available', errorCode: null },
+    storage: { kind: 'greptime', status: 'available', errorCode: null },
+    collectors: {
+      status: 'available',
+      total: 3,
+      online: 3,
+      runtimeHealthy: 1,
+      lastReportedAt: '2026-07-22T01:02:00Z',
+      errorCode: null
+    }
+  };
+}

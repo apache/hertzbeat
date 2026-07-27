@@ -27,8 +27,15 @@
       },
       "snapshotObservedAt": "Snapshot {{time}}",
       "collectorLastReportedAt": "Last report {{time}}",
+      "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} runtime healthy",
       "collectorNotReported": "No runtime report",
       "notObserved": "Not observed",
+      "request": {
+        "permission": "Runtime status permission denied",
+        "unavailable": "Runtime status request unavailable",
+        "contract": "Runtime status response invalid",
+        "error": "Runtime status could not be loaded"
+      },
       "reason": {
         "server_unavailable": "Server unavailable",
         "storage_unavailable": "Storage unavailable",

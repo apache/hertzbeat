@@ -27,8 +27,15 @@
       },
       "snapshotObservedAt": "快照於 {{time}}",
       "collectorLastReportedAt": "最後回報於 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} 在線 · {{runtimeHealthy}} 個執行階段正常",
       "collectorNotReported": "暫無執行階段回報",
       "notObserved": "尚未觀測",
+      "request": {
+        "permission": "無權檢視執行狀態",
+        "unavailable": "執行狀態請求無法使用",
+        "contract": "執行狀態回應無效",
+        "error": "無法載入執行狀態"
+      },
       "reason": {
         "server_unavailable": "伺服器無法使用",
         "storage_unavailable": "儲存空間無法使用",

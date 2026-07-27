@@ -22,6 +22,8 @@ type RuntimeServerErrorCode = 'server_unavailable';
 type RuntimeStorageErrorCode = 'storage_unavailable' | 'storage_query_failed';
 type RuntimeCollectorsErrorCode = 'collector_status_unavailable';
 export type RuntimeStatusErrorCode = RuntimeServerErrorCode | RuntimeStorageErrorCode | RuntimeCollectorsErrorCode;
+// Request failures are transport evidence and must never populate backend-owned section error codes.
+export type RuntimeStatusRequestFailure = 'permission' | 'unavailable' | 'contract' | 'error';
 
 type RuntimeSectionStatus<ErrorCode extends RuntimeStatusErrorCode> = Readonly<{
   status: RuntimeStatusState;
@@ -32,7 +34,7 @@ type RuntimeServerStatus = RuntimeSectionStatus<RuntimeServerErrorCode>;
 
 type RuntimeStorageStatus = RuntimeSectionStatus<RuntimeStorageErrorCode> & Readonly<{ kind: 'greptime' }>;
 
-type RuntimeCollectorsStatus = RuntimeSectionStatus<RuntimeCollectorsErrorCode> &
+export type RuntimeCollectorsStatus = RuntimeSectionStatus<RuntimeCollectorsErrorCode> &
   Readonly<{
     total: number | null;
     online: number | null;
@@ -55,4 +57,4 @@ export type RuntimeStatusSnapshot = Readonly<{
 export type RuntimeStatusViewModel =
   | Readonly<{ state: 'loading'; snapshot: null }>
   | Readonly<{ state: 'ready'; snapshot: RuntimeStatusSnapshot }>
-  | Readonly<{ state: 'unavailable'; snapshot: RuntimeStatusSnapshot }>;
+  | Readonly<{ state: 'request-failed'; snapshot: null; failure: RuntimeStatusRequestFailure }>;

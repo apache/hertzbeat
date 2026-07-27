@@ -27,8 +27,15 @@
       },
       "snapshotObservedAt": "スナップショット {{time}}",
       "collectorLastReportedAt": "最終報告 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} オンライン · ランタイム正常 {{runtimeHealthy}}",
       "collectorNotReported": "ランタイム報告なし",
       "notObserved": "未観測",
+      "request": {
+        "permission": "実行状態を表示する権限がありません",
+        "unavailable": "実行状態のリクエストを利用できません",
+        "contract": "実行状態の応答が無効です",
+        "error": "実行状態を読み込めませんでした"
+      },
       "reason": {
         "server_unavailable": "サーバーを利用できません",
         "storage_unavailable": "ストレージを利用できません",

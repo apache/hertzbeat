@@ -18,7 +18,8 @@ import { useRuntimeStatusController } from '@/features/runtime-status';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
-import { ShellHeaderActions, ShellStatusSpine } from './shell-header-presentation';
+import { ShellHeaderActions } from './shell-header-presentation';
+import { ShellStatusSpine } from './shell-status-spine';
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
 
 export function ShellHeader({ collapsed }: { collapsed: boolean }) {

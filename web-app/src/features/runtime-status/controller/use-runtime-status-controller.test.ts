@@ -18,6 +18,7 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { RuntimeStatusContractError } from '../api/runtime-status-schema';
 import { RUNTIME_STATUS_REFRESH_INTERVAL_MS, useRuntimeStatusController } from './use-runtime-status-controller';
 
 type QueryOptions = {
@@ -63,7 +64,7 @@ describe('useRuntimeStatusController', () => {
     });
   });
 
-  it('does not expose cached evidence while pending and fails closed on any query error', () => {
+  it('does not expose cached evidence while pending or after a request failure', () => {
     query.useQuery.mockReturnValue({ data: runtimeStatusFixture(), error: null, isPending: true });
     expect(renderHook(() => useRuntimeStatusController()).result.current).toEqual({
       state: 'loading',
@@ -72,17 +73,13 @@ describe('useRuntimeStatusController', () => {
 
     query.useQuery.mockReturnValue({
       data: runtimeStatusFixture(),
-      error: new Error('invalid response'),
+      error: new RuntimeStatusContractError(),
       isPending: false
     });
-    expect(renderHook(() => useRuntimeStatusController()).result.current).toMatchObject({
-      state: 'unavailable',
-      snapshot: {
-        observedAt: null,
-        server: { status: 'unavailable', errorCode: 'server_unavailable' },
-        storage: { status: 'unavailable', errorCode: 'storage_unavailable' },
-        collectors: { status: 'unavailable', errorCode: 'collector_status_unavailable' }
-      }
+    expect(renderHook(() => useRuntimeStatusController()).result.current).toEqual({
+      state: 'request-failed',
+      snapshot: null,
+      failure: 'contract'
     });
   });
 });

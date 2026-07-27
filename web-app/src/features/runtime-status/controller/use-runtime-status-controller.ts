@@ -17,9 +17,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import { classifyRuntimeStatusRequestFailure } from '../api/runtime-status-api-failure';
 import { loadRuntimeStatus } from '../api/runtime-status-api';
-import type { RuntimeStatusViewModel } from '../model/runtime-status-contract';
-import { unavailableRuntimeStatus } from '../model/runtime-status-model';
+import type { RuntimeStatusRequestFailure, RuntimeStatusViewModel } from '../model/runtime-status-contract';
+import { runtimeStatusViewModel } from '../model/runtime-status-model';
 import { runtimeStatusQueryKeys } from './runtime-status-query-keys';
 
 export const RUNTIME_STATUS_REFRESH_INTERVAL_MS = 30_000;
@@ -31,7 +32,12 @@ export function useRuntimeStatusController(): RuntimeStatusViewModel {
     refetchInterval: RUNTIME_STATUS_REFRESH_INTERVAL_MS
   });
 
-  if (query.isPending) return { state: 'loading', snapshot: null };
-  if (query.error || !query.data) return { state: 'unavailable', snapshot: unavailableRuntimeStatus() };
-  return { state: 'ready', snapshot: query.data };
+  const failure: RuntimeStatusRequestFailure | null = query.error
+    ? classifyRuntimeStatusRequestFailure(query.error)
+    : null;
+  return runtimeStatusViewModel({
+    pending: query.isPending,
+    snapshot: query.data ?? null,
+    failure
+  });
 }

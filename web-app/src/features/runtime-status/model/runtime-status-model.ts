@@ -15,20 +15,21 @@
  * limitations under the License.
  */
 
-import type { RuntimeStatusSnapshot } from './runtime-status-contract';
+import type {
+  RuntimeStatusRequestFailure,
+  RuntimeStatusSnapshot,
+  RuntimeStatusViewModel
+} from './runtime-status-contract';
 
-export function unavailableRuntimeStatus(): RuntimeStatusSnapshot {
-  return {
-    observedAt: null,
-    server: { status: 'unavailable', errorCode: 'server_unavailable' },
-    storage: { kind: 'greptime', status: 'unavailable', errorCode: 'storage_unavailable' },
-    collectors: {
-      status: 'unavailable',
-      total: null,
-      online: null,
-      runtimeHealthy: null,
-      lastReportedAt: null,
-      errorCode: 'collector_status_unavailable'
-    }
-  };
+type RuntimeStatusQueryEvidence = {
+  pending: boolean;
+  snapshot: RuntimeStatusSnapshot | null;
+  failure: RuntimeStatusRequestFailure | null;
+};
+
+export function runtimeStatusViewModel(evidence: RuntimeStatusQueryEvidence): RuntimeStatusViewModel {
+  if (evidence.pending) return { state: 'loading', snapshot: null };
+  if (evidence.failure) return { state: 'request-failed', snapshot: null, failure: evidence.failure };
+  if (evidence.snapshot) return { state: 'ready', snapshot: evidence.snapshot };
+  return { state: 'request-failed', snapshot: null, failure: 'error' };
 }

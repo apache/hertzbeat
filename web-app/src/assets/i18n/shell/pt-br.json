@@ -27,8 +27,15 @@
       },
       "snapshotObservedAt": "Snapshot às {{time}}",
       "collectorLastReportedAt": "Último relato às {{time}}",
+      "collectorCounts": "{{online}}/{{total}} online · {{runtimeHealthy}} com runtime saudável",
       "collectorNotReported": "Sem relato de runtime",
       "notObserved": "Não observado",
+      "request": {
+        "permission": "Permissão para status de execução negada",
+        "unavailable": "Solicitação de status de execução indisponível",
+        "contract": "Resposta de status de execução inválida",
+        "error": "Não foi possível carregar o status de execução"
+      },
       "reason": {
         "server_unavailable": "Servidor indisponível",
         "storage_unavailable": "Armazenamento indisponível",

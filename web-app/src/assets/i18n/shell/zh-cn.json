@@ -27,8 +27,15 @@
       },
       "snapshotObservedAt": "快照于 {{time}}",
       "collectorLastReportedAt": "最后上报于 {{time}}",
+      "collectorCounts": "{{online}}/{{total}} 在线 · {{runtimeHealthy}} 个运行时正常",
       "collectorNotReported": "暂无运行时上报",
       "notObserved": "尚未观测",
+      "request": {
+        "permission": "无权查看运行状态",
+        "unavailable": "运行状态请求不可用",
+        "contract": "运行状态响应无效",
+        "error": "无法加载运行状态"
+      },
       "reason": {
         "server_unavailable": "服务端不可用",
         "storage_unavailable": "存储不可用",
