@@ -8,6 +8,9 @@
       "expand": "Expandir navegação",
       "toggleGroup": "Alternar {{label}}"
     },
+    "permission": {
+      "roleRequired": "É necessário acesso de administrador."
+    },
     "status": {
       "summary": "Status de execução",
       "server": "Servidor",

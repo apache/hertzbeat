@@ -57,6 +57,7 @@ type NavigationResource = {
   dataProviderName?: string;
   timePolicy?: ShellTimePolicy;
   actionTimePolicies?: ShellResourceMeta['actionTimePolicies'];
+  requiredRoles?: string[];
 };
 
 type RoutedNavigationResource = Omit<NavigationResource, 'name' | 'list' | 'labelKey'> & {
@@ -284,6 +285,7 @@ function navigationResource(resource: NavigationResource): ResourceProps {
     navigation: true,
     order: resource.order,
     timePolicy: resource.timePolicy ?? (resource.parent === 'settings' || !resource.list ? 'none' : 'unknown'),
+    ...(resource.requiredRoles ? { requiredRoles: resource.requiredRoles } : {}),
     ...(resource.actionTimePolicies ? { actionTimePolicies: resource.actionTimePolicies } : {})
   };
   return {
@@ -358,11 +360,12 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
     ...resource,
     name: resource.name ?? routeDefinition.id,
     list: routeDefinition.resource.listPath ?? routeDefinition.path,
-    labelKey: routeDefinition.resource.labelKey
+    labelKey: routeDefinition.resource.labelKey,
+    ...(routeDefinition.resource.requiredRoles ? { requiredRoles: [...routeDefinition.resource.requiredRoles] } : {})
   });
 }
 
-function resolveShellAccess(params: Parameters<AccessControlProvider['can']>[0]['params']) {
+export function resolveShellAccess(params: Parameters<AccessControlProvider['can']>[0]['params']) {
   const shell = readShellResourceMeta(params?.resource?.meta?.shell);
   if (!shell || shell.capability !== 'supported') return capabilityDenied(shell);
   const permitted = hasRequiredRole(shell.requiredRoles ?? [], stringRoles(params?.roles));

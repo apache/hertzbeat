@@ -8,6 +8,9 @@
       "expand": "展开导航",
       "toggleGroup": "展开或收起{{label}}"
     },
+    "permission": {
+      "roleRequired": "需要管理员权限。"
+    },
     "status": {
       "summary": "运行状态",
       "server": "服务端",

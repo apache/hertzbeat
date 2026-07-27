@@ -8,6 +8,10 @@
       "title": "頁面暫時無法使用",
       "description": "頁面載入失敗，請重試或稍後返回。"
     },
+    "permission": {
+      "roleRequiredTitle": "需要管理員權限",
+      "roleRequiredDescription": "目前帳號無權開啟此頁面。"
+    },
     "query": "查詢",
     "refresh": "重新整理",
     "actions": "操作",

@@ -196,11 +196,20 @@ describe('route registry', () => {
       id: 'plugins',
       path: '/settings/plugins',
       kind: 'page',
-      resource: { labelKey: 'settingsNavigation.plugins' }
+      resource: { labelKey: 'settingsNavigation.plugins', requiredRoles: ['ADMIN'] }
     });
     expect(legacyRouteCatalog).toContainEqual(
       expect.objectContaining({ id: 'legacy-plugins', path: '/setting/plugin', targetRouteId: 'plugins' })
     );
+  });
+
+  it('owns administrative read access only for the two backend ADMIN-only settings resources', () => {
+    expect(getAppRoute('tokens').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
+    expect(getAppRoute('plugins').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
+    expect(routeRegistry.flatMap(route => (route.resource?.requiredRoles ? [route.id] : []))).toEqual([
+      'tokens',
+      'plugins'
+    ]);
   });
 
   it('registers the session lock as a canonical passport-layout page', () => {

@@ -8,6 +8,9 @@
       "expand": "Expand navigation",
       "toggleGroup": "Toggle {{label}}"
     },
+    "permission": {
+      "roleRequired": "Administrator access is required."
+    },
     "status": {
       "summary": "Runtime status",
       "server": "Server",

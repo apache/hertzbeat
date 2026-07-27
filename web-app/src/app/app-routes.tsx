@@ -20,10 +20,11 @@ import { Navigate, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
-import { loadTokenPageRoute } from '@/features/settings/token';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 
+import { AdministrativePluginRoutePage, AdministrativeTokenRoutePage } from './administrative-route-pages';
 import { RefineRuntime } from './refine/refine-runtime';
+import { AdministrativeRouteAccess } from './administrative-route-access';
 import { LegacyRouteRedirect } from './legacy-route-redirect';
 import { applicationRootPath, getAppRoute, getAppRouteIdentity, legacyRouteCatalog } from './route-registry';
 
@@ -257,7 +258,11 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 ...getAppRouteIdentity('tokens'),
-                lazy: loadTokenPageRoute
+                element: (
+                  <AdministrativeRouteAccess routeId="tokens">
+                    <AdministrativeTokenRoutePage />
+                  </AdministrativeRouteAccess>
+                )
               },
               {
                 ...getAppRouteIdentity('collectors'),
@@ -268,10 +273,11 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 ...getAppRouteIdentity('plugins'),
-                lazy: async () => {
-                  const { PluginPage } = await import('@/features/settings/plugin');
-                  return { Component: PluginPage };
-                }
+                element: (
+                  <AdministrativeRouteAccess routeId="plugins">
+                    <AdministrativePluginRoutePage />
+                  </AdministrativeRouteAccess>
+                )
               },
               {
                 ...getAppRouteIdentity('monitor-definitions'),

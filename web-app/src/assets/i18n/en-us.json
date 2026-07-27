@@ -8,6 +8,10 @@
       "title": "Page unavailable",
       "description": "This page could not be loaded. Retry or return to it later."
     },
+    "permission": {
+      "roleRequiredTitle": "Administrator access required",
+      "roleRequiredDescription": "Your account does not have permission to open this page."
+    },
     "query": "Query",
     "refresh": "Refresh",
     "actions": "Actions",

@@ -8,6 +8,10 @@
       "title": "页面暂不可用",
       "description": "页面加载失败，请重试或稍后返回。"
     },
+    "permission": {
+      "roleRequiredTitle": "需要管理员权限",
+      "roleRequiredDescription": "当前账号无权打开此页面。"
+    },
     "query": "查询",
     "refresh": "刷新",
     "actions": "操作",

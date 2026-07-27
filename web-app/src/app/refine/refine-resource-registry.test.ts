@@ -146,6 +146,16 @@ describe('Refine shell resource registry', () => {
       })
     ).resolves.toEqual({ can: true });
   });
+
+  it('propagates real Token and Plugin route roles and denies non-administrative sessions', async () => {
+    for (const name of ['tokens', 'plugins']) {
+      const resource = refineResources.find(candidate => candidate.name === name);
+      expect(readShellResourceMeta(resource?.meta?.shell)).toMatchObject({ requiredRoles: ['ADMIN'] });
+      await expect(canAccess(resource, ['ADMIN'])).resolves.toEqual({ can: true });
+      await expect(canAccess(resource, ['USER'])).resolves.toEqual({ can: false, reason: 'ROLE_REQUIRED' });
+      await expect(canAccess(resource, ['GUEST'])).resolves.toEqual({ can: false, reason: 'ROLE_REQUIRED' });
+    }
+  });
 });
 
 function shellMeta(name: string) {
@@ -164,4 +174,13 @@ function resourceIdentity(resources: ReturnType<typeof buildRefineResources>, na
     parent: resource?.meta?.parent,
     list: resource?.list
   };
+}
+
+function canAccess(resource: (typeof refineResources)[number] | undefined, roles: string[]) {
+  if (!resource) throw new Error('Expected Refine resource.');
+  return shellAccessControlProvider.can({
+    resource: resource.name,
+    action: 'list',
+    params: { resource, roles }
+  });
 }

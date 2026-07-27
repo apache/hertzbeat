@@ -8,6 +8,9 @@
       "expand": "ナビゲーションを展開",
       "toggleGroup": "{{label}}を展開または折りたたむ"
     },
+    "permission": {
+      "roleRequired": "管理者権限が必要です。"
+    },
     "status": {
       "summary": "実行状態",
       "server": "サーバー",

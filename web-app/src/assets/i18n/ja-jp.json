@@ -8,6 +8,10 @@
       "title": "ページを利用できません",
       "description": "ページを読み込めませんでした。再試行するか、後でもう一度開いてください。"
     },
+    "permission": {
+      "roleRequiredTitle": "管理者権限が必要です",
+      "roleRequiredDescription": "このアカウントには、このページを開く権限がありません。"
+    },
     "query": "検索",
     "refresh": "更新",
     "actions": "操作",

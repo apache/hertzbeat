@@ -8,6 +8,9 @@
       "expand": "展開導覽",
       "toggleGroup": "展開或收合{{label}}"
     },
+    "permission": {
+      "roleRequired": "需要管理員權限。"
+    },
     "status": {
       "summary": "執行狀態",
       "server": "伺服器",

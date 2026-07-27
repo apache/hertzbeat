@@ -30,7 +30,7 @@ const refine = vi.hoisted(() => ({
 vi.mock('@refinedev/core', async importOriginal => ({
   ...(await importOriginal<typeof import('@refinedev/core')>()),
   useCan: ({ resource }: { resource: string }) => ({
-    data: { can: !refine.denied.has(resource) },
+    data: refine.denied.has(resource) ? { can: false, reason: 'ROLE_REQUIRED' } : { can: true },
     isLoading: false
   }),
   useGo: () => refine.go,
@@ -80,6 +80,9 @@ describe('collapsed ShellNavigation', () => {
     expect(restricted).toHaveAttribute('aria-disabled', 'true');
     expect(preview).toHaveAttribute('aria-disabled', 'true');
 
+    fireEvent.mouseEnter(restricted);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('shell.permission.roleRequired');
+    fireEvent.mouseLeave(restricted);
     fireEvent.click(restricted);
     expect(refine.go).not.toHaveBeenCalled();
     fireEvent.click(monitors);

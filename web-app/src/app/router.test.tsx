@@ -20,7 +20,7 @@ import { isValidElement } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { AuthGate } from '@/core/auth/auth-gate';
-import { loadTokenPageRoute } from '@/features/settings/token';
+import { AdministrativeRouteAccess } from './administrative-route-access';
 import { applicationRootPath, getAppRoute, legacyRouteCatalog, routeRegistry, type AppRouteId } from './route-registry';
 import { appRoutes } from './app-routes';
 
@@ -107,7 +107,8 @@ describe('application data router', () => {
 
     for (const route of basicCanonicalRoutes) {
       const definition = getAppRoute(route.id as AppRouteId);
-      expect(Boolean(route.lazy)).toBe(definition.kind === 'page');
+      const hasPageLoader = Boolean(route.lazy) || isAdministrativeRoute(route);
+      expect(hasPageLoader).toBe(definition.kind === 'page');
       if (definition.kind === 'redirect') expect(route.element).toBeDefined();
     }
   });
@@ -117,12 +118,17 @@ describe('application data router', () => {
     expect(appRoutes[0]?.errorElement).toBeDefined();
   });
 
-  it('delegates the Token route to its feature-owned lazy loader', () => {
-    const tokenRoute = flattenRoutes(appRoutes).find(route => route.id === 'tokens');
-
-    expect(tokenRoute?.lazy).toBe(loadTokenPageRoute);
+  it.each(['tokens', 'plugins'])('places the %s page behind the administrative boundary', routeId => {
+    const route = flattenRoutes(appRoutes).find(candidate => candidate.id === routeId);
+    expect(isValidElement(route?.element)).toBe(true);
+    if (!isValidElement(route?.element)) throw new Error(`The ${routeId} access boundary is missing.`);
+    expect(route.element.type).toBe(AdministrativeRouteAccess);
   });
 });
+
+function isAdministrativeRoute(route: RouteObject) {
+  return isValidElement(route.element) && route.element.type === AdministrativeRouteAccess;
+}
 
 function compareRouteId(left: { id: string | undefined }, right: { id: string | undefined }) {
   return (left.id ?? '').localeCompare(right.id ?? '');

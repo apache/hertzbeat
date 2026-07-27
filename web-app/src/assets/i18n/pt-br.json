@@ -8,6 +8,10 @@
       "title": "Página indisponível",
       "description": "Não foi possível carregar esta página. Tente novamente ou volte mais tarde."
     },
+    "permission": {
+      "roleRequiredTitle": "Acesso de administrador necessário",
+      "roleRequiredDescription": "Sua conta não tem permissão para abrir esta página."
+    },
     "query": "Consultar",
     "refresh": "Atualizar",
     "actions": "Ações",

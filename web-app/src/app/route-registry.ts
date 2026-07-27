@@ -32,6 +32,7 @@ export type AppRouteDefinition = {
   resource?: {
     labelKey: string;
     listPath?: string;
+    requiredRoles?: readonly string[];
   };
 };
 
@@ -107,13 +108,13 @@ export const appRouteCatalog = {
     resource: { labelKey: 'settingsNavigation.channels' }
   }),
   tokens: pageRoute('tokens', settingsPaths.tokens, {
-    resource: { labelKey: 'settingsNavigation.tokens' }
+    resource: { labelKey: 'settingsNavigation.tokens', requiredRoles: ['ADMIN'] }
   }),
   collectors: pageRoute('collectors', settingsPaths.collectors, {
     resource: { labelKey: 'settingsNavigation.collectors' }
   }),
   plugins: pageRoute('plugins', settingsPaths.plugins, {
-    resource: { labelKey: 'settingsNavigation.plugins' }
+    resource: { labelKey: 'settingsNavigation.plugins', requiredRoles: ['ADMIN'] }
   }),
   'monitor-definitions': pageRoute('monitor-definitions', settingsPaths.monitorDefinitions, {
     resource: { labelKey: 'settingsNavigation.monitorDefinitions' }

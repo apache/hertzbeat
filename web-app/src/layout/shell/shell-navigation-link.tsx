@@ -36,12 +36,14 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
     queryOptions: { staleTime: Number.POSITIVE_INFINITY }
   });
   const disabled = item.disabled || access.isLoading || access.data?.can === false;
-  let tooltip: string | undefined;
-  if (collapsed) {
-    tooltip = label;
-  } else if (disabled) {
-    tooltip = t(`shell.capability.${item.capability}`);
-  }
+  const tooltip = resolveTooltip({
+    capability: item.capability,
+    collapsed,
+    disabled,
+    label,
+    roleDenied: access.data?.can === false && access.data.reason === 'ROLE_REQUIRED',
+    translate: key => t(key)
+  });
   const linkClassName = active ? `${styles.navigationLink} ${styles.navigationLinkActive}` : styles.navigationLink;
 
   const navigate = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -67,4 +69,18 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
       </a>
     </Tooltip>
   );
+}
+
+function resolveTooltip(options: {
+  capability: ShellNavigationItem['capability'];
+  collapsed: boolean;
+  disabled: boolean;
+  label: string;
+  roleDenied: boolean;
+  translate: (key: string) => string;
+}) {
+  if (options.roleDenied) return options.translate('shell.permission.roleRequired');
+  if (options.collapsed) return options.label;
+  if (options.disabled) return options.translate(`shell.capability.${options.capability}`);
+  return undefined;
 }
