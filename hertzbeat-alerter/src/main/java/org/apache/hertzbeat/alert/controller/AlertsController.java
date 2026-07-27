@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AlertsController {
 
     private static final String ALERT_GROUP_NOT_FOUND_MESSAGE = "Alert group was not found.";
+    private static final String ALERT_GROUP_DELETE_FAILED_MESSAGE = "Alert group delete failed.";
     private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
 
     @Autowired
@@ -90,11 +91,16 @@ public class AlertsController {
     @Operation(summary = "Delete group alarms in batches", description = "according to the alarm ID list to delete the alarm information in batches")
     public ResponseEntity<Message<Void>> deleteAlerts(
             @Parameter(description = "Alarm List ID", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            alertService.deleteGroupAlerts(new HashSet<>(ids));
+        try {
+            if (ids != null && !ids.isEmpty()) {
+                alertService.deleteGroupAlerts(new HashSet<>(ids));
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_DELETE_FAILED_MESSAGE));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
     }
 
     @PutMapping(path = "/group/status/{status}")

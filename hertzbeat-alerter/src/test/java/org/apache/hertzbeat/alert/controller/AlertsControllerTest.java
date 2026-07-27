@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -122,6 +123,38 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
                 .andReturn();
+    }
+
+    @Test
+    void deleteGroupAlertsMissingTargetReturnsStableSafeFailure() throws Exception {
+        HashSet<Long> missingIds = new HashSet<>(List.of(6565463543L));
+        Mockito.doThrow(new AlertGroupNotFoundException())
+                .when(alertService).deleteGroupAlerts(missingIds);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/alerts/group")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group was not found."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void deleteGroupAlertsGenericFailureDoesNotExposeExceptionDetails() throws Exception {
+        HashSet<Long> ids = new HashSet<>(List.of(7L));
+        Mockito.doThrow(new IllegalStateException(
+                        "token=private-delete-token payload=private-alert-payload"))
+                .when(alertService).deleteGroupAlerts(ids);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/alerts/group")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group delete failed."))
+                .andExpect(content().string(not(containsString("private-delete-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
     }
 
     @Test

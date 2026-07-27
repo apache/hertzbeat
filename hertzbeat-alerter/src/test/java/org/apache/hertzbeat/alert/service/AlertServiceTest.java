@@ -77,10 +77,30 @@ class AlertServiceTest {
         HashSet<Long> ids = new HashSet<>();
         ids.add(1L);
         ids.add(2L);
+        List<GroupAlert> groupAlerts = List.of(
+                GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
+                GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
+        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(groupAlerts);
+
         assertDoesNotThrow(() -> alertService.deleteGroupAlerts(ids));
+
         verify(groupAlertDao, times(1)).deleteGroupAlertsByIdIn(ids);
     }
 
+    @Test
+    void deleteGroupAlertsRejectsPartialMissingTargetsBeforeDeletes() {
+        HashSet<Long> ids = new HashSet<>(List.of(1L, 2L));
+        GroupAlert existingAlert = GroupAlert.builder()
+                .id(1L)
+                .alertFingerprints(List.of("private-alert-fingerprint"))
+                .build();
+        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(List.of(existingAlert));
+
+        assertThrows(AlertGroupNotFoundException.class, () -> alertService.deleteGroupAlerts(ids));
+
+        verify(groupAlertDao, never()).deleteGroupAlertsByIdIn(ids);
+        verifyNoInteractions(singleAlertDao);
+    }
 
     @Test
     void editGroupAlertStatus() {

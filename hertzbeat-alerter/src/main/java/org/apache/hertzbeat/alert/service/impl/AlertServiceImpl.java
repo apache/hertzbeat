@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -167,7 +168,11 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void deleteGroupAlerts(HashSet<Long> ids) {
+        if (ids.contains(null)) {
+            throw new AlertGroupNotFoundException();
+        }
         List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByIdIn(ids);
+        requireExactGroupAlertTargets(ids, groupAlerts);
         for (GroupAlert groupAlert : groupAlerts) {
             List<String> firingAlerts = groupAlert.getAlertFingerprints();
             singleAlertDao.deleteSingleAlertsByFingerprintIn(firingAlerts);
@@ -190,11 +195,7 @@ public class AlertServiceImpl implements AlertService {
             throw new AlertGroupNotFoundException();
         }
         List<GroupAlert> groupAlerts = groupAlertDao.findAllById(requestedIds);
-        List<Long> foundIds = groupAlerts.stream().map(GroupAlert::getId).distinct().toList();
-        // Batch status changes are all-or-nothing so clients cannot treat a partial update as authoritative success.
-        if (foundIds.size() != requestedIds.size() || !foundIds.containsAll(requestedIds)) {
-            throw new AlertGroupNotFoundException();
-        }
+        requireExactGroupAlertTargets(requestedIds, groupAlerts);
         long now = Instant.now().toEpochMilli();
         List<String> fingerprints = groupAlerts.stream()
                 .map(GroupAlert::getAlertFingerprints)
@@ -223,6 +224,14 @@ public class AlertServiceImpl implements AlertService {
         groupAlertDao.saveAll(groupAlerts);
         if (!singleAlerts.isEmpty()) {
             singleAlertDao.saveAll(singleAlerts);
+        }
+    }
+
+    private static void requireExactGroupAlertTargets(Collection<Long> requestedIds, List<GroupAlert> groupAlerts) {
+        List<Long> foundIds = groupAlerts.stream().map(GroupAlert::getId).distinct().toList();
+        // Batch mutations are all-or-nothing so clients cannot treat a partial update as authoritative success.
+        if (foundIds.size() != requestedIds.size() || !foundIds.containsAll(requestedIds)) {
+            throw new AlertGroupNotFoundException();
         }
     }
 
