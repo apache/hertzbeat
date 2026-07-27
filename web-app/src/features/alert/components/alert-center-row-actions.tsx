@@ -9,9 +9,11 @@ import { Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertGroup } from '../model/alert-model';
+import type { AlertCenterActionPolicy } from '../model/alert-capability-model';
 import { AlertCenterConfirmedAction } from './alert-center-confirmed-action';
 
 type AlertCenterRowActionsProps = {
+  actionPolicy: AlertCenterActionPolicy;
   acknowledge: (group: AlertGroup) => void | Promise<unknown>;
   busy: boolean;
   group: AlertGroup;
@@ -22,20 +24,22 @@ type AlertCenterRowActionsProps = {
 };
 
 export function AlertCenterRowActions(props: AlertCenterRowActionsProps) {
-  const { busy, group, remove } = props;
+  const { actionPolicy, busy, group, remove } = props;
   const { t } = useTranslation();
   return (
     <Space size={0}>
-      <AlertCenterRowStatusActions {...props} />
-      <AlertCenterConfirmedAction
-        type="link"
-        danger
-        label={t('alert.delete')}
-        confirm={t('alert.deleteConfirm')}
-        confirmLabel={t('alert.confirmDelete')}
-        disabled={busy}
-        run={() => remove(group)}
-      />
+      {actionPolicy.canUpdateStatus ? <AlertCenterRowStatusActions {...props} /> : null}
+      {actionPolicy.canDeleteGroups ? (
+        <AlertCenterConfirmedAction
+          type="link"
+          danger
+          label={t('alert.delete')}
+          confirm={t('alert.deleteConfirm')}
+          confirmLabel={t('alert.confirmDelete')}
+          disabled={busy}
+          run={() => remove(group)}
+        />
+      ) : null}
     </Space>
   );
 }

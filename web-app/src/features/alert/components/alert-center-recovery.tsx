@@ -11,10 +11,12 @@ import { useTranslation } from 'react-i18next';
 import type { AlertCenterOperationRecovery } from '../model/alert-center-operation-state';
 
 export function AlertCenterRecovery({
+  canRetry,
   recovery,
   retrying,
   retry
 }: {
+  canRetry: boolean;
   recovery: AlertCenterOperationRecovery | null;
   retrying: boolean;
   retry: () => unknown;
@@ -28,9 +30,11 @@ export function AlertCenterRecovery({
       showIcon
       message={t(recovery.failure === 'unavailable' ? 'common.unavailable' : failureKey)}
       action={
-        <Button size="small" loading={retrying} disabled={retrying} onClick={() => void retry()}>
-          {t('common.retry')}
-        </Button>
+        canRetry ? (
+          <Button size="small" loading={retrying} disabled={retrying} onClick={() => void retry()}>
+            {t('common.retry')}
+          </Button>
+        ) : undefined
       }
     />
   );

@@ -26,10 +26,11 @@ import { AlertCenterRecovery } from '../components/alert-center-recovery';
 import { AlertCenterSummary } from '../components/alert-center-summary';
 import { AlertCenterToolbar } from '../components/alert-center-toolbar';
 import { useAlertCenterController } from '../controller/use-alert-center-controller';
+import { canRetryAlertCenterRecovery } from '../model/alert-capability-model';
 
 export function AlertCenterPage() {
   const controller = useAlertCenterController();
-  const { command, draft, list, query, recovery, refreshing, summary } = controller.state;
+  const { capabilities, command, draft, list, query, recovery, refreshing, summary } = controller.state;
   const busy = command !== 'idle' || recovery !== null;
 
   return (
@@ -49,6 +50,7 @@ export function AlertCenterPage() {
       />
       <AlertCenterSummary state={summary} retry={controller.retrySummary} />
       <AlertCenterBulkActions
+        actionPolicy={capabilities}
         busy={busy}
         selectedGroups={selectedAlertGroups(list, controller.state.selectedIds)}
         actions={{
@@ -60,8 +62,14 @@ export function AlertCenterPage() {
           unacknowledge: controller.unacknowledgeSelected
         }}
       />
-      <AlertCenterRecovery recovery={recovery} retrying={command === 'recovering'} retry={controller.retryOperation} />
+      <AlertCenterRecovery
+        canRetry={canRetryAlertCenterRecovery(capabilities, recovery)}
+        recovery={recovery}
+        retrying={command === 'recovering'}
+        retry={controller.retryOperation}
+      />
       <AlertCenterResults
+        actionPolicy={capabilities}
         onAcknowledge={controller.acknowledge}
         busy={busy}
         state={list}

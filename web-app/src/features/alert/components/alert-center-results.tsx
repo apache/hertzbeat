@@ -17,11 +17,11 @@
 
 import { Alert, Empty, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 
 import styles from '../shared/alert-center.module.css';
+import { hasAlertCenterRowActions, type AlertCenterActionPolicy } from '../model/alert-capability-model';
 import {
   alertPageSizes,
   alertSeverities,
@@ -30,13 +30,15 @@ import {
   type AlertStatus
 } from '../model/alert-model';
 import type { AlertListState } from '../model/alert-center-view-model';
+import { alertCenterActionColumn, type AlertCenterRowActionHandlers } from './alert-center-action-column';
 import { AlertCenterGroupDetails } from './alert-center-group-details';
-import { AlertCenterRowActions } from './alert-center-row-actions';
+import { alertCenterRowSelection } from './alert-center-row-selection';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
 type Translator = (key: string) => string;
 
 type AlertCenterResultsProps = {
+  actionPolicy: AlertCenterActionPolicy;
   onAcknowledge: (group: AlertGroup) => void | Promise<unknown>;
   busy: boolean;
   state: AlertListState;
@@ -52,7 +54,15 @@ type AlertCenterResultsProps = {
   retry: () => unknown;
 };
 
+type AlertCenterColumnsOptions = {
+  t: Translator;
+  actionPolicy: AlertCenterActionPolicy;
+  busy: boolean;
+  actions: AlertCenterRowActionHandlers;
+};
+
 export function AlertCenterResults({
+  actionPolicy,
   onAcknowledge,
   busy,
   state,
@@ -72,11 +82,13 @@ export function AlertCenterResults({
   if (fallback) return fallback;
 
   const records = state.kind === 'ready' ? state.records : [];
-  const total = state.kind === 'ready' ? state.total : 0;
-  const rowSelection: TableRowSelection<AlertGroup> = {
-    selectedRowKeys: selectedIds,
-    getCheckboxProps: () => ({ disabled: busy }),
-    onChange: keys => onSelectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
+  const rowSelection = alertCenterRowSelection(actionPolicy, busy, selectedIds, onSelectIds);
+  const actions = {
+    acknowledge: onAcknowledge,
+    remove: onRemove,
+    resolve: onResolve,
+    reopen: onReopen,
+    unacknowledge: onUnacknowledge
   };
   return (
     <Table<AlertGroup>
@@ -84,8 +96,8 @@ export function AlertCenterResults({
       size="small"
       loading={state.kind === 'loading'}
       dataSource={records}
-      columns={buildColumns(t, busy, onAcknowledge, onRemove, onResolve, onReopen, onUnacknowledge)}
-      rowSelection={rowSelection}
+      columns={buildColumns({ t, actionPolicy, busy, actions })}
+      {...(rowSelection ? { rowSelection } : {})}
       expandable={{
         expandedRowRender: group => <AlertCenterGroupDetails alerts={group.alerts} />,
         rowExpandable: group => group.alerts.length > 0
@@ -96,7 +108,7 @@ export function AlertCenterResults({
         pageSize,
         pageSizeOptions: [...alertPageSizes],
         showSizeChanger: true,
-        total,
+        total: state.kind === 'ready' ? state.total : 0,
         onChange: onPageChange
       }}
     />
@@ -116,16 +128,8 @@ function renderResultFallback(state: AlertListState, t: Translator, retry: () =>
   );
 }
 
-function buildColumns(
-  t: Translator,
-  busy: boolean,
-  onAcknowledge: (group: AlertGroup) => void | Promise<unknown>,
-  onRemove: (group: AlertGroup) => void | Promise<unknown>,
-  onResolve: (group: AlertGroup) => void | Promise<unknown>,
-  onReopen: (group: AlertGroup) => void | Promise<unknown>,
-  onUnacknowledge: (group: AlertGroup) => void | Promise<unknown>
-): ColumnsType<AlertGroup> {
-  return [
+function buildColumns({ t, actionPolicy, busy, actions }: AlertCenterColumnsOptions): ColumnsType<AlertGroup> {
+  const columns: ColumnsType<AlertGroup> = [
     { title: t('alert.name'), render: (_value, row) => alertName(row) },
     {
       title: t('alert.status.label'),
@@ -158,30 +162,17 @@ function buildColumns(
       dataIndex: 'gmtUpdate',
       width: 190,
       render: (value: AlertGroup['gmtUpdate']) => value ?? '—'
-    },
-    {
-      title: t('common.actions'),
-      width: 210,
-      render: (_value, group) => (
-        <AlertCenterRowActions
-          acknowledge={onAcknowledge}
-          busy={busy}
-          group={group}
-          remove={onRemove}
-          resolve={onResolve}
-          reopen={onReopen}
-          unacknowledge={onUnacknowledge}
-        />
-      )
     }
   ];
+  if (!hasAlertCenterRowActions(actionPolicy)) return columns;
+  const actionColumn = alertCenterActionColumn({ t, actionPolicy, busy, actions });
+  return [...columns, actionColumn];
 }
 
 function alertName(row: AlertGroup) {
   return row.commonLabels?.alertname || row.groupLabels?.alertname || `#${row.id}`;
 }
 
-/** Keeps Ant Design presentation tokens out of the Alert domain model. */
 function alertStatusColor(status: AlertStatus) {
   if (status === 'firing') return 'red';
   if (status === 'acknowledged') return 'gold';

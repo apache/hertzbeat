@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
@@ -27,7 +27,6 @@ import {
   readAlertQuery,
   writeAlertQuery,
   type AlertPage,
-  type AlertGroupTargetStatus,
   type AlertQuery,
   type AlertSeverity,
   type AlertStatusFilter,
@@ -40,12 +39,14 @@ import type {
   AlertListState,
   AlertSummaryState
 } from '../model/alert-center-view-model';
-import type { AlertCenterStatusAction } from '../model/alert-center-operation-state';
+import { createAlertCenterActionCommands } from './alert-center-action-admission';
+import { useAlertCapabilities } from './use-alert-capabilities';
 import { useAlertCenterData } from './use-alert-center-data';
 import { useAlertCenterOperationController } from './use-alert-center-operation-controller';
 import { useAlertCenterPageCorrection } from './use-alert-center-page-correction';
 
 export function useAlertCenterController() {
+  const capabilities = useAlertCapabilities();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const query = readAlertQuery(params);
@@ -56,8 +57,12 @@ export function useAlertCenterController() {
   const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
   useAlertCenterPageCorrection(query, listQuery.data, setParams);
   const list = resolveListState(listQuery);
-  const selection = useAuthoritativePageSelection(source, list);
+  const { selectedIds, selectIds } = useAuthoritativePageSelection(source, list);
   const operation = useAlertCenterOperationController(refetchList, refetchSummary);
+
+  useEffect(() => {
+    if (!capabilities.canSelect) selectIds([]);
+  }, [capabilities.canSelect, selectIds]);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));
@@ -66,16 +71,17 @@ export function useAlertCenterController() {
     draft.setValue({ ...draft.value, [field]: value });
   };
   const submitFilters = () => submitAlertFilters(draft.value, updateQuery);
-  const commands = createAlertCenterCommands(operation, list, selection.selectedIds, selection.selectIds);
+  const commands = createAlertCenterActionCommands(capabilities, operation, list, selectedIds, selectIds);
 
   const state: AlertCenterState = {
+    capabilities,
     command: operation.command,
     draft: draft.value,
     list,
     query,
     refreshing: summaryQuery.isFetching || listQuery.isFetching,
     recovery: operation.recovery,
-    selectedIds: selection.selectedIds,
+    selectedIds: capabilities.canSelect ? selectedIds : [],
     summary: resolveSummaryState(summaryQuery)
   };
 
@@ -92,51 +98,10 @@ export function useAlertCenterController() {
       }),
     retryList: refetchList,
     retrySummary: refetchSummary,
-    selectIds: selection.selectIds,
     ...commands,
     refresh,
     manageRules: () => void navigate(alertRoutePaths.rules)
   };
-}
-
-function createAlertCenterCommands(
-  operation: ReturnType<typeof useAlertCenterOperationController>,
-  list: AlertListState,
-  selectedIds: number[],
-  selectIds: (ids: number[]) => void
-) {
-  const updateSelectedStatus = (
-    source: AlertGroupTargetStatus,
-    target: AlertGroupTargetStatus,
-    action: AlertCenterStatusAction
-  ) => {
-    const ids = selectedAlertIdsByStatus(list, selectedIds, source);
-    return ids.length > 0 ? operation.updateStatus(ids, target, action) : Promise.resolve(false);
-  };
-  return {
-    clearSelection: () => selectIds([]),
-    retryOperation: operation.retry,
-    acknowledge: (group: { id: number }) => operation.updateStatus([group.id], 'acknowledged', 'acknowledge'),
-    acknowledgeSelected: () => updateSelectedStatus('firing', 'acknowledged', 'acknowledge'),
-    remove: (group: { id: number }) => operation.remove([group.id]),
-    removeSelected: () => operation.remove(selectedIds),
-    resolve: (group: { id: number }) => operation.updateStatus([group.id], 'resolved', 'resolve'),
-    resolveSelected: () => updateSelectedStatus('firing', 'resolved', 'resolve'),
-    reopen: (group: { id: number }) => operation.updateStatus([group.id], 'firing', 'reopen'),
-    reopenSelected: () => updateSelectedStatus('resolved', 'firing', 'reopen'),
-    unacknowledge: (group: { id: number }) => operation.updateStatus([group.id], 'firing', 'unacknowledge'),
-    unacknowledgeSelected: () => updateSelectedStatus('acknowledged', 'firing', 'unacknowledge')
-  };
-}
-
-function selectedAlertIdsByStatus(
-  list: AlertListState,
-  selectedIds: readonly number[],
-  status: AlertGroupTargetStatus
-) {
-  if (list.kind !== 'ready') return [];
-  const selected = new Set(selectedIds);
-  return list.records.filter(group => selected.has(group.id) && group.status === status).map(group => group.id);
 }
 
 function submitAlertFilters(draft: AlertFilterDraft, updateQuery: (patch: Partial<AlertQuery>) => void) {

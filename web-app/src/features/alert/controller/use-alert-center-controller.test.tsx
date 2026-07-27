@@ -48,6 +48,9 @@ vi.mock('../api/alert-api', () => ({
 }));
 vi.mock('@refinedev/core', () => ({ useNotification: () => ({ open: api.notification }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('./use-alert-capabilities', () => ({
+  useAlertCapabilities: () => ({ canUpdateStatus: true, canDeleteGroups: true, canSelect: true })
+}));
 
 const summary: AlertSummary = {
   total: 3,

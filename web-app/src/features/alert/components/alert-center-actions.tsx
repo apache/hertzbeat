@@ -9,6 +9,7 @@ import { Button, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertGroup } from '../model/alert-model';
+import type { AlertCenterActionPolicy } from '../model/alert-capability-model';
 import styles from '../shared/alert-center.module.css';
 import { AlertCenterConfirmedAction } from './alert-center-confirmed-action';
 
@@ -22,10 +23,12 @@ type BulkActions = {
 };
 
 export function AlertCenterBulkActions({
+  actionPolicy,
   busy,
   selectedGroups,
   actions
 }: {
+  actionPolicy: AlertCenterActionPolicy;
   busy: boolean;
   selectedGroups: AlertGroup[];
   actions: BulkActions;
@@ -33,20 +36,24 @@ export function AlertCenterBulkActions({
   const { t } = useTranslation();
   const counts = countSelectedStatuses(selectedGroups);
   const selectedCount = selectedGroups.length;
-  if (selectedCount === 0) return null;
+  if (!actionPolicy.canSelect || selectedCount === 0) return null;
   return (
     <div className={styles.bulkActions}>
       <Typography.Text>{t('alert.selected', { count: selectedCount })}</Typography.Text>
       <Space wrap size="small">
-        <AlertCenterBulkStatusActions busy={busy} counts={counts} actions={actions} />
-        <AlertCenterConfirmedAction
-          danger
-          label={t('alert.deleteSelected')}
-          confirm={t('alert.deleteSelectedConfirm', { count: selectedCount })}
-          confirmLabel={t('alert.confirmDelete')}
-          disabled={busy}
-          run={actions.remove}
-        />
+        {actionPolicy.canUpdateStatus ? (
+          <AlertCenterBulkStatusActions busy={busy} counts={counts} actions={actions} />
+        ) : null}
+        {actionPolicy.canDeleteGroups ? (
+          <AlertCenterConfirmedAction
+            danger
+            label={t('alert.deleteSelected')}
+            confirm={t('alert.deleteSelectedConfirm', { count: selectedCount })}
+            confirmLabel={t('alert.confirmDelete')}
+            disabled={busy}
+            run={actions.remove}
+          />
+        ) : null}
         <Button size="small" disabled={busy} onClick={actions.clear}>
           {t('common.clear')}
         </Button>

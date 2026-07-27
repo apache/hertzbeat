@@ -281,6 +281,7 @@ describe('AlertCenterPage', () => {
 
 function buildState(override: Record<string, unknown> = {}) {
   return {
+    capabilities: { canUpdateStatus: true, canDeleteGroups: true, canSelect: true },
     draft: { search: '', serviceName: '', serviceNamespace: '', environment: '' },
     list: { kind: 'ready', records: [record], total: 1 },
     query: {
