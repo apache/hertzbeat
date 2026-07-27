@@ -21,8 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.HashSet;
@@ -87,20 +91,31 @@ class AlertServiceTest {
                 .status(CommonConstants.ALERT_STATUS_RESOLVED)
                 .alertFingerprints(List.of("fingerprint-1"))
                 .build();
+        GroupAlert secondGroupAlert = GroupAlert.builder()
+                .id(2L)
+                .status(CommonConstants.ALERT_STATUS_RESOLVED)
+                .alertFingerprints(List.of())
+                .build();
+        GroupAlert thirdGroupAlert = GroupAlert.builder()
+                .id(3L)
+                .status(CommonConstants.ALERT_STATUS_RESOLVED)
+                .alertFingerprints(List.of())
+                .build();
+        List<GroupAlert> groupAlerts = List.of(groupAlert, secondGroupAlert, thirdGroupAlert);
         SingleAlert singleAlert = SingleAlert.builder()
                 .id(1L)
                 .fingerprint("fingerprint-1")
                 .status(CommonConstants.ALERT_STATUS_RESOLVED)
                 .endAt(1L)
                 .build();
-        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+        when(groupAlertDao.findAllById(ids)).thenReturn(groupAlerts);
         when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-1"))).thenReturn(List.of(singleAlert));
 
         assertDoesNotThrow(() -> alertService.editGroupAlertStatus(status, ids));
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, singleAlert.getStatus());
         assertNull(singleAlert.getEndAt());
-        verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
+        verify(groupAlertDao, times(1)).saveAll(groupAlerts);
         verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
     }
 
@@ -155,6 +170,40 @@ class AlertServiceTest {
         assertNull(singleAlert.getEndAt());
         verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
         verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
+    }
+
+    @Test
+    void editGroupAlertStatusRejectsPartialMissingTargetsBeforeWrites() {
+        List<Long> ids = List.of(1L, 2L);
+        GroupAlert existingAlert = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .alertFingerprints(List.of("fingerprint-1"))
+                .build();
+        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(existingAlert));
+
+        assertThrows(AlertGroupNotFoundException.class,
+                () -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
+
+        verify(groupAlertDao, never()).saveAll(anyList());
+        verifyNoInteractions(singleAlertDao);
+    }
+
+    @Test
+    void editGroupAlertStatusRemainsIdempotentWhenStatusAlreadyApplied() {
+        List<Long> ids = List.of(1L);
+        GroupAlert groupAlert = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_ACKNOWLEDGED)
+                .alertFingerprints(List.of())
+                .build();
+        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids));
+
+        assertEquals(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, groupAlert.getStatus());
+        verify(groupAlertDao).saveAll(List.of(groupAlert));
+        verifyNoInteractions(singleAlertDao);
     }
 
     @Test

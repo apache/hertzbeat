@@ -32,6 +32,7 @@ import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -184,9 +185,15 @@ public class AlertServiceImpl implements AlertService {
         if (!StringUtils.hasText(status) || ids == null || ids.isEmpty()) {
             return;
         }
-        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(ids);
-        if (groupAlerts.isEmpty()) {
-            return;
+        List<Long> requestedIds = ids.stream().distinct().toList();
+        if (requestedIds.contains(null)) {
+            throw new AlertGroupNotFoundException();
+        }
+        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(requestedIds);
+        List<Long> foundIds = groupAlerts.stream().map(GroupAlert::getId).distinct().toList();
+        // Batch status changes are all-or-nothing so clients cannot treat a partial update as authoritative success.
+        if (foundIds.size() != requestedIds.size() || !foundIds.containsAll(requestedIds)) {
+            throw new AlertGroupNotFoundException();
         }
         long now = Instant.now().toEpochMilli();
         List<String> fingerprints = groupAlerts.stream()

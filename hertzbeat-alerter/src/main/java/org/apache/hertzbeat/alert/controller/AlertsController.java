@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -46,6 +48,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
+
+    private static final String ALERT_GROUP_NOT_FOUND_MESSAGE = "Alert group was not found.";
+    private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
 
     @Autowired
     private AlertService alertService;
@@ -98,11 +103,16 @@ public class AlertsController {
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
             @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && status != null && !ids.isEmpty()) {
-            alertService.editGroupAlertStatus(status, ids);
+        try {
+            if (ids != null && status != null && !ids.isEmpty()) {
+                alertService.editGroupAlertStatus(status, ids);
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
     }
 
     @PutMapping(path = "/status/{status}")

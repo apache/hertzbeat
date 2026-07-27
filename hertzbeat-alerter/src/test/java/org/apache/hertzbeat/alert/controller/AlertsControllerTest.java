@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -145,6 +148,36 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
                 .andReturn();
+    }
+
+    @Test
+    void applyGroupAlertStatusMissingTargetReturnsStableSafeFailure() throws Exception {
+        Mockito.doThrow(new AlertGroupNotFoundException())
+                .when(alertService).editGroupAlertStatus("acknowledged", List.of(6565463543L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/acknowledged")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group was not found."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusGenericFailureDoesNotExposeExceptionDetails() throws Exception {
+        Mockito.doThrow(new IllegalStateException(
+                        "token=private-alert-token payload=private-alert-payload"))
+                .when(alertService).editGroupAlertStatus("resolved", List.of(7L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/resolved")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group status update failed."))
+                .andExpect(content().string(not(containsString("private-alert-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
     }
 
     @Test
