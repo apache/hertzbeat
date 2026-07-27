@@ -92,6 +92,21 @@ describe('Collector intake advertisement request', () => {
     {
       capabilities: ['otlp_grpc'],
       otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http:telemetry.example.test:4317'
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http:/telemetry.example.test:4317'
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'http:///telemetry.example.test:4317'
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
       otlpGrpcEndpoint: 'https://telemetry.example.test:4317',
       token: 'must-not-enter-request'
     }

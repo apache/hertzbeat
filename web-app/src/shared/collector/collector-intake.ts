@@ -156,6 +156,7 @@ export function parseExactCollectorInstrumentationIntake(
 }
 
 export function isSafeCollectorIntakeEndpoint(value: string) {
+  if (!/^https?:\/\/[^/\s]/iu.test(value)) return false;
   try {
     const endpoint = new URL(value);
     return (
