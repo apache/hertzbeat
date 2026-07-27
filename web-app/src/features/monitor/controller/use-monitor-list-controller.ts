@@ -18,11 +18,9 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useSession } from '@/core/auth/session-context';
 import { useQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
-import { monitorCapabilities } from '../model/monitor-capability-model';
 import {
   monitorAppOptions,
   monitorSelectionScope,
@@ -32,6 +30,7 @@ import {
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
 import { useMonitorExport } from './use-monitor-export';
+import { useMonitorCapabilities } from './use-monitor-capabilities';
 import { useMonitorImport } from './use-monitor-import';
 import { useMonitorListCommands } from './use-monitor-list-commands';
 import { useMonitorListNavigation } from './use-monitor-list-navigation';
@@ -43,8 +42,7 @@ import { useMonitorSelection } from './use-monitor-selection';
 export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor-list-resources';
 
 export function useMonitorListController() {
-  const session = useSession().session;
-  const capabilities = monitorCapabilities(session?.roles ?? []);
+  const capabilities = useMonitorCapabilities();
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();

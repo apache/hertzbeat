@@ -2274,6 +2274,8 @@
       "newTitle": "新增監控",
       "editTitle": "編輯監控",
       "description": "設定監控並檢測連線，確認後儲存。",
+      "permissionTitle": "需要監控寫入權限",
+      "permissionDescription": "目前帳號可以檢視監控，但不能新增或編輯監控。",
       "interval": "採集間隔（秒）",
       "collector": "採集器",
       "collectorDefault": "使用預設採集器",

@@ -2191,6 +2191,8 @@
       "newTitle": "新建监控",
       "editTitle": "编辑监控",
       "description": "配置监控并检测连通性，确认后保存。",
+      "permissionTitle": "需要监控写入权限",
+      "permissionDescription": "当前账号可以查看监控，但不能新建或编辑监控。",
       "interval": "采集间隔（秒）",
       "collector": "采集器",
       "collectorDefault": "使用默认采集器",

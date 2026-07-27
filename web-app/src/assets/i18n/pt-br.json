@@ -2297,6 +2297,8 @@
       "newTitle": "Novo monitor",
       "editTitle": "Editar monitor",
       "description": "Configure o monitor, teste a conexão e salve.",
+      "permissionTitle": "Permissão de gravação de monitor necessária",
+      "permissionDescription": "Sua conta pode visualizar monitores, mas não pode criá-los ou editá-los.",
       "interval": "Intervalo (segundos)",
       "collector": "Coletor",
       "collectorDefault": "Usar coletor padrão",

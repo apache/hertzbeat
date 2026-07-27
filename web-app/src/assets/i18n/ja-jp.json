@@ -2295,6 +2295,8 @@
       "newTitle": "監視を追加",
       "editTitle": "監視を編集",
       "description": "監視を設定し、接続をテストしてから保存します。",
+      "permissionTitle": "監視の書き込み権限が必要です",
+      "permissionDescription": "このアカウントでは監視を表示できますが、作成または編集はできません。",
       "interval": "間隔（秒）",
       "collector": "コレクター",
       "collectorDefault": "既定のコレクターを使用",

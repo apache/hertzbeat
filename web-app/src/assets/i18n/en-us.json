@@ -2210,6 +2210,8 @@
       "newTitle": "New monitor",
       "editTitle": "Edit monitor",
       "description": "Configure the monitor, test connectivity, then save.",
+      "permissionTitle": "Monitor write access required",
+      "permissionDescription": "Your account can view monitors but cannot create or edit them.",
       "interval": "Interval (seconds)",
       "collector": "Collector",
       "collectorDefault": "Use default collector",
