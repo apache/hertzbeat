@@ -404,7 +404,7 @@ contract.
                 "dependencies": [
                   {
                     "name": "open-telemetry/sdk",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/sdk#1.14.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/sdk",
                     "version": "1.14.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.sdk",
@@ -413,7 +413,7 @@ contract.
                   },
                   {
                     "name": "open-telemetry/exporter-otlp",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/exporter-otlp#1.4.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/exporter-otlp",
                     "version": "1.4.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.exporter",
@@ -422,7 +422,7 @@ contract.
                   },
                   {
                     "name": "open-telemetry/opentelemetry-auto-psr18",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/opentelemetry-auto-psr18#1.2.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/opentelemetry-auto-psr18",
                     "version": "1.2.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.framework_instrumentation",
@@ -458,7 +458,7 @@ contract.
                 "dependencies": [
                   {
                     "name": "open-telemetry/sdk",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/sdk#1.14.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/sdk",
                     "version": "1.14.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.sdk",
@@ -467,7 +467,7 @@ contract.
                   },
                   {
                     "name": "open-telemetry/exporter-otlp",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/exporter-otlp#1.4.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/exporter-otlp",
                     "version": "1.4.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.exporter",
@@ -476,7 +476,7 @@ contract.
                   },
                   {
                     "name": "open-telemetry/opentelemetry-auto-laravel",
-                    "sourceUrl": "https://packagist.org/packages/open-telemetry/opentelemetry-auto-laravel#1.7.0",
+                    "sourceUrl": "https://packagist.org/packages/open-telemetry/opentelemetry-auto-laravel",
                     "version": "1.7.0",
                     "license": "Apache-2.0",
                     "purposeKey": "instrumentation.dependency.framework_instrumentation",
