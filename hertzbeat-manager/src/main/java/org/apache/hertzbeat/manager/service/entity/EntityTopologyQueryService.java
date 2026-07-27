@@ -50,6 +50,8 @@ public class EntityTopologyQueryService {
     private static final int DEFAULT_TOPOLOGY_ENTITY_LIMIT = 64;
     private static final int MAX_TOPOLOGY_EDGE_PAGE_SIZE = 200;
     private static final int IMPACT_TIMELINE_LIMIT = 12;
+    private static final String PARTIAL_REASON_ENTITY_SEED_LIMIT = "entity_seed_limit";
+    private static final String PARTIAL_REASON_EDGE_PAGE = "edge_page";
     private static final String SOURCE_KIND_ENTITY_RELATION = "entity-relation";
     private static final String SOURCE_KIND_MONITOR_BIND = "monitor-bind";
     private static final String SOURCE_KIND_OTLP_TRACE_CALL = "otlp-trace-call";
@@ -124,6 +126,7 @@ public class EntityTopologyQueryService {
         graph.setFocusEntityId(focusEntityId);
         graph.setDepth(depth);
         graph.setSourceKinds(List.of());
+        initializeEdgePageEvidence(graph, pageIndex, pageSize);
         if (focusEntityId == null) {
             return buildDefaultTopologyGraph(graph, depth, environment, normalizedSourceKind,
                     sourceSelection, start, end, normalizedRelationType, hideInternal, pageIndex, pageSize);
@@ -160,9 +163,11 @@ public class EntityTopologyQueryService {
                 ? collectMonitorBinds(entityById.keySet())
                 : List.of();
         Map<Long, Monitor> monitorById = monitorMap(monitorBinds);
-        List<EntityTopologyGraphInfo.Edge> visibleEdges = filterAndPageEdges(
+        EdgePageResult edgePageResult = filterAndPageEdges(
                 buildEdges(relations, entityById.keySet(), monitorBinds, monitorById, traceCallEdges),
                 normalizedRelationType, hideInternal, pageIndex, pageSize);
+        List<EntityTopologyGraphInfo.Edge> visibleEdges = edgePageResult.edges();
+        applyEdgePageEvidence(graph, edgePageResult);
         graph.setSourceKinds(buildSourceKinds(normalizedSourceKind, visibleEdges));
         graph.setNodes(filterNodesByVisibleEdges(
                 buildNodes(entityById, monitorBinds, monitorById, focusEntityId, traceCallEdges),
@@ -183,7 +188,11 @@ public class EntityTopologyQueryService {
                                                               Boolean hideInternal,
                                                               Integer pageIndex,
                                                               Integer pageSize) {
-        List<ObserveEntity> seedEntities = defaultSeedEntities(environment);
+        DefaultSeedSelection seedSelection = defaultSeedEntities(environment);
+        List<ObserveEntity> seedEntities = seedSelection.entities();
+        if (seedSelection.partial()) {
+            addPartialReason(graph, PARTIAL_REASON_ENTITY_SEED_LIMIT);
+        }
         if (seedEntities.isEmpty()) {
             return graph;
         }
@@ -218,9 +227,11 @@ public class EntityTopologyQueryService {
                 ? collectMonitorBinds(entityById.keySet())
                 : List.of();
         Map<Long, Monitor> monitorById = monitorMap(monitorBinds);
-        List<EntityTopologyGraphInfo.Edge> visibleEdges = filterAndPageEdges(
+        EdgePageResult edgePageResult = filterAndPageEdges(
                 buildEdges(relations, entityById.keySet(), monitorBinds, monitorById, traceCallEdges),
                 relationType, hideInternal, pageIndex, pageSize);
+        List<EntityTopologyGraphInfo.Edge> visibleEdges = edgePageResult.edges();
+        applyEdgePageEvidence(graph, edgePageResult);
         graph.setSourceKinds(buildSourceKinds(sourceKind, visibleEdges));
         graph.setNodes(filterNodesByVisibleEdges(
                 buildNodes(entityById, monitorBinds, monitorById, null, traceCallEdges),
@@ -230,17 +241,23 @@ public class EntityTopologyQueryService {
         return graph;
     }
 
-    private List<ObserveEntity> defaultSeedEntities(String environment) {
+    private DefaultSeedSelection defaultSeedEntities(String environment) {
         Sort sort = Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id"));
         List<ObserveEntity> entities = entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
-                PageRequest.of(0, DEFAULT_TOPOLOGY_ENTITY_LIMIT, sort));
+                PageRequest.of(0, DEFAULT_TOPOLOGY_ENTITY_LIMIT + 1, sort));
         if (entities == null) {
-            return List.of();
+            return new DefaultSeedSelection(List.of(), false);
         }
-        return entities.stream()
+        boolean partial = entities.size() > DEFAULT_TOPOLOGY_ENTITY_LIMIT;
+        List<ObserveEntity> retained = entities.stream()
+                .limit(DEFAULT_TOPOLOGY_ENTITY_LIMIT)
                 .filter(entity -> entity.getId() != null)
                 .filter(entity -> matchesEnvironment(entity, environment))
                 .toList();
+        return new DefaultSeedSelection(retained, partial);
+    }
+
+    private record DefaultSeedSelection(List<ObserveEntity> entities, boolean partial) {
     }
 
     private TraceCallTopologyReadModel traceCallTopologyReadModel(Collection<ObserveEntity> seedEntities,
@@ -652,27 +669,75 @@ public class EntityTopologyQueryService {
         return edges;
     }
 
-    private List<EntityTopologyGraphInfo.Edge> filterAndPageEdges(List<EntityTopologyGraphInfo.Edge> edges,
-                                                                  String relationType,
-                                                                  Boolean hideInternal,
-                                                                  Integer pageIndex,
-                                                                  Integer pageSize) {
+    private EdgePageResult filterAndPageEdges(List<EntityTopologyGraphInfo.Edge> edges,
+                                              String relationType,
+                                              Boolean hideInternal,
+                                              Integer pageIndex,
+                                              Integer pageSize) {
         List<EntityTopologyGraphInfo.Edge> filtered = edges.stream()
                 .filter(edge -> matchesRelationType(edge, relationType))
                 .filter(edge -> !isInternalEdge(edge, hideInternal))
                 .toList();
+        int normalizedPageIndex = normalizePageIndex(pageIndex);
         int normalizedPageSize = normalizePageSize(pageSize);
         if (normalizedPageSize <= 0) {
-            return filtered;
+            return new EdgePageResult(filtered,
+                    new EntityTopologyGraphInfo.EdgePage(normalizedPageIndex, 0, filtered.size(), false),
+                    normalizedPageIndex > 0);
         }
-        int offset = normalizePageIndex(pageIndex) * normalizedPageSize;
+        long offset = (long) normalizedPageIndex * normalizedPageSize;
+        List<EntityTopologyGraphInfo.Edge> visible;
         if (offset >= filtered.size()) {
-            return List.of();
+            visible = List.of();
+        } else {
+            visible = filtered.stream()
+                    .skip(offset)
+                    .limit(normalizedPageSize)
+                    .toList();
         }
-        return filtered.stream()
-                .skip(offset)
-                .limit(normalizedPageSize)
-                .toList();
+        boolean hasNext = offset + visible.size() < filtered.size();
+        boolean partial = normalizedPageIndex > 0 || hasNext;
+        return new EdgePageResult(visible,
+                new EntityTopologyGraphInfo.EdgePage(
+                        normalizedPageIndex, normalizedPageSize, filtered.size(), hasNext),
+                partial);
+    }
+
+    private void applyEdgePageEvidence(EntityTopologyGraphInfo graph, EdgePageResult result) {
+        graph.setEdgePage(result.page());
+        if (result.partial()) {
+            addPartialReason(graph, PARTIAL_REASON_EDGE_PAGE);
+        }
+    }
+
+    private void addPartialReason(EntityTopologyGraphInfo graph, String reason) {
+        graph.setPartial(true);
+        Set<String> reasons = new LinkedHashSet<>(graph.getPartialReasons());
+        reasons.add(reason);
+        LinkedHashSet<String> stableReasons = new LinkedHashSet<>();
+        if (reasons.contains(PARTIAL_REASON_ENTITY_SEED_LIMIT)) {
+            stableReasons.add(PARTIAL_REASON_ENTITY_SEED_LIMIT);
+        }
+        if (reasons.contains(PARTIAL_REASON_EDGE_PAGE)) {
+            stableReasons.add(PARTIAL_REASON_EDGE_PAGE);
+        }
+        graph.setPartialReasons(stableReasons);
+    }
+
+    private void initializeEdgePageEvidence(EntityTopologyGraphInfo graph,
+                                            Integer pageIndex,
+                                            Integer pageSize) {
+        int normalizedPageIndex = normalizePageIndex(pageIndex);
+        graph.setEdgePage(new EntityTopologyGraphInfo.EdgePage(
+                normalizedPageIndex, normalizePageSize(pageSize), 0, false));
+        if (normalizedPageIndex > 0) {
+            addPartialReason(graph, PARTIAL_REASON_EDGE_PAGE);
+        }
+    }
+
+    private record EdgePageResult(List<EntityTopologyGraphInfo.Edge> edges,
+                                  EntityTopologyGraphInfo.EdgePage page,
+                                  boolean partial) {
     }
 
     private List<EntityTopologyGraphInfo.Node> filterNodesByVisibleEdges(

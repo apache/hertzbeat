@@ -236,9 +236,15 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
                 candidateMessage);
         validate(binary, prepared.active(), home, logFile, environment);
         Process recovered = launchAndAwait(binary, prepared.active(), home, logFile, environment);
-        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage,
-                prepared.previousActiveRevision(), activeConfig);
-        rejectDesiredConfig(prepared.desiredRevision(), candidateMessage);
+        boolean recoveredDesiredRevision = prepared.previousActiveRevision() > 0
+                && prepared.previousActiveRevision() == prepared.desiredRevision();
+        markRunning(recovered, snapshot.restartCount() + 1,
+                recoveredDesiredRevision ? "" : candidateMessage,
+                prepared.previousActiveRevision(),
+                recoveredDesiredRevision ? properties.desiredConfig() : activeConfig);
+        if (!recoveredDesiredRevision) {
+            rejectDesiredConfig(prepared.desiredRevision(), candidateMessage);
+        }
         return true;
     }
 
@@ -304,7 +310,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             }
             Thread.sleep(HEALTH_POLL_MILLIS);
         }
-        throw new IllegalStateException("HertzBeat telemetry runtime did not become ready at " + healthEndpoint);
+        throw new IllegalStateException("HertzBeat telemetry runtime did not become ready");
     }
 
     private Map<String, String> environment() {

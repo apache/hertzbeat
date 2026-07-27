@@ -98,10 +98,10 @@ public class DashboardController {
     public ResponseEntity<Message<String>> deleteDashboardByMonitorId(@RequestParam Long monitorId) {
         try {
             dashboardService.deleteDashboard(monitorId);
-        } catch (Exception e) {
-            log.error("delete dashboard error", e);
+        } catch (Exception ignored) {
+            log.error("delete dashboard error");
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
         }
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
+        return ResponseEntity.ok(Message.success("delete dashboard success"));
     }
 }

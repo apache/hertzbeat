@@ -225,10 +225,95 @@ class EntityTopologyQueryServiceTest {
         verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
                 pageable != null
                         && pageable.isPaged()
-                        && pageable.getPageSize() == 64
+                        && pageable.getPageSize() == 65
                         && pageable.getSort().getOrderFor("gmtUpdate") != null
                         && pageable.getSort().getOrderFor("id") != null));
         verify(entityWorkspaceAccessService, never()).findAccessibleEntitiesForRequestWorkspace(any(Sort.class));
+    }
+
+    @Test
+    void reportsDefaultEntitySeedTruncationWithoutProcessingTheProbeEntity() {
+        List<ObserveEntity> candidates = new java.util.ArrayList<>();
+        for (long id = 1; id <= 65; id++) {
+            candidates.add(entity(id, "service", "service-" + id, "commerce", "prod", "healthy"));
+        }
+        List<ObserveEntity> retained = candidates.subList(0, 64);
+
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+                .thenReturn(candidates);
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.size() == 64 && ids.contains(1L) && ids.contains(64L) && !ids.contains(65L))))
+                .thenReturn(retained);
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "otlp-trace-call");
+
+        assertTrue(graph.isPartial());
+        assertEquals(Set.of("entity_seed_limit"), graph.getPartialReasons());
+        assertEquals(64, graph.getNodes().size());
+        assertFalse(graph.getNodes().stream().anyMatch(node -> Long.valueOf(65L).equals(node.getEntityId())));
+        assertEquals(0, graph.getEdgePage().getPageIndex());
+        assertEquals(0, graph.getEdgePage().getPageSize());
+        assertEquals(0, graph.getEdgePage().getTotalElements());
+        assertFalse(graph.getEdgePage().isHasNext());
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
+                pageable != null && pageable.getPageSize() == 65));
+    }
+
+    @Test
+    void reportsFocusedEdgePageEvidenceWithoutEntitySeedReason() {
+        ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
+        ObserveEntity payment = entity(20L, "service", "payment-api", "commerce", "prod", "healthy");
+        ObserveEntity orders = entity(30L, "database", "orders-db", "commerce", "prod", "healthy");
+        ObserveEntity cache = entity(40L, "middleware", "cache", "commerce", "prod", "healthy");
+        List<EntityRelation> relations = List.of(
+                relation(101L, 10L, 20L, "depends_on", "manual", 92),
+                relation(102L, 10L, 30L, "depends_on", "manual", 91),
+                relation(103L, 10L, 40L, "depends_on", "manual", 90));
+
+        when(entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(10L))
+                .thenReturn(Optional.of(checkout));
+        when(entityRelationQueryService.findEntityRelations(10L)).thenReturn(relations);
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.containsAll(List.of(10L, 20L, 30L, 40L)))))
+                .thenReturn(List.of(checkout, payment, orders, cache));
+
+        EntityTopologyGraphInfo firstPage = entityTopologyQueryService.buildFocusedTopology(
+                10L, 1, "prod", "entity-relation", null, null, "depends_on", false, 0, 2);
+        EntityTopologyGraphInfo secondPage = entityTopologyQueryService.buildFocusedTopology(
+                10L, 1, "prod", "entity-relation", null, null, "depends_on", false, 1, 2);
+
+        assertTrue(firstPage.isPartial());
+        assertEquals(Set.of("edge_page"), firstPage.getPartialReasons());
+        assertEquals(2, firstPage.getEdges().size());
+        assertEquals(0, firstPage.getEdgePage().getPageIndex());
+        assertEquals(2, firstPage.getEdgePage().getPageSize());
+        assertEquals(3, firstPage.getEdgePage().getTotalElements());
+        assertTrue(firstPage.getEdgePage().isHasNext());
+
+        assertTrue(secondPage.isPartial());
+        assertEquals(Set.of("edge_page"), secondPage.getPartialReasons());
+        assertEquals(1, secondPage.getEdges().size());
+        assertEquals(1, secondPage.getEdgePage().getPageIndex());
+        assertEquals(2, secondPage.getEdgePage().getPageSize());
+        assertEquals(3, secondPage.getEdgePage().getTotalElements());
+        assertFalse(secondPage.getEdgePage().isHasNext());
+    }
+
+    @Test
+    void preservesRequestedEdgePageEvidenceWhenFocusedGraphIsEmpty() {
+        when(entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(999L))
+                .thenReturn(Optional.empty());
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                999L, 1, "prod", "entity-relation", null, null, null, false, 2, 25);
+
+        assertTrue(graph.isPartial());
+        assertEquals(Set.of("edge_page"), graph.getPartialReasons());
+        assertEquals(2, graph.getEdgePage().getPageIndex());
+        assertEquals(25, graph.getEdgePage().getPageSize());
+        assertEquals(0, graph.getEdgePage().getTotalElements());
+        assertFalse(graph.getEdgePage().isHasNext());
     }
 
     @Test
@@ -274,7 +359,7 @@ class EntityTopologyQueryServiceTest {
         verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
                 pageable != null
                         && pageable.isPaged()
-                        && pageable.getPageSize() == 64
+                        && pageable.getPageSize() == 65
                         && pageable.getSort().getOrderFor("gmtUpdate") != null
                         && pageable.getSort().getOrderFor("id") != null));
         verify(traceCallTopologyQueryService, never()).findTraceCallEdges(any(), any(), any(), any(), any());
@@ -325,6 +410,12 @@ class EntityTopologyQueryServiceTest {
         assertEquals(List.of(10L, 20L, 30L),
                 graph.getNodes().stream().map(EntityTopologyGraphInfo.Node::getEntityId).toList());
         assertEquals(2, graph.getEdges().size());
+        assertFalse(graph.isPartial());
+        assertEquals(Set.of(), graph.getPartialReasons());
+        assertEquals(0, graph.getEdgePage().getPageIndex());
+        assertEquals(0, graph.getEdgePage().getPageSize());
+        assertEquals(2, graph.getEdgePage().getTotalElements());
+        assertFalse(graph.getEdgePage().isHasNext());
         assertTrue(graph.getNodes().stream().filter(EntityTopologyGraphInfo.Node::isFocus).anyMatch(node ->
                 Long.valueOf(10L).equals(node.getEntityId())
                         && "checkout-api".equals(node.getEntityName())
