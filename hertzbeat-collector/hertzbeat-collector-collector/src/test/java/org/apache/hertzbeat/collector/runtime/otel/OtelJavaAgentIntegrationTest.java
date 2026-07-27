@@ -331,6 +331,22 @@ class OtelJavaAgentIntegrationTest {
     }
 
     private static Path downloadVerifiedAgent(ExternalLanguageProcessHarness harness) throws Exception {
+        Path mavenCacheAgent = Path.of(
+                System.getProperty("user.home"),
+                ".m2",
+                "repository",
+                "io",
+                "opentelemetry",
+                "javaagent",
+                "opentelemetry-javaagent",
+                JAVA_AGENT_VERSION,
+                "opentelemetry-javaagent-" + JAVA_AGENT_VERSION + ".jar");
+        // Reuse the official Maven artifact when available. The digest check preserves the
+        // interoperability boundary without repeatedly depending on an external download.
+        if (Files.isRegularFile(mavenCacheAgent)
+                && JAVA_AGENT_SHA256.equals(sha256(mavenCacheAgent))) {
+            return mavenCacheAgent;
+        }
         Path cache = Files.createDirectories(harness.resolve("java-agent-cache"));
         Path agentJar = cache.resolve("opentelemetry-javaagent-" + JAVA_AGENT_VERSION + ".jar");
         HttpRequest request = HttpRequest.newBuilder(JAVA_AGENT_URI)
