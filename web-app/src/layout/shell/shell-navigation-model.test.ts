@@ -130,6 +130,16 @@ describe('shell navigation model', () => {
         timePolicy: 'none'
       })
     ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.tokens',
+        navigation: true,
+        order: 20,
+        requiredRole: ['ADMIN'],
+        timePolicy: 'none'
+      })
+    ).toBeUndefined();
   });
 });
 

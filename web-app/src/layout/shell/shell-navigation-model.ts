@@ -7,6 +7,7 @@
 
 import type { Action, IResourceItem } from '@refinedev/core';
 import type { ReactNode } from 'react';
+import { z } from 'zod';
 
 import type { TimeOwnership } from '@/shared/time';
 
@@ -14,46 +15,35 @@ export type ShellCapability = 'supported' | 'unknown' | 'unsupported';
 export type ShellTimePolicy = TimeOwnership;
 export type ShellResourceAction = Action;
 
-export type ShellResourceMeta = {
-  capability: ShellCapability;
-  label?: string;
-  labelKey: string;
-  navigation: boolean;
-  order: number;
-  requiredRoles?: string[];
-  timePolicy: ShellTimePolicy;
-  actionTimePolicies?: Partial<Record<ShellResourceAction, ShellTimePolicy>>;
-};
+const shellTimePolicySchema = z.enum(['global', 'route_owned', 'none', 'unknown']);
+const shellActionTimePoliciesSchema = z
+  .object({
+    create: shellTimePolicySchema.optional(),
+    edit: shellTimePolicySchema.optional(),
+    list: shellTimePolicySchema.optional(),
+    show: shellTimePolicySchema.optional(),
+    clone: shellTimePolicySchema.optional()
+  })
+  .strict();
+const shellResourceMetaSchema = z
+  .object({
+    capability: z.enum(['supported', 'unknown', 'unsupported']),
+    label: z.string().optional(),
+    labelKey: z.string(),
+    navigation: z.boolean(),
+    order: z.number().int().nonnegative(),
+    requiredRoles: z.array(z.string()).optional(),
+    timePolicy: shellTimePolicySchema,
+    actionTimePolicies: shellActionTimePoliciesSchema.optional()
+  })
+  .strict();
 
-const shellCapabilities: readonly ShellCapability[] = ['supported', 'unknown', 'unsupported'];
-const shellTimePolicies: readonly ShellTimePolicy[] = ['global', 'route_owned', 'none', 'unknown'];
-const shellResourceActions: readonly ShellResourceAction[] = ['create', 'edit', 'list', 'show', 'clone'];
+export type ShellResourceMeta = z.output<typeof shellResourceMetaSchema>;
 
 /** Reads HertzBeat-owned metadata from Refine's intentionally untyped extension bag. */
 export function readShellResourceMeta(value: unknown): ShellResourceMeta | undefined {
-  const fields = {
-    capability: property(value, 'capability'),
-    labelKey: property(value, 'labelKey'),
-    label: optionalString(property(value, 'label')),
-    navigation: property(value, 'navigation'),
-    order: property(value, 'order'),
-    timePolicy: property(value, 'timePolicy')
-  };
-  if (!validShellResourceFields(fields)) return undefined;
-  const { capability, label, labelKey, navigation, order, timePolicy } = fields;
-  const requiredRoles = stringArray(property(value, 'requiredRoles'));
-  const actionTimePolicies = readActionTimePolicies(property(value, 'actionTimePolicies'));
-  if (requiredRoles === null || actionTimePolicies === null) return undefined;
-  return {
-    capability,
-    ...optionalLabel(label),
-    labelKey,
-    navigation,
-    order,
-    timePolicy,
-    ...(requiredRoles ? { requiredRoles } : {}),
-    ...(actionTimePolicies ? { actionTimePolicies } : {})
-  };
+  const result = shellResourceMetaSchema.safeParse(value);
+  return result.success ? result.data : undefined;
 }
 
 export function resolveShellTimePolicy(shell: ShellResourceMeta | undefined, action: ShellResourceAction | undefined) {
@@ -103,73 +93,6 @@ export function buildShellNavigation(resources: readonly IResourceItem[]) {
   });
   sortNavigation(roots);
   return roots;
-}
-
-type RawShellResourceFields = {
-  capability: unknown;
-  label: string | undefined | null;
-  labelKey: unknown;
-  navigation: unknown;
-  order: unknown;
-  timePolicy: unknown;
-};
-
-type ValidShellResourceFields = {
-  capability: ShellCapability;
-  label: string | undefined;
-  labelKey: string;
-  navigation: boolean;
-  order: number;
-  timePolicy: ShellTimePolicy;
-};
-
-function validShellResourceFields(fields: RawShellResourceFields): fields is ValidShellResourceFields {
-  return (
-    isMember(shellCapabilities, fields.capability) &&
-    typeof fields.labelKey === 'string' &&
-    fields.label !== null &&
-    typeof fields.navigation === 'boolean' &&
-    typeof fields.order === 'number' &&
-    Number.isSafeInteger(fields.order) &&
-    fields.order >= 0 &&
-    isMember(shellTimePolicies, fields.timePolicy)
-  );
-}
-
-function readActionTimePolicies(value: unknown): ShellResourceMeta['actionTimePolicies'] | null {
-  if (value === undefined) return undefined;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  if (Object.keys(value).some(key => !shellResourceActions.some(action => action === key))) return null;
-  const policies: Partial<Record<ShellResourceAction, ShellTimePolicy>> = {};
-  for (const action of shellResourceActions) {
-    const policy = property(value, action);
-    if (policy === undefined) continue;
-    if (!isMember(shellTimePolicies, policy)) return null;
-    policies[action] = policy;
-  }
-  return policies;
-}
-
-function stringArray(value: unknown): string[] | undefined | null {
-  if (value === undefined) return undefined;
-  return Array.isArray(value) && value.every(item => typeof item === 'string') ? value : null;
-}
-
-function optionalString(value: unknown): string | undefined | null {
-  if (value === undefined) return undefined;
-  return typeof value === 'string' ? value : null;
-}
-
-function optionalLabel(label: string | undefined) {
-  return label === undefined ? {} : { label };
-}
-
-function property(value: unknown, key: PropertyKey): unknown {
-  return value && typeof value === 'object' ? Reflect.get(value, key) : undefined;
-}
-
-function isMember<T extends string>(values: readonly T[], value: unknown): value is T {
-  return typeof value === 'string' && values.some(candidate => candidate === value);
 }
 
 export function activeNavigationTrail(tree: readonly ShellNavigationItem[], location: string) {
