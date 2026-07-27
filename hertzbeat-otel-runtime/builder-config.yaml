@@ -11,6 +11,9 @@ dist:
   version: 2.0.0-phase1
   build_tags: remove_all_sd
 
+replaces:
+  - golang.org/x/text => golang.org/x/text v0.39.0
+
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.156.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.156.0
