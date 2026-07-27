@@ -85,6 +85,15 @@ class SqlServerJdbcTemplateIntegrationTest {
 
     @BeforeAll
     void setUp() throws Exception {
+        // Checked before the Docker probe so the skip costs nothing: Microsoft ships
+        // no arm64 image for SQL Server on Linux -- 2017, 2019 and 2022 are all
+        // amd64-only.  Under emulation on Apple Silicon sqlservr crashes during
+        // startup (core dump, never logs "ready for client connections"), and
+        // Rosetta does not help.  This is not a timeout to be tuned: the full
+        // version matrix runs on the amd64 CI runners instead.
+        Assumptions.assumeFalse(
+                "aarch64".equals(System.getProperty("os.arch")),
+                "SQL Server has no arm64 image; matrix runs on amd64 CI");
         Assumptions.assumeTrue(
                 DockerClientFactory.instance().isDockerAvailable(),
                 "Docker is required for integration tests");
