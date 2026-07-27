@@ -37,6 +37,9 @@ vi.mock('./notice-rule-query-controller', () => ({
     replacePageIndex: mocks.replacePageIndex
   })
 }));
+vi.mock('./use-notice-rule-action-capabilities', () => ({
+  useNoticeRuleActionCapabilities: () => ({ canCreate: true, canEdit: true, canToggle: true, canDelete: true })
+}));
 
 import { useNoticeRuleController } from './notice-rule-controller';
 import { NoticeRuleContractError, NoticeRuleRequestFailure } from '../model/notice-rule-failure';

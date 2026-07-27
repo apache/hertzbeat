@@ -4,7 +4,9 @@ import type { DataProvider } from '@refinedev/core';
 
 import type { NoticeRule } from '../model/notice-rule-model';
 import type { NoticeRuleFailureKind } from '../model/notice-rule-failure';
-import type { NoticeRuleCommandGate, NoticeRuleEditorController } from './notice-rule-editor-controller';
+import type { NoticeRuleActionCapabilities } from '../model/notice-rule-action-capability';
+import type { NoticeRuleCommandGate } from './notice-rule-command-gate';
+import type { NoticeRuleEditorController } from './notice-rule-editor-controller';
 import type { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
 
 type WriteFailure = Exclude<NoticeRuleFailureKind, 'missing'>;
@@ -19,6 +21,7 @@ export type NoticeRuleCommandNotifications = {
 };
 
 export type NoticeRuleCommandContext = {
+  capabilities: NoticeRuleActionCapabilities;
   list: ReturnType<typeof useNoticeRuleList>;
   options: ReturnType<typeof useNoticeRuleOptions>;
   provider: DataProvider;

@@ -12,100 +12,8 @@ import {
 } from '../model/notice-rule-model';
 import { noticeRuleReceiverPatch } from '../model/notice-rule-delivery-model';
 import { noticeRuleFailureKind, type NoticeRuleDetailState } from '../model/notice-rule-failure';
-import type { NoticeRuleOperationReceipt, NoticeRuleOperationRecovery } from '../model/notice-rule-operation-state';
-
-type Command = 'saving' | 'deleting' | 'toggling';
-type MutableReference<T> = { current: T };
-
-export function useNoticeRuleCommandGate() {
-  const ownerAliveRef = useRef(false);
-  const commandRef = useRef<'idle' | Command>('idle');
-  const receiptRef = useRef<NoticeRuleOperationReceipt | undefined>(undefined);
-  const [command, setCommand] = useState<'idle' | 'recovering' | Command>('idle');
-  const [togglingRuleId, setTogglingRuleId] = useState<number | null>(null);
-  const [recovery, setRecovery] = useState<NoticeRuleOperationRecovery>();
-  useCommandGateLifetime(ownerAliveRef, commandRef, receiptRef);
-  const begin = (next: Command, ruleId: number | null = null) => {
-    // React state is not synchronous; the ref closes the same-tick command race.
-    if (!ownerAliveRef.current || commandRef.current !== 'idle' || receiptRef.current) return false;
-    commandRef.current = next;
-    setCommand(next);
-    setTogglingRuleId(ruleId);
-    return true;
-  };
-  const beginRecovery = () => {
-    const receipt = receiptRef.current;
-    if (!ownerAliveRef.current || commandRef.current !== 'idle' || !receipt || receipt.phase === 'commit-uncertain') {
-      return undefined;
-    }
-    const next = receipt.kind === 'delete' ? 'deleting' : receipt.kind === 'toggle' ? 'toggling' : 'saving';
-    commandRef.current = next;
-    setCommand(next);
-    setTogglingRuleId(receipt.kind === 'toggle' ? receipt.id : null);
-    return receipt;
-  };
-  const retain = (receipt: NoticeRuleOperationReceipt) => {
-    if (ownerAliveRef.current && commandRef.current !== 'idle') receiptRef.current = receipt;
-  };
-  const clear = () => {
-    receiptRef.current = undefined;
-    if (ownerAliveRef.current) setRecovery(undefined);
-  };
-  const markRecovery = (failure: NoticeRuleOperationRecovery['failure']) => {
-    publishRecovery(ownerAliveRef.current, receiptRef.current, failure, setRecovery);
-  };
-  const end = () => {
-    commandRef.current = 'idle';
-    if (ownerAliveRef.current) {
-      setCommand(receiptRef.current ? 'recovering' : 'idle');
-      setTogglingRuleId(null);
-    }
-  };
-  return {
-    command,
-    togglingRuleId,
-    recovery,
-    begin,
-    beginRecovery,
-    retain,
-    clear,
-    markRecovery,
-    end,
-    isLocked: () => commandRef.current !== 'idle' || receiptRef.current !== undefined,
-    isOwnerAlive: () => ownerAliveRef.current
-  };
-}
-
-function useCommandGateLifetime(
-  ownerAliveRef: MutableReference<boolean>,
-  commandRef: MutableReference<'idle' | Command>,
-  receiptRef: MutableReference<NoticeRuleOperationReceipt | undefined>
-) {
-  useEffect(() => {
-    ownerAliveRef.current = true;
-    return () => {
-      ownerAliveRef.current = false;
-      commandRef.current = 'idle';
-      receiptRef.current = undefined;
-    };
-  }, [commandRef, ownerAliveRef, receiptRef]);
-}
-
-function publishRecovery(
-  ownerAlive: boolean,
-  receipt: NoticeRuleOperationReceipt | undefined,
-  failure: NoticeRuleOperationRecovery['failure'],
-  publish: Dispatch<SetStateAction<NoticeRuleOperationRecovery | undefined>>
-) {
-  if (!ownerAlive || !receipt || receipt.phase === 'write') return;
-  if (receipt.phase === 'commit-uncertain') {
-    publish({ kind: receipt.kind, phase: receipt.phase, failure: 'commit-uncertain', retryable: false });
-  } else if (failure !== 'commit-uncertain') {
-    publish({ kind: receipt.kind, phase: receipt.phase, failure, retryable: true });
-  }
-}
-
-export type NoticeRuleCommandGate = ReturnType<typeof useNoticeRuleCommandGate>;
+import type { NoticeRuleActionCapabilities } from '../model/notice-rule-action-capability';
+import type { NoticeRuleCommandGate } from './notice-rule-command-gate';
 
 type NoticeRuleEditorOptions = {
   ready: boolean;
@@ -113,19 +21,25 @@ type NoticeRuleEditorOptions = {
   templates: NoticeTemplate[];
 };
 
-export function useNoticeRuleEditorController(
-  gate: NoticeRuleCommandGate,
-  options: NoticeRuleEditorOptions,
-  loadDetail: (id: number) => Promise<NoticeRule>
-) {
+export function useNoticeRuleEditorController({
+  capabilities,
+  gate,
+  loadDetail,
+  options
+}: {
+  capabilities: NoticeRuleActionCapabilities;
+  gate: NoticeRuleCommandGate;
+  loadDetail: (id: number) => Promise<NoticeRule>;
+  options: NoticeRuleEditorOptions;
+}) {
   const [draft, setDraft] = useState<NoticeRuleDraft | null>(null);
   const detail = useNoticeRuleDetail({ gate, loadDetail, setDraft });
   const edit = (id: number) => {
-    if (!options.ready) return Promise.resolve();
+    if (!capabilities.canEdit || !options.ready) return Promise.resolve();
     return detail.edit(id);
   };
   const create = () => {
-    if (gate.isLocked() || !options.ready) return;
+    if (!capabilities.canCreate || gate.isLocked() || !options.ready) return;
     detail.invalidate();
     setDraft(createNoticeRuleDraft());
   };

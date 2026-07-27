@@ -25,9 +25,11 @@ import {
   proveNoticeRuleReceipt,
   scanNoticeRulesByName
 } from './notice-rule-operation-proof';
+import { canPersistNoticeRule, canPerformRetainedNoticeRuleAction } from './notice-rule-action-admission';
 import type { NoticeRuleCommandContext } from './notice-rule-command-types';
 
 export async function persistNoticeRule(context: NoticeRuleCommandContext, draft: NoticeRuleDraft | null) {
+  if (!canPersistNoticeRule(context.capabilities, draft)) return false;
   if (context.options.kind !== 'ready') return false;
   if (!draft || !validMutation(draft, context)) {
     context.notify.validation();
@@ -50,6 +52,7 @@ export async function persistNoticeRule(context: NoticeRuleCommandContext, draft
 }
 
 export async function toggleNoticeRule(context: NoticeRuleCommandContext, rule: NoticeRule, enable: boolean) {
+  if (!context.capabilities.canToggle) return false;
   if (context.options.kind !== 'ready' || !context.gate.begin('toggling', rule.id)) return false;
   try {
     const current = await context.loadDetail(rule.id);
@@ -74,6 +77,7 @@ export async function toggleNoticeRule(context: NoticeRuleCommandContext, rule: 
 }
 
 export async function removeNoticeRule(context: NoticeRuleCommandContext, rule: NoticeRule) {
+  if (!context.capabilities.canDelete) return false;
   if (!context.gate.begin('deleting')) return false;
   const receipt: NoticeRuleOperationReceipt = { kind: 'delete', phase: 'write', id: rule.id };
   context.gate.retain(receipt);
@@ -86,6 +90,7 @@ export async function removeNoticeRule(context: NoticeRuleCommandContext, rule: 
 }
 
 export async function retryNoticeRuleOperation(context: NoticeRuleCommandContext) {
+  if (!canPerformRetainedNoticeRuleAction(context.capabilities, context.gate.retainedReceipt())) return false;
   const receipt = context.gate.beginRecovery();
   if (!receipt) return false;
   try {

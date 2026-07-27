@@ -15,7 +15,7 @@ export function useNoticeRuleController() {
   const options = useNoticeRuleOptions();
   const list = useNoticeRuleList(queryController.query);
   useNoticeRulePageCorrection(queryController.query, list.state, queryController.replacePageIndex);
-  const commandController = useNoticeRuleCommandController(list, options);
+  const commandController = useNoticeRuleCommandController({ list, options });
   const { gate, editor } = commandController;
 
   return {

@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import type { NoticeRule } from '../model/notice-rule-model';
 import { noticeRuleDetailMismatchFailure } from '../model/notice-rule-failure';
 import { noticeRuleResourceName } from '../notice-rule-resource';
-import { useNoticeRuleCommandGate, useNoticeRuleEditorController } from './notice-rule-editor-controller';
+import { useNoticeRuleCommandGate } from './notice-rule-command-gate';
+import { useNoticeRuleEditorController } from './notice-rule-editor-controller';
 import type { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
 import type { NoticeRuleCommandNotifications } from './notice-rule-command-types';
 import {
@@ -15,14 +16,19 @@ import {
   retryNoticeRuleOperation,
   toggleNoticeRule
 } from './notice-rule-write-operations';
+import { useNoticeRuleActionCapabilities } from './use-notice-rule-action-capabilities';
 
-export function useNoticeRuleCommandController(
-  list: ReturnType<typeof useNoticeRuleList>,
-  options: ReturnType<typeof useNoticeRuleOptions>
-) {
+export function useNoticeRuleCommandController({
+  list,
+  options
+}: {
+  list: ReturnType<typeof useNoticeRuleList>;
+  options: ReturnType<typeof useNoticeRuleOptions>;
+}) {
   const { t } = useTranslation();
   const notification = useNotification();
   const provider = useDataProvider()(noticeRuleResourceName);
+  const capabilities = useNoticeRuleActionCapabilities();
   const gate = useNoticeRuleCommandGate();
   const notify: NoticeRuleCommandNotifications = {
     validation: () => notification.open?.({ message: t('noticeRules.validation'), type: 'error' }),
@@ -42,16 +48,17 @@ export function useNoticeRuleCommandController(
     if (response.data.id !== id) throw noticeRuleDetailMismatchFailure();
     return response.data;
   };
-  const editor = useNoticeRuleEditorController(
+  const editor = useNoticeRuleEditorController({
+    capabilities,
     gate,
-    {
+    loadDetail,
+    options: {
       ready: options.kind === 'ready',
       receivers: options.receivers,
       templates: options.templates
-    },
-    loadDetail
-  );
-  const context = { list, options, provider, gate, editor, loadDetail, notify };
+    }
+  });
+  const context = { capabilities, list, options, provider, gate, editor, loadDetail, notify };
   return {
     gate,
     editor,
