@@ -31,13 +31,15 @@ export function MonitorRowActions({
   open,
   run,
   disabled,
-  canWrite
+  canWrite,
+  canDelete
 }: {
   monitor: Monitor;
   open: (id: number, mode: 'view' | 'edit') => void;
   run: Runner;
   disabled: boolean;
   canWrite: boolean;
+  canDelete: boolean;
 }) {
   const { t } = useTranslation();
   const toggle: MonitorAction = monitor.status === monitorStatusCodes.paused ? 'enable' : 'pause';
@@ -47,24 +49,31 @@ export function MonitorRowActions({
       <Button type="link" disabled={disabled} onClick={() => open(monitor.id, 'view')}>
         {t('common.view')}
       </Button>
-      <Button type="link" disabled={disabled} onClick={() => open(monitor.id, 'edit')}>
-        {t('common.edit')}
-      </Button>
       {canWrite ? (
-        <Button type="link" disabled={disabled} onClick={() => void run('copy', [monitor.id])}>
-          {t('monitorActions.copy')}
-        </Button>
+        <>
+          <Button type="link" disabled={disabled} onClick={() => open(monitor.id, 'edit')}>
+            {t('common.edit')}
+          </Button>
+          <Button type="link" disabled={disabled} onClick={() => void run('copy', [monitor.id])}>
+            {t('monitorActions.copy')}
+          </Button>
+          <Popconfirm
+            title={t(toggleConfirmKey, { name: monitor.name })}
+            onConfirm={() => void run(toggle, [monitor.id])}
+          >
+            <Button type="link" disabled={disabled}>
+              {t(`monitorActions.${toggle}`)}
+            </Button>
+          </Popconfirm>
+        </>
       ) : null}
-      <Popconfirm title={t(toggleConfirmKey, { name: monitor.name })} onConfirm={() => void run(toggle, [monitor.id])}>
-        <Button type="link" disabled={disabled}>
-          {t(`monitorActions.${toggle}`)}
-        </Button>
-      </Popconfirm>
-      <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete', [monitor.id])}>
-        <Button type="link" danger disabled={disabled}>
-          {t('monitorActions.delete')}
-        </Button>
-      </Popconfirm>
+      {canDelete ? (
+        <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete', [monitor.id])}>
+          <Button type="link" danger disabled={disabled}>
+            {t('monitorActions.delete')}
+          </Button>
+        </Popconfirm>
+      ) : null}
     </Space>
   );
 }
@@ -73,6 +82,8 @@ export function MonitorBulkActions({
   selectedIds,
   run,
   exportSelected,
+  canWrite,
+  canDelete,
   canExport,
   clearSelection,
   disabled
@@ -80,39 +91,47 @@ export function MonitorBulkActions({
   selectedIds: number[];
   run: (action: MonitorAction) => void | Promise<void>;
   exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
+  canWrite: boolean;
+  canDelete: boolean;
   canExport: boolean;
   clearSelection: () => void;
   disabled: boolean;
 }) {
   const { t } = useTranslation();
-  if (selectedIds.length === 0) return null;
+  if (selectedIds.length === 0 || (!canWrite && !canDelete && !canExport)) return null;
   return (
     <div className={styles.bulk}>
       <Typography.Text>{t('monitorActions.selected', { count: selectedIds.length })}</Typography.Text>
       <Space>
-        <Popconfirm
-          title={t('monitorActions.selectedEnableConfirm', { count: selectedIds.length })}
-          onConfirm={() => void run('enable')}
-        >
-          <Button disabled={disabled}>{t('monitorActions.enable')}</Button>
-        </Popconfirm>
-        <Popconfirm
-          title={t('monitorActions.selectedPauseConfirm', { count: selectedIds.length })}
-          onConfirm={() => void run('pause')}
-        >
-          <Button disabled={disabled}>{t('monitorActions.pause')}</Button>
-        </Popconfirm>
+        {canWrite ? (
+          <>
+            <Popconfirm
+              title={t('monitorActions.selectedEnableConfirm', { count: selectedIds.length })}
+              onConfirm={() => void run('enable')}
+            >
+              <Button disabled={disabled}>{t('monitorActions.enable')}</Button>
+            </Popconfirm>
+            <Popconfirm
+              title={t('monitorActions.selectedPauseConfirm', { count: selectedIds.length })}
+              onConfirm={() => void run('pause')}
+            >
+              <Button disabled={disabled}>{t('monitorActions.pause')}</Button>
+            </Popconfirm>
+          </>
+        ) : null}
         {canExport ? (
           <MonitorExportButton label={t('monitor.export.selected')} disabled={disabled} onExport={exportSelected} />
         ) : null}
         <Button disabled={disabled} onClick={clearSelection}>
           {t('monitorActions.clearSelection')}
         </Button>
-        <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete')}>
-          <Button danger disabled={disabled}>
-            {t('monitorActions.delete')}
-          </Button>
-        </Popconfirm>
+        {canDelete ? (
+          <Popconfirm title={t('monitorActions.deleteConfirm')} onConfirm={() => void run('delete')}>
+            <Button danger disabled={disabled}>
+              {t('monitorActions.delete')}
+            </Button>
+          </Popconfirm>
+        ) : null}
       </Space>
     </div>
   );

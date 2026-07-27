@@ -11,7 +11,6 @@ import type { PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 const exportApi = vi.hoisted(() => ({ requestMonitorExport: vi.fn() }));
@@ -39,7 +38,7 @@ describe('useMonitorExport', () => {
   });
 
   it('exports selected monitors and all monitors for an administrator', async () => {
-    const view = renderHook(() => useMonitorExport([7, 8]), { wrapper: wrapper(['ADMIN']) });
+    const view = renderHook(() => useMonitorExport([7, 8], { canExport: true }), { wrapper });
 
     await act(() => view.result.current.exportSelected('JSON'));
     await act(() => view.result.current.exportAll('EXCEL'));
@@ -60,7 +59,7 @@ describe('useMonitorExport', () => {
   });
 
   it('does not admit export without the backend-required administrator role', async () => {
-    const view = renderHook(() => useMonitorExport([7]), { wrapper: wrapper(['USER']) });
+    const view = renderHook(() => useMonitorExport([7], { canExport: false }), { wrapper });
 
     expect(view.result.current.canExport).toBe(false);
     await act(() => view.result.current.exportSelected('JSON'));
@@ -71,7 +70,7 @@ describe('useMonitorExport', () => {
   });
 
   it('does not send an empty selected export request', async () => {
-    const view = renderHook(() => useMonitorExport([]), { wrapper: wrapper(['ADMIN']) });
+    const view = renderHook(() => useMonitorExport([], { canExport: true }), { wrapper });
 
     await act(() => view.result.current.exportSelected('JSON'));
 
@@ -79,20 +78,10 @@ describe('useMonitorExport', () => {
   });
 });
 
-function wrapper(roles: string[]) {
-  return function MonitorExportWrapper({ children }: PropsWithChildren) {
-    return (
-      <I18nextProvider i18n={i18n}>
-        <SessionContext.Provider
-          value={{
-            session: { authenticated: true, username: 'operator', workspaceId: null, roles, expiresAt: null },
-            loading: false,
-            retry: () => undefined
-          }}
-        >
-          <App>{children}</App>
-        </SessionContext.Provider>
-      </I18nextProvider>
-    );
-  };
+function wrapper({ children }: PropsWithChildren) {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <App>{children}</App>
+    </I18nextProvider>
+  );
 }

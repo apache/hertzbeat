@@ -32,23 +32,30 @@ vi.mock('../api/monitor-api', async importOriginal => ({
 
 import { useMonitorListCommands } from './use-monitor-list-commands';
 
-describe('useMonitorListCommands copy permission', () => {
+describe('useMonitorListCommands permissions', () => {
   beforeAll(async () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
   beforeEach(() => vi.clearAllMocks());
 
-  it('fails closed before the API when a direct copy handler lacks capability', async () => {
+  it.each([
+    ['copy', { canWrite: false, canDelete: false }],
+    ['enable', { canWrite: false, canDelete: false }],
+    ['pause', { canWrite: false, canDelete: false }],
+    ['delete', { canWrite: true, canDelete: false }]
+  ] as const)('fails closed before API, selection, and reread for denied %s', async (action, capabilities) => {
     const selection = { remove: vi.fn(), validatedIds: vi.fn(() => [7]) };
-    const view = renderHook(() => useMonitorListCommands('page=0', vi.fn(), selection, { canWrite: false }), {
+    const reread = vi.fn();
+    const view = renderHook(() => useMonitorListCommands('page=0', reread, selection, capabilities), {
       wrapper
     });
 
-    await act(() => view.result.current.run('copy', [7]));
+    await act(() => view.result.current.run(action, [7]));
 
     expect(api.mutateMonitors).not.toHaveBeenCalled();
     expect(selection.remove).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
   });
 });
 

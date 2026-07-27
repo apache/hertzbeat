@@ -24,15 +24,20 @@ export type MonitorCapabilities = {
   canWrite: boolean;
   canDelete: boolean;
   canExport: boolean;
+  canSelect: boolean;
 };
 
 /** Mirrors the shipped Sureness monitor policy for feature action admission. */
 export function monitorCapabilities(roles: readonly string[]): MonitorCapabilities {
+  const canWrite = hasAnyRole(roles, monitorWriteRoles);
+  const canDelete = hasAnyRole(roles, monitorAdministratorRoles);
+  const canExport = hasAnyRole(roles, monitorAdministratorRoles);
   return {
     canRead: hasAnyRole(roles, monitorReadRoles),
-    canWrite: hasAnyRole(roles, monitorWriteRoles),
-    canDelete: hasAnyRole(roles, monitorAdministratorRoles),
-    canExport: hasAnyRole(roles, monitorAdministratorRoles)
+    canWrite,
+    canDelete,
+    canExport,
+    canSelect: canWrite || canDelete || canExport
   };
 }
 

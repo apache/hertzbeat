@@ -9,16 +9,15 @@ import { App } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useSession } from '@/core/auth/session-context';
-
 import { MonitorExportError, requestMonitorExport } from '../api/monitor-export-api';
+import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import { saveMonitorExport } from '../model/monitor-export-download';
 import type { MonitorExportFormat, MonitorExportScope } from '../model/monitor-export-model';
 
-export function useMonitorExport(selectedIds: number[]) {
+export function useMonitorExport(selectedIds: number[], capabilities: Pick<MonitorCapabilities, 'canExport'>) {
   const { message } = App.useApp();
   const { t } = useTranslation();
-  const canExport = useSession().session?.roles.includes('ADMIN') ?? false;
+  const { canExport } = capabilities;
   const active = useRef<AbortController | null>(null);
   const mounted = useRef(true);
   const [exporting, setExporting] = useState(false);

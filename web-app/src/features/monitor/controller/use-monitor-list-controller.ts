@@ -56,9 +56,10 @@ export function useMonitorListController() {
   const records = displayPage?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
   const commands = useMonitorListCommands(source, reread, selection, capabilities);
-  const navigation = useMonitorListNavigation(query);
-  const monitorExport = useMonitorExport(selection.selectedIds);
-  const monitorImport = useMonitorImport(reread, () => selection.selectIds([]));
+  const navigation = useMonitorListNavigation(query, capabilities);
+  const monitorExport = useMonitorExport(selection.selectedIds, capabilities);
+  const monitorImport = useMonitorImport(reread, capabilities, () => selection.selectIds([]));
+  const selectionActions = monitorSelectionActions(capabilities.canSelect, selection.selectIds);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     state: {
@@ -96,8 +97,19 @@ export function useMonitorListController() {
       cancelImport: monitorImport.actions.cancel,
       selectImportFile: monitorImport.actions.selectFile,
       submitImport: monitorImport.actions.submit,
-      selectIds: selection.selectIds,
-      clearSelection: () => selection.selectIds([])
+      selectIds: selectionActions.selectIds,
+      clearSelection: selectionActions.clearSelection
+    }
+  };
+}
+
+function monitorSelectionActions(canSelect: boolean, selectIds: (ids: number[]) => void) {
+  return {
+    selectIds: (ids: number[]) => {
+      if (canSelect) selectIds(ids);
+    },
+    clearSelection: () => {
+      if (canSelect) selectIds([]);
     }
   };
 }

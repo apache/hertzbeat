@@ -72,14 +72,18 @@ describe('MonitorListView evidence states', () => {
   });
 
   it('keeps permission-gated header management actions absent', () => {
-    renderView({ canExport: false, monitors: { kind: 'empty' } });
+    renderView({
+      capabilities: { canRead: true, canWrite: false, canDelete: false, canExport: false, canSelect: false },
+      canExport: false,
+      monitors: { kind: 'empty' }
+    });
 
     const header = requireDomElement(
       document.querySelector('[data-hb-operational-page-header]'),
       'Operational page header'
     );
     expect(header).toContainElement(screen.getByRole('link', { name: i18n.t('monitor.help') }));
-    expect(header).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    expect(screen.queryByRole('button', { name: i18n.t('monitor.editor.newTitle') })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: i18n.t('monitor.import.action') })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: i18n.t('monitor.export.all') })).not.toBeInTheDocument();
   });
@@ -377,7 +381,7 @@ function renderView(
     selectedIds: [],
     operating: false,
     refreshing: false,
-    capabilities: { canRead: true, canWrite: true, canDelete: true, canExport: true },
+    capabilities: { canRead: true, canWrite: true, canDelete: true, canExport: true, canSelect: true },
     canExport: false,
     monitorImport: { canImport: false, draft: null, invalid: null, failure: null, busy: false },
     apps: { kind: 'ready', options: [] },

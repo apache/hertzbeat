@@ -21,7 +21,6 @@ import type { PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 const api = vi.hoisted(() => ({ importMonitorConfig: vi.fn() }));
@@ -48,7 +47,7 @@ describe('useMonitorImport', () => {
     const reread = vi.fn().mockResolvedValue(undefined);
     const onImported = vi.fn();
     const file = new File(['[]'], 'monitors.json');
-    const view = renderHook(() => useMonitorImport(reread, onImported), { wrapper: wrapper(['ADMIN']) });
+    const view = renderHook(() => useMonitorImport(reread, { canWrite: true }, onImported), { wrapper });
 
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(file));
@@ -61,7 +60,7 @@ describe('useMonitorImport', () => {
   });
 
   it('clears an unsubmitted file on cancel without writing', () => {
-    const view = renderHook(() => useMonitorImport(vi.fn()), { wrapper: wrapper(['ADMIN']) });
+    const view = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }), { wrapper });
 
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(new File(['[]'], 'monitors.json')));
@@ -71,16 +70,21 @@ describe('useMonitorImport', () => {
     expect(api.importMonitorConfig).not.toHaveBeenCalled();
   });
 
-  it('allows server-authorized users, blocks guests, and preserves safe failure kinds', async () => {
-    const allowed = renderHook(() => useMonitorImport(vi.fn()), { wrapper: wrapper(['USER']) });
+  it('allows a server-authorized user to open the import draft', () => {
+    const allowed = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }), { wrapper });
     act(() => allowed.result.current.actions.open());
     expect(allowed.result.current.state.draft).toEqual({ file: null });
+  });
 
-    const denied = renderHook(() => useMonitorImport(vi.fn()), { wrapper: wrapper(['GUEST']) });
+  it('keeps a guest direct open inert', () => {
+    const denied = renderHook(() => useMonitorImport(vi.fn(), { canWrite: false }), { wrapper });
     act(() => denied.result.current.actions.open());
     expect(denied.result.current.state.draft).toBeNull();
+    expect(api.importMonitorConfig).not.toHaveBeenCalled();
+  });
 
-    const admin = renderHook(() => useMonitorImport(vi.fn()), { wrapper: wrapper(['ADMIN']) });
+  it('preserves validation and safe API failure kinds', async () => {
+    const admin = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }), { wrapper });
     act(() => admin.result.current.actions.open());
     act(() => admin.result.current.actions.selectFile(new File(['x'], 'monitors.yml')));
     await act(() => admin.result.current.actions.submit());
@@ -93,20 +97,10 @@ describe('useMonitorImport', () => {
   });
 });
 
-function wrapper(roles: string[]) {
-  return function MonitorImportWrapper({ children }: PropsWithChildren) {
-    return (
-      <I18nextProvider i18n={i18n}>
-        <SessionContext.Provider
-          value={{
-            session: { authenticated: true, username: 'operator', workspaceId: null, roles, expiresAt: null },
-            loading: false,
-            retry: () => undefined
-          }}
-        >
-          <App>{children}</App>
-        </SessionContext.Provider>
-      </I18nextProvider>
-    );
-  };
+function wrapper({ children }: PropsWithChildren) {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <App>{children}</App>
+    </I18nextProvider>
+  );
 }

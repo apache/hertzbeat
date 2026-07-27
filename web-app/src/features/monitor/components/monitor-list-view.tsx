@@ -39,7 +39,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         actions={
           <MonitorListManagementActions
             disabled={state.operating}
-            canImport={state.monitorImport.canImport}
+            canWrite={state.capabilities.canWrite}
             canExport={state.canExport}
             create={actions.create}
             openImport={actions.openImport}
@@ -59,6 +59,8 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         selectedIds={state.selectedIds}
         run={actions.runBulk}
         exportSelected={actions.exportSelected}
+        canWrite={state.capabilities.canWrite}
+        canDelete={state.capabilities.canDelete}
         canExport={state.canExport}
         clearSelection={actions.clearSelection}
         disabled={state.operating}
@@ -69,6 +71,8 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         selectedIds={state.selectedIds}
         operating={state.operating}
         canWrite={state.capabilities.canWrite}
+        canDelete={state.capabilities.canDelete}
+        canSelect={state.capabilities.canSelect}
         actions={actions}
       />
       <MonitorImportDialog

@@ -54,6 +54,8 @@ export function MonitorListResults({
   selectedIds,
   operating,
   canWrite,
+  canDelete,
+  canSelect,
   actions
 }: {
   evidence: MonitorListEvidence;
@@ -61,6 +63,8 @@ export function MonitorListResults({
   selectedIds: number[];
   operating: boolean;
   canWrite: boolean;
+  canDelete: boolean;
+  canSelect: boolean;
   actions: MonitorResultActions;
 }) {
   const { t } = useTranslation();
@@ -79,13 +83,14 @@ export function MonitorListResults({
     getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };
+  const selectionProps = canSelect ? { rowSelection } : {};
   return (
     <Table<MonitorListRow>
+      {...selectionProps}
       rowKey="id"
       size="small"
       dataSource={evidence.records}
-      columns={columns(t, query, actions, operating, canWrite)}
-      rowSelection={rowSelection}
+      columns={columns(t, query, actions, operating, canWrite, canDelete)}
       rowClassName={row => (isMonitorRowDisappeared(row) ? disappearedRowClassName : '')}
       onChange={monitorTableChange(actions.changeSort)}
       pagination={{
@@ -118,7 +123,8 @@ function columns(
   query: MonitorQuery,
   actions: MonitorResultActions,
   operating: boolean,
-  canWrite: boolean
+  canWrite: boolean,
+  canDelete: boolean
 ): ColumnsType<MonitorListRow> {
   return [
     ...monitorIdentityColumns(t, monitorTableSortOrder(query, 'name'), actions, operating),
@@ -149,6 +155,7 @@ function columns(
           run={actions.run}
           disabled={operating || isMonitorRowDisappeared(row)}
           canWrite={canWrite}
+          canDelete={canDelete}
         />
       )
     }

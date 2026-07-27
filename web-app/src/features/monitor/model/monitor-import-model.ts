@@ -16,7 +16,6 @@
  */
 
 const monitorImportExtensions = ['.json', '.xlsx', '.yaml'] as const;
-const monitorImportRoles = new Set(['ADMIN', 'USER']);
 
 export const monitorImportAccept = monitorImportExtensions.join(',');
 
@@ -30,10 +29,6 @@ export type MonitorImportState = {
   failure: MonitorImportFailureKind | null;
   busy: boolean;
 };
-
-export function userCanImportMonitors(roles: readonly string[]) {
-  return roles.some(role => monitorImportRoles.has(role));
-}
 
 export function validateMonitorImportFile(
   file: File | null

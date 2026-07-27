@@ -17,16 +17,9 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { userCanImportMonitors, validateMonitorImportFile } from './monitor-import-model';
+import { validateMonitorImportFile } from './monitor-import-model';
 
 describe('monitor import model', () => {
-  it('matches the server import roles without granting guest access', () => {
-    expect(userCanImportMonitors(['ADMIN'])).toBe(true);
-    expect(userCanImportMonitors(['USER'])).toBe(true);
-    expect(userCanImportMonitors(['GUEST'])).toBe(false);
-    expect(userCanImportMonitors([])).toBe(false);
-  });
-
   it.each(['monitors.json', 'monitors.xlsx', 'monitors.yaml', 'MONITORS.JSON'])(
     'accepts a non-empty backend-supported %s file',
     name => {

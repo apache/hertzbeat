@@ -34,7 +34,7 @@ export function useMonitorListCommands(
   source: string,
   reread: () => Promise<MonitorPage>,
   selection: Pick<MonitorSelectionController, 'remove' | 'validatedIds'>,
-  capabilities: Pick<MonitorCapabilities, 'canWrite'>
+  capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>
 ) {
   const { t } = useTranslation();
   const { message } = App.useApp();
@@ -100,11 +100,12 @@ async function refreshMonitorList(reread: () => Promise<MonitorPage>) {
 function canStartListCommand(
   action: MonitorAction,
   ids: number[],
-  capabilities: Pick<MonitorCapabilities, 'canWrite'>,
+  capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>,
   active: ActiveListOperation | null
 ) {
   if (active || ids.length === 0) return false;
-  return action !== 'copy' || capabilities.canWrite;
+  if (action === 'delete') return capabilities.canDelete;
+  return capabilities.canWrite;
 }
 
 function useListOperationScope(

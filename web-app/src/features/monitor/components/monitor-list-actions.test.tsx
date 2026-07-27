@@ -21,16 +21,16 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import { MonitorRowActions } from './monitor-list-actions';
+import { MonitorBulkActions, MonitorRowActions } from './monitor-list-actions';
 
-describe('MonitorRowActions copy capability', () => {
+describe('monitor list action permissions', () => {
   beforeAll(async () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
   afterEach(cleanup);
 
-  it('does not render copy when the session capability denies it', () => {
+  it('keeps guest rows read-only', () => {
     render(
       <I18nextProvider i18n={i18n}>
         <MonitorRowActions
@@ -39,10 +39,67 @@ describe('MonitorRowActions copy capability', () => {
           run={vi.fn()}
           disabled={false}
           canWrite={false}
+          canDelete={false}
         />
       </I18nextProvider>
     );
 
+    expect(screen.getByRole('button', { name: i18n.t('common.view') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('common.edit') })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: i18n.t('monitorActions.copy') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitorActions.pause') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitorActions.delete') })).not.toBeInTheDocument();
+  });
+
+  it('shows user row writes without administrator delete', () => {
+    renderRowActions(true, false);
+
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('monitorActions.copy') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('monitorActions.pause') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitorActions.delete') })).not.toBeInTheDocument();
+  });
+
+  it('shows administrator delete', () => {
+    renderRowActions(true, true);
+
+    expect(screen.getByRole('button', { name: i18n.t('monitorActions.delete') })).toBeInTheDocument();
+  });
+
+  it('keeps user bulk actions writable but not administrative', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <MonitorBulkActions
+          selectedIds={[7]}
+          run={vi.fn()}
+          exportSelected={vi.fn()}
+          canWrite
+          canDelete={false}
+          canExport={false}
+          clearSelection={vi.fn()}
+          disabled={false}
+        />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByRole('button', { name: i18n.t('monitorActions.enable') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('monitorActions.pause') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitorActions.delete') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitor.export.selected') })).not.toBeInTheDocument();
   });
 });
+
+function renderRowActions(canWrite: boolean, canDelete: boolean) {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <MonitorRowActions
+        monitor={{ id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1 }}
+        open={vi.fn()}
+        run={vi.fn()}
+        disabled={false}
+        canWrite={canWrite}
+        canDelete={canDelete}
+      />
+    </I18nextProvider>
+  );
+}

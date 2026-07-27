@@ -16,14 +16,14 @@ import styles from './monitor-list.module.css';
 
 export function MonitorListManagementActions({
   disabled,
-  canImport,
+  canWrite,
   canExport,
   create,
   openImport,
   exportAll
 }: {
   disabled: boolean;
-  canImport: boolean;
+  canWrite: boolean;
   canExport: boolean;
   create: () => void;
   openImport: () => void;
@@ -38,13 +38,15 @@ export function MonitorListManagementActions({
       data-monitor-management-actions=""
     >
       <MonitorHelpLink />
-      <Button type="primary" disabled={disabled} onClick={create}>
-        {t('monitor.editor.newTitle')}
-      </Button>
-      {canImport ? (
-        <Button disabled={disabled} onClick={openImport}>
-          {t('monitor.import.action')}
-        </Button>
+      {canWrite ? (
+        <>
+          <Button type="primary" disabled={disabled} onClick={create}>
+            {t('monitor.editor.newTitle')}
+          </Button>
+          <Button disabled={disabled} onClick={openImport}>
+            {t('monitor.import.action')}
+          </Button>
+        </>
       ) : null}
       {canExport ? (
         <MonitorExportButton label={t('monitor.export.all')} disabled={disabled} onExport={exportAll} />

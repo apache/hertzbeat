@@ -19,11 +19,9 @@ import { App } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useSession } from '@/core/auth/session-context';
-
 import { importMonitorConfig, MonitorImportError } from '../api/monitor-import-api';
+import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import {
-  userCanImportMonitors,
   validateMonitorImportFile,
   type MonitorImportDraft,
   type MonitorImportFailureKind,
@@ -31,8 +29,12 @@ import {
   type MonitorImportState
 } from '../model/monitor-import-model';
 
-export function useMonitorImport(reread: () => Promise<unknown>, onImported: () => void = () => undefined) {
-  const canImport = userCanImportMonitors(useSession().session?.roles ?? []);
+export function useMonitorImport(
+  reread: () => Promise<unknown>,
+  capabilities: Pick<MonitorCapabilities, 'canWrite'>,
+  onImported: () => void = () => undefined
+) {
+  const canImport = capabilities.canWrite;
   const [draft, setDraft] = useState<MonitorImportDraft | null>(null);
   const [invalid, setInvalid] = useState<MonitorImportInvalidKind | null>(null);
   const operation = useMonitorImportOperation(reread);
