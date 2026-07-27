@@ -94,6 +94,7 @@ resourceRole:
   - /api/otlp/**===post===[admin,user]
   - /api/logs/otlp/**===post===[admin,user]
   - /api/logs/sse/**===get===[admin,user,guest]
+  - /api/manager/sse/**===get===[admin,user,guest]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
@@ -122,7 +123,6 @@ excludedResource:
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
-  - /api/manager/sse/**===*
   # web ui resource
   - /===get
   - /assets/**===get
