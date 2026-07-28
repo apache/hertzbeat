@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
@@ -48,8 +49,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -430,6 +431,44 @@ class AccountServiceTest {
     }
 
     @Test
+    void testGenerateTokenRejectsInvalidExpirationBeforeIssuingOrPersisting() {
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            assertAll(
+                    () -> Assertions.assertThrows(
+                            IllegalArgumentException.class,
+                            () -> accountService.generateToken("invalid", 0L)),
+                    () -> Assertions.assertThrows(
+                            IllegalArgumentException.class,
+                            () -> accountService.generateToken("invalid", -2L)),
+                    () -> Assertions.assertThrows(
+                            IllegalArgumentException.class,
+                            () -> accountService.generateToken("invalid", 3_153_600_001L)));
+        }
+
+        verify(accountProvider, never()).loadAccount(any());
+        verify(authTokenDao, never()).save(any(AuthToken.class));
+    }
+
+    @Test
+    void testGenerateTokenRejectsUnsupportedScopeBeforeIssuingOrPersisting() {
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            Assertions.assertThrows(
+                    IllegalArgumentException.class,
+                    () -> accountService.generateToken("invalid", 3600L, "plaintext-sentinel"));
+        }
+
+        verify(authTokenDao, never()).save(any(AuthToken.class));
+    }
+
+    @Test
     void testGenerateTokenHasManagedClaim() throws Exception {
         SurenessAccount account = buildActiveAccount();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
@@ -533,17 +572,18 @@ class AccountServiceTest {
     @Test
     void testDeleteTokenInvalidatesCache() throws Exception {
         AuthToken token = AuthToken.builder().id(1L).tokenHash("hash123").creator(identifier).build();
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
         when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
         SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
 
-            assertTrue(accountService.deleteToken(1L));
+            assertEquals(AccountService.TokenRevocationResult.REVOKED, accountService.deleteToken(1L));
         }
 
         ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
-        verify(authTokenDao).save(captor.capture());
+        verify(authTokenDao).saveAndFlush(captor.capture());
         AuthToken revoked = captor.getValue();
         assertEquals((byte) 1, revoked.getStatus());
         assertEquals(identifier, revoked.getRevokedBy());
@@ -553,22 +593,52 @@ class AccountServiceTest {
 
     @Test
     void testDeleteTokenReportsMissing() throws Exception {
-        when(authTokenDao.findById(1L)).thenReturn(Optional.empty());
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.empty());
         SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
 
-            assertFalse(accountService.deleteToken(1L));
+            assertEquals(AccountService.TokenRevocationResult.MISSING, accountService.deleteToken(1L));
         }
 
-        verify(authTokenDao, never()).save(any(AuthToken.class));
+        verify(authTokenDao, never()).saveAndFlush(any(AuthToken.class));
+    }
+
+    @Test
+    void testDeleteTokenReportsAlreadyRevokedWithoutWritingAgain() throws Exception {
+        AuthToken token = AuthToken.builder()
+                .id(1L)
+                .creator(identifier)
+                .status((byte) 1)
+                .build();
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            assertEquals(AccountService.TokenRevocationResult.ALREADY_REVOKED, accountService.deleteToken(1L));
+        }
+
+        verify(authTokenDao, never()).saveAndFlush(any(AuthToken.class));
+    }
+
+    @Test
+    void testDeleteTokenUsesTransactionAndLockedTargetLookup() throws Exception {
+        assertAll(
+                () -> assertNotNull(AccountServiceImpl.class
+                        .getMethod("deleteToken", Long.class)
+                        .getAnnotation(Transactional.class)),
+                () -> assertNotNull(AuthTokenDao.class
+                        .getMethod("findByIdForUpdate", Long.class)));
     }
 
     @Test
     void testDeleteTokenRejectsUnconfirmedPersistence() {
         AuthToken token = AuthToken.builder().id(1L).tokenHash("hash123").creator(identifier).build();
-        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token), Optional.empty());
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
+        when(authTokenDao.findById(1L)).thenReturn(Optional.empty());
         SubjectSum subjectSum = mockAdminSubject(identifier);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
@@ -577,14 +647,15 @@ class AccountServiceTest {
             Assertions.assertThrows(IllegalStateException.class, () -> accountService.deleteToken(1L));
         }
 
-        verify(authTokenDao).save(token);
-        verify(authTokenDao, times(2)).findById(1L);
+        verify(authTokenDao).saveAndFlush(token);
+        verify(authTokenDao).findByIdForUpdate(1L);
+        verify(authTokenDao).findById(1L);
     }
 
     @Test
     void testDeleteTokenRejectsNonOwner() {
         AuthToken token = AuthToken.builder().id(1L).tokenHash("hash123").creator("admin").build();
-        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
         SubjectSum subjectSum = mockUserSubject("tom");
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
@@ -603,7 +674,7 @@ class AccountServiceTest {
                 .workspaceId("team-b")
                 .status((byte) 0)
                 .build();
-        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(token));
         SubjectSum subjectSum = mockAdminSubject(identifier);
 
         AuthTokenRequestContext.bindWorkspaceId("team-a");
@@ -611,7 +682,7 @@ class AccountServiceTest {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
 
             Assertions.assertThrows(AuthenticationException.class, () -> accountService.deleteToken(1L));
-            verify(authTokenDao, never()).save(any(AuthToken.class));
+            verify(authTokenDao, never()).saveAndFlush(any(AuthToken.class));
         } finally {
             AuthTokenRequestContext.clear();
         }
@@ -770,18 +841,20 @@ class AccountServiceTest {
 
         // Now revoke it
         AuthToken authToken = AuthToken.builder().id(1L).tokenHash("some-hash").creator(identifier).build();
+        when(authTokenDao.findByIdForUpdate(1L)).thenReturn(Optional.of(authToken));
         when(authTokenDao.findById(1L)).thenReturn(Optional.of(authToken));
         SubjectSum subjectSum = mockAdminSubject(identifier);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            assertTrue(accountService.deleteToken(1L));
+            assertEquals(AccountService.TokenRevocationResult.REVOKED, accountService.deleteToken(1L));
         }
 
         // After revoke, the next check should hit DB again (cache invalidated for that hash)
         // Note: the tokenHash in DB differs from sha256(tokenValue), so this tests cache invalidation path
-        verify(authTokenDao, times(2)).findById(1L);
+        verify(authTokenDao).findByIdForUpdate(1L);
+        verify(authTokenDao).findById(1L);
         ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
-        verify(authTokenDao).save(captor.capture());
+        verify(authTokenDao).saveAndFlush(captor.capture());
         assertEquals((byte) 1, captor.getValue().getStatus());
         assertEquals(identifier, captor.getValue().getRevokedBy());
         assertNotNull(captor.getValue().getRevokedTime());

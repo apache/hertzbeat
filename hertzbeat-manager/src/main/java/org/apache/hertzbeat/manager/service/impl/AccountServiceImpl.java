@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
@@ -211,6 +212,8 @@ public class AccountServiceImpl implements AccountService {
     private String generateManagedToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId,
                                         String tokenAudience, String collectorId, List<String> allowedSignals)
             throws AuthenticationException {
+        validateTokenExpiration(expireSeconds);
+        String normalizedScope = AuthTokenScopes.normalizeApiTokenScope(tokenScope);
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
         SurenessAccount account = accountProvider.loadAccount(userId);
@@ -220,7 +223,6 @@ public class AccountServiceImpl implements AccountService {
         if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
             throw new AuthenticationException("Expired or Illegal Account");
         }
-        String normalizedScope = AuthTokenScopes.normalizeApiTokenScope(tokenScope);
         String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         long activeTokens = authTokenDao.countByStatusAndCreatorAndTokenScopeAndWorkspaceId(
             TOKEN_STATUS_ACTIVE, userId, normalizedScope, normalizedWorkspaceId);
@@ -256,6 +258,13 @@ public class AccountServiceImpl implements AccountService {
         return token;
     }
 
+    private void validateTokenExpiration(Long expireSeconds) {
+        if (expireSeconds != null
+                && (expireSeconds == 0 || expireSeconds < -1 || expireSeconds > NON_EXPIRING_TOKEN_SECONDS)) {
+            throw new IllegalArgumentException("Invalid token expiration");
+        }
+    }
+
     private String issueAccessToken(String userId, List<String> roles, long expirationSeconds) {
         Map<String, Object> customClaimMap = new HashMap<>(2);
         customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_SCOPE, AuthTokenScopes.UI_SESSION);
@@ -287,12 +296,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public boolean deleteToken(Long id) throws AuthenticationException {
+    @Transactional
+    public TokenRevocationResult deleteToken(Long id) throws AuthenticationException {
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
-        AuthToken token = authTokenDao.findById(id).orElse(null);
+        AuthToken token = authTokenDao.findByIdForUpdate(id).orElse(null);
         if (token == null) {
-            return false;
+            return TokenRevocationResult.MISSING;
         }
         if (!subjectSum.hasRole("admin") && !StringUtils.equals(userId, token.getCreator())) {
             throw new AuthenticationException("No permission");
@@ -305,7 +315,7 @@ public class AccountServiceImpl implements AccountService {
             throw new AuthenticationException("No workspace permission");
         }
         if (!Byte.valueOf(TOKEN_STATUS_ACTIVE).equals(token.getStatus())) {
-            return false;
+            return TokenRevocationResult.ALREADY_REVOKED;
         }
         String tokenHash = token.getTokenHash();
         if (StringUtils.isNotBlank(tokenHash)) {
@@ -315,13 +325,13 @@ public class AccountServiceImpl implements AccountService {
         token.setStatus(TOKEN_STATUS_REVOKED);
         token.setRevokedBy(userId);
         token.setRevokedTime(LocalDateTime.now());
-        authTokenDao.save(token);
+        authTokenDao.saveAndFlush(token);
         AuthToken persistedToken = authTokenDao.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Revoked token is unavailable after persistence"));
         if (!Byte.valueOf(TOKEN_STATUS_REVOKED).equals(persistedToken.getStatus())) {
             throw new IllegalStateException("Token revocation was not persisted");
         }
-        return true;
+        return TokenRevocationResult.REVOKED;
     }
 
     @Override

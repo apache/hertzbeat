@@ -27,4 +27,8 @@ public record AuthTokenMutationResponse(Long id, String status) {
     public static AuthTokenMutationResponse missing(Long id) {
         return new AuthTokenMutationResponse(id, "missing");
     }
+
+    public static AuthTokenMutationResponse alreadyRevoked(Long id) {
+        return new AuthTokenMutationResponse(id, "already-revoked");
+    }
 }

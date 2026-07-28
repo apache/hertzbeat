@@ -30,6 +30,14 @@ import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
  * Account service
  */
 public interface AccountService extends ObservabilityAccessTokenGateway {
+
+    /** Confirmed result of one token revocation attempt. */
+    enum TokenRevocationResult {
+        REVOKED,
+        MISSING,
+        ALREADY_REVOKED
+    }
+
     /**
      * Account password login to obtain associated user information
      *
@@ -101,8 +109,8 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
      * Delete/revoke an API token by id
      *
      * @param id token id
-     * @return {@code true} only when the revoked state is confirmed by a database reread
+     * @return the confirmed revocation outcome
      */
-    boolean deleteToken(Long id) throws AuthenticationException;
+    TokenRevocationResult deleteToken(Long id) throws AuthenticationException;
 
 }
