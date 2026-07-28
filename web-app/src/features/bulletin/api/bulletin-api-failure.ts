@@ -33,6 +33,7 @@ export async function bulletinApiRequest<T>(
 }
 
 function failureKind(reason: ApiMessageError, operation: BulletinApiOperation): BulletinFailureKind {
+  if (reason.status === 401 || reason.status === 403) return 'permission';
   if (reason.cause !== undefined || reason.status == null || reason.status === 0 || reason.status >= 500) {
     return 'unavailable';
   }
@@ -43,6 +44,7 @@ function failureKind(reason: ApiMessageError, operation: BulletinApiOperation): 
 
 function writeOutcome(reason: ApiMessageError, operation: BulletinApiOperation): BulletinWriteOutcome {
   if (!isWriteOperation(operation)) return 'uncertain';
+  if (reason.status === 401 || reason.status === 403) return 'rejected';
   return apiMessageWriteOutcome(reason);
 }
 

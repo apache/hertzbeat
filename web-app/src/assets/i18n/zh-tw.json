@@ -959,27 +959,36 @@
     "deleteSelected": "刪除所選項目",
     "deleteSelectedConfirm": "確定刪除選取的 {{count}} 個看板？",
     "deleteSelectedSuccess": "所選看板已刪除並驗證。",
-    "list": { "invalid": "看板列表回應無效。", "unavailable": "看板儲存不可用。", "error": "無法載入看板。" },
+    "list": {
+      "invalid": "看板列表回應無效。",
+      "permission": "您沒有查看看板的權限。",
+      "unavailable": "看板儲存不可用。",
+      "error": "無法載入看板。"
+    },
     "dependencies": {
       "invalid": "監控中繼資料無效。",
+      "permission": "您沒有載入監控中繼資料的權限。",
       "unavailable": "監控中繼資料不可用。",
       "error": "無法載入監控中繼資料。"
     },
     "read": {
       "missing": "看板已不存在。",
       "invalid": "看板詳情無效。",
+      "permission": "您沒有查看此看板的權限。",
       "unavailable": "看板儲存不可用。",
       "error": "無法載入看板。"
     },
     "save": {
       "missing": "看板已不存在。",
       "invalid": "無法驗證儲存結果。",
+      "permission": "您沒有儲存此看板的權限。",
       "unavailable": "看板儲存不可用。",
       "error": "無法儲存看板。"
     },
     "deleteError": {
       "missing": "看板已不存在。",
       "invalid": "無法驗證刪除結果。",
+      "permission": "您沒有刪除看板的權限。",
       "unavailable": "看板儲存不可用。",
       "error": "無法刪除看板。"
     },
@@ -989,6 +998,7 @@
       "empty": "所選看板目前沒有指標列。",
       "missing": "看板已不存在。",
       "invalid": "指標回應無效。",
+      "permission": "您沒有查看看板指標的權限。",
       "unavailable": "即時指標儲存不可用。",
       "error": "無法載入指標。",
       "monitor": "監控",

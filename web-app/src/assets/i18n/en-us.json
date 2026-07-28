@@ -972,29 +972,34 @@
     "deleteSelectedSuccess": "Selected bulletins deleted and verified.",
     "list": {
       "invalid": "The bulletin list response is invalid.",
+      "permission": "You do not have permission to view bulletins.",
       "unavailable": "Bulletin storage is unavailable.",
       "error": "Bulletins could not be loaded."
     },
     "dependencies": {
       "invalid": "Monitor metadata is invalid.",
+      "permission": "You do not have permission to load monitor metadata.",
       "unavailable": "Monitor metadata is unavailable.",
       "error": "Monitor metadata could not be loaded."
     },
     "read": {
       "missing": "The bulletin no longer exists.",
       "invalid": "The bulletin detail is invalid.",
+      "permission": "You do not have permission to view this bulletin.",
       "unavailable": "Bulletin storage is unavailable.",
       "error": "The bulletin could not be loaded."
     },
     "save": {
       "missing": "The bulletin no longer exists.",
       "invalid": "The saved bulletin could not be verified.",
+      "permission": "You do not have permission to save this bulletin.",
       "unavailable": "Bulletin storage is unavailable.",
       "error": "The bulletin could not be saved."
     },
     "deleteError": {
       "missing": "The bulletin no longer exists.",
       "invalid": "Deletion could not be verified.",
+      "permission": "You do not have permission to delete bulletins.",
       "unavailable": "Bulletin storage is unavailable.",
       "error": "The bulletin could not be deleted."
     },
@@ -1004,6 +1009,7 @@
       "empty": "The selected bulletin has no current metric rows.",
       "missing": "The bulletin no longer exists.",
       "invalid": "The metrics response is invalid.",
+      "permission": "You do not have permission to view bulletin metrics.",
       "unavailable": "The realtime metric store is unavailable.",
       "error": "Metrics could not be loaded.",
       "monitor": "Monitor",

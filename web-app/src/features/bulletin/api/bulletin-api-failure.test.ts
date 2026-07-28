@@ -10,6 +10,45 @@ import { bulletinApiRequest, normalizeBulletinApiFailure } from './bulletin-api-
 
 describe('Bulletin API failure boundary', () => {
   it.each([
+    [401, 'list', 'uncertain'],
+    [401, 'read-detail', 'uncertain'],
+    [401, 'metrics', 'uncertain'],
+    [401, 'create', 'rejected'],
+    [401, 'update', 'rejected'],
+    [401, 'delete', 'rejected'],
+    [403, 'list', 'uncertain'],
+    [403, 'read-detail', 'uncertain'],
+    [403, 'metrics', 'uncertain'],
+    [403, 'create', 'rejected'],
+    [403, 'update', 'rejected'],
+    [403, 'delete', 'rejected']
+  ] as const)('normalizes HTTP %i %s as permission with stable write evidence', (status, operation, writeOutcome) => {
+    const failure = normalizeBulletinApiFailure(
+      new ApiMessageError('private authorization detail', { status }),
+      operation
+    );
+
+    expect(failure).toMatchObject({ kind: 'permission', writeOutcome, message: 'Bulletin request failed' });
+    expect(JSON.stringify(failure)).not.toContain('private');
+  });
+
+  it.each([401, 403] as const)(
+    'keeps HTTP %i write permission a definite rejection despite a transport cause',
+    status => {
+      const failure = normalizeBulletinApiFailure(
+        new ApiMessageError('private authorization detail', {
+          status,
+          cause: new Error('private transport cause')
+        }),
+        'update'
+      );
+
+      expect(failure).toMatchObject({ kind: 'permission', writeOutcome: 'rejected' });
+      expect(JSON.stringify(failure)).not.toContain('private');
+    }
+  );
+
+  it.each([
     [
       'network write',
       new ApiMessageError('private', { cause: new Error('private-cause') }),

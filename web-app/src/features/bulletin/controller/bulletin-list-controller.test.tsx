@@ -84,6 +84,13 @@ describe('Bulletin list controller', () => {
     });
   });
 
+  it('presents permission failure without exposing list records', async () => {
+    api.loadBulletins.mockRejectedValue(new BulletinRequestFailure('permission', 'uncertain'));
+    const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'permission' }));
+  });
+
   it('returns false when the query function throws during refetch', async () => {
     api.loadBulletins.mockResolvedValueOnce(page([oldRecord]));
     const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });

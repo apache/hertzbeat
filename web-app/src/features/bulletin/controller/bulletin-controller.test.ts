@@ -19,6 +19,8 @@ describe('bulletin controller boundaries', () => {
   afterEach(() => vi.restoreAllMocks());
   it('preserves invalid, unavailable, and unexpected monitor failures', () => {
     expect(classifyBulletinMonitorError(new MonitorContractError('bad metadata'))).toBe('invalid');
+    expect(classifyBulletinMonitorError(new ApiMessageError('private', { status: 401 }))).toBe('permission');
+    expect(classifyBulletinMonitorError(new ApiMessageError('private', { status: 403 }))).toBe('permission');
     expect(classifyBulletinMonitorError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
     expect(classifyBulletinMonitorError(new Error('unexpected'))).toBe('error');
   });

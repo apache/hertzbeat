@@ -175,6 +175,29 @@ describe('bulletin page', () => {
     expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
   });
+
+  it('renders only local permission keys for list, dependencies, and metrics failures', () => {
+    const current = pageController({ draft: record });
+    controller.useBulletinController.mockReturnValue({
+      ...current.value,
+      state: {
+        ...current.value.state,
+        dependencies: {
+          ...current.value.state.dependencies,
+          kind: 'permission'
+        },
+        list: { kind: 'permission' },
+        metrics: { kind: 'permission' }
+      }
+    });
+
+    render(<BulletinPage />);
+
+    expect(screen.getByText('bulletin.list.permission')).toBeInTheDocument();
+    expect(screen.getByText('bulletin.dependencies.permission')).toBeInTheDocument();
+    expect(screen.getByText('bulletin.metrics.permission')).toBeInTheDocument();
+    expect(screen.queryByText('private authorization detail')).not.toBeInTheDocument();
+  });
 });
 
 function pageController({

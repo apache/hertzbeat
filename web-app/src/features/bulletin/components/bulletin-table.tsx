@@ -20,7 +20,7 @@ type BulletinTableProps = {
   actions: BulletinTableActions;
   busy: boolean;
   capabilities: BulletinActionCapabilities;
-  listKind: 'idle' | 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
+  listKind: 'idle' | 'loading' | 'ready' | 'empty' | 'invalid' | 'permission' | 'unavailable' | 'error';
   query: BulletinQuery;
   records: Bulletin[];
   selectedId: number | null;

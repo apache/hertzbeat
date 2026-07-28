@@ -21,4 +21,15 @@ describe('Bulletin locale coverage', () => {
       expect(locale.bulletin.deleteSelectedSuccess).toBeTruthy();
     }
   });
+
+  it('provides local permission copy for every Bulletin read and write surface', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.bulletin.list.permission).toBeTruthy();
+      expect(locale.bulletin.dependencies.permission).toBeTruthy();
+      expect(locale.bulletin.read.permission).toBeTruthy();
+      expect(locale.bulletin.save.permission).toBeTruthy();
+      expect(locale.bulletin.deleteError.permission).toBeTruthy();
+      expect(locale.bulletin.metrics.permission).toBeTruthy();
+    }
+  });
 });

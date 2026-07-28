@@ -11,7 +11,7 @@ import { classifyBulletinFailure } from '../model/bulletin-failure';
 import { isBulletinPageComplete, writeBulletinQuery, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
-type BulletinListFailure = 'invalid' | 'unavailable' | 'error';
+type BulletinListFailure = 'invalid' | 'permission' | 'unavailable' | 'error';
 export type BulletinListState = RemotePageState<Bulletin, BulletinListFailure> | { kind: 'idle' };
 
 export function useBulletinListController(query: BulletinQuery, canRead = true) {

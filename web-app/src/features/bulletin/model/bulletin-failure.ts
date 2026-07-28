@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-export type BulletinFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
+export type BulletinFailureKind = 'missing' | 'invalid' | 'permission' | 'unavailable' | 'error';
 export type BulletinWriteOutcome = 'rejected' | 'uncertain';
 
 type BulletinFailureOptions = { code?: string };

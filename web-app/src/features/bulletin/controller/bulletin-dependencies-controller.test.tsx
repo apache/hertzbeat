@@ -178,6 +178,22 @@ describe('Bulletin dependency controller', () => {
     expect(hook.result.current.fieldSelection).toBe('unverified');
   });
 
+  it('presents dependency permission without exposing cached metadata or server detail', async () => {
+    monitor.loadMonitorApps.mockRejectedValue(new ApiMessageError('private authorization detail', { status: 403 }));
+    const hook = renderHook(() => useBulletinDependencies(draft('website')), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('permission'));
+    expect(hook.result.current).toMatchObject({
+      apps: [],
+      monitors: [],
+      metrics: [],
+      metricTree: [],
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified'
+    });
+    expect(JSON.stringify(hook.result.current)).not.toContain('private');
+  });
+
   it('blocks an edit with saved fields when the authoritative hierarchy is empty', async () => {
     monitor.loadMonitorAppHierarchy.mockResolvedValue({ ...hierarchy('website'), children: [] });
     const hook = renderHook(

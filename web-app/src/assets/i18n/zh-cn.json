@@ -959,27 +959,36 @@
     "deleteSelected": "删除所选项",
     "deleteSelectedConfirm": "确认删除选中的 {{count}} 个看板？",
     "deleteSelectedSuccess": "所选看板已删除并验证。",
-    "list": { "invalid": "看板列表响应无效。", "unavailable": "看板存储不可用。", "error": "无法加载看板。" },
+    "list": {
+      "invalid": "看板列表响应无效。",
+      "permission": "您没有查看看板的权限。",
+      "unavailable": "看板存储不可用。",
+      "error": "无法加载看板。"
+    },
     "dependencies": {
       "invalid": "监控元数据无效。",
+      "permission": "您没有加载监控元数据的权限。",
       "unavailable": "监控元数据不可用。",
       "error": "无法加载监控元数据。"
     },
     "read": {
       "missing": "看板已不存在。",
       "invalid": "看板详情无效。",
+      "permission": "您没有查看此看板的权限。",
       "unavailable": "看板存储不可用。",
       "error": "无法加载看板。"
     },
     "save": {
       "missing": "看板已不存在。",
       "invalid": "无法验证保存结果。",
+      "permission": "您没有保存此看板的权限。",
       "unavailable": "看板存储不可用。",
       "error": "无法保存看板。"
     },
     "deleteError": {
       "missing": "看板已不存在。",
       "invalid": "无法验证删除结果。",
+      "permission": "您没有删除看板的权限。",
       "unavailable": "看板存储不可用。",
       "error": "无法删除看板。"
     },
@@ -989,6 +998,7 @@
       "empty": "所选看板当前没有指标行。",
       "missing": "看板已不存在。",
       "invalid": "指标响应无效。",
+      "permission": "您没有查看看板指标的权限。",
       "unavailable": "实时指标存储不可用。",
       "error": "无法加载指标。",
       "monitor": "监控",

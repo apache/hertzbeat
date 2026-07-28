@@ -3,7 +3,7 @@
 import type { BulletinMetricTreeMetricNode } from './bulletin-metric-tree-model';
 import type { BulletinMetricDefinition, BulletinMonitor } from './bulletin-model';
 
-export type BulletinDependencyKind = 'idle' | 'loading' | 'ready' | 'invalid' | 'unavailable' | 'error';
+export type BulletinDependencyKind = 'idle' | 'loading' | 'ready' | 'invalid' | 'permission' | 'unavailable' | 'error';
 export type BulletinDependencySelection = 'unverified' | 'valid' | 'stale';
 
 type BulletinApplication = {

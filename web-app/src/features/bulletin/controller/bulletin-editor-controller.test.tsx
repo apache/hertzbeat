@@ -3,6 +3,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BulletinRequestFailure } from '../model/bulletin-failure';
 import type { Bulletin } from '../model/bulletin-model';
 
 const api = vi.hoisted(() => ({ loadBulletin: vi.fn() }));
@@ -81,6 +82,17 @@ describe('Bulletin editor controller', () => {
 
     await expect(editing).resolves.toBe(false);
     expect(onReadFailure).not.toHaveBeenCalled();
+  });
+
+  it('reports a stable permission failure for detail reads without opening a draft', async () => {
+    const onReadFailure = vi.fn();
+    api.loadBulletin.mockRejectedValue(new BulletinRequestFailure('permission', 'uncertain'));
+    const { result } = renderEditorController(onReadFailure);
+
+    await act(async () => expect(result.current.editor.actions.edit(7)).resolves.toBe(false));
+
+    expect(onReadFailure).toHaveBeenCalledWith('permission');
+    expect(result.current.editor.state.draft).toBeNull();
   });
 
   it('locks every editor mutation synchronously while a command owns the gate', async () => {

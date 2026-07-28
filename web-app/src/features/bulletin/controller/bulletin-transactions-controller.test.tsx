@@ -425,6 +425,57 @@ describe('Bulletin transactions controller', () => {
     expect(mocks.proveBulletinCreated).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['create', 401],
+    ['create', 403],
+    ['update', 401],
+    ['update', 403],
+    ['delete', 401],
+    ['delete', 403]
+  ] as const)(
+    'treats %s HTTP %i permission failure as definite rejection without proof or mutation retry',
+    async (operation, status) => {
+      const context = createContext({ selectedId: 7 });
+      const failureOperation = operation === 'delete' ? 'delete' : operation;
+      const failure = normalizeBulletinApiFailure(
+        new ApiMessageError('private authorization detail', { status }),
+        failureOperation
+      );
+      if (operation === 'create') mocks.createBulletin.mockRejectedValue(failure);
+      if (operation === 'update') {
+        context.initialDraft.id = 7;
+        mocks.updateBulletin.mockRejectedValue(failure);
+      }
+      if (operation === 'delete') mocks.deleteBulletins.mockRejectedValue(failure);
+      const hook = renderHook(() => useBulletinTransactions(context.value));
+
+      await act(async () =>
+        expect(
+          operation === 'delete' ? hook.result.current.remove(bulletin(7, 'Operations')) : hook.result.current.save()
+        ).resolves.toBe(false)
+      );
+      await act(async () => expect(hook.result.current.retry()).resolves.toBe(false));
+
+      expect(context.getRecovery()).toBeNull();
+      expect(context.setDraft).not.toHaveBeenCalledWith(null);
+      expect(context.setSelectedId).not.toHaveBeenCalled();
+      expect(mocks.proveBulletinCreated).not.toHaveBeenCalled();
+      expect(mocks.proveBulletinUpdated).not.toHaveBeenCalled();
+      expect(mocks.proveBulletinsDeleted).not.toHaveBeenCalled();
+      expect(
+        operation === 'create'
+          ? mocks.createBulletin
+          : operation === 'update'
+            ? mocks.updateBulletin
+            : mocks.deleteBulletins
+      ).toHaveBeenCalledTimes(1);
+      expect(mocks.notification).toHaveBeenCalledWith({
+        message: operation === 'delete' ? 'bulletin.deleteError.permission' : 'bulletin.save.permission',
+        type: 'error'
+      });
+    }
+  );
+
   it('does not publish or notify after a pending save loses ownership on unmount', async () => {
     const pending = deferred<ReturnType<typeof bulletin>>();
     const setSelectedId = vi.fn();

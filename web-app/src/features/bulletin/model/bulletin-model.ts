@@ -25,7 +25,7 @@ type BulletinMetricsRow = { monitorName: string; monitorId: number; host: string
 export type BulletinMetrics = { name: string; content: BulletinMetricsRow[] };
 export type BulletinMetricsState = OptionalRemoteValueState<
   BulletinMetrics,
-  'missing' | 'invalid' | 'unavailable' | 'error'
+  'missing' | 'invalid' | 'permission' | 'unavailable' | 'error'
 >;
 
 type BulletinPageEvidence = {

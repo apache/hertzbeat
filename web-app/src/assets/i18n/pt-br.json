@@ -977,29 +977,34 @@
     "deleteSelectedSuccess": "Quadros selecionados excluídos e verificados.",
     "list": {
       "invalid": "A resposta da lista é inválida.",
+      "permission": "Você não tem permissão para ver os quadros.",
       "unavailable": "O armazenamento está indisponível.",
       "error": "Não foi possível carregar os quadros."
     },
     "dependencies": {
       "invalid": "Os metadados de monitor são inválidos.",
+      "permission": "Você não tem permissão para carregar os metadados de monitor.",
       "unavailable": "Os metadados estão indisponíveis.",
       "error": "Não foi possível carregar os metadados."
     },
     "read": {
       "missing": "O quadro não existe mais.",
       "invalid": "O detalhe é inválido.",
+      "permission": "Você não tem permissão para ver este quadro.",
       "unavailable": "O armazenamento está indisponível.",
       "error": "Não foi possível carregar o quadro."
     },
     "save": {
       "missing": "O quadro não existe mais.",
       "invalid": "Não foi possível verificar o salvamento.",
+      "permission": "Você não tem permissão para salvar este quadro.",
       "unavailable": "O armazenamento está indisponível.",
       "error": "Não foi possível salvar o quadro."
     },
     "deleteError": {
       "missing": "O quadro não existe mais.",
       "invalid": "Não foi possível verificar a exclusão.",
+      "permission": "Você não tem permissão para excluir quadros.",
       "unavailable": "O armazenamento está indisponível.",
       "error": "Não foi possível excluir o quadro."
     },
@@ -1009,6 +1014,7 @@
       "empty": "O quadro não possui linhas de métricas atuais.",
       "missing": "O quadro não existe mais.",
       "invalid": "A resposta de métricas é inválida.",
+      "permission": "Você não tem permissão para ver as métricas do quadro.",
       "unavailable": "O armazenamento em tempo real está indisponível.",
       "error": "Não foi possível carregar as métricas.",
       "monitor": "Monitor",

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BulletinRequestFailure } from '../model/bulletin-failure';
 import { refreshSavedBulletinMetrics, useBulletinMetrics } from './bulletin-metrics-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
@@ -42,6 +43,13 @@ describe('Bulletin metrics controller', () => {
     const hook = renderHook(() => useBulletinMetrics(7), { wrapper: createWrapper() });
 
     await waitFor(() => expect(hook.result.current).toEqual({ kind: 'empty' }));
+  });
+
+  it('presents metrics permission failure', async () => {
+    api.loadBulletinMetrics.mockRejectedValue(new BulletinRequestFailure('permission', 'uncertain'));
+    const hook = renderHook(() => useBulletinMetrics(7), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current).toEqual({ kind: 'permission' }));
   });
 
   it('cannot manually fetch metrics without a selected Bulletin', async () => {

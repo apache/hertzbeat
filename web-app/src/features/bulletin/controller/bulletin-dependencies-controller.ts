@@ -31,6 +31,7 @@ import {
   isBulletinDependencyApplication
 } from '../model/bulletin-dependency-policy';
 import { bulletinQueryKeys } from './bulletin-query-keys';
+import { normalizeBulletinApiFailure } from '../api/bulletin-api-failure';
 
 const bulletinDependencyStaleTimeMs = 30_000;
 
@@ -138,7 +139,7 @@ export function buildBulletinDependencyRecords(
   };
 }
 
-export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'unavailable' | 'error' {
+export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'permission' | 'unavailable' | 'error' {
   if (
     error instanceof MonitorContractError ||
     error instanceof BulletinMetricTreeError ||
@@ -146,6 +147,8 @@ export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'unava
   ) {
     return 'invalid';
   }
+  const normalized = normalizeBulletinApiFailure(error, 'list');
+  if (normalized.kind === 'permission') return 'permission';
   return classifyMonitorReadError(error) === 'unavailable' ? 'unavailable' : 'error';
 }
 
@@ -173,7 +176,7 @@ function resolveResourceState(resource: DependencyResource<unknown>): Dependency
 }
 
 function isFailure(kind: DependencyResourceState): kind is Exclude<DependencyResourceState, 'loading' | 'ready'> {
-  return kind === 'invalid' || kind === 'unavailable' || kind === 'error';
+  return kind === 'invalid' || kind === 'permission' || kind === 'unavailable' || kind === 'error';
 }
 
 function resolveSelection(

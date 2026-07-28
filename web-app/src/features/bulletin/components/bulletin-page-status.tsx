@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { BulletinCommand, BulletinRecovery } from '../model/bulletin-operation-state';
 import { BulletinRecoveryAlert } from './bulletin-recovery-alert';
 
-type BulletinListKind = 'idle' | 'loading' | 'empty' | 'ready' | 'invalid' | 'unavailable' | 'error';
+type BulletinListKind = 'idle' | 'loading' | 'empty' | 'ready' | 'invalid' | 'permission' | 'unavailable' | 'error';
 
 export function BulletinPageStatus({
   command,
@@ -20,7 +20,8 @@ export function BulletinPageStatus({
   onRetry: () => void;
 }) {
   const { t } = useTranslation();
-  const listFailed = list.kind === 'invalid' || list.kind === 'unavailable' || list.kind === 'error';
+  const listFailed =
+    list.kind === 'invalid' || list.kind === 'permission' || list.kind === 'unavailable' || list.kind === 'error';
   return (
     <>
       {listFailed && <Alert type="error" showIcon message={t(`bulletin.list.${list.kind}`)} />}
