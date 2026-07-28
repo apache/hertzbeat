@@ -30,6 +30,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -48,6 +49,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -86,6 +88,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -206,9 +210,9 @@ class PluginServiceTest {
         PluginUpload upload = new PluginUpload(new MockMultipartFile(
                 "file", "failed.jar", "application/java-archive", new byte[]{1}), "Failed Plugin", true);
 
-        CommonException failure;
+        DataAccessResourceFailureException failure;
         try {
-            failure = assertThrows(CommonException.class, () -> service.savePlugin(upload));
+            failure = assertThrows(DataAccessResourceFailureException.class, () -> service.savePlugin(upload));
         } finally {
             if (previousPluginLib == null) {
                 System.clearProperty("hertzbeat.plugin.lib.dir");
@@ -217,7 +221,7 @@ class PluginServiceTest {
             }
         }
 
-        assertEquals("Failed to upload plugin", failure.getMessage());
+        assertEquals("Plugin artifact storage unavailable", failure.getMessage());
         assertFalse(failure.getMessage().contains("/private/"));
         try (Stream<java.nio.file.Path> files = Files.list(tempDir.toPath())) {
             assertEquals(0, files.count());
@@ -228,7 +232,33 @@ class PluginServiceTest {
     void rejectsBlankPluginNameAtServiceBoundary() {
         PluginUpload upload = new PluginUpload(new MockMultipartFile(
                 "file", "blank-name.jar", "application/java-archive", new byte[]{1}), "  ", true);
-        assertThrows(CommonException.class, () -> pluginService.savePlugin(upload));
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(upload));
+    }
+
+    @Test
+    void rejectsOversizedPluginBeforeWritingArtifact() throws IOException {
+        MultipartFile oversized = mock(MultipartFile.class);
+        when(oversized.getOriginalFilename()).thenReturn("oversized.jar");
+        when(oversized.getSize()).thenReturn(101L * 1024 * 1024);
+        PluginUpload upload = new PluginUpload(oversized, "Oversized Plugin", true);
+
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(upload));
+
+        verify(oversized, times(0)).transferTo(any(File.class));
+        verify(metadataDao, times(0)).save(any(PluginMetadata.class));
+    }
+
+    @Test
+    void rejectsEmptyOrNonJarUploadBeforeWritingArtifact() {
+        PluginUpload empty = new PluginUpload(new MockMultipartFile(
+                "file", "empty.jar", "application/java-archive", new byte[0]), "Empty Plugin", true);
+        PluginUpload wrongExtension = new PluginUpload(new MockMultipartFile(
+                "file", "plugin.zip", "application/zip", new byte[]{1}), "Wrong Extension", true);
+
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(empty));
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(wrongExtension));
+
+        verify(metadataDao, times(0)).save(any(PluginMetadata.class));
     }
 
     @Test
@@ -237,13 +267,13 @@ class PluginServiceTest {
             "file", "../test-plugin.jar", "application/java-archive",
             "plugin-content".getBytes(StandardCharsets.UTF_8));
         PluginUpload pluginUpload = new PluginUpload(mockFile, "Test Plugin", true);
-        assertThrows(CommonException.class, () -> pluginService.savePlugin(pluginUpload));
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(pluginUpload));
 
         MockMultipartFile mockWindowsFile = new MockMultipartFile(
             "file", "..\\..\\test-plugin.jar", "application/java-archive",
             "plugin-content".getBytes(StandardCharsets.UTF_8));
         PluginUpload pluginUploadWindows = new PluginUpload(mockWindowsFile, "Test Plugin", true);
-        assertThrows(CommonException.class, () -> pluginService.savePlugin(pluginUploadWindows));
+        assertThrows(IllegalArgumentException.class, () -> pluginService.savePlugin(pluginUploadWindows));
 
 
     }
@@ -264,7 +294,7 @@ class PluginServiceTest {
                 .jarFilePath("/untrusted/path.jar")
                 .build();
 
-        when(metadataDao.findById(1L)).thenReturn(Optional.of(persisted));
+        when(metadataDao.findByIdForUpdate(1L)).thenReturn(Optional.of(persisted));
         when(metadataDao.save(any(PluginMetadata.class))).thenReturn(persisted);
         assertDoesNotThrow(() -> pluginService.updateStatus(request));
 
@@ -295,9 +325,7 @@ class PluginServiceTest {
                 .id(2L).enableStatus(true).jarFilePath(secondJar.getAbsolutePath()).items(List.of()).build();
         Set<Long> ids = new HashSet<>(Set.of(1L, 2L));
 
-        when(metadataDao.findAllById(ids)).thenReturn(List.of(first, second));
-        when(metadataDao.findById(1L)).thenReturn(Optional.of(first));
-        when(metadataDao.findById(2L)).thenReturn(Optional.of(second));
+        when(metadataDao.findAllByIdForUpdate(ids)).thenReturn(List.of(first, second));
         doNothing().when(metadataDao).deleteById(1L);
         doNothing().when(metadataDao).deleteById(2L);
 
@@ -326,6 +354,47 @@ class PluginServiceTest {
     }
 
     @Test
+    void emptyBatchDeleteIsRejectedBeforeDatabaseAccess() {
+        assertThrows(IllegalArgumentException.class, () -> pluginService.deletePlugins(Set.of()));
+        verify(metadataDao, times(0)).findAllByIdForUpdate(any());
+    }
+
+    @Test
+    void missingBatchDeleteTargetRejectsWholeMutation(@TempDir File tempDir) throws IOException {
+        File jar = new File(tempDir, "only-existing.jar");
+        Files.write(jar.toPath(), new byte[]{1});
+        PluginMetadata existing = PluginMetadata.builder()
+                .id(1L).enableStatus(true).jarFilePath(jar.getAbsolutePath()).items(List.of()).build();
+        Set<Long> requested = Set.of(1L, 2L);
+        when(metadataDao.findAllByIdForUpdate(requested)).thenReturn(List.of(existing));
+        String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
+        System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            assertThrows(NoSuchElementException.class, () -> pluginService.deletePlugins(requested));
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+            if (previousPluginLib == null) {
+                System.clearProperty("hertzbeat.plugin.lib.dir");
+            } else {
+                System.setProperty("hertzbeat.plugin.lib.dir", previousPluginLib);
+            }
+        }
+
+        verify(metadataDao, times(0)).deleteById(any(Long.class));
+        verify(pluginParameterService, times(0)).deleteByPluginIds(any());
+        assertTrue(existing.getEnableStatus());
+        assertTrue(jar.exists());
+    }
+
+    @Test
+    void statusAndDeleteUseLockedTargetLookups() {
+        assertDoesNotThrow(() -> PluginMetadataDao.class.getMethod("findByIdForUpdate", Long.class));
+        assertDoesNotThrow(() -> PluginMetadataDao.class.getMethod("findAllByIdForUpdate", Set.class));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void committedDeleteClosesRuntimeBeforeRemovingManagedArtifacts(@TempDir File tempDir) throws Exception {
         File jar = new File(tempDir, "managed.jar");
@@ -334,8 +403,7 @@ class PluginServiceTest {
         Files.createDirectories(extracted.toPath());
         PluginMetadata plugin = PluginMetadata.builder()
                 .id(73L).enableStatus(true).jarFilePath(jar.getAbsolutePath()).items(List.of()).build();
-        when(metadataDao.findAllById(Set.of(73L))).thenReturn(List.of(plugin));
-        when(metadataDao.findById(73L)).thenReturn(Optional.of(plugin));
+        when(metadataDao.findAllByIdForUpdate(Set.of(73L))).thenReturn(List.of(plugin));
         when(metadataDao.findPluginMetadataByEnableStatusTrue()).thenReturn(List.of());
         Field loadersField = PluginServiceImpl.class.getDeclaredField("pluginClassLoaders");
         loadersField.setAccessible(true);
@@ -380,8 +448,7 @@ class PluginServiceTest {
         Files.write(jar.toPath(), new byte[]{1});
         PluginMetadata plugin = PluginMetadata.builder()
                 .id(75L).enableStatus(true).jarFilePath(jar.getAbsolutePath()).items(List.of()).build();
-        when(metadataDao.findAllById(Set.of(75L))).thenReturn(List.of(plugin));
-        when(metadataDao.findById(75L)).thenReturn(Optional.of(plugin));
+        when(metadataDao.findAllByIdForUpdate(Set.of(75L))).thenReturn(List.of(plugin));
         when(metadataDao.findPluginMetadataByEnableStatusTrue())
                 .thenThrow(new IllegalStateException("raw token and /private/runtime/path"));
         String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
@@ -411,7 +478,7 @@ class PluginServiceTest {
         Files.write(outside.toPath(), new byte[]{1});
         PluginMetadata plugin = PluginMetadata.builder()
                 .id(74L).enableStatus(true).jarFilePath(outside.getAbsolutePath()).items(List.of()).build();
-        when(metadataDao.findAllById(Set.of(74L))).thenReturn(List.of(plugin));
+        when(metadataDao.findAllByIdForUpdate(Set.of(74L))).thenReturn(List.of(plugin));
         String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
         System.setProperty("hertzbeat.plugin.lib.dir", root.getAbsolutePath());
 
@@ -440,10 +507,10 @@ class PluginServiceTest {
                 .jarFilePath(new File(tempDir, "missing-plugin.jar").getAbsolutePath())
                 .items(List.of(item))
                 .build();
-        when(metadataDao.findById(71L)).thenReturn(Optional.of(plugin));
+        when(metadataDao.findByIdForUpdate(71L)).thenReturn(Optional.of(plugin));
         pluginService.updateStatus(plugin);
         pluginParameterRegistry.registerDefinition(71L, new PluginConfig());
-        when(metadataDao.findAllById(Set.of(71L))).thenReturn(List.of(plugin));
+        when(metadataDao.findAllByIdForUpdate(Set.of(71L))).thenReturn(List.of(plugin));
         String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
         System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());
 
@@ -477,7 +544,7 @@ class PluginServiceTest {
         PluginMetadata persisted = PluginMetadata.builder()
                 .id(72L).enableStatus(false).jarFilePath(jar.getAbsolutePath()).items(List.of(item)).build();
         PluginMetadata request = PluginMetadata.builder().id(72L).enableStatus(true).build();
-        when(metadataDao.findById(72L)).thenReturn(Optional.of(persisted));
+        when(metadataDao.findByIdForUpdate(72L)).thenReturn(Optional.of(persisted));
         when(metadataDao.findPluginMetadataByEnableStatusTrue()).thenReturn(List.of(persisted));
         String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
         System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());

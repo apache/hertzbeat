@@ -56,6 +56,7 @@ class UiSessionProtectedPluginMockMvcTest {
         PluginController controller = new PluginController(pluginService, mock(PluginParameterService.class));
         SecurityManager securityManager = mock(SecurityManager.class);
         SubjectSum admin = mock(SubjectSum.class);
+        when(admin.hasRole("admin")).thenReturn(true);
         UiSessionService sessionService = mock(UiSessionService.class);
         when(sessionService.inspect("valid-access")).thenReturn(new UiSessionView(
                 true, "admin", java.util.List.of("admin"), "default", java.time.Instant.now().plusSeconds(3600)));
