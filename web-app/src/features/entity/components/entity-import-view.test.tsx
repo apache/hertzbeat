@@ -67,6 +67,12 @@ describe('EntityImportView', () => {
     expect(consoleError.mock.calls.flat().join(' ')).not.toMatch(/same key|unique "key"/i);
     consoleError.mockRestore();
   });
+
+  it('shows a permission-only surface without exposing import inputs', () => {
+    renderView({ canWrite: false });
+    expect(screen.getByText('You do not have permission to import resources.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Resource definition content')).not.toBeInTheDocument();
+  });
 });
 
 function renderView(
@@ -86,6 +92,7 @@ function view(
       previewing: false,
       confirming: false,
       confirmEnabled: false,
+      canWrite: true,
       returnTo: '/entities',
       ...statePatch
     },

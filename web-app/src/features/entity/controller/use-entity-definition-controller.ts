@@ -15,6 +15,7 @@ import {
 } from '../model/entity-definition-model';
 import { entityQueryKeys } from './entity-query-keys';
 import { useEntityDefinitionEditing } from './use-entity-definition-editing';
+import { useEntityCapabilities } from './use-entity-capabilities';
 
 export function useEntityDefinitionController(): EntityDefinitionViewModel {
   const navigate = useNavigate();
@@ -22,27 +23,31 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
   const { entityId } = useParams();
   const [params] = useSearchParams();
   const id = parseEntityDefinitionId(entityId);
+  const { canWrite } = useEntityCapabilities();
   const [format, setFormat] = useState<EntityDefinitionFormat>('yaml');
   const context = useQuery({
     queryKey: entityQueryKeys.editor(id),
-    queryFn: id === undefined ? skipToken : ({ signal }) => loadEditableEntity(id, signal),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEditableEntity(id, signal),
     retry: false
   });
   const definition = useQuery({
     queryKey: entityQueryKeys.definition(id, format),
-    queryFn: id === undefined ? skipToken : ({ signal }) => loadEntityDefinition(id, format, signal),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEntityDefinition(id, format, signal),
     retry: false
   });
-  const editing = useEntityDefinitionEditing({
-    id,
-    format,
-    setFormat,
-    canonical: definition.data,
-    refetchCanonical: () => definition.refetch({ throwOnError: true }),
-    refreshAfterSave: savedId =>
-      refreshSavedDefinition(client, () => definition.refetch({ throwOnError: true }), savedId)
-  });
-  const evidence = resolveDefinitionEvidence(id, context, definition, editing.state.saved);
+  const editing = useEntityDefinitionEditing(
+    {
+      id,
+      format,
+      setFormat,
+      canonical: definition.data,
+      refetchCanonical: () => definition.refetch({ throwOnError: true }),
+      refreshAfterSave: savedId =>
+        refreshSavedDefinition(client, () => definition.refetch({ throwOnError: true }), savedId)
+    },
+    canWrite
+  );
+  const evidence = resolveDefinitionEvidence(canWrite, id, context, definition, editing.state.saved);
   return {
     state: {
       evidence,
@@ -70,11 +75,13 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
 }
 
 function resolveDefinitionEvidence(
+  canWrite: boolean,
   id: number | undefined,
   context: { isPending: boolean; error: Error | null; data: EditableEntityDto | undefined },
   definition: { isPending: boolean; error: Error | null; data: string | undefined },
   hasCommittedDraft: boolean
 ): EntityDefinitionViewModel['state']['evidence'] {
+  if (!canWrite) return { kind: 'permission' };
   if (id === undefined) return { kind: 'missing' };
   if (context.isPending || definition.isPending) return { kind: 'loading' };
   const error = context.error ?? (hasCommittedDraft ? null : definition.error);

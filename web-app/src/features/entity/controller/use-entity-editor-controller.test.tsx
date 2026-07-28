@@ -6,6 +6,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { SessionContext } from '@/core/auth/session-context';
 
 const api = vi.hoisted(() => ({
   loadEditableEntity: vi.fn(),
@@ -160,10 +161,37 @@ describe('useEntityEditorController', () => {
     act(() => routed.current().actions.submit());
     await waitFor(() => expect(api.saveEditableEntity).toHaveBeenCalledTimes(1));
   });
+
+  it('fails closed for GUEST without loading editor data and retires a dirty draft before a role-lost submit', async () => {
+    const guest = renderController('edit', '/entities/7/edit', 'GUEST');
+    expect(guest.current().state.evidence.kind).toBe('permission');
+    await act(async () => Promise.resolve());
+    expect(api.loadEditableEntity).not.toHaveBeenCalled();
+    expect(api.loadEntityCatalogSuggestions).not.toHaveBeenCalled();
+    act(() => {
+      guest.current().actions.change('type', 'service');
+      guest.current().actions.change('name', 'checkout');
+      guest.current().actions.submit();
+    });
+    expect(api.saveEditableEntity).not.toHaveBeenCalled();
+
+    const routed = renderController('new', '/entities/new', 'USER');
+    act(() => {
+      routed.current().actions.change('type', 'service');
+      routed.current().actions.change('name', 'private-draft');
+    });
+    expect(routed.current().state.dirty).toBe(true);
+    routed.setRole('GUEST');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('permission'));
+    expect(routed.current().state.draft.name).toBe('');
+    act(() => routed.current().actions.submit());
+    expect(api.saveEditableEntity).not.toHaveBeenCalled();
+  });
 });
 
-function renderController(mode: 'new' | 'edit', entry: string) {
+function renderController(mode: 'new' | 'edit', entry: string, initialRole = 'ADMIN') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let role = initialRole;
   let controller: ReturnType<typeof useEntityEditorController> | undefined;
   function Probe() {
     controller = useEntityEditorController(mode);
@@ -183,13 +211,39 @@ function renderController(mode: 'new' | 'edit', entry: string) {
     ],
     { initialEntries: [entry] }
   );
-  render(<RouterProvider router={router} />);
+  const rendered = render(
+    <SessionContext.Provider value={sessionState(role)}>
+      <RouterProvider router={router} />
+    </SessionContext.Provider>
+  );
   return {
     client,
     router,
     current: () => {
       if (!controller) throw new Error('controller not mounted');
       return controller;
+    },
+    setRole(nextRole: string) {
+      role = nextRole;
+      rendered.rerender(
+        <SessionContext.Provider value={sessionState(role)}>
+          <RouterProvider router={router} />
+        </SessionContext.Provider>
+      );
+    }
+  };
+}
+
+function sessionState(role: string) {
+  return {
+    loading: false,
+    retry: vi.fn(),
+    session: {
+      authenticated: true,
+      username: 'operator',
+      roles: [role],
+      workspaceId: 'default',
+      expiresAt: null
     }
   };
 }

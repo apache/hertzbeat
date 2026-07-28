@@ -39,6 +39,7 @@ export type EntityDiscoveryViewModel = {
     draft: string;
     evidence: RemotePageState<EntityDiscoveryRow, 'unavailable' | 'error'>;
     refreshing: boolean;
+    canWrite: boolean;
   };
   actions: {
     updateDraft: (value: string) => void;

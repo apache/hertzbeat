@@ -13,7 +13,7 @@ import type {
 import { EntityEditorAdvancedFields, EntityEditorCoreFields } from './entity-editor-fields';
 import styles from './entity-view.module.css';
 
-type EditorEvidence = { kind: 'loading' | 'missing' | 'unavailable' | 'error' } | { kind: 'ready' };
+type EditorEvidence = { kind: 'loading' | 'missing' | 'permission' | 'unavailable' | 'error' } | { kind: 'ready' };
 type SuggestionEvidence =
   { kind: 'loading' | 'unavailable' } | { kind: 'ready'; value: EntityCatalogSuggestions | undefined };
 type SaveFailure = 'permission' | 'validation' | 'unavailable' | 'error';
@@ -45,6 +45,8 @@ export function EntityEditorView({ state, actions }: EntityEditorViewProps) {
       </div>
     );
   if (state.evidence.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
+  if (state.evidence.kind === 'permission')
+    return <Alert showIcon type="error" message={t('entity.editor.saveFailure.permission')} />;
   if (state.evidence.kind === 'unavailable') return <Alert type="warning" message={t('common.unavailable')} />;
   if (state.evidence.kind === 'error') return <Alert type="error" message={t('common.routeError.description')} />;
   return <ReadyEditor state={state} actions={actions} />;

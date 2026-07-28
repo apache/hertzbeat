@@ -5,6 +5,8 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionContext } from '@/core/auth/session-context';
+
 const api = vi.hoisted(() => ({
   loadEditableEntity: vi.fn(),
   loadEntityDefinition: vi.fn(),
@@ -137,10 +139,38 @@ describe('useEntityDefinitionController', () => {
     expect(routed.current().state.content).toBe('kind: database');
     expect(routed.current().state.dirty).toBe(true);
   });
+
+  it('shows permission without loading content for GUEST and retires role-lost draft ownership', async () => {
+    const guest = renderController('/entities/7/definition', 'GUEST');
+    expect(guest.current().state.evidence.kind).toBe('permission');
+    expect(api.loadEditableEntity).not.toHaveBeenCalled();
+    expect(api.loadEntityDefinition).not.toHaveBeenCalled();
+    act(() => {
+      guest.current().actions.preview();
+      guest.current().actions.save();
+    });
+    expect(api.previewEntityDefinition).not.toHaveBeenCalled();
+    expect(api.saveEntityDefinition).not.toHaveBeenCalled();
+
+    const routed = renderController('/entities/7/definition', 'USER');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.changeContent('kind: database'));
+    expect(routed.current().state.dirty).toBe(true);
+    routed.setRole('GUEST');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('permission'));
+    expect(routed.current().state.content).toBe('');
+    act(() => {
+      routed.current().actions.preview();
+      routed.current().actions.save();
+    });
+    expect(api.previewEntityDefinition).not.toHaveBeenCalled();
+    expect(api.saveEntityDefinition).not.toHaveBeenCalled();
+  });
 });
 
-function renderController(entry: string) {
+function renderController(entry: string, initialRole = 'ADMIN') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let role = initialRole;
   let controller: ReturnType<typeof useEntityDefinitionController> | undefined;
   let location = '';
   function Probe() {
@@ -149,15 +179,17 @@ function renderController(entry: string) {
     location = `${current.pathname}${current.search}`;
     return null;
   }
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>
-        <Routes>
-          <Route path="/entities/:entityId/definition" element={<Probe />} />
-          <Route path="*" element={<Probe />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+  const rendered = render(
+    <SessionContext.Provider value={sessionState(role)}>
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[entry]}>
+          <Routes>
+            <Route path="/entities/:entityId/definition" element={<Probe />} />
+            <Route path="*" element={<Probe />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    </SessionContext.Provider>
   );
   return {
     client,
@@ -165,6 +197,35 @@ function renderController(entry: string) {
       if (!controller) throw new Error('controller not mounted');
       return controller;
     },
-    location: () => location
+    location: () => location,
+    setRole(nextRole: string) {
+      role = nextRole;
+      rendered.rerender(
+        <SessionContext.Provider value={sessionState(role)}>
+          <QueryClientProvider client={client}>
+            <MemoryRouter initialEntries={[entry]}>
+              <Routes>
+                <Route path="/entities/:entityId/definition" element={<Probe />} />
+                <Route path="*" element={<Probe />} />
+              </Routes>
+            </MemoryRouter>
+          </QueryClientProvider>
+        </SessionContext.Provider>
+      );
+    }
+  };
+}
+
+function sessionState(role: string) {
+  return {
+    loading: false,
+    retry: vi.fn(),
+    session: {
+      authenticated: true,
+      username: 'operator',
+      roles: [role],
+      workspaceId: 'default',
+      expiresAt: null
+    }
   };
 }

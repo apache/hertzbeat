@@ -17,8 +17,10 @@ import {
 } from '../model/entity-discovery-model';
 import { safeEntityReturnTo } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
+import { useEntityCapabilities } from './use-entity-capabilities';
 
 export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
+  const { canWrite } = useEntityCapabilities();
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
@@ -54,7 +56,8 @@ export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
       query,
       draft: draft.value,
       evidence: resolveDiscoveryEvidence(result.isPending, result.error, result.data),
-      refreshing: result.isFetching
+      refreshing: result.isFetching,
+      canWrite
     },
     actions: {
       updateDraft: draft.setValue,
@@ -62,7 +65,9 @@ export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
       changePage: (page, pageSize) => setQuery({ pageIndex: page - 1, pageSize }),
       refresh: () => void client.invalidateQueries({ queryKey: entityQueryKeys.discovery(source) }),
       back: () => void navigate(catalogReturnTo),
-      create: () => void navigate(buildEntityDiscoveryCreatePath(query, catalogReturnTo)),
+      create: () => {
+        if (canWrite) void navigate(buildEntityDiscoveryCreatePath(query, catalogReturnTo));
+      },
       openCandidate: resourceId => {
         if (location.pathname === entityRoutePaths.discovery)
           void navigate(buildEntityDiscoveryDetailPath(resourceId, query, catalogReturnTo));

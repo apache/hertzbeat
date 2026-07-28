@@ -112,6 +112,7 @@ function view(
       saving: false,
       refreshing: false,
       saveEnabled: false,
+      canWrite: true,
       saved: false,
       ...statePatch
     },

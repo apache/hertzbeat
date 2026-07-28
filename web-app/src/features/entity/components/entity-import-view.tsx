@@ -13,6 +13,7 @@ import { EntityDefinitionSummary } from './entity-definition-summary';
 
 export function EntityImportView({ state, actions }: EntityImportViewModel) {
   const { t } = useTranslation();
+  if (!state.canWrite) return <Alert showIcon type="error" message={t('entity.import.failure.permission')} />;
   if (state.createdIds && state.preview)
     return <ImportSuccess ids={state.createdIds} resources={state.preview} returnTo={state.returnTo} />;
   return (

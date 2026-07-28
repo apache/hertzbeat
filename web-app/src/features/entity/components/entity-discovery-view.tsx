@@ -59,7 +59,7 @@ function DiscoveryResults({ state, actions }: EntityDiscoveryViewModel) {
       rowKey={row => row.monitor.id}
       size="small"
       dataSource={evidence.records}
-      columns={discoveryColumns(t, actions.openCandidate, actions.create)}
+      columns={discoveryColumns(t, actions.openCandidate, actions.create, state.canWrite)}
       pagination={{
         current: state.query.pageIndex + 1,
         pageSize: state.query.pageSize,
@@ -75,7 +75,8 @@ function DiscoveryResults({ state, actions }: EntityDiscoveryViewModel) {
 function discoveryColumns(
   t: (key: string) => string,
   openCandidate: (resourceId: number) => void,
-  create: () => void
+  create: () => void,
+  canWrite: boolean
 ): ColumnsType<EntityDiscoveryRow> {
   return [
     { title: t('entity.discovery.fields.name'), render: (_value, row) => <strong>{row.monitor.name}</strong> },
@@ -92,7 +93,9 @@ function discoveryColumns(
     },
     {
       title: t('entity.discovery.fields.candidates'),
-      render: (_value, row) => <CandidateList candidates={row.candidates} t={t} open={openCandidate} create={create} />
+      render: (_value, row) => (
+        <CandidateList candidates={row.candidates} t={t} open={openCandidate} create={create} canWrite={canWrite} />
+      )
     }
   ];
 }
@@ -101,22 +104,16 @@ function CandidateList({
   candidates,
   t,
   open,
-  create
+  create,
+  canWrite
 }: {
   candidates: EntityDiscoveryCandidate[];
   t: (key: string) => string;
   open: (resourceId: number) => void;
   create: () => void;
+  canWrite: boolean;
 }) {
-  if (candidates.length === 0)
-    return (
-      <Space direction="vertical" size={4}>
-        <Typography.Text type="secondary">{t('entity.discovery.noCandidates')}</Typography.Text>
-        <Button size="small" onClick={create}>
-          {t('entity.editor.addTitle')}
-        </Button>
-      </Space>
-    );
+  if (candidates.length === 0) return <EmptyCandidateList t={t} create={create} canWrite={canWrite} />;
   return (
     <Space direction="vertical" size={8}>
       {candidates.map(candidate => (
@@ -152,6 +149,27 @@ function CandidateList({
           ) : null}
         </Space>
       ))}
+    </Space>
+  );
+}
+
+function EmptyCandidateList({
+  t,
+  create,
+  canWrite
+}: {
+  t: (key: string) => string;
+  create: () => void;
+  canWrite: boolean;
+}) {
+  return (
+    <Space direction="vertical" size={4}>
+      <Typography.Text type="secondary">{t('entity.discovery.noCandidates')}</Typography.Text>
+      {canWrite ? (
+        <Button size="small" onClick={create}>
+          {t('entity.editor.addTitle')}
+        </Button>
+      ) : null}
     </Space>
   );
 }

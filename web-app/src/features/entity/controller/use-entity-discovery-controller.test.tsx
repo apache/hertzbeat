@@ -5,6 +5,8 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionContext } from '@/core/auth/session-context';
+
 const api = vi.hoisted(() => ({ loadEntityDiscovery: vi.fn() }));
 vi.mock('../api/entity-discovery-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/entity-discovery-api')>()),
@@ -72,9 +74,18 @@ describe('useEntityDiscoveryController', () => {
     act(() => unsafe.current().actions.back());
     expect(unsafe.location()).toBe('/entities');
   });
+
+  it('keeps discovery reads available to GUEST but rejects its create handoff', async () => {
+    const routed = renderController('/entities/discovery?search=mysql', 'GUEST');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(api.loadEntityDiscovery).toHaveBeenCalled();
+    expect(routed.current().state.canWrite).toBe(false);
+    act(() => routed.current().actions.create());
+    expect(routed.location()).toContain('/entities/discovery');
+  });
 });
 
-function renderController(entry: string) {
+function renderController(entry: string, role = 'ADMIN') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   let location = '';
   let controller: ReturnType<typeof useEntityDiscoveryController> | undefined;
@@ -88,12 +99,14 @@ function renderController(entry: string) {
     return null;
   }
   render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>
-        <ControllerProbe />
-        <LocationProbe />
-      </MemoryRouter>
-    </QueryClientProvider>
+    <SessionContext.Provider value={sessionState(role)}>
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[entry]}>
+          <ControllerProbe />
+          <LocationProbe />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </SessionContext.Provider>
   );
   return {
     current: () => {
@@ -101,5 +114,19 @@ function renderController(entry: string) {
       return controller;
     },
     location: () => location
+  };
+}
+
+function sessionState(role: string) {
+  return {
+    loading: false,
+    retry: vi.fn(),
+    session: {
+      authenticated: true,
+      username: 'operator',
+      roles: [role],
+      workspaceId: 'default',
+      expiresAt: null
+    }
   };
 }

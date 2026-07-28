@@ -5,6 +5,8 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionContext } from '@/core/auth/session-context';
+
 const api = vi.hoisted(() => ({ previewEntityDefinitionBundle: vi.fn(), commitEntityDefinitionBundle: vi.fn() }));
 vi.mock('../api/entity-import-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/entity-import-api')>()),
@@ -87,10 +89,33 @@ describe('useEntityImportController', () => {
     act(() => resolveCommit?.([41]));
     await waitFor(() => expect(routed.current().state.createdIds).toEqual([41]));
   });
+
+  it('fails closed for GUEST and clears preview ownership before a role-lost confirmation', async () => {
+    const guest = renderController('/entities/import', 'GUEST');
+    act(() => {
+      guest.current().actions.changeContent('kind: service');
+      guest.current().actions.preview();
+      guest.current().actions.confirm();
+    });
+    expect(guest.current().state.canWrite).toBe(false);
+    expect(api.previewEntityDefinitionBundle).not.toHaveBeenCalled();
+    expect(api.commitEntityDefinitionBundle).not.toHaveBeenCalled();
+
+    const routed = renderController('/entities/import', 'USER');
+    act(() => routed.current().actions.changeContent('kind: service'));
+    act(() => routed.current().actions.preview());
+    await waitFor(() => expect(routed.current().state.confirmEnabled).toBe(true));
+    routed.setRole('GUEST');
+    await waitFor(() => expect(routed.current().state.canWrite).toBe(false));
+    expect(routed.current().state.draft).toEqual({ content: '', format: 'yaml' });
+    act(() => routed.current().actions.confirm());
+    expect(api.commitEntityDefinitionBundle).not.toHaveBeenCalled();
+  });
 });
 
-function renderController(entry: string) {
+function renderController(entry: string, initialRole = 'ADMIN') {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+  let role = initialRole;
   let location = '';
   let controller: ReturnType<typeof useEntityImportController> | undefined;
   function ControllerProbe() {
@@ -102,19 +127,48 @@ function renderController(entry: string) {
     location = `${current.pathname}${current.search}`;
     return null;
   }
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>
-        <ControllerProbe />
-        <LocationProbe />
-      </MemoryRouter>
-    </QueryClientProvider>
+  const rendered = render(
+    <SessionContext.Provider value={sessionState(role)}>
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[entry]}>
+          <ControllerProbe />
+          <LocationProbe />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </SessionContext.Provider>
   );
   return {
     current: () => {
       if (!controller) throw new Error('controller not mounted');
       return controller;
     },
-    location: () => location
+    location: () => location,
+    setRole(nextRole: string) {
+      role = nextRole;
+      rendered.rerender(
+        <SessionContext.Provider value={sessionState(role)}>
+          <QueryClientProvider client={client}>
+            <MemoryRouter initialEntries={[entry]}>
+              <ControllerProbe />
+              <LocationProbe />
+            </MemoryRouter>
+          </QueryClientProvider>
+        </SessionContext.Provider>
+      );
+    }
+  };
+}
+
+function sessionState(role: string) {
+  return {
+    loading: false,
+    retry: vi.fn(),
+    session: {
+      authenticated: true,
+      username: 'operator',
+      roles: [role],
+      workspaceId: 'default',
+      expiresAt: null
+    }
   };
 }

@@ -33,6 +33,7 @@ export type EntityDefinitionViewModel = {
     saving: boolean;
     refreshing: boolean;
     saveEnabled: boolean;
+    canWrite: boolean;
     failure?: EntityDefinitionFailure;
     refreshFailure?: EntityDefinitionFailure;
     saved: boolean;

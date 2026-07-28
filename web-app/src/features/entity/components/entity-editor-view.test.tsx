@@ -59,6 +59,12 @@ describe('EntityEditorView', () => {
     expect(screen.getByRole('button', { name: 'Advanced details' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
   });
+
+  it('renders write-route permission without exposing an editable form', () => {
+    renderView({ evidence: { kind: 'permission' } });
+    expect(screen.getByText('You do not have permission to save this resource.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+  });
 });
 
 function renderView(

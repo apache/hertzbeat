@@ -75,6 +75,19 @@ describe('EntityDiscoveryView', () => {
     expect(create).toHaveBeenCalledOnce();
   });
 
+  it('keeps GUEST discovery results readable without exposing the create action', () => {
+    renderView({
+      canWrite: false,
+      evidence: {
+        kind: 'ready',
+        records: [{ monitor: rows[0]!.monitor, candidates: [] }],
+        total: 1
+      }
+    });
+    expect(screen.getByText('checkout-http')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add resource' })).not.toBeInTheDocument();
+  });
+
   it.each(['loading', 'empty', 'unavailable', 'error'] as const)('keeps %s distinct from ready rows', kind => {
     renderView({ evidence: { kind } });
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
@@ -92,6 +105,7 @@ function renderView(
       draft: '',
       evidence: { kind: 'loading' },
       refreshing: false,
+      canWrite: true,
       ...statePatch
     },
     actions: {

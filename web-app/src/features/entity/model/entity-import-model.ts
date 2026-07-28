@@ -26,6 +26,7 @@ export type EntityImportViewModel = {
     previewing: boolean;
     confirming: boolean;
     confirmEnabled: boolean;
+    canWrite: boolean;
     failure?: EntityImportFailure;
     createdIds?: number[];
     returnTo: string;
