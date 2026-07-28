@@ -46,21 +46,23 @@ public class MysqlR2dbcQueryExecutor implements MysqlQueryExecutor {
     @Override
     public QueryResult execute(String sql, QueryOptions options) {
         String normalizedSql = sqlGuard.normalizeAndValidate(sql);
-        QueryResult firstAttempt = executeOnce(normalizedSql, options, SslMode.PREFERRED);
-        if (!firstAttempt.hasError() || !shouldRetryWithoutSsl(firstAttempt.getError())) {
-            return firstAttempt;
+        // A single PREFERRED attempt negotiates TLS when the server supports it and
+        // falls back to plaintext only through the protocol-level handshake when the
+        // server advertises no SSL capability. It must NOT be followed by a second
+        // SslMode.DISABLED attempt on handshake *failures*: a handshake failure is
+        // ambiguous (a MitM can induce it to force a downgrade), and retrying with
+        // SSL disabled would then ship the monitoring credentials in the clear.
+        QueryResult result = executeOnce(normalizedSql, options, SslMode.PREFERRED);
+        if (!result.hasError()) {
+            return result;
         }
-        QueryResult fallbackAttempt = executeOnce(normalizedSql, options, SslMode.DISABLED);
-        if (!fallbackAttempt.hasError()) {
-            return fallbackAttempt;
-        }
-        if (requiresSslCompatibleAuth(fallbackAttempt.getError())) {
+        if (requiresSslCompatibleAuth(result.getError())) {
             return QueryResult.builder()
-                    .error(fallbackAttempt.getError()
+                    .error(result.getError()
                             + ". This route currently needs a TLS-compatible runtime or a mysql_native_password monitoring user.")
                     .build();
         }
-        return fallbackAttempt;
+        return result;
     }
 
     private QueryResult executeOnce(String sql, QueryOptions options, SslMode sslMode) {
@@ -126,17 +128,6 @@ public class MysqlR2dbcQueryExecutor implements MysqlQueryExecutor {
             current = current.getCause();
         }
         return false;
-    }
-
-    private boolean shouldRetryWithoutSsl(String error) {
-        if (error == null) {
-            return false;
-        }
-        String normalized = error.toLowerCase(Locale.ROOT);
-        return normalized.contains("handshake_failure")
-                || normalized.contains("ssl/tls handshake")
-                || normalized.contains("closedchannelexception")
-                || normalized.contains("connection unexpectedly closed");
     }
 
     private boolean requiresSslCompatibleAuth(String error) {
