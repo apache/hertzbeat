@@ -39,6 +39,7 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.import.failure.forbidden).toBeTruthy();
       expect(locale.monitor.import.failure.unavailable).toBeTruthy();
       expect(locale.monitor.import.failure.error).toBeTruthy();
+      expect(locale.monitor.metadata.parameters).toBeTruthy();
       expect(locale.monitorMetrics.autoRefresh.label).toBeTruthy();
       expect(locale.monitorMetrics.autoRefresh.seconds).toBeTruthy();
       expect(locale.monitorMetrics.autoRefresh.off).toBeTruthy();

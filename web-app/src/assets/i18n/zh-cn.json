@@ -2159,7 +2159,8 @@
       "created": "创建时间",
       "updated": "更新时间",
       "labels": "标签",
-      "annotations": "注解"
+      "annotations": "注解",
+      "parameters": "参数"
     },
     "grafana": {
       "title": "Grafana 仪表盘",

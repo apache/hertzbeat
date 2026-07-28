@@ -2265,7 +2265,8 @@
       "created": "Criado",
       "updated": "Atualizado",
       "labels": "Rótulos",
-      "annotations": "Anotações"
+      "annotations": "Anotações",
+      "parameters": "Parâmetros"
     },
     "grafana": {
       "title": "Painel do Grafana",

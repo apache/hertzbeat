@@ -9,7 +9,7 @@ import { Descriptions, Space, Tag, Typography, type DescriptionsProps } from 'an
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import type { Monitor } from '../model/monitor-contract';
+import { monitorParamTypes, type Monitor, type MonitorParam } from '../model/monitor-contract';
 import { monitorStatusColor, monitorStatusKey, parseMonitorTimestamp } from '../model/monitor-model';
 
 import styles from './monitor-detail-view.module.css';
@@ -21,19 +21,22 @@ import styles from './monitor-detail-view.module.css';
  */
 export function MonitorDetailMetadata({
   monitor,
-  collector
+  collector,
+  params
 }: {
   monitor: Monitor;
   collector: string | null | undefined;
+  params: MonitorParam[] | undefined;
 }) {
   const { t } = useTranslation();
-  return <Descriptions size="small" column={2} items={monitorMetadataItems(t, monitor, collector)} />;
+  return <Descriptions size="small" column={2} items={monitorMetadataItems(t, monitor, collector, params)} />;
 }
 
 function monitorMetadataItems(
   t: TFunction,
   monitor: Monitor,
-  collector: string | null | undefined
+  collector: string | null | undefined,
+  params: MonitorParam[] | undefined
 ): NonNullable<DescriptionsProps['items']> {
   return [
     {
@@ -65,6 +68,12 @@ function monitorMetadataItems(
       label: t('monitor.metadata.annotations'),
       children: <MetadataEntries entries={monitor.annotations} />,
       span: 2
+    },
+    {
+      key: 'params',
+      label: t('monitor.metadata.parameters'),
+      children: <MonitorParameters params={params} />,
+      span: 2
     }
   ];
 }
@@ -95,4 +104,24 @@ function MetadataEntries({ entries }: { entries: Record<string, string> | null |
       ))}
     </Space>
   );
+}
+
+function MonitorParameters({ params }: { params: MonitorParam[] | undefined }) {
+  if (!params || params.length === 0) return <>—</>;
+  return (
+    <Space direction="vertical" size={2}>
+      {params.map((param, index) => (
+        <Typography.Text key={param.id ?? `${param.field}:${index}`}>
+          <Typography.Text code>{param.field}</Typography.Text>
+          {' = '}
+          {monitorParameterValue(param)}
+        </Typography.Text>
+      ))}
+    </Space>
+  );
+}
+
+function monitorParameterValue(param: MonitorParam) {
+  if (param.paramValue === null || param.paramValue === undefined || param.paramValue === '') return '—';
+  return param.type === monitorParamTypes.encrypted ? '••••••••' : param.paramValue;
 }

@@ -67,7 +67,11 @@ export function MonitorDetailView({
           ) : null}
         </Space>
       </header>
-      <MonitorDetailMetadata monitor={monitor} collector={state.detail.detail.collector} />
+      <MonitorDetailMetadata
+        monitor={monitor}
+        collector={state.detail.detail.collector}
+        params={state.detail.detail.params}
+      />
       {metricWorkbench}
       <MonitorGrafanaDashboard
         dashboard={state.detail.detail.grafanaDashboard}

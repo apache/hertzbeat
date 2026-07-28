@@ -20,6 +20,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { monitorParamTypes } from '../model/monitor-contract';
 import { MonitorDetailView } from './monitor-detail-view';
 
 const ready = {
@@ -87,6 +88,32 @@ describe('MonitorDetailView', () => {
     expect(screen.getByText('platform')).toBeInTheDocument();
     expect(screen.getByText(i18n.t('monitor.metadata.created'))).toBeInTheDocument();
     expect(screen.getByText(i18n.t('monitor.metadata.updated'))).toBeInTheDocument();
+  });
+
+  it('renders the canonical non-empty parameter evidence without exposing encrypted password values', () => {
+    renderView({
+      ...ready,
+      detail: {
+        ...ready.detail,
+        params: [
+          { id: 1, monitorId: 7, field: 'host', type: 1, paramValue: '127.0.0.1' },
+          { id: 2, monitorId: 7, field: 'timeout', type: 0, paramValue: '6000' },
+          {
+            id: 3,
+            monitorId: 7,
+            field: 'password',
+            type: monitorParamTypes.encrypted,
+            paramValue: 'private-encrypted-wire-value'
+          }
+        ]
+      }
+    });
+
+    expect(screen.getByText(i18n.t('monitor.metadata.parameters'))).toBeInTheDocument();
+    expect(parameterRow('host = 127.0.0.1')).toBeInTheDocument();
+    expect(parameterRow('timeout = 6000')).toBeInTheDocument();
+    expect(parameterRow('password = ••••••••')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('private-encrypted-wire-value');
   });
 
   it('keeps the monitor help guide available from detail', () => {
@@ -162,6 +189,12 @@ describe('MonitorDetailView', () => {
     expect(screen.queryByText('private backend failure')).not.toBeInTheDocument();
   });
 });
+
+function parameterRow(value: string) {
+  return screen.getByText(
+    (_content, element) => element?.matches('span.ant-typography') === true && element.textContent === value
+  );
+}
 
 function grafana(enabled: boolean, url: string | null) {
   return {

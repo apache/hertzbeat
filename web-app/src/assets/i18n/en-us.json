@@ -2178,7 +2178,8 @@
       "created": "Created",
       "updated": "Updated",
       "labels": "Labels",
-      "annotations": "Annotations"
+      "annotations": "Annotations",
+      "parameters": "Parameters"
     },
     "grafana": {
       "title": "Grafana dashboard",

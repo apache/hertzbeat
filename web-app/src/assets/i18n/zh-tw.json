@@ -2242,7 +2242,8 @@
       "created": "建立時間",
       "updated": "更新時間",
       "labels": "標籤",
-      "annotations": "註解"
+      "annotations": "註解",
+      "parameters": "參數"
     },
     "grafana": {
       "title": "Grafana 儀表板",
