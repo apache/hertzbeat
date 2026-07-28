@@ -32,8 +32,11 @@ import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfigRequest;
 import org.apache.hertzbeat.manager.service.ConfigService;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,6 +78,21 @@ public class GeneralConfigController {
 
     @Resource
     private MessageServerConfigService messageServerConfigService;
+
+    @Resource
+    private SystemConfigService systemConfigService;
+
+    @PostMapping(path = "/system")
+    @Operation(summary = "Save the system config")
+    public ResponseEntity<Message<SystemConfig>> saveSystemConfig(@RequestBody SystemConfigRequest request) {
+        return handleSystemConfig(() -> systemConfigService.saveAndGetConfig(request));
+    }
+
+    @GetMapping(path = "/system")
+    @Operation(summary = "Get the system config")
+    public ResponseEntity<Message<SystemConfig>> getSystemConfig() {
+        return handleSystemConfig(systemConfigService::getConfig);
+    }
 
     @PostMapping(path = "/email")
     @Operation(summary = "Save the email server config")
@@ -164,6 +182,20 @@ public class GeneralConfigController {
         } catch (Exception exception) {
             log.error("Message server config error: {}", exception.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Message server config error"));
+        }
+    }
+
+    private <T> ResponseEntity<Message<T>> handleSystemConfig(Supplier<T> action) {
+        try {
+            return ResponseEntity.ok(Message.success(action.get()));
+        } catch (DataAccessException exception) {
+            log.error("System config storage unavailable: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "System config storage unavailable"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid system config"));
+        } catch (Exception exception) {
+            log.error("System config error: {}", exception.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "System config error"));
         }
     }
 }

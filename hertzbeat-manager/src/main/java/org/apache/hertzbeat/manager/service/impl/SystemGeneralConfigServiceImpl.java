@@ -20,25 +20,66 @@ package org.apache.hertzbeat.manager.service.impl;
 import tools.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
+import java.time.ZoneId;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfigRequest;
+import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * system config service impl
  */
 @Service
-public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig> {
+public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig>
+        implements SystemConfigService {
+
+    private static final Set<String> SUPPORTED_LOCALES =
+            Set.of("en_US", "zh_CN", "zh_TW", "ja_JP", "pt_BR");
+    private static final Set<String> SUPPORTED_THEMES =
+            Set.of("dark-ops", "light-ops", "compact");
+
     @Resource
     private ApplicationContext applicationContext;
 
     public SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao) {
         super(generalConfigDao);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveConfig(SystemConfig systemConfig) {
+        validate(systemConfig);
+        super.saveConfig(systemConfig);
+    }
+
+    /**
+     * Saves the typed system configuration and returns the authoritative persisted value.
+     *
+     * @param request requested system configuration
+     * @return authoritative persisted system configuration
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public SystemConfig saveAndGetConfig(SystemConfigRequest request) {
+        if (request == null || request.isUnknownFieldPresent()) {
+            throw new IllegalArgumentException("Unsupported system config");
+        }
+        SystemConfig systemConfig =
+                new SystemConfig(request.getTimeZoneId(), request.getLocale(), request.getTheme());
+        saveConfig(systemConfig);
+        SystemConfig saved = getConfig();
+        if (saved == null) {
+            throw new IllegalStateException("System config missing after save");
+        }
+        return saved;
     }
 
     @Override
@@ -64,5 +105,14 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
                 return SystemConfig.class;
             }
         };
+    }
+
+    private void validate(SystemConfig systemConfig) {
+        if (systemConfig == null
+                || !ZoneId.getAvailableZoneIds().contains(systemConfig.getTimeZoneId())
+                || !SUPPORTED_LOCALES.contains(systemConfig.getLocale())
+                || !SUPPORTED_THEMES.contains(systemConfig.getTheme())) {
+            throw new IllegalArgumentException("Unsupported system config");
+        }
     }
 }

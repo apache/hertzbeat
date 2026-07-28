@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,8 +34,11 @@ import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigOptions;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
+import org.apache.hertzbeat.manager.pojo.dto.SystemConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.apache.hertzbeat.manager.service.impl.ConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +65,9 @@ class GeneralConfigControllerTest {
     @Mock
     private MessageServerConfigService messageServerConfigService;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
     @InjectMocks
     private GeneralConfigController generalConfigController;
 
@@ -71,27 +78,91 @@ class GeneralConfigControllerTest {
     }
 
     @Test
-    public void testSaveOrUpdateConfig() throws Exception {
-
-        doNothing().when(configService).saveConfig(anyString(), any());
+    public void testSaveSystemConfig() throws Exception {
+        when(systemConfigService.saveAndGetConfig(any())).thenReturn(
+                new SystemConfig("UTC", "en_US", "dark-ops"));
 
         mockMvc.perform(post("/api/config/system")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"key\":\"value\"}"))
+                        .content("{\"timeZoneId\":\"UTC\",\"locale\":\"en_US\",\"theme\":\"dark-ops\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Update config success"));
+                .andExpect(jsonPath("$.data.timeZoneId").value("UTC"));
+        SystemConfigRequest expected = new SystemConfigRequest();
+        expected.setTimeZoneId("UTC");
+        expected.setLocale("en_US");
+        expected.setTheme("dark-ops");
+        verify(systemConfigService).saveAndGetConfig(expected);
     }
 
     @Test
-    public void testGetConfig() throws Exception {
+    public void testGetSystemConfig() throws Exception {
 
-        when(configService.getConfig(anyString())).thenReturn(any());
+        when(systemConfigService.getConfig()).thenReturn(
+                new SystemConfig("UTC", "en_US", "dark-ops"));
 
         mockMvc.perform(get("/api/config/system")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
+
+    @Test
+    void missingSystemConfigIsDistinctFromStorageFailure() throws Exception {
+        when(systemConfigService.getConfig()).thenReturn(null);
+
+        mockMvc.perform(get("/api/config/system").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void systemConfigFailuresUseFixedEnvelopeWithoutStorageOrConfigText() throws Exception {
+        when(systemConfigService.getConfig())
+                .thenThrow(new DataAccessResourceFailureException("system-storage-sentinel"));
+        when(systemConfigService.saveAndGetConfig(any()))
+                .thenThrow(new IllegalArgumentException("system-config-sentinel"));
+
+        mockMvc.perform(get("/api/config/system").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("System config storage unavailable"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("system-storage-sentinel"))));
+        mockMvc.perform(post("/api/config/system")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"timeZoneId\":\"invalid-config-sentinel\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Invalid system config"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("system-config-sentinel"))))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("invalid-config-sentinel"))));
+    }
+
+    @Test
+    void systemConfigRejectsUnknownAndServerOwnedFieldsWithoutEchoingThem() throws Exception {
+        when(systemConfigService.saveAndGetConfig(any()))
+                .thenAnswer(invocation -> {
+                    SystemConfigRequest request = invocation.getArgument(0);
+                    if (request.isUnknownFieldPresent()) {
+                        throw new IllegalArgumentException("unknown-field-sentinel");
+                    }
+                    return new SystemConfig(request.getTimeZoneId(), request.getLocale(), request.getTheme());
+                });
+
+        mockMvc.perform(post("/api/config/system")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"timeZoneId":"UTC","locale":"en_US","theme":"dark-ops",
+                                 "type":"sms","token":"secret-token-sentinel"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Invalid system config"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("secret-token-sentinel"))))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("unknown-field-sentinel"))));
     }
 
     @Test
