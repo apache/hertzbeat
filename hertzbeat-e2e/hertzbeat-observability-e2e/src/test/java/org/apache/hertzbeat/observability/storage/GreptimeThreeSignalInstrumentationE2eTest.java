@@ -45,9 +45,16 @@ import io.opentelemetry.proto.trace.v1.Span;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionResponse;
@@ -64,6 +71,8 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationDetectionService;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
+import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationDetectionV2Service;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
@@ -124,6 +133,12 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     private InstrumentationDetectionService detectionService;
 
     @Autowired
+    private InstrumentationDetectionV2Service currentDetectionService;
+
+    @Autowired
+    private CollectorDao collectorDao;
+
+    @Autowired
     private InstrumentationSignalDetectionStore signalDetectionStore;
 
     @Autowired
@@ -148,6 +163,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
 
     @Test
     void ingestedSignalsConvergeToReceivedUnderExactOnboardingContext() {
+        advertiseCollectorProfile();
         long startedAt = System.currentTimeMillis() - 1_000;
         long signalTimeNanos = System.currentTimeMillis() * 1_000_000L;
 
@@ -165,6 +181,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         });
         await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(
                 () -> assertNativeContextMappings(startedAt, System.currentTimeMillis()));
+        await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(
+                () -> assertCurrentDetectionContract(startedAt));
 
         var nativeSnapshot = signalDetectionStore.detect(new DetectionCriteria(
                 SERVICE_NAME,
@@ -233,6 +251,49 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 enabledJump(detected, METRICS).context(),
                 enabledJump(detected, LOGS).context(),
                 enabledJump(detected, TRACES).context());
+    }
+
+    private void advertiseCollectorProfile() {
+        String advertisement = new CollectorIntakeAdvertisementCodec().encode(
+                new CollectorIntakeAdvertisementRequest(
+                        1,
+                        Gateway.COLLECTOR,
+                        List.of(Capability.OTLP_HTTP_PROTOBUF),
+                        "http://127.0.0.1:4318",
+                        null));
+        collectorDao.save(Collector.builder()
+                .name(COLLECTOR_ID)
+                .ip("127.0.0.1")
+                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                .instrumentationIntake(advertisement)
+                .build());
+    }
+
+    private void assertCurrentDetectionContract(long startedAt) {
+        var response = currentDetectionService.detect(
+                new org.apache.hertzbeat.observability.instrumentation.v2.api
+                        .InstrumentationDetectionV2.DetectionRequest(
+                        2,
+                        SourceKind.QUICK_START,
+                        "opentelemetry_telemetrygen",
+                        null,
+                        null,
+                        null,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        new ServiceIdentity(
+                                SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
+                        "collector:" + COLLECTOR_ID,
+                        startedAt));
+        assertThat(response.signals().values())
+                .allMatch(signal -> signal.status()
+                        == org.apache.hertzbeat.observability.instrumentation.v2.api
+                                .InstrumentationDetectionV2.DetectionStatus.RECEIVED);
+        assertThat(response.queryJumps()).hasSize(3).allMatch(jump -> jump.enabled()
+                && COLLECTOR_ID.equals(jump.context().collectorId())
+                && INSTANCE_ID.equals(jump.context().serviceInstanceId())
+                && ENDPOINT.equals(jump.context().endpoint())
+                && startedAt == jump.context().startedAt());
     }
 
     private void assertNativeContextMappings(long startedAt, long detectedAt) {

@@ -105,13 +105,14 @@ public class InstrumentationGuideV2Renderer {
         return switch (recipe.kind()) {
             case APPLICATION -> applicationAdapter.blocks(
                     request, recipe, profile, target.endpoint(), target.protocol(), service);
-            case QUICK_START -> quickStartBlocks(target, service, recipe);
+            case QUICK_START -> quickStartBlocks(target, service, recipe, profile.collectorId());
             case EXISTING_OPENTELEMETRY -> sourceTemplates.render(
                     recipe.id(), new GuideContext(target.endpoint(), target.protocol(), service));
         };
     }
 
-    private List<GuideBlock> quickStartBlocks(Target target, ServiceIdentity service, RecipeOption recipe) {
+    private List<GuideBlock> quickStartBlocks(
+            Target target, ServiceIdentity service, RecipeOption recipe, String collectorId) {
         List<GuideBlock> blocks = new ArrayList<>();
         blocks.add(copyable(
                 "install_telemetrygen",
@@ -130,7 +131,7 @@ public class InstrumentationGuideV2Renderer {
                     "instrumentation.v2.block.send_" + signal,
                     "instrumentation.location.application_host",
                     "bash",
-                    telemetrygenCommand(signal, target, service),
+                    telemetrygenCommand(signal, target, service, collectorId),
                     null,
                     List.of(TOKEN_NAME)));
         }
@@ -152,7 +153,8 @@ public class InstrumentationGuideV2Renderer {
         return List.copyOf(blocks);
     }
 
-    private String telemetrygenCommand(String signal, Target target, ServiceIdentity service) {
+    private String telemetrygenCommand(
+            String signal, Target target, ServiceIdentity service, String collectorId) {
         String countFlag = switch (signal) {
             case "metrics" -> "--metrics 1";
             case "logs" -> "--logs 1";
@@ -163,18 +165,26 @@ public class InstrumentationGuideV2Renderer {
                 ? " --otlp-http --otlp-http-url-path " + shellQuote(target.signalPath(signal))
                 : "";
         String security = target.security() == TransportSecurity.PLAINTEXT ? " --otlp-insecure" : "";
+        String collectorAttribute = collectorId == null
+                ? ""
+                : telemetrygenAttribute("hertzbeat.collector.id", collectorId);
         String command = "./.hertzbeat-telemetrygen/telemetrygen " + signal
                 + transport
                 + security
                 + " --otlp-endpoint " + shellQuote(target.authority())
                 + " --otlp-header 'Authorization=\"Bearer " + TOKEN_MARKER + "\"'"
                 + " --service " + shellQuote(service.name())
-                + " --otlp-attributes 'service.namespace=\"" + service.namespace() + "\"'"
-                + " --otlp-attributes 'deployment.environment.name=\"" + service.environment() + "\"' "
+                + telemetrygenAttribute("service.namespace", service.namespace())
+                + telemetrygenAttribute("deployment.environment.name", service.environment())
+                + collectorAttribute + " "
                 + countFlag;
         return "if " + command + " >/dev/null 2>&1; then "
                 + "printf '%s\\n' 'telemetrygen: success'; else "
                 + "printf '%s\\n' 'telemetrygen: failed' >&2; false; fi";
+    }
+
+    private String telemetrygenAttribute(String key, String value) {
+        return " --otlp-attributes " + shellQuote(key + "=\"" + value + "\"");
     }
 
     private GuideBlock copyable(

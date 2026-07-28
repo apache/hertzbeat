@@ -172,6 +172,98 @@ class InstrumentationV2ServicesTest {
     }
 
     @Test
+    void rendersCollectorIdentityRequiredByScopedDetectionForApplicationAndQuickStart() {
+        IntakeProfile collector = collectorProfile();
+        InstrumentationIntakeProfileV2Service profiles =
+                new InstrumentationIntakeProfileV2Service(() -> List.of(collector));
+        InstrumentationCatalogV2Service catalog = catalog();
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog,
+                profiles,
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
+
+        var application = renderer.render(new RenderRequest(
+                2,
+                SourceKind.APPLICATION,
+                "java_spring_boot_zero_code",
+                null,
+                null,
+                null,
+                Environment.VM,
+                Platform.LINUX_AMD64,
+                collector.id(),
+                service()));
+        var quickStart = renderer.render(new RenderRequest(
+                2,
+                SourceKind.QUICK_START,
+                "opentelemetry_telemetrygen",
+                null,
+                null,
+                null,
+                Environment.VM,
+                Platform.LINUX_AMD64,
+                collector.id(),
+                service()));
+
+        assertTrue(renderedContent(application).contains("hertzbeat.collector.id=loopback"));
+        assertTrue(renderedContent(quickStart)
+                .contains("--otlp-attributes 'hertzbeat.collector.id=\"loopback\"'"));
+    }
+
+    @Test
+    void doesNotInventCollectorIdentityForServerOrExternalProfiles() {
+        IntakeProfile external = new IntakeProfile(
+                "external-west",
+                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.EXTERNAL,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("https://external.example.test:4318", TransportSecurity.TLS)),
+                "Authorization",
+                null,
+                null);
+        for (IntakeProfile profile : List.of(serverProfile(), external)) {
+            InstrumentationIntakeProfileV2Service profiles =
+                    new InstrumentationIntakeProfileV2Service(() -> List.of(profile));
+            InstrumentationCatalogV2Service catalog = catalog();
+            InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                    catalog,
+                    profiles,
+                    new InstrumentationApplicationGuideV2Adapter(
+                            catalog, InstrumentationGuideAdapterRegistry.official()));
+
+            var application = renderer.render(new RenderRequest(
+                    2,
+                    SourceKind.APPLICATION,
+                    "java_spring_boot_zero_code",
+                    null,
+                    null,
+                    null,
+                    Environment.VM,
+                    Platform.LINUX_AMD64,
+                    profile.id(),
+                    service()));
+            var quickStart = renderer.render(new RenderRequest(
+                    2,
+                    SourceKind.QUICK_START,
+                    "opentelemetry_telemetrygen",
+                    null,
+                    null,
+                    null,
+                    Environment.VM,
+                    Platform.LINUX_AMD64,
+                    profile.id(),
+                    service()));
+
+            assertFalse(renderedContent(application).contains("hertzbeat.collector.id"));
+            assertFalse(renderedContent(quickStart).contains("hertzbeat.collector.id"));
+        }
+    }
+
+    @Test
     void rendersCatalogSourceTemplateAndDetectsOnlyItsDeclaredSignals() {
         InstrumentationIntakeProfileV2Service profiles =
                 new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile()));
@@ -324,6 +416,28 @@ class InstrumentationV2ServicesTest {
                 "Authorization",
                 null,
                 null);
+    }
+
+    private IntakeProfile collectorProfile() {
+        return new IntakeProfile(
+                "collector:loopback",
+                IntakeKind.HERTZBEAT_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.COLLECTOR,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("http://127.0.0.1:4318", TransportSecurity.PLAINTEXT)),
+                "Authorization",
+                "loopback",
+                null);
+    }
+
+    private String renderedContent(
+            org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderResponse response) {
+        return response.blocks().stream()
+                .map(block -> block.content() == null ? "" : block.content())
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     private ServiceIdentity service() {
