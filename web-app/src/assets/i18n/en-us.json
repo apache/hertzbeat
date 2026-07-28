@@ -1428,6 +1428,7 @@
     "new": "New label",
     "edit": "Edit label",
     "empty": "No labels match the current query.",
+    "permission": "Your session does not have permission to read labels.",
     "unavailable": "Label data is unavailable.",
     "label": "Label",
     "name": "Name",

@@ -118,6 +118,23 @@ describe('LabelResults', () => {
 
     expect(callbacks.onRemove).not.toHaveBeenCalled();
   });
+
+  it('renders permission failure separately from unavailable and generic errors', () => {
+    const callbacks = labelCallbacks();
+    render(
+      <LabelResults
+        busy={false}
+        writeLocked={false}
+        state={{ kind: 'permission' }}
+        pageIndex={0}
+        pageSize={20}
+        {...callbacks}
+      />
+    );
+
+    expect(screen.getByText('labels.permission')).toBeInTheDocument();
+    expect(screen.queryByText('labels.unavailable')).not.toBeInTheDocument();
+  });
 });
 
 function renderResults() {

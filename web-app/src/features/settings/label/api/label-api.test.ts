@@ -58,16 +58,10 @@ const label = {
 describe('label API', () => {
   beforeEach(() => vi.clearAllMocks());
   it('uses the established label endpoints', async () => {
-    apiMessageGet.mockResolvedValue({
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      number: 0,
-      size: 20
-    });
-    apiMessagePost.mockResolvedValue(undefined);
-    apiMessagePut.mockResolvedValue(undefined);
-    apiMessageDelete.mockResolvedValue(undefined);
+    apiMessageGet.mockResolvedValue(page([], { size: 20 }));
+    apiMessagePost.mockResolvedValue(null);
+    apiMessagePut.mockResolvedValue(null);
+    apiMessageDelete.mockResolvedValue(null);
     await loadLabels({ search: '', pageIndex: 0, pageSize: 20 });
     await saveLabel({ name: 'env' }, true);
     await saveLabel({ id: 4, name: 'env', type: 1 }, false);
@@ -82,6 +76,27 @@ describe('label API', () => {
       type: 1
     });
     expect(apiMessageDelete).toHaveBeenCalledWith(`${labelEndpoint}?ids=4`);
+  });
+
+  it('rejects invalid direct requests before transport', async () => {
+    await expect(loadLabels({ search: '', pageIndex: -1, pageSize: 20 })).rejects.toBeInstanceOf(LabelContractError);
+    await expect(saveLabel({ name: '   ' }, true)).rejects.toBeInstanceOf(LabelContractError);
+    await expect(saveLabel({ id: 0, name: 'env', type: 1 }, false)).rejects.toBeInstanceOf(LabelContractError);
+    await expect(deleteLabel(0)).rejects.toBeInstanceOf(LabelContractError);
+    expect(apiMessageGet).not.toHaveBeenCalled();
+    expect(apiMessagePost).not.toHaveBeenCalled();
+    expect(apiMessagePut).not.toHaveBeenCalled();
+    expect(apiMessageDelete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['create', () => saveLabel({ name: 'env' }, true), apiMessagePost],
+    ['update', () => saveLabel({ id: 7, name: 'env', type: 1 }, false), apiMessagePut],
+    ['delete', () => deleteLabel(7), apiMessageDelete]
+  ] as const)('rejects non-null %s write data as an uncertain contract failure', async (_name, command, transport) => {
+    transport.mockResolvedValue({ privateField: 'secret' });
+
+    await expect(command()).rejects.toBeInstanceOf(LabelContractError);
   });
 
   it('trims the Label request payload at the transport boundary', () => {
@@ -120,20 +135,14 @@ describe('label API', () => {
 
   it('finds only an exact server record across paginated fuzzy search results', async () => {
     apiMessageGet
-      .mockResolvedValueOnce({
-        content: fuzzyLabels(100),
-        totalElements: 101,
-        totalPages: 2,
-        number: 0,
-        size: 100
-      })
-      .mockResolvedValueOnce({
-        content: [{ id: 7, name: 'env', tagValue: 'prod', creator: 'server' }],
-        totalElements: 101,
-        totalPages: 2,
-        number: 1,
-        size: 100
-      });
+      .mockResolvedValueOnce(page(fuzzyLabels(100), { totalElements: 101, totalPages: 2 }))
+      .mockResolvedValueOnce(
+        page([{ id: 7, name: 'env', tagValue: 'prod', creator: 'server' }], {
+          totalElements: 101,
+          totalPages: 2,
+          number: 1
+        })
+      );
 
     await expect(findCanonicalLabel({ id: 7, name: ' env ', tagValue: ' prod ' })).resolves.toMatchObject({
       id: 7,
@@ -306,13 +315,29 @@ describe('label API', () => {
 });
 
 function page(content: unknown[], overrides: Record<string, unknown> = {}) {
+  const totalElements = typeof overrides.totalElements === 'number' ? overrides.totalElements : content.length;
+  const size = typeof overrides.size === 'number' ? overrides.size : 100;
+  const number = typeof overrides.number === 'number' ? overrides.number : 0;
+  const totalPages = typeof overrides.totalPages === 'number' ? overrides.totalPages : Math.ceil(totalElements / size);
   return {
     content,
-    totalElements: content.length,
-    totalPages: content.length ? 1 : 0,
-    number: 0,
-    size: 100,
-    ...overrides
+    pageable: {
+      pageNumber: number,
+      pageSize: size,
+      sort: { empty: true, sorted: false, unsorted: true },
+      offset: number * size,
+      paged: true,
+      unpaged: false
+    },
+    last: number + 1 >= totalPages,
+    totalPages,
+    totalElements,
+    size,
+    number,
+    sort: { empty: true, sorted: false, unsorted: true },
+    first: number === 0,
+    numberOfElements: content.length,
+    empty: content.length === 0
   };
 }
 

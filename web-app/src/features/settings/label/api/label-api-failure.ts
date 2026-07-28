@@ -7,7 +7,7 @@
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-export type LabelTransportFailureKind = 'rejected' | 'unavailable' | 'error';
+export type LabelTransportFailureKind = 'rejected' | 'permission' | 'unavailable' | 'error';
 
 type LabelTransportFailureOptions = {
   status?: number;
@@ -40,6 +40,9 @@ export function normalizeLabelTransportFailure(reason: unknown) {
   if (reason.cause !== undefined || reason.status === undefined || reason.status === 0 || reason.status >= 500) {
     return new LabelTransportFailure('unavailable', reason.status === undefined ? {} : { status: reason.status });
   }
+  if (reason.status === 401 || reason.status === 403) {
+    return new LabelTransportFailure('permission', { status: reason.status });
+  }
   if (isNonTimeoutClientStatus(reason.status)) {
     return new LabelTransportFailure('rejected', { status: reason.status });
   }
@@ -49,7 +52,7 @@ export function normalizeLabelTransportFailure(reason: unknown) {
 export function isExplicitLabelTransportRejection(reason: unknown) {
   return (
     reason instanceof LabelTransportFailure &&
-    reason.kind === 'rejected' &&
+    (reason.kind === 'rejected' || reason.kind === 'permission') &&
     reason.status !== undefined &&
     isNonTimeoutClientStatus(reason.status)
   );

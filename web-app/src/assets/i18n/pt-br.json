@@ -1432,6 +1432,7 @@
     "new": "Novo rótulo",
     "edit": "Editar rótulo",
     "empty": "Nenhum rótulo corresponde à consulta.",
+    "permission": "A sessão atual não tem permissão para ler rótulos.",
     "unavailable": "Os dados dos rótulos estão indisponíveis.",
     "label": "Rótulo",
     "name": "Nome",

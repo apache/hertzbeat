@@ -14,7 +14,7 @@ import {
   type LabelRecord
 } from './label-model';
 
-export type LabelFailureKind = 'invalid' | 'unavailable' | 'error';
+export type LabelFailureKind = 'invalid' | 'permission' | 'unavailable' | 'error';
 export type LabelWriteOutcome = 'not-attempted' | 'rejected' | 'uncertain';
 export type LabelWriteRecovery = 'rewrite' | 'proof' | 'commit-uncertain';
 
@@ -57,8 +57,10 @@ export class LabelRequestFailure extends Error {
   }
 }
 
-export function classifyLabelReadFailure(reason: unknown): Exclude<LabelFailureKind, 'invalid'> | 'error' {
-  return reason instanceof LabelRequestFailure && reason.kind === 'unavailable' ? 'unavailable' : 'error';
+export function classifyLabelReadFailure(reason: unknown): 'permission' | 'unavailable' | 'error' {
+  if (!(reason instanceof LabelRequestFailure)) return 'error';
+  if (reason.kind === 'permission' || reason.kind === 'unavailable') return reason.kind;
+  return 'error';
 }
 
 export function isSafeLabelMutationRelease(reason: unknown) {

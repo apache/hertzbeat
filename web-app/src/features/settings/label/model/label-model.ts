@@ -16,7 +16,6 @@
  */
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
-import type { RemotePageState } from '@/shared/remote-state';
 import type { PagedCollection } from '@/shared/pagination';
 
 export const labelResourceName = 'labels' as const;
@@ -29,8 +28,8 @@ export type LabelRecord = {
   type?: number;
   creator?: string;
   modifier?: string;
-  gmtCreate?: number | string;
-  gmtUpdate?: number | string;
+  gmtCreate?: string;
+  gmtUpdate?: string;
 };
 
 export type LabelEditorState = { value: Partial<LabelRecord>; isNew: true } | { value: LabelRecord; isNew: false };
@@ -56,7 +55,23 @@ export class LabelContractError extends Error {
   }
 }
 
-export type LabelListState = RemotePageState<LabelRecord, 'unavailable' | 'error'>;
+/** A local request-contract failure proves that no Label transport was attempted. */
+export class LabelRequestContractError extends LabelContractError {
+  override readonly code = 'LABEL_REQUEST_INVALID';
+
+  constructor(message = 'Label request is invalid') {
+    super(message);
+    this.name = 'LabelRequestContractError';
+  }
+}
+
+export type LabelListState =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: LabelRecord[]; total: number };
 
 export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
   const value = label.tagValue?.trim();

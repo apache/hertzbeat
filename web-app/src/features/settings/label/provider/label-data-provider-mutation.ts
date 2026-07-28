@@ -22,6 +22,7 @@ import {
   buildLabelExpectedWrite,
   labelSaveConverged,
   LabelContractError,
+  LabelRequestContractError,
   type LabelIdentity,
   type LabelRecord
 } from '../model/label-model';
@@ -79,6 +80,9 @@ export function toLabelRequestFailure(reason: LabelTransportFailure | LabelContr
       isExplicitLabelTransportRejection(reason) ? 'rejected' : 'uncertain'
     );
   }
+  if (reason instanceof LabelRequestContractError) {
+    return new LabelRequestFailure('invalid', 'not-attempted', { code: reason.code });
+  }
   return new LabelRequestFailure('invalid', 'uncertain', { code: reason.code });
 }
 
@@ -100,12 +104,13 @@ function writeEvidence(
   expected: LabelWriteEvidence['expected'],
   reason?: unknown
 ) {
-  const rejected = phase === 'write' && isExplicitLabelTransportRejection(reason);
-  return createLabelWriteEvidence(operation, phase, writeRecovery(operation, rejected), expected);
+  const safeToRewrite =
+    phase === 'write' && (isExplicitLabelTransportRejection(reason) || reason instanceof LabelRequestContractError);
+  return createLabelWriteEvidence(operation, phase, writeRecovery(operation, safeToRewrite), expected);
 }
 
-function writeRecovery(operation: LabelWriteEvidence['operation'], rejected: boolean) {
-  if (rejected) return 'rewrite';
+function writeRecovery(operation: LabelWriteEvidence['operation'], safeToRewrite: boolean) {
+  if (safeToRewrite) return 'rewrite';
   return operation === 'update' ? 'proof' : 'commit-uncertain';
 }
 
@@ -113,13 +118,9 @@ function deleteRecovery(reason: unknown): 'rewrite' | 'proof' {
   return isExplicitLabelTransportRejection(reason) ? 'rewrite' : 'proof';
 }
 
-function mutationFailure(
-  reason: unknown,
-  evidence: LabelMutationEvidence,
-  outcome: LabelWriteOutcome = evidence.recovery === 'rewrite' ? 'rejected' : 'uncertain'
-) {
+function mutationFailure(reason: unknown, evidence: LabelMutationEvidence, outcome?: LabelWriteOutcome) {
   const failure = providerFailure(reason);
-  return new LabelRequestFailure(failure.kind, outcome, {
+  return new LabelRequestFailure(failure.kind, outcome ?? failure.writeOutcome, {
     ...(failure.code === undefined ? {} : { code: failure.code }),
     evidence
   });
@@ -139,6 +140,7 @@ function providerFailure(reason: unknown) {
 }
 
 function transportFailureKind(reason: LabelTransportFailure): LabelFailureKind {
+  if (reason.kind === 'permission') return 'permission';
   if (reason.kind === 'unavailable') return 'unavailable';
   return reason.kind === 'rejected' ? 'error' : reason.kind;
 }

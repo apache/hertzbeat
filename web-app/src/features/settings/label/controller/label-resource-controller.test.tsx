@@ -291,7 +291,15 @@ describe('Label resource controller', () => {
     expect(refine.notificationOpen).not.toHaveBeenCalled();
   });
 
-  it('releases a write receipt only after an explicit prewrite 4xx rejection', () => {
+  it.each([
+    [
+      'explicit prewrite 4xx rejection',
+      new LabelRequestFailure('error', 'rejected', {
+        evidence: writeEvidence('create', 'write', 'rewrite', { name: 'old' })
+      })
+    ],
+    ['local request validation failure', new LabelRequestFailure('invalid', 'not-attempted')]
+  ])('releases a write receipt after a proven %s', (_case, failure) => {
     const oldConfirmed = vi.fn();
     const newConfirmed = vi.fn();
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
@@ -300,17 +308,14 @@ describe('Label resource controller', () => {
     });
     const oldCallbacks = refine.createMutate.mock.calls[0]?.[1];
     act(() => {
-      void oldCallbacks?.onError?.(
-        new LabelRequestFailure('error', 'rejected', {
-          evidence: writeEvidence('create', 'write', 'rewrite', { name: 'old' })
-        })
-      );
+      void oldCallbacks?.onError?.(failure);
       result.current.updateLabel(serverLabel, { description: 'new' }, newConfirmed);
       void oldCallbacks?.onSuccess?.({ data: serverLabel });
     });
 
     expect(oldConfirmed).not.toHaveBeenCalled();
     expect(newConfirmed).not.toHaveBeenCalled();
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
     expect(refine.notificationOpen).toHaveBeenCalledTimes(1);
     expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.saveFailed', type: 'error' });
   });
@@ -606,6 +611,7 @@ describe('Label resource controller', () => {
 
   it.each([
     ['loading', { isPending: true }],
+    ['permission', { isError: true, error: new LabelRequestFailure('permission', 'rejected') }],
     ['unavailable', { isError: true, error: new LabelRequestFailure('unavailable', 'uncertain') }],
     ['error', { isError: true, error: new LabelRequestFailure('invalid', 'uncertain') }],
     ['error', { isError: true, error: new LabelRequestFailure('error', 'uncertain') }],

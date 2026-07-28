@@ -37,4 +37,12 @@ describe('Label API failure evidence', () => {
     expect(failure).toMatchObject({ kind: 'rejected', status });
     expect(isExplicitLabelTransportRejection(failure)).toBe(true);
   });
+
+  it.each([401, 403])('keeps HTTP %s permission evidence distinct and redacted', status => {
+    const failure = normalizeLabelTransportFailure(new ApiMessageError('private permission detail', { status }));
+
+    expect(failure).toMatchObject({ kind: 'permission', status, message: 'Label request failed' });
+    expect(isExplicitLabelTransportRejection(failure)).toBe(true);
+    expect(JSON.stringify(failure)).not.toContain('private');
+  });
 });

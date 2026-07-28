@@ -18,9 +18,15 @@
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
-import { LabelContractError, type LabelIdentity, type LabelPage, type LabelRecord } from '../model/label-model';
+import {
+  LabelContractError,
+  LabelRequestContractError,
+  type LabelIdentity,
+  type LabelPage,
+  type LabelRecord
+} from '../model/label-model';
 import { labelApiRequest } from './label-api-failure';
-import { parseLabelPage } from './label-schema';
+import { parseLabelPage, parseLabelWriteReceipt } from './label-schema';
 
 export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
 
@@ -46,6 +52,7 @@ export class LabelCanonicalProofLimitError extends LabelContractError {
 }
 
 export async function loadLabels(query: LabelListRequest, signal?: AbortSignal) {
+  validateListRequest(query);
   const response = await labelApiRequest(() =>
     signal ? apiMessageGet(buildLabelListPath(query), { signal }) : apiMessageGet(buildLabelListPath(query))
   );
@@ -70,15 +77,18 @@ export async function loadLabelSuggestions(signal?: AbortSignal): Promise<LabelS
   return buildLabelSuggestionCatalog(pages.flatMap(page => page.content));
 }
 
-export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
+export async function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
   const payload = buildLabelPayload(label, isNew);
-  return labelApiRequest(() =>
+  const receipt = await labelApiRequest(() =>
     isNew ? apiMessagePost(labelEndpoint, payload) : apiMessagePut(labelEndpoint, payload)
   );
+  return parseLabelWriteReceipt(receipt);
 }
 
-export function deleteLabel(id: number) {
-  return labelApiRequest(() => apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`));
+export async function deleteLabel(id: number) {
+  if (!positiveSafeInteger(id)) throw new LabelRequestContractError('Label id is invalid');
+  const receipt = await labelApiRequest(() => apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`));
+  return parseLabelWriteReceipt(receipt);
 }
 
 export async function findCanonicalLabel(identity: LabelIdentity) {
@@ -115,18 +125,42 @@ function buildLabelListPath(query: LabelListRequest) {
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize)
   });
-  if (query.search) params.set('search', query.search);
+  const search = query.search.trim();
+  if (search) params.set('search', search);
   return `${labelEndpoint}?${params.toString()}`;
 }
 
 export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelPayload {
-  return {
-    ...(!isNew && label.id ? { id: label.id } : {}),
+  const payload = {
+    ...(!isNew && label.id !== undefined ? { id: label.id } : {}),
     name: label.name?.trim() ?? '',
     tagValue: label.tagValue?.trim() ?? '',
     description: label.description?.trim() ?? '',
     type: isNew ? 1 : (label.type ?? 1)
   };
+  if (!validLabelPayload(payload, isNew)) throw new LabelRequestContractError('Label write request is invalid');
+  return payload;
+}
+
+function validLabelPayload(payload: LabelPayload, isNew: boolean) {
+  const checks = [
+    Boolean(payload.name),
+    isNew || positiveSafeInteger(payload.id),
+    Number.isSafeInteger(payload.type),
+    payload.type >= 0,
+    payload.type <= 3
+  ];
+  return checks.every(Boolean);
+}
+
+function validateListRequest(query: LabelListRequest) {
+  if (!Number.isSafeInteger(query.pageIndex) || query.pageIndex < 0 || !positiveSafeInteger(query.pageSize)) {
+    throw new LabelRequestContractError('Label list request is invalid');
+  }
+}
+
+function positiveSafeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }
 
 function assertBoundedProof(totalPages: number) {

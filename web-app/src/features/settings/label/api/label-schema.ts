@@ -23,29 +23,47 @@ const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0);
 const nullableTextSchema = z.string().nullish();
-// Spring currently serializes LocalDateTime as text. Numeric timestamps remain
-// accepted only because the pre-migration frontend contract supported them.
-const nullableTimestampSchema = z.union([z.string(), z.number().finite()]).nullish();
+const nullableTimestampSchema = z.string().nullish();
+const sortWireSchema = z.object({ empty: z.boolean(), sorted: z.boolean(), unsorted: z.boolean() }).strict();
 
-const labelWireSchema = z.object({
-  id: positiveIntegerSchema,
-  name: z.string().refine(value => value.trim().length > 0),
-  tagValue: nullableTextSchema,
-  description: nullableTextSchema,
-  type: safeIntegerSchema.refine(value => value >= 0 && value <= 3).nullish(),
-  creator: nullableTextSchema,
-  modifier: nullableTextSchema,
-  gmtCreate: nullableTimestampSchema,
-  gmtUpdate: nullableTimestampSchema
-});
+const labelWireSchema = z
+  .object({
+    id: positiveIntegerSchema,
+    name: z.string().refine(value => value.trim().length > 0),
+    tagValue: nullableTextSchema,
+    description: nullableTextSchema,
+    type: safeIntegerSchema.refine(value => value >= 0 && value <= 3).nullish(),
+    creator: nullableTextSchema,
+    modifier: nullableTextSchema,
+    gmtCreate: nullableTimestampSchema,
+    gmtUpdate: nullableTimestampSchema
+  })
+  .strict();
 
-const labelPageWireSchema = z.object({
-  content: z.array(labelWireSchema),
-  totalElements: nonNegativeIntegerSchema,
-  totalPages: nonNegativeIntegerSchema,
-  number: nonNegativeIntegerSchema,
-  size: positiveIntegerSchema
-});
+const labelPageWireSchema = z
+  .object({
+    content: z.array(labelWireSchema),
+    pageable: z
+      .object({
+        pageNumber: nonNegativeIntegerSchema,
+        pageSize: positiveIntegerSchema,
+        sort: sortWireSchema,
+        offset: nonNegativeIntegerSchema,
+        paged: z.boolean(),
+        unpaged: z.boolean()
+      })
+      .strict(),
+    last: z.boolean(),
+    totalPages: nonNegativeIntegerSchema,
+    totalElements: nonNegativeIntegerSchema,
+    size: positiveIntegerSchema,
+    number: nonNegativeIntegerSchema,
+    sort: sortWireSchema,
+    first: z.boolean(),
+    numberOfElements: nonNegativeIntegerSchema,
+    empty: z.boolean()
+  })
+  .strict();
 
 type LabelPageRequest = { pageIndex: number; pageSize: number };
 type LabelWire = z.output<typeof labelWireSchema>;
@@ -55,19 +73,7 @@ export function parseLabelPage(value: unknown, request: LabelPageRequest): Label
   if (!result.success) throw new LabelContractError();
 
   const page = result.data;
-  const expectedTotalPages = Math.ceil(page.totalElements / page.size);
-  const remainingElements = page.totalElements - page.number * page.size;
-  const expectedContentSize = Math.max(0, Math.min(page.size, remainingElements));
-  const hasUniqueIds = new Set(page.content.map(label => label.id)).size === page.content.length;
-  if (
-    page.number !== request.pageIndex ||
-    page.size !== request.pageSize ||
-    page.content.length !== expectedContentSize ||
-    page.totalPages !== expectedTotalPages ||
-    !hasUniqueIds
-  ) {
-    throw new LabelContractError('Label page identity is invalid');
-  }
+  if (!validPageIdentity(page, request)) throw new LabelContractError('Label page identity is invalid');
 
   return {
     content: page.content.map(mapLabel),
@@ -76,6 +82,33 @@ export function parseLabelPage(value: unknown, request: LabelPageRequest): Label
     number: page.number,
     size: page.size
   };
+}
+
+export function parseLabelWriteReceipt(value: unknown) {
+  if (!z.null().safeParse(value).success) throw new LabelContractError('Label write receipt is invalid');
+  return null;
+}
+
+function validPageIdentity(page: z.output<typeof labelPageWireSchema>, request: LabelPageRequest) {
+  const remainingElements = page.totalElements - page.number * page.size;
+  const expectedContentSize = Math.max(0, Math.min(page.size, remainingElements));
+  const checks = [
+    page.number === request.pageIndex,
+    page.size === request.pageSize,
+    page.content.length === expectedContentSize,
+    page.totalPages === Math.ceil(page.totalElements / page.size),
+    page.numberOfElements === page.content.length,
+    page.empty === (page.content.length === 0),
+    page.first === (page.number === 0),
+    page.last === page.number + 1 >= page.totalPages,
+    page.pageable.pageNumber === page.number,
+    page.pageable.pageSize === page.size,
+    page.pageable.offset === page.number * page.size,
+    page.pageable.paged,
+    !page.pageable.unpaged,
+    new Set(page.content.map(label => label.id)).size === page.content.length
+  ];
+  return checks.every(Boolean);
 }
 
 function mapLabel(wire: LabelWire): LabelRecord {

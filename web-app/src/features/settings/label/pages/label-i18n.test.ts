@@ -33,6 +33,7 @@ describe('label settings locale contract', () => {
     }
     expect(en.settingsNavigation.labels).toBeTruthy();
     expect(expected).toContain('filter');
+    expect(expected).toContain('permission');
     expect(expected).toContain('unavailable');
   });
 });

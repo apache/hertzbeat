@@ -43,6 +43,7 @@ type LabelResultsProps = LabelResultActions & {
 export function LabelResults(props: LabelResultsProps) {
   const { t } = useTranslation();
   if (props.state.kind === 'loading') return <Spin data-testid="label-loading" />;
+  if (props.state.kind === 'permission') return <Alert type="error" showIcon message={t('labels.permission')} />;
   if (props.state.kind === 'unavailable') return <Alert type="error" showIcon message={t('labels.unavailable')} />;
   if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
   if (props.state.kind === 'empty') return <Empty description={t('labels.empty')} />;
@@ -93,7 +94,7 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
       title: t('labels.updated'),
       dataIndex: 'gmtUpdate',
       width: 180,
-      render: (value: number | string | undefined, row) => formatTime(value ?? row.gmtCreate)
+      render: (value: string | undefined, row) => formatTime(value ?? row.gmtCreate)
     },
     {
       title: t('common.actions'),
@@ -122,9 +123,9 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
   ];
 }
 
-function formatTime(value?: number | string) {
+function formatTime(value?: string) {
   if (value == null) return '—';
-  const timestamp = typeof value === 'number' ? value : Date.parse(value);
+  const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return '—';
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(timestamp);
 }

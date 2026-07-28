@@ -21,7 +21,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 import { LabelTransportFailure } from '../api/label-api-failure';
 import { LabelRequestFailure } from '../model/label-failure';
-import { LabelContractError, type LabelRecord } from '../model/label-model';
+import { LabelContractError, LabelRequestContractError, type LabelRecord } from '../model/label-model';
 
 type LabelApi = typeof import('../api/label-api');
 const canonical = vi.hoisted(() => ({ endpoint: '/canonical-label-endpoint' }));
@@ -45,7 +45,7 @@ const serverLabel: LabelRecord = {
   tagValue: 'prod',
   description: 'Server canonical',
   creator: 'server',
-  gmtUpdate: 42
+  gmtUpdate: '2026-07-18T10:30:00'
 };
 
 describe('Label Refine data provider', () => {
@@ -145,7 +145,7 @@ describe('Label Refine data provider', () => {
   it('rereads server canonical data after void create and update mutations', async () => {
     const createdLabel = { ...serverLabel, description: 'request value' };
     const updatedLabel = { ...serverLabel, description: 'new request value' };
-    labelApi.saveLabel.mockResolvedValue(undefined);
+    labelApi.saveLabel.mockResolvedValue(null);
     labelApi.findCanonicalLabel.mockResolvedValueOnce(createdLabel).mockResolvedValueOnce(updatedLabel);
 
     await expect(
@@ -172,7 +172,7 @@ describe('Label Refine data provider', () => {
   });
 
   it('does not accept a matching id with stale writable values as update proof', async () => {
-    labelApi.saveLabel.mockResolvedValue(undefined);
+    labelApi.saveLabel.mockResolvedValue(null);
     labelApi.findCanonicalLabel.mockResolvedValue(serverLabel);
 
     await expect(
@@ -191,7 +191,7 @@ describe('Label Refine data provider', () => {
   });
 
   it('marks a create without a canonical server id as commit-uncertain', async () => {
-    labelApi.saveLabel.mockResolvedValue(undefined);
+    labelApi.saveLabel.mockResolvedValue(null);
     labelApi.findCanonicalLabel.mockResolvedValue(undefined);
 
     await expect(
@@ -214,7 +214,7 @@ describe('Label Refine data provider', () => {
   });
 
   it('retains exact-id proof evidence when an update canonical reread fails', async () => {
-    labelApi.saveLabel.mockResolvedValue(undefined);
+    labelApi.saveLabel.mockResolvedValue(null);
     labelApi.findCanonicalLabel.mockRejectedValue(new LabelTransportFailure('unavailable'));
 
     let error: unknown;
@@ -257,6 +257,33 @@ describe('Label Refine data provider', () => {
     expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
   });
 
+  it('marks a local write-request contract failure as not attempted', async () => {
+    labelApi.saveLabel.mockRejectedValue(new LabelRequestContractError('Label write request is invalid'));
+
+    await expect(
+      labelDataProvider.create({ resource: 'labels', variables: { name: 'env', tagValue: 'prod' } })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'not-attempted',
+      evidence: { operation: 'create', phase: 'write', recovery: 'rewrite' }
+    });
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+  });
+
+  it('marks rejected Refine mutation input as not attempted', async () => {
+    await expect(
+      labelDataProvider.create({ resource: 'labels', variables: { name: 'env', description: 42 } })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'not-attempted',
+      code: 'LABEL_VARIABLES_INVALID'
+    });
+    expect(labelApi.saveLabel).not.toHaveBeenCalled();
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+  });
+
   it('does not trust a rejected label without explicit 4xx transport evidence', async () => {
     labelApi.saveLabel.mockRejectedValue(new LabelTransportFailure('rejected'));
 
@@ -293,7 +320,7 @@ describe('Label Refine data provider', () => {
 
   it('deletes a server record pessimistically and confirms canonical absence', async () => {
     labelApi.findCanonicalLabel.mockResolvedValueOnce(serverLabel).mockResolvedValueOnce(undefined);
-    labelApi.deleteLabel.mockResolvedValue(undefined);
+    labelApi.deleteLabel.mockResolvedValue(null);
 
     await expect(
       labelDataProvider.deleteOne<LabelRecord, LabelRecord>({
@@ -336,7 +363,7 @@ describe('Label Refine data provider', () => {
     labelApi.findCanonicalLabel
       .mockResolvedValueOnce(serverLabel)
       .mockRejectedValueOnce(new LabelTransportFailure('unavailable'));
-    labelApi.deleteLabel.mockResolvedValue(undefined);
+    labelApi.deleteLabel.mockResolvedValue(null);
 
     await expect(
       labelDataProvider.deleteOne<LabelRecord, LabelRecord>({

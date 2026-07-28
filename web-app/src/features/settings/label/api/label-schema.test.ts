@@ -24,25 +24,19 @@ describe('Label response schema', () => {
   it('maps the Spring Page and omits nullable entity fields', () => {
     expect(
       parseLabelPage(
-        {
-          content: [
-            {
-              id: 7,
-              name: 'env',
-              tagValue: null,
-              description: null,
-              type: null,
-              creator: null,
-              modifier: null,
-              gmtCreate: null,
-              gmtUpdate: null
-            }
-          ],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 20
-        },
+        springPage([
+          {
+            id: 7,
+            name: 'env',
+            tagValue: null,
+            description: null,
+            type: null,
+            creator: null,
+            modifier: null,
+            gmtCreate: null,
+            gmtUpdate: null
+          }
+        ]),
         { pageIndex: 0, pageSize: 20 }
       )
     ).toEqual({
@@ -54,17 +48,31 @@ describe('Label response schema', () => {
     });
   });
 
+  it.each([
+    springPage([
+      {
+        id: 7,
+        name: 'env',
+        gmtCreate: 1_650_000_000_000,
+        gmtUpdate: '2026-07-18T10:30:00'
+      }
+    ]),
+    { ...springPage([{ id: 7, name: 'env', privateField: 'secret' }]), unexpected: 'secret' }
+  ])('rejects non-DTO Label page content %#', value => {
+    expect(() => parseLabelPage(value, { pageIndex: 0, pageSize: 20 })).toThrow(LabelContractError);
+  });
+
   it('uses a sanitized stable error for malformed content', () => {
     let error: unknown;
     try {
       parseLabelPage(
-        {
-          content: [{ id: 7, name: 'private-label-response', tagValue: [] }],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 20
-        },
+        springPage([
+          {
+            id: 7,
+            name: 'private-label-response',
+            tagValue: []
+          }
+        ]),
         { pageIndex: 0, pageSize: 20 }
       );
     } catch (reason) {
@@ -78,43 +86,35 @@ describe('Label response schema', () => {
   it('rejects an otherwise exact page with duplicate stable ids', () => {
     expect(() =>
       parseLabelPage(
-        {
-          content: [
-            { id: 7, name: 'env' },
-            { id: 7, name: 'service' }
-          ],
-          totalElements: 2,
-          totalPages: 1,
-          number: 0,
-          size: 20
-        },
+        springPage([
+          { id: 7, name: 'env' },
+          { id: 7, name: 'service' }
+        ]),
         { pageIndex: 0, pageSize: 20 }
       )
     ).toThrow(LabelContractError);
   });
-
-  it('keeps the documented legacy numeric timestamp compatibility', () => {
-    const page = parseLabelPage(
-      {
-        content: [
-          {
-            id: 7,
-            name: 'env',
-            gmtCreate: 1_650_000_000_000,
-            gmtUpdate: '2026-07-18T10:30:00'
-          }
-        ],
-        totalElements: 1,
-        totalPages: 1,
-        number: 0,
-        size: 20
-      },
-      { pageIndex: 0, pageSize: 20 }
-    );
-
-    expect(page.content[0]).toMatchObject({
-      gmtCreate: 1_650_000_000_000,
-      gmtUpdate: '2026-07-18T10:30:00'
-    });
-  });
 });
+
+function springPage(content: unknown[]) {
+  return {
+    content,
+    pageable: {
+      pageNumber: 0,
+      pageSize: 20,
+      sort: { empty: true, sorted: false, unsorted: true },
+      offset: 0,
+      paged: true,
+      unpaged: false
+    },
+    last: true,
+    totalPages: content.length === 0 ? 0 : 1,
+    totalElements: content.length,
+    size: 20,
+    number: 0,
+    sort: { empty: true, sorted: false, unsorted: true },
+    first: true,
+    numberOfElements: content.length,
+    empty: content.length === 0
+  };
+}

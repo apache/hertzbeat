@@ -26,7 +26,7 @@ import type {
 } from '@refinedev/core';
 
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
-import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
+import { createRefineHttpError, isRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
 
 import { labelEndpoint, loadLabels } from '../api/label-api';
 import { LabelTransportFailure } from '../api/label-api-failure';
@@ -60,7 +60,7 @@ export const labelDataProvider: DataProvider = {
     resource: string;
     variables: TVariables;
   }): Promise<CreateResponse<TData>> {
-    return protect(async () => {
+    return protectMutation(async () => {
       assertLabelResource(params.resource);
       const draft = readLabelDraft(params.variables);
       const canonical = await writeAndProveLabel('create', draft);
@@ -73,7 +73,7 @@ export const labelDataProvider: DataProvider = {
     id: string | number;
     variables: TVariables;
   }): Promise<UpdateResponse<TData>> {
-    return protect(async () => {
+    return protectMutation(async () => {
       assertLabelResource(params.resource);
       const id = readLabelId(params.id);
       const draft = { ...readLabelDraft(params.variables), id };
@@ -87,7 +87,7 @@ export const labelDataProvider: DataProvider = {
     id: string | number;
     variables?: TVariables;
   }): Promise<DeleteOneResponse<TData>> {
-    return protect(async () => {
+    return protectMutation(async () => {
       assertLabelResource(params.resource);
       const id = readLabelId(params.id);
       const canonical = await deleteAndProveLabel(id, readLabelDraft(params.variables));
@@ -106,5 +106,20 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
     if (reason instanceof LabelTransportFailure || reason instanceof LabelContractError)
       throw toLabelRequestFailure(reason);
     throw toRefineHttpError(reason);
+  }
+}
+
+async function protectMutation<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await protect(operation);
+  } catch (reason) {
+    // Refine input contracts fail before transport; keep that fact so the
+    // controller releases its exclusive write owner instead of retaining proof.
+    if (isRefineHttpError(reason) && reason.kind === 'contract' && reason.statusCode === 400) {
+      throw new LabelRequestFailure('invalid', 'not-attempted', {
+        ...(typeof reason.code === 'string' ? { code: reason.code } : {})
+      });
+    }
+    throw reason;
   }
 }
