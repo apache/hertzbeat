@@ -32,8 +32,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    # Bind data-store ports to localhost only: these services carry default
+    # credentials (see POSTGRES_PASSWORD / the greptime static user provider)
+    # and are only meant for the operator on the host, not for remote access.
     ports:
-      - '15432:5432'
+      - '127.0.0.1:15432:5432'
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: 123456
@@ -58,11 +61,14 @@ services:
       start_period: 30s
     environment:
         TZ: Asia/Shanghai
+    # Bind data-store ports to localhost only: these services use the default
+    # static user provider (greptime=greptime) and are only meant for the
+    # operator on the host, not for remote access.
     ports:
-      - "14000:4000"
-      - "14001:4001"
-      - "14002:4002"
-      - "14003:4003"
+      - "127.0.0.1:14000:4000"
+      - "127.0.0.1:14001:4001"
+      - "127.0.0.1:14002:4002"
+      - "127.0.0.1:14003:4003"
     volumes:
       - greptime-tsdb-data:/greptimedb_data
     command:
