@@ -24,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +65,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class InstrumentationV2ReviewContractTest {
 
@@ -139,6 +143,72 @@ class InstrumentationV2ReviewContractTest {
         assertTrue(grpcResponse.blocks().stream().filter(block -> block.id().startsWith("send_"))
                 .allMatch(block -> block.content().contains("--otlp-endpoint 'grpc.example.test:4317'")
                         && !block.content().contains("--otlp-http")));
+    }
+
+    @Test
+    void rendersTelemetrygenTransportSecurityWithoutDowngradingTls() {
+        var plaintextHttp = quickStart(plaintextHttpProfile());
+        assertTrue(sendCommands(plaintextHttp).stream()
+                .allMatch(command -> command.contains("--otlp-http")
+                        && command.contains("--otlp-insecure")));
+
+        var plaintextGrpc = quickStart(plaintextGrpcProfile());
+        assertTrue(sendCommands(plaintextGrpc).stream()
+                .allMatch(command -> !command.contains("--otlp-http")
+                        && command.contains("--otlp-insecure")));
+
+        var tlsHttp = quickStart(serverProfile());
+        assertTrue(sendCommands(tlsHttp).stream()
+                .allMatch(command -> command.contains("--otlp-http")
+                        && !command.contains("--otlp-insecure")));
+
+        var tlsGrpc = quickStart(grpcProfile());
+        assertTrue(sendCommands(tlsGrpc).stream()
+                .allMatch(command -> !command.contains("--otlp-http")
+                        && !command.contains("--otlp-insecure")));
+    }
+
+    @Test
+    void telemetrygenCommandDoesNotExposeMaterializedTokenInVisibleLogs(@TempDir Path tempDir) throws Exception {
+        Path executable = tempDir.resolve(".hertzbeat-telemetrygen/telemetrygen");
+        Files.createDirectories(executable.getParent());
+        Files.writeString(
+                executable,
+                "#!/bin/sh\nprintf '%s\\n' \"$*\"\nprintf '%s\\n' \"$*\" >&2\n"
+                        + "[ \"${FAIL_TELEMETRYGEN:-0}\" -eq 0 ]\n",
+                StandardCharsets.UTF_8);
+        assertTrue(executable.toFile().setExecutable(true));
+
+        String syntheticToken = "hb_test_token_7f3c9d2e";
+        String command = sendCommands(quickStart(plaintextGrpcProfile())).getFirst()
+                .replace("${HERTZBEAT_TOKEN}", syntheticToken);
+        Path stdoutLog = tempDir.resolve("stdout.log");
+        Path stderrLog = tempDir.resolve("stderr.log");
+        Process process = new ProcessBuilder("bash", "-c", command)
+                .directory(tempDir.toFile())
+                .redirectOutput(stdoutLog.toFile())
+                .redirectError(stderrLog.toFile())
+                .start();
+
+        assertEquals(0, process.waitFor());
+        assertEquals("telemetrygen: success\n", Files.readString(stdoutLog));
+        assertEquals("", Files.readString(stderrLog));
+
+        Path failedStdoutLog = tempDir.resolve("failed-stdout.log");
+        Path failedStderrLog = tempDir.resolve("failed-stderr.log");
+        ProcessBuilder failedProcessBuilder = new ProcessBuilder("bash", "-c", command)
+                .directory(tempDir.toFile())
+                .redirectOutput(failedStdoutLog.toFile())
+                .redirectError(failedStderrLog.toFile());
+        failedProcessBuilder.environment().put("FAIL_TELEMETRYGEN", "1");
+        Process failedProcess = failedProcessBuilder.start();
+
+        assertEquals(1, failedProcess.waitFor());
+        assertEquals("", Files.readString(failedStdoutLog));
+        assertEquals("telemetrygen: failed\n", Files.readString(failedStderrLog));
+        for (Path log : List.of(stdoutLog, stderrLog, failedStdoutLog, failedStderrLog)) {
+            assertFalse(Files.readString(log).contains(syntheticToken));
+        }
     }
 
     @Test
@@ -293,6 +363,20 @@ class InstrumentationV2ReviewContractTest {
                         catalog, InstrumentationGuideAdapterRegistry.official()));
     }
 
+    private RenderResponse quickStart(IntakeProfile profile) {
+        return renderer(List.of(profile)).render(new RenderRequest(
+                2, SourceKind.QUICK_START, "opentelemetry_telemetrygen",
+                null, null, null, Environment.VM, Platform.LINUX_AMD64,
+                profile.id(), service()));
+    }
+
+    private List<String> sendCommands(RenderResponse response) {
+        return response.blocks().stream()
+                .filter(block -> block.id().startsWith("send_"))
+                .map(GuideBlock::content)
+                .toList();
+    }
+
     private InstrumentationDetectionV2Service detectionService(
             List<IntakeProfile> profiles,
             org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore store,
@@ -359,6 +443,36 @@ class InstrumentationV2ReviewContractTest {
                 Map.of(
                         OtlpTransport.GRPC,
                         new IntakeEndpoint("https://grpc.example.test:4317", TransportSecurity.TLS)),
+                "Authorization",
+                null,
+                null);
+    }
+
+    private IntakeProfile plaintextHttpProfile() {
+        return new IntakeProfile(
+                "external:http-plaintext",
+                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.EXTERNAL,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("http://http.example.test:4318", TransportSecurity.PLAINTEXT)),
+                "Authorization",
+                null,
+                null);
+    }
+
+    private IntakeProfile plaintextGrpcProfile() {
+        return new IntakeProfile(
+                "external:grpc-plaintext",
+                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.EXTERNAL,
+                List.of(OtlpTransport.GRPC),
+                Map.of(
+                        OtlpTransport.GRPC,
+                        new IntakeEndpoint("http://grpc.example.test:4317", TransportSecurity.PLAINTEXT)),
                 "Authorization",
                 null,
                 null);

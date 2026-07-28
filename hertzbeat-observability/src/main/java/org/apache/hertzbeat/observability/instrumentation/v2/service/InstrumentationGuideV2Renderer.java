@@ -162,14 +162,19 @@ public class InstrumentationGuideV2Renderer {
         String transport = "http/protobuf".equals(target.protocol())
                 ? " --otlp-http --otlp-http-url-path " + shellQuote(target.signalPath(signal))
                 : "";
-        return "./.hertzbeat-telemetrygen/telemetrygen " + signal
+        String security = target.security() == TransportSecurity.PLAINTEXT ? " --otlp-insecure" : "";
+        String command = "./.hertzbeat-telemetrygen/telemetrygen " + signal
                 + transport
+                + security
                 + " --otlp-endpoint " + shellQuote(target.authority())
                 + " --otlp-header 'Authorization=\"Bearer " + TOKEN_MARKER + "\"'"
                 + " --service " + shellQuote(service.name())
                 + " --otlp-attributes 'service.namespace=\"" + service.namespace() + "\"'"
                 + " --otlp-attributes 'deployment.environment.name=\"" + service.environment() + "\"' "
                 + countFlag;
+        return "if " + command + " >/dev/null 2>&1; then "
+                + "printf '%s\\n' 'telemetrygen: success'; else "
+                + "printf '%s\\n' 'telemetrygen: failed' >&2; false; fi";
     }
 
     private GuideBlock copyable(
