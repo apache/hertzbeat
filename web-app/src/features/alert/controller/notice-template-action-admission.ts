@@ -17,7 +17,11 @@ export function canSubmitNoticeTemplate(
   draft: NoticeTemplateDraft | null
 ) {
   if (!draft) return false;
-  return canPerformNoticeTemplateAction(capabilities, draft.id === undefined ? 'create' : 'edit');
+  return canPerformNoticeTemplateAction(capabilities, noticeTemplateDraftAction(draft));
+}
+
+export function noticeTemplateDraftAction(draft: NoticeTemplateDraft): NoticeTemplateActionKind {
+  return draft.id === undefined ? 'create' : 'edit';
 }
 
 export function canEditNoticeTemplate(
@@ -39,6 +43,13 @@ export function canRetryNoticeTemplateOperation(
   recovery: NoticeTemplateRecovery | null
 ) {
   if (!recovery || recovery.stage === 'commit-uncertain') return false;
+  return canRetainNoticeTemplateRecovery(capabilities, recovery);
+}
+
+export function canRetainNoticeTemplateRecovery(
+  capabilities: NoticeTemplateActionCapabilities,
+  recovery: NoticeTemplateRecovery | null
+) {
   return canPerformNoticeTemplateAction(capabilities, noticeTemplateRecoveryAction(recovery));
 }
 

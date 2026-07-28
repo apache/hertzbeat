@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NoticeTemplateRequestFailure } from '../model/notice-template-failure';
@@ -111,13 +111,138 @@ describe('Notice Template direct command admission', () => {
     expect(view.result.current.state.recovery).toMatchObject({ stage: 'delete-proof' });
 
     refine.capabilities = userActions();
-    view.rerender();
+    act(() => view.rerender());
+    expect(view.result.current.state.recovery).toBeNull();
     await act(async () => view.result.current.retryRecovery());
 
     expect(refine.getOne).toHaveBeenCalledTimes(2);
     expect(refine.refetch).not.toHaveBeenCalled();
   });
+
+  it('retires a pending detail load so its late response cannot restore a draft', async () => {
+    const detail = deferred<{ data: typeof record }>();
+    refine.capabilities = userActions();
+    refine.getOne.mockReturnValueOnce(detail.promise);
+    const view = renderHook(() => useNoticeTemplateController());
+    let editPromise: Promise<void> | undefined;
+    act(() => {
+      editPromise = view.result.current.edit(record);
+    });
+    await waitFor(() => expect(refine.getOne).toHaveBeenCalledOnce());
+
+    refine.capabilities = guestActions();
+    act(() => view.rerender());
+    await act(async () => {
+      detail.resolve({ data: record });
+      await editPromise;
+    });
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(view.result.current.state.draft).toBeNull();
+    expect(refine.notification).not.toHaveBeenCalled();
+  });
+
+  it('retires an active create so its late receipt cannot notify or start a reread', async () => {
+    const createReceipt = deferred<{ data: { response: null } }>();
+    refine.capabilities = userActions();
+    refine.custom.mockReturnValueOnce(createReceipt.promise);
+    const view = renderHook(() => useNoticeTemplateController());
+    act(() => {
+      view.result.current.create();
+      view.result.current.updateDraft({ name: 'New', content: '${content}' });
+    });
+    let submitPromise: Promise<void> | undefined;
+    act(() => {
+      submitPromise = view.result.current.submit();
+    });
+    await waitFor(() => expect(refine.custom).toHaveBeenCalledOnce());
+
+    refine.capabilities = guestActions();
+    act(() => view.rerender());
+    await act(async () => {
+      createReceipt.resolve({ data: { response: null } });
+      await submitPromise;
+    });
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(view.result.current.state.draft).toBeNull();
+    expect(view.result.current.state.recovery).toBeNull();
+    expect(refine.notification).not.toHaveBeenCalled();
+    expect(refine.refetch).not.toHaveBeenCalled();
+  });
+
+  it('retires active update proof so its late result cannot publish success or reread', async () => {
+    const proof = deferred<{ data: typeof record }>();
+    refine.capabilities = userActions();
+    refine.getOne.mockResolvedValueOnce({ data: record }).mockReturnValueOnce(proof.promise);
+    const view = renderHook(() => useNoticeTemplateController());
+    await act(async () => view.result.current.edit(record));
+    act(() => {
+      view.result.current.updateDraft({ name: 'Changed' });
+    });
+    let submitPromise: Promise<void> | undefined;
+    act(() => {
+      submitPromise = view.result.current.submit();
+    });
+    await waitFor(() => expect(refine.getOne).toHaveBeenCalledTimes(2));
+    expect(view.result.current.state.recovery).toMatchObject({ stage: 'update-proof' });
+
+    refine.capabilities = guestActions();
+    act(() => view.rerender());
+    await act(async () => {
+      proof.resolve({ data: { ...record, name: 'Changed' } });
+      await submitPromise;
+    });
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(view.result.current.state.draft).toBeNull();
+    expect(view.result.current.state.recovery).toBeNull();
+    expect(refine.notification).not.toHaveBeenCalled();
+    expect(refine.refetch).not.toHaveBeenCalled();
+  });
+
+  it('retires an active projection recovery without hiding the retained preview', async () => {
+    const projection = deferred<{ data: { data: (typeof record)[]; total: number }; isError: false }>();
+    refine.capabilities = userActions();
+    refine.refetch.mockRejectedValueOnce(new NoticeTemplateRequestFailure('unavailable', 'uncertain'));
+    const view = renderHook(() => useNoticeTemplateController());
+    act(() => {
+      view.result.current.setPreview(record);
+      view.result.current.create();
+      view.result.current.updateDraft({ name: 'New', content: '${content}' });
+    });
+    await act(async () => view.result.current.submit());
+    expect(view.result.current.state.recovery).toMatchObject({ stage: 'projection', action: 'create' });
+    const notificationsBeforeRetry = refine.notification.mock.calls.length;
+
+    refine.refetch.mockReturnValueOnce(projection.promise);
+    let retryPromise: Promise<void> | undefined;
+    act(() => {
+      retryPromise = view.result.current.retryRecovery();
+    });
+    await waitFor(() => expect(refine.refetch).toHaveBeenCalledTimes(2));
+    refine.capabilities = guestActions();
+    act(() => view.rerender());
+    await act(async () => {
+      projection.resolve({ data: { data: [record], total: 1 }, isError: false });
+      await retryPromise;
+    });
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(view.result.current.state.recovery).toBeNull();
+    expect(view.result.current.state.preview).toEqual(record);
+    expect(refine.notification).toHaveBeenCalledTimes(notificationsBeforeRetry);
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+  });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(complete => {
+    resolve = complete;
+  });
+  return { promise, resolve };
+}
 
 function userActions() {
   return { canCreate: true, canEdit: true, canDelete: false };

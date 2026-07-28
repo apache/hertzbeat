@@ -18,42 +18,69 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { NoticeTemplateCommand, NoticeTemplateRecovery } from '../model/notice-template-command-state';
+import type {
+  NoticeTemplateActionCapabilities,
+  NoticeTemplateActionKind
+} from '../model/notice-template-action-capability';
+import { canPerformNoticeTemplateAction } from '../model/notice-template-action-capability';
+import { canRetainNoticeTemplateRecovery, noticeTemplateRecoveryAction } from './notice-template-action-admission';
 
 export type NoticeTemplateOperationOwner = {
+  action: NoticeTemplateActionKind;
   command: Exclude<NoticeTemplateCommand, 'idle'>;
   epoch: number;
 };
 
 type MutableCell<T> = { current: T };
 
+type NoticeTemplateOperationState = {
+  epochRef: MutableCell<number>;
+  ownerRef: MutableCell<NoticeTemplateOperationOwner | null>;
+  recoveryRef: MutableCell<NoticeTemplateRecovery | null>;
+  setCommand: (command: NoticeTemplateCommand) => void;
+  setRecovery: (recovery: NoticeTemplateRecovery | null) => void;
+};
+
 function admitDetail(
   ownerRef: MutableCell<NoticeTemplateOperationOwner | null>,
   recoveryRef: MutableCell<NoticeTemplateRecovery | null>,
-  replace: (command: NoticeTemplateOperationOwner['command']) => NoticeTemplateOperationOwner
+  replace: (
+    command: NoticeTemplateOperationOwner['command'],
+    action: NoticeTemplateActionKind
+  ) => NoticeTemplateOperationOwner
 ) {
   if (recoveryRef.current || (ownerRef.current && ownerRef.current.command !== 'loading-detail')) return null;
-  return replace('loading-detail');
+  return replace('loading-detail', 'edit');
 }
 
 function admitCommand(
   command: 'saving' | 'deleting',
+  action: NoticeTemplateActionKind,
   ownerRef: MutableCell<NoticeTemplateOperationOwner | null>,
   recoveryRef: MutableCell<NoticeTemplateRecovery | null>,
-  replace: (command: NoticeTemplateOperationOwner['command']) => NoticeTemplateOperationOwner
+  replace: (
+    command: NoticeTemplateOperationOwner['command'],
+    action: NoticeTemplateActionKind
+  ) => NoticeTemplateOperationOwner
 ) {
   // React state commits later; the ref closes same-tick duplicate admission.
   if (ownerRef.current || recoveryRef.current) return null;
-  return replace(command);
+  return replace(command, action);
 }
 
 function admitRecovery(
   ownerRef: MutableCell<NoticeTemplateOperationOwner | null>,
   recoveryRef: MutableCell<NoticeTemplateRecovery | null>,
-  replace: (command: NoticeTemplateOperationOwner['command']) => NoticeTemplateOperationOwner
+  replace: (
+    command: NoticeTemplateOperationOwner['command'],
+    action: NoticeTemplateActionKind
+  ) => NoticeTemplateOperationOwner
 ) {
   const recovery = recoveryRef.current;
   if (ownerRef.current || !recovery || recovery.stage === 'commit-uncertain') return null;
-  return { owner: replace('recovering'), recovery };
+  const action = noticeTemplateRecoveryAction(recovery);
+  if (!action) return null;
+  return { owner: replace('recovering', action), recovery };
 }
 
 function publishRecovery(
@@ -69,6 +96,45 @@ function publishRecovery(
   return true;
 }
 
+function retireUnauthorizedOperation(
+  state: NoticeTemplateOperationState,
+  capabilities: NoticeTemplateActionCapabilities
+) {
+  const ownsUnauthorizedOperation =
+    state.ownerRef.current !== null && !canRetainOperationOwner(capabilities, state.ownerRef.current);
+  const retainsUnauthorizedRecovery =
+    state.recoveryRef.current !== null && !canRetainNoticeTemplateRecovery(capabilities, state.recoveryRef.current);
+  if (!ownsUnauthorizedOperation && !retainsUnauthorizedRecovery) return false;
+  state.epochRef.current += 1;
+  state.ownerRef.current = null;
+  state.recoveryRef.current = null;
+  state.setCommand('idle');
+  state.setRecovery(null);
+  return true;
+}
+
+function canRetainOperationOwner(
+  capabilities: NoticeTemplateActionCapabilities,
+  owner: NoticeTemplateOperationOwner | null
+) {
+  return owner !== null && canPerformNoticeTemplateAction(capabilities, owner.action);
+}
+
+function useRetireNoticeTemplateOperationOnUnmount(
+  epochRef: MutableCell<number>,
+  ownerRef: MutableCell<NoticeTemplateOperationOwner | null>,
+  recoveryRef: MutableCell<NoticeTemplateRecovery | null>
+) {
+  useEffect(
+    () => () => {
+      epochRef.current += 1;
+      ownerRef.current = null;
+      recoveryRef.current = null;
+    },
+    [epochRef, ownerRef, recoveryRef]
+  );
+}
+
 /** Owns synchronous command admission and retires stale async completions. */
 export function useNoticeTemplateOperationController() {
   const epochRef = useRef(0);
@@ -76,23 +142,17 @@ export function useNoticeTemplateOperationController() {
   const recoveryRef = useRef<NoticeTemplateRecovery | null>(null);
   const [command, setCommand] = useState<NoticeTemplateCommand>('idle');
   const [recovery, setRecoveryState] = useState<NoticeTemplateRecovery | null>(null);
-  useEffect(
-    () => () => {
-      epochRef.current += 1;
-      ownerRef.current = null;
-      recoveryRef.current = null;
-    },
-    []
-  );
-  const replace = (next: NoticeTemplateOperationOwner['command']) => {
-    const owner = { command: next, epoch: epochRef.current + 1 };
+  useRetireNoticeTemplateOperationOnUnmount(epochRef, ownerRef, recoveryRef);
+  const replace = (next: NoticeTemplateOperationOwner['command'], action: NoticeTemplateActionKind) => {
+    const owner = { action, command: next, epoch: epochRef.current + 1 };
     epochRef.current = owner.epoch;
     ownerRef.current = owner;
     setCommand(next);
     return owner;
   };
   const beginDetail = () => admitDetail(ownerRef, recoveryRef, replace);
-  const beginCommand = (next: 'saving' | 'deleting') => admitCommand(next, ownerRef, recoveryRef, replace);
+  const beginCommand = (next: 'saving' | 'deleting', action: NoticeTemplateActionKind) =>
+    admitCommand(next, action, ownerRef, recoveryRef, replace);
   const beginRecovery = () => admitRecovery(ownerRef, recoveryRef, replace);
   const isCurrent = (owner: NoticeTemplateOperationOwner) =>
     ownerRef.current === owner && epochRef.current === owner.epoch;
@@ -113,16 +173,24 @@ export function useNoticeTemplateOperationController() {
     publishRecovery(owner, null, recoveryRef, setRecoveryState, isCurrent);
   const setRecovery = (owner: NoticeTemplateOperationOwner, next: NoticeTemplateRecovery) =>
     publishRecovery(owner, next, recoveryRef, setRecoveryState, isCurrent);
+  const retireUnauthorized = (capabilities: NoticeTemplateActionCapabilities) =>
+    retireUnauthorizedOperation(
+      { epochRef, ownerRef, recoveryRef, setCommand, setRecovery: setRecoveryState },
+      capabilities
+    );
   return {
     beginCommand,
     beginDetail,
     beginRecovery,
+    canRetainActiveOperation: (capabilities: NoticeTemplateActionCapabilities) =>
+      canRetainOperationOwner(capabilities, ownerRef.current),
     clearRecovery,
     command,
     end,
     isCurrent,
     isLocked,
     recovery,
+    retireUnauthorized,
     retainedRecovery: () => recoveryRef.current,
     setRecovery,
     supersedeDetail

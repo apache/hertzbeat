@@ -28,7 +28,7 @@ import {
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
-import { canEditNoticeTemplate } from './notice-template-action-admission';
+import { canEditNoticeTemplate, canSubmitNoticeTemplate } from './notice-template-action-admission';
 
 export function useNoticeTemplateEditorController({
   guardWritable,
@@ -73,7 +73,15 @@ export function useNoticeTemplateEditorController({
         return true;
       }
     },
-    controls: { getDraft: draftStore.get, publish: draftStore.publish },
+    controls: {
+      getDraft: draftStore.get,
+      publish: draftStore.publish,
+      retireUnauthorized: (nextCapabilities: NoticeTemplateActionCapabilities) => {
+        if (!nextCapabilities.canEdit) detailEditor.retire();
+        const draft = draftStore.get();
+        if (draft && !canSubmitNoticeTemplate(nextCapabilities, draft)) draftStore.publish(null);
+      }
+    },
     state: { draft: draftStore.draft }
   };
 }

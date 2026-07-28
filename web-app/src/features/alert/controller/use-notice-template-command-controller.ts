@@ -33,8 +33,14 @@ import { useNoticeTemplateRemove } from './use-notice-template-remove';
 import { useNoticeTemplateSubmit } from './use-notice-template-submit';
 import { proveNoticeTemplateDeletion, proveNoticeTemplateUpdate } from './notice-template-write-proof';
 import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
-import { canRetryNoticeTemplateOperation, noticeTemplateRecoveryAction } from './notice-template-action-admission';
+import {
+  canRetainNoticeTemplateRecovery,
+  canRetryNoticeTemplateOperation,
+  noticeTemplateRecoveryAction,
+  canSubmitNoticeTemplate
+} from './notice-template-action-admission';
 import { useNoticeTemplateActionCapabilities } from './use-notice-template-action-capabilities';
+import { useNoticeTemplateRoleLossRetirement } from './use-notice-template-role-loss-retirement';
 
 type RecoveryRetryOptions = {
   capabilities: NoticeTemplateActionCapabilities;
@@ -120,6 +126,7 @@ export function useNoticeTemplateCommandController({
     operation,
     provider
   });
+  useNoticeTemplateRoleLossRetirement({ capabilities, editor, operation });
   const submit = useNoticeTemplateSubmit({
     capabilities,
     editor,
@@ -149,7 +156,7 @@ export function useNoticeTemplateCommandController({
     t
   });
 
-  return createNoticeTemplateCommands({ editor, operation, remove, retryRecovery, submit });
+  return createNoticeTemplateCommands({ capabilities, editor, operation, remove, retryRecovery, submit });
 }
 
 function useNoticeTemplateWritableGuard(notification: ReturnType<typeof useNotification>, t: TFunction) {
@@ -164,6 +171,7 @@ function useNoticeTemplateWritableGuard(notification: ReturnType<typeof useNotif
 }
 
 function createNoticeTemplateCommands(options: {
+  capabilities: NoticeTemplateActionCapabilities;
   editor: ReturnType<typeof useNoticeTemplateEditorController>;
   operation: NoticeTemplateOperationController;
   remove: ReturnType<typeof useNoticeTemplateRemove>;
@@ -171,6 +179,11 @@ function createNoticeTemplateCommands(options: {
   submit: ReturnType<typeof useNoticeTemplateSubmit>;
 }) {
   return {
+    capabilities: options.capabilities,
+    canRetainActiveOperation: options.operation.canRetainActiveOperation(options.capabilities),
+    canRetainRecovery: canRetainNoticeTemplateRecovery(options.capabilities, options.operation.recovery),
+    canRetryRecovery: canRetryNoticeTemplateOperation(options.capabilities, options.operation.recovery),
+    canSubmitDraft: canSubmitNoticeTemplate(options.capabilities, options.editor.state.draft),
     closeDraft: () => {
       options.editor.actions.close();
     },

@@ -33,8 +33,10 @@ export function NoticeTemplatePage() {
   const { t } = useTranslation();
   const controller = useNoticeTemplateController();
   const { state } = controller;
-  const commandBusy = state.command === 'saving' || state.command === 'deleting' || state.command === 'recovering';
-  const busy = commandBusy || state.recovery !== null;
+  const commandBusy =
+    state.canRetainActiveOperation &&
+    (state.command === 'saving' || state.command === 'deleting' || state.command === 'recovering');
+  const busy = commandBusy || state.canRetainRecovery;
 
   return (
     <OperationalPage>
@@ -43,14 +45,17 @@ export function NoticeTemplatePage() {
         titleId={NOTICE_TEMPLATE_HEADING_ID}
         description={t('noticeTemplates.description')}
         actions={
-          <Button type="primary" disabled={busy} onClick={controller.create}>
-            {t('noticeTemplates.new')}
-          </Button>
+          state.capabilities.canCreate ? (
+            <Button type="primary" disabled={busy} onClick={controller.create}>
+              {t('noticeTemplates.new')}
+            </Button>
+          ) : undefined
         }
       />
       <NoticeTemplateWorkspace controller={controller} busy={busy} commandBusy={commandBusy} />
       <NoticeTemplateOverlays
         busy={busy}
+        canShowDraft={state.canSubmitDraft}
         draft={state.draft}
         preview={state.preview}
         onDraftChange={controller.updateDraft}
@@ -86,20 +91,22 @@ function NoticeTemplateWorkspace({
         onRefresh={controller.refresh}
       />
       <NoticeTemplateRecoveryAlert
-        busy={commandBusy}
+        canRetry={state.canRetryRecovery}
         recovery={state.recovery}
+        retryBusy={state.command === 'recovering'}
         retry={() => void controller.retryRecovery()}
       />
       <div className={pageStyles.results}>
         <NoticeTemplateResults
           busy={busy}
+          capabilities={state.capabilities}
           retryDisabled={commandBusy}
           state={state.list}
           pageIndex={state.query.pageIndex}
           pageSize={state.query.pageSize}
           onPageChange={controller.changePage}
           onRetry={() => {
-            if (state.recovery?.stage === 'projection') void controller.retryRecovery();
+            if (state.recovery?.stage === 'projection' && state.canRetryRecovery) void controller.retryRecovery();
             else controller.refresh();
           }}
           onView={controller.setPreview}

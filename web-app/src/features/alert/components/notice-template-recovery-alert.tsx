@@ -21,20 +21,22 @@ import { useTranslation } from 'react-i18next';
 import type { NoticeTemplateRecovery } from '../model/notice-template-command-state';
 
 export function NoticeTemplateRecoveryAlert({
-  busy,
+  canRetry,
   recovery,
+  retryBusy,
   retry
 }: {
-  busy: boolean;
+  canRetry: boolean;
   recovery: NoticeTemplateRecovery | null;
+  retryBusy: boolean;
   retry: () => void;
 }) {
   const { t } = useTranslation();
   if (!recovery || recovery.stage === 'projection') return null;
   const messageKey = recovery.stage === 'delete-proof' ? 'noticeTemplates.deleteFailed' : 'noticeTemplates.saveFailed';
   const action =
-    recovery.stage === 'commit-uncertain' ? undefined : (
-      <Button size="small" disabled={busy} onClick={retry}>
+    recovery.stage === 'commit-uncertain' || !canRetry ? undefined : (
+      <Button size="small" disabled={retryBusy} loading={retryBusy} onClick={retry}>
         {t('common.retry')}
       </Button>
     );

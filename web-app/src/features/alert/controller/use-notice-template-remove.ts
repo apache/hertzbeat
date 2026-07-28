@@ -58,7 +58,7 @@ export function useNoticeTemplateRemove({
     }
     const action = prepareDelete(guardWritable, provider, template);
     if (!action || confirmedDeletedIds.current.has(action.id)) return;
-    const owner = operation.beginCommand('deleting');
+    const owner = operation.beginCommand('deleting', 'delete');
     if (!owner) return;
     try {
       const confirmed = await deleteAndProve({

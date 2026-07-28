@@ -20,6 +20,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
 import { noticeTemplateTime, noticeTemplateTypeLabelKey } from '../model/notice-template-view-model';
 import pageStyles from '../shared/notice-template-page.module.css';
 import {
@@ -31,6 +32,7 @@ import {
 
 type NoticeTemplateResultsProps = {
   busy: boolean;
+  capabilities: NoticeTemplateActionCapabilities;
   retryDisabled: boolean;
   state: NoticeTemplateListState;
   pageIndex: number;
@@ -44,6 +46,7 @@ type NoticeTemplateResultsProps = {
 
 export function NoticeTemplateResults({
   busy,
+  capabilities,
   retryDisabled,
   state,
   pageIndex,
@@ -77,7 +80,7 @@ export function NoticeTemplateResults({
       size="small"
       tableLayout="fixed"
       dataSource={state.records}
-      columns={templateColumns(t, busy, onView, onEdit, onRemove)}
+      columns={templateColumns(t, busy, capabilities, onView, onEdit, onRemove)}
       pagination={{
         current: pageIndex + 1,
         disabled: busy,
@@ -110,6 +113,7 @@ function FailureState({ disabled, message, onRetry }: { disabled: boolean; messa
 function templateColumns(
   t: TFunction,
   busy: boolean,
+  capabilities: NoticeTemplateActionCapabilities,
   view: (template: NoticeTemplateResourceRecord) => void,
   edit: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
   remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>
@@ -153,13 +157,14 @@ function templateColumns(
         return <span title={value}>{value}</span>;
       }
     },
-    templateActionColumn(t, busy, view, edit, remove)
+    templateActionColumn(t, busy, capabilities, view, edit, remove)
   ];
 }
 
 function templateActionColumn(
   t: TFunction,
   busy: boolean,
+  capabilities: NoticeTemplateActionCapabilities,
   view: (template: NoticeTemplateResourceRecord) => void,
   edit: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
   remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>
@@ -167,28 +172,36 @@ function templateActionColumn(
   return {
     title: t('common.actions'),
     width: 140,
-    render: (_value, template) =>
-      isNoticeTemplateReadOnly(template) ? (
-        <Button type="link" disabled={busy} onClick={() => view(template)}>
-          {t('common.view')}
-        </Button>
-      ) : (
-        <Space>
-          <Button type="link" disabled={busy} onClick={() => void edit(template)}>
-            {t('common.edit')}
+    render: (_value, template) => {
+      if (isNoticeTemplateReadOnly(template) || (!capabilities.canEdit && !capabilities.canDelete)) {
+        return (
+          <Button type="link" disabled={busy} onClick={() => view(template)}>
+            {t('common.view')}
           </Button>
-          <Popconfirm
-            disabled={busy}
-            title={t('noticeTemplates.deleteConfirm')}
-            okButtonProps={{ disabled: busy }}
-            onConfirm={() => !busy && void remove(template)}
-          >
-            <Button type="link" danger disabled={busy}>
-              {t('noticeTemplates.delete')}
+        );
+      }
+      return (
+        <Space>
+          {capabilities.canEdit && (
+            <Button type="link" disabled={busy} onClick={() => void edit(template)}>
+              {t('common.edit')}
             </Button>
-          </Popconfirm>
+          )}
+          {capabilities.canDelete && (
+            <Popconfirm
+              disabled={busy}
+              title={t('noticeTemplates.deleteConfirm')}
+              okButtonProps={{ disabled: busy }}
+              onConfirm={() => !busy && void remove(template)}
+            >
+              <Button type="link" danger disabled={busy}>
+                {t('noticeTemplates.delete')}
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
-      )
+      );
+    }
   };
 }
 

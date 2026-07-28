@@ -29,7 +29,7 @@ import type { NoticeTemplateOperationController } from './use-notice-template-op
 import { proveNoticeTemplateUpdate } from './notice-template-write-proof';
 import { isDefiniteWriteRejection } from './notice-template-write-rejection';
 import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
-import { canSubmitNoticeTemplate } from './notice-template-action-admission';
+import { canSubmitNoticeTemplate, noticeTemplateDraftAction } from './notice-template-action-admission';
 
 export function useNoticeTemplateSubmit({
   editor,
@@ -55,7 +55,7 @@ export function useNoticeTemplateSubmit({
       notify(t('noticeTemplates.validation'), 'error');
       return;
     }
-    const owner = operation.beginCommand('saving');
+    const owner = operation.beginCommand('saving', noticeTemplateDraftAction(draft));
     if (!owner) return;
     try {
       const confirmed = await saveAndProve(provider, draft, operation, owner);

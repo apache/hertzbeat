@@ -165,6 +165,8 @@ describe('NoticeTemplatePage', () => {
   it('uses the projection-only retry while keeping write commands locked', () => {
     controller.state = {
       ...buildState({ kind: 'unavailable' }),
+      canRetainRecovery: true,
+      canRetryRecovery: true,
       recovery: { stage: 'projection' }
     };
     renderPage();
@@ -179,6 +181,8 @@ describe('NoticeTemplatePage', () => {
   it('exposes an explicit proof-only retry while keeping the acknowledged write locked', () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      canRetainRecovery: true,
+      canRetryRecovery: true,
       draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' },
       recovery: {
         stage: 'update-proof',
@@ -230,6 +234,7 @@ describe('NoticeTemplatePage', () => {
   it('keeps an unprovable create locked without exposing another write path', () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      canRetainRecovery: true,
       recovery: { stage: 'commit-uncertain', draft: { name: 'Uncertain', type: 1, content: '${content}' } },
       draft: { name: 'Uncertain', type: 1, content: '${content}' }
     };
@@ -247,6 +252,8 @@ describe('NoticeTemplatePage', () => {
   it('keeps delete-proof recovery visible without exposing the editor', () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      canRetainRecovery: true,
+      canRetryRecovery: true,
       draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' },
       recovery: { stage: 'delete-proof', id: 42, record: custom }
     };
@@ -280,6 +287,11 @@ describe('NoticeTemplatePage', () => {
 
 function buildState(list: Record<string, unknown>) {
   return {
+    capabilities: { canCreate: true, canEdit: true, canDelete: true },
+    canRetainActiveOperation: true,
+    canRetainRecovery: false,
+    canRetryRecovery: false,
+    canSubmitDraft: true,
     command: 'idle',
     draft: null,
     list,

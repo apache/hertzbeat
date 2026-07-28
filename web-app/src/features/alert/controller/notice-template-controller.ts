@@ -58,6 +58,11 @@ export function useNoticeTemplateController() {
     setName: queryController.setName,
     setPreview,
     state: {
+      capabilities: commands.capabilities,
+      canRetainActiveOperation: commands.canRetainActiveOperation,
+      canRetainRecovery: commands.canRetainRecovery,
+      canRetryRecovery: commands.canRetryRecovery,
+      canSubmitDraft: commands.canSubmitDraft,
       command: commands.command,
       draft: commands.draft,
       list: listController.listState,
