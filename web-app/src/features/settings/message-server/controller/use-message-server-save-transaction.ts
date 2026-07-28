@@ -15,10 +15,19 @@
  * limitations under the License.
  */
 
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import { classifyMessageServerReadError } from '../api/message-server-api';
 import { isDefiniteMessageServerWriteRejection } from '../api/message-server-write-rejection';
+import {
+  isProofReceipt,
+  useMessageServerSaveRuntime,
+  type CommitUncertainReceipt,
+  type MessageServerSaveOwner,
+  type MessageServerSaveRuntime,
+  type MutationReceipt,
+  type ProofReceipt
+} from './use-message-server-save-runtime';
 
 export type MessageServerSaveNotifications = {
   invalid: () => void;
@@ -36,110 +45,51 @@ type SaveTransactionOptions<Draft, Evidence> = {
   close: () => void;
   accept: (evidence: Evidence) => void;
   notifications: MessageServerSaveNotifications;
+  retireProof: () => void;
 };
 
-type MutationReceipt<Draft> = { phase: 'mutation'; draft: Draft };
-type ProofReceipt<Draft> = {
-  phase: 'proof-after-acknowledgement' | 'proof-after-ambiguous-mutation';
-  draft: Draft;
-  failureKey: string | null;
-};
-type CommitUncertainReceipt<Draft> = {
-  phase: 'commit-uncertain';
-  draft: Draft;
-  failureKey: string;
-};
-type SaveReceipt<Draft> = MutationReceipt<Draft> | ProofReceipt<Draft> | CommitUncertainReceipt<Draft>;
-type SaveCommand = 'idle' | 'saving' | 'proving';
-
-export function useMessageServerSaveTransaction<Draft, Evidence>(options: SaveTransactionOptions<Draft, Evidence>) {
-  const runtime = useSaveTransactionRuntime<Draft>();
+export function useMessageServerSaveTransaction<Draft, Evidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  canWrite: boolean
+) {
+  const runtime = useMessageServerSaveRuntime<Draft>();
+  const { retireWriteAccess } = runtime;
+  const { close, retireProof } = options;
+  const canWriteRef = useRef(canWrite);
+  const previousCanWriteRef = useRef(canWrite);
+  canWriteRef.current = canWrite;
+  useLayoutEffect(() => {
+    const lostWriteAccess = previousCanWriteRef.current && !canWrite;
+    previousCanWriteRef.current = canWrite;
+    if (!lostWriteAccess) return;
+    retireWriteAccess();
+    retireProof();
+    close();
+  }, [canWrite, close, retireProof, retireWriteAccess]);
   return {
     close: () => {
       if (!runtime.isLocked()) options.close();
     },
     isLocked: runtime.isLocked,
+    canWrite: () => canWriteRef.current,
     locked: runtime.command !== 'idle' || runtime.recoveryKey !== null,
     recoveryKey: runtime.recoveryKey,
     recoveryRetryable: runtime.recoveryRetryable,
-    retry: () => retrySave(options, runtime),
+    retry: () => (canWriteRef.current ? retrySave(options, runtime) : Promise.resolve()),
     proving: runtime.command === 'proving',
     saving: runtime.command === 'saving',
-    submit: () => submitSave(options, runtime)
-  };
-}
-
-type TransactionRuntime<Draft> = {
-  receiptRef: MutableRefObject<SaveReceipt<Draft> | null>;
-  command: SaveCommand;
-  recoveryKey: string | null;
-  recoveryRetryable: boolean;
-  isCurrent: (owner: symbol) => boolean;
-  isLocked: () => boolean;
-  begin: (command: Exclude<SaveCommand, 'idle'>) => symbol | null;
-  publishReceipt: (owner: symbol, receipt: SaveReceipt<Draft> | null) => void;
-  finish: (owner: symbol) => void;
-};
-
-function useSaveTransactionRuntime<Draft>(): TransactionRuntime<Draft> {
-  const ownerRef = useRef<symbol | null>(null);
-  const receiptRef = useRef<SaveReceipt<Draft> | null>(null);
-  const mountedRef = useRef(true);
-  const [command, setCommand] = useState<SaveCommand>('idle');
-  const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
-  const [recoveryRetryable, setRecoveryRetryable] = useState(false);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      ownerRef.current = null;
-      receiptRef.current = null;
-    };
-  }, []);
-
-  const isCurrent = (owner: symbol) => mountedRef.current && ownerRef.current === owner;
-  // The ref closes the same-tick gap before React can render the locked state.
-  const begin = (next: Exclude<SaveCommand, 'idle'>) => {
-    if (!mountedRef.current || ownerRef.current) return null;
-    const owner = Symbol(next);
-    ownerRef.current = owner;
-    setCommand(next);
-    return owner;
-  };
-  const publishReceipt = (owner: symbol, receipt: SaveReceipt<Draft> | null) => {
-    if (!isCurrent(owner)) return;
-    receiptRef.current = receipt;
-    const failureKey = receipt?.phase === 'mutation' ? null : (receipt?.failureKey ?? null);
-    setRecoveryKey(failureKey);
-    setRecoveryRetryable(isProofReceipt(receipt) && failureKey !== null);
-  };
-  const finish = (owner: symbol) => {
-    if (!isCurrent(owner)) return;
-    ownerRef.current = null;
-    setCommand('idle');
-  };
-  const isLocked = () => ownerRef.current !== null || receiptRef.current !== null;
-  return {
-    receiptRef,
-    command,
-    recoveryKey,
-    recoveryRetryable,
-    isCurrent,
-    isLocked,
-    begin,
-    publishReceipt,
-    finish
+    submit: () => (canWriteRef.current ? submitSave(options, runtime) : Promise.resolve())
   };
 }
 
 async function submitSave<Draft, Evidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: TransactionRuntime<Draft>
+  runtime: MessageServerSaveRuntime<Draft>
 ) {
   if (runtime.receiptRef.current) return;
   const draft = options.draft;
   if (!draft || options.validate(draft).length > 0) return options.notifications.invalid();
-  const owner = runtime.begin('saving');
+  const owner = runtime.begin('save');
   if (!owner) return;
   // Own the draft before POST so same-tick callers cannot dispatch it twice.
   const mutationReceipt: MutationReceipt<Draft> = { phase: 'mutation', draft };
@@ -176,12 +126,12 @@ async function submitSave<Draft, Evidence>(
 
 async function retrySave<Draft, Evidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: TransactionRuntime<Draft>
+  runtime: MessageServerSaveRuntime<Draft>
 ) {
   // Recovery is proof-only. It never repeats the write represented by receipt.
   const receipt = runtime.receiptRef.current;
   if (!isProofReceipt(receipt) || !receipt.failureKey) return;
-  const owner = runtime.begin('proving');
+  const owner = runtime.begin('proof');
   if (!owner) return;
   await proveSave(options, runtime, owner, receipt);
   runtime.finish(owner);
@@ -189,8 +139,8 @@ async function retrySave<Draft, Evidence>(
 
 async function proveSave<Draft, Evidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: TransactionRuntime<Draft>,
-  owner: symbol,
+  runtime: MessageServerSaveRuntime<Draft>,
+  owner: MessageServerSaveOwner,
   receipt: ProofReceipt<Draft>
 ) {
   try {
@@ -228,8 +178,4 @@ function canonicalReadFailureKey(error: unknown) {
   if (!(error instanceof AuthoritativeReadError)) return 'messageServer.saveFailed';
   if (error.missing) return 'messageServer.saveNotConverged';
   return `messageServer.read.${classifyMessageServerReadError(error.reason)}`;
-}
-
-function isProofReceipt<Draft>(receipt: SaveReceipt<Draft> | null): receipt is ProofReceipt<Draft> {
-  return receipt?.phase === 'proof-after-acknowledgement' || receipt?.phase === 'proof-after-ambiguous-mutation';
 }

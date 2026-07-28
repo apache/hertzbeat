@@ -58,6 +58,7 @@ export function MessageServerChannelRow({
   summary,
   status,
   disabled = false,
+  canConfigure,
   action
 }: {
   title: string;
@@ -65,6 +66,7 @@ export function MessageServerChannelRow({
   summary: string;
   status: ChannelStatus;
   disabled?: boolean;
+  canConfigure: boolean;
   action: () => void;
 }) {
   const { t } = useTranslation();
@@ -78,9 +80,11 @@ export function MessageServerChannelRow({
         <Tag color={statusColor(status)}>{t(`messageServer.status.${status}`)}</Tag>
         <Typography.Text>{summary}</Typography.Text>
       </div>
-      <Button disabled={disabled} onClick={action}>
-        {t('messageServer.configure')}
-      </Button>
+      {canConfigure && (
+        <Button disabled={disabled} onClick={action}>
+          {t('messageServer.configure')}
+        </Button>
+      )}
     </section>
   );
 }

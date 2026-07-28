@@ -17,11 +17,10 @@
 
 import { useQuery, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  classifyMessageServerReadError,
   loadEmailServerConfig,
   loadSmsServerConfig,
   saveEmailServerConfig,
@@ -51,24 +50,18 @@ import {
   smsServerSaveConverged
 } from '../model/message-server-convergence';
 import { messageServerQueryKeys } from './message-server-query-keys';
+import { messageServerChannelState } from './message-server-channel-state';
+import { useMessageServerActionCapabilities } from './use-message-server-action-capabilities';
 import {
   useMessageServerSaveTransaction,
   type MessageServerSaveNotifications
 } from './use-message-server-save-transaction';
 
-export type MessageServerChannelState<T> =
-  | { kind: 'loading' }
-  | { kind: 'missing' }
-  | { kind: 'permission' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'invalid' }
-  | { kind: 'configured'; config: T };
-
 export function useMessageServerController() {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
+  const capabilities = useMessageServerActionCapabilities();
   const emailQuery = useQuery({
     queryKey: messageServerQueryKeys.email(),
     queryFn: ({ signal }) => loadEmailServerConfig(signal),
@@ -84,12 +77,13 @@ export function useMessageServerController() {
     success: () => void message.success(t('messageServer.saveSuccess')),
     failure: key => void message.error(t(key))
   };
-  const email = useEmailServerChannel(emailQuery, queryClient, notifications);
-  const sms = useSmsServerChannel(smsQuery, queryClient, notifications);
+  const email = useEmailServerChannel(emailQuery, queryClient, notifications, capabilities.canConfigure);
+  const sms = useSmsServerChannel(smsQuery, queryClient, notifications, capabilities.canConfigure);
 
   return {
-    email: channelState<EmailServerConfig>(emailQuery),
-    sms: channelState<SmsServerConfig>(smsQuery),
+    capabilities,
+    email: messageServerChannelState<EmailServerConfig>(emailQuery),
+    sms: messageServerChannelState<SmsServerConfig>(smsQuery),
     emailDraft: email.draft,
     smsDraft: sms.draft,
     emailLocked: email.locked,
@@ -116,23 +110,32 @@ export function useMessageServerController() {
 function useEmailServerChannel(
   query: UseQueryResult<EmailServerEvidence>,
   queryClient: QueryClient,
-  notifications: MessageServerSaveNotifications
+  notifications: MessageServerSaveNotifications,
+  canConfigure: boolean
 ) {
   const [draft, setDraft] = useState<EmailServerDraft | null>(null);
-  const transaction = useMessageServerSaveTransaction({
-    draft,
-    validate: validateEmailServerDraft,
-    write: value => saveEmailServerConfig(buildEmailServerPayload(value)),
-    reread: query.refetch,
-    converged: emailServerSaveConverged,
-    canProveAmbiguousWrite: emailServerAmbiguousWriteProvable,
-    close: () => setDraft(null),
-    accept: evidence => {
-      queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
-      setDraft(null);
+  const close = useCallback(() => setDraft(null), []);
+  const retireProof = useCallback(() => {
+    void queryClient.cancelQueries({ queryKey: messageServerQueryKeys.email() });
+  }, [queryClient]);
+  const transaction = useMessageServerSaveTransaction(
+    {
+      draft,
+      validate: validateEmailServerDraft,
+      write: value => saveEmailServerConfig(buildEmailServerPayload(value)),
+      reread: query.refetch,
+      converged: emailServerSaveConverged,
+      canProveAmbiguousWrite: emailServerAmbiguousWriteProvable,
+      close,
+      accept: evidence => {
+        queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
+        setDraft(null);
+      },
+      notifications,
+      retireProof
     },
-    notifications
-  });
+    canConfigure
+  );
   return {
     draft,
     locked: transaction.locked,
@@ -143,11 +146,12 @@ function useEmailServerChannel(
     saving: transaction.saving,
     actions: {
       openEmail: () => {
-        if (!transaction.isLocked() && query.data) setDraft(createEmailServerDraft(query.data));
+        if (transaction.canWrite() && !transaction.isLocked() && query.data)
+          setDraft(createEmailServerDraft(query.data));
       },
       closeEmail: transaction.close,
       updateEmail: (patch: Partial<EmailServerDraft>) => {
-        if (transaction.isLocked()) return;
+        if (!transaction.canWrite() || transaction.isLocked()) return;
         setDraft(current =>
           current
             ? {
@@ -159,7 +163,9 @@ function useEmailServerChannel(
         );
       },
       setEmailSecretCleared: (cleared: boolean) => {
-        if (!transaction.isLocked()) setDraft(current => (current ? setEmailSecretCleared(current, cleared) : null));
+        if (transaction.canWrite() && !transaction.isLocked()) {
+          setDraft(current => (current ? setEmailSecretCleared(current, cleared) : null));
+        }
       },
       submitEmail: transaction.submit
     }
@@ -169,23 +175,32 @@ function useEmailServerChannel(
 function useSmsServerChannel(
   query: UseQueryResult<SmsServerEvidence>,
   queryClient: QueryClient,
-  notifications: MessageServerSaveNotifications
+  notifications: MessageServerSaveNotifications,
+  canConfigure: boolean
 ) {
   const [draft, setDraft] = useState<SmsServerDraft | null>(null);
-  const transaction = useMessageServerSaveTransaction({
-    draft,
-    validate: validateSmsServerDraft,
-    write: value => saveSmsServerConfig(buildSmsServerPayload(value)),
-    reread: query.refetch,
-    converged: smsServerSaveConverged,
-    canProveAmbiguousWrite: smsServerAmbiguousWriteProvable,
-    close: () => setDraft(null),
-    accept: evidence => {
-      queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
-      setDraft(null);
+  const close = useCallback(() => setDraft(null), []);
+  const retireProof = useCallback(() => {
+    void queryClient.cancelQueries({ queryKey: messageServerQueryKeys.sms() });
+  }, [queryClient]);
+  const transaction = useMessageServerSaveTransaction(
+    {
+      draft,
+      validate: validateSmsServerDraft,
+      write: value => saveSmsServerConfig(buildSmsServerPayload(value)),
+      reread: query.refetch,
+      converged: smsServerSaveConverged,
+      canProveAmbiguousWrite: smsServerAmbiguousWriteProvable,
+      close,
+      accept: evidence => {
+        queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
+        setDraft(null);
+      },
+      notifications,
+      retireProof
     },
-    notifications
-  });
+    canConfigure
+  );
   return {
     draft,
     locked: transaction.locked,
@@ -196,22 +211,13 @@ function useSmsServerChannel(
     saving: transaction.saving,
     actions: {
       openSms: () => {
-        if (!transaction.isLocked() && query.data) setDraft(createSmsServerDraft(query.data));
+        if (transaction.canWrite() && !transaction.isLocked() && query.data) setDraft(createSmsServerDraft(query.data));
       },
       closeSms: transaction.close,
       replaceSms: (value: SmsServerDraft | null) => {
-        if (!transaction.isLocked()) setDraft(value);
+        if (transaction.canWrite() && !transaction.isLocked()) setDraft(value);
       },
       submitSms: transaction.submit
     }
   };
-}
-
-function channelState<T>(
-  query: UseQueryResult<{ status: 'configured'; config: T } | { status: 'missing'; config: null }>
-): MessageServerChannelState<T> {
-  if (query.isPending) return { kind: 'loading' };
-  if (query.error) return { kind: classifyMessageServerReadError(query.error) };
-  if (!query.data) return { kind: 'error' };
-  return query.data.status === 'configured' ? { kind: 'configured', config: query.data.config } : { kind: 'missing' };
 }

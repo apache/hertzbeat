@@ -21,6 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { SessionContext } from '@/core/auth/session-context';
 
 const api = vi.hoisted(() => ({
   loadEmailServerConfig: vi.fn(),
@@ -585,6 +586,22 @@ function deferred<T>() {
 function wrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return function Wrapper({ children }: PropsWithChildren) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <SessionContext.Provider
+        value={{
+          session: {
+            authenticated: true,
+            username: 'administrator',
+            workspaceId: null,
+            roles: ['ADMIN'],
+            expiresAt: null
+          },
+          loading: false,
+          retry: () => undefined
+        }}
+      >
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </SessionContext.Provider>
+    );
   };
 }

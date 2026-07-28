@@ -94,10 +94,46 @@ describe('MessageServerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /common\.retry/ }));
     expect(current.actions.retryEmailSave).not.toHaveBeenCalled();
   });
+
+  it('keeps guest read evidence and refresh while hiding every write and retained proof control', () => {
+    const current = state(
+      {
+        kind: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: ['emailPassword']
+        }
+      },
+      { kind: 'unavailable' }
+    );
+    controller.value = {
+      ...current,
+      capabilities: { canConfigure: false },
+      emailDraft: createEmailServerDraft(),
+      emailSaveRecovery: 'messageServer.read.unavailable',
+      emailSaveRecoveryRetryable: true
+    };
+    render(<MessageServerPage />);
+
+    expect(screen.getByText('smtp.example.test:587 · ops@example.test')).toBeInTheDocument();
+    expect(screen.getAllByText('messageServer.read.unavailable').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'messageServer.configure' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.retrySms).toHaveBeenCalledOnce();
+    expect(current.actions.retryEmailSave).not.toHaveBeenCalled();
+  });
 });
 
 function state(email: unknown, sms: unknown) {
   return {
+    capabilities: { canConfigure: true },
     email,
     sms,
     emailDraft: null,
