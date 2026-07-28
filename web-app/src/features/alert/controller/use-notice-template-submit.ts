@@ -28,15 +28,19 @@ import type { NoticeTemplateEditorController } from './use-notice-template-edito
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 import { proveNoticeTemplateUpdate } from './notice-template-write-proof';
 import { isDefiniteWriteRejection } from './notice-template-write-rejection';
+import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
+import { canSubmitNoticeTemplate } from './notice-template-action-admission';
 
 export function useNoticeTemplateSubmit({
   editor,
+  capabilities,
   notify,
   operation,
   provider,
   refreshAuthoritatively,
   t
 }: {
+  capabilities: NoticeTemplateActionCapabilities;
   editor: NoticeTemplateEditorController;
   notify: (message: string, type: 'error' | 'success') => void;
   operation: NoticeTemplateOperationController;
@@ -46,7 +50,7 @@ export function useNoticeTemplateSubmit({
 }) {
   return async () => {
     const draft = editor.controls.getDraft();
-    if (!draft) return;
+    if (!draft || !canSubmitNoticeTemplate(capabilities, draft)) return;
     if (validateNoticeTemplateDraft(draft).length > 0) {
       notify(t('noticeTemplates.validation'), 'error');
       return;
@@ -61,7 +65,10 @@ export function useNoticeTemplateSubmit({
       try {
         await refreshAuthoritatively();
       } catch {
-        operation.setRecovery(owner, { stage: 'projection' });
+        operation.setRecovery(owner, {
+          stage: 'projection',
+          action: draft.id === undefined ? 'create' : 'edit'
+        });
       }
     } catch (reason) {
       if (!operation.isCurrent(owner)) return;

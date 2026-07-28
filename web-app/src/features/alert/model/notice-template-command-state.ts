@@ -16,12 +16,13 @@
  */
 
 import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../notice-template-model';
+import type { NoticeTemplateActionKind } from './notice-template-action-capability';
 
 export type NoticeTemplateCommand = 'idle' | 'loading-detail' | 'saving' | 'deleting' | 'recovering';
 
 /** Durable in-session receipt describing the only safe continuation after a partial write transaction. */
 export type NoticeTemplateRecovery =
-  | { stage: 'projection' }
+  | { stage: 'projection'; action: NoticeTemplateActionKind }
   | { stage: 'update-proof'; draft: NoticeTemplateDraft }
   | { stage: 'delete-proof'; id: number; record: NoticeTemplateResourceRecord }
   | { stage: 'commit-uncertain'; draft: NoticeTemplateDraft };

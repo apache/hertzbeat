@@ -19,14 +19,21 @@ import { useNotification, type DataProvider } from '@refinedev/core';
 import type { TFunction } from 'i18next';
 import { useRef } from 'react';
 
-import type { NoticeTemplateQuery, NoticeTemplateResourceRecord } from '../notice-template-model';
+import {
+  isNoticeTemplateReadOnly,
+  type NoticeTemplateQuery,
+  type NoticeTemplateResourceRecord
+} from '../notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 import { preflightNoticeTemplateDeletion, proveNoticeTemplateDeletion } from './notice-template-write-proof';
 import { isDefiniteWriteRejection } from './notice-template-write-rejection';
+import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
+import { canDeleteNoticeTemplate } from './notice-template-action-admission';
 
 export function useNoticeTemplateRemove({
   guardWritable,
+  capabilities,
   notification,
   provider,
   query,
@@ -34,6 +41,7 @@ export function useNoticeTemplateRemove({
   operation,
   t
 }: {
+  capabilities: NoticeTemplateActionCapabilities;
   guardWritable: (template: NoticeTemplateResourceRecord) => boolean;
   notification: ReturnType<typeof useNotification>;
   provider: DataProvider;
@@ -44,6 +52,10 @@ export function useNoticeTemplateRemove({
 }) {
   const confirmedDeletedIds = useRef(new Set<number>());
   return async (template: NoticeTemplateResourceRecord) => {
+    if (!canDeleteNoticeTemplate(capabilities, template)) {
+      if (isNoticeTemplateReadOnly(template)) guardWritable(template);
+      return;
+    }
     const action = prepareDelete(guardWritable, provider, template);
     if (!action || confirmedDeletedIds.current.has(action.id)) return;
     const owner = operation.beginCommand('deleting');
@@ -63,7 +75,7 @@ export function useNoticeTemplateRemove({
       try {
         await refreshAuthoritatively();
       } catch {
-        operation.setRecovery(owner, { stage: 'projection' });
+        operation.setRecovery(owner, { stage: 'projection', action: 'delete' });
       }
     } catch {
       if (operation.isCurrent(owner)) {

@@ -43,6 +43,9 @@ vi.mock('@refinedev/core', () => ({
   useList: refine.useList,
   useNotification: refine.useNotification
 }));
+vi.mock('./use-notice-template-action-capabilities', () => ({
+  useNoticeTemplateActionCapabilities: () => ({ canCreate: true, canEdit: true, canDelete: true })
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams(refine.params), refine.setParams]
@@ -220,7 +223,7 @@ describe('Notice Template remove proof', () => {
     await act(async () => result.current.remove(record));
 
     expect(result.current.state.list.kind).toBe('unavailable');
-    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(result.current.state.recovery).toEqual({ stage: 'projection', action: 'delete' });
     expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.deleteSuccess', type: 'success' });
 
     await act(async () => result.current.remove(record));

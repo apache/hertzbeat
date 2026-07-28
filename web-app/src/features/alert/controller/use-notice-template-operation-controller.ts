@@ -123,6 +123,7 @@ export function useNoticeTemplateOperationController() {
     isCurrent,
     isLocked,
     recovery,
+    retainedRecovery: () => recoveryRef.current,
     setRecovery,
     supersedeDetail
   };

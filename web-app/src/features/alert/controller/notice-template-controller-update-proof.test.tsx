@@ -43,6 +43,9 @@ vi.mock('@refinedev/core', () => ({
   useList: refine.useList,
   useNotification: refine.useNotification
 }));
+vi.mock('./use-notice-template-action-capabilities', () => ({
+  useNoticeTemplateActionCapabilities: () => ({ canCreate: true, canEdit: true, canDelete: true })
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams(refine.params), refine.setParams]
@@ -92,7 +95,7 @@ describe('Notice Template update proof', () => {
 
     expect(result.current.state.draft).toBeNull();
     expect(result.current.state.list.kind).toBe('unavailable');
-    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(result.current.state.recovery).toEqual({ stage: 'projection', action: 'create' });
     expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.saveSuccess', type: 'success' });
 
     await act(async () => result.current.submit());
@@ -281,7 +284,7 @@ describe('Notice Template update proof', () => {
 
     expect(result.current.state.draft).toBeNull();
     expect(result.current.state.list.kind).toBe('error');
-    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(result.current.state.recovery).toEqual({ stage: 'projection', action: 'edit' });
     expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.saveSuccess', type: 'success' });
 
     await act(async () => result.current.retryRecovery());

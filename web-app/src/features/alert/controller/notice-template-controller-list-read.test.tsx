@@ -37,6 +37,9 @@ vi.mock('@refinedev/core', () => ({
   useList: refine.useList,
   useNotification: refine.useNotification
 }));
+vi.mock('./use-notice-template-action-capabilities', () => ({
+  useNoticeTemplateActionCapabilities: () => ({ canCreate: true, canEdit: true, canDelete: true })
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams(refine.params), refine.setParams]

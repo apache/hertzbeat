@@ -27,13 +27,17 @@ import {
 } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
+import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
+import { canEditNoticeTemplate } from './notice-template-action-admission';
 
 export function useNoticeTemplateEditorController({
   guardWritable,
+  capabilities,
   notifyLoadFailure,
   operation,
   provider
 }: {
+  capabilities: NoticeTemplateActionCapabilities;
   guardWritable: (template: NoticeTemplateResourceRecord) => boolean;
   notifyLoadFailure: () => void;
   operation: NoticeTemplateOperationController;
@@ -42,6 +46,7 @@ export function useNoticeTemplateEditorController({
   const draftStore = useNoticeTemplateDraftStore();
   const detailEditor = useNoticeTemplateDetailEditor({
     draftStore,
+    capabilities,
     guardWritable,
     notifyLoadFailure,
     operation,
@@ -55,6 +60,7 @@ export function useNoticeTemplateEditorController({
         return true;
       },
       create: () => {
+        if (!capabilities.canCreate) return false;
         if (!detailEditor.retire()) return false;
         draftStore.publish(createNoticeTemplateDraft());
         return true;
@@ -86,11 +92,13 @@ type NoticeTemplateDraftStore = ReturnType<typeof useNoticeTemplateDraftStore>;
 
 function useNoticeTemplateDetailEditor({
   draftStore,
+  capabilities,
   guardWritable,
   notifyLoadFailure,
   operation,
   provider
 }: {
+  capabilities: NoticeTemplateActionCapabilities;
   draftStore: NoticeTemplateDraftStore;
   guardWritable: (template: NoticeTemplateResourceRecord) => boolean;
   notifyLoadFailure: () => void;
@@ -108,7 +116,11 @@ function useNoticeTemplateDetailEditor({
     return true;
   };
   const edit = (template: NoticeTemplateResourceRecord): Promise<void> => {
-    if (!guardWritable(template) || template.backendId == null || !provider.getOne) return Promise.resolve();
+    if (!canEditNoticeTemplate(capabilities, template)) {
+      if (isNoticeTemplateReadOnly(template)) guardWritable(template);
+      return Promise.resolve();
+    }
+    if (template.backendId == null || !provider.getOne) return Promise.resolve();
     if (pendingRef.current?.id === template.backendId) return pendingRef.current.promise;
     const owner = operation.beginDetail();
     if (!owner) return Promise.resolve();
