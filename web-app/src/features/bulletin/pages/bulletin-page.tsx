@@ -21,6 +21,7 @@ export function BulletinPage() {
       <BulletinPageControls
         actions={actions}
         busy={busy}
+        capabilities={state.capabilities}
         refreshing={state.refreshing}
         search={state.search}
         selectedIds={state.selectedIds}
@@ -34,6 +35,7 @@ export function BulletinPage() {
       <BulletinTable
         actions={actions}
         busy={busy}
+        capabilities={state.capabilities}
         listKind={state.list.kind}
         query={state.query}
         records={records}
@@ -45,15 +47,17 @@ export function BulletinPage() {
         <Typography.Title level={3}>{t('bulletin.metrics.title')}</Typography.Title>
         <BulletinMetricsPanel state={state.metrics} />
       </section>
-      <BulletinEditor
-        draft={state.draft}
-        dependencies={state.dependencies}
-        saving={state.command === 'saving'}
-        busy={busy}
-        onClose={actions.close}
-        onSave={() => void actions.save()}
-        onChange={actions.updateDraft}
-      />
+      {state.capabilities.canWrite && (
+        <BulletinEditor
+          draft={state.draft}
+          dependencies={state.dependencies}
+          saving={state.command === 'saving'}
+          busy={busy}
+          onClose={actions.close}
+          onSave={() => void actions.save()}
+          onChange={actions.updateDraft}
+        />
+      )}
     </div>
   );
 }

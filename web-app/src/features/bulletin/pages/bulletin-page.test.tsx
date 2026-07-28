@@ -102,15 +102,92 @@ describe('bulletin page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(current.actions.retry).toHaveBeenCalledOnce();
   });
+
+  it('keeps GUEST read controls and metrics selection while hiding every write and delete affordance', () => {
+    const current = pageController({
+      capabilities: { canRead: true, canWrite: false, canDelete: false },
+      draft: record,
+      selectedId: 7,
+      selectedIds: [7]
+    });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByPlaceholderText('bulletin.search')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'bulletin.create' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'bulletin.deleteSelected' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'bulletin.viewMetrics' }));
+    expect(current.actions.select).toHaveBeenCalledWith(7);
+  });
+
+  it('renders USER authoring while hiding administrator-only deletion and selection', () => {
+    const current = pageController({
+      capabilities: { canRead: true, canWrite: true, canDelete: false },
+      draft: record,
+      selectedId: 7,
+      selectedIds: [7]
+    });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'bulletin.deleteSelected' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('synchronously converges role presentation without removing legal metrics selection', () => {
+    const admin = pageController({ selectedId: 7, selectedIds: [7] });
+    controller.useBulletinController.mockReturnValue(admin.value);
+    const page = render(<BulletinPage />);
+    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).not.toEqual([]);
+
+    const user = pageController({
+      capabilities: { canRead: true, canWrite: true, canDelete: false },
+      selectedId: 7
+    });
+    controller.useBulletinController.mockReturnValue(user.value);
+    page.rerender(<BulletinPage />);
+    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+
+    const guest = pageController({
+      capabilities: { canRead: true, canWrite: false, canDelete: false },
+      selectedId: 7
+    });
+    controller.useBulletinController.mockReturnValue(guest.value);
+    page.rerender(<BulletinPage />);
+    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+  });
 });
 
 function pageController({
+  capabilities = { canRead: true, canWrite: true, canDelete: true },
   command = 'idle',
+  draft = null,
   recovery = null,
   selectedId = null,
   selectedIds = []
 }: {
+  capabilities?: { canRead: boolean; canWrite: boolean; canDelete: boolean };
   command?: 'idle' | 'saving';
+  draft?: typeof record | null;
   recovery?: null | {
     stage: 'update-proof';
     draft: typeof record;
@@ -139,9 +216,18 @@ function pageController({
     actions,
     value: {
       state: {
+        capabilities,
         command,
-        dependencies: { kind: 'ready', apps: [], monitors: [], metrics: [] },
-        draft: null,
+        dependencies: {
+          kind: 'ready',
+          apps: [],
+          fieldSelection: 'valid',
+          metricTree: [],
+          metrics: [],
+          monitorSelection: 'valid',
+          monitors: []
+        },
+        draft,
         list: { kind: 'ready', records: [record], total: 1 },
         metrics: { kind: 'idle' },
         query: { search: '', pageIndex: 0, pageSize: 8 },

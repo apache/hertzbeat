@@ -49,6 +49,7 @@ export function useBulletinController() {
 
   return {
     state: {
+      capabilities,
       command: gate.command,
       dependencies,
       draft: editor.state.draft,

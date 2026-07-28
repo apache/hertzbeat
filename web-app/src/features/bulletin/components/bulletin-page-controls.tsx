@@ -3,6 +3,7 @@
 import { Button, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
 import styles from '../bulletin-page.module.css';
 
 type BulletinPageControlsProps = {
@@ -14,12 +15,20 @@ type BulletinPageControlsProps = {
     submitSearch: () => unknown;
   };
   busy: boolean;
+  capabilities: BulletinActionCapabilities;
   refreshing: boolean;
   search: string;
   selectedIds: number[];
 };
 
-export function BulletinPageControls({ actions, busy, refreshing, search, selectedIds }: BulletinPageControlsProps) {
+export function BulletinPageControls({
+  actions,
+  busy,
+  capabilities,
+  refreshing,
+  search,
+  selectedIds
+}: BulletinPageControlsProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -29,7 +38,7 @@ export function BulletinPageControls({ actions, busy, refreshing, search, select
           <Typography.Text type="secondary">{t('bulletin.description')}</Typography.Text>
         </div>
         <Space>
-          {selectedIds.length > 0 && (
+          {capabilities.canDelete && selectedIds.length > 0 && (
             <Popconfirm
               title={t('bulletin.deleteSelectedConfirm', { count: selectedIds.length })}
               okText={t('common.delete')}
@@ -42,9 +51,11 @@ export function BulletinPageControls({ actions, busy, refreshing, search, select
               </Button>
             </Popconfirm>
           )}
-          <Button type="primary" disabled={busy} onClick={actions.create}>
-            {t('bulletin.create')}
-          </Button>
+          {capabilities.canWrite && (
+            <Button type="primary" disabled={busy} onClick={actions.create}>
+              {t('bulletin.create')}
+            </Button>
+          )}
         </Space>
       </header>
       <Space.Compact className={styles.toolbar}>

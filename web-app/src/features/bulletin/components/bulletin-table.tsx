@@ -4,6 +4,7 @@ import { Button, Popconfirm, Space, Table, Tag, type TableProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
 import { bulletinPageSizes, formatBulletinTime, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
 import styles from '../bulletin-page.module.css';
 
@@ -18,6 +19,7 @@ type BulletinTableActions = {
 type BulletinTableProps = {
   actions: BulletinTableActions;
   busy: boolean;
+  capabilities: BulletinActionCapabilities;
   listKind: 'idle' | 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
   query: BulletinQuery;
   records: Bulletin[];
@@ -36,13 +38,17 @@ export function BulletinTable(props: BulletinTableProps) {
       dataSource={props.records}
       rowClassName={record => (record.id === props.selectedId ? (styles.selectedRow ?? '') : '')}
       onRow={record => (props.busy ? {} : { onClick: () => props.actions.select(record.id) })}
-      rowSelection={{
-        selectedRowKeys: props.selectedIds,
-        getCheckboxProps: () => ({ disabled: props.busy }),
-        onChange: keys => {
-          if (!props.busy) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
-        }
-      }}
+      rowSelection={
+        props.capabilities.canDelete
+          ? {
+              selectedRowKeys: props.selectedIds,
+              getCheckboxProps: () => ({ disabled: props.busy }),
+              onChange: keys => {
+                if (!props.busy) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+              }
+            }
+          : undefined
+      }
       pagination={
         props.listKind === 'ready'
           ? {
@@ -56,7 +62,7 @@ export function BulletinTable(props: BulletinTableProps) {
             }
           : false
       }
-      columns={createBulletinColumns(props.actions, props.busy, t)}
+      columns={createBulletinColumns(props.actions, props.busy, props.capabilities, t)}
     />
   );
 }
@@ -64,6 +70,7 @@ export function BulletinTable(props: BulletinTableProps) {
 function createBulletinColumns(
   actions: BulletinTableActions,
   busy: boolean,
+  capabilities: BulletinActionCapabilities,
   t: TFunction
 ): NonNullable<TableProps<Bulletin>['columns']> {
   return [
@@ -80,14 +87,22 @@ function createBulletinColumns(
           <Button type="link" disabled={busy} onClick={() => actions.select(record.id)}>
             {t('bulletin.viewMetrics')}
           </Button>
-          <Button type="link" disabled={busy} onClick={() => void actions.edit(record.id)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm disabled={busy} title={t('bulletin.deleteConfirm')} onConfirm={() => void actions.remove(record)}>
-            <Button type="link" danger disabled={busy}>
-              {t('bulletin.delete')}
+          {capabilities.canWrite && (
+            <Button type="link" disabled={busy} onClick={() => void actions.edit(record.id)}>
+              {t('common.edit')}
             </Button>
-          </Popconfirm>
+          )}
+          {capabilities.canDelete && (
+            <Popconfirm
+              disabled={busy}
+              title={t('bulletin.deleteConfirm')}
+              onConfirm={() => void actions.remove(record)}
+            >
+              <Button type="link" danger disabled={busy}>
+                {t('bulletin.delete')}
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       )
     }
