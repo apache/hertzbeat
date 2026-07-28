@@ -13,6 +13,8 @@ import styles from '../shared/alert-rule-list.module.css';
 
 type AlertRuleListHeadingProps = {
   busy: boolean;
+  canDelete: boolean;
+  canWrite: boolean;
   exporting: boolean;
   selectedCount: number;
   create: () => void;
@@ -23,6 +25,8 @@ type AlertRuleListHeadingProps = {
 
 export function AlertRuleListHeading({
   busy,
+  canDelete,
+  canWrite,
   exporting,
   selectedCount,
   create,
@@ -40,15 +44,16 @@ export function AlertRuleListHeading({
       <Space>
         <AlertRuleSelectedActions
           busy={busy}
+          canDelete={canDelete}
           exporting={exporting}
           selectedCount={selectedCount}
           removeSelected={removeSelected}
           exportSelected={exportSelected}
         />
-        <Button disabled={busy} onClick={importRules}>
+        <Button disabled={busy || !canWrite} onClick={importRules}>
           {t('alertRules.import.open')}
         </Button>
-        <Button type="primary" disabled={busy} onClick={create}>
+        <Button type="primary" disabled={busy || !canWrite} onClick={create}>
           {t('alertRules.new')}
         </Button>
       </Space>
@@ -58,11 +63,12 @@ export function AlertRuleListHeading({
 
 function AlertRuleSelectedActions({
   busy,
+  canDelete,
   exporting,
   selectedCount,
   removeSelected,
   exportSelected
-}: Omit<AlertRuleListHeadingProps, 'create' | 'importRules'>) {
+}: Omit<AlertRuleListHeadingProps, 'canWrite' | 'create' | 'importRules'>) {
   const { t } = useTranslation();
   if (selectedCount === 0) return null;
   const chooseFormat = (key: string) => {
@@ -90,10 +96,11 @@ function AlertRuleSelectedActions({
         title={t('alertRules.deleteSelectedConfirm', { count: selectedCount })}
         okText={t('common.delete')}
         cancelText={t('common.cancel')}
-        okButtonProps={{ danger: true, disabled: busy }}
+        disabled={!canDelete}
+        okButtonProps={{ danger: true, disabled: busy || !canDelete }}
         onConfirm={removeSelected}
       >
-        <Button danger disabled={busy}>
+        <Button danger disabled={busy || !canDelete}>
           {t('alertRules.deleteSelected')}
         </Button>
       </Popconfirm>

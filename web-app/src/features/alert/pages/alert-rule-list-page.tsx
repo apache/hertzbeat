@@ -32,13 +32,15 @@ import styles from '../shared/alert-rule-list.module.css';
 export function AlertRuleListPage() {
   const { t } = useTranslation();
   const controller = useAlertRuleListController();
-  const { command, exporting, importState, list, query, refreshing, search, selectedIds } = controller.state;
+  const { capabilities, command, exporting, importState, list, query, refreshing, search, selectedIds } =
+    controller.state;
   const commandBusy = command !== 'idle';
   const interactionLocked = commandBusy || exporting || importState.busy;
   const recovering = command === 'recovering';
   return (
     <div className={styles.page}>
       <AlertRuleListHeading
+        {...capabilities}
         busy={interactionLocked}
         exporting={exporting}
         selectedCount={selectedIds.length}
@@ -68,6 +70,7 @@ export function AlertRuleListPage() {
       <AlertRuleListResults
         state={list}
         columns={buildAlertRuleListColumns(t, {
+          ...capabilities,
           busy: interactionLocked,
           edit: controller.edit,
           toggle: controller.toggle,

@@ -2,6 +2,7 @@
 
 export * from './alert-rule-condition';
 export * from './alert-rule-condition-edit';
+export * from './alert-rule-action-capability';
 export * from './alert-rule-draft';
 export * from './alert-rule-export-model';
 export * from './alert-rule-import-model';

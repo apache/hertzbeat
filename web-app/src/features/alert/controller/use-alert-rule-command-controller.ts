@@ -8,6 +8,7 @@ import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
 import { validateAlertRuleDraft, type AlertRuleDraft } from '../model/alert-rule-model';
 import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
+import { useAlertRuleActionCapabilities } from './use-alert-rule-action-capabilities';
 import { useAlertRuleSaveOperation } from './use-alert-rule-save-operation';
 
 export function useAlertRuleCommandController(
@@ -19,6 +20,7 @@ export function useAlertRuleCommandController(
   const { t } = useTranslation();
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const capabilities = useAlertRuleActionCapabilities();
   const operation = useAlertRuleSaveOperation(
     mode,
     identity,
@@ -34,11 +36,12 @@ export function useAlertRuleCommandController(
     () => void navigate(alertRoutePaths.rules)
   );
   const save = async () => {
+    if (!capabilities.canWrite) return;
     if (!draft || validateAlertRuleDraft(draft).length > 0) {
       void message.warning(t('alertRules.validation'));
       return;
     }
     await operation.save(draft);
   };
-  return { isLocked: operation.isLocked, retry: operation.retry, save };
+  return { canSave: capabilities.canWrite, isLocked: operation.isLocked, retry: operation.retry, save };
 }

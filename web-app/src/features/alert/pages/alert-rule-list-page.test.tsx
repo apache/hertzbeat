@@ -151,6 +151,23 @@ describe('AlertRuleListPage', () => {
     expect(controller.importActions.open).toHaveBeenCalledOnce();
   });
 
+  it('renders guest and user action permissions without enabling rejected writes', () => {
+    controller.state = buildState({ capabilities: { canWrite: false, canDelete: false }, selectedIds: [7] });
+    const guest = render(<AlertRuleListPage />);
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.import.open' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.deleteSelected' })).toBeDisabled();
+    guest.unmount();
+
+    controller.state = buildState({ capabilities: { canWrite: true, canDelete: false }, selectedIds: [7] });
+    render(<AlertRuleListPage />);
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeEnabled();
+    expect(screen.getByRole('switch')).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'alertRules.deleteSelected' })).toBeDisabled();
+  });
+
   it('locks selection and rule writes while an export owns the selected snapshot', () => {
     controller.state = buildState({ exporting: true, selectedIds: [7] });
     render(<AlertRuleListPage />);
@@ -240,6 +257,7 @@ describe('AlertRuleListPage', () => {
 
 function buildState(override: Record<string, unknown> = {}) {
   return {
+    capabilities: { canWrite: true, canDelete: true },
     command: 'idle',
     exporting: false,
     importState: {

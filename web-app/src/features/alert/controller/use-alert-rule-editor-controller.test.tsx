@@ -43,6 +43,7 @@ const monitor = vi.hoisted(() => ({
   loadMonitorNavigationApps: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const session = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/alert-rule-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
   ...api
@@ -60,6 +61,13 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
     i18n: { language: 'en-US', resolvedLanguage: 'en-US' }
+  })
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: { roles: session.roles },
+    loading: false,
+    retry: vi.fn()
   })
 }));
 
@@ -80,6 +88,7 @@ const persisted: AlertRule = {
 describe('Alert Rule editor controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    session.roles = ['ADMIN'];
     api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: true, hasSqlExecutor: true });
     api.loadAlertRule.mockResolvedValue(persisted);
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
@@ -112,6 +121,21 @@ describe('Alert Rule editor controller', () => {
     unmount();
 
     expect(detailSignal?.aborted).toBe(true);
+  });
+
+  it('fails closed before create or edit write transport for a guest session', async () => {
+    session.roles = ['GUEST'];
+    const create = renderController('new', '/alerts/rules/new');
+    await waitFor(() => expect(create.result.current.state.detail.kind).toBe('ready'));
+    act(() => create.result.current.updateDraft(validDraft()));
+    await act(async () => create.result.current.save());
+    create.unmount();
+
+    const edit = renderController('edit');
+    await waitFor(() => expect(edit.result.current.state.detail.kind).toBe('ready'));
+    await act(async () => edit.result.current.save());
+
+    expect(api.saveAlertRule).not.toHaveBeenCalled();
   });
 
   it('aborts the datasource capability read when the editor unmounts', async () => {

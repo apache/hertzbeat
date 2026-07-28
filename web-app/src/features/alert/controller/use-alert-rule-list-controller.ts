@@ -19,8 +19,14 @@ import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../model/alert-rule-model';
+import {
+  alertRuleFailureKind,
+  type AlertRule,
+  type AlertRuleListState,
+  type AlertRulePage
+} from '../model/alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
+import { useAlertRuleActionCapabilities } from './use-alert-rule-action-capabilities';
 import { useAlertRuleExport } from './use-alert-rule-export';
 import { useAlertRuleImport } from './use-alert-rule-import';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
@@ -32,6 +38,7 @@ export function useAlertRuleListController() {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const capabilities = useAlertRuleActionCapabilities();
   const route = useAlertRuleListQueryController();
   const { listQuery, rereadLatest } = useAlertRuleListReadController(route.query);
   const list = resolveListState(listQuery.isPending, listQuery.error, listQuery.data);
@@ -46,8 +53,10 @@ export function useAlertRuleListController() {
       void message.error(t('alertRules.operationFailed'));
     }
   });
+  const actions = createAlertRuleListActions({ route, operations, navigate, rereadLatest });
   return {
     state: {
+      capabilities,
       command: operations.command,
       list,
       query: route.query,
@@ -57,12 +66,28 @@ export function useAlertRuleListController() {
       exporting: exportOperation.exporting,
       importState: importOperation.state
     },
-    importActions: importOperation.actions,
+    importActions: {
+      ...importOperation.actions,
+      open: () => {
+        if (capabilities.canWrite) importOperation.actions.open();
+      },
+      submit: () => (capabilities.canWrite ? importOperation.actions.submit() : Promise.resolve(false))
+    },
     selectIds: (ids: number[]) => {
       if (!operations.isLocked()) selection.selectIds(ids);
     },
     exportSelected: exportOperation.exportSelected,
-    ...createAlertRuleListActions({ route, operations, navigate, rereadLatest })
+    ...actions,
+    create: () => {
+      if (capabilities.canWrite) actions.create();
+    },
+    edit: (id: number) => {
+      if (capabilities.canWrite) actions.edit(id);
+    },
+    toggle: (rule: AlertRule, enabled: boolean) =>
+      capabilities.canWrite ? actions.toggle(rule, enabled) : Promise.resolve(),
+    remove: (id: number) => (capabilities.canDelete ? actions.remove(id) : Promise.resolve()),
+    removeMany: (ids: readonly number[]) => (capabilities.canDelete ? actions.removeMany(ids) : Promise.resolve())
   };
 }
 

@@ -155,6 +155,14 @@ describe('AlertRuleEditorPage', () => {
     expect(controller.cancel).toHaveBeenCalled();
   });
 
+  it('keeps preview readable but disables save when the session cannot write alert rules', () => {
+    controller.state = buildState({ canSave: false });
+    render(<AlertRuleEditorPage mode="edit" />);
+
+    expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+  });
+
   it('disables every mutable field while save owns the operation gate', () => {
     controller.state = buildState({
       command: 'saving',
@@ -182,6 +190,7 @@ describe('AlertRuleEditorPage', () => {
 
 function buildState(override: Record<string, unknown> = {}) {
   return {
+    canSave: true,
     command: 'idle',
     datasource: {
       kind: 'ready',

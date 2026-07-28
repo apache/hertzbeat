@@ -30,6 +30,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   return {
     state: {
       command: route.active.command,
+      canSave: command.canSave,
       datasource: datasource.state,
       detail: route.detail,
       draft,

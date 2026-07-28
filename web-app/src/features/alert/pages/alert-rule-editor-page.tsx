@@ -114,7 +114,7 @@ function AlertRuleEditorForm({
 
 function AlertRuleEditorActions({ controller }: { controller: AlertRuleEditorController }) {
   const { t } = useTranslation();
-  const { command, preview, recovery } = controller.state;
+  const { canSave, command, preview, recovery } = controller.state;
   return (
     <div className={styles.actions}>
       <Button disabled={command === 'saving'} onClick={controller.cancel}>
@@ -132,7 +132,7 @@ function AlertRuleEditorActions({ controller }: { controller: AlertRuleEditorCon
       <Button
         type="primary"
         loading={command === 'saving' && !recovery}
-        disabled={recovery !== undefined}
+        disabled={!canSave || recovery !== undefined}
         onClick={() => {
           void controller.save();
         }}

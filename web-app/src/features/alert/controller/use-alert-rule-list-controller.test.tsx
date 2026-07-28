@@ -37,6 +37,7 @@ const api = vi.hoisted(() => ({
   updateAlertRuleEnabled: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+const session = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 
 vi.mock('../api/alert-rule-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
@@ -47,6 +48,13 @@ vi.mock('antd', async importOriginal => ({
   App: { useApp: () => ({ message: notify }) }
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: { roles: session.roles },
+    loading: false,
+    retry: vi.fn()
+  })
+}));
 
 const persisted: AlertRule = {
   id: 7,
@@ -66,6 +74,7 @@ const persisted: AlertRule = {
 describe('Alert Rule list controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    session.roles = ['ADMIN'];
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
     api.loadAlertRule.mockResolvedValue(persisted);
     api.updateAlertRuleEnabled.mockResolvedValue(undefined);
@@ -78,6 +87,38 @@ describe('Alert Rule list controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
 
     expect(api.loadAlertRules).toHaveBeenCalledWith({ search: '', pageIndex: 0, pageSize: 8 }, expect.any(AbortSignal));
+  });
+
+  it('fails closed before write transport and write-route navigation for a guest session', async () => {
+    session.roles = ['GUEST'];
+    const routed = renderRouted(['/alerts/rules?pageIndex=0&pageSize=8']);
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+
+    act(() => {
+      routed.current().create();
+      routed.current().edit(persisted.id);
+    });
+    await act(async () => {
+      await routed.current().toggle(persisted, false);
+      await routed.current().remove(persisted.id);
+    });
+
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+    expect(api.updateAlertRuleEnabled).not.toHaveBeenCalled();
+    expect(api.deleteAlertRules).not.toHaveBeenCalled();
+  });
+
+  it('admits user writes but fails closed before administrator-only delete transport', async () => {
+    session.roles = ['USER'];
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertRule.mockResolvedValue({ ...persisted, enable: false });
+
+    await act(async () => result.current.toggle(persisted, false));
+    await act(async () => result.current.remove(persisted.id));
+
+    expect(api.updateAlertRuleEnabled).toHaveBeenCalledOnce();
+    expect(api.deleteAlertRules).not.toHaveBeenCalled();
   });
 
   it('owns canonical search, POP convergence, page size, and navigation', async () => {
