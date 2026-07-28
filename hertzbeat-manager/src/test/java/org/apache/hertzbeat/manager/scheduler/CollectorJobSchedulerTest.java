@@ -47,6 +47,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -189,6 +190,29 @@ public class CollectorJobSchedulerTest {
         assertNotNull(job);
         assertEquals("cron", job.getScheduleType());
         assertEquals("0 55 7 * * ?", job.getCronExpression());
+    }
+
+    @Test
+    void testOnlineCollectorDoesNotSendAesSecret() {
+        String identity = "collector-1";
+        org.apache.hertzbeat.common.entity.manager.Collector collector =
+                org.apache.hertzbeat.common.entity.manager.Collector.builder()
+                        .name(identity)
+                        .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                        .build();
+        when(collectorDao.findCollectorByName(identity)).thenReturn(Optional.of(collector));
+        ManageServer manageServer = mock(ManageServer.class);
+        collectorJobScheduler.setManageServer(manageServer);
+        ClusterMsg.Message successResponse = ClusterMsg.Message.newBuilder()
+                .setMsg(com.google.protobuf.ByteString.copyFromUtf8(String.valueOf(CommonConstants.SUCCESS_CODE)))
+                .build();
+        when(manageServer.sendMsgSync(eq(identity), any(ClusterMsg.Message.class))).thenReturn(successResponse);
+
+        assertTrue(collectorJobScheduler.onlineCollector(identity));
+
+        ArgumentCaptor<ClusterMsg.Message> messageCaptor = ArgumentCaptor.forClass(ClusterMsg.Message.class);
+        verify(manageServer).sendMsgSync(eq(identity), messageCaptor.capture());
+        assertTrue(messageCaptor.getValue().getMsg().isEmpty());
     }
 
 }

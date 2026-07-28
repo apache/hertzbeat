@@ -20,7 +20,15 @@ package org.apache.hertzbeat.collector.dispatch.entrance;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
@@ -36,24 +44,20 @@ import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * collect server
@@ -64,6 +68,8 @@ import java.util.concurrent.TimeUnit;
         name = "enabled", havingValue = "true")
 @Slf4j
 public class CollectServer implements CommandLineRunner {
+
+    private static final Set<Integer> AES_KEY_LENGTHS = Set.of(16, 24, 32);
 
     private final CollectJobService collectJobService;
 
@@ -84,6 +90,9 @@ public class CollectServer implements CommandLineRunner {
     private boolean heartbeatPending;
 
     private final Runnable closeApplicationAction;
+
+    @Value("${common.secret:}")
+    private String commonSecret;
 
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
@@ -181,7 +190,21 @@ public class CollectServer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        initializeAesSecret();
         this.remotingClient.start();
+    }
+
+    private void initializeAesSecret() {
+        if (StringUtils.isBlank(commonSecret)) {
+            throw new IllegalStateException(
+                    "A standalone Collector must configure the same AES key as Manager via common.secret "
+                            + "or COMMON_SECRET");
+        }
+        int secretLength = commonSecret.getBytes(StandardCharsets.UTF_8).length;
+        if (!AES_KEY_LENGTHS.contains(secretLength)) {
+            throw new IllegalStateException("common.secret must be 16, 24, or 32 bytes in UTF-8");
+        }
+        AesUtil.setDefaultSecretKey(commonSecret);
     }
 
     /**
