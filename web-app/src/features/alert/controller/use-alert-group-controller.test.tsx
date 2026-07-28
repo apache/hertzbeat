@@ -22,6 +22,7 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-d
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { SessionContext } from '@/core/auth/session-context';
 
 import { normalizeAlertGroupApiFailure } from '../api/alert-group-api-failure';
 import {
@@ -88,6 +89,44 @@ describe('Alert Group controller', () => {
       { search: '', pageIndex: 0, pageSize: 8 },
       expect.any(AbortSignal)
     );
+  });
+
+  it('rejects USER delete before transport while keeping the list read available', async () => {
+    const { result } = renderController('/alerts/groups?pageIndex=0&pageSize=8', ['USER']);
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await act(async () => result.current.remove(7));
+
+    expect(api.loadAlertGroups).toHaveBeenCalled();
+    expect(api.deleteAlertGroups).not.toHaveBeenCalled();
+  });
+
+  it('keeps Sureness-authorized USER writes available', async () => {
+    const { result } = renderController('/alerts/groups?pageIndex=0&pageSize=8', ['USER']);
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await act(async () => result.current.toggle(persisted, false));
+
+    expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce();
+  });
+
+  it('rejects every GUEST mutation before editor or transport admission', async () => {
+    const { result } = renderController('/alerts/groups?pageIndex=0&pageSize=8', ['GUEST']);
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await act(async () => {
+      result.current.create();
+      await result.current.edit(7);
+      await result.current.toggle(persisted, false);
+      await result.current.remove(7);
+      await result.current.submit();
+    });
+
+    expect(result.current.state.draft).toBeNull();
+    expect(api.loadAlertGroup).not.toHaveBeenCalled();
+    expect(api.saveAlertGroup).not.toHaveBeenCalled();
+    expect(api.updateAlertGroupEnabled).not.toHaveBeenCalled();
+    expect(api.deleteAlertGroups).not.toHaveBeenCalled();
   });
 
   it('owns canonical URL search, POP convergence, and page-size reset', async () => {
@@ -976,12 +1015,20 @@ describe('Alert Group controller', () => {
   });
 });
 
-function renderController(entry = '/alerts/groups?pageIndex=0&pageSize=8') {
+function renderController(entry = '/alerts/groups?pageIndex=0&pageSize=8', roles = ['ADMIN']) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const wrapper = ({ children }: PropsWithChildren) => (
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
-    </QueryClientProvider>
+    <SessionContext.Provider
+      value={{
+        session: { authenticated: true, username: 'operator', workspaceId: null, roles, expiresAt: null },
+        loading: false,
+        retry: () => undefined
+      }}
+    >
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
+      </QueryClientProvider>
+    </SessionContext.Provider>
   );
   return renderHook(() => useAlertGroupController(), { wrapper });
 }
@@ -998,9 +1045,23 @@ function renderRoutedController(entries: string[]) {
       {
         path: '/alerts/groups',
         element: (
-          <QueryClientProvider client={client}>
-            <Probe />
-          </QueryClientProvider>
+          <SessionContext.Provider
+            value={{
+              session: {
+                authenticated: true,
+                username: 'operator',
+                workspaceId: null,
+                roles: ['ADMIN'],
+                expiresAt: null
+              },
+              loading: false,
+              retry: () => undefined
+            }}
+          >
+            <QueryClientProvider client={client}>
+              <Probe />
+            </QueryClientProvider>
+          </SessionContext.Provider>
         )
       }
     ],

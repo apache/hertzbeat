@@ -24,8 +24,12 @@ import {
   type AlertGroupWriteContext
 } from './alert-group-write-operations';
 import { useAlertGroupCommandGate, useAlertGroupEditor } from './use-alert-group-editor-controller';
+import type { AlertGroupActionCapabilities } from '../model/alert-group-action-capability';
 
-export function useAlertGroupCommandController(rereadList: () => Promise<AlertGroupPage>) {
+export function useAlertGroupCommandController(
+  rereadList: () => Promise<AlertGroupPage>,
+  capabilities: AlertGroupActionCapabilities
+) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const gate = useAlertGroupCommandGate();
@@ -40,7 +44,11 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
     operationFailed: () => void message.error(t('alertGroups.operationFailed'))
   };
   const context: AlertGroupWriteContext = { rereadList, gate, editor, notifications };
-  const submit = useAlertGroupSubmit(context);
+  const submit = useAlertGroupSubmit(context, capabilities.canWrite);
+  const canRetry = () => {
+    const recovery = gate.recovery;
+    return recovery?.kind === 'delete' ? capabilities.canDelete : capabilities.canWrite;
+  };
 
   return {
     state: {
@@ -53,18 +61,27 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
       recovery: gate.recovery
     },
     actions: {
-      ...editor.actions,
+      create: () => {
+        if (capabilities.canWrite) editor.actions.create();
+      },
+      edit: (id: number) => (capabilities.canWrite ? editor.actions.edit(id) : Promise.resolve()),
+      retryDetail: () => (capabilities.canWrite ? editor.actions.retryDetail() : Promise.resolve()),
+      closeDraft: editor.actions.closeDraft,
+      updateDraft: editor.actions.updateDraft,
       submit,
-      toggle: (group: AlertGroupConverge, enable: boolean) => toggleAlertGroup(context, group, enable),
-      remove: (id: number) => removeAlertGroup(context, id),
-      removeMany: (ids: readonly number[]) => removeAlertGroups(context, ids),
-      retry: () => retryAlertGroupOperation(context)
+      toggle: (group: AlertGroupConverge, enable: boolean) =>
+        capabilities.canWrite ? toggleAlertGroup(context, group, enable) : Promise.resolve(),
+      remove: (id: number) => (capabilities.canDelete ? removeAlertGroup(context, id) : Promise.resolve()),
+      removeMany: (ids: readonly number[]) =>
+        capabilities.canDelete ? removeAlertGroups(context, ids) : Promise.resolve(),
+      retry: () => (canRetry() ? retryAlertGroupOperation(context) : Promise.resolve())
     }
   };
 }
 
-function useAlertGroupSubmit(context: AlertGroupWriteContext) {
+function useAlertGroupSubmit(context: AlertGroupWriteContext, canWrite: boolean) {
   const submit = async () => {
+    if (!canWrite) return;
     const { editor, gate, notifications, rereadList } = context;
     const draft = editor.draft;
     if (!draft || validateAlertGroupDraft(draft).length > 0) {

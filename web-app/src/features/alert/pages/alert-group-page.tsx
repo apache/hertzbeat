@@ -15,91 +15,25 @@
  * limitations under the License.
  */
 
-import { Button, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { buildAlertGroupColumns } from '../components/alert-group-columns';
 import { AlertGroupEditor } from '../components/alert-group-editor';
+import { AlertGroupPageHeader } from '../components/alert-group-page-header';
 import { AlertGroupRecovery } from '../components/alert-group-recovery';
 import { AlertGroupDetailFailure, AlertGroupResults } from '../components/alert-group-results';
+import { AlertGroupToolbar } from '../components/alert-group-toolbar';
 import { useAlertGroupController } from '../controller/use-alert-group-controller';
 import styles from '../shared/alert-policy-page.module.css';
-
-type AlertGroupToolbarProps = {
-  refreshing: boolean;
-  search: string;
-  setSearch: (value: string) => void;
-  submitSearch: () => void;
-  refresh: () => unknown;
-};
-
-function AlertGroupToolbar(props: AlertGroupToolbarProps) {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.toolbar}>
-      <Input
-        allowClear
-        value={props.search}
-        placeholder={t('alertGroups.search')}
-        onChange={event => props.setSearch(event.target.value)}
-        onPressEnter={props.submitSearch}
-      />
-      <Button type="primary" onClick={props.submitSearch}>
-        {t('common.query')}
-      </Button>
-      <Button loading={props.refreshing} onClick={() => void props.refresh()}>
-        {t('common.refresh')}
-      </Button>
-    </div>
-  );
-}
-
-function AlertGroupPageHeader({
-  busy,
-  create,
-  removeSelected,
-  selectedCount
-}: {
-  busy: boolean;
-  create: () => void;
-  removeSelected: () => unknown;
-  selectedCount: number;
-}) {
-  const { t } = useTranslation();
-  return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('alertGroups.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('alertGroups.description')}</Typography.Text>
-      </div>
-      <Space>
-        {selectedCount > 0 && (
-          <Popconfirm
-            title={t('alertGroups.deleteSelectedConfirm', { count: selectedCount })}
-            okText={t('common.delete')}
-            cancelText={t('common.cancel')}
-            okButtonProps={{ danger: true, disabled: busy }}
-            onConfirm={removeSelected}
-          >
-            <Button danger disabled={busy}>
-              {t('alertGroups.deleteSelected')}
-            </Button>
-          </Popconfirm>
-        )}
-        <Button type="primary" disabled={busy} onClick={create}>
-          {t('alertGroups.new')}
-        </Button>
-      </Space>
-    </header>
-  );
-}
 
 function useAlertGroupPageColumns(controller: ReturnType<typeof useAlertGroupController>, busy: boolean) {
   const { t } = useTranslation();
   return buildAlertGroupColumns(t, {
     busy,
+    canDelete: controller.capabilities.canDelete,
+    canWrite: controller.capabilities.canWrite,
     edit: controller.edit,
     toggle: controller.toggle,
     remove: controller.remove
@@ -110,8 +44,11 @@ export function AlertGroupPage() {
   const controller = useAlertGroupController();
   const state = controller.state;
   const busy = state.command !== 'idle';
-  const saveRecovery = state.recovery?.kind === 'update' ? state.recovery : undefined;
-  const routeRecovery = state.recovery?.kind === 'update' ? undefined : state.recovery;
+  const canRetryRecovery =
+    state.recovery?.kind === 'delete' ? controller.capabilities.canDelete : controller.capabilities.canWrite;
+  const saveRecovery =
+    controller.capabilities.canWrite && state.recovery?.kind === 'update' ? state.recovery : undefined;
+  const routeRecovery = saveRecovery ? undefined : state.recovery;
   const removeSelected = () => {
     if (state.selectedIds.length > 0) return controller.removeMany(state.selectedIds);
   };
@@ -121,6 +58,8 @@ export function AlertGroupPage() {
     <div className={styles.page}>
       <AlertGroupPageHeader
         busy={busy}
+        canCreate={controller.capabilities.canWrite}
+        canDelete={controller.capabilities.canDelete}
         create={controller.create}
         selectedCount={state.selectedIds.length}
         removeSelected={removeSelected}
@@ -134,36 +73,56 @@ export function AlertGroupPage() {
         submitSearch={controller.submitSearch}
         refresh={controller.refresh}
       />
-      <AlertGroupRecovery recovery={routeRecovery} retrying={state.command !== 'recovering'} retry={controller.retry} />
-      <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
+      <AlertGroupRecovery
+        canRetry={canRetryRecovery}
+        recovery={routeRecovery}
+        retrying={state.command !== 'recovering'}
+        retry={controller.retry}
+      />
+      {controller.capabilities.canWrite && (
+        <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
+      )}
       <AlertGroupResults
         state={state.list}
         columns={columns}
         pageIndex={state.query.pageIndex}
         pageSize={state.query.pageSize}
         busy={busy}
+        canDelete={controller.capabilities.canDelete}
         selectedIds={state.selectedIds}
         selectIds={controller.selectIds}
         changePage={controller.changePage}
         retry={controller.refresh}
       />
-      {state.draft && (
-        <AlertGroupEditor
-          draft={state.draft}
-          saving={state.command === 'saving'}
-          commandLocked={busy}
-          failure={state.editorFailure}
-          createAcknowledged={state.createAcknowledged}
-          proofFailure={state.createProofFailure}
-          recovery={saveRecovery}
-          retrying={state.command !== 'recovering'}
-          labelKeys={state.labelSuggestions.keys}
-          update={controller.updateDraft}
-          close={controller.closeDraft}
-          submit={controller.submit}
-          retry={controller.retry}
-        />
-      )}
+      {renderAlertGroupEditor(controller, busy, canRetryRecovery, saveRecovery)}
     </div>
+  );
+}
+
+function renderAlertGroupEditor(
+  controller: ReturnType<typeof useAlertGroupController>,
+  busy: boolean,
+  canRetry: boolean,
+  recovery: ReturnType<typeof useAlertGroupController>['state']['recovery']
+) {
+  const state = controller.state;
+  if (!controller.capabilities.canWrite || !state.draft) return null;
+  return (
+    <AlertGroupEditor
+      draft={state.draft}
+      saving={state.command === 'saving'}
+      commandLocked={busy}
+      canRetry={canRetry}
+      failure={state.editorFailure}
+      createAcknowledged={state.createAcknowledged}
+      proofFailure={state.createProofFailure}
+      recovery={recovery}
+      retrying={state.command !== 'recovering'}
+      labelKeys={state.labelSuggestions.keys}
+      update={controller.updateDraft}
+      close={controller.closeDraft}
+      submit={controller.submit}
+      retry={controller.retry}
+    />
   );
 }

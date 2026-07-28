@@ -12,6 +12,8 @@ import type { AlertGroupConverge } from '../model/alert-group-model';
 
 export type AlertGroupColumnActions = {
   busy: boolean;
+  canDelete: boolean;
+  canWrite: boolean;
   edit: (id: number) => unknown;
   toggle: (group: AlertGroupConverge, enabled: boolean) => unknown;
   remove: (id: number) => unknown;
@@ -29,7 +31,7 @@ export function AlertGroupEnabledCell({
   return (
     <Switch
       checked={value === true}
-      disabled={actions.busy || value === null}
+      disabled={!actions.canWrite || actions.busy || value === null}
       onChange={enabled => void actions.toggle(group, enabled)}
     />
   );
@@ -46,18 +48,22 @@ export function AlertGroupActionCell({
 }) {
   return (
     <Space>
-      <Button type="link" disabled={actions.busy} onClick={() => void actions.edit(group.id)}>
-        {t('common.edit')}
-      </Button>
-      <Popconfirm
-        title={t('alertGroups.deleteConfirm')}
-        okButtonProps={{ disabled: actions.busy }}
-        onConfirm={() => actions.remove(group.id)}
-      >
-        <Button type="link" danger disabled={actions.busy}>
-          {t('alertGroups.delete')}
+      {actions.canWrite && (
+        <Button type="link" disabled={actions.busy} onClick={() => void actions.edit(group.id)}>
+          {t('common.edit')}
         </Button>
-      </Popconfirm>
+      )}
+      {actions.canDelete && (
+        <Popconfirm
+          title={t('alertGroups.deleteConfirm')}
+          okButtonProps={{ disabled: actions.busy }}
+          onConfirm={() => actions.remove(group.id)}
+        >
+          <Button type="link" danger disabled={actions.busy}>
+            {t('alertGroups.delete')}
+          </Button>
+        </Popconfirm>
+      )}
     </Space>
   );
 }

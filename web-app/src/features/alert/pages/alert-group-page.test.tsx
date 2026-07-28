@@ -21,6 +21,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertGroupPage } from './alert-group-page';
 
 const controller = vi.hoisted(() => ({
+  capabilities: { canDelete: true, canWrite: true },
   changePage: vi.fn(),
   closeDraft: vi.fn(),
   create: vi.fn(),
@@ -57,6 +58,7 @@ const record = {
 describe('AlertGroupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    controller.capabilities = { canDelete: true, canWrite: true };
     controller.state = buildState();
   });
   afterEach(cleanup);
@@ -109,6 +111,43 @@ describe('AlertGroupPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it.each([
+    ['GUEST', false, false],
+    ['USER', true, false],
+    ['ADMIN', true, true]
+  ])('shows only shipped Alert Group actions for %s', (_role, canWrite, canDelete) => {
+    controller.capabilities = { canWrite, canDelete };
+    render(<AlertGroupPage />);
+
+    expect(screen.queryByRole('button', { name: 'alertGroups.new' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'common.edit' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'alertGroups.delete' }) !== null).toBe(canDelete);
+    expect(screen.queryByRole('checkbox', { name: 'Select all' }) !== null).toBe(canDelete);
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', !canWrite);
+    expect(screen.getByText('By service')).toBeInTheDocument();
+  });
+
+  it('keeps retained recovery evidence visible without offering a role-forbidden retry', () => {
+    controller.capabilities = { canWrite: true, canDelete: false };
+    controller.state = buildState({
+      command: 'recovering',
+      recovery: { kind: 'delete', phase: 'proof', failure: 'unavailable', retryable: true }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByText('common.unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+  });
+
+  it('does not expose stale editor failure actions after write access is lost', () => {
+    controller.capabilities = { canWrite: false, canDelete: false };
+    controller.state = buildState({ detail: { kind: 'unavailable', id: 7 } });
+    render(<AlertGroupPage />);
+
+    expect(screen.queryByText('common.unavailable')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
   });
 
   it('offers canonical server label keys without disabling manual tags', () => {

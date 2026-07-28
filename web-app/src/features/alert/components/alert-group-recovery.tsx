@@ -12,10 +12,12 @@ import type { AlertGroupOperationRecovery } from '../model/alert-group-operation
 
 /** Renders retained proof ownership without presenting an uncertain write as failed. */
 export function AlertGroupRecovery({
+  canRetry,
   recovery,
   retrying,
   retry
 }: {
+  canRetry: boolean;
   recovery: AlertGroupOperationRecovery | undefined;
   retrying: boolean;
   retry: () => unknown;
@@ -28,9 +30,11 @@ export function AlertGroupRecovery({
       showIcon
       message={t(recovery.failure === 'unavailable' ? 'common.unavailable' : 'common.routeError.description')}
       action={
-        <Button size="small" disabled={retrying} loading={retrying} onClick={() => void retry()}>
-          {t('common.retry')}
-        </Button>
+        canRetry ? (
+          <Button size="small" disabled={retrying} loading={retrying} onClick={() => void retry()}>
+            {t('common.retry')}
+          </Button>
+        ) : undefined
       }
     />
   );

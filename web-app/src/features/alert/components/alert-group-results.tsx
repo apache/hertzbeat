@@ -19,6 +19,7 @@ export function AlertGroupResults({
   pageIndex,
   pageSize,
   busy,
+  canDelete,
   selectedIds,
   selectIds,
   changePage,
@@ -29,6 +30,7 @@ export function AlertGroupResults({
   pageIndex: number;
   pageSize: number;
   busy: boolean;
+  canDelete: boolean;
   selectedIds: number[];
   selectIds: (ids: number[]) => void;
   changePage: (page: number, pageSize: number) => void;
@@ -52,7 +54,7 @@ export function AlertGroupResults({
       loading={state.kind === 'loading'}
       dataSource={records}
       columns={columns}
-      rowSelection={rowSelection}
+      {...(canDelete ? { rowSelection } : {})}
       scroll={{ x: 1100 }}
       pagination={{
         current: pageIndex + 1,

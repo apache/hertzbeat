@@ -21,6 +21,7 @@ type AlertGroupEditorProps = {
   draft: AlertGroupDraft;
   saving: boolean;
   commandLocked: boolean;
+  canRetry: boolean;
   failure: AlertGroupFailure | undefined;
   createAcknowledged: boolean;
   proofFailure: 'unavailable' | 'error' | undefined;
@@ -58,7 +59,12 @@ export function AlertGroupEditor(props: AlertGroupEditorProps) {
       onOk={submit}
     >
       <EditorFailure failure={props.failure} acknowledged={props.createAcknowledged} proof={props.proofFailure} />
-      <AlertGroupRecovery recovery={props.recovery} retrying={props.retrying} retry={props.retry} />
+      <AlertGroupRecovery
+        canRetry={props.canRetry}
+        recovery={props.recovery}
+        retrying={props.retrying}
+        retry={props.retry}
+      />
       <AlertGroupFields draft={props.draft} disabled={fieldsLocked} labelKeys={props.labelKeys} update={props.update} />
     </Modal>
   );
