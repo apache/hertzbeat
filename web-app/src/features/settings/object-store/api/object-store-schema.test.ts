@@ -18,12 +18,17 @@
 import { describe, expect, it } from 'vitest';
 
 import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
-import { parseObjectStoreDraft, parseObjectStoreReadModel } from './object-store-schema';
+import {
+  parseObjectStoreDraft,
+  parseObjectStoreMutationResult,
+  parseObjectStoreReadModel
+} from './object-store-schema';
 
 describe('object store response schema', () => {
   it('accepts a complete draft at the unknown-value boundary', () => {
     const draft = {
       type: 'OBS' as const,
+      configuredSecrets: [],
       config: {
         accessKey: 'ak',
         secretKey: 'sk',
@@ -53,48 +58,62 @@ describe('object store response schema', () => {
     expect(JSON.stringify(error)).not.toContain('private-extra-field');
   });
 
-  it.each([
-    ['plaintext', 'private-schema-secret', true],
-    ['trimmed plaintext', ' private-trimmed-secret ', true],
-    ['empty', '', false],
-    ['blank', '   ', false]
-  ])('replaces an OBS %s wire secret with non-sensitive configured evidence', (_label, secretKey, configured) => {
-    const result = parseObjectStoreReadModel({
+  it('accepts the exact redacted OBS response and its configuredSecrets name', () => {
+    const wire = {
       type: 'OBS',
       config: {
-        accessKey: 'ak',
-        secretKey,
-        bucketName: 'bucket'
-      }
-    });
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
+    };
 
-    expect(result).toEqual({
+    expect(parseObjectStoreReadModel(wire)).toEqual({
       type: 'OBS',
-      config: { accessKey: 'ak', bucketName: 'bucket', secretConfigured: configured }
+      config: wire.config,
+      configuredSecrets: ['accessKey', 'secretKey']
     });
-    const serialized = JSON.stringify(result);
-    expect(serialized).not.toContain('secretKey');
-    if (secretKey.trim()) expect(serialized).not.toContain(secretKey.trim());
-  });
-
-  it('reports an absent OBS wire secret without inventing configured state', () => {
-    expect(parseObjectStoreReadModel({ type: 'OBS', config: {} })).toEqual({
+    expect(parseObjectStoreMutationResult(wire)).toEqual({
       type: 'OBS',
-      config: { secretConfigured: false }
+      config: wire.config,
+      configuredSecrets: ['accessKey', 'secretKey']
     });
   });
 
-  it.each([{ type: 'DATABASE' }, { type: 'FILE', config: null }, { type: 'DATABASE', config: undefined }])(
-    'normalizes a missing legacy config object for $type',
-    wire => {
-      expect(parseObjectStoreReadModel(wire)).toEqual({ type: wire.type, config: {} });
-    }
-  );
+  it.each(['DATABASE', 'FILE'] as const)('accepts the exact redacted %s response', type => {
+    expect(parseObjectStoreReadModel({ type, config: null, configuredSecrets: [] })).toEqual({
+      type,
+      config: {},
+      configuredSecrets: []
+    });
+  });
 
   it.each([
-    { type: 'OTHER', config: { secretKey: 'private-type-secret' } },
-    { type: 'OBS', config: ['private-array-secret'] },
-    { type: 'OBS', config: { endpoint: 42, secretKey: 'private-field-secret' } }
+    { type: 'OBS', config: { bucketName: 'bucket', endpoint: 'endpoint', savePath: 'path' } },
+    {
+      type: 'OBS',
+      config: {
+        accessKey: 'private-access',
+        bucketName: 'bucket',
+        endpoint: 'endpoint',
+        savePath: 'path'
+      },
+      configuredSecrets: ['accessKey']
+    },
+    {
+      type: 'OBS',
+      config: {
+        secretKey: 'private-secret',
+        bucketName: 'bucket',
+        endpoint: 'endpoint',
+        savePath: 'path'
+      },
+      configuredSecrets: ['secretKey']
+    },
+    { type: 'FILE', config: {}, configuredSecrets: [] },
+    { type: 'OBS', config: ['private-array-secret'], configuredSecrets: [] },
+    { type: 'OBS', config: { bucketName: 'bucket', endpoint: 42, savePath: 'path' }, configuredSecrets: [] }
   ])('fails closed without echoing malformed response data', wire => {
     let error: unknown;
     try {

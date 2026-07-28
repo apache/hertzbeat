@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-export type ObjectStoreFailureKind = 'invalid' | 'unavailable' | 'error';
+export type ObjectStoreFailureKind = 'missing' | 'permission' | 'invalid' | 'unavailable' | 'error';
 export type ObjectStoreWriteOutcome = 'rejected' | 'uncertain';
 
 type ObjectStoreFailureOptions = { code?: string };

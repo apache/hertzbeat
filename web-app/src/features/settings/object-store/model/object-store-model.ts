@@ -16,19 +16,19 @@
  */
 
 export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
+export type ObjectStoreSecretName = 'accessKey' | 'secretKey';
 
 /** Safe configuration returned by reads. It must never represent secret plaintext. */
 export type ObjectStoreReadConfig = {
-  accessKey?: string;
   bucketName?: string;
   endpoint?: string;
   savePath?: string;
-  secretConfigured?: boolean;
 };
 
 export type ObjectStoreReadModel = {
   type: ObjectStoreType;
   config: ObjectStoreReadConfig;
+  configuredSecrets: ObjectStoreSecretName[];
 };
 
 /** Editable configuration whose secret exists only in the current browser session. */
@@ -43,6 +43,7 @@ export type ObjectStoreDraftConfig = {
 export type ObjectStoreDraft = {
   type: ObjectStoreType;
   config: ObjectStoreDraftConfig;
+  configuredSecrets: ObjectStoreSecretName[];
 };
 
 export const objectStoreResourceId = 'current' as const;
@@ -80,6 +81,11 @@ export const objectStoreObsFieldNames = [
   'endpoint',
   'savePath'
 ] as const satisfies readonly (keyof ObjectStoreDraftConfig)[];
+export const objectStoreSecretNames = ['accessKey', 'secretKey'] as const satisfies readonly ObjectStoreSecretName[];
+
+export function userCanWriteObjectStore(roles: readonly string[]) {
+  return roles.includes('ADMIN');
+}
 
 const secretPlaceholderSentinels = new Set(['__keep__', '<masked>', '[masked]', '<redacted>', '[redacted]']);
 
@@ -89,25 +95,23 @@ function normalizeObjectStoreType(type?: ObjectStoreType | null): ObjectStoreTyp
 
 export function createObjectStoreDraft(config?: ObjectStoreReadModel | null): ObjectStoreDraft {
   const type = normalizeObjectStoreType(config?.type);
-  if (type !== 'OBS') return { type, config: {} };
+  if (type !== 'OBS') return { type, config: {}, configuredSecrets: [] };
   return {
     type,
     config: {
-      accessKey: config?.config.accessKey ?? '',
-      // Read models deliberately carry only secretConfigured. A secret can enter
-      // the draft only through this browser session's password input.
+      accessKey: '',
+      // Redacted reads carry only configuredSecrets evidence. Credential
+      // plaintext can enter the draft only through this browser session.
       secretKey: '',
       bucketName: config?.config.bucketName ?? '',
       endpoint: config?.config.endpoint ?? '',
       savePath: config?.config.savePath ?? 'hertzbeat'
-    }
+    },
+    configuredSecrets: [...(config?.configuredSecrets ?? [])]
   };
 }
 
-export function createObjectStoreResourceRecord(config?: ObjectStoreReadModel | null): ObjectStoreResourceRecord {
-  if (config == null) {
-    return { id: objectStoreResourceId, type: 'DATABASE', config: {} };
-  }
+export function createObjectStoreResourceRecord(config: ObjectStoreReadModel): ObjectStoreResourceRecord {
   if (typeof config !== 'object' || Array.isArray(config)) {
     throw new ObjectStoreResourceContractError();
   }
@@ -117,20 +121,25 @@ export function createObjectStoreResourceRecord(config?: ObjectStoreReadModel | 
   if (!isPlainRecord(config.config)) {
     throw new ObjectStoreResourceContractError();
   }
+  if (
+    !Array.isArray(config.configuredSecrets) ||
+    config.configuredSecrets.some(secret => !objectStoreSecretNames.includes(secret))
+  ) {
+    throw new ObjectStoreResourceContractError();
+  }
   return {
     id: objectStoreResourceId,
     type: config.type,
-    config: copyReadConfig(config.config)
+    config: copyReadConfig(config.config),
+    configuredSecrets: [...config.configuredSecrets]
   };
 }
 
 function copyReadConfig(value: ObjectStoreReadConfig): ObjectStoreReadConfig {
   return {
-    ...(value.accessKey === undefined ? {} : { accessKey: value.accessKey }),
     ...(value.bucketName === undefined ? {} : { bucketName: value.bucketName }),
     ...(value.endpoint === undefined ? {} : { endpoint: value.endpoint }),
-    ...(value.savePath === undefined ? {} : { savePath: value.savePath }),
-    ...(value.secretConfigured === undefined ? {} : { secretConfigured: value.secretConfigured })
+    ...(value.savePath === undefined ? {} : { savePath: value.savePath })
   };
 }
 
@@ -146,7 +155,8 @@ export function changeObjectStoreType(config: ObjectStoreDraft, type: ObjectStor
   return {
     type: normalized,
     config:
-      normalized === 'OBS' ? { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' } : {}
+      normalized === 'OBS' ? { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' } : {},
+    configuredSecrets: []
   };
 }
 
@@ -160,10 +170,14 @@ export function updateObjectStoreField(
 
 export function validateObjectStoreDraft(config: ObjectStoreDraft) {
   if (config.type !== 'OBS') return [];
-  const missing = objectStoreObsFieldNames.filter(field => !String(config.config[field] ?? '').trim());
-  if (!missing.includes('secretKey') && isSecretPlaceholder(String(config.config.secretKey))) {
-    missing.push('secretKey');
-  }
+  const missing = objectStoreObsFieldNames.filter(field => {
+    if (!objectStoreSecretNames.includes(field as ObjectStoreSecretName)) {
+      return !String(config.config[field] ?? '').trim();
+    }
+    const secret = field as ObjectStoreSecretName;
+    const fresh = String(config.config[secret] ?? '');
+    return (!fresh.trim() && !config.configuredSecrets.includes(secret)) || isSecretPlaceholder(fresh);
+  });
   const endpoint = String(config.config.endpoint ?? '').trim();
   if (endpoint && !isSupportedObsEndpoint(endpoint)) missing.push('endpoint');
   return missing;
@@ -171,32 +185,63 @@ export function validateObjectStoreDraft(config: ObjectStoreDraft) {
 
 function isSupportedObsEndpoint(endpoint: string) {
   try {
-    return new URL(endpoint).hostname.endsWith('.myhuaweicloud.com');
+    const parsed = new URL(endpoint);
+    return (
+      parsed.protocol === 'https:' &&
+      parsed.hostname.endsWith('.myhuaweicloud.com') &&
+      parsed.username === '' &&
+      parsed.password === '' &&
+      parsed.search === '' &&
+      parsed.hash === '' &&
+      (parsed.pathname === '' || parsed.pathname === '/')
+    );
   } catch {
     return false;
   }
 }
 
 export function isObjectStoreDirty(config: ObjectStoreDraft, baseline: ObjectStoreDraft) {
-  return JSON.stringify(normalizeObjectStoreDraft(config)) !== JSON.stringify(normalizeObjectStoreDraft(baseline));
+  return JSON.stringify(buildComparableDraft(config)) !== JSON.stringify(buildComparableDraft(baseline));
 }
 
 /** OBS secret plaintext is write-only, so an ambiguous replacement cannot be proved by GET. */
 export function canProveAmbiguousObjectStoreSave(draft: ObjectStoreDraft) {
-  return draft.type !== 'OBS';
+  return draft.type !== 'OBS' || objectStoreSecretNames.every(secret => !String(draft.config[secret] ?? '').trim());
 }
 
 export function objectStoreSaveConverged(draft: ObjectStoreDraft, record: ObjectStoreResourceRecord) {
-  return canProveAmbiguousObjectStoreSave(draft) && !isObjectStoreDirty(draft, createObjectStoreDraft(record));
+  if (!canProveAmbiguousObjectStoreSave(draft) || draft.type !== record.type) return false;
+  if (draft.type !== 'OBS') return true;
+  const current = normalizeObjectStoreDraft(draft);
+  if (
+    current.config.bucketName !== record.config.bucketName ||
+    current.config.endpoint !== record.config.endpoint ||
+    current.config.savePath !== record.config.savePath
+  ) {
+    return false;
+  }
+  return objectStoreSecretNames.every(
+    secret => draft.configuredSecrets.includes(secret) === record.configuredSecrets.includes(secret)
+  );
 }
 
 export function normalizeObjectStoreDraft(config: ObjectStoreDraft): ObjectStoreDraft {
-  if (config.type !== 'OBS') return { type: config.type, config: {} };
+  if (config.type !== 'OBS') return { type: config.type, config: {}, configuredSecrets: [] };
   return {
     type: 'OBS',
     config: Object.fromEntries(
       objectStoreObsFieldNames.map(field => [field, String(config.config[field] ?? '').trim()])
-    )
+    ),
+    configuredSecrets: [...config.configuredSecrets]
+  };
+}
+
+function buildComparableDraft(config: ObjectStoreDraft) {
+  const normalized = normalizeObjectStoreDraft(config);
+  if (normalized.type !== 'OBS') return normalized;
+  return {
+    type: normalized.type,
+    config: normalized.config
   };
 }
 

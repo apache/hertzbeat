@@ -32,6 +32,7 @@ const refine = vi.hoisted(() => ({
   useOne: vi.fn(),
   useNotification: vi.fn()
 }));
+const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 
 vi.mock('@refinedev/core', () => ({
   useDataProvider: refine.useDataProvider,
@@ -40,23 +41,31 @@ vi.mock('@refinedev/core', () => ({
   useNotification: refine.useNotification
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
+}));
 
 const serverRecord: ObjectStoreResourceRecord = {
   id: 'current',
   type: 'OBS',
   config: {
-    accessKey: 'ak',
-    secretConfigured: true,
     bucketName: 'bucket',
     endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
     savePath: 'hertzbeat'
-  }
+  },
+  configuredSecrets: ['accessKey', 'secretKey']
 };
-const databaseRecord: ObjectStoreResourceRecord = { id: 'current', type: 'DATABASE', config: {} };
+const databaseRecord: ObjectStoreResourceRecord = {
+  id: 'current',
+  type: 'DATABASE',
+  config: {},
+  configuredSecrets: []
+};
 
 describe('Object Store resource controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    auth.roles = ['ADMIN'];
     refine.refetch.mockReset();
     refine.invalidate.mockReset();
     refine.invalidate.mockResolvedValue(undefined);
@@ -105,7 +114,7 @@ describe('Object Store resource controller', () => {
     ['loading', { isPending: true }],
     ['unavailable', { isError: true, error: unavailableFailure(), result: undefined }],
     [
-      'error',
+      'invalid',
       {
         isError: true,
         error: invalidFailure(),
@@ -114,7 +123,7 @@ describe('Object Store resource controller', () => {
     ],
     ['error', { isError: true, error: { statusCode: 503 }, result: undefined }],
     ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],
-    ['error', { isError: false, result: undefined }],
+    ['missing', { isError: false, result: undefined }],
     ['ready', {}]
   ])('maps authoritative evidence to the %s state', (kind, override) => {
     refine.useOne.mockReturnValue(buildOneResult(override));
@@ -132,7 +141,7 @@ describe('Object Store resource controller', () => {
       current: { config: { secretKey: '' } }
     });
     act(() => result.current.submit());
-    act(() => result.current.updateDraft({ type: 'OBS', config: {} }));
+    act(() => result.current.updateDraft({ type: 'OBS', config: {}, configuredSecrets: [] }));
     act(() => result.current.submit());
     expect(result.current.state).toMatchObject({ kind: 'ready', showValidation: true });
     act(() => result.current.discard());
@@ -143,7 +152,7 @@ describe('Object Store resource controller', () => {
 
   it('accepts canonical success and invalidates only the named singleton detail without its secret', async () => {
     refine.providerUpdate.mockResolvedValue({
-      data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
+      data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'canonical' } }
     });
     const { result } = renderHook(() => useObjectStoreResourceController());
     const editable = createObjectStoreDraft(serverRecord);
@@ -165,7 +174,7 @@ describe('Object Store resource controller', () => {
         kind: 'ready',
         dirty: false,
         showValidation: false,
-        current: { config: expect.objectContaining({ accessKey: 'canonical', secretKey: '' }) }
+        current: { config: expect.objectContaining({ bucketName: 'canonical', accessKey: '', secretKey: '' }) }
       });
       expect(JSON.stringify(result.current.state)).not.toContain('runtime-only-secret');
     });
@@ -189,7 +198,7 @@ describe('Object Store resource controller', () => {
     ]
   ])('keeps canonical success when best-effort cache invalidation %s', async (_label, failInvalidation) => {
     refine.providerUpdate.mockResolvedValue({
-      data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
+      data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'canonical' } }
     });
     failInvalidation();
     const { result } = renderHook(() => useObjectStoreResourceController());
@@ -205,7 +214,7 @@ describe('Object Store resource controller', () => {
 
     await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, saving: false }));
     expect(result.current.state).toMatchObject({
-      current: { config: expect.objectContaining({ accessKey: 'canonical', secretKey: '' }) }
+      current: { config: expect.objectContaining({ bucketName: 'canonical', accessKey: '', secretKey: '' }) }
     });
     expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
     expect(refine.invalidate).toHaveBeenCalledTimes(1);
@@ -299,7 +308,7 @@ describe('Object Store resource controller', () => {
       refine.providerUpdate.mockRejectedValueOnce(failure());
       const { result } = renderHook(() => useObjectStoreResourceController());
 
-      act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
+      act(() => result.current.updateDraft(fileDraft()));
       act(() => result.current.submit());
 
       await waitFor(() => expect(refine.refetch).toHaveBeenCalledTimes(1));
@@ -349,7 +358,7 @@ describe('Object Store resource controller', () => {
       refine.providerUpdate.mockRejectedValueOnce(rejection());
       const { result } = renderHook(() => useObjectStoreResourceController());
 
-      act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
+      act(() => result.current.updateDraft(fileDraft()));
       act(() => result.current.submit());
 
       await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null }));
@@ -366,7 +375,7 @@ describe('Object Store resource controller', () => {
     refine.providerUpdate.mockRejectedValueOnce(envelopeFailure());
     const { result } = renderHook(() => useObjectStoreResourceController());
 
-    act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
+    act(() => result.current.updateDraft(fileDraft()));
     act(() => result.current.submit());
 
     await waitFor(() =>
@@ -375,7 +384,7 @@ describe('Object Store resource controller', () => {
     act(() => {
       result.current.submit();
       result.current.discard();
-      result.current.updateDraft({ type: 'DATABASE', config: {} });
+      result.current.updateDraft(databaseDraft());
     });
     expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
 
@@ -417,6 +426,40 @@ describe('Object Store resource controller', () => {
     }
   );
 
+  it('retires fresh credentials and ignores a late write result after ADMIN access is lost', async () => {
+    const write = deferred<{ data: ObjectStoreResourceRecord }>();
+    refine.providerUpdate.mockReturnValue(write.promise);
+    const { result, rerender } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: {
+        ...createObjectStoreDraft(serverRecord).config,
+        accessKey: 'runtime-only-access',
+        secretKey: 'runtime-only-secret'
+      }
+    };
+    act(() => result.current.updateDraft(submitted));
+    act(() => result.current.submit());
+
+    auth.roles = ['USER'];
+    rerender();
+
+    expect(result.current.canWrite).toBe(false);
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      locked: false,
+      dirty: false,
+      current: { config: { accessKey: '', secretKey: '' } }
+    });
+    write.resolve({ data: { ...serverRecord, config: { ...serverRecord.config, bucketName: 'late-result' } } });
+    await act(async () => write.promise);
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { config: { bucketName: 'bucket', accessKey: '', secretKey: '' } }
+    });
+    expect(refine.notification).not.toHaveBeenCalled();
+  });
+
   it('retires an in-flight proof on unmount without publishing a notification', async () => {
     const proof = deferred<{ data: { data: ObjectStoreResourceRecord }; error: null; isError: false }>();
     refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
@@ -424,7 +467,7 @@ describe('Object Store resource controller', () => {
     refine.providerUpdate.mockRejectedValueOnce(unavailableFailure());
     const { result, unmount } = renderHook(() => useObjectStoreResourceController());
 
-    act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
+    act(() => result.current.updateDraft(fileDraft()));
     act(() => result.current.submit());
     unmount();
     proof.resolve({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
@@ -446,6 +489,14 @@ function buildOneResult(override: Record<string, unknown> = {}) {
     },
     result: Object.hasOwn(override, 'result') ? override.result : serverRecord
   };
+}
+
+function fileDraft() {
+  return { type: 'FILE' as const, config: {}, configuredSecrets: [] };
+}
+
+function databaseDraft() {
+  return { type: 'DATABASE' as const, config: {}, configuredSecrets: [] };
 }
 
 const ambiguousWriteFailures = [

@@ -29,16 +29,16 @@ import { objectStoreDataProvider } from './object-store-data-provider';
 const configuredRead: ObjectStoreReadModel = {
   type: 'OBS',
   config: {
-    accessKey: 'ak',
-    secretConfigured: true,
     bucketName: 'bucket',
     endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
     savePath: 'hertzbeat'
-  }
+  },
+  configuredSecrets: ['accessKey', 'secretKey']
 };
 
 const configuredDraft: ObjectStoreDraft = {
   type: 'OBS',
+  configuredSecrets: ['accessKey', 'secretKey'],
   config: {
     accessKey: 'ak',
     secretKey: 'sk',
@@ -61,21 +61,21 @@ describe('Object Store Refine data provider', () => {
     const result = await objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' });
 
     expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
-    expect(JSON.stringify(result)).not.toContain('secretKey');
+    expect(result.data.config).not.toHaveProperty('accessKey');
+    expect(result.data.config).not.toHaveProperty('secretKey');
   });
 
   it('sends plaintext only in the write and returns cache-safe canonical evidence', async () => {
     const plaintext = 'runtime-only-provider-secret';
     const write = { ...configuredDraft, config: { ...configuredDraft.config, secretKey: plaintext } };
-    objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
-    objectStoreApi.loadObjectStore.mockResolvedValue(configuredRead);
+    objectStoreApi.saveObjectStore.mockResolvedValue(configuredRead);
 
     const result = await objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: write });
 
     expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
     expect(JSON.stringify(result)).not.toContain(plaintext);
     expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(write);
-    expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
+    expect(objectStoreApi.loadObjectStore).not.toHaveBeenCalled();
   });
 
   it('rejects malformed mutation variables before transport through the schema boundary', async () => {
@@ -93,47 +93,14 @@ describe('Object Store Refine data provider', () => {
     expect(objectStoreApi.saveObjectStore).not.toHaveBeenCalled();
   });
 
-  it('fails the mutation when the authoritative reread fails after POST', async () => {
-    objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
-    objectStoreApi.loadObjectStore.mockRejectedValue(
-      new ApiMessageError('secretKey=private-reread-secret', { cause: new TypeError('private-reread-cause') })
-    );
-
-    let error: unknown;
-    try {
-      await objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft });
-    } catch (reason) {
-      error = reason;
-    }
-
-    expect(error).toMatchObject({
-      code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
-      kind: 'invalid',
-      message: 'Object Store request failed',
-      writeOutcome: 'uncertain'
-    });
-    expect(JSON.stringify(error)).not.toContain('private-reread');
-    expect((error as Error).cause).toBeUndefined();
-    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledTimes(1);
-    expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
-  });
-
-  it('marks a 4xx canonical reread as post-write uncertainty', async () => {
-    objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
-    objectStoreApi.loadObjectStore.mockRejectedValue(new ApiMessageError('Forbidden', { status: 403 }));
-
-    await expect(
-      objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft })
-    ).rejects.toMatchObject({ code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED', writeOutcome: 'uncertain' });
-  });
-
-  it('fails closed when the post-write authoritative reread has no record', async () => {
-    objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
+  it('keeps missing GET evidence distinct without inventing a default provider', async () => {
     objectStoreApi.loadObjectStore.mockResolvedValue(null);
 
-    await expect(
-      objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft })
-    ).rejects.toMatchObject({ code: 'OBJECT_STORE_CANONICAL_REREAD_MISSING', writeOutcome: 'uncertain' });
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_CONFIG_MISSING',
+      kind: 'missing',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('sanitizes malformed backend records at the model-owned resource boundary', async () => {
@@ -182,6 +149,7 @@ describe('Object Store Refine data provider', () => {
 
   it.each([
     ['HTTP source 4xx', createRefineHttpError('private', 400, undefined, 'http', 422), 'error', 'rejected'],
+    ['HTTP source permission', createRefineHttpError('private', 403, undefined, 'http', 403), 'permission', 'rejected'],
     ['HTTP source timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'error', 'uncertain'],
     [
       'HTTP source status zero',

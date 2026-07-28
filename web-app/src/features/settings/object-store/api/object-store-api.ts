@@ -20,10 +20,10 @@ import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import {
   normalizeObjectStoreDraft,
   ObjectStoreDraftContractError,
-  objectStoreObsFieldNames,
   validateObjectStoreDraft,
   type ObjectStoreDraft,
   type ObjectStoreDraftConfig,
+  type ObjectStoreSecretName,
   type ObjectStoreType
 } from '../model/object-store-model';
 import { objectStoreApiRequest } from './object-store-api-failure';
@@ -34,6 +34,7 @@ export { parseObjectStoreDraft } from './object-store-schema';
 export type ObjectStorePayload = {
   type: ObjectStoreType;
   config: ObjectStoreDraftConfig;
+  clearSecrets: ObjectStoreSecretName[];
 };
 
 export const objectStoreEndpoint = '/api/config/oss';
@@ -53,13 +54,21 @@ export async function saveObjectStore(config: ObjectStoreDraft) {
 }
 
 export function buildObjectStorePayload(config: ObjectStoreDraft): ObjectStorePayload {
-  if (config.type !== 'OBS') return normalizeObjectStoreDraft(config);
-  // The backend replaces the full OBS config and has no keep/clear operation.
-  // Reject empty or placeholder secrets instead of overwriting with fake data.
+  if (config.type !== 'OBS') return { type: config.type, config: {}, clearSecrets: [] };
   if (validateObjectStoreDraft(config).length > 0) throw new ObjectStoreDraftContractError();
   const normalized = normalizeObjectStoreDraft(config);
+  const obsConfig: ObjectStoreDraftConfig = {
+    bucketName: String(normalized.config.bucketName),
+    endpoint: String(normalized.config.endpoint),
+    savePath: String(normalized.config.savePath)
+  };
+  if (normalized.config.accessKey) obsConfig.accessKey = normalized.config.accessKey;
+  if (normalized.config.secretKey) obsConfig.secretKey = normalized.config.secretKey;
   return {
     type: 'OBS',
-    config: Object.fromEntries(objectStoreObsFieldNames.map(field => [field, normalized.config[field]]))
+    config: obsConfig,
+    // Clearing either credential would leave an active OBS configuration
+    // invalid, so the editor supports preserve-or-replace only.
+    clearSecrets: []
   };
 }

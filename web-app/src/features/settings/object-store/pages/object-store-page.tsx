@@ -31,25 +31,22 @@ export function ObjectStorePage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('objectStore.title')} description={t('objectStore.description')} />
-      {state.kind === 'unavailable' && (
+      {(state.kind === 'missing' ||
+        state.kind === 'permission' ||
+        state.kind === 'invalid' ||
+        state.kind === 'unavailable' ||
+        state.kind === 'error') && (
         <Alert
           type="error"
           showIcon
-          message={t('objectStore.unavailable')}
-          action={<RetryButton onRetry={controller.retry} />}
-        />
-      )}
-      {state.kind === 'error' && (
-        <Alert
-          type="error"
-          showIcon
-          message={t('common.routeError.description')}
+          message={t(objectStoreFailureMessageKey(state.kind))}
           action={<RetryButton onRetry={controller.retry} />}
         />
       )}
       {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 6 }} />}
       {state.kind === 'ready' && (
         <>
+          {!controller.canWrite && <Alert type="info" showIcon message={t('objectStore.readOnly')} />}
           {state.recovery && (
             <Alert
               type="warning"
@@ -69,6 +66,7 @@ export function ObjectStorePage() {
             locked={state.locked}
             showValidation={state.showValidation}
             saving={state.saving}
+            canWrite={controller.canWrite}
             onUpdate={controller.updateDraft}
             onSubmit={controller.submit}
             onDiscard={controller.discard}
@@ -77,6 +75,14 @@ export function ObjectStorePage() {
       )}
     </OperationalPage>
   );
+}
+
+function objectStoreFailureMessageKey(kind: 'missing' | 'permission' | 'invalid' | 'unavailable' | 'error') {
+  if (kind === 'missing') return 'objectStore.missing';
+  if (kind === 'permission') return 'common.permission.roleRequiredDescription';
+  if (kind === 'invalid') return 'objectStore.invalid';
+  if (kind === 'unavailable') return 'objectStore.unavailable';
+  return 'common.routeError.description';
 }
 
 function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => Promise<void> }) {

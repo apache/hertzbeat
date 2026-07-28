@@ -23,42 +23,56 @@ import {
   ObjectStoreDraftContractError,
   ObjectStoreResourceContractError,
   objectStoreObsFieldNames,
+  objectStoreSecretNames,
   type ObjectStoreDraft,
-  type ObjectStoreReadConfig,
   type ObjectStoreReadModel
 } from '../model/object-store-model';
 
-const wireConfigSchema = z.object({
-  accessKey: z.string().optional(),
-  secretKey: z.string().optional(),
-  bucketName: z.string().optional(),
-  endpoint: z.string().optional(),
-  savePath: z.string().optional()
-});
-
-const wireObjectStoreSchema = z
+const secretNameSchema = z.enum(objectStoreSecretNames);
+const configuredSecretsSchema = z.array(secretNameSchema).refine(items => new Set(items).size === items.length);
+const publicObsConfigSchema = z
   .object({
-    type: z.enum(['DATABASE', 'FILE', 'OBS']),
-    // Older DATABASE and FILE records may omit config or store it as null.
-    // Normalize that wire-only variation here so the domain always sees an object.
-    config: wireConfigSchema.nullish().transform(config => config ?? {})
+    bucketName: z.string(),
+    endpoint: z.string(),
+    savePath: z.string()
   })
-  .nullable();
+  .strict();
+const wireObjectStoreValueSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      type: z.literal('OBS'),
+      config: publicObsConfigSchema,
+      configuredSecrets: configuredSecretsSchema
+    })
+    .strict(),
+  z
+    .object({
+      type: z.enum(['DATABASE', 'FILE']),
+      config: z.null(),
+      configuredSecrets: z.array(z.never()).length(0)
+    })
+    .strict()
+]);
+const wireObjectStoreSchema = wireObjectStoreValueSchema.nullable();
 const draftConfigSchema = z.partialRecord(z.enum(objectStoreObsFieldNames), z.string());
 const objectStoreDraftSchema = z
   .object({
     type: z.enum(['DATABASE', 'FILE', 'OBS']),
-    config: draftConfigSchema
+    config: draftConfigSchema,
+    configuredSecrets: configuredSecretsSchema
   })
   .strict();
-const mutationResultSchema = z.string();
 
 /** Parses untrusted Refine mutation variables before they enter the write API. */
 export function parseObjectStoreDraft(value: unknown): ObjectStoreDraft {
   if (!hasOwnProperties(value, ['type', 'config'])) throw new ObjectStoreDraftContractError();
   const result = objectStoreDraftSchema.safeParse(value);
   if (!result.success) throw new ObjectStoreDraftContractError();
-  return { type: result.data.type, config: copyDraftConfig(result.data.config) };
+  return {
+    type: result.data.type,
+    config: copyDraftConfig(result.data.config),
+    configuredSecrets: [...result.data.configuredSecrets]
+  };
 }
 
 export function parseObjectStoreReadModel(value: unknown): ObjectStoreReadModel | null {
@@ -66,29 +80,31 @@ export function parseObjectStoreReadModel(value: unknown): ObjectStoreReadModel 
   if (!result.success) throw new ObjectStoreResourceContractError();
   if (result.data === null) return null;
 
-  const { secretKey } = result.data.config;
-  const visible = copyVisibleConfig(result.data.config);
-  const config: ObjectStoreReadConfig =
-    result.data.type === 'OBS' ? { ...visible, secretConfigured: Boolean(secretKey?.trim()) } : visible;
-  return { type: result.data.type, config };
+  return copyReadModel(result.data);
 }
 
-export function parseObjectStoreMutationResult(value: unknown): string {
-  const result = mutationResultSchema.safeParse(value);
+export function parseObjectStoreMutationResult(value: unknown): ObjectStoreReadModel {
+  const result = wireObjectStoreValueSchema.safeParse(value);
   if (!result.success) throw new ObjectStoreResourceContractError();
-  return result.data;
+  return copyReadModel(result.data);
 }
 
-function copyVisibleConfig(config: z.infer<typeof wireConfigSchema>): ObjectStoreReadConfig {
-  const visible: ObjectStoreReadConfig = {};
-  if (config.accessKey !== undefined) visible.accessKey = config.accessKey;
-  if (config.bucketName !== undefined) visible.bucketName = config.bucketName;
-  if (config.endpoint !== undefined) visible.endpoint = config.endpoint;
-  if (config.savePath !== undefined) visible.savePath = config.savePath;
-  return visible;
+function copyReadModel(value: z.infer<typeof wireObjectStoreValueSchema>): ObjectStoreReadModel {
+  return {
+    type: value.type,
+    config:
+      value.type === 'OBS'
+        ? {
+            bucketName: value.config.bucketName,
+            endpoint: value.config.endpoint,
+            savePath: value.config.savePath
+          }
+        : {},
+    configuredSecrets: [...value.configuredSecrets]
+  };
 }
 
-function copyDraftConfig(config: z.infer<typeof wireConfigSchema>): ObjectStoreDraft['config'] {
+function copyDraftConfig(config: z.infer<typeof draftConfigSchema>): ObjectStoreDraft['config'] {
   const draft: ObjectStoreDraft['config'] = {};
   if (config.accessKey !== undefined) draft.accessKey = config.accessKey;
   if (config.secretKey !== undefined) draft.secretKey = config.secretKey;

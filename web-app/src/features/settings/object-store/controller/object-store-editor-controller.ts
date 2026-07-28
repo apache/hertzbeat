@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import {
   createObjectStoreDraft,
@@ -20,7 +20,8 @@ export function useObjectStoreEditorController(
   record: ObjectStoreResourceRecord | undefined,
   reread: ObjectStoreCanonicalRead,
   update: ObjectStoreMutation,
-  notifications: ObjectStoreSaveNotifications
+  notifications: ObjectStoreSaveNotifications,
+  canWrite: boolean
 ) {
   const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
   const [showValidation, setShowValidation] = useState(false);
@@ -38,43 +39,41 @@ export function useObjectStoreEditorController(
     reread,
     ...notifications
   });
+  useRetireObjectStoreWriteAccess(canWrite, transaction.retireWriteAccess, setDraft, setShowValidation);
   const updateDraft = (next: ObjectStoreDraft) => {
-    if (transaction.isLocked()) return;
+    if (!canWrite || transaction.isLocked()) return;
     setDraft(next);
     setShowValidation(false);
   };
   const discard = () => {
-    if (transaction.isLocked()) return;
+    if (!canWrite || transaction.isLocked()) return;
     setDraft(null);
     setShowValidation(false);
   };
   const retry = async () => {
-    if (transaction.recovery) return transaction.retry();
+    if (transaction.recovery) return canWrite ? transaction.retry() : undefined;
     if (!transaction.isLocked()) await reread();
   };
   const submit = () => {
+    if (!canWrite) return;
     if (missingFields.length > 0) {
       setShowValidation(true);
       return;
     }
     if (dirty) transaction.submit(current);
   };
-  return {
-    discard,
-    retry,
-    state: {
-      current,
-      dirty,
-      locked: transaction.isLocked(),
-      missingFields,
-      proving: transaction.proving,
-      recovery: transaction.recovery,
-      saving: transaction.saving,
-      showValidation
-    },
-    submit,
-    updateDraft
+  const state = {
+    current,
+    canWrite,
+    dirty,
+    locked: transaction.isLocked(),
+    missingFields,
+    proving: transaction.proving,
+    recovery: transaction.recovery,
+    saving: transaction.saving,
+    showValidation
   };
+  return { discard, retry, state, submit, updateDraft };
 }
 
 function useAcceptedObjectStoreBaseline(record: ObjectStoreResourceRecord | undefined) {
@@ -87,4 +86,21 @@ function useAcceptedObjectStoreBaseline(record: ObjectStoreResourceRecord | unde
     accept: (value: ObjectStoreResourceRecord) => setAccepted({ source: record, value }),
     baseline: createObjectStoreDraft(acceptedRecord ?? record)
   };
+}
+
+function useRetireObjectStoreWriteAccess(
+  canWrite: boolean,
+  retire: () => void,
+  setDraft: Dispatch<SetStateAction<ObjectStoreDraft | null>>,
+  setShowValidation: Dispatch<SetStateAction<boolean>>
+) {
+  const previousCanWrite = useRef(canWrite);
+  useLayoutEffect(() => {
+    const lostWriteAccess = previousCanWrite.current && !canWrite;
+    previousCanWrite.current = canWrite;
+    if (!lostWriteAccess) return;
+    retire();
+    setDraft(null);
+    setShowValidation(false);
+  }, [canWrite, retire, setDraft, setShowValidation]);
 }

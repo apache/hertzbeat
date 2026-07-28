@@ -32,7 +32,7 @@ const obsFieldDefinitions = [
     key: 'accessKey',
     labelKey: 'objectStore.obs.accessKey',
     placeholderKey: 'objectStore.obs.accessKeyPlaceholder',
-    secret: false
+    secret: true
   },
   {
     key: 'secretKey',
@@ -67,6 +67,7 @@ type ObjectStoreEditorProps = {
   locked: boolean;
   showValidation: boolean;
   saving: boolean;
+  canWrite: boolean;
   onUpdate: (draft: ObjectStoreDraft) => void;
   onSubmit: () => void;
   onDiscard: () => void;
@@ -90,7 +91,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           <span className={styles.label}>{t('objectStore.type.label')}</span>
           <span className={styles.control}>
             <Select
-              disabled={props.locked}
+              disabled={!props.canWrite || props.locked}
               value={current.type}
               options={objectStoreTypeDefinitions.map(definition => ({
                 value: definition.value,
@@ -109,16 +110,21 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
               key={field.key}
               draft={current}
               definition={field}
-              disabled={props.locked}
+              disabled={!props.canWrite || props.locked}
               onUpdate={props.onUpdate}
             />
           ))}
       </div>
       <div className={styles.actions}>
-        <Button type="primary" loading={props.saving} disabled={!props.dirty || props.locked} onClick={props.onSubmit}>
+        <Button
+          type="primary"
+          loading={props.saving}
+          disabled={!props.canWrite || !props.dirty || props.locked}
+          onClick={props.onSubmit}
+        >
           {t('common.save')}
         </Button>
-        <Button disabled={!props.dirty || props.locked} onClick={props.onDiscard}>
+        <Button disabled={!props.canWrite || !props.dirty || props.locked} onClick={props.onDiscard}>
           {t('objectStore.discard')}
         </Button>
         {!props.dirty && <Typography.Text type="secondary">{t('objectStore.noChanges')}</Typography.Text>}
@@ -139,6 +145,7 @@ function ObjectStoreField({
   onUpdate: (draft: ObjectStoreDraft) => void;
 }) {
   const { t } = useTranslation();
+  const configured = definition.secret && draft.configuredSecrets.includes(definition.key);
   const inputProps = {
     value: String(draft.config[definition.key] ?? ''),
     disabled,
@@ -151,6 +158,9 @@ function ObjectStoreField({
       <span className={`${styles.label} ${styles.required}`}>{t(definition.labelKey)}</span>
       <span className={styles.control}>
         {definition.secret ? <Input.Password {...inputProps} /> : <Input {...inputProps} />}
+        {configured && !inputProps.value.trim() && (
+          <Typography.Text type="secondary">{t('objectStore.obs.configuredCredential')}</Typography.Text>
+        )}
       </span>
     </label>
   );

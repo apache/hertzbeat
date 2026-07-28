@@ -28,6 +28,28 @@ describe('Object Store API failure boundary', () => {
     ],
     ['status zero', new ApiMessageError('private', { status: 0 }), 'write', 'unavailable', 'uncertain'],
     ['HTTP rejection', new ApiMessageError('private', { status: 422 }), 'write', 'error', 'rejected'],
+    ['permission rejection', new ApiMessageError('private', { status: 403 }), 'write', 'permission', 'rejected'],
+    [
+      'invalid config envelope',
+      new ApiMessageError('Invalid object store config', { code: 20, status: 200 }),
+      'write',
+      'invalid',
+      'rejected'
+    ],
+    [
+      'storage envelope',
+      new ApiMessageError('Object store storage unavailable', { code: 20, status: 200 }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'generic envelope',
+      new ApiMessageError('Object store config error', { code: 20, status: 200 }),
+      'write',
+      'error',
+      'uncertain'
+    ],
     ['read HTTP failure', new ApiMessageError('private', { status: 422 }), 'read', 'error', 'uncertain'],
     ['business envelope', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'uncertain'],
     ['read contract', new ObjectStoreResourceContractError(), 'read', 'invalid', 'uncertain'],

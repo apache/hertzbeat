@@ -31,14 +31,21 @@ import { loadObjectStore, saveObjectStore } from './object-store-api';
 describe('object store API', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('uses the established general configuration endpoint', async () => {
-    apiMessageGet.mockResolvedValueOnce({ type: 'DATABASE', config: {} });
-    apiMessagePost.mockResolvedValue('Update config success');
-    await expect(loadObjectStore()).resolves.toEqual({ type: 'DATABASE', config: {} });
-    await expect(saveObjectStore({ type: 'FILE', config: {} })).resolves.toBe('Update config success');
+  it('consumes authoritative redacted GET and POST responses', async () => {
+    const database = { type: 'DATABASE', config: null, configuredSecrets: [] };
+    const file = { type: 'FILE', config: null, configuredSecrets: [] };
+    apiMessageGet.mockResolvedValueOnce(database);
+    apiMessagePost.mockResolvedValue(file);
+    await expect(loadObjectStore()).resolves.toEqual({ type: 'DATABASE', config: {}, configuredSecrets: [] });
+    await expect(saveObjectStore({ type: 'FILE', config: {}, configuredSecrets: [] })).resolves.toEqual({
+      type: 'FILE',
+      config: {},
+      configuredSecrets: []
+    });
     await expect(
       saveObjectStore({
         type: 'OBS',
+        configuredSecrets: [],
         config: {
           accessKey: ' access ',
           secretKey: ' secret ',
@@ -47,9 +54,9 @@ describe('object store API', () => {
           savePath: ' hertzbeat '
         }
       })
-    ).resolves.toBe('Update config success');
+    ).resolves.toEqual({ type: 'FILE', config: {}, configuredSecrets: [] });
     expect(apiMessageGet).toHaveBeenCalledWith('/api/config/oss');
-    expect(apiMessagePost).toHaveBeenCalledWith('/api/config/oss', { type: 'FILE', config: {} });
+    expect(apiMessagePost).toHaveBeenCalledWith('/api/config/oss', { type: 'FILE', config: {}, clearSecrets: [] });
     expect(apiMessagePost).toHaveBeenLastCalledWith('/api/config/oss', {
       type: 'OBS',
       config: {
@@ -58,37 +65,29 @@ describe('object store API', () => {
         bucketName: 'bucket',
         endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
         savePath: 'hertzbeat'
-      }
+      },
+      clearSecrets: []
     });
     expect(apiMessagePost.mock.calls[1]?.[0]).not.toContain('secret');
   });
 
-  it('removes the server secret before returning the read model', async () => {
+  it('rejects a response that contains either server credential instead of stripping it', async () => {
     apiMessageGet.mockResolvedValueOnce({
       type: 'OBS',
       config: {
-        accessKey: 'ak',
+        accessKey: 'private-server-access',
         secretKey: 'private-server-secret',
         bucketName: 'bucket',
         endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
         savePath: 'hertzbeat'
-      }
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
     });
 
-    const result = await loadObjectStore();
-
-    expect(result).toEqual({
-      type: 'OBS',
-      config: {
-        accessKey: 'ak',
-        secretConfigured: true,
-        bucketName: 'bucket',
-        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
-        savePath: 'hertzbeat'
-      }
+    await expect(loadObjectStore()).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
     });
-    expect(JSON.stringify(result)).not.toContain('private-server-secret');
-    expect(JSON.stringify(result)).not.toContain('secretKey');
   });
 
   it.each([
@@ -110,9 +109,9 @@ describe('object store API', () => {
   });
 
   it('rejects malformed mutation responses', async () => {
-    apiMessagePost.mockResolvedValue({ message: 'Update config success' });
+    apiMessagePost.mockResolvedValue('Update config success');
 
-    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toMatchObject({
+    await expect(saveObjectStore({ type: 'FILE', config: {}, configuredSecrets: [] })).rejects.toMatchObject({
       kind: 'invalid',
       writeOutcome: 'uncertain'
     });
@@ -124,6 +123,7 @@ describe('object store API', () => {
       await expect(
         saveObjectStore({
           type: 'OBS',
+          configuredSecrets: [],
           config: {
             accessKey: 'ak',
             secretKey,
@@ -144,6 +144,6 @@ describe('object store API', () => {
     apiMessagePost.mockRejectedValueOnce(failure());
 
     await expect(loadObjectStore()).rejects.toMatchObject(expected);
-    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toMatchObject(expected);
+    await expect(saveObjectStore({ type: 'FILE', config: {}, configuredSecrets: [] })).rejects.toMatchObject(expected);
   });
 });

@@ -31,10 +31,15 @@ import {
 
 describe('object store model', () => {
   it('normalizes missing and unsupported configurations to database storage', () => {
-    expect(createObjectStoreDraft()).toEqual({ type: 'DATABASE', config: {} });
+    expect(createObjectStoreDraft()).toEqual({
+      type: 'DATABASE',
+      config: {},
+      configuredSecrets: []
+    });
     expect(createObjectStoreDraft({ type: 'OTHER', config: { stale: true } } as never)).toEqual({
       type: 'DATABASE',
-      config: {}
+      config: {},
+      configuredSecrets: []
     });
   });
 
@@ -42,9 +47,14 @@ describe('object store model', () => {
     const obs = changeObjectStoreType({ type: 'FILE', config: { stale: true } } as never, 'OBS');
     expect(obs).toEqual({
       type: 'OBS',
-      config: { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' }
+      config: { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' },
+      configuredSecrets: []
     });
-    expect(changeObjectStoreType(obs, 'FILE')).toEqual({ type: 'FILE', config: {} });
+    expect(changeObjectStoreType(obs, 'FILE')).toEqual({
+      type: 'FILE',
+      config: {},
+      configuredSecrets: []
+    });
   });
 
   it('requires every empty OBS field and trims the persisted payload', () => {
@@ -52,6 +62,7 @@ describe('object store model', () => {
     expect(validateObjectStoreDraft(draft)).toEqual(['accessKey', 'secretKey', 'bucketName', 'endpoint']);
     const configured = {
       type: 'OBS' as const,
+      configuredSecrets: [],
       config: {
         accessKey: ' ak ',
         secretKey: ' sk ',
@@ -69,7 +80,8 @@ describe('object store model', () => {
         bucketName: 'bucket',
         endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
         savePath: 'hertzbeat/data'
-      }
+      },
+      clearSecrets: []
     });
     expect(
       validateObjectStoreDraft({
@@ -77,10 +89,22 @@ describe('object store model', () => {
         config: { ...configured.config, endpoint: 'https://obs.example.com' }
       })
     ).toEqual(['endpoint']);
+    expect(
+      validateObjectStoreDraft({
+        ...configured,
+        config: { ...configured.config, endpoint: 'http://obs.cn-north-4.myhuaweicloud.com' }
+      })
+    ).toEqual(['endpoint']);
+    expect(
+      validateObjectStoreDraft({
+        ...configured,
+        config: { ...configured.config, endpoint: 'https://obs.cn-north-4.myhuaweicloud.com/path' }
+      })
+    ).toEqual(['endpoint']);
   });
 
   it('compares normalized drafts instead of object identity', () => {
-    const baseline = { type: 'FILE' as const, config: {} };
+    const baseline = { type: 'FILE' as const, config: {}, configuredSecrets: [] };
     expect(isObjectStoreDirty(createObjectStoreDraft(baseline), baseline)).toBe(false);
     expect(isObjectStoreDirty(changeObjectStoreType(baseline, 'DATABASE'), baseline)).toBe(true);
   });
@@ -90,17 +114,14 @@ describe('object store model', () => {
     expect(
       createObjectStoreResourceRecord({
         type: 'OBS',
-        config: { accessKey: 'ak', secretConfigured: true, bucketName: 'bucket' }
+        config: { bucketName: 'bucket' },
+        configuredSecrets: ['accessKey', 'secretKey']
       })
     ).toEqual({
       id: 'current',
       type: 'OBS',
-      config: { accessKey: 'ak', secretConfigured: true, bucketName: 'bucket' }
-    });
-    expect(createObjectStoreResourceRecord(null)).toEqual({
-      id: 'current',
-      type: 'DATABASE',
-      config: {}
+      config: { bucketName: 'bucket' },
+      configuredSecrets: ['accessKey', 'secretKey']
     });
   });
 
@@ -108,21 +129,23 @@ describe('object store model', () => {
     const record = createObjectStoreResourceRecord({
       type: 'OBS',
       config: {
-        accessKey: 'ak',
-        secretConfigured: true,
         bucketName: 'bucket'
-      }
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
     });
 
     const draft = createObjectStoreDraft(record);
 
+    expect(draft.config.accessKey).toBe('');
     expect(draft.config.secretKey).toBe('');
-    expect(JSON.stringify(record)).not.toContain('secretKey');
+    expect(record.config).not.toHaveProperty('accessKey');
+    expect(record.config).not.toHaveProperty('secretKey');
   });
 
   it('treats reread secret presence as evidence, never proof of an OBS plaintext replacement', () => {
     const draft = {
       type: 'OBS' as const,
+      configuredSecrets: ['accessKey', 'secretKey'] as ('accessKey' | 'secretKey')[],
       config: {
         accessKey: 'ak',
         secretKey: 'runtime-only-secret',
@@ -134,18 +157,67 @@ describe('object store model', () => {
     const reread = createObjectStoreResourceRecord({
       type: 'OBS',
       config: {
-        accessKey: 'ak',
-        secretConfigured: true,
         bucketName: 'bucket',
         endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
         savePath: 'hertzbeat'
-      }
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
     });
 
     expect(canProveAmbiguousObjectStoreSave(draft)).toBe(false);
     expect(objectStoreSaveConverged(draft, reread)).toBe(false);
     expect(JSON.stringify(reread)).not.toContain('runtime-only-secret');
-    expect(JSON.stringify(reread)).not.toContain('secretKey');
+    expect(reread.config).not.toHaveProperty('secretKey');
+  });
+
+  it('keeps both credentials fresh-entry-only and omits preserved values from writes', () => {
+    const record = createObjectStoreResourceRecord({
+      type: 'OBS',
+      config: {
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
+    } as never);
+    const draft = createObjectStoreDraft(record);
+
+    expect(draft).toMatchObject({
+      config: { accessKey: '', secretKey: '' },
+      configuredSecrets: ['accessKey', 'secretKey']
+    });
+    expect(buildObjectStorePayload(draft)).toEqual({
+      type: 'OBS',
+      config: {
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      },
+      clearSecrets: []
+    });
+  });
+
+  it('uses redacted GET only to prove an OBS edit that omitted both credentials', () => {
+    const baseline = createObjectStoreResourceRecord({
+      type: 'OBS',
+      config: {
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      },
+      configuredSecrets: ['accessKey', 'secretKey']
+    });
+    const draft = {
+      ...createObjectStoreDraft(baseline),
+      config: { ...createObjectStoreDraft(baseline).config, savePath: 'hertzbeat/data' }
+    };
+    const reread = {
+      ...baseline,
+      config: { ...baseline.config, savePath: 'hertzbeat/data' }
+    };
+
+    expect(canProveAmbiguousObjectStoreSave(draft)).toBe(true);
+    expect(objectStoreSaveConverged(draft, reread)).toBe(true);
   });
 
   it('rejects malformed non-null wire records without echoing their contents', () => {

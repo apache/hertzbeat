@@ -58,6 +58,7 @@ export const objectStoreDataProvider: DataProvider = {
     return protect('read', async () => {
       assertResourceAndId(params.resource, params.id);
       const config = await readObjectStore();
+      if (config == null) throw missingFailure();
       return { data: adaptRefineRecord<TData>(readResourceRecord(config)) };
     });
   },
@@ -73,9 +74,7 @@ export const objectStoreDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect('write', async () => {
       assertResourceAndId(params.resource, params.id);
-      await saveObjectStore(parseObjectStoreDraft(params.variables));
-      const canonical = await readCanonicalObjectStoreAfterWrite();
-      if (canonical == null) throw contractFailure('OBJECT_STORE_CANONICAL_REREAD_MISSING');
+      const canonical = await saveObjectStore(parseObjectStoreDraft(params.variables));
       return { data: adaptRefineRecord<TData>(readResourceRecord(canonical)) };
     });
   },
@@ -118,6 +117,7 @@ function adaptRefineFailure(reason: RefineHttpError, phase: ObjectStoreRequestPh
 
 function refineFailureKind(reason: RefineHttpError): ObjectStoreFailureKind {
   if (isRefineSourceUnavailable(reason)) return 'unavailable';
+  if (reason.kind === 'http' && (reason.httpStatus === 401 || reason.httpStatus === 403)) return 'permission';
   if (typeof reason.code === 'string' && reason.code.startsWith('OBJECT_STORE_')) return 'invalid';
   return 'error';
 }
@@ -154,16 +154,6 @@ async function readObjectStore() {
   }
 }
 
-async function readCanonicalObjectStoreAfterWrite() {
-  try {
-    return await readObjectStore();
-  } catch {
-    // POST has already returned. A failed GET is not evidence that the write
-    // was rejected, even when that GET itself returned an HTTP 4xx response.
-    throw contractFailure('OBJECT_STORE_CANONICAL_REREAD_FAILED');
-  }
-}
-
 function readResourceRecord(value: Parameters<typeof createObjectStoreResourceRecord>[0]) {
   try {
     return createObjectStoreResourceRecord(value);
@@ -173,6 +163,10 @@ function readResourceRecord(value: Parameters<typeof createObjectStoreResourceRe
     }
     throw reason;
   }
+}
+
+function missingFailure() {
+  return new ObjectStoreRequestFailure('missing', 'uncertain', { code: 'OBJECT_STORE_CONFIG_MISSING' });
 }
 
 function contractFailure(code: string) {

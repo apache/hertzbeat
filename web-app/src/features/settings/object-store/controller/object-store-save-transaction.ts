@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isObjectStoreWriteRejection } from '../model/object-store-failure';
 import {
@@ -86,6 +86,7 @@ export function useObjectStoreSaveTransaction(options: SaveTransactionOptions) {
     isLocked: runtime.isLocked,
     proving: runtime.command === 'proving',
     recovery: runtime.recovery,
+    retireWriteAccess: runtime.retireWriteAccess,
     retry,
     saving: runtime.command === 'saving',
     submit
@@ -160,6 +161,12 @@ function useSaveRuntime() {
     };
   }, []);
   const isCurrent = (owner: symbol) => mountedRef.current && ownerRef.current === owner;
+  const retireWriteAccess = useCallback(() => {
+    ownerRef.current = null;
+    receiptRef.current = null;
+    setCommand('idle');
+    setRecovery(null);
+  }, []);
   const begin = (next: Exclude<SaveCommand, 'idle'>, allowReceipt = false) => {
     if (!mountedRef.current || ownerRef.current || (!allowReceipt && receiptRef.current)) return null;
     const owner = Symbol(next);
@@ -178,5 +185,5 @@ function useSaveRuntime() {
     setCommand('idle');
   };
   const isLocked = () => ownerRef.current !== null || receiptRef.current !== null;
-  return { begin, command, finish, isCurrent, isLocked, publish, receiptRef, recovery };
+  return { begin, command, finish, isCurrent, isLocked, publish, receiptRef, recovery, retireWriteAccess };
 }

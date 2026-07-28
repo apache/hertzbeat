@@ -19,8 +19,11 @@ import { useDataProvider, useInvalidate, useNotification, useOne, type HttpError
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useSession } from '@/core/auth/session-context';
+
 import {
   objectStoreResourceId,
+  userCanWriteObjectStore,
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
@@ -34,6 +37,7 @@ const objectStoreDataProvider = 'object-store';
 export function useObjectStoreResourceController() {
   const { t } = useTranslation();
   const notification = useNotification();
+  const canWrite = userCanWriteObjectStore(useSession().session?.roles ?? []);
   const resource = useOne<ObjectStoreResourceRecord, HttpError>({
     resource: objectStoreResource,
     id: objectStoreResourceId,
@@ -53,11 +57,17 @@ export function useObjectStoreResourceController() {
       return { data: undefined, error };
     }
   }, [refetch]);
-  const editor = useObjectStoreEditorController(resource.result, reread, update, {
-    notifyFailure: () => notification.open?.({ message: t('objectStore.unavailable'), type: 'error' }),
-    notifyRejected: () => notification.open?.({ message: t('objectStore.saveFailed'), type: 'error' }),
-    notifySuccess: () => notification.open?.({ message: t('objectStore.saveSuccess'), type: 'success' })
-  });
+  const editor = useObjectStoreEditorController(
+    resource.result,
+    reread,
+    update,
+    {
+      notifyFailure: () => notification.open?.({ message: t('objectStore.unavailable'), type: 'error' }),
+      notifyRejected: () => notification.open?.({ message: t('objectStore.saveFailed'), type: 'error' }),
+      notifySuccess: () => notification.open?.({ message: t('objectStore.saveSuccess'), type: 'success' })
+    },
+    canWrite
+  );
   const kind = resolveResourceKind(
     resource.query.isPending,
     resource.query.isError,
@@ -67,6 +77,7 @@ export function useObjectStoreResourceController() {
 
   return {
     discard: editor.discard,
+    canWrite,
     retry: editor.retry,
     state:
       kind === 'ready' || editor.state.locked ? ({ kind: 'ready', ...editor.state } as const) : ({ kind } as const),
@@ -120,6 +131,6 @@ function resolveResourceKind(
   record: ObjectStoreResourceRecord | undefined
 ) {
   if (isPending) return 'loading';
-  if (isError) return classifyObjectStoreReadFailure(error) === 'unavailable' ? 'unavailable' : 'error';
-  return record ? 'ready' : 'error';
+  if (isError) return classifyObjectStoreReadFailure(error);
+  return record ? 'ready' : 'missing';
 }

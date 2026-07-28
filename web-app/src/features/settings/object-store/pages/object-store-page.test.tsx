@@ -40,8 +40,9 @@ import { ObjectStorePage } from './object-store-page';
 
 const configuredObs = {
   type: 'OBS' as const,
+  configuredSecrets: ['accessKey', 'secretKey'] as const,
   config: {
-    accessKey: 'ak',
+    accessKey: '',
     secretKey: '',
     bucketName: 'bucket',
     endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
@@ -80,6 +81,9 @@ describe('ObjectStorePage', () => {
     renderObjectStorePage();
 
     expect(await screen.findByPlaceholderText('OBS secret key')).toHaveValue('');
+    expect(screen.getAllByText('A credential is already configured. Leave this field blank to keep it.')).toHaveLength(
+      2
+    );
 
     fireEvent.change(screen.getByPlaceholderText('OBS access key'), {
       target: { value: 'changed-ak' }
@@ -115,6 +119,18 @@ describe('ObjectStorePage', () => {
     expect(controller.retry).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['missing', 'Object storage has not been configured.'],
+    ['invalid', 'The object storage response is invalid.'],
+    ['permission', 'Your account does not have permission to open this page.']
+  ] as const)('renders %s evidence with fixed local copy', async (kind, message) => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind }));
+    renderObjectStorePage();
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('OBS access key')).not.toBeInTheDocument();
+  });
+
   it('renders loading without exposing stale editor values', () => {
     controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'loading' }));
     const { container } = renderObjectStorePage();
@@ -132,6 +148,16 @@ describe('ObjectStorePage', () => {
     expect(screen.getByRole('combobox')).toBeDisabled();
     expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+  });
+
+  it('keeps the redacted configuration readable but disables writes for non-admin users', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({}, false));
+    renderObjectStorePage();
+
+    expect(await screen.findByText('Only administrators can change object storage configuration.')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('OBS access key')).toBeDisabled();
+    expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
   it('keeps proof recovery visible, locked, and GET-retryable', async () => {
@@ -160,8 +186,9 @@ describe('ObjectStorePage', () => {
   });
 });
 
-function buildController(state: Record<string, unknown> = {}) {
+function buildController(state: Record<string, unknown> = {}, canWrite = true) {
   return {
+    canWrite,
     discard: controller.discard,
     retry: controller.retry,
     state: {
