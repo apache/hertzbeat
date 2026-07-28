@@ -9,6 +9,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({ deleteEntity: vi.fn(), loadEntityDetail: vi.fn() }));
 const modal = vi.hoisted(() => ({ confirm: vi.fn() }));
+const capability = vi.hoisted(() => ({ useEntityCapabilities: vi.fn() }));
 vi.mock('../api/entity-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/entity-api')>()),
   ...api
@@ -22,6 +23,7 @@ vi.mock('antd', async importOriginal => ({
   ...(await importOriginal<typeof import('antd')>()),
   App: { useApp: () => ({ modal }) }
 }));
+vi.mock('./use-entity-capabilities', () => capability);
 
 import { useEntityDetailController } from './use-entity-detail-controller';
 
@@ -37,6 +39,7 @@ describe('useEntityDetailController deletion', () => {
     vi.clearAllMocks();
     api.loadEntityDetail.mockResolvedValue(detail);
     api.deleteEntity.mockResolvedValue(undefined);
+    capability.useEntityCapabilities.mockReturnValue({ canWrite: true, canDelete: true });
   });
   afterEach(cleanup);
 
@@ -53,6 +56,72 @@ describe('useEntityDetailController deletion', () => {
       })
     );
     expect(api.deleteEntity).not.toHaveBeenCalled();
+  });
+
+  it('does not admit delete when the current session lacks delete permission', async () => {
+    capability.useEntityCapabilities.mockReturnValue({ canWrite: true, canDelete: false });
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.remove());
+
+    expect(routed.current().state.canDelete).toBe(false);
+    expect(modal.confirm).not.toHaveBeenCalled();
+    expect(api.deleteEntity).not.toHaveBeenCalled();
+  });
+
+  it('does not navigate to write routes without write permission', async () => {
+    capability.useEntityCapabilities.mockReturnValue({ canWrite: false, canDelete: false });
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.edit());
+    act(() => routed.current().actions.definition());
+
+    expect(routed.router.state.location.pathname).toBe('/entities/7');
+  });
+
+  it('retires an open delete confirmation when the session loses permission', async () => {
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.remove());
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk?: () => Promise<unknown> } | undefined;
+
+    capability.useEntityCapabilities.mockReturnValue({ canWrite: true, canDelete: false });
+    await act(() => routed.router.navigate('/entities/7?role=changed'));
+    await act(async () => {
+      await expect(confirmation?.onOk?.()).resolves.toBeUndefined();
+    });
+
+    expect(routed.current().state.canDelete).toBe(false);
+    expect(api.deleteEntity).not.toHaveBeenCalled();
+  });
+
+  it('refreshes detail through its owned query key without clearing ready evidence', async () => {
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.refresh());
+
+    await waitFor(() => expect(api.loadEntityDetail).toHaveBeenCalledTimes(2));
+    expect(routed.current().state.evidence.kind).toBe('ready');
+  });
+
+  it('cancels an old entity scope and never publishes its late detail', async () => {
+    const old = deferred<typeof detail>();
+    const next = deferred<typeof detail>();
+    api.loadEntityDetail.mockImplementation((id: number, signal: AbortSignal) => {
+      if (id === 7) {
+        signal.addEventListener('abort', () => old.resolve(detail));
+        return old.promise;
+      }
+      return next.promise;
+    });
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(api.loadEntityDetail).toHaveBeenCalledTimes(1));
+
+    await act(() => routed.router.navigate('/entities/8'));
+    next.resolve({ ...detail, entity: { ...detail.entity, id: 8, name: 'payments' } });
+    await waitFor(() => expect(readyEntityName(routed.current())).toBe('payments'));
+    expect(api.loadEntityDetail.mock.calls[0]?.[1]).toMatchObject({ aborted: true });
   });
 
   it('prevents pending double submit, invalidates entity caches, and returns safely after success', async () => {
@@ -169,4 +238,8 @@ function deferred<T>() {
     resolve = complete;
   });
   return { promise, resolve };
+}
+
+function readyEntityName(controller: ReturnType<typeof useEntityDetailController>) {
+  return controller.state.evidence.kind === 'ready' ? controller.state.evidence.detail.entity.name : undefined;
 }

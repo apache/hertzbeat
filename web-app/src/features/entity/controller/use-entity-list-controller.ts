@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useQueryDraft } from '@/shared/query-context';
@@ -16,14 +16,21 @@ import {
   type EntityFilterKey,
   type EntityListEvidence
 } from '../model/entity-view-model';
+import { useEntityCapabilities } from './use-entity-capabilities';
 import { entityQueryKeys } from './entity-query-keys';
 
 export function useEntityListController() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
+  const capabilities = useEntityCapabilities();
   const query = readEntityQuery(params);
   const source = writeEntityQuery(query).toString();
+  useEffect(() => {
+    if (location.pathname === entityRoutePaths.list && params.toString() !== source) {
+      setParams(source, { replace: true });
+    }
+  }, [location.pathname, params, setParams, source]);
   const draft = useQueryDraft(
     source,
     useMemo(() => query.search, [query.search])
@@ -40,7 +47,8 @@ export function useEntityListController() {
       query,
       draft: draft.value,
       evidence: resolveEvidence(result.isPending, result.error, result.data),
-      refreshing: result.isFetching
+      refreshing: result.isFetching,
+      canWrite: capabilities.canWrite
     },
     actions: {
       updateDraft: draft.setValue,
@@ -53,8 +61,12 @@ export function useEntityListController() {
         void client.invalidateQueries({ queryKey: entityQueryKeys.list(source) });
       },
       discover: () => void navigate(buildEntityDiscoveryRoute(query)),
-      importDefinitions: () => void navigate(buildEntityImportRoute(query)),
-      create: () => void navigate(buildEntityCreatePath(query)),
+      importDefinitions: () => {
+        if (capabilities.canWrite) void navigate(buildEntityImportRoute(query));
+      },
+      create: () => {
+        if (capabilities.canWrite) void navigate(buildEntityCreatePath(query));
+      },
       open: (id: number) => {
         if (location.pathname === entityRoutePaths.list) void navigate(buildEntityDetailPath(id, query));
       }

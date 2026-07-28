@@ -11,6 +11,7 @@ import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
 import styles from './entity-view.module.css';
 
 type EntityDetailViewActions = {
+  refresh: () => void;
   back: () => void;
   edit: () => void;
   definition: () => void;
@@ -25,6 +26,9 @@ export function EntityDetailView({
 }: {
   state: {
     evidence: EntityDetailEvidence;
+    refreshing: boolean;
+    canWrite: boolean;
+    canDelete: boolean;
     deleting: boolean;
     deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
   };
@@ -39,6 +43,8 @@ export function EntityDetailView({
       </div>
     );
   if (evidence.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
+  if (evidence.kind === 'permission')
+    return <Alert showIcon type="warning" message={t('common.permission.roleRequiredDescription')} />;
   if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
   return <ReadyEntityDetail detail={evidence.detail} state={state} actions={actions} />;
@@ -50,7 +56,13 @@ function ReadyEntityDetail({
   actions
 }: {
   detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
-  state: { deleting: boolean; deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error' };
+  state: {
+    deleting: boolean;
+    refreshing: boolean;
+    canWrite: boolean;
+    canDelete: boolean;
+    deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
+  };
   actions: EntityDetailViewActions;
 }) {
   const { t } = useTranslation();
@@ -63,18 +75,27 @@ function ReadyEntityDetail({
           <Typography.Text type="secondary">{localizeEntityCode(t, 'type', detail.entity.type)}</Typography.Text>
         </div>
         <Space>
-          <Button type="primary" onClick={actions.edit}>
-            {t('common.edit')}
-          </Button>
-          <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
-          <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
-            {t('entity.delete.action')}
-          </Button>
+          {state.canWrite ? (
+            <>
+              <Button type="primary" onClick={actions.edit}>
+                {t('common.edit')}
+              </Button>
+              <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
+            </>
+          ) : null}
+          {state.canDelete ? (
+            <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
+              {t('entity.delete.action')}
+            </Button>
+          ) : null}
           {signals.map(signal => (
             <Button key={signal} onClick={() => actions.explore(signal)}>
               {t(`entity.explore.${signal}`)}
             </Button>
           ))}
+          <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refresh}>
+            {t('common.refresh')}
+          </Button>
           <Button onClick={actions.back}>{t('common.back')}</Button>
         </Space>
       </header>

@@ -2,13 +2,13 @@
 
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import {
   classifyEntityDeleteError,
-  classifyEntityDetailError,
+  classifyEntityDetailReadError,
   deleteEntity,
   loadEntityDetail
 } from '../api/entity-api';
@@ -24,11 +24,13 @@ import {
   type EntityNoiseControlType
 } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
+import { useEntityCapabilities } from './use-entity-capabilities';
 
 export function useEntityDetailController() {
   const navigate = useNavigate();
   const { entityId } = useParams();
   const [params] = useSearchParams();
+  const capabilities = useEntityCapabilities();
   const id = parseEntityId(entityId);
   const result = useQuery({
     queryKey: entityQueryKeys.detail(id),
@@ -38,20 +40,30 @@ export function useEntityDetailController() {
   const evidence = resolveDetail(id, result.isPending, result.error, result.data);
   const deletion = useEntityDeletion(
     evidence.kind === 'ready' ? evidence.detail.entity : undefined,
-    params.get('returnTo')
+    params.get('returnTo'),
+    capabilities.canDelete
   );
   return {
-    state: { evidence, ...deletion.state },
+    state: {
+      evidence,
+      refreshing: result.isFetching && !result.isPending,
+      canWrite: capabilities.canWrite,
+      canDelete: capabilities.canDelete,
+      ...deletion.state
+    },
     actions: {
+      refresh: () => {
+        void result.refetch();
+      },
       back: () => {
         void navigate(safeEntityReturnTo(params.get('returnTo')));
       },
       edit: () => {
-        if (evidence.kind === 'ready')
+        if (capabilities.canWrite && evidence.kind === 'ready')
           void navigate(buildEntityEditRoute(evidence.detail.entity.id, params.get('returnTo')));
       },
       definition: () => {
-        if (evidence.kind === 'ready') {
+        if (capabilities.canWrite && evidence.kind === 'ready') {
           void navigate(buildEntityDefinitionRoute(evidence.detail.entity.id, params.get('returnTo')));
         }
       },
@@ -66,12 +78,16 @@ export function useEntityDetailController() {
   };
 }
 
-function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | null) {
+function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | null, canDelete: boolean) {
   const { t } = useTranslation();
   const { modal } = App.useApp();
   const client = useQueryClient();
   const navigate = useNavigate();
   const started = useRef(false);
+  const deleteAdmitted = useRef(canDelete);
+  useEffect(() => {
+    deleteAdmitted.current = canDelete;
+  }, [canDelete]);
   const deletion = useMutation({
     mutationFn: deleteExistingEntity,
     onSuccess: async (_result, deletedId) => {
@@ -80,7 +96,7 @@ function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | 
     }
   });
   const remove = () => {
-    if (!entity || deletion.isPending || started.current) return;
+    if (!canDelete || !entity || deletion.isPending || started.current) return;
     deletion.reset();
     modal.confirm({
       title: t('entity.delete.title', { name: entity.displayName || entity.name }),
@@ -89,7 +105,7 @@ function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | 
       okButtonProps: { danger: true },
       cancelText: t('common.cancel'),
       onOk: async () => {
-        if (started.current) return;
+        if (!deleteAdmitted.current || started.current) return;
         started.current = true;
         try {
           await deletion.mutateAsync(entity.id);
@@ -140,7 +156,7 @@ function resolveDetail(
 ): EntityDetailEvidence {
   if (id === undefined) return { kind: 'missing' };
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyEntityDetailError(error) };
+  if (error) return { kind: classifyEntityDetailReadError(error) };
   return detail ? { kind: 'ready', detail } : { kind: 'error' };
 }
 

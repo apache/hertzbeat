@@ -49,8 +49,9 @@ export async function deleteEntity(id: number) {
   await apiMessageDelete(`/api/entities/${id}`);
 }
 
-export function classifyEntityReadError(error: unknown): 'unavailable' | 'error' {
+export function classifyEntityReadError(error: unknown): 'permission' | 'unavailable' | 'error' {
   if (error instanceof EntityContractError) return 'error';
+  if (error instanceof ApiMessageError && [401, 403].includes(error.status ?? 0)) return 'permission';
   if (
     error instanceof ApiMessageError &&
     (error.cause !== undefined || [0, 502, 503, 504].includes(error.status ?? 0))
@@ -64,6 +65,14 @@ export function classifyEntityDetailError(error: unknown): 'missing' | 'unavaila
   if (error instanceof EntityMissingError || (error instanceof ApiMessageError && isEntityMissingResponse(error))) {
     return 'missing';
   }
+  const failure = classifyEntityReadError(error);
+  return failure === 'permission' ? 'error' : failure;
+}
+
+export function classifyEntityDetailReadError(error: unknown): 'missing' | 'permission' | 'unavailable' | 'error' {
+  if (error instanceof EntityMissingError || (error instanceof ApiMessageError && isEntityMissingResponse(error))) {
+    return 'missing';
+  }
   return classifyEntityReadError(error);
 }
 
@@ -72,7 +81,7 @@ export function classifyEntityDeleteError(
 ): 'missing' | 'permission' | 'validation' | 'unavailable' | 'error' {
   if (error instanceof ApiMessageError) {
     if (isEntityMissingResponse(error)) return 'missing';
-    if (error.status === 403) return 'permission';
+    if ([401, 403].includes(error.status ?? 0)) return 'permission';
     if (error.code === 1 || [400, 409, 422].includes(error.status ?? 0)) return 'validation';
     if (error.cause !== undefined || [0, 502, 503, 504].includes(error.status ?? 0)) return 'unavailable';
   }

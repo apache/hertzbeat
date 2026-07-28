@@ -24,6 +24,14 @@ describe('EntityDetailView', () => {
   });
   afterEach(cleanup);
 
+  it.each(['loading', 'missing', 'permission', 'unavailable', 'error'] as const)(
+    'keeps %s distinct from ready detail',
+    kind => {
+      renderView({ kind });
+      expect(screen.queryByRole('heading', { name: 'checkout' })).not.toBeInTheDocument();
+    }
+  );
+
   it('shows real identity, health, monitor, and relation evidence', () => {
     renderView({
       kind: 'ready',
@@ -57,7 +65,7 @@ describe('EntityDetailView', () => {
         kind: 'ready',
         detail: { entity, identities: [], evidence: { logHintCount: 1 }, boundMonitors: [], relations: [] }
       },
-      explore
+      { explore }
     );
     fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.explore.logs') }));
     expect(explore).toHaveBeenCalledWith('logs');
@@ -132,11 +140,7 @@ describe('EntityDetailView', () => {
           relations: []
         }
       },
-      undefined,
-      undefined,
-      false,
-      undefined,
-      manageNoiseControls
+      { manageNoiseControls }
     );
 
     const section = screen.getByRole('region', { name: i18n.t('entity.noiseControls.title') });
@@ -154,10 +158,7 @@ describe('EntityDetailView', () => {
     const remove = vi.fn();
     renderView(
       { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
-      () => undefined,
-      remove,
-      false,
-      'permission'
+      { remove, deleteFailure: 'permission' }
     );
     fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.delete.action') }));
     expect(remove).toHaveBeenCalledOnce();
@@ -167,25 +168,69 @@ describe('EntityDetailView', () => {
     );
     expect(i18n.t('entity.delete.description')).toContain('does not delete monitored targets or telemetry data');
   });
+
+  it('hides deletion without permission and exposes explicit refresh', () => {
+    const refresh = vi.fn();
+    renderView(
+      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      { canDelete: false, refresh }
+    );
+
+    expect(screen.queryByRole('button', { name: i18n.t('entity.delete.action') })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.refresh') }));
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('hides edit and definition entry points without write permission', () => {
+    renderView(
+      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      { canDelete: false, canWrite: false }
+    );
+
+    expect(screen.queryByRole('button', { name: i18n.t('common.edit') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('entity.definition.action') })).not.toBeInTheDocument();
+  });
 });
 
 function renderView(
   evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'],
-  explore = () => undefined,
-  remove = () => undefined,
-  deleting = false,
-  deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error',
-  manageNoiseControls = () => undefined
+  {
+    explore = () => undefined,
+    remove = () => undefined,
+    deleting = false,
+    deleteFailure,
+    manageNoiseControls = () => undefined,
+    canDelete = true,
+    refresh = () => undefined,
+    canWrite = true
+  }: {
+    explore?: Parameters<typeof EntityDetailView>[0]['actions']['explore'];
+    remove?: () => void;
+    deleting?: boolean;
+    deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
+    manageNoiseControls?: Parameters<typeof EntityDetailView>[0]['actions']['manageNoiseControls'];
+    canDelete?: boolean;
+    refresh?: () => void;
+    canWrite?: boolean;
+  } = {}
 ) {
   return render(
     <I18nextProvider i18n={i18n}>
       <EntityDetailView
-        state={{ evidence, deleting, ...(deleteFailure ? { deleteFailure } : {}) }}
+        state={{
+          evidence,
+          deleting,
+          refreshing: false,
+          canWrite,
+          canDelete,
+          ...(deleteFailure ? { deleteFailure } : {})
+        }}
         actions={{
           back: () => undefined,
           edit: () => undefined,
           definition: () => undefined,
           explore,
+          refresh,
           remove,
           manageNoiseControls
         }}

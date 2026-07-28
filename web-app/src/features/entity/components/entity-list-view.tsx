@@ -26,8 +26,12 @@ export function EntityListView({ state, actions }: EntityListViewProps) {
           <Button type="primary" onClick={actions.discover}>
             {t('entity.discovery.action')}
           </Button>
-          <Button onClick={actions.importDefinitions}>{t('entity.import.action')}</Button>
-          <Button onClick={actions.create}>{t('entity.editor.addTitle')}</Button>
+          {state.canWrite ? (
+            <>
+              <Button onClick={actions.importDefinitions}>{t('entity.import.action')}</Button>
+              <Button onClick={actions.create}>{t('entity.editor.addTitle')}</Button>
+            </>
+          ) : null}
           <Button disabled={state.refreshing} onClick={actions.refresh}>
             {t('common.refresh')}
           </Button>
@@ -125,6 +129,8 @@ function EntityResults({ state, actions }: EntityListViewProps) {
       </div>
     );
   if (evidence.kind === 'empty') return <Empty description={t('entity.empty')} />;
+  if (evidence.kind === 'permission')
+    return <Alert showIcon type="warning" message={t('common.permission.roleRequiredDescription')} />;
   if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
   return (

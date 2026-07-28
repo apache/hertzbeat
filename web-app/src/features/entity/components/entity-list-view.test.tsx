@@ -15,10 +15,13 @@ describe('EntityListView', () => {
   });
   afterEach(cleanup);
 
-  it.each(['loading', 'empty', 'unavailable', 'error'] as const)('keeps %s distinct from ready rows', kind => {
-    renderView({ evidence: { kind } });
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
+  it.each(['loading', 'empty', 'permission', 'unavailable', 'error'] as const)(
+    'keeps %s distinct from ready rows',
+    kind => {
+      renderView({ evidence: { kind } });
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    }
+  );
 
   it('uses familiar resource-catalog language instead of exposing the internal domain model', () => {
     renderView({ evidence: { kind: 'empty' } });
@@ -29,6 +32,14 @@ describe('EntityListView', () => {
     expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import definitions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add resource' })).toBeInTheDocument();
+  });
+
+  it('keeps discovery readable but hides write entry points without write permission', () => {
+    renderView({ evidence: { kind: 'empty' }, canWrite: false });
+
+    expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Import definitions' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add resource' })).not.toBeInTheDocument();
   });
 
   it('keeps secondary filters collapsed by default and preserves their values across disclosure', () => {
@@ -129,6 +140,7 @@ function renderView(
           draft: '',
           evidence: { kind: 'loading' },
           refreshing: false,
+          canWrite: true,
           ...statePatch
         }}
         actions={actions}

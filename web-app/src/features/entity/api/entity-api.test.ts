@@ -13,7 +13,8 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { EntityContractError, type EntityQuery } from '../model/entity-contract';
 import {
   buildEntityListPath,
-  classifyEntityDetailError,
+  classifyEntityReadError,
+  classifyEntityDetailReadError,
   classifyEntityDeleteError,
   deleteEntity,
   loadEntityDetail,
@@ -191,6 +192,7 @@ describe('entity API', () => {
   });
 
   it.each([
+    [new ApiMessageError('private unauthenticated detail', { status: 401 }), 'permission'],
     [new ApiMessageError('private permission detail', { status: 403 }), 'permission'],
     [new ApiMessageError('private validation detail', { code: 1, status: 200 }), 'validation'],
     [new ApiMessageError('private conflict detail', { status: 409 }), 'validation'],
@@ -204,12 +206,23 @@ describe('entity API', () => {
   });
 
   it.each([
+    [new ApiMessageError('private unauthenticated detail', { status: 401 }), 'permission'],
+    [new ApiMessageError('private forbidden detail', { status: 403 }), 'permission'],
     [new ApiMessageError('private missing detail', { status: 404 }), 'missing'],
     [new ApiMessageError('private missing detail', { code: 3, status: 200 }), 'missing'],
     [new ApiMessageError('private legacy detail', { code: 15, status: 200 }), 'missing'],
     [new ApiMessageError('private unavailable detail', { status: 503 }), 'unavailable'],
     [new Error('private generic detail'), 'error']
   ] as const)('classifies detail failures without exposing backend text', (failure, expected) => {
-    expect(classifyEntityDetailError(failure)).toBe(expected);
+    expect(classifyEntityDetailReadError(failure)).toBe(expected);
+  });
+
+  it.each([
+    [new ApiMessageError('private unauthenticated list', { status: 401 }), 'permission'],
+    [new ApiMessageError('private forbidden list', { status: 403 }), 'permission'],
+    [new ApiMessageError('private unavailable list', { status: 503 }), 'unavailable'],
+    [new EntityContractError('private contract detail'), 'error']
+  ] as const)('classifies list failures without exposing backend text', (failure, expected) => {
+    expect(classifyEntityReadError(failure)).toBe(expected);
   });
 });

@@ -1,6 +1,5 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 import {
   alertRoutePaths,
   applicationRoutePaths,
@@ -34,8 +33,20 @@ export const defaultEntityQuery: EntityQuery = {
   pageSize: 10
 };
 
-export type EntityListEvidence = RemotePageState<EntitySummary, 'unavailable' | 'error'>;
-export type EntityDetailEvidence = RemotePayloadState<{ detail: EntityDetail }, 'missing' | 'unavailable' | 'error'>;
+export type EntityListEvidence =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: EntitySummary[]; total: number };
+export type EntityDetailEvidence =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; detail: EntityDetail };
 export type EntityExploreSignal = 'metrics' | 'logs';
 export type EntityNoiseControlType = 'silence' | 'inhibit';
 
@@ -44,6 +55,7 @@ export type EntityListViewState = {
   draft: string;
   evidence: EntityListEvidence;
   refreshing: boolean;
+  canWrite: boolean;
 };
 export type EntityListViewActions = {
   updateDraft: (value: string) => void;
