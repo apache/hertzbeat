@@ -57,6 +57,42 @@ describe('useMonitorListCommands permissions', () => {
     expect(selection.remove).not.toHaveBeenCalled();
     expect(reread).not.toHaveBeenCalled();
   });
+
+  it('rejects a retained delete after ADMIN to USER downgrade while preserving selection', async () => {
+    const selection = { remove: vi.fn(), validatedIds: vi.fn(() => [7]) };
+    const reread = vi.fn();
+    const view = renderHook(({ capabilities }) => useMonitorListCommands('page=0', reread, selection, capabilities), {
+      initialProps: { capabilities: { canWrite: true, canDelete: true } },
+      wrapper
+    });
+    const retainedDelete = view.result.current.run;
+
+    view.rerender({ capabilities: { canWrite: true, canDelete: false } });
+    await act(() => retainedDelete('delete', [7]));
+
+    expect(api.mutateMonitors).not.toHaveBeenCalled();
+    expect(selection.remove).not.toHaveBeenCalled();
+  });
+
+  it.each(['enable', 'pause', 'copy'] as const)(
+    'rejects retained %s after USER to GUEST downgrade and clears the no-longer-actionable selection',
+    async action => {
+      const selection = { remove: vi.fn(), validatedIds: vi.fn(() => [7]) };
+      const reread = vi.fn();
+      const view = renderHook(({ capabilities }) => useMonitorListCommands('page=0', reread, selection, capabilities), {
+        initialProps: { capabilities: { canWrite: true, canDelete: false } },
+        wrapper
+      });
+      const retainedRun = view.result.current.run;
+
+      view.rerender({ capabilities: { canWrite: false, canDelete: false } });
+      await act(() => retainedRun(action, [7]));
+
+      expect(api.mutateMonitors).not.toHaveBeenCalled();
+      expect(selection.remove).toHaveBeenCalledWith([7]);
+      expect(reread).not.toHaveBeenCalled();
+    }
+  );
 });
 
 function wrapper({ children }: PropsWithChildren) {

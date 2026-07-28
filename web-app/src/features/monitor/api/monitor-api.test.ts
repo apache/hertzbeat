@@ -238,15 +238,16 @@ describe('monitor list API contracts', () => {
   });
 
   it('uses a non-replayable POST for enable while preserving the established mutation methods', async () => {
-    await mutateMonitors('enable', [7, 8]);
-    await mutateMonitors('pause', [7]);
-    await mutateMonitors('delete', [8]);
-    await mutateMonitors('copy', [9]);
+    const signal = new AbortController().signal;
+    await mutateMonitors('enable', [7, 8], signal);
+    await mutateMonitors('pause', [7], signal);
+    await mutateMonitors('delete', [8], signal);
+    await mutateMonitors('copy', [9], signal);
 
-    expect(http.apiMessagePost).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&ids=8', null);
-    expect(http.apiMessagePost).toHaveBeenNthCalledWith(2, '/api/monitor/copy/9', null);
-    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&type=JSON');
-    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/monitors?ids=8');
+    expect(http.apiMessagePost).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&ids=8', null, { signal });
+    expect(http.apiMessagePost).toHaveBeenNthCalledWith(2, '/api/monitor/copy/9', null, { signal });
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&type=JSON', { signal });
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/monitors?ids=8', { signal });
     expect(http.apiMessageGet).not.toHaveBeenCalledWith('/api/monitors/manage?ids=7&ids=8');
   });
 

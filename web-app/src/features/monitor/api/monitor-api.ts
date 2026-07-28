@@ -208,10 +208,11 @@ function collectNewMonitorEvidence(
   }
 }
 
-export function mutateMonitors(action: MonitorAction, ids: number[]) {
+export function mutateMonitors(action: MonitorAction, ids: number[], signal?: AbortSignal) {
   const path = buildMonitorActionPath(action, ids);
-  if (action === 'copy' || action === 'enable') return apiMessagePost(path, null);
-  return apiMessageDelete(path);
+  const options = signal ? { signal } : undefined;
+  if (action === 'copy' || action === 'enable') return apiMessagePost(path, null, options);
+  return apiMessageDelete(path, options);
 }
 
 export function deleteMonitorGrafanaDashboard(id: number, signal?: AbortSignal) {

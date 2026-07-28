@@ -30,7 +30,12 @@ import { monitorQueryKeys } from './monitor-query-keys';
 import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
 
-type ActiveListOperation = { source: string; token: number; controller: AbortController };
+type ActiveListOperation = {
+  action: MonitorAction;
+  source: string;
+  token: number;
+  controller: AbortController;
+};
 export function useMonitorListCommands(
   source: string,
   reread: () => Promise<MonitorPage>,
@@ -43,24 +48,33 @@ export function useMonitorListCommands(
   const activeOperationRef = useRef<ActiveListOperation | null>(null);
   const sequence = useRef(0);
   const currentSourceRef = useRef<string | undefined>(undefined);
+  const currentCapabilitiesRef = useRef(capabilities);
   const [busyOperation, setBusyOperation] = useState<ActiveListOperation | undefined>(undefined);
   const copyInstance = useMonitorInstanceCopy();
   useListOperationScope(source, currentSourceRef, activeOperationRef, setBusyOperation);
+  useListCapabilityScope(
+    capabilities,
+    currentCapabilitiesRef,
+    activeOperationRef,
+    setBusyOperation,
+    selection.remove,
+    selection.validatedIds
+  );
 
   const run = async (action: MonitorAction, ids: number[]) => {
-    if (!canStartListCommand(action, ids, capabilities, activeOperationRef.current)) return;
-    const operation = { source, token: ++sequence.current, controller: new AbortController() };
+    if (!canStartListCommand(action, ids, currentCapabilitiesRef.current, activeOperationRef.current)) return;
+    const operation = { action, source, token: ++sequence.current, controller: new AbortController() };
     activeOperationRef.current = operation;
     setBusyOperation(operation);
     try {
-      await mutateMonitors(action, ids);
+      await mutateMonitors(action, ids, operation.controller.signal);
       if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
       const verification = await verifyMonitorMutation(action, ids, operation.controller.signal);
       if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
-      publishMonitorDetailEvidence(queryClient, verification);
       const grafanaCleanupFailed =
         action === 'delete' ? await deleteMonitorGrafanaDashboards(ids, operation.controller.signal) : false;
       if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
+      publishMonitorDetailEvidence(queryClient, verification);
       selection.remove(ids);
       notifyCommittedMutation(verification, message, t);
       if (grafanaCleanupFailed) void message.warning(t('monitor.grafana.cleanupFailure'));
@@ -105,8 +119,11 @@ function canStartListCommand(
   active: ActiveListOperation | null
 ) {
   if (active || ids.length === 0) return false;
-  if (action === 'delete') return capabilities.canDelete;
-  return capabilities.canWrite;
+  return canUseListAction(action, capabilities);
+}
+
+function canUseListAction(action: MonitorAction, capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>) {
+  return action === 'delete' ? capabilities.canDelete : capabilities.canWrite;
 }
 
 function useListOperationScope(
@@ -120,12 +137,45 @@ function useListOperationScope(
     setBusyOperation(undefined);
     return () => {
       if (currentSourceRef.current === source) currentSourceRef.current = undefined;
-      if (activeOperationRef.current?.source === source) {
-        activeOperationRef.current.controller.abort();
+      const active = activeOperationRef.current;
+      if (active?.source === source) {
         activeOperationRef.current = null;
+        active.controller.abort();
       }
     };
   }, [activeOperationRef, currentSourceRef, setBusyOperation, source]);
+}
+
+function useListCapabilityScope(
+  capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>,
+  currentCapabilitiesRef: React.MutableRefObject<Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>>,
+  activeOperationRef: React.MutableRefObject<ActiveListOperation | null>,
+  setBusyOperation: React.Dispatch<React.SetStateAction<ActiveListOperation | undefined>>,
+  removeSelection: (ids: readonly number[]) => void,
+  validatedIds: () => number[]
+) {
+  useLayoutEffect(() => {
+    const previous = currentCapabilitiesRef.current;
+    currentCapabilitiesRef.current = capabilities;
+    const active = activeOperationRef.current;
+    if (active && !canUseListAction(active.action, capabilities)) {
+      activeOperationRef.current = null;
+      setBusyOperation(current => (current?.token === active.token ? undefined : current));
+      active.controller.abort();
+    }
+    if (previous.canWrite && !capabilities.canWrite) {
+      const selectedIds = validatedIds();
+      if (selectedIds.length > 0) removeSelection(selectedIds);
+    }
+  }, [
+    activeOperationRef,
+    capabilities.canDelete,
+    capabilities.canWrite,
+    currentCapabilitiesRef,
+    removeSelection,
+    setBusyOperation,
+    validatedIds
+  ]);
 }
 
 function ownsListOperation(
