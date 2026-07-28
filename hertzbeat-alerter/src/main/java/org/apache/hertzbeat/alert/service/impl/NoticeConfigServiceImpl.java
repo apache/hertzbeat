@@ -137,7 +137,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                     Predicate predicateName = criteriaBuilder.like(
                             criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                     );
-                    predicate = criteriaBuilder.and(predicateName);
+                    predicate = criteriaBuilder.and(predicate, predicateName);
                 }
                 return predicate;
             };

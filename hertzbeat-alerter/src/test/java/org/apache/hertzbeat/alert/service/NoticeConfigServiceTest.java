@@ -17,6 +17,12 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
@@ -30,6 +36,7 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,6 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -160,6 +168,38 @@ class NoticeConfigServiceTest {
         assertEquals(template2, result.getContent().get(1));
 
         verify(noticeTemplateDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void getCustomNoticeTemplatesCombinesPresetAndNameFilters() {
+        ArgumentCaptor<Specification<NoticeTemplate>> specificationCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        when(noticeTemplateDao.findAll(any(Specification.class), any(PageRequest.class)))
+                .thenReturn(Page.empty());
+
+        noticeConfigService.getNoticeTemplates("Template", false, 0, 8);
+
+        verify(noticeTemplateDao).findAll(specificationCaptor.capture(), any(PageRequest.class));
+        Root<NoticeTemplate> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder criteriaBuilder = mock(CriteriaBuilder.class);
+        Path<Boolean> presetPath = mock(Path.class);
+        Path<String> namePath = mock(Path.class);
+        Expression<String> loweredName = mock(Expression.class);
+        Predicate customPredicate = mock(Predicate.class);
+        Predicate namePredicate = mock(Predicate.class);
+        Predicate combinedPredicate = mock(Predicate.class);
+        when(root.<Boolean>get("preset")).thenReturn(presetPath);
+        when(root.<String>get("name")).thenReturn(namePath);
+        when(criteriaBuilder.equal(presetPath, false)).thenReturn(customPredicate);
+        when(criteriaBuilder.lower(namePath)).thenReturn(loweredName);
+        when(criteriaBuilder.like(loweredName, "%template%")).thenReturn(namePredicate);
+        when(criteriaBuilder.and(customPredicate, namePredicate)).thenReturn(combinedPredicate);
+
+        Predicate result = specificationCaptor.getValue().toPredicate(root, query, criteriaBuilder);
+
+        assertSame(combinedPredicate, result);
     }
 
     @Test
