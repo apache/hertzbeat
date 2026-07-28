@@ -77,6 +77,6 @@ async function retainProjectionFailure(
 ) {
   const projected = await refreshBulletinListProjection(client, context.refresh, () => context.gate.isCurrent(owner));
   if (context.gate.isCurrent(owner) && !projected) {
-    context.gate.setRecovery(owner, { stage: 'projection', failure: 'error' });
+    context.gate.setRecovery(owner, { stage: 'projection', operation: owner.operation, failure: 'error' });
   }
 }

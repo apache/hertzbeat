@@ -132,6 +132,36 @@ describe('Bulletin transactions controller', () => {
     await act(async () => first);
   });
 
+  it('rejects retained GUEST save/delete/batch commands before transport', async () => {
+    const context = createContext();
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+    const retained = { ...hook.result.current };
+    context.canWriteRef.current = false;
+    context.canDeleteRef.current = false;
+
+    await act(async () => expect(retained.save()).resolves.toBe(false));
+    await act(async () => expect(retained.remove(bulletin(7, 'Operations'))).resolves.toBe(false));
+    await act(async () => expect(retained.removeMany([7, 8])).resolves.toBe(false));
+
+    expect(mocks.captureBulletinCreateBaseline).not.toHaveBeenCalled();
+    expect(mocks.createBulletin).not.toHaveBeenCalled();
+    expect(mocks.deleteBulletins).not.toHaveBeenCalled();
+  });
+
+  it('allows retained USER save but rejects delete before transport', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValue(true);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+    const retained = { ...hook.result.current };
+    context.canDeleteRef.current = false;
+
+    await act(async () => expect(retained.save()).resolves.toBe(true));
+    await act(async () => expect(retained.remove(bulletin(7, 'Operations'))).resolves.toBe(false));
+
+    expect(mocks.createBulletin).toHaveBeenCalledOnce();
+    expect(mocks.deleteBulletins).not.toHaveBeenCalled();
+  });
+
   it.each(['monitorSelection', 'fieldSelection'] as const)(
     'rejects a save while %s has not converged to the authoritative dependencies',
     async selection => {
@@ -341,7 +371,7 @@ describe('Bulletin transactions controller', () => {
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
     await act(async () => expect(hook.result.current.save()).resolves.toBe(true));
-    expect(context.getRecovery()).toMatchObject({ stage: 'projection' });
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'save' });
     await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
 
     await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
@@ -349,6 +379,37 @@ describe('Bulletin transactions controller', () => {
     expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
     expect(context.refresh).toHaveBeenCalledTimes(2);
     expect(context.getRecovery()).toBeNull();
+  });
+
+  it('does not retry delete projection after ADMIN loses delete capability', async () => {
+    const context = createContext({ selectedId: 7 });
+    context.refresh.mockResolvedValue(false);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.remove(bulletin(7, 'Operations'))).resolves.toBe(true));
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'delete' });
+    context.canDeleteRef.current = false;
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(false));
+
+    expect(context.refresh).toHaveBeenCalledTimes(1);
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'delete' });
+  });
+
+  it('does not run a retained save retry after USER loses write capability', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValue(false);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(true));
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'save' });
+    const retainedRetry = hook.result.current.retry;
+    context.canWriteRef.current = false;
+
+    await act(async () => expect(retainedRetry()).resolves.toBe(false));
+
+    expect(context.refresh).toHaveBeenCalledTimes(1);
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'save' });
   });
 
   it('allows a deliberate rewrite only after an explicit typed 4xx rejection', async () => {
@@ -370,7 +431,7 @@ describe('Bulletin transactions controller', () => {
     mocks.proveBulletinCreated.mockReturnValue(pending.promise);
     const hook = renderHook(() => {
       const gate = useBulletinOperationGate();
-      const editor = useBulletinEditorController(gate, vi.fn());
+      const editor = useBulletinEditorController(gate, vi.fn(), { current: true });
       const transactions = useBulletinTransactions({
         ...createContext().value,
         editor,
@@ -404,13 +465,17 @@ function createContext(options: { selectedId?: number } = {}) {
     fields: { responseTime: ['duration'] }
   };
   let draft: typeof initialDraft | null = initialDraft;
-  let owner: { command: 'saving' | 'deleting' | 'recovering' } | undefined;
+  let owner: { command: 'saving' | 'deleting' | 'recovering'; operation: 'save' | 'delete' } | undefined;
   let recovery: BulletinRecovery | null = null;
   const setDraft = vi.fn((next: typeof initialDraft | null) => {
     draft = next;
   });
   const setSelectedId = vi.fn();
+  const canWriteRef = { current: true };
+  const canDeleteRef = { current: true };
   const value: Parameters<typeof useBulletinTransactions>[0] = {
+    canWriteRef,
+    canDeleteRef,
     dependencies: {
       kind: 'ready',
       fieldSelection: 'valid',
@@ -420,19 +485,23 @@ function createContext(options: { selectedId?: number } = {}) {
     },
     editor: {
       state: { draft: initialDraft },
-      controls: { getDraft: () => draft, invalidateDetail: vi.fn(), setDraft },
+      controls: { getDraft: () => draft, invalidateDetail: vi.fn(), retireWriteAccess: vi.fn(), setDraft },
       actions: { close: vi.fn(), create: vi.fn(), edit: vi.fn(), update: vi.fn() }
     },
     gate: {
       command: 'idle',
       begin: next => {
         if (owner || recovery) return undefined;
-        owner = { command: next };
+        owner = { command: next, operation: next === 'deleting' ? 'delete' : 'save' };
         return owner;
       },
       beginRecovery: () => {
         if (owner || !recovery) return undefined;
-        owner = { command: 'recovering' };
+        owner = {
+          command: 'recovering',
+          operation:
+            recovery.stage === 'delete-proof' ? 'delete' : recovery.stage === 'projection' ? recovery.operation : 'save'
+        };
         return { owner, recovery };
       },
       clearRecovery: candidate => {
@@ -445,7 +514,9 @@ function createContext(options: { selectedId?: number } = {}) {
       },
       isCurrent: candidate => owner === candidate,
       isLocked: () => owner !== undefined || recovery !== null,
+      getRecovery: () => recovery,
       recovery: null,
+      retire: vi.fn(),
       setRecovery: (candidate, next) => {
         if (owner !== candidate) return false;
         recovery = next;
@@ -457,7 +528,16 @@ function createContext(options: { selectedId?: number } = {}) {
     setSelectedId,
     t: key => key
   };
-  return { getRecovery: () => recovery, initialDraft, refresh, setDraft, setSelectedId, value };
+  return {
+    canDeleteRef,
+    canWriteRef,
+    getRecovery: () => recovery,
+    initialDraft,
+    refresh,
+    setDraft,
+    setSelectedId,
+    value
+  };
 }
 
 function bulletin(id: number, name: string) {

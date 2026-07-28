@@ -7,6 +7,7 @@ import { useCallback, useRef, type Dispatch, type RefObject, type SetStateAction
 import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof';
 import { classifyBulletinFailure, type BulletinFailureKind } from '../model/bulletin-failure';
 import { normalizeBulletinIds, type Bulletin } from '../model/bulletin-model';
+import { bulletinRecoveryOperation } from '../model/bulletin-operation-state';
 import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
 import { refreshBulletinListProjection } from './bulletin-list-projection';
 import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
@@ -25,6 +26,8 @@ type BulletinValidationProof = Pick<
 >;
 
 type TransactionContext = {
+  canDeleteRef: RefObject<boolean>;
+  canWriteRef: RefObject<boolean>;
   dependencies: BulletinValidationProof;
   editor: BulletinEditorController;
   gate: BulletinOperationGate;
@@ -53,6 +56,7 @@ function useBulletinSave(
   notification: ReturnType<typeof useNotification>
 ) {
   return useCallback(async () => {
+    if (!context.canWriteRef.current) return false;
     const draft = getValidDraft(context, notification);
     if (!draft) return false;
     const owner = context.gate.begin('saving');
@@ -86,6 +90,7 @@ function useBulletinRemove(
 ) {
   return useCallback(
     async (ids: readonly number[], batch: boolean) => {
+      if (!context.canDeleteRef.current) return false;
       let canonicalIds: number[];
       try {
         canonicalIds = normalizeBulletinIds(ids);
@@ -123,6 +128,7 @@ function useBulletinRecovery(
   confirmedDeletedIdsRef: RefObject<Set<number>>
 ) {
   return useCallback(async () => {
+    if (!canRetryBulletinRecovery(context)) return false;
     const confirmedDeletedIds = confirmedDeletedIdsRef.current;
     const admission = context.gate.beginRecovery();
     if (!admission) return false;
@@ -151,6 +157,13 @@ function useBulletinRecovery(
       context.gate.end(owner);
     }
   }, [client, confirmedDeletedIdsRef, context, notification]);
+}
+
+function canRetryBulletinRecovery(context: TransactionContext) {
+  const recovery = context.gate.getRecovery();
+  if (!recovery) return false;
+  const operation = bulletinRecoveryOperation(recovery);
+  return operation === 'save' ? context.canWriteRef.current : context.canDeleteRef.current;
 }
 
 function getValidDraft(context: TransactionContext, notification: ReturnType<typeof useNotification>) {

@@ -18,7 +18,7 @@ type BulletinTableActions = {
 type BulletinTableProps = {
   actions: BulletinTableActions;
   busy: boolean;
-  listKind: 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
+  listKind: 'idle' | 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
   query: BulletinQuery;
   records: Bulletin[];
   selectedId: number | null;

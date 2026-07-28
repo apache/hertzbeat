@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { BulletinCommand, BulletinRecovery } from '../model/bulletin-operation-state';
 import { BulletinRecoveryAlert } from './bulletin-recovery-alert';
 
-type BulletinListKind = 'loading' | 'empty' | 'ready' | 'invalid' | 'unavailable' | 'error';
+type BulletinListKind = 'idle' | 'loading' | 'empty' | 'ready' | 'invalid' | 'unavailable' | 'error';
 
 export function BulletinPageStatus({
   command,

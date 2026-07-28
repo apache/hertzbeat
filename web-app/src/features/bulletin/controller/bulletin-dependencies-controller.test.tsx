@@ -56,6 +56,47 @@ describe('Bulletin dependency controller', () => {
     expect(monitor.loadMonitorAppHierarchy).not.toHaveBeenCalled();
   });
 
+  it('does not start dependency reads without read capability', async () => {
+    const hook = renderHook(() => useBulletinDependencies(draft('website'), false), { wrapper: createWrapper() });
+
+    await Promise.resolve();
+
+    expect(hook.result.current).toMatchObject({
+      kind: 'idle',
+      apps: [],
+      monitors: [],
+      metrics: [],
+      metricTree: []
+    });
+    expect(monitor.loadMonitorApps).not.toHaveBeenCalled();
+    expect(monitor.loadMonitors).not.toHaveBeenCalled();
+    expect(monitor.loadMonitorAppHierarchy).not.toHaveBeenCalled();
+  });
+
+  it('does not project cached dependencies after read capability is lost', async () => {
+    monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy('website'));
+    const hook = renderHook(({ canRead }: { canRead: boolean }) => useBulletinDependencies(draft('website'), canRead), {
+      initialProps: { canRead: true },
+      wrapper: createWrapper()
+    });
+    await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
+    expect(hook.result.current.apps).not.toEqual([]);
+    expect(hook.result.current.monitors).not.toEqual([]);
+    expect(hook.result.current.metricTree).not.toEqual([]);
+
+    hook.rerender({ canRead: false });
+
+    expect(hook.result.current).toMatchObject({
+      kind: 'idle',
+      apps: [],
+      monitors: [],
+      metrics: [],
+      metricTree: [],
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified'
+    });
+  });
+
   it('loads the application catalog without treating disabled downstream queries as pending', async () => {
     const blank: BulletinDraft = { name: '', app: '', monitorIds: [], fields: {} };
     const hook = renderHook(() => useBulletinDependencies(blank), { wrapper: createWrapper() });

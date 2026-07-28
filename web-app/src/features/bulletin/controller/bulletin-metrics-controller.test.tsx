@@ -18,6 +18,15 @@ vi.mock('../api/bulletin-api', async importOriginal => ({
 describe('Bulletin metrics controller', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('does not start a metrics read without read capability', async () => {
+    const hook = renderHook(() => useBulletinMetrics(7, false), { wrapper: createWrapper() });
+
+    await act(async () => Promise.resolve());
+
+    expect(hook.result.current).toEqual({ kind: 'idle' });
+    expect(api.loadBulletinMetrics).not.toHaveBeenCalled();
+  });
+
   it('classifies a non-empty response with zero rendered fields as empty', async () => {
     api.loadBulletinMetrics.mockResolvedValue({
       name: 'Ops',

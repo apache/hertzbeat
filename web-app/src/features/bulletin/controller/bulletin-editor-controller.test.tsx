@@ -96,12 +96,25 @@ describe('Bulletin editor controller', () => {
     await expect(result.current.editor.actions.edit(7)).resolves.toBe(false);
   });
 
+  it('rejects direct and retained write-editor commands when current write capability is absent', async () => {
+    const canWriteRef = { current: true };
+    const { result } = renderEditorController(vi.fn(), canWriteRef);
+    const retained = { ...result.current.editor.actions };
+    canWriteRef.current = false;
+
+    expect(retained.create()).toBe(false);
+    expect(retained.update({ name: 'ignored' })).toBe(false);
+    await expect(retained.edit(7)).resolves.toBe(false);
+    expect(result.current.editor.state.draft).toBeNull();
+    expect(api.loadBulletin).not.toHaveBeenCalled();
+  });
+
   it('allows only the current owner to release the operation gate', () => {
     const { result } = renderEditorController();
     let owner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
     act(() => {
       owner = result.current.gate.begin('saving')!;
-      result.current.gate.end({ command: 'saving' });
+      result.current.gate.end({ command: 'saving', operation: 'save' });
     });
 
     expect(result.current.gate.isLocked()).toBe(true);
@@ -142,12 +155,39 @@ describe('Bulletin editor controller', () => {
     expect(result.current.gate.recovery).toBeNull();
     expect(result.current.gate.isLocked()).toBe(false);
   });
+
+  it('selectively retires pending owners and typed recovery by operation', () => {
+    const { result } = renderEditorController();
+    let saveOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      saveOwner = result.current.gate.begin('saving')!;
+      result.current.gate.setRecovery(saveOwner, {
+        stage: 'projection',
+        operation: 'save',
+        failure: 'unavailable'
+      });
+      result.current.gate.end(saveOwner);
+      result.current.gate.retire('delete');
+    });
+    expect(result.current.gate.recovery).toMatchObject({ stage: 'projection', operation: 'save' });
+
+    act(() => result.current.gate.retire('save'));
+    expect(result.current.gate.recovery).toBeNull();
+
+    let deleteOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      deleteOwner = result.current.gate.begin('deleting')!;
+      result.current.gate.retire('delete');
+    });
+    expect(result.current.gate.isCurrent(deleteOwner)).toBe(false);
+    expect(result.current.gate.command).toBe('idle');
+  });
 });
 
-function renderEditorController(onReadFailure = vi.fn()) {
+function renderEditorController(onReadFailure = vi.fn(), canWriteRef = { current: true }) {
   return renderHook(() => {
     const gate = useBulletinOperationGate();
-    const editor = useBulletinEditorController(gate, onReadFailure);
+    const editor = useBulletinEditorController(gate, onReadFailure, canWriteRef);
     return { editor, gate };
   });
 }

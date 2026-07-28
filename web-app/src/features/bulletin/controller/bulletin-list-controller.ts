@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useLayoutEffect, useReducer, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import type { RemotePageState } from '@/shared/remote-state';
 import { useAuthoritativePageSelection } from '@/shared/table-selection';
@@ -12,18 +12,24 @@ import { isBulletinPageComplete, writeBulletinQuery, type Bulletin, type Bulleti
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinListFailure = 'invalid' | 'unavailable' | 'error';
-export type BulletinListState = RemotePageState<Bulletin, BulletinListFailure>;
+export type BulletinListState = RemotePageState<Bulletin, BulletinListFailure> | { kind: 'idle' };
 
-export function useBulletinListController(query: BulletinQuery) {
+export function useBulletinListController(query: BulletinQuery, canRead = true) {
+  const canReadRef = useRef(canRead);
+  useLayoutEffect(() => {
+    canReadRef.current = canRead;
+  }, [canRead]);
   const queryKey = bulletinQueryKeys.list(query);
   const list = useQuery({
     queryKey,
     queryFn: ({ signal }) => loadBulletins(query, signal),
+    enabled: canRead,
     retry: false
   });
   const { refetch } = list;
 
   const refresh = useCallback(async (): Promise<boolean> => {
+    if (!canReadRef.current) return false;
     try {
       const result = await refetch();
       return !result.isError && result.data !== undefined;
@@ -34,8 +40,8 @@ export function useBulletinListController(query: BulletinQuery) {
 
   return {
     refresh,
-    refreshing: list.isFetching,
-    state: resolveListState(list)
+    refreshing: canRead && list.isFetching,
+    state: canRead ? resolveListState(list) : { kind: 'idle' as const }
   };
 }
 
@@ -87,7 +93,7 @@ export function useBulletinSelection(query: BulletinQuery, list: BulletinListSta
 }
 
 export function useBulletinBatchSelection(query: BulletinQuery, list: BulletinListState) {
-  const source = list.kind === 'invalid' ? ({ kind: 'error' } as const) : list;
+  const source = list.kind === 'invalid' || list.kind === 'idle' ? ({ kind: 'error' } as const) : list;
   return useAuthoritativePageSelection(writeBulletinQuery(query).toString(), source);
 }
 

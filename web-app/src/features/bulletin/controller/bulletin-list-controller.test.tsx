@@ -31,6 +31,34 @@ const freshRecord = bulletin(8, 'Fresh');
 describe('Bulletin list controller', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('does not start a list read without read capability', async () => {
+    const hook = renderHook(() => useBulletinListController(query, false), { wrapper: createWrapper() });
+
+    await act(async () => Promise.resolve());
+
+    expect(hook.result.current.state).toEqual({ kind: 'idle' });
+    expect(api.loadBulletins).not.toHaveBeenCalled();
+  });
+
+  it('retires cached records and retained refresh transport when read capability is lost', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(bulletinQueryKeys.list(query), page([oldRecord]));
+    api.loadBulletins.mockResolvedValue(page([freshRecord]));
+    const hook = renderHook(({ canRead }: { canRead: boolean }) => useBulletinListController(query, canRead), {
+      initialProps: { canRead: true },
+      wrapper: createWrapper(client)
+    });
+    const retainedRefresh = hook.result.current.refresh;
+    expect(hook.result.current.state).toMatchObject({ kind: 'ready', records: [oldRecord] });
+    api.loadBulletins.mockClear();
+
+    hook.rerender({ canRead: false });
+
+    expect(hook.result.current.state).toEqual({ kind: 'idle' });
+    await act(async () => expect(retainedRefresh()).resolves.toBe(false));
+    expect(api.loadBulletins).not.toHaveBeenCalled();
+  });
+
   it('hides stale records after refresh failure and restores authoritative retry data', async () => {
     api.loadBulletins
       .mockResolvedValueOnce(page([oldRecord]))

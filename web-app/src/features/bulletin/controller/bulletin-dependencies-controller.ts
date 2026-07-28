@@ -50,32 +50,44 @@ type BulletinDependencyResources = {
   hierarchy: DependencyResource<BulletinMetricTreeMetricNode[]>;
 };
 
-export function useBulletinDependencies(draft: BulletinDraft | null): BulletinDependencyProof {
-  const resources = useBulletinDependencyResources(draft);
-  return resolveBulletinDependencies(draft, resources);
+export function useBulletinDependencies(draft: BulletinDraft | null, canRead = true): BulletinDependencyProof {
+  const resources = useBulletinDependencyResources(draft, canRead);
+  return canRead ? resolveBulletinDependencies(draft, resources) : idleBulletinDependencies();
 }
 
-function useBulletinDependencyResources(draft: BulletinDraft | null) {
+function idleBulletinDependencies(): BulletinDependencyProof {
+  return {
+    kind: 'idle',
+    fieldSelection: 'unverified',
+    monitorSelection: 'unverified',
+    apps: [],
+    monitors: [],
+    metrics: [],
+    metricTree: []
+  };
+}
+
+function useBulletinDependencyResources(draft: BulletinDraft | null, canRead: boolean) {
   const { i18n } = useTranslation();
   const app = draft?.app ?? '';
   const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const apps = useQuery({
     queryKey: bulletinQueryKeys.apps(),
     queryFn: loadBulletinApps,
-    enabled: draft != null,
+    enabled: canRead && draft != null,
     retry: false,
     staleTime: bulletinDependencyStaleTimeMs
   });
   const monitors = useQuery({
     queryKey: bulletinQueryKeys.monitors(app),
     queryFn: ({ signal }) => loadAllMonitors(app, signal),
-    enabled: Boolean(draft && app),
+    enabled: canRead && Boolean(draft && app),
     retry: false
   });
   const hierarchy = useQuery({
     queryKey: bulletinQueryKeys.hierarchy(app, locale),
     queryFn: ({ signal }) => loadBulletinMetricTree(app, locale, signal),
-    enabled: Boolean(draft && app),
+    enabled: canRead && Boolean(draft && app),
     retry: false
   });
   return { app, apps, hierarchy, monitors };

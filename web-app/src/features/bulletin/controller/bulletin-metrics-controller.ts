@@ -9,15 +9,15 @@ import { bulletinQueryKeys } from './bulletin-query-keys';
 
 const bulletinMetricsRefreshIntervalMs = 30_000;
 
-export function useBulletinMetrics(selectedId: number | null) {
+export function useBulletinMetrics(selectedId: number | null, canRead = true) {
   const query = useQuery({
     queryKey: bulletinQueryKeys.metrics(selectedId),
     // `enabled: false` still permits manual refetch; skipToken removes the unsafe null-id query function.
-    queryFn: selectedId == null ? skipToken : ({ signal }) => loadBulletinMetrics(selectedId, signal),
+    queryFn: !canRead || selectedId == null ? skipToken : ({ signal }) => loadBulletinMetrics(selectedId, signal),
     retry: false,
     refetchInterval: bulletinMetricsRefreshIntervalMs
   });
-  if (selectedId == null) return { kind: 'idle' as const };
+  if (!canRead || selectedId == null) return { kind: 'idle' as const };
   if (query.isPending) return { kind: 'loading' as const };
   if (query.isError) return { kind: classifyBulletinFailure(query.error) };
   return hasBulletinMetricFields(query.data)
