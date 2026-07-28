@@ -74,6 +74,78 @@ class DataSourceServiceTest {
     }
 
     @Test
+    void calculatePreviewPreservesExecutorFailure() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(List.of());
+        when(mockExecutor.executePreview(anyString())).thenThrow(new IllegalStateException("preview backend unavailable"));
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.calculatePreview("promql", "node_cpu_seconds_total > 80"));
+        assertEquals("Preview query execution failed", exception.getMessage());
+    }
+
+    @Test
+    void queryPreviewReturnsSafeFailureWithoutExecutorDetails() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(List.of());
+        when(mockExecutor.executePreview(anyString()))
+                .thenThrow(new IllegalStateException("private backend host and query details"));
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.queryPreview(
+                        "sql", "SELECT * FROM hertzbeat_logs", LOG_ALERT_THRESHOLD_TYPE_PERIODIC));
+
+        assertEquals("Preview query execution failed", exception.getMessage());
+    }
+
+    @Test
+    void queryPreviewWrapsValidatedSqlWithAnOuterLimit() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.executePreview(anyString())).thenReturn(List.of());
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        dataSourceService.queryPreview(
+                "sql", "SELECT * FROM hertzbeat_logs LIMIT 10; ", LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        verify(mockExecutor).executePreview(
+                "SELECT * FROM (SELECT * FROM hertzbeat_logs LIMIT 10) AS hertzbeat_preview LIMIT 100");
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryPreviewRejectsUnsafeSqlBeforeStrictExecution() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.queryPreview(
+                        "sql", "DROP TABLE hertzbeat_logs", LOG_ALERT_THRESHOLD_TYPE_PERIODIC));
+
+        verify(mockExecutor, never()).executePreview(anyString());
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryLeavesRegularSqlUnwrapped() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(List.of());
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        dataSourceService.query(
+                "sql", "SELECT * FROM hertzbeat_logs LIMIT 10;", LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        verify(mockExecutor).execute("SELECT * FROM hertzbeat_logs LIMIT 10;");
+        verify(mockExecutor, never()).executePreview(anyString());
+    }
+
+    @Test
     void calculate2() {
         List<Map<String, Object>> prometheusData = List.of(
                 new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),

@@ -178,6 +178,11 @@ public interface CommonConstants {
     String TRACE_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_trace";
 
     /**
+     * Maximum number of rows or series returned by an alert rule preview.
+     */
+    int ALERT_PREVIEW_RESULT_LIMIT = 100;
+
+    /**
      * Alert mode label key
      */
     String ALERT_MODE_LABEL = "alert_mode";

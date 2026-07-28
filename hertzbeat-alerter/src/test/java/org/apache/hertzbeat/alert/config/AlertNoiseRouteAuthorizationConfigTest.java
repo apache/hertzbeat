@@ -33,6 +33,8 @@ import org.junit.jupiter.api.function.Executable;
 class AlertNoiseRouteAuthorizationConfigTest {
 
     private static final String GET_RULE = "  - /api/alert/**===get===[admin,user,guest]";
+    private static final String ALERT_PREVIEW_GET_RULE =
+            "  - /api/alert/define/preview/**===get===[admin,user]";
     private static final String POST_RULE = "  - /api/alert/**===post===[admin,user]";
     private static final String PUT_RULE = "  - /api/alert/**===put===[admin,user]";
     private static final String DELETE_RULE = "  - /api/alert/**===delete===[admin]";
@@ -58,7 +60,11 @@ class AlertNoiseRouteAuthorizationConfigTest {
 
     private static void assertRules(String config) throws IOException {
         List<String> lines = Files.readAllLines(repoRoot().resolve(config));
+        assertTrue(lines.contains(ALERT_PREVIEW_GET_RULE),
+                () -> config + " must restrict alert preview telemetry to authors");
         assertTrue(lines.contains(GET_RULE), () -> config + " must allow authenticated alert reads");
+        assertTrue(lines.indexOf(ALERT_PREVIEW_GET_RULE) < lines.indexOf(GET_RULE),
+                () -> config + " must match the alert preview rule before the wildcard read");
         assertTrue(lines.contains(POST_RULE), () -> config + " must protect alert creates");
         assertTrue(lines.contains(PUT_RULE), () -> config + " must protect alert updates");
         assertTrue(lines.contains(DELETE_RULE), () -> config + " must restrict alert deletes");

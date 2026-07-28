@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -93,6 +94,7 @@ public class AlertDefineExcelImExportServiceTest {
             assertEquals(Map.of("key", "value"), alertDefineDTO.getAnnotations());
             assertEquals("template1", alertDefineDTO.getTemplate());
             assertTrue(alertDefineDTO.getEnable());
+            assertNull(alertDefineDTO.getDatasource());
         }
     }
 
@@ -104,6 +106,7 @@ public class AlertDefineExcelImExportServiceTest {
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
         alertDefineDTO.setName("app1");
         alertDefineDTO.setType("metric1");
+        alertDefineDTO.setDatasource("lifecycle-promql");
         alertDefineDTO.setExpr("expr1");
         alertDefineDTO.setPeriod(10);
         alertDefineDTO.setTimes(1);
@@ -129,6 +132,7 @@ public class AlertDefineExcelImExportServiceTest {
                 assertEquals("Annotations", headerRow.getCell(6).getStringCellValue());
                 assertEquals("Template", headerRow.getCell(7).getStringCellValue());
                 assertEquals("Enable", headerRow.getCell(8).getStringCellValue());
+                assertEquals("Datasource", headerRow.getCell(9).getStringCellValue());
 
                 Row dataRow = resultSheet.getRow(1);
                 assertEquals("app1", dataRow.getCell(0).getStringCellValue());
@@ -140,6 +144,11 @@ public class AlertDefineExcelImExportServiceTest {
                 assertEquals(JsonUtil.toJson(Map.of("key", "value")), dataRow.getCell(6).getStringCellValue());
                 assertEquals("template1", dataRow.getCell(7).getStringCellValue());
                 assertTrue(dataRow.getCell(8).getBooleanCellValue());
+                assertEquals("lifecycle-promql", dataRow.getCell(9).getStringCellValue());
+
+                List<ExportAlertDefineDTO> parsed = alertDefineExcelImExportService.parseImport(
+                        new ByteArrayInputStream(outputStream.toByteArray()));
+                assertEquals("lifecycle-promql", parsed.getFirst().getAlertDefine().getDatasource());
             }
         }
     }

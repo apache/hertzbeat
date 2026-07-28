@@ -183,7 +183,7 @@ class AlertDefineServiceTest {
                 put("status", "200");
             }
         };
-        when(dataSourceService.calculate(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
+        when(dataSourceService.calculatePreview(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
         List<Map<String, Object>> result = alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
         assertNotNull(result);
         assertEquals(1307, result.get(0).get("__value__"));
@@ -196,10 +196,34 @@ class AlertDefineServiceTest {
     }
 
     @Test
+    void getDefinePreviewPreservesDatasourceExecutionFailure() {
+        String expr = "up > 0";
+        when(dataSourceService.calculatePreview("promql", expr))
+                .thenThrow(new AlertExpressionException("Preview query execution failed"));
+
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr));
+    }
+
+    @Test
+    void getDefinePreviewCapsReturnedTelemetryRows() {
+        String expr = "up > 0";
+        List<Map<String, Object>> rows = java.util.stream.IntStream.range(0, 101)
+                .mapToObj(index -> Map.<String, Object>of("__value__", index))
+                .toList();
+        when(dataSourceService.calculatePreview("promql", expr)).thenReturn(rows);
+
+        List<Map<String, Object>> result =
+                alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+
+        assertEquals(100, result.size());
+    }
+
+    @Test
     void getDefinePreviewSupportsPeriodicTraceSql() {
         String expr = "SELECT service_name, 0.2 AS __value__ FROM hertzbeat_apm_red_1m";
         Map<String, Object> row = Map.of("service_name", "checkout", "__value__", 0.2D);
-        when(dataSourceService.query(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+        when(dataSourceService.queryPreview(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
                 .thenReturn(List.of(row));
 
         List<Map<String, Object>> result =
@@ -207,6 +231,22 @@ class AlertDefineServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(0.2D, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void getDefinePreviewPreservesPeriodicLogAndTraceExecutionFailures() {
+        String logExpr = "SELECT * FROM hertzbeat_logs";
+        String traceExpr = "SELECT __value__ FROM hertzbeat_apm_red_1m";
+        AlertExpressionException safeFailure = new AlertExpressionException("Preview query execution failed");
+        when(dataSourceService.queryPreview("sql", logExpr, LOG_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenThrow(safeFailure);
+        when(dataSourceService.queryPreview("sql", traceExpr, TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenThrow(safeFailure);
+
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", LOG_ALERT_THRESHOLD_TYPE_PERIODIC, logExpr));
+        assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, traceExpr));
     }
 
     @Test
@@ -257,7 +297,7 @@ class AlertDefineServiceTest {
     @Test
     void getDefinePreviewRejectsPeriodicTraceSqlWithoutValueColumn() {
         String expr = "SELECT service_name FROM hertzbeat_apm_red_1m";
-        when(dataSourceService.query(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+        when(dataSourceService.queryPreview(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
                 .thenReturn(List.of(Map.of("service_name", "checkout")));
 
         AlertExpressionException exception = assertThrows(AlertExpressionException.class,

@@ -61,6 +61,8 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     private static final List<String> TRACE_ALLOWED_TABLES = List.of("hertzbeat_apm_red_1m", "hzb_traces");
 
+    private static final String PREVIEW_QUERY_EXECUTION_FAILED = "Preview query execution failed";
+
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Setter
@@ -85,6 +87,15 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     @Override
     public List<Map<String, Object>> calculate(String datasource, String expr) {
+        return calculate(datasource, expr, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> calculatePreview(String datasource, String expr) {
+        return calculate(datasource, expr, true);
+    }
+
+    private List<Map<String, Object>> calculate(String datasource, String expr, boolean strict) {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
@@ -99,11 +110,19 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
         try {
-            return evaluate(expr, executor);
+            return evaluate(expr, executor, strict);
         } catch (AlertExpressionException ae) {
+            if (strict) {
+                log.warn("Alert preview calculation rejected for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Calculate query parse error, datasource: {}, expr: {}, msg: {}", datasource, expr, ae.getMessage(), ae);
             throw ae;
         } catch (Exception e) {
+            if (strict) {
+                log.warn("Alert preview calculation execution failed for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new RuntimeException("Query execution failed", e);
         }
@@ -116,6 +135,15 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     @Override
     public List<Map<String, Object>> query(String datasource, String expr, String alertType) {
+        return query(datasource, expr, alertType, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryPreview(String datasource, String expr, String alertType) {
+        return query(datasource, expr, alertType, true);
+    }
+
+    private List<Map<String, Object>> query(String datasource, String expr, String alertType, boolean strict) {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
@@ -136,11 +164,25 @@ public class DataSourceServiceImpl implements DataSourceService {
         }
 
         try {
-            return executor.execute(expr);
+            String executableExpression = strict && isSqlDatasource(datasource) ? limitPreviewSql(expr) : expr;
+            return strict ? executor.executePreview(executableExpression) : executor.execute(executableExpression);
         } catch (Exception e) {
+            if (strict) {
+                log.warn("Alert preview query execution failed for datasource {}", datasource);
+                throw new AlertExpressionException(PREVIEW_QUERY_EXECUTION_FAILED);
+            }
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new AlertExpressionException(e.getMessage());
         }
+    }
+
+    private String limitPreviewSql(String sql) {
+        String boundedSql = sql.stripTrailing();
+        if (boundedSql.endsWith(";")) {
+            boundedSql = boundedSql.substring(0, boundedSql.length() - 1).stripTrailing();
+        }
+        return "SELECT * FROM (" + boundedSql + ") AS hertzbeat_preview LIMIT "
+                + CommonConstants.ALERT_PREVIEW_RESULT_LIMIT;
     }
 
     /**
@@ -169,7 +211,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         return logSqlSecurityValidator;
     }
 
-    private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
+    private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor, boolean strict) {
         CommonTokenStream tokens = createTokenStream(expr);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);
         ParseTree tree = expressionCache.get(expr, e -> parser.expr());
@@ -178,7 +220,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         if (tokens.index() > 0 && tokens.LA(1) != Token.EOF) {
             throw new AlertExpressionException(bundle.getString("alerter.calculate.parse.error"));
         }
-        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
+        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens, strict);
         return visitor.visit(tree);
     }
 

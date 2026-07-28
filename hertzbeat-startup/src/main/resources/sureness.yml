@@ -61,6 +61,7 @@ resourceRole:
   - /api/monitors===delete===[admin]
   - /api/monitors/manage===delete===[admin]
   - /api/monitors/**===delete===[admin]
+  - /api/alert/define/preview/**===get===[admin,user]
   - /api/alert/**===get===[admin,user,guest]
   - /api/alert/sse/**===get===[admin,user,guest]
   - /api/alert/**===post===[admin,user]

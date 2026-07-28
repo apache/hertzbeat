@@ -34,6 +34,14 @@ public interface DataSourceService {
     List<Map<String, Object>> calculate(String datasource, String expr);
 
     /**
+     * Execute a preview calculation while preserving query execution failures.
+     * @param datasource datasource
+     * @param expr query expr
+     * @return preview result
+     */
+    List<Map<String, Object>> calculatePreview(String datasource, String expr);
+
+    /**
      * query result set from db
      * @param datasource sql or promql
      * @param expr query expr
@@ -49,6 +57,15 @@ public interface DataSourceService {
      * @return result
      */
     List<Map<String, Object>> query(String datasource, String expr, String alertType);
+
+    /**
+     * Execute an alert preview query without exposing executor failure details.
+     * @param datasource sql or promql
+     * @param expr query expr
+     * @param alertType alert rule type
+     * @return preview rows
+     */
+    List<Map<String, Object>> queryPreview(String datasource, String expr, String alertType);
 
     /**
      * Get available datasource executors status
