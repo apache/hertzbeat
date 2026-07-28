@@ -33,6 +33,7 @@ import { noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelResourceName } from '@/features/settings/label/refine';
 import { systemConfigResourceName } from '@/features/settings/system-config/refine';
 import {
+  hasShellRoleAccess,
   readShellResourceMeta,
   type ShellCapability,
   type ShellResourceMeta,
@@ -368,7 +369,7 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
 export function resolveShellAccess(params: Parameters<AccessControlProvider['can']>[0]['params']) {
   const shell = readShellResourceMeta(params?.resource?.meta?.shell);
   if (!shell || shell.capability !== 'supported') return capabilityDenied(shell);
-  const permitted = hasRequiredRole(shell.requiredRoles ?? [], stringRoles(params?.roles));
+  const permitted = hasShellRoleAccess(shell, stringRoles(params?.roles));
   return permitted ? { can: true } : { can: false, reason: 'ROLE_REQUIRED' };
 }
 
@@ -379,8 +380,4 @@ function capabilityDenied(shell?: ShellResourceMeta) {
 
 function stringRoles(value: unknown) {
   return Array.isArray(value) ? value.filter(role => typeof role === 'string') : [];
-}
-
-function hasRequiredRole(requiredRoles: string[], roles: string[]) {
-  return requiredRoles.length === 0 || requiredRoles.some(role => roles.includes(role));
 }

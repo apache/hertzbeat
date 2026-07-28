@@ -64,11 +64,11 @@ export type ShellNavigationItem = {
   route?: string;
 };
 
-export function buildShellNavigation(resources: readonly IResourceItem[]) {
+export function buildShellNavigation(resources: readonly IResourceItem[], roles: readonly string[] = []) {
   const items = new Map<string, ShellNavigationItem>();
   resources.forEach(resource => {
     const shell = readShellResourceMeta(resource.meta?.shell);
-    if (!shell?.navigation) return;
+    if (!shell?.navigation || !hasShellRoleAccess(shell, roles)) return;
     const item: ShellNavigationItem = {
       capability: shell.capability,
       children: [],
@@ -93,6 +93,12 @@ export function buildShellNavigation(resources: readonly IResourceItem[]) {
   });
   sortNavigation(roots);
   return roots;
+}
+
+export function hasShellRoleAccess(shell: ShellResourceMeta | undefined, roles: readonly string[]) {
+  if (!shell) return false;
+  const requiredRoles = shell.requiredRoles ?? [];
+  return requiredRoles.length === 0 || requiredRoles.some(role => roles.includes(role));
 }
 
 export function activeNavigationTrail(tree: readonly ShellNavigationItem[], location: string) {

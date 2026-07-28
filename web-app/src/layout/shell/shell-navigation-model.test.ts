@@ -60,6 +60,19 @@ describe('shell navigation model', () => {
     expect(unknown).toMatchObject({ capability: 'unknown', disabled: true });
   });
 
+  it('omits role-denied routes from navigation while retaining admitted siblings', () => {
+    const tree = buildShellNavigation(
+      [
+        resource('administration', undefined, undefined, 10),
+        resource('settings', '/settings', 'administration', 10),
+        resource('tokens', '/settings/tokens', 'administration', 20, 'supported', ['ADMIN'])
+      ],
+      ['USER']
+    );
+
+    expect(tree[0]?.children.map(item => item.name)).toEqual(['settings']);
+  });
+
   it('keeps a backend-owned application label as display data rather than an i18n key', () => {
     const [item] = buildShellNavigation([
       {
@@ -148,7 +161,8 @@ function resource(
   list?: string,
   parent?: string,
   order = 0,
-  capability: 'supported' | 'unknown' | 'unsupported' = 'supported'
+  capability: 'supported' | 'unknown' | 'unsupported' = 'supported',
+  requiredRoles?: string[]
 ) {
   return {
     name,
@@ -158,7 +172,8 @@ function resource(
         labelKey: `shell.navigation.${name}`,
         navigation: true,
         order,
-        timePolicy: list ? ('unknown' as const) : ('none' as const)
+        timePolicy: list ? ('unknown' as const) : ('none' as const),
+        ...(requiredRoles ? { requiredRoles } : {})
       },
       ...(parent ? { parent } : {})
     },

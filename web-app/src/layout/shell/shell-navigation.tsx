@@ -11,6 +11,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
+import { useSession } from '@/core/auth/session-context';
+
 import { activeNavigationTrail, buildShellNavigation, type ShellNavigationItem } from './shell-navigation-model';
 import styles from './hertzbeat-shell.module.css';
 import { ShellNavigationFlyout } from './shell-navigation-flyout';
@@ -20,12 +22,15 @@ type ShellNavigationProps = {
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 };
+const noSessionRoles: readonly string[] = [];
 
 export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigationProps) {
   const { t } = useTranslation();
+  const { session } = useSession();
   const location = useLocation();
   const { resources } = useResourceParams();
-  const tree = useMemo(() => buildShellNavigation(resources), [resources]);
+  const roles = session?.roles ?? noSessionRoles;
+  const tree = useMemo(() => buildShellNavigation(resources, roles), [resources, roles]);
   const trail = useMemo(
     () => activeNavigationTrail(tree, `${location.pathname}${location.search}`),
     [location.pathname, location.search, tree]

@@ -24,7 +24,8 @@ import { ShellNavigation } from './shell-navigation';
 const refine = vi.hoisted(() => ({
   go: vi.fn(),
   resources: [] as ReturnType<typeof navigationResources>,
-  denied: new Set<string>()
+  denied: new Set<string>(),
+  roles: ['ADMIN']
 }));
 
 vi.mock('@refinedev/core', async importOriginal => ({
@@ -37,7 +38,7 @@ vi.mock('@refinedev/core', async importOriginal => ({
   useResourceParams: () => ({ resources: refine.resources })
 }));
 vi.mock('@/core/auth/session-context', () => ({
-  useSession: () => ({ session: { roles: ['ADMIN'] } })
+  useSession: () => ({ session: { roles: refine.roles } })
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
@@ -45,6 +46,7 @@ describe('collapsed ShellNavigation', () => {
   beforeEach(() => {
     refine.go.mockReset();
     refine.denied = new Set(['restricted']);
+    refine.roles = ['ADMIN'];
     refine.resources = navigationResources();
   });
   afterEach(cleanup);
@@ -125,6 +127,17 @@ describe('collapsed ShellNavigation', () => {
     });
     expect(administration).toHaveFocus();
   });
+
+  it('removes an ADMIN-only route when the active session loses that role', async () => {
+    const view = renderNavigation();
+    fireEvent.click(groupButton('shell.navigation.administration'));
+    expect(await screen.findByRole('link', { name: 'menu.tokens' })).toBeInTheDocument();
+
+    refine.roles = ['USER'];
+    view.rerender(navigationElement());
+
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'menu.tokens' })).not.toBeInTheDocument());
+  });
 });
 
 function groupButton(name: string) {
@@ -132,7 +145,11 @@ function groupButton(name: string) {
 }
 
 function renderNavigation() {
-  return render(
+  return render(navigationElement());
+}
+
+function navigationElement() {
+  return (
     <MemoryRouter initialEntries={['/dashboard']}>
       <ShellNavigation collapsed onCollapsedChange={vi.fn()} />
     </MemoryRouter>
@@ -150,7 +167,8 @@ function navigationResources() {
     resource('preview', '/preview', 'shell-workspace', 40, 'unknown'),
     resource('alerts', '/alerts', 'shell-operations', 10),
     resource('alert-rules', '/alerts/rules', 'alerts', 10),
-    resource('settings', '/settings', 'shell-administration', 10)
+    resource('settings', '/settings', 'shell-administration', 10),
+    resource('tokens', '/settings/tokens', 'shell-administration', 20, 'supported', ['ADMIN'])
   ];
 }
 
@@ -159,7 +177,8 @@ function resource(
   list?: string,
   parent?: string,
   order = 0,
-  capability: 'supported' | 'unknown' | 'unsupported' = 'supported'
+  capability: 'supported' | 'unknown' | 'unsupported' = 'supported',
+  requiredRoles?: string[]
 ) {
   return {
     name,
@@ -170,7 +189,8 @@ function resource(
         labelKey: name.startsWith('shell-') ? `shell.navigation.${name.slice(6)}` : labelKey(name),
         navigation: true,
         order,
-        timePolicy: list ? ('unknown' as const) : ('none' as const)
+        timePolicy: list ? ('unknown' as const) : ('none' as const),
+        ...(requiredRoles ? { requiredRoles } : {})
       },
       ...(parent ? { parent } : {})
     },
