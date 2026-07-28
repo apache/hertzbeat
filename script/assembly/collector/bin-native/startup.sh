@@ -23,6 +23,8 @@ cd "$(dirname "$0")"
 BIN_DIR="$(pwd)"
 cd ..
 DEPLOY_DIR="$(pwd)"
+: "${HERTZBEAT_HOME:=$DEPLOY_DIR}"
+export HERTZBEAT_HOME
 
 CONF_DIR="$DEPLOY_DIR/config"
 LOGS_DIR="$DEPLOY_DIR/logs"

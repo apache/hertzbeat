@@ -23,6 +23,8 @@ cd "$(dirname "$0")/.."
 DEPLOY_DIR=$(pwd)
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 CONF_DIR="$DEPLOY_DIR/config"
+: "${HERTZBEAT_HOME:=$DEPLOY_DIR}"
+export HERTZBEAT_HOME
 
 if [ ! -x "$APP_PATH" ]; then
   echo "ERROR: native executable not found: $APP_PATH" >&2
