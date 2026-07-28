@@ -72,6 +72,8 @@ function ResultPanel({
   const { t } = useTranslation();
   if (result.kind === 'invalid') return null;
   if (result.kind === 'loading') return <ExploreLoadingResult />;
+  if (result.kind === 'permission')
+    return <ExploreMessageResult type="warning" message={t('common.permission.roleRequiredDescription')} />;
   if (result.kind === 'transport_error')
     return (
       <ExploreMessageResult

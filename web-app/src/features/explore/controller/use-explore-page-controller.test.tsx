@@ -240,6 +240,7 @@ describe('Explore page controller', () => {
     const { ApiMessageError } = await import('@/core/http/api-message');
     const { ExploreSignalContractError } = await import('../model/explore-signal-contract');
     for (const [reason, kind] of [
+      [new ApiMessageError('forbidden', { status: 403 }), 'permission'],
       [new ApiMessageError('offline', { status: 503 }), 'transport_error'],
       [new ExploreSignalContractError('bad'), 'contract_error'],
       [new Error('bad'), 'error']

@@ -261,6 +261,8 @@ describe('explore API paths', () => {
 
   it('keeps missing, transport, contract, and other failures distinct', () => {
     expect(classifyExploreSignalError(new ExploreSignalMissingError())).toBe('missing');
+    expect(classifyExploreSignalError(new ApiMessageError('unauthorized', { status: 401 }))).toBe('permission');
+    expect(classifyExploreSignalError(new ApiMessageError('forbidden', { status: 403 }))).toBe('permission');
     expect(classifyExploreSignalError(new ApiMessageError('offline', { status: 503 }))).toBe('transport_error');
     expect(classifyExploreSignalError(new ExploreSignalContractError('bad'))).toBe('contract_error');
     expect(classifyExploreSignalError(new Error('bad'))).toBe('error');

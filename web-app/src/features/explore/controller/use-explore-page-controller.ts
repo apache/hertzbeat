@@ -47,6 +47,7 @@ export type ExplorePageResultState =
   | { kind: 'invalid' }
   | { kind: 'live' }
   | { kind: 'loading' }
+  | { kind: 'permission' }
   | { kind: 'transport_error' }
   | { kind: 'contract_error' }
   | { kind: 'error' }
@@ -131,7 +132,9 @@ function resolveResult(
   if (pending) return { kind: 'loading' };
   if (error) {
     const kind = classifyExploreSignalError(error);
-    return { kind: kind === 'transport_error' || kind === 'contract_error' ? kind : 'error' };
+    return {
+      kind: kind === 'permission' || kind === 'transport_error' || kind === 'contract_error' ? kind : 'error'
+    };
   }
   if (!evidence) return { kind: 'error' };
   return resolveDataResult(query, evidence);

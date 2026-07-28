@@ -261,12 +261,13 @@ describe('ExplorePage instrumentation context boundary', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'transportError'],
-    [new ExploreSignalContractError('invalid payload'), 'contractError']
+    [new ApiMessageError('forbidden', { status: 403 }), 'common.permission.roleRequiredDescription'],
+    [new ApiMessageError('offline', { status: 503 }), 'explore.states.transportError'],
+    [new ExploreSignalContractError('invalid payload'), 'explore.states.contractError']
   ] as const)('renders classified request failures without calling them empty', async (reason, messageKey) => {
     api.loadLogSignal.mockRejectedValue(reason);
     renderPage('/explore?signal=logs');
-    expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
+    expect(await screen.findByText(i18n.t(messageKey))).toBeInTheDocument();
     expect(screen.queryByText(en.explore.empty.logs)).not.toBeInTheDocument();
   });
 });
