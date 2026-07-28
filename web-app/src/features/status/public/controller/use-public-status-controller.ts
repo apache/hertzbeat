@@ -16,13 +16,17 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 
 import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from '../api/public-status-api';
 import type { PublicStatusState, PublicStatusViewModel } from '../model/public-status-contract';
+import { createPublicStatusIncidentRange, isPublicStatusIncidentYear } from '../model/public-status-incident-range';
 import { isCompletePublicStatusIncidentPage, publicStatusState } from '../model/public-status-model';
 import { publicStatusQueryKeys } from './public-status-query-keys';
 
 export function usePublicStatusController(): PublicStatusViewModel {
+  const [incidentYear, setIncidentYear] = useState(() => new Date().getFullYear());
+  const incidentRange = useMemo(() => createPublicStatusIncidentRange(incidentYear), [incidentYear]);
   const org = useQuery({
     queryKey: publicStatusQueryKeys.org(),
     queryFn: ({ signal }) => loadPublicStatusOrg({ signal })
@@ -32,25 +36,34 @@ export function usePublicStatusController(): PublicStatusViewModel {
     queryFn: ({ signal }) => loadPublicStatusComponents({ signal })
   });
   const incidents = useQuery({
-    queryKey: publicStatusQueryKeys.incidents(),
-    queryFn: ({ signal }) => loadPublicStatusIncidents({ signal })
+    queryKey: publicStatusQueryKeys.incidents(incidentRange),
+    queryFn: ({ signal }) => loadPublicStatusIncidents(incidentRange, { signal })
   });
   const state = publicStatusState(org.error, components.error, incidents.error);
+  const actions = {
+    incidentLoading: incidents.isPending,
+    incidentRange,
+    incidentRefreshing: incidents.isFetching && !incidents.isPending,
+    refreshIncidents: incidents.refetch,
+    selectIncidentYear: (year: number) => {
+      if (isPublicStatusIncidentYear(year, new Date().getFullYear())) setIncidentYear(year);
+    }
+  };
 
   // Pending evidence wins over cached data so a partial first load cannot appear ready.
-  if (org.isPending || components.isPending || incidents.isPending) return emptyViewModel(state, true);
+  if (org.isPending || components.isPending) return emptyViewModel(state, true, actions);
   if (state !== 'ready') {
-    return { ...emptyViewModel(state, false), org: org.error ? undefined : org.data };
+    return { ...emptyViewModel(state, false, actions), org: org.error ? undefined : org.data };
   }
-  if (
-    org.data === undefined ||
-    components.data === undefined ||
-    incidents.data === undefined ||
-    !isCompletePublicStatusIncidentPage(incidents.data)
-  ) {
-    return emptyViewModel('error', false);
+  if (org.data === undefined || components.data === undefined) return emptyViewModel('error', false, actions);
+  if (incidents.isPending) {
+    return { ...actions, org: org.data, components: components.data, incidents: [], loading: false, state: 'ready' };
+  }
+  if (incidents.data === undefined || !isCompletePublicStatusIncidentPage(incidents.data)) {
+    return emptyViewModel('error', false, actions);
   }
   return {
+    ...actions,
     org: org.data,
     components: components.data,
     incidents: incidents.data.content,
@@ -59,6 +72,13 @@ export function usePublicStatusController(): PublicStatusViewModel {
   };
 }
 
-function emptyViewModel(state: PublicStatusState, loading: boolean): PublicStatusViewModel {
-  return { org: undefined, components: [], incidents: [], loading, state };
+function emptyViewModel(
+  state: PublicStatusState,
+  loading: boolean,
+  actions: Pick<
+    PublicStatusViewModel,
+    'incidentLoading' | 'incidentRange' | 'incidentRefreshing' | 'refreshIncidents' | 'selectIncidentYear'
+  >
+): PublicStatusViewModel {
+  return { ...actions, org: undefined, components: [], incidents: [], loading, state };
 }

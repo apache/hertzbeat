@@ -23,6 +23,7 @@ import {
 } from '@/features/status/api/status-api-failure';
 
 import type { PublicStatusIncidentPage } from '../model/public-status-contract';
+import type { PublicStatusIncidentRange } from '../model/public-status-incident-range';
 import { isCompletePublicStatusIncidentPage } from '../model/public-status-model';
 import {
   parsePublicStatusComponents,
@@ -45,15 +46,15 @@ export const loadPublicStatusOrg = async (context?: PublicStatusQueryContext) =>
 export const loadPublicStatusComponents = async (context?: PublicStatusQueryContext) =>
   parsePublicStatusComponents(await get('/api/status/page/public/component', context));
 
-export async function loadPublicStatusIncidents(context?: PublicStatusQueryContext) {
-  const firstPage = await loadIncidentPage(0, context);
+export async function loadPublicStatusIncidents(range: PublicStatusIncidentRange, context?: PublicStatusQueryContext) {
+  const firstPage = await loadIncidentPage(0, range, context);
   assertFirstPage(firstPage);
   const pages = [firstPage];
 
   // The validated first page fixes the termination bound; every later page must keep that snapshot metadata.
   for (let pageIndex = 1; pageIndex < firstPage.totalPages; pageIndex += 1) {
     if (context?.signal?.aborted) throw createStatusRequestCancellation();
-    const page = await loadIncidentPage(pageIndex, context);
+    const page = await loadIncidentPage(pageIndex, range, context);
     assertContinuationPage(firstPage, page, pageIndex);
     pages.push(page);
   }
@@ -63,8 +64,18 @@ export async function loadPublicStatusIncidents(context?: PublicStatusQueryConte
   return result;
 }
 
-async function loadIncidentPage(pageIndex: number, context?: PublicStatusQueryContext) {
-  const path = `${incidentPath}?pageIndex=${pageIndex}&pageSize=${publicStatusIncidentPageSize}`;
+async function loadIncidentPage(
+  pageIndex: number,
+  range: PublicStatusIncidentRange,
+  context?: PublicStatusQueryContext
+) {
+  const parameters = new URLSearchParams({
+    pageIndex: String(pageIndex),
+    pageSize: String(publicStatusIncidentPageSize),
+    startTime: String(range.startTime)
+  });
+  if (range.endTime !== null) parameters.set('endTime', String(range.endTime));
+  const path = `${incidentPath}?${parameters.toString()}`;
   return parsePublicStatusIncidents(await get(path, context));
 }
 

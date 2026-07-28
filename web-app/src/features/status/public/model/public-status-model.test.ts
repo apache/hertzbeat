@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
+import { PublicStatusContractError } from './public-status-contract';
 import {
   isStatusOrgNotFound,
   publicComponentStateKey,
@@ -46,6 +47,8 @@ describe('public status state', () => {
     expect(publicStatusState(null, new Error('components failed'), null)).toBe('error');
     expect(publicStatusState(null, null, new Error('incidents failed'))).toBe('error');
     expect(publicStatusState(new StatusOrgNotFoundError(), new Error('components unavailable'), null)).toBe('error');
+    expect(publicStatusState(new StatusRequestFailure('permission', 'rejected'), null, null)).toBe('permission');
+    expect(publicStatusState(new PublicStatusContractError(), null, null)).toBe('invalid');
   });
 
   it('keeps typed health and incident states distinct from unknown evidence', () => {

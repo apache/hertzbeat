@@ -17,12 +17,27 @@
 
 import type { PagedCollection } from '@/shared/pagination';
 
+import type { PublicStatusIncidentRange } from './public-status-incident-range';
+
 export type PublicStatusOrg = {
   name: string;
   description: string;
-  home?: string;
+  home: string;
+  logo: string;
+  feedback?: string;
   state: PublicStatusOrgState;
   color?: string;
+};
+
+export type PublicStatusHistory = {
+  id?: number;
+  componentId: number;
+  state: PublicStatusComponentState;
+  timestamp: number;
+  uptime?: number;
+  abnormal?: number;
+  unknowing?: number;
+  normal?: number;
 };
 
 export type PublicStatusComponent = {
@@ -30,6 +45,22 @@ export type PublicStatusComponent = {
   name: string;
   description?: string;
   state: PublicStatusComponentState;
+  history: PublicStatusHistory[] | null;
+};
+
+export type PublicStatusIncidentComponent = {
+  id: number;
+  name: string;
+  description?: string;
+  state: PublicStatusComponentState;
+};
+
+export type PublicStatusIncidentContent = {
+  id: number;
+  incidentId: number;
+  message: string;
+  state: PublicStatusIncidentState;
+  timestamp: number;
 };
 
 export type PublicStatusIncident = {
@@ -38,6 +69,8 @@ export type PublicStatusIncident = {
   state: PublicStatusIncidentState;
   startTime?: number;
   endTime?: number;
+  components: PublicStatusIncidentComponent[] | null;
+  contents: PublicStatusIncidentContent[] | null;
 };
 
 export type PublicStatusOrgState = 'healthy' | 'degraded' | 'incident' | 'unknown';
@@ -46,12 +79,24 @@ export type PublicStatusIncidentState = 'investigating' | 'identified' | 'monito
 
 export type PublicStatusIncidentPage = PagedCollection<PublicStatusIncident>;
 
-export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable' | 'error';
+export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable' | 'invalid' | 'permission' | 'error';
 
 export type PublicStatusViewModel = {
   org: PublicStatusOrg | undefined;
   components: PublicStatusComponent[];
   incidents: PublicStatusIncident[];
+  incidentLoading: boolean;
+  incidentRange: PublicStatusIncidentRange;
+  incidentRefreshing: boolean;
   loading: boolean;
+  refreshIncidents: () => unknown;
+  selectIncidentYear: (year: number) => void;
   state: PublicStatusState;
 };
+
+export class PublicStatusContractError extends Error {
+  constructor() {
+    super('Public status response is invalid');
+    this.name = 'PublicStatusContractError';
+  }
+}

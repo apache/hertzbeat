@@ -9,86 +9,83 @@ import { z } from 'zod';
 
 import type {
   PublicStatusComponent,
-  PublicStatusComponentState,
   PublicStatusIncident,
+  PublicStatusIncidentComponent,
   PublicStatusIncidentPage,
-  PublicStatusIncidentState,
   PublicStatusOrg,
   PublicStatusOrgState
 } from '../model/public-status-contract';
-
-const nullableText = z.string().nullable().optional();
-const nullableTime = z.union([z.string(), z.number()]).nullable().optional();
-const state = z.number().int();
+import { PublicStatusContractError } from '../model/public-status-contract';
+import {
+  nullablePublicStatusText,
+  nullablePublicStatusTime,
+  publicComponentState,
+  publicIncidentState,
+  publicStatusComponentInfoSchema,
+  publicStatusHistorySchema,
+  publicStatusIncidentContentSchema,
+  publicStatusNonNegativeInteger,
+  publicStatusPositiveInteger,
+  publicStatusSafeInteger,
+  requiredPublicStatusText,
+  safePublicStatusFeedback,
+  safePublicStatusUrl
+} from './public-status-evidence-schema';
 
 const publicStatusOrgWireSchema = z
   .object({
-    id: z.number().int().positive().nullable().optional(),
-    name: z.string(),
-    description: z.string(),
-    home: nullableText,
-    logo: nullableText,
-    feedback: nullableText,
-    color: nullableText,
-    state,
-    creator: nullableText,
-    modifier: nullableText,
-    gmtCreate: nullableTime,
-    gmtUpdate: nullableTime
+    id: publicStatusPositiveInteger.nullable().optional(),
+    name: requiredPublicStatusText,
+    description: requiredPublicStatusText,
+    home: safePublicStatusUrl,
+    logo: safePublicStatusUrl,
+    feedback: safePublicStatusFeedback,
+    color: nullablePublicStatusText,
+    state: publicStatusSafeInteger,
+    creator: nullablePublicStatusText,
+    modifier: nullablePublicStatusText,
+    gmtCreate: nullablePublicStatusTime,
+    gmtUpdate: nullablePublicStatusTime
   })
   .strict()
   .transform((value): PublicStatusOrg => ({
     name: value.name,
     description: value.description,
-    ...(value.home == null ? {} : { home: value.home }),
+    home: value.home,
+    logo: value.logo,
+    ...(value.feedback == null ? {} : { feedback: value.feedback }),
     state: publicOrgState(value.state),
     ...(value.color == null ? {} : { color: value.color })
   }));
 
-const componentInfoSchema = z
-  .object({
-    id: z.number().int().positive(),
-    orgId: z.number().int().positive().nullable().optional(),
-    name: z.string(),
-    description: nullableText,
-    labels: z.record(z.string(), z.string()).nullable().optional(),
-    method: state.optional(),
-    configState: state.optional(),
-    state,
-    creator: nullableText,
-    modifier: nullableText,
-    gmtCreate: nullableTime,
-    gmtUpdate: nullableTime
-  })
-  .strict();
-
 const publicStatusComponentWireSchema = z
   .object({
-    info: componentInfoSchema,
-    history: z.array(z.unknown()).nullable().optional()
+    info: publicStatusComponentInfoSchema,
+    history: z.array(publicStatusHistorySchema).nullable()
   })
   .strict()
-  .transform(({ info }): PublicStatusComponent => ({
+  .transform(({ info, history }): PublicStatusComponent => ({
     id: info.id,
     name: info.name,
     ...(info.description == null ? {} : { description: info.description }),
-    state: publicComponentState(info.state)
+    state: publicComponentState(info.state),
+    history
   }));
 
 const publicStatusIncidentSchema = z
   .object({
-    id: z.number().int().positive(),
-    orgId: z.number().int().positive().nullable().optional(),
-    name: z.string(),
-    state,
-    startTime: z.number().nullable().optional(),
-    endTime: z.number().nullable().optional(),
-    creator: nullableText,
-    modifier: nullableText,
-    gmtCreate: nullableTime,
-    gmtUpdate: nullableTime,
-    components: z.array(z.unknown()).nullable().optional(),
-    contents: z.array(z.unknown()).nullable().optional()
+    id: publicStatusPositiveInteger,
+    orgId: publicStatusPositiveInteger.nullable().optional(),
+    name: requiredPublicStatusText,
+    state: publicStatusSafeInteger,
+    startTime: publicStatusPositiveInteger.nullable().optional(),
+    endTime: publicStatusPositiveInteger.nullable().optional(),
+    creator: nullablePublicStatusText,
+    modifier: nullablePublicStatusText,
+    gmtCreate: nullablePublicStatusTime,
+    gmtUpdate: nullablePublicStatusTime,
+    components: z.array(publicStatusComponentInfoSchema).nullable(),
+    contents: z.array(publicStatusIncidentContentSchema).nullable()
   })
   .strict()
   .transform((value): PublicStatusIncident => ({
@@ -96,16 +93,24 @@ const publicStatusIncidentSchema = z
     name: value.name,
     state: publicIncidentState(value.state),
     ...(value.startTime == null ? {} : { startTime: value.startTime }),
-    ...(value.endTime == null ? {} : { endTime: value.endTime })
+    ...(value.endTime == null ? {} : { endTime: value.endTime }),
+    components:
+      value.components?.map((component): PublicStatusIncidentComponent => ({
+        id: component.id,
+        name: component.name,
+        ...(component.description == null ? {} : { description: component.description }),
+        state: publicComponentState(component.state)
+      })) ?? null,
+    contents: value.contents
   }));
 
 const publicStatusIncidentPageSchema = z
   .object({
     content: z.array(publicStatusIncidentSchema),
-    totalElements: z.number().int().nonnegative(),
-    totalPages: z.number().int().nonnegative(),
-    number: z.number().int().nonnegative(),
-    size: z.number().int().positive(),
+    totalElements: publicStatusNonNegativeInteger,
+    totalPages: publicStatusNonNegativeInteger,
+    number: publicStatusNonNegativeInteger,
+    size: publicStatusPositiveInteger,
     pageable: z.unknown().optional(),
     last: z.boolean().optional(),
     sort: z.unknown().optional(),
@@ -122,16 +127,27 @@ const publicStatusIncidentPageSchema = z
     size
   }));
 
-export class PublicStatusContractError extends Error {
-  constructor() {
-    super('Public status response is invalid');
-    this.name = 'PublicStatusContractError';
-  }
-}
-
 export const parsePublicStatusOrg = (value: unknown) => parse(publicStatusOrgWireSchema, value);
-export const parsePublicStatusComponents = (value: unknown) => parse(z.array(publicStatusComponentWireSchema), value);
-export const parsePublicStatusIncidents = (value: unknown) => parse(publicStatusIncidentPageSchema, value);
+export const parsePublicStatusComponents = (value: unknown) => {
+  const components = parse(z.array(publicStatusComponentWireSchema), value);
+  components.forEach(component => {
+    if (
+      component.history &&
+      (new Set(component.history.map(item => item.timestamp)).size !== component.history.length ||
+        component.history.some(item => item.componentId !== component.id))
+    ) {
+      throw new PublicStatusContractError();
+    }
+  });
+  return components;
+};
+export const parsePublicStatusIncidents = (value: unknown) => {
+  const page = parse(publicStatusIncidentPageSchema, value);
+  page.content.forEach(assertIncidentRelations);
+  return page;
+};
+
+export { PublicStatusContractError } from '../model/public-status-contract';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -139,24 +155,21 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return result.data;
 }
 
+function assertIncidentRelations(incident: PublicStatusIncident) {
+  const componentIds = incident.components?.map(component => component.id) ?? [];
+  const contentIds = incident.contents?.map(content => content.id) ?? [];
+  if (new Set(componentIds).size !== componentIds.length || new Set(contentIds).size !== contentIds.length) {
+    throw new PublicStatusContractError();
+  }
+  if (incident.contents?.some(content => content.incidentId !== incident.id)) {
+    throw new PublicStatusContractError();
+  }
+}
+
 // Persisted backend byte codes are a compatibility boundary; future values must remain unknown evidence.
 function publicOrgState(value: number): PublicStatusOrgState {
   if (value === 0) return 'healthy';
   if (value === 1) return 'degraded';
   if (value === 2) return 'incident';
-  return 'unknown';
-}
-
-function publicComponentState(value: number): PublicStatusComponentState {
-  if (value === 0) return 'healthy';
-  if (value === 1) return 'incident';
-  return 'unknown';
-}
-
-function publicIncidentState(value: number): PublicStatusIncidentState {
-  if (value === 0) return 'investigating';
-  if (value === 1) return 'identified';
-  if (value === 2) return 'monitoring';
-  if (value === 3) return 'resolved';
   return 'unknown';
 }

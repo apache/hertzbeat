@@ -20,14 +20,22 @@ import { describe, expect, it } from 'vitest';
 import { publicStatusQueryKeys } from './public-status-query-keys';
 
 describe('Public Status Query Keys', () => {
+  const range = { year: 2026, startTime: 100, endTime: null };
+
   it('preserves the established cache identity for each fixed public resource', () => {
     expect(publicStatusQueryKeys.org()).toEqual(['public-status-org']);
     expect(publicStatusQueryKeys.components()).toEqual(['public-status-components']);
-    expect(publicStatusQueryKeys.incidents()).toEqual(['public-status-incidents']);
+    expect(publicStatusQueryKeys.incidents(range)).toEqual(['public-status-incidents', 2026, 100, null]);
   });
 
   it('keeps distinct resources isolated', () => {
     expect(publicStatusQueryKeys.org()).not.toEqual(publicStatusQueryKeys.components());
-    expect(publicStatusQueryKeys.components()).not.toEqual(publicStatusQueryKeys.incidents());
+    expect(publicStatusQueryKeys.components()).not.toEqual(publicStatusQueryKeys.incidents(range));
+  });
+
+  it('isolates incident years and their canonical range evidence', () => {
+    expect(publicStatusQueryKeys.incidents(range)).not.toEqual(
+      publicStatusQueryKeys.incidents({ year: 2025, startTime: 50, endTime: 99 })
+    );
   });
 });

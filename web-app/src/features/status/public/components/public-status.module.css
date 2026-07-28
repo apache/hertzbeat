@@ -34,6 +34,22 @@
   margin: 0;
 }
 
+.logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .section {
   margin-top: 28px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.incidentEvidence {
+  width: 100%;
 }

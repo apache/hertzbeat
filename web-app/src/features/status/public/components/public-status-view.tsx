@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Skeleton, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Skeleton, Space, Tag, Typography } from 'antd';
 import type { CSSProperties } from 'react';
 
 import { defaultStatusAccent } from '@/features/status/shared/status-constants';
@@ -23,15 +23,16 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   PublicStatusComponent,
-  PublicStatusComponentState,
   PublicStatusIncident,
-  PublicStatusIncidentState,
   PublicStatusOrg,
   PublicStatusOrgState,
   PublicStatusState,
   PublicStatusViewModel
 } from '../model/public-status-contract';
-import { publicComponentStateKey, publicIncidentStateKey, publicOrgStateKey } from '../model/public-status-model';
+import type { PublicStatusIncidentRange } from '../model/public-status-incident-range';
+import { publicOrgStateKey } from '../model/public-status-model';
+import { PublicStatusComponents } from './public-status-components';
+import { PublicStatusIncidents } from './public-status-incidents';
 import styles from './public-status.module.css';
 
 export function PublicStatusView(props: PublicStatusViewModel) {
@@ -42,10 +43,15 @@ export function PublicStatusView(props: PublicStatusViewModel) {
     >
       <StatusHeader org={props.org} />
       <StatusBody
+        incidentRange={props.incidentRange}
+        incidentLoading={props.incidentLoading}
+        incidentRefreshing={props.incidentRefreshing}
         loading={props.loading}
         state={props.state}
         components={props.components}
         incidents={props.incidents}
+        onIncidentYearChange={props.selectIncidentYear}
+        onRefreshIncidents={props.refreshIncidents}
       />
     </main>
   );
@@ -55,11 +61,25 @@ function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
   const { t } = useTranslation();
   return (
     <header className={styles.header}>
-      <div>
-        <Typography.Title level={2}>{org?.name ?? t('status.title')}</Typography.Title>
-        <Typography.Text type="secondary">{org?.description ?? t('status.description')}</Typography.Text>
-      </div>
-      {org && <Tag color={orgStateColor(org.state)}>{t(publicOrgStateKey(org.state))}</Tag>}
+      <Space align="start">
+        {org && (
+          <a href={org.home} target="_blank" rel="noreferrer">
+            <img className={styles.logo} src={org.logo} alt={org.name} />
+          </a>
+        )}
+        <div>
+          <Typography.Title level={2}>{org?.name ?? t('status.title')}</Typography.Title>
+          <Typography.Text type="secondary">{org?.description ?? t('status.description')}</Typography.Text>
+        </div>
+      </Space>
+      <Space>
+        {org?.feedback && (
+          <Button href={publicStatusFeedbackHref(org.feedback)} target="_blank" rel="noreferrer">
+            {t('status.feedback')}
+          </Button>
+        )}
+        {org && <Tag color={orgStateColor(org.state)}>{t(publicOrgStateKey(org.state))}</Tag>}
+      </Space>
     </header>
   );
 }
@@ -68,95 +88,42 @@ function StatusBody({
   loading,
   state,
   components,
-  incidents
+  incidents,
+  incidentRange,
+  incidentLoading,
+  incidentRefreshing,
+  onIncidentYearChange,
+  onRefreshIncidents
 }: {
   loading: boolean;
   state: PublicStatusState;
   components: PublicStatusComponent[];
   incidents: PublicStatusIncident[];
+  incidentRange: PublicStatusIncidentRange;
+  incidentLoading: boolean;
+  incidentRefreshing: boolean;
+  onIncidentYearChange: (year: number) => void;
+  onRefreshIncidents: () => unknown;
 }) {
   const { t } = useTranslation();
   if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
   if (state === 'unconfigured') return <Alert type="info" showIcon message={t('status.notConfigured')} />;
   if (state === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (state === 'invalid') return <Alert type="error" showIcon message={t('status.invalid')} />;
+  if (state === 'permission') return <Alert type="error" showIcon message={t('status.permission')} />;
   if (state === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  return <StatusContent components={components} incidents={incidents} />;
-}
-
-function StatusContent({
-  components,
-  incidents
-}: {
-  components: PublicStatusComponent[];
-  incidents: PublicStatusIncident[];
-}) {
   return (
     <>
-      <StatusComponentsSection components={components} />
-      <StatusIncidentsSection incidents={incidents} />
+      <PublicStatusComponents components={components} />
+      <PublicStatusIncidents
+        incidents={incidents}
+        loading={incidentLoading}
+        range={incidentRange}
+        refreshing={incidentRefreshing}
+        onYearChange={onIncidentYearChange}
+        onRefresh={onRefreshIncidents}
+      />
     </>
-  );
-}
-
-function StatusComponentsSection({ components }: { components: PublicStatusComponent[] }) {
-  const { t } = useTranslation();
-  return (
-    <section className={styles.section}>
-      <Typography.Title level={4}>{t('status.components')}</Typography.Title>
-      {components.length ? (
-        <Table<PublicStatusComponent>
-          rowKey="id"
-          pagination={false}
-          size="small"
-          dataSource={components}
-          columns={[
-            { title: t('status.component'), dataIndex: 'name' },
-            { title: t('status.descriptionLabel'), dataIndex: 'description' },
-            {
-              title: t('status.state'),
-              dataIndex: 'state',
-              render: (state: PublicStatusComponentState) => (
-                <Tag color={componentStateColor(state)}>{t(publicComponentStateKey(state))}</Tag>
-              )
-            }
-          ]}
-        />
-      ) : (
-        <Empty description={t('status.noComponents')} />
-      )}
-    </section>
-  );
-}
-
-function StatusIncidentsSection({ incidents }: { incidents: PublicStatusIncident[] }) {
-  const { t } = useTranslation();
-  return (
-    <section className={styles.section}>
-      <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
-      {incidents.length ? (
-        <Table<PublicStatusIncident>
-          rowKey="id"
-          pagination={false}
-          size="small"
-          dataSource={incidents}
-          columns={[
-            { title: t('status.incident'), dataIndex: 'name' },
-            {
-              title: t('status.state'),
-              dataIndex: 'state',
-              render: (state: PublicStatusIncidentState) => <Tag>{t(publicIncidentStateKey(state))}</Tag>
-            },
-            {
-              title: t('status.started'),
-              dataIndex: 'startTime',
-              render: (value: number | undefined) => (value ? new Date(value).toLocaleString() : '—')
-            }
-          ]}
-        />
-      ) : (
-        <Empty description={t('status.noIncidents')} />
-      )}
-    </section>
   );
 }
 
@@ -167,8 +134,8 @@ function orgStateColor(state: PublicStatusOrgState) {
   return 'default';
 }
 
-function componentStateColor(state: PublicStatusComponentState) {
-  if (state === 'healthy') return 'green';
-  if (state === 'incident') return 'red';
-  return 'default';
+function publicStatusFeedbackHref(feedback: string) {
+  const normalized = feedback.toLowerCase();
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) return feedback;
+  return `mailto:${feedback}`;
 }

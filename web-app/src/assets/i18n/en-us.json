@@ -2436,11 +2436,26 @@
     "state": "State",
     "normal": "Normal",
     "abnormal": "Abnormal",
+    "feedback": "Feedback",
+    "historyTime": "History time",
+    "uptime": "Uptime",
+    "normalSeconds": "Normal seconds",
+    "abnormalSeconds": "Abnormal seconds",
+    "unknownSeconds": "Unknown seconds",
+    "noHistory": "No component history is available.",
+    "historyUnavailable": "Component history evidence is unavailable.",
     "noComponents": "No public components are configured.",
     "incidents": "Incidents",
     "incident": "Incident",
     "started": "Started",
+    "incidentYear": "Incident year",
+    "affectedComponents": "Affected components",
+    "noAffectedComponents": "No affected components.",
+    "noIncidentUpdates": "No incident updates are available.",
+    "incidentDetailsUnavailable": "Incident detail evidence is unavailable.",
     "noIncidents": "No incidents in the selected period.",
-    "notConfigured": "The public status page has not been configured yet."
+    "notConfigured": "The public status page has not been configured yet.",
+    "invalid": "The public status response is invalid and cannot be displayed.",
+    "permission": "The public status service refused this request."
   }
 }

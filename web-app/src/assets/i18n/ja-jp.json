@@ -2433,11 +2433,26 @@
     "state": "状態",
     "normal": "正常",
     "abnormal": "異常",
+    "feedback": "フィードバック",
+    "historyTime": "履歴時刻",
+    "uptime": "稼働率",
+    "normalSeconds": "正常秒数",
+    "abnormalSeconds": "異常秒数",
+    "unknownSeconds": "不明秒数",
+    "noHistory": "コンポーネント履歴はありません。",
+    "historyUnavailable": "コンポーネント履歴の証拠を利用できません。",
     "noComponents": "公開コンポーネントがありません。",
     "incidents": "インシデント",
     "incident": "インシデント",
     "started": "開始",
+    "incidentYear": "インシデント年",
+    "affectedComponents": "影響を受けたコンポーネント",
+    "noAffectedComponents": "影響を受けたコンポーネントはありません。",
+    "noIncidentUpdates": "インシデント更新はありません。",
+    "incidentDetailsUnavailable": "インシデント詳細の証拠を利用できません。",
     "noIncidents": "選択期間にインシデントはありません。",
-    "notConfigured": "公開ステータスページはまだ設定されていません。"
+    "notConfigured": "公開ステータスページはまだ設定されていません。",
+    "invalid": "公開ステータスの応答が無効なため表示できません。",
+    "permission": "公開ステータスサービスがこの要求を拒否しました。"
   }
 }

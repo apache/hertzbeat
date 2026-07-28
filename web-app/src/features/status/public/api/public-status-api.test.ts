@@ -35,22 +35,28 @@ import {
 import { PublicStatusContractError } from './public-status-schema';
 
 describe('public status API', () => {
+  const range = { year: 2026, startTime: 1_767_225_600_000, endTime: null };
+  const historicalRange = { year: 2025, startTime: 1_735_689_600_000, endTime: 1_767_225_599_999 };
+
   beforeEach(() => {
     apiMessageGet.mockReset();
   });
 
   it('uses the established public status queries', async () => {
     apiMessageGet
-      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0 })
+      .mockResolvedValueOnce(orgResponse(0))
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 });
     await loadPublicStatusOrg();
     await loadPublicStatusComponents();
-    await loadPublicStatusIncidents();
+    await loadPublicStatusIncidents(range);
 
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/status/page/public/org');
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/status/page/public/component');
-    expect(apiMessageGet).toHaveBeenNthCalledWith(3, '/api/status/page/public/incident?pageIndex=0&pageSize=20');
+    expect(apiMessageGet).toHaveBeenNthCalledWith(
+      3,
+      '/api/status/page/public/incident?pageIndex=0&pageSize=20&startTime=1767225600000'
+    );
   });
 
   it('maps the backend component wrapper into the public view contract', async () => {
@@ -66,30 +72,108 @@ describe('public status API', () => {
         id: 1,
         name: 'API',
         description: 'Public API',
-        state: 'healthy'
+        state: 'healthy',
+        history: []
       }
     ]);
   });
 
-  it('maps every backend state domain into stable public status values', async () => {
+  it('preserves public organization, component history and incident timeline evidence', async () => {
     apiMessageGet
-      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0 })
-      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 1 })
-      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 2 })
-      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 9 })
+      .mockResolvedValueOnce({
+        name: 'HertzBeat',
+        description: 'Status',
+        home: 'https://hertzbeat.apache.org',
+        logo: '/logo.svg',
+        feedback: 'ops@example.test',
+        state: 0
+      })
       .mockResolvedValueOnce([
-        { info: { id: 1, name: 'Healthy', state: 0 } },
-        { info: { id: 2, name: 'Incident', state: 1 } },
-        { info: { id: 3, name: 'Unknown', state: 2 } },
-        { info: { id: 4, name: 'Future', state: 9 } }
+        {
+          info: { id: 1, name: 'API', state: 0 },
+          history: [
+            {
+              componentId: 1,
+              state: 0,
+              timestamp: 1_700_000_000_000,
+              uptime: 0.995,
+              normal: 86_000,
+              abnormal: 400,
+              unknowing: 0
+            }
+          ]
+        }
       ])
       .mockResolvedValueOnce({
         content: [
-          { id: 1, name: 'Investigating', state: 0 },
-          { id: 2, name: 'Identified', state: 1 },
-          { id: 3, name: 'Monitoring', state: 2 },
-          { id: 4, name: 'Resolved', state: 3 },
-          { id: 5, name: 'Future', state: 9 }
+          {
+            id: 2,
+            name: 'Gateway latency',
+            state: 1,
+            components: [{ id: 1, name: 'API', state: 1 }],
+            contents: [
+              {
+                id: 3,
+                incidentId: 2,
+                message: 'Mitigation in progress',
+                state: 2,
+                timestamp: 1_700_000_100_000
+              }
+            ]
+          }
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 20
+      });
+
+    await expect(loadPublicStatusOrg()).resolves.toMatchObject({
+      home: 'https://hertzbeat.apache.org',
+      logo: '/logo.svg',
+      feedback: 'ops@example.test'
+    });
+    await expect(loadPublicStatusComponents()).resolves.toMatchObject([
+      {
+        history: [
+          {
+            uptime: 0.995,
+            normal: 86_000,
+            abnormal: 400,
+            unknowing: 0
+          }
+        ]
+      }
+    ]);
+    await expect(loadPublicStatusIncidents(range)).resolves.toMatchObject({
+      content: [
+        {
+          components: [{ id: 1, name: 'API', state: 'incident' }],
+          contents: [{ message: 'Mitigation in progress', state: 'monitoring' }]
+        }
+      ]
+    });
+  });
+
+  it('maps every backend state domain into stable public status values', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce(orgResponse(0))
+      .mockResolvedValueOnce(orgResponse(1))
+      .mockResolvedValueOnce(orgResponse(2))
+      .mockResolvedValueOnce(orgResponse(9))
+      .mockResolvedValueOnce([
+        { info: { id: 1, name: 'Healthy', state: 0 }, history: [] },
+        { info: { id: 2, name: 'Incident', state: 1 }, history: [] },
+        { info: { id: 3, name: 'Unknown', state: 2 }, history: [] },
+        { info: { id: 4, name: 'Future', state: 9 }, history: [] }
+      ])
+      .mockResolvedValueOnce({
+        content: [
+          incident(1, 'Investigating', 0),
+          incident(2, 'Identified', 1),
+          incident(3, 'Monitoring', 2),
+          incident(4, 'Resolved', 3),
+          incident(5, 'Future', 9)
         ],
         totalElements: 5,
         totalPages: 1,
@@ -102,12 +186,12 @@ describe('public status API', () => {
     await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'incident' });
     await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'unknown' });
     await expect(loadPublicStatusComponents()).resolves.toEqual([
-      { id: 1, name: 'Healthy', state: 'healthy' },
-      { id: 2, name: 'Incident', state: 'incident' },
-      { id: 3, name: 'Unknown', state: 'unknown' },
-      { id: 4, name: 'Future', state: 'unknown' }
+      { id: 1, name: 'Healthy', state: 'healthy', history: [] },
+      { id: 2, name: 'Incident', state: 'incident', history: [] },
+      { id: 3, name: 'Unknown', state: 'unknown', history: [] },
+      { id: 4, name: 'Future', state: 'unknown', history: [] }
     ]);
-    await expect(loadPublicStatusIncidents()).resolves.toMatchObject({
+    await expect(loadPublicStatusIncidents(range)).resolves.toMatchObject({
       content: [
         { id: 1, name: 'Investigating', state: 'investigating' },
         { id: 2, name: 'Identified', state: 'identified' },
@@ -130,11 +214,18 @@ describe('public status API', () => {
       )
       .mockResolvedValueOnce(incidentPage(1, 2, 21, [21]));
 
-    const result = await loadPublicStatusIncidents();
+    const result = await loadPublicStatusIncidents(historicalRange);
 
     expect(result.content.map(incident => incident.id)).toEqual(Array.from({ length: 21 }, (_, index) => index + 1));
     expect(result.totalElements).toBe(21);
-    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/status/page/public/incident?pageIndex=1&pageSize=20');
+    expect(apiMessageGet).toHaveBeenNthCalledWith(
+      1,
+      '/api/status/page/public/incident?pageIndex=0&pageSize=20&startTime=1735689600000&endTime=1767225599999'
+    );
+    expect(apiMessageGet).toHaveBeenNthCalledWith(
+      2,
+      '/api/status/page/public/incident?pageIndex=1&pageSize=20&startTime=1735689600000&endTime=1767225599999'
+    );
   });
 
   it('stops a serial incident scan when its caller cancels after the current page', async () => {
@@ -151,7 +242,7 @@ describe('public status API', () => {
       );
     });
 
-    await expect(loadPublicStatusIncidents({ signal: controller.signal })).rejects.toMatchObject({
+    await expect(loadPublicStatusIncidents(range, { signal: controller.signal })).rejects.toMatchObject({
       name: 'AbortError',
       message: 'Request aborted'
     });
@@ -164,7 +255,7 @@ describe('public status API', () => {
       size: publicStatusIncidentPageSize + 1
     });
 
-    await expect(loadPublicStatusIncidents()).rejects.toBeInstanceOf(PublicStatusContractError);
+    await expect(loadPublicStatusIncidents(range)).rejects.toBeInstanceOf(PublicStatusContractError);
     expect(apiMessageGet).toHaveBeenCalledTimes(1);
   });
 
@@ -180,7 +271,7 @@ describe('public status API', () => {
       )
       .mockResolvedValueOnce(incidentPage(0, 2, 21, [21]));
 
-    await expect(loadPublicStatusIncidents()).rejects.toBeInstanceOf(PublicStatusContractError);
+    await expect(loadPublicStatusIncidents(range)).rejects.toBeInstanceOf(PublicStatusContractError);
   });
 
   it('fails unavailable instead of issuing an unbounded number of incident requests', async () => {
@@ -193,12 +284,23 @@ describe('public status API', () => {
       )
     );
 
-    await expect(loadPublicStatusIncidents()).rejects.toBeInstanceOf(PublicStatusContractError);
+    await expect(loadPublicStatusIncidents(range)).rejects.toBeInstanceOf(PublicStatusContractError);
     expect(apiMessageGet).toHaveBeenCalledTimes(1);
   });
 
   it('rejects malformed public status resources', async () => {
-    apiMessageGet.mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0, token: 'secret' });
+    apiMessageGet.mockResolvedValueOnce({ ...orgResponse(0), token: 'secret' });
+
+    await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(PublicStatusContractError);
+  });
+
+  it.each([
+    ['home', 'javascript:alert(1)'],
+    ['logo', 'data:image/svg+xml,unsafe'],
+    ['feedback', 'javascript:alert(1)'],
+    ['home', '//example.test/status']
+  ])('rejects an unsafe organization %s link', async (field, value) => {
+    apiMessageGet.mockResolvedValueOnce({ ...orgResponse(0), [field]: value });
 
     await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(PublicStatusContractError);
   });
@@ -214,10 +316,18 @@ describe('public status API', () => {
 
 function incidentPage(number: number, totalPages: number, totalElements: number, ids: number[]) {
   return {
-    content: ids.map(id => ({ id, name: `Incident ${id}`, state: 1 })),
+    content: ids.map(id => incident(id, `Incident ${id}`, 1)),
     totalElements,
     totalPages,
     number,
     size: publicStatusIncidentPageSize
   };
+}
+
+function orgResponse(state: number) {
+  return { name: 'HertzBeat', description: 'Status', home: '/', logo: '/logo.svg', state };
+}
+
+function incident(id: number, name: string, state: number) {
+  return { id, name, state, components: [], contents: [] };
 }

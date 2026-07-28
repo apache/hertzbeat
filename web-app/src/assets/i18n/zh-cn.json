@@ -2416,11 +2416,26 @@
     "state": "状态",
     "normal": "正常",
     "abnormal": "异常",
+    "feedback": "反馈",
+    "historyTime": "历史时间",
+    "uptime": "可用率",
+    "normalSeconds": "正常秒数",
+    "abnormalSeconds": "异常秒数",
+    "unknownSeconds": "未知秒数",
+    "noHistory": "暂无组件历史记录。",
+    "historyUnavailable": "组件历史证据暂不可用。",
     "noComponents": "尚未配置公开组件。",
     "incidents": "故障",
     "incident": "故障",
     "started": "开始时间",
+    "incidentYear": "故障年份",
+    "affectedComponents": "受影响组件",
+    "noAffectedComponents": "没有受影响组件。",
+    "noIncidentUpdates": "暂无故障更新。",
+    "incidentDetailsUnavailable": "故障详情证据暂不可用。",
     "noIncidents": "所选时间内没有故障。",
-    "notConfigured": "公开状态页尚未配置。"
+    "notConfigured": "公开状态页尚未配置。",
+    "invalid": "公开状态响应无效，无法显示。",
+    "permission": "公开状态服务拒绝了此请求。"
   }
 }

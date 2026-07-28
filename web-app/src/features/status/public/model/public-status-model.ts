@@ -24,6 +24,7 @@ import type {
   PublicStatusOrgState,
   PublicStatusState
 } from './public-status-contract';
+import { PublicStatusContractError as PublicStatusContractFailure } from './public-status-contract';
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 export type { PublicStatusState } from './public-status-contract';
@@ -35,7 +36,9 @@ export function publicStatusState(
 ): PublicStatusState {
   if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
   const errors = [orgError, componentsError, incidentsError].filter(Boolean);
+  if (errors.some(error => statusRequestFailureKind(error) === 'permission')) return 'permission';
   if (errors.some(error => statusRequestFailureKind(error) === 'unavailable')) return 'unavailable';
+  if (errors.some(error => error instanceof PublicStatusContractFailure)) return 'invalid';
   if (errors.length) return 'error';
   return 'ready';
 }

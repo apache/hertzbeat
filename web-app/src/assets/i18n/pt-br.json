@@ -2435,11 +2435,26 @@
     "state": "Estado",
     "normal": "Normal",
     "abnormal": "Anormal",
+    "feedback": "Feedback",
+    "historyTime": "Data do histórico",
+    "uptime": "Disponibilidade",
+    "normalSeconds": "Segundos normais",
+    "abnormalSeconds": "Segundos anormais",
+    "unknownSeconds": "Segundos desconhecidos",
+    "noHistory": "Nenhum histórico de componente disponível.",
+    "historyUnavailable": "As evidências do histórico do componente estão indisponíveis.",
     "noComponents": "Nenhum componente público configurado.",
     "incidents": "Incidentes",
     "incident": "Incidente",
     "started": "Início",
+    "incidentYear": "Ano do incidente",
+    "affectedComponents": "Componentes afetados",
+    "noAffectedComponents": "Nenhum componente afetado.",
+    "noIncidentUpdates": "Nenhuma atualização de incidente disponível.",
+    "incidentDetailsUnavailable": "As evidências de detalhes do incidente estão indisponíveis.",
     "noIncidents": "Nenhum incidente no período selecionado.",
-    "notConfigured": "A página pública de status ainda não foi configurada."
+    "notConfigured": "A página pública de status ainda não foi configurada.",
+    "invalid": "A resposta de status público é inválida e não pode ser exibida.",
+    "permission": "O serviço de status público recusou esta solicitação."
   }
 }

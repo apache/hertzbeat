@@ -2416,11 +2416,26 @@
     "state": "狀態",
     "normal": "正常",
     "abnormal": "異常",
+    "feedback": "回饋",
+    "historyTime": "歷史時間",
+    "uptime": "可用率",
+    "normalSeconds": "正常秒數",
+    "abnormalSeconds": "異常秒數",
+    "unknownSeconds": "未知秒數",
+    "noHistory": "暫無元件歷史記錄。",
+    "historyUnavailable": "元件歷史證據暫時無法使用。",
     "noComponents": "尚未設定公開元件。",
     "incidents": "故障",
     "incident": "故障",
     "started": "開始時間",
+    "incidentYear": "故障年份",
+    "affectedComponents": "受影響元件",
+    "noAffectedComponents": "沒有受影響元件。",
+    "noIncidentUpdates": "暫無故障更新。",
+    "incidentDetailsUnavailable": "故障詳細資料證據暫時無法使用。",
     "noIncidents": "所選期間內沒有故障。",
-    "notConfigured": "公開狀態頁尚未設定。"
+    "notConfigured": "公開狀態頁尚未設定。",
+    "invalid": "公開狀態回應無效，無法顯示。",
+    "permission": "公開狀態服務拒絕了此請求。"
   }
 }
