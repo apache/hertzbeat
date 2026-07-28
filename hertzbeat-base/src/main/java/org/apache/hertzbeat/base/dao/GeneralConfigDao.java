@@ -17,9 +17,13 @@
 
 package org.apache.hertzbeat.base.dao;
 
+import jakarta.persistence.LockModeType;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,4 +40,8 @@ public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, Jp
      * @return Return the queried configuration information
      */
     GeneralConfig findByType(String type);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select config from GeneralConfig config where config.type = :type")
+    GeneralConfig findByTypeForUpdate(@Param("type") String type);
 }

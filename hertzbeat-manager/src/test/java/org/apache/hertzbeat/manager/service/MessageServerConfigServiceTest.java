@@ -21,10 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
 import org.apache.hertzbeat.manager.service.impl.MessageServerConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,11 +44,13 @@ class MessageServerConfigServiceTest {
     private ConfigService configService;
     @Mock
     private MessageServerConfigMapper mapper;
+    @Mock
+    private GeneralConfigDao generalConfigDao;
     private MessageServerConfigServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new MessageServerConfigServiceImpl(configService, mapper);
+        service = new MessageServerConfigServiceImpl(configService, mapper, generalConfigDao);
     }
 
     @Test
@@ -69,6 +75,42 @@ class MessageServerConfigServiceTest {
         order.verify(configService).saveConfig("email", merged);
         order.verify(configService).getConfig("email");
         order.verify(mapper).toEmailResponse(authoritative);
+    }
+
+    @Test
+    void saveLoadsExistingEmailConfigUnderItsExactRowLockBeforeMergingCredentials() {
+        EmailServerConfigRequest request = new EmailServerConfigRequest();
+        MailServerConfig existing = new MailServerConfig();
+        MailServerConfig merged = new MailServerConfig();
+        when(configService.getConfig("email")).thenReturn(existing, merged);
+        when(mapper.toEmailConfig(request, existing)).thenReturn(merged);
+
+        service.saveEmailConfig(request);
+
+        InOrder order = inOrder(generalConfigDao, configService, mapper);
+        order.verify(generalConfigDao).findByTypeForUpdate("email");
+        order.verify(configService).getConfig("email");
+        order.verify(mapper).toEmailConfig(request, existing);
+        order.verify(configService).saveConfig("email", merged);
+        verify(generalConfigDao).findByTypeForUpdate("email");
+    }
+
+    @Test
+    void saveLoadsExistingSmsConfigUnderItsExactRowLockBeforeMergingCredentials() {
+        SmsServerConfigRequest request = new SmsServerConfigRequest();
+        SmsConfig existing = new SmsConfig();
+        SmsConfig merged = new SmsConfig();
+        merged.setType("twilio");
+        when(configService.getConfig("sms")).thenReturn(existing, merged);
+        when(mapper.toSmsConfig(request, existing)).thenReturn(merged);
+
+        service.saveSmsConfig(request);
+
+        InOrder order = inOrder(generalConfigDao, configService, mapper);
+        order.verify(generalConfigDao).findByTypeForUpdate("sms");
+        order.verify(configService).getConfig("sms");
+        order.verify(mapper).toSmsConfig(request, existing);
+        order.verify(configService).saveConfig("sms", merged);
     }
 
     @Test
