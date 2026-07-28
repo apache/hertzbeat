@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.logs.controller;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -103,6 +104,9 @@ class LogSseControllerTest {
         String spanId = "abcdef1234567890";
         String entityId = "42";
         String entityType = "service";
+        String serviceName = "checkout";
+        String serviceNamespace = "payments";
+        String environment = "prod";
         String collectorId = "collector-a";
         String instance = "checkout-7d9";
         String endpoint = "/checkout";
@@ -117,6 +121,9 @@ class LogSseControllerTest {
                         .param("spanId", spanId)
                         .param("entityId", entityId)
                         .param("entityType", entityType)
+                        .param("serviceName", serviceName)
+                        .param("serviceNamespace", serviceNamespace)
+                        .param("environment", environment)
                         .param("collectorId", collectorId)
                         .param("instance", instance)
                         .param("endpoint", endpoint)
@@ -135,6 +142,9 @@ class LogSseControllerTest {
         Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
         Assertions.assertEquals(capturedCriteria.getEntityId(), entityId);
         Assertions.assertEquals(capturedCriteria.getEntityType(), entityType);
+        Assertions.assertEquals(capturedCriteria.getServiceName(), serviceName);
+        Assertions.assertEquals(capturedCriteria.getServiceNamespace(), serviceNamespace);
+        Assertions.assertEquals(capturedCriteria.getEnvironment(), environment);
         Assertions.assertEquals(capturedCriteria.getCollectorId(), collectorId);
         Assertions.assertEquals(capturedCriteria.getInstance(), instance);
         Assertions.assertEquals(capturedCriteria.getEndpoint(), endpoint);
@@ -162,6 +172,27 @@ class LogSseControllerTest {
         Assertions.assertFalse(capturedCriteria.matches(LogEntry.builder()
                 .resource(Map.of("hertzbeat.workspace_id", "team-b"))
                 .build()));
+    }
+
+    @Test
+    void subscribeUsesDefaultAuthenticatedWorkspaceInsteadOfClientWorkspace() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("workspaceId", "client-controlled")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        Assertions.assertEquals("default", filterCriteriaCaptor.getValue().getWorkspaceId());
+    }
+
+    @Test
+    void subscribeRejectsInvalidAndPartiallyInvalidFiltersWithoutOpeningEmitter() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("resourceFilter", "service.version=1.2.3, malformed")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isBadRequest());
+
+        verify(emitterManager, never()).createEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

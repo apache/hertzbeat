@@ -24,7 +24,6 @@ import org.apache.hertzbeat.observability.logs.service.LogSseService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
@@ -41,15 +40,17 @@ public class LogSseServiceImpl implements LogSseService {
 
     @Override
     public SseEmitter subscribe(LogSseFilterCriteria filterCriteria) {
+        LogSseFilterCriteria effectiveCriteria = filterCriteria == null
+                ? new LogSseFilterCriteria()
+                : filterCriteria;
+        effectiveCriteria.validate();
         Long clientId = SnowFlakeIdGenerator.generateId();
-        bindRequestWorkspace(filterCriteria);
-        return emitterManager.createEmitter(clientId, filterCriteria);
+        bindRequestWorkspace(effectiveCriteria);
+        return emitterManager.createEmitter(clientId, effectiveCriteria);
     }
 
     private void bindRequestWorkspace(LogSseFilterCriteria filterCriteria) {
-        String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
-        if (filterCriteria != null && StringUtils.hasText(workspaceId)) {
-            filterCriteria.setWorkspaceId(AuthTokenScopes.normalizeWorkspaceId(workspaceId));
-        }
+        filterCriteria.setWorkspaceId(
+                AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()));
     }
 }

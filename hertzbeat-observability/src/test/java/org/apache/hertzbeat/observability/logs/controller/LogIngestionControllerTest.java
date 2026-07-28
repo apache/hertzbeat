@@ -109,9 +109,9 @@ class LogIngestionControllerTest {
                         .post("/api/logs/ingest/vector")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(logContent)
-        )
+                )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("Add extern log failed: Invalid log format"));
+                .andExpect(jsonPath("$.msg").value("Add extern log failed"));
     }
 }

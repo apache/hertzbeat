@@ -32,6 +32,8 @@ import io.opentelemetry.proto.logs.v1.ScopeLogs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.observability.TelemetryIntakeSignalEvent;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedactionService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
@@ -68,6 +70,12 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private static final int OTLP_TRACE_ID_BYTES = 16;
     private static final int OTLP_SPAN_ID_BYTES = 8;
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
+    private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
+            "hertzbeat.workspace_id", "hertzbeat_workspace_id", "workspace.id", "workspace_id");
+    private static final Set<String> COLLECTOR_RESOURCE_KEYS = Set.of(
+            "hertzbeat.collector.id", "hertzbeat_collector_id",
+            "hertzbeat.collector", "hertzbeat_collector",
+            "collector.id", "collector_id");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CommonDataQueue commonDataQueue;
@@ -104,7 +112,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             ExportLogsServiceRequest request = builder.build();
             processLogsRequest(request, "JSON");
         } catch (InvalidProtocolBufferException e) {
-            log.error("Failed to parse OTLP JSON log payload: {}", e.getMessage());
+            log.error("Failed to parse OTLP JSON log payload.");
             throw new IllegalArgumentException("Invalid OTLP JSON log content", e);
         }
     }
@@ -123,7 +131,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             ExportLogsServiceRequest request = ExportLogsServiceRequest.parseFrom(content);
             processLogsRequest(request, "binary");
         } catch (InvalidProtocolBufferException e) {
-            log.error("Failed to parse OTLP binary log payload: {}", e.getMessage());
+            log.error("Failed to parse OTLP binary log payload.");
             throw new IllegalArgumentException("Invalid OTLP binary log content", e);
         }
     }
@@ -185,7 +193,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             gzipInputStream.transferTo(outputStream);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            log.error("Failed to decompress OTLP gzip log payload: {}", e.getMessage());
+            log.error("Failed to decompress OTLP gzip log payload.");
             throw new IllegalArgumentException("Invalid gzip-compressed OTLP log content", e);
         }
     }
@@ -204,6 +212,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             Map<String, Object> resourceAttributes = extractAttributes(
                 resourceLogs.getResource().getAttributesList()
             );
+            bindAuthenticatedResourceScope(resourceAttributes);
 
             for (ScopeLogs scopeLogs : resourceLogs.getScopeLogsList()) {
                 // Extract instrumentation scope information
@@ -223,6 +232,17 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
         }
 
         return logEntries;
+    }
+
+    private void bindAuthenticatedResourceScope(Map<String, Object> resourceAttributes) {
+        WORKSPACE_RESOURCE_KEYS.forEach(resourceAttributes::remove);
+        resourceAttributes.put("hertzbeat_workspace_id",
+                AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()));
+        COLLECTOR_RESOURCE_KEYS.forEach(resourceAttributes::remove);
+        String collectorId = AuthTokenRequestContext.currentCollectorId();
+        if (collectorId != null && !collectorId.isBlank()) {
+            resourceAttributes.put("hertzbeat_collector_id", collectorId.trim());
+        }
     }
 
     /**

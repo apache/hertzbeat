@@ -69,9 +69,9 @@ public class LogIngestionController {
                     adapter.ingest(content);
                     return ResponseEntity.ok(Message.success("Add extern log success"));
                 } catch (Exception e) {
-                    log.error("Add log failed: {}", e.getMessage(), e);
+                    log.error("External log ingestion failed.");
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Message.fail(CommonConstants.FAIL_CODE, "Add extern log failed: " + e.getMessage()));
+                            .body(Message.fail(CommonConstants.FAIL_CODE, "Add extern log failed"));
                 }
             }
         }
