@@ -20,19 +20,10 @@ package org.apache.hertzbeat.manager.config;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import jakarta.annotation.Resource;
 import java.security.SecureRandom;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-import java.util.TimeZone;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.AesUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.TimeZoneUtil;
-import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.MuteConfig;
-import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
@@ -81,31 +72,10 @@ public class ConfigInitializer implements SmartLifecycle {
     @Resource
     private AppService appService;
 
-    @Resource
-    protected GeneralConfigDao generalConfigDao;
-
     @SneakyThrows
     public void initConfig() {
         // for system config
-        SystemConfig systemConfig = systemGeneralConfigService.getConfig();
-        if (systemConfig != null) {
-            TimeZoneUtil.setTimeZoneAndLocale(systemConfig.getTimeZoneId(), systemConfig.getLocale());
-
-            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-            simpleDateFormat.setTimeZone(TimeZone.getDefault());
-        } else {
-            // init system config data
-            systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID()).theme("default")
-                .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
-                    + Locale.getDefault().getCountry())
-                .build();
-            String contentJson = JsonUtil.toJson(systemConfig);
-            GeneralConfig generalConfig2Save = GeneralConfig.builder()
-                .type(systemGeneralConfigService.type())
-                .content(contentJson)
-                .build();
-            generalConfigDao.save(generalConfig2Save);
-        }
+        systemGeneralConfigService.initializeCanonicalConfig();
         // for template config, flush the template config in db to memory
         TemplateConfig templateConfig = templateConfigService.getConfig();
         appService.updateCustomTemplateConfig(templateConfig);
