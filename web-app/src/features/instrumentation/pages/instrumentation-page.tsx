@@ -107,9 +107,11 @@ function ConfigureStage({ page }: { page: PageController }) {
         tokenDraft={page.tokenDraft}
         tokenGenerating={page.tokenGenerating}
         tokenError={page.tokenError}
+        canGenerateToken={page.canGenerateToken}
         onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
         onServiceName={page.patchServiceName}
         onPlatform={platform => page.patchDraft({ platform })}
+        onToken={page.setToken}
         onRender={() => void page.renderGuide()}
         onOpenToken={page.openTokenGenerator}
         onCloseToken={page.closeTokenGenerator}

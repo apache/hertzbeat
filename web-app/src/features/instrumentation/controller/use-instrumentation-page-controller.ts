@@ -8,6 +8,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useSession } from '@/core/auth/session-context';
+
 import {
   detectInstrumentationSignals,
   loadInstrumentationCatalog,
@@ -21,6 +23,7 @@ import {
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
+import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 import { useInstrumentationTokenActions } from './instrumentation-token-actions';
@@ -32,6 +35,7 @@ const keys = {
 
 export function useInstrumentationPageController() {
   const navigate = useNavigate();
+  const { canGenerateToken } = instrumentationTokenCapability(useSession().session?.roles ?? []);
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const state = useInstrumentationControllerState();
   const startedAtRef = useRef<number | undefined>(undefined);
@@ -57,7 +61,7 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const guideActions = useGuideActions(state, generationRef, startedAtRef);
-  const tokenActions = useInstrumentationTokenActions(state, generationRef);
+  const tokenActions = useInstrumentationTokenActions(state, generationRef, canGenerateToken);
   const detect = useDetection(
     state.draft,
     state.setDetection,
@@ -84,6 +88,7 @@ export function useInstrumentationPageController() {
     ...draftActions,
     ...guideActions,
     ...tokenActions,
+    canGenerateToken,
     detect,
     openQuery,
     hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),

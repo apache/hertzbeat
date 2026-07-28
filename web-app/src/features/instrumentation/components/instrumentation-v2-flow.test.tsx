@@ -147,9 +147,11 @@ describe('instrumentation v2 interaction', () => {
       tokenDraft: undefined,
       tokenGenerating: false,
       tokenError: false,
+      canGenerateToken: true,
       onProfile: vi.fn(),
       onServiceName: vi.fn(),
       onPlatform: vi.fn(),
+      onToken: vi.fn(),
       onRender: vi.fn(),
       onOpenToken: vi.fn(),
       onCloseToken: vi.fn(),
@@ -209,7 +211,7 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.v2.profile.unavailable')).toBeInTheDocument();
   });
 
-  it('generates an OTLP ingest token through a name and expiry modal without a password field', () => {
+  it('generates an OTLP ingest token through a name and expiry modal without a credential field', () => {
     const onOpenToken = vi.fn();
     const onGenerateToken = vi.fn();
     render(
@@ -229,10 +231,12 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenDraft={{ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' }}
         tokenGenerating={false}
-        tokenError={false}
+        tokenError
+        canGenerateToken
         onProfile={vi.fn()}
         onServiceName={vi.fn()}
         onPlatform={vi.fn()}
+        onToken={vi.fn()}
         onRender={vi.fn()}
         onOpenToken={onOpenToken}
         onCloseToken={vi.fn()}
@@ -240,14 +244,53 @@ describe('instrumentation v2 interaction', () => {
         onGenerateToken={onGenerateToken}
       />
     );
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'instrumentation.token.name' })).toHaveValue('Checkout ingest');
-    expect(screen.getByText('instrumentation.token.fixedScope')).toBeInTheDocument();
-    expect(screen.getAllByRole('combobox')).toHaveLength(1);
-    expect(screen.queryByLabelText('instrumentation.field.token')).toBeNull();
-    expect(document.querySelector('input[type="password"]')).toBeNull();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('textbox', { name: 'instrumentation.token.name' })).toHaveValue('Checkout ingest');
+    expect(within(dialog).getByText('instrumentation.token.fixedScope')).toBeInTheDocument();
+    expect(within(dialog).getByText('instrumentation.token.generateError')).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('combobox')).toHaveLength(1);
+    expect(within(dialog).queryByLabelText('instrumentation.field.token')).toBeNull();
+    expect(dialog.querySelector('input[type="password"]')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'instrumentation.token.generate' }));
     expect(onGenerateToken).toHaveBeenCalledOnce();
+  });
+
+  it('keeps manual token entry but removes generation for a non-writer capability', () => {
+    const onToken = vi.fn();
+    render(
+      <InstrumentationConfigureStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'server-default',
+          profiles: [guide.intakeProfile]
+        }}
+        profileId="server-default"
+        serviceName="checkout"
+        platformOptions={[]}
+        canRender={false}
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        canGenerateToken={false}
+        onProfile={vi.fn()}
+        onServiceName={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={onToken}
+        onRender={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+      />
+    );
+
+    const tokenInput = screen.getByLabelText('instrumentation.field.token');
+    fireEvent.change(tokenInput, { target: { value: 'existing-otlp-token' } });
+    expect(onToken).toHaveBeenCalledWith('existing-otlp-token');
+    expect(screen.queryByRole('button', { name: 'instrumentation.token.generateAccess' })).not.toBeInTheDocument();
   });
 
   it('shows endpoint security and an explicit Bearer risk for a selected plaintext destination', () => {
@@ -275,9 +318,11 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        canGenerateToken
         onProfile={vi.fn()}
         onServiceName={vi.fn()}
         onPlatform={vi.fn()}
+        onToken={vi.fn()}
         onRender={vi.fn()}
         onOpenToken={vi.fn()}
         onCloseToken={vi.fn()}

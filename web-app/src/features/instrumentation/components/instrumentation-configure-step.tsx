@@ -30,9 +30,11 @@ type ConfigureStepProps = {
   tokenDraft?: AccessTokenGenerationDraft | undefined;
   tokenGenerating: boolean;
   tokenError: boolean;
+  canGenerateToken: boolean;
   onProfile: (intakeProfileId: string) => void;
   onServiceName: (name: string) => void;
   onPlatform: (platform: string) => void;
+  onToken: (token: string) => void;
   onRender: () => void;
   onOpenToken: () => void;
   onCloseToken: () => void;
@@ -80,8 +82,21 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
       {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
         <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
       )}
+      <label className={styles.serviceNameField}>
+        <Typography.Text strong>{t('instrumentation.field.token')}</Typography.Text>
+        <Input.Password
+          aria-label={t('instrumentation.field.token')}
+          autoComplete="off"
+          placeholder={t('instrumentation.field.tokenPlaceholder')}
+          value={props.token}
+          onChange={event => props.onToken(event.target.value)}
+        />
+        <Typography.Text type="secondary">{t('instrumentation.field.tokenMemory')}</Typography.Text>
+      </label>
       <div className={styles.configureActions}>
-        <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
+        {props.canGenerateToken && (
+          <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
+        )}
         <Typography.Text type={props.token ? 'success' : 'secondary'}>
           {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
         </Typography.Text>
@@ -90,7 +105,7 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         </Button>
       </div>
       {props.renderError && <Alert type="error" showIcon message={t('instrumentation.v2.renderError')} />}
-      {props.tokenDraft && <AccessTokenModal {...props} draft={props.tokenDraft} />}
+      {props.canGenerateToken && props.tokenDraft && <AccessTokenModal {...props} draft={props.tokenDraft} />}
     </section>
   );
 }

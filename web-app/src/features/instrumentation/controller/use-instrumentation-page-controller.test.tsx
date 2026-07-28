@@ -8,7 +8,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({
   loadInstrumentationCatalog: vi.fn(),
@@ -19,10 +21,19 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/instrumentation-api', () => api);
 const tokenApi = vi.hoisted(() => ({ generateAccessToken: vi.fn() }));
 vi.mock('@/shared/access-token/access-token-generation-api', () => tokenApi);
+const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
+}));
 
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
 
 describe('useInstrumentationPageController', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.roles = ['ADMIN'];
+  });
+
   it('starts and resets without implicitly selecting quick start', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({
@@ -170,6 +181,7 @@ describe('useInstrumentationPageController', () => {
     );
     await act(async () => result.current.generateToken());
 
+    expect(result.current.canGenerateToken).toBe(true);
     expect(tokenApi.generateAccessToken).toHaveBeenCalledWith({
       name: 'Checkout ingest',
       expireSeconds: 2_592_000,
@@ -200,6 +212,173 @@ describe('useInstrumentationPageController', () => {
     expect(result.current.stage).toBe('source');
     expect(result.current.token).toBe('');
     unmount();
+  });
+
+  it.each(['USER', 'GUEST'])('keeps manual token entry available without admitting generation for %s', async role => {
+    auth.roles = [role];
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.setToken('existing-otlp-token'));
+    act(() => result.current.openTokenGenerator());
+    await act(async () => result.current.generateToken());
+
+    expect(result.current.canGenerateToken).toBe(false);
+    expect(result.current.token).toBe('existing-otlp-token');
+    expect(result.current.tokenDraft).toBeUndefined();
+    expect(tokenApi.generateAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('retires an in-flight generation when ADMIN capability is lost and ignores the late receipt', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const receipt = deferred<{ id: 'generated'; token: string }>();
+    tokenApi.generateAccessToken.mockReturnValue(receipt.promise);
+    const localStorageBefore = storageSnapshot(window.localStorage);
+    const sessionStorageBefore = storageSnapshot(window.sessionStorage);
+    const locationBefore = window.location.href;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const { result, rerender } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.setToken('existing-otlp-token'));
+    act(() => result.current.openTokenGenerator());
+    act(() => result.current.updateTokenDraft({ name: 'Late receipt', expireSeconds: -1, scope: 'otlp-ingest' }));
+    let generation: Promise<void> | undefined;
+    act(() => {
+      generation = result.current.generateToken();
+    });
+    auth.roles = ['USER'];
+    rerender();
+
+    expect(result.current.canGenerateToken).toBe(false);
+    expect(result.current).toMatchObject({
+      token: 'existing-otlp-token',
+      tokenDraft: undefined,
+      tokenGenerating: false,
+      tokenError: false
+    });
+    await act(async () => {
+      receipt.resolve({ id: 'generated', token: 'late-generation-secret' });
+      await generation;
+    });
+    expect(result.current).toMatchObject({
+      token: 'existing-otlp-token',
+      tokenDraft: undefined,
+      tokenGenerating: false,
+      tokenError: false
+    });
+    expect(storageSnapshot(window.localStorage)).toEqual(localStorageBefore);
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionStorageBefore);
+    expect(window.location.href).toBe(locationBefore);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('late-generation-secret');
+    log.mockRestore();
+  });
+
+  it('rejects retained ADMIN token commands after generation capability is lost', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const { result, rerender } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    const retained = {
+      open: result.current.openTokenGenerator,
+      update: result.current.updateTokenDraft,
+      generate: result.current.generateToken
+    };
+
+    auth.roles = ['USER'];
+    rerender();
+    act(() => retained.open());
+    act(() => retained.update({ name: 'Retained ADMIN command', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => retained.generate());
+
+    expect(result.current).toMatchObject({
+      tokenDraft: undefined,
+      tokenGenerating: false,
+      tokenError: false
+    });
+    expect(tokenApi.generateAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('does not retire an unrelated guide render when token-generation capability is lost', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const guideReceipt = deferred<{ schemaVersion: number }>();
+    api.renderInstrumentationGuide.mockReturnValue(guideReceipt.promise);
+    const { result, rerender } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.setStage('configure'));
+    act(() => result.current.patchServiceName('checkout'));
+    let rendering: Promise<void> | undefined;
+    act(() => {
+      rendering = result.current.renderGuide();
+    });
+
+    auth.roles = ['USER'];
+    rerender();
+    await act(async () => {
+      guideReceipt.resolve({ schemaVersion: 2 });
+      await rendering;
+    });
+
+    expect(result.current.canGenerateToken).toBe(false);
+    expect(result.current.guide).toEqual({ schemaVersion: 2 });
+    expect(result.current.rendering).toBe(false);
+  });
+
+  it.each([
+    ['HTTP 403', new ApiMessageError('private denial body', { status: 403 })],
+    ['explicit rejection', new ApiMessageError('private rejection body', { code: 20, status: 200 })]
+  ])('publishes only fixed local error state for %s', async (_label, rejection) => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    tokenApi.generateAccessToken.mockRejectedValue(rejection);
+    const localStorageBefore = storageSnapshot(window.localStorage);
+    const sessionStorageBefore = storageSnapshot(window.sessionStorage);
+    const locationBefore = window.location.href;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.openTokenGenerator());
+    act(() => result.current.updateTokenDraft({ name: 'Rejected', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => result.current.generateToken());
+
+    expect(result.current).toMatchObject({ token: '', tokenError: true, tokenGenerating: false });
+    expect(JSON.stringify(result.current)).not.toContain('private');
+    expect(storageSnapshot(window.localStorage)).toEqual(localStorageBefore);
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionStorageBefore);
+    expect(window.location.href).toBe(locationBefore);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('private');
+    log.mockRestore();
   });
 
   it('discards an in-flight token after session-loss unmount without persistence or URL leakage', async () => {
@@ -268,6 +447,14 @@ function storageSnapshot(storage: Storage) {
     .filter((key): key is string => Boolean(key))
     .sort()
     .map(key => [key, storage.getItem(key)]);
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }
 
 const serverProfile = {

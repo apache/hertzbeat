@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useCallback, type RefObject } from 'react';
+import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react';
 
 import { generateAccessToken } from '@/shared/access-token/access-token-generation-api';
 import {
@@ -18,41 +18,82 @@ import type { InstrumentationControllerState } from './instrumentation-controlle
 
 export function useInstrumentationTokenActions(
   state: InstrumentationControllerState,
-  generationRef: RefObject<number>
+  generationRef: RefObject<number>,
+  canGenerateToken: boolean
 ) {
+  const tokenGenerationRef = useRef(0);
+  const canGenerateTokenRef = useRef(canGenerateToken);
+  useLayoutEffect(() => {
+    canGenerateTokenRef.current = canGenerateToken;
+  }, [canGenerateToken]);
+  useRetireTokenGeneration(canGenerateToken, state, tokenGenerationRef);
   const openTokenGenerator = useCallback(() => {
-    if (state.tokenGenerating) return;
+    if (!canGenerateTokenRef.current || state.tokenGenerating) return;
     state.setTokenError(false);
     state.setTokenDraft({ ...createAccessTokenGenerationDraft('otlp-ingest'), scope: 'otlp-ingest' });
-  }, [state]);
+  }, [canGenerateTokenRef, state]);
   const closeTokenGenerator = useCallback(() => {
     if (!state.tokenGenerating) state.setTokenDraft(undefined);
   }, [state]);
   const updateTokenDraft = useCallback(
     (draft: AccessTokenGenerationDraft) => {
-      if (!state.tokenGenerating) state.setTokenDraft({ ...draft, scope: 'otlp-ingest' });
+      if (canGenerateTokenRef.current && !state.tokenGenerating) {
+        state.setTokenDraft({ ...draft, scope: 'otlp-ingest' });
+      }
     },
-    [state]
+    [canGenerateTokenRef, state]
   );
   const generateToken = useCallback(async () => {
+    if (!canGenerateTokenRef.current) return;
     const draft = state.tokenDraft;
     if (!draft || validateAccessTokenGenerationDraft(draft).length > 0) {
       state.setTokenError(true);
       return;
     }
-    const generation = generationRef.current;
+    const flowGeneration = generationRef.current;
+    const tokenGeneration = tokenGenerationRef.current;
     state.setTokenGenerating(true);
     state.setTokenError(false);
     try {
       const receipt = await generateAccessToken({ ...draft, scope: 'otlp-ingest' });
-      if (generationRef.current !== generation) return;
+      if (!generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) return;
       state.setToken(receipt.token);
       state.setTokenDraft(undefined);
     } catch {
-      if (generationRef.current === generation) state.setTokenError(true);
+      if (generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) {
+        state.setTokenError(true);
+      }
     } finally {
-      if (generationRef.current === generation) state.setTokenGenerating(false);
+      if (generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) {
+        state.setTokenGenerating(false);
+      }
     }
-  }, [generationRef, state]);
+  }, [canGenerateTokenRef, generationRef, state, tokenGenerationRef]);
   return { openTokenGenerator, closeTokenGenerator, updateTokenDraft, generateToken };
+}
+
+function useRetireTokenGeneration(
+  canGenerateToken: boolean,
+  state: InstrumentationControllerState,
+  tokenGenerationRef: RefObject<number>
+) {
+  const previousCanGenerate = useRef(canGenerateToken);
+  useLayoutEffect(() => {
+    const lostCapability = previousCanGenerate.current && !canGenerateToken;
+    previousCanGenerate.current = canGenerateToken;
+    if (!lostCapability) return;
+    tokenGenerationRef.current += 1;
+    state.setTokenDraft(undefined);
+    state.setTokenGenerating(false);
+    state.setTokenError(false);
+  }, [canGenerateToken, state, tokenGenerationRef]);
+}
+
+function generationIsCurrent(
+  flowGenerationRef: RefObject<number>,
+  flowGeneration: number,
+  tokenGenerationRef: RefObject<number>,
+  tokenGeneration: number
+) {
+  return flowGenerationRef.current === flowGeneration && tokenGenerationRef.current === tokenGeneration;
 }
