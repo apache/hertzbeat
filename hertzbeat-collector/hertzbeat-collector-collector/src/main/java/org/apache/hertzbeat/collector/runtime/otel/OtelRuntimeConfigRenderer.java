@@ -117,6 +117,8 @@ public class OtelRuntimeConfigRenderer {
         if (properties.getInternalTelemetryPort() < 1 || properties.getInternalTelemetryPort() > 65535) {
             throw new IllegalArgumentException("Runtime internal telemetry port is invalid");
         }
+        long exporterTimeoutSeconds = OtelRuntimeGatewayPolicy.boundedTimeout(
+                properties.getOtlpHttpExporterTimeout(), "HTTP exporter request").toSeconds();
         StringBuilder yaml = new StringBuilder("receivers:\n  otlp:\n    protocols:\n")
                 .append("      grpc:\n")
                 .append("        endpoint: ").append(yamlScalar(gateway.grpcEndpoint())).append('\n')
@@ -141,6 +143,7 @@ public class OtelRuntimeConfigRenderer {
                     headers:
                       Authorization: Bearer ${env:HERTZBEAT_OTLP_TOKEN}
                     compression: gzip
+                    timeout: %ds
                     retry_on_failure:
                       enabled: true
                       initial_interval: 1s
@@ -153,6 +156,8 @@ public class OtelRuntimeConfigRenderer {
                       sizer: requests
                       queue_size: 2048
                       storage: file_storage
+                """.formatted(exporterTimeoutSeconds));
+        yaml.append("""
                 extensions:
                   health_check:
                     endpoint: 127.0.0.1:%d

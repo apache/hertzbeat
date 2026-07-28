@@ -69,6 +69,7 @@ collector:
     host-metrics-interval: ${HERTZBEAT_OTEL_HOST_METRICS_INTERVAL:10s}
     file-storage-directory: ${HERTZBEAT_OTEL_FILE_STORAGE_DIRECTORY:data/otel-runtime}
     export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT:http://127.0.0.1:1157/api/otlp}
+    otlp-http-exporter-timeout: ${HERTZBEAT_OTLP_HTTP_EXPORTER_TIMEOUT:5s}
     token: ${HERTZBEAT_OTLP_TOKEN:}
     otlp-grpc-endpoint: ${HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT:127.0.0.1:4317}
     otlp-http-endpoint: ${HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT:127.0.0.1:4318}

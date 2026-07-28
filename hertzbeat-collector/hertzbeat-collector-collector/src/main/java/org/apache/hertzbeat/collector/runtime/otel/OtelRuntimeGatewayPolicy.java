@@ -53,9 +53,9 @@ final class OtelRuntimeGatewayPolicy {
         if (!gatewayEnabled && (!isLoopback(grpcEndpoint) || !isLoopback(httpEndpoint))) {
             throw new IllegalArgumentException("Non-loopback OTLP listeners require explicit Gateway mode");
         }
-        Duration readTimeout = timeout(properties.getOtlpReadTimeout(), "read");
-        Duration writeTimeout = timeout(properties.getOtlpWriteTimeout(), "write");
-        Duration idleTimeout = timeout(properties.getOtlpIdleTimeout(), "idle");
+        Duration readTimeout = boundedTimeout(properties.getOtlpReadTimeout(), "read");
+        Duration writeTimeout = boundedTimeout(properties.getOtlpWriteTimeout(), "write");
+        Duration idleTimeout = boundedTimeout(properties.getOtlpIdleTimeout(), "idle");
         if (!gatewayEnabled) {
             return new ResolvedGateway(grpcEndpoint, httpEndpoint, false,
                     readTimeout, writeTimeout, idleTimeout, null, null, null, null);
@@ -129,7 +129,7 @@ final class OtelRuntimeGatewayPolicy {
         }
     }
 
-    private static Duration timeout(Duration value, String label) {
+    static Duration boundedTimeout(Duration value, String label) {
         if (value == null || value.compareTo(MINIMUM_TIMEOUT) < 0 || value.compareTo(MAXIMUM_TIMEOUT) > 0
                 || value.getNano() != 0) {
             throw new IllegalArgumentException("OTLP " + label + " timeout must be a whole second between 1s and 5m");
