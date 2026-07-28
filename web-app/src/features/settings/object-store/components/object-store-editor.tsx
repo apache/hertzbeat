@@ -115,20 +115,22 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
             />
           ))}
       </div>
-      <div className={styles.actions}>
-        <Button
-          type="primary"
-          loading={props.saving}
-          disabled={!props.canWrite || !props.dirty || props.locked}
-          onClick={props.onSubmit}
-        >
-          {t('common.save')}
-        </Button>
-        <Button disabled={!props.canWrite || !props.dirty || props.locked} onClick={props.onDiscard}>
-          {t('objectStore.discard')}
-        </Button>
-        {!props.dirty && <Typography.Text type="secondary">{t('objectStore.noChanges')}</Typography.Text>}
-      </div>
+      {props.canWrite && (
+        <div className={styles.actions}>
+          <Button
+            type="primary"
+            loading={props.saving}
+            disabled={!props.dirty || props.locked}
+            onClick={props.onSubmit}
+          >
+            {t('common.save')}
+          </Button>
+          <Button disabled={!props.dirty || props.locked} onClick={props.onDiscard}>
+            {t('objectStore.discard')}
+          </Button>
+          {!props.dirty && <Typography.Text type="secondary">{t('objectStore.noChanges')}</Typography.Text>}
+        </div>
+      )}
     </>
   );
 }

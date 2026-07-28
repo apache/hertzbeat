@@ -26,10 +26,20 @@ import {
   isObjectStoreDirty,
   objectStoreResourceId,
   objectStoreSaveConverged,
+  userCanWriteObjectStore,
   validateObjectStoreDraft
 } from './object-store-model';
 
 describe('object store model', () => {
+  it.each([
+    [['ADMIN'], true],
+    [['USER'], false],
+    [['GUEST'], false],
+    [[], false]
+  ] as const)('maps roles %j to Object Store write capability %j', (roles, expected) => {
+    expect(userCanWriteObjectStore(roles)).toBe(expected);
+  });
+
   it('normalizes missing and unsupported configurations to database storage', () => {
     expect(createObjectStoreDraft()).toEqual({
       type: 'DATABASE',

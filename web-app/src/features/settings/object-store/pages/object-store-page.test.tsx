@@ -150,14 +150,15 @@ describe('ObjectStorePage', () => {
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 
-  it('keeps the redacted configuration readable but disables writes for non-admin users', async () => {
+  it('keeps the redacted configuration readable without write affordances for a non-writer', async () => {
     controller.useObjectStoreResourceController.mockReturnValue(buildController({}, false));
     renderObjectStorePage();
 
     expect(await screen.findByText('Only administrators can change object storage configuration.')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('OBS access key')).toBeDisabled();
     expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
   });
 
   it('keeps proof recovery visible, locked, and GET-retryable', async () => {
