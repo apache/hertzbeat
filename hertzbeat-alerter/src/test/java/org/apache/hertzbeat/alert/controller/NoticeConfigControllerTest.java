@@ -42,6 +42,7 @@ import org.apache.hertzbeat.alert.dto.NoticeReceiverRequest;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverResponse;
 import org.apache.hertzbeat.alert.service.NoticeReceiverContractMapper;
 import org.apache.hertzbeat.alert.service.NoticeReceiverContractService;
+import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -432,6 +433,24 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void addNewNoticeTemplateReturnsStableSafeInvalidRequestFailure() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        noticeTemplate.setName("private-template-payload");
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.INVALID_REQUEST))
+                .when(noticeConfigService).addNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(post("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template request is invalid."))
+                .andExpect(content().string(not(containsString("private-template-payload"))))
+                .andExpect(content().string(not(containsString("87584674384"))));
+    }
+
+    @Test
     void editNoticeTemplate() throws Exception {
         NoticeTemplate noticeTemplate = getNoticeTemplate();
         doNothing().when(noticeConfigService).editNoticeTemplate(noticeTemplate);
@@ -448,9 +467,25 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void editNoticeTemplateReturnsStableSafeNotFoundFailure() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        noticeTemplate.setId(87584674384L);
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND))
+                .when(noticeConfigService).editNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(put("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."))
+                .andExpect(content().string(not(containsString("87584674384"))));
+    }
+
+    @Test
     void deleteNoticeTemplate_Success() throws Exception {
         Long templateId = 1L;
-        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.of(new NoticeTemplate()));
 
         mockMvc.perform(delete("/api/notice/template/{id}", templateId))
                 .andExpect(status().isOk())
@@ -463,14 +498,30 @@ class NoticeConfigControllerTest {
     @Test
     void deleteNoticeTemplate_NotFound() throws Exception {
         Long templateId = 1L;
-        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.empty());
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND))
+                .when(noticeConfigService).deleteNoticeTemplate(templateId);
 
         mockMvc.perform(delete("/api/notice/template/{id}", templateId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct"));
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."));
 
-        Mockito.verify(noticeConfigService, Mockito.never()).deleteNoticeTemplate(templateId);
+        Mockito.verify(noticeConfigService).deleteNoticeTemplate(templateId);
+    }
+
+    @Test
+    void deleteNoticeTemplateReturnsStableSafeReadOnlyFailure() throws Exception {
+        long templateId = 87584674384L;
+        Mockito.doThrow(new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.READ_ONLY))
+                .when(noticeConfigService).deleteNoticeTemplate(templateId);
+
+        mockMvc.perform(delete("/api/notice/template/{id}", templateId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Preset notice templates are read-only."))
+                .andExpect(content().string(not(containsString("87584674384"))));
     }
 
     @Test
@@ -511,6 +562,18 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void getTemplatesReturnsStableSafeStorageFailure() throws Exception {
+        when(noticeConfigService.getNoticeTemplates(null, true, 0, 8))
+                .thenThrow(new DataAccessResourceFailureException("private-storage-token"));
+
+        this.mockMvc.perform(get("/api/notice/templates"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notice template storage is unavailable."))
+                .andExpect(content().string(not(containsString("private-storage-token"))));
+    }
+
+    @Test
     void testGetTemplatesById() throws Exception {
         // Mock the service response
         NoticeTemplate template = new NoticeTemplate();
@@ -525,7 +588,7 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(get("/api/notice/template/{id}", 25857585858L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct or refresh the page"));
+                .andExpect(jsonPath("$.msg").value("Notice template was not found."));
     }
 
     @Test

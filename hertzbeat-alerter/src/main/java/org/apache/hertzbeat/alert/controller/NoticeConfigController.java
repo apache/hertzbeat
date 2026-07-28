@@ -31,6 +31,7 @@ import org.apache.hertzbeat.alert.dto.NoticeReceiverOptionResponse;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverRequest;
 import org.apache.hertzbeat.alert.dto.NoticeReceiverResponse;
 import org.apache.hertzbeat.alert.service.NoticeReceiverContractService;
+import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -57,6 +58,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/notice", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class NoticeConfigController {
+
+    private static final String NOTICE_TEMPLATE_INVALID_MESSAGE = "Notice template request is invalid.";
+    private static final String NOTICE_TEMPLATE_NOT_FOUND_MESSAGE = "Notice template was not found.";
+    private static final String NOTICE_TEMPLATE_READ_ONLY_MESSAGE = "Preset notice templates are read-only.";
+    private static final String NOTICE_TEMPLATE_STORAGE_UNAVAILABLE_MESSAGE = "Notice template storage is unavailable.";
+    private static final String NOTICE_TEMPLATE_OPERATION_FAILED_MESSAGE = "Notice template operation failed.";
 
     @Autowired
     private NoticeConfigService noticeConfigService;
@@ -202,28 +209,47 @@ public class NoticeConfigController {
     @PostMapping(path = "/template")
     @Operation(summary = "Add a notification template", description = "Add a notification template")
     public ResponseEntity<Message<Void>> addNewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
-        noticeConfigService.addNoticeTemplate(noticeTemplate);
-        return ResponseEntity.ok(Message.success("Add success"));
+        try {
+            noticeConfigService.addNoticeTemplate(noticeTemplate);
+            return ResponseEntity.ok(Message.success("Add success"));
+        } catch (NoticeTemplateMutationException exception) {
+            return templateMutationFailure(exception);
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("create", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("create", exception);
+        }
     }
 
     @PutMapping(path = "/template")
     @Operation(summary = "Modify existing notification template information", description = "Modify existing notification template information")
     public ResponseEntity<Message<Void>> editNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
-        noticeConfigService.editNoticeTemplate(noticeTemplate);
-        return ResponseEntity.ok(Message.success("Edit success"));
+        try {
+            noticeConfigService.editNoticeTemplate(noticeTemplate);
+            return ResponseEntity.ok(Message.success("Edit success"));
+        } catch (NoticeTemplateMutationException exception) {
+            return templateMutationFailure(exception);
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("update", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("update", exception);
+        }
     }
 
     @DeleteMapping(path = "/template/{id}")
     @Operation(summary = "Delete existing notification template information", description = "Delete existing notification template information")
     public ResponseEntity<Message<Void>> deleteNoticeTemplate(
             @Parameter(description = "en: Notification template ID", example = "6565463543") @PathVariable("id") final Long templateId) {
-        // Returns success if it does not exist or if the deletion is successful
-        Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
-        if (noticeTemplate.isEmpty()) {
-            return ResponseEntity.ok(Message.success("The specified notification template could not be queried, please check whether the parameters are correct"));
+        try {
+            noticeConfigService.deleteNoticeTemplate(templateId);
+            return ResponseEntity.ok(Message.success("Delete success"));
+        } catch (NoticeTemplateMutationException exception) {
+            return templateMutationFailure(exception);
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("delete", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("delete", exception);
         }
-        noticeConfigService.deleteNoticeTemplate(templateId);
-        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @GetMapping(path = "/templates")
@@ -234,15 +260,27 @@ public class NoticeConfigController {
             @Parameter(description = "Whether it is a preset template", example = "true") @RequestParam(defaultValue = "true") final boolean preset,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
-        Page<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name, preset, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(templatePage));
+        try {
+            Page<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name, preset, pageIndex, pageSize);
+            return ResponseEntity.ok(Message.success(templatePage));
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("list", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("list", exception);
+        }
     }
 
     @GetMapping(path = "/templates/all")
     @Operation(summary = "Get a list of all message notification templates",
             description = "Get a list of all message notification templates")
     public ResponseEntity<Message<List<NoticeTemplate>>> getAllTemplates() {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeTemplates()));
+        try {
+            return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeTemplates()));
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("list all", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("list all", exception);
+        }
     }
 
     @GetMapping(path = "/template/{id}")
@@ -250,11 +288,17 @@ public class NoticeConfigController {
             description = "Get the notification template information based on the template ID")
     public ResponseEntity<Message<NoticeTemplate>> getTemplateById(
             @Parameter(description = "en: Notification template ID", example = "6565463543") @PathVariable("id") final Long templateId) {
-        Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
-        if (noticeTemplate.isEmpty()) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "The specified notification template could not be queried, please check whether the parameters are correct or refresh the page"));
+        try {
+            Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
+            if (noticeTemplate.isEmpty()) {
+                return ResponseEntity.ok(Message.fail(FAIL_CODE, NOTICE_TEMPLATE_NOT_FOUND_MESSAGE));
+            }
+            return ResponseEntity.ok(Message.success(noticeTemplate.get()));
+        } catch (DataAccessException exception) {
+            return templateStorageUnavailable("detail", exception);
+        } catch (Exception exception) {
+            return templateOperationFailed("detail", exception);
         }
-        return ResponseEntity.ok(Message.success(noticeTemplate.get()));
     }
 
     @PostMapping(path = "/receiver/send-test-msg")
@@ -271,6 +315,25 @@ public class NoticeConfigController {
         } catch (Exception e) {
             return receiverError("test", e);
         }
+    }
+
+    private ResponseEntity<Message<Void>> templateMutationFailure(NoticeTemplateMutationException exception) {
+        String message = switch (exception.getReason()) {
+            case INVALID_REQUEST -> NOTICE_TEMPLATE_INVALID_MESSAGE;
+            case NOT_FOUND -> NOTICE_TEMPLATE_NOT_FOUND_MESSAGE;
+            case READ_ONLY -> NOTICE_TEMPLATE_READ_ONLY_MESSAGE;
+        };
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, message));
+    }
+
+    private <T> ResponseEntity<Message<T>> templateStorageUnavailable(String operation, Exception exception) {
+        log.error("notice template {} storage unavailable: {}", operation, exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, NOTICE_TEMPLATE_STORAGE_UNAVAILABLE_MESSAGE));
+    }
+
+    private <T> ResponseEntity<Message<T>> templateOperationFailed(String operation, Exception exception) {
+        log.error("notice template {} failed: {}", operation, exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, NOTICE_TEMPLATE_OPERATION_FAILED_MESSAGE));
     }
 
     private <T> ResponseEntity<Message<T>> receiverStorageUnavailable(String operation, Exception exception) {

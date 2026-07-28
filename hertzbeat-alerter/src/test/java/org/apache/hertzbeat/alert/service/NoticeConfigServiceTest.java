@@ -21,6 +21,7 @@ import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
+import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException.Reason;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -42,11 +43,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 
@@ -216,23 +220,146 @@ class NoticeConfigServiceTest {
 
     @Test
     void addTemplate() {
-        final NoticeTemplate noticeTemplate = mock(NoticeTemplate.class);
+        final NoticeTemplate noticeTemplate = NoticeTemplate.builder()
+                .name("custom")
+                .type((byte) 1)
+                .content("content")
+                .build();
         noticeConfigService.addNoticeTemplate(noticeTemplate);
-        verify(noticeTemplateDao, times(1)).save(noticeTemplate);
+        verify(noticeTemplateDao, times(1)).save(any(NoticeTemplate.class));
+    }
+
+    @Test
+    void addNoticeTemplateRejectsCallerOwnedIdentityAndPresetState() {
+        NoticeTemplate noticeTemplate = NoticeTemplate.builder()
+                .id(87584674384L)
+                .name("private-template")
+                .type((byte) 1)
+                .preset(true)
+                .content("private-template-payload")
+                .build();
+
+        NoticeTemplateMutationException exception = assertThrows(NoticeTemplateMutationException.class,
+                () -> noticeConfigService.addNoticeTemplate(noticeTemplate));
+
+        assertEquals(Reason.INVALID_REQUEST, exception.getReason());
+        verifyNoInteractions(noticeTemplateDao);
     }
 
     @Test
     void editTemplate() {
-        final NoticeTemplate noticeTemplate = mock(NoticeTemplate.class);
+        final NoticeTemplate noticeTemplate = NoticeTemplate.builder()
+                .id(23342525L)
+                .name("updated")
+                .type((byte) 1)
+                .content("updated content")
+                .build();
+        NoticeTemplate persisted = NoticeTemplate.builder().id(23342525L).preset(false).build();
+        when(noticeTemplateDao.findByIdForUpdate(23342525L)).thenReturn(java.util.Optional.of(persisted));
         noticeConfigService.editNoticeTemplate(noticeTemplate);
-        verify(noticeTemplateDao, times(1)).save(noticeTemplate);
+        verify(noticeTemplateDao, times(1)).save(persisted);
+    }
+
+    @Test
+    void editNoticeTemplateRejectsMissingTargetBeforeWrite() {
+        NoticeTemplate noticeTemplate = NoticeTemplate.builder()
+                .id(87584674384L)
+                .name("updated")
+                .type((byte) 1)
+                .content("updated content")
+                .build();
+        when(noticeTemplateDao.findByIdForUpdate(87584674384L)).thenReturn(java.util.Optional.empty());
+
+        NoticeTemplateMutationException exception = assertThrows(NoticeTemplateMutationException.class,
+                () -> noticeConfigService.editNoticeTemplate(noticeTemplate));
+
+        assertEquals(Reason.NOT_FOUND, exception.getReason());
+        verify(noticeTemplateDao, never()).save(any());
+    }
+
+    @Test
+    void editNoticeTemplateUpdatesOnlyTheLockedExactCustomTarget() {
+        NoticeTemplate persisted = NoticeTemplate.builder()
+                .id(87584674384L)
+                .name("existing")
+                .type((byte) 2)
+                .content("existing content")
+                .creator("trusted-creator")
+                .preset(false)
+                .build();
+        NoticeTemplate request = NoticeTemplate.builder()
+                .id(87584674384L)
+                .name("updated")
+                .type((byte) 1)
+                .content("updated content")
+                .creator("private-spoofed-creator")
+                .preset(false)
+                .build();
+        when(noticeTemplateDao.findByIdForUpdate(87584674384L)).thenReturn(java.util.Optional.of(persisted));
+
+        noticeConfigService.editNoticeTemplate(request);
+
+        assertEquals("updated", persisted.getName());
+        assertEquals((byte) 1, persisted.getType());
+        assertEquals("updated content", persisted.getContent());
+        assertEquals("trusted-creator", persisted.getCreator());
+        verify(noticeTemplateDao).save(persisted);
+        verify(noticeTemplateDao, never()).save(request);
+    }
+
+    @Test
+    void editNoticeTemplateRejectsPresetMutationBeforeWrite() {
+        NoticeTemplate persisted = NoticeTemplate.builder()
+                .id(87584674384L)
+                .preset(false)
+                .build();
+        NoticeTemplate request = NoticeTemplate.builder()
+                .id(87584674384L)
+                .preset(true)
+                .build();
+        when(noticeTemplateDao.findByIdForUpdate(87584674384L)).thenReturn(java.util.Optional.of(persisted));
+
+        NoticeTemplateMutationException exception = assertThrows(NoticeTemplateMutationException.class,
+                () -> noticeConfigService.editNoticeTemplate(request));
+
+        assertEquals(Reason.READ_ONLY, exception.getReason());
+        verify(noticeTemplateDao, never()).save(any());
     }
 
     @Test
     void deleteTemplate() {
         final Long templateId = 23342525L;
+        NoticeTemplate persisted = NoticeTemplate.builder().id(templateId).preset(false).build();
+        when(noticeTemplateDao.findByIdForUpdate(templateId)).thenReturn(java.util.Optional.of(persisted));
         noticeConfigService.deleteNoticeTemplate(templateId);
-        verify(noticeTemplateDao, times(1)).deleteById(templateId);
+        verify(noticeTemplateDao, times(1)).delete(persisted);
+    }
+
+    @Test
+    void deleteNoticeTemplateRejectsMissingTargetBeforeWrite() {
+        long templateId = 87584674384L;
+        when(noticeTemplateDao.findByIdForUpdate(templateId)).thenReturn(java.util.Optional.empty());
+
+        NoticeTemplateMutationException exception = assertThrows(NoticeTemplateMutationException.class,
+                () -> noticeConfigService.deleteNoticeTemplate(templateId));
+
+        assertEquals(Reason.NOT_FOUND, exception.getReason());
+        verify(noticeTemplateDao, never()).delete(any(NoticeTemplate.class));
+        verify(noticeTemplateDao, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteNoticeTemplateRejectsLockedPresetTargetBeforeWrite() {
+        long templateId = 87584674384L;
+        NoticeTemplate persisted = NoticeTemplate.builder().id(templateId).preset(true).build();
+        when(noticeTemplateDao.findByIdForUpdate(templateId)).thenReturn(java.util.Optional.of(persisted));
+
+        NoticeTemplateMutationException exception = assertThrows(NoticeTemplateMutationException.class,
+                () -> noticeConfigService.deleteNoticeTemplate(templateId));
+
+        assertEquals(Reason.READ_ONLY, exception.getReason());
+        verify(noticeTemplateDao, never()).delete(any(NoticeTemplate.class));
+        verify(noticeTemplateDao, never()).deleteById(any());
     }
 
     @Test
