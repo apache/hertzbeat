@@ -17,13 +17,16 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -48,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,6 +80,9 @@ class AppServiceTest {
 
     @Mock
     private MonitorDao monitorDao;
+
+    @Mock
+    private ParamDao paramDao;
 
     @Mock
     private DefineDao defineDao;
@@ -107,6 +114,44 @@ class AppServiceTest {
     void getAppDefine() {
         assertDoesNotThrow(() -> appService.getAppDefine("jvm"));
         assertThrows(IllegalArgumentException.class, () -> appService.getAppDefine("unknown"));
+    }
+
+    @Test
+    void getPushDefineUsesAutoCreatedPrometheusMonitorIdentityAndRealtimeCatalog() {
+        long monitorId = 11L;
+        String app = "push-proof-job";
+        String metrics = "proof_metric_total";
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .app(app)
+                .name("proof-instance")
+                .type(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE)
+                .build();
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setId(monitorId)
+                .setApp(app)
+                .setMetrics(metrics)
+                .addField(CollectRep.Field.newBuilder()
+                        .setName("region")
+                        .setType(CommonConstants.TYPE_STRING)
+                        .setLabel(true)
+                        .build())
+                .addField(CollectRep.Field.newBuilder()
+                        .setName("value")
+                        .setType(CommonConstants.TYPE_NUMBER)
+                        .setLabel(false)
+                        .build())
+                .build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(monitor));
+        when(warehouseService.queryMonitorMetricsData(monitorId)).thenReturn(List.of(metricsData));
+
+        Job catalog = appService.getPushDefine(monitorId);
+
+        assertEquals(monitorId, catalog.getMonitorId());
+        assertEquals(app, catalog.getApp());
+        assertEquals(List.of(metrics), catalog.getMetrics().stream().map(Metrics::getName).toList());
+        assertEquals(List.of("region", "value"),
+                catalog.getMetrics().get(0).getFields().stream().map(Metrics.Field::getField).toList());
     }
 
     @Test

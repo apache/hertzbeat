@@ -22,6 +22,7 @@ package org.apache.hertzbeat.push.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.config.PushErrorRequestWrapper;
 import org.apache.hertzbeat.push.config.PushSuccessRequestWrapper;
@@ -41,11 +42,13 @@ public class PushPrometheusController {
     @PostMapping()
     @Operation(summary = "Prometheus push gateway", description = "Push prometheus metric data to hertzbeat")
     public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) {
-        if (request instanceof PushErrorRequestWrapper error) {
+        PushErrorRequestWrapper error = findWrapper(request, PushErrorRequestWrapper.class);
+        if (error != null) {
             return ResponseEntity.badRequest().body(Message.success(String.format("Push failed, job: %s, instance: %s", 
                             error.getJob(), error.getInstance())));
         }
-        else if (request instanceof PushSuccessRequestWrapper success) {
+        PushSuccessRequestWrapper success = findWrapper(request, PushSuccessRequestWrapper.class);
+        if (success != null) {
             return ResponseEntity.ok(Message.success(String.format("Push success, job: %s, instance: %s",
                     success.getJob(), success.getInstance())));
         }
@@ -53,6 +56,22 @@ public class PushPrometheusController {
             return ResponseEntity.badRequest()
                     .body(Message.success(String.format("Request  %s not matched.", request.getRequestURI())));
         }
+    }
+
+    private static <T extends HttpServletRequest> T findWrapper(HttpServletRequest request, Class<T> wrapperType) {
+        HttpServletRequest current = request;
+        while (current != null) {
+            if (wrapperType.isInstance(current)) {
+                return wrapperType.cast(current);
+            }
+            if (!(current instanceof HttpServletRequestWrapper wrapper)
+                    || !(wrapper.getRequest() instanceof HttpServletRequest nested)
+                    || nested == current) {
+                return null;
+            }
+            current = nested;
+        }
+        return null;
     }
 
 }

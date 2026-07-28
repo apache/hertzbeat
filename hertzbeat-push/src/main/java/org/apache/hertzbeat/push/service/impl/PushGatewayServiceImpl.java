@@ -34,10 +34,13 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.push.dao.PushMonitorDao;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * push gateway service impl
@@ -51,14 +54,22 @@ public class PushGatewayServiceImpl implements PushGatewayService {
     
     private final PushMonitorDao pushMonitorDao;
     
-    private final Map<String, Long> jobInstanceMap;
+    private final Map<PushMonitorIdentity, Long> jobInstanceMap;
     
     public PushGatewayServiceImpl(CommonDataQueue commonDataQueue, PushMonitorDao pushMonitorDao) {
         this.commonDataQueue = commonDataQueue;
         this.pushMonitorDao = pushMonitorDao;
         jobInstanceMap = new ConcurrentHashMap<>();
-        pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor -> 
-                jobInstanceMap.put(monitor.getApp() + "_" + monitor.getName(), monitor.getId()));
+        pushMonitorDao.findMonitorsByType(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE).forEach(monitor ->
+                jobInstanceMap.put(new PushMonitorIdentity(monitor.getApp(), monitor.getName()), monitor.getId()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMonitorDeleted(MonitorDeletedEvent event) {
+        Long monitorId = event.getMonitorId();
+        if (monitorId != null) {
+            jobInstanceMap.entrySet().removeIf(entry -> monitorId.equals(entry.getValue()));
+        }
     }
 
     @Override
@@ -74,7 +85,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
             if (job != null && instance != null) {
                 // auto create monitor when job and instance not null
                 // job is app, instance is the name
-                id = jobInstanceMap.computeIfAbsent(job + "_" + instance, key -> {
+                id = jobInstanceMap.computeIfAbsent(new PushMonitorIdentity(job, instance), key -> {
                     log.info("auto create monitor by prometheus push, job: {}, instance: {}", job, instance);
                     long monitorId = SnowFlakeIdGenerator.generateId();
                     Monitor monitor = Monitor.builder()
@@ -82,7 +93,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                             .app(job)
                             .name(instance)
                             .instance(instance)
-                            .type((byte) 1)
+                            .type(CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE)
                             .status(CommonConstants.MONITOR_UP_CODE)
                             .build();
                     this.pushMonitorDao.save(monitor);
@@ -129,5 +140,8 @@ public class PushGatewayServiceImpl implements PushGatewayService {
             log.error("push prometheus metrics error", e);
             return false;
         }
+    }
+
+    private record PushMonitorIdentity(String job, String instance) {
     }
 }
