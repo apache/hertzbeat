@@ -71,8 +71,9 @@ describe('dashboard controller', () => {
 
   it.each([
     [{ apps: null }, alert(0), 'missing'],
+    [new DashboardRequestFailure('permission'), alert(0), 'permission'],
     [new DashboardRequestFailure('unavailable'), alert(0), 'unavailable'],
-    [new DashboardContractError('bad'), alert(0), 'error']
+    [new DashboardContractError('bad'), alert(0), 'contract']
   ] as const)('classifies monitor evidence as %s without hiding ready alerts', async (summary, alerts, kind) => {
     if (summary instanceof Error) api.loadDashboardSummary.mockRejectedValue(summary);
     else api.loadDashboardSummary.mockResolvedValue(summary);
@@ -83,8 +84,9 @@ describe('dashboard controller', () => {
   });
 
   it.each([
+    [new DashboardRequestFailure('permission'), 'permission'],
     [new DashboardRequestFailure('unavailable'), 'unavailable'],
-    [new DashboardContractError('bad'), 'error'],
+    [new DashboardContractError('bad'), 'contract'],
     [new Error('bad'), 'error']
   ] as const)('classifies alert evidence as %s without hiding ready monitors', async (reason, kind) => {
     api.loadDashboardAlertSummary.mockRejectedValue(reason);
@@ -145,6 +147,94 @@ describe('dashboard controller', () => {
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
     expect(view.result.current.monitorState).toHaveProperty('apps');
     expect(view.result.current.alertState).toHaveProperty('summary');
+  });
+
+  it('keeps auto-refresh failures independent and recovers both sources on the next interval', async () => {
+    vi.useFakeTimers();
+    api.loadDashboardSummary
+      .mockResolvedValueOnce({ apps: [app] })
+      .mockRejectedValueOnce(new DashboardRequestFailure('permission'))
+      .mockResolvedValueOnce({ apps: [app] });
+    api.loadDashboardAlertSummary
+      .mockResolvedValueOnce(alert(2))
+      .mockResolvedValueOnce(alert(6))
+      .mockResolvedValueOnce(alert(2));
+    const view = renderController();
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+
+    await act(async () => vi.advanceTimersByTimeAsync(DASHBOARD_REFRESH_INTERVAL_MS));
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+    expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
+    expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
+    expect(view.result.current).toMatchObject({
+      monitorState: { kind: 'permission' },
+      alertState: { kind: 'ready', summary: { total: 6 } }
+    });
+
+    await act(async () => vi.advanceTimersByTimeAsync(DASHBOARD_REFRESH_INTERVAL_MS));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(view.result.current).toMatchObject({
+      monitorState: { kind: 'ready', apps: [app] },
+      alertState: { kind: 'ready', summary: { total: 2 } }
+    });
+  });
+
+  it('cancels an older manual refresh and ignores its late monitor result', async () => {
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
+    const stale = deferred<{ apps: (typeof app)[] }>();
+    let staleSignal: AbortSignal | undefined;
+    api.loadDashboardSummary
+      .mockImplementationOnce((signal: AbortSignal) => {
+        staleSignal = signal;
+        return stale.promise;
+      })
+      .mockResolvedValueOnce({ apps: [{ ...app, app: 'current' }] });
+
+    let firstRefresh!: Promise<void>;
+    act(() => {
+      firstRefresh = view.result.current.refresh();
+    });
+    await waitFor(() => expect(staleSignal).toBeDefined());
+    await act(async () => view.result.current.refresh());
+
+    expect(staleSignal?.aborted).toBe(true);
+    await waitFor(() =>
+      expect(view.result.current.monitorState).toMatchObject({
+        kind: 'ready',
+        apps: [{ app: 'current' }]
+      })
+    );
+    act(() => stale.resolve({ apps: [{ ...app, app: 'stale' }] }));
+    await act(async () => {
+      await stale.promise;
+      await firstRefresh;
+    });
+    expect(view.result.current.monitorState).toMatchObject({ kind: 'ready', apps: [{ app: 'current' }] });
+  });
+
+  it('recovers both sources on the next manual refresh after independent failures', async () => {
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
+    api.loadDashboardSummary.mockRejectedValueOnce(new DashboardRequestFailure('permission'));
+    api.loadDashboardAlertSummary.mockRejectedValueOnce(new DashboardRequestFailure('unavailable'));
+    await act(async () => view.result.current.refresh());
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'permission' },
+        alertState: { kind: 'unavailable' }
+      })
+    );
+
+    api.loadDashboardSummary.mockResolvedValueOnce({ apps: [{ ...app, app: 'recovered' }] });
+    api.loadDashboardAlertSummary.mockResolvedValueOnce(alert(5));
+    await act(async () => view.result.current.refresh());
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'ready', apps: [{ app: 'recovered' }] },
+        alertState: { kind: 'ready', summary: { total: 5 } }
+      })
+    );
   });
 });
 

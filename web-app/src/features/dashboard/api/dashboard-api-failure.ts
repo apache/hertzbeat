@@ -14,6 +14,7 @@ const unavailableHttpStatuses = new Set([0, 502, 503, 504]);
 /** Converts transport evidence into a redacted failure safe for feature layers. */
 export function normalizeDashboardApiFailure(error: unknown) {
   if (!(error instanceof ApiMessageError)) return error;
+  if (error.status === 401 || error.status === 403) return new DashboardRequestFailure('permission');
   // Only missing/network/gateway evidence means the dashboard source is
   // unavailable. Other HTTP and envelope failures remain ordinary errors.
   const unavailable =

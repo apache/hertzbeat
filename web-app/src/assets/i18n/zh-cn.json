@@ -919,12 +919,16 @@
     "alertReady": "当前告警概览报告了 {{count}} 条活动告警。",
     "monitorStates": {
       "missing": "缺少监控概览，计数已隐藏。",
+      "permission": "当前账号无权读取监控概览，计数已隐藏。",
       "unavailable": "监控概览暂不可用，计数已隐藏。",
+      "contract": "监控概览不符合预期契约，计数已隐藏。",
       "error": "监控概览加载失败，计数已隐藏。"
     },
     "alertStates": {
       "missing": "缺少告警概览，计数已隐藏。",
+      "permission": "当前账号无权读取告警概览，计数已隐藏。",
       "unavailable": "告警概览暂不可用，计数已隐藏。",
+      "contract": "告警概览不符合预期契约，计数已隐藏。",
       "error": "告警概览加载失败，计数已隐藏。"
     }
   },

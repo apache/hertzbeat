@@ -935,12 +935,16 @@
     "alertReady": "O resumo atual informa {{count}} alertas ativos.",
     "monitorStates": {
       "missing": "O resumo de monitores está ausente. Os contadores foram ocultados.",
+      "permission": "Você não tem permissão para ler o resumo de monitores. Os contadores foram ocultados.",
       "unavailable": "O resumo de monitores está indisponível. Os contadores foram ocultados.",
+      "contract": "O resumo de monitores não corresponde ao contrato esperado. Os contadores foram ocultados.",
       "error": "Não foi possível carregar o resumo de monitores. Os contadores foram ocultados."
     },
     "alertStates": {
       "missing": "O resumo de alertas está ausente. Os contadores foram ocultados.",
+      "permission": "Você não tem permissão para ler o resumo de alertas. Os contadores foram ocultados.",
       "unavailable": "O resumo de alertas está indisponível. Os contadores foram ocultados.",
+      "contract": "O resumo de alertas não corresponde ao contrato esperado. Os contadores foram ocultados.",
       "error": "Não foi possível carregar o resumo de alertas. Os contadores foram ocultados."
     }
   },

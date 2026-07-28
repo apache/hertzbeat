@@ -91,6 +91,34 @@ describe('DashboardPage', () => {
     expect(screen.getByText(i18n.t('dashboard.alertStates.error'))).toBeInTheDocument();
   });
 
+  it.each([
+    ['permission', 'permission'],
+    ['contract', 'contract']
+  ] as const)('renders monitor %s independently from ready alerts', (kind, messageKey) => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind },
+      alertState: { kind: 'ready', summary: alert(2) },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.getByText(i18n.t(`dashboard.monitorStates.${messageKey}`))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('2');
+  });
+
+  it.each([
+    ['permission', 'permission'],
+    ['contract', 'contract']
+  ] as const)('renders alert %s independently from ready monitors', (kind, messageKey) => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'ready', apps: [app] },
+      alertState: { kind },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.getByText(i18n.t(`dashboard.alertStates.${messageKey}`))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
+  });
+
   it('never manufactures zero for pending or failed sections', () => {
     controller.useDashboardController.mockReturnValue({
       monitorState: { kind: 'loading' },

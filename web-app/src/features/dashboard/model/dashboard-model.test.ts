@@ -13,6 +13,7 @@ import {
   dashboardFailureKind,
   DashboardContractError,
   DashboardRequestFailure,
+  isDashboardFailureState,
   monitorTotals
 } from './dashboard-model';
 
@@ -23,10 +24,29 @@ describe('dashboard contracts', () => {
     ).toEqual({ total: 5, available: 3, unavailable: 1, unmanaged: 1 });
   });
 
-  it('classifies only stable request evidence as unavailable', () => {
+  it('classifies stable request and contract evidence without collapsing failures', () => {
+    expect(dashboardFailureKind(new DashboardRequestFailure('permission'))).toBe('permission');
     expect(dashboardFailureKind(new DashboardRequestFailure('unavailable'))).toBe('unavailable');
     expect(dashboardFailureKind(new DashboardRequestFailure('error'))).toBe('error');
-    expect(dashboardFailureKind(new DashboardContractError('invalid contract'))).toBe('error');
+    expect(dashboardFailureKind(new DashboardContractError('invalid contract'))).toBe('contract');
     expect(dashboardFailureKind(new Error('unknown failure'))).toBe('error');
   });
+
+  it('keeps both summary renderers on the same failure-state vocabulary', () => {
+    expect(isDashboardFailureState({ kind: 'permission' })).toBe(true);
+    expect(isDashboardFailureState({ kind: 'contract' })).toBe(true);
+    expect(isDashboardFailureState({ kind: 'ready', apps: [] })).toBe(false);
+    expect(isDashboardFailureState({ kind: 'empty', summary: alertSummary(0) })).toBe(false);
+  });
 });
+
+function alertSummary(total: number) {
+  return {
+    total,
+    dealNum: 0,
+    rate: 0,
+    priorityWarningNum: 0,
+    priorityCriticalNum: 0,
+    priorityEmergencyNum: 0
+  };
+}

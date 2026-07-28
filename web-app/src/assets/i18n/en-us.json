@@ -930,12 +930,16 @@
     "alertReady": "{{count}} active alerts are reported by the current summary.",
     "monitorStates": {
       "missing": "Monitor summary is missing. Counters are hidden.",
+      "permission": "You do not have permission to read the monitor summary. Counters are hidden.",
       "unavailable": "Monitor summary is unavailable. Counters are hidden.",
+      "contract": "Monitor summary did not match the expected contract. Counters are hidden.",
       "error": "Monitor summary could not be loaded. Counters are hidden."
     },
     "alertStates": {
       "missing": "Alert summary is missing. Counters are hidden.",
+      "permission": "You do not have permission to read the alert summary. Counters are hidden.",
       "unavailable": "Alert summary is unavailable. Counters are hidden.",
+      "contract": "Alert summary did not match the expected contract. Counters are hidden.",
       "error": "Alert summary could not be loaded. Counters are hidden."
     }
   },

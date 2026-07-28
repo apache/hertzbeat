@@ -8,7 +8,7 @@
 import { Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { DashboardAlertState } from '../model/dashboard-model';
+import { isDashboardFailureState, type DashboardAlertState } from '../model/dashboard-model';
 import styles from './dashboard.module.css';
 
 export function DashboardAlertSummary({ state }: { state: DashboardAlertState }) {
@@ -16,7 +16,7 @@ export function DashboardAlertSummary({ state }: { state: DashboardAlertState })
   if (state.kind === 'loading') {
     return <Skeleton className={styles.summaryLoading ?? ''} active paragraph={false} />;
   }
-  if (state.kind === 'missing' || state.kind === 'unavailable' || state.kind === 'error') {
+  if (isDashboardFailureState(state)) {
     return (
       <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>
         {t(`dashboard.alertStates.${state.kind}`)}

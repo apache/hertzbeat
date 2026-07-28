@@ -8,7 +8,12 @@
 import { Skeleton, Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { monitorTotals, type AppCount, type DashboardMonitorState } from '../model/dashboard-model';
+import {
+  isDashboardFailureState,
+  monitorTotals,
+  type AppCount,
+  type DashboardMonitorState
+} from '../model/dashboard-model';
 import styles from './dashboard.module.css';
 
 export function DashboardMonitorSummary({ state }: { state: DashboardMonitorState }) {
@@ -16,7 +21,7 @@ export function DashboardMonitorSummary({ state }: { state: DashboardMonitorStat
   if (state.kind === 'loading') {
     return <Skeleton className={styles.summaryLoading ?? ''} active paragraph={false} />;
   }
-  if (state.kind === 'missing' || state.kind === 'unavailable' || state.kind === 'error') {
+  if (isDashboardFailureState(state)) {
     return (
       <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>
         {t(`dashboard.monitorStates.${state.kind}`)}

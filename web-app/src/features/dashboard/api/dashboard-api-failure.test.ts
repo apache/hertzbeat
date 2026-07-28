@@ -21,6 +21,8 @@ describe('Dashboard API failure boundary', () => {
       'unavailable'
     ],
     ['status zero', new ApiMessageError('offline', { status: 0 }), 'unavailable'],
+    ['unauthorized', new ApiMessageError('unauthorized', { status: 401 }), 'permission'],
+    ['forbidden', new ApiMessageError('forbidden', { status: 403 }), 'permission'],
     ['bad gateway', new ApiMessageError('offline', { status: 502 }), 'unavailable'],
     ['service unavailable', new ApiMessageError('offline', { status: 503 }), 'unavailable'],
     ['gateway timeout', new ApiMessageError('offline', { status: 504 }), 'unavailable'],

@@ -34,13 +34,17 @@ export type DashboardAlertSummary = {
 export type DashboardMonitorState =
   | { kind: 'loading' }
   | { kind: 'missing' }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
+  | { kind: 'contract' }
   | { kind: 'error' }
   | { kind: 'ready' | 'empty'; apps: AppCount[] };
 export type DashboardAlertState =
   | { kind: 'loading' }
   | { kind: 'missing' }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
+  | { kind: 'contract' }
   | { kind: 'error' }
   | { kind: 'ready' | 'empty'; summary: DashboardAlertSummary };
 
@@ -51,7 +55,16 @@ export class DashboardContractError extends Error {
   }
 }
 
-export type DashboardFailureKind = 'unavailable' | 'error';
+export type DashboardFailureKind = 'permission' | 'unavailable' | 'contract' | 'error';
+export type DashboardFailureStateKind = 'missing' | DashboardFailureKind;
+
+const dashboardFailureStateKinds = new Set<DashboardFailureStateKind>([
+  'missing',
+  'permission',
+  'unavailable',
+  'contract',
+  'error'
+]);
 
 /** Stable request evidence emitted by the Dashboard API boundary. */
 export class DashboardRequestFailure extends Error {
@@ -62,7 +75,15 @@ export class DashboardRequestFailure extends Error {
 }
 
 export function dashboardFailureKind(error: unknown): DashboardFailureKind {
+  if (error instanceof DashboardContractError) return 'contract';
   return error instanceof DashboardRequestFailure ? error.kind : 'error';
+}
+
+/** Keeps both Dashboard data sources aligned when a new failure state is introduced. */
+export function isDashboardFailureState(
+  state: DashboardMonitorState | DashboardAlertState
+): state is Extract<DashboardMonitorState | DashboardAlertState, { kind: DashboardFailureStateKind }> {
+  return dashboardFailureStateKinds.has(state.kind as DashboardFailureStateKind);
 }
 
 export function monitorTotals(apps: AppCount[]) {
