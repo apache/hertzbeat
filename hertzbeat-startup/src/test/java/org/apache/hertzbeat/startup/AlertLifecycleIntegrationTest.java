@@ -19,6 +19,7 @@ package org.apache.hertzbeat.startup;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_ACKNOWLEDGED;
 import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_FIRING;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_PENDING;
 import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_RESOLVED;
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.SUCCESS_CODE;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -144,6 +146,88 @@ class AlertLifecycleIntegrationTest {
         assertTrue(groupAlertDao.existsById(retainedGroup.getId()));
         assertTrue(singleAlertDao.existsById(retainedAlert.getId()));
         assertCommittedMutationEvents();
+    }
+
+    @Test
+    void groupEvidenceReturnsSortedBoundedProofAndStableSafeValidationFailures() throws Exception {
+        String marker = "alert-evidence-" + UUID.randomUUID();
+        SingleAlert firingAlert = singleAlertDao.saveAndFlush(singleAlert(marker, "firing"));
+        SingleAlert pendingAlert = singleAlertDao.saveAndFlush(singleAlert(marker, "pending"));
+        SingleAlert acknowledgedAlert = singleAlertDao.saveAndFlush(singleAlert(marker, "acknowledged"));
+        SingleAlert resolvedAlert = singleAlertDao.saveAndFlush(singleAlert(marker, "resolved"));
+        GroupAlert firingGroup = saveGroup(marker, "firing", firingAlert, ALERT_STATUS_FIRING);
+        GroupAlert pendingGroup = saveGroup(marker, "pending", pendingAlert, ALERT_STATUS_PENDING);
+        GroupAlert acknowledgedGroup =
+                saveGroup(marker, "acknowledged", acknowledgedAlert, ALERT_STATUS_ACKNOWLEDGED);
+        GroupAlert resolvedGroup = saveGroup(marker, "resolved", resolvedAlert, ALERT_STATUS_RESOLVED);
+        long firstMissingId = resolvedGroup.getId() + 1_000_000L;
+        long secondMissingId = firstMissingId + 1L;
+
+        mockMvc.perform(get("/api/alerts/group/evidence")
+                        .param("ids", String.valueOf(firingGroup.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groups.length()").value(1))
+                .andExpect(jsonPath("$.data.groups[0].id").value(firingGroup.getId()))
+                .andExpect(jsonPath("$.data.missingIds.length()").value(0));
+
+        mockMvc.perform(get("/api/alerts/group/evidence")
+                        .param("ids", String.valueOf(firstMissingId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groups.length()").value(0))
+                .andExpect(jsonPath("$.data.missingIds[0]").value(firstMissingId));
+
+        mockMvc.perform(get("/api/alerts/group/evidence")
+                        .param("ids",
+                                String.valueOf(secondMissingId),
+                                String.valueOf(resolvedGroup.getId()),
+                                String.valueOf(pendingGroup.getId()),
+                                String.valueOf(firingGroup.getId()),
+                                String.valueOf(acknowledgedGroup.getId()),
+                                String.valueOf(pendingGroup.getId()),
+                                String.valueOf(firstMissingId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groups.length()").value(4))
+                .andExpect(jsonPath("$.data.groups[0].id").value(firingGroup.getId()))
+                .andExpect(jsonPath("$.data.groups[0].status").value(ALERT_STATUS_FIRING))
+                .andExpect(jsonPath("$.data.groups[1].id").value(pendingGroup.getId()))
+                .andExpect(jsonPath("$.data.groups[1].status").value(ALERT_STATUS_PENDING))
+                .andExpect(jsonPath("$.data.groups[2].id").value(acknowledgedGroup.getId()))
+                .andExpect(jsonPath("$.data.groups[2].status").value(ALERT_STATUS_ACKNOWLEDGED))
+                .andExpect(jsonPath("$.data.groups[3].id").value(resolvedGroup.getId()))
+                .andExpect(jsonPath("$.data.groups[3].status").value(ALERT_STATUS_RESOLVED))
+                .andExpect(jsonPath("$.data.groups[0].alerts").doesNotExist())
+                .andExpect(jsonPath("$.data.missingIds[0]").value(firstMissingId))
+                .andExpect(jsonPath("$.data.missingIds[1]").value(secondMissingId))
+                .andExpect(jsonPath("$.data.observedAt").isNumber());
+
+        assertInvalidEvidenceRequest();
+        assertInvalidEvidenceRequest("");
+        assertInvalidEvidenceRequest("-6565463543");
+        assertInvalidEvidenceRequest("not-a-number-private-detail");
+        assertInvalidEvidenceRequest(
+                Collections.nCopies(101, String.valueOf(firingGroup.getId())).toArray(String[]::new));
+    }
+
+    private void assertInvalidEvidenceRequest(String... ids) throws Exception {
+        var request = get("/api/alerts/group/evidence");
+        if (ids.length > 0) {
+            request.param("ids", ids);
+        }
+        mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Invalid alert group evidence request."))
+                .andExpect(content().string(not(containsString("6565463543"))))
+                .andExpect(content().string(not(containsString("not-a-number-private-detail"))));
+    }
+
+    private GroupAlert saveGroup(String marker, String suffix, SingleAlert alert, String groupStatus) {
+        GroupAlert group = groupAlert(marker, suffix, alert);
+        group.setStatus(groupStatus);
+        return groupAlertDao.saveAndFlush(group);
     }
 
     private void assertNonEmptyPagesAndNestedDetail(

@@ -27,7 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
+import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceRequestException;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceService;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -65,6 +69,9 @@ class AlertsControllerTest {
 
     @Mock
     private AlertService alertService;
+
+    @Mock
+    private AlertGroupEvidenceService alertGroupEvidenceService;
 
     private List<Long> ids;
 
@@ -114,6 +121,60 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
                 .andReturn();
+    }
+
+    @Test
+    void getGroupAlertEvidenceReturnsFrozenSchema() throws Exception {
+        List<String> requestedIds = List.of("2", "1", "3", "1");
+        AlertGroupEvidence evidence = new AlertGroupEvidence(
+                List.of(
+                        new AlertGroupStatusEvidence(1L, CommonConstants.ALERT_STATUS_FIRING),
+                        new AlertGroupStatusEvidence(2L, CommonConstants.ALERT_STATUS_PENDING)),
+                List.of(3L),
+                123456789L);
+        Mockito.when(alertGroupEvidenceService.getEvidence(requestedIds)).thenReturn(evidence);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "2", "1", "3", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groups.length()").value(2))
+                .andExpect(jsonPath("$.data.groups[0].id").value(1))
+                .andExpect(jsonPath("$.data.groups[0].status").value("firing"))
+                .andExpect(jsonPath("$.data.groups[1].id").value(2))
+                .andExpect(jsonPath("$.data.groups[1].status").value("pending"))
+                .andExpect(jsonPath("$.data.missingIds[0]").value(3))
+                .andExpect(jsonPath("$.data.observedAt").value(123456789L));
+
+        Mockito.verify(alertGroupEvidenceService).getEvidence(requestedIds);
+    }
+
+    @Test
+    void getGroupAlertEvidenceInvalidRequestReturnsStableSafeFailure() throws Exception {
+        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("-6565463543")))
+                .thenThrow(new AlertGroupEvidenceRequestException());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "-6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Invalid alert group evidence request."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void getGroupAlertEvidenceFailureDoesNotExposeExceptionDetails() throws Exception {
+        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("7")))
+                .thenThrow(new IllegalStateException(
+                        "token=private-evidence-token payload=private-alert-payload"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group evidence query failed."))
+                .andExpect(content().string(not(containsString("private-evidence-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
     }
 
     @Test

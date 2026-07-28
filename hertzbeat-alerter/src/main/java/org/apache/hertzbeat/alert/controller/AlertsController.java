@@ -24,6 +24,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
+import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceRequestException;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceService;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -53,9 +56,16 @@ public class AlertsController {
     private static final String ALERT_GROUP_DELETE_FAILED_MESSAGE = "Alert group delete failed.";
     private static final String ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE = "Alert group status is not supported.";
     private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
+    private static final String INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE =
+            "Invalid alert group evidence request.";
+    private static final String ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE =
+            "Alert group evidence query failed.";
 
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private AlertGroupEvidenceService alertGroupEvidenceService;
 
     @GetMapping
     @Operation(summary = "Query Alarms")
@@ -86,6 +96,20 @@ public class AlertsController {
         Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, severity, serviceName,
                 serviceNamespace, environment, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
+    }
+
+    @GetMapping("/group/evidence")
+    @Operation(summary = "Query canonical alert group evidence by ID")
+    public ResponseEntity<Message<AlertGroupEvidence>> getGroupAlertEvidence(
+            @Parameter(description = "Alert group ID list", example = "6565463543")
+            @RequestParam(required = false) List<String> ids) {
+        try {
+            return ResponseEntity.ok(Message.success(alertGroupEvidenceService.getEvidence(ids)));
+        } catch (AlertGroupEvidenceRequestException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE));
+        }
     }
 
     @DeleteMapping("/group")
