@@ -18,16 +18,19 @@
 import { Button, Popconfirm, Space, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import type { AlertSilence } from '../model/alert-silence-model';
 
 export function AlertSilenceActions({
   silence,
+  capabilities,
   writeLocked,
   edit,
   toggle,
   remove
 }: {
   silence: AlertSilence;
+  capabilities: AlertActionCapabilities;
   writeLocked: boolean;
   edit: (id: number) => void;
   toggle: (silence: AlertSilence, enabled: boolean) => void;
@@ -38,17 +41,21 @@ export function AlertSilenceActions({
     <Space>
       <Switch
         checked={silence.enable === true}
-        disabled={writeLocked || typeof silence.enable !== 'boolean'}
+        disabled={!capabilities.canWrite || writeLocked || typeof silence.enable !== 'boolean'}
         onChange={enabled => toggle(silence, enabled)}
       />
-      <Button type="link" disabled={writeLocked} onClick={() => edit(silence.id)}>
-        {t('common.edit')}
-      </Button>
-      <Popconfirm title={t('alertSilences.deleteConfirm')} onConfirm={() => remove(silence.id)}>
-        <Button type="link" danger disabled={writeLocked}>
-          {t('alertSilences.delete')}
+      {capabilities.canWrite && (
+        <Button type="link" disabled={writeLocked} onClick={() => edit(silence.id)}>
+          {t('common.edit')}
         </Button>
-      </Popconfirm>
+      )}
+      {capabilities.canDelete && (
+        <Popconfirm title={t('alertSilences.deleteConfirm')} onConfirm={() => remove(silence.id)}>
+          <Button type="link" danger disabled={writeLocked}>
+            {t('alertSilences.delete')}
+          </Button>
+        </Popconfirm>
+      )}
     </Space>
   );
 }

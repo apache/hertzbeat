@@ -33,4 +33,21 @@ describe('AlertSilenceRecovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it('keeps retained proof evidence visible but disables retry after capability loss', () => {
+    const retry = vi.fn();
+    render(
+      <AlertSilenceRecovery
+        busy={false}
+        canRetry={false}
+        recovery={{ kind: 'delete', phase: 'proof', retryable: true }}
+        retry={retry}
+      />
+    );
+
+    const button = screen.getByRole('button', { name: 'common.retry' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(retry).not.toHaveBeenCalled();
+  });
 });

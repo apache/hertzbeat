@@ -75,7 +75,7 @@ export function useAlertSilenceDetailController(isBusy: () => boolean, isWriteLo
     [isWriteLocked, message, t]
   );
   const actions = useAlertSilenceDraftActions(isBusy, isWriteLocked, intent, request, setDetail, close);
-  return { detail, captureCloseCurrentSession, edit, ...actions };
+  return { detail, captureCloseCurrentSession, edit, retire: close, ...actions };
 }
 
 function useAlertSilenceDraftActions(

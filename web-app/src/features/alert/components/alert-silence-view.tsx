@@ -55,8 +55,14 @@ export function AlertSilenceView({
         submit={actions.submitSearch}
         refresh={actions.refresh}
       />
-      <AlertSilenceRecovery busy={state.busy} recovery={pageRecovery} retry={actions.refresh} />
+      <AlertSilenceRecovery
+        busy={state.busy}
+        canRetry={state.canRetryRecovery}
+        recovery={pageRecovery}
+        retry={actions.refresh}
+      />
       <AlertSilenceResults
+        capabilities={state.capabilities}
         evidence={state.list}
         query={state.query}
         writeLocked={state.writeLocked}
@@ -64,7 +70,7 @@ export function AlertSilenceView({
         selectIds={actions.selectIds}
         actions={actions}
       />
-      {draft && (
+      {state.capabilities.canWrite && draft && (
         <AlertSilenceEditor
           draft={draft}
           recovery={editorRecovery}
@@ -90,7 +96,7 @@ function AlertSilenceHeader({ state, actions }: { state: AlertSilenceViewState; 
         <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
       </div>
       <Space>
-        {state.selectedIds.length > 0 && (
+        {state.capabilities.canDelete && state.selectedIds.length > 0 && (
           <Popconfirm
             title={t('alertSilences.deleteSelectedConfirm', { count: state.selectedIds.length })}
             disabled={state.writeLocked}
@@ -102,9 +108,11 @@ function AlertSilenceHeader({ state, actions }: { state: AlertSilenceViewState; 
             </Button>
           </Popconfirm>
         )}
-        <Button type="primary" disabled={state.writeLocked} onClick={actions.create}>
-          {t('alertSilences.new')}
-        </Button>
+        {state.capabilities.canWrite && (
+          <Button type="primary" disabled={state.writeLocked} onClick={actions.create}>
+            {t('alertSilences.new')}
+          </Button>
+        )}
       </Space>
     </header>
   );

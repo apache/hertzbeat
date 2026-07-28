@@ -7,10 +7,12 @@ import type { AlertSilenceRecovery as RecoveryState } from '../model/alert-silen
 
 export function AlertSilenceRecovery({
   busy,
+  canRetry = true,
   recovery,
   retry
 }: {
   busy: boolean;
+  canRetry?: boolean;
   recovery: RecoveryState | null;
   retry: () => unknown;
 }) {
@@ -23,7 +25,7 @@ export function AlertSilenceRecovery({
       message={t(recoveryMessageKey(recovery))}
       action={
         recovery.retryable ? (
-          <Button size="small" disabled={busy} onClick={() => void retry()}>
+          <Button size="small" disabled={busy || !canRetry} onClick={() => void retry()}>
             {t('common.retry')}
           </Button>
         ) : undefined

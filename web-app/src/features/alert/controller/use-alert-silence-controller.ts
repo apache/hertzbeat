@@ -16,7 +16,7 @@
  */
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
@@ -31,7 +31,10 @@ import {
   type AlertSilenceQuery
 } from '../model/alert-silence-model';
 import { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
+import { useAlertSilenceActionCapabilities } from './use-alert-silence-action-capabilities';
 import { useAlertSilenceMutations } from './use-alert-silence-mutations';
+import { useAlertSilencePageCorrection } from './use-alert-silence-page-correction';
+import { useAlertSilenceRoleLossRetirement } from './use-alert-silence-role-loss-retirement';
 import { useAlertSilenceSelection } from './use-alert-silence-selection';
 import type { AlertSilenceProjectionFailure } from './use-alert-silence-operation-gate';
 import {
@@ -39,66 +42,81 @@ import {
   useAlertSilenceVisibleProjection,
   type AlertSilenceVisibleProjection
 } from './alert-silence-visible-projection';
+import { createAlertSilenceControllerActions } from './alert-silence-controller-actions';
 
 export function useAlertSilenceController() {
+  const capabilities = useAlertSilenceActionCapabilities();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const query = readAlertSilenceQuery(params);
   const management = readAlertSilenceManagementContext(params);
-  const latestProjection = useRef<AlertSilenceVisibleProjection>({ query, management });
-  // A pending command can outlive route changes; its visible reread belongs to
-  // the latest committed route query, never the render that started the write.
-  useLayoutEffect(() => {
-    latestProjection.current = { query, management };
-  }, [management, query]);
-  const source = writeAlertSilenceRoute(query, management).toString();
-  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
+  const latestProjection = useLatestAlertSilenceProjection(query, management);
+  const { value: search, setValue: setSearch } = useAlertSilenceSearchDraft(query, management);
   const projection = useAlertSilenceVisibleProjection({ query, management });
   const overflow = useAlertSilencePageCorrection(query, management, projection.page, setParams);
   const updateQuery = (patch: Partial<AlertSilenceQuery>) =>
     setParams(writeAlertSilenceRoute({ ...query, ...patch }, management));
   const rereadList = () => fetchAlertSilenceVisibleProjection(queryClient, latestProjection.current);
   const mutations = useAlertSilenceMutations(rereadList);
-  const detail = useAlertSilenceDetailController(mutations.isActive, mutations.isLocked);
+  const detail = useAlertSilenceDetailController(
+    mutations.isActive,
+    () => mutations.isLocked() || !capabilities.canWrite
+  );
   const draft = alertSilenceDetailDraft(detail.detail);
   const managementActions = createAlertSilenceManagementActions(management, query, setParams, navigate);
   const list = resolveControllerList(projection, mutations, overflow);
   const selection = useAlertSilenceSelection(query, list);
+  const selectSelectionIds = selection.selectIds;
+  useAlertSilenceRoleLossRetirement(capabilities, detail.retire, selectSelectionIds);
   const selectIds = (ids: number[]) => {
-    if (!mutations.isLocked()) selection.selectIds(ids);
+    if (capabilities.canDelete && !mutations.isLocked()) selectSelectionIds(ids);
   };
+  const canRetryRecovery = canRetryAlertSilenceRecovery(capabilities, mutations.recovery);
+  const actions = createAlertSilenceControllerActions({
+    capabilities,
+    search,
+    draft,
+    detail,
+    mutations,
+    setSearch,
+    updateQuery,
+    refresh: () => refreshAlertSilences(mutations.recovery !== null, canRetryRecovery, mutations.retry, rereadList),
+    selectIds,
+    managementActions
+  });
   return {
     state: {
+      capabilities,
       query,
       search,
       detail: detail.detail,
       busy: mutations.busy,
       writeLocked: mutations.isLocked(),
       recovery: mutations.recovery,
+      canRetryRecovery,
       refreshing: projection.refreshing,
       list,
-      selectedIds: selection.selectedIds,
+      selectedIds: capabilities.canDelete ? selection.selectedIds : [],
       management: { context: management, missingCount: projection.missingCount }
     },
-    actions: {
-      setSearch,
-      submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
-      refresh: () => refreshAlertSilences(mutations.recovery?.retryable === true, mutations.retry, rereadList),
-      selectIds,
-      create: detail.create,
-      edit: detail.edit,
-      cancel: detail.cancel,
-      updateDraft: detail.updateDraft,
-      replaceDraft: detail.replaceDraft,
-      save: () => mutations.save(draft, detail.captureCloseCurrentSession()),
-      toggle: mutations.toggle,
-      remove: mutations.remove,
-      removeMany: mutations.removeMany,
-      ...managementActions
-    }
+    actions
   };
+}
+
+function useAlertSilenceSearchDraft(query: AlertSilenceQuery, management: AlertSilenceVisibleProjection['management']) {
+  return useStringQueryDraft(writeAlertSilenceRoute(query, management).toString(), query.search);
+}
+
+function useLatestAlertSilenceProjection(
+  query: AlertSilenceQuery,
+  management: AlertSilenceVisibleProjection['management']
+) {
+  const latest = useRef<AlertSilenceVisibleProjection>({ query, management });
+  useLayoutEffect(() => {
+    latest.current = { query, management };
+  }, [management, query]);
+  return latest;
 }
 
 function resolveControllerList(
@@ -135,10 +153,11 @@ function createAlertSilenceManagementActions(
 
 async function refreshAlertSilences(
   hasRecovery: boolean,
+  canRetryRecovery: boolean,
   retry: () => Promise<void>,
   reread: () => Promise<AlertSilencePage>
 ) {
-  if (hasRecovery) return retry();
+  if (hasRecovery && canRetryRecovery) return retry();
   try {
     await reread();
   } catch {
@@ -146,25 +165,12 @@ async function refreshAlertSilences(
   }
 }
 
-function useAlertSilencePageCorrection(
-  query: AlertSilenceQuery,
-  management: ReturnType<typeof readAlertSilenceManagementContext>,
-  page: AlertSilencePage | undefined,
-  setParams: ReturnType<typeof useSearchParams>[1]
+function canRetryAlertSilenceRecovery(
+  capabilities: ReturnType<typeof useAlertSilenceActionCapabilities>,
+  recovery: ReturnType<typeof useAlertSilenceMutations>['recovery']
 ) {
-  const overflow = page && page.content.length === 0 && page.totalElements > 0 && query.pageIndex >= page.totalPages;
-  const totalPages = page?.totalPages;
-  useEffect(() => {
-    if (!overflow || totalPages === undefined) return;
-    setParams(
-      writeAlertSilenceRoute(
-        { search: query.search, pageSize: query.pageSize, pageIndex: Math.max(0, totalPages - 1) },
-        management
-      ),
-      { replace: true }
-    );
-  }, [management, overflow, query.pageSize, query.search, setParams, totalPages]);
-  return Boolean(overflow);
+  if (!recovery?.retryable) return false;
+  return recovery.kind === 'delete' ? capabilities.canDelete : capabilities.canWrite;
 }
 
 function resolveListEvidence(

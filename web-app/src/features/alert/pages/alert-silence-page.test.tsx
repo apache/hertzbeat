@@ -32,9 +32,13 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/alert-silence-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-silence-api')>()),
   ...api
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
 }));
 
 import { AlertSilencePage } from './alert-silence-page';
@@ -67,6 +71,7 @@ describe('AlertSilencePage', () => {
   });
 
   beforeEach(() => {
+    access.roles = ['ADMIN'];
     vi.clearAllMocks();
     lastSavedCanonical = undefined;
     api.loadAlertSilences.mockResolvedValue({ content: [record], totalElements: 1 });
@@ -101,6 +106,31 @@ describe('AlertSilencePage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent(
       '/alerts/silences?pageIndex=0&pageSize=15&search=database'
     );
+  });
+
+  it('renders GUEST as read-only without actionable mutation controls', async () => {
+    access.roles = ['GUEST'];
+    renderPage();
+    const row = await screen.findByRole('row', { name: /Database maintenance/ });
+
+    expect(screen.queryByRole('button', { name: 'New silence' })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(within(row).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(within(row).getByRole('switch')).toBeDisabled();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('keeps USER write controls while omitting ADMIN-only delete controls', async () => {
+    access.roles = ['USER'];
+    api.loadAlertSilences.mockResolvedValue({ content: [{ ...record, enable: true }], totalElements: 1 });
+    renderPage();
+    const row = await screen.findByRole('row', { name: /Database maintenance/ });
+
+    expect(screen.getByRole('button', { name: 'New silence' })).toBeEnabled();
+    expect(within(row).getByRole('button', { name: 'Edit' })).toBeEnabled();
+    expect(within(row).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(within(row).getByRole('switch')).toBeEnabled();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   it('renders the entity-matched silence context with honest empty evidence', async () => {

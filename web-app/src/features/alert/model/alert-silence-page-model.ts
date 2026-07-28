@@ -17,6 +17,7 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 
+import type { AlertActionCapabilities } from './alert-action-capability';
 import type {
   AlertSilence,
   AlertSilenceDraft,
@@ -41,6 +42,7 @@ export type AlertSilenceDetailState =
   | { kind: AlertSilenceDetailFailure; id: number };
 
 export type AlertSilenceViewState = {
+  capabilities: AlertActionCapabilities;
   query: AlertSilenceQuery;
   search: string;
   detail: AlertSilenceDetailState;
@@ -49,6 +51,7 @@ export type AlertSilenceViewState = {
   busy: boolean;
   writeLocked: boolean;
   recovery: AlertSilenceRecovery | null;
+  canRetryRecovery: boolean;
   refreshing: boolean;
   management: {
     context: AlertSilenceManagementContext | null;

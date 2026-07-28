@@ -18,23 +18,19 @@
 import { Alert, Empty, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
+import type { Key } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import type { AlertSilenceListEvidence } from '../model/alert-silence-page-model';
 import { alertSilencePageSizes, type AlertSilence, type AlertSilenceQuery } from '../model/alert-silence-model';
 import { AlertSilenceActions } from './alert-silence-actions';
 import styles from '../shared/alert-policy-page.module.css';
 
-export function AlertSilenceResults({
-  evidence,
-  query,
-  writeLocked,
-  selectedIds,
-  selectIds,
-  actions
-}: {
+type AlertSilenceResultsProps = {
   evidence: AlertSilenceListEvidence;
   query: AlertSilenceQuery;
+  capabilities: AlertActionCapabilities;
   writeLocked: boolean;
   selectedIds: number[];
   selectIds: (ids: number[]) => void;
@@ -44,8 +40,11 @@ export function AlertSilenceResults({
     toggle: (silence: AlertSilence, enabled: boolean) => void;
     remove: (id: number) => void;
   };
-}) {
+};
+
+export function AlertSilenceResults(props: AlertSilenceResultsProps) {
   const { t } = useTranslation();
+  const { evidence } = props;
   if (evidence.kind === 'loading')
     return (
       <div role="status">
@@ -55,19 +54,36 @@ export function AlertSilenceResults({
   if (evidence.kind === 'empty') return <Empty description={t('alertSilences.empty')} />;
   if (evidence.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  return <AlertSilenceReadyResults {...props} evidence={evidence} />;
+}
+
+function AlertSilenceReadyResults({
+  evidence,
+  query,
+  capabilities,
+  writeLocked,
+  selectedIds,
+  selectIds,
+  actions
+}: AlertSilenceResultsProps & { evidence: Extract<AlertSilenceListEvidence, { kind: 'ready' }> }) {
+  const { t } = useTranslation();
   return (
     <Table<AlertSilence>
       rowKey="id"
       size="small"
       dataSource={evidence.records}
-      columns={columns(t, writeLocked, actions)}
-      rowSelection={{
-        selectedRowKeys: selectedIds,
-        getCheckboxProps: () => ({ disabled: writeLocked }),
-        onChange: keys => {
-          if (!writeLocked) selectIds(keys.filter((key): key is number => typeof key === 'number'));
-        }
-      }}
+      columns={columns(t, capabilities, writeLocked, actions)}
+      {...(capabilities.canDelete
+        ? {
+            rowSelection: {
+              selectedRowKeys: selectedIds,
+              getCheckboxProps: () => ({ disabled: writeLocked }),
+              onChange: (keys: Key[]) => {
+                if (!writeLocked) selectIds(keys.filter((key): key is number => typeof key === 'number'));
+              }
+            }
+          }
+        : {})}
       scroll={{ x: 1310 }}
       pagination={{
         current: query.pageIndex + 1,
@@ -86,6 +102,7 @@ export function AlertSilenceResults({
 
 function columns(
   t: TFunction,
+  capabilities: AlertActionCapabilities,
   writeLocked: boolean,
   actions: {
     edit: (id: number) => void;
@@ -106,7 +123,9 @@ function columns(
     {
       title: t('common.actions'),
       width: 250,
-      render: (_value, item) => <AlertSilenceActions silence={item} writeLocked={writeLocked} {...actions} />
+      render: (_value, item) => (
+        <AlertSilenceActions silence={item} capabilities={capabilities} writeLocked={writeLocked} {...actions} />
+      )
     }
   ];
 }

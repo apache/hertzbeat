@@ -44,9 +44,13 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/alert-silence-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-silence-api')>()),
   ...api
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
 }));
 
 import { useAlertSilenceController } from './use-alert-silence-controller';
@@ -85,6 +89,7 @@ describe('useAlertSilenceController', () => {
     await loadLocale('en-US');
   });
   beforeEach(() => {
+    access.roles = ['ADMIN'];
     savedCanonical = record;
     Object.values(api).forEach(mock => mock.mockReset());
     api.loadAlertSilences.mockResolvedValue(page());
@@ -113,6 +118,87 @@ describe('useAlertSilenceController', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  it('fails closed before GUEST editor and mutation transport admission', async () => {
+    access.roles = ['GUEST'];
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(async () => {
+      view.result.current.controller.actions.create();
+      await view.result.current.controller.actions.edit(record.id);
+      await view.result.current.controller.actions.save();
+      await view.result.current.controller.actions.toggle(record, false);
+      await view.result.current.controller.actions.remove(record.id);
+      await view.result.current.controller.actions.removeMany([record.id]);
+    });
+
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+    expect(api.saveAlertSilence).not.toHaveBeenCalled();
+    expect(api.updateAlertSilenceEnabled).not.toHaveBeenCalled();
+    expect(api.deleteAlertSilence).not.toHaveBeenCalled();
+    expect(api.deleteAlertSilences).not.toHaveBeenCalled();
+  });
+
+  it('keeps USER writes while rejecting ADMIN-only delete transports', async () => {
+    access.roles = ['USER'];
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(async () => view.result.current.controller.actions.toggle(record, false));
+    await act(async () => {
+      await view.result.current.controller.actions.remove(record.id);
+      await view.result.current.controller.actions.removeMany([record.id]);
+    });
+
+    expect(api.updateAlertSilenceEnabled).toHaveBeenCalledOnce();
+    expect(api.deleteAlertSilence).not.toHaveBeenCalled();
+    expect(api.deleteAlertSilences).not.toHaveBeenCalled();
+  });
+
+  it('retires unsubmitted draft and selection when write/delete capability is lost', async () => {
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => {
+      view.result.current.controller.actions.selectIds([record.id]);
+      view.result.current.controller.actions.create();
+    });
+    expect(view.result.current.controller.state.selectedIds).toEqual([record.id]);
+    expect(view.result.current.controller.state.detail.kind).toBe('ready');
+
+    access.roles = ['GUEST'];
+    view.rerender();
+
+    await waitFor(() => {
+      expect(view.result.current.controller.state.selectedIds).toEqual([]);
+      expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    });
+  });
+
+  it('retains in-flight uncertainty after role loss but denies its proof retry', async () => {
+    const write = deferred<AlertSilence>();
+    api.saveAlertSilence.mockReturnValueOnce(write.promise);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    await act(() => view.result.current.controller.actions.edit(record.id));
+    let save!: Promise<void>;
+    act(() => {
+      save = view.result.current.controller.actions.save();
+    });
+    await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalledOnce());
+
+    access.roles = ['GUEST'];
+    view.rerender();
+    act(() => write.reject(new AlertSilenceRequestFailure('unavailable', 'uncertain')));
+    await act(async () => save);
+
+    expect(view.result.current.controller.state.recovery).toMatchObject({ kind: 'update', phase: 'proof' });
+    api.loadAlertSilence.mockClear();
+    await act(async () => view.result.current.controller.actions.refresh());
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+    expect(api.saveAlertSilence).toHaveBeenCalledOnce();
   });
 
   it('converges search draft on Push, Back, and Forward without render-phase updates', async () => {
