@@ -73,7 +73,7 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
 
     @Override
     public AlertSilenceResponse update(AlertSilenceRequest request) {
-        Long id = mapper.requirePositiveId(request.getId());
+        Long id = mapper.requirePositiveId(request == null ? null : request.getId());
         AlertSilence existing = alertSilenceDao.findById(id).orElseThrow(AlertSilenceNotFoundException::new);
         alertSilenceDao.save(mapper.toExistingEntity(request, existing));
         AlertSilence authoritative = alertSilenceDao.findById(id)
