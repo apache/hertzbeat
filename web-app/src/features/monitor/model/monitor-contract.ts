@@ -30,6 +30,8 @@ export const monitorScheduleTypes = ['interval', 'cron'] as const;
 export const monitorSortFields = ['name', 'status', 'gmtUpdate'] as const;
 export const monitorSortOrders = ['asc', 'desc'] as const;
 export const monitorStatusCodes = { paused: 0, available: 1, unavailable: 2 } as const;
+/** Mirrors CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE from the backend wire contract. */
+export const monitorTypes = { pushAutoCreate: 1 } as const;
 /** Mirrors CommonConstants.PARAM_TYPE_PASSWORD from the backend wire contract. */
 export const monitorParamTypes = { encrypted: 2 } as const;
 export const monitorStatusFilters = {

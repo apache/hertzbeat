@@ -16,7 +16,7 @@
  */
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
-import type { Monitor, MonitorMetricOption } from '../model/monitor-contract';
+import { monitorTypes, type Monitor, type MonitorMetricOption } from '../model/monitor-contract';
 import { monitorMetricHistoryUsesInterval, type MonitorMetricHistory } from '../model/monitor-detail-model';
 import {
   parseFavoriteMetrics,
@@ -31,7 +31,9 @@ export function buildRealtimeMetricPath(monitorId: number, metricKey: string) {
 
 export function buildMetricCatalogPath(monitor: Monitor) {
   const app = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
-  if (app === 'push') return `/api/apps/${monitor.id}/pushdefine`;
+  if (monitor.type === monitorTypes.pushAutoCreate || app === 'push') {
+    return `/api/apps/${monitor.id}/pushdefine`;
+  }
   if (app === 'prometheus') return `/api/apps/${monitor.id}/define/dynamic`;
   return `/api/apps/${app}/define`;
 }
