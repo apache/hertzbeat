@@ -545,6 +545,7 @@ class PluginServiceTest {
                 .id(72L).enableStatus(false).jarFilePath(jar.getAbsolutePath()).items(List.of(item)).build();
         PluginMetadata request = PluginMetadata.builder().id(72L).enableStatus(true).build();
         when(metadataDao.findByIdForUpdate(72L)).thenReturn(Optional.of(persisted));
+        when(metadataDao.findAll()).thenReturn(List.of(persisted));
         when(metadataDao.findPluginMetadataByEnableStatusTrue()).thenReturn(List.of(persisted));
         String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
         System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());
@@ -567,6 +568,47 @@ class PluginServiceTest {
             assertEquals(initialLoaderCount + 1, loaders.size());
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
+            if (previousPluginLib == null) {
+                System.clearProperty("hertzbeat.plugin.lib.dir");
+            } else {
+                System.setProperty("hertzbeat.plugin.lib.dir", previousPluginLib);
+            }
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void disabledPluginPublishesParameterDefinitionWithoutLoadingRuntime(@TempDir File tempDir) throws Exception {
+        File jar = new File(tempDir, "disabled-parameter-plugin.jar");
+        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
+            output.putNextEntry(new JarEntry("define/plugin-define.yml"));
+            output.write("params:\n  - field: endpoint\n    type: text\n".getBytes(StandardCharsets.UTF_8));
+            output.closeEntry();
+        }
+        PluginMetadata disabled = PluginMetadata.builder()
+                .id(76L)
+                .enableStatus(false)
+                .jarFilePath(jar.getAbsolutePath())
+                .items(List.of(new PluginItem(RollbackMarker.class.getName(), PluginType.POST_ALERT)))
+                .build();
+        when(metadataDao.findAll()).thenReturn(List.of(disabled));
+        when(metadataDao.findPluginMetadataByEnableStatusTrue()).thenReturn(List.of());
+        String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
+        System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());
+        Method reload = PluginServiceImpl.class.getDeclaredMethod("loadJarToClassLoader");
+        reload.setAccessible(true);
+        Field loadersField = PluginServiceImpl.class.getDeclaredField("pluginClassLoaders");
+        loadersField.setAccessible(true);
+        List<URLClassLoader> loaders = (List<URLClassLoader>) loadersField.get(pluginService);
+
+        try {
+            reload.invoke(pluginService);
+
+            assertTrue(pluginParameterRegistry.definition(76L).isPresent());
+            assertEquals("endpoint",
+                    pluginParameterRegistry.definition(76L).orElseThrow().getParams().getFirst().getField());
+            assertTrue(loaders.isEmpty());
+        } finally {
             if (previousPluginLib == null) {
                 System.clearProperty("hertzbeat.plugin.lib.dir");
             } else {
@@ -691,12 +733,12 @@ class PluginServiceTest {
             jos.closeEntry();
         }
         Method method = PluginServiceImpl.class.getDeclaredMethod(
-            "loadLibInPlugin", String.class, Long.class);
+            "loadLibInPlugin", String.class);
         method.setAccessible(true);
 
         Exception exception = assertThrows(Exception.class, () -> {
             try {
-                method.invoke(pluginService, maliciousJar.getAbsolutePath(), 1L);
+                method.invoke(pluginService, maliciousJar.getAbsolutePath());
             } catch (java.lang.reflect.InvocationTargetException e) {
                 throw e.getCause();
             }

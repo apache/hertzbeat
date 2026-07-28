@@ -424,11 +424,19 @@ public class PluginServiceImpl implements PluginService {
                 System.gc();
             }
             pluginParameterRegistry.clearDefinitions();
+            for (PluginMetadata metadata : metadataDao.findAll()) {
+                try {
+                    File managedJar = pluginArtifactLifecycle.requireManagedJar(new File(metadata.getJarFilePath()));
+                    loadPluginParameterDefinition(managedJar, metadata.getId());
+                } catch (IOException | RuntimeException exception) {
+                    log.error("Plugin parameter definition is unavailable during runtime reload");
+                }
+            }
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
             for (PluginMetadata metadata : plugins) {
                 try {
                     File managedJar = pluginArtifactLifecycle.requireManagedJar(new File(metadata.getJarFilePath()));
-                    List<URL> urls = loadLibInPlugin(managedJar.getPath(), metadata.getId());
+                    List<URL> urls = loadLibInPlugin(managedJar.getPath());
                     urls.add(managedJar.toURI().toURL());
                     pluginClassLoaders.add(
                             new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
@@ -443,15 +451,28 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
+    private void loadPluginParameterDefinition(File pluginJar, Long pluginMetadataId) throws IOException {
+        try (JarFile jarFile = new JarFile(pluginJar)) {
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                if ((entry.getName().contains("define"))
+                        && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
+                    pluginParameterRegistry.registerDefinition(
+                            pluginMetadataId, readPluginConfig(jarFile, entry));
+                }
+            }
+        }
+    }
+
     /**
      * loading other JAR files that are dependencies for the plugin
      *
      * @param pluginJarPath    jar file path
-     * @param pluginMetadataId plugin id
      * @return urls
      */
 
-    private List<URL> loadLibInPlugin(String pluginJarPath, Long pluginMetadataId) throws IOException {
+    private List<URL> loadLibInPlugin(String pluginJarPath) throws IOException {
         File libDir = new File(getOtherLibDir(pluginJarPath));
         FileUtils.forceMkdir(libDir);
         List<URL> libUrls = new ArrayList<>();
@@ -481,10 +502,6 @@ public class PluginServiceImpl implements PluginService {
                         libUrls.add(file.toURI().toURL());
                         out.flush();
                     }
-                }
-                if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
-                    PluginConfig config = readPluginConfig(jarFile, entry);
-                    pluginParameterRegistry.registerDefinition(pluginMetadataId, config);
                 }
             }
         }

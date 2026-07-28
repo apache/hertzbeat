@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.usthe.sureness.configuration.SurenessJakartaServletFilter;
 import com.usthe.sureness.mgt.SecurityManager;
 import com.usthe.sureness.processor.exception.ExpiredCredentialsException;
+import com.usthe.sureness.processor.exception.UnauthorizedException;
 import com.usthe.sureness.processor.exception.UnknownAccountException;
 import com.usthe.sureness.subject.SubjectSum;
 import jakarta.servlet.http.Cookie;
@@ -70,6 +71,9 @@ class UiSessionProtectedPluginMockMvcTest {
             if ("Bearer expired-access".equals(authorization)) {
                 throw new ExpiredCredentialsException("expired");
             }
+            if ("Bearer user-access".equals(authorization) || "Bearer guest-access".equals(authorization)) {
+                throw new UnauthorizedException("role cannot manage plugins");
+            }
             throw new UnknownAccountException("anonymous");
         });
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -94,5 +98,16 @@ class UiSessionProtectedPluginMockMvcTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.SET_COOKIE,
                         org.hamcrest.Matchers.containsString("Max-Age=0")));
+    }
+
+    @Test
+    void protectedPluginRejectsDirectUserAndGuestApiRequests() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer user-access"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer guest-access"))
+                .andExpect(status().isForbidden());
     }
 }
