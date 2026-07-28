@@ -5,8 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+
+import { useCanonicalQuerySearch, zeroBasedPageChange } from '@/shared/query-context';
 
 import { readNoticeReceiverQuery, writeNoticeReceiverQuery } from '../model/notice-receiver-model';
 
@@ -22,11 +24,7 @@ export function useNoticeReceiverQueryController() {
   }
   const name = draft.query === query ? draft.value : query.name;
 
-  useEffect(() => {
-    if (locationSearch !== canonicalSearch) {
-      setSearchParams(canonicalSearch, { replace: true });
-    }
-  }, [canonicalSearch, locationSearch, setSearchParams]);
+  useCanonicalQuerySearch(locationSearch, canonicalSearch, setSearchParams);
 
   const search = useCallback(() => {
     setSearchParams(writeNoticeReceiverQuery({ ...query, name: name.trim(), pageIndex: 0 }));
@@ -34,7 +32,7 @@ export function useNoticeReceiverQueryController() {
 
   const changePage = useCallback(
     (page: number, pageSize: number) => {
-      setSearchParams(writeNoticeReceiverQuery({ ...query, pageIndex: page - 1, pageSize }));
+      setSearchParams(writeNoticeReceiverQuery({ ...query, ...zeroBasedPageChange(page, pageSize, query.pageSize) }));
     },
     [query, setSearchParams]
   );

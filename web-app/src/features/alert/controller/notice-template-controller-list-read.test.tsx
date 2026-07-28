@@ -92,7 +92,7 @@ describe('Notice Template list and detail reads', () => {
       })
     );
     expect((refine.setParams.mock.calls[0]?.[0] as URLSearchParams).toString()).toBe(
-      'name=Mail&preset=false&pageIndex=2&pageSize=25'
+      'name=Mail&preset=false&pageIndex=0&pageSize=25'
     );
   });
 

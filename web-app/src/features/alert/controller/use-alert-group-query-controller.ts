@@ -8,14 +8,16 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useStringQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 
 import { readAlertGroupQuery, writeAlertGroupQuery, type AlertGroupQuery } from '../model/alert-group-model';
 
 export function useAlertGroupQueryController() {
   const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
   const query = readAlertGroupQuery(params);
   const source = writeAlertGroupQuery(query).toString();
+  useCanonicalQuerySearch(locationSearch, source, setParams);
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const updateQuery = (patch: Partial<AlertGroupQuery>) => {
     setParams(writeAlertGroupQuery({ ...query, ...patch }));
@@ -39,11 +41,7 @@ export function useAlertGroupQueryController() {
     actions: {
       setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) =>
-        updateQuery({
-          pageIndex: pageSize === query.pageSize ? page - 1 : 0,
-          pageSize
-        })
+      changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize))
     }
   };
 }

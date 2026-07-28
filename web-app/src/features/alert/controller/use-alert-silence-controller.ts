@@ -19,7 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useStringQueryDraft } from '@/shared/query-context';
 
 import { alertSilenceDetailDraft, type AlertSilenceListEvidence } from '../model/alert-silence-page-model';
 import {
@@ -48,9 +48,7 @@ export function useAlertSilenceController() {
   const capabilities = useAlertSilenceActionCapabilities();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
-  const query = readAlertSilenceQuery(params);
-  const management = readAlertSilenceManagementContext(params);
+  const { query, management, setParams } = useAlertSilenceRouteQuery();
   const latestProjection = useLatestAlertSilenceProjection(query, management);
   const { value: search, setValue: setSearch } = useAlertSilenceSearchDraft(query, management);
   const projection = useAlertSilenceVisibleProjection({ query, management });
@@ -75,6 +73,7 @@ export function useAlertSilenceController() {
   const canRetryRecovery = canRetryAlertSilenceRecovery(capabilities, mutations.recovery);
   const actions = createAlertSilenceControllerActions({
     capabilities,
+    query,
     search,
     draft,
     detail,
@@ -102,6 +101,15 @@ export function useAlertSilenceController() {
     },
     actions
   };
+}
+
+function useAlertSilenceRouteQuery() {
+  const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
+  const query = readAlertSilenceQuery(params);
+  const management = readAlertSilenceManagementContext(params);
+  useCanonicalQuerySearch(locationSearch, writeAlertSilenceRoute(query, management).toString(), setParams);
+  return { query, management, setParams };
 }
 
 function useAlertSilenceSearchDraft(query: AlertSilenceQuery, management: AlertSilenceVisibleProjection['management']) {

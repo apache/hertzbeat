@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
+import { zeroBasedPageChange } from '@/shared/query-context';
 import type { AlertSilenceDraft, AlertSilenceQuery } from '../model/alert-silence-model';
 import type { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
 import type { useAlertSilenceMutations } from './use-alert-silence-mutations';
@@ -13,6 +14,7 @@ type ManagementActions = {
 
 export function createAlertSilenceControllerActions(options: {
   capabilities: AlertActionCapabilities;
+  query: AlertSilenceQuery;
   search: string;
   draft: AlertSilenceDraft | null;
   detail: ReturnType<typeof useAlertSilenceDetailController>;
@@ -27,7 +29,8 @@ export function createAlertSilenceControllerActions(options: {
   return {
     setSearch: options.setSearch,
     submitSearch: () => options.updateQuery({ search: options.search.trim(), pageIndex: 0 }),
-    changePage: (page: number, pageSize: number) => options.updateQuery({ pageIndex: page - 1, pageSize }),
+    changePage: (page: number, pageSize: number) =>
+      options.updateQuery(zeroBasedPageChange(page, pageSize, options.query.pageSize)),
     refresh: options.refresh,
     selectIds: options.selectIds,
     create: () => {

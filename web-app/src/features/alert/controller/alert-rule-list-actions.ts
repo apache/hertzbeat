@@ -8,6 +8,7 @@
 import type { NavigateFunction } from 'react-router-dom';
 
 import { alertRoutePaths, buildAlertRuleEditPath } from '@/shared/navigation/app-paths';
+import { zeroBasedPageChange } from '@/shared/query-context';
 
 import type { AlertRulePage } from '../model/alert-rule-model';
 import type { AlertRuleListQueryController } from './use-alert-rule-list-query-controller';
@@ -34,12 +35,7 @@ export function createAlertRuleListActions({
     setSearch: (value: string) => unlessLocked(() => route.setSearch(value)),
     submitSearch: () => unlessLocked(() => route.updateQuery({ search: route.search.trim(), pageIndex: 0 })),
     changePage: (page: number, pageSize: number) =>
-      unlessLocked(() =>
-        route.updateQuery({
-          pageIndex: pageSize === route.query.pageSize ? page - 1 : 0,
-          pageSize
-        })
-      ),
+      unlessLocked(() => route.updateQuery(zeroBasedPageChange(page, pageSize, route.query.pageSize))),
     refresh: () => {
       if (operations.hasReceipt()) return operations.resume();
       if (operations.isLocked()) return Promise.resolve();

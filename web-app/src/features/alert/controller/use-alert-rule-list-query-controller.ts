@@ -7,15 +7,17 @@
 
 import { useSearchParams } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useStringQueryDraft } from '@/shared/query-context';
 
 import { readAlertRuleQuery, writeAlertRuleQuery, type AlertRuleQuery } from '../model/alert-rule-model';
 
 /** Owns the Alert Rule list URL and its unsent search draft. */
 export function useAlertRuleListQueryController() {
   const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
   const query = readAlertRuleQuery(params);
   const source = writeAlertRuleQuery(query).toString();
+  useCanonicalQuerySearch(locationSearch, source, setParams);
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const updateQuery = (patch: Partial<AlertRuleQuery>) => {
     setParams(writeAlertRuleQuery({ ...query, ...patch }));

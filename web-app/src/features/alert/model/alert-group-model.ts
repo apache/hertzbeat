@@ -16,6 +16,7 @@
  */
 
 import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 export const alertGroupPageSizes = compactTablePageSizes;
 
@@ -93,17 +94,14 @@ export function alertGroupWriteOutcome(error: unknown): AlertGroupWriteOutcome {
 }
 
 export function readAlertGroupQuery(params: URLSearchParams): AlertGroupQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     search: params.get('search')?.trim() ?? '',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: alertGroupPageSizes.includes(pageSize as (typeof alertGroupPageSizes)[number]) ? pageSize : 8
+    ...readZeroBasedPage(params, alertGroupPageSizes, 8)
   };
 }
 
 export function writeAlertGroupQuery(query: AlertGroupQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
   if (query.search) params.set('search', query.search);
   return params;
 }

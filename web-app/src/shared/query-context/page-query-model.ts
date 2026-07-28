@@ -16,8 +16,14 @@ export function readZeroBasedPage<S extends number>(
   };
 }
 
-export function writeZeroBasedPage(pageIndex: number, pageSize: number) {
-  return new URLSearchParams({ pageIndex: String(pageIndex), pageSize: String(pageSize) });
+export function writeZeroBasedPage(pageIndex: number, pageSize: number, params = new URLSearchParams()) {
+  params.set('pageIndex', String(pageIndex));
+  params.set('pageSize', String(pageSize));
+  return params;
+}
+
+export function zeroBasedPageChange(page: number, pageSize: number, currentPageSize: number) {
+  return { pageIndex: pageSize === currentPageSize ? Math.max(0, page - 1) : 0, pageSize };
 }
 
 function readNonNegativeInteger(value: string | null) {

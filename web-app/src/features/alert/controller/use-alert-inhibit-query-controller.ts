@@ -8,7 +8,7 @@
 import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useStringQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 
 import {
   readAlertInhibitManagementContext,
@@ -21,9 +21,11 @@ import {
 export function useAlertInhibitQueryController() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
   const query = readAlertInhibitQuery(params);
   const management = readAlertInhibitManagementContext(params);
   const source = writeAlertInhibitRoute(query, management).toString();
+  useCanonicalQuerySearch(locationSearch, source, setParams);
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const updateQuery = (patch: Partial<AlertInhibitQuery>) => {
     setParams(writeAlertInhibitRoute({ ...query, ...patch }, management));
@@ -45,11 +47,7 @@ export function useAlertInhibitQueryController() {
     actions: {
       setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) =>
-        updateQuery({
-          pageIndex: pageSize === query.pageSize ? page - 1 : 0,
-          pageSize
-        }),
+      changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize)),
       viewAllRules: () => updateManagement({ mode: 'all' }),
       viewMatchedRules: () => updateManagement({ mode: 'matched' }),
       returnToEntity: () => {

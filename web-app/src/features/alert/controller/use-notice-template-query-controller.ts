@@ -18,7 +18,7 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useStringQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 
 import { readNoticeTemplateQuery, writeNoticeTemplateQuery, type NoticeTemplateQuery } from '../notice-template-model';
 
@@ -26,6 +26,8 @@ export function useNoticeTemplateQueryController() {
   const [params, setParams] = useSearchParams();
   const serializedParams = params.toString();
   const query = useMemo(() => readNoticeTemplateQuery(new URLSearchParams(serializedParams)), [serializedParams]);
+  const canonicalSearch = useMemo(() => writeNoticeTemplateQuery(query).toString(), [query]);
+  useCanonicalQuerySearch(serializedParams, canonicalSearch, setParams);
   const { value: name, setValue: setName } = useStringQueryDraft(query.name, query.name);
   const updateQuery = useCallback(
     (patch: Partial<NoticeTemplateQuery>) => {
@@ -41,7 +43,7 @@ export function useNoticeTemplateQueryController() {
   );
 
   return {
-    changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
+    changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize)),
     changePreset: (preset: boolean) => updateQuery({ preset, pageIndex: 0 }),
     name,
     query,

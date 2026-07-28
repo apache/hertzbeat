@@ -16,6 +16,7 @@
  */
 
 import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
@@ -124,13 +125,12 @@ export function readAlertQuery(params: URLSearchParams): AlertQuery {
     serviceName: readText(params, 'serviceName'),
     serviceNamespace: readText(params, 'serviceNamespace'),
     environment: readText(params, 'environment'),
-    pageIndex: readPageIndex(params.get('pageIndex')),
-    pageSize: readPageSize(params.get('pageSize'))
+    ...readZeroBasedPage(params, alertPageSizes, 8)
   };
 }
 
 export function writeAlertQuery(query: AlertQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
   if (query.search) params.set('search', query.search);
   if (query.status) params.set('status', query.status);
   if (query.severity) params.set('severity', query.severity);
@@ -147,14 +147,4 @@ function readEnum<const T extends readonly string[]>(value: string | null, suppo
 
 function readText(params: URLSearchParams, field: string) {
   return params.get(field)?.trim() ?? '';
-}
-
-function readPageIndex(value: string | null) {
-  const requested = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(requested) && requested >= 0 ? requested : 0;
-}
-
-function readPageSize(value: string | null) {
-  const requested = Number.parseInt(value ?? '', 10);
-  return alertPageSizes.includes(requested as (typeof alertPageSizes)[number]) ? requested : 8;
 }

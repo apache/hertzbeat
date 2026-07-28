@@ -17,6 +17,7 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 import { compactTablePageSizes } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 import { formatLabelMatchers, parseLabelMatchers } from '../../shared/alert-label-matchers';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
@@ -86,17 +87,14 @@ export function resolveNoticeRuleListState(
 }
 
 export function readNoticeRuleQuery(params: URLSearchParams): NoticeRuleQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     name: params.get('name')?.trim() ?? '',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: noticeRulePageSizes.includes(pageSize as (typeof noticeRulePageSizes)[number]) ? pageSize : 8
+    ...readZeroBasedPage(params, noticeRulePageSizes, 8)
   };
 }
 
 export function writeNoticeRuleQuery(query: NoticeRuleQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
   if (query.name) params.set('name', query.name);
   return params;
 }

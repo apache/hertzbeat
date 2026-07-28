@@ -19,7 +19,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
-import { useQueryDraft } from '@/shared/query-context';
+import { useCanonicalQuerySearch, useQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
 import {
@@ -49,8 +49,10 @@ export function useAlertCenterController() {
   const capabilities = useAlertCapabilities();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const locationSearch = params.toString();
   const query = readAlertQuery(params);
   const source = writeAlertQuery(query).toString();
+  useCanonicalQuerySearch(locationSearch, source, setParams);
   const draft = useAlertFilterDraft(query, source);
 
   const data = useAlertCenterData(query);
@@ -91,11 +93,7 @@ export function useAlertCenterController() {
     submitFilters,
     changeStatus: (status: AlertStatusFilter) => updateQuery({ status, pageIndex: 0 }),
     changeSeverity: (severity: AlertSeverity) => updateQuery({ severity, pageIndex: 0 }),
-    changePage: (page: number, pageSize: number) =>
-      updateQuery({
-        pageIndex: pageSize === query.pageSize ? page - 1 : 0,
-        pageSize
-      }),
+    changePage: (page: number, pageSize: number) => updateQuery(zeroBasedPageChange(page, pageSize, query.pageSize)),
     retryList: refetchList,
     retrySummary: refetchSummary,
     ...commands,

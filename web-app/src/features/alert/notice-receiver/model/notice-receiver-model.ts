@@ -19,6 +19,7 @@ import {
   type WebHookAuthType
 } from './notice-receiver-catalog';
 import { compactTablePageSizes } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 export * from './notice-receiver-catalog';
 
@@ -65,17 +66,14 @@ export type NoticeReceiverMutation = {
 };
 
 export function readNoticeReceiverQuery(params: URLSearchParams): NoticeReceiverQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     name: params.get('name')?.trim() ?? '',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: noticeReceiverPageSizes.includes(pageSize as (typeof noticeReceiverPageSizes)[number]) ? pageSize : 8
+    ...readZeroBasedPage(params, noticeReceiverPageSizes, 8)
   };
 }
 
 export function writeNoticeReceiverQuery(query: NoticeReceiverQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  const params = writeZeroBasedPage(query.pageIndex, query.pageSize);
   if (query.name) params.set('name', query.name);
   return params;
 }

@@ -17,6 +17,7 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
+import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 
@@ -52,13 +53,10 @@ export class NoticeTemplateContractError extends Error {
 const supportedTypes = new Set<NoticeReceiverType>(receiverTypeDefinitions.map(definition => definition.type));
 
 export function readNoticeTemplateQuery(params: URLSearchParams): NoticeTemplateQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     name: params.get('name')?.trim() ?? '',
     preset: params.get('preset') !== 'false',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: noticeTemplatePageSizes.includes(pageSize as (typeof noticeTemplatePageSizes)[number]) ? pageSize : 8
+    ...readZeroBasedPage(params, noticeTemplatePageSizes, 8)
   };
 }
 
@@ -66,9 +64,7 @@ export function writeNoticeTemplateQuery(query: NoticeTemplateQuery) {
   const params = new URLSearchParams();
   if (query.name) params.set('name', query.name);
   params.set('preset', String(query.preset));
-  params.set('pageIndex', String(query.pageIndex));
-  params.set('pageSize', String(query.pageSize));
-  return params;
+  return writeZeroBasedPage(query.pageIndex, query.pageSize, params);
 }
 
 export function createNoticeTemplateDraft(): NoticeTemplateDraft {

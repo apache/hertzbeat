@@ -10,3 +10,4 @@ export * from './query-context-context';
 export * from './query-context-provider';
 export * from './use-query-draft';
 export * from './page-query-model';
+export * from './use-canonical-query-search';
