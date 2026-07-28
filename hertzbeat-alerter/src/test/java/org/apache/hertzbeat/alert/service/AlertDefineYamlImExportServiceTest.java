@@ -64,6 +64,7 @@ class AlertDefineYamlImExportServiceTest {
                         times: 3
                         enable: true
                         template: Template1
+                        datasource: promql
                     """;
 
     private InputStream inputStream;
@@ -82,6 +83,7 @@ class AlertDefineYamlImExportServiceTest {
         alertDefine.setExpr("Expr1");
         alertDefine.setEnable(true);
         alertDefine.setTemplate("Template1");
+        alertDefine.setDatasource("promql");
 
         ExportAlertDefineDTO exportAlertDefine = new ExportAlertDefineDTO();
         exportAlertDefine.setAlertDefine(alertDefine);
@@ -135,6 +137,7 @@ class AlertDefineYamlImExportServiceTest {
         assertTrue(yamlOutput.contains("name: App1"));
         assertTrue(yamlOutput.contains("type: realtime"));
         assertTrue(yamlOutput.contains("expr: Expr1"));
+        assertTrue(yamlOutput.contains("datasource: promql"));
     }
 
     @Test
