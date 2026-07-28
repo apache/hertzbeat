@@ -59,7 +59,20 @@ export function useCollectorRuntimeConfigController(options: Options) {
     saveRuntimeConfig(value, options, controls, () => void message.success(t('collectors.runtime.success')));
   const cancel = () => cancelRuntimeConfig(controls);
   const busy = phase !== 'idle';
-  return { editor, busy, loading: phase === 'loading', saving: phase === 'saving', failure, open, save, cancel };
+  return {
+    editor,
+    busy,
+    loading: phase === 'loading',
+    saving: phase === 'saving',
+    failure,
+    open,
+    save,
+    cancel,
+    retire: () => {
+      closeRuntime(controls);
+      controls.setFailure(null);
+    }
+  };
 }
 
 async function openRuntimeConfig(name: string, options: Options, controls: RuntimeControls) {

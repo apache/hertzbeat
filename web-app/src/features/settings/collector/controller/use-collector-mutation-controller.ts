@@ -17,6 +17,7 @@ import type {
   CollectorMutationFailure,
   CollectorPage
 } from '../model/collector-model';
+import type { CollectorActionCapabilities } from '../model/collector-action-capability';
 import {
   collectorQueryAfterConfirmedDelete,
   sameCollectorQuery,
@@ -94,8 +95,16 @@ export function useCollectorMutationController(options: Options) {
       setMutationFailure(null);
       setProofFailure(false);
       void refetch();
+    },
+    retireUnauthorized: (capabilities: CollectorActionCapabilities) => {
+      setPendingAction(current => (current && actionAllowed(current.action, capabilities) ? current : null));
+      if (!capabilities.canWrite && !capabilities.canDelete) options.clearSelection();
     }
   };
+}
+
+function actionAllowed(action: CollectorMutationAction, capabilities: CollectorActionCapabilities) {
+  return action === 'delete' ? capabilities.canDelete : capabilities.canWrite;
 }
 
 function useCollectorActionRequest(

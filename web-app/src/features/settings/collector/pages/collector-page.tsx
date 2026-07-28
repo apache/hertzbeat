@@ -34,6 +34,8 @@ export function CollectorPage() {
       <CollectorRuntimeApplicationAlert state={controller.runtimeApplication} />
       <div className={styles.commandBand}>
         <CollectorToolbar
+          canWrite={controller.capabilities.canWrite}
+          canDelete={controller.capabilities.canDelete}
           name={controller.nameDraft}
           selected={selected}
           mutating={controller.mutating}
@@ -45,6 +47,8 @@ export function CollectorPage() {
         />
       </div>
       <CollectorList
+        canWrite={controller.capabilities.canWrite}
+        canDelete={controller.capabilities.canDelete}
         state={controller.listState}
         query={controller.query}
         selected={selected}
@@ -71,6 +75,7 @@ function CollectorDialogs({ controller }: { controller: ReturnType<typeof useCol
         onConfirm={controller.actions.confirmAction}
       />
       <CollectorIntakeDialog
+        canDelete={controller.capabilities.canDelete}
         record={controller.intakeEditor?.record ?? null}
         saving={controller.intakeSaving}
         failure={controller.intakeFailure}

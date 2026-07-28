@@ -13,6 +13,7 @@ import type { ManagedOtelRuntimeConfig } from '../api/collector-runtime-config-s
 import type { CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
 import { sameCollectorQuery, type CollectorQuery } from '../model/collector-query-model';
 import { persistCollectorRuntimeConfig } from './collector-runtime-config-persistence';
+import type { RuntimeSourceCoordinator, RuntimeSourceOwner } from './collector-runtime-source-coordinator';
 
 type RuntimeSession = {
   record: CollectorRecord;
@@ -30,11 +31,6 @@ export type RuntimeSourceAdapter<Draft> = {
   buildUpdate: (current: ManagedOtelRuntimeConfig, draft: Draft) => ManagedOtelRuntimeConfig | null;
   successKey: string;
 };
-type RuntimeSourceOwner = 'prometheus' | 'fileLog';
-export type RuntimeSourceCoordinator = {
-  claim: (owner: RuntimeSourceOwner) => boolean;
-  release: (owner: RuntimeSourceOwner) => void;
-};
 type Options<Draft> = {
   queryRef: { current: CollectorQuery };
   session: RuntimeSession | null;
@@ -44,20 +40,6 @@ type Options<Draft> = {
   coordinator: RuntimeSourceCoordinator;
   onManagementSaved: (collector: string, revision: number) => void;
 };
-
-export function createRuntimeSourceCoordinator(): RuntimeSourceCoordinator {
-  let current: RuntimeSourceOwner | null = null;
-  return {
-    claim: owner => {
-      if (current) return false;
-      current = owner;
-      return true;
-    },
-    release: owner => {
-      if (current === owner) current = null;
-    }
-  };
-}
 
 export function useCollectorRuntimeSourceSession<Draft>(options: Options<Draft>) {
   const { t } = useTranslation();
@@ -90,7 +72,25 @@ export function useCollectorRuntimeSourceSession<Draft>(options: Options<Draft>)
     setEditor(current => (current ? { ...current, draft } : current));
     setFailure(null);
   };
-  return { editor, saving, failure, open, save, cancel, close, replaceDraft, reject: () => setFailure('validation') };
+  const retire = () => {
+    operationRef.current += 1;
+    setEditor(null);
+    setSaving(false);
+    setFailure(null);
+    options.coordinator.release(options.owner);
+  };
+  return {
+    editor,
+    saving,
+    failure,
+    open,
+    save,
+    cancel,
+    close,
+    retire,
+    replaceDraft,
+    reject: () => setFailure('validation')
+  };
 }
 
 function openSourceSession<Draft>(

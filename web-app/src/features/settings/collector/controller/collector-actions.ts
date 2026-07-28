@@ -6,6 +6,7 @@
  */
 
 import type { CollectorPageSize, CollectorQuery } from '../model/collector-query-model';
+import type { CollectorActionCapabilities } from '../model/collector-action-capability';
 import type { useCollectorIntakeController } from './use-collector-intake-controller';
 import type { useCollectorFileLogSourceController } from './use-collector-file-log-source-controller';
 import type { useCollectorMutationController } from './use-collector-mutation-controller';
@@ -13,6 +14,7 @@ import type { useCollectorPrometheusSourceController } from './use-collector-pro
 import type { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
 
 type ActionOptions = {
+  capabilities: CollectorActionCapabilities;
   nameDraft: string;
   queryRef: { current: CollectorQuery };
   selected: string[];
@@ -44,43 +46,75 @@ export function buildCollectorActions(options: ActionOptions) {
       if (!managedBusy()) options.mutation.refresh(options.refetch);
     },
     requestAction: (action: Parameters<typeof options.mutation.requestAction>[0], collectors: string[]) => {
-      if (!managedBusy()) options.mutation.requestAction(action, collectors);
+      if (!managedBusy() && actionAllowed(action, options.capabilities)) {
+        options.mutation.requestAction(action, collectors);
+      }
     },
     cancelAction: options.mutation.cancelAction,
-    confirmAction: options.mutation.confirmAction,
-    openIntake: options.intake.open,
-    saveIntake: options.intake.save,
-    clearIntake: options.intake.clear,
+    confirmAction: () => {
+      const action = options.mutation.pendingAction?.action;
+      return action && actionAllowed(action, options.capabilities)
+        ? options.mutation.confirmAction()
+        : Promise.resolve();
+    },
+    openIntake: (name: string) => {
+      if (options.capabilities.canWrite) options.intake.open(name);
+    },
+    saveIntake: (value: unknown) => (options.capabilities.canWrite ? options.intake.save(value) : Promise.resolve()),
+    clearIntake: () => (options.capabilities.canDelete ? options.intake.clear() : Promise.resolve()),
     cancelIntake: options.intake.cancel,
-    openRuntimeConfig: options.runtime.open,
-    saveRuntimeConfig: options.runtime.save,
+    openRuntimeConfig: (name: string) =>
+      options.capabilities.canWrite ? options.runtime.open(name) : Promise.resolve(),
+    saveRuntimeConfig: (value: unknown) =>
+      options.capabilities.canWrite ? options.runtime.save(value) : Promise.resolve(),
     cancelRuntimeConfig: options.runtime.cancel,
-    openPrometheusSources: options.prometheus.open,
+    openPrometheusSources: () => {
+      if (options.capabilities.canWrite) options.prometheus.open();
+    },
     selectPrometheusTarget: options.prometheus.select,
     applyPrometheusTarget: options.prometheus.apply,
     removePrometheusTarget: options.prometheus.remove,
-    savePrometheusSources: options.prometheus.save,
+    savePrometheusSources: () => (options.capabilities.canWrite ? options.prometheus.save() : Promise.resolve()),
     cancelPrometheusSources: options.prometheus.cancel,
     closePrometheusSources: options.prometheus.close,
     cancelPrometheusTarget: options.prometheus.cancelTarget,
-    openFileLogSources: options.fileLog.open,
+    openFileLogSources: () => {
+      if (options.capabilities.canWrite) options.fileLog.open();
+    },
     selectFileLogSource: options.fileLog.select,
     applyFileLogSource: options.fileLog.apply,
     removeFileLogSource: options.fileLog.remove,
-    saveFileLogSources: options.fileLog.save,
+    saveFileLogSources: () => (options.capabilities.canWrite ? options.fileLog.save() : Promise.resolve()),
     cancelFileLogSources: options.fileLog.cancel,
     closeFileLogSources: options.fileLog.close,
     cancelFileLogSource: options.fileLog.cancelSource,
     toggleSelection: (name: string, checked: boolean) => {
-      if (options.mutation.mutating || managedBusy() || !options.visibleMutableNames.includes(name)) return;
+      if (
+        (!options.capabilities.canWrite && !options.capabilities.canDelete) ||
+        options.mutation.mutating ||
+        managedBusy() ||
+        !options.visibleMutableNames.includes(name)
+      )
+        return;
       options.setSelected(
         checked ? [...new Set([...options.selected, name])] : options.selected.filter(candidate => candidate !== name)
       );
     },
     toggleAll: (checked: boolean) => {
-      if (!options.mutation.mutating && !managedBusy()) {
+      if (
+        (options.capabilities.canWrite || options.capabilities.canDelete) &&
+        !options.mutation.mutating &&
+        !managedBusy()
+      ) {
         options.setSelected(checked ? options.visibleMutableNames : []);
       }
     }
   };
+}
+
+function actionAllowed(
+  action: Parameters<ActionOptions['mutation']['requestAction']>[0],
+  capabilities: CollectorActionCapabilities
+) {
+  return action === 'delete' ? capabilities.canDelete : capabilities.canWrite;
 }

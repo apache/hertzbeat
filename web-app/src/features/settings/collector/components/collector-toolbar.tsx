@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import type { CollectorMutationAction } from '../model/collector-model';
 
 type Props = {
+  canWrite: boolean;
+  canDelete: boolean;
   name: string;
   selected: string[];
   mutating: boolean;
@@ -40,15 +42,21 @@ export function CollectorToolbar(props: Props) {
       <Button disabled={props.mutating} loading={props.refreshing && !props.mutating} onClick={props.onRefresh}>
         {t('common.refresh')}
       </Button>
-      <Button disabled={disabled} onClick={() => props.onAction('online', props.selected)}>
-        {t('collectors.takeSelectedOnline')}
-      </Button>
-      <Button disabled={disabled} onClick={() => props.onAction('offline', props.selected)}>
-        {t('collectors.takeSelectedOffline')}
-      </Button>
-      <Button danger disabled={disabled} onClick={() => props.onAction('delete', props.selected)}>
-        {t('collectors.deleteSelected')}
-      </Button>
+      {props.canWrite && (
+        <>
+          <Button disabled={disabled} onClick={() => props.onAction('online', props.selected)}>
+            {t('collectors.takeSelectedOnline')}
+          </Button>
+          <Button disabled={disabled} onClick={() => props.onAction('offline', props.selected)}>
+            {t('collectors.takeSelectedOffline')}
+          </Button>
+        </>
+      )}
+      {props.canDelete && (
+        <Button danger disabled={disabled} onClick={() => props.onAction('delete', props.selected)}>
+          {t('collectors.deleteSelected')}
+        </Button>
+      )}
     </div>
   );
 }

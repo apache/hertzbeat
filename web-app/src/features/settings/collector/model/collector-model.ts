@@ -35,6 +35,7 @@ export type CollectorPage = {
 export type CollectorListState =
   | { kind: 'loading' }
   | { kind: 'empty' }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
   | { kind: 'error' }
   | { kind: 'ready'; records: CollectorRecord[]; total: number };

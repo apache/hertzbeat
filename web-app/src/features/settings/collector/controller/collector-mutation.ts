@@ -8,6 +8,7 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
+import { classifyCollectorApiFailure } from '../api/collector-api-failure';
 import type { CollectorMutationCommand, CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
 
 export function collectorMutationConverged(
@@ -23,13 +24,7 @@ export function collectorMutationConverged(
 }
 
 export function classifyCollectorMutationFailure(error: unknown): CollectorMutationFailure {
-  if (!(error instanceof ApiMessageError)) return 'error';
-  if (error.status === 401 || error.status === 403) return 'permission';
-  if (error.status !== undefined && error.status >= 400 && error.status < 500) return 'validation';
-  if (error.code !== undefined) return 'validation';
-  return error.status === undefined || error.status === 0 || error.status >= 500 || error.cause !== undefined
-    ? 'unavailable'
-    : 'error';
+  return classifyCollectorApiFailure(error);
 }
 
 type CollectorProjection = Pick<CollectorRecord, 'name' | 'online'>[];

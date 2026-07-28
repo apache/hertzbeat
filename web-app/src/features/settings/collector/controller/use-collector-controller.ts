@@ -5,30 +5,34 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import { useSourceScopedValue, useStringQueryDraft } from '@/shared/query-context';
 
 import { loadCollectorManagementPage } from '../api/collector-management-api';
-import type { CollectorListState, CollectorPage } from '../model/collector-model';
+import type { CollectorActionCapabilities } from '../model/collector-action-capability';
+import type { CollectorListState } from '../model/collector-model';
 import { readCollectorQuery, writeCollectorQuery, type CollectorQuery } from '../model/collector-query-model';
 import { buildCollectorActions } from './collector-actions';
+import { resolveCollectorListState } from './collector-list-state';
+import { createRuntimeSourceCoordinator } from './collector-runtime-source-coordinator';
 import { useCollectorMutationController } from './use-collector-mutation-controller';
 import { useCollectorIntakeController } from './use-collector-intake-controller';
 import { useCollectorFileLogSourceController } from './use-collector-file-log-source-controller';
 import { useCollectorPrometheusSourceController } from './use-collector-prometheus-source-controller';
 import { useCollectorRuntimeApplicationController } from './use-collector-runtime-application-controller';
 import { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
-import { createRuntimeSourceCoordinator } from './use-collector-runtime-source-session';
 import { collectorQueryKeys } from './collector-query-keys';
+import { useCollectorActionCapabilities } from './use-collector-action-capabilities';
+import { useCollectorRoleLossRetirement } from './use-collector-role-loss-retirement';
 
 export function useCollectorController() {
+  const capabilities = useCollectorActionCapabilities();
   const queryClient = useQueryClient();
   const sourceCoordinator = useMemo(() => createRuntimeSourceCoordinator(), []);
-  const state = useCollectorQueryState();
+  const state = useCollectorQueryState(capabilities.canRead);
   const runtimeApplication = useCollectorRuntimeApplicationController();
   const mutation = useCollectorMutationController({
     query: state.query,
@@ -69,7 +73,8 @@ export function useCollectorController() {
     coordinator: sourceCoordinator,
     onManagementSaved: runtimeApplication.track
   });
-  const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure);
+  useCollectorRoleLossRetirement({ capabilities, mutation, intake, runtime, prometheus, fileLog });
+  const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure, capabilities.canRead);
   const busy = mutation.mutating || intake.saving || runtime.busy || prometheus.saving || fileLog.saving;
   return collectorPageModel(
     state,
@@ -80,7 +85,8 @@ export function useCollectorController() {
     fileLog,
     listState,
     busy,
-    runtimeApplication.state
+    runtimeApplication.state,
+    capabilities
   );
 }
 
@@ -93,9 +99,11 @@ function collectorPageModel(
   fileLog: ReturnType<typeof useCollectorFileLogSourceController>,
   listState: CollectorListState,
   busy: boolean,
-  runtimeApplication: ReturnType<typeof useCollectorRuntimeApplicationController>['state']
+  runtimeApplication: ReturnType<typeof useCollectorRuntimeApplicationController>['state'],
+  capabilities: CollectorActionCapabilities
 ) {
   return {
+    capabilities,
     query: state.query,
     nameDraft: state.nameDraft,
     listState,
@@ -120,6 +128,7 @@ function collectorPageModel(
     fileLogFailure: fileLog.failure,
     runtimeApplication,
     actions: buildCollectorActions({
+      capabilities,
       ...state,
       mutation,
       intake,
@@ -131,7 +140,7 @@ function collectorPageModel(
   };
 }
 
-function useCollectorQueryState() {
+function useCollectorQueryState(canRead: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchSource = searchParams.toString();
   const query = useMemo(() => readCollectorQuery(new URLSearchParams(searchSource)), [searchSource]);
@@ -142,7 +151,8 @@ function useCollectorQueryState() {
   const collectorQuery = useQuery({
     queryKey: collectorQueryKeys.page(query),
     queryFn: ({ signal }) => loadCollectorManagementPage(query, signal),
-    retry: false
+    retry: false,
+    enabled: canRead
   });
 
   useLayoutEffect(() => {
@@ -176,20 +186,4 @@ function useCollectorQueryState() {
     visibleMutableNames,
     navigateQuery
   };
-}
-
-function resolveCollectorListState(query: UseQueryResult<CollectorPage>, proofFailure: boolean): CollectorListState {
-  if (proofFailure) return { kind: 'unavailable' };
-  if (query.isPending) return { kind: 'loading' };
-  if (query.error) return { kind: classifyCollectorReadFailure(query.error) };
-  if (!query.data) return { kind: 'error' };
-  if (query.data.content.length === 0) return { kind: 'empty' };
-  return { kind: 'ready', records: query.data.content, total: query.data.totalElements };
-}
-
-function classifyCollectorReadFailure(error: unknown): 'unavailable' | 'error' {
-  if (!(error instanceof ApiMessageError)) return 'error';
-  return error.status === undefined || error.status === 0 || error.status >= 500 || error.cause !== undefined
-    ? 'unavailable'
-    : 'error';
 }

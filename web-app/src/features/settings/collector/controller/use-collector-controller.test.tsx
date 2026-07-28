@@ -10,7 +10,7 @@ import { App } from 'antd';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useEffect, type PropsWithChildren } from 'react';
 import { MemoryRouter, useNavigate, type NavigateFunction } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import type { CollectorInstrumentationIntake } from '@/shared/collector';
@@ -58,10 +58,104 @@ const clearIntake = vi.mocked(clearCollectorInstrumentationIntake);
 const loadRuntime = vi.mocked(loadCollectorRuntimeConfig);
 const saveRuntime = vi.mocked(saveCollectorRuntimeConfig);
 const waitForRuntimeApplication = vi.mocked(waitForCollectorRuntimeApplication);
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 let navigateRoute: NavigateFunction | undefined;
 
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
+}));
+
 describe('useCollectorController', () => {
+  beforeEach(() => {
+    access.roles = ['ADMIN'];
+  });
   afterEach(() => vi.clearAllMocks());
+
+  it('keeps GUEST reads active while rejecting every Collector write-flow admission', async () => {
+    access.roles = ['GUEST'];
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    act(() => {
+      result.current.actions.requestAction('offline', ['edge']);
+      result.current.actions.requestAction('delete', ['edge']);
+      result.current.actions.openIntake('edge');
+      void result.current.actions.openRuntimeConfig('edge');
+      void result.current.actions.saveIntake(intakeRequest());
+      void result.current.actions.clearIntake();
+      void result.current.actions.saveRuntimeConfig(runtimeDraft());
+    });
+
+    expect(result.current.capabilities).toEqual({ canRead: true, canWrite: false, canDelete: false });
+    expect(result.current.pendingAction).toBeNull();
+    expect(result.current.intakeEditor).toBeNull();
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(mutate).not.toHaveBeenCalled();
+    expect(saveIntake).not.toHaveBeenCalled();
+    expect(clearIntake).not.toHaveBeenCalled();
+    expect(loadRuntime).not.toHaveBeenCalled();
+    expect(saveRuntime).not.toHaveBeenCalled();
+    expect(load).toHaveBeenCalled();
+  });
+
+  it('admits USER PUT workflows but rejects every DELETE before transport', async () => {
+    access.roles = ['USER'];
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    act(() => result.current.actions.requestAction('offline', ['edge']));
+    expect(result.current.pendingAction?.action).toBe('offline');
+    act(() => result.current.actions.cancelAction());
+    act(() => result.current.actions.requestAction('delete', ['edge']));
+    expect(result.current.pendingAction).toBeNull();
+
+    act(() => result.current.actions.openIntake('edge'));
+    await act(async () => result.current.actions.clearIntake());
+    expect(clearIntake).not.toHaveBeenCalled();
+    await act(async () => result.current.actions.saveIntake(intakeRequest()));
+    expect(saveIntake).toHaveBeenCalledOnce();
+  });
+
+  it('retires write editors and pending commands on role loss without repeating an in-flight runtime PUT', async () => {
+    access.roles = ['USER'];
+    const write = deferred<ReturnType<typeof runtimeConfig>>();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    saveRuntime.mockReturnValue(write.promise);
+    const view = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    await act(async () => view.result.current.actions.openRuntimeConfig('edge'));
+    act(() => view.result.current.actions.requestAction('offline', ['edge']));
+    act(() => {
+      void view.result.current.actions.saveRuntimeConfig(runtimeDraft());
+    });
+    await waitFor(() => expect(saveRuntime).toHaveBeenCalledOnce());
+
+    access.roles = ['GUEST'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.runtimeEditor).toBeNull());
+    expect(view.result.current.pendingAction).toBeNull();
+    write.resolve(runtimeConfig({ revision: 8 }));
+    await act(async () => write.promise);
+
+    expect(saveRuntime).toHaveBeenCalledOnce();
+    act(() => {
+      void view.result.current.actions.saveRuntimeConfig(runtimeDraft());
+      void view.result.current.actions.confirmAction();
+    });
+    expect(saveRuntime).toHaveBeenCalledOnce();
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it.each([401, 403])('renders HTTP %s Collector list rejection as permission evidence', async status => {
+    load.mockRejectedValue(new ApiMessageError('redacted', { status }));
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState).toEqual({ kind: 'permission' }));
+  });
 
   it('proves a successful delete from the final visible row on the adjusted backend page', async () => {
     load

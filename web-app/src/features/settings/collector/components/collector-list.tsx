@@ -17,6 +17,8 @@ import { CollectorRowActions } from './collector-row-actions';
 import { CollectorRuntimeReportFacts } from './collector-runtime-report-facts';
 
 type Props = {
+  canWrite: boolean;
+  canDelete: boolean;
   state: CollectorListState;
   query: CollectorQuery;
   selected: string[];
@@ -43,6 +45,9 @@ export function CollectorList(props: Props) {
   }
   if (props.state.kind === 'unavailable') {
     return <StateMessage title={t('collectors.unavailable')} />;
+  }
+  if (props.state.kind === 'permission') {
+    return <StateMessage title={t('common.permission.roleRequiredDescription')} />;
   }
   if (props.state.kind === 'error') {
     return <StateMessage title={t('common.routeError.description')} />;
@@ -71,7 +76,12 @@ export function CollectorList(props: Props) {
 }
 
 function collectorColumns(props: Props, t: TFunction): ColumnsType<CollectorRecord> {
-  return [...selectionColumns(props, t), ...factColumns(t), actionColumn(props, t)];
+  const selectable = props.canWrite || props.canDelete;
+  return [
+    ...(selectable ? selectionColumns(props, t) : []),
+    ...factColumns(t),
+    ...(selectable ? [actionColumn(props, t)] : [])
+  ];
 }
 
 function selectionColumns(props: Props, t: TFunction): ColumnsType<CollectorRecord> {
@@ -161,6 +171,17 @@ function actionColumn(props: Props, t: TFunction): ColumnsType<CollectorRecord>[
     key: 'actions',
     fixed: 'right',
     width: 420,
-    render: (_, record) => <CollectorRowActions {...props} record={record} t={t} />
+    render: (_, record) => (
+      <CollectorRowActions
+        canWrite={props.canWrite}
+        canDelete={props.canDelete}
+        busy={props.busy}
+        onAction={props.onAction}
+        onIntake={props.onIntake}
+        onRuntime={props.onRuntime}
+        record={record}
+        t={t}
+      />
+    )
   };
 }

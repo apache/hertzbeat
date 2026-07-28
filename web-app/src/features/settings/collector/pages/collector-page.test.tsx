@@ -71,6 +71,22 @@ describe('CollectorPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it.each([
+    [{ canRead: true, canWrite: false, canDelete: false }, false, false],
+    [{ canRead: true, canWrite: true, canDelete: false }, true, false],
+    [{ canRead: true, canWrite: true, canDelete: true }, true, true]
+  ] as const)('renders exact method capability admission %#', (capabilities, canWrite, canDelete) => {
+    resource.useCollectorController.mockReturnValue(buildController({ capabilities }));
+    renderPage();
+
+    expect(screen.getAllByText('edge').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Configure edge intake' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'Configure edge managed runtime' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'Take edge offline' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'Delete edge' }) !== null).toBe(canDelete);
+    expect(screen.queryByRole('checkbox', { name: 'Select edge' }) !== null).toBe(canWrite || canDelete);
+  });
+
   it('wires controller application and record runtime reports into the page', () => {
     resource.useCollectorController.mockReturnValue(
       buildController({
@@ -580,6 +596,7 @@ describe('CollectorPage', () => {
 
 function buildController(overrides: Record<string, unknown> = {}) {
   return {
+    capabilities: { canRead: true, canWrite: true, canDelete: true },
     query: { name: '', pageIndex: 0, pageSize: 8 },
     nameDraft: '',
     listState: {

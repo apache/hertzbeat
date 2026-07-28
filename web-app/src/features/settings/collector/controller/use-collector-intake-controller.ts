@@ -7,7 +7,7 @@
 
 import type { QueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -39,6 +39,7 @@ export function useCollectorIntakeController(options: Options) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [editor, setEditor] = useState<Editor | null>(null);
+  const operationRef = useRef(0);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<CollectorMutationFailure | null>(null);
   const open = useCallback(
@@ -55,10 +56,12 @@ export function useCollectorIntakeController(options: Options) {
     async (request?: CollectorIntakeAdvertisementRequest) => {
       if (!editor || saving) return;
       if (!sameCollectorQuery(editor.query, options.queryRef.current)) return setEditor(null);
+      const operation = ++operationRef.current;
       setSaving(true);
       setFailure(null);
       await options.queryClient.cancelQueries({ queryKey: collectorQueryKeys.page(editor.query), exact: true });
       const result = await persistAndProveIntake(editor, request, options.queryClient);
+      if (operation !== operationRef.current) return;
       const current = sameCollectorQuery(editor.query, options.queryRef.current);
       setSaving(false);
       if (!current) return setEditor(null);
@@ -83,6 +86,12 @@ export function useCollectorIntakeController(options: Options) {
     open,
     save,
     clear: () => execute(),
+    retire: () => {
+      operationRef.current += 1;
+      setEditor(null);
+      setSaving(false);
+      setFailure(null);
+    },
     cancel: () => {
       if (!saving) {
         setEditor(null);

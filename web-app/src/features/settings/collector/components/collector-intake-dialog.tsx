@@ -27,6 +27,7 @@ type FormValue = {
 };
 
 type Props = {
+  canDelete: boolean;
   record: CollectorRecord | null;
   saving: boolean;
   failure: CollectorMutationFailure | null;
@@ -96,7 +97,7 @@ function IntakeEditorModal(props: Props & { record: CollectorRecord; onRequestCl
         onFinish={submit}
       >
         <IntakeFields capabilities={capabilities} />
-        {collectorIntakeCanBeCleared(props.record.instrumentationIntake) && (
+        {props.canDelete && collectorIntakeCanBeCleared(props.record.instrumentationIntake) && (
           <Button danger disabled={props.saving} onClick={props.onRequestClear}>
             {t('collectors.intake.clear')}
           </Button>
