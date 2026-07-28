@@ -9,9 +9,18 @@ import { z } from 'zod';
 
 import { isSafeCollectorIntakeEndpoint } from '@/shared/collector';
 
-import { BLOCK_TYPES } from '../model/instrumentation-v2-contract';
+import { BLOCK_TYPES, SOURCE_KINDS } from '../model/instrumentation-v2-contract';
 
 export const text = z.string().min(1);
+export const selection = {
+  sourceKind: z.enum(SOURCE_KINDS),
+  recipeId: text.optional(),
+  language: text.optional(),
+  framework: text.optional(),
+  method: text.optional(),
+  environment: text.optional(),
+  platform: text.optional()
+};
 export const key = z.string().regex(/^[a-z0-9_.]{1,160}$/);
 export const timestamp = z.number().int().positive();
 export const capability = z.enum(['supported', 'preview', 'unsupported']);

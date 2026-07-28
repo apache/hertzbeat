@@ -7,7 +7,7 @@
 
 import { apiFetch } from '@/core/http/http-client';
 
-import type { DetectionRequest, RenderRequest } from '../model/instrumentation-v2-contract';
+import type { DetectionRequest, RenderRequest, Selection } from '../model/instrumentation-v2-contract';
 import { messageEnvelopeSchema } from './instrumentation-v2-schema';
 import {
   InstrumentationContractError,
@@ -63,8 +63,7 @@ export const detectInstrumentationSignals = (value: DetectionRequest, signal?: A
   request(`${ROOT}/detect`, post(copyRequest(value), signal), response => {
     const parsed = parseDetectionResponse(response);
     if (
-      parsed.context.sourceKind !== value.sourceKind ||
-      parsed.context.recipeId !== value.recipeId ||
+      !sameSelection(parsed.context, value) ||
       parsed.context.intakeProfileId !== value.intakeProfileId ||
       parsed.context.startedAt !== value.startedAt ||
       !sameService(parsed.context.service, value.service)
@@ -136,5 +135,17 @@ function sameService(left: RenderRequest['service'], right: RenderRequest['servi
     left.environment === right.environment &&
     left.serviceInstanceId === right.serviceInstanceId &&
     left.endpoint === right.endpoint
+  );
+}
+
+function sameSelection(left: Selection, right: Selection) {
+  return (
+    left.sourceKind === right.sourceKind &&
+    left.recipeId === right.recipeId &&
+    left.language === right.language &&
+    left.framework === right.framework &&
+    left.method === right.method &&
+    left.environment === right.environment &&
+    left.platform === right.platform
   );
 }

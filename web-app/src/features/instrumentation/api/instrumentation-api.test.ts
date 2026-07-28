@@ -68,20 +68,32 @@ describe('instrumentation API', () => {
       schemaVersion: 2,
       sourceKind: 'quick_start',
       recipeId: 'opentelemetry_telemetrygen',
+      environment: 'docker',
+      platform: 'linux_amd64',
       intakeProfileId: 'server-default',
-      service: { name: 'checkout', namespace: 'shop', environment: 'prod' }
+      service: {
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod',
+        serviceInstanceId: 'checkout-1',
+        endpoint: '/checkout/{id}'
+      }
     } as const;
     apiFetch.mockResolvedValueOnce(response(renderFixture()));
-    await renderInstrumentationGuide({ ...request, token: 'must-never-leave-memory' } as never);
+    await renderInstrumentationGuide({
+      ...request,
+      token: 'must-never-leave-memory',
+      otlpHttpEndpoint: 'http://guessed.invalid:4318'
+    } as never);
     const [path, init] = apiFetch.mock.calls[0]!;
     expect(path).toBe('/api/instrumentation/render');
     expect(String(init.body)).not.toContain('must-never-leave-memory');
-    const serializedRequest: unknown = JSON.parse(String(init.body));
-    expect(serializedRequest).not.toHaveProperty('token');
+    expect(JSON.parse(String(init.body))).toEqual(request);
 
     apiFetch.mockResolvedValueOnce(response(detectionFixture()));
     await detectInstrumentationSignals({ ...request, startedAt: 1_000 });
     expect(apiFetch.mock.calls[1]?.[0]).toBe('/api/instrumentation/detect');
+    expect(JSON.parse(String(apiFetch.mock.calls[1]?.[1]?.body))).toEqual({ ...request, startedAt: 1_000 });
   });
 
   it('rejects mismatched response context with a stable non-sensitive contract error', async () => {
@@ -95,6 +107,32 @@ describe('instrumentation API', () => {
     });
     await expect(promise).rejects.toBeInstanceOf(InstrumentationContractError);
     await expect(promise).rejects.not.toHaveProperty('cause');
+  });
+
+  it('rejects a detection echo that changes any frozen selection field', async () => {
+    const request = {
+      schemaVersion: 2,
+      sourceKind: 'quick_start',
+      recipeId: 'opentelemetry_telemetrygen',
+      environment: 'docker',
+      platform: 'linux_amd64',
+      intakeProfileId: 'server-default',
+      service: {
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod',
+        serviceInstanceId: 'checkout-1',
+        endpoint: '/checkout/{id}'
+      },
+      startedAt: 1_000
+    } as const;
+    apiFetch.mockResolvedValueOnce(
+      response({
+        ...detectionFixture(),
+        context: { ...detectionFixture().context, environment: 'kubernetes' }
+      })
+    );
+    await expect(detectInstrumentationSignals(request)).rejects.toBeInstanceOf(InstrumentationContractError);
   });
 });
 
@@ -111,6 +149,8 @@ function detectionFixture() {
     serviceNamespace: 'shop',
     environment: 'prod',
     intakeProfileId: 'server-default',
+    serviceInstanceId: 'checkout-1',
+    endpoint: '/checkout/{id}',
     startedAt: 1_000,
     detectedAt: 2_000
   };
@@ -120,17 +160,25 @@ function detectionFixture() {
     context: {
       sourceKind: 'quick_start',
       recipeId: 'opentelemetry_telemetrygen',
-      service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
+      environment: 'docker',
+      platform: 'linux_amd64',
+      service: {
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod',
+        serviceInstanceId: 'checkout-1',
+        endpoint: '/checkout/{id}'
+      },
       intakeProfileId: 'server-default',
       startedAt: 1_000,
-      windowEndAt: 3_000
+      windowEndAt: 121_000
     },
     signals: {
       metrics: { status: 'received', lastReceivedAt: 1_900 },
       logs: { status: 'waiting', errorCode: 'signal_not_received' },
       traces: { status: 'unsupported', errorCode: 'signal_not_supported' }
     },
-    polling: { decision: 'complete', deadlineAt: 3_000 },
+    polling: { decision: 'continue_polling', pollAfterMs: 3_000, deadlineAt: 121_000 },
     queryJumpContext: context,
     queryJumps: [
       { signal: 'metrics', enabled: true, context },
@@ -154,7 +202,13 @@ function renderFixture() {
       endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' } },
       authHeaderName: 'Authorization'
     },
-    service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
+    service: {
+      name: 'checkout',
+      namespace: 'shop',
+      environment: 'prod',
+      serviceInstanceId: 'checkout-1',
+      endpoint: '/checkout/{id}'
+    },
     signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
     components: [],
     secretPlaceholders: {

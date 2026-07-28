@@ -201,6 +201,50 @@ describe('useInstrumentationPageController', () => {
     expect(result.current.token).toBe('');
     unmount();
   });
+
+  it('discards an in-flight token after session-loss unmount without persistence or URL leakage', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    let resolveToken: ((value: { id: string; token: string }) => void) | undefined;
+    tokenApi.generateAccessToken.mockReturnValue(
+      new Promise(resolve => {
+        resolveToken = resolve;
+      })
+    );
+    const localStorageBefore = storageSnapshot(window.localStorage);
+    const sessionStorageBefore = storageSnapshot(window.sessionStorage);
+    const locationBefore = window.location.href;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const harness = createHarness();
+    const { result, unmount } = renderHook(() => useInstrumentationPageController(), { wrapper: harness.wrapper });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.openTokenGenerator());
+    act(() =>
+      result.current.updateTokenDraft({ name: 'Session scoped', expireSeconds: 2_592_000, scope: 'otlp-ingest' })
+    );
+    let generation: Promise<void> | undefined;
+    act(() => {
+      generation = result.current.generateToken();
+    });
+    unmount();
+    await act(async () => {
+      resolveToken?.({ id: 'generated', token: 'hb_session_loss_secret' });
+      await generation;
+    });
+
+    expect(storageSnapshot(window.localStorage)).toEqual(localStorageBefore);
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionStorageBefore);
+    expect(window.location.href).toBe(locationBefore);
+    expect(JSON.stringify(harness.client.getQueryCache().getAll())).not.toContain('hb_session_loss_secret');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('hb_session_loss_secret');
+    log.mockRestore();
+  });
 });
 
 function createWrapper() {
@@ -217,6 +261,13 @@ function createHarness() {
     );
   };
   return { client, wrapper };
+}
+
+function storageSnapshot(storage: Storage) {
+  return Array.from({ length: storage.length }, (_, index) => storage.key(index))
+    .filter((key): key is string => Boolean(key))
+    .sort()
+    .map(key => [key, storage.getItem(key)]);
 }
 
 const serverProfile = {

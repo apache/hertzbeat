@@ -9,12 +9,22 @@ export const SOURCE_KINDS = ['quick_start', 'application', 'existing_opentelemet
 export const SIGNALS = ['metrics', 'logs', 'traces'] as const;
 export const BLOCK_TYPES = ['command', 'code', 'environment', 'download', 'note', 'warning', 'link', 'check'] as const;
 export const DETECTION_STATUSES = ['waiting', 'received', 'unsupported', 'unavailable', 'error'] as const;
+export const DETECTION_ERROR_CODES = [
+  'signal_not_received',
+  'signal_not_supported',
+  'storage_unavailable',
+  'storage_query_failed',
+  'collector_unavailable',
+  'authentication_failed',
+  'invalid_context'
+] as const;
 export const POLLING_DECISIONS = ['continue_polling', 'complete', 'manual_retry'] as const;
 
 export type SourceKind = (typeof SOURCE_KINDS)[number];
 export type Signal = (typeof SIGNALS)[number];
 type BlockType = (typeof BLOCK_TYPES)[number];
 type DetectionStatus = (typeof DETECTION_STATUSES)[number];
+type DetectionErrorCode = (typeof DETECTION_ERROR_CODES)[number];
 type PollingDecision = (typeof POLLING_DECISIONS)[number];
 type SignalValues<T> = { metrics: T; logs: T; traces: T };
 
@@ -178,7 +188,7 @@ export type DetectionResponse = {
   signals: SignalValues<{
     status: DetectionStatus;
     lastReceivedAt?: number | undefined;
-    errorCode?: string | undefined;
+    errorCode?: DetectionErrorCode | undefined;
   }>;
   polling: { decision: PollingDecision; pollAfterMs?: number | undefined; deadlineAt: number };
   queryJumpContext: QueryJumpContext;

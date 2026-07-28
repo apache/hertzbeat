@@ -516,14 +516,14 @@ const detection = {
     service: guide.service,
     intakeProfileId: 'server-default',
     startedAt: 1000,
-    windowEndAt: 2000
+    windowEndAt: 121000
   },
   signals: {
     metrics: { status: 'received' as const, lastReceivedAt: 1900 },
-    logs: { status: 'waiting' as const, errorCode: 'signal_not_received' },
-    traces: { status: 'unsupported' as const, errorCode: 'signal_not_supported' }
+    logs: { status: 'waiting' as const, errorCode: 'signal_not_received' as const },
+    traces: { status: 'unsupported' as const, errorCode: 'signal_not_supported' as const }
   },
-  polling: { decision: 'complete' as const, deadlineAt: 3000 },
+  polling: { decision: 'continue_polling' as const, pollAfterMs: 3000, deadlineAt: 121000 },
   queryJumpContext: context,
   queryJumps: [
     { signal: 'metrics' as const, enabled: true, context },

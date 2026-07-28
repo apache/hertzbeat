@@ -7,7 +7,8 @@
 
 import { z } from 'zod';
 
-import { DETECTION_STATUSES, POLLING_DECISIONS, SIGNALS, SOURCE_KINDS } from '../model/instrumentation-v2-contract';
+import { SOURCE_KINDS } from '../model/instrumentation-v2-contract';
+export { detectionSchema } from './instrumentation-detection-schema';
 import {
   capability,
   component,
@@ -16,19 +17,9 @@ import {
   profileError,
   service,
   signalValues,
-  text,
-  timestamp
+  text
 } from './instrumentation-v2-schema-parts';
 export { catalogSchema } from './instrumentation-catalog-schema';
-const selection = {
-  sourceKind: z.enum(SOURCE_KINDS),
-  recipeId: text.optional(),
-  language: text.optional(),
-  framework: text.optional(),
-  method: text.optional(),
-  environment: text.optional(),
-  platform: text.optional()
-};
 const intakeEndpoint = z
   .object({ url: explicitCollectorIntakeEndpoint, security: z.enum(['tls', 'plaintext']) })
   .strict()
@@ -164,83 +155,6 @@ export const renderSchema = z
     blocks: z.array(guideBlock)
   })
   .strict();
-
-const jumpContext = z
-  .object({
-    serviceName: text,
-    serviceNamespace: text.optional(),
-    environment: text.optional(),
-    intakeProfileId: text,
-    collectorId: text.optional(),
-    serviceInstanceId: text.optional(),
-    endpoint: text.optional(),
-    startedAt: timestamp,
-    detectedAt: timestamp
-  })
-  .strict();
-const signalDetection = z
-  .object({ status: z.enum(DETECTION_STATUSES), lastReceivedAt: timestamp.optional(), errorCode: text.optional() })
-  .strict()
-  .superRefine(validateSignalDetection);
-
-type SignalDetection = z.infer<typeof signalDetection>;
-
-function validateSignalDetection(value: SignalDetection, context: z.RefinementCtx) {
-  const valid = {
-    received: Boolean(value.lastReceivedAt) && !value.errorCode,
-    waiting: !value.lastReceivedAt && value.errorCode === 'signal_not_received',
-    unsupported: !value.lastReceivedAt && value.errorCode === 'signal_not_supported',
-    unavailable: !value.lastReceivedAt && Boolean(value.errorCode),
-    error: Boolean(value.errorCode)
-  }[value.status];
-  if (!valid) context.addIssue({ code: 'custom', message: `${value.status} signal evidence is invalid` });
-}
-
-export const detectionSchema = z
-  .object({
-    schemaVersion: z.literal(2),
-    detectedAt: timestamp,
-    context: z
-      .object({
-        ...selection,
-        service,
-        intakeProfileId: text,
-        collectorId: text.optional(),
-        startedAt: timestamp,
-        windowEndAt: timestamp
-      })
-      .strict(),
-    signals: signalValues(signalDetection),
-    polling: z
-      .object({ decision: z.enum(POLLING_DECISIONS), pollAfterMs: timestamp.optional(), deadlineAt: timestamp })
-      .strict(),
-    queryJumpContext: jumpContext,
-    queryJumps: z.array(z.object({ signal: z.enum(SIGNALS), enabled: z.boolean(), context: jumpContext }).strict())
-  })
-  .strict()
-  .superRefine((value, context) => {
-    if (value.queryJumps.length !== 3 || new Set(value.queryJumps.map(jump => jump.signal)).size !== 3) {
-      context.addIssue({ code: 'custom', message: 'exactly three signal jumps are required' });
-    }
-    if ((value.polling.decision === 'continue_polling') !== Boolean(value.polling.pollAfterMs)) {
-      context.addIssue({ code: 'custom', message: 'polling delay does not match decision' });
-    }
-    validateQueryJumps(value, context);
-  });
-
-type Detection = z.infer<typeof detectionSchema>;
-
-function validateQueryJumps(value: Detection, context: z.RefinementCtx) {
-  for (const jump of value.queryJumps) {
-    const signal = value.signals[jump.signal];
-    if (JSON.stringify(jump.context) !== JSON.stringify(value.queryJumpContext)) {
-      context.addIssue({ code: 'custom', message: 'query jump context must match shared context' });
-    }
-    if (jump.enabled !== (signal.status === 'received')) {
-      context.addIssue({ code: 'custom', message: 'query jump enabled state must match received signal' });
-    }
-  }
-}
 
 export const messageEnvelopeSchema = z
   .object({ code: z.number().int(), msg: z.string().nullable().optional(), data: z.unknown() })

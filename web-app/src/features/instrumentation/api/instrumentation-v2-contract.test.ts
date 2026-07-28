@@ -420,14 +420,14 @@ describe('instrumentation v2 wire contracts', () => {
         service,
         intakeProfileId: 'server-default',
         startedAt: 1000,
-        windowEndAt: 2000
+        windowEndAt: 121000
       },
       signals: {
         metrics: { status: 'received', lastReceivedAt: 1900 },
         logs: { status: 'waiting', errorCode: 'signal_not_received' },
         traces: { status: 'unsupported', errorCode: 'signal_not_supported' }
       },
-      polling: { decision: 'complete', deadlineAt: 3000 },
+      polling: { decision: 'continue_polling', pollAfterMs: 3000, deadlineAt: 121000 },
       queryJumpContext: jumpContext,
       queryJumps: [
         { signal: 'metrics', enabled: true, context: jumpContext },
@@ -452,4 +452,93 @@ describe('instrumentation v2 wire contracts', () => {
       })
     ).toThrow();
   });
+
+  it('rejects detection evidence that escapes the safe scoped status contract', () => {
+    const response = detectionResponse();
+    expect(() =>
+      parseDetectionResponse({
+        ...response,
+        signals: {
+          ...response.signals,
+          metrics: { status: 'received', lastReceivedAt: response.detectedAt + 1 }
+        }
+      })
+    ).toThrow();
+    expect(() =>
+      parseDetectionResponse({
+        ...response,
+        signals: {
+          ...response.signals,
+          logs: { status: 'unavailable', errorCode: 'database_password_leaked' }
+        }
+      })
+    ).toThrow();
+    expect(() =>
+      parseDetectionResponse({
+        ...response,
+        polling: { decision: 'complete', deadlineAt: response.context.windowEndAt }
+      })
+    ).toThrow();
+  });
+
+  it('binds query jumps to the complete echoed detection context', () => {
+    const response = detectionResponse();
+    const mismatchedJumpContext = {
+      ...response.queryJumpContext,
+      collectorId: 'other-collector',
+      serviceInstanceId: 'other-instance',
+      endpoint: '/other'
+    };
+    expect(() =>
+      parseDetectionResponse({
+        ...response,
+        queryJumpContext: mismatchedJumpContext,
+        queryJumps: response.queryJumps.map(jump => ({ ...jump, context: mismatchedJumpContext }))
+      })
+    ).toThrow();
+  });
 });
+
+function detectionResponse() {
+  const scopedService = {
+    ...service,
+    serviceInstanceId: 'checkout-1',
+    endpoint: '/checkout/{id}'
+  };
+  const scopedJump = {
+    serviceName: scopedService.name,
+    serviceNamespace: scopedService.namespace,
+    environment: scopedService.environment,
+    intakeProfileId: 'collector-edge',
+    collectorId: 'edge',
+    serviceInstanceId: scopedService.serviceInstanceId,
+    endpoint: scopedService.endpoint,
+    startedAt: 1000,
+    detectedAt: 2000
+  };
+  return {
+    schemaVersion: 2 as const,
+    detectedAt: 2000,
+    context: {
+      sourceKind: 'quick_start' as const,
+      recipeId: 'opentelemetry_telemetrygen',
+      service: scopedService,
+      intakeProfileId: 'collector-edge',
+      collectorId: 'edge',
+      startedAt: 1000,
+      windowEndAt: 121000
+    },
+    signals: {
+      metrics: { status: 'received' as const, lastReceivedAt: 1900 },
+      logs: { status: 'waiting' as const, errorCode: 'signal_not_received' },
+      traces: { status: 'unsupported' as const, errorCode: 'signal_not_supported' }
+    },
+    polling: { decision: 'continue_polling' as const, pollAfterMs: 3000, deadlineAt: 121000 },
+    queryJumpContext: scopedJump,
+    queryJumps: [
+      { signal: 'metrics' as const, enabled: true, context: scopedJump },
+      { signal: 'logs' as const, enabled: false, context: scopedJump },
+      { signal: 'traces' as const, enabled: false, context: scopedJump }
+    ]
+  };
+}
