@@ -22,6 +22,7 @@ import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contr
 import {
   AlertContractError,
   alertGroupTargetStatuses,
+  normalizeAlertEvidenceIds,
   normalizeAlertGroupIds,
   writeAlertQuery,
   type AlertGroupTargetStatus,
@@ -29,9 +30,11 @@ import {
 } from '../model/alert-model';
 import { alertApiRequest } from './alert-api-failure';
 import { parseAlertEventSignal, type AlertEventSignal } from './alert-event-schema';
+import { parseAlertGroupEvidence } from './alert-group-evidence-schema';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
 const alertGroupEndpoint = '/api/alerts/group';
+const alertGroupEvidenceEndpoint = `${alertGroupEndpoint}/evidence`;
 const alertGroupStatusEndpoint = `${alertGroupEndpoint}/status`;
 
 export function buildAlertListPath(query: AlertQuery) {
@@ -56,6 +59,15 @@ export function loadAlertGroups(query: AlertQuery, signal?: AbortSignal) {
     const path = buildAlertListPath(query);
     const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
     return parseAlertGroupPage(response, query);
+  }, signal);
+}
+
+export function loadAlertGroupEvidence(ids: readonly number[], signal?: AbortSignal) {
+  return alertApiRequest(async () => {
+    const canonicalIds = normalizeAlertEvidenceIds(ids);
+    const path = buildAlertGroupCommandPath(alertGroupEvidenceEndpoint, canonicalIds);
+    const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
+    return parseAlertGroupEvidence(response, canonicalIds);
   }, signal);
 }
 

@@ -24,6 +24,7 @@ export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as cons
 export const alertRecordStatuses = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertGroupTargetStatuses = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
+export const maximumAlertEvidenceIds = 100;
 
 export type AlertStatus = (typeof alertStatuses)[number];
 type AlertRecordStatus = (typeof alertRecordStatuses)[number];
@@ -78,6 +79,11 @@ export type AlertRecord = {
 };
 
 export type AlertPage = PagedCollection<AlertGroup>;
+export type AlertGroupEvidence = {
+  groups: Array<{ id: number; status: AlertStatus }>;
+  missingIds: number[];
+  observedAt: number;
+};
 
 export class AlertContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -122,6 +128,14 @@ export function normalizeAlertGroupIds(ids: readonly number[]) {
   const uniqueIds = [...new Set(ids)].sort((left, right) => left - right);
   if (uniqueIds.length === 0 || uniqueIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
     throw new AlertContractError('Alert group ids are invalid');
+  }
+  return uniqueIds;
+}
+
+export function normalizeAlertEvidenceIds(ids: readonly number[]) {
+  const uniqueIds = normalizeAlertGroupIds(ids);
+  if (uniqueIds.length > maximumAlertEvidenceIds) {
+    throw new AlertContractError('Alert evidence request exceeds the id limit');
   }
   return uniqueIds;
 }

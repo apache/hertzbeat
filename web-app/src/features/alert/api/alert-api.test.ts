@@ -25,6 +25,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import {
   buildAlertListPath,
   deleteAlertGroups,
+  loadAlertGroupEvidence,
   loadAlertGroups,
   loadAlertSummary,
   openAlertGroupStream,
@@ -167,6 +168,58 @@ describe('alert API', () => {
 
     await expect(deleteAlertGroups([0])).rejects.toBeInstanceOf(AlertContractError);
     expect(apiMessageDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads one canonical evidence snapshot for unique positive ids up to 100', async () => {
+    apiMessageGet.mockResolvedValue({
+      groups: [
+        { id: 7, status: 'firing' },
+        { id: 9, status: 'resolved' }
+      ],
+      missingIds: [],
+      observedAt: 1_785_000_000_000
+    });
+
+    await expect(loadAlertGroupEvidence([9, 7, 9])).resolves.toEqual({
+      groups: [
+        { id: 7, status: 'firing' },
+        { id: 9, status: 'resolved' }
+      ],
+      missingIds: [],
+      observedAt: 1_785_000_000_000
+    });
+    expect(apiMessageGet).toHaveBeenCalledOnce();
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/alerts/group/evidence?ids=7&ids=9');
+
+    vi.clearAllMocks();
+    const maximumIds = Array.from({ length: 100 }, (_value, index) => index + 1);
+    apiMessageGet.mockResolvedValueOnce({
+      groups: maximumIds.map(id => ({ id, status: 'resolved' })),
+      missingIds: [],
+      observedAt: 1_785_000_000_001
+    });
+    const maximumEvidence = await loadAlertGroupEvidence(maximumIds);
+    expect(maximumEvidence.groups).toHaveLength(100);
+    expect(maximumEvidence.missingIds).toEqual([]);
+    expect(apiMessageGet).toHaveBeenCalledOnce();
+
+    vi.clearAllMocks();
+    await expect(
+      loadAlertGroupEvidence(Array.from({ length: 101 }, (_value, index) => index + 1))
+    ).rejects.toBeInstanceOf(AlertContractError);
+    expect(apiMessageGet).not.toHaveBeenCalled();
+  });
+
+  it('preserves permission and invalid-contract evidence failures', async () => {
+    apiMessageGet.mockRejectedValueOnce(new ApiMessageError('private evidence failure', { status: 403 }));
+    await expect(loadAlertGroupEvidence([7])).rejects.toMatchObject({ kind: 'permission' });
+
+    apiMessageGet.mockResolvedValueOnce({
+      groups: [{ id: 8, status: 'resolved' }],
+      missingIds: [],
+      observedAt: 1_785_000_000_000
+    });
+    await expect(loadAlertGroupEvidence([7])).rejects.toBeInstanceOf(AlertContractError);
   });
 
   it('owns the allowlisted group-status path and canonicalizes ids before transport', async () => {

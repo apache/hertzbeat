@@ -32,6 +32,7 @@ import { useAlertCenterController } from './use-alert-center-controller';
 
 const api = vi.hoisted(() => ({
   deleteAlertGroups: vi.fn(),
+  loadAlertGroupEvidence: vi.fn(),
   loadAlertGroups: vi.fn(),
   loadAlertSummary: vi.fn(),
   notification: vi.fn(),
@@ -41,6 +42,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/alert-api', () => ({
   deleteAlertGroups: api.deleteAlertGroups,
+  loadAlertGroupEvidence: api.loadAlertGroupEvidence,
   loadAlertGroups: api.loadAlertGroups,
   loadAlertSummary: api.loadAlertSummary,
   openAlertGroupStream: api.openAlertGroupStream,
@@ -65,6 +67,15 @@ describe('Alert Center controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.deleteAlertGroups.mockResolvedValue(undefined);
+    api.loadAlertGroupEvidence.mockImplementation((ids: number[]) => {
+      const target = api.updateAlertGroupStatus.mock.calls.at(-1)?.[1] ?? 'firing';
+      const deleted = api.deleteAlertGroups.mock.calls.length > 0;
+      return Promise.resolve({
+        groups: deleted ? [] : ids.map(id => ({ id, status: target })),
+        missingIds: deleted ? ids : [],
+        observedAt: 1_785_000_000_000
+      });
+    });
     api.loadAlertSummary.mockResolvedValue(summary);
     api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve(page(query)));
     api.openAlertGroupStream.mockReturnValue({ close: vi.fn() });

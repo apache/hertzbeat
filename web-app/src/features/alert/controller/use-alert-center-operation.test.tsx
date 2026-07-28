@@ -164,6 +164,26 @@ describe('alert center operation command', () => {
     expect(hook.result.current.recovery).toBeNull();
   });
 
+  it('retains proof permission evidence without replaying the completed write', async () => {
+    operations.proveAlertGroupsStatus.mockRejectedValueOnce(new AlertRequestFailure('permission', 'rejected'));
+    const hook = renderOperation();
+
+    await act(async () => hook.result.current.updateStatus([7], 'resolved'));
+
+    expect(failure).toHaveBeenCalledWith(
+      'permission',
+      expect.objectContaining({ kind: 'status', ids: [7], phase: 'proof', status: 'resolved' })
+    );
+    expect(hook.result.current.recovery).toMatchObject({
+      failure: 'permission',
+      ids: [7],
+      kind: 'status',
+      phase: 'proof',
+      status: 'resolved'
+    });
+    expect(operations.updateAlertGroupStatus).toHaveBeenCalledOnce();
+  });
+
   it('retires proof recovery as a read-only unlock without replaying the write', async () => {
     operations.updateAlertGroupStatus.mockRejectedValueOnce(new AlertRequestFailure('unavailable', 'uncertain'));
     const hook = renderOperation();
