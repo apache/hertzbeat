@@ -109,7 +109,7 @@ function useStatusOrgFormController({
     const owner = submitOperation.begin();
     if (!owner) return;
     try {
-      await onSubmit(value);
+      await onSubmit(org ? value : { ...value, state: emptyOrg.state });
       if (submitOperation.isCurrent(owner)) setEditing(false);
     } catch {
       // The mutation reports the failure; retaining this state keeps the draft retryable.

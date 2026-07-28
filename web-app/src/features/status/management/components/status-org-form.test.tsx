@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
@@ -46,6 +46,26 @@ describe('StatusOrgForm presentation', () => {
     expect(screen.getByText('common.save').closest('button')).toHaveAttribute('type', 'submit');
     expect(screen.queryByText('common.cancel')).not.toBeInTheDocument();
     expect(screen.queryByText('common.edit')).not.toBeInTheDocument();
+  });
+
+  it('submits the canonical initial state for a missing organization', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(org);
+    renderOrgForm({ org: undefined, onSubmit });
+
+    fireEvent.change(screen.getByLabelText('statusManagement.name'), { target: { value: 'Proof status' } });
+    fireEvent.change(screen.getByLabelText('statusManagement.home'), { target: { value: 'https://status.test' } });
+    fireEvent.change(screen.getByLabelText('status.descriptionLabel'), { target: { value: 'Proof description' } });
+    fireEvent.change(screen.getByLabelText('statusManagement.logo'), { target: { value: '/proof.svg' } });
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Proof status',
+          state: 0
+        })
+      )
+    );
   });
 
   it('keeps a new organization disabled while saving and exposes the loading boundary', () => {

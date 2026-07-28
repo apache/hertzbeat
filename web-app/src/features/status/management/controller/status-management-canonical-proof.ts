@@ -95,11 +95,14 @@ function incidentWritable(value: StatusIncident) {
     components: (value.components ?? [])
       .map(item => componentWritable(item, true))
       .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))),
-    contents: (value.contents ?? []).map(item => ({
-      message: item.message,
-      state: item.state,
-      timestamp: item.timestamp
-    }))
+    // History order is presentation-only: the editor appends oldest-first while the backend reads newest-first.
+    contents: (value.contents ?? [])
+      .map(item => ({
+        message: item.message,
+        state: item.state,
+        timestamp: item.timestamp
+      }))
+      .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
     // ids, start/end time, incidentId and audit fields are assigned by the backend.
   };
 }
