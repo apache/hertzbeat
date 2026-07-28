@@ -1475,6 +1475,7 @@
     "permission": "Sua conta não tem permissão para ler as configurações do sistema.",
     "invalid": "As configurações do sistema retornaram uma resposta inválida.",
     "unavailable": "As configurações do sistema estão indisponíveis.",
+    "useCurrentServerSettings": "Usar configurações atuais do servidor",
     "timezonesUnavailable": "O catálogo de fusos horários está indisponível. O valor atual será preservado.",
     "saveSuccess": "Configurações do sistema salvas.",
     "saveFailed": "Não foi possível salvar as configurações do sistema.",

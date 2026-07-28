@@ -1471,6 +1471,7 @@
     "permission": "Your account does not have permission to read system settings.",
     "invalid": "System settings returned an invalid response.",
     "unavailable": "System settings are unavailable.",
+    "useCurrentServerSettings": "Use current server settings",
     "timezonesUnavailable": "The time zone catalog is unavailable. The current value is still preserved.",
     "saveSuccess": "System settings saved.",
     "saveFailed": "System settings could not be saved.",

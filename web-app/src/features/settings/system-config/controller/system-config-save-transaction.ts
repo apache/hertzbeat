@@ -27,6 +27,11 @@ import {
   type SystemConfigResourceRecord
 } from '../model/system-config-model';
 import {
+  acceptSystemConfigCanonicalProof,
+  completeSystemConfigSave,
+  withSystemConfigProofRecovery
+} from './system-config-save-proof';
+import {
   useSystemConfigSaveRuntime,
   type SystemConfigSaveOwner,
   type SystemConfigSaveReceipt,
@@ -72,12 +77,17 @@ export function useSystemConfigSaveTransaction(options: SaveTransactionOptions, 
   const prove = async (owner: SystemConfigSaveOwner, receipt: SystemConfigSaveReceipt) => {
     const evidence = await options.reread();
     if (!runtime.isCurrent(owner)) return;
-    if (evidence.error || !evidence.data || !systemConfigSaveConverged(receipt.draft, evidence.data)) {
-      runtime.publish(owner, { ...receipt, recovery: { phase: 'proof' } });
+    if (evidence.error || !evidence.data) {
+      runtime.publish(owner, withSystemConfigProofRecovery(receipt, null));
       options.notifyFailure();
       return;
     }
-    completeSave(options, runtime, owner, evidence.data);
+    if (!systemConfigSaveConverged(receipt.draft, evidence.data)) {
+      runtime.publish(owner, withSystemConfigProofRecovery(receipt, { record: evidence.data }));
+      options.notifyFailure();
+      return;
+    }
+    completeSystemConfigSave(options, runtime, owner, evidence.data);
   };
   const submit = (draft: SystemConfigDraft) => submitSystemConfigSave(options, runtime, prove, draft);
   const retry = async () => {
@@ -92,7 +102,10 @@ export function useSystemConfigSaveTransaction(options: SaveTransactionOptions, 
       runtime.finish(owner);
     }
   };
+  const canonicalProof = runtime.recovery?.canonicalProof ?? null;
   return {
+    accepting: runtime.command === 'accepting',
+    canUseCurrentServerSettings: canonicalProof !== null,
     canWrite: () => canWriteRef.current,
     isLocked: runtime.isLocked,
     proving: runtime.command === 'proving',
@@ -101,7 +114,8 @@ export function useSystemConfigSaveTransaction(options: SaveTransactionOptions, 
     saving: runtime.command === 'saving',
     submit: (draft: SystemConfigDraft) => {
       if (canWriteRef.current) submit(draft);
-    }
+    },
+    useCurrentServerSettings: () => acceptSystemConfigCanonicalProof(options, runtime, canWriteRef, canonicalProof)
   };
 }
 
@@ -123,7 +137,7 @@ async function handleSaveFailure(
     }
     return;
   }
-  runtime.publish(owner, { ...receipt, recovery: { phase: 'proof' } });
+  runtime.publish(owner, withSystemConfigProofRecovery(receipt, null));
   try {
     await prove(owner, receipt);
   } finally {
@@ -140,13 +154,13 @@ function submitSystemConfigSave(
   if (runtime.receiptRef.current) return;
   const owner = runtime.begin('save');
   if (!owner) return;
-  const receipt = { draft, recovery: null };
+  const receipt: SystemConfigSaveReceipt = { draft, recovery: null };
   runtime.receiptRef.current = receipt;
   options.mutation.mutate(buildUpdate(draft), {
     onSuccess: response => {
       if (!runtime.isCurrent(owner)) return;
       if (!systemConfigSaveConverged(receipt.draft, response.data)) {
-        runtime.publish(owner, { ...receipt, recovery: { phase: 'proof' } });
+        runtime.publish(owner, withSystemConfigProofRecovery(receipt, null));
         try {
           options.notifyFailure();
         } finally {
@@ -155,7 +169,7 @@ function submitSystemConfigSave(
         return;
       }
       try {
-        completeSave(options, runtime, owner, response.data);
+        completeSystemConfigSave(options, runtime, owner, response.data);
       } finally {
         runtime.finish(owner);
       }
@@ -164,21 +178,6 @@ function submitSystemConfigSave(
       void handleSaveFailure(options, runtime, prove, owner, receipt, reason);
     }
   });
-}
-
-function completeSave(
-  options: SaveTransactionOptions,
-  runtime: SystemConfigSaveRuntime,
-  owner: SystemConfigSaveOwner,
-  record: SystemConfigResourceRecord
-) {
-  runtime.publish(owner, null);
-  try {
-    options.accept(record);
-    options.notifySuccess();
-  } catch {
-    options.notifyFailure();
-  }
 }
 
 function buildUpdate(draft: SystemConfigDraft) {

@@ -31,6 +31,7 @@ const controller = vi.hoisted(() => ({
   retryTimezones: vi.fn(),
   save: vi.fn(),
   update: vi.fn(),
+  useCurrentServerSettings: vi.fn(),
   useSystemConfigResourceController: vi.fn()
 }));
 vi.mock('../controller/system-config-resource-controller', () => ({
@@ -130,6 +131,22 @@ describe('SystemConfigPage', () => {
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 
+  it('offers explicit adoption only when canonical proof evidence exists', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(
+      buildController({
+        canUseCurrentServerSettings: true,
+        dirty: true,
+        locked: true,
+        recovery: { phase: 'proof' }
+      })
+    );
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Use current server settings' }));
+    expect(controller.useCurrentServerSettings).toHaveBeenCalledOnce();
+    expect(controller.retrySave).not.toHaveBeenCalled();
+  });
+
   it.each([['USER'], ['GUEST']] as const)('keeps settings readable but hides every write action for %s', async () => {
     controller.useSystemConfigResourceController.mockReturnValue(buildController({ canConfigure: false }));
     renderPage();
@@ -160,9 +177,12 @@ function buildController(state: Record<string, unknown> = {}) {
     retrySave: controller.retrySave,
     retryTimezones: controller.retryTimezones,
     save: controller.save,
+    useCurrentServerSettings: controller.useCurrentServerSettings,
     state: {
       kind: 'ready',
+      accepting: false,
       canConfigure: true,
+      canUseCurrentServerSettings: false,
       current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' },
       dirty: false,
       locked: false,

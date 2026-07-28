@@ -1456,6 +1456,7 @@
     "permission": "当前账号无权读取系统设置。",
     "invalid": "系统设置返回了无效响应。",
     "unavailable": "系统设置暂不可用。",
+    "useCurrentServerSettings": "使用服务器当前设置",
     "timezonesUnavailable": "时区目录暂不可用，当前值仍会保留。",
     "saveSuccess": "系统设置已保存。",
     "saveFailed": "系统设置保存失败。",

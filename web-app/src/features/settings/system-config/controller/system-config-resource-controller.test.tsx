@@ -322,6 +322,183 @@ describe('System Config resource controller', () => {
     expect(refine.updateMutate).toHaveBeenCalledTimes(1);
   });
 
+  it('offers the mismatching canonical proof and adopts it without replaying the write', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
+    const hook = renderHook(() => useSystemConfigResourceController());
+
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+
+    await waitFor(() =>
+      expect(hook.result.current.state).toMatchObject({
+        kind: 'ready',
+        current: { theme: 'compact' },
+        locked: true,
+        canUseCurrentServerSettings: true,
+        recovery: { phase: 'proof' }
+      })
+    );
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(preferences.persist).not.toHaveBeenCalled();
+
+    act(() => hook.result.current.useCurrentServerSettings());
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'dark' });
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(refine.notification).not.toHaveBeenCalledWith({
+      message: 'systemConfig.saveSuccess',
+      type: 'success'
+    });
+    expect(hook.result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { theme: 'dark-ops' },
+      dirty: false,
+      locked: false,
+      recovery: null
+    });
+  });
+
+  it('keeps canonical proof locked when runtime adoption fails', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    preferences.persist.mockImplementationOnce(() => {
+      throw new Error('storage unavailable');
+    });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ canUseCurrentServerSettings: true }));
+
+    act(() => hook.result.current.useCurrentServerSettings());
+
+    expect(reload).toHaveBeenCalledOnce();
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'systemConfig.unavailable', type: 'error' });
+    expect(hook.result.current.state).toMatchObject({
+      kind: 'ready',
+      locked: true,
+      canUseCurrentServerSettings: true,
+      recovery: { phase: 'proof' }
+    });
+    expect(refine.updateMutate).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['missing', () => Promise.resolve(null)],
+    ['malformed', () => Promise.resolve({ locale: 'bogus' })],
+    ['unavailable', () => Promise.reject(createRefineHttpError('unavailable', 503, undefined, 'http', 503))]
+  ])('keeps %s proof locked without a canonical adoption action', async (_label, reread) => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockImplementationOnce(reread);
+    const hook = renderHook(() => useSystemConfigResourceController());
+
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+
+    await waitFor(() =>
+      expect(hook.result.current.state).toMatchObject({
+        kind: 'ready',
+        locked: true,
+        canUseCurrentServerSettings: false,
+        recovery: { phase: 'proof' }
+      })
+    );
+    act(() => hook.result.current.useCurrentServerSettings());
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    expect(hook.result.current.state).toMatchObject({ locked: true, recovery: { phase: 'proof' } });
+  });
+
+  it('makes retained canonical adoption fail closed after role loss', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ canUseCurrentServerSettings: true }));
+    const retained = hook.result.current.useCurrentServerSettings;
+
+    access.roles = ['USER'];
+    act(() => hook.rerender());
+    act(() => retained());
+
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    expect(hook.result.current.state).toMatchObject({
+      canConfigure: false,
+      dirty: false,
+      locked: false,
+      recovery: null
+    });
+  });
+
+  it('rejects a retained canonical proof after a newer proof replaces its epoch', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    let callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ canUseCurrentServerSettings: true }));
+    const staleAdoption = hook.result.current.useCurrentServerSettings;
+
+    access.roles = ['USER'];
+    act(() => hook.rerender());
+    access.roles = ['ADMIN'];
+    act(() => hook.rerender());
+    act(() => hook.result.current.update('locale', 'ja_JP'));
+    act(() => hook.result.current.save());
+    callbacks = refine.updateMutate.mock.calls[1]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ canUseCurrentServerSettings: true }));
+
+    act(() => staleAdoption());
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    expect(hook.result.current.state).toMatchObject({ locked: true, canUseCurrentServerSettings: true });
+
+    act(() => hook.result.current.useCurrentServerSettings());
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'dark' });
+    expect(reload).toHaveBeenCalledOnce();
+    expect(refine.updateMutate).toHaveBeenCalledTimes(2);
+  });
+
+  it('makes canonical adoption inert after unmount', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ canUseCurrentServerSettings: true }));
+    const retained = hook.result.current.useCurrentServerSettings;
+
+    hook.unmount();
+    act(() => retained());
+
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('rejects a mismatching mutation success record and retries only canonical GET', async () => {
     const canonical = { ...serverRecord, theme: 'compact' as const };
     const reload = vi.fn();

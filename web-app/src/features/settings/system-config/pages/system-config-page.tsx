@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton } from 'antd';
+import { Alert, Button, Skeleton, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
@@ -50,7 +50,15 @@ export function SystemConfigPage() {
               type="warning"
               showIcon
               message={t('systemConfig.unavailable')}
-              action={<RetryButton loading={state.proving} onRetry={controller.retrySave} />}
+              action={
+                <ProofRecoveryActions
+                  accepting={state.accepting}
+                  canUseCurrentServerSettings={state.canUseCurrentServerSettings}
+                  proving={state.proving}
+                  onRetry={controller.retrySave}
+                  onUseCurrent={controller.useCurrentServerSettings}
+                />
+              }
             />
           )}
           <SystemConfigEditor
@@ -71,6 +79,32 @@ export function SystemConfigPage() {
         </>
       )}
     </OperationalPage>
+  );
+}
+
+function ProofRecoveryActions({
+  accepting,
+  canUseCurrentServerSettings,
+  proving,
+  onRetry,
+  onUseCurrent
+}: {
+  accepting: boolean;
+  canUseCurrentServerSettings: boolean;
+  proving: boolean;
+  onRetry: () => unknown;
+  onUseCurrent: () => unknown;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Space>
+      <RetryButton loading={proving} onRetry={onRetry} />
+      {canUseCurrentServerSettings && (
+        <Button size="small" loading={accepting} onClick={onUseCurrent}>
+          {t('systemConfig.useCurrentServerSettings')}
+        </Button>
+      )}
+    </Space>
   );
 }
 

@@ -75,7 +75,9 @@ export function useSystemConfigFormController(options: FormOptions) {
     save,
     state: {
       current,
+      accepting: transaction.accepting,
       canConfigure: options.canConfigure,
+      canUseCurrentServerSettings: transaction.canUseCurrentServerSettings,
       dirty,
       locked: transaction.isLocked(),
       proving: transaction.proving,
@@ -86,7 +88,8 @@ export function useSystemConfigFormController(options: FormOptions) {
       timezonesPending: options.timezonesPending,
       valid
     },
-    update
+    update,
+    useCurrentServerSettings: transaction.useCurrentServerSettings
   };
 }
 

@@ -1473,6 +1473,7 @@
     "permission": "システム設定を読み取る権限がありません。",
     "invalid": "システム設定から無効な応答が返されました。",
     "unavailable": "システム設定を取得できません。",
+    "useCurrentServerSettings": "現在のサーバー設定を使用",
     "timezonesUnavailable": "タイムゾーン一覧を取得できません。現在値は保持されます。",
     "saveSuccess": "システム設定を保存しました。",
     "saveFailed": "システム設定を保存できませんでした。",

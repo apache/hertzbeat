@@ -66,6 +66,7 @@ export function useSystemConfigResourceController() {
     retrySave: form.retrySave,
     retryTimezones: form.retryTimezones,
     save: form.save,
+    useCurrentServerSettings: form.useCurrentServerSettings,
     state:
       kind === 'ready' || form.state.locked
         ? ({

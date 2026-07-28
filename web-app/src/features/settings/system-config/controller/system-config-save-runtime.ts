@@ -13,8 +13,8 @@ export type SystemConfigSaveReceipt = {
   draft: SystemConfigDraft;
   recovery: SystemConfigSaveRecovery | null;
 };
-type SystemConfigSaveCommand = 'idle' | 'saving' | 'proving';
-type SystemConfigSaveAction = 'save' | 'proof';
+type SystemConfigSaveCommand = 'idle' | 'saving' | 'proving' | 'accepting';
+type SystemConfigSaveAction = 'save' | 'proof' | 'canonical';
 export type SystemConfigSaveOwner = { action: SystemConfigSaveAction; epoch: number };
 
 export type SystemConfigSaveRuntime = {
@@ -51,7 +51,7 @@ export function useSystemConfigSaveRuntime(): SystemConfigSaveRuntime {
     const owner = { action, epoch: epochRef.current + 1 };
     epochRef.current = owner.epoch;
     ownerRef.current = owner;
-    setCommand(action === 'save' ? 'saving' : 'proving');
+    setCommand(systemConfigSaveCommand(action));
     return owner;
   };
   const publish = (owner: SystemConfigSaveOwner, receipt: SystemConfigSaveReceipt | null) => {
@@ -72,6 +72,12 @@ export function useSystemConfigSaveRuntime(): SystemConfigSaveRuntime {
     setRecovery(null);
   }, []);
   return { receiptRef, command, recovery, isCurrent, isLocked, begin, publish, finish, retireWriteAccess };
+}
+
+function systemConfigSaveCommand(action: SystemConfigSaveAction): SystemConfigSaveCommand {
+  if (action === 'save') return 'saving';
+  if (action === 'proof') return 'proving';
+  return 'accepting';
 }
 
 function clearOwnership(

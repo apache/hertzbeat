@@ -26,7 +26,6 @@ export const systemThemes = ['light-ops', 'dark-ops', 'compact'] as const;
 export type SystemLocale = (typeof systemLocales)[number];
 export type SystemTheme = (typeof systemThemes)[number];
 export type SystemConfigDraft = { locale: SystemLocale | ''; timeZoneId: string; theme: SystemTheme | '' };
-export type SystemConfigSaveRecovery = { phase: 'proof' };
 
 export const systemConfigResourceName = 'system-config' as const;
 export const systemConfigResourceId = 'current' as const;
@@ -38,6 +37,8 @@ export type SystemConfigResourceRecord = {
   timeZoneId: string;
   theme: SystemTheme;
 };
+export type SystemConfigCanonicalProof = { record: SystemConfigResourceRecord };
+export type SystemConfigSaveRecovery = { phase: 'proof'; canonicalProof: SystemConfigCanonicalProof | null };
 
 export type SystemTimezoneResourceRecord = {
   id: typeof systemTimezonesResourceId;

@@ -1456,6 +1456,7 @@
     "permission": "目前帳號沒有讀取系統設定的權限。",
     "invalid": "系統設定傳回了無效回應。",
     "unavailable": "系統設定暫時不可用。",
+    "useCurrentServerSettings": "使用伺服器目前設定",
     "timezonesUnavailable": "時區目錄暫時不可用，目前值仍會保留。",
     "saveSuccess": "系統設定已儲存。",
     "saveFailed": "系統設定無法儲存。",
