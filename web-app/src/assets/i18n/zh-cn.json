@@ -2136,6 +2136,10 @@
   "monitor": {
     "title": "监控中心",
     "description": "查看监控可用性、端点与归属信息。",
+    "permission": {
+      "title": "无法访问监控数据",
+      "description": "当前账号无法查看监控数据。"
+    },
     "help": "帮助",
     "copyEndpoint": "复制端点 {{instance}}",
     "copyEndpointSuccess": "端点已复制。",

@@ -2151,6 +2151,10 @@
   "monitor": {
     "title": "Monitors",
     "description": "Inspect availability, endpoints, and monitor ownership.",
+    "permission": {
+      "title": "Monitor access unavailable",
+      "description": "Your account cannot access monitor data."
+    },
     "help": "Help",
     "copyEndpoint": "Copy endpoint {{instance}}",
     "copyEndpointSuccess": "Endpoint copied.",

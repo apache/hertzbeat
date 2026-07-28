@@ -66,6 +66,8 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.copyEndpoint).toBeTruthy();
       expect(locale.monitor.copyEndpointSuccess).toBeTruthy();
       expect(locale.monitor.copyEndpointFailure).toBeTruthy();
+      expect(locale.monitor.permission.title).toBeTruthy();
+      expect(locale.monitor.permission.description).toBeTruthy();
       expect(Object.keys(locale.monitor.categories).sort()).toEqual([
         'bigdata',
         'cache',

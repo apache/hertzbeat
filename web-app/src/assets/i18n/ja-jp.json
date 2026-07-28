@@ -2236,6 +2236,10 @@
   "monitor": {
     "title": "監視センター",
     "description": "可用性、エンドポイント、監視の所有情報を確認します。",
+    "permission": {
+      "title": "監視データにアクセスできません",
+      "description": "このアカウントでは監視データを表示できません。"
+    },
     "help": "ヘルプ",
     "copyEndpoint": "エンドポイント {{instance}} をコピー",
     "copyEndpointSuccess": "エンドポイントをコピーしました。",

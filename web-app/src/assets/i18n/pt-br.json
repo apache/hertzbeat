@@ -2238,6 +2238,10 @@
   "monitor": {
     "title": "Monitores",
     "description": "Inspecione disponibilidade, endpoints e propriedade dos monitores.",
+    "permission": {
+      "title": "Acesso aos monitores indisponível",
+      "description": "Sua conta não pode acessar dados de monitoramento."
+    },
     "help": "Ajuda",
     "copyEndpoint": "Copiar endpoint {{instance}}",
     "copyEndpointSuccess": "Endpoint copiado.",

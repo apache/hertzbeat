@@ -15,20 +15,17 @@
  * limitations under the License.
  */
 
-import { MonitorListView } from '../components/monitor-list-view';
-import { MonitorReadPermissionState } from '../components/monitor-read-permission-state';
-import { useMonitorCapabilities } from '../controller/use-monitor-capabilities';
-import { useMonitorListController } from '../controller/use-monitor-list-controller';
+import { Alert } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-export function MonitorListPage() {
-  const capabilities = useMonitorCapabilities();
-  if (!capabilities.canRead) return <MonitorReadPermissionState />;
-  // Controller ownership lives below this gate so role loss unmounts every
-  // query, interval, and cached view before denied content can render.
-  return <MonitorListWorkspace />;
-}
-
-function MonitorListWorkspace() {
-  const controller = useMonitorListController();
-  return <MonitorListView {...controller} />;
+export function MonitorReadPermissionState() {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t('monitor.permission.title')}
+      description={t('monitor.permission.description')}
+    />
+  );
 }

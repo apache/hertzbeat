@@ -2219,6 +2219,10 @@
   "monitor": {
     "title": "監控中心",
     "description": "查看監控可用性、端點與歸屬資訊。",
+    "permission": {
+      "title": "無法存取監控資料",
+      "description": "目前帳號無法查看監控資料。"
+    },
     "help": "說明",
     "copyEndpoint": "複製端點 {{instance}}",
     "copyEndpointSuccess": "端點已複製。",

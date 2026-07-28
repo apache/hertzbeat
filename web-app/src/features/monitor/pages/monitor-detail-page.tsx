@@ -17,10 +17,20 @@
 
 import { MonitorDetailView } from '../components/monitor-detail-view';
 import { MonitorMetricWorkbench } from '../components/monitor-metric-workbench';
+import { MonitorReadPermissionState } from '../components/monitor-read-permission-state';
+import { useMonitorCapabilities } from '../controller/use-monitor-capabilities';
 import { useMonitorDetailController } from '../controller/use-monitor-detail-controller';
 import { useMonitorMetricWorkbenchController } from '../controller/use-monitor-metric-workbench-controller';
 
 export function MonitorDetailPage() {
+  const capabilities = useMonitorCapabilities();
+  if (!capabilities.canRead) return <MonitorReadPermissionState />;
+  // Keeping both detail and metric controllers in this child makes one access
+  // transition retire their queries and cached presentation together.
+  return <MonitorDetailWorkspace />;
+}
+
+function MonitorDetailWorkspace() {
   const detail = useMonitorDetailController();
   const ready = detail.state.detail.kind === 'ready' ? detail.state.detail.detail : undefined;
   const metrics = useMonitorMetricWorkbenchController(ready?.monitor, ready?.metrics ?? [], {
