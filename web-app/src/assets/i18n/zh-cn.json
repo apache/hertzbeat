@@ -1202,8 +1202,10 @@
     "validation": { "name": "请输入插件名称。", "jarFile": "请选择非空的 .jar 文件。" },
     "notice": { "updated": "插件状态已更新。", "deleted": "所选插件已删除。" },
     "failure": {
-      "operation-failed": "服务器拒绝了插件操作。",
-      "forbidden": "此操作需要管理员权限。",
+      "missing": "所选插件已不存在。",
+      "invalid": "插件请求或响应无效。",
+      "permission": "此操作需要管理员权限。",
+      "conflict": "同名插件已存在。",
       "unavailable": "插件服务不可用，请重试。",
       "contract": "服务器返回了无效的插件响应。",
       "error": "插件操作失败。"

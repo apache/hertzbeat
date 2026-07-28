@@ -1221,8 +1221,10 @@
     "validation": { "name": "Enter a plugin name.", "jarFile": "Choose a non-empty .jar file." },
     "notice": { "updated": "Plugin status was updated.", "deleted": "The selected plugins were deleted." },
     "failure": {
-      "operation-failed": "The server rejected the plugin operation.",
-      "forbidden": "Administrator access is required for this operation.",
+      "missing": "The selected plugin no longer exists.",
+      "invalid": "The plugin request or response was invalid.",
+      "permission": "Administrator access is required for this operation.",
+      "conflict": "A plugin with this name already exists.",
       "unavailable": "Plugins are unavailable. Try again.",
       "contract": "The server returned an invalid plugin response.",
       "error": "The plugin operation failed."

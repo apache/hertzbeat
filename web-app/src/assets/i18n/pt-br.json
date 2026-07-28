@@ -1225,8 +1225,10 @@
       "deleted": "Os plugins selecionados foram excluídos."
     },
     "failure": {
-      "operation-failed": "O servidor rejeitou a operação do plugin.",
-      "forbidden": "É necessário acesso de administrador para esta operação.",
+      "missing": "O plugin selecionado não existe mais.",
+      "invalid": "A solicitação ou resposta do plugin é inválida.",
+      "permission": "O acesso de administrador é necessário para esta operação.",
+      "conflict": "Já existe um plugin com este nome.",
       "unavailable": "Os plugins estão indisponíveis. Tente novamente.",
       "contract": "O servidor retornou uma resposta de plugin inválida.",
       "error": "A operação do plugin falhou."

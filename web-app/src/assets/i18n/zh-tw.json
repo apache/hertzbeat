@@ -1202,8 +1202,10 @@
     "validation": { "name": "請輸入外掛程式名稱。", "jarFile": "請選擇非空的 .jar 檔案。" },
     "notice": { "updated": "外掛程式狀態已更新。", "deleted": "所選外掛程式已刪除。" },
     "failure": {
-      "operation-failed": "伺服器拒絕了外掛程式操作。",
-      "forbidden": "此操作需要管理員權限。",
+      "missing": "所選外掛程式已不存在。",
+      "invalid": "外掛程式請求或回應無效。",
+      "permission": "此操作需要管理員權限。",
+      "conflict": "同名外掛程式已存在。",
       "unavailable": "外掛程式服務無法使用，請重試。",
       "contract": "伺服器傳回了無效的外掛程式回應。",
       "error": "外掛程式操作失敗。"

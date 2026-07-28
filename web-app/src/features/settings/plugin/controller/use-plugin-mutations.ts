@@ -5,18 +5,22 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { deletePlugins, PluginRequestError, updatePluginStatus } from '../api/plugin-api';
+import { deletePlugins, updatePluginStatus } from '../api/plugin-api';
 import {
   pluginQueryAfterDelete,
+  pluginDeleteConverged,
+  pluginStatusConverged,
   type PluginDeleteTarget,
   type PluginFailureKind,
+  type PluginPage,
   type PluginQuery,
   type PluginRecord
 } from '../model/plugin-model';
+import { executePluginCommand, usePluginCommandLifecycle } from './use-plugin-command-lifecycle';
 
-export function usePluginMutations(options: {
+type MutationOptions = {
   canWrite: boolean;
   query: PluginQuery;
   getQuery: () => PluginQuery;
@@ -24,31 +28,33 @@ export function usePluginMutations(options: {
   selectedIds: number[];
   setSelected: (ids: number[]) => void;
   navigate: (query: PluginQuery, replace?: boolean) => void;
-  onChanged: () => Promise<void>;
-}) {
+  reread: () => Promise<PluginPage | null>;
+};
+
+export function usePluginMutations(options: MutationOptions) {
   const [deleteTarget, setDeleteTarget] = useState<PluginDeleteTarget | null>(null);
+  const { canWrite, setSelected } = options;
   const write = usePluginWriteState(options.canWrite);
   const deleteRequests = createDeleteRequests(options, write, setDeleteTarget);
   const toggleStatus = async (plugin: PluginRecord) => {
-    const changed = await write.run(() => updatePluginStatus(plugin.id, !plugin.enableStatus), 'updated');
-    if (changed) await options.onChanged();
+    const nextStatus = !plugin.enableStatus;
+    await write.run(
+      () => updatePluginStatus(plugin.id, nextStatus),
+      async () => {
+        const page = await options.reread();
+        return Boolean(page && pluginStatusConverged(page, plugin.id, nextStatus));
+      },
+      'updated'
+    );
   };
-  const confirmDelete = async () => {
-    const target = deleteTarget;
-    if (!target) return;
-    const receiptQuery = options.query;
-    const changed = await write.run(() => deletePlugins(target.ids), 'deleted');
-    if (!changed) return;
-    const next = pluginQueryAfterDelete(options.getQuery(), {
-      query: receiptQuery,
-      visibleRecords: options.visibleRecords,
-      deleteCount: target.ids.length
+  const confirmDelete = () => runPluginDelete(deleteTarget, options, write, setDeleteTarget);
+  useEffect(() => {
+    if (canWrite) return;
+    queueMicrotask(() => {
+      setDeleteTarget(null);
+      setSelected([]);
     });
-    setDeleteTarget(null);
-    options.setSelected([]);
-    if (next) options.navigate(next, true);
-    await options.onChanged();
-  };
+  }, [canWrite, setSelected]);
   return {
     deleteTarget,
     failure: write.failure,
@@ -63,15 +69,42 @@ export function usePluginMutations(options: {
   };
 }
 
+async function runPluginDelete(
+  target: PluginDeleteTarget | null,
+  options: MutationOptions,
+  write: ReturnType<typeof usePluginWriteState>,
+  setDeleteTarget: (target: PluginDeleteTarget | null) => void
+) {
+  if (!target) return;
+  const receiptQuery = options.query;
+  const changed = await write.run(
+    () => deletePlugins(target.ids),
+    async () => {
+      const page = await options.reread();
+      return Boolean(page && pluginDeleteConverged(page, target.ids));
+    },
+    'deleted'
+  );
+  if (!changed) return;
+  const next = pluginQueryAfterDelete(options.getQuery(), {
+    query: receiptQuery,
+    visibleRecords: options.visibleRecords,
+    deleteCount: target.ids.length
+  });
+  setDeleteTarget(null);
+  options.setSelected([]);
+  if (next) options.navigate(next, true);
+}
+
 function createDeleteRequests(
   options: { canWrite: boolean; selectedIds: number[] },
   write: ReturnType<typeof usePluginWriteState>,
   setTarget: (target: PluginDeleteTarget | null) => void
 ) {
-  const ready = () => options.canWrite && !write.active.current;
+  const ready = () => write.authorizedRef.current && !write.activeRef.current;
   return {
     cancelDelete: () => {
-      if (!write.active.current) {
+      if (!write.activeRef.current) {
         setTarget(null);
         write.reset();
       }
@@ -95,27 +128,46 @@ function usePluginWriteState(canWrite: boolean) {
   const [failure, setFailure] = useState<PluginFailureKind | null>(null);
   const [notice, setNotice] = useState<'updated' | 'deleted' | null>(null);
   const [busy, setBusy] = useState(false);
-  const active = useRef(false);
+  const lifecycle = usePluginCommandLifecycle(canWrite, () => {
+    setBusy(false);
+    setFailure(null);
+    setNotice(null);
+  });
+  const { activeRef, authorizedRef, generationRef, current } = lifecycle;
   const reset = () => {
     setFailure(null);
     setNotice(null);
   };
-  const run = async (operation: () => Promise<unknown>, success: 'updated' | 'deleted') => {
-    if (!canWrite || active.current) return false;
-    active.current = true;
+  const run = async (
+    operation: () => Promise<unknown>,
+    verify: () => Promise<boolean>,
+    success: 'updated' | 'deleted'
+  ) => {
+    if (!authorizedRef.current || activeRef.current) return false;
+    const runGeneration = generationRef.current;
+    activeRef.current = true;
     setBusy(true);
     reset();
     try {
-      await operation();
+      const outcome = await executePluginCommand(operation, () => current(runGeneration), setFailure);
+      if (outcome.kind === 'stopped') return false;
+      const converged = await verify();
+      if (!current(runGeneration)) return false;
+      if (!converged) {
+        setFailure(outcome.kind === 'uncertain' ? outcome.failure : 'error');
+        return false;
+      }
       setNotice(success);
       return true;
-    } catch (error) {
-      setFailure(error instanceof PluginRequestError ? error.kind : 'error');
+    } catch {
+      if (current(runGeneration)) setFailure('error');
       return false;
     } finally {
-      active.current = false;
-      setBusy(false);
+      if (current(runGeneration)) {
+        activeRef.current = false;
+        setBusy(false);
+      }
     }
   };
-  return { active, busy, failure, notice, reset, run };
+  return { activeRef, authorizedRef, busy, failure, notice, reset, run };
 }

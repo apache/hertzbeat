@@ -9,6 +9,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildEmptyPluginUpload,
+  pluginIdsByName,
+  pluginPageIsComplete,
+  pluginUploadConverged,
   pluginQueryAfterDelete,
   readPluginQuery,
   validatePluginUpload,
@@ -35,6 +38,7 @@ describe('plugin model', () => {
   it('keeps uploads in-memory and accepts only a non-empty jar File', () => {
     const jar = new File(['plugin'], 'audit.jar', { type: 'application/java-archive' });
     const wrong = new File(['plugin'], 'audit.zip', { type: 'application/zip' });
+    const unsafe = new File(['plugin'], '../audit.jar', { type: 'application/java-archive' });
 
     expect(buildEmptyPluginUpload()).toEqual({ name: '', jarFile: null, enableStatus: true });
     expect(validatePluginUpload({ name: ' audit ', jarFile: jar, enableStatus: false })).toEqual({
@@ -45,6 +49,7 @@ describe('plugin model', () => {
       name: false,
       jarFile: false
     });
+    expect(validatePluginUpload({ name: 'audit', jarFile: unsafe, enableStatus: true }).jarFile).toBe(false);
   });
 
   it('moves to the previous page only when a confirmed delete empties the visible page', () => {
@@ -58,5 +63,19 @@ describe('plugin model', () => {
     expect(
       pluginQueryAfterDelete(query, { query: { ...query, search: 'new' }, visibleRecords: 2, deleteCount: 2 })
     ).toBeUndefined();
+  });
+
+  it('requires a new canonical identity before proving an uncertain upload', () => {
+    const existing = { id: 11, name: 'audit', enableStatus: true };
+    const uploaded = { id: 17, name: 'audit', enableStatus: true };
+    const draft = { name: 'audit', jarFile: null, enableStatus: true };
+    const baseline = { content: [existing], totalElements: 1, totalPages: 1, number: 0, size: 8 };
+
+    expect(pluginPageIsComplete(baseline)).toBe(true);
+    expect(pluginPageIsComplete({ ...baseline, totalElements: 2 })).toBe(false);
+    expect(pluginUploadConverged({ ...baseline, content: [uploaded] }, draft, pluginIdsByName(baseline, 'audit'))).toBe(
+      true
+    );
+    expect(pluginUploadConverged(baseline, draft, pluginIdsByName(baseline, 'audit'))).toBe(false);
   });
 });

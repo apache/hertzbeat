@@ -50,6 +50,8 @@ describe('PluginPage', () => {
     ['loading', 'plugins.loading'],
     ['empty', 'plugins.empty'],
     ['search-empty', 'plugins.searchEmpty'],
+    ['invalid', 'plugins.failure.invalid'],
+    ['permission', 'plugins.failure.permission'],
     ['unavailable', 'plugins.failure.unavailable'],
     ['error', 'plugins.failure.error']
   ])('renders the explicit %s list state', (kind, message) => {
@@ -65,18 +67,20 @@ describe('PluginPage', () => {
 
     expect(screen.getByText('plugins.readOnly')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'plugins.upload' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('searchbox')).toBeDisabled();
     expect(screen.queryByText(/parameter/i)).not.toBeInTheDocument();
   });
 
   it('does not leak an upload failure into a delete operation', () => {
     controller.value = pluginController({
-      uploadFailure: 'operation-failed',
+      uploadFailure: 'error',
       mutationFailure: null,
       deleteTarget: { ids: [11], label: 'audit', mode: 'single' }
     });
     render(<PluginPage />);
 
-    expect(screen.queryByText('plugins.failure.operation-failed')).not.toBeInTheDocument();
+    expect(screen.queryByText('plugins.failure.error')).not.toBeInTheDocument();
     expect(screen.getByText('plugins.deleteConfirm')).toBeInTheDocument();
   });
 });

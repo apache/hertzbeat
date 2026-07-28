@@ -71,12 +71,15 @@ function PluginToolbar({ controller }: { controller: ReturnType<typeof usePlugin
       <Input.Search
         className={styles.search}
         allowClear
+        disabled={!controller.canWrite}
         value={controller.searchDraft}
         placeholder={t('plugins.search')}
         onChange={event => controller.actions.setSearchDraft(event.target.value)}
         onSearch={controller.actions.submitSearch}
       />
-      <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
+      <Button disabled={!controller.canWrite} onClick={controller.actions.refresh}>
+        {t('common.refresh')}
+      </Button>
       <Button
         danger
         disabled={!controller.canWrite || controller.busy || controller.selectedIds.length === 0}
@@ -93,6 +96,8 @@ function PluginResults({ controller }: { controller: ReturnType<typeof usePlugin
   if (controller.listState.kind === 'loading') return <State text={t('plugins.loading')} loading />;
   if (controller.listState.kind === 'empty') return <Empty description={t('plugins.empty')} />;
   if (controller.listState.kind === 'search-empty') return <Empty description={t('plugins.searchEmpty')} />;
+  if (controller.listState.kind === 'invalid') return <Empty description={t('plugins.failure.invalid')} />;
+  if (controller.listState.kind === 'permission') return <Empty description={t('plugins.failure.permission')} />;
   if (controller.listState.kind === 'unavailable') return <Empty description={t('plugins.failure.unavailable')} />;
   if (controller.listState.kind === 'error') return <Empty description={t('plugins.failure.error')} />;
   return (

@@ -10,9 +10,9 @@ import { describe, expect, it } from 'vitest';
 import {
   parsePluginParamDefinition,
   parsePluginParamWritePayload,
-  parsePluginParamWriteReceipt,
-  PluginContractError
-} from './plugin-schema';
+  parsePluginParamWriteReceipt
+} from './plugin-param-schema';
+import { PluginContractError } from './plugin-contract-error';
 
 describe('plugin parameter schema', () => {
   it('parses the frozen definition contract and rejects password material', () => {

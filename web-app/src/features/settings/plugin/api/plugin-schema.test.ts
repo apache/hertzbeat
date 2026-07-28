@@ -20,13 +20,8 @@ const plugin = {
 };
 
 describe('plugin schema', () => {
-  it('maps a coherent Spring page without retaining nested items', () => {
-    expect(
-      parsePluginPage(
-        { content: [plugin], totalElements: 1, totalPages: 1, number: 0, size: 8 },
-        { search: '', pageIndex: 0, pageSize: 8 }
-      )
-    ).toEqual({
+  it('maps the exact coherent Spring page without retaining nested items', () => {
+    expect(parsePluginPage(springPage([plugin], 1), { search: '', pageIndex: 0, pageSize: 8 })).toEqual({
       content: [
         {
           id: 11,
@@ -48,17 +43,19 @@ describe('plugin schema', () => {
   it.each([
     [
       {
-        content: [{ ...plugin, jarFilePath: '/secret/plugin.jar' }],
-        totalElements: 1,
-        totalPages: 1,
-        number: 0,
-        size: 8
+        ...springPage([{ ...plugin, jarFilePath: '/secret/plugin.jar' }], 1)
       }
     ],
-    [{ content: [{ ...plugin, id: 0 }], totalElements: 1, totalPages: 1, number: 0, size: 8 }],
-    [{ content: [plugin, plugin], totalElements: 2, totalPages: 1, number: 0, size: 8 }],
-    [{ content: [], totalElements: 1, totalPages: 1, number: 0, size: 8 }],
-    [{ content: [], totalElements: 0, totalPages: 0, number: 1, size: 8 }]
+    [
+      {
+        ...springPage([{ ...plugin, items: [{ id: 1, classIdentifier: 'safe', type: 'POST_ALERT', secret: 'x' }] }], 1)
+      }
+    ],
+    [{ ...springPage([{ ...plugin, id: 0 }], 1) }],
+    [{ ...springPage([plugin, plugin], 2) }],
+    [{ ...springPage([], 1) }],
+    [{ ...springPage([], 0), number: 1 }],
+    [{ ...springPage([plugin], 1), unexpected: 'private-page-field' }]
   ])('rejects unsafe or incoherent plugin page %#', value => {
     expect(() => parsePluginPage(value, { search: '', pageIndex: 0, pageSize: 8 })).toThrow(PluginContractError);
   });
@@ -67,3 +64,26 @@ describe('plugin schema', () => {
     expect(() => parsePluginWriteReceipt(true)).toThrow(PluginContractError);
   });
 });
+
+function springPage(content: unknown[], totalElements: number) {
+  return {
+    content,
+    pageable: {
+      pageNumber: 0,
+      pageSize: 8,
+      sort: { empty: true, sorted: false, unsorted: true },
+      offset: 0,
+      paged: true,
+      unpaged: false
+    },
+    last: true,
+    totalPages: totalElements === 0 ? 0 : 1,
+    totalElements,
+    size: 8,
+    number: 0,
+    sort: { empty: true, sorted: false, unsorted: true },
+    first: true,
+    numberOfElements: content.length,
+    empty: content.length === 0
+  };
+}

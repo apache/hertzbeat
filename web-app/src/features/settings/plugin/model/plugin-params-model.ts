@@ -99,6 +99,28 @@ export function buildPluginParamPayload(draft: PluginParamDraft) {
   return { pluginMetadataId: draft.pluginMetadataId, params };
 }
 
+/**
+ * A redacted backend read can prove ordinary values and KEEP/CLEAR password
+ * intent. It can never prove which plaintext was accepted for REPLACE.
+ */
+export function canProvePluginParamWrite(draft: PluginParamDraft) {
+  return buildPluginParamPayload(draft).params.every(param => !('intent' in param) || param.intent !== 'REPLACE');
+}
+
+export function pluginParamWriteConverged(draft: PluginParamDraft, params: readonly PluginParam[]) {
+  if (!canProvePluginParamWrite(draft)) return false;
+  const current = new Map(params.map(param => [param.field, param]));
+  return buildPluginParamPayload(draft).params.every(expected => {
+    const actual = current.get(expected.field);
+    if (!actual) return false;
+    if ('intent' in expected) return expected.intent === 'KEEP' ? actual.configured : !actual.configured;
+    const configured = expected.value.trim().length > 0;
+    return (
+      actual.configured === configured && (configured ? actual.value === expected.value : actual.value === undefined)
+    );
+  });
+}
+
 export function localizedPluginParamName(define: PluginParamDefine, locale: string) {
   const exact = Object.entries(define.name).find(([key]) => key.toLowerCase() === locale.toLowerCase())?.[1];
   return exact ?? define.name['en-US'] ?? Object.values(define.name)[0] ?? define.field;

@@ -19,7 +19,7 @@ import {
 } from '../model/plugin-model';
 import { pluginQueryKeys } from './plugin-query-keys';
 
-export function usePluginQuery() {
+export function usePluginQuery(enabled = true) {
   const [params, setParams] = useSearchParams();
   const source = params.toString();
   const query = useMemo(() => readPluginQuery(new URLSearchParams(source)), [source]);
@@ -32,7 +32,8 @@ export function usePluginQuery() {
   const result = useQuery({
     queryKey: pluginQueryKeys.page(query),
     queryFn: ({ signal }) => loadPlugins(query, signal),
-    retry: false
+    retry: false,
+    enabled
   });
 
   useLayoutEffect(() => {
@@ -53,7 +54,7 @@ export function usePluginQuery() {
   const setPage = (pageIndex: number, pageSize: PluginPageSize) =>
     navigate({ ...queryRef.current, pageIndex, pageSize });
   const setSearchDraft = (value: string) => setDraft({ query: query.search, value });
-  const setSelected = (ids: number[]) => setSelection({ query: canonical, ids });
+  const setSelected = useCallback((ids: number[]) => setSelection({ query: canonical, ids }), [canonical]);
 
   return {
     query,
