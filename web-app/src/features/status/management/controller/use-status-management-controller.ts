@@ -8,7 +8,6 @@ import { useExclusiveOperation } from '@/shared/exclusive-operation/use-exclusiv
 
 import { statusManagementFailureKind, type StatusManagementFailureKind } from '../api/status-management-api';
 import {
-  type StatusComponent,
   type StatusComponentRecord,
   type StatusIncidentPage,
   type StatusIncidentRecord,
@@ -26,13 +25,16 @@ import { useStatusIncidentEditor } from './use-status-incident-editor';
 import { useStatusIncidentQuery } from './use-status-incident-query';
 import { useStatusIncidentTransactions } from './use-status-incident-transactions';
 import { useStatusManagementNotifications } from './use-status-management-notifications';
+import { useStatusManagementActionCapabilities } from './use-status-management-action-capabilities';
+import { useStatusManagementActions } from './use-status-management-actions';
 import { useStatusManagementResources } from './use-status-management-resources';
 import { useStatusOrgSave } from './use-status-org-save';
 
 export function useStatusManagementController() {
+  const capabilities = useStatusManagementActionCapabilities();
   const command = useExclusiveOperation('status-management-command');
   const incidentQuery = useStatusIncidentQuery();
-  const resources = useStatusManagementResources(incidentQuery.query);
+  const resources = useStatusManagementResources(incidentQuery.query, capabilities.canRead);
   const notify = useStatusManagementNotifications();
   const componentEditor = useStatusComponentEditor(command);
   const incidentEditor = useStatusIncidentEditor(command);
@@ -50,11 +52,15 @@ export function useStatusManagementController() {
     resources.incidents.error,
     resources.incidents.data
   );
-  const editorCommands = createEditorCommands({
+  const actions = useStatusManagementActions({
+    capabilities,
     command,
     orgState,
     componentEditor,
-    incidentEditor
+    incidentEditor,
+    orgSave,
+    components,
+    incidents
   });
 
   return {
@@ -76,53 +82,10 @@ export function useStatusManagementController() {
     orgSaving: orgSave.saving,
     componentSaving: components.saving,
     incidentSaving: incidents.saving,
-    saveOrg: orgSave.save,
-    retryOrgWrite: orgSave.retryWrite,
     orgWriteRecovery: orgSave.writeRecovery,
-    ...editorCommands,
-    saveComponent: components.save,
-    retryComponentWrite: components.retryWrite,
-    deleteComponent: components.remove,
-    saveIncident: incidents.save,
-    retryIncidentWrite: incidents.retryWrite,
-    deleteIncident: incidents.remove,
+    ...actions,
     refreshComponents: components.refresh,
     refreshIncidents: incidents.refresh
-  };
-}
-
-function createEditorCommands(context: {
-  command: ReturnType<typeof useExclusiveOperation>;
-  orgState: StatusRecordState<StatusOrgRecord>;
-  componentEditor: ReturnType<typeof useStatusComponentEditor>;
-  incidentEditor: ReturnType<typeof useStatusIncidentEditor>;
-}) {
-  const { command, orgState, componentEditor, incidentEditor } = context;
-  return {
-    openNewComponent: () => {
-      if (command.isLocked() || orgState.kind !== 'ready') return;
-      componentEditor.openNew(orgState.record.id);
-    },
-    editComponent: (value: StatusComponent) => {
-      if (command.isLocked()) return;
-      componentEditor.edit(value);
-    },
-    closeComponent: () => {
-      if (command.isLocked()) return;
-      componentEditor.close();
-    },
-    openNewIncident: () => {
-      if (command.isLocked() || orgState.kind !== 'ready') return;
-      incidentEditor.openNew(orgState.record.id);
-    },
-    openIncident: (id: number) => {
-      if (command.isLocked()) return;
-      incidentEditor.edit(id);
-    },
-    closeIncident: () => {
-      if (command.isLocked()) return;
-      incidentEditor.close();
-    }
   };
 }
 
@@ -155,7 +118,8 @@ function resolveOrgState(
   if (pending) return { kind: 'loading' };
   if (error) {
     if (isStatusOrgNotFound(error)) return { kind: 'missing' };
-    return { kind: statusManagementFailureKind(error) === 'unavailable' ? 'unavailable' : 'error' };
+    const kind = statusManagementFailureKind(error);
+    return { kind: kind === 'unavailable' || kind === 'permission' ? kind : 'error' };
   }
   return record ? { kind: 'ready', record } : { kind: 'error' };
 }
@@ -183,6 +147,6 @@ function resolveIncidentState(
   return { kind: 'ready', records: page.content, total: page.totalElements };
 }
 
-function failureCollectionState(kind: StatusManagementFailureKind): { kind: 'unavailable' | 'error' } {
-  return { kind: kind === 'unavailable' ? 'unavailable' : 'error' };
+function failureCollectionState(kind: StatusManagementFailureKind): { kind: 'permission' | 'unavailable' | 'error' } {
+  return { kind: kind === 'unavailable' || kind === 'permission' ? kind : 'error' };
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export type StatusFailureKind = 'missing' | 'unavailable' | 'error';
+export type StatusFailureKind = 'missing' | 'permission' | 'unavailable' | 'error';
 export type StatusWriteOutcome = 'rejected' | 'uncertain';
 
 /** Stable domain evidence emitted by the Status API boundary. */

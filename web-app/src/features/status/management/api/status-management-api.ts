@@ -82,7 +82,7 @@ function get(path: string, signal?: AbortSignal) {
   return signal ? apiMessageGet(path, { signal }) : apiMessageGet(path);
 }
 
-export type StatusManagementFailureKind = 'missing' | 'unavailable' | 'error';
+export type StatusManagementFailureKind = 'missing' | 'permission' | 'unavailable' | 'error';
 
 export function statusManagementFailureKind(error: unknown): StatusManagementFailureKind {
   if (error instanceof StatusManagementMissingError) return 'missing';

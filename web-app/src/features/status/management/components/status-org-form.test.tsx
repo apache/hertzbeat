@@ -105,6 +105,7 @@ function renderOrgForm(
 ) {
   return render(
     <StatusOrgForm
+      canWrite
       org={patch.org}
       saving={patch.saving ?? false}
       commandLocked={patch.commandLocked ?? false}

@@ -44,9 +44,9 @@ const incidentStateKeys: Record<number, string> = {
   [statusIncidentState.resolved]: 'statusManagement.resolved'
 };
 
-export type StatusRecordState<T> = RemoteRecordState<T, 'missing' | 'unavailable' | 'error'>;
-export type StatusCollectionState<T> = RemoteCollectionState<T, 'unavailable' | 'error'>;
-export type StatusIncidentCollectionState<T> = RemotePageState<T, 'unavailable' | 'error'>;
+export type StatusRecordState<T> = RemoteRecordState<T, 'missing' | 'permission' | 'unavailable' | 'error'>;
+export type StatusCollectionState<T> = RemoteCollectionState<T, 'permission' | 'unavailable' | 'error'>;
+export type StatusIncidentCollectionState<T> = RemotePageState<T, 'permission' | 'unavailable' | 'error'>;
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 

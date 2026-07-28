@@ -37,6 +37,7 @@ const emptyOrg: StatusOrg = {
 
 interface StatusOrgFormProps {
   org: StatusOrg | undefined;
+  canWrite: boolean;
   saving: boolean;
   commandLocked: boolean;
   writeRecovery: 'proof' | 'commit-uncertain' | undefined;
@@ -44,13 +45,30 @@ interface StatusOrgFormProps {
   onSubmit: (org: StatusOrg) => Promise<StatusOrgRecord>;
 }
 
-export function StatusOrgForm({ org, saving, commandLocked, writeRecovery, onRetry, onSubmit }: StatusOrgFormProps) {
-  const controller = useStatusOrgFormController({ org, saving, commandLocked, writeRecovery, onRetry, onSubmit });
+export function StatusOrgForm({
+  org,
+  canWrite,
+  saving,
+  commandLocked,
+  writeRecovery,
+  onRetry,
+  onSubmit
+}: StatusOrgFormProps) {
+  const controller = useStatusOrgFormController({
+    org,
+    canWrite,
+    saving,
+    commandLocked,
+    writeRecovery,
+    onRetry,
+    onSubmit
+  });
   return (
     <Form form={controller.form} layout="vertical" onFinish={controller.save}>
       {writeRecovery && <StatusWriteRecoveryAlert />}
       <StatusOrgFields disabled={controller.fieldsDisabled} />
       <StatusOrgActions
+        canWrite={canWrite}
         editing={controller.editing}
         saving={saving}
         locked={controller.locked}
@@ -66,13 +84,14 @@ export function StatusOrgForm({ org, saving, commandLocked, writeRecovery, onRet
 
 function useStatusOrgFormController({
   org,
+  canWrite,
   saving,
   commandLocked,
   writeRecovery,
   onRetry,
   onSubmit
 }: StatusOrgFormProps) {
-  const [editing, setEditing] = useState(!org);
+  const [editing, setEditing] = useState(canWrite && !org);
   const [form] = Form.useForm<StatusOrg>();
   const submitOperation = useExclusiveOperation('status-org-form-submit');
   const initialized = useRef(false);
@@ -85,9 +104,8 @@ function useStatusOrgFormController({
       initialized.current = true;
     }
   }, [editing, form, org]);
-
   const save = async (value: StatusOrg) => {
-    if (saving || commandLocked) return;
+    if (!canWrite || saving || commandLocked) return;
     const owner = submitOperation.begin();
     if (!owner) return;
     try {
@@ -108,7 +126,7 @@ function useStatusOrgFormController({
   };
 
   const edit = () => {
-    if (commandLocked || submitOperation.isLocked()) return;
+    if (!canWrite || commandLocked || submitOperation.isLocked()) return;
     form.setFieldsValue(org ?? emptyOrg);
     previousOrg.current = org;
     setEditing(true);
@@ -122,7 +140,8 @@ function useStatusOrgFormController({
     retry: () => void retryStatusOrgForm(writeRecovery, onRetry, setEditing),
     editing: editing || Boolean(writeRecovery),
     locked: saving || commandLocked || submitOperation.pending,
-    fieldsDisabled: !editing || saving || commandLocked || submitOperation.pending || Boolean(writeRecovery)
+    fieldsDisabled:
+      !canWrite || !editing || saving || commandLocked || submitOperation.pending || Boolean(writeRecovery)
   };
 }
 

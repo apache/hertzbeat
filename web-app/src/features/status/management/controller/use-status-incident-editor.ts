@@ -71,8 +71,13 @@ export function useStatusIncidentEditor(command: ExclusiveOperation, reportLoadF
     invalidate();
     setView(current => ({ ...current, loading: false, error: undefined }));
   }, [invalidate]);
+  const retire = useCallback(() => {
+    invalidate();
+    epoch.current += 1;
+    setView({ loading: false });
+  }, [invalidate]);
   useEffect(() => invalidate, [invalidate]);
-  return { ...view, edit, openNew, close, complete, retireDetail, currentEpoch: () => epoch.current };
+  return { ...view, edit, openNew, close, complete, retire, retireDetail, currentEpoch: () => epoch.current };
 }
 
 async function loadDetail(request: DetailRequest) {

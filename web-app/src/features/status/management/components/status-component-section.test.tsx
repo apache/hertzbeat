@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-import { StatusComponentSection } from './status-management-sections';
+import { StatusComponentSection } from './status-component-section';
 
 describe('Status management recovery controls', () => {
   afterEach(cleanup);
@@ -14,6 +14,9 @@ describe('Status management recovery controls', () => {
     const onRefresh = vi.fn().mockResolvedValue(true);
     render(
       <StatusComponentSection
+        canCreate
+        canUpdate
+        canDelete
         orgId={1}
         state={{ kind: 'error' }}
         commandLocked
@@ -37,6 +40,9 @@ describe('Status management recovery controls', () => {
   it('disables the delete proof Retry while its retained receipt is being checked', () => {
     render(
       <StatusComponentSection
+        canCreate
+        canUpdate
+        canDelete
         orgId={1}
         state={{ kind: 'error' }}
         commandLocked

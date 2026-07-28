@@ -17,11 +17,10 @@
 
 import { StatusManagementEditors } from '../components/status-management-editors';
 import { StatusManagementHeader } from '../components/status-management-header';
-import {
-  StatusComponentSection,
-  StatusIncidentSection,
-  StatusOrgSection
-} from '../components/status-management-sections';
+import { StatusWriteRecoveryAlert } from '../components/status-write-recovery-alert';
+import { StatusComponentSection } from '../components/status-component-section';
+import { StatusIncidentSection } from '../components/status-incident-section';
+import { StatusOrgSection } from '../components/status-org-section';
 import { publicStatusPath } from '@/features/status/shared/status-constants';
 import styles from '../components/status-management.module.css';
 import { useStatusManagementController } from '../controller/use-status-management-controller';
@@ -37,6 +36,8 @@ export function StatusManagementPage() {
     <div className={styles.page}>
       <StatusManagementHeader publicStatusHref={publicStatusPath} />
       <StatusOrgSection
+        canCreate={controller.capabilities.canCreate}
+        canUpdate={controller.capabilities.canUpdate}
         state={controller.org}
         saving={controller.orgSaving}
         commandLocked={controller.commandLocked}
@@ -45,6 +46,9 @@ export function StatusManagementPage() {
         onSave={controller.saveOrg}
       />
       <StatusComponentSection
+        canCreate={controller.capabilities.canCreate}
+        canUpdate={controller.capabilities.canUpdate}
+        canDelete={controller.capabilities.canDelete}
         orgId={statusOrg?.id}
         state={controller.components}
         commandLocked={controller.commandLocked}
@@ -56,6 +60,9 @@ export function StatusManagementPage() {
         onDelete={controller.deleteComponent}
       />
       <StatusIncidentSection
+        canCreate={controller.capabilities.canCreate}
+        canUpdate={controller.capabilities.canUpdate}
+        canDelete={controller.capabilities.canDelete}
         orgId={statusOrg?.id}
         componentCount={statusComponents.length}
         draftSearch={controller.incidentQuery.draftSearch}
@@ -91,21 +98,25 @@ function StatusEditorLayer({
   components: Parameters<typeof StatusManagementEditors>[0]['components'];
 }) {
   return (
-    <StatusManagementEditors
-      component={controller.componentEditor}
-      incident={controller.incidentEditor}
-      components={components}
-      commandLocked={controller.commandLocked}
-      componentWriteRecovery={controller.componentWriteRecovery}
-      incidentWriteRecovery={controller.incidentWriteRecovery}
-      componentSaving={controller.componentSaving}
-      incidentSaving={controller.incidentSaving}
-      onCloseComponent={controller.closeComponent}
-      onCloseIncident={controller.closeIncident}
-      onRetryComponentWrite={controller.retryComponentWrite}
-      onRetryIncidentWrite={controller.retryIncidentWrite}
-      onSaveComponent={controller.saveComponent}
-      onSaveIncident={controller.saveIncident}
-    />
+    <>
+      {!controller.componentEditor && controller.componentWriteRecovery && <StatusWriteRecoveryAlert />}
+      {!controller.incidentEditor && controller.incidentWriteRecovery && <StatusWriteRecoveryAlert />}
+      <StatusManagementEditors
+        component={controller.componentEditor}
+        incident={controller.incidentEditor}
+        components={components}
+        commandLocked={controller.commandLocked}
+        componentWriteRecovery={controller.componentWriteRecovery}
+        incidentWriteRecovery={controller.incidentWriteRecovery}
+        componentSaving={controller.componentSaving}
+        incidentSaving={controller.incidentSaving}
+        onCloseComponent={controller.closeComponent}
+        onCloseIncident={controller.closeIncident}
+        onRetryComponentWrite={controller.retryComponentWrite}
+        onRetryIncidentWrite={controller.retryIncidentWrite}
+        onSaveComponent={controller.saveComponent}
+        onSaveIncident={controller.saveIncident}
+      />
+    </>
   );
 }

@@ -61,5 +61,8 @@ function readFailureKind(error: ApiMessageError) {
   if (error.status === 404 || (error.status === 200 && error.code === statusOrgNotFoundCode)) {
     return 'missing' as const;
   }
+  if (error.status === 401 || error.status === 403) {
+    return 'permission' as const;
+  }
   return 'error' as const;
 }

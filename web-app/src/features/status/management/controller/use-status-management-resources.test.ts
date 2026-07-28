@@ -8,6 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type QueryOptions = {
+  enabled: boolean;
   queryFn: (context: { signal: AbortSignal }) => unknown;
 };
 
@@ -29,7 +30,7 @@ describe('useStatusManagementResources', () => {
 
   it('passes TanStack cancellation signals through every initial read', async () => {
     const query = { search: '', pageIndex: 0, pageSize: 8 };
-    useStatusManagementResources(query);
+    useStatusManagementResources(query, true);
     const controller = new AbortController();
 
     await Promise.all(
@@ -39,5 +40,11 @@ describe('useStatusManagementResources', () => {
     expect(api.loadStatusOrg).toHaveBeenCalledWith(controller.signal);
     expect(api.loadStatusComponents).toHaveBeenCalledWith(controller.signal);
     expect(api.loadStatusIncidents).toHaveBeenCalledWith(query, controller.signal);
+  });
+
+  it('keeps every status read disabled until the session has an admitted role', () => {
+    useStatusManagementResources({ search: '', pageIndex: 0, pageSize: 8 }, false);
+
+    expect(reactQuery.useQuery.mock.calls.map(([options]) => options.enabled)).toEqual([false, false, false]);
   });
 });

@@ -40,9 +40,13 @@ const api = vi.hoisted(() => ({
   saveStatusIncident: vi.fn(),
   saveStatusOrg: vi.fn()
 }));
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/status-management-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/status-management-api')>()),
   ...api
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
 }));
 
 import { StatusManagementPage } from './status-management-page';
@@ -58,6 +62,7 @@ describe('StatusManagementPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    access.roles = ['ADMIN'];
     api.loadStatusOrg.mockResolvedValue(org);
     api.loadStatusComponents.mockResolvedValue([]);
     api.loadStatusIncidents.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
@@ -68,6 +73,34 @@ describe('StatusManagementPage', () => {
     api.deleteStatusIncident.mockResolvedValue(undefined);
     api.loadStatusComponent.mockResolvedValue(statusComponent);
   });
+
+  it.each([
+    ['GUEST', false, false],
+    ['USER', true, false],
+    ['ADMIN', true, true]
+  ] as const)(
+    'renders exact %s write and delete admission without affecting reads',
+    async (role, canWrite, canDelete) => {
+      access.roles = [role];
+      api.loadStatusComponents.mockResolvedValue([statusComponent]);
+      api.loadStatusIncidents.mockResolvedValue({
+        content: [incidentSummary],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      });
+      renderPage();
+
+      expect((await screen.findAllByText('API')).length).toBeGreaterThan(0);
+      expect(screen.getByText('Outage')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'New component' }) !== null).toBe(canWrite);
+      expect(screen.queryByRole('button', { name: 'New incident' }) !== null).toBe(canWrite);
+      expect(screen.queryAllByRole('button', { name: 'Edit' }).length > 0).toBe(canWrite);
+      expect(screen.queryAllByRole('button', { name: 'Update' }).length > 0).toBe(canWrite);
+      expect(screen.queryAllByRole('button', { name: 'Delete' }).length > 0).toBe(canDelete);
+    }
+  );
 
   afterEach(() => cleanup());
 

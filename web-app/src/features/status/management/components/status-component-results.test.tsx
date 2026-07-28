@@ -12,7 +12,7 @@ import type { StatusComponent } from '../model/status-management-contract';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-import { ComponentResults } from './status-management-results';
+import { ComponentResults } from './status-component-results';
 
 const component: StatusComponent = {
   id: 4,
@@ -30,6 +30,8 @@ describe('Status management results', () => {
     const onDelete = vi.fn();
     const view = render(
       <ComponentResults
+        canUpdate
+        canDelete
         state={{ kind: 'ready', records: [component] }}
         commandLocked={false}
         onEdit={vi.fn()}
@@ -42,6 +44,8 @@ describe('Status management results', () => {
 
     view.rerender(
       <ComponentResults
+        canUpdate
+        canDelete
         state={{ kind: 'ready', records: [component] }}
         commandLocked
         onEdit={vi.fn()}

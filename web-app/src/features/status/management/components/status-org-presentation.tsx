@@ -23,6 +23,7 @@ interface StatusOrgFieldsProps {
 }
 
 interface StatusOrgActionsProps {
+  canWrite: boolean;
   editing: boolean;
   saving: boolean;
   locked: boolean;
@@ -61,6 +62,7 @@ export function StatusOrgFields({ disabled }: StatusOrgFieldsProps) {
 }
 
 export function StatusOrgActions({
+  canWrite,
   editing,
   saving,
   locked,
@@ -71,6 +73,7 @@ export function StatusOrgActions({
   onRetry
 }: StatusOrgActionsProps) {
   const { t } = useTranslation();
+  if (!canWrite) return null;
 
   return (
     <Space>

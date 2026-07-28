@@ -43,6 +43,8 @@ describe('Status API failure boundary', () => {
   });
 
   it.each([
+    ['permission', new ApiMessageError('Forbidden', { status: 403 }), 'permission', 'rejected'],
+    ['authentication', new ApiMessageError('Unauthorized', { status: 401 }), 'permission', 'rejected'],
     ['missing', new ApiMessageError('Missing', { status: 404 }), 'missing', 'rejected'],
     ['unavailable', new ApiMessageError('Unavailable', { status: 503 }), 'unavailable', 'uncertain'],
     ['business envelope', new ApiMessageError('Rejected', { code: 12, status: 200 }), 'error', 'uncertain'],

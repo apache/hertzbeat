@@ -36,6 +36,10 @@ export function useStatusComponentEditor(command: ExclusiveOperation) {
   const complete = (expectedEpoch: number) => {
     if (epoch.current === expectedEpoch) setComponent(undefined);
   };
+  const retire = () => {
+    epoch.current += 1;
+    setComponent(undefined);
+  };
 
-  return { component, openNew, edit, close, complete, currentEpoch: () => epoch.current };
+  return { component, openNew, edit, close, complete, retire, currentEpoch: () => epoch.current };
 }

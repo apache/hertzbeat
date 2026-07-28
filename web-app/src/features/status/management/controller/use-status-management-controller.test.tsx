@@ -32,6 +32,7 @@ const api = vi.hoisted(() => ({
   saveStatusOrg: vi.fn()
 }));
 const notification = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 
 vi.mock('../api/status-management-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/status-management-api')>()),
@@ -39,6 +40,9 @@ vi.mock('../api/status-management-api', async importOriginal => ({
 }));
 vi.mock('antd', () => ({ App: { useApp: () => ({ message: notification }) } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
+}));
 
 import { useStatusManagementController } from './use-status-management-controller';
 
@@ -70,6 +74,7 @@ const incident: StatusIncident = {
 describe('useStatusManagementController', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    access.roles = ['ADMIN'];
     api.loadStatusOrg.mockResolvedValue(org);
     api.loadStatusComponents.mockResolvedValue([component]);
     api.loadStatusIncidents.mockResolvedValue(incidentPage([incident], 1));
@@ -80,6 +85,80 @@ describe('useStatusManagementController', () => {
     api.saveStatusIncident.mockResolvedValue(undefined);
     api.deleteStatusComponent.mockResolvedValue(undefined);
     api.deleteStatusIncident.mockResolvedValue(undefined);
+  });
+
+  it('keeps GUEST reads active but rejects every create, update, incident-write, and delete admission', async () => {
+    access.roles = ['GUEST'];
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.components.kind).toBe('ready'));
+
+    act(() => {
+      result.current.openNewComponent();
+      result.current.editComponent(component);
+      result.current.openNewIncident();
+      result.current.openIncident(incident.id!);
+      result.current.saveComponent(component);
+      result.current.saveIncident(incident);
+      result.current.deleteComponent(component.id!);
+      result.current.deleteIncident(incident.id!);
+    });
+    await expect(result.current.saveOrg(org)).rejects.toMatchObject({ kind: 'permission', writeOutcome: 'rejected' });
+
+    expect(result.current.capabilities).toEqual({
+      canRead: true,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false
+    });
+    expect(result.current.componentEditor).toBeUndefined();
+    expect(result.current.incidentEditor).toBeUndefined();
+    expect(api.saveStatusOrg).not.toHaveBeenCalled();
+    expect(api.saveStatusComponent).not.toHaveBeenCalled();
+    expect(api.saveStatusIncident).not.toHaveBeenCalled();
+    expect(api.deleteStatusComponent).not.toHaveBeenCalled();
+    expect(api.deleteStatusIncident).not.toHaveBeenCalled();
+    expect(api.loadStatusOrg).toHaveBeenCalled();
+    expect(api.loadStatusComponents).toHaveBeenCalled();
+    expect(api.loadStatusIncidents).toHaveBeenCalled();
+  });
+
+  it('retires USER editors on role loss and keeps an ambiguous write honest without admitting retry', async () => {
+    access.roles = ['USER'];
+    const write = deferred<void>();
+    api.saveStatusComponent.mockReturnValueOnce(write.promise);
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.components.kind).toBe('ready'));
+    act(() => view.result.current.editComponent(component));
+    act(() => view.result.current.saveComponent({ ...component, name: 'Role-loss update' }));
+    await waitFor(() => expect(api.saveStatusComponent).toHaveBeenCalledOnce());
+
+    access.roles = ['GUEST'];
+    view.rerender();
+    act(() => write.reject(unavailableRequestFailure()));
+    await waitFor(() => expect(view.result.current.componentWriteRecovery).toBe('proof'));
+    await waitFor(() => expect(view.result.current.componentEditor).toBeUndefined());
+
+    api.loadStatusComponent.mockClear();
+    act(() => view.result.current.retryComponentWrite());
+    expect(api.loadStatusComponent).not.toHaveBeenCalled();
+    expect(view.result.current.componentWriteRecovery).toBe('proof');
+  });
+
+  it('allows USER writes but rejects administrator-only deletes before transport', async () => {
+    access.roles = ['USER'];
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.components.kind).toBe('ready'));
+
+    act(() => {
+      result.current.editComponent(component);
+      result.current.deleteComponent(component.id!);
+      result.current.deleteIncident(incident.id!);
+    });
+    act(() => result.current.saveComponent({ ...component, name: 'User update' }));
+
+    await waitFor(() => expect(api.saveStatusComponent).toHaveBeenCalledOnce());
+    expect(api.deleteStatusComponent).not.toHaveBeenCalled();
+    expect(api.deleteStatusIncident).not.toHaveBeenCalled();
   });
 
   it('accepts a matching canonical organization returned by POST and clears saving', async () => {
