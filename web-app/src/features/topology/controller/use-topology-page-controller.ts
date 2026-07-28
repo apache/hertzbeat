@@ -116,7 +116,11 @@ function resolveTopologyRequest(
 }
 
 function topologySemanticScope(routeQuery: TopologyQuery, effectiveWindow: ExactTimeWindow | undefined) {
-  const routeScope = writeTopologyQuery(routeQuery).toString();
+  const routeScopeParams = writeTopologyQuery(routeQuery);
+  // Edge pages replace one render window inside the same operator graph scope.
+  routeScopeParams.delete('pageIndex');
+  routeScopeParams.delete('pageSize');
+  const routeScope = routeScopeParams.toString();
   const inheritedDuration =
     routeQuery.window || !effectiveWindow ? 'none' : String(effectiveWindow.to - effectiveWindow.from);
   return `${routeScope}|inheritedDuration=${inheritedDuration}`;

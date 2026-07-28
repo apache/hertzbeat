@@ -58,6 +58,26 @@ describe('topology page controller refresh and interaction', () => {
     act(() => second.resolve(topologyGraph(['2'])));
     await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
   });
+
+  it('keeps the canvas and a still-visible selection while the next edge page resolves', async () => {
+    const secondPage = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockImplementation(query =>
+      query.pageIndex === 1 ? secondPage.promise : Promise.resolve(topologyGraph(['1', '2']))
+    );
+    const view = renderController('/topology?pageIndex=0&pageSize=25');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+
+    act(() => view.current().actions.changePage(1, 25));
+
+    await waitFor(() => expect(view.router.state.location.search).toContain('pageIndex=1'));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.refreshing).toBe(true);
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    act(() => secondPage.resolve(topologyGraph(['2', '3'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+  });
 });
 
 describe('topology page refresh revision and failure', () => {
