@@ -16,7 +16,8 @@
  */
 
 /** Failures shared by read-only backend resources. */
-type RemoteFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
+export type RemoteFailureKind = 'missing' | 'invalid' | 'permission' | 'unavailable' | 'error';
+type DefaultRemoteFailureKind = Exclude<RemoteFailureKind, 'permission'>;
 
 type LoadingState = { kind: 'loading' };
 type EmptyState = { kind: 'empty' };
@@ -26,29 +27,29 @@ type FailureState<Failure extends RemoteFailureKind> = Failure extends RemoteFai
 type ReadyState<Payload extends object> = { kind: 'ready' } & Payload;
 
 /** A remote read whose ready branch keeps a feature-specific payload name. */
-export type RemotePayloadState<Payload extends object, Failure extends RemoteFailureKind = RemoteFailureKind> =
+export type RemotePayloadState<Payload extends object, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> =
   LoadingState | FailureState<Failure> | ReadyState<Payload>;
 
 /** A single remote value. Successful data exists only in the ready branch. */
-type RemoteValueState<Data, Failure extends RemoteFailureKind = RemoteFailureKind> = RemotePayloadState<
+type RemoteValueState<Data, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> = RemotePayloadState<
   { data: Data },
   Failure
 >;
 
 /** A value that is not requested until the user selects its parent resource. */
-export type OptionalRemoteValueState<Data, Failure extends RemoteFailureKind = RemoteFailureKind> =
+export type OptionalRemoteValueState<Data, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> =
   IdleState | EmptyState | RemoteValueState<Data, Failure>;
 
 /** A non-paginated collection with an explicit empty state. */
-export type RemoteCollectionState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> =
+export type RemoteCollectionState<Item, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> =
   EmptyState | RemotePayloadState<{ records: Item[] }, Failure>;
 
 /** A backend page whose total is meaningful only after a successful read. */
-export type RemotePageState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> =
+export type RemotePageState<Item, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> =
   EmptyState | RemotePayloadState<{ records: Item[]; total: number }, Failure>;
 
 /** A named record payload for features that do not use the generic data field. */
-export type RemoteRecordState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> = RemotePayloadState<
+export type RemoteRecordState<Item, Failure extends RemoteFailureKind = DefaultRemoteFailureKind> = RemotePayloadState<
   { record: Item },
   Failure
 >;

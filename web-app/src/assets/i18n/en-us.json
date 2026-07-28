@@ -2294,7 +2294,7 @@
     "updated": "Updated",
     "delete": "Delete",
     "confirmDelete": "Confirm delete",
-    "deleteConfirm": "Delete this alert group and its alert records?",
+    "deleteConfirm": "Delete alert group {{target}} and its alert records?",
     "deleteSuccess": "Alert group deleted.",
     "deleteFailed": "The alert group could not be deleted or verified.",
     "selected": "{{count}} selected",

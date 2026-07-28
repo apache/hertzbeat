@@ -151,6 +151,33 @@ describe('alert center operation command', () => {
     expect(success).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a server permission rejection distinct and does not retain recovery', async () => {
+    operations.updateAlertGroupStatus.mockRejectedValueOnce(new AlertRequestFailure('permission', 'rejected'));
+    const hook = renderOperation();
+
+    await act(async () => hook.result.current.updateStatus([7], 'acknowledged'));
+
+    expect(failure).toHaveBeenCalledWith(
+      'permission',
+      expect.objectContaining({ kind: 'status', ids: [7], status: 'acknowledged' })
+    );
+    expect(hook.result.current.recovery).toBeNull();
+  });
+
+  it('retires proof recovery as a read-only unlock without replaying the write', async () => {
+    operations.updateAlertGroupStatus.mockRejectedValueOnce(new AlertRequestFailure('unavailable', 'uncertain'));
+    const hook = renderOperation();
+    await act(async () => hook.result.current.updateStatus([7], 'resolved'));
+    expect(hook.result.current.recovery).toMatchObject({ phase: 'proof' });
+
+    act(() => hook.result.current.retireRecovery());
+
+    expect(hook.result.current).toMatchObject({ command: 'idle', recovery: null });
+    expect(operations.updateAlertGroupStatus).toHaveBeenCalledOnce();
+    expect(operations.proveAlertGroupsStatus).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
+  });
+
   function renderOperation() {
     return renderHook(() => useAlertCenterOperation({ reread, success, failure }));
   }

@@ -75,17 +75,25 @@ export function updateAlertGroupStatus(ids: number[], status: AlertGroupTargetSt
 export function openAlertGroupStream(handlers: {
   onOpen: () => void;
   onAlert: (event: AlertEventSignal | null) => void;
+  onMutation: () => void;
   onRetrying: () => void;
   onUnavailable: () => void;
 }) {
   return openBrowserEventStream('/api/alert/sse/subscribe', {
-    eventNames: ['ALERT_EVENT'],
+    eventNames: ['ALERT_EVENT', 'ALERT_GROUP_MUTATION'],
     onOpen: handlers.onOpen,
     onRetrying: handlers.onRetrying,
     onUnavailable: handlers.onUnavailable,
     // Raw alert bodies stay at the transport boundary. Only id and status may
     // drive an in-memory notification; canonical APIs still own rendered data.
-    onEvent: (_name, data) => handlers.onAlert(parseAlertEventSignal(data))
+    onEvent: (name, data) => {
+      if (name === 'ALERT_GROUP_MUTATION') {
+        // Sparse mutation events are invalidation signals, never notification payloads.
+        handlers.onMutation();
+        return;
+      }
+      handlers.onAlert(parseAlertEventSignal(data));
+    }
   });
 }
 

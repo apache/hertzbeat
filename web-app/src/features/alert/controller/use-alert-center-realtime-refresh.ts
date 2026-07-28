@@ -12,6 +12,9 @@ import type { AlertEventSignal } from '../api/alert-event-schema';
 
 const alertRefreshCoalesceMs = 250;
 const alertFallbackPollingMs = 30_000;
+// Rebuild the stream at low frequency after its bounded retry budget is exhausted,
+// so a transient outage cannot strand the shell in permanent polling.
+const alertStreamCircuitBreakerMs = 5 * 60_000;
 
 export function useAlertCenterRealtimeRefresh(
   refresh: () => Promise<unknown>,
@@ -23,6 +26,9 @@ export function useAlertCenterRealtimeRefresh(
     let trailing = false;
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
     let fallbackTimer: ReturnType<typeof setInterval> | undefined;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let stream: { close: () => void } | undefined;
+    let streamGeneration = 0;
 
     const scheduleRefresh = () => {
       if (closed) return;
@@ -60,36 +66,67 @@ export function useAlertCenterRealtimeRefresh(
       scheduleRefresh();
       if (!fallbackTimer) fallbackTimer = setInterval(scheduleRefresh, alertFallbackPollingMs);
     };
+    const stopReconnect = () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = undefined;
+    };
+    const scheduleReconnect = () => {
+      if (closed || reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = undefined;
+        connectStream();
+      }, alertStreamCircuitBreakerMs);
+    };
+    const connectStream = () => {
+      if (closed) return;
+      stopReconnect();
+      stream?.close();
+      stream = undefined;
+      const generation = ++streamGeneration;
+      const ownsConnection = () => !closed && generation === streamGeneration;
+      try {
+        stream = openAlertGroupStream({
+          onOpen: () => {
+            if (!ownsConnection()) return;
+            scheduleRefresh();
+            stopFallback();
+            stopReconnect();
+          },
+          onAlert: event => {
+            if (!ownsConnection()) return;
+            onAlert?.(event);
+            scheduleRefresh();
+          },
+          onMutation: () => {
+            if (!ownsConnection()) return;
+            scheduleRefresh();
+          },
+          onRetrying: () => undefined,
+          onUnavailable: () => {
+            if (!ownsConnection()) return;
+            streamGeneration += 1;
+            const exhausted = stream;
+            stream = undefined;
+            exhausted?.close();
+            startFallback();
+            scheduleReconnect();
+          }
+        });
+      } catch {
+        if (!ownsConnection()) return;
+        startFallback();
+        scheduleReconnect();
+      }
+    };
 
-    const stream = connectAlertStream(stopFallback, startFallback, scheduleRefresh, onAlert);
+    connectStream();
 
     return () => {
       closed = true;
       if (refreshTimer) clearTimeout(refreshTimer);
       stopFallback();
+      stopReconnect();
       stream?.close();
     };
   }, [onAlert, refresh]);
-}
-
-function connectAlertStream(
-  stopFallback: () => void,
-  startFallback: () => void,
-  scheduleRefresh: () => void,
-  onAlert?: (event: AlertEventSignal | null) => void
-) {
-  try {
-    return openAlertGroupStream({
-      onOpen: stopFallback,
-      onAlert: event => {
-        onAlert?.(event);
-        scheduleRefresh();
-      },
-      onRetrying: () => undefined,
-      onUnavailable: startFallback
-    });
-  } catch {
-    startFallback();
-    return undefined;
-  }
 }

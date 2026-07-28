@@ -190,13 +190,14 @@ describe('alert API', () => {
     const handlers = {
       onOpen: vi.fn(),
       onAlert: vi.fn(),
+      onMutation: vi.fn(),
       onRetrying: vi.fn(),
       onUnavailable: vi.fn()
     };
 
     openAlertGroupStream(handlers);
     expect(openBrowserEventStream).toHaveBeenCalledWith('/api/alert/sse/subscribe', {
-      eventNames: ['ALERT_EVENT'],
+      eventNames: ['ALERT_EVENT', 'ALERT_GROUP_MUTATION'],
       onOpen: handlers.onOpen,
       onRetrying: handlers.onRetrying,
       onUnavailable: handlers.onUnavailable,
@@ -214,5 +215,9 @@ describe('alert API', () => {
 
     transport?.onEvent('ALERT_EVENT', 'private malformed body');
     expect(handlers.onAlert).toHaveBeenLastCalledWith(null);
+
+    transport?.onEvent('ALERT_GROUP_MUTATION', JSON.stringify({ groupId: 7, operation: 'status' }));
+    expect(handlers.onMutation).toHaveBeenCalledOnce();
+    expect(handlers.onAlert).toHaveBeenCalledTimes(2);
   });
 });

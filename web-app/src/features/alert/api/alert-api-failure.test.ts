@@ -25,6 +25,8 @@ describe('Alert Center API failure boundary', () => {
     ['service unavailable', new ApiMessageError('offline', { status: 503 }), 'unavailable'],
     ['gateway timeout', new ApiMessageError('offline', { status: 504 }), 'unavailable'],
     ['other server failure', new ApiMessageError('failed', { status: 500 }), 'error'],
+    ['unauthorized', new ApiMessageError('failed', { status: 401 }), 'permission'],
+    ['forbidden', new ApiMessageError('failed', { status: 403 }), 'permission'],
     ['client rejection', new ApiMessageError('failed', { status: 400 }), 'error']
   ] as const)('maps %s to the stable %s domain kind', (_label, error, kind) => {
     expect(normalizeAlertApiFailure(error)).toMatchObject({ kind });

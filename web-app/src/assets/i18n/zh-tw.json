@@ -2131,7 +2131,7 @@
     "updated": "更新時間",
     "delete": "刪除",
     "confirmDelete": "確認刪除",
-    "deleteConfirm": "刪除此告警群組及其告警記錄？",
+    "deleteConfirm": "刪除告警群組 {{target}} 及其告警記錄？",
     "deleteSuccess": "告警群組已刪除。",
     "deleteFailed": "無法刪除或驗證此告警群組。",
     "selected": "已選取 {{count}} 項",

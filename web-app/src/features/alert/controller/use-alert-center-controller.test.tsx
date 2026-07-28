@@ -177,6 +177,15 @@ describe('Alert Center controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe('unavailable'));
   });
 
+  it('keeps server read permission rejection distinct for list and summary', async () => {
+    api.loadAlertSummary.mockRejectedValue(new AlertRequestFailure('permission', 'rejected'));
+    api.loadAlertGroups.mockRejectedValue(new AlertRequestFailure('permission', 'rejected'));
+    const { result } = renderController();
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('permission'));
+    expect(result.current.state.summary.kind).toBe('permission');
+  });
+
   it('does not let a late query A response replace query B', async () => {
     const a = deferred<AlertPage>();
     api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
@@ -233,8 +242,20 @@ describe('Alert Center controller', () => {
   });
 
   it('projects a proven group deletion before reporting success', async () => {
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve(
+        api.deleteAlertGroups.mock.calls.length
+          ? page(query)
+          : {
+              ...page(query),
+              content: [alertGroup(7, 'firing')],
+              totalElements: 1,
+              totalPages: 1
+            }
+      )
+    );
     const { result } = renderController();
-    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
 
     await act(async () => result.current.remove({ id: 7 }));
 
@@ -305,6 +326,41 @@ describe('Alert Center controller', () => {
     expect(api.notification).toHaveBeenLastCalledWith({
       type: 'success',
       message: 'alert.unacknowledgeSuccess'
+    });
+  });
+
+  it('advances one selected group from firing through acknowledged to resolved', async () => {
+    let status: 'firing' | 'acknowledged' | 'resolved' = 'firing';
+    api.updateAlertGroupStatus.mockImplementation((_ids: number[], target: 'firing' | 'acknowledged' | 'resolved') => {
+      status = target;
+      return Promise.resolve();
+    });
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve({
+        ...page(query),
+        content: [alertGroup(7, status)],
+        totalElements: 1,
+        totalPages: 1
+      })
+    );
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+    act(() => result.current.selectIds([7]));
+
+    await act(async () => result.current.acknowledgeSelected());
+    await waitFor(() =>
+      expect(result.current.state.list).toMatchObject({
+        kind: 'ready',
+        records: [expect.objectContaining({ id: 7, status: 'acknowledged' })]
+      })
+    );
+    act(() => result.current.selectIds([7]));
+    await act(async () => result.current.resolveSelected());
+
+    expect(api.updateAlertGroupStatus.mock.calls.map(call => call[1])).toEqual(['acknowledged', 'resolved']);
+    expect(result.current.state.list).toMatchObject({
+      kind: 'ready',
+      records: [expect.objectContaining({ id: 7, status: 'resolved' })]
     });
   });
 });

@@ -17,7 +17,7 @@
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
-import type { AlertGroup, AlertQuery, AlertSummary } from './alert-model';
+import type { AlertFailureKind, AlertGroup, AlertQuery, AlertSummary } from './alert-model';
 import type { AlertCapabilities } from './alert-capability-model';
 import type { AlertCenterOperationCommand, AlertCenterOperationRecovery } from './alert-center-operation-state';
 
@@ -25,9 +25,9 @@ export type AlertFilterDraft = Pick<AlertQuery, 'search' | 'serviceName' | 'serv
 
 export type AlertDraftField = keyof AlertFilterDraft;
 
-export type AlertListState = RemotePageState<AlertGroup, 'unavailable' | 'error'>;
+export type AlertListState = RemotePageState<AlertGroup, AlertFailureKind>;
 
-export type AlertSummaryState = RemotePayloadState<{ summary: AlertSummary }, 'unavailable' | 'error'>;
+export type AlertSummaryState = RemotePayloadState<{ summary: AlertSummary }, AlertFailureKind>;
 
 export type AlertCenterState = {
   capabilities: AlertCapabilities;

@@ -2154,7 +2154,7 @@
     "updated": "Atualizado",
     "delete": "Excluir",
     "confirmDelete": "Confirmar exclusão",
-    "deleteConfirm": "Excluir este grupo de alertas e seus registros?",
+    "deleteConfirm": "Excluir o grupo de alertas {{target}} e seus registros?",
     "deleteSuccess": "Grupo de alertas excluído.",
     "deleteFailed": "Não foi possível excluir ou verificar o grupo de alertas.",
     "selected": "{{count}} selecionados",

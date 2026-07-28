@@ -62,6 +62,7 @@ function SoundControl({ state, t }: { state: ShellAlertNotificationState; t: TFu
 
 function soundControlLabel(state: ShellAlertNotificationState['sound'], t: TFunction) {
   if (state.kind === 'loading') return t('shell.alerts.soundLoading');
+  if (state.kind === 'permission') return t('common.permission.roleRequiredDescription');
   if (state.kind === 'unavailable') return t('shell.alerts.soundUnavailable');
   if (state.kind === 'error') return t('shell.alerts.soundError');
   if (state.saving) return t('shell.alerts.soundSaving');
@@ -104,6 +105,9 @@ function AlertNotificationList({ state, t }: { state: ShellAlertNotificationStat
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('shell.alerts.empty')} />;
   if (state.kind === 'unavailable') {
     return <div className={styles.alertPopoverState}>{t('shell.alerts.unavailable')}</div>;
+  }
+  if (state.kind === 'permission') {
+    return <div className={styles.alertPopoverState}>{t('common.permission.roleRequiredDescription')}</div>;
   }
   if (state.kind === 'error') return <div className={styles.alertPopoverState}>{t('shell.alerts.error')}</div>;
   return (

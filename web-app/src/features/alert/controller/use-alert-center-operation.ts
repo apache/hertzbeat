@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useExclusiveOperation } from '@/shared/exclusive-operation';
 
@@ -19,6 +19,7 @@ import {
   alertFailureKind,
   alertWriteOutcome,
   normalizeAlertGroupIds,
+  type AlertFailureKind,
   type AlertGroupTargetStatus
 } from '../model/alert-model';
 import { AlertCenterProofError, proveAlertGroupsMissing, proveAlertGroupsStatus } from './alert-center-operation-proof';
@@ -37,7 +38,7 @@ type OperationReceipt =
 type OperationDependencies = {
   reread: () => Promise<void>;
   success: (receipt: OperationReceipt) => void;
-  failure: (kind: 'unavailable' | 'error', receipt: OperationReceipt) => void;
+  failure: (kind: AlertFailureKind, receipt: OperationReceipt) => void;
 };
 
 const commandByStatusAction: Record<AlertCenterStatusAction, AlertCenterOperationCommand> = {
@@ -52,6 +53,10 @@ export function useAlertCenterOperation(dependencies: OperationDependencies) {
   const receiptRef = useRef<OperationReceipt | null>(null);
   const [active, setActive] = useState<OperationReceipt | null>(null);
   const [recovery, setRecovery] = useState<AlertCenterOperationRecovery | null>(null);
+  const retireRecovery = useCallback(() => {
+    receiptRef.current = null;
+    setRecovery(null);
+  }, []);
 
   const run = async (candidate?: OperationReceipt) => {
     const owner = gate.begin();
@@ -84,6 +89,7 @@ export function useAlertCenterOperation(dependencies: OperationDependencies) {
   return {
     command: resolveCommand(gate.pending, active, recovery),
     recovery,
+    retireRecovery,
     remove: (ids: readonly number[]) => run({ kind: 'delete', ids: normalizeAlertGroupIds(ids), phase: 'write' }),
     updateStatus: (
       ids: readonly number[],

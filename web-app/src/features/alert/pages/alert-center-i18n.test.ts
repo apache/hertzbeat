@@ -18,7 +18,7 @@ describe('Alert Center locale coverage', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw]) {
       expect(locale.alert.delete).toBeTruthy();
       expect(locale.alert.confirmDelete).toBeTruthy();
-      expect(locale.alert.deleteConfirm).toBeTruthy();
+      expect(locale.alert.deleteConfirm).toContain('{{target}}');
       expect(locale.alert.deleteSuccess).toBeTruthy();
       expect(locale.alert.deleteFailed).toBeTruthy();
     }

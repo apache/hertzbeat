@@ -2152,7 +2152,7 @@
     "updated": "更新日時",
     "delete": "削除",
     "confirmDelete": "削除を確認",
-    "deleteConfirm": "このアラートグループとアラートレコードを削除しますか？",
+    "deleteConfirm": "アラートグループ {{target}} とそのアラートレコードを削除しますか？",
     "deleteSuccess": "アラートグループを削除しました。",
     "deleteFailed": "アラートグループを削除または検証できませんでした。",
     "selected": "{{count}} 件選択中",

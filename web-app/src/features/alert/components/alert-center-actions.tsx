@@ -72,6 +72,7 @@ function AlertCenterBulkStatusActions({
   actions: BulkActions;
 }) {
   const { t } = useTranslation();
+  const resolvableCount = counts.firing + counts.acknowledged;
   return (
     <>
       {counts.firing > 0 ? (
@@ -83,13 +84,6 @@ function AlertCenterBulkStatusActions({
             disabled={busy}
             run={actions.acknowledge}
           />
-          <AlertCenterConfirmedAction
-            label={t('alert.resolveSelected')}
-            confirm={t('alert.resolveSelectedConfirm', { count: counts.firing })}
-            confirmLabel={t('alert.confirmResolve')}
-            disabled={busy}
-            run={actions.resolve}
-          />
         </>
       ) : null}
       {counts.acknowledged > 0 ? (
@@ -99,6 +93,15 @@ function AlertCenterBulkStatusActions({
           confirmLabel={t('alert.confirmUnacknowledge')}
           disabled={busy}
           run={actions.unacknowledge}
+        />
+      ) : null}
+      {resolvableCount > 0 ? (
+        <AlertCenterConfirmedAction
+          label={t('alert.resolveSelected')}
+          confirm={t('alert.resolveSelectedConfirm', { count: resolvableCount })}
+          confirmLabel={t('alert.confirmResolve')}
+          disabled={busy}
+          run={actions.resolve}
         />
       ) : null}
       {counts.resolved > 0 ? (

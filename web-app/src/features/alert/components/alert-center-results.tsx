@@ -25,6 +25,7 @@ import { hasAlertCenterRowActions, type AlertCenterActionPolicy } from '../model
 import {
   alertPageSizes,
   alertSeverities,
+  alertGroupName,
   type AlertGroup,
   type AlertSeverity,
   type AlertStatus
@@ -117,20 +118,26 @@ export function AlertCenterResults({
 
 function renderResultFallback(state: AlertListState, t: Translator, retry: () => unknown): ReactNode {
   if (state.kind === 'empty') return <Empty description={t('alert.empty')} />;
-  if (state.kind !== 'unavailable' && state.kind !== 'error') return null;
+  if (state.kind !== 'permission' && state.kind !== 'unavailable' && state.kind !== 'error') return null;
   return (
     <Alert
       type={state.kind === 'unavailable' ? 'warning' : 'error'}
       showIcon
-      message={t(state.kind === 'unavailable' ? 'alert.listUnavailable' : 'alert.listLoadFailed')}
+      message={t(alertListFailureMessageKey(state.kind))}
       action={<AlertCenterRetryButton onClick={retry} />}
     />
   );
 }
 
+function alertListFailureMessageKey(kind: 'permission' | 'unavailable' | 'error') {
+  if (kind === 'permission') return 'common.permission.roleRequiredDescription';
+  if (kind === 'unavailable') return 'alert.listUnavailable';
+  return 'alert.listLoadFailed';
+}
+
 function buildColumns({ t, actionPolicy, busy, actions }: AlertCenterColumnsOptions): ColumnsType<AlertGroup> {
   const columns: ColumnsType<AlertGroup> = [
-    { title: t('alert.name'), render: (_value, row) => alertName(row) },
+    { title: t('alert.name'), render: (_value, row) => alertGroupName(row) },
     {
       title: t('alert.status.label'),
       dataIndex: 'status',
@@ -167,10 +174,6 @@ function buildColumns({ t, actionPolicy, busy, actions }: AlertCenterColumnsOpti
   if (!hasAlertCenterRowActions(actionPolicy)) return columns;
   const actionColumn = alertCenterActionColumn({ t, actionPolicy, busy, actions });
   return [...columns, actionColumn];
-}
-
-function alertName(row: AlertGroup) {
-  return row.commonLabels?.alertname || row.groupLabels?.alertname || `#${row.id}`;
 }
 
 function alertStatusColor(status: AlertStatus) {

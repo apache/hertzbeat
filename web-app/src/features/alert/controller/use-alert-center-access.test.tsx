@@ -15,6 +15,7 @@ const operation = vi.hoisted(() => ({
   command: 'idle',
   recovery: null as null | { kind: 'delete' | 'status' },
   remove: vi.fn(),
+  retireRecovery: vi.fn(),
   retry: vi.fn(),
   updateStatus: vi.fn()
 }));
@@ -78,6 +79,19 @@ import { useAlertCenterController } from './use-alert-center-controller';
 describe('useAlertCenterController action access', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    evidence.page.content = [
+      {
+        id: 7,
+        status: 'firing',
+        groupLabels: null,
+        commonLabels: null,
+        commonAnnotations: null,
+        alertFingerprints: null,
+        alerts: [],
+        gmtUpdate: null
+      }
+    ];
+    evidence.page.totalElements = 1;
     operation.command = 'idle';
     operation.recovery = null;
     operation.remove.mockResolvedValue(true);
@@ -152,6 +166,86 @@ describe('useAlertCenterController action access', () => {
     await act(() => view.result.current.retryOperation());
 
     expect(operation.retry).not.toHaveBeenCalled();
+  });
+
+  it('rechecks every row command against the current visible authoritative group', async () => {
+    capability.useAlertCapabilities.mockReturnValue(adminCapabilities);
+    const view = renderController();
+
+    await act(async () => {
+      await view.result.current.acknowledge({ id: 7 });
+      await view.result.current.resolve({ id: 7 });
+      await view.result.current.reopen({ id: 7 });
+      await view.result.current.unacknowledge({ id: 7 });
+      await view.result.current.remove({ id: 7 });
+    });
+    expect(operation.updateStatus.mock.calls.map(call => call.slice(0, 2))).toEqual([
+      [[7], 'acknowledged'],
+      [[7], 'resolved']
+    ]);
+    expect(operation.remove).toHaveBeenCalledWith([7]);
+
+    vi.clearAllMocks();
+    evidence.page.content[0]!.status = 'acknowledged';
+    view.rerender();
+    await act(async () => {
+      await view.result.current.acknowledge({ id: 7 });
+      await view.result.current.resolve({ id: 7 });
+      await view.result.current.reopen({ id: 7 });
+      await view.result.current.unacknowledge({ id: 7 });
+    });
+    expect(operation.updateStatus.mock.calls.map(call => call.slice(0, 2))).toEqual([
+      [[7], 'resolved'],
+      [[7], 'firing']
+    ]);
+
+    vi.clearAllMocks();
+    evidence.page.content[0]!.status = 'resolved';
+    view.rerender();
+    await act(async () => {
+      await view.result.current.acknowledge({ id: 7 });
+      await view.result.current.resolve({ id: 7 });
+      await view.result.current.reopen({ id: 7 });
+      await view.result.current.unacknowledge({ id: 7 });
+    });
+    expect(operation.updateStatus.mock.calls.map(call => call.slice(0, 2))).toEqual([[[7], 'firing']]);
+
+    vi.clearAllMocks();
+    evidence.page.content[0]!.status = 'pending';
+    view.rerender();
+    await act(async () => {
+      await view.result.current.acknowledge({ id: 7 });
+      await view.result.current.resolve({ id: 7 });
+      await view.result.current.reopen({ id: 7 });
+      await view.result.current.unacknowledge({ id: 7 });
+    });
+    expect(operation.updateStatus).not.toHaveBeenCalled();
+
+    vi.clearAllMocks();
+    evidence.page.content = [];
+    evidence.page.totalElements = 0;
+    view.rerender();
+    await act(async () => {
+      await view.result.current.resolve({ id: 7 });
+      await view.result.current.remove({ id: 7 });
+    });
+    expect(operation.updateStatus).not.toHaveBeenCalled();
+    expect(operation.remove).not.toHaveBeenCalled();
+  });
+
+  it('retires inaccessible recovery after permission loss without retrying or replaying a write', () => {
+    capability.useAlertCapabilities.mockReturnValue(userCapabilities);
+    operation.recovery = { kind: 'status' };
+    const view = renderController();
+    expect(operation.retireRecovery).not.toHaveBeenCalled();
+
+    capability.useAlertCapabilities.mockReturnValue(guestCapabilities);
+    view.rerender();
+
+    expect(operation.retireRecovery).toHaveBeenCalledOnce();
+    expect(operation.retry).not.toHaveBeenCalled();
+    expect(operation.updateStatus).not.toHaveBeenCalled();
+    expect(operation.remove).not.toHaveBeenCalled();
   });
 
   it('clears internal selection on permission loss so it cannot reappear after restoration', () => {

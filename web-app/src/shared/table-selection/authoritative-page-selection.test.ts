@@ -8,6 +8,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import { useAuthoritativePageSelection } from './authoritative-page-selection';
 
 type Row = { id: number };
@@ -51,5 +53,13 @@ describe('authoritative page selection', () => {
     view.rerender({ source: { kind: 'ready', records, total: records.length } });
 
     expect(view.result.current.selectedIds).toEqual([7]);
+  });
+
+  it('accepts a caller-owned remote failure union without feature coupling', () => {
+    type Failure = 'permission' | 'invalid';
+    const source: RemotePageState<Row, Failure> = { kind: 'permission' };
+    const view = renderHook(() => useAuthoritativePageSelection<Row, Failure>('page=0', source));
+
+    expect(view.result.current.selectedIds).toEqual([]);
   });
 });

@@ -28,7 +28,7 @@ export function AlertCenterRecovery({
     <Alert
       type="warning"
       showIcon
-      message={t(recovery.failure === 'unavailable' ? 'common.unavailable' : failureKey)}
+      message={t(recoveryFailureMessageKey(recovery.failure, failureKey))}
       action={
         canRetry ? (
           <Button size="small" loading={retrying} disabled={retrying} onClick={() => void retry()}>
@@ -38,6 +38,12 @@ export function AlertCenterRecovery({
       }
     />
   );
+}
+
+function recoveryFailureMessageKey(failure: AlertCenterOperationRecovery['failure'], operationFailureKey: string) {
+  if (failure === 'permission') return 'common.permission.roleRequiredDescription';
+  if (failure === 'unavailable') return 'common.unavailable';
+  return operationFailureKey;
 }
 
 function operationFailureKey(recovery: AlertCenterOperationRecovery) {

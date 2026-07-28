@@ -53,12 +53,14 @@ vi.mock('../controller/use-alert-center-controller', () => ({ useAlertCenterCont
 vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav data-testid="alert-nav" /> }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      ({
-        'instrumentation.field.serviceName': en.instrumentation.field.serviceName,
-        'instrumentation.field.serviceNamespace': en.instrumentation.field.serviceNamespace,
-        'instrumentation.field.serviceEnvironment': en.instrumentation.field.serviceEnvironment
-      })[key] ?? key
+    t: (key: string, values?: Record<string, unknown>) =>
+      key === 'alert.deleteConfirm'
+        ? `${key}:${String(values?.target)}`
+        : ({
+            'instrumentation.field.serviceName': en.instrumentation.field.serviceName,
+            'instrumentation.field.serviceNamespace': en.instrumentation.field.serviceNamespace,
+            'instrumentation.field.serviceEnvironment': en.instrumentation.field.serviceEnvironment
+          }[key] ?? key)
   })
 }));
 
@@ -147,6 +149,7 @@ describe('AlertCenterPage', () => {
     render(<AlertCenterPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'alert.delete' }));
+    expect(await screen.findByText('alert.deleteConfirm:Latency (#1)')).toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmDelete' }));
 
     expect(controller.remove).toHaveBeenCalledWith(record);
@@ -178,12 +181,28 @@ describe('AlertCenterPage', () => {
     expect(command.mock.calls[0]).toEqual([]);
   });
 
+  it('allows an acknowledged-only selection to advance to resolved', async () => {
+    controller.state = buildState({
+      list: { kind: 'ready', records: [selectedRecords[1]], total: 1 },
+      selectedIds: [2]
+    });
+    render(<AlertCenterPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'alert.resolveSelected' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
+
+    expect(controller.resolveSelected).toHaveBeenCalledOnce();
+  });
+
   it('offers resolve for active rows and reopen for resolved rows', async () => {
+    controller.state = buildState({
+      list: { kind: 'ready', records: [{ ...record, status: 'firing' }], total: 1 }
+    });
     const view = render(<AlertCenterPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'alert.resolve' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmResolve' }));
-    expect(controller.resolve).toHaveBeenCalledWith(record);
+    expect(controller.resolve).toHaveBeenCalledWith({ ...record, status: 'firing' });
     view.unmount();
 
     controller.state = buildState({
@@ -212,10 +231,11 @@ describe('AlertCenterPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'alert.unacknowledge' }));
     fireEvent.click(await screen.findByRole('button', { name: 'alert.confirmUnacknowledge' }));
     expect(controller.unacknowledge).toHaveBeenCalledWith(acknowledged);
-    expect(screen.queryByRole('button', { name: 'alert.resolve' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'alert.resolve' })).toBeInTheDocument();
   });
 
   it.each([
+    ['permission', 'common.permission.roleRequiredDescription'],
     ['unavailable', 'alert.listUnavailable'],
     ['error', 'alert.listLoadFailed']
   ])('renders distinct list %s state and delegates retry', (kind, evidence) => {
@@ -275,6 +295,14 @@ describe('AlertCenterPage', () => {
     controller.state = buildState({ summary: { kind: 'error' } });
     render(<AlertCenterPage />);
     expect(screen.getByText('alert.summaryLoadFailed')).toBeInTheDocument();
+    expect(screen.queryByText('alert.summary.total')).not.toBeInTheDocument();
+  });
+
+  it('renders summary permission rejection without presenting stale totals', () => {
+    controller.state = buildState({ summary: { kind: 'permission' } });
+    render(<AlertCenterPage />);
+
+    expect(screen.getByText('common.permission.roleRequiredDescription')).toBeInTheDocument();
     expect(screen.queryByText('alert.summary.total')).not.toBeInTheDocument();
   });
 });

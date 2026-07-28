@@ -20,17 +20,23 @@ export type ShellAlertItem = {
 };
 
 export type ShellAlertCountState =
-  { kind: 'loading' } | { kind: 'ready'; total: number } | { kind: 'unavailable' } | { kind: 'error' };
+  | { kind: 'loading' }
+  | { kind: 'ready'; total: number }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' };
 
 export type ShellAlertListState =
   | { kind: 'loading' }
   | { kind: 'empty' }
   | { kind: 'ready'; items: ShellAlertItem[] }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
   | { kind: 'error' };
 
 export type ShellAlertSoundState =
   | { kind: 'loading' }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
   | { kind: 'error' }
   | {

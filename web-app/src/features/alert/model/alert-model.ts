@@ -86,7 +86,7 @@ export class AlertContractError extends Error {
   }
 }
 
-export type AlertFailureKind = 'unavailable' | 'error';
+export type AlertFailureKind = 'permission' | 'unavailable' | 'error';
 export type AlertWriteOutcome = 'rejected' | 'uncertain';
 
 /** Stable request evidence emitted by the Alert Center API boundary. */
@@ -106,6 +106,15 @@ export function alertFailureKind(error: unknown): AlertFailureKind {
 
 export function alertWriteOutcome(error: unknown): AlertWriteOutcome {
   return error instanceof AlertRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
+export function alertGroupName(group: Pick<AlertGroup, 'id' | 'commonLabels' | 'groupLabels'>) {
+  return group.commonLabels?.alertname || group.groupLabels?.alertname || `#${group.id}`;
+}
+
+export function alertGroupIdentity(group: Pick<AlertGroup, 'id' | 'commonLabels' | 'groupLabels'>) {
+  const name = group.commonLabels?.alertname || group.groupLabels?.alertname;
+  return name ? `${name} (#${group.id})` : `#${group.id}`;
 }
 
 /** Canonicalizes every batch command before it reaches the transport boundary. */

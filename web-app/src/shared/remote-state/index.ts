@@ -2,6 +2,7 @@
 
 export type {
   OptionalRemoteValueState,
+  RemoteFailureKind,
   RemoteCollectionState,
   RemotePageState,
   RemotePayloadState,

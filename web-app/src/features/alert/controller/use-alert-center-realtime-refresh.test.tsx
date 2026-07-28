@@ -41,7 +41,23 @@ describe('Alert Center realtime refresh', () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
-  it('polls after the bounded stream becomes unavailable and stops after recovery', async () => {
+  it('reconciles on native open and mutation without projecting mutation as an alert', async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const onAlert = vi.fn();
+    renderHook(() => useAlertCenterRealtimeRefresh(refresh, onAlert));
+    const stream = FakeStream.instances[0]!;
+
+    act(() => stream.open());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(refresh).toHaveBeenCalledOnce();
+
+    act(() => stream.mutation());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(onAlert).not.toHaveBeenCalled();
+  });
+
+  it('keeps polling when an exhausted stream reports a late open', async () => {
     const refresh = vi.fn().mockResolvedValue(undefined);
     renderHook(() => useAlertCenterRealtimeRefresh(refresh));
     const stream = FakeStream.instances[0]!;
@@ -55,7 +71,76 @@ describe('Alert Center realtime refresh', () => {
 
     act(() => stream.open());
     await act(async () => vi.advanceTimersByTimeAsync(60_000));
+    expect(refresh).toHaveBeenCalledTimes(4);
+  });
+
+  it('periodically rebuilds one exhausted stream and stops polling when the replacement opens', async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    renderHook(() => useAlertCenterRealtimeRefresh(refresh));
+    const exhausted = FakeStream.instances[0]!;
+
+    act(() => exhausted.unavailable());
+    await act(async () => vi.advanceTimersByTimeAsync(5 * 60_000));
+
+    expect(FakeStream.instances).toHaveLength(2);
+    expect(exhausted.close).toHaveBeenCalledOnce();
+    const replacement = FakeStream.instances[1]!;
+    act(() => replacement.open());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    const callsAfterOpen = refresh.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(5 * 60_000));
+
+    expect(FakeStream.instances).toHaveLength(2);
+    expect(refresh).toHaveBeenCalledTimes(callsAfterOpen);
+  });
+
+  it('retires an exhausted generation immediately so only its replacement can recover polling', async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const onAlert = vi.fn();
+    renderHook(() => useAlertCenterRealtimeRefresh(refresh, onAlert));
+    const exhausted = FakeStream.instances[0]!;
+
+    act(() => exhausted.unavailable());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    act(() => {
+      exhausted.open();
+      exhausted.alert();
+      exhausted.mutation();
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+    expect(onAlert).not.toHaveBeenCalled();
     expect(refresh).toHaveBeenCalledTimes(2);
+
+    await act(async () => vi.advanceTimersByTimeAsync(4 * 60_000 + 30_000));
+    const replacement = FakeStream.instances[1]!;
+    act(() => replacement.open());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    const callsAfterReplacementOpen = refresh.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(60_000));
+
+    expect(refresh).toHaveBeenCalledTimes(callsAfterReplacementOpen);
+  });
+
+  it('deduplicates circuit-breaker reconnects and cancels them on unmount', async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const view = renderHook(() => useAlertCenterRealtimeRefresh(refresh));
+    const exhausted = FakeStream.instances[0]!;
+
+    act(() => {
+      exhausted.unavailable();
+      exhausted.unavailable();
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(5 * 60_000));
+    expect(FakeStream.instances).toHaveLength(2);
+
+    const replacement = FakeStream.instances[1]!;
+    act(() => replacement.unavailable());
+    view.unmount();
+    expect(replacement.close).toHaveBeenCalledOnce();
+    await act(async () => vi.advanceTimersByTimeAsync(10 * 60_000));
+
+    expect(FakeStream.instances).toHaveLength(2);
   });
 
   it('serializes a trailing refresh and closes all work on unmount', async () => {
@@ -100,6 +185,7 @@ describe('Alert Center realtime refresh', () => {
 type StreamHandlers = {
   onOpen: () => void;
   onAlert: () => void;
+  onMutation: () => void;
   onRetrying: () => void;
   onUnavailable: () => void;
 };
@@ -118,6 +204,10 @@ class FakeStream {
 
   alert() {
     this.handlers.onAlert();
+  }
+
+  mutation() {
+    this.handlers.onMutation();
   }
 
   unavailable() {

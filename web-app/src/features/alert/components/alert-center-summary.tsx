@@ -46,6 +46,16 @@ export function AlertCenterSummary({ state, retry }: { state: AlertSummaryState;
       />
     );
   }
+  if (state.kind === 'permission') {
+    return (
+      <Alert
+        type="error"
+        showIcon
+        message={t('common.permission.roleRequiredDescription')}
+        action={<AlertCenterRetryButton onClick={retry} />}
+      />
+    );
+  }
   return <SummaryValues summary={state.summary} />;
 }
 

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertGroupTargetStatus } from './alert-model';
+import type { AlertFailureKind, AlertGroupTargetStatus } from './alert-model';
 
 export type AlertCenterStatusAction = 'acknowledge' | 'unacknowledge' | 'resolve' | 'reopen';
 
@@ -15,7 +15,7 @@ export type AlertCenterOperationCommand =
 type RecoveryEvidence = {
   ids: number[];
   phase: 'proof' | 'projection';
-  failure: 'unavailable' | 'error';
+  failure: AlertFailureKind;
 };
 
 export type AlertCenterOperationRecovery =

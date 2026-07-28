@@ -25,11 +25,21 @@ export function createAlertCenterActionCommands(
     capabilities.canUpdateStatus && ids.length > 0
       ? operation.updateStatus(ids, target, action)
       : Promise.resolve(false);
-  const updateSelectedStatus = (
-    source: AlertGroupTargetStatus,
+  const updateVisibleGroupStatus = (
+    group: { id: number },
+    sources: readonly AlertGroupTargetStatus[],
     target: AlertGroupTargetStatus,
     action: AlertCenterStatusAction
-  ) => updateStatus(selectedAlertIdsByStatus(list, selectedIds, source), target, action);
+  ) => {
+    const current = visibleAlertGroup(list, group.id);
+    if (!current || !sources.some(status => current.status === status)) return Promise.resolve(false);
+    return updateStatus([current.id], target, action);
+  };
+  const updateSelectedStatus = (
+    sources: readonly AlertGroupTargetStatus[],
+    target: AlertGroupTargetStatus,
+    action: AlertCenterStatusAction
+  ) => updateStatus(selectedAlertIdsByStatus(list, selectedIds, sources), target, action);
   const removeGroups = (ids: number[]) =>
     capabilities.canDeleteGroups && ids.length > 0 ? operation.remove(ids) : Promise.resolve(false);
   const select = (ids: number[]) => {
@@ -39,26 +49,43 @@ export function createAlertCenterActionCommands(
     clearSelection: () => select([]),
     retryOperation: () =>
       canRetryAlertCenterRecovery(capabilities, operation.recovery) ? operation.retry() : Promise.resolve(false),
-    acknowledge: (group: { id: number }) => updateStatus([group.id], 'acknowledged', 'acknowledge'),
-    acknowledgeSelected: () => updateSelectedStatus('firing', 'acknowledged', 'acknowledge'),
-    remove: (group: { id: number }) => removeGroups([group.id]),
-    removeSelected: () => removeGroups(selectedIds),
-    resolve: (group: { id: number }) => updateStatus([group.id], 'resolved', 'resolve'),
-    resolveSelected: () => updateSelectedStatus('firing', 'resolved', 'resolve'),
-    reopen: (group: { id: number }) => updateStatus([group.id], 'firing', 'reopen'),
-    reopenSelected: () => updateSelectedStatus('resolved', 'firing', 'reopen'),
+    acknowledge: (group: { id: number }) => updateVisibleGroupStatus(group, ['firing'], 'acknowledged', 'acknowledge'),
+    acknowledgeSelected: () => updateSelectedStatus(['firing'], 'acknowledged', 'acknowledge'),
+    remove: (group: { id: number }) => {
+      const current = visibleAlertGroup(list, group.id);
+      return current ? removeGroups([current.id]) : Promise.resolve(false);
+    },
+    removeSelected: () => removeGroups(selectedVisibleAlertIds(list, selectedIds)),
+    resolve: (group: { id: number }) =>
+      updateVisibleGroupStatus(group, ['firing', 'acknowledged'], 'resolved', 'resolve'),
+    resolveSelected: () => updateSelectedStatus(['firing', 'acknowledged'], 'resolved', 'resolve'),
+    reopen: (group: { id: number }) => updateVisibleGroupStatus(group, ['resolved'], 'firing', 'reopen'),
+    reopenSelected: () => updateSelectedStatus(['resolved'], 'firing', 'reopen'),
     selectIds: select,
-    unacknowledge: (group: { id: number }) => updateStatus([group.id], 'firing', 'unacknowledge'),
-    unacknowledgeSelected: () => updateSelectedStatus('acknowledged', 'firing', 'unacknowledge')
+    unacknowledge: (group: { id: number }) =>
+      updateVisibleGroupStatus(group, ['acknowledged'], 'firing', 'unacknowledge'),
+    unacknowledgeSelected: () => updateSelectedStatus(['acknowledged'], 'firing', 'unacknowledge')
   };
+}
+
+function visibleAlertGroup(list: AlertListState, id: number) {
+  return list.kind === 'ready' ? list.records.find(group => group.id === id) : undefined;
+}
+
+function selectedVisibleAlertIds(list: AlertListState, selectedIds: readonly number[]) {
+  if (list.kind !== 'ready') return [];
+  const selected = new Set(selectedIds);
+  return list.records.filter(group => selected.has(group.id)).map(group => group.id);
 }
 
 function selectedAlertIdsByStatus(
   list: AlertListState,
   selectedIds: readonly number[],
-  status: AlertGroupTargetStatus
+  statuses: readonly AlertGroupTargetStatus[]
 ) {
   if (list.kind !== 'ready') return [];
   const selected = new Set(selectedIds);
-  return list.records.filter(group => selected.has(group.id) && group.status === status).map(group => group.id);
+  return list.records
+    .filter(group => selected.has(group.id) && statuses.some(status => group.status === status))
+    .map(group => group.id);
 }

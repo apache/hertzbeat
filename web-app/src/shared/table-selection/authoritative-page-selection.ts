@@ -16,10 +16,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type { RemotePageState } from '@/shared/remote-state';
+import type { RemoteFailureKind, RemotePageState } from '@/shared/remote-state';
 
 type Identified = { id: number };
-type SelectionSource<Item extends Identified> = RemotePageState<Item, 'unavailable' | 'error'>;
+type SelectionSource<Item extends Identified, Failure extends RemoteFailureKind> = RemotePageState<Item, Failure>;
 type PageSelection = {
   scope: string;
   projection: object | string;
@@ -30,7 +30,10 @@ type PageSelection = {
  * Owns selection for one authoritative backend page. Query changes and fresh
  * page projections invalidate the old selection instead of reviving stale IDs.
  */
-export function useAuthoritativePageSelection<Item extends Identified>(scope: string, source: SelectionSource<Item>) {
+export function useAuthoritativePageSelection<
+  Item extends Identified,
+  Failure extends RemoteFailureKind = RemoteFailureKind
+>(scope: string, source: SelectionSource<Item, Failure>) {
   const records = source.kind === 'ready' ? source.records : undefined;
   const projection = records ?? source.kind;
   const [selection, setSelection] = useState<PageSelection>({ scope, projection, ids: [] });

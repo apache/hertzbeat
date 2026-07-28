@@ -2270,7 +2270,7 @@
     "updated": "更新时间",
     "delete": "删除",
     "confirmDelete": "确认删除",
-    "deleteConfirm": "删除该告警组及其告警记录？",
+    "deleteConfirm": "删除告警组 {{target}} 及其告警记录？",
     "deleteSuccess": "告警组已删除。",
     "deleteFailed": "无法删除或验证该告警组。",
     "selected": "已选择 {{count}} 项",

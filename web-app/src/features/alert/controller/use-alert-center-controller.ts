@@ -22,10 +22,13 @@ import { alertRoutePaths } from '@/shared/navigation/app-paths';
 import { useCanonicalQuerySearch, useQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
+import { canRetryAlertCenterRecovery } from '../model/alert-capability-model';
 import {
   alertFailureKind,
   readAlertQuery,
   writeAlertQuery,
+  type AlertFailureKind,
+  type AlertGroup,
   type AlertPage,
   type AlertQuery,
   type AlertSeverity,
@@ -59,12 +62,17 @@ export function useAlertCenterController() {
   const { list: listQuery, summary: summaryQuery, refetchList, refetchSummary, refresh } = data;
   useAlertCenterPageCorrection(query, listQuery.data, setParams);
   const list = resolveListState(listQuery);
-  const { selectedIds, selectIds } = useAuthoritativePageSelection(source, list);
+  const { selectedIds, selectIds } = useAuthoritativePageSelection<AlertGroup, AlertFailureKind>(source, list);
   const operation = useAlertCenterOperationController(refetchList, refetchSummary);
 
   useEffect(() => {
     if (!capabilities.canSelect) selectIds([]);
   }, [capabilities.canSelect, selectIds]);
+  useEffect(() => {
+    if (operation.recovery && !canRetryAlertCenterRecovery(capabilities, operation.recovery)) {
+      operation.retireRecovery();
+    }
+  }, [capabilities.canDeleteGroups, capabilities.canUpdateStatus, operation.recovery, operation.retireRecovery]);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));

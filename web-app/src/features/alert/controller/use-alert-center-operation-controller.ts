@@ -31,10 +31,19 @@ export function useAlertCenterOperationController(
     failure: (kind, receipt) => {
       notification.open?.({
         type: 'error',
-        message: kind === 'unavailable' ? t('common.unavailable') : t(operationMessageKey(receipt, 'Failed'))
+        message: t(operationFailureMessageKey(kind, receipt))
       });
     }
   });
+}
+
+function operationFailureMessageKey(
+  kind: 'permission' | 'unavailable' | 'error',
+  receipt: { kind: 'delete' } | { kind: 'status'; action: 'acknowledge' | 'unacknowledge' | 'resolve' | 'reopen' }
+) {
+  if (kind === 'permission') return 'common.permission.roleRequiredDescription';
+  if (kind === 'unavailable') return 'common.unavailable';
+  return operationMessageKey(receipt, 'Failed');
 }
 
 function operationMessageKey(

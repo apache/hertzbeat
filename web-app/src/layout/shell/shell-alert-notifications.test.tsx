@@ -88,6 +88,25 @@ describe('ShellAlertNotifications', () => {
     expect(await screen.findByText('shell.alerts.empty')).toBeInTheDocument();
   });
 
+  it('keeps shell list and sound permission rejection distinct', async () => {
+    render(
+      <ShellAlertNotifications
+        state={{
+          count: { kind: 'permission' },
+          list: { kind: 'permission' },
+          sound: { kind: 'permission' },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.alerts' }));
+    expect(await screen.findByText('common.permission.roleRequiredDescription')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.permission.roleRequiredDescription' })).toBeDisabled();
+  });
+
   it('exposes one compact server-backed sound action with honest disabled evidence', () => {
     const toggleSound = vi.fn();
     const { rerender } = render(
