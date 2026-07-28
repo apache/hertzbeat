@@ -24,11 +24,11 @@ import {
   type AlertGroupWriteContext
 } from './alert-group-write-operations';
 import { useAlertGroupCommandGate, useAlertGroupEditor } from './use-alert-group-editor-controller';
-import type { AlertGroupActionCapabilities } from '../model/alert-group-action-capability';
+import type { AlertActionCapabilities } from '../model/alert-action-capability';
 
 export function useAlertGroupCommandController(
   rereadList: () => Promise<AlertGroupPage>,
-  capabilities: AlertGroupActionCapabilities
+  capabilities: AlertActionCapabilities
 ) {
   const { t } = useTranslation();
   const { message } = App.useApp();

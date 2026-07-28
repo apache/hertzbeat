@@ -38,6 +38,7 @@ const api = vi.hoisted(() => ({
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 const settings = vi.hoisted(() => ({ loadLabelSuggestions: vi.fn() }));
+const access = vi.hoisted(() => ({ capabilities: { canWrite: true, canDelete: true } }));
 
 vi.mock('../api/alert-inhibit-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
@@ -49,10 +50,14 @@ vi.mock('antd', async importOriginal => ({
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('@/features/settings', () => settings);
+vi.mock('./use-alert-inhibit-action-capabilities', () => ({
+  useAlertInhibitActionCapabilities: () => access.capabilities
+}));
 
 describe('Alert Inhibit controller composition', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    access.capabilities = { canWrite: true, canDelete: true };
     api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) =>
       Promise.resolve(alertInhibitPage(query, []))
     );
@@ -60,6 +65,21 @@ describe('Alert Inhibit controller composition', () => {
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
     api.saveAlertInhibit.mockResolvedValue(undefined);
     settings.loadLabelSuggestions.mockResolvedValue({ keys: ['environment'], valuesByKey: {} });
+  });
+
+  it('retires selected ids when ADMIN-only delete capability is lost', async () => {
+    api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery) =>
+      Promise.resolve(alertInhibitPage(query, [persistedAlertInhibit]))
+    );
+    const view = renderAlertInhibitController();
+    await waitFor(() => expect(view.result.current.state.list.kind).toBe('ready'));
+    act(() => view.result.current.selectIds([persistedAlertInhibit.id]));
+    expect(view.result.current.state.selectedIds).toEqual([persistedAlertInhibit.id]);
+
+    access.capabilities = { canWrite: true, canDelete: false };
+    view.rerender();
+
+    await waitFor(() => expect(view.result.current.state.selectedIds).toEqual([]));
   });
 
   it('keeps an acknowledged create without identity open as commit-uncertain', async () => {

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { loadAlertInhibitPrefillAlerts } from '../api/alert-inhibit-api';
@@ -73,7 +73,13 @@ export function useAlertInhibitPrefillController(
     pendingRef.current = promise;
     void promise;
   };
-  return { state, create };
+  const retire = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = undefined;
+    pendingRef.current = undefined;
+    setState('idle');
+  }, []);
+  return { state, create, retire };
 }
 
 async function loadEntityAlertsIntoDraft({
@@ -100,6 +106,7 @@ async function loadEntityAlertsIntoDraft({
   try {
     const alerts = await loadAlertInhibitPrefillAlerts(context.entityId, signal);
     if (!operation.isCurrent(owner)) return;
+    if (signal.aborted) return;
     if (!sameEntityContext(currentManagement(), context)) {
       setState('idle');
       return;
@@ -109,6 +116,8 @@ async function loadEntityAlertsIntoDraft({
     setState(prefill.kind);
   } catch (error) {
     if (!operation.isCurrent(owner)) return;
+    // Losing write access aborts this read. Its rejection must not reopen a draft after retirement.
+    if (signal.aborted) return;
     if (!sameEntityContext(currentManagement(), context)) {
       setState('idle');
       return;

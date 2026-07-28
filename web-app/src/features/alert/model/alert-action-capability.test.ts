@@ -2,15 +2,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { alertRuleActionCapabilities } from './alert-rule-action-capability';
+import { alertActionCapabilities } from './alert-action-capability';
 
-describe('alertRuleActionCapabilities', () => {
+describe('shared Alert action capabilities', () => {
   it.each([
     [['ADMIN'], { canWrite: true, canDelete: true }],
     [['USER'], { canWrite: true, canDelete: false }],
     [['GUEST'], { canWrite: false, canDelete: false }],
     [[], { canWrite: false, canDelete: false }]
-  ])('maps Sureness roles %j to alert-rule action admission', (roles, expected) => {
-    expect(alertRuleActionCapabilities(roles)).toEqual(expected);
+  ])('maps shipped /api/alert/** Sureness roles %j', (roles, expected) => {
+    expect(alertActionCapabilities(roles)).toEqual(expected);
   });
 });

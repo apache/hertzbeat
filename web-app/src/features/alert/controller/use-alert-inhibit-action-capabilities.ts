@@ -4,6 +4,6 @@ import { useSession } from '@/core/auth/session-context';
 
 import { alertActionCapabilities } from '../model/alert-action-capability';
 
-export function useAlertGroupActionCapabilities() {
+export function useAlertInhibitActionCapabilities() {
   return alertActionCapabilities(useSession().session?.roles ?? []);
 }

@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   alertInhibitDraftFromDetail,
@@ -17,10 +17,10 @@ function useAlertInhibitDraftStore() {
   const [draft, setDraft] = useState<AlertInhibitDraft | null>(null);
   // State renders the draft; the ref retires its identity before a same-tick submit can read stale data.
   const draftRef = useRef<AlertInhibitDraft | null>(null);
-  const publish = (next: AlertInhibitDraft | null) => {
+  const publish = useCallback((next: AlertInhibitDraft | null) => {
     draftRef.current = next;
     setDraft(next);
-  };
+  }, []);
   const patch = (next: Partial<AlertInhibitDraft>) => {
     publish(draftRef.current ? { ...draftRef.current, ...next } : draftRef.current);
   };
@@ -51,11 +51,11 @@ function useAlertInhibitDetailEditor(
       pendingDetailRef.current = undefined;
     };
   }, []);
-  const invalidateDetail = () => {
+  const invalidateDetail = useCallback(() => {
     detailEpochRef.current += 1;
     pendingDetailRef.current = undefined;
     setDetail({ kind: 'idle' });
-  };
+  }, []);
   const edit = (id: number): Promise<void> => {
     if (!mountedRef.current || operation.isLocked()) return Promise.resolve();
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
@@ -111,12 +111,18 @@ export function useAlertInhibitEditorController(operation: AlertInhibitOperation
     if (operation.isLocked()) return;
     draftStore.patch(patch);
   };
+  const retire = useCallback(() => {
+    detailEditor.invalidate();
+    draftStore.publish(null);
+    setEditorFailure(undefined);
+  }, [detailEditor.invalidate, draftStore.publish]);
   return {
     state: { detail: detailEditor.detail, draft: draftStore.draft, editorFailure },
     controls: {
       getDraft: draftStore.get,
       invalidateDetail: detailEditor.invalidate,
       openCreateDraft,
+      retire,
       setDraft: draftStore.publish,
       setEditorFailure
     },

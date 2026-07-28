@@ -21,6 +21,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { normalizeAlertInhibitApiFailure } from '../api/alert-inhibit-api-failure';
+import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import {
   AlertInhibitContractError,
   AlertInhibitMissingError,
@@ -76,6 +77,147 @@ describe('Alert Inhibit command controller', () => {
     api.deleteAlertInhibit.mockResolvedValue(undefined);
     api.deleteAlertInhibits.mockResolvedValue(undefined);
     reread.mockResolvedValue(alertInhibitPage({ search: '', pageIndex: 0, pageSize: 8 }, []));
+  });
+
+  it('fails closed before editor or transport admission when write capability is absent', async () => {
+    const { result } = renderCommandController(null, { canWrite: false, canDelete: false });
+
+    await act(async () => {
+      result.current.create();
+      await result.current.edit(persistedAlertInhibit.id);
+      result.current.updateDraft(validAlertInhibitDraft());
+      await result.current.submit();
+      await result.current.toggle(persistedAlertInhibit, false);
+      await result.current.remove(persistedAlertInhibit.id);
+      await result.current.removeMany([persistedAlertInhibit.id]);
+      await result.current.retryDetail();
+      await result.current.retry();
+    });
+
+    expect(result.current.state.draft).toBeNull();
+    expect(api.loadAlertInhibitPrefillAlerts).not.toHaveBeenCalled();
+    expect(api.loadAlertInhibit).not.toHaveBeenCalled();
+    expect(api.saveAlertInhibit).not.toHaveBeenCalled();
+    expect(api.updateAlertInhibitEnabled).not.toHaveBeenCalled();
+    expect(api.deleteAlertInhibit).not.toHaveBeenCalled();
+    expect(api.deleteAlertInhibits).not.toHaveBeenCalled();
+  });
+
+  it('keeps USER write actions but rejects ADMIN-only delete transports', async () => {
+    const { result } = renderCommandController(null, { canWrite: true, canDelete: false });
+
+    act(() => result.current.create());
+    expect(result.current.state.draft).not.toBeNull();
+    await act(async () => result.current.toggle(persistedAlertInhibit, false));
+    await act(async () => {
+      await result.current.remove(persistedAlertInhibit.id);
+      await result.current.removeMany([persistedAlertInhibit.id]);
+    });
+
+    expect(api.updateAlertInhibitEnabled).toHaveBeenCalledOnce();
+    expect(api.deleteAlertInhibit).not.toHaveBeenCalled();
+    expect(api.deleteAlertInhibits).not.toHaveBeenCalled();
+  });
+
+  it('retains delete recovery but retires draft and pending detail as role capabilities are lost', async () => {
+    api.deleteAlertInhibit.mockRejectedValueOnce(unavailableRequestFailure());
+    const detail = deferred<AlertInhibit>();
+    const { result, rerender } = renderHook(
+      ({ capabilities }) => {
+        const command = useAlertInhibitCommandController(reread, null, capabilities);
+        return { state: command.state, ...command.actions };
+      },
+      { initialProps: { capabilities: { canWrite: true, canDelete: true } } }
+    );
+
+    act(() => result.current.create());
+    expect(result.current.state.draft).not.toBeNull();
+    await act(async () => result.current.remove(persistedAlertInhibit.id));
+    expect(result.current.state.recovery?.kind).toBe('delete');
+
+    rerender({ capabilities: { canWrite: true, canDelete: false } });
+    expect(result.current.state.recovery?.kind).toBe('delete');
+    expect(result.current.state.draft).not.toBeNull();
+    await act(async () => result.current.retry());
+    expect(api.deleteAlertInhibit).toHaveBeenCalledOnce();
+
+    api.deleteAlertInhibit.mockResolvedValue(undefined);
+    api.loadAlertInhibit.mockReturnValueOnce(detail.promise);
+    let edit!: Promise<void>;
+    act(() => {
+      edit = result.current.edit(persistedAlertInhibit.id);
+    });
+    rerender({ capabilities: { canWrite: false, canDelete: false } });
+    await waitFor(() => {
+      expect(result.current.state.detail).toEqual({ kind: 'idle' });
+      expect(result.current.state.draft).toBeNull();
+    });
+    act(() => detail.resolve(persistedAlertInhibit));
+    await act(async () => edit);
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.recovery?.kind).toBe('delete');
+  });
+
+  it('keeps uncertain in-flight write evidence after role loss without admitting retry', async () => {
+    let rejectWrite!: (reason: unknown) => void;
+    api.saveAlertInhibit.mockReturnValueOnce(
+      new Promise<void>((_resolve, reject) => {
+        rejectWrite = reject;
+      })
+    );
+    const { result, rerender } = renderHook(
+      ({ capabilities }) => {
+        const command = useAlertInhibitCommandController(reread, null, capabilities);
+        return { state: command.state, ...command.actions };
+      },
+      { initialProps: { capabilities: { canWrite: true, canDelete: true } } }
+    );
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+    let submission!: Promise<void>;
+    act(() => {
+      submission = result.current.submit();
+    });
+    await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalledOnce());
+
+    rerender({ capabilities: { canWrite: false, canDelete: false } });
+    await waitFor(() => expect(result.current.state.draft).toBeNull());
+    act(() => rejectWrite(unavailableRequestFailure()));
+    await act(async () => submission);
+
+    expect(result.current.state.recovery?.kind).toBe('save');
+    await act(async () => result.current.retry());
+    expect(api.saveAlertInhibit).toHaveBeenCalledOnce();
+    expect(api.loadAlertInhibit).not.toHaveBeenCalled();
+  });
+
+  it('retires an in-flight entity prefill when write access is lost', async () => {
+    const alerts = deferred<Array<{ labels: Record<string, string> }>>();
+    api.loadAlertInhibitPrefillAlerts.mockReturnValueOnce(alerts.promise);
+    const { result, rerender } = renderHook(
+      ({ capabilities }) => {
+        const command = useAlertInhibitCommandController(reread, entityManagementContext(), capabilities);
+        return { state: command.state, ...command.actions };
+      },
+      { initialProps: { capabilities: { canWrite: true, canDelete: true } } }
+    );
+
+    act(() => result.current.create());
+    await waitFor(() => expect(api.loadAlertInhibitPrefillAlerts).toHaveBeenCalledOnce());
+    const signal = api.loadAlertInhibitPrefillAlerts.mock.calls[0]?.[1] as AbortSignal;
+
+    rerender({ capabilities: { canWrite: false, canDelete: false } });
+    expect(signal.aborted).toBe(true);
+    await act(async () => {
+      alerts.resolve([{ labels: { service: 'checkout' } }]);
+      await alerts.promise;
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.prefill).toBe('idle');
+      expect(result.current.state.draft).toBeNull();
+      expect(result.current.state.command).toBe('idle');
+    });
   });
 
   it('admits only one same-tick write command', async () => {
@@ -180,9 +322,12 @@ describe('Alert Inhibit command controller', () => {
   it('does not publish prefill after navigation changes the entity context', async () => {
     const alerts = deferred<Array<{ labels: Record<string, string> }>>();
     api.loadAlertInhibitPrefillAlerts.mockReturnValueOnce(alerts.promise);
-    const { result, rerender } = renderHook(({ management }) => useAlertInhibitCommandController(reread, management), {
-      initialProps: { management: entityManagementContext() }
-    });
+    const { result, rerender } = renderHook(
+      ({ management }) => useAlertInhibitCommandController(reread, management, { canWrite: true, canDelete: true }),
+      {
+        initialProps: { management: entityManagementContext() }
+      }
+    );
     act(() => result.current.actions.create());
     rerender({ management: { ...entityManagementContext(), entityId: 8, entityName: 'Billing API' } });
 
@@ -705,9 +850,12 @@ function uncertainRequestFailure() {
   return new AlertInhibitRequestFailure('error', 'uncertain');
 }
 
-function renderCommandController(management: Parameters<typeof useAlertInhibitCommandController>[1] = null) {
+function renderCommandController(
+  management: Parameters<typeof useAlertInhibitCommandController>[1] = null,
+  capabilities: AlertActionCapabilities = { canWrite: true, canDelete: true }
+) {
   return renderHook(() => {
-    const command = useAlertInhibitCommandController(reread, management);
+    const command = useAlertInhibitCommandController(reread, management, capabilities);
     return { state: command.state, ...command.actions };
   });
 }

@@ -15,23 +15,24 @@
  * limitations under the License.
  */
 
-import { Button, Popconfirm, Space, Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
-
 import { AlertManagementNav } from '../components/alert-management-nav';
+import { AlertInhibitPageHeader } from '../components/alert-inhibit-page-header';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
 import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
 import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
 import { useAlertInhibitController } from '../controller/use-alert-inhibit-controller';
+import { alertInhibitRouteRecovery } from '../model/alert-inhibit-recovery-capability';
 import { AlertInhibitDraftEditor } from './alert-inhibit-draft-editor';
 import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
   const controller = useAlertInhibitController();
-  const { command, detail, list, management, query, recovery, refreshing, search, selectedIds } = controller.state;
-  const routeRecovery = recovery?.kind === 'save' ? undefined : recovery;
+  const { capabilities } = controller;
+  const { command, detail, draft, list, management, query, recovery, refreshing, search, selectedIds } =
+    controller.state;
+  const routeRecovery = alertInhibitRouteRecovery(recovery, capabilities, draft !== null);
   const busy = command !== 'idle';
   const removeSelected = () => {
     if (!busy && selectedIds.length > 0) void controller.removeMany(selectedIds);
@@ -40,6 +41,7 @@ export function AlertInhibitPage() {
     <div className={styles.page}>
       <AlertInhibitPageHeader
         busy={busy}
+        capabilities={capabilities}
         selectedCount={selectedIds.length}
         create={controller.create}
         removeSelected={removeSelected}
@@ -55,9 +57,14 @@ export function AlertInhibitPage() {
         submitSearch={controller.submitSearch}
         refresh={controller.refresh}
       />
-      <AlertInhibitRecovery recovery={routeRecovery} retrying={command !== 'recovering'} retry={controller.retry} />
-      <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />
+      <AlertInhibitRecovery
+        recovery={routeRecovery.recovery}
+        retrying={command !== 'recovering' || !routeRecovery.canRetry}
+        retry={controller.retry}
+      />
+      {capabilities.canWrite && <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />}
       <AlertInhibitResults
+        capabilities={capabilities}
         state={list}
         busy={busy}
         pageIndex={query.pageIndex}
@@ -70,7 +77,7 @@ export function AlertInhibitPage() {
         changePage={controller.changePage}
         retry={controller.refresh}
       />
-      <AlertInhibitDraftEditor controller={controller} />
+      {capabilities.canWrite && <AlertInhibitDraftEditor controller={controller} />}
     </div>
   );
 }
@@ -105,43 +112,4 @@ function managementContextProps(
     viewMatched: controller.viewMatchedRules,
     returnToEntity: controller.returnToEntity
   };
-}
-
-function AlertInhibitPageHeader({
-  busy,
-  selectedCount,
-  create,
-  removeSelected
-}: {
-  busy: boolean;
-  selectedCount: number;
-  create: () => unknown;
-  removeSelected: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('alertInhibits.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('alertInhibits.description')}</Typography.Text>
-      </div>
-      <Space>
-        {selectedCount > 0 && (
-          <Popconfirm
-            title={t('alertInhibits.deleteSelectedConfirm', { count: selectedCount })}
-            disabled={busy}
-            okText={t('common.delete')}
-            onConfirm={removeSelected}
-          >
-            <Button danger disabled={busy}>
-              {t('alertInhibits.deleteSelected')}
-            </Button>
-          </Popconfirm>
-        )}
-        <Button type="primary" disabled={busy} onClick={create}>
-          {t('alertInhibits.new')}
-        </Button>
-      </Space>
-    </header>
-  );
 }

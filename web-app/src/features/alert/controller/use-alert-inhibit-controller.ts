@@ -1,22 +1,40 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { useEffect } from 'react';
+
+import { useAlertInhibitActionCapabilities } from './use-alert-inhibit-action-capabilities';
 import { useAlertInhibitCommandController } from './use-alert-inhibit-command-controller';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 import { useAlertInhibitSelection } from './use-alert-inhibit-selection';
 import { useAlertLabelSuggestionController } from './use-alert-label-suggestion-controller';
 
 export function useAlertInhibitController() {
+  const capabilities = useAlertInhibitActionCapabilities();
   const read = useAlertInhibitReadController();
-  const command = useAlertInhibitCommandController(read.rereadAuthoritatively, read.state.management.context);
+  const command = useAlertInhibitCommandController(
+    read.rereadAuthoritatively,
+    read.state.management.context,
+    capabilities
+  );
   const labelSuggestions = useAlertLabelSuggestionController();
   const selection = useAlertInhibitSelection(read.state.query, read.state.list);
+  const selectIds = selection.selectIds;
+  useEffect(() => {
+    if (!capabilities.canDelete) selectIds([]);
+  }, [capabilities.canDelete, selectIds]);
   const unlessLocked =
     <Args extends unknown[]>(action: (...args: Args) => unknown) =>
     (...args: Args) => {
       if (!command.controls.isLocked()) return action(...args);
     };
   return {
-    state: { ...command.state, ...read.state, labelSuggestions, selectedIds: selection.selectedIds },
+    capabilities,
+    state: {
+      ...command.state,
+      ...read.state,
+      labelSuggestions,
+      selectedIds: capabilities.canDelete ? selection.selectedIds : []
+    },
     setSearch: unlessLocked(read.actions.setSearch),
     submitSearch: unlessLocked(read.actions.submitSearch),
     changePage: unlessLocked(read.actions.changePage),
@@ -24,7 +42,9 @@ export function useAlertInhibitController() {
     viewAllRules: unlessLocked(read.actions.viewAllRules),
     viewMatchedRules: unlessLocked(read.actions.viewMatchedRules),
     returnToEntity: unlessLocked(read.actions.returnToEntity),
-    selectIds: unlessLocked(selection.selectIds),
+    selectIds: unlessLocked((ids: number[]) => {
+      if (capabilities.canDelete) selectIds(ids);
+    }),
     ...command.actions
   };
 }

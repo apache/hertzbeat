@@ -21,6 +21,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertInhibitPage } from './alert-inhibit-page';
 
 const controller = vi.hoisted(() => ({
+  capabilities: { canWrite: true, canDelete: true },
   changePage: vi.fn(),
   closeDraft: vi.fn(),
   create: vi.fn(),
@@ -59,6 +60,7 @@ const record = {
 describe('AlertInhibitPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    controller.capabilities = { canWrite: true, canDelete: true };
     controller.state = buildState();
   });
   afterEach(cleanup);
@@ -118,6 +120,51 @@ describe('AlertInhibitPage', () => {
     expect(controller.refresh).toHaveBeenCalled();
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
+  });
+
+  it('renders GUEST as read-only without actionable mutation controls', () => {
+    controller.capabilities = { canWrite: false, canDelete: false };
+    render(<AlertInhibitPage />);
+
+    expect(screen.queryByRole('button', { name: 'alertInhibits.new' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'alertInhibits.delete' })).not.toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('hides stale write state but keeps denied uncertain-write evidence visible and non-actionable', () => {
+    controller.capabilities = { canWrite: false, canDelete: false };
+    controller.state = buildState({
+      command: 'recovering',
+      detail: { kind: 'unavailable', id: 7 },
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service'],
+        enable: true
+      },
+      recovery: { kind: 'save', phase: 'proof', retryable: true },
+      selectedIds: [7]
+    });
+    render(<AlertInhibitPage />);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('alertInhibits.loadFailed')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
+  });
+
+  it('keeps USER write controls while omitting ADMIN-only delete selection and actions', () => {
+    controller.capabilities = { canWrite: true, canDelete: false };
+    render(<AlertInhibitPage />);
+
+    expect(screen.getByRole('button', { name: 'alertInhibits.new' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'alertInhibits.delete' })).not.toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeEnabled();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   it('offers canonical server label keys without disabling manual tags', () => {
