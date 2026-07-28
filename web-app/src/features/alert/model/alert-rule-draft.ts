@@ -13,6 +13,11 @@ import type { AlertRuleDraft } from './alert-rule-draft-contract';
 import { createMetricAlertEditorDraft, metricAlertEditorFromExpression } from './alert-rule-metric-draft';
 
 export type { AlertRuleDraft } from './alert-rule-draft-contract';
+export type AlertRulePreviewRequest = {
+  type: AlertRuleType;
+  datasource: AlertRuleDatasource;
+  expr: string;
+};
 
 const strategyForType: Record<AlertRuleType, { kind: AlertRuleKind; dataType: AlertRuleDataType }> = {
   realtime_metric: { kind: 'realtime', dataType: 'metric' },
@@ -73,7 +78,7 @@ export function buildAlertRuleTogglePayload(rule: AlertRule, enable: boolean) {
   };
 }
 
-export function buildAlertRulePreviewRequest(draft: AlertRuleDraft) {
+export function buildAlertRulePreviewRequest(draft: AlertRuleDraft): AlertRulePreviewRequest {
   const type = typeForDraft(draft);
   if (!validBoundedText(draft.expr, 2048)) throw contract('expr is invalid');
   return { type, datasource: datasourceFor(type), expr: draft.expr.trim() };

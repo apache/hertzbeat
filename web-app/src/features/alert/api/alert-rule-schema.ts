@@ -24,6 +24,8 @@ import {
   type AlertRule,
   type AlertRuleDatasourceStatus,
   type AlertRulePage,
+  type AlertRulePreview,
+  type AlertRulePreviewValue,
   type AlertRuleQuery
 } from '../model/alert-rule-model';
 
@@ -72,7 +74,18 @@ const alertRulePageSchema = z.object({
   size: positiveIntegerSchema
 });
 
-const alertRulePreviewSchema = z.array(z.record(z.string(), z.unknown()));
+const alertRulePreviewMaxRows = 100;
+const alertRulePreviewMaxDepth = 6;
+const alertRulePreviewMaxCollectionItems = 50;
+const alertRulePreviewMaxStringCharacters = 16_384;
+const alertRulePreviewStringSchema = z.string().max(alertRulePreviewMaxStringCharacters);
+const alertRulePreviewValueSchema = buildAlertRulePreviewValueSchema(0);
+const alertRulePreviewRowSchema = boundedPreviewObjectInput().pipe(
+  z.record(alertRulePreviewStringSchema, alertRulePreviewValueSchema)
+);
+const alertRulePreviewSchema = boundedPreviewArrayInput(alertRulePreviewMaxRows).pipe(
+  z.array(alertRulePreviewRowSchema)
+);
 const alertRuleDatasourceStatusSchema = z.object({
   hasPromqlExecutor: z.boolean(),
   hasSqlExecutor: z.boolean()
@@ -103,11 +116,9 @@ export function parseAlertRulePage(value: unknown, query: AlertRuleQuery): Alert
   return { ...page, content: page.content.map(mapAlertRule) };
 }
 
-export function parseAlertRulePreview(value: unknown): { matchCount: number } {
+export function parseAlertRulePreview(value: unknown): AlertRulePreview {
   const rows = parseSchema(alertRulePreviewSchema, value, 'Alert rule preview');
-  // The editor only presents whether and how many rows matched. Discard the
-  // backend rows here so arbitrary query output never becomes route state.
-  return { matchCount: rows.length };
+  return { rowCount: rows.length, rows };
 }
 
 export function parseAlertRuleDatasourceStatus(value: unknown): AlertRuleDatasourceStatus {
@@ -165,4 +176,41 @@ function daysInMonth(year: number, month: number) {
 
 function isLeapYear(year: number) {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+
+function buildAlertRulePreviewValueSchema(depth: number): z.ZodType<AlertRulePreviewValue> {
+  const scalarSchema = z.union([
+    alertRulePreviewStringSchema,
+    z.number(),
+    z.boolean(),
+    z.null()
+  ]) as z.ZodType<AlertRulePreviewValue>;
+  if (depth >= alertRulePreviewMaxDepth) return scalarSchema;
+  const childSchema = buildAlertRulePreviewValueSchema(depth + 1);
+  const arraySchema = boundedPreviewArrayInput(alertRulePreviewMaxCollectionItems).pipe(z.array(childSchema));
+  const objectSchema = boundedPreviewObjectInput().pipe(z.record(alertRulePreviewStringSchema, childSchema));
+  return z.union([scalarSchema, arraySchema, objectSchema]);
+}
+
+function boundedPreviewObjectInput() {
+  return z.custom<Record<string, unknown>>(isBoundedPreviewObject, {
+    message: 'Expected a bounded preview object'
+  });
+}
+
+function boundedPreviewArrayInput(maxItems: number) {
+  return z.custom<unknown[]>(value => Array.isArray(value) && value.length <= maxItems, {
+    message: 'Expected a bounded preview array'
+  });
+}
+
+function isBoundedPreviewObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  let entries = 0;
+  for (const key in value) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+    entries += 1;
+    if (entries > alertRulePreviewMaxCollectionItems) return false;
+  }
+  return true;
 }

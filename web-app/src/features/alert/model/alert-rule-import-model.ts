@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-const alertRuleImportExtensions = ['.json', '.xlsx', '.yaml'] as const;
+const alertRuleImportExtensions = ['.json', '.xlsx', '.yaml', '.yml'] as const;
 
 export const alertRuleImportAccept = alertRuleImportExtensions.join(',');
 

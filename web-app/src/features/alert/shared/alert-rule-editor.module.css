@@ -160,6 +160,12 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+.previewEvidence {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
 .actions {
   display: flex;
   justify-content: flex-end;

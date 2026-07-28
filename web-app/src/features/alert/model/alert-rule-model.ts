@@ -8,6 +8,7 @@ export * from './alert-rule-import-model';
 export * from './alert-rule-metric-expression';
 export * from './alert-rule-metric-bindings';
 export * from './alert-rule-metric-draft';
+export * from './alert-rule-preview';
 export * from './alert-rule-query';
 export * from './alert-rule-strategy';
 export * from './alert-rule-target-catalog';

@@ -17,15 +17,15 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertRuleApiRequest } from './alert-rule-api-failure';
+import { alertRuleApiRequest, alertRuleWriteApiRequest } from './alert-rule-api-failure';
 import {
   AlertRuleContractError,
   buildAlertRulePayload,
-  buildAlertRulePreviewRequest,
   buildAlertRuleTogglePayload,
   normalizeAlertRuleIds,
   type AlertRule,
   type AlertRuleDraft,
+  type AlertRulePreviewRequest,
   type AlertRuleQuery
 } from '../model/alert-rule-model';
 import {
@@ -81,23 +81,22 @@ export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft)
   if (mode === 'new' && draft.id !== undefined) throw new AlertRuleContractError('create must not carry an id');
   if (mode === 'edit' && draft.id === undefined) throw new AlertRuleContractError('update requires an id');
   const payload = buildAlertRulePayload(draft);
-  if (mode === 'new') await alertRuleApiRequest(() => apiMessagePost('/api/alert/define', payload));
-  else await alertRuleApiRequest(() => apiMessagePut('/api/alert/define', payload));
+  if (mode === 'new') await alertRuleWriteApiRequest(() => apiMessagePost('/api/alert/define', payload));
+  else await alertRuleWriteApiRequest(() => apiMessagePut('/api/alert/define', payload));
 }
 
 export async function deleteAlertRules(ids: number[]): Promise<void> {
   const uniqueIds = normalizeAlertRuleIds(ids.map(normalizeId));
   const params = new URLSearchParams();
   uniqueIds.forEach(id => params.append('ids', String(id)));
-  await alertRuleApiRequest(() => apiMessageDelete(`/api/alert/defines?${params.toString()}`));
+  await alertRuleWriteApiRequest(() => apiMessageDelete(`/api/alert/defines?${params.toString()}`));
 }
 
 export async function updateAlertRuleEnabled(rule: AlertRule, enable: boolean): Promise<void> {
-  await alertRuleApiRequest(() => apiMessagePut('/api/alert/define', buildAlertRuleTogglePayload(rule, enable)));
+  await alertRuleWriteApiRequest(() => apiMessagePut('/api/alert/define', buildAlertRuleTogglePayload(rule, enable)));
 }
 
-export async function previewAlertRule(draft: AlertRuleDraft) {
-  const request = buildAlertRulePreviewRequest(draft);
+export async function previewAlertRule(request: AlertRulePreviewRequest) {
   const params = new URLSearchParams({ type: request.type, expr: request.expr });
   // The backend currently exposes preview only as GET, so the expression
   // remains in the URL until that contract supports a request body.

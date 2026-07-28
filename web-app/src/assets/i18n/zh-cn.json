@@ -1990,7 +1990,7 @@
     "deleteSelectedConfirm": "确认删除选中的 {{count}} 条告警规则？",
     "export": {
       "selected": "导出选中项",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
       "success": "告警规则配置已下载。",
       "failure": {
         "forbidden": "当前账户无权导出告警规则。",
@@ -2097,8 +2097,11 @@
     "period": "计算周期（秒）",
     "times": "触发次数",
     "preview": "预览",
-    "previewSuccess": "找到 {{count}} 条匹配序列。",
-    "previewEmpty": "没有匹配序列。",
+    "previewSuccess": "预览返回 {{count}} 行；每页最多显示 {{pageSize}} 行。",
+    "previewEmpty": "预览未返回任何行。",
+    "previewTruncated": "部分预览内容已截断以便显示。",
+    "previewInvalid": "预览结果超出安全显示限制，或响应结构无效。",
+    "previewInputInvalid": "预览表达式无效或超出输入限制。",
     "previewFailed": "表达式计算失败。",
     "datasource": {
       "checking": "正在检查周期计算能力。",

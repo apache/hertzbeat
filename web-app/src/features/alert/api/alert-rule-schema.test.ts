@@ -214,17 +214,40 @@ describe('alert rule wire schemas', () => {
     ).toThrow(AlertRuleContractError);
   });
 
-  it('reduces preview rows to bounded count evidence', () => {
+  it('preserves preview rows and JSON values for operator inspection', () => {
     const preview = parseAlertRulePreview([
-      { value: 1, authorization: 'private-secret', nested: { payload: 'not retained' } }
+      { metric: 'cpu_usage', value: 92.5, __value__: null, labels: { service: 'checkout' } },
+      { metric: 'cpu_usage', value: 88, healthy: false }
     ]);
 
-    expect(preview).toEqual({ matchCount: 1 });
-    expect(JSON.stringify(preview)).not.toContain('private-secret');
-    expect(parseAlertRulePreview([])).toEqual({ matchCount: 0 });
+    expect(preview).toEqual({
+      rowCount: 2,
+      rows: [
+        { metric: 'cpu_usage', value: 92.5, __value__: null, labels: { service: 'checkout' } },
+        { metric: 'cpu_usage', value: 88, healthy: false }
+      ]
+    });
+    expect(parseAlertRulePreview([])).toEqual({ rowCount: 0, rows: [] });
     expect(() => parseAlertRulePreview(null)).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([[]])).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([1])).toThrow(AlertRuleContractError);
+    expect(() => parseAlertRulePreview([{ value: undefined }])).toThrow(AlertRuleContractError);
+  });
+
+  it('rejects preview evidence beyond the bounded wire contract before route state', () => {
+    expect(() => parseAlertRulePreview(Array.from({ length: 101 }, () => ({ value: 1 })))).toThrow(
+      AlertRuleContractError
+    );
+    expect(() =>
+      parseAlertRulePreview([
+        Object.fromEntries(Array.from({ length: 51 }, (_value, index) => [`field-${index}`, index]))
+      ])
+    ).toThrow(AlertRuleContractError);
+    expect(() => parseAlertRulePreview([{ value: Array.from({ length: 51 }, () => 1) }])).toThrow(
+      AlertRuleContractError
+    );
+    expect(() => parseAlertRulePreview([{ value: 'x'.repeat(16_385) }])).toThrow(AlertRuleContractError);
+    expect(() => parseAlertRulePreview([{ value: nestedPreviewValue(7) }])).toThrow(AlertRuleContractError);
   });
 
   it('allowlists the datasource capability flags used by the editor', () => {
@@ -247,3 +270,9 @@ describe('alert rule wire schemas', () => {
     expect(() => parseAlertRuleDatasourceStatus(value)).toThrow(AlertRuleContractError);
   });
 });
+
+function nestedPreviewValue(depth: number): unknown {
+  let value: unknown = 'leaf';
+  for (let index = 0; index < depth; index += 1) value = { nested: value };
+  return value;
+}

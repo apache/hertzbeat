@@ -37,7 +37,7 @@ describe('Alert Rule import API', () => {
   });
 
   it('rejects unsupported documents before transport', async () => {
-    await expect(importAlertRuleDefinitions(new File(['rule'], 'rules.yml'))).rejects.toMatchObject({
+    await expect(importAlertRuleDefinitions(new File(['rule'], 'rules.txt'))).rejects.toMatchObject({
       kind: 'validation',
       outcome: 'rejected'
     });

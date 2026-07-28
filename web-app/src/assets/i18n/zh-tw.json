@@ -1990,7 +1990,7 @@
     "deleteSelectedConfirm": "確認刪除選取的 {{count}} 條警報規則？",
     "export": {
       "selected": "匯出選取項目",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
       "success": "警報規則設定已下載。",
       "failure": {
         "forbidden": "目前帳戶無權匯出警報規則。",
@@ -2097,8 +2097,11 @@
     "period": "計算週期（秒）",
     "times": "觸發次數",
     "preview": "預覽",
-    "previewSuccess": "找到 {{count}} 條符合序列。",
-    "previewEmpty": "沒有符合序列。",
+    "previewSuccess": "預覽傳回 {{count}} 行；每頁最多顯示 {{pageSize}} 行。",
+    "previewEmpty": "預覽未傳回任何行。",
+    "previewTruncated": "部分預覽內容已截斷以便顯示。",
+    "previewInvalid": "預覽結果超出安全顯示限制，或回應結構無效。",
+    "previewInputInvalid": "預覽運算式無效或超出輸入限制。",
     "previewFailed": "運算式計算失敗。",
     "datasource": {
       "checking": "正在檢查週期計算能力。",

@@ -59,6 +59,7 @@ describe('AlertRuleEditorPage', () => {
   it.each([
     ['loading', 'loading'],
     ['missing', 'common.notFound.description'],
+    ['permission', 'common.permission.roleRequiredDescription'],
     ['unavailable', 'common.unavailable'],
     ['error', 'common.routeError.description']
   ])('renders detail state %s honestly', (kind, evidence) => {
@@ -70,6 +71,9 @@ describe('AlertRuleEditorPage', () => {
 
   it.each([
     ['empty', 'alertRules.previewEmpty'],
+    ['input', 'alertRules.previewInputInvalid'],
+    ['permission', 'common.permission.roleRequiredDescription'],
+    ['invalid', 'alertRules.previewInvalid'],
     ['unavailable', 'common.unavailable'],
     ['error', 'alertRules.previewFailed']
   ])('renders preview state %s distinctly', (kind, evidence) => {
@@ -79,9 +83,10 @@ describe('AlertRuleEditorPage', () => {
   });
 
   it.each([
-    ['missing', 'common.notFound.description'],
+    ['permission', 'common.permission.roleRequiredDescription'],
     ['unavailable', 'common.unavailable'],
-    ['error', 'alertRules.saveFailed']
+    ['error', 'alertRules.saveFailed'],
+    ['validation', 'alertRules.validation']
   ])('renders save failure %s distinctly', (failure, evidence) => {
     controller.state = buildState({ saveFailure: failure });
     render(<AlertRuleEditorPage mode="new" />);
@@ -142,9 +147,20 @@ describe('AlertRuleEditorPage', () => {
   });
 
   it('renders ready preview and delegates draft, preview, save, and cancel', () => {
-    controller.state = buildState({ preview: { kind: 'ready', matchCount: 1 } });
+    controller.state = buildState({
+      preview: {
+        kind: 'ready',
+        rowCount: 1,
+        rows: [{ metric: 'cpu_usage', value: 92.5, __value__: null, labels: { service: 'checkout' } }]
+      }
+    });
     render(<AlertRuleEditorPage mode="new" />);
     expect(screen.getByText('alertRules.previewSuccess')).toBeInTheDocument();
+    expect(screen.getAllByText('metric').length).toBeGreaterThan(0);
+    expect(screen.getByText('cpu_usage')).toBeInTheDocument();
+    expect(screen.getByText('92.5')).toBeInTheDocument();
+    expect(screen.getByText('null')).toBeInTheDocument();
+    expect(screen.getByText('{"service":"checkout"}')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('alertRules.name'), { target: { value: 'New' } });
     fireEvent.click(screen.getByRole('button', { name: 'alertRules.preview' }));
     fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
@@ -155,11 +171,11 @@ describe('AlertRuleEditorPage', () => {
     expect(controller.cancel).toHaveBeenCalled();
   });
 
-  it('keeps preview readable but disables save when the session cannot write alert rules', () => {
+  it('disables preview and save when the session cannot write alert rules', () => {
     controller.state = buildState({ canSave: false });
     render(<AlertRuleEditorPage mode="edit" />);
 
-    expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
   });
 

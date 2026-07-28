@@ -29,6 +29,8 @@ export function useAlertRuleCommandController(
       success: () => void message.success(t('alertRules.saveSuccess')),
       failure: (kind, retained) => {
         if (kind === 'unavailable') void message.warning(t('common.unavailable'));
+        else if (kind === 'validation') void message.warning(t('alertRules.validation'));
+        else if (kind === 'permission') void message.error(t('common.permission.roleRequiredDescription'));
         else if (retained) void message.error(t('common.routeError.description'));
         else void message.error(t('alertRules.saveFailed'));
       }

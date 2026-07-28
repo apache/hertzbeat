@@ -2,8 +2,8 @@
 
 import type { AlertRuleDraft } from '../model/alert-rule-model';
 import type {
-  AlertRuleEditorFailure,
   AlertRulePreviewState,
+  AlertRuleEditorSaveFailure,
   AlertRuleSaveRecovery
 } from '../model/alert-rule-editor-evidence';
 
@@ -15,7 +15,7 @@ export type AlertRuleRouteState = {
   draft: AlertRuleDraft | null;
   preview: AlertRulePreviewState;
   command: 'idle' | 'saving';
-  saveFailure: AlertRuleEditorFailure | undefined;
+  saveFailure: AlertRuleEditorSaveFailure | undefined;
   recovery: AlertRuleSaveRecovery | undefined;
 };
 

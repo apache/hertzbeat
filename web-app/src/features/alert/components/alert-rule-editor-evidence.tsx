@@ -10,11 +10,13 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   AlertRuleEditorDetailState,
-  AlertRuleEditorFailure,
+  AlertRuleEditorReadFailure,
+  AlertRuleEditorSaveFailure,
   AlertRulePreviewState,
   AlertRuleSaveRecovery
 } from '../model/alert-rule-editor-evidence';
-import type { AlertRuleDatasourceState } from '../model/alert-rule-model';
+import { alertRulePreviewPageSize, type AlertRuleDatasourceState } from '../model/alert-rule-model';
+import { AlertRulePreviewTable } from './alert-rule-preview-table';
 
 export function AlertRuleDetailEvidence(props: { state: AlertRuleEditorDetailState; retry: () => unknown }) {
   const { t } = useTranslation();
@@ -37,13 +39,31 @@ export function AlertRuleDetailEvidence(props: { state: AlertRuleEditorDetailSta
 export function AlertRulePreviewEvidence({ state }: { state: AlertRulePreviewState }) {
   const { t } = useTranslation();
   if (state.kind === 'idle' || state.kind === 'loading') return null;
+  if (state.kind === 'input') {
+    return <Alert type="error" showIcon message={t('alertRules.previewInputInvalid')} />;
+  }
+  if (state.kind === 'permission') {
+    return <Alert type="error" showIcon message={t('common.permission.roleRequiredDescription')} />;
+  }
+  if (state.kind === 'invalid') {
+    return <Alert type="error" showIcon message={t('alertRules.previewInvalid')} />;
+  }
   if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (state.kind === 'error') return <Alert type="error" showIcon message={t('alertRules.previewFailed')} />;
   if (state.kind === 'empty') return <Alert type="warning" showIcon message={t('alertRules.previewEmpty')} />;
-  return <Alert type="success" showIcon message={t('alertRules.previewSuccess', { count: state.matchCount })} />;
+  return (
+    <>
+      <Alert
+        type="success"
+        showIcon
+        message={t('alertRules.previewSuccess', { count: state.rowCount, pageSize: alertRulePreviewPageSize })}
+      />
+      <AlertRulePreviewTable evidence={state} />
+    </>
+  );
 }
 
-export function AlertRuleSaveEvidence({ failure }: { failure: AlertRuleEditorFailure | undefined }) {
+export function AlertRuleSaveEvidence({ failure }: { failure: AlertRuleEditorSaveFailure | undefined }) {
   const { t } = useTranslation();
   if (!failure) return null;
   return <Alert type="error" showIcon message={t(saveFailureMessageKey(failure))} />;
@@ -104,14 +124,16 @@ function datasourceMessageKey(status: Extract<AlertRuleDatasourceState, { kind: 
   return status.hasSqlExecutor ? 'alertRules.datasource.sqlOnly' : 'alertRules.datasource.none';
 }
 
-function detailFailureMessageKey(failure: AlertRuleEditorFailure) {
+function detailFailureMessageKey(failure: AlertRuleEditorReadFailure) {
   if (failure === 'missing') return 'common.notFound.description';
+  if (failure === 'permission') return 'common.permission.roleRequiredDescription';
   if (failure === 'unavailable') return 'common.unavailable';
   return 'common.routeError.description';
 }
 
-function saveFailureMessageKey(failure: AlertRuleEditorFailure) {
-  if (failure === 'missing') return 'common.notFound.description';
+function saveFailureMessageKey(failure: AlertRuleEditorSaveFailure) {
+  if (failure === 'permission') return 'common.permission.roleRequiredDescription';
+  if (failure === 'validation') return 'alertRules.validation';
   if (failure === 'unavailable') return 'common.unavailable';
   return 'alertRules.saveFailed';
 }

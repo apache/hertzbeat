@@ -122,7 +122,7 @@ function AlertRuleEditorActions({ controller }: { controller: AlertRuleEditorCon
       </Button>
       <Button
         loading={preview.kind === 'loading'}
-        disabled={command === 'saving' || recovery !== undefined}
+        disabled={!canSave || command === 'saving' || recovery !== undefined}
         onClick={() => {
           void controller.preview();
         }}

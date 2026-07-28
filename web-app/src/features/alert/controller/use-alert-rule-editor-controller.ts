@@ -17,7 +17,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const draft = route.draft;
   const metricTarget = useAlertRuleMetricTargetController(draft);
   const command = useAlertRuleCommandController(mode, draft, route.identity, route.updateRoute);
-  const preview = useAlertRulePreviewController(draft, route.identity, route.updateRoute);
+  const preview = useAlertRulePreviewController(command.canSave, draft, route.identity, route.updateRoute);
   const updateDraft = (patch: Partial<AlertRuleDraft>) => {
     if (!draft || command.isLocked()) return;
     route.identity.invalidate();

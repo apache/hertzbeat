@@ -43,7 +43,8 @@ export type AlertRule = {
 export type AlertRulePage = PagedCollection<AlertRule>;
 
 export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
-export type AlertRuleFailureKind = 'missing' | 'unavailable' | 'error';
+export type AlertRuleFailureKind = 'missing' | 'permission' | 'unavailable' | 'error';
+export type AlertRuleWriteFailureKind = 'permission' | 'validation' | 'unavailable' | 'error';
 export type AlertRuleWriteOutcome = 'rejected' | 'uncertain';
 
 export class AlertRuleContractError extends Error {
@@ -71,14 +72,28 @@ export class AlertRuleRequestFailure extends Error {
   }
 }
 
+export class AlertRuleWriteRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertRuleWriteFailureKind,
+    readonly writeOutcome: AlertRuleWriteOutcome
+  ) {
+    super('Alert Rule write failed');
+    this.name = 'AlertRuleWriteRequestFailure';
+  }
+}
+
 export function alertRuleFailureKind(error: unknown): AlertRuleFailureKind {
   if (error instanceof AlertRuleMissingError) return 'missing';
+  if (error instanceof AlertRuleWriteRequestFailure) {
+    return error.kind === 'validation' ? 'error' : error.kind;
+  }
   return error instanceof AlertRuleRequestFailure ? error.kind : 'error';
 }
 
 /** Unknown write outcomes must continue through canonical read proof. */
 export function alertRuleWriteOutcome(error: unknown): AlertRuleWriteOutcome {
   if (error instanceof AlertRuleContractError) return 'rejected';
+  if (error instanceof AlertRuleWriteRequestFailure) return error.writeOutcome;
   return error instanceof AlertRuleRequestFailure ? error.writeOutcome : 'uncertain';
 }
 

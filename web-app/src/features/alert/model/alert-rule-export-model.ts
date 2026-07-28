@@ -7,14 +7,15 @@
 
 import { safeDownloadFilename, type BrowserDownloadArtifact } from '@/shared/browser-download';
 
-export const alertRuleExportFormats = ['JSON', 'EXCEL'] as const;
+export const alertRuleExportFormats = ['JSON', 'EXCEL', 'YAML'] as const;
 
 export type AlertRuleExportFormat = (typeof alertRuleExportFormats)[number];
 export type AlertRuleExportArtifact = BrowserDownloadArtifact;
 
 const fallbackNames: Record<AlertRuleExportFormat, string> = {
   JSON: 'hertzbeat-alert-rules.json',
-  EXCEL: 'hertzbeat-alert-rules.xlsx'
+  EXCEL: 'hertzbeat-alert-rules.xlsx',
+  YAML: 'hertzbeat-alert-rules.yaml'
 };
 
 export function alertRuleExportFilename(contentDisposition: string | null, format: AlertRuleExportFormat) {

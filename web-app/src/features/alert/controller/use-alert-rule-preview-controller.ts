@@ -1,14 +1,21 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { App } from 'antd';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { previewAlertRule } from '../api/alert-rule-api';
-import { alertRuleFailureKind, type AlertRuleDraft } from '../model/alert-rule-model';
+import {
+  AlertRuleContractError,
+  alertRuleFailureKind,
+  buildAlertRulePreviewRequest,
+  type AlertRuleDraft,
+  type AlertRulePreviewRequest
+} from '../model/alert-rule-model';
 import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
 
 export function useAlertRulePreviewController(
+  canPreview: boolean,
   draft: AlertRuleDraft | null,
   identity: AlertRuleEditorIdentityController,
   updateRoute: AlertRuleRouteUpdate
@@ -16,12 +23,21 @@ export function useAlertRulePreviewController(
   const { t } = useTranslation();
   const { message } = App.useApp();
   const previewEpochRef = useRef(0);
+  const previousCanPreviewRef = useRef(canPreview);
   const invalidate = () => {
     previewEpochRef.current += 1;
   };
   const preview = async () => {
+    if (!canPreview) return;
     if (!draft?.expr.trim()) {
       void message.warning(t('alertRules.expressionRequired'));
+      return;
+    }
+    let request: AlertRulePreviewRequest;
+    try {
+      request = buildAlertRulePreviewRequest(draft);
+    } catch (reason) {
+      updateRoute({ preview: { kind: reason instanceof AlertRuleContractError ? 'input' : 'error' } });
       return;
     }
     const owner = identity.capture();
@@ -29,16 +45,29 @@ export function useAlertRulePreviewController(
     previewEpochRef.current = epoch;
     updateRoute({ preview: { kind: 'loading' } });
     try {
-      const evidence = await previewAlertRule(draft);
+      const evidence = await previewAlertRule(request);
       if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
       updateRoute({
-        preview: evidence.matchCount === 0 ? { kind: 'empty' } : { kind: 'ready', matchCount: evidence.matchCount }
+        preview: evidence.rowCount === 0 ? { kind: 'empty' } : { kind: 'ready', ...evidence }
       });
     } catch (reason) {
       if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
-      const kind = alertRuleFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';
+      const failure = alertRuleFailureKind(reason);
+      const kind =
+        reason instanceof AlertRuleContractError
+          ? 'invalid'
+          : failure === 'permission' || failure === 'unavailable'
+            ? failure
+            : 'error';
       updateRoute({ preview: { kind } });
     }
   };
+  useEffect(() => {
+    const lostAccess = previousCanPreviewRef.current && !canPreview;
+    previousCanPreviewRef.current = canPreview;
+    if (!lostAccess) return;
+    previewEpochRef.current += 1;
+    updateRoute({ preview: { kind: 'idle' } });
+  }, [canPreview, updateRoute]);
   return { invalidate, preview };
 }

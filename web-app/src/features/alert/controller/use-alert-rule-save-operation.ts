@@ -14,6 +14,7 @@ import {
   alertRuleWriteOutcome,
   buildAlertRulePayload,
   AlertRuleRequestFailure,
+  AlertRuleWriteRequestFailure,
   type AlertRuleDraft
 } from '../model/alert-rule-model';
 import type {
@@ -40,7 +41,7 @@ type OwnedReceipt = { identity: AlertRuleEditorOperationIdentity; receipt: Alert
 type Attempt = { token: symbol; owned: OwnedReceipt };
 type SaveNotifications = {
   success: () => void;
-  failure: (kind: 'unavailable' | 'error', retained: boolean) => void;
+  failure: (kind: 'permission' | 'validation' | 'unavailable' | 'error', retained: boolean) => void;
 };
 
 export function useAlertRuleSaveOperation(
@@ -126,11 +127,14 @@ function recoverReceipt(receipt: AlertRuleSaveReceipt, reason: unknown): AlertRu
     receipt.phase = 'commit-uncertain';
     return { phase: 'commit-uncertain', failure: 'unavailable', retryable: false };
   }
-  return { phase: 'proof', failure: failureKind(reason), retryable: true };
+  return { phase: 'proof', failure: recoveryFailureKind(reason), retryable: true };
 }
 
 function isDefiniteSourceRejection(reason: unknown) {
-  return reason instanceof AlertRuleRequestFailure && alertRuleWriteOutcome(reason) === 'rejected';
+  return (
+    (reason instanceof AlertRuleRequestFailure || reason instanceof AlertRuleWriteRequestFailure) &&
+    alertRuleWriteOutcome(reason) === 'rejected'
+  );
 }
 
 function createOwnedReceipt(
@@ -158,7 +162,14 @@ function cloneDraft(draft: AlertRuleDraft): AlertRuleDraft {
   };
 }
 
-function failureKind(reason: unknown): 'unavailable' | 'error' {
+function failureKind(reason: unknown): 'permission' | 'validation' | 'unavailable' | 'error' {
+  if (reason instanceof AlertRuleWriteRequestFailure && reason.kind === 'validation') return 'validation';
+  const kind = alertRuleFailureKind(reason);
+  if (kind === 'permission' || kind === 'unavailable') return kind;
+  return 'error';
+}
+
+function recoveryFailureKind(reason: unknown): 'unavailable' | 'error' {
   return alertRuleFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';
 }
 

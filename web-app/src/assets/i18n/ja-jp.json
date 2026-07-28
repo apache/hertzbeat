@@ -2011,7 +2011,7 @@
     "deleteSelectedConfirm": "選択した {{count}} 件のアラートルールを削除しますか？",
     "export": {
       "selected": "選択項目をエクスポート",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
       "success": "アラートルール設定をダウンロードしました。",
       "failure": {
         "forbidden": "アラートルールをエクスポートする権限がありません。",
@@ -2118,8 +2118,11 @@
     "period": "評価周期（秒）",
     "times": "発火回数",
     "preview": "プレビュー",
-    "previewSuccess": "{{count}} 件の系列が一致しました。",
-    "previewEmpty": "一致する系列はありません。",
+    "previewSuccess": "プレビューで {{count}} 行が返されました。1 ページあたり最大 {{pageSize}} 行を表示します。",
+    "previewEmpty": "プレビューで行は返されませんでした。",
+    "previewTruncated": "一部のプレビュー内容は表示のために省略されています。",
+    "previewInvalid": "プレビュー結果が安全な表示制限を超えたか、応答形式が無効です。",
+    "previewInputInvalid": "プレビュー式が無効か、入力制限を超えています。",
     "previewFailed": "式を評価できませんでした。",
     "datasource": {
       "checking": "周期評価機能を確認しています。",

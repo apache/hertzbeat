@@ -2013,7 +2013,7 @@
     "deleteSelectedConfirm": "Excluir {{count}} regras de alerta selecionadas?",
     "export": {
       "selected": "Exportar selecionadas",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
       "success": "Configuração de regras de alerta baixada.",
       "failure": {
         "forbidden": "Sua conta não pode exportar regras de alerta.",
@@ -2120,8 +2120,11 @@
     "period": "Período de avaliação (segundos)",
     "times": "Contagem de disparo",
     "preview": "Visualizar",
-    "previewSuccess": "{{count}} séries correspondentes.",
-    "previewEmpty": "Nenhuma série correspondente.",
+    "previewSuccess": "A prévia retornou {{count}} linhas; até {{pageSize}} linhas são exibidas por página.",
+    "previewEmpty": "A prévia não retornou linhas.",
+    "previewTruncated": "Parte do conteúdo da prévia foi truncada para exibição.",
+    "previewInvalid": "O resultado da prévia excedeu os limites seguros de exibição ou tinha um formato de resposta inválido.",
+    "previewInputInvalid": "A expressão da prévia é inválida ou excede o limite de entrada.",
     "previewFailed": "Não foi possível avaliar a expressão.",
     "datasource": {
       "checking": "Verificando os recursos de avaliação periódica.",

@@ -5,13 +5,19 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
-export type AlertRuleEditorDetailState = { kind: 'loading' } | { kind: AlertRuleEditorFailure } | { kind: 'ready' };
+import type { AlertRulePreview } from './alert-rule-preview';
+
+export type AlertRuleEditorReadFailure = 'missing' | 'permission' | 'unavailable' | 'error';
+export type AlertRuleEditorSaveFailure = 'permission' | 'validation' | 'unavailable' | 'error';
+export type AlertRuleEditorDetailState = { kind: 'loading' } | { kind: AlertRuleEditorReadFailure } | { kind: 'ready' };
 export type AlertRulePreviewState =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'empty' }
-  | { kind: 'ready'; matchCount: number }
+  | ({ kind: 'ready' } & AlertRulePreview)
+  | { kind: 'input' }
+  | { kind: 'permission' }
+  | { kind: 'invalid' }
   | { kind: 'unavailable' }
   | { kind: 'error' };
 

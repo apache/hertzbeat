@@ -25,6 +25,7 @@ import {
   AlertRuleContractError,
   AlertRuleMissingError,
   AlertRuleRequestFailure,
+  AlertRuleWriteRequestFailure,
   type AlertRule,
   periodicLogStarterExpression,
   type AlertRuleQuery
@@ -92,7 +93,7 @@ describe('Alert Rule editor controller', () => {
     api.loadAlertRuleDatasourceStatus.mockResolvedValue({ hasPromqlExecutor: true, hasSqlExecutor: true });
     api.loadAlertRule.mockResolvedValue(persisted);
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
-    api.previewAlertRule.mockResolvedValue({ matchCount: 0 });
+    api.previewAlertRule.mockResolvedValue(previewEvidence(0));
     api.saveAlertRule.mockResolvedValue(undefined);
     monitor.loadMonitorNavigationApps.mockResolvedValue([]);
     monitor.loadMonitorAppHierarchy.mockResolvedValue({
@@ -367,10 +368,11 @@ describe('Alert Rule editor controller', () => {
   });
 
   it.each([
-    [{ matchCount: 0 }, 'empty'],
-    [{ matchCount: 1 }, 'ready'],
+    [previewEvidence(0), 'empty'],
+    [previewEvidence(1), 'ready'],
+    [new AlertRuleRequestFailure('permission', 'rejected'), 'permission'],
     [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
-    [new AlertRuleContractError('bad'), 'error']
+    [new AlertRuleContractError('bad'), 'invalid']
   ])('keeps preview evidence distinct as %s', async (evidence, kind) => {
     if (evidence instanceof Error) api.previewAlertRule.mockRejectedValue(evidence);
     else api.previewAlertRule.mockResolvedValue(evidence);
@@ -380,9 +382,35 @@ describe('Alert Rule editor controller', () => {
     expect(result.current.state.preview.kind).toBe(kind);
   });
 
+  it.each([
+    [new AlertRuleRequestFailure('permission', 'rejected'), 'permission'],
+    [new AlertRuleContractError('over-limit preview'), 'invalid']
+  ])('retires preview rows when the next preview becomes %s', async (failure, kind) => {
+    api.previewAlertRule.mockResolvedValueOnce(previewEvidence(1)).mockRejectedValueOnce(failure);
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'usage > 90' }));
+    await act(async () => result.current.preview());
+    expect(result.current.state.preview.kind).toBe('ready');
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind });
+    expect(JSON.stringify(result.current.state.preview)).not.toContain('\"rows\"');
+  });
+
+  it('rejects an over-limit preview expression as input before API transport', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft({ expr: 'x'.repeat(2049) }));
+
+    await act(async () => result.current.preview());
+
+    expect(result.current.state.preview).toEqual({ kind: 'input' });
+    expect(api.previewAlertRule).not.toHaveBeenCalled();
+  });
+
   it('keeps only the latest same-route preview when completions arrive out of order', async () => {
-    const first = deferred<{ matchCount: number }>();
-    const second = deferred<{ matchCount: number }>();
+    const first = deferred<ReturnType<typeof previewEvidence>>();
+    const second = deferred<ReturnType<typeof previewEvidence>>();
     api.previewAlertRule.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
     const { result } = renderController('new', '/alerts/rules/new');
     act(() => result.current.updateDraft({ expr: 'usage > 90' }));
@@ -393,17 +421,17 @@ describe('Alert Rule editor controller', () => {
       firstPreview = result.current.preview();
       secondPreview = result.current.preview();
     });
-    act(() => second.resolve({ matchCount: 2 }));
+    act(() => second.resolve(previewEvidence(2)));
     await act(async () => secondPreview);
-    expect(result.current.state.preview).toEqual({ kind: 'ready', matchCount: 2 });
+    expect(result.current.state.preview).toEqual({ kind: 'ready', ...previewEvidence(2) });
 
-    act(() => first.resolve({ matchCount: 1 }));
+    act(() => first.resolve(previewEvidence(1)));
     await act(async () => firstPreview);
-    expect(result.current.state.preview).toEqual({ kind: 'ready', matchCount: 2 });
+    expect(result.current.state.preview).toEqual({ kind: 'ready', ...previewEvidence(2) });
   });
 
   it('does not let a stale preview completion replace current editor state', async () => {
-    const preview = deferred<{ matchCount: number }>();
+    const preview = deferred<ReturnType<typeof previewEvidence>>();
     api.previewAlertRule.mockReturnValue(preview.promise);
     const { result } = renderController('new', '/alerts/rules/new');
     act(() => result.current.updateDraft({ expr: 'usage > 90' }));
@@ -413,11 +441,71 @@ describe('Alert Rule editor controller', () => {
     });
 
     act(() => result.current.updateDraft({ expr: 'usage > 95' }));
-    act(() => preview.resolve({ matchCount: 1 }));
+    act(() => preview.resolve(previewEvidence(1)));
     await act(async () => pending);
 
     expect(result.current.state.draft?.expr).toBe('usage > 95');
     expect(result.current.state.preview.kind).toBe('idle');
+  });
+
+  it('retires preview rows and blocks preview transport when write access is lost', async () => {
+    const view = renderController('new', '/alerts/rules/new');
+    act(() => view.result.current.updateDraft({ expr: 'usage > 90' }));
+    api.previewAlertRule.mockResolvedValue(previewEvidence(1));
+    await act(async () => view.result.current.preview());
+    expect(view.result.current.state.preview.kind).toBe('ready');
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.state.preview.kind).toBe('idle'));
+    await act(async () => view.result.current.preview());
+
+    expect(api.previewAlertRule).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(view.result.current.state)).not.toContain('\"rows\"');
+  });
+
+  it('keeps an in-flight save owned and unlocks it after write access is lost and restored', async () => {
+    const write = deferred<void>();
+    api.saveAlertRule.mockReturnValue(write.promise);
+    const view = renderController('edit');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    let save!: Promise<void>;
+    act(() => {
+      save = view.result.current.save();
+    });
+    await waitFor(() => expect(view.result.current.state.command).toBe('saving'));
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    session.roles = ['ADMIN'];
+    view.rerender();
+    act(() => write.resolve());
+    await act(async () => save);
+
+    expect(view.result.current.state.command).toBe('idle');
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains proof recovery across write-access loss and retries it after access returns', async () => {
+    const view = renderController('edit');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+    await act(async () => view.result.current.save());
+    expect(view.result.current.state.recovery).toEqual({
+      phase: 'proof',
+      failure: 'unavailable',
+      retryable: true
+    });
+
+    session.roles = ['GUEST'];
+    view.rerender();
+    session.roles = ['ADMIN'];
+    view.rerender();
+    await act(async () => view.result.current.retrySave());
+
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+    expect(view.result.current.state.recovery).toBeUndefined();
   });
 
   it('saves PUT only after exact-id all-field canonical convergence', async () => {
@@ -547,6 +635,33 @@ describe('Alert Rule editor controller', () => {
     await act(async () => result.current.save());
     expect(api.saveAlertRule).toHaveBeenCalledTimes(2);
     expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains the draft and exposes redacted server validation without proof recovery', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleWriteRequestFailure('validation', 'rejected'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.saveFailure).toBe('validation');
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(result.current.state.draft).toEqual(expect.objectContaining({ id: persisted.id, name: persisted.name }));
+    expect(notify.warning).toHaveBeenCalledWith('alertRules.validation');
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the draft and exposes redacted server permission without proof recovery', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('permission', 'rejected'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.saveFailure).toBe('permission');
+    expect(result.current.state.recovery).toBeUndefined();
+    expect(notify.error).toHaveBeenCalledWith('common.permission.roleRequiredDescription');
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(1);
   });
 
   it('does not treat an unscoped contract exception as source rejection evidence', async () => {
@@ -691,7 +806,7 @@ describe('Alert Rule editor controller', () => {
   });
 
   it('does not let stale preview overwrite a new route', async () => {
-    const oldPreview = deferred<{ matchCount: number }>();
+    const oldPreview = deferred<ReturnType<typeof previewEvidence>>();
     api.previewAlertRule.mockReturnValue(oldPreview.promise);
     api.loadAlertRule.mockImplementation((id: number) => Promise.resolve({ ...persisted, id }));
     const routed = renderRouted(['/alerts/rules/new', '/alerts/rules/8/edit']);
@@ -702,7 +817,7 @@ describe('Alert Rule editor controller', () => {
     });
     await act(async () => routed.router.navigate(1));
     await waitFor(() => expect(routed.current().state.draft?.id).toBe(8));
-    act(() => oldPreview.resolve({ matchCount: 1 }));
+    act(() => oldPreview.resolve(previewEvidence(1)));
     await act(async () => preview);
     expect(routed.current().state.preview.kind).toBe('idle');
   });
@@ -747,6 +862,13 @@ describe('Alert Rule editor controller', () => {
 
 function validDraft() {
   return { name: ' New Rule ', expr: 'usage > 90', template: 'Alert', period: 300, times: 3 };
+}
+
+function previewEvidence(rowCount: number) {
+  return {
+    rowCount,
+    rows: Array.from({ length: rowCount }, (_value, index) => ({ value: index + 1 }))
+  };
 }
 
 function renderController(mode: 'new' | 'edit', entry = '/alerts/rules/7/edit') {

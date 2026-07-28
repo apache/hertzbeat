@@ -21,6 +21,7 @@ describe('Alert Rule locale coverage', () => {
       expect(locale.alertRules.export.selected).toBeTruthy();
       expect(locale.alertRules.export.format.json).toBeTruthy();
       expect(locale.alertRules.export.format.excel).toBeTruthy();
+      expect(locale.alertRules.export.format.yaml).toBeTruthy();
       expect(locale.alertRules.export.failure.unavailable).toBeTruthy();
       expect(locale.alertRules.import.open).toBeTruthy();
       expect(locale.alertRules.import.validation.unsupported).toBeTruthy();
@@ -30,6 +31,9 @@ describe('Alert Rule locale coverage', () => {
       expect(locale.alertRules.datasource.none).toBeTruthy();
       expect(locale.alertRules.datasource.promqlOnly).toBeTruthy();
       expect(locale.alertRules.datasource.sqlOnly).toBeTruthy();
+      expect(locale.alertRules.previewTruncated).toBeTruthy();
+      expect(locale.alertRules.previewInvalid).toBeTruthy();
+      expect(locale.alertRules.previewInputInvalid).toBeTruthy();
     }
   });
 });

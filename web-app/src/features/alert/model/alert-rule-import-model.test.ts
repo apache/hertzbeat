@@ -11,8 +11,8 @@ import { alertRuleImportAccept, validateAlertRuleImportFile } from './alert-rule
 
 describe('Alert Rule import model', () => {
   it('accepts the backend-supported document formats', () => {
-    expect(alertRuleImportAccept).toBe('.json,.xlsx,.yaml');
-    for (const name of ['rules.json', 'rules.XLSX', 'rules.yaml']) {
+    expect(alertRuleImportAccept).toBe('.json,.xlsx,.yaml,.yml');
+    for (const name of ['rules.json', 'rules.XLSX', 'rules.yaml', 'rules.YML']) {
       expect(validateAlertRuleImportFile(new File(['rule'], name))).toMatchObject({ valid: true });
     }
   });
@@ -20,7 +20,7 @@ describe('Alert Rule import model', () => {
   it('rejects missing, empty, and unsupported files before transport', () => {
     expect(validateAlertRuleImportFile(null)).toEqual({ valid: false, reason: 'required' });
     expect(validateAlertRuleImportFile(new File([], 'rules.json'))).toEqual({ valid: false, reason: 'empty' });
-    expect(validateAlertRuleImportFile(new File(['rule'], 'rules.yml'))).toEqual({
+    expect(validateAlertRuleImportFile(new File(['rule'], 'rules.txt'))).toEqual({
       valid: false,
       reason: 'unsupported'
     });

@@ -10,7 +10,11 @@ import { describe, expect, it } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { AlertRuleRequestFailure } from '../model/alert-rule-model';
-import { alertRuleApiRequest, normalizeAlertRuleApiFailure } from './alert-rule-api-failure';
+import {
+  alertRuleApiRequest,
+  normalizeAlertRuleApiFailure,
+  normalizeAlertRuleWriteFailure
+} from './alert-rule-api-failure';
 
 describe('Alert Rule API failure boundary', () => {
   it.each([
@@ -26,10 +30,19 @@ describe('Alert Rule API failure boundary', () => {
     ['status zero', new ApiMessageError('offline', { status: 0 }), 'unavailable', 'uncertain'],
     ['bad gateway', new ApiMessageError('offline', { status: 502 }), 'unavailable', 'uncertain'],
     ['service unavailable', new ApiMessageError('offline', { status: 503 }), 'unavailable', 'uncertain'],
+    [
+      'validation-looking unavailable',
+      new ApiMessageError('private', { status: 503, code: 1 }),
+      'unavailable',
+      'uncertain'
+    ],
     ['gateway timeout', new ApiMessageError('offline', { status: 504 }), 'unavailable', 'uncertain'],
+    ['unauthorized', new ApiMessageError('private', { status: 401 }), 'permission', 'rejected'],
+    ['forbidden before validation', new ApiMessageError('private', { status: 403, code: 1 }), 'permission', 'rejected'],
     ['other server failure', new ApiMessageError('failed', { status: 500 }), 'error', 'uncertain'],
-    ['client rejection', new ApiMessageError('failed', { status: 400 }), 'error', 'rejected'],
+    ['read-side parameter rejection', new ApiMessageError('private', { status: 400, code: 1 }), 'error', 'rejected'],
     ['request timeout', new ApiMessageError('failed', { status: 408 }), 'error', 'uncertain'],
+    ['validation-looking timeout', new ApiMessageError('private', { status: 408, code: 1 }), 'error', 'uncertain'],
     [
       'client-looking network failure',
       new ApiMessageError('failed', { status: 422, cause: new Error('request did not complete') }),
@@ -57,6 +70,13 @@ describe('Alert Rule API failure boundary', () => {
     ['business response', new ApiMessageError('failed', { code: 12, status: 200 }), 'error', 'uncertain']
   ] as const)('maps %s to stable %s/%s domain evidence', (_label, error, kind, writeOutcome) => {
     expect(normalizeAlertRuleApiFailure(error)).toMatchObject({ kind, writeOutcome });
+  });
+
+  it.each([
+    ['bean validation', new ApiMessageError('private', { status: 400, code: 1 })],
+    ['service validation', new ApiMessageError('private', { status: 200, code: 1 })]
+  ])('maps write-side %s without changing shared read evidence', (_label, error) => {
+    expect(normalizeAlertRuleWriteFailure(error)).toMatchObject({ kind: 'validation', writeOutcome: 'rejected' });
   });
 
   it('redacts transport details and preserves non-transport domain errors', () => {

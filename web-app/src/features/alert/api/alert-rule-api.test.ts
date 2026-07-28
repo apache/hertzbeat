@@ -38,7 +38,9 @@ import {
 import {
   AlertRuleContractError,
   AlertRuleRequestFailure,
+  AlertRuleWriteRequestFailure,
   alertRuleDraftFromDetail,
+  buildAlertRulePreviewRequest,
   createAlertRuleDraft,
   type AlertRule,
   type AlertRuleQuery
@@ -210,8 +212,11 @@ describe('alert rule API', () => {
 
   it('previews a valid strategy and expression without requiring unrelated editor fields', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue([{ value: 1 }]);
-    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).resolves.toEqual({
-      matchCount: 1
+    await expect(
+      previewAlertRule(buildAlertRulePreviewRequest({ ...createAlertRuleDraft(), expr: 'usage > 90' }))
+    ).resolves.toEqual({
+      rowCount: 1,
+      rows: [{ value: 1 }]
     });
     expect(apiMessageGet).toHaveBeenCalledWith(
       '/api/alert/define/preview/promql?type=realtime_metric&expr=usage+%3E+90'
@@ -220,9 +225,9 @@ describe('alert rule API', () => {
 
   it('rejects malformed preview rows at the response boundary', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue([[]]);
-    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).rejects.toThrow(
-      AlertRuleContractError
-    );
+    await expect(
+      previewAlertRule(buildAlertRulePreviewRequest({ ...createAlertRuleDraft(), expr: 'usage > 90' }))
+    ).rejects.toThrow(AlertRuleContractError);
   });
 
   it('normalizes every transport entry before leaving the API', async () => {
@@ -240,15 +245,15 @@ describe('alert rule API', () => {
     vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
     await expect(loadAlertRuleDatasourceStatus()).rejects.toBeInstanceOf(AlertRuleRequestFailure);
     vi.mocked(apiMessagePost).mockRejectedValueOnce(transportFailure());
-    await expect(saveAlertRule('new', draft)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    await expect(saveAlertRule('new', draft)).rejects.toBeInstanceOf(AlertRuleWriteRequestFailure);
     vi.mocked(apiMessagePut).mockRejectedValueOnce(transportFailure());
-    await expect(saveAlertRule('edit', { ...draft, id: 7 })).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    await expect(saveAlertRule('edit', { ...draft, id: 7 })).rejects.toBeInstanceOf(AlertRuleWriteRequestFailure);
     vi.mocked(apiMessageDelete).mockRejectedValueOnce(transportFailure());
-    await expect(deleteAlertRules([7])).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    await expect(deleteAlertRules([7])).rejects.toBeInstanceOf(AlertRuleWriteRequestFailure);
     vi.mocked(apiMessagePut).mockRejectedValueOnce(transportFailure());
-    await expect(updateAlertRuleEnabled(persisted, false)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    await expect(updateAlertRuleEnabled(persisted, false)).rejects.toBeInstanceOf(AlertRuleWriteRequestFailure);
     vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
-    await expect(previewAlertRule(draft)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    await expect(previewAlertRule(buildAlertRulePreviewRequest(draft))).rejects.toBeInstanceOf(AlertRuleRequestFailure);
   });
 });
 

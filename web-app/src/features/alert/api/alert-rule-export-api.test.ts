@@ -17,6 +17,7 @@ describe('Alert Rule export API', () => {
 
   it('builds a canonical selected export path', () => {
     expect(buildAlertRuleExportPath([9, 7, 9], 'JSON')).toBe('/api/alert/defines/export?ids=7&ids=9&type=JSON');
+    expect(buildAlertRuleExportPath([7], 'YAML')).toBe('/api/alert/defines/export?ids=7&type=YAML');
     expect(() => buildAlertRuleExportPath([], 'EXCEL')).toThrow();
   });
 
@@ -45,6 +46,14 @@ describe('Alert Rule export API', () => {
 
     expect(http.apiFetch).toHaveBeenCalledWith('/api/alert/defines/export?ids=7&type=JSON', {
       signal: controller.signal
+    });
+  });
+
+  it('uses a safe YAML fallback filename when the backend omits disposition', async () => {
+    http.apiFetch.mockResolvedValue(new Response('rules', { status: 200 }));
+
+    await expect(requestAlertRuleExport([7], 'YAML')).resolves.toMatchObject({
+      filename: 'hertzbeat-alert-rules.yaml'
     });
   });
 

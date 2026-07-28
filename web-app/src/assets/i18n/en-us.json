@@ -2009,7 +2009,7 @@
     "deleteSelectedConfirm": "Delete {{count}} selected alert rules?",
     "export": {
       "selected": "Export selected",
-      "format": { "json": "JSON", "excel": "Excel" },
+      "format": { "json": "JSON", "excel": "Excel", "yaml": "YAML" },
       "success": "Alert rule configuration downloaded.",
       "failure": {
         "forbidden": "Your account is not permitted to export alert rules.",
@@ -2116,8 +2116,11 @@
     "period": "Evaluation period (seconds)",
     "times": "Trigger count",
     "preview": "Preview",
-    "previewSuccess": "{{count}} matching series found.",
-    "previewEmpty": "No matching series found.",
+    "previewSuccess": "Preview returned {{count}} rows; up to {{pageSize}} rows are shown per page.",
+    "previewEmpty": "The preview returned no rows.",
+    "previewTruncated": "Some preview content was truncated for display.",
+    "previewInvalid": "The preview result exceeded safe display limits or had an invalid response shape.",
+    "previewInputInvalid": "The preview expression is invalid or exceeds the input limit.",
     "previewFailed": "The expression could not be evaluated.",
     "datasource": {
       "checking": "Checking periodic evaluation capabilities.",
