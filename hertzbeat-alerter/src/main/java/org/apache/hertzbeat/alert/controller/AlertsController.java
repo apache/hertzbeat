@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -135,14 +134,6 @@ public class AlertsController {
             alertService.editSingleAlertStatus(status, ids);
         }
         Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
-    }
-
-    @GetMapping(path = "/summary")
-    @Operation(summary = "Get alarm statistics", description = "Get alarm statistics information")
-    public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
-        AlertSummary alertSummary = alertService.getAlertsSummary();
-        Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
 

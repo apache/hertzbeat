@@ -60,6 +60,9 @@ class AlertsControllerTest {
     @InjectMocks
     private AlertsController alertsController;
 
+    @InjectMocks
+    private AlertSummaryController alertSummaryController;
+
     @Mock
     private AlertService alertService;
 
@@ -68,7 +71,7 @@ class AlertsControllerTest {
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(alertsController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(alertsController, alertSummaryController).build();
         ids = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
     }
 
