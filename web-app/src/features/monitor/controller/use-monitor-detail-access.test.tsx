@@ -73,6 +73,24 @@ describe('useMonitorDetailController action access', () => {
       canDeleteGrafanaDashboard: false
     });
   });
+
+  it('fails a retained Grafana delete callback closed after the role loses permission', async () => {
+    capability.useMonitorCapabilities.mockReturnValue({ canWrite: true, canDeleteGrafanaDashboard: true });
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.controller.state.detail.kind).toBe('ready'));
+    const retainedDelete = view.result.current.controller.actions.deleteGrafanaDashboard;
+
+    capability.useMonitorCapabilities.mockReturnValue({ canWrite: true, canDeleteGrafanaDashboard: false });
+    view.rerender();
+    await act(() => retainedDelete());
+
+    expect(api.deleteMonitorGrafanaDashboard).not.toHaveBeenCalled();
+    expect(view.result.current.controller.state).toMatchObject({
+      canDeleteGrafanaDashboard: false,
+      grafanaDeleting: false,
+      grafanaDeleteError: false
+    });
+  });
 });
 
 function renderController() {

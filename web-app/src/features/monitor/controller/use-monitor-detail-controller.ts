@@ -16,7 +16,7 @@
  */
 
 import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { classifyMonitorDetailReadError, deleteMonitorGrafanaDashboard, loadMonitorDetail } from '../api/monitor-api';
@@ -85,35 +85,67 @@ function useGrafanaDashboardDelete(
   queryClient: ReturnType<typeof useQueryClient>,
   canDeleteGrafanaDashboard: boolean
 ) {
-  const operation = useRef<AbortController | null>(null);
+  type DeleteOwner = { id: number; epoch: number; controller: AbortController };
+  const operation = useRef<DeleteOwner | null>(null);
+  const epoch = useRef(0);
+  const currentId = useRef(id);
+  const currentCanDelete = useRef(canDeleteGrafanaDashboard);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
-  useEffect(
+  // Retire ownership before abort so a transport that ignores cancellation cannot publish into a new route or role.
+  const retire = useCallback((owner: DeleteOwner) => {
+    if (operation.current !== owner) return;
+    operation.current = null;
+    epoch.current += 1;
+    setDeleting(false);
+    setError(false);
+    owner.controller.abort();
+  }, []);
+  useLayoutEffect(() => {
+    currentId.current = id;
+    currentCanDelete.current = canDeleteGrafanaDashboard;
+    const owner = operation.current;
+    if (owner && (!canDeleteGrafanaDashboard || owner.id !== id)) retire(owner);
+  }, [canDeleteGrafanaDashboard, id, retire]);
+  useLayoutEffect(
     () => () => {
-      operation.current?.abort();
+      const owner = operation.current;
+      if (!owner) return;
       operation.current = null;
+      epoch.current += 1;
+      owner.controller.abort();
     },
-    [id]
+    []
   );
   const run = async () => {
-    if (!canDeleteGrafanaDashboard || id === undefined || operation.current) return;
+    const operationId = currentId.current;
+    if (!currentCanDelete.current || operationId === undefined || operation.current) return;
     const controller = new AbortController();
-    operation.current = controller;
+    const owner = { id: operationId, epoch: epoch.current + 1, controller };
+    epoch.current = owner.epoch;
+    operation.current = owner;
     setDeleting(true);
     setError(false);
+    const ownsOperation = () =>
+      operation.current === owner &&
+      epoch.current === owner.epoch &&
+      currentId.current === owner.id &&
+      currentCanDelete.current;
     try {
-      await deleteMonitorGrafanaDashboard(id, controller.signal);
-      if (operation.current !== controller) return;
-      queryClient.setQueryData<MonitorDetail>(monitorQueryKeys.detail(id), detail =>
-        detail?.grafanaDashboard
+      await deleteMonitorGrafanaDashboard(operationId, controller.signal);
+      if (!ownsOperation()) return;
+      queryClient.setQueryData<MonitorDetail>(monitorQueryKeys.detail(operationId), detail => {
+        if (!ownsOperation()) return detail;
+        return detail?.grafanaDashboard
           ? { ...detail, grafanaDashboard: { ...detail.grafanaDashboard, enabled: false, url: null } }
-          : detail
-      );
+          : detail;
+      });
     } catch {
-      if (operation.current === controller && !controller.signal.aborted) setError(true);
+      if (ownsOperation() && !controller.signal.aborted) setError(true);
     } finally {
-      if (operation.current === controller) {
+      if (ownsOperation()) {
         operation.current = null;
+        epoch.current += 1;
         setDeleting(false);
       }
     }

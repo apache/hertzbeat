@@ -33,6 +33,7 @@ vi.mock('../api/monitor-api', async importOriginal => ({
 vi.mock('./use-monitor-capabilities', () => capability);
 
 import { useMonitorDetailController } from './use-monitor-detail-controller';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 const detail = {
   monitor: { id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1 },
@@ -247,6 +248,170 @@ describe('useMonitorDetailController', () => {
       detail: { kind: 'ready', detail: { grafanaDashboard } }
     });
   });
+
+  it.each(['resolve', 'reject'] as const)(
+    'retires an in-flight Grafana delete on permission loss before a late %s',
+    async completion => {
+      const grafanaDashboard = {
+        monitorId: 7,
+        folderUid: null,
+        slug: null,
+        status: null,
+        uid: 'ops',
+        url: 'https://grafana.example/d/ops',
+        version: 1,
+        enabled: true,
+        template: null
+      };
+      api.loadMonitorDetail.mockResolvedValue({ ...detail, grafanaDashboard });
+      let settle!: () => void;
+      let deleteSignal!: AbortSignal;
+      api.deleteMonitorGrafanaDashboard.mockImplementation(
+        (_id, signal) =>
+          new Promise<void>((resolve, reject) => {
+            deleteSignal = signal;
+            settle = () => (completion === 'resolve' ? resolve() : reject(new Error('late failure')));
+          })
+      );
+      const view = renderController('/monitors/7');
+      await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+      act(() => {
+        void view.result.current.actions.deleteGrafanaDashboard();
+      });
+      await waitFor(() => expect(view.result.current.state.grafanaDeleting).toBe(true));
+      capability.useMonitorCapabilities.mockReturnValue({ canWrite: true, canDeleteGrafanaDashboard: false });
+      view.rerender();
+
+      expect(deleteSignal.aborted).toBe(true);
+      expect(view.result.current.state).toMatchObject({
+        grafanaDeleting: false,
+        grafanaDeleteError: false,
+        detail: { kind: 'ready', detail: { grafanaDashboard } }
+      });
+
+      await act(async () => {
+        settle();
+        await Promise.resolve();
+      });
+      expect(view.result.current.state).toMatchObject({
+        grafanaDeleting: false,
+        grafanaDeleteError: false,
+        detail: { kind: 'ready', detail: { grafanaDashboard } }
+      });
+    }
+  );
+
+  it('retires route ownership before abort and rejects an ABA late completion', async () => {
+    const dashboardFor = (monitorId: number) => ({
+      monitorId,
+      folderUid: null,
+      slug: null,
+      status: null,
+      uid: `ops-${monitorId}`,
+      url: `https://grafana.example/d/ops-${monitorId}`,
+      version: 1,
+      enabled: true,
+      template: null
+    });
+    api.loadMonitorDetail.mockImplementation(id =>
+      Promise.resolve({
+        ...detail,
+        monitor: { ...detail.monitor, id },
+        grafanaDashboard: dashboardFor(id)
+      })
+    );
+    const deletes: Array<{ id: number; signal: AbortSignal; resolve: () => void }> = [];
+    api.deleteMonitorGrafanaDashboard.mockImplementation(
+      (id, signal) =>
+        new Promise<void>(resolve => {
+          deletes.push({ id, signal, resolve });
+        })
+    );
+    const view = renderController('/monitors/7');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+
+    act(() => {
+      void view.result.current.actions.deleteGrafanaDashboard();
+    });
+    await waitFor(() => expect(deletes).toHaveLength(1));
+    act(() => {
+      void view.navigate('/monitors/8');
+    });
+    await waitFor(() =>
+      expect(view.result.current.state.detail).toMatchObject({
+        kind: 'ready',
+        detail: { monitor: { id: 8 } }
+      })
+    );
+    expect(deletes[0]?.signal.aborted).toBe(true);
+    expect(view.result.current.state.grafanaDeleting).toBe(false);
+
+    act(() => {
+      void view.result.current.actions.deleteGrafanaDashboard();
+    });
+    await waitFor(() => expect(deletes).toHaveLength(2));
+    act(() => {
+      void view.navigate('/monitors/7');
+    });
+    await waitFor(() =>
+      expect(view.result.current.state.detail).toMatchObject({
+        kind: 'ready',
+        detail: { monitor: { id: 7 } }
+      })
+    );
+    expect(deletes[1]?.signal.aborted).toBe(true);
+
+    await act(async () => {
+      deletes[0]!.resolve();
+      deletes[1]!.resolve();
+      await Promise.resolve();
+    });
+    expect(view.result.current.state).toMatchObject({
+      grafanaDeleting: false,
+      grafanaDeleteError: false,
+      detail: { kind: 'ready', detail: { grafanaDashboard: dashboardFor(7) } }
+    });
+  });
+
+  it('retires and aborts an in-flight Grafana delete on unmount', async () => {
+    const grafanaDashboard = {
+      monitorId: 7,
+      folderUid: null,
+      slug: null,
+      status: null,
+      uid: 'ops',
+      url: 'https://grafana.example/d/ops',
+      version: 1,
+      enabled: true,
+      template: null
+    };
+    api.loadMonitorDetail.mockResolvedValue({ ...detail, grafanaDashboard });
+    let deleteSignal!: AbortSignal;
+    let resolveDelete!: () => void;
+    api.deleteMonitorGrafanaDashboard.mockImplementation(
+      (_id, signal) =>
+        new Promise<void>(resolve => {
+          deleteSignal = signal;
+          resolveDelete = resolve;
+        })
+    );
+    const view = renderController('/monitors/7');
+    await waitFor(() => expect(view.result.current.state.detail.kind).toBe('ready'));
+    act(() => {
+      void view.result.current.actions.deleteGrafanaDashboard();
+    });
+    await waitFor(() => expect(view.result.current.state.grafanaDeleting).toBe(true));
+
+    view.unmount();
+
+    expect(deleteSignal.aborted).toBe(true);
+    await act(async () => {
+      resolveDelete();
+      await Promise.resolve();
+    });
+    expect(view.client.getQueryData(monitorQueryKeys.detail(7))).toMatchObject({ grafanaDashboard });
+  });
 });
 
 function renderController(entry: string) {
@@ -272,5 +437,5 @@ function renderController(entry: string) {
       </QueryClientProvider>
     )
   });
-  return { ...rendered, location: () => currentLocation, navigate: (path: string) => navigate(path) };
+  return { ...rendered, client, location: () => currentLocation, navigate: (path: string) => navigate(path) };
 }
