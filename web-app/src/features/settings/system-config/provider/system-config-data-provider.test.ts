@@ -33,7 +33,7 @@ vi.mock('../api/system-config-api', async importOriginal => ({
 
 import { systemConfigDataProvider } from './system-config-data-provider';
 
-const config = { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' };
+const config = { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' };
 
 describe('System Config Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -85,10 +85,9 @@ describe('System Config Refine data provider', () => {
     expect(api.loadSystemConfig).not.toHaveBeenCalled();
   });
 
-  it('resolves update only after an authoritative canonical reread', async () => {
+  it('uses the authoritative POST response directly without a redundant GET', async () => {
     const canonical = { locale: 'ja_JP', timeZoneId: 'Asia/Tokyo', theme: 'compact' };
-    api.saveSystemConfig.mockResolvedValue('Update config success');
-    api.loadSystemConfig.mockResolvedValue(canonical);
+    api.saveSystemConfig.mockResolvedValue(canonical);
 
     await expect(
       systemConfigDataProvider.update({
@@ -97,30 +96,33 @@ describe('System Config Refine data provider', () => {
         variables: config
       })
     ).resolves.toEqual({ data: { id: 'current', ...canonical } });
-    expect(api.saveSystemConfig.mock.invocationCallOrder[0]).toBeLessThan(
-      api.loadSystemConfig.mock.invocationCallOrder[0] ?? 0
-    );
+    expect(api.saveSystemConfig).toHaveBeenCalledTimes(1);
+    expect(api.loadSystemConfig).not.toHaveBeenCalled();
   });
 
-  it('fails closed on null or malformed canonical rereads', async () => {
-    api.saveSystemConfig.mockResolvedValue('Update config success');
-    api.loadSystemConfig.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      locale: 'private-invalid-locale',
-      timeZoneId: 'UTC',
-      theme: 'dark'
-    });
+  it('keeps an ambiguous POST failure as mutation evidence without issuing GET', async () => {
+    api.saveSystemConfig.mockRejectedValue(new ApiMessageError('Unavailable', { status: 503 }));
 
     await expect(
       systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config })
-    ).rejects.toMatchObject({ code: 'SYSTEM_CONFIG_CANONICAL_REREAD_MISSING' });
-    let error: unknown;
-    try {
-      await systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config });
-    } catch (reason) {
-      error = reason;
-    }
-    expect(error).toMatchObject({ code: 'SYSTEM_CONFIG_RESPONSE_INVALID' });
-    expect(JSON.stringify(error)).not.toContain('private-invalid-locale');
+    ).rejects.toMatchObject({ statusCode: 503 });
+    expect(api.loadSystemConfig).not.toHaveBeenCalled();
+  });
+
+  it('distinguishes a missing singleton from an invalid response', async () => {
+    api.loadSystemConfig.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      locale: 'private-invalid-locale',
+      timeZoneId: 'UTC',
+      theme: 'dark-ops'
+    });
+
+    await expect(systemConfigDataProvider.getOne({ resource: 'system-config', id: 'current' })).rejects.toMatchObject({
+      code: 'SYSTEM_CONFIG_MISSING',
+      statusCode: 404
+    });
+    const invalid = systemConfigDataProvider.getOne({ resource: 'system-config', id: 'current' });
+    await expect(invalid).rejects.toMatchObject({ code: 'SYSTEM_CONFIG_RESPONSE_INVALID', statusCode: 502 });
+    await expect(invalid).rejects.not.toHaveProperty('message', expect.stringContaining('private-invalid-locale'));
   });
 
   it('rejects malformed write input and timezone evidence without exposing their values', async () => {
@@ -158,23 +160,5 @@ describe('System Config Refine data provider', () => {
       systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: inheritedConfig })
     ).rejects.toMatchObject({ code: 'SYSTEM_CONFIG_VARIABLES_INVALID', statusCode: 400 });
     expect(api.saveSystemConfig).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['HTTP 4xx', () => new ApiMessageError('Forbidden', { status: 403 })],
-    ['backend envelope', () => new ApiMessageError('Rejected', { code: 20, status: 200 })]
-  ])('marks a post-write canonical %s failure as uncertainty', async (_label, failure) => {
-    api.saveSystemConfig.mockResolvedValue('Update config success');
-    api.loadSystemConfig.mockRejectedValue(failure());
-
-    await expect(
-      systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config })
-    ).rejects.toMatchObject({
-      statusCode: 502,
-      code: 'SYSTEM_CONFIG_CANONICAL_REREAD_FAILED',
-      kind: 'contract'
-    });
-    expect(api.saveSystemConfig).toHaveBeenCalledTimes(1);
-    expect(api.loadSystemConfig).toHaveBeenCalledTimes(1);
   });
 });

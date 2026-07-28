@@ -44,26 +44,26 @@ describe('system configuration API', () => {
   });
 
   it('uses the established general configuration endpoints', async () => {
-    apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
+    apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' });
     apiMessageGet.mockResolvedValueOnce([{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]);
-    apiMessagePost.mockResolvedValueOnce('Update config success');
-    const config = { locale: 'en_US' as const, timeZoneId: 'UTC', theme: 'dark' as const };
+    const config = { locale: 'en_US' as const, timeZoneId: 'UTC', theme: 'dark-ops' as const };
+    apiMessagePost.mockResolvedValueOnce(config);
     await expect(loadSystemConfig()).resolves.toEqual(config);
     await expect(loadTimezones()).resolves.toHaveLength(1);
-    await expect(saveSystemConfig(config)).resolves.toBe('Update config success');
+    await expect(saveSystemConfig(config)).resolves.toEqual(config);
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/config/system');
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, systemConfigTimezonesEndpoint);
     expect(apiMessagePost).toHaveBeenCalledWith('/api/config/system', config);
   });
 
   it('rejects malformed configuration responses at the domain boundary', async () => {
-    apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark', token: 'secret' });
+    apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops', token: 'secret' });
     apiMessageGet.mockResolvedValueOnce([{ zoneId: 'UTC', offset: 0, displayName: 'UTC' }]);
-    apiMessagePost.mockResolvedValueOnce({ message: 'not a string' });
+    apiMessagePost.mockResolvedValueOnce('Update config success');
 
     await expect(loadSystemConfig()).rejects.toBeInstanceOf(SystemConfigContractError);
     await expect(loadTimezones()).rejects.toBeInstanceOf(SystemConfigContractError);
-    await expect(saveSystemConfig({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' })).rejects.toBeInstanceOf(
+    await expect(saveSystemConfig({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' })).rejects.toBeInstanceOf(
       SystemConfigContractError
     );
   });

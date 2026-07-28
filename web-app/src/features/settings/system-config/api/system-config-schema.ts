@@ -8,12 +8,13 @@
 import { z } from 'zod';
 
 import type { SystemConfigValue, TimezoneOption } from '../model/system-config-contract';
+import { systemLocales, systemThemes } from '../model/system-config-model';
 
 const systemConfigValueSchema: z.ZodType<SystemConfigValue> = z
   .object({
-    locale: z.string(),
-    timeZoneId: z.string(),
-    theme: z.string()
+    locale: z.enum(systemLocales),
+    timeZoneId: z.string().trim().min(1),
+    theme: z.enum(systemThemes)
   })
   .strict();
 
@@ -28,7 +29,7 @@ const timezoneOptionSchema: z.ZodType<TimezoneOption> = z
   .strict();
 
 const timezonesSchema = z.array(timezoneOptionSchema);
-const mutationResultSchema = z.string();
+const mutationResultSchema = systemConfigValueSchema;
 
 export class SystemConfigContractError extends Error {
   constructor() {
@@ -45,7 +46,7 @@ export function parseTimezoneOptions(value: unknown): TimezoneOption[] {
   return parse(timezonesSchema, value);
 }
 
-export function parseSystemConfigMutationResult(value: unknown): string {
+export function parseSystemConfigMutationResult(value: unknown): SystemConfigValue {
   return parse(mutationResultSchema, value);
 }
 

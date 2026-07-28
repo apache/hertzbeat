@@ -71,15 +71,7 @@ export const systemConfigDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
-      await saveSystemConfig(readVariables(params.variables));
-      const canonical = await readCanonicalSystemConfigAfterWrite();
-      if (canonical == null) {
-        throw createRefineHttpError(
-          'System Config canonical reread returned no record',
-          502,
-          'SYSTEM_CONFIG_CANONICAL_REREAD_MISSING'
-        );
-      }
+      const canonical = await saveSystemConfig(readVariables(params.variables));
       return { data: adaptRefineRecord<TData>(readConfigRecord(canonical)) };
     });
   },
@@ -114,16 +106,6 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   }
 }
 
-async function readCanonicalSystemConfigAfterWrite() {
-  try {
-    return await loadSystemConfig();
-  } catch {
-    // The POST already returned successfully. A failed GET cannot prove that
-    // the write was rejected, even when the GET itself returned a 4xx status.
-    throw createRefineHttpError('System Config canonical reread failed', 502, 'SYSTEM_CONFIG_CANONICAL_REREAD_FAILED');
-  }
-}
-
 function rejectUnsupported<T>(code: string, message: string): Promise<T> {
   return Promise.reject(createRefineHttpError(message, 405, code));
 }
@@ -150,6 +132,9 @@ function readVariables(value: unknown): SystemConfigValue {
 }
 
 function readConfigRecord(value: SystemConfigValue | null) {
+  if (value === null) {
+    throw createRefineHttpError('System Config is missing', 404, 'SYSTEM_CONFIG_MISSING');
+  }
   try {
     return createSystemConfigResourceRecord(value);
   } catch (reason) {

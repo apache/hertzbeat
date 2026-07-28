@@ -1433,6 +1433,9 @@
   "systemConfig": {
     "title": "系统设置",
     "description": "配置全局语言、时区和界面密度。",
+    "missing": "系统设置尚未配置。",
+    "permission": "当前账号无权读取系统设置。",
+    "invalid": "系统设置返回了无效响应。",
     "unavailable": "系统设置暂不可用。",
     "timezonesUnavailable": "时区目录暂不可用，当前值仍会保留。",
     "saveSuccess": "系统设置已保存。",
@@ -1455,8 +1458,8 @@
     "theme": {
       "label": "界面",
       "help": "选择标准、深色或紧凑的运维界面。",
-      "default": "标准浅色",
-      "dark": "深色",
+      "light-ops": "标准浅色",
+      "dark-ops": "深色",
       "compact": "紧凑深色"
     }
   },

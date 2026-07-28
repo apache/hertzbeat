@@ -1456,6 +1456,9 @@
   "systemConfig": {
     "title": "Configurações do sistema",
     "description": "Configure o idioma, fuso horário e densidade da interface.",
+    "missing": "As configurações do sistema ainda não foram definidas.",
+    "permission": "Sua conta não tem permissão para ler as configurações do sistema.",
+    "invalid": "As configurações do sistema retornaram uma resposta inválida.",
     "unavailable": "As configurações do sistema estão indisponíveis.",
     "timezonesUnavailable": "O catálogo de fusos horários está indisponível. O valor atual será preservado.",
     "saveSuccess": "Configurações do sistema salvas.",
@@ -1478,8 +1481,8 @@
     "theme": {
       "label": "Interface",
       "help": "Escolha a interface padrão, escura ou compacta.",
-      "default": "Claro padrão",
-      "dark": "Escuro",
+      "light-ops": "Claro padrão",
+      "dark-ops": "Escuro",
       "compact": "Escuro compacto"
     }
   },

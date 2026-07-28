@@ -26,7 +26,8 @@ import { requireDomElement } from '@/test/dom-element';
 
 const controller = vi.hoisted(() => ({
   discard: vi.fn(),
-  retry: vi.fn(),
+  retryRead: vi.fn(),
+  retrySave: vi.fn(),
   retryTimezones: vi.fn(),
   save: vi.fn(),
   update: vi.fn(),
@@ -72,14 +73,17 @@ describe('SystemConfigPage', () => {
   });
 
   it.each([
+    ['missing', 'System settings have not been configured.'],
+    ['permission', 'Your account does not have permission to read system settings.'],
     ['unavailable', 'System settings are unavailable.'],
+    ['invalid', 'System settings returned an invalid response.'],
     ['error', 'This page could not be loaded. Retry or return to it later.']
   ])('renders %s distinctly and delegates retry', async (kind, message) => {
     controller.useSystemConfigResourceController.mockReturnValue(buildController({ kind }));
     renderPage();
     expect(await screen.findByText(message)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(controller.retry).toHaveBeenCalledTimes(1);
+    expect(controller.retryRead).toHaveBeenCalledTimes(1);
   });
 
   it('keeps auxiliary timezone failure inside the ready editor', async () => {
@@ -119,23 +123,47 @@ describe('SystemConfigPage', () => {
 
     expect(await screen.findByText('System settings are unavailable.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(controller.retry).toHaveBeenCalledTimes(1);
+    expect(controller.retrySave).toHaveBeenCalledTimes(1);
     const selects = screen.getAllByRole('combobox');
     selects.forEach(select => expect(select).toBeDisabled());
     expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+  });
+
+  it.each([['USER'], ['GUEST']] as const)('keeps settings readable but hides every write action for %s', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(buildController({ canConfigure: false }));
+    renderPage();
+
+    const selects = await screen.findAllByRole('combobox');
+    expect(selects).toHaveLength(3);
+    selects.forEach(select => expect(select).toBeDisabled());
+    expect(screen.queryByRole('button', { name: /Save$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
+  });
+
+  it('hides retained proof retry synchronously after ADMIN role loss', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(
+      buildController({ canConfigure: false, dirty: false, locked: false, recovery: null })
+    );
+    renderPage();
+
+    await screen.findByText('English');
+    expect(screen.queryByText('System settings are unavailable.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save$/ })).not.toBeInTheDocument();
   });
 });
 
 function buildController(state: Record<string, unknown> = {}) {
   return {
     discard: controller.discard,
-    retry: controller.retry,
+    retryRead: controller.retryRead,
+    retrySave: controller.retrySave,
     retryTimezones: controller.retryTimezones,
     save: controller.save,
     state: {
       kind: 'ready',
-      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' },
+      canConfigure: true,
+      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' },
       dirty: false,
       locked: false,
       proving: false,

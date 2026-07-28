@@ -16,11 +16,12 @@
  */
 
 import type { SupportedLocale } from '@/core/i18n/i18n';
+import type { RuntimeTheme } from '@/core/runtime-preferences';
 
 import type { TimezoneOption } from './system-config-contract';
 
 export const systemLocales = ['en_US', 'zh_CN', 'zh_TW', 'ja_JP', 'pt_BR'] as const;
-export const systemThemes = ['default', 'dark', 'compact'] as const;
+export const systemThemes = ['light-ops', 'dark-ops', 'compact'] as const;
 
 export type SystemLocale = (typeof systemLocales)[number];
 export type SystemTheme = (typeof systemThemes)[number];
@@ -66,18 +67,38 @@ const systemToRuntimeLocale: Record<SystemLocale, SupportedLocale> = {
   pt_BR: 'pt-BR'
 };
 
+const runtimeToSystemTheme: Record<RuntimeTheme, SystemTheme> = {
+  default: 'light-ops',
+  dark: 'dark-ops',
+  compact: 'compact'
+};
+
+const systemToRuntimeTheme: Record<SystemTheme, RuntimeTheme> = {
+  'light-ops': 'default',
+  'dark-ops': 'dark',
+  compact: 'compact'
+};
+
 export function localeToRuntime(locale?: string | null): SupportedLocale {
   return isSystemLocale(locale) ? systemToRuntimeLocale[locale] : 'en-US';
 }
 
+export function runtimeThemeToSystemTheme(theme: RuntimeTheme): SystemTheme {
+  return runtimeToSystemTheme[theme];
+}
+
+export function systemThemeToRuntimeTheme(theme: SystemTheme): RuntimeTheme {
+  return systemToRuntimeTheme[theme];
+}
+
 export function createSystemConfigDraft(
   config: { locale?: string; timeZoneId?: string; theme?: string } | null | undefined,
-  defaults: { locale: SupportedLocale; timeZoneId: string; theme: SystemTheme }
+  defaults: { locale: SupportedLocale; timeZoneId: string; theme: RuntimeTheme }
 ): SystemConfigDraft {
   return {
     locale: isSystemLocale(config?.locale) ? config.locale : runtimeToSystemLocale[defaults.locale],
     timeZoneId: config?.timeZoneId?.trim() || defaults.timeZoneId,
-    theme: isSystemTheme(config?.theme) ? config.theme : defaults.theme
+    theme: isSystemTheme(config?.theme) ? config.theme : runtimeThemeToSystemTheme(defaults.theme)
   };
 }
 

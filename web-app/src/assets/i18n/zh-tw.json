@@ -1433,6 +1433,9 @@
   "systemConfig": {
     "title": "系統設定",
     "description": "設定全域語言、時區與介面密度。",
+    "missing": "系統設定尚未設定。",
+    "permission": "目前帳號沒有讀取系統設定的權限。",
+    "invalid": "系統設定傳回了無效回應。",
     "unavailable": "系統設定暫時不可用。",
     "timezonesUnavailable": "時區目錄暫時不可用，目前值仍會保留。",
     "saveSuccess": "系統設定已儲存。",
@@ -1455,8 +1458,8 @@
     "theme": {
       "label": "介面",
       "help": "選擇標準、深色或緊湊的運維介面。",
-      "default": "標準淺色",
-      "dark": "深色",
+      "light-ops": "標準淺色",
+      "dark-ops": "深色",
       "compact": "緊湊深色"
     }
   },

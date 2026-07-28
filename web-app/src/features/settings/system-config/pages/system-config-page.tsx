@@ -31,35 +31,31 @@ export function SystemConfigPage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('systemConfig.title')} description={t('systemConfig.description')} />
-      {state.kind === 'unavailable' && (
-        <Alert
-          type="error"
-          showIcon
-          message={t('systemConfig.unavailable')}
-          action={<RetryButton onRetry={controller.retry} />}
-        />
+      {state.kind === 'missing' && <ReadFailure message={t('systemConfig.missing')} onRetry={controller.retryRead} />}
+      {state.kind === 'permission' && (
+        <ReadFailure message={t('systemConfig.permission')} onRetry={controller.retryRead} />
       )}
+      {state.kind === 'unavailable' && (
+        <ReadFailure message={t('systemConfig.unavailable')} onRetry={controller.retryRead} />
+      )}
+      {state.kind === 'invalid' && <ReadFailure message={t('systemConfig.invalid')} onRetry={controller.retryRead} />}
       {state.kind === 'error' && (
-        <Alert
-          type="error"
-          showIcon
-          message={t('common.routeError.description')}
-          action={<RetryButton onRetry={controller.retry} />}
-        />
+        <ReadFailure message={t('common.routeError.description')} onRetry={controller.retryRead} />
       )}
       {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 4 }} />}
       {state.kind === 'ready' && (
         <>
-          {state.recovery && (
+          {state.canConfigure && state.recovery && (
             <Alert
               type="warning"
               showIcon
               message={t('systemConfig.unavailable')}
-              action={<RetryButton loading={state.proving} onRetry={controller.retry} />}
+              action={<RetryButton loading={state.proving} onRetry={controller.retrySave} />}
             />
           )}
           <SystemConfigEditor
             current={state.current}
+            canConfigure={state.canConfigure}
             timezoneOptions={state.timezoneOptions}
             timezonesPending={state.timezonesPending}
             timezonesFailed={state.timezonesFailed}
@@ -78,7 +74,11 @@ export function SystemConfigPage() {
   );
 }
 
-function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => Promise<void> }) {
+function ReadFailure({ message, onRetry }: { message: string; onRetry: () => unknown }) {
+  return <Alert type="error" showIcon message={message} action={<RetryButton onRetry={onRetry} />} />;
+}
+
+function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => unknown }) {
   const { t } = useTranslation();
   return (
     <Button

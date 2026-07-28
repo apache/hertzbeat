@@ -1452,6 +1452,9 @@
   "systemConfig": {
     "title": "System settings",
     "description": "Configure the shared language, time zone, and interface density.",
+    "missing": "System settings have not been configured.",
+    "permission": "Your account does not have permission to read system settings.",
+    "invalid": "System settings returned an invalid response.",
     "unavailable": "System settings are unavailable.",
     "timezonesUnavailable": "The time zone catalog is unavailable. The current value is still preserved.",
     "saveSuccess": "System settings saved.",
@@ -1474,8 +1477,8 @@
     "theme": {
       "label": "Interface",
       "help": "Choose the standard, dark, or compact operator interface.",
-      "default": "Standard light",
-      "dark": "Dark",
+      "light-ops": "Standard light",
+      "dark-ops": "Dark",
       "compact": "Compact dark"
     }
   },

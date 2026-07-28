@@ -22,9 +22,10 @@ import { useTranslation } from 'react-i18next';
 import { resolveLocale } from '@/core/i18n/i18n';
 import { readRuntimeTheme } from '@/core/runtime-preferences';
 
-import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
+import { loadSystemConfig, systemConfigTimezonesEndpoint } from '../api/system-config-api';
 import {
   createSystemConfigDraft,
+  createSystemConfigResourceRecord,
   systemConfigResourceId,
   systemConfigResourceName,
   type SystemConfigDraft,
@@ -32,18 +33,18 @@ import {
   type SystemTimezoneResourceRecord
 } from '../model/system-config-model';
 import { useSystemConfigFormController } from './system-config-form-controller';
+import { useSystemConfigActionCapabilities } from './use-system-config-action-capabilities';
 
 export function useSystemConfigResourceController() {
   const { t, i18n } = useTranslation();
   const notification = useNotification();
+  const capabilities = useSystemConfigActionCapabilities();
   const { config, mutation, reread, timezones } = useSystemConfigResources();
   const defaults = runtimeDefaults(i18n.resolvedLanguage);
-  const baseline = createSystemConfigDraft(
-    config.result ? { ...config.result, theme: defaults.theme } : null,
-    defaults
-  );
+  const baseline = createSystemConfigDraft(config.result, defaults);
   const form = useSystemConfigFormController({
     baseline,
+    canConfigure: capabilities.canConfigure,
     mutation,
     notifications: {
       notifyFailure: () => notification.open?.({ message: t('systemConfig.unavailable'), type: 'error' }),
@@ -51,6 +52,7 @@ export function useSystemConfigResourceController() {
       notifySuccess: () => notification.open?.({ message: t('systemConfig.saveSuccess'), type: 'success' })
     },
     reread,
+    retryRead: config.query.refetch,
     retryTimezones: timezones.query.refetch,
     timezoneOptions: buildTimezoneOptions(timezones.result.data?.items, baseline.timeZoneId),
     timezonesFailed: timezones.query.isError,
@@ -60,7 +62,8 @@ export function useSystemConfigResourceController() {
 
   return {
     discard: form.discard,
-    retry: form.retry,
+    retryRead: form.retryRead,
+    retrySave: form.retrySave,
     retryTimezones: form.retryTimezones,
     save: form.save,
     state:
@@ -90,23 +93,19 @@ function useSystemConfigResources() {
   const mutation = useUpdate<SystemConfigResourceRecord, HttpError, SystemConfigDraft>({
     resource: systemConfigResourceName,
     dataProviderName: systemConfigResourceName,
-    invalidates: ['detail'],
+    invalidates: [],
     mutationMode: 'pessimistic',
     successNotification: false,
     errorNotification: false
   });
-  const refetch = config.query.refetch;
   const reread = useCallback(async () => {
     try {
-      const result = await refetch();
-      return {
-        data: result.isError ? undefined : result.data?.data,
-        error: result.isError ? result.error : null
-      };
+      const value = await loadSystemConfig();
+      return { data: value ? createSystemConfigResourceRecord(value) : undefined, error: null };
     } catch (error) {
       return { data: undefined, error };
     }
-  }, [refetch]);
+  }, []);
   return { config, mutation, reread, timezones };
 }
 
@@ -136,13 +135,16 @@ function resolveKind(
   record: SystemConfigResourceRecord | undefined
 ) {
   if (pending) return 'loading';
-  if (failed) return isUnavailable(error) ? 'unavailable' : 'error';
+  if (failed) return classifyReadFailure(error);
   return record ? 'ready' : 'error';
 }
 
-function isUnavailable(error: HttpError | null) {
-  if (readErrorCode(error) === 'SYSTEM_CONFIG_RESPONSE_INVALID') return false;
-  return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
+function classifyReadFailure(error: HttpError | null) {
+  if (readErrorCode(error) === 'SYSTEM_CONFIG_MISSING') return 'missing';
+  if (error?.statusCode === 401 || error?.statusCode === 403) return 'permission';
+  if (readErrorCode(error) === 'SYSTEM_CONFIG_RESPONSE_INVALID') return 'invalid';
+  if (error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1)) return 'unavailable';
+  return 'error';
 }
 
 function readErrorCode(error: HttpError | null) {

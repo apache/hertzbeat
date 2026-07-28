@@ -1,11 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { persistSystemPreferences } from '@/core/runtime-preferences';
 
 import {
   isSystemConfigDirty,
+  systemThemeToRuntimeTheme,
   validateSystemConfigDraft,
   type SystemConfigDraft,
   type SystemConfigResourceRecord
@@ -22,50 +23,59 @@ type FormOptions = {
   mutation: SystemConfigMutation;
   notifications: SystemConfigSaveNotifications;
   reread: SystemConfigCanonicalRead;
+  retryRead: () => unknown;
   retryTimezones: () => unknown;
   timezoneOptions: Array<{ value: string; label: string }>;
   timezonesFailed: boolean;
   timezonesPending: boolean;
+  canConfigure: boolean;
 };
 
 export function useSystemConfigFormController(options: FormOptions) {
   const [draft, setDraft] = useState<SystemConfigDraft | null>(null);
+  const retireDraft = useCallback(() => setDraft(null), []);
   const current = draft ?? options.baseline;
   const dirty = draft !== null && isSystemConfigDirty(draft, options.baseline);
   const valid = validateSystemConfigDraft(current).length === 0;
-  const transaction = useSystemConfigSaveTransaction({
-    accept: record => {
-      setDraft(null);
-      applyCanonicalSystemConfig(record);
+  const transaction = useSystemConfigSaveTransaction(
+    {
+      accept: record => {
+        setDraft(null);
+        applyCanonicalSystemConfig(record);
+      },
+      mutation: options.mutation,
+      reread: options.reread,
+      retireDraft,
+      ...options.notifications
     },
-    mutation: options.mutation,
-    reread: options.reread,
-    ...options.notifications
-  });
+    options.canConfigure
+  );
   const update = <K extends keyof SystemConfigDraft>(field: K, value: SystemConfigDraft[K]) => {
-    if (transaction.isLocked()) return;
+    if (!transaction.canWrite() || transaction.isLocked()) return;
     setDraft(previous => ({ ...(previous ?? current), [field]: value }));
   };
   const discard = () => {
-    if (!transaction.isLocked()) setDraft(null);
+    if (transaction.canWrite() && !transaction.isLocked()) setDraft(null);
   };
-  const retry = async () => {
-    if (transaction.recovery) return transaction.retry();
-    if (!transaction.isLocked()) await options.reread();
+  const retryRead = async () => {
+    if (!transaction.isLocked()) await options.retryRead();
   };
+  const retrySave = () => transaction.retry();
   const retryTimezones = () => {
     if (!transaction.isLocked()) void options.retryTimezones();
   };
   const save = () => {
-    if (dirty && valid) transaction.submit(current);
+    if (transaction.canWrite() && dirty && valid) transaction.submit(current);
   };
   return {
     discard,
-    retry,
+    retryRead,
+    retrySave,
     retryTimezones,
     save,
     state: {
       current,
+      canConfigure: options.canConfigure,
       dirty,
       locked: transaction.isLocked(),
       proving: transaction.proving,
@@ -83,7 +93,7 @@ export function useSystemConfigFormController(options: FormOptions) {
 /** Apply only the canonical backend response before reloading runtime locale and theme. */
 function applyCanonicalSystemConfig(record: SystemConfigResourceRecord) {
   try {
-    persistSystemPreferences(record);
+    persistSystemPreferences({ locale: record.locale, theme: systemThemeToRuntimeTheme(record.theme) });
   } finally {
     globalThis.location.reload();
   }

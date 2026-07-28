@@ -35,6 +35,8 @@ const refine = vi.hoisted(() => ({
   useUpdate: vi.fn()
 }));
 const preferences = vi.hoisted(() => ({ persist: vi.fn(), readTheme: vi.fn(() => 'dark') }));
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
+const api = vi.hoisted(() => ({ loadSystemConfig: vi.fn() }));
 
 vi.mock('@refinedev/core', () => ({
   useCustom: refine.useCustom,
@@ -46,12 +48,19 @@ vi.mock('@/core/runtime-preferences', () => ({
   persistSystemPreferences: preferences.persist,
   readRuntimeTheme: preferences.readTheme
 }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles } })
+}));
 vi.mock('@/core/i18n/i18n', () => ({ resolveLocale: () => 'en-US' }));
+vi.mock('../api/system-config-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/system-config-api')>()),
+  loadSystemConfig: api.loadSystemConfig
+}));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { resolvedLanguage: 'en-US' }, t: (key: string) => key })
 }));
 
-const serverRecord = { id: 'current', locale: 'en_US', timeZoneId: 'UTC', theme: 'default' };
+const serverRecord = { id: 'current', locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' };
 const timezoneRecord = {
   id: 'timezones',
   items: [{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]
@@ -60,9 +69,11 @@ const timezoneRecord = {
 describe('System Config resource controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    access.roles = ['ADMIN'];
     refine.configRefetch.mockReset();
     refine.updateMutate.mockReset();
     refine.configRefetch.mockResolvedValue({ data: { data: serverRecord }, error: null, isError: false });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
     refine.useOne.mockReturnValue(buildOneResult());
     refine.useCustom.mockReturnValue(buildTimezoneResult());
     refine.useNotification.mockReturnValue({ open: refine.notification });
@@ -89,16 +100,19 @@ describe('System Config resource controller', () => {
     );
     expect(result.current.state).toMatchObject({
       kind: 'ready',
-      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' },
+      canConfigure: true,
+      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark-ops' },
       timezoneOptions: [{ value: 'UTC', label: 'UTC (UTC+00:00) UTC' }]
     });
   });
 
   it.each([
     ['loading', { isPending: true }],
+    ['missing', { isError: true, error: { statusCode: 404, code: 'SYSTEM_CONFIG_MISSING' }, result: undefined }],
+    ['permission', { isError: true, error: { statusCode: 403 }, result: undefined }],
     ['unavailable', { isError: true, error: { statusCode: 503 }, result: undefined }],
     [
-      'error',
+      'invalid',
       {
         isError: true,
         error: { statusCode: 502, code: 'SYSTEM_CONFIG_RESPONSE_INVALID' },
@@ -126,7 +140,7 @@ describe('System Config resource controller', () => {
     act(() => {
       void callbacks?.onSuccess?.({ data: canonical });
     });
-    expect(preferences.persist).toHaveBeenCalledWith(canonical);
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'compact' });
     expect(reload).toHaveBeenCalledTimes(1);
     expect(refine.notification).toHaveBeenCalledWith({ message: 'systemConfig.saveSuccess', type: 'success' });
   });
@@ -160,7 +174,7 @@ describe('System Config resource controller', () => {
       result.current.save();
       result.current.update('locale', 'ja_JP');
       result.current.discard();
-      void result.current.retry();
+      void result.current.retryRead();
       result.current.retryTimezones();
     });
 
@@ -197,7 +211,7 @@ describe('System Config resource controller', () => {
       const canonical = { ...serverRecord, theme: 'compact' as const };
       const reload = vi.fn();
       vi.stubGlobal('location', { reload });
-      refine.configRefetch.mockResolvedValue({ data: { data: canonical }, error: null, isError: false });
+      api.loadSystemConfig.mockResolvedValue(canonical);
       const { result } = renderHook(() => useSystemConfigResourceController());
 
       act(() => result.current.update('theme', 'compact'));
@@ -207,10 +221,10 @@ describe('System Config resource controller', () => {
         void callbacks?.onError?.(failure());
       });
 
-      await waitFor(() => expect(refine.configRefetch).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(api.loadSystemConfig).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
       expect(refine.updateMutate).toHaveBeenCalledTimes(1);
-      expect(preferences.persist).toHaveBeenCalledWith(canonical);
+      expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'compact' });
       expect(refine.notification).toHaveBeenCalledWith({ message: 'systemConfig.saveSuccess', type: 'success' });
     }
   );
@@ -228,7 +242,7 @@ describe('System Config resource controller', () => {
       });
 
       await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null }));
-      expect(refine.configRefetch).not.toHaveBeenCalled();
+      expect(api.loadSystemConfig).not.toHaveBeenCalled();
       expect(refine.notification).toHaveBeenCalledWith({ message: 'systemConfig.saveFailed', type: 'error' });
       act(() => result.current.update('locale', 'ja_JP'));
       act(() => result.current.save());
@@ -241,9 +255,9 @@ describe('System Config resource controller', () => {
     const canonical = { ...serverRecord, theme: 'compact' as const };
     const reload = vi.fn();
     vi.stubGlobal('location', { reload });
-    refine.configRefetch
-      .mockResolvedValueOnce({ data: undefined, error: { statusCode: 503 }, isError: true })
-      .mockResolvedValueOnce({ data: { data: canonical }, error: null, isError: false });
+    api.loadSystemConfig
+      .mockRejectedValueOnce(createRefineHttpError('unavailable', 503, undefined, 'http', 503))
+      .mockResolvedValueOnce(canonical);
     const { result } = renderHook(() => useSystemConfigResourceController());
 
     act(() => result.current.update('theme', 'compact'));
@@ -265,18 +279,18 @@ describe('System Config resource controller', () => {
     expect(refine.updateMutate).toHaveBeenCalledTimes(1);
     expect(refine.timezonesRefetch).not.toHaveBeenCalled();
 
-    await act(async () => result.current.retry());
+    await act(async () => result.current.retrySave());
 
-    expect(refine.configRefetch).toHaveBeenCalledTimes(2);
+    expect(api.loadSystemConfig).toHaveBeenCalledTimes(2);
     expect(refine.updateMutate).toHaveBeenCalledTimes(1);
-    expect(preferences.persist).toHaveBeenCalledWith(canonical);
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'compact' });
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it('retains the submitted draft when canonical GET does not match exactly', async () => {
     const reload = vi.fn();
     vi.stubGlobal('location', { reload });
-    refine.configRefetch.mockResolvedValue({ data: { data: serverRecord }, error: null, isError: false });
+    api.loadSystemConfig.mockResolvedValue(serverRecord);
     const hook = renderHook(() => useSystemConfigResourceController());
 
     act(() => hook.result.current.update('theme', 'compact'));
@@ -312,7 +326,7 @@ describe('System Config resource controller', () => {
     const canonical = { ...serverRecord, theme: 'compact' as const };
     const reload = vi.fn();
     vi.stubGlobal('location', { reload });
-    refine.configRefetch.mockResolvedValue({ data: { data: canonical }, error: null, isError: false });
+    api.loadSystemConfig.mockResolvedValue(canonical);
     const { result } = renderHook(() => useSystemConfigResourceController());
 
     act(() => result.current.update('theme', 'compact'));
@@ -330,7 +344,7 @@ describe('System Config resource controller', () => {
         recovery: { phase: 'proof' }
       })
     );
-    expect(refine.configRefetch).not.toHaveBeenCalled();
+    expect(api.loadSystemConfig).not.toHaveBeenCalled();
     expect(preferences.persist).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
     expect(refine.notification).not.toHaveBeenCalledWith({
@@ -340,19 +354,19 @@ describe('System Config resource controller', () => {
     act(() => result.current.save());
     expect(refine.updateMutate).toHaveBeenCalledTimes(1);
 
-    await act(async () => result.current.retry());
+    await act(async () => result.current.retrySave());
 
-    expect(refine.configRefetch).toHaveBeenCalledTimes(1);
+    expect(api.loadSystemConfig).toHaveBeenCalledTimes(1);
     expect(refine.updateMutate).toHaveBeenCalledTimes(1);
-    expect(preferences.persist).toHaveBeenCalledWith(canonical);
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'compact' });
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it('retires a late canonical proof after unmount', async () => {
-    const proof = deferred<{ data: { data: typeof serverRecord }; error: null; isError: false }>();
+    const proof = deferred<typeof serverRecord>();
     const reload = vi.fn();
     vi.stubGlobal('location', { reload });
-    refine.configRefetch.mockReturnValue(proof.promise);
+    api.loadSystemConfig.mockReturnValue(proof.promise);
     const hook = renderHook(() => useSystemConfigResourceController());
 
     act(() => hook.result.current.update('theme', 'compact'));
@@ -362,12 +376,135 @@ describe('System Config resource controller', () => {
       void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503));
     });
     hook.unmount();
-    proof.resolve({ data: { data: { ...serverRecord, theme: 'compact' } }, error: null, isError: false });
+    proof.resolve({ ...serverRecord, theme: 'compact' });
     await act(async () => proof.promise);
 
     expect(preferences.persist).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
     expect(refine.notification).not.toHaveBeenCalled();
+  });
+
+  it.each([['USER'], ['GUEST']] as const)(
+    'denies retained write commands for %s while preserving read retries',
+    async role => {
+      access.roles = [...role];
+      const { result } = renderHook(() => useSystemConfigResourceController());
+      const retained = {
+        discard: result.current.discard,
+        retrySave: result.current.retrySave,
+        save: result.current.save,
+        update: result.current.update
+      };
+
+      act(() => {
+        retained.update('theme', 'compact');
+        retained.discard();
+        retained.save();
+      });
+      await act(async () => retained.retrySave());
+      act(() => {
+        void result.current.retryRead();
+        result.current.retryTimezones();
+      });
+
+      expect(result.current.state).toMatchObject({
+        kind: 'ready',
+        canConfigure: false,
+        current: { theme: 'dark-ops' }
+      });
+      expect(refine.updateMutate).not.toHaveBeenCalled();
+      expect(api.loadSystemConfig).not.toHaveBeenCalled();
+      expect(refine.configRefetch).toHaveBeenCalledTimes(1);
+      expect(refine.timezonesRefetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('retires a draft, proof recovery, and retained commands when ADMIN loses write access', async () => {
+    api.loadSystemConfig.mockRejectedValue(createRefineHttpError('unavailable', 503, undefined, 'http', 503));
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(hook.result.current.state).toMatchObject({ recovery: { phase: 'proof' } }));
+    const retained = hook.result.current;
+
+    access.roles = ['USER'];
+    act(() => hook.rerender());
+    await act(async () => retained.retrySave());
+    act(() => {
+      retained.update('locale', 'ja_JP');
+      retained.discard();
+      retained.save();
+    });
+
+    expect(hook.result.current.state).toMatchObject({
+      kind: 'ready',
+      canConfigure: false,
+      current: { locale: 'en_US', theme: 'dark-ops' },
+      dirty: false,
+      recovery: null
+    });
+    expect(api.loadSystemConfig).toHaveBeenCalledTimes(1);
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('makes a late mutation completion inert after ADMIN loses write access', () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+
+    access.roles = ['GUEST'];
+    act(() => hook.rerender());
+    act(() => void callbacks?.onSuccess?.({ data: { ...serverRecord, theme: 'compact' } }));
+
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(refine.notification).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    expect(hook.result.current.state).toMatchObject({ canConfigure: false, dirty: false, recovery: null });
+  });
+
+  it('makes a late proof completion inert after ADMIN loses write access', async () => {
+    const proof = deferred<typeof serverRecord>();
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    api.loadSystemConfig.mockReturnValue(proof.promise);
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onError?.(createRefineHttpError('unavailable', 503, undefined, 'http', 503)));
+    await waitFor(() => expect(api.loadSystemConfig).toHaveBeenCalledTimes(1));
+
+    access.roles = ['USER'];
+    act(() => hook.rerender());
+    proof.resolve({ ...serverRecord, theme: 'compact' });
+    await act(async () => proof.promise);
+
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(refine.notification).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+    expect(hook.result.current.state).toMatchObject({
+      canConfigure: false,
+      current: { theme: 'dark-ops' },
+      dirty: false,
+      recovery: null
+    });
+  });
+
+  it('maps an authoritative light server theme to the browser runtime theme', () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'light-ops'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+    act(() => void callbacks?.onSuccess?.({ data: { ...serverRecord, theme: 'light-ops' } }));
+
+    expect(preferences.persist).toHaveBeenCalledWith({ locale: 'en_US', theme: 'default' });
   });
 });
 

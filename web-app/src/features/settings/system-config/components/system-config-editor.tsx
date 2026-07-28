@@ -29,6 +29,7 @@ import {
 import styles from './system-config-editor.module.css';
 
 type SystemConfigEditorProps = {
+  canConfigure: boolean;
   current: SystemConfigDraft;
   timezoneOptions: Array<{ value: string; label: string }>;
   timezonesPending: boolean;
@@ -52,7 +53,7 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
       <div className={styles.form}>
         <SystemConfigField label={t('systemConfig.locale.label')} help={t('systemConfig.locale.help')}>
           <Select<SystemLocale>
-            disabled={props.locked}
+            disabled={!props.canConfigure || props.locked}
             value={current.locale || null}
             options={systemLocales.map(locale => ({ value: locale, label: t(`systemConfig.locale.${locale}`) }))}
             onChange={value => props.onUpdate('locale', value)}
@@ -60,7 +61,7 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
         </SystemConfigField>
         <SystemConfigField label={t('systemConfig.timezone.label')} help={t('systemConfig.timezone.help')}>
           <Select<string>
-            disabled={props.locked}
+            disabled={!props.canConfigure || props.locked}
             value={current.timeZoneId || null}
             showSearch
             optionFilterProp="label"
@@ -71,7 +72,7 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
         </SystemConfigField>
         <SystemConfigField label={t('systemConfig.theme.label')} help={t('systemConfig.theme.help')}>
           <Select<SystemTheme>
-            disabled={props.locked}
+            disabled={!props.canConfigure || props.locked}
             value={current.theme || null}
             options={systemThemes.map(theme => ({ value: theme, label: t(`systemConfig.theme.${theme}`) }))}
             onChange={value => props.onUpdate('theme', value)}
@@ -102,6 +103,7 @@ function TimezoneFailure(props: SystemConfigEditorProps) {
 
 function SystemConfigActions(props: SystemConfigEditorProps) {
   const { t } = useTranslation();
+  if (!props.canConfigure) return null;
   return (
     <div className={styles.actions}>
       <Button

@@ -16,7 +16,7 @@
  */
 
 import { useUpdate, type HttpError } from '@refinedev/core';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import { isDefiniteSystemConfigWriteRejection } from '../api/system-config-write-rejection';
 import {
@@ -24,9 +24,14 @@ import {
   systemConfigResourceName,
   systemConfigSaveConverged,
   type SystemConfigDraft,
-  type SystemConfigResourceRecord,
-  type SystemConfigSaveRecovery
+  type SystemConfigResourceRecord
 } from '../model/system-config-model';
+import {
+  useSystemConfigSaveRuntime,
+  type SystemConfigSaveOwner,
+  type SystemConfigSaveReceipt,
+  type SystemConfigSaveRuntime
+} from './system-config-save-runtime';
 
 export type SystemConfigMutation = ReturnType<
   typeof useUpdate<SystemConfigResourceRecord, HttpError, SystemConfigDraft>
@@ -47,14 +52,24 @@ type SaveTransactionOptions = SystemConfigSaveNotifications & {
   accept: (record: SystemConfigResourceRecord) => void;
   mutation: SystemConfigMutation;
   reread: SystemConfigCanonicalRead;
+  retireDraft: () => void;
 };
 
-type SaveReceipt = { draft: SystemConfigDraft; recovery: SystemConfigSaveRecovery | null };
-type SaveCommand = 'idle' | 'saving' | 'proving';
-
-export function useSystemConfigSaveTransaction(options: SaveTransactionOptions) {
-  const runtime = useSaveRuntime();
-  const prove = async (owner: symbol, receipt: SaveReceipt) => {
+export function useSystemConfigSaveTransaction(options: SaveTransactionOptions, canWrite: boolean) {
+  const runtime = useSystemConfigSaveRuntime();
+  const canWriteRef = useRef(canWrite);
+  const previousCanWriteRef = useRef(canWrite);
+  const { retireDraft } = options;
+  const { retireWriteAccess } = runtime;
+  useLayoutEffect(() => {
+    canWriteRef.current = canWrite;
+    const lostWriteAccess = previousCanWriteRef.current && !canWrite;
+    previousCanWriteRef.current = canWrite;
+    if (!lostWriteAccess) return;
+    retireWriteAccess();
+    retireDraft();
+  }, [canWrite, retireDraft, retireWriteAccess]);
+  const prove = async (owner: SystemConfigSaveOwner, receipt: SystemConfigSaveReceipt) => {
     const evidence = await options.reread();
     if (!runtime.isCurrent(owner)) return;
     if (evidence.error || !evidence.data || !systemConfigSaveConverged(receipt.draft, evidence.data)) {
@@ -68,7 +83,8 @@ export function useSystemConfigSaveTransaction(options: SaveTransactionOptions) 
   const retry = async () => {
     const receipt = runtime.receiptRef.current;
     if (receipt?.recovery?.phase !== 'proof') return;
-    const owner = runtime.begin('proving', true);
+    if (!canWriteRef.current) return;
+    const owner = runtime.begin('proof');
     if (!owner) return;
     try {
       await prove(owner, receipt);
@@ -77,21 +93,24 @@ export function useSystemConfigSaveTransaction(options: SaveTransactionOptions) 
     }
   };
   return {
+    canWrite: () => canWriteRef.current,
     isLocked: runtime.isLocked,
     proving: runtime.command === 'proving',
     recovery: runtime.recovery,
     retry,
-    saving: runtime.command === 'saving' || options.mutation.mutation.isPending,
-    submit
+    saving: runtime.command === 'saving',
+    submit: (draft: SystemConfigDraft) => {
+      if (canWriteRef.current) submit(draft);
+    }
   };
 }
 
 async function handleSaveFailure(
   options: SaveTransactionOptions,
-  runtime: SaveRuntime,
-  prove: (owner: symbol, receipt: SaveReceipt) => Promise<void>,
-  owner: symbol,
-  receipt: SaveReceipt,
+  runtime: SystemConfigSaveRuntime,
+  prove: (owner: SystemConfigSaveOwner, receipt: SystemConfigSaveReceipt) => Promise<void>,
+  owner: SystemConfigSaveOwner,
+  receipt: SystemConfigSaveReceipt,
   reason: unknown
 ) {
   if (!runtime.isCurrent(owner)) return;
@@ -114,12 +133,12 @@ async function handleSaveFailure(
 
 function submitSystemConfigSave(
   options: SaveTransactionOptions,
-  runtime: SaveRuntime,
-  prove: (owner: symbol, receipt: SaveReceipt) => Promise<void>,
+  runtime: SystemConfigSaveRuntime,
+  prove: (owner: SystemConfigSaveOwner, receipt: SystemConfigSaveReceipt) => Promise<void>,
   draft: SystemConfigDraft
 ) {
   if (runtime.receiptRef.current) return;
-  const owner = runtime.begin('saving');
+  const owner = runtime.begin('save');
   if (!owner) return;
   const receipt = { draft, recovery: null };
   runtime.receiptRef.current = receipt;
@@ -149,8 +168,8 @@ function submitSystemConfigSave(
 
 function completeSave(
   options: SaveTransactionOptions,
-  runtime: SaveRuntime,
-  owner: symbol,
+  runtime: SystemConfigSaveRuntime,
+  owner: SystemConfigSaveOwner,
   record: SystemConfigResourceRecord
 ) {
   runtime.publish(owner, null);
@@ -167,46 +186,8 @@ function buildUpdate(draft: SystemConfigDraft) {
     id: systemConfigResourceId,
     resource: systemConfigResourceName,
     dataProviderName: systemConfigResourceName,
-    invalidates: ['detail'] as Array<'detail'>,
+    invalidates: [] as Array<'detail'>,
     mutationMode: 'pessimistic' as const,
     values: draft
   };
-}
-
-type SaveRuntime = ReturnType<typeof useSaveRuntime>;
-
-function useSaveRuntime() {
-  const mountedRef = useRef(true);
-  const ownerRef = useRef<symbol | null>(null);
-  const receiptRef = useRef<SaveReceipt | null>(null);
-  const [command, setCommand] = useState<SaveCommand>('idle');
-  const [recovery, setRecovery] = useState<SystemConfigSaveRecovery | null>(null);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      ownerRef.current = null;
-      receiptRef.current = null;
-    };
-  }, []);
-  const isCurrent = (owner: symbol) => mountedRef.current && ownerRef.current === owner;
-  const begin = (next: Exclude<SaveCommand, 'idle'>, allowReceipt = false) => {
-    if (!mountedRef.current || ownerRef.current || (!allowReceipt && receiptRef.current)) return null;
-    const owner = Symbol(next);
-    ownerRef.current = owner;
-    setCommand(next);
-    return owner;
-  };
-  const publish = (owner: symbol, receipt: SaveReceipt | null) => {
-    if (!isCurrent(owner)) return;
-    receiptRef.current = receipt;
-    setRecovery(receipt?.recovery ?? null);
-  };
-  const finish = (owner: symbol) => {
-    if (!isCurrent(owner)) return;
-    ownerRef.current = null;
-    setCommand('idle');
-  };
-  const isLocked = () => ownerRef.current !== null || receiptRef.current !== null;
-  return { begin, command, finish, isCurrent, isLocked, publish, receiptRef, recovery };
 }
