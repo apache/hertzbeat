@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import java.util.Objects;
+import org.apache.hertzbeat.alert.dto.AlertInhibitRequest;
+import org.apache.hertzbeat.alert.dto.AlertInhibitResponse;
 import org.apache.hertzbeat.alert.service.AlertInhibitService;
-import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,30 +48,24 @@ public class AlertInhibitController {
 
     @PostMapping
     @Operation(summary = "New Alarm Inhibit", description = "Added an alarm Inhibit")
-    public ResponseEntity<Message<Void>> addNewAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
-        alertInhibitService.validate(alertInhibit, false);
-        alertInhibitService.addAlertInhibit(alertInhibit);
-        return ResponseEntity.ok(Message.success("Add success"));
+    public ResponseEntity<Message<AlertInhibitResponse>> addNewAlertInhibit(
+            @RequestBody AlertInhibitRequest request) {
+        return ResponseEntity.ok(Message.success(alertInhibitService.create(request)));
     }
 
     @PutMapping
     @Operation(summary = "Modifying an Alarm Inhibit", description = "Modify an existing alarm Inhibit")
-    public ResponseEntity<Message<Void>> modifyAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
-        alertInhibitService.validate(alertInhibit, true);
-        alertInhibitService.modifyAlertInhibit(alertInhibit);
-        return ResponseEntity.ok(Message.success("Modify success"));
+    public ResponseEntity<Message<AlertInhibitResponse>> modifyAlertInhibit(
+            @RequestBody AlertInhibitRequest request) {
+        return ResponseEntity.ok(Message.success(alertInhibitService.update(request)));
     }
 
     @GetMapping(path = "/{id}")
     @Operation(summary = "Querying Alarm Inhibit",
             description = "You can obtain alarm Inhibit information based on the alarm Inhibit ID")
-    public ResponseEntity<Message<AlertInhibit>> getAlertInhibit(
+    public ResponseEntity<Message<AlertInhibitResponse>> getAlertInhibit(
             @Parameter(description = "Alarm Inhibit ID", example = "6565463543") @PathVariable("id") long id) {
-        AlertInhibit alertInhibit = alertInhibitService.getAlertInhibit(id);
-
-        return Objects.isNull(alertInhibit)
-                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertInhibit not exist."))
-                : ResponseEntity.ok(Message.success(alertInhibit));
+        return ResponseEntity.ok(Message.success(alertInhibitService.get(id)));
     }
 
 }

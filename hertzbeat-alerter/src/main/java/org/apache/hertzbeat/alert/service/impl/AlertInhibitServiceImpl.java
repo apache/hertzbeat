@@ -20,66 +20,122 @@ package org.apache.hertzbeat.alert.service.impl;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
+import org.apache.hertzbeat.alert.dto.AlertInhibitDeleteResponse;
+import org.apache.hertzbeat.alert.dto.AlertInhibitPageResponse;
+import org.apache.hertzbeat.alert.dto.AlertInhibitRequest;
+import org.apache.hertzbeat.alert.dto.AlertInhibitResponse;
 import org.apache.hertzbeat.alert.reduce.AlarmInhibitReduce;
+import org.apache.hertzbeat.alert.service.AlertInhibitContractMapper;
+import org.apache.hertzbeat.alert.service.AlertInhibitNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertInhibitOperationException;
 import org.apache.hertzbeat.alert.service.AlertInhibitService;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 /**
  * management interface service implement for alert inhibit
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-@Slf4j
 public class AlertInhibitServiceImpl implements AlertInhibitService {
 
-    @Autowired
-    private AlertInhibitDao alertInhibitDao;
-    
-    @Autowired
-    private AlarmInhibitReduce alarmInhibitReduce;
+    private static final Set<String> SORT_FIELDS = Set.of("id", "name", "enable", "gmtCreate", "gmtUpdate");
+    private static final int MAX_PAGE_SIZE = 100;
 
-    @Override
-    public void validate(AlertInhibit alertInhibit, boolean isModify) throws IllegalArgumentException {
-        // todo
+    private final AlertInhibitDao alertInhibitDao;
+    private final AlarmInhibitReduce alarmInhibitReduce;
+    private final AlertInhibitContractMapper mapper;
+
+    public AlertInhibitServiceImpl(AlertInhibitDao alertInhibitDao, AlarmInhibitReduce alarmInhibitReduce,
+                                   AlertInhibitContractMapper mapper) {
+        this.alertInhibitDao = alertInhibitDao;
+        this.alarmInhibitReduce = alarmInhibitReduce;
+        this.mapper = mapper;
     }
 
     @Override
-    public void addAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException {
-        alertInhibitDao.save(alertInhibit);
+    public AlertInhibitResponse create(AlertInhibitRequest request) {
+        AlertInhibit saved = alertInhibitDao.save(mapper.toNewEntity(request));
+        if (saved == null || saved.getId() == null) {
+            throw new AlertInhibitOperationException("Alert inhibit create did not return an identity");
+        }
+        AlertInhibit authoritative = alertInhibitDao.findById(saved.getId())
+                .orElseThrow(() -> new AlertInhibitOperationException("Alert inhibit create did not converge"));
         refreshAlertInhibitsCache();
+        return mapper.toResponse(authoritative);
     }
 
     @Override
-    public void modifyAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException {
-        alertInhibitDao.save(alertInhibit);
+    public AlertInhibitResponse update(AlertInhibitRequest request) {
+        Long id = mapper.requirePositiveId(request == null ? null : request.getId());
+        AlertInhibit existing = alertInhibitDao.findById(id).orElseThrow(AlertInhibitNotFoundException::new);
+        alertInhibitDao.save(mapper.toExistingEntity(request, existing));
+        AlertInhibit authoritative = alertInhibitDao.findById(id)
+                .orElseThrow(() -> new AlertInhibitOperationException("Alert inhibit update did not converge"));
         refreshAlertInhibitsCache();
+        return mapper.toResponse(authoritative);
     }
 
     @Override
-    public AlertInhibit getAlertInhibit(long inhibitId) throws RuntimeException {
-        return alertInhibitDao.findById(inhibitId).orElse(null);
+    @Transactional(readOnly = true)
+    public AlertInhibitResponse get(long inhibitId) {
+        mapper.requirePositiveId(inhibitId);
+        return alertInhibitDao.findById(inhibitId).map(mapper::toResponse)
+                .orElseThrow(AlertInhibitNotFoundException::new);
     }
 
     @Override
-    public void deleteAlertInhibits(Set<Long> inhibitIds) throws RuntimeException {
-        alertInhibitDao.deleteAlertInhibitsByIdIn(inhibitIds);
+    public AlertInhibitDeleteResponse delete(Set<Long> inhibitIds) {
+        Set<Long> requested = validateIds(inhibitIds);
+        Set<Long> existing = ids(alertInhibitDao.findAllById(requested));
+        Set<Long> missing = new LinkedHashSet<>(requested);
+        missing.removeAll(existing);
+        if (!existing.isEmpty()) {
+            alertInhibitDao.deleteAlertInhibitsByIdIn(existing);
+        }
+        Set<Long> remaining = ids(alertInhibitDao.findAllById(requested));
+        if (!remaining.isEmpty()) {
+            throw new AlertInhibitOperationException("Alert inhibit delete did not converge");
+        }
         refreshAlertInhibitsCache();
+        String status = existing.isEmpty() ? "missing" : missing.isEmpty() ? "deleted" : "partial";
+        return new AlertInhibitDeleteResponse(status, Set.copyOf(existing), Set.copyOf(missing));
     }
 
     @Override
-    public Page<AlertInhibit> getAlertInhibits(List<Long> inhibitIds, String search, String sort, String order, int pageIndex, int pageSize) {
+    @Transactional(readOnly = true)
+    public AlertInhibitPageResponse list(List<Long> inhibitIds, String search, String sort, String order,
+                                         int pageIndex, int pageSize) {
+        List<Long> ids = inhibitIds == null ? null : List.copyOf(validateIds(new LinkedHashSet<>(inhibitIds)));
+        String query = StringUtils.trimToNull(search);
+        if (query != null && query.length() > 100) {
+            throw new IllegalArgumentException("Alert inhibit search is too long");
+        }
+        if (!SORT_FIELDS.contains(sort) || !("asc".equalsIgnoreCase(order) || "desc".equalsIgnoreCase(order))) {
+            throw new IllegalArgumentException("Alert inhibit sort is invalid");
+        }
+        if (pageIndex < 0 || pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Alert inhibit page is invalid");
+        }
+        Page<AlertInhibit> page = alertInhibitDao.findAll(specification(ids, query),
+                PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.fromString(order), sort)));
+        List<AlertInhibitResponse> content = page.getContent().stream().map(mapper::toResponse).toList();
+        return new AlertInhibitPageResponse(content, page.getTotalElements(), page.getTotalPages(),
+                page.getNumber(), page.getSize());
+    }
+
+    private Specification<AlertInhibit> specification(List<Long> inhibitIds, String search) {
         Specification<AlertInhibit> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (inhibitIds != null && !inhibitIds.isEmpty()) {
@@ -89,11 +145,11 @@ public class AlertInhibitServiceImpl implements AlertInhibitService {
                 }
                 andList.add(inPredicate);
             }
-            if (StringUtils.hasText(search)) {
+            if (search != null) {
                 Predicate predicate = criteriaBuilder.or(
                         criteriaBuilder.like(
                                 criteriaBuilder.lower(root.get("name")),
-                                "%" + search.toLowerCase() + "%"
+                                "%" + search.toLowerCase(Locale.ROOT) + "%"
                         )
                 );
                 andList.add(predicate);
@@ -101,9 +157,22 @@ public class AlertInhibitServiceImpl implements AlertInhibitService {
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));
         };
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return alertInhibitDao.findAll(specification, pageRequest);
+        return specification;
+    }
+
+    private Set<Long> validateIds(Set<Long> inhibitIds) {
+        if (inhibitIds == null || inhibitIds.isEmpty()) {
+            throw new IllegalArgumentException("Alert inhibit ids are required");
+        }
+        LinkedHashSet<Long> result = new LinkedHashSet<>();
+        inhibitIds.forEach(id -> result.add(mapper.requirePositiveId(id)));
+        return result;
+    }
+
+    private Set<Long> ids(Iterable<AlertInhibit> inhibits) {
+        Set<Long> ids = new LinkedHashSet<>();
+        inhibits.forEach(inhibit -> ids.add(inhibit.getId()));
+        return ids;
     }
 
     private void refreshAlertInhibitsCache() {

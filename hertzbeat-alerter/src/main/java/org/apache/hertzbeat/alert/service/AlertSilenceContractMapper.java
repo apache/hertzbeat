@@ -39,6 +39,9 @@ public class AlertSilenceContractMapper {
     private static final int MAX_MATCHER_CONTENT_LENGTH = 1800;
 
     public AlertSilence toNewEntity(AlertSilenceRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Alert silence request is required");
+        }
         if (request.getId() != null) {
             throw new IllegalArgumentException("id is not allowed when creating an alert silence");
         }
@@ -46,6 +49,9 @@ public class AlertSilenceContractMapper {
     }
 
     public AlertSilence toExistingEntity(AlertSilenceRequest request, AlertSilence existing) {
+        if (request == null) {
+            throw new IllegalArgumentException("Alert silence request is required");
+        }
         Long id = requirePositiveId(request.getId());
         if (!id.equals(existing.getId())) {
             throw new IllegalArgumentException("Alert silence identity does not match");

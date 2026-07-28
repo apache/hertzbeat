@@ -21,7 +21,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.service.AlertSilenceNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertInhibitNotFoundException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -31,37 +31,37 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/** Safe and non-reflective failure mapping for the two existing alert-silence controllers. */
+/** Safe and non-reflective failure mapping for the two existing alert-inhibit controllers. */
 @Slf4j
-@RestControllerAdvice(assignableTypes = {AlertSilenceController.class, AlertSilencesController.class})
-public class AlertSilenceControllerAdvice {
+@RestControllerAdvice(assignableTypes = {AlertInhibitController.class, AlertInhibitsController.class})
+public class AlertInhibitControllerAdvice {
 
-    @ExceptionHandler(AlertSilenceNotFoundException.class)
+    @ExceptionHandler(AlertInhibitNotFoundException.class)
     public ResponseEntity<Message<Void>> missing() {
-        return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."));
+        return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertInhibit not exist."));
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Message<Void>> unavailable(DataAccessException exception) {
-        log.error("Alert silence storage unavailable: {}", exception.getClass().getSimpleName());
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Alert silence storage unavailable"));
+        log.error("Alert inhibit storage unavailable: {}", exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Alert inhibit storage unavailable"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Message<Void>> invalid() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Message.fail(FAIL_CODE, "Invalid alert silence request"));
+                .body(Message.fail(FAIL_CODE, "Invalid alert inhibit request"));
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<Message<Void>> malformed() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Message.fail(FAIL_CODE, "Invalid alert silence request"));
+                .body(Message.fail(FAIL_CODE, "Invalid alert inhibit request"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Message<Void>> error(Exception exception) {
-        log.error("Alert silence operation error: {}", exception.getClass().getSimpleName());
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Alert silence operation error"));
+        log.error("Alert inhibit operation error: {}", exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Alert inhibit operation error"));
     }
 }
