@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -50,6 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Test case for {@link AlertService}
@@ -64,6 +66,9 @@ class AlertServiceTest {
 
     @Mock
     private AlarmCommonReduce alarmCommonReduce;
+
+    @Mock
+    private AlertGroupMutationPublisher alertGroupMutationPublisher;
 
     @InjectMocks
     private AlertServiceImpl alertService;
@@ -95,11 +100,30 @@ class AlertServiceTest {
                 .alertFingerprints(List.of("private-alert-fingerprint"))
                 .build();
         when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(List.of(existingAlert));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            assertThrows(AlertGroupNotFoundException.class, () -> alertService.deleteGroupAlerts(ids));
 
-        assertThrows(AlertGroupNotFoundException.class, () -> alertService.deleteGroupAlerts(ids));
+            assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
+            verify(groupAlertDao, never()).deleteGroupAlertsByIdIn(ids);
+            verifyNoInteractions(singleAlertDao);
+            verifyNoInteractions(alertGroupMutationPublisher);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 
-        verify(groupAlertDao, never()).deleteGroupAlertsByIdIn(ids);
-        verifyNoInteractions(singleAlertDao);
+    @Test
+    void deleteGroupAlertsRequestsTombstoneAfterExactDelete() {
+        HashSet<Long> ids = new HashSet<>(List.of(2L, 1L));
+        List<GroupAlert> groupAlerts = List.of(
+                GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
+                GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
+        when(groupAlertDao.findGroupAlertsByIdIn(ids)).thenReturn(groupAlerts);
+        alertService.deleteGroupAlerts(ids);
+
+        verify(groupAlertDao).deleteGroupAlertsByIdIn(ids);
+        verify(alertGroupMutationPublisher).publishDeleted(ids);
     }
 
     @Test
@@ -201,12 +225,32 @@ class AlertServiceTest {
                 .alertFingerprints(List.of("fingerprint-1"))
                 .build();
         when(groupAlertDao.findAllById(ids)).thenReturn(List.of(existingAlert));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            assertThrows(AlertGroupNotFoundException.class,
+                    () -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
 
-        assertThrows(AlertGroupNotFoundException.class,
-                () -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
+            assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
+            verify(groupAlertDao, never()).saveAll(anyList());
+            verifyNoInteractions(singleAlertDao);
+            verifyNoInteractions(alertGroupMutationPublisher);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
 
-        verify(groupAlertDao, never()).saveAll(anyList());
-        verifyNoInteractions(singleAlertDao);
+    @Test
+    void editGroupAlertStatusRequestsRefreshAfterExactWrites() {
+        List<Long> ids = List.of(2L, 1L, 2L);
+        List<GroupAlert> groupAlerts = List.of(
+                GroupAlert.builder().id(1L).alertFingerprints(List.of()).build(),
+                GroupAlert.builder().id(2L).alertFingerprints(List.of()).build());
+        when(groupAlertDao.findAllById(List.of(2L, 1L))).thenReturn(groupAlerts);
+        alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_ACKNOWLEDGED, ids);
+
+        verify(groupAlertDao).saveAll(groupAlerts);
+        verify(alertGroupMutationPublisher).publishStatusChanged(
+                List.of(2L, 1L), CommonConstants.ALERT_STATUS_ACKNOWLEDGED);
     }
 
     @Test
@@ -304,4 +348,5 @@ class AlertServiceTest {
         verify(singleAlertDao, times(1)).querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
         verify(singleAlertDao, times(1)).count();
     }
+
 }

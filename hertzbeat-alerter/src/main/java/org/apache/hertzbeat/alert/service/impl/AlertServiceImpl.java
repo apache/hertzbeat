@@ -33,6 +33,7 @@ import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertGroupMutationPublisher;
 import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
 import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -65,6 +66,9 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
+
+    @Autowired
+    private AlertGroupMutationPublisher alertGroupMutationPublisher;
 
     @Override
     public Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
@@ -179,6 +183,7 @@ public class AlertServiceImpl implements AlertService {
             singleAlertDao.deleteSingleAlertsByFingerprintIn(firingAlerts);
         }
         groupAlertDao.deleteGroupAlertsByIdIn(ids);
+        alertGroupMutationPublisher.publishDeleted(ids);
     }
 
     @Override
@@ -227,6 +232,7 @@ public class AlertServiceImpl implements AlertService {
         if (!singleAlerts.isEmpty()) {
             singleAlertDao.saveAll(singleAlerts);
         }
+        alertGroupMutationPublisher.publishStatusChanged(requestedIds, status);
     }
 
     private static void requireSupportedGroupAlertStatus(String status) {
