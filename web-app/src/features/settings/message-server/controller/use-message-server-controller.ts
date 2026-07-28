@@ -38,6 +38,7 @@ import {
   createEmailServerDraft,
   createSmsServerDraft,
   setEmailSecretCleared,
+  updateEmailServerDraft,
   validateEmailServerDraft,
   validateSmsServerDraft,
   type EmailServerDraft,
@@ -152,15 +153,7 @@ function useEmailServerChannel(
       closeEmail: transaction.close,
       updateEmail: (patch: Partial<EmailServerDraft>) => {
         if (!transaction.canWrite() || transaction.isLocked()) return;
-        setDraft(current =>
-          current
-            ? {
-                ...current,
-                ...patch,
-                ...(patch.emailPassword?.trim() ? { clearSecrets: [] } : {})
-              }
-            : null
-        );
+        setDraft(current => updateEmailServerDraft(current, patch));
       },
       setEmailSecretCleared: (cleared: boolean) => {
         if (transaction.canWrite() && !transaction.isLocked()) {

@@ -173,6 +173,18 @@ export function setEmailSecretCleared(draft: EmailServerDraft, cleared: boolean)
   };
 }
 
+export function updateEmailServerDraft(
+  draft: EmailServerDraft | null,
+  patch: Partial<EmailServerDraft>
+): EmailServerDraft | null {
+  if (!draft) return null;
+  return {
+    ...draft,
+    ...patch,
+    ...(patch.emailPassword?.trim() ? { clearSecrets: [] } : {})
+  };
+}
+
 export function messageServerStatus(enable: boolean, invalidFields: string[]) {
   if (invalidFields.length > 0) return 'unconfigured' as const;
   return enable ? ('enabled' as const) : ('disabled' as const);
