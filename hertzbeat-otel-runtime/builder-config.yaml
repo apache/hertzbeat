@@ -13,6 +13,7 @@ dist:
 
 replaces:
   - golang.org/x/text => golang.org/x/text v0.39.0
+  - google.golang.org/grpc => google.golang.org/grpc v1.82.1
 
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.156.0
