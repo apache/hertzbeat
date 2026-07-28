@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AlertGroup } from './alert-model';
-import { buildShellAlertItems } from './shell-alert-notification-model';
+import { buildShellAlertItems, shellAlertSoundCanToggle } from './shell-alert-notification-model';
 
 describe('shell alert notification model', () => {
   it('projects bounded recent alert evidence without inventing names', () => {
@@ -45,6 +45,13 @@ describe('shell alert notification model', () => {
 
   it('caps the header preview independently from the server page size', () => {
     expect(buildShellAlertItems(Array.from({ length: 8 }, (_, index) => group(index + 1)))).toHaveLength(5);
+  });
+
+  it('keeps global mute writes ADMIN-only while every shell role retains read evidence', () => {
+    expect(shellAlertSoundCanToggle(['ADMIN'])).toBe(true);
+    expect(shellAlertSoundCanToggle(['USER'])).toBe(false);
+    expect(shellAlertSoundCanToggle(['GUEST'])).toBe(false);
+    expect(shellAlertSoundCanToggle([])).toBe(false);
   });
 });
 

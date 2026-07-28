@@ -44,7 +44,7 @@ export function ShellAlertNotifications({
 function SoundControl({ state, t }: { state: ShellAlertNotificationState; t: TFunction }) {
   const label = soundControlLabel(state.sound, t);
   const muted = state.sound.kind !== 'ready' || state.sound.muted;
-  const disabled = state.sound.kind !== 'ready' || state.sound.saving;
+  const disabled = state.sound.kind !== 'ready' || !state.sound.canToggle || state.sound.saving;
   return (
     <Tooltip title={label}>
       <Button
@@ -65,6 +65,7 @@ function soundControlLabel(state: ShellAlertNotificationState['sound'], t: TFunc
   if (state.kind === 'permission') return t('common.permission.roleRequiredDescription');
   if (state.kind === 'unavailable') return t('shell.alerts.soundUnavailable');
   if (state.kind === 'error') return t('shell.alerts.soundError');
+  if (!state.canToggle) return t('shell.alerts.soundReadOnly');
   if (state.saving) return t('shell.alerts.soundSaving');
   if (state.failure === 'save_failed') return t('shell.alerts.soundSaveFailed');
   if (state.muted) return t('shell.alerts.soundMuted');

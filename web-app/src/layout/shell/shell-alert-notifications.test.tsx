@@ -35,7 +35,7 @@ describe('ShellAlertNotifications', () => {
               }
             ]
           },
-          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
           toggleSound: vi.fn()
         }}
         t={t}
@@ -76,7 +76,7 @@ describe('ShellAlertNotifications', () => {
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
-          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
           toggleSound: vi.fn()
         }}
         t={t}
@@ -114,7 +114,7 @@ describe('ShellAlertNotifications', () => {
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
-          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
           toggleSound
         }}
         t={t}
@@ -138,5 +138,26 @@ describe('ShellAlertNotifications', () => {
       />
     );
     expect(screen.getByRole('button', { name: 'shell.alerts.soundUnavailable' })).toBeDisabled();
+  });
+
+  it('shows canonical mute evidence but disables the global action for a read-only role', () => {
+    const toggleSound = vi.fn();
+    render(
+      <ShellAlertNotifications
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: false, muted: false, saving: false, permission: 'default', failure: null },
+          toggleSound
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    const control = screen.getByRole('button', { name: 'shell.alerts.soundReadOnly' });
+    expect(control).toBeDisabled();
+    fireEvent.click(control);
+    expect(toggleSound).not.toHaveBeenCalled();
   });
 });

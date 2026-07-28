@@ -36,7 +36,7 @@ describe('ShellHeaderActions account menu', () => {
         alertNotifications={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
-          sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+          sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
           toggleSound: vi.fn()
         }}
         fullscreen={{ available: true, active: false, busy: false }}
@@ -67,7 +67,14 @@ describe('ShellHeaderActions account menu', () => {
       alertNotifications: {
         count: { kind: 'ready', total: 0 } as const,
         list: { kind: 'empty' } as const,
-        sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null } as const,
+        sound: {
+          kind: 'ready',
+          canToggle: true,
+          muted: true,
+          saving: false,
+          permission: 'default',
+          failure: null
+        } as const,
         toggleSound: vi.fn()
       },
       loggingOut: false,

@@ -41,6 +41,7 @@ describe('shell locale contract', () => {
     expect(expected).toContain('actions.alertsWithCount');
     expect(expected).toContain('alerts.unavailable');
     expect(expected).toContain('alerts.soundEnabledBrowserDenied');
+    expect(expected).toContain('alerts.soundReadOnly');
     expect(expected).toContain('alerts.browserBody');
   });
 });

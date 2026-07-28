@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
@@ -14,10 +14,11 @@ import type {
 } from '@/core/notification/browser-alert-notification';
 
 import type { AlertEventSignal } from '../api/alert-event-schema';
-import { loadShellAlertMute, saveShellAlertMute } from '../api/shell-alert-notification-api';
+import { loadShellAlertMute } from '../api/shell-alert-notification-api';
 import { alertFailureKind } from '../model/alert-model';
-import type { ShellAlertSoundState } from '../model/shell-alert-notification-model';
+import { shellAlertSoundCanToggle, type ShellAlertSoundState } from '../model/shell-alert-notification-model';
 import { shellAlertNotificationQueryKeys } from './shell-alert-notification-query-keys';
+import { useShellAlertMuteOperation } from './use-shell-alert-mute-operation';
 
 const notifiedAlertLimit = 128;
 const chineseAlertSound = '/assets/audio/default-alert-CN.mp3';
@@ -28,6 +29,7 @@ type SoundControllerOptions = {
   notificationTitle: string;
   notificationBody: string;
   onOpenAlerts: () => void;
+  roles: readonly string[];
   runtime: BrowserAlertNotificationRuntime;
 };
 
@@ -39,10 +41,16 @@ export function useShellAlertSoundController(options: SoundControllerOptions) {
     retry: false
   });
   const [permission, setPermission] = useState(() => runtime.readPermission());
-  const update = useMuteUpdate(muteQuery.data?.muted, runtime, setPermission);
+  const canToggle = shellAlertSoundCanToggle(options.roles);
+  const update = useShellAlertMuteOperation({
+    canToggle,
+    currentMuted: muteQuery.data?.muted,
+    runtime,
+    setPermission
+  });
   const notifiedIds = useRef<number[]>([]);
   const soundSnapshot = useRef({ muted: true, permission });
-  const delivery = useRef(options);
+  const delivery = useRef({ locale, notificationBody, notificationTitle, onOpenAlerts, runtime });
 
   useEffect(() => {
     soundSnapshot.current = { muted: muteQuery.data?.muted ?? true, permission };
@@ -74,50 +82,12 @@ export function useShellAlertSoundController(options: SoundControllerOptions) {
       muteQuery.data?.muted,
       update.saving,
       permission,
-      update.failure
+      update.failure,
+      canToggle
     ),
     toggleSound: update.toggle,
     onAlert
   };
-}
-
-function useMuteUpdate(
-  currentMuted: boolean | undefined,
-  runtime: BrowserAlertNotificationRuntime,
-  setPermission: (permission: BrowserAlertPermission) => void
-) {
-  const client = useQueryClient();
-  const [saving, setSaving] = useState(false);
-  const [failure, setFailure] = useState<'save_failed' | null>(null);
-  const mounted = useRef(false);
-  const updating = useRef(false);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      updating.current = false;
-    };
-  }, []);
-  const toggle = useCallback(async () => {
-    if (updating.current || currentMuted === undefined) return;
-    updating.current = true;
-    setSaving(true);
-    setFailure(null);
-    const muted = !currentMuted;
-    try {
-      if (!muted) {
-        const nextPermission = await runtime.requestPermission();
-        if (mounted.current) setPermission(nextPermission);
-      }
-      client.setQueryData(shellAlertNotificationQueryKeys.mute(), await saveShellAlertMute(muted));
-    } catch {
-      if (mounted.current) setFailure('save_failed');
-    } finally {
-      updating.current = false;
-      if (mounted.current) setSaving(false);
-    }
-  }, [client, currentMuted, runtime, setPermission]);
-  return { saving, failure, toggle };
 }
 
 function readSoundState(
@@ -126,12 +96,13 @@ function readSoundState(
   muted: boolean | undefined,
   saving: boolean,
   permission: BrowserAlertPermission,
-  failure: 'save_failed' | null
+  failure: 'save_failed' | null,
+  canToggle: boolean
 ): ShellAlertSoundState {
   if (pending) return { kind: 'loading' };
   if (error) return { kind: alertFailureKind(error) };
   if (muted === undefined) return { kind: 'error' };
-  return { kind: 'ready', muted, saving, permission, failure };
+  return { kind: 'ready', canToggle, muted, saving, permission, failure };
 }
 
 function rememberAlert(ids: number[], id: number) {

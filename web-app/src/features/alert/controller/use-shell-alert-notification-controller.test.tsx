@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BrowserAlertNotificationRuntime } from '@/core/notification/browser-alert-notification';
 
 import { AlertRequestFailure, type AlertQuery } from '../model/alert-model';
+import { shellAlertNotificationQueryKeys } from './shell-alert-notification-query-keys';
 import { useShellAlertNotificationController } from './use-shell-alert-notification-controller';
 
 const api = vi.hoisted(() => ({
@@ -35,6 +36,7 @@ const notificationRuntime: BrowserAlertNotificationRuntime = {
   playSound: vi.fn()
 };
 const openAlerts = vi.fn();
+let canonicalMuted = true;
 
 describe('shell alert notification controller', () => {
   beforeEach(() => {
@@ -58,8 +60,12 @@ describe('shell alert notification controller', () => {
       })
     );
     api.openAlertGroupStream.mockReturnValue({ close: vi.fn() });
-    soundApi.loadShellAlertMute.mockResolvedValue({ muted: true });
-    soundApi.saveShellAlertMute.mockImplementation((muted: boolean) => Promise.resolve({ muted }));
+    canonicalMuted = true;
+    soundApi.loadShellAlertMute.mockImplementation(() => Promise.resolve({ muted: canonicalMuted }));
+    soundApi.saveShellAlertMute.mockImplementation((muted: boolean) => {
+      canonicalMuted = muted;
+      return Promise.resolve();
+    });
     vi.mocked(notificationRuntime.readPermission).mockReturnValue('default');
     vi.mocked(notificationRuntime.requestPermission).mockResolvedValue('granted');
     openAlerts.mockReset();
@@ -130,6 +136,171 @@ describe('shell alert notification controller', () => {
     expect(api.openAlertGroupStream).toHaveBeenCalledTimes(1);
   });
 
+  it.each([['USER'], ['GUEST']] as const)(
+    'keeps the canonical mute state readable but refuses a %s toggle',
+    async role => {
+      const { result } = renderController([role]);
+      await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+      expect(result.current.sound).toMatchObject({ canToggle: false });
+      await act(async () => result.current.toggleSound());
+
+      expect(notificationRuntime.requestPermission).not.toHaveBeenCalled();
+      expect(soundApi.saveShellAlertMute).not.toHaveBeenCalled();
+    }
+  );
+
+  it('retires a captured ADMIN toggle synchronously after role downgrade', async () => {
+    const { result, rerender } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', canToggle: true }));
+    const retainedToggle = result.current.toggleSound;
+
+    rerender({ roles: ['USER'] });
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', canToggle: false }));
+    await act(async () => retainedToggle());
+
+    expect(notificationRuntime.requestPermission).not.toHaveBeenCalled();
+    expect(soundApi.saveShellAlertMute).not.toHaveBeenCalled();
+  });
+
+  it('retires permission-await work before a downgrade can issue POST', async () => {
+    const permission = deferred<NotificationPermission>();
+    vi.mocked(notificationRuntime.requestPermission).mockReturnValue(permission.promise);
+    const { result, rerender } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+    let toggle!: Promise<void>;
+    act(() => {
+      toggle = result.current.toggleSound();
+    });
+    await waitFor(() => expect(notificationRuntime.requestPermission).toHaveBeenCalledOnce());
+    rerender({ roles: ['GUEST'] });
+    permission.resolve('granted');
+    await act(async () => toggle);
+
+    expect(soundApi.saveShellAlertMute).not.toHaveBeenCalled();
+    expect(result.current.sound).toMatchObject({
+      kind: 'ready',
+      canToggle: false,
+      muted: true,
+      saving: false,
+      failure: null
+    });
+  });
+
+  it.each(['resolve', 'reject'] as const)(
+    'converges through canonical GET after a late POST %s and role downgrade',
+    async completion => {
+      const post = deferred<void>();
+      soundApi.saveShellAlertMute.mockReturnValue(post.promise);
+      const { client, result, rerender } = renderController();
+      await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+      let toggle!: Promise<void>;
+      act(() => {
+        toggle = result.current.toggleSound();
+      });
+      await waitFor(() => expect(soundApi.saveShellAlertMute).toHaveBeenCalledWith(false));
+      rerender({ roles: ['USER'] });
+      canonicalMuted = false;
+      if (completion === 'resolve') post.resolve();
+      else post.reject(new AlertRequestFailure('error', 'rejected'));
+      await act(async () => toggle);
+
+      await waitFor(() => expect(soundApi.loadShellAlertMute).toHaveBeenCalledTimes(2));
+      expect(client.getQueryData(shellAlertNotificationQueryKeys.mute())).toEqual({ muted: false });
+      expect(result.current.sound).toMatchObject({
+        kind: 'ready',
+        canToggle: false,
+        muted: false,
+        saving: false,
+        failure: null
+      });
+    }
+  );
+
+  it('refuses a captured ADMIN toggle after unmount', async () => {
+    const { result, unmount } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+    const retainedToggle = result.current.toggleSound;
+
+    unmount();
+    await act(async () => retainedToggle());
+
+    expect(notificationRuntime.requestPermission).not.toHaveBeenCalled();
+    expect(soundApi.saveShellAlertMute).not.toHaveBeenCalled();
+  });
+
+  it('does not publish a late POST completion after unmount', async () => {
+    const post = deferred<void>();
+    soundApi.saveShellAlertMute.mockReturnValue(post.promise);
+    const { client, result, unmount } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+    let toggle!: Promise<void>;
+    act(() => {
+      toggle = result.current.toggleSound();
+    });
+    await waitFor(() => expect(soundApi.saveShellAlertMute).toHaveBeenCalledOnce());
+    unmount();
+    post.resolve();
+    await act(async () => toggle);
+
+    expect(soundApi.loadShellAlertMute).toHaveBeenCalledTimes(1);
+    expect(client.getQueryData(shellAlertNotificationQueryKeys.mute())).toEqual({ muted: true });
+  });
+
+  it('aborts canonical GET and suppresses its late cache write after unmount', async () => {
+    const canonical = deferred<{ muted: boolean }>();
+    let canonicalSignal: AbortSignal | undefined;
+    soundApi.loadShellAlertMute.mockResolvedValueOnce({ muted: true }).mockImplementationOnce((signal: AbortSignal) => {
+      canonicalSignal = signal;
+      return canonical.promise;
+    });
+    const { client, result, unmount } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+    let toggle!: Promise<void>;
+    act(() => {
+      toggle = result.current.toggleSound();
+    });
+    await waitFor(() => expect(soundApi.loadShellAlertMute).toHaveBeenCalledTimes(2));
+    unmount();
+    canonical.resolve({ muted: false });
+    await act(async () => toggle);
+
+    expect(canonicalSignal?.aborted).toBe(true);
+    expect(client.getQueryData(shellAlertNotificationQueryKeys.mute())).toEqual({ muted: true });
+  });
+
+  it('uses current canonical mute evidence when an old toggle callback runs', async () => {
+    const { client, result } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+    const retainedToggle = result.current.toggleSound;
+    act(() => {
+      client.setQueryData(shellAlertNotificationQueryKeys.mute(), { muted: false });
+    });
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: false }));
+
+    await act(async () => retainedToggle());
+
+    expect(soundApi.saveShellAlertMute).toHaveBeenCalledWith(true);
+    expect(notificationRuntime.requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('converges a legal POST through canonical GET instead of its request parameter', async () => {
+    soundApi.saveShellAlertMute.mockResolvedValue(undefined);
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true }));
+
+    await act(async () => result.current.toggleSound());
+
+    expect(soundApi.saveShellAlertMute).toHaveBeenCalledWith(false);
+    expect(soundApi.loadShellAlertMute).toHaveBeenCalledTimes(2);
+    expect(soundApi.loadShellAlertMute).toHaveBeenLastCalledWith(expect.any(AbortSignal));
+    expect(result.current.sound).toMatchObject({ kind: 'ready', muted: true, saving: false, failure: null });
+  });
+
   it('notifies once per firing group while unmuted without retaining alert content', async () => {
     soundApi.loadShellAlertMute.mockResolvedValue({ muted: false });
     vi.mocked(notificationRuntime.readPermission).mockReturnValue('granted');
@@ -198,20 +369,32 @@ describe('shell alert notification controller', () => {
   });
 });
 
-function renderController() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+function renderController(roles = ['ADMIN']) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } } });
   const wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return renderHook(
-    () =>
+  const rendered = renderHook(
+    ({ roles: currentRoles }) =>
       useShellAlertNotificationController({
         locale: 'en-US',
         notificationTitle: 'HertzBeat alert',
         notificationBody: 'A new active alert needs attention.',
         onOpenAlerts: openAlerts,
-        runtime: notificationRuntime
+        runtime: notificationRuntime,
+        roles: currentRoles
       }),
-    { wrapper }
+    { initialProps: { roles }, wrapper }
   );
+  return { ...rendered, client };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }

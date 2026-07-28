@@ -32,7 +32,8 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
     locale: i18n.resolvedLanguage,
     notificationTitle: t('shell.alerts.browserTitle'),
     notificationBody: t('shell.alerts.browserBody'),
-    onOpenAlerts: actions.openAlerts
+    onOpenAlerts: actions.openAlerts,
+    roles: session?.roles ?? []
   });
   const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';

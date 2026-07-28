@@ -91,6 +91,7 @@
       "soundLoading": "正在載入告警聲音設定",
       "soundUnavailable": "告警聲音設定暫時無法使用",
       "soundError": "無法讀取告警聲音設定",
+      "soundReadOnly": "只有管理員可以修改全域告警聲音設定",
       "soundSaving": "正在更新告警聲音設定",
       "soundSaveFailed": "無法更新告警聲音設定",
       "soundMuted": "告警聲音已靜音",

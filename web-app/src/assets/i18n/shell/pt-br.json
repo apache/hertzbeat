@@ -91,6 +91,7 @@
       "soundLoading": "Carregando a configuração de som dos alertas",
       "soundUnavailable": "A configuração de som dos alertas está indisponível",
       "soundError": "Não foi possível ler a configuração de som dos alertas",
+      "soundReadOnly": "Somente administradores podem alterar a configuração global de som dos alertas",
       "soundSaving": "Atualizando a configuração de som dos alertas",
       "soundSaveFailed": "Não foi possível atualizar a configuração de som dos alertas",
       "soundMuted": "O som dos alertas está silenciado",

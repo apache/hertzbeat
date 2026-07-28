@@ -91,6 +91,7 @@
       "soundLoading": "アラート音の設定を読み込み中",
       "soundUnavailable": "アラート音の設定を利用できません",
       "soundError": "アラート音の設定を読み取れませんでした",
+      "soundReadOnly": "グローバルアラート音の設定を変更できるのは管理者のみです",
       "soundSaving": "アラート音の設定を更新中",
       "soundSaveFailed": "アラート音の設定を更新できませんでした",
       "soundMuted": "アラート音はミュートされています",

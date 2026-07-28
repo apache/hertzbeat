@@ -26,8 +26,7 @@ export async function loadShellAlertMute(signal?: AbortSignal) {
 }
 
 export async function saveShellAlertMute(muted: boolean) {
-  return alertApiRequest(async () => {
+  await alertApiRequest(async () => {
     await apiMessagePost(shellAlertMuteEndpoint, { mute: muted });
-    return { muted };
   });
 }

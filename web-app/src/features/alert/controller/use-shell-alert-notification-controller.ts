@@ -41,6 +41,7 @@ type ShellAlertNotificationOptions = {
   notificationTitle: string;
   notificationBody: string;
   onOpenAlerts: () => void;
+  roles: readonly string[];
   runtime?: BrowserAlertNotificationRuntime;
 };
 

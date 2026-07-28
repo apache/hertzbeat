@@ -51,7 +51,7 @@ vi.mock('@/features/alert/shell', () => ({
   useShellAlertNotificationController: () => ({
     count: { kind: 'ready', total: 0 },
     list: { kind: 'empty' },
-    sound: { kind: 'ready', muted: true, saving: false, permission: 'default', failure: null },
+    sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
     toggleSound: vi.fn()
   })
 }));

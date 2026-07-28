@@ -37,7 +37,7 @@ describe('shell alert notification API', () => {
   it('saves only the mute flag', async () => {
     transport.apiMessagePost.mockResolvedValue(undefined);
 
-    await expect(saveShellAlertMute(true)).resolves.toEqual({ muted: true });
+    await expect(saveShellAlertMute(true)).resolves.toBeUndefined();
     expect(transport.apiMessagePost).toHaveBeenCalledWith('/api/config/mute', { mute: true });
   });
 

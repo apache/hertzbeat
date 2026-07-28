@@ -91,6 +91,7 @@
       "soundLoading": "Loading alert sound setting",
       "soundUnavailable": "Alert sound setting is unavailable",
       "soundError": "Alert sound setting could not be read",
+      "soundReadOnly": "Only administrators can change the global alert sound setting",
       "soundSaving": "Updating alert sound setting",
       "soundSaveFailed": "Alert sound setting could not be updated",
       "soundMuted": "Alert sound is muted",

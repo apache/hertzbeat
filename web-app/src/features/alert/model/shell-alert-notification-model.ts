@@ -41,6 +41,7 @@ export type ShellAlertSoundState =
   | { kind: 'error' }
   | {
       kind: 'ready';
+      canToggle: boolean;
       muted: boolean;
       saving: boolean;
       permission: BrowserAlertPermission;
@@ -53,6 +54,10 @@ export type ShellAlertNotificationState = {
   sound: ShellAlertSoundState;
   toggleSound: () => Promise<void>;
 };
+
+export function shellAlertSoundCanToggle(roles: readonly string[]) {
+  return roles.includes('ADMIN');
+}
 
 /** Projects only the compact evidence needed by the global header. */
 export function buildShellAlertItems(groups: AlertGroup[]): ShellAlertItem[] {
