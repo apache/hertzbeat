@@ -108,7 +108,9 @@ export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
 }
 
 export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
-  if (![query.serviceNamespace, query.intakeProfileId, query.collectorId, query.windowMode].some(isPresent)) {
+  // Ordinary Explore filters can include a namespace. Only onboarding-owned identity/window markers activate
+  // the stricter handoff contract.
+  if (![query.intakeProfileId, query.collectorId, query.windowMode].some(isPresent)) {
     return 'none';
   }
   if (

@@ -71,7 +71,6 @@ describe('ExplorePage instrumentation context boundary', () => {
 
   it('does not widen partial or reversed instrumentation scope into any signal query or SSE stream', async () => {
     const invalidEntries = [
-      '/explore?signal=metrics&serviceNamespace=commerce',
       '/explore?signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce&start=1000&end=2000',
       '/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east&start=2000&end=1000',
       '/explore?signal=traces&collectorId=east',
@@ -90,15 +89,36 @@ describe('ExplorePage instrumentation context boundary', () => {
     expect(api.openLogStream).not.toHaveBeenCalled();
   });
 
-  it('continues to query ordinary Explore scope', async () => {
-    renderPage('/explore?signal=metrics&serviceName=checkout&environment=prod');
+  it('queries history and opens live SSE for ordinary direct Explore scope', async () => {
+    const scope =
+      'serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-1&endpoint=%2Fcheckout';
+    renderPage(`/explore?signal=metrics&${scope}`);
 
     await waitFor(() =>
       expect(api.loadMetricSignal).toHaveBeenCalledWith(
-        expect.objectContaining({ signal: 'metrics', serviceName: 'checkout', environment: 'prod' }),
+        expect.objectContaining({
+          signal: 'metrics',
+          serviceName: 'checkout',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          instance: 'checkout-1',
+          endpoint: '/checkout'
+        }),
         expect.any(AbortSignal)
       )
     );
+    expect(screen.queryByText(en.explore.handoffInvalid)).not.toBeInTheDocument();
+    cleanup();
+
+    renderPage(`/explore?signal=logs&mode=live&${scope}`);
+    await waitFor(() =>
+      expect(api.openLogStream).toHaveBeenCalledWith(
+        '/api/logs/sse/subscribe?serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-1&endpoint=%2Fcheckout',
+        expect.any(Object)
+      )
+    );
+    expect(screen.queryByText(en.explore.handoffInvalid)).not.toBeInTheDocument();
   });
 
   it('does not reconnect a live log SSE stream when the shared relative window auto-refreshes', async () => {

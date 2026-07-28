@@ -132,6 +132,38 @@ describe('explore query state', () => {
     ).toBe('/explore?signal=traces&timeRange=last-30m&serviceName=checkout&traceId=trace-1');
   });
 
+  it('keeps ordinary direct Explore filters outside onboarding handoff validation', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&mode=live&serviceName=checkout-api&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-7d9&endpoint=%2Fcheckout'
+      )
+    );
+
+    expect(query).toMatchObject({
+      signal: 'logs',
+      live: true,
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
+      intakeProfileId: undefined,
+      collectorId: undefined,
+      windowMode: undefined
+    });
+    expect(exploreHandoffState(query)).toBe('none');
+    for (const scope of [
+      { serviceName: 'checkout-api' },
+      { serviceNamespace: 'commerce' },
+      { environment: 'prod' },
+      { instance: 'checkout-7d9' },
+      { endpoint: '/checkout' }
+    ]) {
+      expect(exploreHandoffState({ signal: 'logs', timeRange: 'last-30m', ...scope })).toBe('none');
+    }
+  });
+
   it('parses and serializes the complete onboarding handoff without accepting a Token', () => {
     const query = parseExploreQuery(
       new URLSearchParams(

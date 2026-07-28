@@ -118,7 +118,7 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   const params = new URLSearchParams();
   const scoped = exploreHandoffState(query) === 'scoped';
   setValue(params, 'serviceName', query.serviceName);
-  if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
+  setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
   if (scoped) setValue(params, 'collectorId', query.collectorId);
   appendOptionalDimensions(params, query);
@@ -169,7 +169,7 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
   const scoped = exploreHandoffState(query) === 'scoped';
   const exact = exploreUsesExactWindow(query);
   setValue(params, 'serviceName', query.serviceName);
-  if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
+  setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
   if (scoped) setValue(params, 'collectorId', query.collectorId);
   appendOptionalDimensions(params, query);
