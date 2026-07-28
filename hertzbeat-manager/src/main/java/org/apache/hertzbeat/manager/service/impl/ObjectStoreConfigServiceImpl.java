@@ -24,18 +24,22 @@ import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.service.ObjectStoreConfigMapper;
+import org.apache.hertzbeat.manager.service.ObjectStoreConfigService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
-import java.net.URL;
 
 /**
  * File storage configuration service
@@ -44,7 +48,8 @@ import java.net.URL;
 @Slf4j
 @Service
 public class ObjectStoreConfigServiceImpl extends
-        AbstractGeneralConfigServiceImpl<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>> implements InitializingBean {
+        AbstractGeneralConfigServiceImpl<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>>
+        implements InitializingBean, ObjectStoreConfigService {
 
     private static final String BEAN_NAME = "ObjectStoreService";
     @Resource
@@ -52,8 +57,11 @@ public class ObjectStoreConfigServiceImpl extends
     @Resource
     private ApplicationContext ctx;
 
-    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao) {
+    private final ObjectStoreConfigMapper mapper;
+
+    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectStoreConfigMapper mapper) {
         super(generalConfigDao);
+        this.mapper = mapper;
     }
 
     @Override
@@ -72,6 +80,26 @@ public class ObjectStoreConfigServiceImpl extends
     }
 
     @Override
+    public ObjectStoreConfigResponse getSafeConfig() {
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config = getConfig();
+        return config == null ? null : mapper.toResponse(config);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ObjectStoreConfigResponse saveAndGetSafeConfig(ObjectStoreConfigRequest request) {
+        // Serialize credential merge, persistence, runtime replacement, and authoritative reread.
+        generalConfigDao.findByTypeForUpdate(type());
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> merged = mapper.toConfig(request, getConfig());
+        super.saveConfig(merged);
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> saved = getConfig();
+        if (saved == null) {
+            throw new IllegalStateException("Object store config missing after save");
+        }
+        return mapper.toResponse(saved);
+    }
+
+    @Override
     public void handler(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
         // initialize file storage service
         if (config != null) {
@@ -80,6 +108,7 @@ public class ObjectStoreConfigServiceImpl extends
                 // case other object store service
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
+            return;
         }
         log.warn("object store config is null, please check the configuration file.");
     }
@@ -111,17 +140,7 @@ public class ObjectStoreConfigServiceImpl extends
      * Refer: <a href="https://console-intl.huaweicloud.com/apiexplorer/#/endpoint">...</a>
      */
     public void validateObsEndpoint(String endpoint) {
-        try {
-            URL url = new URL(endpoint);
-            String host = url.getHost();
-
-            // Verify whether it is a Huawei Cloud domain name
-            if (!host.endsWith(".myhuaweicloud.com")) {
-                throw new IllegalArgumentException("Invalid OBS endpoint domain. Only myhuaweicloud.com is allowed");
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid OBS endpoint: " + e.getMessage());
-        }
+        mapper.validateObsEndpoint(endpoint);
     }
 
     @Override

@@ -18,8 +18,12 @@
 package org.apache.hertzbeat.manager.service;
 
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * test case for {@link ObjectStoreConfigServiceImpl}
@@ -57,7 +62,7 @@ class ObjectStoreConfigServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectStoreConfigService = new ObjectStoreConfigServiceImpl(generalConfigDao);
+        objectStoreConfigService = new ObjectStoreConfigServiceImpl(generalConfigDao, new ObjectStoreConfigMapper());
         ReflectionTestUtils.setField(objectStoreConfigService, "beanFactory", beanFactory);
         ReflectionTestUtils.setField(objectStoreConfigService, "ctx", ctx);
     }
@@ -81,7 +86,7 @@ class ObjectStoreConfigServiceTest {
         ObjectStoreDTO.ObsConfig obsConfig = new ObjectStoreDTO.ObsConfig();
         obsConfig.setAccessKey("access-key");
         obsConfig.setSecretKey("secret-key");
-        obsConfig.setEndpoint("http://xxx.myhuaweicloud.com");
+        obsConfig.setEndpoint("https://xxx.myhuaweicloud.com");
         obsConfig.setBucketName("bucket-name");
         config.setConfig(obsConfig);
 
@@ -97,8 +102,8 @@ class ObjectStoreConfigServiceTest {
                 objectStoreConfigService.validateObsEndpoint("https://obs.myhuaweicloud.com"));
 
         // Test various invalid scenarios
-        // 1. Using http protocol (insecure)
-        assertDoesNotThrow(() ->
+        // 1. Using http protocol would transmit OBS credentials without transport security.
+        assertThrows(IllegalArgumentException.class, () ->
                 objectStoreConfigService.validateObsEndpoint("http://obs.myhuaweicloud.com"));
 
         // 2. Using invalid domain names
@@ -127,5 +132,24 @@ class ObjectStoreConfigServiceTest {
                 objectStoreConfigService.validateObsEndpoint(null));
         assertThrows(IllegalArgumentException.class, () ->
                 objectStoreConfigService.validateObsEndpoint(""));
+    }
+
+    @Test
+    void saveLocksExactTypeAndReturnsAuthoritativeRedactedConfig() {
+        ObjectStoreConfigRequest request = new ObjectStoreConfigRequest();
+        request.setType(ObjectStoreDTO.Type.DATABASE.name());
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> authoritative =
+                new ObjectStoreDTO<>(ObjectStoreDTO.Type.DATABASE, null);
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(authoritative))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(null, persisted, persisted);
+
+        ObjectStoreConfigResponse response = objectStoreConfigService.saveAndGetSafeConfig(request);
+
+        assertEquals(ObjectStoreDTO.Type.DATABASE, response.type());
+        verify(generalConfigDao).findByTypeForUpdate("oss");
+        verify(generalConfigDao).save(any());
     }
 }
