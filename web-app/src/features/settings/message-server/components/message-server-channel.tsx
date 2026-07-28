@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import styles from './message-server-channel.module.css';
 
-type FailureKind = 'unavailable' | 'error' | 'invalid';
+type FailureKind = 'permission' | 'unavailable' | 'error' | 'invalid';
 type ChannelStatus = 'enabled' | 'disabled' | 'unconfigured';
 
 export function MessageServerChannelLoading({ title }: { title: string }) {

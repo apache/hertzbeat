@@ -23,11 +23,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({
-  classifyMessageServerReadError: vi.fn((error: unknown) => {
-    if (error === 'invalid') return 'invalid';
-    if (error === 'offline') return 'unavailable';
-    return 'error';
-  }),
   loadEmailServerConfig: vi.fn(),
   loadSmsServerConfig: vi.fn(),
   saveEmailServerConfig: vi.fn(),
@@ -47,11 +42,6 @@ import { MessageServerContractError } from '../api/message-server-schema';
 describe('useMessageServerController', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    api.classifyMessageServerReadError.mockImplementation((error: unknown) => {
-      if (error === 'invalid') return 'invalid';
-      if (error === 'offline') return 'unavailable';
-      return 'error';
-    });
   });
 
   it('keeps configured and missing evidence distinct and proves save by reread', async () => {
@@ -137,12 +127,21 @@ describe('useMessageServerController', () => {
   });
 
   it('does not collapse invalid configuration into storage unavailability', async () => {
-    api.loadEmailServerConfig.mockRejectedValue('invalid');
-    api.loadSmsServerConfig.mockRejectedValue('offline');
+    api.loadEmailServerConfig.mockRejectedValue(new MessageServerContractError());
+    api.loadSmsServerConfig.mockRejectedValue(new ApiMessageError('redacted'));
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.email.kind).toBe('invalid'));
     expect(result.current.sms.kind).toBe('unavailable');
+  });
+
+  it('keeps permission rejection distinct from invalid, unavailable, and ordinary read failures', async () => {
+    api.loadEmailServerConfig.mockRejectedValue(new ApiMessageError('redacted', { status: 403 }));
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.email.kind).toBe('permission'));
+    expect(result.current.sms.kind).toBe('missing');
   });
 
   it('keeps the editor open and exposes reread failure instead of reporting false success', async () => {
@@ -159,7 +158,7 @@ describe('useMessageServerController', () => {
         configuredSecrets: ['emailPassword' as const]
       }
     };
-    api.loadEmailServerConfig.mockResolvedValueOnce(email).mockRejectedValueOnce('offline');
+    api.loadEmailServerConfig.mockResolvedValueOnce(email).mockRejectedValueOnce(new ApiMessageError('redacted'));
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
     api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
@@ -390,12 +389,12 @@ describe('useMessageServerController', () => {
 
   it.each([
     ['missing reread', { status: 'missing', config: null }, 'messageServer.saveNotConverged'],
-    ['invalid reread', 'invalid', 'messageServer.read.invalid'],
-    ['unavailable reread', 'offline', 'messageServer.read.unavailable'],
-    ['ordinary reread failure', 'ordinary', 'messageServer.read.error']
+    ['invalid reread', new MessageServerContractError(), 'messageServer.read.invalid'],
+    ['unavailable reread', new ApiMessageError('redacted'), 'messageServer.read.unavailable'],
+    ['ordinary reread failure', new Error('redacted'), 'messageServer.read.error']
   ])('keeps the email draft and reports %s', async (_label, reread, expectedKey) => {
     api.loadEmailServerConfig.mockResolvedValueOnce(emailEvidence());
-    if (typeof reread === 'string') api.loadEmailServerConfig.mockRejectedValueOnce(reread);
+    if (reread instanceof Error) api.loadEmailServerConfig.mockRejectedValueOnce(reread);
     else api.loadEmailServerConfig.mockResolvedValueOnce(reread);
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
     api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
@@ -466,7 +465,7 @@ describe('useMessageServerController', () => {
     const retryProof = deferred<ReturnType<typeof emailEvidence>>();
     api.loadEmailServerConfig
       .mockResolvedValueOnce(emailEvidence())
-      .mockRejectedValueOnce('offline')
+      .mockRejectedValueOnce(new ApiMessageError('redacted'))
       .mockReturnValueOnce(retryProof.promise);
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
     api.saveEmailServerConfig.mockRejectedValue(Object.assign(new Error('ambiguous write'), { status: 503 }));

@@ -66,6 +66,7 @@ export async function saveSmsServerConfig(payload: SmsServerPayload) {
 
 export function classifyMessageServerReadError(error: unknown): MessageServerReadFailure {
   if (error instanceof MessageServerContractError) return 'invalid';
+  if (error instanceof ApiMessageError && (error.status === 401 || error.status === 403)) return 'permission';
   if (error instanceof ApiMessageError && (error.status === undefined || error.status >= 500)) return 'unavailable';
   return 'error';
 }
@@ -93,8 +94,8 @@ function mapSmsOptions(
 ): Record<string, string> {
   const optionFields = fields.filter(field => !field.secret);
   const expectedKeys = new Set(optionFields.map(field => field.key));
-  const actualKeys = Object.keys(options);
-  if (actualKeys.length !== expectedKeys.size || actualKeys.some(key => !expectedKeys.has(key))) {
+  const hasForeignValue = Object.entries(options).some(([key, value]) => !expectedKeys.has(key) && value !== null);
+  if (hasForeignValue) {
     throw new MessageServerContractError('SMS option fields do not match the selected provider');
   }
   return Object.fromEntries(optionFields.map(field => [field.key, mapSmsOption(field, options[field.key])]));

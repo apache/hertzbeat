@@ -94,7 +94,12 @@ function EmailChannel({ controller }: { controller: Controller }) {
   const { t } = useTranslation();
   const state = controller.email;
   if (state.kind === 'loading') return <MessageServerChannelLoading title={t('messageServer.email.title')} />;
-  if (state.kind === 'unavailable' || state.kind === 'error' || state.kind === 'invalid') {
+  if (
+    state.kind === 'permission' ||
+    state.kind === 'unavailable' ||
+    state.kind === 'error' ||
+    state.kind === 'invalid'
+  ) {
     return (
       <MessageServerChannelFailure
         title={t('messageServer.email.title')}
@@ -132,7 +137,12 @@ function SmsChannel({ controller }: { controller: Controller }) {
   const { t } = useTranslation();
   const state = controller.sms;
   if (state.kind === 'loading') return <MessageServerChannelLoading title={t('messageServer.sms.title')} />;
-  if (state.kind === 'unavailable' || state.kind === 'error' || state.kind === 'invalid') {
+  if (
+    state.kind === 'permission' ||
+    state.kind === 'unavailable' ||
+    state.kind === 'error' ||
+    state.kind === 'invalid'
+  ) {
     return (
       <MessageServerChannelFailure
         title={t('messageServer.sms.title')}

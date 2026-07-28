@@ -59,6 +59,7 @@ import {
 export type MessageServerChannelState<T> =
   | { kind: 'loading' }
   | { kind: 'missing' }
+  | { kind: 'permission' }
   | { kind: 'unavailable' }
   | { kind: 'error' }
   | { kind: 'invalid' }

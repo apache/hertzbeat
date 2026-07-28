@@ -1915,6 +1915,7 @@
     "saveFailed": "Não foi possível salvar a configuração do serviço de canal.",
     "saveNotConverged": "O servidor não confirmou a configuração salva.",
     "read": {
+      "permission": "Você não tem permissão para ler esta configuração de serviço de canal.",
       "unavailable": "O armazenamento de configurações está indisponível.",
       "error": "Não foi possível ler a configuração do serviço de canal.",
       "invalid": "A configuração armazenada do serviço de canal é inválida."

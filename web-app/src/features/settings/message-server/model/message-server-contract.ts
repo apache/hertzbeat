@@ -44,7 +44,7 @@ export type SmsServerPayload = Omit<SmsServerConfig, 'configuredSecrets'> & {
 export type EmailServerEvidence =
   { status: 'configured'; config: EmailServerConfig } | { status: 'missing'; config: null };
 export type SmsServerEvidence = { status: 'configured'; config: SmsServerConfig } | { status: 'missing'; config: null };
-export type MessageServerReadFailure = 'unavailable' | 'error' | 'invalid';
+export type MessageServerReadFailure = 'permission' | 'unavailable' | 'error' | 'invalid';
 
 export const smsProviderFieldContracts: Record<SmsProviderType, readonly SmsProviderFieldContract[]> = {
   tencent: [secret('secretId'), secret('secretKey'), field('appId'), field('signName'), field('templateId')],

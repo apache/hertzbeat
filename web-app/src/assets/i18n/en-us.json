@@ -1911,6 +1911,7 @@
     "saveFailed": "Channel service configuration could not be saved.",
     "saveNotConverged": "The server did not confirm the saved configuration.",
     "read": {
+      "permission": "You do not have permission to read this channel service configuration.",
       "unavailable": "Configuration storage is unavailable.",
       "error": "Channel service configuration could not be read.",
       "invalid": "The stored channel service configuration is invalid."

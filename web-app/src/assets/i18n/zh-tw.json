@@ -1892,6 +1892,7 @@
     "saveFailed": "渠道服務設定儲存失敗。",
     "saveNotConverged": "服務端未確認儲存後的設定。",
     "read": {
+      "permission": "目前帳號無權讀取此渠道服務設定。",
       "unavailable": "設定儲存空間暫時無法使用。",
       "error": "無法讀取渠道服務設定。",
       "invalid": "已儲存的渠道服務設定無效。"

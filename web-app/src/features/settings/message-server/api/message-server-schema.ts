@@ -33,13 +33,28 @@ const emailEvidenceSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('missing'), config: z.null() }).strict()
 ]);
 
+// SmsServerConfigOptions is serialized with the application's ALWAYS null
+// inclusion. Write-only secrets are absent; all read-safe fields are present.
+const smsOptionsSchema = z
+  .object({
+    appId: z.string().nullable(),
+    signName: z.string().nullable(),
+    templateId: z.string().nullable(),
+    accessKeyId: z.string().nullable(),
+    templateCode: z.string().nullable(),
+    signature: z.string().nullable(),
+    authMode: z.string().nullable(),
+    region: z.string().nullable(),
+    accountSid: z.string().nullable(),
+    twilioPhoneNumber: z.string().nullable()
+  })
+  .strict();
+
 const smsConfigSchema = z
   .object({
     enable: z.boolean(),
     type: z.enum(['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio']),
-    // Provider-specific option keys are validated after the provider is known.
-    // Keeping values unknown here avoids pretending every provider has one shape.
-    options: z.record(z.string(), z.unknown()),
+    options: smsOptionsSchema,
     configuredSecrets: z
       .array(z.enum(smsSecrets))
       .refine(values => new Set(values).size === values.length, 'Expected unique values')

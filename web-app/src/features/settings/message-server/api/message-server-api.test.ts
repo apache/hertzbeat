@@ -15,15 +15,21 @@
  * limitations under the License.
  */
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn() }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageGet, apiMessagePost }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageGet,
+  apiMessagePost
+}));
 
 import {
   loadEmailServerConfig,
   loadSmsServerConfig,
   MessageServerContractError,
+  classifyMessageServerReadError,
   saveEmailServerConfig,
   saveSmsServerConfig
 } from './message-server-api';
@@ -50,7 +56,7 @@ describe('message server API contract', () => {
       config: {
         enable: true,
         type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+        options: backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
         configuredSecrets: ['authToken']
       }
     };
@@ -61,8 +67,43 @@ describe('message server API contract', () => {
 
     await expect(loadEmailServerConfig()).resolves.toEqual(email);
     await expect(loadEmailServerConfig()).resolves.toEqual({ status: 'missing', config: null });
-    await expect(loadSmsServerConfig()).resolves.toEqual(sms);
+    await expect(loadSmsServerConfig()).resolves.toEqual({
+      ...sms,
+      config: {
+        ...sms.config,
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }
+      }
+    });
     expect(apiMessageGet.mock.calls).toEqual([['/api/config/email'], ['/api/config/email'], ['/api/config/sms']]);
+  });
+
+  it('maps the backend SMS options DTO to only the selected provider without inventing secret values', async () => {
+    apiMessageGet.mockResolvedValue({
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'twilio',
+        options: backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
+        configuredSecrets: ['authToken']
+      }
+    });
+
+    await expect(loadSmsServerConfig()).resolves.toEqual({
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'twilio',
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+        configuredSecrets: ['authToken']
+      }
+    });
+  });
+
+  it('classifies invalid, permission, unavailable, and ordinary read failures distinctly', () => {
+    expect(classifyMessageServerReadError(new MessageServerContractError())).toBe('invalid');
+    expect(classifyMessageServerReadError(new ApiMessageError('redacted', { status: 403 }))).toBe('permission');
+    expect(classifyMessageServerReadError(new ApiMessageError('redacted', { status: 503 }))).toBe('unavailable');
+    expect(classifyMessageServerReadError(new ApiMessageError('redacted', { status: 409 }))).toBe('error');
   });
 
   it('accepts an existing configuration whose required secret was explicitly cleared', async () => {
@@ -104,7 +145,10 @@ describe('message server API contract', () => {
       config: {
         enable: true,
         type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'must-not-return' },
+        options: {
+          ...backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
+          authToken: 'must-not-return'
+        },
         configuredSecrets: ['authToken']
       }
     },
@@ -113,7 +157,7 @@ describe('message server API contract', () => {
       config: {
         enable: true,
         type: 'smslocal',
-        options: { accessKeyId: 'wrong-provider' },
+        options: backendSmsOptions({ accessKeyId: 'wrong-provider' }),
         configuredSecrets: ['apiKey']
       }
     }
@@ -142,7 +186,7 @@ describe('message server API contract', () => {
       config: {
         enable: true,
         type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+        options: backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
         configuredSecrets: ['authToken']
       }
     };
@@ -164,7 +208,13 @@ describe('message server API contract', () => {
     };
 
     await expect(saveEmailServerConfig(email)).resolves.toEqual(emailEvidence);
-    await expect(saveSmsServerConfig(sms)).resolves.toEqual(smsEvidence);
+    await expect(saveSmsServerConfig(sms)).resolves.toEqual({
+      ...smsEvidence,
+      config: {
+        ...smsEvidence.config,
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }
+      }
+    });
 
     expect(apiMessagePost).toHaveBeenNthCalledWith(1, '/api/config/email', email);
     expect(apiMessagePost).toHaveBeenNthCalledWith(2, '/api/config/sms', sms);
@@ -213,7 +263,10 @@ describe('message server API contract', () => {
       config: {
         enable: true,
         type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'echoed' },
+        options: {
+          ...backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
+          authToken: 'echoed'
+        },
         configuredSecrets: ['authToken']
       }
     });
@@ -226,3 +279,19 @@ describe('message server API contract', () => {
     ).rejects.toBeInstanceOf(MessageServerContractError);
   });
 });
+
+function backendSmsOptions(patch: Record<string, string | null> = {}) {
+  return {
+    appId: null,
+    signName: null,
+    templateId: null,
+    accessKeyId: null,
+    templateCode: null,
+    signature: null,
+    authMode: null,
+    region: null,
+    accountSid: null,
+    twilioPhoneNumber: null,
+    ...patch
+  };
+}

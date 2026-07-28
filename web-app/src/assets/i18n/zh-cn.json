@@ -1892,6 +1892,7 @@
     "saveFailed": "渠道服务配置保存失败。",
     "saveNotConverged": "服务端未确认保存后的配置。",
     "read": {
+      "permission": "当前账号无权读取此渠道服务配置。",
       "unavailable": "配置存储暂不可用。",
       "error": "无法读取渠道服务配置。",
       "invalid": "已存储的渠道服务配置无效。"

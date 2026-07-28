@@ -64,7 +64,7 @@ describe('message server wire schemas', () => {
     expect(
       parseSmsEvidenceWire({
         status: 'configured',
-        config: { enable: true, type: 'twilio', options: {}, configuredSecrets: [] }
+        config: { enable: true, type: 'twilio', options: backendSmsOptions(), configuredSecrets: [] }
       })
     ).toMatchObject({ status: 'configured', config: { type: 'twilio' } });
     expect(() =>
@@ -77,4 +77,45 @@ describe('message server wire schemas', () => {
       MessageServerContractError
     );
   });
+
+  it('requires the exact read-safe backend SMS options DTO instead of a compact legacy provider shape', () => {
+    expect(
+      parseSmsEvidenceWire({
+        status: 'configured',
+        config: {
+          enable: true,
+          type: 'twilio',
+          options: backendSmsOptions({ accountSid: 'account', twilioPhoneNumber: '+15550000000' }),
+          configuredSecrets: ['authToken']
+        }
+      })
+    ).toMatchObject({ status: 'configured', config: { options: { accountSid: 'account' } } });
+    expect(() =>
+      parseSmsEvidenceWire({
+        status: 'configured',
+        config: {
+          enable: true,
+          type: 'twilio',
+          options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+          configuredSecrets: ['authToken']
+        }
+      })
+    ).toThrow(MessageServerContractError);
+  });
 });
+
+function backendSmsOptions(patch: Record<string, string | null> = {}) {
+  return {
+    appId: null,
+    signName: null,
+    templateId: null,
+    accessKeyId: null,
+    templateCode: null,
+    signature: null,
+    authMode: null,
+    region: null,
+    accountSid: null,
+    twilioPhoneNumber: null,
+    ...patch
+  };
+}
