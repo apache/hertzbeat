@@ -3457,7 +3457,7 @@ class OtlpGrpcIngestionServiceImplTest {
     }
 
     @Test
-    void shouldApplyAuthenticatedWorkspaceToMetricIntakeResourceAttributes() {
+    void shouldApplyAuthenticatedWorkspaceToRuntimeInternalMetricIntakeResourceAttributes() {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
         try {
             ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
@@ -3465,7 +3465,12 @@ class OtlpGrpcIngestionServiceImplTest {
                             .setResource(Resource.newBuilder()
                                     .addAttributes(KeyValue.newBuilder()
                                             .setKey("service.name")
-                                            .setValue(AnyValue.newBuilder().setStringValue("checkout").build())
+                                            .setValue(AnyValue.newBuilder()
+                                                    .setStringValue("hertzbeat-otel-runtime").build())
+                                            .build())
+                                    .addAttributes(KeyValue.newBuilder()
+                                            .setKey("hertzbeat.collector.id")
+                                            .setValue(AnyValue.newBuilder().setStringValue("collector-a").build())
                                             .build())
                                     .addAttributes(KeyValue.newBuilder()
                                             .setKey("hertzbeat.workspace_id")
@@ -3474,7 +3479,7 @@ class OtlpGrpcIngestionServiceImplTest {
                                     .build())
                             .addScopeMetrics(ScopeMetrics.newBuilder()
                                     .addMetrics(Metric.newBuilder()
-                                            .setName("checkout.requests")
+                                            .setName("otelcol_process_uptime")
                                             .setGauge(Gauge.newBuilder()
                                                     .addDataPoints(NumberDataPoint.newBuilder()
                                                             .setTimeUnixNano(1_710_000_000_000_000_000L)
@@ -3501,10 +3506,11 @@ class OtlpGrpcIngestionServiceImplTest {
 
             verify(observabilitySignalIntakeGateway).recordOtlpMetricIntake(
                     org.mockito.ArgumentMatchers.argThat(attributes ->
-                            "checkout".equals(attributes.get("service.name"))
+                            "hertzbeat-otel-runtime".equals(attributes.get("service.name"))
+                                    && "collector-a".equals(attributes.get("hertzbeat.collector.id"))
                                     && "prod-west".equals(attributes.get("hertzbeat.workspace_id"))),
                     eq(1_710_000_000_000L),
-                    eq("checkout.requests"),
+                    eq("otelcol_process_uptime"),
                     eq("gauge"),
                     eq(null),
                     eq(1.0),

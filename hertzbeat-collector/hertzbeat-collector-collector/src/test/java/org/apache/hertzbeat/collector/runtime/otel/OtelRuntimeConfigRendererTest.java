@@ -151,6 +151,41 @@ class OtelRuntimeConfigRendererTest {
     }
 
     @Test
+    void rendersDirectAuthenticatedInternalMetricsOtlpReaderWithoutEmbeddingSecrets() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setToken("internal-metrics-secret-must-stay-in-environment");
+        properties.setOtlpHttpExporterTimeout(Duration.ofSeconds(12));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("    resource:\n"
+                + "      attributes:\n"
+                + "        - name: service.name\n"
+                + "          value: hertzbeat-otel-runtime\n"
+                + "        - name: service.namespace\n"
+                + "          value: hertzbeat\n"
+                + "        - name: hertzbeat.collector.id\n"
+                + "          value: ${env:HERTZBEAT_COLLECTOR_ID}\n"
+                + "        - name: hertzbeat.workspace_id\n"
+                + "          value: ${env:HERTZBEAT_WORKSPACE_ID}\n"));
+        assertTrue(yaml.contains("        - periodic:\n"
+                + "            interval: 10000\n"
+                + "            timeout: 12000\n"
+                + "            exporter:\n"
+                + "              otlp:\n"
+                + "                protocol: http/protobuf\n"
+                + "                endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}/v1/metrics\n"
+                + "                headers:\n"
+                + "                  - name: Authorization\n"
+                + "                    value: Bearer ${env:HERTZBEAT_OTLP_TOKEN}\n"
+                + "                compression: gzip\n"
+                + "                timeout: 12000\n"));
+        assertFalse(yaml.contains(properties.getToken()));
+    }
+
+    @Test
     void rendersExplicitEnvironmentCloudDetectionAndFixedNoisePreset() throws Exception {
         OtelRuntimeProperties properties = new OtelRuntimeProperties();
         properties.setHome(tempDir);
