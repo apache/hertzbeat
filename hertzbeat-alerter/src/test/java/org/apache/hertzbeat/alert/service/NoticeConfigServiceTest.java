@@ -280,6 +280,41 @@ class NoticeConfigServiceTest {
     }
 
     @Test
+    void sendTestMsgRejectsMaskedSecretReplayToChangedWebhookUrl() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setType((byte) 2);
+        stored.setHookUrl("https://trusted.example/hook");
+        stored.setHookAuthToken("hook-auth-token-abcd");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(stored);
+        incoming.setHookUrl("https://attacker.example/collect");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
+    }
+
+    @Test
+    void sendTestMsgRejectsBareMaskReplayToChangedWebhookUrl() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setType((byte) 2);
+        stored.setHookUrl("https://trusted.example/hook");
+        stored.setHookAuthToken("hook-auth-token-abcd");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setType((byte) 2);
+        incoming.setHookUrl("https://attacker.example/collect");
+        incoming.setHookAuthToken(NoticeReceiverMaskUtil.SECRET_MASK);
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
+    }
+
+    @Test
     void deleteReceiver() {
         final Long receiverId = 23342525L;
         noticeConfigService.deleteReceiver(receiverId);
