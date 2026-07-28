@@ -42,8 +42,18 @@ describe('monitor import API', () => {
     expect(form.get('file')).toBe(file);
   });
 
+  it.each(['json', 'yaml', 'yml', 'xlsx'])('accepts a backend-supported .%s file', async extension => {
+    http.apiMessagePostForm.mockResolvedValue(undefined);
+
+    await importMonitorConfig(new File(['content'], `monitors.${extension}`));
+
+    expect(http.apiMessagePostForm).toHaveBeenCalledOnce();
+  });
+
   it('rejects unsupported files before transport', async () => {
-    await expect(importMonitorConfig(new File(['x'], 'monitors.yml'))).rejects.toMatchObject({ kind: 'validation' });
+    await expect(importMonitorConfig(new File(['x'], 'monitors.toml'))).rejects.toMatchObject({
+      kind: 'validation'
+    });
     expect(http.apiMessagePostForm).not.toHaveBeenCalled();
   });
 

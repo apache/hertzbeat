@@ -16,10 +16,9 @@
  */
 
 import { App } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { importMonitorConfig, MonitorImportError } from '../api/monitor-import-api';
 import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import {
   validateMonitorImportFile,
@@ -28,6 +27,17 @@ import {
   type MonitorImportInvalidKind,
   type MonitorImportState
 } from '../model/monitor-import-model';
+import { executeMonitorImport, type MonitorImportExecutionOwner as ImportOwner } from './monitor-import-execution';
+
+type ImportRetirement = {
+  currentCanImport: RefObject<boolean>;
+  active: RefObject<ImportOwner | null>;
+  generation: RefObject<number>;
+  mounted: RefObject<boolean>;
+  closeDraft: () => void;
+  setBusy: (busy: boolean) => void;
+  setFailure: (failure: MonitorImportFailureKind | null) => void;
+};
 
 export function useMonitorImport(
   reread: () => Promise<unknown>,
@@ -37,98 +47,151 @@ export function useMonitorImport(
   const canImport = capabilities.canWrite;
   const [draft, setDraft] = useState<MonitorImportDraft | null>(null);
   const [invalid, setInvalid] = useState<MonitorImportInvalidKind | null>(null);
-  const operation = useMonitorImportOperation(reread);
+  const currentDraft = useRef(draft);
+  const closeDraft = useCallback(() => {
+    currentDraft.current = null;
+    setDraft(null);
+    setInvalid(null);
+  }, []);
+  const operation = useMonitorImportOperation(canImport, reread, onImported, closeDraft);
 
   const open = () => {
-    if (!canImport || operation.isActive()) return;
-    setDraft({ file: null });
+    if (!operation.canStart()) return;
+    const next = { file: null };
+    currentDraft.current = next;
+    setDraft(next);
     setInvalid(null);
     operation.clearFailure();
   };
   const cancel = () => {
     if (operation.isActive()) return;
-    setDraft(null);
-    setInvalid(null);
+    closeDraft();
     operation.clearFailure();
   };
   const selectFile = (file: File | null) => {
-    if (operation.isActive()) return;
-    setDraft(current => (current ? { file } : current));
+    if (!operation.canStart() || !currentDraft.current) return;
+    const next = { file };
+    currentDraft.current = next;
+    setDraft(next);
     setInvalid(null);
     operation.clearFailure();
   };
   const submit = async () => {
-    if (!canImport || !draft || operation.isActive()) return false;
-    const validation = validateMonitorImportFile(draft.file);
+    const selectedDraft = currentDraft.current;
+    if (!operation.canStart() || !selectedDraft) return false;
+    const validation = validateMonitorImportFile(selectedDraft.file);
     if (!validation.valid) {
       setInvalid(validation.reason);
       return false;
     }
-    return operation.execute(validation.file, () => {
-      onImported();
-      setDraft(null);
-    });
+    return operation.execute(validation.file);
   };
 
-  const state: MonitorImportState = {
-    canImport,
-    draft,
-    invalid,
-    failure: operation.failure,
-    busy: operation.busy
-  };
+  const state: MonitorImportState = { canImport, draft, invalid, failure: operation.failure, busy: operation.busy };
   return { state, actions: { open, cancel, selectFile, submit } };
 }
 
-function useMonitorImportOperation(reread: () => Promise<unknown>) {
+function useMonitorImportOperation(
+  canImport: boolean,
+  reread: () => Promise<unknown>,
+  onImported: () => void,
+  closeDraft: () => void
+) {
   const { message } = App.useApp();
   const { t } = useTranslation();
   const [failure, setFailure] = useState<MonitorImportFailureKind | null>(null);
   const [busy, setBusy] = useState(false);
-  const active = useRef<AbortController | null>(null);
+  const active = useRef<ImportOwner | null>(null);
+  const generation = useRef(0);
+  const currentCanImport = useRef(canImport);
   const mounted = useRef(true);
 
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      active.current?.abort();
-    };
-  }, []);
+  useMonitorImportRetirement(canImport, {
+    currentCanImport,
+    active,
+    generation,
+    mounted,
+    closeDraft,
+    setBusy,
+    setFailure
+  });
 
-  const execute = async (file: File, accept: () => void) => {
+  const canStart = () => mounted.current && currentCanImport.current && active.current === null;
+  const execute = (file: File) => {
     const controller = new AbortController();
-    active.current = controller;
+    const owner = { generation: generation.current + 1, controller };
+    generation.current = owner.generation;
+    active.current = owner;
     setBusy(true);
     setFailure(null);
-    try {
-      await importMonitorConfig(file, controller.signal);
-      if (!mounted.current) return true;
-      accept();
-      // Manager SSE owns task progress and completion. Dialog closure plus the
-      // canonical reread remain deterministic if the supplemental stream is down.
-      try {
-        await reread();
-      } catch {
-        if (mounted.current) void message.warning(t('monitor.import.refreshFailure'));
+    const owns = () =>
+      mounted.current &&
+      currentCanImport.current &&
+      active.current === owner &&
+      generation.current === owner.generation;
+    return executeMonitorImport(file, {
+      owner,
+      owns,
+      onImported,
+      closeDraft,
+      reread,
+      warnRefresh: () => void message.warning(t('monitor.import.refreshFailure')),
+      publishFailure: setFailure,
+      finish: () => {
+        if (!owns()) return;
+        active.current = null;
+        generation.current += 1;
+        setBusy(false);
       }
-      return true;
-    } catch (error) {
-      if (mounted.current) {
-        setFailure(error instanceof MonitorImportError ? error.kind : 'error');
-      }
-      return false;
-    } finally {
-      if (active.current === controller) active.current = null;
-      if (mounted.current) setBusy(false);
-    }
+    });
   };
-
   return {
     busy,
     failure,
+    canStart,
     isActive: () => active.current !== null,
-    clearFailure: () => setFailure(null),
+    clearFailure: () => {
+      if (mounted.current) setFailure(null);
+    },
     execute
   };
+}
+
+function useMonitorImportRetirement(canImport: boolean, retirement: ImportRetirement) {
+  const { currentCanImport, active, generation, mounted, closeDraft, setBusy, setFailure } = retirement;
+  const retire = useCallback(
+    (owner: ImportOwner) => {
+      if (active.current !== owner) return;
+      active.current = null;
+      generation.current += 1;
+      if (mounted.current) {
+        setBusy(false);
+        setFailure(null);
+        closeDraft();
+      }
+      owner.controller.abort();
+    },
+    [active, closeDraft, generation, mounted, setBusy, setFailure]
+  );
+  useLayoutEffect(() => {
+    currentCanImport.current = canImport;
+    if (canImport) return;
+    const owner = active.current;
+    if (owner) retire(owner);
+    else {
+      closeDraft();
+      setFailure(null);
+    }
+  }, [active, canImport, closeDraft, currentCanImport, retire, setFailure]);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      const owner = active.current;
+      if (!owner) return;
+      active.current = null;
+      generation.current += 1;
+      owner.controller.abort();
+    };
+  }, [active, generation, mounted]);
 }
