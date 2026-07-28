@@ -17,11 +17,12 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import tools.jackson.core.type.TypeReference;
 import com.obs.services.ObsClient;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
@@ -36,10 +37,10 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.Assert;
-
-import jakarta.annotation.Resource;
-import java.lang.reflect.Type;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * File storage configuration service
@@ -72,10 +73,6 @@ public class ObjectStoreConfigServiceImpl extends
     @Override
     public TypeReference<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>> getTypeReference() {
         return new TypeReference<>() {
-            @Override
-            public Type getType() {
-                return ObjectStoreDTO.class;
-            }
         };
     }
 
@@ -88,26 +85,46 @@ public class ObjectStoreConfigServiceImpl extends
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ObjectStoreConfigResponse saveAndGetSafeConfig(ObjectStoreConfigRequest request) {
-        // Serialize credential merge, persistence, runtime replacement, and authoritative reread.
         generalConfigDao.findByTypeForUpdate(type());
         ObjectStoreDTO<ObjectStoreDTO.ObsConfig> merged = mapper.toConfig(request, getConfig());
-        super.saveConfig(merged);
+        persist(merged);
         ObjectStoreDTO<ObjectStoreDTO.ObsConfig> saved = getConfig();
         if (saved == null) {
             throw new IllegalStateException("Object store config missing after save");
         }
+        ctx.publishEvent(new ObjectStoreConfigPersistedEvent(saved));
         return mapper.toResponse(saved);
     }
 
     @Override
-    public void handler(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
-        // initialize file storage service
+    public void saveConfig(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
+        throw new IllegalArgumentException("Use the dedicated object store config boundary");
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public synchronized void applyCommittedConfig(ObjectStoreConfigPersistedEvent event) {
+        applyRuntime(event.config());
+        ctx.publishEvent(new ObjectStoreConfigChangeEvent(event.config()));
+    }
+
+    private void persist(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
+        String content = JsonUtil.toJson(config);
+        if (content == null) {
+            throw new IllegalStateException("Object store config serialization failed");
+        }
+        generalConfigDao.save(GeneralConfig.builder()
+                .type(type())
+                .content(content)
+                .build());
+    }
+
+    private void applyRuntime(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
         if (config != null) {
             if (config.getType() == ObjectStoreDTO.Type.OBS) {
                 initObs(config);
-                // case other object store service
+            } else {
+                beanFactory.destroySingleton(BEAN_NAME);
             }
-            ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
             return;
         }
         log.warn("object store config is null, please check the configuration file.");
@@ -145,7 +162,9 @@ public class ObjectStoreConfigServiceImpl extends
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // init file storage
-        handler(getConfig());
+        applyRuntime(getConfig());
+    }
+
+    public record ObjectStoreConfigPersistedEvent(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
     }
 }

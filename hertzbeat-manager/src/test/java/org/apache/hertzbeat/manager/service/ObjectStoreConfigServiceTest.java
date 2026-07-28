@@ -37,7 +37,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,13 +77,13 @@ class ObjectStoreConfigServiceTest {
     }
 
     @Test
-    void testHandlerNullConfig() {
-        objectStoreConfigService.handler(null);
+    void testStartupWithNullConfigDoesNotPublishChange() throws Exception {
+        objectStoreConfigService.afterPropertiesSet();
         verify(ctx, never()).publishEvent(any());
     }
 
     @Test
-    void testHandlerObsConfig() {
+    void testCommittedObsConfigReplacesRuntimeAndPublishesChange() {
         ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config = new ObjectStoreDTO<>();
         config.setType(ObjectStoreDTO.Type.OBS);
         ObjectStoreDTO.ObsConfig obsConfig = new ObjectStoreDTO.ObsConfig();
@@ -90,9 +93,17 @@ class ObjectStoreConfigServiceTest {
         obsConfig.setBucketName("bucket-name");
         config.setConfig(obsConfig);
 
-        objectStoreConfigService.handler(config);
+        objectStoreConfigService.applyCommittedConfig(
+                new ObjectStoreConfigServiceImpl.ObjectStoreConfigPersistedEvent(config));
 
+        assertTrue(beanFactory.containsSingleton("ObjectStoreService"));
         verify(ctx).publishEvent(any(ObjectStoreConfigChangeEvent.class));
+
+        objectStoreConfigService.applyCommittedConfig(
+                new ObjectStoreConfigServiceImpl.ObjectStoreConfigPersistedEvent(
+                        new ObjectStoreDTO<>(ObjectStoreDTO.Type.DATABASE, null)));
+
+        assertFalse(beanFactory.containsSingleton("ObjectStoreService"));
     }
 
     @Test
@@ -151,5 +162,56 @@ class ObjectStoreConfigServiceTest {
         assertEquals(ObjectStoreDTO.Type.DATABASE, response.type());
         verify(generalConfigDao).findByTypeForUpdate("oss");
         verify(generalConfigDao).save(any());
+    }
+
+    @Test
+    void restoresPersistedObsConfigWithItsParameterizedType() {
+        ObjectStoreDTO.ObsConfig options = obsConfig();
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, options)))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(persisted);
+
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> restored = objectStoreConfigService.getConfig();
+
+        assertInstanceOf(ObjectStoreDTO.ObsConfig.class, restored.getConfig());
+        assertEquals("stored-access", restored.getConfig().getAccessKey());
+    }
+
+    @Test
+    void saveDoesNotMutateRuntimeOrPublishChangeBeforeCommit() {
+        ObjectStoreConfigRequest request = request();
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, obsConfig())))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(null, persisted, persisted);
+
+        objectStoreConfigService.saveAndGetSafeConfig(request);
+
+        assertFalse(beanFactory.containsSingleton("ObjectStoreService"));
+        verify(ctx, never()).publishEvent(any(ObjectStoreConfigChangeEvent.class));
+    }
+
+    private ObjectStoreConfigRequest request() {
+        var options = new org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigOptions();
+        options.setAccessKey("stored-access");
+        options.setSecretKey("stored-secret");
+        options.setEndpoint("https://obs.myhuaweicloud.com");
+        options.setBucketName("bucket");
+        ObjectStoreConfigRequest request = new ObjectStoreConfigRequest();
+        request.setType(ObjectStoreDTO.Type.OBS.name());
+        request.setConfig(options);
+        return request;
+    }
+
+    private ObjectStoreDTO.ObsConfig obsConfig() {
+        ObjectStoreDTO.ObsConfig options = new ObjectStoreDTO.ObsConfig();
+        options.setAccessKey("stored-access");
+        options.setSecretKey("stored-secret");
+        options.setEndpoint("https://obs.myhuaweicloud.com");
+        options.setBucketName("bucket");
+        return options;
     }
 }

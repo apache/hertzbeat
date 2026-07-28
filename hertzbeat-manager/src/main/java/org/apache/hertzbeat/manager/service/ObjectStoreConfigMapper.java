@@ -34,6 +34,8 @@ import org.springframework.stereotype.Component;
 public class ObjectStoreConfigMapper {
 
     private static final Set<String> SECRETS = Set.of("accessKey", "secretKey");
+    private static final Set<String> LEGACY_SECRET_SENTINELS =
+            Set.of("keep", "mask", "__keep__", "<masked>", "[masked]", "<redacted>", "[redacted]");
 
     public ObjectStoreDTO<ObjectStoreDTO.ObsConfig> toConfig(
             ObjectStoreConfigRequest request, ObjectStoreDTO<ObjectStoreDTO.ObsConfig> existing) {
@@ -115,7 +117,18 @@ public class ObjectStoreConfigMapper {
         if (clears != null && clears.contains(name)) {
             return null;
         }
-        return StringUtils.isBlank(supplied) ? existing : supplied.trim();
+        if (StringUtils.isBlank(supplied)) {
+            return existing;
+        }
+        String value = supplied.trim();
+        if (isLegacySecretSentinel(value)) {
+            throw new IllegalArgumentException("Legacy object store secret sentinel is not accepted");
+        }
+        return value;
+    }
+
+    private boolean isLegacySecretSentinel(String value) {
+        return LEGACY_SECRET_SENTINELS.contains(value.toLowerCase(Locale.ROOT)) || value.matches("[*•]{4,}");
     }
 
     private void validateClears(Set<String> clears) {

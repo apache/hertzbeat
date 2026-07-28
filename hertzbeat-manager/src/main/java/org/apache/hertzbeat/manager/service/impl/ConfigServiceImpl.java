@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 public class ConfigServiceImpl implements ConfigService {
 
     private static final String TEMPLATE_CONFIG_TYPE = "template";
+    private static final String OBJECT_STORE_CONFIG_TYPE = "oss";
 
     private final Map<String, GeneralConfigService> configServiceMap;
 
@@ -47,6 +48,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Override
     public void saveConfig(String type, Object config) {
+        rejectDedicatedObjectStoreType(type);
         GeneralConfigService configService = configServiceMap.get(type);
         if (configService == null) {
             throw new IllegalArgumentException("Not supported this config type: " + type);
@@ -56,6 +58,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Override
     public Object getConfig(String type) {
+        rejectDedicatedObjectStoreType(type);
         GeneralConfigService configService = configServiceMap.get(type);
         if (configService == null) {
             throw new IllegalArgumentException("Not supported this config type: " + type);
@@ -78,5 +81,11 @@ public class ConfigServiceImpl implements ConfigService {
         }
         config.getApps().put(app, template);
         configService.saveConfig(config);
+    }
+
+    private void rejectDedicatedObjectStoreType(String type) {
+        if (OBJECT_STORE_CONFIG_TYPE.equals(type)) {
+            throw new IllegalArgumentException("Use the dedicated object store config boundary");
+        }
     }
 }

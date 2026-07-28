@@ -27,6 +27,8 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ObjectStoreConfigMapperTest {
 
@@ -55,6 +57,41 @@ class ObjectStoreConfigMapperTest {
 
         assertEquals("stored-access", merged.getConfig().getAccessKey());
         assertEquals("stored-secret", merged.getConfig().getSecretKey());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "KEEP", "keep", "KeEp", "MASK", "mask", "__KEEP__", "__keep__",
+        "<masked>", "<MASKED>", "[masked]", "[MASKED]",
+        "<redacted>", "<REDACTED>", "[redacted]", "[REDACTED]",
+        "****", "********", "••••", "••••••"
+    })
+    void rejectsNormalizedLegacySecretSentinels(String sentinel) {
+        ObjectStoreConfigRequest request = obsRequest(sentinel, null);
+
+        assertThrows(IllegalArgumentException.class, () -> mapper.toConfig(
+                request, new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, obs("stored-access", "stored-secret"))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"replacement", "KEEP", "__KEEP__", "<masked>", "[redacted]", "****", "••••"})
+    void clearAndSuppliedSecretAlwaysRejectAsAmbiguous(String supplied) {
+        ObjectStoreConfigRequest request = obsRequest(supplied, null);
+        request.setClearSecrets(Set.of("accessKey"));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> mapper.toConfig(
+                request, new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, obs("stored-access", "stored-secret"))));
+        assertEquals("Ambiguous object store secret update", error.getMessage());
+    }
+
+    @Test
+    void acceptsValuesBelowRepeatedMaskBoundary() {
+        for (String value : Set.of("***", "•••")) {
+            ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config = mapper.toConfig(
+                    obsRequest(value, "replacement-secret"),
+                    new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, obs("stored-access", "stored-secret")));
+            assertEquals(value, config.getConfig().getAccessKey());
+        }
     }
 
     @Test
