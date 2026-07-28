@@ -21,7 +21,9 @@ import {
   buildCrossSignalPath,
   buildExplorePath,
   exploreHandoffState,
+  exploreQueryContext,
   exploreUsesExactWindow,
+  mergeExploreContextChanges,
   mergeExploreQuery,
   parseExploreQuery,
   presetTimeRangePatch,
@@ -287,6 +289,62 @@ describe('explore query state', () => {
       groupBy: undefined,
       aggregation: undefined,
       step: undefined
+    });
+  });
+
+  it('clears stale trace conditions and pagination when upstream query context changes', () => {
+    const current = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=collector-east' +
+          '&instance=checkout-7d9&endpoint=%2Fcheckout&query=timeout&traceId=trace-old&spanId=span-old' +
+          '&resourceFilter=cloud.region%3Dus-east&attributeFilter=http.status_code%3D500&page=3' +
+          '&start=1710000000000&end=1710000005000'
+      )
+    );
+    const next = mergeExploreQuery(
+      current,
+      mergeExploreContextChanges(exploreQueryContext(current), { serviceName: 'payments' })
+    );
+
+    expect(next).toMatchObject({
+      signal: 'logs',
+      serviceName: 'payments',
+      collectorId: 'collector-east',
+      query: 'timeout',
+      resourceFilter: 'cloud.region=us-east',
+      attributeFilter: 'http.status_code=500',
+      serviceNamespace: undefined,
+      environment: undefined,
+      instance: undefined,
+      endpoint: undefined,
+      traceId: undefined,
+      spanId: undefined,
+      pageIndex: undefined,
+      start: 1_710_000_000_000,
+      end: 1_710_000_005_000
+    });
+  });
+
+  it('keeps explicitly replaced trace conditions during the same context change', () => {
+    const current = parseExploreQuery(
+      new URLSearchParams('signal=logs&serviceName=checkout&traceId=trace-old&spanId=span-old&page=3')
+    );
+    const next = mergeExploreQuery(
+      current,
+      mergeExploreContextChanges(exploreQueryContext(current), {
+        serviceName: 'payments',
+        traceId: 'trace-new',
+        spanId: 'span-new',
+        pageIndex: 1
+      })
+    );
+
+    expect(next).toMatchObject({
+      signal: 'logs',
+      serviceName: 'payments',
+      traceId: 'trace-new',
+      spanId: 'span-new',
+      pageIndex: 1
     });
   });
 

@@ -26,15 +26,9 @@ import {
 } from './explore-query';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import {
-  mergeQueryContext,
-  parseQueryContext,
-  QUERY_CONTEXT_FIELDS,
-  writeQueryContext,
-  type ExactTimeWindow,
-  type QueryContext
-} from '@/shared/query-context';
+import { parseQueryContext, writeQueryContext, type ExactTimeWindow } from '@/shared/query-context';
 
+export { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
 export {
   exploreHandoffState,
   exploreUsesExactWindow,
@@ -90,18 +84,6 @@ export function buildExplorePath(query: ExploreQuery) {
   return `${applicationRoutePaths.explore}?${params.toString()}`;
 }
 
-export function exploreQueryContext(query: ExploreQuery): QueryContext {
-  return {
-    intakeProfileId: query.intakeProfileId,
-    collectorId: query.collectorId,
-    serviceName: query.serviceName,
-    serviceNamespace: query.serviceNamespace,
-    environment: query.environment,
-    instance: query.instance,
-    endpoint: query.endpoint
-  };
-}
-
 /**
  * Transient evidence must be discarded whenever any route-owned query input
  * changes, otherwise a drawer can display data from the previous scope.
@@ -117,26 +99,6 @@ export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatc
     signal: changes.signal ?? query.signal,
     timeRange: changes.timeRange ?? query.timeRange
   });
-}
-
-const exploreContextFields = Object.values(QUERY_CONTEXT_FIELDS);
-
-export function mergeExploreContextChanges(context: QueryContext, changes: ExploreQueryPatch): ExploreQueryPatch {
-  if (!exploreContextFields.some(field => Object.hasOwn(changes, field))) return changes;
-  const patch = Object.fromEntries(
-    exploreContextFields.flatMap(field => (Object.hasOwn(changes, field) ? [[field, changes[field]]] : []))
-  ) as Partial<QueryContext>;
-  const next = mergeQueryContext(context, patch);
-  return {
-    ...changes,
-    intakeProfileId: next.intakeProfileId,
-    collectorId: next.collectorId,
-    serviceName: next.serviceName,
-    serviceNamespace: next.serviceNamespace,
-    environment: next.environment,
-    instance: next.instance,
-    endpoint: next.endpoint
-  };
 }
 
 export function buildCrossSignalPath(
