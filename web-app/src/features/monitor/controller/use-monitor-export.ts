@@ -6,7 +6,7 @@
  */
 
 import { App } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MonitorExportError, requestMonitorExport } from '../api/monitor-export-api';
@@ -14,41 +14,82 @@ import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import { saveMonitorExport } from '../model/monitor-export-download';
 import type { MonitorExportFormat, MonitorExportScope } from '../model/monitor-export-model';
 
+type ExportOwner = { generation: number; controller: AbortController };
+
 export function useMonitorExport(selectedIds: number[], capabilities: Pick<MonitorCapabilities, 'canExport'>) {
   const { message } = App.useApp();
   const { t } = useTranslation();
   const { canExport } = capabilities;
-  const active = useRef<AbortController | null>(null);
+  const active = useRef<ExportOwner | null>(null);
+  const generation = useRef(0);
+  const currentCanExport = useRef(canExport);
   const mounted = useRef(true);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
+  const retire = useCallback((owner: ExportOwner) => {
+    if (active.current !== owner) return;
+    active.current = null;
+    generation.current += 1;
+    if (mounted.current) setExporting(false);
+    owner.controller.abort();
+  }, []);
+
+  useLayoutEffect(() => {
+    currentCanExport.current = canExport;
+    const owner = active.current;
+    if (!canExport && owner) retire(owner);
+  }, [canExport, retire]);
+
+  useLayoutEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      active.current?.abort();
+      const owner = active.current;
+      if (!owner) return;
+      active.current = null;
+      generation.current += 1;
+      owner.controller.abort();
     };
   }, []);
 
   const run = async (scope: MonitorExportScope, format: MonitorExportFormat) => {
-    if (!canExport || active.current || (scope.kind === 'selected' && scope.ids.length === 0)) return false;
+    if (
+      !mounted.current ||
+      !currentCanExport.current ||
+      active.current ||
+      (scope.kind === 'selected' && scope.ids.length === 0)
+    )
+      return false;
     const controller = new AbortController();
-    active.current = controller;
+    const owner = { generation: generation.current + 1, controller };
+    generation.current = owner.generation;
+    active.current = owner;
     setExporting(true);
+    const ownsExport = () =>
+      mounted.current &&
+      currentCanExport.current &&
+      active.current === owner &&
+      generation.current === owner.generation;
     try {
       const artifact = await requestMonitorExport(scope, format, controller.signal);
+      // Abort is advisory: a retired transport may still resolve, so each
+      // externally visible publication must re-check the exact current owner.
+      if (!ownsExport()) return false;
       saveMonitorExport(artifact);
-      if (mounted.current) void message.success(t('monitor.export.success'));
-      return true;
+      if (!ownsExport()) return false;
+      void message.success(t('monitor.export.success'));
+      return ownsExport();
     } catch (error) {
-      if (mounted.current) {
-        const kind = error instanceof MonitorExportError ? error.kind : 'error';
-        void message.error(t(`monitor.export.failure.${kind}`));
-      }
+      if (!ownsExport()) return false;
+      const kind = error instanceof MonitorExportError ? error.kind : 'error';
+      void message.error(t(`monitor.export.failure.${kind}`));
       return false;
     } finally {
-      if (active.current === controller) active.current = null;
-      if (mounted.current) setExporting(false);
+      if (ownsExport()) {
+        active.current = null;
+        generation.current += 1;
+        setExporting(false);
+      }
     }
   };
 
