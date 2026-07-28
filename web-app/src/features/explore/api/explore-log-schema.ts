@@ -17,7 +17,12 @@
 
 import { z } from 'zod';
 
-import { ExploreSignalContractError, type ExplorePageResult, type LogRow } from '../model/explore-signal-contract';
+import {
+  ExploreSignalContractError,
+  type ExplorePageResult,
+  type LogRow,
+  type LogStreamGap
+} from '../model/explore-signal-contract';
 import {
   jsonValueSchema,
   nullableJavaLongSchema,
@@ -51,12 +56,26 @@ const logRowSchema: z.ZodType<LogRow> = z.object({
   scopeSchemaUrl: nullableStringSchema
 });
 
+const logStreamGapSchema: z.ZodType<LogStreamGap> = z
+  .object({
+    observedAt: z.number().int().safe().positive(),
+    reason: z.literal('queue_overflow'),
+    droppedCount: z.number().int().safe().positive()
+  })
+  .strict();
+
 export function parseLogPage(value: unknown, pageIndex: number, pageSize: number): ExplorePageResult<LogRow> {
   return parseExplorePage(value, pageIndex, pageSize, logRowSchema);
 }
 
 export function parseLogRow(value: unknown): LogRow {
   const result = logRowSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+export function parseLogStreamGap(value: unknown): LogStreamGap {
+  const result = logStreamGapSchema.safeParse(value);
   if (!result.success) throw new ExploreSignalContractError();
   return result.data;
 }

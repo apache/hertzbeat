@@ -75,7 +75,7 @@ describe('ExplorePage instrumentation context boundary', () => {
       '/explore?signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce&start=1000&end=2000',
       '/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east&start=2000&end=1000',
       '/explore?signal=traces&collectorId=east',
-      '/explore?signal=logs&live=true&collectorId=east'
+      '/explore?signal=logs&mode=live&collectorId=east'
     ];
 
     for (const entry of invalidEntries) {
@@ -104,7 +104,7 @@ describe('ExplorePage instrumentation context boundary', () => {
   it('does not reconnect a live log SSE stream when the shared relative window auto-refreshes', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(2_000_000);
-    renderPage('/explore?signal=logs&live=true');
+    renderPage('/explore?signal=logs&mode=live');
     await act(async () => vi.advanceTimersByTimeAsync(0));
     expect(api.openLogStream).toHaveBeenCalledOnce();
 

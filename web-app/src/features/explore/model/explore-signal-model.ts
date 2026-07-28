@@ -17,7 +17,7 @@
 
 import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from './explore-signal-contract';
 
-export type LiveLogStatus = 'waiting' | 'connected' | 'paused' | 'unavailable' | 'error' | 'contract';
+export type LiveLogStatus = 'waiting' | 'connected' | 'degraded' | 'paused' | 'unavailable' | 'error' | 'contract';
 export type TraceSpanTiming =
   | { kind: 'unavailable' }
   | { kind: 'instant'; offsetPercent: number }

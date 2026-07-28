@@ -438,6 +438,8 @@
     "streamStatus": "Stream",
     "waiting": "Waiting for matching logs",
     "streamFailed": "The live log stream is unavailable.",
+    "streamGap": "The live log stream has a gap. Some log entries may be missing.",
+    "streamGapCount": "At least {{count}} log entries were dropped before filtering. Retry to start a complete stream boundary.",
     "pause": "Pause",
     "resume": "Resume",
     "clear": "Clear",

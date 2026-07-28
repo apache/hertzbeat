@@ -270,10 +270,12 @@ describe('explore API paths', () => {
 
   it('parses stream events at the API boundary and reports malformed payloads without values', () => {
     const onLog = vi.fn();
+    const onGap = vi.fn();
     const onContractError = vi.fn();
     openLogStream('/stream', {
       onOpen: vi.fn(),
       onLog,
+      onGap,
       onRetrying: vi.fn(),
       onUnavailable: vi.fn(),
       onContractError
@@ -286,9 +288,33 @@ describe('explore API paths', () => {
 
     transportHandlers?.onEvent('LOG_EVENT', JSON.stringify(logRow('valid')));
     transportHandlers?.onEvent('LOG_EVENT', '{private malformed body');
+    transportHandlers?.onEvent(
+      'LOG_STREAM_GAP',
+      JSON.stringify({ observedAt: 1_750_000_000_000, reason: 'queue_overflow', droppedCount: 37 })
+    );
+    for (const invalidGap of [
+      { observedAt: 1_750_000_000_000, reason: 'queue_overflow' },
+      { observedAt: 0, reason: 'queue_overflow', droppedCount: 1 },
+      { observedAt: 1_750_000_000_000, reason: 'queue_overflow', droppedCount: 0 },
+      { observedAt: 1_750_000_000_000, reason: 'queue_overflow', droppedCount: Number.MAX_SAFE_INTEGER + 1 },
+      { observedAt: 1_750_000_000_000, reason: 'unknown', droppedCount: 1 },
+      { observedAt: 1_750_000_000_000, reason: 'queue_overflow', droppedCount: 1, detail: 'private' }
+    ]) {
+      transportHandlers?.onEvent('LOG_STREAM_GAP', JSON.stringify(invalidGap));
+    }
+    transportHandlers?.onEvent('LOG_STREAM_GAP', '{malformed');
 
     expect(onLog).toHaveBeenCalledWith(expect.objectContaining({ body: 'valid' }));
-    expect(onContractError).toHaveBeenCalledOnce();
+    expect(onGap).toHaveBeenCalledOnce();
+    expect(onGap).toHaveBeenCalledWith({
+      observedAt: 1_750_000_000_000,
+      reason: 'queue_overflow',
+      droppedCount: 37
+    });
+    expect(onContractError).toHaveBeenCalledTimes(8);
+    expect(openBrowserEventStream.mock.calls[0]?.[1]).toMatchObject({
+      eventNames: ['LOG_EVENT', 'LOG_STREAM_GAP']
+    });
   });
 });
 

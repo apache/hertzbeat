@@ -427,6 +427,8 @@
     "streamStatus": "日誌流",
     "waiting": "等待符合條件的日誌",
     "streamFailed": "即時日誌流無法使用。",
+    "streamGap": "即時日誌流存在缺口，部分日誌可能遺失。",
+    "streamGapCount": "篩選前至少遺失了 {{count}} 筆日誌。請重試以開始完整的新日誌流。",
     "pause": "暫停",
     "resume": "繼續",
     "clear": "清除",

@@ -427,6 +427,8 @@
     "streamStatus": "日志流",
     "waiting": "等待符合条件的日志",
     "streamFailed": "实时日志流不可用。",
+    "streamGap": "实时日志流存在缺口，部分日志可能缺失。",
+    "streamGapCount": "筛选前至少丢失了 {{count}} 条日志。请重试以开始完整的新日志流。",
     "pause": "暂停",
     "resume": "继续",
     "clear": "清空",

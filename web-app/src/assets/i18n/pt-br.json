@@ -441,6 +441,8 @@
     "streamStatus": "Fluxo",
     "waiting": "Aguardando logs correspondentes",
     "streamFailed": "O fluxo de logs ao vivo não está disponível.",
+    "streamGap": "O fluxo de logs ao vivo tem uma lacuna. Algumas entradas podem estar ausentes.",
+    "streamGapCount": "Pelo menos {{count}} entradas de log foram perdidas antes da filtragem. Tente novamente para iniciar um fluxo completo.",
     "pause": "Pausar",
     "resume": "Retomar",
     "clear": "Limpar",

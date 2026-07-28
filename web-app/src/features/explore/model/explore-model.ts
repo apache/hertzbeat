@@ -62,7 +62,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
     start: readTimestamp(params.get('start')),
     end: readTimestamp(params.get('end')),
-    live: params.get('live') === 'true' ? true : undefined,
+    live: readLiveMode(params),
     severityText: readValue(params.get('severityText')),
     spanId: readValue(params.get('spanId')),
     resourceFilter: readValue(params.get('resourceFilter')),
@@ -166,6 +166,12 @@ function readPageIndex(value: string | null) {
   return Number.isSafeInteger(pageIndex) && pageIndex > 0 ? pageIndex : undefined;
 }
 
+function readLiveMode(params: URLSearchParams) {
+  const mode = params.get('mode');
+  if (mode !== null) return mode === 'live' ? true : undefined;
+  return params.get('live') === 'true' ? true : undefined;
+}
+
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
 }
@@ -182,7 +188,7 @@ function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
   setValue(params, 'resourceFilter', query.resourceFilter);
   if (query.pageIndex) params.set('page', String(query.pageIndex));
   if (query.signal === 'logs') {
-    if (query.live) params.set('live', 'true');
+    if (query.live) params.set('mode', 'live');
     setValue(params, 'severityText', query.severityText);
     setValue(params, 'spanId', query.spanId);
     setValue(params, 'attributeFilter', query.attributeFilter);

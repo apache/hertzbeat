@@ -56,6 +56,19 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().query.query).toBe('current'));
   });
 
+  it('writes canonical live mode for log controls and clears it for other signals', async () => {
+    const routed = renderController(['/explore?signal=logs']);
+    await waitFor(() => expect(routed.current().query.signal).toBe('logs'));
+
+    act(() => routed.current().updateQuery({ live: true }));
+    await waitFor(() => expect(routed.router.state.location.search).toContain('mode=live'));
+    expect(routed.router.state.location.search).not.toContain('live=true');
+
+    act(() => routed.current().updateQuery({ signal: 'metrics' }));
+    await waitFor(() => expect(routed.current().query.signal).toBe('metrics'));
+    expect(routed.router.state.location.search).not.toMatch(/mode=live|live=true/u);
+  });
+
   it('preserves exact handoff windows across Back and Forward', async () => {
     const scope = 'serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east';
     const routed = renderController(
@@ -98,7 +111,7 @@ describe('Explore page controller', () => {
     expect(api.loadTraceSignal).not.toHaveBeenCalled();
     invalid.unmount();
 
-    const live = renderController(['/explore?signal=logs&live=true']);
+    const live = renderController(['/explore?signal=logs&mode=live']);
     await waitFor(() => expect(live.current().result.kind).toBe('live'));
     await act(async () => live.current().refresh());
     expect(api.loadLogSignal).not.toHaveBeenCalled();

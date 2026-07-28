@@ -123,13 +123,14 @@ describe('LogResult', () => {
     ['error', 'exploreLog.streamFailed'],
     ['contract', 'explore.loadFailed']
   ] as const)('labels %s without claiming the stream is connecting', (status, messageKey) => {
+    const retry = vi.fn();
     render(
       <I18nextProvider i18n={i18n}>
         <LogResult
           query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
           t={i18n.t}
           navigate={vi.fn()}
-          live={{ rows: [], status, togglePaused: vi.fn(), clear: vi.fn() }}
+          live={{ rows: [], status, togglePaused: vi.fn(), retry, clear: vi.fn() }}
         />
       </I18nextProvider>
     );
@@ -137,6 +138,35 @@ describe('LogResult', () => {
     expect(screen.queryByText(i18n.t('exploreLog.connecting'))).not.toBeInTheDocument();
     expect(screen.queryByText(i18n.t('exploreLog.waiting'))).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('exploreLog.pause') })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('keeps gap evidence visible and offers an explicit retry', () => {
+    const retry = vi.fn();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+          t={i18n.t}
+          navigate={vi.fn()}
+          live={{
+            rows: [liveLogRow],
+            status: 'degraded',
+            gapDroppedCount: 37,
+            togglePaused: vi.fn(),
+            retry,
+            clear: vi.fn()
+          }}
+        />
+      </I18nextProvider>
+    );
+
+    expect(screen.getAllByText(i18n.t('exploreLog.streamGapCount', { count: 37 })).length).toBeGreaterThan(0);
+    expect(screen.getByText('live payment timeout')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pause') })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 });
 
@@ -196,6 +226,7 @@ function LiveSubject() {
         rows,
         status: paused ? 'paused' : 'waiting',
         togglePaused: () => setPaused(current => !current),
+        retry: vi.fn(),
         clear: () => setRows([])
       }}
     />

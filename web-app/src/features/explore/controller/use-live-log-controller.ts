@@ -15,78 +15,77 @@
  * limitations under the License.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { buildLogStreamPath, openLogStream } from '../api/explore-api';
-import type { LogRow } from '../model/explore-signal-contract';
-import type { LogExploreQuery } from '../model/explore-model';
-import type { LiveLogStatus } from '../model/explore-signal-model';
+import type { UiSession } from '@/core/auth/session-api';
+import { useSession } from '@/core/auth/session-context';
 
-const MAXIMUM_RETAINED_LIVE_LOG_ROWS = 500;
-type PathState<T> = { path: string; value: T };
+import { buildLogStreamPath } from '../api/explore-api';
+import { exploreEvidenceScopeKey, type LogExploreQuery } from '../model/explore-model';
+import { evidenceForScope, liveLogStatus, useScopedLiveLogState, valueForScope } from './use-live-log-evidence-state';
+import { useLiveLogStream } from './use-live-log-stream';
 
 export function useLiveLogController(query: LogExploreQuery) {
+  const { session } = useSession();
   const path = useMemo(() => buildLogStreamPath(query), [query]);
+  const sessionIdentity = liveLogSessionIdentity(session);
+  const evidenceScope = JSON.stringify([sessionIdentity, exploreEvidenceScopeKey(query)]);
+  const connectionScope = JSON.stringify([sessionIdentity, path]);
   const [paused, setPaused] = useState(false);
-  // Tag stream-owned state with its path so a query change cannot briefly expose rows from the previous stream.
-  const [rowsState, setRowsState] = useState<PathState<LogRow[]>>({ path, value: [] });
-  const [statusState, setStatusState] = useState<PathState<LiveLogStatus>>({ path, value: 'waiting' });
-  const active = useRef<symbol | undefined>(undefined);
+  const [retryRevision, setRetryRevision] = useState(0);
+  const { evidenceState, setEvidenceState, connectionState, setConnectionState, evidenceScopeRef } =
+    useScopedLiveLogState(evidenceScope, connectionScope);
+  useLiveLogStream({
+    path,
+    connectionScope,
+    evidenceScopeRef,
+    paused,
+    retryRevision,
+    setConnectionState,
+    setEvidenceState
+  });
 
-  useEffect(() => {
-    if (paused) return;
-    const token = Symbol(path);
-    active.current = token;
-    const setStatus = (value: LiveLogStatus) => {
-      if (active.current === token) setStatusState({ path, value });
-    };
-    let source: { close: () => void };
-    try {
-      source = openLogStream(path, {
-        onOpen: () => setStatus('connected'),
-        onRetrying: () => setStatus('waiting'),
-        onUnavailable: () => setStatus('unavailable'),
-        onContractError: () => setStatus('contract'),
-        onLog: row => {
-          if (active.current !== token) return;
-          setRowsState(current => ({
-            path,
-            value: [row, ...rowsForPath(current, path)].slice(0, MAXIMUM_RETAINED_LIVE_LOG_ROWS)
-          }));
-        }
-      });
-    } catch {
-      setStatus('error');
-      return;
-    }
-    return () => {
-      if (active.current === token) active.current = undefined;
-      source.close();
-    };
-  }, [path, paused]);
-
-  const rows = rowsForPath(rowsState, path);
-  const status = statusForPath(statusState, path, paused);
+  const evidence = evidenceForScope(evidenceState, evidenceScope);
+  const connectionStatus = valueForScope(connectionState, connectionScope, 'waiting');
+  const status = liveLogStatus(connectionStatus, evidence.integrity, paused);
   const togglePaused = () => {
     const nextPaused = !paused;
-    if (!nextPaused) setStatusState({ path, value: 'waiting' });
+    if (nextPaused)
+      setEvidenceState(current => {
+        const currentEvidence = evidenceForScope(current, evidenceScope);
+        return {
+          scope: evidenceScope,
+          rows: currentEvidence.rows,
+          integrity: 'degraded',
+          gapDroppedCount: currentEvidence.gapDroppedCount,
+          gapCountOverflowed: currentEvidence.gapCountOverflowed
+        };
+      });
+    if (!nextPaused) setConnectionState({ scope: connectionScope, value: 'waiting' });
     setPaused(nextPaused);
   };
   return {
-    rows,
+    rows: evidence.rows,
     status,
+    gapDroppedCount: evidence.gapDroppedCount,
     togglePaused,
-    clear: () => setRowsState({ path, value: [] })
+    retry: () => {
+      setEvidenceState({
+        scope: evidenceScope,
+        rows: [],
+        integrity: 'complete',
+        gapDroppedCount: undefined,
+        gapCountOverflowed: false
+      });
+      setConnectionState({ scope: connectionScope, value: 'waiting' });
+      setRetryRevision(current => current + 1);
+    },
+    clear: () => setEvidenceState({ scope: evidenceScope, ...evidence, rows: [] })
   };
 }
 
-function rowsForPath(state: PathState<LogRow[]>, path: string) {
-  if (state.path !== path) return [];
-  return state.value;
-}
-
-function statusForPath(state: PathState<LiveLogStatus>, path: string, paused: boolean): LiveLogStatus {
-  if (paused) return 'paused';
-  if (state.path !== path) return 'waiting';
-  return state.value;
+function liveLogSessionIdentity(session: UiSession | undefined) {
+  return session
+    ? [session.authenticated, session.username, session.workspaceId, [...session.roles].sort()]
+    : ['session-loading'];
 }

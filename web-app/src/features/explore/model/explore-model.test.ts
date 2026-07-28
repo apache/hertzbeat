@@ -28,6 +28,7 @@ import {
   parseExploreQuery,
   presetTimeRangePatch,
   querySubmissionTimePatch,
+  signalSelectionPatch,
   timeRangeMilliseconds
 } from './explore-model';
 
@@ -77,6 +78,43 @@ describe('explore query state', () => {
     ).toBe(
       '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&environment=prod&query=POST+%2Fcheckout&errorOnly=true&end=2000'
     );
+  });
+
+  it('parses canonical and legacy live log URLs but only serializes the canonical mode', () => {
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&mode=live'))).toMatchObject({
+      signal: 'logs',
+      live: true
+    });
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&live=true'))).toMatchObject({
+      signal: 'logs',
+      live: true
+    });
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&mode=history&live=true'))).toMatchObject({
+      signal: 'logs',
+      live: undefined
+    });
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&mode=live&live=false'))).toMatchObject({
+      signal: 'logs',
+      live: true
+    });
+
+    const canonical = buildExplorePath({
+      signal: 'logs',
+      timeRange: 'last-30m',
+      live: true
+    });
+    expect(canonical).toBe('/explore?signal=logs&timeRange=last-30m&mode=live');
+    expect(canonical).not.toContain('live=true');
+  });
+
+  it('drops live mode when moving away from logs', () => {
+    const metrics = mergeExploreQuery(
+      parseExploreQuery(new URLSearchParams('signal=logs&mode=live')),
+      signalSelectionPatch('metrics')
+    );
+
+    expect(metrics).not.toHaveProperty('live');
+    expect(buildExplorePath(metrics)).not.toMatch(/mode=live|live=true/u);
   });
 
   it('preserves trace context when moving from logs to traces', () => {

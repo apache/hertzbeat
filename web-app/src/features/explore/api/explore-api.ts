@@ -36,7 +36,7 @@ import {
   parseTraceDuration
 } from '../model/explore-field-contract';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
-import { parseLogPage, parseLogRow } from './explore-log-schema';
+import { parseLogPage, parseLogRow, parseLogStreamGap } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
 import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 
@@ -137,19 +137,22 @@ export function openLogStream(
   handlers: {
     onOpen: () => void;
     onLog: (row: ReturnType<typeof parseLogRow>) => void;
+    onGap: (gap: ReturnType<typeof parseLogStreamGap>) => void;
     onRetrying: () => void;
     onUnavailable: () => void;
     onContractError: () => void;
   }
 ) {
   return openBrowserEventStream(path, {
-    eventNames: ['LOG_EVENT'],
+    eventNames: ['LOG_EVENT', 'LOG_STREAM_GAP'],
     onOpen: handlers.onOpen,
     onRetrying: handlers.onRetrying,
     onUnavailable: handlers.onUnavailable,
-    onEvent: (_name, data) => {
+    onEvent: (name, data) => {
       try {
-        handlers.onLog(parseLogRow(JSON.parse(data) as unknown));
+        const value = JSON.parse(data) as unknown;
+        if (name === 'LOG_STREAM_GAP') handlers.onGap(parseLogStreamGap(value));
+        else handlers.onLog(parseLogRow(value));
       } catch (error) {
         if (error instanceof ExploreSignalContractError || error instanceof SyntaxError) {
           handlers.onContractError();

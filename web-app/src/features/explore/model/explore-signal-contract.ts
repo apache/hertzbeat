@@ -96,6 +96,11 @@ export type LogRow = {
   } | null;
   scopeSchemaUrl: string | null;
 };
+export type LogStreamGap = {
+  observedAt: number;
+  reason: 'queue_overflow';
+  droppedCount: number;
+};
 
 export type MetricField = {
   name: string | null;
