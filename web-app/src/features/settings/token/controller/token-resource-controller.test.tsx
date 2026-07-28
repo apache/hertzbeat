@@ -96,7 +96,16 @@ describe('Token resource controller', () => {
       })
     );
     rerender();
-    expect(result.current.state.list.kind).toBe('error');
+    expect(result.current.state.list.kind).toBe('invalid');
+    refine.useList.mockReturnValue(
+      buildListResult({
+        isError: true,
+        error: permissionFailure(),
+        data: []
+      })
+    );
+    rerender();
+    expect(result.current.state.list.kind).toBe('permission');
     refine.useList.mockReturnValue(buildListResult({ isError: true, error: { statusCode: 503 }, data: [] }));
     rerender();
     expect(result.current.state.list.kind).toBe('error');
@@ -268,7 +277,7 @@ describe('Token resource controller', () => {
     }
   );
 
-  it.each(['deleted', 'missing'] as const)(
+  it.each(['deleted', 'missing', 'already-revoked'] as const)(
     'confirms a %s revocation result only after an authoritative list reread',
     async status => {
       refine.custom.mockResolvedValue({ data: { id: 7, status } });
@@ -431,7 +440,7 @@ describe('Token resource controller', () => {
     expect(refine.custom).toHaveBeenCalledTimes(4);
   });
 
-  it('reports a contract refresh as error without discarding the one-time receipt', async () => {
+  it('reports a contract refresh as invalid without discarding the one-time receipt', async () => {
     refine.custom.mockResolvedValue({ data: { id: 'generated', token: 'hb_generated_once' } });
     refine.refetch.mockRejectedValue(invalidFailure());
     const { result } = renderHook(() => useTokenResourceController());
@@ -441,8 +450,8 @@ describe('Token resource controller', () => {
     await act(async () => result.current.generate());
 
     expect(result.current.state.generatedToken).toBe('hb_generated_once');
-    expect(result.current.state.list.kind).toBe('error');
-    expect(refine.notification).toHaveBeenCalledWith({ message: 'common.routeError.description', type: 'error' });
+    expect(result.current.state.list.kind).toBe('invalid');
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.invalid', type: 'error' });
     expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'token.unavailable' }));
   });
 
@@ -498,6 +507,10 @@ function unavailableFailure() {
 
 function invalidFailure() {
   return new TokenRequestFailure('invalid', 'uncertain', { code: 'TOKEN_RESPONSE_INVALID' });
+}
+
+function permissionFailure() {
+  return new TokenRequestFailure('permission', 'uncertain');
 }
 
 function httpRejectedFailure() {

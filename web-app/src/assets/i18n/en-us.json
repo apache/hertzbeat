@@ -1542,6 +1542,7 @@
     "generateFailed": "Token could not be generated.",
     "validation": "Enter a token name.",
     "unavailable": "Token data is unavailable.",
+    "invalid": "The token response is invalid.",
     "empty": "No API tokens have been generated.",
     "scope": {
       "label": "Access",

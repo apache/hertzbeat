@@ -19,9 +19,9 @@ import { useList, type HttpError } from '@refinedev/core';
 import { useCallback, useState } from 'react';
 
 import { tokenResourceName, type TokenListState, type TokenResourceRecord } from '../model/token-model';
-import { classifyTokenCollectionFailure } from '../model/token-failure';
+import { classifyTokenCollectionFailure, type TokenFailureKind } from '../model/token-failure';
 
-export type TokenListFailureKind = 'error' | 'unavailable';
+export type TokenListFailureKind = TokenFailureKind;
 export type RefreshAuthoritativeTokenList = (expectedAbsentId?: number) => Promise<TokenListFailureKind | null>;
 
 export function useTokenListController() {
@@ -73,7 +73,10 @@ export function useTokenListController() {
 }
 
 export function tokenListFailureMessage(kind: TokenListFailureKind) {
-  return kind === 'unavailable' ? 'token.unavailable' : 'common.routeError.description';
+  if (kind === 'unavailable') return 'token.unavailable';
+  if (kind === 'invalid') return 'token.invalid';
+  if (kind === 'permission') return 'common.permission.roleRequiredDescription';
+  return 'common.routeError.description';
 }
 
 function resolveTokenListState(
@@ -104,5 +107,5 @@ function hasDifferentNumericId(value: unknown, expectedId: number) {
 }
 
 function resolveTokenListFailure(reason: unknown): TokenListFailureKind {
-  return classifyTokenCollectionFailure(reason) === 'unavailable' ? 'unavailable' : 'error';
+  return classifyTokenCollectionFailure(reason);
 }

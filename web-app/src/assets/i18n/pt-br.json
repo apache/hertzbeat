@@ -1546,6 +1546,7 @@
     "generateFailed": "Não foi possível gerar o token.",
     "validation": "Informe um nome para o token.",
     "unavailable": "Os dados de token estão indisponíveis.",
+    "invalid": "A resposta de token é inválida.",
     "empty": "Nenhum token de API foi gerado.",
     "scope": {
       "label": "Acesso",

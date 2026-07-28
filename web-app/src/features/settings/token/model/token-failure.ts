@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-export type TokenFailureKind = 'invalid' | 'unavailable' | 'error';
+export type TokenFailureKind = 'invalid' | 'unavailable' | 'permission' | 'error';
 export type TokenWriteOutcome = 'rejected' | 'uncertain';
 
 type TokenFailureOptions = { code?: string };

@@ -20,10 +20,7 @@ export function normalizeTokenApiFailure(reason: unknown, phase: TokenRequestPha
     return new TokenRequestFailure('invalid', 'uncertain', { code: 'TOKEN_RESPONSE_INVALID' });
   }
   if (!(reason instanceof ApiMessageError)) return new TokenRequestFailure('error', 'uncertain');
-  return new TokenRequestFailure(
-    failureKind(reason),
-    phase === 'collection' ? 'uncertain' : apiMessageWriteOutcome(reason)
-  );
+  return new TokenRequestFailure(failureKind(reason), writeOutcome(reason, phase));
 }
 
 export async function tokenApiRequest<T>(phase: TokenRequestPhase, operation: () => Promise<T>): Promise<T> {
@@ -38,5 +35,18 @@ function failureKind(reason: ApiMessageError): TokenFailureKind {
   if (reason.cause !== undefined || reason.status === undefined || reason.status === 0 || reason.status >= 500) {
     return 'unavailable';
   }
+  if (reason.status === 401 || reason.status === 403 || isPermissionMessage(reason.message)) return 'permission';
+  if (reason.message === 'Token storage unavailable') return 'unavailable';
+  if (reason.message === 'Invalid token request') return 'invalid';
   return 'error';
+}
+
+function writeOutcome(reason: ApiMessageError, phase: TokenRequestPhase) {
+  if (phase === 'collection') return 'uncertain';
+  if (reason.message === 'Invalid token request' || isPermissionMessage(reason.message)) return 'rejected';
+  return apiMessageWriteOutcome(reason);
+}
+
+function isPermissionMessage(message: string) {
+  return message === 'No permission' || message === 'No login user';
 }

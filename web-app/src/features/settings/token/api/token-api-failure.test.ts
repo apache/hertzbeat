@@ -27,7 +27,42 @@ describe('Token API failure boundary', () => {
       'unavailable',
       'uncertain'
     ],
-    ['permission rejection', new ApiMessageError('private', { status: 403 }), 'write', 'error', 'rejected'],
+    ['permission rejection', new ApiMessageError('private', { status: 403 }), 'write', 'permission', 'rejected'],
+    [
+      'invalid request envelope',
+      new ApiMessageError('Invalid token request', { code: 20, status: 200 }),
+      'write',
+      'invalid',
+      'rejected'
+    ],
+    [
+      'storage envelope',
+      new ApiMessageError('Token storage unavailable', { code: 20, status: 200 }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'permission envelope',
+      new ApiMessageError('No permission', { code: 20, status: 200 }),
+      'write',
+      'permission',
+      'rejected'
+    ],
+    [
+      'missing session collection envelope',
+      new ApiMessageError('No login user', { code: 20, status: 200 }),
+      'collection',
+      'permission',
+      'uncertain'
+    ],
+    [
+      'generic token envelope',
+      new ApiMessageError('Generate token error', { code: 20, status: 200 }),
+      'write',
+      'error',
+      'uncertain'
+    ],
     [
       'HTTP rejection with business code',
       new ApiMessageError('private', { code: 20, status: 422 }),
@@ -42,7 +77,7 @@ describe('Token API failure boundary', () => {
   ] as const)('normalizes %s', (_label, reason, phase, kind, writeOutcome) => {
     const failure = normalizeTokenApiFailure(reason, phase);
     expect(failure).toMatchObject({ kind, writeOutcome, message: 'Token request failed' });
-    expect(JSON.stringify(failure)).not.toContain('private');
+    expect(JSON.stringify(failure)).not.toContain(reason instanceof Error ? reason.message : 'private');
   });
 
   it('preserves domain failure identity', () => {

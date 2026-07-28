@@ -1544,6 +1544,7 @@
     "generateFailed": "トークンを生成できませんでした。",
     "validation": "トークン名を入力してください。",
     "unavailable": "トークンデータを取得できません。",
+    "invalid": "トークンの応答が無効です。",
     "empty": "API トークンはまだありません。",
     "scope": {
       "label": "アクセス",

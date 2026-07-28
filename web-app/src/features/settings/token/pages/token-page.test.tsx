@@ -107,6 +107,8 @@ describe('TokenPage', () => {
 
   it.each([
     ['unavailable', 'Token data is unavailable.'],
+    ['invalid', 'The token response is invalid.'],
+    ['permission', 'Your account does not have permission to open this page.'],
     ['error', 'This page could not be loaded. Retry or return to it later.']
   ] as const)('keeps the %s list state distinct and retryable', (kind, message) => {
     controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind } }));

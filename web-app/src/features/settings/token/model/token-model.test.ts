@@ -37,9 +37,10 @@ describe('token model', () => {
   });
 
   it('distinguishes active, expired, and non-expiring tokens', () => {
-    expect(isTokenExpired({ expireTime: null }, 2_000)).toBe(false);
-    expect(isTokenExpired({ expireTime: 1_000 }, 2_000)).toBe(true);
-    expect(isTokenExpired({ expireTime: 3_000 }, 2_000)).toBe(false);
+    const now = Date.parse('2026-07-16T20:00:00Z');
+    expect(isTokenExpired({ expireTime: null }, now)).toBe(false);
+    expect(isTokenExpired({ expireTime: '2026-07-16T19:59:00Z' }, now)).toBe(true);
+    expect(isTokenExpired({ expireTime: '2026-07-16T20:01:00Z' }, now)).toBe(false);
   });
 
   it('does not invent a label for an unknown server scope', () => {

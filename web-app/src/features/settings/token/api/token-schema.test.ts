@@ -65,11 +65,21 @@ describe('Token API schemas', () => {
     expect(() => parseGeneratedTokenReceipt(undefined)).toThrow(TokenApiContractError);
   });
 
-  it('parses only id-bound deleted or missing revoke results', () => {
+  it('parses only the exact id-bound revoke result statuses', () => {
     expect(parseTokenMutationResponse({ id: 7, status: 'deleted' })).toEqual({ id: 7, status: 'deleted' });
     expect(parseTokenMutationResponse({ id: 8, status: 'missing' })).toEqual({ id: 8, status: 'missing' });
+    expect(parseTokenMutationResponse({ id: 9, status: 'already-revoked' })).toEqual({
+      id: 9,
+      status: 'already-revoked'
+    });
     expect(() => parseTokenMutationResponse({ id: 7, status: 'success' })).toThrow(TokenApiContractError);
     expect(() => parseTokenMutationResponse({ id: 7, status: 'deleted', token: 'raw-token' })).toThrow(
+      TokenApiContractError
+    );
+  });
+
+  it('rejects legacy numeric timestamps outside the exact LocalDateTime DTO', () => {
+    expect(() => parseTokenResourceRecords([{ ...tokenSummaryWire(), lastUsedTime: 1_000 }])).toThrow(
       TokenApiContractError
     );
   });
@@ -110,7 +120,7 @@ function tokenSummaryWire() {
     creator: 'admin',
     gmtCreate: '2026-07-16T20:00:00',
     expireTime: null,
-    lastUsedTime: 1_000,
+    lastUsedTime: '2026-07-16T20:01:00',
     revokedTime: null,
     revokedBy: null
   };

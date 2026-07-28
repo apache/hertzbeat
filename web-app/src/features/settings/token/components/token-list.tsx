@@ -26,6 +26,7 @@ import {
   type TokenListState,
   type TokenResourceRecord
 } from '../model/token-model';
+import type { TokenFailureKind } from '../model/token-failure';
 import styles from './token.module.css';
 
 type TokenListProps = {
@@ -40,7 +41,12 @@ export function TokenList(props: TokenListProps) {
   const { t } = useTranslation();
   const { modal } = App.useApp();
 
-  if (props.list.kind === 'unavailable' || props.list.kind === 'error') {
+  if (
+    props.list.kind === 'unavailable' ||
+    props.list.kind === 'invalid' ||
+    props.list.kind === 'permission' ||
+    props.list.kind === 'error'
+  ) {
     return <TokenListFailureAlert kind={props.list.kind} onRetry={props.onRetry} />;
   }
 
@@ -72,13 +78,13 @@ export function TokenList(props: TokenListProps) {
   );
 }
 
-function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: 'unavailable' | 'error' }) {
+function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: TokenFailureKind }) {
   const { t } = useTranslation();
   return (
     <Alert
       type="error"
       showIcon
-      message={props.kind === 'unavailable' ? t('token.unavailable') : t('common.routeError.description')}
+      message={t(tokenFailureMessageKey(props.kind))}
       action={
         <Button
           size="small"
@@ -91,6 +97,13 @@ function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: 
       }
     />
   );
+}
+
+function tokenFailureMessageKey(kind: TokenFailureKind) {
+  if (kind === 'unavailable') return 'token.unavailable';
+  if (kind === 'invalid') return 'token.invalid';
+  if (kind === 'permission') return 'common.permission.roleRequiredDescription';
+  return 'common.routeError.description';
 }
 
 function tokenColumns(

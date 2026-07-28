@@ -1523,6 +1523,7 @@
     "generateFailed": "Token 生成失败。",
     "validation": "请输入 Token 名称。",
     "unavailable": "Token 数据不可用。",
+    "invalid": "Token 响应无效。",
     "empty": "尚未生成 API Token。",
     "scope": {
       "label": "访问范围",

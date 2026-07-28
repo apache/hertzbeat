@@ -42,10 +42,9 @@ const safePositiveIntegerSchema = z
   .refine(Number.isSafeInteger)
   .refine(value => value > 0);
 const nullableTextSchema = z.string().nullable();
-// Spring serializes LocalDateTime as text. Numeric timestamps remain accepted
-// only for compatibility with the pre-migration frontend contract.
 const nullableTimestampSchema = z
-  .union([z.string().refine(value => value.trim() !== '' && Number.isFinite(Date.parse(value))), z.number().finite()])
+  .string()
+  .refine(value => value.trim() !== '' && Number.isFinite(Date.parse(value)))
   .nullable();
 
 const tokenWireSchema = z
@@ -74,7 +73,7 @@ const tokenWireSchema = z
 const tokenMutationWireSchema = z
   .object({
     id: safePositiveIntegerSchema,
-    status: z.enum(['deleted', 'missing'])
+    status: z.enum(['deleted', 'missing', 'already-revoked'])
   })
   .strict();
 

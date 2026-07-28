@@ -16,6 +16,7 @@
  */
 
 import type { RemoteCollectionState } from '@/shared/remote-state';
+import type { TokenFailureKind } from './token-failure';
 import {
   accessTokenExpirationDefinitions,
   accessTokenScopeDefinitions,
@@ -32,7 +33,7 @@ export const tokenResourceName = 'tokens';
 export type TokenScope = AccessTokenScope;
 export type TokenDraft = AccessTokenGenerationDraft;
 
-type TokenTimeValue = string | number | null;
+type TokenTimeValue = string | null;
 
 export type TokenResourceRecord = {
   id: number;
@@ -56,7 +57,7 @@ export type GeneratedTokenReceipt = GeneratedAccessTokenReceipt;
 
 export type TokenMutationResult = {
   id: number;
-  status: 'deleted' | 'missing';
+  status: 'deleted' | 'missing' | 'already-revoked';
 };
 
 export type TokenGenerationRecovery = {
@@ -69,7 +70,9 @@ export type TokenRevocationRecovery = {
   id: number;
 };
 
-export type TokenListState = RemoteCollectionState<TokenResourceRecord, 'unavailable' | 'error'>;
+type TokenListRemoteFailure = Exclude<TokenFailureKind, 'permission'>;
+export type TokenListState =
+  RemoteCollectionState<TokenResourceRecord, TokenListRemoteFailure> | { kind: 'permission' };
 
 export const tokenScopeDefinitions = accessTokenScopeDefinitions;
 export const tokenExpirationDefinitions = accessTokenExpirationDefinitions;
@@ -95,6 +98,6 @@ export function validateTokenDraft(draft: TokenDraft) {
 
 export function isTokenExpired(token: Pick<TokenResourceRecord, 'expireTime'>, now = Date.now()) {
   if (token.expireTime == null || token.expireTime === '') return false;
-  const timestamp = typeof token.expireTime === 'number' ? token.expireTime : Date.parse(token.expireTime);
+  const timestamp = Date.parse(token.expireTime);
   return Number.isFinite(timestamp) && timestamp < now;
 }

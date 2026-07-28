@@ -111,6 +111,7 @@ function adaptRefineFailure(reason: RefineHttpError, phase: TokenRequestPhase) {
 
 function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
   if (isRefineSourceUnavailable(reason)) return 'unavailable';
+  if (reason.kind === 'http' && (reason.httpStatus === 401 || reason.httpStatus === 403)) return 'permission';
   if (typeof reason.code === 'string' && reason.code.startsWith('TOKEN_')) return 'invalid';
   return 'error';
 }

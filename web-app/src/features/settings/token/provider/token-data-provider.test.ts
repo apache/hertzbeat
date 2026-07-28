@@ -117,6 +117,14 @@ describe('Token Refine data provider', () => {
     });
   });
 
+  it('preserves already-revoked as converged revocation evidence', async () => {
+    api.revokeToken.mockResolvedValue({ id: 7, status: 'already-revoked' });
+
+    await expect(tokenDataProvider.custom?.({ url: '/api/account/token/7', method: 'delete' })).resolves.toEqual({
+      data: { id: 7, status: 'already-revoked' }
+    });
+  });
+
   it('reports malformed generation variables as a client contract error', async () => {
     api.parseTokenGenerationDraft.mockImplementationOnce(() => {
       throw new api.TokenApiContractError();

@@ -1523,6 +1523,7 @@
     "generateFailed": "Token 產生失敗。",
     "validation": "請輸入 Token 名稱。",
     "unavailable": "Token 資料無法使用。",
+    "invalid": "Token 回應無效。",
     "empty": "尚未產生 API Token。",
     "scope": {
       "label": "存取範圍",
