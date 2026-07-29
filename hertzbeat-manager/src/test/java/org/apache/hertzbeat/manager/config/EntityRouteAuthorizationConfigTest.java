@@ -17,9 +17,21 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.usthe.sureness.matcher.DefaultPathRoleMatcher;
+import com.usthe.sureness.processor.exception.UnauthorizedException;
+import com.usthe.sureness.processor.exception.UnknownAccountException;
+import com.usthe.sureness.processor.support.NoneProcessor;
+import com.usthe.sureness.processor.support.PasswordProcessor;
+import com.usthe.sureness.provider.DefaultAccount;
+import com.usthe.sureness.provider.ducument.DocumentPathTreeProvider;
+import com.usthe.sureness.subject.Subject;
+import com.usthe.sureness.subject.support.NoneSubject;
+import com.usthe.sureness.subject.support.PasswordSubject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +46,10 @@ import org.junit.jupiter.api.function.Executable;
  */
 class EntityRouteAuthorizationConfigTest {
 
+    private static final String GET_DISCOVERY = "/api/entities/discovery===get";
+    private static final String POST_ENTITY = "/api/entities===post";
+    private static final String PUT_DEFINITION = "/api/entities/42/definition===put";
+    private static final String DELETE_ENTITY = "/api/entities/42===delete";
     private static final List<String> ENTITY_RULES = List.of(
             "  - /api/entities===get===[admin,user,guest]",
             "  - /api/entities/**===get===[admin,user,guest]",
@@ -54,6 +70,8 @@ class EntityRouteAuthorizationConfigTest {
             "script/docker-compose/hertzbeat-postgresql-greptimedb/conf/sureness.yml",
             "script/docker-compose/hertzbeat-postgresql-victoria-metrics/conf/sureness.yml");
 
+    private final DefaultPathRoleMatcher pathRoleMatcher = loadPathRoleMatcher();
+
     @Test
     void shippedConfigsKeepEntityRoutesExplicitlyRoleScoped() {
         List<Executable> checks = new ArrayList<>();
@@ -61,6 +79,71 @@ class EntityRouteAuthorizationConfigTest {
             checks.add(() -> assertRules(config));
         }
         assertAll(checks);
+    }
+
+    @Test
+    void actualSurenessAuthorizationEnforcesEntityReadWriteAndDeleteRoles() {
+        assertAll(
+                () -> assertAnonymousDenied(GET_DISCOVERY),
+                () -> assertAnonymousDenied(POST_ENTITY),
+                () -> assertAnonymousDenied(PUT_DEFINITION),
+                () -> assertAnonymousDenied(DELETE_ENTITY),
+                () -> assertRoleAllowed("guest", GET_DISCOVERY),
+                () -> assertRoleForbidden("guest", POST_ENTITY),
+                () -> assertRoleForbidden("guest", PUT_DEFINITION),
+                () -> assertRoleForbidden("guest", DELETE_ENTITY),
+                () -> assertRoleAllowed("user", GET_DISCOVERY),
+                () -> assertRoleAllowed("user", POST_ENTITY),
+                () -> assertRoleAllowed("user", PUT_DEFINITION),
+                () -> assertRoleForbidden("user", DELETE_ENTITY),
+                () -> assertRoleAllowed("admin", GET_DISCOVERY),
+                () -> assertRoleAllowed("admin", POST_ENTITY),
+                () -> assertRoleAllowed("admin", PUT_DEFINITION),
+                () -> assertRoleAllowed("admin", DELETE_ENTITY));
+    }
+
+    private void assertAnonymousDenied(String resource) {
+        Subject subject = NoneSubject.builder().setTargetUri(resource).build();
+        pathRoleMatcher.matchRole(subject);
+        assertThatThrownBy(() -> new NoneProcessor().process(subject))
+                .isInstanceOf(UnknownAccountException.class);
+    }
+
+    private void assertRoleAllowed(String role, String resource) {
+        Subject subject = subject(role, resource);
+        pathRoleMatcher.matchRole(subject);
+        assertThatNoException().isThrownBy(() -> passwordProcessor().process(subject));
+    }
+
+    private void assertRoleForbidden(String role, String resource) {
+        Subject subject = subject(role, resource);
+        pathRoleMatcher.matchRole(subject);
+        assertThatThrownBy(() -> passwordProcessor().process(subject))
+                .isInstanceOf(UnauthorizedException.class);
+    }
+
+    private static Subject subject(String role, String resource) {
+        return PasswordSubject.builder(role, "credential")
+                .setTargetResource(resource)
+                .build();
+    }
+
+    private static PasswordProcessor passwordProcessor() {
+        PasswordProcessor processor = new PasswordProcessor();
+        processor.setAccountProvider(appId -> DefaultAccount.builder(appId)
+                .setPassword("credential")
+                .setOwnRoles(List.of(appId))
+                .build());
+        return processor;
+    }
+
+    private static DefaultPathRoleMatcher loadPathRoleMatcher() {
+        DocumentPathTreeProvider provider = new DocumentPathTreeProvider();
+        provider.setContextPath(null);
+        DefaultPathRoleMatcher matcher = new DefaultPathRoleMatcher();
+        matcher.setPathTreeProvider(provider);
+        matcher.buildTree();
+        return matcher;
     }
 
     private static void assertRules(String config) throws IOException {
