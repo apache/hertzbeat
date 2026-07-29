@@ -72,6 +72,11 @@ resourceRole:
   - /api/chat/**===post===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
+  # the openapi document is a map of every route, parameter and model, so it is
+  # scoped like any other administrative resource instead of being anonymous
+  - /v3/api-docs/**===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
@@ -108,10 +113,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
