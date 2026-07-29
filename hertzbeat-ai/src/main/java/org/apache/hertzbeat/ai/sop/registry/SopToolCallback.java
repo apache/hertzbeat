@@ -109,7 +109,7 @@ public class SopToolCallback implements ToolCallback {
         String defaultValue = parameter.getDefaultValue();
         try {
             return switch (mapType(parameter.getType())) {
-                case "boolean" -> Boolean.valueOf(defaultValue);
+                case "boolean" -> parseBooleanDefault(parameter, defaultValue);
                 case "integer" -> Long.valueOf(defaultValue);
                 case "number" -> Double.valueOf(defaultValue);
                 default -> defaultValue;
@@ -117,6 +117,18 @@ public class SopToolCallback implements ToolCallback {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid default value for SOP parameter: " + parameter.getName(), e);
         }
+    }
+
+    private boolean parseBooleanDefault(SopParameter parameter, String defaultValue) {
+        String normalizedValue = defaultValue.trim();
+        if ("true".equalsIgnoreCase(normalizedValue)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(normalizedValue)) {
+            return false;
+        }
+        throw new IllegalArgumentException(
+                "Invalid boolean default value for SOP parameter: " + parameter.getName());
     }
 
     private String mapType(String type) {
