@@ -19,13 +19,19 @@ package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.AlertManagerExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.DefaultExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.PrometheusExternAlertService;
+import org.apache.hertzbeat.alert.service.impl.ZabbixExternAlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +40,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Unit contract for {@link AlertReportController}.
@@ -49,6 +57,9 @@ class AlertReportControllerTest {
 
     @Mock
     private ExternAlertService externAlertService;
+
+    @Mock
+    private AlarmCommonReduce alarmCommonReduce;
 
     @BeforeEach
     void setUp() {
@@ -136,6 +147,37 @@ class AlertReportControllerTest {
     }
 
     @Test
+    void realIngressRejectsMalformedEmptyAndUnprocessablePayloadsSafely() throws Exception {
+        MockMvc realIngress = MockMvcBuilders
+                .standaloneSetup(new AlertReportController(realIngressServices()))
+                .build();
+        String privateBody = "Bearer-private-token private-test-source /secret/private-body";
+        List<RequestBuilder> rejectedRequests = List.of(
+                post("/api/alerts/report", privateBody),
+                post("/api/alerts/report", "{}"),
+                post("/api/v2/alerts", privateBody),
+                post("/api/v2/alerts", "[]"),
+                post("/api/alerts/report/alertmanager", privateBody),
+                post("/api/alerts/report/alertmanager", "{\"alerts\":[]}"),
+                post("/api/alerts/report/zabbix", privateBody),
+                post("/api/alerts/report/zabbix", "{}"));
+
+        for (RequestBuilder request : rejectedRequests) {
+            realIngress.perform(request)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").value("external_alert_rejected"))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("Bearer-private-token"))))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("private-test-source"))))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("/secret/private-body"))));
+        }
+        verifyNoInteractions(alarmCommonReduce);
+    }
+
+    @Test
     void unsupportedOrUnavailableSourceReturnsStableFailureEnvelope() throws Exception {
         String privateSource = "Bearer-private-source";
         when(externAlertService.supportSource()).thenReturn("other");
@@ -169,5 +211,24 @@ class AlertReportControllerTest {
                 .andExpect(status().isMethodNotAllowed());
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/alerts/report"))
                 .andExpect(status().isMethodNotAllowed());
+    }
+
+    private List<ExternAlertService> realIngressServices() {
+        return List.of(
+                withReducer(new DefaultExternAlertService()),
+                withReducer(new PrometheusExternAlertService()),
+                withReducer(new AlertManagerExternAlertService()),
+                withReducer(new ZabbixExternAlertServiceImpl()));
+    }
+
+    private <T extends ExternAlertService> T withReducer(T service) {
+        ReflectionTestUtils.setField(service, "alarmCommonReduce", alarmCommonReduce);
+        return service;
+    }
+
+    private static RequestBuilder post(String path, String body) {
+        return MockMvcRequestBuilders.post(path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body);
     }
 }

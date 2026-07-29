@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -183,7 +184,7 @@ public class AlertManagerExternAlertServiceTest {
     @Test
     void testAddExternAlertWithInvalidContent() {
         String invalidContent = "invalid json content";
-        externAlertService.addExternAlert(invalidContent);
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert(invalidContent));
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
     }
 
@@ -193,7 +194,8 @@ public class AlertManagerExternAlertServiceTest {
             .groupKey("test-group-key")
             .alerts(List.of()) // Empty alerts list
             .build();
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
+        String content = JsonUtil.toJson(alertManagerAlert);
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert(content));
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
     }
 
@@ -211,19 +213,9 @@ public class AlertManagerExternAlertServiceTest {
             .alerts(List.of(prometheusAlert))
             .build();
 
-        final SingleAlert[] capturedAlert = new SingleAlert[1];
-        doAnswer(invocation -> {
-            capturedAlert[0] = invocation.getArgument(0);
-            return null;
-        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
-
-        externAlertService.addExternAlert(JsonUtil.toJson(alertManagerAlert));
-
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
-
-        assertNotNull(capturedAlert[0]);
-        assertNotNull(capturedAlert[0].getLabels());
-        assertEquals("alertmanager", capturedAlert[0].getLabels().get("__source__"));
+        String content = JsonUtil.toJson(alertManagerAlert);
+        assertThrows(IllegalArgumentException.class, () -> externAlertService.addExternAlert(content));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
     }
 
     @Test
