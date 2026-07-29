@@ -24,24 +24,6 @@ import static org.apache.hertzbeat.observability.instrumentation.api.Instrumenta
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.google.protobuf.ByteString;
-import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
-import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.logs.v1.LogRecord;
-import io.opentelemetry.proto.logs.v1.ResourceLogs;
-import io.opentelemetry.proto.logs.v1.ScopeLogs;
-import io.opentelemetry.proto.metrics.v1.Gauge;
-import io.opentelemetry.proto.metrics.v1.Metric;
-import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
-import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
-import io.opentelemetry.proto.resource.v1.Resource;
-import io.opentelemetry.proto.trace.v1.ResourceSpans;
-import io.opentelemetry.proto.trace.v1.ScopeSpans;
-import io.opentelemetry.proto.trace.v1.Span;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -81,13 +63,7 @@ import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /** Proves scoped onboarding detection against telemetry written through the real HertzBeat ingestion services. */
 @SpringBootTest(
@@ -103,30 +79,7 @@ import org.testcontainers.utility.DockerImageName;
                 "warehouse.store.greptime.password="
         })
 @Testcontainers(disabledWithoutDocker = true)
-class GreptimeThreeSignalInstrumentationE2eTest {
-
-    private static final int GREPTIME_HTTP_PORT = 4000;
-    private static final int GREPTIME_GRPC_PORT = 4001;
-    private static final String SERVICE_NAME = "checkout-api";
-    private static final String SERVICE_NAMESPACE = "commerce";
-    private static final String ENVIRONMENT = "proof";
-    private static final String COLLECTOR_ID = "collector-e2e";
-    private static final String SERVER_PROFILE_ID = "server-e2e";
-    private static final String INSTANCE_ID = "checkout-e2e-7d9";
-    private static final String ENDPOINT = "/checkout";
-    private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
-    private static final String SPAN_ID = "0123456789abcdef";
-
-    @Container
-    @SuppressWarnings("resource")
-    private static final GenericContainer<?> GREPTIME = new GenericContainer<>(
-            DockerImageName.parse("greptime/greptimedb:v1.0.1"))
-            .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
-            .withCommand("standalone", "start",
-                    "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                    "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-            .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
-            .withStartupTimeout(Duration.ofSeconds(120));
+class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSupport {
 
     @Autowired
     private OtlpGrpcIngestionService ingestionService;
@@ -154,14 +107,6 @@ class GreptimeThreeSignalInstrumentationE2eTest {
 
     @Autowired
     private EntityTraceQueryService traceQueryService;
-
-    @DynamicPropertySource
-    static void greptimeProperties(DynamicPropertyRegistry registry) {
-        registry.add("warehouse.store.greptime.http-endpoint", () -> "http://" + GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_HTTP_PORT));
-        registry.add("warehouse.store.greptime.grpc-endpoints", () -> GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_GRPC_PORT));
-    }
 
     @Test
     void ingestedSignalsConvergeToReceivedUnderExactOnboardingContext() {
@@ -511,74 +456,4 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         assertThat(response.queryJumps()).hasSize(3).allMatch(jump -> !jump.enabled());
     }
 
-    private ExportMetricsServiceRequest metrics(long timeNanos) {
-        NumberDataPoint point = NumberDataPoint.newBuilder()
-                .setTimeUnixNano(timeNanos)
-                .setAsInt(1)
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        Metric metric = Metric.newBuilder()
-                .setName("hertzbeat.e2e.requests")
-                .setGauge(Gauge.newBuilder().addDataPoints(point))
-                .build();
-        return ExportMetricsServiceRequest.newBuilder()
-                .addResourceMetrics(ResourceMetrics.newBuilder()
-                        .setResource(resource())
-                        .addScopeMetrics(ScopeMetrics.newBuilder().addMetrics(metric)))
-                .build();
-    }
-
-    private ExportLogsServiceRequest logs(long timeNanos) {
-        LogRecord record = LogRecord.newBuilder()
-                .setTimeUnixNano(timeNanos)
-                .setObservedTimeUnixNano(timeNanos)
-                .setSeverityText("INFO")
-                .setBody(AnyValue.newBuilder().setStringValue("three-signal-e2e"))
-                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
-                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        return ExportLogsServiceRequest.newBuilder()
-                .addResourceLogs(ResourceLogs.newBuilder()
-                        .setResource(resource())
-                        .addScopeLogs(ScopeLogs.newBuilder().addLogRecords(record)))
-                .build();
-    }
-
-    private ExportTraceServiceRequest traces(long timeNanos) {
-        Span span = Span.newBuilder()
-                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
-                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
-                .setName("GET /checkout")
-                .setKind(Span.SpanKind.SPAN_KIND_SERVER)
-                .setStartTimeUnixNano(timeNanos)
-                .setEndTimeUnixNano(timeNanos + 10_000_000L)
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        return ExportTraceServiceRequest.newBuilder()
-                .addResourceSpans(ResourceSpans.newBuilder()
-                        .setResource(resource())
-                        .addScopeSpans(ScopeSpans.newBuilder().addSpans(span)))
-                .build();
-    }
-
-    private Resource resource() {
-        return Resource.newBuilder().addAllAttributes(List.of(
-                attribute("service.name", SERVICE_NAME),
-                attribute("service.namespace", SERVICE_NAMESPACE),
-                attribute("deployment.environment.name", ENVIRONMENT),
-                attribute("service.instance.id", INSTANCE_ID),
-                attribute("hertzbeat.collector.id", COLLECTOR_ID))).build();
-    }
-
-    private KeyValue attribute(String key, String value) {
-        return KeyValue.newBuilder()
-                .setKey(key)
-                .setValue(AnyValue.newBuilder().setStringValue(value))
-                .build();
-    }
-
-    private byte[] hex(String value) {
-        return java.util.HexFormat.of().parseHex(value);
-    }
 }
