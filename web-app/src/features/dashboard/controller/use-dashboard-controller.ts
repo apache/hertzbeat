@@ -35,7 +35,7 @@ import {
 import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export const DASHBOARD_REFRESH_INTERVAL_MS = 30_000;
-export const dashboardCollectorQuery: CollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
+const dashboardCollectorQuery: CollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
 
 export function useDashboardController() {
   const monitorQuery = useQuery({

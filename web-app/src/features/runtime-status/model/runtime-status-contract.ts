@@ -21,7 +21,7 @@ type RuntimeStatusState = (typeof RUNTIME_STATUS_STATES)[number];
 type RuntimeServerErrorCode = 'server_unavailable';
 type RuntimeStorageErrorCode = 'storage_unavailable' | 'storage_query_failed';
 type RuntimeCollectorsErrorCode = 'collector_status_unavailable';
-export type RuntimeStatusErrorCode = RuntimeServerErrorCode | RuntimeStorageErrorCode | RuntimeCollectorsErrorCode;
+type RuntimeStatusErrorCode = RuntimeServerErrorCode | RuntimeStorageErrorCode | RuntimeCollectorsErrorCode;
 // Request failures are transport evidence and must never populate backend-owned section error codes.
 export type RuntimeStatusRequestFailure = 'permission' | 'unavailable' | 'contract' | 'error';
 

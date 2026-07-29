@@ -19,7 +19,7 @@ export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
 export type ObjectStoreSecretName = 'accessKey' | 'secretKey';
 
 /** Safe configuration returned by reads. It must never represent secret plaintext. */
-export type ObjectStoreReadConfig = {
+type ObjectStoreReadConfig = {
   bucketName?: string;
   endpoint?: string;
   savePath?: string;

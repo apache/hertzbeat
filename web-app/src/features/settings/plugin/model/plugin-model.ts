@@ -35,7 +35,7 @@ export type PluginDeleteReceipt = {
 };
 
 export const pluginPageSizes = [8, 20, 50] as const;
-export const pluginJarMaxBytes = 100 * 1024 * 1024;
+const pluginJarMaxBytes = 100 * 1024 * 1024;
 const defaultPluginQuery: PluginQuery = { search: '', pageIndex: 0, pageSize: 8 };
 
 export function readPluginQuery(params: URLSearchParams): PluginQuery {

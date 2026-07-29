@@ -19,8 +19,8 @@ export const collectorRuntimeFailureCodes = [
   'UNKNOWN'
 ] as const;
 
-export type CollectorRuntimeState = (typeof collectorRuntimeStates)[number];
-export type CollectorRuntimeFailureCode = (typeof collectorRuntimeFailureCodes)[number];
+type CollectorRuntimeState = (typeof collectorRuntimeStates)[number];
+type CollectorRuntimeFailureCode = (typeof collectorRuntimeFailureCodes)[number];
 
 /** Safe revision evidence projected from a Collector heartbeat report. */
 export type CollectorRuntimeReport = {

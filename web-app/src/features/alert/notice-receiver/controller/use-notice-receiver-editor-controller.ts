@@ -22,7 +22,7 @@ import {
 } from './use-notice-receiver-operation-controller';
 
 export { useNoticeReceiverOperationController as useNoticeReceiverOperationGate };
-export type NoticeReceiverOperationGate = NoticeReceiverOperationController;
+type NoticeReceiverOperationGate = NoticeReceiverOperationController;
 
 type NoticeReceiverEditorOptions = {
   capabilities: NoticeActionCapabilities;

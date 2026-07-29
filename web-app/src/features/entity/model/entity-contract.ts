@@ -78,7 +78,7 @@ export type EntityMonitorQuery = {
   pageIndex: number;
   pageSize: 50;
 };
-export type EntityMonitorPreview = {
+type EntityMonitorPreview = {
   items: EntityMonitor[];
   total: number;
   complete: boolean;

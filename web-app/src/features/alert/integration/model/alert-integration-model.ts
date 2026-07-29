@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
+type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
 export type AlertIntegrationIconKey =
   | 'hertzbeat'
   | 'prometheus'

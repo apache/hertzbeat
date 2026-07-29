@@ -17,11 +17,7 @@
 
 import { z } from 'zod';
 
-import type {
-  AlertIntegrationCatalog,
-  AlertIntegrationCatalogItem,
-  AlertIntegrationGuide
-} from '../model/alert-integration-model';
+import type { AlertIntegrationCatalog, AlertIntegrationGuide } from '../model/alert-integration-model';
 import { AlertIntegrationContractError } from '../model/alert-integration-model';
 
 const readinessSchema = z.enum(['ready', 'configuration_required', 'guide_blocked']);
@@ -82,5 +78,4 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return result.data;
 }
 
-export type { AlertIntegrationCatalogItem };
 export { AlertIntegrationContractError };
