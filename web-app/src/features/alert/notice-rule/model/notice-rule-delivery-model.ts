@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import type { NoticeRuleDraft } from './notice-rule-model';
 
 export function compatibleNoticeRuleTemplates(

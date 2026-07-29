@@ -20,7 +20,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useCanonicalQuerySearch, useStringQueryDraft, zeroBasedPageChange } from '@/shared/query-context';
 
-import { readNoticeTemplateQuery, writeNoticeTemplateQuery, type NoticeTemplateQuery } from '../notice-template-model';
+import {
+  readNoticeTemplateQuery,
+  writeNoticeTemplateQuery,
+  type NoticeTemplateQuery
+} from '../model/notice-template-model';
 
 export function useNoticeTemplateQueryController() {
   const [params, setParams] = useSearchParams();

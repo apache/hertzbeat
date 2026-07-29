@@ -21,7 +21,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 
 import { NoticeTemplateRequestFailure } from '../../model/notice-template-failure';
-import { NoticeTemplateContractError } from '../../notice-template-model';
+import { NoticeTemplateContractError } from '../../model/notice-template-model';
 
 type NoticeTemplateApi = typeof import('../../api/notice-template-api');
 const api = vi.hoisted(() => ({

@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { createNoticeTemplateDraft } from '../notice-template-model';
+import { createNoticeTemplateDraft } from '../model/notice-template-model';
 import {
   canDeleteNoticeTemplate,
   canEditNoticeTemplate,

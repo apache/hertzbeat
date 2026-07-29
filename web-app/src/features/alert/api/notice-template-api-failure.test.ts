@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { NoticeTemplateContractError } from '../notice-template-model';
+import { NoticeTemplateContractError } from '../model/notice-template-model';
 import { NoticeTemplateRequestFailure } from '../model/notice-template-failure';
 import { normalizeNoticeTemplateApiFailure } from './notice-template-api-failure';
 

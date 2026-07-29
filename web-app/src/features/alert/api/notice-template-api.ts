@@ -23,7 +23,7 @@ import {
   writeNoticeTemplateQuery,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
 import { noticeTemplateApiRequest } from './notice-template-api-failure';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';

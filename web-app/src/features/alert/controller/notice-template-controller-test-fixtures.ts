@@ -16,7 +16,7 @@
  */
 
 import { NoticeTemplateRequestFailure } from '../model/notice-template-failure';
-import { noticeTemplateResourceRecord } from '../notice-template-model';
+import { noticeTemplateResourceRecord } from '../model/notice-template-model';
 
 export const record = noticeTemplateResourceRecord({
   id: 42,

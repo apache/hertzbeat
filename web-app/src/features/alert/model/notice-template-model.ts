@@ -19,7 +19,7 @@ import type { RemotePageState } from '@/shared/remote-state';
 import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
 import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
-import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
+import { receiverTypeDefinitions, type NoticeReceiverType } from '../notice-receiver/model/notice-receiver-model';
 
 export const noticeTemplatePageSizes = compactTablePageSizes;
 

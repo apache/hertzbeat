@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import {
   createNoticeRuleDraft,
   noticeRuleDraftFromDetail,

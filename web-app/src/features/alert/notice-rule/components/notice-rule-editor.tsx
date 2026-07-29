@@ -19,7 +19,7 @@ import { Collapse, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import type { NoticeRuleDraft } from '../model/notice-rule-model';
 import type { NoticeRuleOperationRecovery } from '../model/notice-rule-operation-state';
 import { NoticeRuleAdvancedFields } from './notice-rule-advanced-fields';

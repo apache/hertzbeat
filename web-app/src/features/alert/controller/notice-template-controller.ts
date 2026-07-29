@@ -19,7 +19,7 @@ import { useDataProvider, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { NoticeTemplateResourceRecord } from '../notice-template-model';
+import type { NoticeTemplateResourceRecord } from '../model/notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import { useNoticeTemplateCommandController } from './use-notice-template-command-controller';
 import { useNoticeTemplateListController } from './use-notice-template-list-controller';

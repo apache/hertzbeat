@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { hasOwnProperties } from '@/shared/validation/own-properties';
 
 import { noticeReceiverOptionSchema, noticeReceiverTypeSchema } from '../../notice-receiver/api/notice-receiver-schema';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import { NoticeRuleContractError } from '../model/notice-rule-failure';
 import type { NoticeRule, NoticeRuleMutationVariables, NoticeRuleQuery } from '../model/notice-rule-model';
 

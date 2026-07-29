@@ -15,7 +15,7 @@ import {
   type NoticeTemplate,
   type NoticeTemplatePage,
   type NoticeTemplateQuery
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);

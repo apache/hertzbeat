@@ -10,7 +10,7 @@ vi.mock('../controller/notice-template-controller', () => controllerMock);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { useNoticeTemplateController } from '../controller/notice-template-controller';
-import { noticeTemplateResourceRecord } from '../notice-template-model';
+import { noticeTemplateResourceRecord } from '../model/notice-template-model';
 import { NoticeTemplatePage } from './notice-template-page';
 
 type TemplateController = ReturnType<typeof useNoticeTemplateController>;

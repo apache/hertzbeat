@@ -43,7 +43,7 @@ import {
   noticeTemplateResourceRecord,
   type NoticeTemplate,
   type NoticeTemplateQuery
-} from '../../notice-template-model';
+} from '../../model/notice-template-model';
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../../api/notice-template-resource';
 
 import {

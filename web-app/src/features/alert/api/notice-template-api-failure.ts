@@ -3,7 +3,7 @@
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { NoticeTemplateRequestFailure, type NoticeTemplateFailureKind } from '../model/notice-template-failure';
-import { NoticeTemplateContractError } from '../notice-template-model';
+import { NoticeTemplateContractError } from '../model/notice-template-model';
 
 export type NoticeTemplateRequestPhase = 'detail' | 'collection' | 'write';
 

@@ -26,7 +26,7 @@ import {
   validateNoticeTemplateDraft,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
-} from '../../notice-template-model';
+} from '../../model/notice-template-model';
 
 type DeleteRecordIdentity = {
   id: string;

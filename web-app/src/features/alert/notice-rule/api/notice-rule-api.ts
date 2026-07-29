@@ -9,7 +9,7 @@ import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '
 
 import { loadAllNoticeReceiverOptions } from '../../notice-receiver/api/notice-receiver-api';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import {
   buildNoticeRulePayload,
   maximumNoticeRuleScanPages,

@@ -11,7 +11,7 @@ import { zeroBasedPageChange } from '@/shared/query-context';
 
 import { readNoticeReceiverQuery, writeNoticeReceiverQuery } from '../notice-receiver/model/notice-receiver-model';
 import { readNoticeRuleQuery, writeNoticeRuleQuery } from '../notice-rule/model/notice-rule-model';
-import { readNoticeTemplateQuery, writeNoticeTemplateQuery } from '../notice-template-model';
+import { readNoticeTemplateQuery, writeNoticeTemplateQuery } from './notice-template-model';
 import { readAlertGroupQuery, writeAlertGroupQuery } from './alert-group-model';
 import { readAlertInhibitQuery, writeAlertInhibitQuery } from './alert-inhibit-model';
 import { readAlertQuery, writeAlertQuery } from './alert-model';

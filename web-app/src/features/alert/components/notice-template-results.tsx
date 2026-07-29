@@ -28,7 +28,7 @@ import {
   noticeTemplatePageSizes,
   type NoticeTemplateListState,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 
 type NoticeTemplateResultsProps = {
   busy: boolean;

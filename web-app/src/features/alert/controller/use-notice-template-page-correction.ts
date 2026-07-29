@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 
 import { authoritativePageIndexCorrection } from '@/shared/pagination';
 
-import type { NoticeTemplateListState, NoticeTemplateQuery } from '../notice-template-model';
+import type { NoticeTemplateListState, NoticeTemplateQuery } from '../model/notice-template-model';
 
 export function useNoticeTemplatePageCorrection(
   query: NoticeTemplateQuery,

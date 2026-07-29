@@ -21,7 +21,7 @@ import { readZeroBasedPage, writeZeroBasedPage } from '@/shared/query-context';
 
 import { formatLabelMatchers, parseLabelMatchers } from '../../shared/alert-label-matchers';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import type { NoticeRuleCollectionFailureKind } from './notice-rule-failure';
 
 export const noticeRulePageSizes = compactTablePageSizes;

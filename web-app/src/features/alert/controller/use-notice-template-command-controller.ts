@@ -23,7 +23,7 @@ import {
   isNoticeTemplateReadOnly,
   type NoticeTemplateQuery,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 import { useNoticeTemplateEditorController } from './use-notice-template-editor-controller';
 import {
   useNoticeTemplateOperationController,

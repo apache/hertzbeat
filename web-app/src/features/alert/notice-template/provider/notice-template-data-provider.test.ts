@@ -18,7 +18,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
-import { type NoticeTemplate, type NoticeTemplateResourceRecord } from '../../notice-template-model';
+import { type NoticeTemplate, type NoticeTemplateResourceRecord } from '../../model/notice-template-model';
 
 type NoticeTemplateApi = typeof import('../../api/notice-template-api');
 const api = vi.hoisted(() => ({

@@ -23,7 +23,7 @@ import {
   isNoticeTemplateReadOnly,
   type NoticeTemplateQuery,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 import { preflightNoticeTemplateDeletion, proveNoticeTemplateDeletion } from './notice-template-write-proof';

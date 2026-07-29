@@ -10,7 +10,7 @@ import {
   isNoticeTemplateReadOnly,
   type NoticeTemplateDraft,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 
 export function canSubmitNoticeTemplate(
   capabilities: NoticeTemplateActionCapabilities,

@@ -17,9 +17,9 @@
 
 import { Drawer } from 'antd';
 
-import editorStyles from '../notice-template-editor.module.css';
-import { NoticeTemplateEditor } from '../notice-template-editor';
-import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../notice-template-model';
+import editorStyles from './notice-template-editor.module.css';
+import { NoticeTemplateEditor } from './notice-template-editor';
+import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../model/notice-template-model';
 
 type NoticeTemplateOverlaysProps = {
   busy: boolean;

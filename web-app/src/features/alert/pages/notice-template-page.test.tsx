@@ -22,7 +22,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { requireDomElement } from '@/test/dom-element';
 
-import { noticeTemplateResourceRecord } from '../notice-template-model';
+import { noticeTemplateResourceRecord } from '../model/notice-template-model';
 import { NoticeTemplatePage } from './notice-template-page';
 
 const controller = vi.hoisted(() => ({

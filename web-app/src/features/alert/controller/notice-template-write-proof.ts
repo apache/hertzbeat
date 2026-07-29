@@ -21,7 +21,7 @@ import {
   buildNoticeTemplatePayload,
   type NoticeTemplateDraft,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import { classifyNoticeTemplateDetailFailure } from '../model/notice-template-failure';
 

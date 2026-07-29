@@ -22,7 +22,7 @@ import {
   validateNoticeTemplateDraft,
   type NoticeTemplateDraft,
   type NoticeTemplateResourceRecord
-} from '../notice-template-model';
+} from '../model/notice-template-model';
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateEditorController } from './use-notice-template-editor-controller';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';

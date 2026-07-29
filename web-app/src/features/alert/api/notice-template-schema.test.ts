@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { NoticeTemplateContractError } from '../notice-template-model';
+import { NoticeTemplateContractError } from '../model/notice-template-model';
 import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './notice-template-schema';
 
 const query = { name: '', preset: true, pageIndex: 0, pageSize: 8 };

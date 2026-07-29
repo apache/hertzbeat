@@ -16,7 +16,7 @@
  */
 
 import { receiverTypeDefinitions } from '../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplateResourceRecord } from '../notice-template-model';
+import type { NoticeTemplateResourceRecord } from './notice-template-model';
 
 export function noticeTemplateTime(template: Pick<NoticeTemplateResourceRecord, 'gmtCreate' | 'gmtUpdate'>) {
   return template.gmtUpdate ?? template.gmtCreate ?? null;

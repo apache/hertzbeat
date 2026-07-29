@@ -13,7 +13,7 @@ import {
   type NoticeTemplateFailureKind,
   type NoticeTemplateWriteOutcome
 } from '../../model/notice-template-failure';
-import { NoticeTemplateContractError } from '../../notice-template-model';
+import { NoticeTemplateContractError } from '../../model/notice-template-model';
 
 export function normalizeNoticeTemplateProviderFailure(reason: unknown, phase: NoticeTemplateRequestPhase) {
   if (reason instanceof NoticeTemplateRequestFailure) return normalizeNoticeTemplateApiFailure(reason, phase);

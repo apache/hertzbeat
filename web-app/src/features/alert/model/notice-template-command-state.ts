@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../notice-template-model';
+import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from './notice-template-model';
 import type { NoticeTemplateActionKind } from './notice-template-action-capability';
 
 export type NoticeTemplateCommand = 'idle' | 'loading-detail' | 'saving' | 'deleting' | 'recovering';

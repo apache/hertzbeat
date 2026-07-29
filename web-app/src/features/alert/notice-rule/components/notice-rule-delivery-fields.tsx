@@ -4,7 +4,7 @@ import { Input, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { receiverTypeDefinitions, type NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeTemplate } from '../../model/notice-template-model';
 import { compatibleNoticeRuleTemplates } from '../model/notice-rule-delivery-model';
 import type { NoticeRuleDraft } from '../model/notice-rule-model';
 import styles from './notice-rule-editor.module.css';

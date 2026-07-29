@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { NoticeTemplateResourceRecord } from '../../notice-template-model';
+import type { NoticeTemplateResourceRecord } from '../../model/notice-template-model';
 
 import {
   readNoticeTemplateDeleteVariables,
