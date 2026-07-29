@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil.SECRET_MASK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test case for {@link NoticeReceiverMaskUtil}
@@ -104,7 +105,6 @@ class NoticeReceiverMaskUtilTest {
         NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(existing);
         incoming.setAccessToken("new-access-token-1234");
         incoming.setGotifyToken(null);
-        incoming.setNtfyToken(SECRET_MASK);
 
         NoticeReceiverMaskUtil.resolveMask(incoming, existing);
 
@@ -122,13 +122,73 @@ class NoticeReceiverMaskUtilTest {
     }
 
     @Test
-    void resolveMaskIgnoresMaskWhenNothingIsStored() {
+    void resolveMaskRejectsMaskWhenNothingIsStored() {
         NoticeReceiver existing = new NoticeReceiver();
         NoticeReceiver incoming = new NoticeReceiver();
         incoming.setAccessToken(SECRET_MASK);
 
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> NoticeReceiverMaskUtil.resolveMask(incoming, existing));
+    }
+
+    @Test
+    void resolveMaskRejectsBareMaskAsWildcard() {
+        NoticeReceiver existing = buildReceiverWithSecrets();
+        NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setAccessToken(SECRET_MASK);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> NoticeReceiverMaskUtil.resolveMask(incoming, existing));
+    }
+
+    @Test
+    void resolveMaskRestoresBareMaskForShortStoredSecret() {
+        NoticeReceiver existing = new NoticeReceiver();
+        existing.setAccessToken("short-token");
+        NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(existing);
+
         NoticeReceiverMaskUtil.resolveMask(incoming, existing);
 
-        assertEquals(SECRET_MASK, incoming.getAccessToken());
+        assertEquals("short-token", incoming.getAccessToken());
+    }
+
+    @Test
+    void resolveMaskForTestRejectsMaskedWebhookSecretForChangedUrl() {
+        NoticeReceiver existing = buildReceiverWithSecrets();
+        existing.setType((byte) 2);
+        NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(existing);
+        incoming.setHookUrl("https://attacker.example/collect");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> NoticeReceiverMaskUtil.resolveMaskForTest(incoming, existing));
+        assertEquals(SECRET_MASK + "abcd", incoming.getHookAuthToken());
+    }
+
+    @Test
+    void resolveMaskForTestRejectsMaskedNtfySecretForChangedServer() {
+        NoticeReceiver existing = buildReceiverWithSecrets();
+        existing.setType((byte) 15);
+        existing.setNtfyServerUrl("https://ntfy.example");
+        NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(existing);
+        incoming.setNtfyServerUrl("https://attacker.example");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> NoticeReceiverMaskUtil.resolveMaskForTest(incoming, existing));
+        assertEquals(SECRET_MASK + "NIz2", incoming.getNtfyToken());
+    }
+
+    @Test
+    void resolveMaskForTestRestoresSecretForUnchangedDestination() {
+        NoticeReceiver existing = buildReceiverWithSecrets();
+        existing.setType((byte) 2);
+        NoticeReceiver incoming = NoticeReceiverMaskUtil.mask(existing);
+
+        NoticeReceiverMaskUtil.resolveMaskForTest(incoming, existing);
+
+        assertEquals("hook-auth-token-abcd", incoming.getHookAuthToken());
     }
 }
