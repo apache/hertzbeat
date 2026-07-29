@@ -18,8 +18,12 @@
 package org.apache.hertzbeat.manager.service;
 
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigRequest;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +37,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * test case for {@link ObjectStoreConfigServiceImpl}
@@ -57,7 +65,7 @@ class ObjectStoreConfigServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectStoreConfigService = new ObjectStoreConfigServiceImpl(generalConfigDao);
+        objectStoreConfigService = new ObjectStoreConfigServiceImpl(generalConfigDao, new ObjectStoreConfigMapper());
         ReflectionTestUtils.setField(objectStoreConfigService, "beanFactory", beanFactory);
         ReflectionTestUtils.setField(objectStoreConfigService, "ctx", ctx);
     }
@@ -69,25 +77,33 @@ class ObjectStoreConfigServiceTest {
     }
 
     @Test
-    void testHandlerNullConfig() {
-        objectStoreConfigService.handler(null);
+    void testStartupWithNullConfigDoesNotPublishChange() throws Exception {
+        objectStoreConfigService.afterPropertiesSet();
         verify(ctx, never()).publishEvent(any());
     }
 
     @Test
-    void testHandlerObsConfig() {
+    void testCommittedObsConfigReplacesRuntimeAndPublishesChange() {
         ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config = new ObjectStoreDTO<>();
         config.setType(ObjectStoreDTO.Type.OBS);
         ObjectStoreDTO.ObsConfig obsConfig = new ObjectStoreDTO.ObsConfig();
         obsConfig.setAccessKey("access-key");
         obsConfig.setSecretKey("secret-key");
-        obsConfig.setEndpoint("http://xxx.myhuaweicloud.com");
+        obsConfig.setEndpoint("https://xxx.myhuaweicloud.com");
         obsConfig.setBucketName("bucket-name");
         config.setConfig(obsConfig);
 
-        objectStoreConfigService.handler(config);
+        objectStoreConfigService.applyCommittedConfig(
+                new ObjectStoreConfigServiceImpl.ObjectStoreConfigPersistedEvent(config));
 
+        assertTrue(beanFactory.containsSingleton("ObjectStoreService"));
         verify(ctx).publishEvent(any(ObjectStoreConfigChangeEvent.class));
+
+        objectStoreConfigService.applyCommittedConfig(
+                new ObjectStoreConfigServiceImpl.ObjectStoreConfigPersistedEvent(
+                        new ObjectStoreDTO<>(ObjectStoreDTO.Type.DATABASE, null)));
+
+        assertFalse(beanFactory.containsSingleton("ObjectStoreService"));
     }
 
     @Test
@@ -97,8 +113,8 @@ class ObjectStoreConfigServiceTest {
                 objectStoreConfigService.validateObsEndpoint("https://obs.myhuaweicloud.com"));
 
         // Test various invalid scenarios
-        // 1. Using http protocol (insecure)
-        assertDoesNotThrow(() ->
+        // 1. Using http protocol would transmit OBS credentials without transport security.
+        assertThrows(IllegalArgumentException.class, () ->
                 objectStoreConfigService.validateObsEndpoint("http://obs.myhuaweicloud.com"));
 
         // 2. Using invalid domain names
@@ -127,5 +143,75 @@ class ObjectStoreConfigServiceTest {
                 objectStoreConfigService.validateObsEndpoint(null));
         assertThrows(IllegalArgumentException.class, () ->
                 objectStoreConfigService.validateObsEndpoint(""));
+    }
+
+    @Test
+    void saveLocksExactTypeAndReturnsAuthoritativeRedactedConfig() {
+        ObjectStoreConfigRequest request = new ObjectStoreConfigRequest();
+        request.setType(ObjectStoreDTO.Type.DATABASE.name());
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> authoritative =
+                new ObjectStoreDTO<>(ObjectStoreDTO.Type.DATABASE, null);
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(authoritative))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(null, persisted, persisted);
+
+        ObjectStoreConfigResponse response = objectStoreConfigService.saveAndGetSafeConfig(request);
+
+        assertEquals(ObjectStoreDTO.Type.DATABASE, response.type());
+        verify(generalConfigDao).findByTypeForUpdate("oss");
+        verify(generalConfigDao).save(any());
+    }
+
+    @Test
+    void restoresPersistedObsConfigWithItsParameterizedType() {
+        ObjectStoreDTO.ObsConfig options = obsConfig();
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, options)))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(persisted);
+
+        ObjectStoreDTO<ObjectStoreDTO.ObsConfig> restored = objectStoreConfigService.getConfig();
+
+        assertInstanceOf(ObjectStoreDTO.ObsConfig.class, restored.getConfig());
+        assertEquals("stored-access", restored.getConfig().getAccessKey());
+    }
+
+    @Test
+    void saveDoesNotMutateRuntimeOrPublishChangeBeforeCommit() {
+        ObjectStoreConfigRequest request = request();
+        GeneralConfig persisted = GeneralConfig.builder()
+                .type("oss")
+                .content(JsonUtil.toJson(new ObjectStoreDTO<>(ObjectStoreDTO.Type.OBS, obsConfig())))
+                .build();
+        when(generalConfigDao.findByType("oss")).thenReturn(null, persisted, persisted);
+
+        objectStoreConfigService.saveAndGetSafeConfig(request);
+
+        assertFalse(beanFactory.containsSingleton("ObjectStoreService"));
+        verify(ctx, never()).publishEvent(any(ObjectStoreConfigChangeEvent.class));
+    }
+
+    private ObjectStoreConfigRequest request() {
+        var options = new org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigOptions();
+        options.setAccessKey("stored-access");
+        options.setSecretKey("stored-secret");
+        options.setEndpoint("https://obs.myhuaweicloud.com");
+        options.setBucketName("bucket");
+        ObjectStoreConfigRequest request = new ObjectStoreConfigRequest();
+        request.setType(ObjectStoreDTO.Type.OBS.name());
+        request.setConfig(options);
+        return request;
+    }
+
+    private ObjectStoreDTO.ObsConfig obsConfig() {
+        ObjectStoreDTO.ObsConfig options = new ObjectStoreDTO.ObsConfig();
+        options.setAccessKey("stored-access");
+        options.setSecretKey("stored-secret");
+        options.setEndpoint("https://obs.myhuaweicloud.com");
+        options.setBucketName("bucket");
+        return options;
     }
 }

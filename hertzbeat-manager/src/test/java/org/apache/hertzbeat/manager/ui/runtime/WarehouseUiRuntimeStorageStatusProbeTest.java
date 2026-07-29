@@ -23,40 +23,41 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.warehouse.service.MetricsDataService;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import java.util.Optional;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbDataStorage;
 import org.junit.jupiter.api.Test;
 
-/** Ensures the UI probe reuses the Warehouse health boundary without storage queries. */
+/** Ensures the UI probe reports only the configured Greptime storage. */
 class WarehouseUiRuntimeStorageStatusProbeTest {
 
     @Test
-    void delegatesToMetricsDataServiceAndTreatsNullAsUnavailable() {
-        MetricsDataService metricsDataService = mock(MetricsDataService.class);
-        WarehouseUiRuntimeStorageStatusProbe probe = new WarehouseUiRuntimeStorageStatusProbe(
-                metricsDataService, greptimeProperties(true));
-        when(metricsDataService.getWarehouseStorageServerStatus())
-                .thenReturn(Boolean.TRUE)
-                .thenReturn((Boolean) null);
+    void reportsUnavailableWhenGreptimeStorageBeanIsAbsent() {
+        WarehouseUiRuntimeStorageStatusProbe probe =
+                new WarehouseUiRuntimeStorageStatusProbe(Optional.empty());
 
-        assertTrue(probe.isAvailable());
         assertFalse(probe.isAvailable());
-        verify(metricsDataService, org.mockito.Mockito.times(2)).getWarehouseStorageServerStatus();
     }
 
     @Test
-    void doesNotReportAnotherWarehouseAsAvailableGreptimeStorage() {
-        MetricsDataService metricsDataService = mock(MetricsDataService.class);
-        WarehouseUiRuntimeStorageStatusProbe probe = new WarehouseUiRuntimeStorageStatusProbe(
-                metricsDataService, greptimeProperties(false));
-        when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(Boolean.TRUE);
+    void reportsAvailableWhenGreptimeStorageIsAvailable() {
+        GreptimeDbDataStorage greptimeStorage = mock(GreptimeDbDataStorage.class);
+        when(greptimeStorage.getServerAvailability()).thenReturn(ServerAvailability.AVAILABLE);
+        WarehouseUiRuntimeStorageStatusProbe probe =
+                new WarehouseUiRuntimeStorageStatusProbe(Optional.of(greptimeStorage));
 
-        assertFalse(probe.isAvailable());
-        verify(metricsDataService, org.mockito.Mockito.never()).getWarehouseStorageServerStatus();
+        assertTrue(probe.isAvailable());
+        verify(greptimeStorage).getServerAvailability();
     }
 
-    private GreptimeProperties greptimeProperties(boolean enabled) {
-        return new GreptimeProperties(
-                enabled, "127.0.0.1:4001", "http://127.0.0.1:4000", "public", null, null, null);
+    @Test
+    void reportsUnavailableWhenGreptimeStorageIsUnavailable() {
+        GreptimeDbDataStorage greptimeStorage = mock(GreptimeDbDataStorage.class);
+        when(greptimeStorage.getServerAvailability()).thenReturn(ServerAvailability.UNAVAILABLE);
+        WarehouseUiRuntimeStorageStatusProbe probe =
+                new WarehouseUiRuntimeStorageStatusProbe(Optional.of(greptimeStorage));
+
+        assertFalse(probe.isAvailable());
+        verify(greptimeStorage).getServerAvailability();
     }
 }

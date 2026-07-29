@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.dao;
 
 import java.util.HashSet;
 import java.util.List;
+import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -60,4 +61,13 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      * @return group alerts
      */
     List<GroupAlert> findGroupAlertsByIdIn(HashSet<Long> ids);
+
+    /**
+     * Find only persisted status evidence for the requested group IDs.
+     * @param ids requested group IDs
+     * @return minimal ID/status projections
+     */
+    @Query("select new org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence(alert.id, alert.status) "
+            + "from GroupAlert alert where alert.id in :ids")
+    List<AlertGroupStatusEvidence> findStatusEvidenceByIdIn(@Param("ids") List<Long> ids);
 }

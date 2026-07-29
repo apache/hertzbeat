@@ -19,6 +19,8 @@
 
 set -eu
 
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
   echo "usage: $0 <image> [platform]" >&2
   exit 2
@@ -27,9 +29,13 @@ fi
 image=$1
 platform=${2:-linux/amd64}
 container="hertzbeat-native-image-$$"
+image_archive=
 
 cleanup() {
   docker rm -f "$container" >/dev/null 2>&1 || true
+  if [ -n "$image_archive" ]; then
+    rm -f "$image_archive"
+  fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -48,6 +54,11 @@ if [ "$entrypoint" != '["./bin/foreground.sh"]' ]; then
   echo "native Collector image must start the foreground launcher directly" >&2
   exit 1
 fi
+
+image_archive=$(mktemp "${TMPDIR:-/tmp}/hertzbeat-native-image.XXXXXX")
+docker save --output "$image_archive" "$image"
+python3 "$repo_root/script/ci/verify-hybrid-collector-release-content.py" \
+  --container-image "$image_archive"
 
 docker run --rm --platform "$platform" --entrypoint sh "$image" -ec '
   test "$(id -u)" -ne 0
@@ -116,6 +127,8 @@ if [ "$(docker inspect --format '{{.State.Running}}' "$container")" != false ]; 
   exit 1
 fi
 docker rm "$container" >/dev/null
+rm -f "$image_archive"
+image_archive=
 trap - EXIT HUP INT TERM
 
 echo "Hybrid Collector native image runtime contract passed"

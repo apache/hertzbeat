@@ -20,6 +20,7 @@
 package org.apache.hertzbeat.observability.logs.controller;
 
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.observability.logs.service.LogSseService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.springframework.http.MediaType;
@@ -52,7 +53,17 @@ public class LogSseController {
     @GetMapping(path = "/subscribe")
     @Operation(summary = "Subscribe to log events with optional filtering", description = "Subscribe to log events with optional filtering")
     public ResponseEntity<SseEmitter> subscribe(@ModelAttribute LogSseFilterCriteria filterCriteria) {
-        filterCriteria.normalizeQueryContext();
+        String workspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
+        if (workspaceId == null || workspaceId.isBlank()) {
+            return ResponseEntity.status(403).build();
+        }
+        filterCriteria.setWorkspaceId(workspaceId);
+        try {
+            filterCriteria.normalizeQueryContext();
+            filterCriteria.validate();
+        } catch (IllegalArgumentException ignored) {
+            return ResponseEntity.badRequest().build();
+        }
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_EVENT_STREAM)
                 .header("Cache-Control", "no-cache, no-transform")

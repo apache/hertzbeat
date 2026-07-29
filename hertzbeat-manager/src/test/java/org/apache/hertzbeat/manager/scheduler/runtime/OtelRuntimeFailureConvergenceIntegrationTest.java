@@ -100,6 +100,7 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
     private static final String INTAKE_TOKEN = "port-conflict-intake-token";
     private static final String AUTH_PROOF_METRIC = "hertzbeat_auth_proof_metric";
     private static final String RATE_LIMIT_PROOF_METRIC = "hertzbeat_rate_limit_proof_metric";
+    private static final String SLOW_RESPONSE_PROOF_METRIC = "hertzbeat_slow_response_proof_metric";
     private static final String UNAVAILABLE_PROOF_METRIC = "hertzbeat_unavailable_proof_metric";
     private static final String RESTART_PROOF_METRIC = "hertzbeat_restart_proof_metric";
     private static final String CORRUPTION_PROOF_METRIC = "hertzbeat_corruption_proof_metric";
@@ -334,6 +335,74 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
         String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
         assertSafe(runtimeLog);
         assertFalse(runtimeLog.contains(RATE_LIMIT_PROOF_METRIC));
+        assertFalse(runtimeLog.contains(tempDir.toString()));
+    }
+
+    @Test
+    void reportsRealExporterSlowResponseThroughHeartbeatAndQueryThenRecovers(
+            CapturedOutput output) throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        SlowIntake intake = new SlowIntake();
+        intake.start();
+        List<Integer> ports = availablePorts(5);
+        OtelRuntimeProperties properties = properties(runtimeBinary, ports);
+        properties.setOtlpHttpExporterTimeout(Duration.ofSeconds(2));
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:" + intake.port() + "/api/otlp"));
+        CollectorRuntimeStatusRegistry registry = new CollectorRuntimeStatusRegistry();
+        ManageServer manageServer = heartbeatServer(registry);
+        MockMvc queryApi = queryApi(registry);
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new org.apache.hertzbeat.collector.runtime.otel.OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        long parentPid = ProcessHandle.current().pid();
+        long runtimePid = -1;
+        try {
+            supervisor.start();
+            runtimePid = supervisor.snapshot().pid();
+            sendMetricPayload(properties.getOtlpHttpEndpoint(), singleMetricPayload(SLOW_RESPONSE_PROOF_METRIC));
+            await(() -> intake.startedRequests() > 0, Duration.ofSeconds(20));
+            ManagedOtelRuntimeStatus unavailable = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE
+                            && positive(status.telemetry().queueSizeBySignal().metrics()),
+                    Duration.ofSeconds(20));
+            assertStableRuntimeIdentity(unavailable, runtimePid);
+            assertEquals(parentPid, ProcessHandle.current().pid());
+            assertTrue(intake.authorizationWasValid());
+            reportHeartbeat(manageServer, unavailable);
+            assertRetriableQuery(
+                    query(queryApi), intake.port(), "BACKEND_UNAVAILABLE", SLOW_RESPONSE_PROOF_METRIC);
+
+            long sentBeforeRecovery = unavailable.telemetry().sent().metrics().value();
+            intake.accept();
+            ManagedOtelRuntimeStatus recovered = awaitRuntimeStatus(
+                    statusProvider,
+                    status -> status.failureCode() == ManagedOtelRuntimeStatus.FailureCode.NONE
+                            && zero(status.telemetry().queueSizeBySignal().metrics())
+                            && availableGreaterThan(status.telemetry().sent().metrics(), sentBeforeRecovery),
+                    Duration.ofSeconds(40));
+            assertStableRuntimeIdentity(recovered, runtimePid);
+            assertEquals(parentPid, ProcessHandle.current().pid());
+            assertTrue(intake.acceptedRequests() > 0);
+            reportHeartbeat(manageServer, recovered);
+            assertRetriableQuery(query(queryApi), intake.port(), "NONE", SLOW_RESPONSE_PROOF_METRIC);
+        } finally {
+            supervisor.close();
+            intake.close();
+        }
+        assertFalse(ProcessHandle.of(runtimePid).map(ProcessHandle::isAlive).orElse(false));
+        assertTrue(intake.isStopped());
+        assertSafeRetriable(output.getAll(), intake.port(), SLOW_RESPONSE_PROOF_METRIC);
+        String runtimeLog = Files.readString(tempDir.resolve("logs/otel-runtime.log"));
+        assertSafe(runtimeLog);
+        assertFalse(runtimeLog.contains(SLOW_RESPONSE_PROOF_METRIC));
         assertFalse(runtimeLog.contains(tempDir.toString()));
     }
 
@@ -1312,6 +1381,98 @@ class OtelRuntimeFailureConvergenceIntegrationTest {
             ManagedOtelRuntimeStatus status,
             int requests,
             Duration duration) {
+    }
+
+    private static final class SlowIntake implements AutoCloseable {
+
+        private final ExecutorService executor = new ThreadPoolExecutor(
+                4,
+                4,
+                0,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(8),
+                runnable -> {
+                    Thread thread = new Thread(runnable, "hertzbeat-slow-intake");
+                    thread.setDaemon(true);
+                    return thread;
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy());
+        private final AtomicBoolean accepting = new AtomicBoolean();
+        private final AtomicBoolean authorizationWasValid = new AtomicBoolean(true);
+        private final AtomicBoolean stopped = new AtomicBoolean(true);
+        private final AtomicInteger startedRequests = new AtomicInteger();
+        private final AtomicInteger acceptedRequests = new AtomicInteger();
+        private HttpServer server;
+
+        void start() throws IOException {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/api/otlp", this::handle);
+            server.setExecutor(executor);
+            server.start();
+            stopped.set(false);
+        }
+
+        private void handle(HttpExchange exchange) throws IOException {
+            try (exchange) {
+                if (!("Bearer " + INTAKE_TOKEN).equals(
+                        exchange.getRequestHeaders().getFirst("Authorization"))) {
+                    authorizationWasValid.set(false);
+                }
+                exchange.getRequestBody().transferTo(OutputStream.nullOutputStream());
+                startedRequests.incrementAndGet();
+                while (!accepting.get() && !stopped.get()) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
+                if (stopped.get()) {
+                    return;
+                }
+                acceptedRequests.incrementAndGet();
+                exchange.sendResponseHeaders(200, -1);
+            }
+        }
+
+        void accept() {
+            accepting.set(true);
+        }
+
+        int port() {
+            return server.getAddress().getPort();
+        }
+
+        int startedRequests() {
+            return startedRequests.get();
+        }
+
+        int acceptedRequests() {
+            return acceptedRequests.get();
+        }
+
+        boolean authorizationWasValid() {
+            return authorizationWasValid.get();
+        }
+
+        boolean isStopped() {
+            return stopped.get() && executor.isTerminated();
+        }
+
+        @Override
+        public void close() {
+            stopped.set(true);
+            if (server != null) {
+                server.stop(0);
+            }
+            executor.shutdownNow();
+            try {
+                stopped.set(executor.awaitTermination(5, TimeUnit.SECONDS));
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private static final class RetriableIntake implements AutoCloseable {

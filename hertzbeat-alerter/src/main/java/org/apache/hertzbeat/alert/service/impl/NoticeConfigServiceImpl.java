@@ -30,6 +30,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
+import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,12 +132,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         } else {
             // Query custom templates
             Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
-                Predicate predicate = criteriaBuilder.conjunction();
+                Predicate predicate = criteriaBuilder.equal(root.get("preset"), false);
                 if (StringUtils.isNotBlank(name)) {
                     Predicate predicateName = criteriaBuilder.like(
                             criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                     );
-                    predicate = criteriaBuilder.and(predicateName);
+                    predicate = criteriaBuilder.and(predicate, predicateName);
                 }
                 return predicate;
             };
@@ -272,19 +273,49 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public void addNoticeTemplate(NoticeTemplate noticeTemplate) {
-        noticeTemplateDao.save(noticeTemplate);
+        if (noticeTemplate.getId() != null || noticeTemplate.isPreset()) {
+            throw new NoticeTemplateMutationException(NoticeTemplateMutationException.Reason.INVALID_REQUEST);
+        }
+        NoticeTemplate customTemplate = NoticeTemplate.builder()
+                .name(noticeTemplate.getName())
+                .type(noticeTemplate.getType())
+                .preset(false)
+                .content(noticeTemplate.getContent())
+                .build();
+        noticeTemplateDao.save(customTemplate);
         clearNoticeRulesCache();
     }
 
     @Override
     public void editNoticeTemplate(NoticeTemplate noticeTemplate) {
-        noticeTemplateDao.save(noticeTemplate);
+        if (noticeTemplate.getId() == null) {
+            throw new NoticeTemplateMutationException(NoticeTemplateMutationException.Reason.INVALID_REQUEST);
+        }
+        NoticeTemplate persisted = noticeTemplateDao.findByIdForUpdate(noticeTemplate.getId())
+                .orElseThrow(() -> new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND));
+        if (persisted.isPreset() || noticeTemplate.isPreset()) {
+            throw new NoticeTemplateMutationException(NoticeTemplateMutationException.Reason.READ_ONLY);
+        }
+        persisted.setName(noticeTemplate.getName());
+        persisted.setType(noticeTemplate.getType());
+        persisted.setContent(noticeTemplate.getContent());
+        noticeTemplateDao.save(persisted);
         clearNoticeRulesCache();
     }
 
     @Override
     public void deleteNoticeTemplate(Long templateId) {
-        noticeTemplateDao.deleteById(templateId);
+        if (templateId == null) {
+            throw new NoticeTemplateMutationException(NoticeTemplateMutationException.Reason.INVALID_REQUEST);
+        }
+        NoticeTemplate persisted = noticeTemplateDao.findByIdForUpdate(templateId)
+                .orElseThrow(() -> new NoticeTemplateMutationException(
+                        NoticeTemplateMutationException.Reason.NOT_FOUND));
+        if (persisted.isPreset()) {
+            throw new NoticeTemplateMutationException(NoticeTemplateMutationException.Reason.READ_ONLY);
+        }
+        noticeTemplateDao.delete(persisted);
         clearNoticeRulesCache();
     }
 

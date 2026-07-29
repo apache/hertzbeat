@@ -24,30 +24,19 @@ import static org.apache.hertzbeat.observability.instrumentation.api.Instrumenta
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.google.protobuf.ByteString;
-import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
-import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
-import io.opentelemetry.proto.common.v1.AnyValue;
-import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.logs.v1.LogRecord;
-import io.opentelemetry.proto.logs.v1.ResourceLogs;
-import io.opentelemetry.proto.logs.v1.ScopeLogs;
-import io.opentelemetry.proto.metrics.v1.Gauge;
-import io.opentelemetry.proto.metrics.v1.Metric;
-import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
-import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
-import io.opentelemetry.proto.resource.v1.Resource;
-import io.opentelemetry.proto.trace.v1.ResourceSpans;
-import io.opentelemetry.proto.trace.v1.ScopeSpans;
-import io.opentelemetry.proto.trace.v1.Span;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementCodec;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionResponse;
@@ -64,6 +53,9 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationDetectionService;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2;
+import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationDetectionV2Service;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
@@ -71,13 +63,7 @@ import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /** Proves scoped onboarding detection against telemetry written through the real HertzBeat ingestion services. */
 @SpringBootTest(
@@ -93,35 +79,19 @@ import org.testcontainers.utility.DockerImageName;
                 "warehouse.store.greptime.password="
         })
 @Testcontainers(disabledWithoutDocker = true)
-class GreptimeThreeSignalInstrumentationE2eTest {
-
-    private static final int GREPTIME_HTTP_PORT = 4000;
-    private static final int GREPTIME_GRPC_PORT = 4001;
-    private static final String SERVICE_NAME = "checkout-api";
-    private static final String SERVICE_NAMESPACE = "commerce";
-    private static final String ENVIRONMENT = "proof";
-    private static final String COLLECTOR_ID = "collector-e2e";
-    private static final String INSTANCE_ID = "checkout-e2e-7d9";
-    private static final String ENDPOINT = "/checkout";
-    private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
-    private static final String SPAN_ID = "0123456789abcdef";
-
-    @Container
-    @SuppressWarnings("resource")
-    private static final GenericContainer<?> GREPTIME = new GenericContainer<>(
-            DockerImageName.parse("greptime/greptimedb:v1.0.1"))
-            .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
-            .withCommand("standalone", "start",
-                    "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                    "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-            .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
-            .withStartupTimeout(Duration.ofSeconds(120));
+class GreptimeThreeSignalInstrumentationE2eTest extends GreptimeThreeSignalE2eSupport {
 
     @Autowired
     private OtlpGrpcIngestionService ingestionService;
 
     @Autowired
     private InstrumentationDetectionService detectionService;
+
+    @Autowired
+    private InstrumentationDetectionV2Service currentDetectionService;
+
+    @Autowired
+    private CollectorDao collectorDao;
 
     @Autowired
     private InstrumentationSignalDetectionStore signalDetectionStore;
@@ -138,16 +108,9 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     @Autowired
     private EntityTraceQueryService traceQueryService;
 
-    @DynamicPropertySource
-    static void greptimeProperties(DynamicPropertyRegistry registry) {
-        registry.add("warehouse.store.greptime.http-endpoint", () -> "http://" + GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_HTTP_PORT));
-        registry.add("warehouse.store.greptime.grpc-endpoints", () -> GREPTIME.getHost()
-                + ":" + GREPTIME.getMappedPort(GREPTIME_GRPC_PORT));
-    }
-
     @Test
     void ingestedSignalsConvergeToReceivedUnderExactOnboardingContext() {
+        advertiseCollectorProfile();
         long startedAt = System.currentTimeMillis() - 1_000;
         long signalTimeNanos = System.currentTimeMillis() * 1_000_000L;
 
@@ -165,6 +128,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         });
         await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(
                 () -> assertNativeContextMappings(startedAt, System.currentTimeMillis()));
+        await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(
+                () -> assertCurrentDetectionContract(startedAt));
 
         var nativeSnapshot = signalDetectionStore.detect(new DetectionCriteria(
                 SERVICE_NAME,
@@ -233,6 +198,79 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 enabledJump(detected, METRICS).context(),
                 enabledJump(detected, LOGS).context(),
                 enabledJump(detected, TRACES).context());
+    }
+
+    private void advertiseCollectorProfile() {
+        CollectorIntakeAdvertisementCodec codec = new CollectorIntakeAdvertisementCodec();
+        String advertisement = codec.encode(
+                new CollectorIntakeAdvertisementRequest(
+                        1,
+                        Gateway.COLLECTOR,
+                        List.of(Capability.OTLP_HTTP_PROTOBUF),
+                        "http://127.0.0.1:4318",
+                        null));
+        collectorDao.save(Collector.builder()
+                .name(COLLECTOR_ID)
+                .ip("127.0.0.1")
+                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                .instrumentationIntake(advertisement)
+                .build());
+        String serverAdvertisement = codec.encode(new CollectorIntakeAdvertisementRequest(
+                1,
+                Gateway.SERVER,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "http://127.0.0.1:4318",
+                null));
+        collectorDao.save(Collector.builder()
+                .name(SERVER_PROFILE_ID)
+                .ip("127.0.0.1")
+                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                .instrumentationIntake(serverAdvertisement)
+                .build());
+    }
+
+    private void assertCurrentDetectionContract(long startedAt) {
+        var response = currentDetectionService.detect(
+                new InstrumentationDetectionV2.DetectionRequest(
+                        2,
+                        SourceKind.QUICK_START,
+                        "opentelemetry_telemetrygen",
+                        null,
+                        null,
+                        null,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        new ServiceIdentity(
+                                SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
+                        "collector:" + COLLECTOR_ID,
+                        startedAt));
+        assertThat(response.signals().values())
+                .allMatch(signal -> signal.status()
+                        == InstrumentationDetectionV2.DetectionStatus.RECEIVED);
+        assertThat(response.queryJumps()).hasSize(3).allMatch(jump -> jump.enabled()
+                && COLLECTOR_ID.equals(jump.context().collectorId())
+                && INSTANCE_ID.equals(jump.context().serviceInstanceId())
+                && ENDPOINT.equals(jump.context().endpoint())
+                && startedAt == jump.context().startedAt());
+
+        var directServerResponse = currentDetectionService.detect(
+                new InstrumentationDetectionV2.DetectionRequest(
+                        2,
+                        SourceKind.QUICK_START,
+                        "opentelemetry_telemetrygen",
+                        null,
+                        null,
+                        null,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        new ServiceIdentity(
+                                SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
+                        "server:" + SERVER_PROFILE_ID,
+                        startedAt));
+        assertThat(directServerResponse.signals().values())
+                .allMatch(signal -> signal.status()
+                        != InstrumentationDetectionV2.DetectionStatus.RECEIVED);
+        assertThat(directServerResponse.queryJumps()).hasSize(3).allMatch(jump -> !jump.enabled());
     }
 
     private void assertNativeContextMappings(long startedAt, long detectedAt) {
@@ -418,74 +456,4 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         assertThat(response.queryJumps()).hasSize(3).allMatch(jump -> !jump.enabled());
     }
 
-    private ExportMetricsServiceRequest metrics(long timeNanos) {
-        NumberDataPoint point = NumberDataPoint.newBuilder()
-                .setTimeUnixNano(timeNanos)
-                .setAsInt(1)
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        Metric metric = Metric.newBuilder()
-                .setName("hertzbeat.e2e.requests")
-                .setGauge(Gauge.newBuilder().addDataPoints(point))
-                .build();
-        return ExportMetricsServiceRequest.newBuilder()
-                .addResourceMetrics(ResourceMetrics.newBuilder()
-                        .setResource(resource())
-                        .addScopeMetrics(ScopeMetrics.newBuilder().addMetrics(metric)))
-                .build();
-    }
-
-    private ExportLogsServiceRequest logs(long timeNanos) {
-        LogRecord record = LogRecord.newBuilder()
-                .setTimeUnixNano(timeNanos)
-                .setObservedTimeUnixNano(timeNanos)
-                .setSeverityText("INFO")
-                .setBody(AnyValue.newBuilder().setStringValue("three-signal-e2e"))
-                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
-                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        return ExportLogsServiceRequest.newBuilder()
-                .addResourceLogs(ResourceLogs.newBuilder()
-                        .setResource(resource())
-                        .addScopeLogs(ScopeLogs.newBuilder().addLogRecords(record)))
-                .build();
-    }
-
-    private ExportTraceServiceRequest traces(long timeNanos) {
-        Span span = Span.newBuilder()
-                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
-                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
-                .setName("GET /checkout")
-                .setKind(Span.SpanKind.SPAN_KIND_SERVER)
-                .setStartTimeUnixNano(timeNanos)
-                .setEndTimeUnixNano(timeNanos + 10_000_000L)
-                .addAttributes(attribute("http.route", ENDPOINT))
-                .build();
-        return ExportTraceServiceRequest.newBuilder()
-                .addResourceSpans(ResourceSpans.newBuilder()
-                        .setResource(resource())
-                        .addScopeSpans(ScopeSpans.newBuilder().addSpans(span)))
-                .build();
-    }
-
-    private Resource resource() {
-        return Resource.newBuilder().addAllAttributes(List.of(
-                attribute("service.name", SERVICE_NAME),
-                attribute("service.namespace", SERVICE_NAMESPACE),
-                attribute("deployment.environment.name", ENVIRONMENT),
-                attribute("service.instance.id", INSTANCE_ID),
-                attribute("hertzbeat.collector.id", COLLECTOR_ID))).build();
-    }
-
-    private KeyValue attribute(String key, String value) {
-        return KeyValue.newBuilder()
-                .setKey(key)
-                .setValue(AnyValue.newBuilder().setStringValue(value))
-                .build();
-    }
-
-    private byte[] hex(String value) {
-        return java.util.HexFormat.of().parseHex(value);
-    }
 }

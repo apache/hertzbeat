@@ -68,7 +68,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>target</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>*.jar</include>
+                <include>${project.build.finalName}.jar</include>
             </includes>
         </fileSet>
 
@@ -92,7 +92,9 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <outputDirectory>runtime/macos-arm64</outputDirectory>
             <includes>
                 <include>runtime-manifest.json</include>
+                <include>hertzbeat-collector.cdx.json</include>
                 <include>hertzbeat-otel-runtime.cdx.json</include>
+                <include>release-inventory.json</include>
                 <include>SHA512SUMS</include>
             </includes>
         </fileSet>

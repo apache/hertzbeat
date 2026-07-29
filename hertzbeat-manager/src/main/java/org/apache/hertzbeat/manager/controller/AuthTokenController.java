@@ -74,6 +74,11 @@ public class AuthTokenController {
                     : accountService.generateToken(request.getName(), request.getExpireSeconds(), request.getScope(),
                             request.getWorkspaceId());
             return ResponseEntity.ok(Message.success(new AuthTokenIssuedResponse(token)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid token request"));
+        } catch (DataAccessException e) {
+            log.error("generate token storage unavailable: {}", e.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Token storage unavailable"));
         } catch (Exception e) {
             log.error("generate token error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Generate token error"));
@@ -103,7 +108,7 @@ public class AuthTokenController {
     }
 
     @GetMapping
-    @Operation(summary = "List all API tokens", description = "List all active non-expiring API tokens")
+    @Operation(summary = "List all API tokens", description = "List active API-token metadata without credentials")
     public ResponseEntity<Message<List<AuthTokenSummary>>> listTokens() {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
@@ -117,6 +122,9 @@ public class AuthTokenController {
                     .map(AuthTokenSummary::fromEntity)
                     .toList();
             return ResponseEntity.ok(Message.success(tokens));
+        } catch (DataAccessException e) {
+            log.error("list tokens storage unavailable: {}", e.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Token storage unavailable"));
         } catch (Exception e) {
             log.error("list tokens error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "List tokens error"));
@@ -135,10 +143,12 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            boolean deleted = accountService.deleteToken(id);
-            AuthTokenMutationResponse response = deleted
-                    ? AuthTokenMutationResponse.deleted(id)
-                    : AuthTokenMutationResponse.missing(id);
+            AccountService.TokenRevocationResult result = accountService.deleteToken(id);
+            AuthTokenMutationResponse response = switch (result) {
+                case REVOKED -> AuthTokenMutationResponse.deleted(id);
+                case MISSING -> AuthTokenMutationResponse.missing(id);
+                case ALREADY_REVOKED -> AuthTokenMutationResponse.alreadyRevoked(id);
+            };
             return ResponseEntity.ok(Message.success(response));
         } catch (javax.naming.AuthenticationException e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));

@@ -88,6 +88,11 @@ class AlertSilenceServiceTest {
     }
 
     @Test
+    void nullUpdateIsRejectedAsValidation() {
+        assertThrows(IllegalArgumentException.class, () -> service.update(null));
+    }
+
+    @Test
     void deleteRereadsAndReportsMissingIds() {
         when(dao.findAllById(Set.of(7L, 8L))).thenReturn(List.of(entity(7L, "existing")), List.of());
         var result = service.delete(Set.of(7L, 8L));

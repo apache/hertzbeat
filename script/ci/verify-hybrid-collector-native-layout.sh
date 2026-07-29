@@ -24,6 +24,7 @@ collector_pom=hertzbeat-collector/hertzbeat-collector-collector/pom.xml
 native_assembly=script/assembly/collector/assembly-native.xml
 native_foreground=script/assembly/collector/bin-native/foreground.sh
 native_startup=script/assembly/collector/bin-native/startup.sh
+native_windows_startup=script/assembly/collector/bin-native-win/startup.bat
 
 grep -q '<java.version>25</java.version>' pom.xml
 grep -q '<id>native</id>' "$collector_pom"
@@ -35,14 +36,9 @@ grep -q 'hertzbeat-otel-runtime/dist/${native.target.platform}' "$native_assembl
 grep -q 'runtime/${native.target.platform}' "$native_assembly"
 grep -q 'OtelRuntimeConfiguration' \
   hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
-
-for launcher in "$native_foreground" "$native_startup"; do
-  if ! grep -Fq 'HERTZBEAT_HOME="${HERTZBEAT_HOME:-$DEPLOY_DIR}"' "$launcher" \
-      || ! grep -Fq 'export HERTZBEAT_HOME' "$launcher"; then
-    echo "$launcher must resolve the managed Runtime from the release root" >&2
-    exit 1
-  fi
-done
+grep -Fq ': "${HERTZBEAT_HOME:=$DEPLOY_DIR}"' "$native_foreground"
+grep -Fq ': "${HERTZBEAT_HOME:=$DEPLOY_DIR}"' "$native_startup"
+grep -Fq 'if not defined HERTZBEAT_HOME set "HERTZBEAT_HOME=%DEPLOY_DIR%"' "$native_windows_startup"
 
 if grep -R '<maven.compiler.\(source\|target\)>17</maven.compiler.' \
   hertzbeat-collector/*/pom.xml >/dev/null 2>&1; then

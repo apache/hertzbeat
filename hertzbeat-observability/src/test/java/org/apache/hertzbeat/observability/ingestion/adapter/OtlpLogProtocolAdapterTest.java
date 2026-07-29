@@ -29,8 +29,10 @@ import io.opentelemetry.proto.resource.v1.Resource;
 import io.opentelemetry.proto.common.v1.InstrumentationScope;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.observability.TelemetryIntakeSignalEvent;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,6 +79,11 @@ class OtlpLogProtocolAdapterTest {
     @BeforeEach
     void setUp() {
         adapter = new OtlpLogProtocolAdapter(commonDataQueue, logSseManager, applicationEventPublisher);
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -241,6 +248,38 @@ class OtlpLogProtocolAdapterTest {
 
         List<LogEntry> capturedList = listCaptor.getValue();
         assertEquals(2, capturedList.size());
+    }
+
+    @Test
+    void authenticatedContextOverridesPayloadWorkspaceAndCollectorBeforeRealtimePublication() {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        AuthTokenRequestContext.bindCollectorId("collector-authenticated");
+        ExportLogsServiceRequest request = createScopedRequest("payload-workspace", "payload-collector");
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<LogEntry> entryCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(entryCaptor.capture());
+        Map<String, Object> resource = entryCaptor.getValue().getResource();
+        assertEquals("team-a", resource.get("hertzbeat_workspace_id"));
+        assertEquals("collector-authenticated", resource.get("hertzbeat_collector_id"));
+        assertFalse(resource.containsValue("payload-workspace"));
+        assertFalse(resource.containsValue("payload-collector"));
+    }
+
+    @Test
+    void missingAuthenticatedIdentityClearsPayloadCollectorAndUsesDefaultWorkspace() {
+        ExportLogsServiceRequest request = createScopedRequest("payload-workspace", "payload-collector");
+
+        adapter.ingestBinary(request.toByteArray());
+
+        ArgumentCaptor<LogEntry> entryCaptor = ArgumentCaptor.forClass(LogEntry.class);
+        verify(logSseManager).broadcast(entryCaptor.capture());
+        Map<String, Object> resource = entryCaptor.getValue().getResource();
+        assertEquals("default", resource.get("hertzbeat_workspace_id"));
+        assertFalse(resource.containsValue("payload-workspace"));
+        assertFalse(resource.containsValue("payload-collector"));
+        assertFalse(resource.containsKey("hertzbeat_collector_id"));
     }
 
     @Test
@@ -567,5 +606,36 @@ class OtlpLogProtocolAdapterTest {
             .build();
 
         return request.toByteArray();
+    }
+
+    private ExportLogsServiceRequest createScopedRequest(String workspaceId, String collectorId) {
+        return ExportLogsServiceRequest.newBuilder()
+                .addResourceLogs(ResourceLogs.newBuilder()
+                        .setResource(Resource.newBuilder()
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.workspace_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(workspaceId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.collector.id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat_collector_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat.collector")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("hertzbeat_collector")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("collector.id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId)))
+                                .addAttributes(KeyValue.newBuilder()
+                                        .setKey("collector_id")
+                                        .setValue(AnyValue.newBuilder().setStringValue(collectorId))))
+                        .addScopeLogs(ScopeLogs.newBuilder()
+                                .addLogRecords(LogRecord.newBuilder()
+                                        .setBody(AnyValue.newBuilder().setStringValue("scoped log")))))
+                .build();
     }
 }

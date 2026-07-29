@@ -72,7 +72,7 @@ class OtelRuntimeSupervisorTest {
         properties.setCollectorId("collector-phase0");
         properties.setWorkspaceId("workspace-phase0");
         properties.setToken("token-phase0");
-        properties.setExportEndpoint(URI.create("http://127.0.0.1:1157/api/otlp"));
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:1157/api/otlp/"));
         properties.setRestartDelay(Duration.ZERO);
         properties.setStartupTimeout(Duration.ofMillis(200));
         properties.setHealthTimeout(Duration.ofMillis(50));
@@ -118,6 +118,8 @@ class OtelRuntimeSupervisorTest {
         assertEquals("collector-phase0", environment.getValue().get("HERTZBEAT_COLLECTOR_ID"));
         assertEquals("workspace-phase0", environment.getValue().get("HERTZBEAT_WORKSPACE_ID"));
         assertEquals("token-phase0", environment.getValue().get("HERTZBEAT_OTLP_TOKEN"));
+        assertEquals("http://127.0.0.1:1157/api/otlp",
+                environment.getValue().get("HERTZBEAT_OTLP_HTTP_ENDPOINT"));
         assertEquals(tempDir.resolve("data/otel-runtime").toString(),
                 environment.getValue().get("HERTZBEAT_OTEL_FILE_STORAGE_DIR"));
         InOrder activationOrder = inOrder(launcher, configTransaction);
@@ -203,6 +205,19 @@ class OtelRuntimeSupervisorTest {
         assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
         assertTrue(supervisor.snapshot().lastError().contains("intake token"));
         verify(resolver, never()).resolve();
+        verify(launcher, never()).start(any(), any(), any(), any(), anyMap(), anyBoolean());
+    }
+
+    @Test
+    void rejectsExportEndpointQueryOrFragmentBeforeLaunchingRuntime() throws Exception {
+        properties.setExportEndpoint(URI.create("http://127.0.0.1:1157/api/otlp?tenant=unsafe#fragment"));
+        properties.setRestartDelay(Duration.ofHours(1));
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
+        assertTrue(supervisor.snapshot().lastError().contains("query or fragment"));
         verify(launcher, never()).start(any(), any(), any(), any(), anyMap(), anyBoolean());
     }
 

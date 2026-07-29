@@ -35,8 +35,10 @@ class TelemetryQueryContextScopeTest {
 
     @Test
     void rejectsMethodConcreteUrlQueryStringAndFragment() {
-        assertThrows(IllegalArgumentException.class,
+        ObservabilityQueryRequestException failure = assertThrows(
+                ObservabilityQueryRequestException.class,
                 () -> new TelemetryQueryContextScope(null, "POST /checkout"));
+        assertEquals(ObservabilityQueryRequestException.ERROR_CODE, failure.getMessage());
         assertThrows(IllegalArgumentException.class,
                 () -> new TelemetryQueryContextScope(null, "https://example.com/checkout"));
         assertThrows(IllegalArgumentException.class,

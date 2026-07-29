@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,6 +49,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/api/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
+
+    private static final String COPY_SOURCE_NOT_FOUND_MESSAGE = "Source monitor was not found.";
+    private static final String COPY_FAILED_MESSAGE = "Copy monitor failed.";
 
     @Autowired
     private MonitorService monitorService;
@@ -166,8 +170,10 @@ public class MonitorController {
         try {
             monitorService.copyMonitor(id);
             return ResponseEntity.ok(Message.success("Copy monitor success"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Copy monitor failed: " + e.getMessage()));
+        } catch (MonitorCopySourceNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, COPY_SOURCE_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, COPY_FAILED_MESSAGE));
         }
     }
 }

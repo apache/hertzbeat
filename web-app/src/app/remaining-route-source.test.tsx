@@ -60,6 +60,7 @@ const canonical = vi.hoisted(() => ({
   buildMonitorEditPath: vi.fn((id: number) => `/canonical-monitors/${id}/edit`)
 }));
 const navigate = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 const monitorApi = vi.hoisted(() => ({
   loadMonitorApps: vi.fn(),
   loadMonitors: vi.fn()
@@ -81,6 +82,13 @@ vi.mock('@/features/monitor/api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor/api/monitor-api')>()),
   ...monitorApi
 }));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: { roles: session.roles },
+    loading: false,
+    retry: vi.fn()
+  })
+}));
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigate
@@ -89,6 +97,7 @@ vi.mock('react-router-dom', async importOriginal => ({
 describe('remaining route ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    session.roles = ['ADMIN'];
     monitorApi.loadMonitorApps.mockResolvedValue([]);
     monitorApi.loadMonitors.mockResolvedValue({
       content: [],

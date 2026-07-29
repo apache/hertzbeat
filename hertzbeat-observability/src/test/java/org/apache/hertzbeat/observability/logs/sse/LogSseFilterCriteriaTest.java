@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -47,6 +48,7 @@ class LogSseFilterCriteriaTest {
                 .build();
 
         filterCriteria = new LogSseFilterCriteria();
+        filterCriteria.setWorkspaceId("default");
     }
 
     @Test
@@ -83,6 +85,16 @@ class LogSseFilterCriteriaTest {
         // Test severity number filter - null value
         filterCriteria.setSeverityNumber(null);
         assertTrue(filterCriteria.matches(testLogEntry));
+    }
+
+    @Test
+    void severityNumberFilterRejectsLogWithoutSeverityNumber() {
+        filterCriteria.setSeverityNumber(9);
+
+        assertFalse(filterCriteria.matches(LogEntry.builder()
+                .severityText("INFO")
+                .body("missing severity number")
+                .build()));
     }
 
     @Test
@@ -155,6 +167,28 @@ class LogSseFilterCriteriaTest {
         // Test multiple filter combinations - partial no match
         filterCriteria.setSeverityText("ERROR");
         assertFalse(filterCriteria.matches(testLogEntry));
+    }
+
+    @Test
+    void hideInternalMatchesHistoricalWorkspaceInfrastructureSemantics() {
+        filterCriteria.setHideInternal(true);
+
+        assertFalse(filterCriteria.matches(logFromService(null)));
+        assertFalse(filterCriteria.matches(logFromService("otelcol-contrib")));
+        assertFalse(filterCriteria.matches(logFromService("frontend-proxy")));
+        assertTrue(filterCriteria.matches(logFromService("kafka")));
+        assertTrue(filterCriteria.matches(logFromService("checkout")));
+    }
+
+    @Test
+    void hideNoiseMatchesHistoricalInternalAndDemoInfrastructureSemantics() {
+        filterCriteria.setHideNoise(true);
+
+        assertFalse(filterCriteria.matches(logFromService(null)));
+        assertFalse(filterCriteria.matches(logFromService("opentelemetry-collector")));
+        assertFalse(filterCriteria.matches(logFromService("load-generator")));
+        assertFalse(filterCriteria.matches(logFromService("postgresql")));
+        assertTrue(filterCriteria.matches(logFromService("checkout")));
     }
 
     @Test
@@ -260,6 +294,132 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void matchesCompleteLiveTelemetryContextWithoutIgnoringAnyDimension() {
+        LogEntry selectedLog = LogEntry.builder()
+                .severityNumber(17)
+                .severityText("ERROR")
+                .traceId("trace-a")
+                .spanId("span-a")
+                .resource(java.util.Map.of(
+                        "service_name", "checkout",
+                        "service_namespace", "payments",
+                        "deployment_environment_name", "prod",
+                        "hertzbeat_collector_id", "collector-a",
+                        "service_instance_id", "checkout-7d9",
+                        "hertzbeat_workspace_id", "team-a",
+                        "service_version", "1.2.3"))
+                .attributes(java.util.Map.of(
+                        "http_route", "/checkout",
+                        "error_type", "Timeout"))
+                .body("checkout failed")
+                .build();
+        filterCriteria.setSeverityNumber(17);
+        filterCriteria.setSeverityText("ERROR");
+        filterCriteria.setTraceId("trace-a");
+        filterCriteria.setSpanId("span-a");
+        filterCriteria.setServiceName("checkout");
+        filterCriteria.setServiceNamespace("payments");
+        filterCriteria.setEnvironment("prod");
+        filterCriteria.setCollectorId("collector-a");
+        filterCriteria.setInstance("checkout-7d9");
+        filterCriteria.setEndpoint("/checkout");
+        filterCriteria.setWorkspaceId("team-a");
+        filterCriteria.setResourceFilter("service.version=1.2.3");
+        filterCriteria.setAttributeFilter("error.type=Timeout");
+
+        assertTrue(filterCriteria.matches(selectedLog));
+
+        filterCriteria.setWorkspaceId("team-b");
+        assertFalse(filterCriteria.matches(selectedLog));
+        filterCriteria.setWorkspaceId("team-a");
+        filterCriteria.setCollectorId("collector-b");
+        assertFalse(filterCriteria.matches(selectedLog));
+        filterCriteria.setCollectorId("collector-a");
+        filterCriteria.setResourceFilter("service.version=2.0.0");
+        assertFalse(filterCriteria.matches(selectedLog));
+        filterCriteria.setResourceFilter("service.version=1.2.3");
+        filterCriteria.setAttributeFilter("error.type=Database");
+        assertFalse(filterCriteria.matches(selectedLog));
+    }
+
+    @Test
+    void rejectsInvalidOrPartiallyInvalidAttributeFilterExpressions() {
+        filterCriteria.setResourceFilter("not-a-filter");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setResourceFilter("service.version=1.2.3, not-a-filter");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setResourceFilter("service.version=1.2.3");
+        filterCriteria.setAttributeFilter("http.route=/checkout, broken");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+        assertThrows(IllegalArgumentException.class, () -> filterCriteria.matches(testLogEntry));
+    }
+
+    @Test
+    void rejectsUnclosedQuotesParenthesesAndEmptyClauses() {
+        filterCriteria.setResourceFilter("service.version='unterminated");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setResourceFilter("service.version=(1.2.3");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setResourceFilter("service.version=1.2.3,,cloud.region=us-east-1");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+    }
+
+    @Test
+    void rejectsEmptyOrUnclosedListValues() {
+        for (String invalidFilter : java.util.List.of(
+                "service.version IN (a,,b)",
+                "service.version IN (a,)",
+                "service.version IN (,a)",
+                "service.version IN ('unterminated,b)")) {
+            filterCriteria.setResourceFilter(invalidFilter);
+            assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+        }
+    }
+
+    @Test
+    void rejectsDuplicateFilterKeys() {
+        filterCriteria.setResourceFilter("service.version=1.2.3,service.version=1.2.4");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setResourceFilter("service.version=1.2.3");
+        filterCriteria.setAttributeFilter("http.route EXISTS,http.route=/checkout");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+
+        filterCriteria.setAttributeFilter(null);
+        filterCriteria.setResourceFilter("service.version=1.2.3,service_version=1.2.4");
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+    }
+
+    @Test
+    void missingSubscriptionWorkspaceFailsClosed() {
+        filterCriteria.setWorkspaceId(null);
+
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+        assertThrows(IllegalArgumentException.class, () -> filterCriteria.matches(LogEntry.builder()
+                .resource(java.util.Map.of("hertzbeat_workspace_id", "default"))
+                .build()));
+    }
+
+    @Test
+    void workspaceBoundaryRecognizesOnlySupportedResourceAliases() {
+        filterCriteria.setWorkspaceId("team-a");
+
+        for (String key : java.util.List.of(
+                "hertzbeat.workspace_id", "hertzbeat_workspace_id", "workspace_id", "workspace.id")) {
+            assertTrue(filterCriteria.matches(LogEntry.builder()
+                    .resource(java.util.Map.of(key, "team-a"))
+                    .build()));
+            assertFalse(filterCriteria.matches(LogEntry.builder()
+                    .resource(java.util.Map.of(key, "team-b"))
+                    .build()));
+        }
+    }
+
+    @Test
     void testMatchesWithNegativeResourceAndAttributeFilters() {
         LogEntry checkoutLog = LogEntry.builder()
                 .severityText("INFO")
@@ -317,6 +477,7 @@ class LogSseFilterCriteriaTest {
         LogSseFilterCriteria criteria = new LogSseFilterCriteria(
                 9, "INFO", null, "1234567890abcdef1234567890abcdef", "1234567890abcdef"
         );
+        criteria.setWorkspaceId("default");
 
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
@@ -338,6 +499,7 @@ class LogSseFilterCriteriaTest {
         criteria.setLogContent("Test log");
         criteria.setTraceId("1234567890abcdef1234567890abcdef");
         criteria.setSpanId("1234567890abcdef");
+        criteria.setWorkspaceId("default");
 
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
@@ -347,5 +509,15 @@ class LogSseFilterCriteriaTest {
 
         // Test matching
         assertTrue(criteria.matches(testLogEntry));
+    }
+
+    private LogEntry logFromService(String serviceName) {
+        java.util.Map<String, Object> resource = serviceName == null
+                ? java.util.Map.of()
+                : java.util.Map.of("service.name", serviceName);
+        return LogEntry.builder()
+                .resource(resource)
+                .body("live log")
+                .build();
     }
 }

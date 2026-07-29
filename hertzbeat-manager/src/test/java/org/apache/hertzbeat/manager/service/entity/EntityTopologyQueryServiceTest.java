@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
@@ -78,6 +81,44 @@ class EntityTopologyQueryServiceTest {
 
     @Mock
     private EntityActivityReadModelService entityActivityReadModelService;
+
+    @Test
+    void rejectsUnknownSourceKindBeforeQueryingTopologyData() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> entityTopologyQueryService.buildFocusedTopology(
+                        10L, 1, "prod", "unknown' OR 1=1 -- private-sql"));
+
+        assertEquals("topology_source_kind_invalid", exception.getMessage());
+        verifyNoInteractions(
+                entityWorkspaceAccessService,
+                entityRelationQueryService,
+                entityMonitorBindQueryService,
+                entityMonitorQueryService,
+                entityIdentityReadModelService,
+                traceCallTopologyQueryService,
+                entityActivityReadModelService);
+    }
+
+    @Test
+    void acceptsDefaultAllAndEverySupportedSourceKind() {
+        assertDoesNotThrow(() -> entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", null));
+        for (String sourceKind : List.of(
+                " ",
+                "all",
+                "MONITOR-BIND",
+                "entity-relation",
+                "monitor-bind",
+                "monitor-ownership",
+                "otlp-trace-call",
+                "cmdb-manual-label",
+                "database-middleware-connection",
+                "template-dependency",
+                "k8s-workload",
+                "alert-impact")) {
+            assertDoesNotThrow(() ->
+                    entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", sourceKind));
+        }
+    }
 
     @Test
     void filtersFocusedTopologyToExplicitMonitorOwnershipSourceKind() {
@@ -204,7 +245,7 @@ class EntityTopologyQueryServiceTest {
         lenient().when(entityMonitorQueryService.findMonitorsByIds(Set.of(701L))).thenReturn(List.of(monitor));
 
         EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
-                null, 1, "prod", null);
+                null, 1, null, null);
 
         assertTrue(graph.isApiBacked());
         assertNull(graph.getFocusEntityId());
@@ -239,7 +280,8 @@ class EntityTopologyQueryServiceTest {
         }
         List<ObserveEntity> retained = candidates.subList(0, 64);
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(candidates);
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.size() == 64 && ids.contains(1L) && ids.contains(64L) && !ids.contains(65L))))
@@ -256,8 +298,35 @@ class EntityTopologyQueryServiceTest {
         assertEquals(0, graph.getEdgePage().getPageSize());
         assertEquals(0, graph.getEdgePage().getTotalElements());
         assertFalse(graph.getEdgePage().isHasNext());
-        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
-                pageable != null && pageable.getPageSize() == 65));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) -> pageable != null && pageable.getPageSize() == 65));
+    }
+
+    @Test
+    void selectsRequestedEnvironmentBeforeApplyingDefaultSeedLimit() {
+        ObserveEntity olderProductionEntity =
+                entity(1000L, "service", "production-api", "commerce", "prod", "healthy");
+
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class))).thenReturn(List.of(olderProductionEntity));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(1000L)))
+                .thenReturn(List.of(olderProductionEntity));
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "otlp-trace-call");
+
+        assertFalse(graph.isPartial());
+        assertEquals(Set.of(), graph.getPartialReasons());
+        assertEquals(List.of(1000L),
+                graph.getNodes().stream().map(EntityTopologyGraphInfo.Node::getEntityId).toList());
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) ->
+                        pageable != null
+                                && pageable.getPageSize() == 65
+                                && pageable.getSort().getOrderFor("gmtUpdate") != null
+                                && pageable.getSort().getOrderFor("id") != null));
+        verify(entityWorkspaceAccessService, never())
+                .findAccessibleEntitiesForRequestWorkspace(any(Pageable.class));
     }
 
     @Test
@@ -340,7 +409,8 @@ class EntityTopologyQueryServiceTest {
         ObserveEntity leaf = entity(200L, "service", "hb-mix-1780329856-svc-00-000",
                 "scale-mix", "prod", "healthy");
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(seeds);
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.contains(1L) && ids.contains(100L) && ids.contains(111L))))
@@ -356,12 +426,13 @@ class EntityTopologyQueryServiceTest {
         assertTrue(graph.getSourceKinds().contains("otlp-trace-call"));
         assertTrue(graph.getNodes().stream().anyMatch(node ->
                 "hb-mix-1780329856-svc-00-000".equals(node.getEntityName())));
-        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
-                pageable != null
-                        && pageable.isPaged()
-                        && pageable.getPageSize() == 65
-                        && pageable.getSort().getOrderFor("gmtUpdate") != null
-                        && pageable.getSort().getOrderFor("id") != null));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) ->
+                        pageable != null
+                                && pageable.isPaged()
+                                && pageable.getPageSize() == 65
+                                && pageable.getSort().getOrderFor("gmtUpdate") != null
+                                && pageable.getSort().getOrderFor("id") != null));
         verify(traceCallTopologyQueryService, never()).findTraceCallEdges(any(), any(), any(), any(), any());
     }
 
@@ -370,7 +441,8 @@ class EntityTopologyQueryServiceTest {
         ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
         ObserveEntity payment = entity(20L, "service", "payment-api", "commerce", "prod", "healthy");
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(List.of(checkout, payment));
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.containsAll(List.of(10L, 20L))))).thenReturn(List.of(checkout, payment));

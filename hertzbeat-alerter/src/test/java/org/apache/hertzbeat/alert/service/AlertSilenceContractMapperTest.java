@@ -82,6 +82,14 @@ class AlertSilenceContractMapperTest {
         assertEquals("creator", updated.getCreator());
     }
 
+    @Test
+    void nullRequestFailsValidation() {
+        var existing = org.apache.hertzbeat.common.entity.alerter.AlertSilence.builder().id(7L).build();
+
+        assertThrows(IllegalArgumentException.class, () -> mapper.toNewEntity(null));
+        assertThrows(IllegalArgumentException.class, () -> mapper.toExistingEntity(null, existing));
+    }
+
     private AlertSilenceRequest request(byte type) {
         AlertSilenceRequest request = new AlertSilenceRequest();
         request.setName("Maintenance");

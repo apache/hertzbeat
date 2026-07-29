@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,9 @@ import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertGroupMutationPublisher;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -62,6 +66,9 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
+
+    @Autowired
+    private AlertGroupMutationPublisher alertGroupMutationPublisher;
 
     @Override
     public Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
@@ -166,12 +173,17 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void deleteGroupAlerts(HashSet<Long> ids) {
+        if (ids.contains(null)) {
+            throw new AlertGroupNotFoundException();
+        }
         List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByIdIn(ids);
+        requireExactGroupAlertTargets(ids, groupAlerts);
         for (GroupAlert groupAlert : groupAlerts) {
             List<String> firingAlerts = groupAlert.getAlertFingerprints();
             singleAlertDao.deleteSingleAlertsByFingerprintIn(firingAlerts);
         }
         groupAlertDao.deleteGroupAlertsByIdIn(ids);
+        alertGroupMutationPublisher.publishDeleted(ids);
     }
 
     @Override
@@ -184,10 +196,13 @@ public class AlertServiceImpl implements AlertService {
         if (!StringUtils.hasText(status) || ids == null || ids.isEmpty()) {
             return;
         }
-        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(ids);
-        if (groupAlerts.isEmpty()) {
-            return;
+        requireSupportedGroupAlertStatus(status);
+        List<Long> requestedIds = ids.stream().distinct().toList();
+        if (requestedIds.contains(null)) {
+            throw new AlertGroupNotFoundException();
         }
+        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(requestedIds);
+        requireExactGroupAlertTargets(requestedIds, groupAlerts);
         long now = Instant.now().toEpochMilli();
         List<String> fingerprints = groupAlerts.stream()
                 .map(GroupAlert::getAlertFingerprints)
@@ -216,6 +231,23 @@ public class AlertServiceImpl implements AlertService {
         groupAlertDao.saveAll(groupAlerts);
         if (!singleAlerts.isEmpty()) {
             singleAlertDao.saveAll(singleAlerts);
+        }
+        alertGroupMutationPublisher.publishStatusChanged(requestedIds, status);
+    }
+
+    private static void requireSupportedGroupAlertStatus(String status) {
+        if (!CommonConstants.ALERT_STATUS_FIRING.equals(status)
+                && !CommonConstants.ALERT_STATUS_ACKNOWLEDGED.equals(status)
+                && !CommonConstants.ALERT_STATUS_RESOLVED.equals(status)) {
+            throw new AlertGroupStatusNotSupportedException();
+        }
+    }
+
+    private static void requireExactGroupAlertTargets(Collection<Long> requestedIds, List<GroupAlert> groupAlerts) {
+        List<Long> foundIds = groupAlerts.stream().map(GroupAlert::getId).distinct().toList();
+        // Batch mutations are all-or-nothing so clients cannot treat a partial update as authoritative success.
+        if (foundIds.size() != requestedIds.size() || !foundIds.containsAll(requestedIds)) {
+            throw new AlertGroupNotFoundException();
         }
     }
 

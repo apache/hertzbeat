@@ -17,13 +17,18 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceRequestException;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceService;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -47,8 +52,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
 
+    private static final String ALERT_GROUP_NOT_FOUND_MESSAGE = "Alert group was not found.";
+    private static final String ALERT_GROUP_DELETE_FAILED_MESSAGE = "Alert group delete failed.";
+    private static final String ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE = "Alert group status is not supported.";
+    private static final String ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE = "Alert group status update failed.";
+    private static final String INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE =
+            "Invalid alert group evidence request.";
+    private static final String ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE =
+            "Alert group evidence query failed.";
+
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private AlertGroupEvidenceService alertGroupEvidenceService;
 
     @GetMapping
     @Operation(summary = "Query Alarms")
@@ -81,15 +98,34 @@ public class AlertsController {
         return ResponseEntity.ok(Message.success(alertPage));
     }
 
+    @GetMapping("/group/evidence")
+    @Operation(summary = "Query canonical alert group evidence by ID")
+    public ResponseEntity<Message<AlertGroupEvidence>> getGroupAlertEvidence(
+            @Parameter(description = "Alert group ID list", example = "6565463543")
+            @RequestParam(required = false) List<String> ids) {
+        try {
+            return ResponseEntity.ok(Message.success(alertGroupEvidenceService.getEvidence(ids)));
+        } catch (AlertGroupEvidenceRequestException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, INVALID_ALERT_GROUP_EVIDENCE_REQUEST_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_EVIDENCE_QUERY_FAILED_MESSAGE));
+        }
+    }
+
     @DeleteMapping("/group")
     @Operation(summary = "Delete group alarms in batches", description = "according to the alarm ID list to delete the alarm information in batches")
     public ResponseEntity<Message<Void>> deleteAlerts(
             @Parameter(description = "Alarm List ID", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            alertService.deleteGroupAlerts(new HashSet<>(ids));
+        try {
+            if (ids != null && !ids.isEmpty()) {
+                alertService.deleteGroupAlerts(new HashSet<>(ids));
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_DELETE_FAILED_MESSAGE));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
     }
 
     @PutMapping(path = "/group/status/{status}")
@@ -98,11 +134,18 @@ public class AlertsController {
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
             @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && status != null && !ids.isEmpty()) {
-            alertService.editGroupAlertStatus(status, ids);
+        try {
+            if (ids != null && status != null && !ids.isEmpty()) {
+                alertService.editGroupAlertStatus(status, ids);
+            }
+            return ResponseEntity.ok(Message.success());
+        } catch (AlertGroupStatusNotSupportedException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_NOT_SUPPORTED_MESSAGE));
+        } catch (AlertGroupNotFoundException exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_NOT_FOUND_MESSAGE));
+        } catch (Exception exception) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, ALERT_GROUP_STATUS_UPDATE_FAILED_MESSAGE));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
     }
 
     @PutMapping(path = "/status/{status}")
@@ -115,14 +158,6 @@ public class AlertsController {
             alertService.editSingleAlertStatus(status, ids);
         }
         Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
-    }
-
-    @GetMapping(path = "/summary")
-    @Operation(summary = "Get alarm statistics", description = "Get alarm statistics information")
-    public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
-        AlertSummary alertSummary = alertService.getAlertsSummary();
-        Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
 

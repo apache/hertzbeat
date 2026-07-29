@@ -33,6 +33,7 @@ import org.junit.jupiter.api.function.Executable;
 class AlertIntegrationRouteAuthorizationConfigTest {
 
     private static final String SOURCE_POST_RULE = "  - /api/alerts/**===post===[admin,user]";
+    private static final String ALERT_READ_RULE = "  - /api/alerts/**===get===[admin,user,guest]";
     private static final String PROMETHEUS_POST_RULE = "  - /api/v2/alerts===post===[admin,user]";
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
@@ -56,6 +57,7 @@ class AlertIntegrationRouteAuthorizationConfigTest {
 
     private static void assertRules(String config) throws IOException {
         List<String> lines = Files.readAllLines(repoRoot().resolve(config));
+        assertTrue(lines.contains(ALERT_READ_RULE), () -> config + " must protect alert reads");
         assertTrue(lines.contains(SOURCE_POST_RULE), () -> config + " must protect source ingestion");
         assertTrue(lines.contains(PROMETHEUS_POST_RULE), () -> config + " must protect Prometheus ingestion");
         assertFalse(lines.stream().anyMatch(line -> line.contains("/api/alerts/report") && line.endsWith("===*")),

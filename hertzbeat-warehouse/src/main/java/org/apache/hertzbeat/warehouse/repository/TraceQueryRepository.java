@@ -30,6 +30,42 @@ import java.util.Set;
 public interface TraceQueryRepository {
 
     /**
+     * Storage-neutral contract for an exact trace-row query.
+     *
+     * <p>Resource and span-attribute filters are exact-match OR sets per key and AND across keys.</p>
+     */
+    record TraceRowQuery(
+            String traceId,
+            String spanId,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String operationName,
+            Long minDurationNanos,
+            Long maxDurationNanos,
+            String workspaceId,
+            Map<String, Set<String>> resourceFilters,
+            Map<String, Set<String>> attributeFilters,
+            Boolean hideInternal) {
+
+        public TraceRowQuery {
+            resourceFilters = immutableFilters(resourceFilters);
+            attributeFilters = immutableFilters(attributeFilters);
+        }
+
+        private static Map<String, Set<String>> immutableFilters(Map<String, Set<String>> filters) {
+            if (filters == null || filters.isEmpty()) {
+                return Map.of();
+            }
+            java.util.LinkedHashMap<String, Set<String>> copy = new java.util.LinkedHashMap<>();
+            filters.forEach((key, values) -> copy.put(key, values == null ? Set.of() : Set.copyOf(values)));
+            return Map.copyOf(copy);
+        }
+    }
+
+    /**
      * Query recent trace rows.
      *
      * @param limit row limit
@@ -493,6 +529,53 @@ public interface TraceQueryRepository {
      * @return raw trace rows
      */
     List<Map<String, Object>> queryTraceRows(String traceId, int limit);
+
+    /**
+     * Query exact trace rows through the complete storage-neutral context.
+     *
+     * @param query trace row query
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryTraceRows(TraceRowQuery query, int limit) {
+        return queryTraceRows(
+                query.traceId(),
+                limit,
+                query.start(),
+                query.end(),
+                query.serviceName(),
+                query.serviceNamespace(),
+                query.environment(),
+                query.operationName(),
+                query.minDurationNanos(),
+                query.maxDurationNanos(),
+                query.workspaceId(),
+                query.resourceFilters(),
+                query.hideInternal());
+    }
+
+    /**
+     * Query recent rows through the same complete storage-neutral context used by exact trace detail.
+     *
+     * @param query trace row query with an optional trace id
+     * @param limit row limit
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(TraceRowQuery query, int limit) {
+        return queryRecentTraceRows(
+                limit,
+                query.start(),
+                query.end(),
+                query.serviceName(),
+                query.serviceNamespace(),
+                query.environment(),
+                query.operationName(),
+                query.minDurationNanos(),
+                query.maxDurationNanos(),
+                query.workspaceId(),
+                query.resourceFilters(),
+                query.hideInternal());
+    }
 
     /**
      * Query rows for a single trace id with storage-owned route/detail filters.

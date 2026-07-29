@@ -49,7 +49,8 @@ public class AlertSilenceControllerAdvice {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Message<Void>> invalid() {
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Invalid alert silence request"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Message.fail(FAIL_CODE, "Invalid alert silence request"));
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class})

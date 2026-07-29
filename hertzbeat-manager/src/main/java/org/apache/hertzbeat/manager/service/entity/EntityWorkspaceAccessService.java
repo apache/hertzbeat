@@ -84,12 +84,25 @@ public class EntityWorkspaceAccessService {
         return filterEntitiesByRequestWorkspace(entities, normalizedWorkspaceId);
     }
 
+    public List<ObserveEntity> findAccessibleEntities(String requestWorkspaceId,
+                                                      String environment,
+                                                      Pageable pageable) {
+        String normalizedWorkspaceId = normalizeWorkspaceId(requestWorkspaceId);
+        List<ObserveEntity> entities =
+                entityWorkspaceQueryService.findEntities(normalizedWorkspaceId, environment, pageable);
+        return filterEntitiesByRequestWorkspace(entities, normalizedWorkspaceId);
+    }
+
     public List<ObserveEntity> findAccessibleEntitiesForRequestWorkspace(Sort sort) {
         return findAccessibleEntities(currentRequestWorkspaceId(), sort);
     }
 
     public List<ObserveEntity> findAccessibleEntitiesForRequestWorkspace(Pageable pageable) {
         return findAccessibleEntities(currentRequestWorkspaceId(), pageable);
+    }
+
+    public List<ObserveEntity> findAccessibleEntitiesForRequestWorkspace(String environment, Pageable pageable) {
+        return findAccessibleEntities(currentRequestWorkspaceId(), environment, pageable);
     }
 
     public Optional<ObserveEntity> findEntityById(long entityId) {

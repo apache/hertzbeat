@@ -33,6 +33,14 @@ resourceRole:
   - /api/plugin/**===get===[admin]
   - /api/plugin/**===post===[admin]
   - /api/apps/**===get===[admin,user,guest]
+  - /api/entities===get===[admin,user,guest]
+  - /api/entities/**===get===[admin,user,guest]
+  - /api/entities===post===[admin,user]
+  - /api/entities/**===post===[admin,user]
+  - /api/entities===put===[admin,user]
+  - /api/entities/**===put===[admin,user]
+  - /api/entities===delete===[admin]
+  - /api/entities/**===delete===[admin]
   - /api/monitor===get===[admin,user,guest]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor===post===[admin,user]
@@ -53,7 +61,9 @@ resourceRole:
   - /api/monitors===delete===[admin]
   - /api/monitors/manage===delete===[admin]
   - /api/monitors/**===delete===[admin]
+  - /api/alert/define/preview/**===get===[admin,user]
   - /api/alert/**===get===[admin,user,guest]
+  - /api/alert/sse/**===get===[admin,user,guest]
   - /api/alert/**===post===[admin,user]
   - /api/alert/**===put===[admin,user]
   - /api/alert/**===delete===[admin]
@@ -66,17 +76,44 @@ resourceRole:
   - /api/notice/**===post===[admin,user]
   - /api/notice/**===put===[admin,user]
   - /api/notice/**===delete===[admin]
-  - /api/tag/**===get===[admin,user,guest]
-  - /api/tag/**===post===[admin,user]
-  - /api/tag/**===put===[admin,user]
-  - /api/tag/**===delete===[admin]
+  - /api/config/email===get===[admin,user,guest]
+  - /api/config/email===post===[admin]
+  - /api/config/sms===get===[admin,user,guest]
+  - /api/config/sms===post===[admin]
+  - /api/config/system===get===[admin,user,guest]
+  - /api/config/system===post===[admin]
+  - /api/config/timezones===get===[admin,user,guest]
+  - /api/config/oss===get===[admin,user,guest]
+  - /api/config/oss===post===[admin]
+  - /api/config/mute===get===[admin,user,guest]
+  - /api/config/mute===post===[admin]
+  - /api/config/template===get===[admin,user,guest]
+  - /api/config/template===post===[admin]
+  - /api/config/template/*===put===[admin]
+  - /api/config/secret===get===[admin]
+  - /api/config/secret===post===[admin]
+  - /api/config/provider===get===[admin]
+  - /api/config/provider===post===[admin]
+  - /api/account/token===get===[admin]
+  - /api/account/token/**===post===[admin]
+  - /api/account/token/**===delete===[admin]
+  - /api/label===get===[admin,user,guest]
+  - /api/label===post===[admin,user]
+  - /api/label===put===[admin,user]
+  - /api/label===delete===[admin]
   - /api/summary/**===get===[admin,user,guest]
   - /api/summary/**===post===[admin,user]
   - /api/summary/**===put===[admin,user]
   - /api/summary/**===delete===[admin]
+  - /api/collector===get===[admin,user,guest]
+  - /api/collector/*/runtime-config===get===[admin,user,guest]
   - /api/collector/**===get===[admin,user,guest]
   - /api/collector/**===post===[admin,user]
+  - /api/collector/online===put===[admin,user]
+  - /api/collector/offline===put===[admin,user]
+  - /api/collector/*/runtime-config===put===[admin,user]
   - /api/collector/**===put===[admin,user]
+  - /api/collector===delete===[admin]
   - /api/collector/**===delete===[admin]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
@@ -90,8 +127,13 @@ resourceRole:
   - /api/instrumentation/**===post===[admin,user]
   - /api/ui/runtime-status===get===[admin,user,guest]
   - /api/ingestion/otlp/**===get===[admin,user,guest]
+  - /api/ingestion/otlp/metrics/console===get===[admin,user,guest]
   - /api/otlp/**===post===[admin,user]
   - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs/**===get===[admin,user,guest]
+  - /api/logs/sse/**===get===[admin,user,guest]
+  - /api/traces/**===get===[admin,user,guest]
+  - /api/manager/sse/**===get===[admin,user,guest]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
@@ -111,8 +153,6 @@ resourceRole:
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
-  - /api/alert/sse/**===*
-  - /api/logs/sse/**===*
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post
@@ -122,7 +162,6 @@ excludedResource:
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
-  - /api/manager/sse/**===*
   # web ui resource
   - /===get
   - /assets/**===get

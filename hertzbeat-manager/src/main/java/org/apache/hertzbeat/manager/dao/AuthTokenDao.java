@@ -20,19 +20,29 @@ package org.apache.hertzbeat.manager.dao;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * AuthToken DAO
  */
 public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecificationExecutor<AuthToken> {
+
+    /**
+     * Lock the exact token row while applying a revocation.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT token FROM AuthToken token WHERE token.id = :id")
+    Optional<AuthToken> findByIdForUpdate(@Param("id") Long id);
 
     /**
      * Find all active tokens (status = 0)

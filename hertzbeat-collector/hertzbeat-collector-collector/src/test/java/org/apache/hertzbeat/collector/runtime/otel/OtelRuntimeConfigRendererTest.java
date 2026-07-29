@@ -94,6 +94,7 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("initial_interval: 1s"));
         assertTrue(yaml.contains("max_interval: 30s"));
         assertTrue(yaml.contains("max_elapsed_time: 0s"));
+        assertTrue(yaml.contains("compression: gzip\n    timeout: 5s\n    retry_on_failure:"));
         assertTrue(yaml.contains("  file_storage:\n    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
         assertTrue(yaml.contains("timeout: 1s"));
         assertTrue(yaml.contains("max_size: 67108864"));
@@ -128,6 +129,60 @@ class OtelRuntimeConfigRendererTest {
         properties.setRuntimeMemoryLimitMiB(64);
         properties.setRuntimeMemorySpikeLimitMiB(64);
         assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+    }
+
+    @Test
+    void rendersOnlyBoundedOtlpHttpExporterRequestTimeout() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setOtlpHttpExporterTimeout(Duration.ofSeconds(12));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("compression: gzip\n    timeout: 12s\n    retry_on_failure:"));
+
+        properties.setOtlpHttpExporterTimeout(Duration.ZERO);
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+        properties.setOtlpHttpExporterTimeout(Duration.ofMillis(1500));
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+        properties.setOtlpHttpExporterTimeout(Duration.ofMinutes(5).plusSeconds(1));
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+    }
+
+    @Test
+    void rendersDirectAuthenticatedInternalMetricsOtlpReaderWithoutEmbeddingSecrets() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setToken("internal-metrics-secret-must-stay-in-environment");
+        properties.setOtlpHttpExporterTimeout(Duration.ofSeconds(12));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("    resource:\n"
+                + "      attributes:\n"
+                + "        - name: service.name\n"
+                + "          value: hertzbeat-otel-runtime\n"
+                + "        - name: service.namespace\n"
+                + "          value: hertzbeat\n"
+                + "        - name: hertzbeat.collector.id\n"
+                + "          value: ${env:HERTZBEAT_COLLECTOR_ID}\n"
+                + "        - name: hertzbeat.workspace_id\n"
+                + "          value: ${env:HERTZBEAT_WORKSPACE_ID}\n"));
+        assertTrue(yaml.contains("        - periodic:\n"
+                + "            interval: 10000\n"
+                + "            timeout: 12000\n"
+                + "            exporter:\n"
+                + "              otlp:\n"
+                + "                protocol: http/protobuf\n"
+                + "                endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}/v1/metrics\n"
+                + "                headers:\n"
+                + "                  - name: Authorization\n"
+                + "                    value: Bearer ${env:HERTZBEAT_OTLP_TOKEN}\n"
+                + "                compression: gzip\n"
+                + "                timeout: 12000\n"));
+        assertFalse(yaml.contains(properties.getToken()));
     }
 
     @Test

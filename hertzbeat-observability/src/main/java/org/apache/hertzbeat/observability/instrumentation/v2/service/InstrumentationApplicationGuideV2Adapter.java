@@ -73,7 +73,7 @@ public class InstrumentationApplicationGuideV2Adapter {
         List<GuideBlock> blocks = new ArrayList<>();
         blocks.add(link(method.component().sourceUrl()));
         addStep(blocks, recipe.id(), languageSteps.install());
-        blocks.add(environment(endpoint, protocol, service, request.platform()));
+        blocks.add(environment(endpoint, protocol, service, request.platform(), profile.collectorId()));
         addStep(blocks, recipe.id(), languageSteps.start());
         addStep(blocks, recipe.id(), languageSteps.container());
         addStep(blocks, recipe.id(), languageSteps.disable());
@@ -136,21 +136,22 @@ public class InstrumentationApplicationGuideV2Adapter {
     }
 
     private GuideBlock environment(
-            String endpoint, String protocol, ServiceIdentity service, Platform platform) {
+            String endpoint, String protocol, ServiceIdentity service, Platform platform, String collectorId) {
         boolean windows = platform == Platform.WINDOWS_AMD64;
+        String resourceAttributes = "service.namespace=" + service.namespace()
+                + ",deployment.environment.name=" + service.environment()
+                + (collectorId == null ? "" : ",hertzbeat.collector.id=" + collectorId);
         String content = windows
                 ? "$env:OTEL_EXPORTER_OTLP_ENDPOINT='" + powershellValue(endpoint) + "'\n"
                         + "$env:OTEL_EXPORTER_OTLP_PROTOCOL='" + protocol + "'\n"
                         + "$env:OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
                         + "$env:OTEL_SERVICE_NAME='" + service.name() + "'\n"
-                        + "$env:OTEL_RESOURCE_ATTRIBUTES='service.namespace=" + service.namespace()
-                        + ",deployment.environment.name=" + service.environment() + "'"
+                        + "$env:OTEL_RESOURCE_ATTRIBUTES='" + powershellValue(resourceAttributes) + "'"
                 : "export OTEL_EXPORTER_OTLP_ENDPOINT=" + shellQuote(endpoint) + "\n"
                         + "export OTEL_EXPORTER_OTLP_PROTOCOL=" + shellQuote(protocol) + "\n"
                         + "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
                         + "export OTEL_SERVICE_NAME=" + service.name() + "\n"
-                        + "export OTEL_RESOURCE_ATTRIBUTES='service.namespace=" + service.namespace()
-                        + ",deployment.environment.name=" + service.environment() + "'";
+                        + "export OTEL_RESOURCE_ATTRIBUTES=" + shellQuote(resourceAttributes);
         return new GuideBlock(
                 "configure_exporter",
                 BlockType.ENVIRONMENT,

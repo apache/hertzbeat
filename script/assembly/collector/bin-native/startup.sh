@@ -23,17 +23,14 @@ cd "$(dirname "$0")"
 BIN_DIR="$(pwd)"
 cd ..
 DEPLOY_DIR="$(pwd)"
+: "${HERTZBEAT_HOME:=$DEPLOY_DIR}"
+export HERTZBEAT_HOME
 
 CONF_DIR="$DEPLOY_DIR/config"
 LOGS_DIR="$DEPLOY_DIR/logs"
 PID_FILE="$LOGS_DIR/${project.artifactId}.pid"
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 SERVER_PORT=1159
-
-# Native web initialization may use a temporary document root as the default
-# relative path. Anchor the managed Runtime and its state to the release root.
-HERTZBEAT_HOME="${HERTZBEAT_HOME:-$DEPLOY_DIR}"
-export HERTZBEAT_HOME
 
 find_running_pid() {
     if [ -f "$PID_FILE" ]; then

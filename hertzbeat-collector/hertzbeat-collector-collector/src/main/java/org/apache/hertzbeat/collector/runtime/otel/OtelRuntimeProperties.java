@@ -48,6 +48,8 @@ public class OtelRuntimeProperties {
 
     private URI exportEndpoint = URI.create("http://127.0.0.1:1157/api/otlp");
 
+    private Duration otlpHttpExporterTimeout = Duration.ofSeconds(5);
+
     private String token = "";
 
     private String collectorId = "";

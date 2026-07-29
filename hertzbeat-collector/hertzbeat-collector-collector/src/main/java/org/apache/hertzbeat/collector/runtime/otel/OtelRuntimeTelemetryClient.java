@@ -34,7 +34,12 @@ import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeTe
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.SignalCounters;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.SignalGauges;
 
-/** Reads the bounded loopback Prometheus view of the official Runtime's internal telemetry. */
+/**
+ * Reads the bounded loopback Prometheus view for Java heartbeat/status observation.
+ *
+ * <p>This local scrape does not forward telemetry. The Runtime's official periodic OTLP reader performs direct
+ * internal-metrics export independently.</p>
+ */
 public class OtelRuntimeTelemetryClient {
 
     private static final int MAXIMUM_RESPONSE_BYTES = 1024 * 1024;

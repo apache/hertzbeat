@@ -38,6 +38,8 @@ class OtelRuntimeConfigurationTest {
             assertTrue(context.isRunning());
             OtelRuntimeSupervisor supervisor = context.getBean(OtelRuntimeSupervisor.class);
             assertEquals(OtelRuntimeState.STOPPED, supervisor.snapshot().state());
+            assertEquals(Duration.ofSeconds(5),
+                    context.getBean(OtelRuntimeProperties.class).getOtlpHttpExporterTimeout());
             assertTrue(context.getBean(CollectorRuntimeStatusProvider.class) instanceof OtelRuntimeStatusProvider);
         });
     }
@@ -103,6 +105,7 @@ class OtelRuntimeConfigurationTest {
                         "collector.otel-runtime.otlp-grpc-endpoint=0.0.0.0:4317",
                         "collector.otel-runtime.otlp-http-endpoint=0.0.0.0:4318",
                         "collector.otel-runtime.otlp-max-request-mi-b=8",
+                        "collector.otel-runtime.otlp-http-exporter-timeout=12s",
                         "collector.otel-runtime.otlp-read-timeout=20s",
                         "collector.otel-runtime.otlp-write-timeout=25s",
                         "collector.otel-runtime.otlp-idle-timeout=45s",
@@ -120,6 +123,7 @@ class OtelRuntimeConfigurationTest {
                     assertTrue(properties.isOtlpGatewayEnabled());
                     assertEquals("0.0.0.0:4317", properties.getOtlpGrpcEndpoint());
                     assertEquals(8, properties.getOtlpMaxRequestMiB());
+                    assertEquals(Duration.ofSeconds(12), properties.getOtlpHttpExporterTimeout());
                     assertEquals(Duration.ofSeconds(20), properties.getOtlpReadTimeout());
                     assertEquals(512, properties.getRuntimeMemoryLimitMiB());
                     assertEquals(128, properties.getRuntimeMemorySpikeLimitMiB());

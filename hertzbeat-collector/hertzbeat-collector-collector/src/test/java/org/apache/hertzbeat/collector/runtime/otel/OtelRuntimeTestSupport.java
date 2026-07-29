@@ -156,6 +156,12 @@ final class OtelRuntimeTestSupport {
                     .toList();
         }
 
+        boolean hasAuthorization(String signal, String authorization) {
+            String path = "/api/otlp/v1/" + signal;
+            return requests.stream().anyMatch(request -> path.equals(request.path())
+                    && authorization.equals(request.authorization()));
+        }
+
         private void capture(HttpExchange exchange) throws IOException {
             try (exchange) {
                 byte[] request = exchange.getRequestBody().readAllBytes();
@@ -167,7 +173,10 @@ final class OtelRuntimeTestSupport {
                 }
                 if (retainPayloads) {
                     payloads.add(new String(request, StandardCharsets.ISO_8859_1));
-                    requests.add(new CapturedRequest(exchange.getRequestURI().getPath(), request.clone()));
+                    requests.add(new CapturedRequest(
+                            exchange.getRequestURI().getPath(),
+                            request.clone(),
+                            exchange.getRequestHeaders().getFirst("Authorization")));
                 }
                 exchange.sendResponseHeaders(200, -1);
             }
@@ -180,7 +189,7 @@ final class OtelRuntimeTestSupport {
             }
         }
 
-        private record CapturedRequest(String path, byte[] body) {
+        private record CapturedRequest(String path, byte[] body, String authorization) {
         }
     }
 }

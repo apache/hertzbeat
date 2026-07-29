@@ -21,6 +21,7 @@ package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
@@ -30,6 +31,7 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.INSTANT;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.RANGE;
+
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -57,6 +59,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     private static final String QUERY_RANGE_PATH = "/api/v1/query_range";
     private static final String QUERY_PATH = "/api/v1/query";
     protected static final String HTTP_QUERY_PARAM = "query";
+    protected static final String HTTP_LIMIT_PARAM = "limit";
     protected static final String HTTP_TIME_PARAM = "time";
     protected static final String HTTP_START_PARAM = "start";
     protected static final String HTTP_END_PARAM = "end";
@@ -85,50 +88,69 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
 
     @Override
     public List<Map<String, Object>> execute(String queryString) {
-        List<Map<String, Object>> results = new LinkedList<>();
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(httpPromqlProperties.username())
-                    && StringUtils.hasText(httpPromqlProperties.password())) {
-                String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
-                String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
-            }
-            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
-            uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
-            URI uri = uriComponentsBuilder.build().toUri();
-            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
-            if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        Map<String, Object> queryResult = new HashMap<>(8);
-                        queryResult.putAll(labels);
-                        if (content.getValue() != null && content.getValue().length == 2) {
-                            queryResult.put("__timestamp__", content.getValue()[0]);
-                            queryResult.put("__value__", content.getValue()[1]);
-                        } else if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Object> values = new LinkedList<>();
-                            for (Object[] valueArr : content.getValues()) {
-                                values.add(valueArr[1]);
-                            }
-                            queryResult.put("__value__", values);
-                        }
-                        results.add(queryResult);
-                    }
-                }
-            } else {
-                log.error("query metrics data from greptime failed. {}", responseEntity);
-            }
+            return execute(queryString, false);
         } catch (Exception e) {
             log.error(e.toString(), e);
+            return new LinkedList<>();
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> executeStrict(String queryString) {
+        return execute(queryString, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> executePreview(String queryString) {
+        return execute(queryString, true);
+    }
+
+    private List<Map<String, Object>> execute(String queryString, boolean limitResult) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (StringUtils.hasText(httpPromqlProperties.username())
+                && StringUtils.hasText(httpPromqlProperties.password())) {
+            String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
+            String encodedAuth = Base64Util.encode(authStr);
+            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+        }
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
+        uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
+        if (limitResult) {
+            uriComponentsBuilder.queryParam(HTTP_LIMIT_PARAM, CommonConstants.ALERT_PREVIEW_RESULT_LIMIT);
+        }
+        URI uri = uriComponentsBuilder.build().toUri();
+        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("PromQL query failed with status " + responseEntity.getStatusCode().value());
+        }
+        PromQlQueryContent body = responseEntity.getBody();
+        if (body == null || body.getData() == null || body.getData().getResult() == null) {
+            throw new IllegalStateException("PromQL query returned an invalid response");
+        }
+        List<Map<String, Object>> results = new LinkedList<>();
+        for (PromQlQueryContent.ContentData.Content content : body.getData().getResult()) {
+            Map<String, String> labels = content.getMetric();
+            Map<String, Object> queryResult = new HashMap<>(8);
+            if (labels != null) {
+                queryResult.putAll(labels);
+            }
+            if (content.getValue() != null && content.getValue().length == 2) {
+                queryResult.put("__timestamp__", content.getValue()[0]);
+                queryResult.put("__value__", content.getValue()[1]);
+            } else if (content.getValues() != null && !content.getValues().isEmpty()) {
+                List<Object> values = new LinkedList<>();
+                for (Object[] valueArr : content.getValues()) {
+                    values.add(valueArr[1]);
+                }
+                queryResult.put("__value__", values);
+            }
+            results.add(queryResult);
         }
         return results;
     }

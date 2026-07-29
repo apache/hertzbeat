@@ -42,6 +42,14 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 22
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: hertzbeat-otel-runtime/go.mod
+        cache-dependency-path: hertzbeat-otel-runtime/go.mod
+    - uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: 25
     - name: Build the Frontend
       run: |
         corepack enable
@@ -49,13 +57,33 @@ jobs:
         cd web-app
         pnpm install --frozen-lockfile
         pnpm build
-        
+
+    - name: Build and verify managed Collector runtimes
+      run: |
+        make -C hertzbeat-otel-runtime release-assets
+        ./script/ci/verify-otel-runtime-package-layout.sh
+
     - name: Build the Backend
       run: |
         mvn clean install
         mvn clean package -Prelease -DskipTests
-        cd hertzbeat-collector
-        mvn clean package -Pcluster -DskipTests
+        ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
+          -Pruntime -DskipTests package
+
+    - name: Verify Linux Collector release content
+      run: |
+        set -- dist/apache-hertzbeat-collector-*-bin-linux_amd64.tar.gz
+        if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+          echo "expected exactly one generated linux-amd64 Hybrid Collector archive" >&2
+          exit 1
+        fi
+        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" linux-amd64
+        set -- dist/apache-hertzbeat-collector-*-bin-linux_arm64.tar.gz
+        if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+          echo "expected exactly one generated linux-arm64 Hybrid Collector archive" >&2
+          exit 1
+        fi
+        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" linux-arm64
 
     - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3
@@ -74,11 +102,22 @@ jobs:
         push: true
         tags: apache/hertzbeat:nightly
         
-    - name: Build and Push Collector
+    - name: Build Collector image for verification
       uses: docker/build-push-action@v6
       with:
         context: ./dist
         file: ./script/docker/collector/Dockerfile
         platforms: linux/amd64,linux/arm64
-        push: true
         tags: apache/hertzbeat-collector:nightly
+        outputs: type=oci,dest=/tmp/hybrid-collector-nightly.oci.tar
+
+    - name: Verify final Collector image content
+      run: python3 script/ci/verify-hybrid-collector-release-content.py --container-image /tmp/hybrid-collector-nightly.oci.tar
+
+    - name: Push verified Collector image
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y skopeo
+        skopeo copy --all --authfile "$HOME/.docker/config.json" \
+          oci-archive:/tmp/hybrid-collector-nightly.oci.tar \
+          docker://apache/hertzbeat-collector:nightly

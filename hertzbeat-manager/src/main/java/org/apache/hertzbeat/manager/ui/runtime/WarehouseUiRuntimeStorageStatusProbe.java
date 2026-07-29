@@ -17,31 +17,25 @@
 
 package org.apache.hertzbeat.manager.ui.runtime;
 
-import org.apache.hertzbeat.warehouse.service.MetricsDataService;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import java.util.Optional;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbDataStorage;
 import org.springframework.stereotype.Component;
 
-/** Adapts the established Warehouse server health boundary for UI aggregation. */
+/** Adapts the Greptime storage health boundary for UI aggregation. */
 @Component
 final class WarehouseUiRuntimeStorageStatusProbe implements UiRuntimeStorageStatusProbe {
 
-    private final MetricsDataService metricsDataService;
-    private final GreptimeProperties greptimeProperties;
+    private final Optional<GreptimeDbDataStorage> greptimeStorage;
 
-    WarehouseUiRuntimeStorageStatusProbe(
-            MetricsDataService metricsDataService,
-            GreptimeProperties greptimeProperties) {
-        this.metricsDataService = metricsDataService;
-        this.greptimeProperties = greptimeProperties;
+    WarehouseUiRuntimeStorageStatusProbe(Optional<GreptimeDbDataStorage> greptimeStorage) {
+        this.greptimeStorage = greptimeStorage;
     }
 
     @Override
     public boolean isAvailable() {
-        // The public v1 contract names Greptime explicitly; another healthy
-        // Warehouse implementation must not satisfy this Greptime status.
-        if (!greptimeProperties.enabled()) {
-            return false;
-        }
-        return Boolean.TRUE.equals(metricsDataService.getWarehouseStorageServerStatus());
+        return greptimeStorage
+                .map(storage -> storage.getServerAvailability() == ServerAvailability.AVAILABLE)
+                .orElse(false);
     }
 }

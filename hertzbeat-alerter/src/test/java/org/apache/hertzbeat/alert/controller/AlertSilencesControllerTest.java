@@ -63,4 +63,14 @@ class AlertSilencesControllerTest {
         mockMvc.perform(delete("/api/alert/silences?ids=7&ids=8"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value("partial"));
     }
+
+    @Test
+    void invalidDeleteReturnsExplicitClientRejection() throws Exception {
+        when(service.delete(null)).thenThrow(new IllegalArgumentException("ids-sentinel"));
+
+        mockMvc.perform(delete("/api/alert/silences")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.msg").value("Invalid alert silence request"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("ids-sentinel"))));
+    }
 }

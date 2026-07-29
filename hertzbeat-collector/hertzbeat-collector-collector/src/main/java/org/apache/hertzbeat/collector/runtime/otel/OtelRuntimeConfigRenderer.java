@@ -117,6 +117,9 @@ public class OtelRuntimeConfigRenderer {
         if (properties.getInternalTelemetryPort() < 1 || properties.getInternalTelemetryPort() > 65535) {
             throw new IllegalArgumentException("Runtime internal telemetry port is invalid");
         }
+        long exporterTimeoutSeconds = OtelRuntimeGatewayPolicy.boundedTimeout(
+                properties.getOtlpHttpExporterTimeout(), "HTTP exporter request").toSeconds();
+        long exporterTimeoutMillis = properties.getOtlpHttpExporterTimeout().toMillis();
         StringBuilder yaml = new StringBuilder("receivers:\n  otlp:\n    protocols:\n")
                 .append("      grpc:\n")
                 .append("        endpoint: ").append(yamlScalar(gateway.grpcEndpoint())).append('\n')
@@ -141,6 +144,7 @@ public class OtelRuntimeConfigRenderer {
                     headers:
                       Authorization: Bearer ${env:HERTZBEAT_OTLP_TOKEN}
                     compression: gzip
+                    timeout: %ds
                     retry_on_failure:
                       enabled: true
                       initial_interval: 1s
@@ -153,6 +157,8 @@ public class OtelRuntimeConfigRenderer {
                       sizer: requests
                       queue_size: 2048
                       storage: file_storage
+                """.formatted(exporterTimeoutSeconds));
+        yaml.append("""
                 extensions:
                   health_check:
                     endpoint: 127.0.0.1:%d
@@ -169,6 +175,16 @@ public class OtelRuntimeConfigRenderer {
         yaml.append("""
                 service:
                   telemetry:
+                    resource:
+                      attributes:
+                        - name: service.name
+                          value: hertzbeat-otel-runtime
+                        - name: service.namespace
+                          value: hertzbeat
+                        - name: hertzbeat.collector.id
+                          value: ${env:HERTZBEAT_COLLECTOR_ID}
+                        - name: hertzbeat.workspace_id
+                          value: ${env:HERTZBEAT_WORKSPACE_ID}
                     metrics:
                       level: basic
                       readers:
@@ -179,6 +195,18 @@ public class OtelRuntimeConfigRenderer {
                                 port: %d
                                 without_type_suffix: true
                                 without_units: true
+                        - periodic:
+                            interval: 10000
+                            timeout: %d
+                            exporter:
+                              otlp:
+                                protocol: http/protobuf
+                                endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}/v1/metrics
+                                headers:
+                                  - name: Authorization
+                                    value: Bearer ${env:HERTZBEAT_OTLP_TOKEN}
+                                compression: gzip
+                                timeout: %d
                   extensions: [%s]
                   pipelines:
                     metrics:
@@ -195,6 +223,8 @@ public class OtelRuntimeConfigRenderer {
                       exporters: [otlphttp]
                 """.formatted(
                 properties.getInternalTelemetryPort(),
+                exporterTimeoutMillis,
+                exporterTimeoutMillis,
                 gateway.enabled() ? "health_check, file_storage, bearertokenauth" : "health_check, file_storage",
                 metricsReceivers(desiredConfig.hostMetricsEnabled(), sources.prometheusTargets()),
                 commonProcessors,

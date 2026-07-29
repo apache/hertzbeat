@@ -42,6 +42,7 @@ const canonical = vi.hoisted(() => ({
   ruleEditPath: vi.fn((ruleId: number) => `/canonical-alerts/rules/${ruleId}/edit`)
 }));
 const navigate = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 
 const alertApi = vi.hoisted(() => ({
   loadAlertGroups: vi.fn(),
@@ -86,6 +87,13 @@ vi.mock('@/features/alert/api/alert-rule-write-proof', async importOriginal => (
   ...ruleProof
 }));
 vi.mock('@/features/alert/controller/use-alert-rule-metric-target-controller', () => metricTargetController);
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({
+    session: { roles: session.roles },
+    loading: false,
+    retry: vi.fn()
+  })
+}));
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigate
@@ -99,6 +107,7 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => k
 describe('Alert route ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    session.roles = ['ADMIN'];
     alertApi.loadAlertGroups.mockResolvedValue({
       content: [],
       totalElements: 0,

@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.traces.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,8 +26,13 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -47,6 +53,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
+import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceRowQuery;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +61,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class EntityTraceQueryServiceImplTest {
@@ -426,13 +434,7 @@ class EntityTraceQueryServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(listRows);
         when(traceQueryRepository.queryTraceRows(
-                eq("trace-1"), eq(5000), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
-                eq(false))).thenReturn(detailRows);
+                org.mockito.ArgumentMatchers.any(TraceRowQuery.class), eq(5000))).thenReturn(detailRows);
 
         var page = entityTraceQueryService.queryTraceList(1L, null, null, null, false, null, null, null, 0, 20);
         TraceDetailDto detail = entityTraceQueryService.getTraceDetail(1L, "trace-1");
@@ -456,16 +458,11 @@ class EntityTraceQueryServiceImplTest {
         assertEquals(1, detail.getSpans().getFirst().getLinks().size());
         assertEquals("fedcba0987654321fedcba0987654321", detail.getSpans().getFirst().getLinks().getFirst().getTraceId());
         assertEquals("follows_from", detail.getSpans().getFirst().getLinks().getFirst().getAttributes().get("link.kind"));
-        ArgumentCaptor<Map<String, Set<String>>> detailIdentityFilterCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(traceQueryRepository).queryTraceRows(
-                eq("trace-1"), eq(5000), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                detailIdentityFilterCaptor.capture(), eq(false));
-        assertEquals(Set.of("1"), detailIdentityFilterCaptor.getValue().get("hertzbeat.entity_id"));
-        assertEquals(Set.of("checkout-service"), detailIdentityFilterCaptor.getValue().get("service.name"));
+        ArgumentCaptor<TraceRowQuery> detailQueryCaptor = ArgumentCaptor.forClass(TraceRowQuery.class);
+        verify(traceQueryRepository).queryTraceRows(detailQueryCaptor.capture(), eq(5000));
+        assertEquals(Set.of("1"), detailQueryCaptor.getValue().resourceFilters().get("hertzbeat.entity_id"));
+        assertEquals(Set.of("checkout-service"),
+                detailQueryCaptor.getValue().resourceFilters().get("service.name"));
     }
 
     @Test
@@ -549,6 +546,55 @@ class EntityTraceQueryServiceImplTest {
         assertEquals(1, detail.getSpans().size());
         verify(traceQueryRepository, atLeastOnce()).queryTraceRows("trace-http", 5000);
         verify(traceQueryRepository, never()).queryRecentTraceRows(1500, null, false);
+    }
+
+    @Test
+    void missingRequestedEntityNeverFallsBackToGlobalTraceEvidence() {
+        long missingEntityId = 404L;
+
+        var page = entityTraceQueryService.queryTraceList(
+                missingEntityId, null, null, null, false, null, null, null, 0, 20);
+        TraceOverviewDto overview = entityTraceQueryService.getTraceOverview(
+                missingEntityId, null, null, null, false, null, null, null, false);
+        Map<String, Object> groups = entityTraceQueryService.getTraceGroupByStats(
+                missingEntityId, null, null, null, false, null, null, null,
+                null, null, null, null, "service.name", null, null, null, false, null);
+        TraceDetailDto detail = entityTraceQueryService.getTraceDetail(missingEntityId, "trace-shared");
+
+        assertTrue(page.isEmpty());
+        assertEquals(0, overview.getTotalTraceCount());
+        assertTrue(((List<?>) groups.get("groups")).isEmpty());
+        assertNull(detail);
+        verifyNoInteractions(traceQueryRepository);
+    }
+
+    @Test
+    void malformedTraceJsonLogDoesNotExposeTelemetryOrParserDetails() {
+        String secretSentinel = "Bearer secret-token";
+        Map<String, Object> row = traceRow(
+                "trace-redacted", "span-redacted", null, "GET /checkout", "checkout",
+                "STATUS_CODE_OK", System.currentTimeMillis(), 1_000_000L, Map.of());
+        row.put("span_events", "[{\"body\":\"" + secretSentinel + "\"}");
+        when(traceQueryRepository.queryTraceRows("trace-redacted", 5000)).thenReturn(List.of(row));
+        Logger logger = (Logger) LoggerFactory.getLogger(EntityTraceQueryServiceImpl.class);
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            assertNotNull(entityTraceQueryService.getTraceDetail(null, "trace-redacted"));
+        } finally {
+            logger.setLevel(previousLevel);
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        assertEquals(1, appender.list.size());
+        ILoggingEvent event = appender.list.getFirst();
+        assertEquals("Trace JSON list parse failed", event.getFormattedMessage());
+        assertFalse(event.getFormattedMessage().contains(secretSentinel));
+        assertNull(event.getThrowableProxy());
     }
 
     @Test
@@ -1394,12 +1440,9 @@ class EntityTraceQueryServiceImplTest {
         long now = System.currentTimeMillis();
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         when(traceQueryRepository.queryTraceRows(
-                eq("trace-shared"), eq(5000), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), eq("team-a"),
-                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false))).thenReturn(List.of(
+                org.mockito.ArgumentMatchers.<TraceRowQuery>argThat(
+                        query -> "trace-shared".equals(query.traceId()) && "team-a".equals(query.workspaceId())),
+                eq(5000))).thenReturn(List.of(
                 traceRow("trace-shared", "span-root-b", null, "GET /payment", "payment-service", "STATUS_CODE_OK",
                         now - 10_000, 2_000_000L,
                         Map.of("service.name", "payment-service", "hertzbeat.workspace_id", "team-b"))

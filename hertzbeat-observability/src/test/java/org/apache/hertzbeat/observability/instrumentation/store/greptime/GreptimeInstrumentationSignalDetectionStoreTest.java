@@ -153,10 +153,14 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         String logs = queryFactory.latestReceivedAt(LOGS, directServer);
         String traces = queryFactory.latestReceivedAt(TRACES, directServer);
 
-        assertTrue(metrics.contains("hertzbeat_collector IS NULL"));
+        assertTrue(metrics.contains("hertzbeat_collector_id IS NULL"));
         assertTrue(logs.contains(
-                "json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') IS NULL"));
-        assertTrue(traces.contains("\"resource_attributes.hertzbeat.collector\" IS NULL"));
+                "json_get_string(resource_attributes,'$[\"hertzbeat.collector.id\"]') IS NULL"));
+        assertTrue(traces.contains("\"resource_attributes.hertzbeat.collector.id\" IS NULL"));
+        assertFalse(metrics.contains("hertzbeat_collector IS NULL"));
+        assertFalse(logs.contains(
+                "json_get_string(resource_attributes,'$[\"hertzbeat.collector\"]') IS NULL"));
+        assertFalse(traces.contains("\"resource_attributes.hertzbeat.collector\" IS NULL"));
         assertTrue(metrics.contains("service_namespace = 'commerce'"));
         assertTrue(metrics.contains("deployment_environment_name = 'prod'"));
         assertTrue(logs.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
@@ -172,11 +176,11 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
 
         DetectionCriteria collector = criteria("checkout", "commerce", "prod", "collector-1");
         assertTrue(queryFactory.latestReceivedAt(METRICS, collector)
-                .contains("hertzbeat_collector = 'collector-1'"));
+                .contains("hertzbeat_collector_id = 'collector-1'"));
         assertTrue(queryFactory.latestReceivedAt(LOGS, collector)
-                .contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') = 'collector-1'"));
+                .contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') = 'collector-1'"));
         assertTrue(queryFactory.latestReceivedAt(TRACES, collector)
-                .contains("\"resource_attributes.hertzbeat.collector\" = 'collector-1'"));
+                .contains("\"resource_attributes.hertzbeat.collector.id\" = 'collector-1'"));
     }
 
     @Test
@@ -349,7 +353,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("service_namespace = 'commerce''s'"));
         assertTrue(sql.contains("deployment_environment_name = 'prod''s'"));
-        assertTrue(sql.contains("hertzbeat_collector = 'collector''s'"));
+        assertTrue(sql.contains("hertzbeat_collector_id = 'collector''s'"));
         assertTrue(sql.contains("service_instance_id = 'checkout''s-7d9'"));
         assertTrue(sql.contains("http_route = '/checkout/{id}''s'"));
         assertTrue(sql.contains("greptime_timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
@@ -362,7 +366,8 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') = 'prod''s'"));
-        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') = 'collector''s'"));
+        assertTrue(sql.contains(
+                "json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') = 'collector''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') = 'checkout''s-7d9'"));
         assertTrue(sql.contains("json_get_string(log_attributes, '$[\"http.route\"]') = '/checkout/{id}''s'"));
         assertTrue(sql.contains("OR trace_id IN (SELECT trace_id FROM hzb_traces"));
@@ -377,7 +382,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("\"resource_attributes.service.namespace\" = 'commerce''s'"));
         assertTrue(sql.contains("\"resource_attributes.deployment.environment.name\" = 'prod''s'"));
-        assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector\" = 'collector''s'"));
+        assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector.id\" = 'collector''s'"));
         assertTrue(sql.contains("\"resource_attributes.service.instance.id\" = 'checkout''s-7d9'"));
         assertTrue(sql.contains("\"span_attributes.http.route\" = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));

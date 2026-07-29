@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -74,6 +75,12 @@ class OtelRuntimeProtocolIntegrationTest {
             supervisor.start();
             assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
 
+            // Prove direct official service.telemetry export before Java performs any loopback status scrape.
+            OtelRuntimeTestSupport.await(
+                    () -> capture.bodies("metrics").stream().anyMatch(this::isRuntimeInternalMetricRequest),
+                    Duration.ofSeconds(20));
+            assertTrue(capture.hasAuthorization("metrics", "Bearer runtime-direct-token"));
+
             sendJsonSignals(properties.getOtlpHttpEndpoint());
 
             SignalRequests protobuf = signalRequests("http-protobuf", 0x31);
@@ -128,6 +135,26 @@ class OtelRuntimeProtocolIntegrationTest {
 
     private static boolean positive(ManagedOtelRuntimeStatus.ObservedLong observed) {
         return observed.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && observed.value() > 0;
+    }
+
+    private boolean isRuntimeInternalMetricRequest(byte[] body) {
+        try {
+            ExportMetricsServiceRequest request = ExportMetricsServiceRequest.parseFrom(body);
+            return request.getResourceMetricsList().stream().anyMatch(resourceMetrics -> {
+                boolean stableIdentity = resourceMetrics.getResource().getAttributesList().stream()
+                        .anyMatch(attribute -> "service.name".equals(attribute.getKey())
+                                && "hertzbeat-otel-runtime".equals(attribute.getValue().getStringValue()))
+                        && resourceMetrics.getResource().getAttributesList().stream()
+                        .anyMatch(attribute -> "hertzbeat.collector.id".equals(attribute.getKey())
+                                && "collector-protocol-integration".equals(attribute.getValue().getStringValue()));
+                boolean internalMetric = resourceMetrics.getScopeMetricsList().stream()
+                        .flatMap(scopeMetrics -> scopeMetrics.getMetricsList().stream())
+                        .anyMatch(metric -> metric.getName().startsWith("otelcol_"));
+                return stableIdentity && internalMetric;
+            });
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static void sendJsonSignals(String endpoint) throws Exception {

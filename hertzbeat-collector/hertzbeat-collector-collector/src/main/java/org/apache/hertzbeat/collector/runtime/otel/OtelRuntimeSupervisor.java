@@ -317,7 +317,8 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
         Map<String, String> environment = new HashMap<>();
         environment.put("HERTZBEAT_COLLECTOR_ID", properties.getCollectorId());
         environment.put("HERTZBEAT_WORKSPACE_ID", properties.getWorkspaceId());
-        environment.put("HERTZBEAT_OTLP_HTTP_ENDPOINT", properties.getExportEndpoint().toString());
+        environment.put("HERTZBEAT_OTLP_HTTP_ENDPOINT",
+                OtelRuntimeExportEndpointPolicy.canonicalize(properties.getExportEndpoint()));
         environment.put("HERTZBEAT_OTLP_TOKEN", properties.getToken());
         environment.put("HERTZBEAT_OTEL_HEALTH_PORT", Integer.toString(properties.getHealthPort()));
         environment.put("HERTZBEAT_OTEL_FILE_STORAGE_DIR", OtelRuntimeConfigRenderer.resolve(

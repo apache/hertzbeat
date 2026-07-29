@@ -26,6 +26,7 @@ import lombok.Data;
 @Data
 public class SmsServerConfigRequest {
 
+    private String expectedRevision;
     private Boolean enable;
     private String type;
     private SmsServerConfigOptions options = new SmsServerConfigOptions();

@@ -187,6 +187,42 @@ class AuthTokenControllerTest {
     }
 
     @Test
+    void testGenerateTokenReportsInvalidRequestWithoutEchoingDetail() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.generateToken(any(), any(), any()))
+                    .thenThrow(new IllegalArgumentException("plaintext-sentinel"));
+
+            this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate")
+                            .param("expireSeconds", "0"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").value("Invalid token request"))
+                    .andExpect(jsonPath("$.msg").value(
+                            org.hamcrest.Matchers.not(
+                                    org.hamcrest.Matchers.containsString("plaintext-sentinel"))));
+        }
+    }
+
+    @Test
+    void testGenerateTokenReportsStorageUnavailable() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.generateToken(any(), any(), any()))
+                    .thenThrow(new DataAccessResourceFailureException("plaintext-sentinel"));
+
+            this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").value("Token storage unavailable"));
+        }
+    }
+
+    @Test
     void testListTokensSuccess() throws Exception {
         SubjectSum subjectSum = mockAdminSubject();
         List<AuthToken> tokens = List.of(
@@ -238,12 +274,28 @@ class AuthTokenControllerTest {
     }
 
     @Test
+    void testListTokensReportsStorageUnavailable() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.listTokens())
+                    .thenThrow(new DataAccessResourceFailureException("plaintext-sentinel"));
+
+            this.mockMvc.perform(MockMvcRequestBuilders.get("/api/account/token"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").value("Token storage unavailable"));
+        }
+    }
+
+    @Test
     void testDeleteTokenSuccess() throws Exception {
         SubjectSum subjectSum = mockAdminSubject();
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            when(accountService.deleteToken(1L)).thenReturn(true);
+            when(accountService.deleteToken(1L)).thenReturn(AccountService.TokenRevocationResult.REVOKED);
 
             this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
                     .andExpect(status().isOk())
@@ -261,13 +313,30 @@ class AuthTokenControllerTest {
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            when(accountService.deleteToken(1L)).thenReturn(false);
+            when(accountService.deleteToken(1L)).thenReturn(AccountService.TokenRevocationResult.MISSING);
 
             this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data.id").value(1))
                     .andExpect(jsonPath("$.data.status").value("missing"));
+        }
+    }
+
+    @Test
+    void testDeleteTokenAlreadyRevoked() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.deleteToken(1L))
+                    .thenReturn(AccountService.TokenRevocationResult.ALREADY_REVOKED);
+
+            this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.id").value(1))
+                    .andExpect(jsonPath("$.data.status").value("already-revoked"));
         }
     }
 

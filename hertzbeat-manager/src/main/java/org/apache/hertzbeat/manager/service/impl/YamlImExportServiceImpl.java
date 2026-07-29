@@ -23,9 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
-import org.yaml.snakeyaml.Yaml;
+import org.apache.hertzbeat.manager.service.helper.MonitorYamlImportParser;
 
 /**
  * Configure the import and export Yaml format
@@ -59,10 +60,17 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
-        // todo now disable this, will enable it in the future.
-        // upgrade to snakeyaml 2.2 and springboot3.x to fix the issue
-        Yaml yaml = new Yaml();
-        return yaml.load(is);
+        return MonitorYamlImportParser.parse(is).stream()
+                .map(YamlImExportServiceImpl::toExportMonitor)
+                .toList();
+    }
+
+    private static ExportMonitorDTO toExportMonitor(Object record) {
+        ExportMonitorDTO monitor = JsonUtil.convertValueQuietly(record, ExportMonitorDTO.class);
+        if (monitor == null || monitor.getMonitor() == null) {
+            throw new IllegalArgumentException(MonitorYamlImportParser.INVALID_CONTENT_MESSAGE);
+        }
+        return monitor;
     }
 
     /**

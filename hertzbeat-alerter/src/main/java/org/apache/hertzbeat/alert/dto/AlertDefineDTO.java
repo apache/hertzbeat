@@ -37,6 +37,8 @@ public class AlertDefineDTO {
     private String name;
     @Excel(name = "Type")
     private String type;
+    @Excel(name = "Datasource")
+    private String datasource;
     @Excel(name = "Expr")
     private String expr;
     @Excel(name = "Period")

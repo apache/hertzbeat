@@ -353,6 +353,8 @@ class EntityDetailObservabilityReadModelServiceTest {
                 detail.getBoundMonitors().size());
         assertEquals(701L, detail.getBoundMonitors().getFirst().getId());
         assertEquals(750L, detail.getBoundMonitors().getLast().getId());
+        assertEquals(60, detail.getMonitorSummary().getTotalBoundMonitors(),
+                "The detail list is only a preview; the summary must retain the complete bound-monitor count");
         assertSame(monitorSummary, detail.getMonitorSummary());
         verify(entityObservabilityGateway).buildEntityMonitorSummary(same(monitors));
         verify(entityObservabilityGateway).resolveEntityDetailBundle(

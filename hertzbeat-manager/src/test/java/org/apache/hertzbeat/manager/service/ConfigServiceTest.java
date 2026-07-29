@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
@@ -70,8 +69,9 @@ public class ConfigServiceTest {
 
     @Test
     public void testSaveConfig() {
-        configService.saveConfig(GeneralConfigTypeEnum.oss.name(), new ObjectStoreDTO<>());
-        verify(objectStoreConfigService, times(1)).saveConfig(any(ObjectStoreDTO.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> configService.saveConfig(GeneralConfigTypeEnum.oss.name(), new ObjectStoreDTO<>()));
+        verify(objectStoreConfigService, times(0)).saveConfig(any(ObjectStoreDTO.class));
 
         configService.saveConfig(GeneralConfigTypeEnum.email.name(), new MailServerConfig());
         verify(mailGeneralConfigService, times(1)).saveConfig(any(MailServerConfig.class));
@@ -79,9 +79,7 @@ public class ConfigServiceTest {
 
     @Test
     public void testGetConfig() {
-        ObjectStoreDTO ossConfig = new ObjectStoreDTO<>();
-        when(objectStoreConfigService.getConfig()).thenReturn(ossConfig);
-        assertNotNull(configService.getConfig(GeneralConfigTypeEnum.oss.name()));
+        assertThrows(IllegalArgumentException.class, () -> configService.getConfig(GeneralConfigTypeEnum.oss.name()));
 
         MailServerConfig emailNoticeSender = new MailServerConfig();
         when(mailGeneralConfigService.getConfig()).thenReturn(emailNoticeSender);

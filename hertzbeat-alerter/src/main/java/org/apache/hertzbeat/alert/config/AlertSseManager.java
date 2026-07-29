@@ -30,8 +30,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * SSE manager for alert
@@ -39,50 +42,94 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class AlertSseManager implements ApplicationListener<ContextClosedEvent> {
+
+    private static final long RECONNECT_TIME_MILLIS = 3_000L;
+
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Object lifecycleMonitor = new Object();
+    private final AtomicLong eventSequence = new AtomicLong(System.currentTimeMillis());
+    private final Supplier<SseEmitter> emitterFactory;
     private boolean closing;
 
+    public AlertSseManager() {
+        this(() -> new SseEmitter(Long.MAX_VALUE));
+    }
+
+    AlertSseManager(Supplier<SseEmitter> emitterFactory) {
+        this.emitterFactory = Objects.requireNonNull(emitterFactory);
+    }
+
+    /**
+     * Opens a reconnectable stream. The ready event is a convergence trigger:
+     * clients must reread canonical alert state rather than expect replay from
+     * this in-memory stream.
+     */
     public SseEmitter createEmitter(Long clientId) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        emitter.onCompletion(() -> removeEmitter(clientId));
-        emitter.onTimeout(() -> removeEmitter(clientId));
-        emitter.onError((ex) -> removeEmitter(clientId));
+        SseEmitter emitter = emitterFactory.get();
+        emitter.onCompletion(() -> removeEmitter(clientId, emitter));
+        emitter.onTimeout(() -> removeEmitter(clientId, emitter));
+        emitter.onError((ex) -> removeEmitter(clientId, emitter));
+        SseEmitter replacedEmitter;
         synchronized (lifecycleMonitor) {
             if (closing) {
-                emitter.complete();
+                tryComplete(emitter);
                 return emitter;
             }
-            emitters.put(clientId, emitter);
+            replacedEmitter = emitters.put(clientId, emitter);
+        }
+        if (replacedEmitter != null && replacedEmitter != emitter) {
+            tryCompleteAndClean(clientId, replacedEmitter);
+        }
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("ALERT_STREAM_READY")
+                    .data("{}")
+                    .reconnectTime(RECONNECT_TIME_MILLIS));
+        } catch (IOException | IllegalStateException exception) {
+            tryCompleteAndClean(clientId, emitter);
         }
         return emitter;
     }
 
     @Async
     public void broadcast(String data) {
+        broadcast(data, "ALERT_EVENT");
+    }
+
+    @Async
+    public void broadcastGroupMutation(String data) {
+        broadcast(data, "ALERT_GROUP_MUTATION");
+    }
+
+    private void broadcast(String data, String eventName) {
+        String eventId = String.valueOf(eventSequence.incrementAndGet());
         emitters.forEach((clientId, emitter) -> {
             try {
                 emitter.send(SseEmitter.event()
-                        .id(String.valueOf(System.currentTimeMillis()))
-                        .name("ALERT_EVENT")
+                        .id(eventId)
+                        .name(eventName)
                         .data(data));
             } catch (IOException | IllegalStateException e) {
                 tryCompleteAndClean(clientId, emitter);
             } catch (Exception exception) {
-                log.error("Failed to broadcast alert data to client: {}", exception.getMessage());
+                log.error("Failed to broadcast alert data to client: {}",
+                        exception.getClass().getSimpleName());
                 tryCompleteAndClean(clientId, emitter);
             }
         });
     }
 
     private void tryCompleteAndClean(Long clientId, SseEmitter emitter) {
+        tryComplete(emitter);
+        removeEmitter(clientId, emitter);
+    }
+
+    private void tryComplete(SseEmitter emitter) {
         try {
             Optional.ofNullable(emitter).ifPresent(ResponseBodyEmitter::complete);
         } catch (Throwable e) {
-            log.debug("Failed to complete emitter for client {}: {}", clientId, e.getMessage());
+            log.debug("Failed to complete alert emitter: {}", e.getClass().getSimpleName());
         }
-        // execute clear
-        removeEmitter(clientId);
     }
 
     @Override
@@ -98,7 +145,7 @@ public class AlertSseManager implements ApplicationListener<ContextClosedEvent> 
         activeEmitters.forEach(this::tryCompleteAndClean);
     }
 
-    private void removeEmitter(Long clientId) {
-        emitters.remove(clientId);
+    private void removeEmitter(Long clientId, SseEmitter emitter) {
+        emitters.remove(clientId, emitter);
     }
 }

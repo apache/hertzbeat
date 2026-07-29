@@ -17,16 +17,21 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
+import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +58,46 @@ class TopologyControllerTest {
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(topologyController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(topologyController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @Test
+    void returnsStableParameterErrorWithoutEchoingUnknownSourceKind() throws Exception {
+        String unknownSourceKind = "unknown' OR 1=1 -- private-sql";
+        when(entityTopologyQueryService.buildFocusedTopology(
+                null, 1, null, unknownSourceKind, null, null,
+                null, null, null, null))
+                .thenThrow(new IllegalArgumentException("topology_source_kind_invalid"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("sourceKind", unknownSourceKind))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.PARAM_INVALID_CODE))
+                .andExpect(jsonPath("$.msg").value("topology_source_kind_invalid"))
+                .andExpect(content().string(not(containsString(unknownSourceKind))));
+
+        verify(entityTopologyQueryService).buildFocusedTopology(
+                null, 1, null, unknownSourceKind, null, null,
+                null, null, null, null);
+    }
+
+    @Test
+    void returnsSafeUnavailableEvidenceThroughExistingMessageLayer() throws Exception {
+        when(entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "otlp-trace-call", null, null,
+                null, null, null, null))
+                .thenThrow(new CommonException("trace_topology_unavailable"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("environment", "prod")
+                        .param("sourceKind", "otlp-trace-call"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("trace_topology_unavailable"))
+                .andExpect(content().string(not(containsString("SELECT"))))
+                .andExpect(content().string(not(containsString("secret"))));
     }
 
     @Test

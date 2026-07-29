@@ -34,8 +34,9 @@ filter. Such a request is rejected instead of silently applying ambiguous constr
 - Metrics console request and returned context.
 - Historical log list, surrounding context, overview, trace coverage, trend, and group-by queries.
 - Live log SSE filtering.
-- Trace list, overview, and group-by queries. Trace detail and span endpoints already address an
-  exact trace identifier and do not add these discovery filters.
+- Trace list, overview, group-by, detail, and span queries. Detail and span requests retain the
+  exact trace identifier while also applying the supplied discovery context; an optional `spanId`
+  further narrows the row set.
 
 Storage access remains behind the existing query services and storage adapters. Controllers only
 bind the HTTP parameters and construct the storage-neutral context; they contain no database query

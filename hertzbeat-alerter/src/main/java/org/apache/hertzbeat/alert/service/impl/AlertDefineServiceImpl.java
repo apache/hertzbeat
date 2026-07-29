@@ -284,22 +284,32 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (!StringUtils.hasText(expr) || !StringUtils.hasText(datasource) || !StringUtils.hasText(type)) {
             return Collections.emptyList();
         }
+        List<Map<String, Object>> preview;
         switch (type) {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
-                return dataSourceService.calculate(datasource, expr);
+                preview = dataSourceService.calculatePreview(datasource, expr);
+                break;
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // todo support alert expr preview
-                return dataSourceService.query(datasource, expr, type);
+                preview = dataSourceService.queryPreview(datasource, expr, type);
+                break;
             case CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC:
-                List<Map<String, Object>> tracePreview = dataSourceService.query(datasource, expr, type);
+                List<Map<String, Object>> tracePreview = dataSourceService.queryPreview(datasource, expr, type);
                 validateTracePreview(tracePreview);
-                return tracePreview;
+                preview = tracePreview;
+                break;
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
-                return validateRealtimeExpressionPreview(type, expr);
+                preview = validateRealtimeExpressionPreview(type, expr);
+                break;
             default:
                 log.error("Get define preview unsupported type: {}", type);
-                return Collections.emptyList();
+                preview = Collections.emptyList();
+                break;
         }
+        if (preview == null || preview.size() <= CommonConstants.ALERT_PREVIEW_RESULT_LIMIT) {
+            return preview == null ? Collections.emptyList() : preview;
+        }
+        return List.copyOf(preview.subList(0, CommonConstants.ALERT_PREVIEW_RESULT_LIMIT));
     }
 
     private List<Map<String, Object>> validateRealtimeExpressionPreview(String type, String expr) {

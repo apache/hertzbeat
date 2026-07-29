@@ -17,14 +17,23 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import org.apache.hertzbeat.alert.dto.AlertGroupEvidence;
+import org.apache.hertzbeat.alert.dto.AlertGroupStatusEvidence;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceRequestException;
+import org.apache.hertzbeat.alert.service.AlertGroupEvidenceService;
+import org.apache.hertzbeat.alert.service.AlertGroupNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertGroupStatusNotSupportedException;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -55,15 +64,21 @@ class AlertsControllerTest {
     @InjectMocks
     private AlertsController alertsController;
 
+    @InjectMocks
+    private AlertSummaryController alertSummaryController;
+
     @Mock
     private AlertService alertService;
+
+    @Mock
+    private AlertGroupEvidenceService alertGroupEvidenceService;
 
     private List<Long> ids;
 
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(alertsController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(alertsController, alertSummaryController).build();
         ids = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
     }
 
@@ -109,6 +124,60 @@ class AlertsControllerTest {
     }
 
     @Test
+    void getGroupAlertEvidenceReturnsFrozenSchema() throws Exception {
+        List<String> requestedIds = List.of("2", "1", "3", "1");
+        AlertGroupEvidence evidence = new AlertGroupEvidence(
+                List.of(
+                        new AlertGroupStatusEvidence(1L, CommonConstants.ALERT_STATUS_FIRING),
+                        new AlertGroupStatusEvidence(2L, CommonConstants.ALERT_STATUS_PENDING)),
+                List.of(3L),
+                123456789L);
+        Mockito.when(alertGroupEvidenceService.getEvidence(requestedIds)).thenReturn(evidence);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "2", "1", "3", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.groups.length()").value(2))
+                .andExpect(jsonPath("$.data.groups[0].id").value(1))
+                .andExpect(jsonPath("$.data.groups[0].status").value("firing"))
+                .andExpect(jsonPath("$.data.groups[1].id").value(2))
+                .andExpect(jsonPath("$.data.groups[1].status").value("pending"))
+                .andExpect(jsonPath("$.data.missingIds[0]").value(3))
+                .andExpect(jsonPath("$.data.observedAt").value(123456789L));
+
+        Mockito.verify(alertGroupEvidenceService).getEvidence(requestedIds);
+    }
+
+    @Test
+    void getGroupAlertEvidenceInvalidRequestReturnsStableSafeFailure() throws Exception {
+        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("-6565463543")))
+                .thenThrow(new AlertGroupEvidenceRequestException());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "-6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Invalid alert group evidence request."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void getGroupAlertEvidenceFailureDoesNotExposeExceptionDetails() throws Exception {
+        Mockito.when(alertGroupEvidenceService.getEvidence(List.of("7")))
+                .thenThrow(new IllegalStateException(
+                        "token=private-evidence-token payload=private-alert-payload"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alerts/group/evidence")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group evidence query failed."))
+                .andExpect(content().string(not(containsString("private-evidence-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
+    }
+
+    @Test
     void deleteGroupAlerts() throws Exception {
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -119,6 +188,38 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
                 .andReturn();
+    }
+
+    @Test
+    void deleteGroupAlertsMissingTargetReturnsStableSafeFailure() throws Exception {
+        HashSet<Long> missingIds = new HashSet<>(List.of(6565463543L));
+        Mockito.doThrow(new AlertGroupNotFoundException())
+                .when(alertService).deleteGroupAlerts(missingIds);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/alerts/group")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group was not found."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void deleteGroupAlertsGenericFailureDoesNotExposeExceptionDetails() throws Exception {
+        HashSet<Long> ids = new HashSet<>(List.of(7L));
+        Mockito.doThrow(new IllegalStateException(
+                        "token=private-delete-token payload=private-alert-payload"))
+                .when(alertService).deleteGroupAlerts(ids);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/alerts/group")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group delete failed."))
+                .andExpect(content().string(not(containsString("private-delete-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
     }
 
     @Test
@@ -145,6 +246,62 @@ class AlertsControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
                 .andReturn();
+    }
+
+    @Test
+    void applyGroupAlertStatusMissingTargetReturnsStableSafeFailure() throws Exception {
+        Mockito.doThrow(new AlertGroupNotFoundException())
+                .when(alertService).editGroupAlertStatus("acknowledged", List.of(6565463543L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/acknowledged")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group was not found."))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusGenericFailureDoesNotExposeExceptionDetails() throws Exception {
+        Mockito.doThrow(new IllegalStateException(
+                        "token=private-alert-token payload=private-alert-payload"))
+                .when(alertService).editGroupAlertStatus("resolved", List.of(7L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/resolved")
+                        .param("ids", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group status update failed."))
+                .andExpect(content().string(not(containsString("private-alert-token"))))
+                .andExpect(content().string(not(containsString("private-alert-payload"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusRejectsUnsupportedPathValueWithStableSafeFailure() throws Exception {
+        Mockito.doThrow(new AlertGroupStatusNotSupportedException())
+                .when(alertService).editGroupAlertStatus("private-arbitrary-status", List.of(6565463543L));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/private-arbitrary-status")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Alert group status is not supported."))
+                .andExpect(content().string(not(containsString("private-arbitrary-status"))))
+                .andExpect(content().string(not(containsString("6565463543"))));
+    }
+
+    @Test
+    void applyGroupAlertStatusKeepsEmptyIdsAsLegacySuccessNoOp() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/alerts/group/status/private-arbitrary-status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"));
+
+        Mockito.verifyNoInteractions(alertService);
     }
 
     @Test

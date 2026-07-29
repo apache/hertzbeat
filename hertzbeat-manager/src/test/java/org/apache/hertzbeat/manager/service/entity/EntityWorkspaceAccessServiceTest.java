@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.LinkedHashSet;
@@ -221,6 +222,33 @@ class EntityWorkspaceAccessServiceTest {
         List<ObserveEntity> entities = workspaceAccessService.findAccessibleEntitiesForRequestWorkspace(pageable);
 
         assertEquals(List.of(teamAlphaEntity), entities);
+    }
+
+    @Test
+    void findAccessibleEntitiesForRequestWorkspacePreservesEnvironmentAndWorkspacePageBoundary() {
+        PageRequest pageable = PageRequest.of(
+                0, 65, Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id")));
+        ObserveEntity teamAlphaEntity = ObserveEntity.builder()
+                .id(431L)
+                .name("checkout")
+                .workspaceId("team-a")
+                .environment("prod")
+                .build();
+        ObserveEntity teamBetaEntity = ObserveEntity.builder()
+                .id(432L)
+                .name("billing")
+                .workspaceId("team-b")
+                .environment("prod")
+                .build();
+        when(entityWorkspaceQueryService.findEntities("team-a", "prod", pageable))
+                .thenReturn(List.of(teamAlphaEntity, teamBetaEntity));
+        AuthTokenRequestContext.bindWorkspaceId(" team-a ");
+
+        List<ObserveEntity> entities =
+                workspaceAccessService.findAccessibleEntitiesForRequestWorkspace("prod", pageable);
+
+        assertEquals(List.of(teamAlphaEntity), entities);
+        verify(entityWorkspaceQueryService).findEntities("team-a", "prod", pageable);
     }
 
     @Test

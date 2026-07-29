@@ -36,6 +36,7 @@ import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.service.AppService;
+import org.apache.hertzbeat.manager.service.helper.MonitorJobScheduleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -115,7 +116,7 @@ public class SchedulerInit implements CommandLineRunner {
                 }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setDefaultInterval(monitor.getIntervals());
+                MonitorJobScheduleMapper.apply(monitor, appDefine);
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
 

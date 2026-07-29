@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
@@ -74,6 +75,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryExp
 import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelService;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
+import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import static org.mockito.Mockito.argThat;
@@ -323,7 +325,32 @@ class MonitorServiceTest {
                 Param.builder().field("host").paramValue("localhost").build());
         when(paramDao.saveAll(params)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        assertEquals(10, job.getDefaultInterval());
+        assertEquals("interval", job.getScheduleType());
+        assertNull(job.getCronExpression());
         verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
+    }
+
+    @Test
+    void addMonitorMapsCronScheduleToCollectJob() {
+        String cronExpression = "0 0 * * * ?";
+        Monitor monitor = Monitor.builder()
+                .intervals(10)
+                .scheduleType("cron")
+                .cronExpression(cronExpression)
+                .name("cron-monitor")
+                .app("demoApp")
+                .instance("localhost")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        List<Param> params = List.of(Param.builder().field("host").paramValue("localhost").build());
+
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+
+        assertEquals("cron", job.getScheduleType());
+        assertEquals(cronExpression, job.getCronExpression());
+        assertEquals(10, job.getDefaultInterval());
     }
 
     @Test
@@ -917,6 +944,9 @@ class MonitorServiceTest {
                 .when(collectJobScheduling).collectSyncJobData(any(Job.class));
 
         assertDoesNotThrow(() -> monitorService.modifyMonitor(monitor, params, null, null));
+        assertEquals(10, job.getDefaultInterval());
+        assertEquals("interval", job.getScheduleType());
+        assertNull(job.getCronExpression());
         verify(monitorDao).save(any(Monitor.class));
         verify(paramDao).saveAll(params);
         verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
@@ -1192,7 +1222,9 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
+            Monitor monitor = Monitor.builder().jobId(id).intervals(10)
+                    .scheduleType("cron").cronExpression("0 0 * * * ?")
+                    .app("app").name("memory").instance("host").id(id)
                     .build();
             monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
@@ -1205,6 +1237,9 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(monitors.get(0).getId())).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.enableManageMonitors(ids));
+        assertEquals(10, job.getDefaultInterval());
+        assertEquals("cron", job.getScheduleType());
+        assertEquals("0 0 * * * ?", job.getCronExpression());
     }
 
     @Test
@@ -1282,6 +1317,13 @@ class MonitorServiceTest {
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
+    }
+
+    @Test
+    void copyMonitorMissingSourceUsesNamedDomainException() {
+        when(monitorDao.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(MonitorCopySourceNotFoundException.class, () -> monitorService.copyMonitor(1L));
     }
 
     @Test

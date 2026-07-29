@@ -117,16 +117,34 @@ class ApiTokenValidationFilterTest {
     void testUiSessionWorkspaceClaimBindsRequestContextWithoutManagedValidation() throws Exception {
         SubjectSum subject = mockSubject();
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
+        when(request.getParameter("workspaceId")).thenReturn("team-b");
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
-            org.junit.jupiter.api.Assertions.assertEquals("team-a", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertEquals("team-b", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    "team-a", AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
             verify(accountService, never()).checkTokenStatus(any());
 
             filter.afterCompletion(request, response, new Object(), null);
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
+        }
+    }
+
+    @Test
+    void testMissingSubjectWorkspaceDoesNotAuthenticateRequestedWorkspace() throws Exception {
+        SubjectSum subject = mockSubject();
+        when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn("team-b");
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            org.junit.jupiter.api.Assertions.assertEquals("team-b", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
         }
     }
 
@@ -241,6 +259,7 @@ class ApiTokenValidationFilterTest {
         String managedToken = "managed-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn("prod-west");
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn("team-a");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "prod-west")).thenReturn(null);
@@ -254,8 +273,11 @@ class ApiTokenValidationFilterTest {
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
             verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "prod-west");
             org.junit.jupiter.api.Assertions.assertEquals("prod-west", AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    "team-a", AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
             filter.afterCompletion(request, response, new Object(), null);
             org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentWorkspaceId());
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentAuthenticatedWorkspaceId());
         }
     }
 

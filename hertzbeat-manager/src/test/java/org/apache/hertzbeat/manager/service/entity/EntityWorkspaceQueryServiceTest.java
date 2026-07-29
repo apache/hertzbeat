@@ -18,15 +18,25 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -112,6 +122,48 @@ class EntityWorkspaceQueryServiceTest {
         assertEquals(List.of(checkout, billing), allEntities);
         verify(observeEntityDao).findAllByWorkspaceId("team-a", pageable);
         verify(observeEntityDao).findAll(pageable);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findEntitiesAppliesWorkspaceAndEnvironmentBeforeTheBoundedPage() {
+        PageRequest pageable = PageRequest.of(
+                0, 65, Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id")));
+        ObserveEntity checkout = ObserveEntity.builder()
+                .id(421L)
+                .name("checkout")
+                .workspaceId("team-a")
+                .environment("prod")
+                .build();
+        Page<ObserveEntity> persistedPage = new PageImpl<>(List.of(checkout), pageable, 1);
+        ArgumentCaptor<Specification<ObserveEntity>> specificationCaptor =
+                ArgumentCaptor.forClass(Specification.class);
+        when(observeEntityDao.findAll(any(Specification.class), eq(pageable))).thenReturn(persistedPage);
+
+        List<ObserveEntity> entities =
+                entityWorkspaceQueryService.findEntities("team-a", " PROD ", pageable);
+
+        assertEquals(List.of(checkout), entities);
+        verify(observeEntityDao).findAll(specificationCaptor.capture(), eq(pageable));
+
+        Root<ObserveEntity> root = mock(Root.class);
+        CriteriaBuilder criteriaBuilder = mock(CriteriaBuilder.class);
+        Path<String> environmentPath = mock(Path.class);
+        Path<String> workspacePath = mock(Path.class);
+        Expression<String> loweredEnvironment = mock(Expression.class);
+        Predicate environmentPredicate = mock(Predicate.class);
+        Predicate workspacePredicate = mock(Predicate.class);
+        Predicate combinedPredicate = mock(Predicate.class);
+        when(root.<String>get("environment")).thenReturn(environmentPath);
+        when(root.<String>get("workspaceId")).thenReturn(workspacePath);
+        when(criteriaBuilder.lower(environmentPath)).thenReturn(loweredEnvironment);
+        when(criteriaBuilder.equal(loweredEnvironment, "prod")).thenReturn(environmentPredicate);
+        when(criteriaBuilder.equal(workspacePath, "team-a")).thenReturn(workspacePredicate);
+        when(criteriaBuilder.and(workspacePredicate, environmentPredicate)).thenReturn(combinedPredicate);
+
+        Predicate predicate = specificationCaptor.getValue().toPredicate(root, null, criteriaBuilder);
+
+        assertSame(combinedPredicate, predicate);
     }
 
     @Test

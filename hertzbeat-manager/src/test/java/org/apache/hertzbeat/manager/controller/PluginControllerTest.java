@@ -19,7 +19,11 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,7 +31,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.support.exception.CommonException;
@@ -41,13 +48,17 @@ import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
 import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -64,6 +75,10 @@ class PluginControllerTest {
 
     private MockMvc mockMvc;
 
+    private MockedStatic<SurenessContextHolder> surenessContext;
+
+    private SubjectSum subject;
+
     @InjectMocks
     private PluginController pluginController;
 
@@ -75,7 +90,28 @@ class PluginControllerTest {
 
     @BeforeEach
     void setUp() {
+        subject = org.mockito.Mockito.mock(SubjectSum.class);
+        lenient().when(subject.hasRole("admin")).thenReturn(true);
+        surenessContext = mockStatic(SurenessContextHolder.class);
+        surenessContext.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
         this.mockMvc = MockMvcBuilders.standaloneSetup(pluginController).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        surenessContext.close();
+    }
+
+    @Test
+    void nonAdminCannotReachPluginManagementService() throws Exception {
+        when(subject.hasRole("admin")).thenReturn(false);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_forbidden"));
+
+        verify(pluginService, never()).getPlugins(any(), anyInt(), anyInt());
     }
 
     @Test
@@ -171,7 +207,7 @@ class PluginControllerTest {
                         .content("{\"id\":6565463543}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("plugin_operation_failed"))
+                .andExpect(jsonPath("$.msg").value("plugin_invalid_request"))
                 .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("enable status"))));
     }
@@ -258,6 +294,48 @@ class PluginControllerTest {
                 .andExpect(jsonPath("$.msg").value("plugin_operation_failed"))
                 .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("/secret/"))));
+    }
+
+    @Test
+    void operationFailuresDistinguishInvalidConflictAndStorageWithoutDetail() throws Exception {
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/plugin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_invalid_request"));
+
+        doThrow(new DataIntegrityViolationException("duplicate at /private/plugin.db"))
+                .when(pluginService).savePlugin(any(PluginUpload.class));
+        MockMultipartFile jarFile = new MockMultipartFile(
+                "jarFile", "duplicate.jar", "application/java-archive", new byte[]{1});
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/plugin")
+                        .file(jarFile)
+                        .param("name", "duplicate")
+                        .param("enableStatus", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_conflict"));
+
+        when(pluginService.getPlugins(null, 0, 8))
+                .thenThrow(new DataAccessResourceFailureException("storage at /private/plugin.db"));
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_storage_unavailable"));
+    }
+
+    @Test
+    void missingPluginUsesStableNotFoundMessageWithoutDetail() throws Exception {
+        doThrow(new NoSuchElementException("missing plugin at /private/plugin-lib/missing.jar"))
+                .when(pluginService).updateStatus(any(PluginMetadata.class));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/plugin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":404,\"enableStatus\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_not_found"))
+                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("/private/"))));
     }
 
 }

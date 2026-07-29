@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -37,13 +38,11 @@ import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  * test case for {@link AlertDefineYamlImExportServiceImpl}
@@ -77,6 +76,7 @@ class AlertDefineYamlImExportServiceTest {
         AlertDefineDTO alertDefine = new AlertDefineDTO();
         alertDefine.setName("App1");
         alertDefine.setType("realtime");
+        alertDefine.setDatasource("lifecycle-promql");
         alertDefine.setPeriod(3000);
         alertDefine.setTimes(3);
         alertDefine.setExpr("Expr1");
@@ -96,12 +96,9 @@ class AlertDefineYamlImExportServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
-
-        InputStream inputStream = new ByteArrayInputStream(JsonUtil.toJson(alertDefineList)
-                .getBytes(StandardCharsets.UTF_8));
-        Yaml yaml = new Yaml();
-
-        assertEquals(yaml.load(inputStream), result);
+        assertEquals("App1", result.getFirst().getAlertDefine().getName());
+        assertEquals("realtime", result.getFirst().getAlertDefine().getType());
+        assertNull(result.getFirst().getAlertDefine().getDatasource());
     }
 
     @Test
@@ -126,6 +123,39 @@ class AlertDefineYamlImExportServiceTest {
     }
 
     @Test
+    void testParseImportRejectsUnknownJavaGlobalTags() {
+        InputStream taggedInput = new ByteArrayInputStream(
+                "- !!java.net.URL {}\n"
+                        .getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(RuntimeException.class, () -> service.parseImport(taggedInput));
+    }
+
+    @Test
+    void testParseImportSupportsLegacyHertzBeatDtoTags() {
+        String legacyYaml =
+                """
+                        - !!org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO
+                          alertDefine: !!org.apache.hertzbeat.alert.dto.AlertDefineDTO
+                            name: Legacy
+                            type: periodic
+                            datasource: legacy-promql
+                            expr: up == 0
+                            period: 60
+                            times: 2
+                            enable: false
+                            template: Legacy template
+                        """;
+
+        List<ExportAlertDefineDTO> result = service.parseImport(
+                new ByteArrayInputStream(legacyYaml.getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals(1, result.size());
+        assertEquals("Legacy", result.getFirst().getAlertDefine().getName());
+        assertEquals("legacy-promql", result.getFirst().getAlertDefine().getDatasource());
+    }
+
+    @Test
     void testWriteOs() {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -135,6 +165,10 @@ class AlertDefineYamlImExportServiceTest {
         assertTrue(yamlOutput.contains("name: App1"));
         assertTrue(yamlOutput.contains("type: realtime"));
         assertTrue(yamlOutput.contains("expr: Expr1"));
+        assertTrue(yamlOutput.contains("datasource: lifecycle-promql"));
+        List<ExportAlertDefineDTO> parsed = service.parseImport(
+                new ByteArrayInputStream(outputStream.toByteArray()));
+        assertEquals("lifecycle-promql", parsed.getFirst().getAlertDefine().getDatasource());
     }
 
     @Test
