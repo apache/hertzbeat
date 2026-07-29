@@ -383,6 +383,316 @@ def inspect_nested_member(payload: bytes, logical_path: str, depth: int) -> None
         raise ReleasePolicyError(f"cannot inspect nested archive {logical_path}: {type(exc).__name__}") from exc
 
 
+def inspect_container_zip(payload: bytes, logical_path: str, depth: int) -> None:
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        names = archive.namelist()
+        for name in names:
+            member_path = f"{logical_path}!/{name}"
+            reject_unsafe_archive_member(name, member_path)
+            reject_distribution_name(member_path)
+            normalized = normalized_name(name)
+            if (normalized.endswith(".dist-info/metadata")
+                    or normalized.endswith(".nuspec")
+                    or normalized.endswith("package.json")):
+                inspect_ecosystem_package_metadata(name, archive.read(name), member_path)
+            if is_release_sbom(name):
+                verify_release_sbom_payload(archive.read(name), member_path)
+        inspect_java_agent_signature(archive, logical_path, names)
+        for info in archive.infolist():
+            if info.is_dir():
+                continue
+            with archive.open(info) as member:
+                prefix = member.read(512)
+            if not looks_like_archive(info.filename) and not has_archive_signature(prefix):
+                continue
+            if info.file_size > MAX_ARCHIVE_MEMBER_BYTES:
+                raise ReleasePolicyError(
+                    f"nested container archive member exceeds safety limit: {logical_path}")
+            inspect_container_nested_member(
+                archive.read(info), f"{logical_path}!/{info.filename}", depth + 1)
+
+
+def inspect_container_tar(payload: bytes, logical_path: str, depth: int) -> None:
+    with tarfile.open(fileobj=io.BytesIO(payload), mode="r:*") as archive:
+        for member in archive.getmembers():
+            member_path = f"{logical_path}!/{member.name}"
+            reject_unsafe_archive_member(member.name, member_path)
+            reject_distribution_name(member_path)
+            if not member.isfile():
+                continue
+            extracted = archive.extractfile(member)
+            if extracted is None:
+                continue
+            prefix = extracted.read(512)
+            normalized = normalized_name(member.name)
+            if (normalized.endswith(".dist-info/metadata")
+                    or normalized.endswith(".nuspec")
+                    or normalized.endswith("package.json")):
+                metadata_payload = prefix + extracted.read(
+                    MAX_PACKAGE_METADATA_BYTES + 1 - len(prefix))
+                inspect_ecosystem_package_metadata(
+                    member.name, metadata_payload, member_path)
+                continue
+            is_sbom = is_release_sbom(member.name)
+            is_archive = looks_like_archive(member.name) or has_archive_signature(prefix)
+            if not is_sbom and not is_archive:
+                continue
+            member_payload = prefix + extracted.read(
+                MAX_ARCHIVE_MEMBER_BYTES + 1 - len(prefix))
+            if is_sbom:
+                verify_release_sbom_payload(member_payload, member_path)
+            if is_archive:
+                inspect_container_nested_member(member_payload, member_path, depth + 1)
+
+
+def inspect_container_nested_member(payload: bytes, logical_path: str, depth: int) -> None:
+    if depth > MAX_NESTED_DEPTH:
+        raise ReleasePolicyError(
+            f"nested container archive depth exceeds {MAX_NESTED_DEPTH}: {logical_path}")
+    if len(payload) > MAX_ARCHIVE_MEMBER_BYTES:
+        raise ReleasePolicyError(
+            f"nested container archive member exceeds safety limit: {logical_path}")
+    reject_distribution_name(logical_path)
+    try:
+        if zipfile.is_zipfile(io.BytesIO(payload)):
+            inspect_container_zip(payload, logical_path, depth)
+            return
+        try:
+            inspect_container_tar(payload, logical_path, depth)
+        except tarfile.ReadError:
+            return
+    except (OSError, tarfile.TarError, zipfile.BadZipFile) as exc:
+        raise ReleasePolicyError(
+            f"cannot inspect nested container archive {logical_path}: {type(exc).__name__}") from exc
+
+
+def inspect_container_layer(payload: bytes, logical_path: str) -> None:
+    if len(payload) > MAX_ARCHIVE_MEMBER_BYTES:
+        raise ReleasePolicyError(f"container image layer exceeds safety limit: {logical_path}")
+    try:
+        inspect_container_tar(payload, logical_path, 0)
+    except (OSError, tarfile.TarError) as exc:
+        raise ReleasePolicyError(
+            f"container image layer is not a supported tar archive: {logical_path}") from exc
+
+
+def read_image_archive_members(archive: tarfile.TarFile, logical_path: str) -> dict[str, tarfile.TarInfo]:
+    members = {}
+    for member in archive.getmembers():
+        reject_unsafe_archive_member(member.name, f"{logical_path}!/{member.name}")
+        if member.issym() or member.islnk():
+            raise ReleasePolicyError(f"container image archive link is not allowed: {logical_path}")
+        if not member.isfile():
+            continue
+        normalized = normalized_name(member.name)
+        if normalized in members:
+            raise ReleasePolicyError(f"duplicate container image archive member: {logical_path}")
+        members[normalized] = member
+    return members
+
+
+def read_image_member(
+        archive: tarfile.TarFile,
+        members: dict[str, tarfile.TarInfo],
+        name: str,
+        logical_path: str,
+) -> bytes:
+    member = members.get(normalized_name(name))
+    if member is None:
+        raise ReleasePolicyError(f"container image archive member is missing: {logical_path}")
+    if member.size > MAX_ARCHIVE_MEMBER_BYTES:
+        raise ReleasePolicyError(f"container image archive member exceeds safety limit: {logical_path}")
+    return read_tar_member(archive, member)
+
+
+def inspect_docker_save(
+        archive: tarfile.TarFile,
+        members: dict[str, tarfile.TarInfo],
+        logical_path: str,
+) -> None:
+    manifest = json.loads(
+        read_image_member(archive, members, "manifest.json", logical_path).decode("utf-8"))
+    if not isinstance(manifest, list) or not manifest:
+        raise ReleasePolicyError(f"docker-save manifest is empty or invalid: {logical_path}")
+    layers = []
+    for image in manifest:
+        if not isinstance(image, dict) or not isinstance(image.get("Layers"), list):
+            raise ReleasePolicyError(f"docker-save manifest entry is invalid: {logical_path}")
+        layers.extend(image["Layers"])
+    if not layers or any(not isinstance(layer, str) for layer in layers):
+        raise ReleasePolicyError(f"docker-save manifest has no valid layers: {logical_path}")
+    for layer in dict.fromkeys(layers):
+        payload = read_image_member(archive, members, layer, logical_path)
+        inspect_container_layer(payload, f"{logical_path}!/{layer}")
+
+
+def oci_blob_name(digest: str, logical_path: str) -> str:
+    match = re.fullmatch(r"sha256:([0-9a-f]{64})", digest) if isinstance(digest, str) else None
+    if match is None:
+        raise ReleasePolicyError(f"unsupported OCI descriptor digest: {logical_path}")
+    return f"blobs/sha256/{match.group(1)}"
+
+
+def read_oci_descriptor_blob(
+        archive: tarfile.TarFile,
+        members: dict[str, tarfile.TarInfo],
+        descriptor: dict,
+        logical_path: str,
+) -> bytes:
+    if not isinstance(descriptor, dict):
+        raise ReleasePolicyError(f"invalid OCI descriptor: {logical_path}")
+    digest = descriptor.get("digest")
+    size = descriptor.get("size")
+    media_type = descriptor.get("mediaType")
+    if (not isinstance(digest, str)
+            or not isinstance(size, int)
+            or isinstance(size, bool)
+            or size < 0
+            or not isinstance(media_type, str)
+            or not media_type):
+        raise ReleasePolicyError(f"invalid OCI descriptor: {logical_path}")
+    payload = read_image_member(
+        archive, members, oci_blob_name(digest, logical_path), logical_path)
+    if len(payload) != size:
+        raise ReleasePolicyError(f"OCI descriptor size mismatch: {logical_path}")
+    if hashlib.sha256(payload).hexdigest() != digest.split(":", 1)[1]:
+        raise ReleasePolicyError(f"OCI descriptor checksum mismatch: {logical_path}")
+    return payload
+
+
+def parse_json_object(payload: bytes, description: str, logical_path: str) -> dict:
+    try:
+        document = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ReleasePolicyError(f"{description} is not valid JSON: {logical_path}") from exc
+    if not isinstance(document, dict):
+        raise ReleasePolicyError(f"{description} must be a JSON object: {logical_path}")
+    return document
+
+
+def require_nonempty_list(document: dict, key: str, description: str, logical_path: str) -> list:
+    value = document.get(key)
+    if not isinstance(value, list) or not value:
+        raise ReleasePolicyError(f"{description} must contain a non-empty {key}: {logical_path}")
+    return value
+
+
+def is_docker_attestation_descriptor(descriptor: dict, logical_path: str) -> bool:
+    annotations = descriptor.get("annotations")
+    if not isinstance(annotations, dict):
+        return False
+    if annotations.get("vnd.docker.reference.type") != "attestation-manifest":
+        return False
+    reference_digest = annotations.get("vnd.docker.reference.digest")
+    if (not isinstance(reference_digest, str)
+            or re.fullmatch(r"sha256:[0-9a-f]{64}", reference_digest) is None):
+        raise ReleasePolicyError(
+            f"Docker attestation reference digest is invalid: {logical_path}")
+    return True
+
+
+def inspect_oci_descriptor(
+        archive: tarfile.TarFile,
+        members: dict[str, tarfile.TarInfo],
+        descriptor: dict,
+        logical_path: str,
+        visited: set[tuple[str, bool]],
+) -> None:
+    payload = read_oci_descriptor_blob(
+        archive, members, descriptor, logical_path)
+    digest = descriptor["digest"]
+    is_attestation = is_docker_attestation_descriptor(descriptor, logical_path)
+    visit_key = (digest, is_attestation)
+    if visit_key in visited:
+        return
+    visited.add(visit_key)
+    media_type = descriptor["mediaType"]
+    if media_type in {
+            "application/vnd.oci.image.index.v1+json",
+            "application/vnd.docker.distribution.manifest.list.v2+json"}:
+        if is_attestation:
+            raise ReleasePolicyError(
+                f"Docker attestation descriptor must reference an image manifest: {logical_path}")
+        index = parse_json_object(payload, "OCI image index", logical_path)
+        for child in require_nonempty_list(
+                index, "manifests", "OCI image index", logical_path):
+            inspect_oci_descriptor(archive, members, child, logical_path, visited)
+    elif media_type in {
+            "application/vnd.oci.image.manifest.v1+json",
+            "application/vnd.docker.distribution.manifest.v2+json"}:
+        manifest = parse_json_object(payload, "OCI image manifest", logical_path)
+        config = manifest.get("config")
+        if not isinstance(config, dict):
+            raise ReleasePolicyError(f"OCI image manifest has an invalid config: {logical_path}")
+        layers = require_nonempty_list(
+            manifest, "layers", "OCI image manifest", logical_path)
+        config_payload = read_oci_descriptor_blob(
+            archive, members, config, logical_path)
+        if is_attestation:
+            if config.get("mediaType") != "application/vnd.oci.empty.v1+json":
+                raise ReleasePolicyError(
+                    f"Docker attestation manifest has a non-empty config type: {logical_path}")
+            parse_json_object(config_payload, "Docker attestation config", logical_path)
+            for layer in layers:
+                if (not isinstance(layer, dict)
+                        or layer.get("mediaType") != "application/vnd.in-toto+json"):
+                    raise ReleasePolicyError(
+                        f"Docker attestation manifest has a container layer: {logical_path}")
+                statement = read_oci_descriptor_blob(
+                    archive, members, layer, logical_path)
+                parse_json_object(statement, "Docker attestation statement", logical_path)
+            return
+        image_config_types = {
+            "application/vnd.oci.image.config.v1+json",
+            "application/vnd.docker.container.image.v1+json",
+        }
+        if config.get("mediaType") not in image_config_types:
+            raise ReleasePolicyError(f"OCI image config type is unsupported: {logical_path}")
+        parse_json_object(config_payload, "OCI image config", logical_path)
+        for layer in layers:
+            if not isinstance(layer, dict) or "layer" not in str(layer.get("mediaType", "")):
+                raise ReleasePolicyError(f"OCI image manifest has an invalid layer: {logical_path}")
+            layer_payload = read_oci_descriptor_blob(
+                archive, members, layer, logical_path)
+            layer_digest = layer["digest"]
+            inspect_container_layer(layer_payload, f"{logical_path}!/{layer_digest}")
+    else:
+        raise ReleasePolicyError(f"unsupported OCI descriptor media type: {logical_path}")
+
+
+def inspect_oci_image(
+        archive: tarfile.TarFile,
+        members: dict[str, tarfile.TarInfo],
+        logical_path: str,
+) -> None:
+    index = parse_json_object(
+        read_image_member(archive, members, "index.json", logical_path),
+        "OCI image index",
+        logical_path,
+    )
+    manifests = require_nonempty_list(
+        index, "manifests", "OCI image index", logical_path)
+    visited = set()
+    for descriptor in manifests:
+        inspect_oci_descriptor(archive, members, descriptor, logical_path, visited)
+
+
+def inspect_container_image(path: Path) -> None:
+    try:
+        with tarfile.open(path, mode="r:*") as archive:
+            members = read_image_archive_members(archive, str(path))
+            if "manifest.json" in members:
+                inspect_docker_save(archive, members, str(path))
+            elif "oci-layout" in members and "index.json" in members:
+                inspect_oci_image(archive, members, str(path))
+            else:
+                raise ReleasePolicyError(
+                    f"unsupported container image archive layout: {path}")
+    except (OSError, tarfile.TarError) as exc:
+        raise ReleasePolicyError(
+            f"cannot inspect container image archive {path}: {type(exc).__name__}") from exc
+
+
 def inspect_release_archive(path: Path) -> None:
     reject_distribution_name(path.name)
     payload = path.read_bytes()
@@ -474,12 +784,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--jvm", action="append", type=Path, default=[])
     parser.add_argument("--native", action="append", type=Path, default=[])
     parser.add_argument("--collector-sbom", action="append", type=Path, default=[])
+    parser.add_argument("--container-image", action="append", type=Path, default=[])
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    supplied = args.source + args.jvm + args.native + args.collector_sbom
+    supplied = (args.source + args.jvm + args.native
+                + args.collector_sbom + args.container_image)
     if not supplied:
         print("at least one release archive or Collector SBOM is required", file=sys.stderr)
         return 2
@@ -494,6 +806,8 @@ def main() -> int:
             inspect_release_archive(path)
         for path in args.collector_sbom:
             verify_collector_sbom(path)
+        for path in args.container_image:
+            inspect_container_image(path)
     except (ReleasePolicyError, ElementTree.ParseError, json.JSONDecodeError) as exc:
         print(f"Hybrid Collector release content check failed: {exc}", file=sys.stderr)
         return 1

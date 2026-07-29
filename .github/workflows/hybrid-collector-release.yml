@@ -199,6 +199,10 @@ jobs:
           push: false
           outputs: type=oci,dest=/tmp/hybrid-collector.oci.tar
           tags: apache/hertzbeat-collector:native-test
+      - name: Verify multi-platform native image layers
+        run: |
+          python3 script/ci/verify-hybrid-collector-release-content.py \
+            --container-image /tmp/hybrid-collector.oci.tar
       - uses: actions/upload-artifact@v4
         with:
           name: hybrid-collector-native-oci
