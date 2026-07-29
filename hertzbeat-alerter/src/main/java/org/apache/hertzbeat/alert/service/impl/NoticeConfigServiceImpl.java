@@ -190,13 +190,28 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
      *                                  be resolved, and saving would persist the placeholder
      */
     private void resolveMaskedSecrets(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, false);
+    }
+
+    /**
+     * Bind stored secrets to their original notification type and destination for test messages.
+     */
+    private void resolveMaskedSecretsForTest(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, true);
+    }
+
+    private void resolveMaskedSecrets(NoticeReceiver noticeReceiver, boolean testMessage) {
         if (noticeReceiver == null || noticeReceiver.getId() == null) {
             return;
         }
         NoticeReceiver existing = noticeReceiverDao.findById(noticeReceiver.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "The receiver with id " + noticeReceiver.getId() + " does not exist."));
-        NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
+        if (testMessage) {
+            NoticeReceiverMaskUtil.resolveMaskForTest(noticeReceiver, existing);
+        } else {
+            NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
+        }
     }
 
     @Override
@@ -339,7 +354,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
-        resolveMaskedSecrets(noticeReceiver);
+        resolveMaskedSecretsForTest(noticeReceiver);
         Map<String, String> labels = new HashMap<>(8);
         labels.put(CommonConstants.LABEL_INSTANCE, "127.0.0.1");
         labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
