@@ -1157,51 +1157,35 @@
     }
   },
   "alertIntegrations": {
+    "states": {
+      "loading": "Loading integration catalog…",
+      "permission": "You do not have permission to view alert integrations.",
+      "unavailable": "Alert integration guides are temporarily unavailable.",
+      "contract": "The server returned an invalid alert integration guide.",
+      "error": "Alert integration guides could not be loaded.",
+      "not-found": "This alert integration is not in the server catalog."
+    },
+    "readiness": {
+      "ready": "This backend guide is ready to configure.",
+      "configuration_required": "This source requires sender or gateway configuration before it can run.",
+      "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
+    },
+    "payloadShape": "Payload shape",
+    "requiredFields": "Required fields",
+    "steps": "Configuration steps",
+    "snippets": "Payload examples",
+    "limitations": "Known limitations",
     "menu": "External alert integrations",
     "title": "{{source}} integration",
     "description": "Configure an external sender to report alerts through HertzBeat's authenticated ingress.",
     "sourcesLabel": "Integration sources",
-    "endpointTitle": "Use the ingress endpoint",
-    "endpointDescription": "Send a POST request to the endpoint derived from this HertzBeat origin.",
     "method": "Method",
-    "backendSource": "Backend adapter",
     "endpoint": "Endpoint",
-    "authorizationTitle": "Authenticate every request",
-    "authorizationDescription": "The ingress requires a bearer API token in the Authorization header.",
     "authorizationHeader": "Required header",
     "manageTokens": "Manage API tokens",
-    "senderTitle": "Configure the sender",
-    "senderDescription": "Configure {{source}} to send its native alert payload to the endpoint with the required header.",
-    "configuration": {
-      "webhook": "In the sender's HTTP client, POST its alert JSON to the displayed endpoint with Content-Type: application/json and the required Authorization header.",
-      "prometheus": "In prometheus.yml under alerting.alertmanagers.static_configs.targets, enter the host and port from the displayed endpoint, set the matching scheme and required bearer authorization, then reload Prometheus. Prometheus POSTs to /api/v2/alerts automatically.",
-      "alertmanager": "In alertmanager.yml, add the displayed endpoint to receivers.webhook_configs, enable send_resolved, configure the required bearer authorization under http_config, and restart Alertmanager.",
-      "skywalking": "In alarm-settings.yml, add the displayed endpoint under hooks.webhook.default.urls, then reload or restart the SkyWalking OAP server.",
-      "uptime-kuma": "Open Settings > Notifications > Set Notifications, choose Webhook, use the displayed endpoint as the Post URL with the application/json preset, save it, and bind it to the monitor.",
-      "zabbix": "Under Administration > Media types, create a Webhook media type whose URL parameter is the displayed endpoint and whose script POSTs the alert JSON; then bind that media type to a user and trigger action.",
-      "tencent": "In Tencent Cloud Monitor, create a notification template under Alarm Management > Notification Templates, set its API Callback to the displayed endpoint, and bind the template to the alert policy.",
-      "alibabacloud-sls": "In Alibaba Cloud SLS, open Alerts > Notification objects > Webhook integration, create a Universal Webhook using POST and the displayed endpoint, then select it from the notification or action policy.",
-      "huaweicloud-ces": "In Huawei Cloud Eye, create a JSON notification template and an HTTP/HTTPS recipient using the displayed endpoint, add the recipient to a notification group and policy, and confirm the subscription request.",
-      "volcengine": "In Volcengine Cloud Monitor Callback Address Management, create a General Address Callback with the displayed endpoint, then bind it to an enabled alert policy through Manual Notification > Alert Callback."
-    },
-    "gatewayWarning": "If the sender cannot set the Authorization header, use an administrator-managed trusted gateway. Never place a token in the URL.",
-    "verifyTitle": "Verify delivery",
-    "healthDisclaimer": "Rendering these instructions does not prove the integration is healthy. Send a controlled alert and verify that HertzBeat receives it.",
     "copy": "Copy",
     "copied": "Copied",
-    "copyFailed": "Copy failed",
-    "sources": {
-      "webhook": "Webhook",
-      "prometheus": "Prometheus",
-      "alertmanager": "Alertmanager",
-      "skywalking": "SkyWalking",
-      "uptime-kuma": "Uptime Kuma",
-      "zabbix": "Zabbix",
-      "tencent": "Tencent Cloud",
-      "alibabacloud-sls": "Alibaba Cloud SLS",
-      "huaweicloud-ces": "Huawei Cloud CES",
-      "volcengine": "Volcengine"
-    }
+    "copyFailed": "Copy failed"
   },
   "plugins": {
     "title": "Plugin management",
@@ -2312,6 +2296,60 @@
     }
   },
   "alert": {
+    "integration": {
+      "source": {
+        "webhook": "Webhook",
+        "prometheus": "Prometheus",
+        "alertmanager": "Alertmanager",
+        "skywalking": "SkyWalking",
+        "uptime-kuma": "Uptime Kuma",
+        "zabbix": "Zabbix",
+        "tencent": "Tencent Cloud",
+        "alibabacloud-sls": "Alibaba Cloud SLS",
+        "huaweicloud-ces": "Huawei Cloud CES",
+        "volcengine": "Volcengine"
+      },
+      "ack": {
+        "accepted_for_processing": "A successful response means the alert was accepted for processing; it does not prove delivery health."
+      },
+      "limit": {
+        "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "zabbix": {
+          "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
+          "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
+          "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        }
+      },
+      "step": {
+        "configure_bearer_capable_callback": "Configure a callback or trusted gateway that can send the required bearer header."
+      },
+      "webhook": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_request": "Configure the sender to POST the required alert JSON and bearer header.",
+          "verify_alert": "Send a controlled alert and verify it appears in Alert Center."
+        }
+      },
+      "prometheus": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_alertmanager_target": "Configure the Prometheus Alertmanager target and bearer authorization.",
+          "verify_alert": "Send a controlled Prometheus alert and verify it appears in Alert Center."
+        }
+      },
+      "alertmanager": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_webhook": "Configure the Alertmanager webhook receiver and bearer authorization.",
+          "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
+        }
+      },
+      "zabbix": {
+        "step": {
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+        }
+      }
+    },
     "title": "Alert center",
     "description": "Inspect grouped alerts and current handling state.",
     "search": "Search alerts",

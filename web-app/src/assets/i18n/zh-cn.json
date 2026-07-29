@@ -1142,51 +1142,35 @@
     }
   },
   "alertIntegrations": {
+    "states": {
+      "loading": "Loading integration catalog…",
+      "permission": "You do not have permission to view alert integrations.",
+      "unavailable": "Alert integration guides are temporarily unavailable.",
+      "contract": "The server returned an invalid alert integration guide.",
+      "error": "Alert integration guides could not be loaded.",
+      "not-found": "This alert integration is not in the server catalog."
+    },
+    "readiness": {
+      "ready": "This backend guide is ready to configure.",
+      "configuration_required": "This source requires sender or gateway configuration before it can run.",
+      "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
+    },
+    "payloadShape": "Payload shape",
+    "requiredFields": "Required fields",
+    "steps": "Configuration steps",
+    "snippets": "Payload examples",
+    "limitations": "Known limitations",
     "menu": "外部告警集成",
     "title": "{{source}} 集成",
     "description": "配置外部发送方，通过 HertzBeat 的认证入口上报告警。",
     "sourcesLabel": "集成来源",
-    "endpointTitle": "使用告警入口",
-    "endpointDescription": "向根据当前 HertzBeat 来源生成的端点发送 POST 请求。",
     "method": "方法",
-    "backendSource": "后端适配器",
     "endpoint": "端点",
-    "authorizationTitle": "认证每个请求",
-    "authorizationDescription": "告警入口要求在 Authorization 请求头中提供 Bearer API 令牌。",
     "authorizationHeader": "必需请求头",
     "manageTokens": "管理 API 令牌",
-    "senderTitle": "配置发送方",
-    "senderDescription": "配置 {{source}}，使用必需请求头将其原生告警负载发送到端点。",
-    "configuration": {
-      "webhook": "在发送方的 HTTP 客户端中，将告警 JSON 以 POST 方式发送到页面显示的端点，并设置 Content-Type: application/json 和必需的 Authorization 请求头。",
-      "prometheus": "在 prometheus.yml 的 alerting.alertmanagers.static_configs.targets 中填写页面端点的主机和端口，设置一致的 scheme 与必需的 Bearer 认证，然后重新加载 Prometheus。Prometheus 会自动 POST 到 /api/v2/alerts。",
-      "alertmanager": "在 alertmanager.yml 的 receivers.webhook_configs 中填写页面显示的端点，启用 send_resolved，在 http_config 中配置必需的 Bearer 认证，然后重启 Alertmanager。",
-      "skywalking": "在 alarm-settings.yml 的 hooks.webhook.default.urls 中填写页面显示的端点，然后重新加载或重启 SkyWalking OAP Server。",
-      "uptime-kuma": "打开“设置 > 通知 > 设置通知”，选择 Webhook，将页面显示的端点填入 Post URL，选择 application/json 预设，保存并绑定到监控项。",
-      "zabbix": "在“管理 > 媒介类型”中创建 Webhook，将页面显示的端点作为 URL 参数，并用脚本 POST 告警 JSON；随后把该媒介绑定到用户和触发器动作。",
-      "tencent": "在腾讯云监控的“告警管理 > 通知模板”中创建模板，将 API 回调设置为页面显示的端点，并把模板绑定到告警策略。",
-      "alibabacloud-sls": "在阿里云 SLS 的“告警 > 通知对象 > Webhook 集成”中创建通用 Webhook，选择 POST 并填写页面显示的端点，然后在通知或行动策略中选择它。",
-      "huaweicloud-ces": "在华为云 Cloud Eye 中创建 JSON 通知模板和使用页面显示端点的 HTTP/HTTPS 接收人，将接收人加入通知组和策略，并确认订阅请求。",
-      "volcengine": "在火山引擎云监控的回调地址管理中，用页面显示的端点创建“通用地址回调”，再通过“手动通知 > 告警回调”绑定到已启用的告警策略。"
-    },
-    "gatewayWarning": "如果发送方无法设置 Authorization 请求头，请使用管理员维护的可信网关。切勿将令牌放入 URL。",
-    "verifyTitle": "验证投递",
-    "healthDisclaimer": "显示这些说明并不能证明集成健康。请发送受控告警并确认 HertzBeat 已接收。",
     "copy": "复制",
     "copied": "已复制",
-    "copyFailed": "复制失败",
-    "sources": {
-      "webhook": "Webhook",
-      "prometheus": "Prometheus",
-      "alertmanager": "Alertmanager",
-      "skywalking": "SkyWalking",
-      "uptime-kuma": "Uptime Kuma",
-      "zabbix": "Zabbix",
-      "tencent": "腾讯云",
-      "alibabacloud-sls": "阿里云 SLS",
-      "huaweicloud-ces": "华为云 CES",
-      "volcengine": "火山引擎"
-    }
+    "copyFailed": "复制失败"
   },
   "plugins": {
     "title": "插件管理",
@@ -2292,6 +2276,60 @@
     }
   },
   "alert": {
+    "integration": {
+      "source": {
+        "webhook": "Webhook",
+        "prometheus": "Prometheus",
+        "alertmanager": "Alertmanager",
+        "skywalking": "SkyWalking",
+        "uptime-kuma": "Uptime Kuma",
+        "zabbix": "Zabbix",
+        "tencent": "Tencent Cloud",
+        "alibabacloud-sls": "Alibaba Cloud SLS",
+        "huaweicloud-ces": "Huawei Cloud CES",
+        "volcengine": "Volcengine"
+      },
+      "ack": {
+        "accepted_for_processing": "A successful response means the alert was accepted for processing; it does not prove delivery health."
+      },
+      "limit": {
+        "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "zabbix": {
+          "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
+          "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
+          "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        }
+      },
+      "step": {
+        "configure_bearer_capable_callback": "Configure a callback or trusted gateway that can send the required bearer header."
+      },
+      "webhook": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_request": "Configure the sender to POST the required alert JSON and bearer header.",
+          "verify_alert": "Send a controlled alert and verify it appears in Alert Center."
+        }
+      },
+      "prometheus": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_alertmanager_target": "Configure the Prometheus Alertmanager target and bearer authorization.",
+          "verify_alert": "Send a controlled Prometheus alert and verify it appears in Alert Center."
+        }
+      },
+      "alertmanager": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_webhook": "Configure the Alertmanager webhook receiver and bearer authorization.",
+          "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
+        }
+      },
+      "zabbix": {
+        "step": {
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+        }
+      }
+    },
     "title": "告警中心",
     "description": "查看聚合告警与当前处理状态。",
     "search": "搜索告警",

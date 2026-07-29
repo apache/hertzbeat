@@ -1150,51 +1150,35 @@
     }
   },
   "alertIntegrations": {
+    "states": {
+      "loading": "Loading integration catalog…",
+      "permission": "You do not have permission to view alert integrations.",
+      "unavailable": "Alert integration guides are temporarily unavailable.",
+      "contract": "The server returned an invalid alert integration guide.",
+      "error": "Alert integration guides could not be loaded.",
+      "not-found": "This alert integration is not in the server catalog."
+    },
+    "readiness": {
+      "ready": "This backend guide is ready to configure.",
+      "configuration_required": "This source requires sender or gateway configuration before it can run.",
+      "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
+    },
+    "payloadShape": "Payload shape",
+    "requiredFields": "Required fields",
+    "steps": "Configuration steps",
+    "snippets": "Payload examples",
+    "limitations": "Known limitations",
     "menu": "外部アラート連携",
     "title": "{{source}} 連携",
     "description": "認証済みの HertzBeat 受信エンドポイントへ外部送信元からアラートを送信します。",
     "sourcesLabel": "連携元",
-    "endpointTitle": "受信エンドポイントを使用する",
-    "endpointDescription": "この HertzBeat のオリジンから生成されたエンドポイントへ POST します。",
     "method": "メソッド",
-    "backendSource": "バックエンドアダプター",
     "endpoint": "エンドポイント",
-    "authorizationTitle": "すべてのリクエストを認証する",
-    "authorizationDescription": "受信には Authorization ヘッダーの Bearer API トークンが必要です。",
     "authorizationHeader": "必須ヘッダー",
     "manageTokens": "API トークンを管理",
-    "senderTitle": "送信元を設定する",
-    "senderDescription": "{{source}} が必要なヘッダーとネイティブアラートペイロードを送信するよう設定します。",
-    "configuration": {
-      "webhook": "送信元の HTTP クライアントで、表示されたエンドポイントへアラート JSON を POST し、Content-Type: application/json と必須の Authorization ヘッダーを設定します。",
-      "prometheus": "prometheus.yml の alerting.alertmanagers.static_configs.targets に表示されたエンドポイントのホストとポートを入力し、同じ scheme と必須の Bearer 認証を設定して Prometheus を再読み込みします。Prometheus は /api/v2/alerts へ自動的に POST します。",
-      "alertmanager": "alertmanager.yml の receivers.webhook_configs に表示されたエンドポイントを追加し、send_resolved を有効化して http_config に必須の Bearer 認証を設定し、Alertmanager を再起動します。",
-      "skywalking": "alarm-settings.yml の hooks.webhook.default.urls に表示されたエンドポイントを追加し、SkyWalking OAP Server を再読み込みまたは再起動します。",
-      "uptime-kuma": "「Settings > Notifications > Set Notifications」で Webhook を選び、表示されたエンドポイントを Post URL に設定して application/json プリセットを選択し、保存して監視対象へ関連付けます。",
-      "zabbix": "「Administration > Media types」で Webhook を作成し、表示されたエンドポイントを URL パラメーターにしてスクリプトからアラート JSON を POST します。そのメディアタイプをユーザーとトリガーアクションへ関連付けます。",
-      "tencent": "Tencent Cloud Monitor の「Alarm Management > Notification Templates」でテンプレートを作成し、API Callback に表示されたエンドポイントを設定してアラートポリシーへ関連付けます。",
-      "alibabacloud-sls": "Alibaba Cloud SLS の「Alerts > Notification objects > Webhook integration」で Universal Webhook を作成し、POST と表示されたエンドポイントを設定して通知またはアクションポリシーから選択します。",
-      "huaweicloud-ces": "Huawei Cloud Eye で JSON 通知テンプレートと表示されたエンドポイントを使う HTTP/HTTPS 受信者を作成し、受信者を通知グループとポリシーへ追加して購読要求を確認します。",
-      "volcengine": "Volcengine Cloud Monitor の Callback Address Management で表示されたエンドポイントを使う General Address Callback を作成し、「Manual Notification > Alert Callback」から有効なアラートポリシーへ関連付けます。"
-    },
-    "gatewayWarning": "送信元が Authorization ヘッダーを設定できない場合は、管理者が管理する信頼済みゲートウェイを使用してください。トークンを URL に含めないでください。",
-    "verifyTitle": "配信を確認する",
-    "healthDisclaimer": "この手順の表示だけでは連携の正常性は証明されません。制御されたアラートを送信し、HertzBeat で受信を確認してください。",
     "copy": "コピー",
     "copied": "コピー済み",
-    "copyFailed": "コピー失敗",
-    "sources": {
-      "webhook": "Webhook",
-      "prometheus": "Prometheus",
-      "alertmanager": "Alertmanager",
-      "skywalking": "SkyWalking",
-      "uptime-kuma": "Uptime Kuma",
-      "zabbix": "Zabbix",
-      "tencent": "Tencent Cloud",
-      "alibabacloud-sls": "Alibaba Cloud SLS",
-      "huaweicloud-ces": "Huawei Cloud CES",
-      "volcengine": "Volcengine"
-    }
+    "copyFailed": "コピー失敗"
   },
   "plugins": {
     "title": "プラグイン管理",
@@ -2165,6 +2149,60 @@
     }
   },
   "alert": {
+    "integration": {
+      "source": {
+        "webhook": "Webhook",
+        "prometheus": "Prometheus",
+        "alertmanager": "Alertmanager",
+        "skywalking": "SkyWalking",
+        "uptime-kuma": "Uptime Kuma",
+        "zabbix": "Zabbix",
+        "tencent": "Tencent Cloud",
+        "alibabacloud-sls": "Alibaba Cloud SLS",
+        "huaweicloud-ces": "Huawei Cloud CES",
+        "volcengine": "Volcengine"
+      },
+      "ack": {
+        "accepted_for_processing": "A successful response means the alert was accepted for processing; it does not prove delivery health."
+      },
+      "limit": {
+        "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "zabbix": {
+          "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
+          "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
+          "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+        }
+      },
+      "step": {
+        "configure_bearer_capable_callback": "Configure a callback or trusted gateway that can send the required bearer header."
+      },
+      "webhook": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_request": "Configure the sender to POST the required alert JSON and bearer header.",
+          "verify_alert": "Send a controlled alert and verify it appears in Alert Center."
+        }
+      },
+      "prometheus": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_alertmanager_target": "Configure the Prometheus Alertmanager target and bearer authorization.",
+          "verify_alert": "Send a controlled Prometheus alert and verify it appears in Alert Center."
+        }
+      },
+      "alertmanager": {
+        "step": {
+          "create_token": "Create an API token in Settings.",
+          "configure_webhook": "Configure the Alertmanager webhook receiver and bearer authorization.",
+          "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
+        }
+      },
+      "zabbix": {
+        "step": {
+          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+        }
+      }
+    },
     "title": "アラートセンター",
     "description": "グループ化されたアラートと処理状態を確認します。",
     "search": "アラートを検索",
