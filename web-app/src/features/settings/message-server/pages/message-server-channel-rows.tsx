@@ -9,8 +9,8 @@ import {
 } from '../components/message-server-channel';
 import type { useMessageServerController } from '../controller/use-message-server-controller';
 import {
-  createEmailServerDraft,
-  createSmsServerDraft,
+  createEmailServerDraftFromConfig,
+  createSmsServerDraftFromConfig,
   messageServerStatus,
   smsProviderDefinition,
   validateEmailServerDraft,
@@ -50,7 +50,7 @@ export function EmailServerChannelRow({ controller }: { controller: Controller }
       />
     );
   }
-  const draft = createEmailServerDraft({ status: 'configured', config: state.config });
+  const draft = createEmailServerDraftFromConfig(state.config);
   return (
     <MessageServerChannelRow
       title={t('messageServer.email.title')}
@@ -95,7 +95,7 @@ export function SmsServerChannelRow({ controller }: { controller: Controller }) 
       />
     );
   }
-  const draft = createSmsServerDraft({ status: 'configured', config: state.config });
+  const draft = createSmsServerDraftFromConfig(state.config);
   const provider = smsProviderDefinition(state.config.type);
   return (
     <MessageServerChannelRow

@@ -65,6 +65,7 @@ describe('message server editors', () => {
   it('presents configured email secret state without ever echoing the saved value', () => {
     const configured = createEmailServerDraft({
       status: 'configured',
+      revision: 'email-r1',
       config: {
         type: 0,
         emailHost: 'smtp.example.test',
@@ -127,6 +128,7 @@ describe('message server editors', () => {
     const setSecretCleared = vi.fn();
     const configured = createEmailServerDraft({
       status: 'configured',
+      revision: 'email-r1',
       config: {
         type: 0,
         emailHost: 'smtp.example.test',
@@ -244,6 +246,31 @@ describe('message server editors', () => {
     expect(screen.getByText('messageServer.read.unavailable')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('labels revision-conflict recovery as an explicit reload instead of a blind retry', () => {
+    const reload = vi.fn();
+    render(
+      <EmailServerEditor
+        draft={{ ...createEmailServerDraft(), configuredSecrets: ['emailPassword'] }}
+        saving={false}
+        locked
+        recovery={{
+          messageKey: 'messageServer.revisionConflict',
+          actionKey: 'messageServer.reloadRevision',
+          retryable: true,
+          retry: reload
+        }}
+        update={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('messageServer.revisionConflict')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'messageServer.reloadRevision' }));
+    expect(reload).toHaveBeenCalledOnce();
   });
 
   it('locks SMS fields and exposes no fake retry for an unprovable secret write', () => {

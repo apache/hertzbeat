@@ -18,16 +18,8 @@
 import { useLayoutEffect, useRef } from 'react';
 
 import { classifyMessageServerReadError } from '../api/message-server-api';
-import { isDefiniteMessageServerWriteRejection } from '../api/message-server-write-rejection';
-import {
-  isProofReceipt,
-  useMessageServerSaveRuntime,
-  type CommitUncertainReceipt,
-  type MessageServerSaveOwner,
-  type MessageServerSaveRuntime,
-  type MutationReceipt,
-  type ProofReceipt
-} from './use-message-server-save-runtime';
+import { classifyMessageServerWriteFailure } from '../api/message-server-write-rejection';
+import { useMessageServerSaveRuntime, type MessageServerSaveOwner } from './use-message-server-save-runtime';
 
 export type MessageServerSaveNotifications = {
   invalid: () => void;
@@ -35,26 +27,27 @@ export type MessageServerSaveNotifications = {
   failure: (key: string) => void;
 };
 
-type SaveTransactionOptions<Draft, Evidence> = {
+type RevisionEvidence = { revision: string };
+type SaveTransactionOptions<Draft, Evidence extends RevisionEvidence> = {
   draft: Draft | null;
   validate: (draft: Draft) => string[];
-  write: (draft: Draft) => Promise<Evidence>;
-  reread: () => Promise<{ data: Evidence | undefined; error: unknown }>;
-  converged: (draft: Draft, evidence: Evidence) => boolean;
-  canProveAmbiguousWrite: (draft: Draft) => boolean;
+  revision: () => string | undefined;
+  write: (draft: Draft, revision: string, signal: AbortSignal) => Promise<Evidence>;
+  reload: (signal: AbortSignal) => Promise<Evidence>;
+  acceptWrite: (evidence: Evidence) => void;
+  acceptReload: (evidence: Evidence) => void;
   close: () => void;
-  accept: (evidence: Evidence) => void;
   notifications: MessageServerSaveNotifications;
-  retireProof: () => void;
+  retireRead: () => void;
 };
 
-export function useMessageServerSaveTransaction<Draft, Evidence>(
+export function useMessageServerSaveTransaction<Draft, Evidence extends RevisionEvidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
   canWrite: boolean
 ) {
-  const runtime = useMessageServerSaveRuntime<Draft>();
-  const { retireWriteAccess } = runtime;
-  const { close, retireProof } = options;
+  const runtime = useMessageServerSaveRuntime();
+  const { close, retireRead } = options;
+  const { retire } = runtime;
   const canWriteRef = useRef(canWrite);
   const previousCanWriteRef = useRef(canWrite);
   canWriteRef.current = canWrite;
@@ -62,120 +55,91 @@ export function useMessageServerSaveTransaction<Draft, Evidence>(
     const lostWriteAccess = previousCanWriteRef.current && !canWrite;
     previousCanWriteRef.current = canWrite;
     if (!lostWriteAccess) return;
-    retireWriteAccess();
-    retireProof();
+    retire();
+    retireRead();
     close();
-  }, [canWrite, close, retireProof, retireWriteAccess]);
+  }, [canWrite, close, retire, retireRead]);
   return {
     close: () => {
-      if (!runtime.isLocked()) options.close();
+      if (runtime.isLocked()) return;
+      retire();
+      close();
     },
     isLocked: runtime.isLocked,
     canWrite: () => canWriteRef.current,
-    locked: runtime.command !== 'idle' || runtime.recoveryKey !== null,
+    locked: runtime.isLocked(),
     recoveryKey: runtime.recoveryKey,
     recoveryRetryable: runtime.recoveryRetryable,
-    retry: () => (canWriteRef.current ? retrySave(options, runtime) : Promise.resolve()),
-    proving: runtime.command === 'proving',
+    retry: () => (canWriteRef.current ? reloadRevision(options, runtime) : Promise.resolve()),
+    proving: runtime.command === 'reloading',
     saving: runtime.command === 'saving',
     submit: () => (canWriteRef.current ? submitSave(options, runtime) : Promise.resolve())
   };
 }
 
-async function submitSave<Draft, Evidence>(
+async function submitSave<Draft, Evidence extends RevisionEvidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: MessageServerSaveRuntime<Draft>
+  runtime: ReturnType<typeof useMessageServerSaveRuntime>
 ) {
-  if (runtime.receiptRef.current) return;
+  if (runtime.isLocked()) return;
   const draft = options.draft;
   if (!draft || options.validate(draft).length > 0) return options.notifications.invalid();
-  const owner = runtime.begin('save');
+  const revision = options.revision();
+  if (!revision) return options.notifications.failure('messageServer.revisionRequired');
+  const owner = runtime.begin('saving');
   if (!owner) return;
-  // Own the draft before POST so same-tick callers cannot dispatch it twice.
-  const mutationReceipt: MutationReceipt<Draft> = { phase: 'mutation', draft };
-  runtime.publishReceipt(owner, mutationReceipt);
-  let proofReceipt: ProofReceipt<Draft>;
   try {
-    await options.write(draft);
-    // A valid safe response proves only that the mutation returned normally.
-    // Canonical GET still owns persisted non-secret convergence.
-    proofReceipt = { phase: 'proof-after-acknowledgement', draft, failureKey: null };
-  } catch (error) {
-    if (isDefiniteMessageServerWriteRejection(error)) {
-      runtime.publishReceipt(owner, null);
-      if (runtime.isCurrent(owner)) options.notifications.failure('messageServer.saveFailed');
-      return runtime.finish(owner);
-    }
-    if (!options.canProveAmbiguousWrite(draft)) {
-      const uncertain: CommitUncertainReceipt<Draft> = {
-        phase: 'commit-uncertain',
-        draft,
-        failureKey: 'messageServer.saveNotConverged'
-      };
-      runtime.publishReceipt(owner, uncertain);
-      if (runtime.isCurrent(owner)) options.notifications.failure(uncertain.failureKey);
-      return runtime.finish(owner);
-    }
-    proofReceipt = { phase: 'proof-after-ambiguous-mutation', draft, failureKey: null };
-  }
-  if (!runtime.isCurrent(owner)) return;
-  runtime.publishReceipt(owner, proofReceipt);
-  await proveSave(options, runtime, owner, proofReceipt);
-  runtime.finish(owner);
-}
-
-async function retrySave<Draft, Evidence>(
-  options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: MessageServerSaveRuntime<Draft>
-) {
-  // Recovery is proof-only. It never repeats the write represented by receipt.
-  const receipt = runtime.receiptRef.current;
-  if (!isProofReceipt(receipt) || !receipt.failureKey) return;
-  const owner = runtime.begin('proof');
-  if (!owner) return;
-  await proveSave(options, runtime, owner, receipt);
-  runtime.finish(owner);
-}
-
-async function proveSave<Draft, Evidence>(
-  options: SaveTransactionOptions<Draft, Evidence>,
-  runtime: MessageServerSaveRuntime<Draft>,
-  owner: MessageServerSaveOwner,
-  receipt: ProofReceipt<Draft>
-) {
-  try {
-    const evidence = await rereadAndConverge(options, receipt.draft);
+    const evidence = await options.write(draft, revision, owner.signal);
     if (!runtime.isCurrent(owner)) return;
-    runtime.publishReceipt(owner, null);
-    options.accept(evidence);
+    runtime.clearFailure(owner);
+    options.acceptWrite(evidence);
     options.notifications.success();
+    runtime.finish(owner);
+  } catch (error) {
+    handleWriteFailure(options, runtime, owner, error);
+  }
+}
+
+function handleWriteFailure<Draft, Evidence extends RevisionEvidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  runtime: ReturnType<typeof useMessageServerSaveRuntime>,
+  owner: MessageServerSaveOwner,
+  error: unknown
+) {
+  if (!runtime.isCurrent(owner)) return;
+  const failure = classifyMessageServerWriteFailure(error);
+  if (failure === 'rejected') {
+    runtime.finish(owner);
+    return options.notifications.failure('messageServer.saveFailed');
+  }
+  const key =
+    failure === 'revision-conflict'
+      ? 'messageServer.revisionConflict'
+      : failure === 'revision-required'
+        ? 'messageServer.revisionRequired'
+        : 'messageServer.saveNotConverged';
+  const reloadRequired = failure === 'revision-conflict' || failure === 'commit-uncertain';
+  runtime.fail(owner, key, reloadRequired);
+  options.notifications.failure(key);
+}
+
+async function reloadRevision<Draft, Evidence extends RevisionEvidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  runtime: ReturnType<typeof useMessageServerSaveRuntime>
+) {
+  if (!runtime.needsReload()) return;
+  const owner = runtime.begin('reloading');
+  if (!owner) return;
+  try {
+    const evidence = await options.reload(owner.signal);
+    if (!runtime.isCurrent(owner)) return;
+    options.acceptReload(evidence);
+    runtime.clearFailure(owner);
+    runtime.finish(owner);
   } catch (error) {
     if (!runtime.isCurrent(owner)) return;
-    const failureKey = canonicalReadFailureKey(error);
-    runtime.publishReceipt(owner, { ...receipt, failureKey });
-    options.notifications.failure(failureKey);
+    const key = `messageServer.read.${classifyMessageServerReadError(error)}`;
+    runtime.fail(owner, key, true);
+    options.notifications.failure(key);
   }
-}
-
-async function rereadAndConverge<Draft, Evidence>(options: SaveTransactionOptions<Draft, Evidence>, draft: Draft) {
-  const proof = await options.reread();
-  if (proof.error) throw new AuthoritativeReadError(proof.error);
-  if (!proof.data || !options.converged(draft, proof.data)) throw new AuthoritativeReadError(undefined, true);
-  return proof.data;
-}
-
-class AuthoritativeReadError extends Error {
-  constructor(
-    readonly reason: unknown,
-    readonly missing = false
-  ) {
-    super('Authoritative message server reread failed');
-    this.name = 'AuthoritativeReadError';
-  }
-}
-
-function canonicalReadFailureKey(error: unknown) {
-  if (!(error instanceof AuthoritativeReadError)) return 'messageServer.saveFailed';
-  if (error.missing) return 'messageServer.saveNotConverged';
-  return `messageServer.read.${classifyMessageServerReadError(error.reason)}`;
 }

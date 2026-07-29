@@ -56,12 +56,24 @@ export async function loadSmsServerConfig(signal?: AbortSignal) {
   return mapSmsEvidence(parseSmsEvidenceWire(value));
 }
 
-export async function saveEmailServerConfig(payload: EmailServerPayload) {
-  return parseEmailEvidenceWire(await apiMessagePost(emailServerEndpoint, payload));
+export async function saveEmailServerConfig(
+  payload: EmailServerPayload,
+  expectedRevision: string,
+  signal?: AbortSignal
+) {
+  const request = { ...payload, expectedRevision };
+  const value = signal
+    ? await apiMessagePost(emailServerEndpoint, request, { signal })
+    : await apiMessagePost(emailServerEndpoint, request);
+  return parseEmailEvidenceWire(value);
 }
 
-export async function saveSmsServerConfig(payload: SmsServerPayload) {
-  return mapSmsEvidence(parseSmsEvidenceWire(await apiMessagePost(smsServerEndpoint, payload)));
+export async function saveSmsServerConfig(payload: SmsServerPayload, expectedRevision: string, signal?: AbortSignal) {
+  const request = { ...payload, expectedRevision };
+  const value = signal
+    ? await apiMessagePost(smsServerEndpoint, request, { signal })
+    : await apiMessagePost(smsServerEndpoint, request);
+  return mapSmsEvidence(parseSmsEvidenceWire(value));
 }
 
 export function classifyMessageServerReadError(error: unknown): MessageServerReadFailure {
@@ -79,6 +91,7 @@ function mapSmsEvidence(evidence: SmsEvidenceWire): SmsServerEvidence {
   const fields = smsProviderFieldContracts[evidence.config.type];
   return {
     status: 'configured',
+    revision: evidence.revision,
     config: {
       enable: evidence.config.enable,
       type: evidence.config.type,

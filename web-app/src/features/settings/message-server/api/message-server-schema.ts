@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { smsSecrets } from '../model/message-server-contract';
 
 const nonemptyTextSchema = z.string().refine(value => Boolean(value.trim()), 'Expected nonempty text');
+const revisionSchema = nonemptyTextSchema.refine(value => value !== 'missing', 'Expected configured revision');
 
 // These objects are strict because read responses must contain configuration
 // metadata only. A password echoed by the backend is a contract violation.
@@ -29,8 +30,8 @@ const emailConfigSchema = z
   .strict();
 
 const emailEvidenceSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('configured'), config: emailConfigSchema }).strict(),
-  z.object({ status: z.literal('missing'), config: z.null() }).strict()
+  z.object({ status: z.literal('configured'), revision: revisionSchema, config: emailConfigSchema }).strict(),
+  z.object({ status: z.literal('missing'), revision: z.literal('missing'), config: z.null() }).strict()
 ]);
 
 // SmsServerConfigOptions is serialized with the application's ALWAYS null
@@ -62,8 +63,8 @@ const smsConfigSchema = z
   .strict();
 
 const smsEvidenceSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('configured'), config: smsConfigSchema }).strict(),
-  z.object({ status: z.literal('missing'), config: z.null() }).strict()
+  z.object({ status: z.literal('configured'), revision: revisionSchema, config: smsConfigSchema }).strict(),
+  z.object({ status: z.literal('missing'), revision: z.literal('missing'), config: z.null() }).strict()
 ]);
 
 export class MessageServerContractError extends Error {

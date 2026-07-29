@@ -1979,6 +1979,9 @@
     "saveSuccess": "Channel service configuration saved.",
     "saveFailed": "Channel service configuration could not be saved.",
     "saveNotConverged": "The server did not confirm the saved configuration.",
+    "revisionConflict": "This configuration changed after you opened it. Reload the latest revision, review your edits, and save again.",
+    "revisionRequired": "The client could not provide the required configuration revision.",
+    "reloadRevision": "Reload latest",
     "read": {
       "permission": "You do not have permission to read this channel service configuration.",
       "unavailable": "Configuration storage is unavailable.",

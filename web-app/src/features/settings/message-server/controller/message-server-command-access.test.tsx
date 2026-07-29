@@ -67,10 +67,11 @@ describe('Message Server direct command admission', () => {
     }
   );
 
-  it('retires both drafts and retained proof when ADMIN loses write access', async () => {
+  it('retires both drafts and retained conflict reload when ADMIN loses write access', async () => {
     api.loadEmailServerConfig
       .mockResolvedValueOnce(emailEvidence())
       .mockRejectedValueOnce(new ApiMessageError('redacted'));
+    api.saveEmailServerConfig.mockRejectedValueOnce(new ApiMessageError('redacted', { status: 409 }));
     const session = { roles: ['ADMIN'] };
     const view = renderController(session);
     await waitFor(() => expect(view.result.current.email.kind).toBe('configured'));
@@ -79,6 +80,7 @@ describe('Message Server direct command admission', () => {
       view.result.current.actions.openSms();
     });
     await act(async () => view.result.current.actions.submitEmail());
+    await act(async () => view.result.current.actions.retryEmailSave());
     expect(view.result.current.emailSaveRecovery).toBe('messageServer.read.unavailable');
     const retainedRetry = view.result.current.actions.retryEmailSave;
 
@@ -135,9 +137,10 @@ describe('Message Server direct command admission', () => {
     expect(notify.success).not.toHaveBeenCalled();
   });
 
-  it('cancels active proof ownership so a late reread cannot change cache or notify success', async () => {
+  it('cancels active reload ownership so a late reread cannot change cache or notify success', async () => {
     const proof = deferred<ReturnType<typeof emailEvidence>>();
     api.loadEmailServerConfig.mockResolvedValueOnce(emailEvidence()).mockReturnValueOnce(proof.promise);
+    api.saveEmailServerConfig.mockRejectedValueOnce(new ApiMessageError('redacted', { status: 409 }));
     const session = { roles: ['ADMIN'] };
     const view = renderController(session);
     await waitFor(() => expect(view.result.current.email.kind).toBe('configured'));
@@ -145,9 +148,10 @@ describe('Message Server direct command admission', () => {
       view.result.current.actions.openEmail();
       view.result.current.actions.updateEmail({ emailHost: 'new.example.test' });
     });
+    await act(async () => view.result.current.actions.submitEmail());
     let submit!: Promise<void>;
     act(() => {
-      submit = view.result.current.actions.submitEmail();
+      submit = view.result.current.actions.retryEmailSave();
     });
     await waitFor(() => expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(2));
 
@@ -197,6 +201,7 @@ function wrapper(session: { roles: string[] }) {
 function emailEvidence(patch: Record<string, unknown> = {}) {
   return {
     status: 'configured' as const,
+    revision: 'email-r1',
     config: {
       type: 0,
       emailHost: 'smtp.example.test',
@@ -214,6 +219,7 @@ function emailEvidence(patch: Record<string, unknown> = {}) {
 function smsEvidence() {
   return {
     status: 'configured' as const,
+    revision: 'sms-r1',
     config: {
       enable: false,
       type: 'tencent' as const,

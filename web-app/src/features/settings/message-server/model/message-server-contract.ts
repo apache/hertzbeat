@@ -42,8 +42,11 @@ export type SmsServerPayload = Omit<SmsServerConfig, 'configuredSecrets'> & {
 };
 
 export type EmailServerEvidence =
-  { status: 'configured'; config: EmailServerConfig } | { status: 'missing'; config: null };
-export type SmsServerEvidence = { status: 'configured'; config: SmsServerConfig } | { status: 'missing'; config: null };
+  | { status: 'configured'; revision: string; config: EmailServerConfig }
+  | { status: 'missing'; revision: 'missing'; config: null };
+export type SmsServerEvidence =
+  | { status: 'configured'; revision: string; config: SmsServerConfig }
+  | { status: 'missing'; revision: 'missing'; config: null };
 export type MessageServerReadFailure = 'permission' | 'unavailable' | 'error' | 'invalid';
 
 export const smsProviderFieldContracts: Record<SmsProviderType, readonly SmsProviderFieldContract[]> = {

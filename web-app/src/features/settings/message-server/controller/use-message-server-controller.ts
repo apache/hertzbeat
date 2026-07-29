@@ -44,12 +44,6 @@ import {
   type EmailServerDraft,
   type SmsServerDraft
 } from '../model/message-server-model';
-import {
-  emailServerAmbiguousWriteProvable,
-  emailServerSaveConverged,
-  smsServerAmbiguousWriteProvable,
-  smsServerSaveConverged
-} from '../model/message-server-convergence';
 import { messageServerQueryKeys } from './message-server-query-keys';
 import { messageServerChannelState } from './message-server-channel-state';
 import { useMessageServerActionCapabilities } from './use-message-server-action-capabilities';
@@ -116,24 +110,26 @@ function useEmailServerChannel(
 ) {
   const [draft, setDraft] = useState<EmailServerDraft | null>(null);
   const close = useCallback(() => setDraft(null), []);
-  const retireProof = useCallback(() => {
+  const retireRead = useCallback(() => {
     void queryClient.cancelQueries({ queryKey: messageServerQueryKeys.email() });
   }, [queryClient]);
   const transaction = useMessageServerSaveTransaction(
     {
       draft,
       validate: validateEmailServerDraft,
-      write: value => saveEmailServerConfig(buildEmailServerPayload(value)),
-      reread: query.refetch,
-      converged: emailServerSaveConverged,
-      canProveAmbiguousWrite: emailServerAmbiguousWriteProvable,
+      revision: () => query.data?.revision,
+      write: (value, revision, signal) => saveEmailServerConfig(buildEmailServerPayload(value), revision, signal),
+      reload: loadEmailServerConfig,
       close,
-      accept: evidence => {
+      acceptWrite: evidence => {
         queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
         setDraft(null);
       },
+      acceptReload: evidence => {
+        queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
+      },
       notifications,
-      retireProof
+      retireRead
     },
     canConfigure
   );
@@ -173,24 +169,26 @@ function useSmsServerChannel(
 ) {
   const [draft, setDraft] = useState<SmsServerDraft | null>(null);
   const close = useCallback(() => setDraft(null), []);
-  const retireProof = useCallback(() => {
+  const retireRead = useCallback(() => {
     void queryClient.cancelQueries({ queryKey: messageServerQueryKeys.sms() });
   }, [queryClient]);
   const transaction = useMessageServerSaveTransaction(
     {
       draft,
       validate: validateSmsServerDraft,
-      write: value => saveSmsServerConfig(buildSmsServerPayload(value)),
-      reread: query.refetch,
-      converged: smsServerSaveConverged,
-      canProveAmbiguousWrite: smsServerAmbiguousWriteProvable,
+      revision: () => query.data?.revision,
+      write: (value, revision, signal) => saveSmsServerConfig(buildSmsServerPayload(value), revision, signal),
+      reload: loadSmsServerConfig,
       close,
-      accept: evidence => {
+      acceptWrite: evidence => {
         queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
         setDraft(null);
       },
+      acceptReload: evidence => {
+        queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
+      },
       notifications,
-      retireProof
+      retireRead
     },
     canConfigure
   );

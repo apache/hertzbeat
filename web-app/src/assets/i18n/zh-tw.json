@@ -1964,6 +1964,9 @@
     "saveSuccess": "渠道服務設定已儲存。",
     "saveFailed": "渠道服務設定儲存失敗。",
     "saveNotConverged": "服務端未確認儲存後的設定。",
+    "revisionConflict": "此設定在開啟後已被修改。請重新載入最新版本，檢查編輯內容後再次儲存。",
+    "revisionRequired": "用戶端未能提供必要的設定版本。",
+    "reloadRevision": "重新載入最新版本",
     "read": {
       "permission": "目前帳號無權讀取此渠道服務設定。",
       "unavailable": "設定儲存空間暫時無法使用。",

@@ -1983,6 +1983,9 @@
     "saveSuccess": "Configuração do serviço de canal salva.",
     "saveFailed": "Não foi possível salvar a configuração do serviço de canal.",
     "saveNotConverged": "O servidor não confirmou a configuração salva.",
+    "revisionConflict": "Esta configuração mudou depois que você a abriu. Recarregue a revisão mais recente, confira suas edições e salve novamente.",
+    "revisionRequired": "O cliente não forneceu a revisão obrigatória da configuração.",
+    "reloadRevision": "Recarregar mais recente",
     "read": {
       "permission": "Você não tem permissão para ler esta configuração de serviço de canal.",
       "unavailable": "O armazenamento de configurações está indisponível.",

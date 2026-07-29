@@ -11,10 +11,15 @@ import { MessageServerContractError, parseEmailEvidenceWire, parseSmsEvidenceWir
 
 describe('message server wire schemas', () => {
   it('parses exact configured and missing email evidence', () => {
-    expect(parseEmailEvidenceWire({ status: 'missing', config: null })).toEqual({ status: 'missing', config: null });
+    expect(parseEmailEvidenceWire({ status: 'missing', revision: 'missing', config: null })).toEqual({
+      status: 'missing',
+      revision: 'missing',
+      config: null
+    });
     expect(
       parseEmailEvidenceWire({
         status: 'configured',
+        revision: 'email-r1',
         config: {
           type: 0,
           emailHost: 'smtp.example.test',
@@ -26,10 +31,10 @@ describe('message server wire schemas', () => {
           configuredSecrets: ['emailPassword']
         }
       })
-    ).toMatchObject({ status: 'configured', config: { emailPort: 587 } });
+    ).toMatchObject({ status: 'configured', revision: 'email-r1', config: { emailPort: 587 } });
   });
 
-  it('rejects secret echoes, blank identities, and invalid ports', () => {
+  it('rejects invalid revisions, secret echoes, blank identities, and invalid ports', () => {
     const config = {
       type: 0,
       emailHost: 'smtp.example.test',
@@ -43,45 +48,57 @@ describe('message server wire schemas', () => {
     expect(() =>
       parseEmailEvidenceWire({
         status: 'configured',
+        revision: 'email-r1',
         config: { ...config, emailPassword: 'echoed-secret' }
       })
     ).toThrow(MessageServerContractError);
     expect(() =>
       parseEmailEvidenceWire({
         status: 'configured',
+        revision: 'email-r1',
         config: { ...config, emailHost: '   ' }
       })
     ).toThrow(MessageServerContractError);
     expect(() =>
       parseEmailEvidenceWire({
         status: 'configured',
+        revision: 'email-r1',
         config: { ...config, emailPort: 65_536 }
       })
     ).toThrow(MessageServerContractError);
+    expect(() => parseEmailEvidenceWire({ status: 'missing', revision: 'wrong-create-token', config: null })).toThrow(
+      MessageServerContractError
+    );
+    expect(() => parseEmailEvidenceWire({ status: 'configured', revision: '  ', config })).toThrow(
+      MessageServerContractError
+    );
   });
 
   it('validates the SMS envelope before provider-specific mapping', () => {
     expect(
       parseSmsEvidenceWire({
         status: 'configured',
+        revision: 'sms-r1',
         config: { enable: true, type: 'twilio', options: backendSmsOptions(), configuredSecrets: [] }
       })
     ).toMatchObject({ status: 'configured', config: { type: 'twilio' } });
     expect(() =>
       parseSmsEvidenceWire({
         status: 'configured',
+        revision: 'sms-r1',
         config: { enable: true, type: 'unknown', options: {}, configuredSecrets: [] }
       })
     ).toThrow(MessageServerContractError);
-    expect(() => parseSmsEvidenceWire({ status: 'missing', config: null, token: 'echoed-secret' })).toThrow(
-      MessageServerContractError
-    );
+    expect(() =>
+      parseSmsEvidenceWire({ status: 'missing', revision: 'missing', config: null, token: 'echoed-secret' })
+    ).toThrow(MessageServerContractError);
   });
 
   it('requires the exact read-safe backend SMS options DTO instead of a compact legacy provider shape', () => {
     expect(
       parseSmsEvidenceWire({
         status: 'configured',
+        revision: 'sms-r1',
         config: {
           enable: true,
           type: 'twilio',
@@ -93,6 +110,7 @@ describe('message server wire schemas', () => {
     expect(() =>
       parseSmsEvidenceWire({
         status: 'configured',
+        revision: 'sms-r1',
         config: {
           enable: true,
           type: 'twilio',

@@ -14,7 +14,9 @@ export type MessageServerChannelState<T> =
   | { kind: 'configured'; config: T };
 
 export function messageServerChannelState<T>(
-  query: UseQueryResult<{ status: 'configured'; config: T } | { status: 'missing'; config: null }>
+  query: UseQueryResult<
+    { status: 'configured'; revision: string; config: T } | { status: 'missing'; revision: 'missing'; config: null }
+  >
 ): MessageServerChannelState<T> {
   if (query.isPending) return { kind: 'loading' };
   if (query.error) return { kind: classifyMessageServerReadError(query.error) };

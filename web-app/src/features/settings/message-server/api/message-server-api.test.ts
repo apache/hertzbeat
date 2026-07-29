@@ -40,6 +40,7 @@ describe('message server API contract', () => {
   it('parses configured and missing evidence from only the frozen endpoints', async () => {
     const email = {
       status: 'configured',
+      revision: 'email-r1',
       config: {
         type: 0,
         emailHost: 'smtp.example.test',
@@ -53,6 +54,7 @@ describe('message server API contract', () => {
     };
     const sms = {
       status: 'configured',
+      revision: 'sms-r1',
       config: {
         enable: true,
         type: 'twilio',
@@ -62,11 +64,11 @@ describe('message server API contract', () => {
     };
     apiMessageGet
       .mockResolvedValueOnce(email)
-      .mockResolvedValueOnce({ status: 'missing', config: null })
+      .mockResolvedValueOnce({ status: 'missing', revision: 'missing', config: null })
       .mockResolvedValueOnce(sms);
 
     await expect(loadEmailServerConfig()).resolves.toEqual(email);
-    await expect(loadEmailServerConfig()).resolves.toEqual({ status: 'missing', config: null });
+    await expect(loadEmailServerConfig()).resolves.toEqual({ status: 'missing', revision: 'missing', config: null });
     await expect(loadSmsServerConfig()).resolves.toEqual({
       ...sms,
       config: {
@@ -80,6 +82,7 @@ describe('message server API contract', () => {
   it('maps the backend SMS options DTO to only the selected provider without inventing secret values', async () => {
     apiMessageGet.mockResolvedValue({
       status: 'configured',
+      revision: 'sms-r1',
       config: {
         enable: true,
         type: 'twilio',
@@ -90,6 +93,7 @@ describe('message server API contract', () => {
 
     await expect(loadSmsServerConfig()).resolves.toEqual({
       status: 'configured',
+      revision: 'sms-r1',
       config: {
         enable: true,
         type: 'twilio',
@@ -109,6 +113,7 @@ describe('message server API contract', () => {
   it('accepts an existing configuration whose required secret was explicitly cleared', async () => {
     const email = {
       status: 'configured',
+      revision: 'email-r1',
       config: {
         type: 0,
         emailHost: 'smtp.example.test',
@@ -170,6 +175,7 @@ describe('message server API contract', () => {
   it('posts only caller-built frozen payloads without placing secrets in URLs', async () => {
     const emailEvidence = {
       status: 'configured',
+      revision: 'email-r2',
       config: {
         type: 0,
         emailHost: 'smtp.example.test',
@@ -183,6 +189,7 @@ describe('message server API contract', () => {
     };
     const smsEvidence = {
       status: 'configured',
+      revision: 'sms-r2',
       config: {
         enable: true,
         type: 'twilio',
@@ -207,8 +214,8 @@ describe('message server API contract', () => {
       options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'new-token' }
     };
 
-    await expect(saveEmailServerConfig(email)).resolves.toEqual(emailEvidence);
-    await expect(saveSmsServerConfig(sms)).resolves.toEqual({
+    await expect(saveEmailServerConfig(email, 'email-r1')).resolves.toEqual(emailEvidence);
+    await expect(saveSmsServerConfig(sms, 'sms-r1')).resolves.toEqual({
       ...smsEvidence,
       config: {
         ...smsEvidence.config,
@@ -216,27 +223,42 @@ describe('message server API contract', () => {
       }
     });
 
-    expect(apiMessagePost).toHaveBeenNthCalledWith(1, '/api/config/email', email);
-    expect(apiMessagePost).toHaveBeenNthCalledWith(2, '/api/config/sms', sms);
+    expect(apiMessagePost).toHaveBeenNthCalledWith(1, '/api/config/email', {
+      ...email,
+      expectedRevision: 'email-r1'
+    });
+    expect(apiMessagePost).toHaveBeenNthCalledWith(2, '/api/config/sms', {
+      ...sms,
+      expectedRevision: 'sms-r1'
+    });
     expect(apiMessagePost.mock.calls.map(call => String(call[0])).join(' ')).not.toMatch(/new-secret|new-token/);
   });
 
-  it('preserves an explicit missing mutation result without inventing configuration', async () => {
-    const missing = { status: 'missing', config: null };
+  it('uses the frozen missing revision for first creation', async () => {
+    const missing = { status: 'missing', revision: 'missing', config: null };
     apiMessagePost.mockResolvedValue(missing);
 
     await expect(
-      saveEmailServerConfig({
-        type: 0,
-        emailHost: 'smtp.example.test',
-        emailUsername: 'ops@example.test',
-        emailPort: 587,
-        emailSsl: false,
-        emailStarttls: true,
-        enable: false
-      })
+      saveEmailServerConfig(
+        {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: false
+        },
+        'missing'
+      )
     ).resolves.toEqual(missing);
-    await expect(saveSmsServerConfig({ enable: false, type: 'smslocal', options: {} })).resolves.toEqual(missing);
+    await expect(saveSmsServerConfig({ enable: false, type: 'smslocal', options: {} }, 'missing')).resolves.toEqual(
+      missing
+    );
+    expect(apiMessagePost.mock.calls.map(call => call[1])).toEqual([
+      expect.objectContaining({ expectedRevision: 'missing' }),
+      expect.objectContaining({ expectedRevision: 'missing' })
+    ]);
   });
 
   it.each(['Update config success', { status: 'configured', config: null }])(
@@ -244,15 +266,18 @@ describe('message server API contract', () => {
     async response => {
       apiMessagePost.mockResolvedValue(response);
       await expect(
-        saveEmailServerConfig({
-          type: 0,
-          emailHost: 'smtp.example.test',
-          emailUsername: 'ops@example.test',
-          emailPort: 587,
-          emailSsl: false,
-          emailStarttls: true,
-          enable: true
-        })
+        saveEmailServerConfig(
+          {
+            type: 0,
+            emailHost: 'smtp.example.test',
+            emailUsername: 'ops@example.test',
+            emailPort: 587,
+            emailSsl: false,
+            emailStarttls: true,
+            enable: true
+          },
+          'email-r1'
+        )
       ).rejects.toBeInstanceOf(MessageServerContractError);
     }
   );
@@ -271,11 +296,14 @@ describe('message server API contract', () => {
       }
     });
     await expect(
-      saveSmsServerConfig({
-        enable: true,
-        type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }
-      })
+      saveSmsServerConfig(
+        {
+          enable: true,
+          type: 'twilio',
+          options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }
+        },
+        'sms-r1'
+      )
     ).rejects.toBeInstanceOf(MessageServerContractError);
   });
 });

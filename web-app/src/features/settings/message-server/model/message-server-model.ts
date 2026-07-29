@@ -18,8 +18,10 @@
 import {
   smsProviderFieldContracts,
   type EmailSecret,
+  type EmailServerConfig,
   type EmailServerEvidence,
   type EmailServerPayload,
+  type SmsServerConfig,
   type SmsServerEvidence,
   type SmsServerPayload
 } from './message-server-contract';
@@ -43,7 +45,11 @@ export type EmailServerDraft = Omit<EmailServerPayload, 'emailPassword' | 'clear
 };
 
 export function createEmailServerDraft(evidence?: EmailServerEvidence): EmailServerDraft {
-  if (!evidence || evidence.status === 'missing') {
+  return createEmailServerDraftFromConfig(evidence?.status === 'configured' ? evidence.config : undefined);
+}
+
+export function createEmailServerDraftFromConfig(config?: EmailServerConfig): EmailServerDraft {
+  if (!config) {
     return {
       type: 0,
       emailHost: '',
@@ -57,7 +63,6 @@ export function createEmailServerDraft(evidence?: EmailServerEvidence): EmailSer
       clearSecrets: []
     };
   }
-  const config = evidence.config;
   return {
     type: config.type,
     emailHost: config.emailHost,
@@ -73,7 +78,10 @@ export function createEmailServerDraft(evidence?: EmailServerEvidence): EmailSer
 }
 
 export function createSmsServerDraft(evidence?: SmsServerEvidence): SmsServerDraft {
-  const config = evidence?.status === 'configured' ? evidence.config : undefined;
+  return createSmsServerDraftFromConfig(evidence?.status === 'configured' ? evidence.config : undefined);
+}
+
+export function createSmsServerDraftFromConfig(config?: SmsServerConfig): SmsServerDraft {
   const draft: SmsServerDraft = {
     enable: config?.enable ?? false,
     type: config?.type ?? 'tencent',

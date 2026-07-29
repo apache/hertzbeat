@@ -26,7 +26,7 @@ export function MessageServerSaveRecovery({ recovery }: { recovery: MessageServe
   const retrying = recovery.retrying ?? false;
   const action = recovery.retryable ? (
     <Button disabled={retrying} loading={retrying} onClick={recovery.retry}>
-      {t('common.retry')}
+      {t(recovery.actionKey ?? 'common.retry')}
     </Button>
   ) : undefined;
   return <Alert type="warning" showIcon message={t(recovery.messageKey)} action={action} />;

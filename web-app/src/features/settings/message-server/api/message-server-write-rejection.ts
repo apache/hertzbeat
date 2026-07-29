@@ -23,3 +23,11 @@ export function isDefiniteMessageServerWriteRejection(reason: unknown) {
   if (!(reason instanceof ApiMessageError)) return false;
   return apiMessageWriteOutcome(reason) === 'rejected';
 }
+
+export type MessageServerWriteFailure = 'revision-conflict' | 'revision-required' | 'rejected' | 'commit-uncertain';
+
+export function classifyMessageServerWriteFailure(reason: unknown): MessageServerWriteFailure {
+  if (reason instanceof ApiMessageError && reason.status === 409) return 'revision-conflict';
+  if (reason instanceof ApiMessageError && reason.status === 428) return 'revision-required';
+  return isDefiniteMessageServerWriteRejection(reason) ? 'rejected' : 'commit-uncertain';
+}

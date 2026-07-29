@@ -33,13 +33,38 @@ import {
   validateSmsServerDraft
 } from './message-server-model';
 import { smsProviderTypes } from './message-server-contract';
-import { emailServerSaveConverged, smsServerSaveConverged } from './message-server-convergence';
 
 describe('message server model', () => {
+  it('keeps revision metadata out of editable drafts and secret payload decisions', () => {
+    const draft = createEmailServerDraft({
+      status: 'configured',
+      revision: 'email-r1',
+      config: {
+        type: 0,
+        emailHost: 'smtp.example.test',
+        emailUsername: 'ops@example.test',
+        emailPort: 587,
+        emailSsl: false,
+        emailStarttls: true,
+        enable: true,
+        configuredSecrets: ['emailPassword']
+      }
+    });
+
+    expect(draft).not.toHaveProperty('revision');
+    expect(buildEmailServerPayload(draft)).not.toHaveProperty('expectedRevision');
+    expect(buildEmailServerPayload({ ...draft, emailPassword: 'replacement' })).toMatchObject({
+      emailPassword: 'replacement'
+    });
+    expect(buildEmailServerPayload(setEmailSecretCleared(draft, true))).toMatchObject({
+      clearSecrets: ['emailPassword']
+    });
+  });
   it('builds retain, replace, and explicit-clear email secret mutations', () => {
     const draft = {
       ...createEmailServerDraft({
         status: 'configured',
+        revision: 'email-r1',
         config: {
           type: 0,
           emailHost: ' smtp.example.test ',
@@ -141,6 +166,7 @@ describe('message server model', () => {
   it('retains, replaces, and explicitly clears only active-provider SMS secrets', () => {
     const draft = createSmsServerDraft({
       status: 'configured',
+      revision: 'sms-r1',
       config: {
         enable: true,
         type: 'unisms',
@@ -166,6 +192,7 @@ describe('message server model', () => {
   it('drops configured-secret ownership when the selected provider changes', () => {
     const configured = createSmsServerDraft({
       status: 'configured',
+      revision: 'sms-r1',
       config: {
         enable: true,
         type: 'tencent',
@@ -197,162 +224,5 @@ describe('message server model', () => {
     ]);
     expect(messageServerStatus(false, [])).toBe('disabled');
     expect(messageServerStatus(true, ['emailHost'])).toBe('unconfigured');
-  });
-
-  it('proves email convergence from semantic fields and secret presence without comparing secret values', () => {
-    const draft = {
-      ...createEmailServerDraft(),
-      type: 1,
-      emailHost: ' smtp.new.test ',
-      emailPort: 2525,
-      emailUsername: ' operator@example.test ',
-      emailSsl: false,
-      emailStarttls: true,
-      enable: true,
-      emailPassword: 'replacement'
-    };
-    const matching = {
-      status: 'configured' as const,
-      config: {
-        type: 1,
-        emailHost: 'smtp.new.test',
-        emailPort: 2525,
-        emailUsername: 'operator@example.test',
-        emailSsl: false,
-        emailStarttls: true,
-        enable: true,
-        configuredSecrets: ['emailPassword' as const]
-      }
-    };
-    expect(emailServerSaveConverged(draft, matching)).toBe(true);
-    for (const patch of [
-      { type: 0 },
-      { emailHost: 'smtp.old.test' },
-      { emailPort: 465 },
-      { emailUsername: 'old@example.test' },
-      { emailSsl: true },
-      { emailStarttls: false },
-      { enable: false },
-      { configuredSecrets: [] }
-    ]) {
-      expect(
-        emailServerSaveConverged(draft, {
-          ...matching,
-          config: { ...matching.config, ...patch }
-        })
-      ).toBe(false);
-    }
-    const clearDraft = { ...draft, emailPassword: '', clearSecrets: ['emailPassword' as const] };
-    expect(emailServerSaveConverged(clearDraft, matching)).toBe(false);
-    expect(
-      emailServerSaveConverged(clearDraft, {
-        ...matching,
-        config: { ...matching.config, configuredSecrets: [] }
-      })
-    ).toBe(true);
-    const retainedDraft = createEmailServerDraft(matching);
-    expect(emailServerSaveConverged(retainedDraft, matching)).toBe(true);
-    expect(
-      emailServerSaveConverged(retainedDraft, {
-        ...matching,
-        config: { ...matching.config, configuredSecrets: [] }
-      })
-    ).toBe(false);
-    const absentDraft = { ...retainedDraft, configuredSecrets: [] };
-    expect(emailServerSaveConverged(absentDraft, matching)).toBe(false);
-    expect(emailServerSaveConverged(draft, { status: 'missing', config: null })).toBe(false);
-  });
-
-  it('proves SMS convergence from active nonsecret options and requested secret presence transitions', () => {
-    const draft = {
-      ...createSmsServerDraft(),
-      enable: true,
-      tencent: {
-        secretId: 'replacement',
-        secretKey: '',
-        appId: 'app-new',
-        signName: 'sign-new',
-        templateId: 'template-new'
-      }
-    };
-    const matching = {
-      status: 'configured' as const,
-      config: {
-        enable: true,
-        type: 'tencent' as const,
-        options: { appId: 'app-new', signName: 'sign-new', templateId: 'template-new' },
-        configuredSecrets: ['secretId' as const]
-      }
-    };
-    expect(smsServerSaveConverged(draft, matching)).toBe(true);
-    expect(
-      smsServerSaveConverged(draft, {
-        ...matching,
-        config: { ...matching.config, type: 'alibaba' as const }
-      })
-    ).toBe(false);
-    expect(
-      smsServerSaveConverged(draft, {
-        ...matching,
-        config: { ...matching.config, enable: false }
-      })
-    ).toBe(false);
-    for (const key of ['appId', 'signName', 'templateId']) {
-      expect(
-        smsServerSaveConverged(draft, {
-          ...matching,
-          config: { ...matching.config, options: { ...matching.config.options, [key]: 'old' } }
-        })
-      ).toBe(false);
-    }
-    expect(
-      smsServerSaveConverged(draft, {
-        ...matching,
-        config: { ...matching.config, configuredSecrets: [] }
-      })
-    ).toBe(false);
-    const clearDraft = {
-      ...draft,
-      tencent: { ...draft.tencent, secretId: '' },
-      clearSecrets: ['secretId' as const]
-    };
-    expect(smsServerSaveConverged(clearDraft, matching)).toBe(false);
-    expect(
-      smsServerSaveConverged(clearDraft, {
-        ...matching,
-        config: { ...matching.config, configuredSecrets: [] }
-      })
-    ).toBe(true);
-    const retainedDraft = createSmsServerDraft(matching);
-    expect(smsServerSaveConverged(retainedDraft, matching)).toBe(true);
-    expect(
-      smsServerSaveConverged(retainedDraft, {
-        ...matching,
-        config: { ...matching.config, configuredSecrets: [] }
-      })
-    ).toBe(false);
-    const absentDraft = { ...retainedDraft, configuredSecrets: [] };
-    expect(smsServerSaveConverged(absentDraft, matching)).toBe(false);
-    const hiddenSecretEvidence = {
-      status: 'configured' as const,
-      config: {
-        enable: false,
-        type: 'unisms' as const,
-        options: { accessKeyId: 'id', authMode: 'simple', signature: 'sign', templateId: 'template' },
-        configuredSecrets: ['accessKeySecret' as const]
-      }
-    };
-    const hiddenClearDraft = {
-      ...createSmsServerDraft(hiddenSecretEvidence),
-      clearSecrets: ['accessKeySecret' as const]
-    };
-    expect(smsServerSaveConverged(hiddenClearDraft, hiddenSecretEvidence)).toBe(false);
-    expect(
-      smsServerSaveConverged(hiddenClearDraft, {
-        ...hiddenSecretEvidence,
-        config: { ...hiddenSecretEvidence.config, configuredSecrets: [] }
-      })
-    ).toBe(true);
-    expect(smsServerSaveConverged(draft, { status: 'missing', config: null })).toBe(false);
   });
 });

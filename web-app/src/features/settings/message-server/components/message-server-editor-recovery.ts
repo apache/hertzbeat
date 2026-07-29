@@ -17,6 +17,7 @@
 
 export type MessageServerEditorRecovery = {
   messageKey: string;
+  actionKey?: string;
   retryable: boolean;
   retrying?: boolean;
   retry: () => void;
@@ -29,5 +30,11 @@ export function createMessageServerEditorRecovery(
   retry: () => Promise<void>
 ): MessageServerEditorRecovery | null {
   if (!messageKey) return null;
-  return { messageKey, retryable, retrying, retry: () => void retry() };
+  return {
+    messageKey,
+    ...(messageKey === 'messageServer.revisionConflict' ? { actionKey: 'messageServer.reloadRevision' } : {}),
+    retryable,
+    retrying,
+    retry: () => void retry()
+  };
 }
