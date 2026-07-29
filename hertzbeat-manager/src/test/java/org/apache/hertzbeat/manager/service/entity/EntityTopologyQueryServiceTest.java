@@ -245,7 +245,7 @@ class EntityTopologyQueryServiceTest {
         lenient().when(entityMonitorQueryService.findMonitorsByIds(Set.of(701L))).thenReturn(List.of(monitor));
 
         EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
-                null, 1, "prod", null);
+                null, 1, null, null);
 
         assertTrue(graph.isApiBacked());
         assertNull(graph.getFocusEntityId());
@@ -280,7 +280,8 @@ class EntityTopologyQueryServiceTest {
         }
         List<ObserveEntity> retained = candidates.subList(0, 64);
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(candidates);
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.size() == 64 && ids.contains(1L) && ids.contains(64L) && !ids.contains(65L))))
@@ -297,8 +298,35 @@ class EntityTopologyQueryServiceTest {
         assertEquals(0, graph.getEdgePage().getPageSize());
         assertEquals(0, graph.getEdgePage().getTotalElements());
         assertFalse(graph.getEdgePage().isHasNext());
-        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
-                pageable != null && pageable.getPageSize() == 65));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) -> pageable != null && pageable.getPageSize() == 65));
+    }
+
+    @Test
+    void selectsRequestedEnvironmentBeforeApplyingDefaultSeedLimit() {
+        ObserveEntity olderProductionEntity =
+                entity(1000L, "service", "production-api", "commerce", "prod", "healthy");
+
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class))).thenReturn(List.of(olderProductionEntity));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(1000L)))
+                .thenReturn(List.of(olderProductionEntity));
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "otlp-trace-call");
+
+        assertFalse(graph.isPartial());
+        assertEquals(Set.of(), graph.getPartialReasons());
+        assertEquals(List.of(1000L),
+                graph.getNodes().stream().map(EntityTopologyGraphInfo.Node::getEntityId).toList());
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) ->
+                        pageable != null
+                                && pageable.getPageSize() == 65
+                                && pageable.getSort().getOrderFor("gmtUpdate") != null
+                                && pageable.getSort().getOrderFor("id") != null));
+        verify(entityWorkspaceAccessService, never())
+                .findAccessibleEntitiesForRequestWorkspace(any(Pageable.class));
     }
 
     @Test
@@ -381,7 +409,8 @@ class EntityTopologyQueryServiceTest {
         ObserveEntity leaf = entity(200L, "service", "hb-mix-1780329856-svc-00-000",
                 "scale-mix", "prod", "healthy");
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(seeds);
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.contains(1L) && ids.contains(100L) && ids.contains(111L))))
@@ -397,12 +426,13 @@ class EntityTopologyQueryServiceTest {
         assertTrue(graph.getSourceKinds().contains("otlp-trace-call"));
         assertTrue(graph.getNodes().stream().anyMatch(node ->
                 "hb-mix-1780329856-svc-00-000".equals(node.getEntityName())));
-        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
-                pageable != null
-                        && pageable.isPaged()
-                        && pageable.getPageSize() == 65
-                        && pageable.getSort().getOrderFor("gmtUpdate") != null
-                        && pageable.getSort().getOrderFor("id") != null));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), argThat((Pageable pageable) ->
+                        pageable != null
+                                && pageable.isPaged()
+                                && pageable.getPageSize() == 65
+                                && pageable.getSort().getOrderFor("gmtUpdate") != null
+                                && pageable.getSort().getOrderFor("id") != null));
         verify(traceCallTopologyQueryService, never()).findTraceCallEdges(any(), any(), any(), any(), any());
     }
 
@@ -411,7 +441,8 @@ class EntityTopologyQueryServiceTest {
         ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
         ObserveEntity payment = entity(20L, "service", "payment-api", "commerce", "prod", "healthy");
 
-        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                eq("prod"), any(Pageable.class)))
                 .thenReturn(List.of(checkout, payment));
         when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.containsAll(List.of(10L, 20L))))).thenReturn(List.of(checkout, payment));

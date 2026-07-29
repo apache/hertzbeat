@@ -245,8 +245,11 @@ public class EntityTopologyQueryService {
 
     private DefaultSeedSelection defaultSeedEntities(String environment) {
         Sort sort = Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id"));
-        List<ObserveEntity> entities = entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
-                PageRequest.of(0, DEFAULT_TOPOLOGY_ENTITY_LIMIT + 1, sort));
+        PageRequest seedPage = PageRequest.of(0, DEFAULT_TOPOLOGY_ENTITY_LIMIT + 1, sort);
+        List<ObserveEntity> entities = hasSpecificEnvironment(environment)
+                ? entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                        environment.trim(), seedPage)
+                : entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(seedPage);
         if (entities == null) {
             return new DefaultSeedSelection(List.of(), false);
         }
@@ -257,6 +260,10 @@ public class EntityTopologyQueryService {
                 .filter(entity -> matchesEnvironment(entity, environment))
                 .toList();
         return new DefaultSeedSelection(retained, partial);
+    }
+
+    private boolean hasSpecificEnvironment(String environment) {
+        return StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim());
     }
 
     private record DefaultSeedSelection(List<ObserveEntity> entities, boolean partial) {

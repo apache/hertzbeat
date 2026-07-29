@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
@@ -57,6 +58,23 @@ public class EntityWorkspaceQueryService {
             return observeEntityDao.findAllByWorkspaceId(workspaceId, pageable);
         }
         return observeEntityDao.findAll(pageable).getContent();
+    }
+
+    public List<ObserveEntity> findEntities(String workspaceId, String environment, Pageable pageable) {
+        if (!StringUtils.hasText(environment)) {
+            return findEntities(workspaceId, pageable);
+        }
+        String normalizedEnvironment = environment.trim().toLowerCase(Locale.ROOT);
+        Specification<ObserveEntity> specification = (root, query, criteriaBuilder) -> {
+            var environmentPredicate = criteriaBuilder.equal(
+                    criteriaBuilder.lower(root.<String>get("environment")), normalizedEnvironment);
+            if (!StringUtils.hasText(workspaceId)) {
+                return environmentPredicate;
+            }
+            var workspacePredicate = criteriaBuilder.equal(root.<String>get("workspaceId"), workspaceId);
+            return criteriaBuilder.and(workspacePredicate, environmentPredicate);
+        };
+        return observeEntityDao.findAll(specification, pageable).getContent();
     }
 
     public Page<ObserveEntity> findEntityPage(Specification<ObserveEntity> specification, Pageable pageable) {
