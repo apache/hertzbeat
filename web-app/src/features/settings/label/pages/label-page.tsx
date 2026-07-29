@@ -17,7 +17,6 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { useSession } from '@/core/auth/session-context';
 import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 import { useStringQueryDraft } from '@/shared/query-context';
 
@@ -25,11 +24,12 @@ import { LabelEditor } from '../components/label-editor';
 import { useLabelEditorController } from '../controller/label-editor-controller';
 import { useLabelQueryController } from '../controller/label-query-controller';
 import { useLabelResourceController } from '../controller/label-resource-controller';
-import { labelActionCapabilities, labelCapabilitySignature, type LabelActionCapabilities } from '../model/label-model';
+import { useLabelActionCapabilities } from '../controller/use-label-action-capabilities';
+import { labelCapabilitySignature, type LabelActionCapabilities } from '../model/label-model';
 import { LabelPageActions, LabelWorkspace } from './label-page-workspace';
 
 export function LabelPage() {
-  const capabilities = labelActionCapabilities(useSession().session?.roles ?? []);
+  const capabilities = useLabelActionCapabilities();
   return <LabelCapabilityWorkspace key={labelCapabilitySignature(capabilities)} capabilities={capabilities} />;
 }
 

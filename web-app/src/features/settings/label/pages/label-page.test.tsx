@@ -24,6 +24,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { requireDomElement } from '@/test/dom-element';
 
+import { labelActionCapabilities } from '../model/label-model';
 import { LabelPage } from './label-page';
 
 type TestListState = { kind: string; records?: unknown[]; total?: number };
@@ -52,8 +53,8 @@ const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../controller/label-resource-controller', () => ({
   useLabelResourceController: () => resource
 }));
-vi.mock('@/core/auth/session-context', () => ({
-  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
+vi.mock('../controller/use-label-action-capabilities', () => ({
+  useLabelActionCapabilities: () => labelActionCapabilities(access.roles)
 }));
 
 const serverLabel = {
