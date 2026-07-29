@@ -81,8 +81,7 @@
   font-size: 12px;
 }
 
-.metricValue,
-.alertValue {
+.metricValue {
   color: var(--hb-text-primary);
   font-size: 24px;
   font-weight: 600;
@@ -91,12 +90,6 @@
 
 .metricValue {
   margin: 3px 0 0;
-}
-
-.alertEvidence {
-  display: flex;
-  align-items: center;
-  gap: 14px;
 }
 
 .summaryStatus {

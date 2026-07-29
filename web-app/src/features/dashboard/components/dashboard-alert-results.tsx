@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { isDashboardFailureState, type DashboardAlertState } from '../model/dashboard-model';
 import styles from './dashboard.module.css';
+import { DashboardSummaryMetric } from './dashboard-summary-metric';
 
 export function DashboardAlertSummary({ state }: { state: DashboardAlertState }) {
   const { t } = useTranslation();
@@ -23,17 +24,14 @@ export function DashboardAlertSummary({ state }: { state: DashboardAlertState })
       </Typography.Text>
     );
   }
+  const summary = state.summary;
   return (
-    <div className={styles.alertEvidence}>
-      <span className={styles.alertValue}>{state.summary.total}</span>
-      <div>
-        <div className={styles.metricLabel}>{t('dashboard.alerts')}</div>
-        <Typography.Text type="secondary">
-          {t(state.kind === 'empty' ? 'dashboard.alertEmpty' : 'dashboard.alertReady', {
-            count: state.summary.total
-          })}
-        </Typography.Text>
-      </div>
-    </div>
+    <dl className={styles.monitorEvidence}>
+      <DashboardSummaryMetric label={t('alert.summary.total')} value={summary.total} />
+      <DashboardSummaryMetric label={t('alert.summary.nonFiring')} value={`${summary.dealNum} (${summary.rate}%)`} />
+      <DashboardSummaryMetric label={t('alert.summary.warning')} value={summary.priorityWarningNum} />
+      <DashboardSummaryMetric label={t('alert.summary.critical')} value={summary.priorityCriticalNum} />
+      <DashboardSummaryMetric label={t('alert.summary.emergency')} value={summary.priorityEmergencyNum} />
+    </dl>
   );
 }

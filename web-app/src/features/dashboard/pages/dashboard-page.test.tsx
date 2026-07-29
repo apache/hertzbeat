@@ -19,7 +19,7 @@ import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import { alertRoutePaths, buildMonitorListPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 const controller = vi.hoisted(() => ({ useDashboardController: vi.fn() }));
 vi.mock('../controller/use-dashboard-controller', () => controller);
@@ -142,6 +142,7 @@ describe('DashboardPage', () => {
     );
     renderPage();
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+(?:\.\d+)?%/)).not.toBeInTheDocument();
   });
 
   it('renders zero only from each authoritative empty response', () => {
@@ -158,6 +159,65 @@ describe('DashboardPage', () => {
     expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('0');
     expect(within(monitor).getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
     expect(screen.queryByText(i18n.t('dashboard.distribution'))).not.toBeInTheDocument();
+    const alerts = screen.getByLabelText(i18n.t('dashboard.alertSummary'));
+    expectMetric(alerts, i18n.t('alert.summary.nonFiring'), '0 (100%)');
+    expectMetric(alerts, i18n.t('alert.summary.warning'), '0');
+    expectMetric(alerts, i18n.t('alert.summary.critical'), '0');
+    expectMetric(alerts, i18n.t('alert.summary.emergency'), '0');
+  });
+
+  it('presents every authoritative summary counter and preserves the backend percentage format', () => {
+    controller.useDashboardController.mockReturnValue(
+      withCollector({
+        monitorState: {
+          kind: 'ready',
+          apps: [{ ...app, size: 4, availableSize: 2, unAvailableSize: 1, unManageSize: 1 }]
+        },
+        alertState: {
+          kind: 'ready',
+          summary: {
+            total: 7,
+            dealNum: 2,
+            rate: 28.57,
+            priorityWarningNum: 2,
+            priorityCriticalNum: 2,
+            priorityEmergencyNum: 1
+          }
+        },
+        refresh: vi.fn()
+      })
+    );
+    renderPage();
+
+    const monitors = screen.getByLabelText(i18n.t('dashboard.monitorSummary'));
+    expectMetric(monitors, i18n.t('monitor.status.paused'), '1');
+    const distribution = screen.getByRole('heading', { name: i18n.t('dashboard.distribution') }).closest('section');
+    expect(
+      within(distribution as HTMLElement).getByRole('columnheader', { name: i18n.t('monitor.status.paused') })
+    ).toBeInTheDocument();
+    const alerts = screen.getByLabelText(i18n.t('dashboard.alertSummary'));
+    expectMetric(alerts, i18n.t('alert.summary.total'), '7');
+    expectMetric(alerts, i18n.t('alert.summary.nonFiring'), '2 (28.57%)');
+    expectMetric(alerts, i18n.t('alert.summary.warning'), '2');
+    expectMetric(alerts, i18n.t('alert.summary.critical'), '2');
+    expectMetric(alerts, i18n.t('alert.summary.emergency'), '1');
+    expect(screen.getByLabelText(i18n.t('collectors.title'))).toHaveTextContent(i18n.t('collectors.empty'));
+  });
+
+  it('uses the central monitor-list builder for an accurately encoded application drilldown', () => {
+    const appName = 'mysql/db & cache';
+    controller.useDashboardController.mockReturnValue(
+      withCollector({
+        monitorState: { kind: 'ready', apps: [{ ...app, app: appName }] },
+        alertState: { kind: 'ready', summary: alert(1) },
+        refresh: vi.fn()
+      })
+    );
+    renderPage();
+
+    const expectedTarget = buildMonitorListPath({ app: appName });
+    expect(expectedTarget).toBe('/monitors?app=mysql%2Fdb+%26+cache');
+    expect(screen.getByRole('link', { name: appName })).toHaveAttribute('href', expectedTarget);
   });
 
   it('renders read-only collector status without hiding ready monitor and alert evidence', () => {
@@ -272,4 +332,9 @@ function alert(total: number) {
     priorityCriticalNum: 0,
     priorityEmergencyNum: 0
   };
+}
+
+function expectMetric(scope: HTMLElement, label: string, value: string) {
+  const metric = within(scope).getByText(label).closest('div');
+  expect(metric).toHaveTextContent(value);
 }

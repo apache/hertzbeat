@@ -7,7 +7,9 @@
 
 import { Skeleton, Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
+import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import {
   isDashboardFailureState,
   monitorTotals,
@@ -15,6 +17,7 @@ import {
   type DashboardMonitorState
 } from '../model/dashboard-model';
 import styles from './dashboard.module.css';
+import { DashboardSummaryMetric } from './dashboard-summary-metric';
 
 export function DashboardMonitorSummary({ state }: { state: DashboardMonitorState }) {
   const { t } = useTranslation();
@@ -34,9 +37,10 @@ export function DashboardMonitorSummary({ state }: { state: DashboardMonitorStat
   const totals = monitorTotals(state.apps);
   return (
     <dl className={styles.monitorEvidence}>
-      <DashboardMetric label={t('dashboard.total')} value={totals.total} />
-      <DashboardMetric label={t('dashboard.available')} value={totals.available} />
-      <DashboardMetric label={t('dashboard.unavailable')} value={totals.unavailable} />
+      <DashboardSummaryMetric label={t('dashboard.total')} value={totals.total} />
+      <DashboardSummaryMetric label={t('dashboard.available')} value={totals.available} />
+      <DashboardSummaryMetric label={t('dashboard.unavailable')} value={totals.unavailable} />
+      <DashboardSummaryMetric label={t('monitor.status.paused')} value={totals.unmanaged} />
     </dl>
   );
 }
@@ -60,7 +64,11 @@ export function DashboardMonitorDistribution({ state }: { state: DashboardMonito
 
 function monitorColumns(t: ReturnType<typeof useTranslation>['t']) {
   return [
-    { title: t('dashboard.application'), dataIndex: 'app' },
+    {
+      title: t('dashboard.application'),
+      dataIndex: 'app',
+      render: (value: string) => <Link to={buildMonitorListPath({ app: value })}>{value}</Link>
+    },
     { title: t('dashboard.category'), dataIndex: 'category' },
     { title: t('dashboard.total'), dataIndex: 'size' },
     {
@@ -72,15 +80,11 @@ function monitorColumns(t: ReturnType<typeof useTranslation>['t']) {
       title: t('dashboard.unavailable'),
       dataIndex: 'unAvailableSize',
       render: (value: number) => <Tag color={value > 0 ? 'red' : 'default'}>{value}</Tag>
+    },
+    {
+      title: t('monitor.status.paused'),
+      dataIndex: 'unManageSize',
+      render: (value: number) => <Tag>{value}</Tag>
     }
   ];
-}
-
-function DashboardMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className={styles.metric}>
-      <dt className={styles.metricLabel}>{label}</dt>
-      <dd className={styles.metricValue}>{value}</dd>
-    </div>
-  );
 }
