@@ -131,25 +131,53 @@ nightly_arm64_verify_line=$(grep -n 'verify-hybrid-collector-jvm-package.sh.*lin
   "$nightly_workflow" | head -1 | cut -d: -f1)
 nightly_backend_build_line=$(grep -n 'name: Build the Backend' "$nightly_workflow" \
   | head -1 | cut -d: -f1)
-nightly_collector_image_line=$(grep -n 'name: Build and Push Collector' "$nightly_workflow" \
+nightly_collector_image_line=$(grep -n 'name: Build Collector image for verification' "$nightly_workflow" \
+  | head -1 | cut -d: -f1)
+nightly_collector_scan_line=$(grep -n -- \
+  '--container-image /tmp/hybrid-collector-nightly.oci.tar' "$nightly_workflow" \
+  | head -1 | cut -d: -f1)
+nightly_collector_push_line=$(grep -n 'name: Push verified Collector image' "$nightly_workflow" \
   | head -1 | cut -d: -f1)
 if [ -z "$nightly_runtime_build_line" ] || [ -z "$nightly_no_cgo_verify_line" ] \
     || [ -z "$nightly_backend_build_line" ] || [ -z "$nightly_amd64_verify_line" ] \
     || [ -z "$nightly_arm64_verify_line" ] \
-    || [ -z "$nightly_collector_image_line" ] \
+    || [ -z "$nightly_collector_image_line" ] || [ -z "$nightly_collector_scan_line" ] \
+    || [ -z "$nightly_collector_push_line" ] \
     || [ "$nightly_runtime_build_line" -ge "$nightly_no_cgo_verify_line" ] \
     || [ "$nightly_no_cgo_verify_line" -ge "$nightly_backend_build_line" ] \
     || [ "$nightly_backend_build_line" -ge "$nightly_amd64_verify_line" ] \
     || [ "$nightly_backend_build_line" -ge "$nightly_arm64_verify_line" ] \
     || [ "$nightly_amd64_verify_line" -ge "$nightly_collector_image_line" ] \
-    || [ "$nightly_arm64_verify_line" -ge "$nightly_collector_image_line" ]; then
-  echo "nightly Collector must verify no-CGO runtimes and both Linux JVM Hybrid packages before publication" >&2
+    || [ "$nightly_arm64_verify_line" -ge "$nightly_collector_image_line" ] \
+    || [ "$nightly_collector_image_line" -ge "$nightly_collector_scan_line" ] \
+    || [ "$nightly_collector_scan_line" -ge "$nightly_collector_push_line" ]; then
+  echo "nightly Collector must verify packages, scan the final multi-platform image, then publish it" >&2
   exit 1
 fi
 grep -q 'java-version: 25' "$nightly_workflow"
 grep -q -- '-Pruntime' "$nightly_workflow"
 grep -Fq 'dist/apache-hertzbeat-collector-*-bin-linux_amd64.tar.gz' "$nightly_workflow"
 grep -Fq 'dist/apache-hertzbeat-collector-*-bin-linux_arm64.tar.gz' "$nightly_workflow"
+grep -Fq 'platforms: linux/amd64,linux/arm64' "$nightly_workflow"
+grep -Fq 'outputs: type=oci,dest=/tmp/hybrid-collector-nightly.oci.tar' "$nightly_workflow"
+grep -Fq 'skopeo copy --all --authfile "$HOME/.docker/config.json"' "$nightly_workflow"
+grep -Fq 'oci-archive:/tmp/hybrid-collector-nightly.oci.tar' "$nightly_workflow"
+grep -Fq 'docker://apache/hertzbeat-collector:nightly' "$nightly_workflow"
+nightly_collector_build_section=$(sed -n \
+  "${nightly_collector_image_line},${nightly_collector_scan_line}p" "$nightly_workflow")
+if printf '%s\n' "$nightly_collector_build_section" | grep -q 'push: true'; then
+  echo "nightly Collector must not push before the final OCI image scan" >&2
+  exit 1
+fi
+if [ "$(grep -c -- '--container-image /tmp/hybrid-collector-nightly.oci.tar' "$nightly_workflow")" -ne 1 ] \
+    || [ "$(grep -c 'docker://apache/hertzbeat-collector:nightly' "$nightly_workflow")" -ne 1 ]; then
+  echo "nightly Collector must scan and publish exactly one final multi-platform OCI archive" >&2
+  exit 1
+fi
+if grep -q 'name: Build and Push Collector' "$nightly_workflow"; then
+  echo "nightly Collector must publish the verified OCI archive instead of rebuilding during push" >&2
+  exit 1
+fi
 if grep -q 'verify-hybrid-collector-jvm-package.sh.*generic' "$nightly_workflow"; then
   echo "nightly Collector publication must not verify or publish the generic JVM-only package" >&2
   exit 1
