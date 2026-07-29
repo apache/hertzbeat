@@ -178,7 +178,7 @@ describe('useMonitorDefinitionController', () => {
   });
 
   it('reconciles the catalog after an uncertain update while preserving the draft for review', async () => {
-    api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain'));
+    api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     const { result } = renderController();
     await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
     await act(() => result.current.actions.openEdit('mysql'));
@@ -195,7 +195,7 @@ describe('useMonitorDefinitionController', () => {
   });
 
   it('reconciles the catalog after an uncertain delete while preserving its confirmation evidence', async () => {
-    api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain'));
+    api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     const { result } = renderController();
     await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
     act(() => result.current.actions.requestDelete(item));
@@ -206,6 +206,199 @@ describe('useMonitorDefinitionController', () => {
     expect(result.current.deleteTarget).toEqual(item);
     await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
   });
+
+  it.each([
+    ['create', 'uncertain', 2],
+    ['create', 'rejected', 1],
+    ['update', 'uncertain', 2],
+    ['update', 'rejected', 1],
+    ['delete', 'uncertain', 2],
+    ['delete', 'rejected', 1]
+  ] as const)(
+    'uses one catalog proof after a %s write is %s and never replays the mutation',
+    async (operation, outcome, catalogCalls) => {
+      const writeError = new MonitorDefinitionRequestError('unavailable', outcome);
+      const provedItem = { ...item, label: 'Authoritative MySQL' };
+      api.catalog.mockResolvedValue({ schemaVersion: 1, items: [item] });
+      if (outcome === 'uncertain') {
+        api.catalog
+          .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+          .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] })
+          .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] });
+      }
+      if (operation === 'create') api.create.mockRejectedValueOnce(writeError);
+      if (operation === 'update') api.update.mockRejectedValueOnce(writeError);
+      if (operation === 'delete') api.remove.mockRejectedValueOnce(writeError);
+      const client = testClient();
+      const publish = vi.spyOn(client, 'setQueryData');
+      const view = renderController(client);
+      await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+
+      if (operation === 'create') {
+        act(() => view.result.current.actions.openCreate());
+        act(() => view.result.current.actions.setDefinition('app: custom'));
+        await act(() => view.result.current.actions.save());
+        expect(view.result.current.workspace).toMatchObject({
+          kind: 'edit',
+          draft: { mode: 'create', definition: 'app: custom' },
+          failure: 'unavailable',
+          writeRecovery: outcome === 'uncertain' ? 'uncertain' : null
+        });
+      } else if (operation === 'update') {
+        await act(() => view.result.current.actions.openEdit('mysql'));
+        act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
+        await act(() => view.result.current.actions.save());
+        expect(view.result.current.workspace).toMatchObject({
+          kind: 'edit',
+          draft: { mode: 'update', definition: 'app: mysql\nname: local', revision },
+          failure: 'unavailable',
+          writeRecovery: outcome === 'uncertain' ? 'uncertain' : null
+        });
+      } else {
+        act(() => view.result.current.actions.requestDelete(item));
+        await act(() => view.result.current.actions.confirmDelete());
+        expect(view.result.current.deleteTarget).toEqual(item);
+        expect(view.result.current.deleteFailure).toBe('unavailable');
+        expect(view.result.current.deleteWriteRecovery).toBe(outcome === 'uncertain' ? 'uncertain' : null);
+      }
+
+      await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(catalogCalls));
+      let write = api.remove;
+      if (operation === 'create') write = api.create;
+      else if (operation === 'update') write = api.update;
+      if (outcome === 'uncertain') {
+        expect(publish).toHaveBeenCalled();
+        await waitFor(() => expect(view.result.current.items).toEqual([provedItem]));
+        if (operation === 'delete') {
+          await act(() => view.result.current.actions.confirmDelete());
+          await act(() => view.result.current.actions.retryDeleteProof());
+        } else {
+          await act(() => view.result.current.actions.save());
+          await act(() => view.result.current.actions.validate());
+          act(() => view.result.current.actions.setDefinition('replaced'));
+          await act(() => view.result.current.actions.retryWorkspaceProof());
+        }
+        expect(api.catalog).toHaveBeenCalledTimes(3);
+      }
+      expect(write).toHaveBeenCalledOnce();
+      expect(view.result.current.notice).toBeNull();
+    }
+  );
+
+  it.each(['save', 'delete'] as const)(
+    'preserves the original %s failure when its authoritative catalog proof fails',
+    async operation => {
+      api.catalog
+        .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+        .mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable'));
+      if (operation === 'save') {
+        api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+      } else {
+        api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+      }
+      const view = renderController();
+      await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+
+      if (operation === 'save') {
+        await act(() => view.result.current.actions.openEdit('mysql'));
+        act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
+        await act(() => view.result.current.actions.save());
+        expect(view.result.current.workspace).toMatchObject({
+          kind: 'edit',
+          draft: { definition: 'app: mysql\nname: local', revision },
+          failure: 'unavailable'
+        });
+        expect(api.update).toHaveBeenCalledOnce();
+      } else {
+        act(() => view.result.current.actions.requestDelete(item));
+        await act(() => view.result.current.actions.confirmDelete());
+        expect(view.result.current.deleteTarget).toEqual(item);
+        expect(view.result.current.deleteFailure).toBe('unavailable');
+        expect(api.remove).toHaveBeenCalledOnce();
+      }
+      expect(api.catalog).toHaveBeenCalledTimes(2);
+      expect(view.result.current.notice).toBeNull();
+    }
+  );
+
+  it('does not let an older catalog refresh overwrite post-failure proof evidence', async () => {
+    const staleRefresh = deferred<{ schemaVersion: 1; items: [typeof item] }>();
+    const provedItem = { ...item, label: 'Post-failure proof' };
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockReturnValueOnce(staleRefresh.promise)
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] });
+    api.create.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+    const client = testClient();
+    const view = renderController(client);
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+
+    act(() => view.result.current.actions.refresh());
+    await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
+    act(() => view.result.current.actions.openCreate());
+    act(() => view.result.current.actions.setDefinition('app: custom'));
+    await act(() => view.result.current.actions.save());
+    await waitFor(() => expect(view.result.current.items).toEqual([provedItem]));
+
+    staleRefresh.resolve({ schemaVersion: 1, items: [item] });
+    await act(async () => staleRefresh.promise);
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+
+    expect(view.result.current.items).toEqual([provedItem]);
+    expect(api.create).toHaveBeenCalledOnce();
+    expect(api.catalog).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(['save', 'delete'] as const)(
+    'retires an in-flight %s catalog proof on ADMIN loss without late cache or UI publication',
+    async operation => {
+      const proof = deferred<{ schemaVersion: 1; items: [typeof item] }>();
+      api.catalog.mockResolvedValueOnce({ schemaVersion: 1, items: [item] }).mockReturnValueOnce(proof.promise);
+      if (operation === 'save') {
+        api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+      } else {
+        api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+      }
+      const client = testClient();
+      const publish = vi.spyOn(client, 'setQueryData');
+      const view = renderController(client);
+      await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+      publish.mockClear();
+      let command!: Promise<void>;
+      if (operation === 'save') {
+        await act(() => view.result.current.actions.openEdit('mysql'));
+        act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
+        act(() => {
+          command = view.result.current.actions.save();
+        });
+      } else {
+        act(() => view.result.current.actions.requestDelete(item));
+        act(() => {
+          command = view.result.current.actions.confirmDelete();
+        });
+      }
+      await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
+      const proofSignal = api.catalog.mock.calls[1]?.[1];
+
+      auth.roles = ['USER'];
+      view.rerender();
+      await waitFor(() =>
+        operation === 'save'
+          ? expect(view.result.current.workspace).toBeNull()
+          : expect(view.result.current.deleteTarget).toBeNull()
+      );
+      expect(proofSignal).toBeInstanceOf(AbortSignal);
+      expect(proofSignal?.aborted).toBe(true);
+
+      proof.resolve({ schemaVersion: 1, items: [{ ...item, label: 'Late proof' }] });
+      await act(async () => command);
+      expect(publish).not.toHaveBeenCalled();
+      expect(view.result.current.workspace).toBeNull();
+      expect(view.result.current.deleteFailure).toBeNull();
+      expect(view.result.current.notice).toBeNull();
+      expect(operation === 'save' ? api.update : api.remove).toHaveBeenCalledOnce();
+    }
+  );
 
   it.each(['resolve', 'reject'] as const)(
     'retires an in-flight save on ADMIN loss and ignores its late %s',
@@ -233,7 +426,7 @@ describe('useMonitorDefinitionController', () => {
       expect(signal?.aborted).toBe(true);
 
       if (completion === 'resolve') write.resolve(detail);
-      else write.reject(new MonitorDefinitionRequestError('state-uncertain'));
+      else write.reject(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
       await act(async () => save);
 
       expect(view.result.current.workspace).toBeNull();
@@ -270,7 +463,7 @@ describe('useMonitorDefinitionController', () => {
       if (completion === 'resolve') {
         removal.resolve({ schemaVersion: 1, app: 'mysql', disposition: 'builtin_restored' });
       } else {
-        removal.reject(new MonitorDefinitionRequestError('state-uncertain'));
+        removal.reject(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
       }
       await act(async () => deletion);
 

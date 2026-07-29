@@ -9,6 +9,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { buildCreateDraft, type MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
 import {
+  proveOwnedMonitorDefinitionCatalog,
+  type MonitorDefinitionCatalogProof
+} from './monitor-definition-catalog-proof';
+import {
   createMonitorDefinitionOperationOwner,
   type MonitorDefinitionOperationOwner
 } from './monitor-definition-operation-owner';
@@ -19,7 +23,12 @@ import {
   runMonitorDefinitionEditorCommand
 } from './monitor-definition-workspace-commands';
 
-export function useMonitorDefinitionWorkspace(options: { canWrite: boolean; language: string; onChanged: () => void }) {
+export function useMonitorDefinitionWorkspace(options: {
+  canWrite: boolean;
+  catalogProof: MonitorDefinitionCatalogProof;
+  language: string;
+  onChanged: () => void;
+}) {
   const [workspace, setWorkspace] = useState<MonitorDefinitionWorkspace | null>(null);
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const canWriteRef = useRef(options.canWrite);
@@ -47,6 +56,7 @@ type WorkspaceActionContext = {
   owner: MonitorDefinitionOperationOwner;
   setWorkspace: (value: MonitorDefinitionWorkspace | null) => void;
   canWrite: boolean;
+  catalogProof: MonitorDefinitionCatalogProof;
   language: string;
   onChanged: () => void;
 };
@@ -77,14 +87,15 @@ function workspaceOpenActions(context: WorkspaceActionContext) {
 }
 
 function workspaceEditorActions(context: WorkspaceActionContext) {
-  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, language, onChanged } = context;
+  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, catalogProof, language, onChanged } =
+    context;
   const run = (operation: 'validate' | 'save' | 'refresh') =>
     runMonitorDefinitionEditorCommand(
       operation,
       workspace,
       actionEpoch,
       workspaceRef,
-      { canWriteRef, language, onChanged },
+      { canWriteRef, catalogProof, language, onChanged },
       owner,
       setWorkspace
     );
@@ -94,22 +105,46 @@ function workspaceEditorActions(context: WorkspaceActionContext) {
         !owner.matches(actionEpoch) ||
         workspaceRef.current !== workspace ||
         owner.closeBlocked() ||
-        (workspace?.kind === 'edit' && workspace.pending)
+        (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
       )
         return;
       owner.retire();
       setWorkspace(null);
     },
     setDefinition: (definition: string) => {
-      if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceRef.current !== workspace) return;
-      setWorkspace(
-        workspace?.kind === 'edit'
-          ? { ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null }
-          : workspace
-      );
+      if (
+        !canWriteRef.current ||
+        !owner.matches(actionEpoch) ||
+        workspaceRef.current !== workspace ||
+        workspace?.kind !== 'edit' ||
+        workspace.writeRecovery
+      )
+        return;
+      setWorkspace({ ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null });
     },
     validate: () => run('validate'),
     save: () => run('save'),
-    refreshAuthoritativeDraft: () => run('refresh')
+    refreshAuthoritativeDraft: () => run('refresh'),
+    retryWorkspaceProof: () => retryWorkspaceCatalogProof(context)
   };
+}
+
+async function retryWorkspaceCatalogProof(context: WorkspaceActionContext) {
+  const { workspace, workspaceRef, canWriteRef, actionEpoch, owner, catalogProof, setWorkspace } = context;
+  if (
+    !canWriteRef.current ||
+    !owner.matches(actionEpoch) ||
+    workspaceRef.current !== workspace ||
+    workspace?.kind !== 'edit' ||
+    workspace.writeRecovery !== 'uncertain' ||
+    owner.busy()
+  )
+    return;
+  const operation = owner.begin('catalog-proof');
+  setWorkspace({ ...workspace, pending: 'proof' });
+  await proveOwnedMonitorDefinitionCatalog(catalogProof, operation, owner);
+  if (owner.owns(operation)) {
+    owner.complete(operation);
+    setWorkspace({ ...workspace, pending: null });
+  }
 }

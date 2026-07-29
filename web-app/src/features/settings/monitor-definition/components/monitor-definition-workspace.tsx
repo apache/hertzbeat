@@ -21,13 +21,14 @@ export function MonitorDefinitionWorkspaceView(props: {
   onCancel: () => void;
   onChange: (value: string) => void;
   onRefreshAuthoritativeDraft: () => void;
+  onRetryCatalogProof: () => void;
   onRetry: () => void;
   onSave: () => void;
   onValidate: () => void;
 }) {
   const { t } = useTranslation();
   const workspace = props.workspace;
-  const commandPending = workspace?.kind === 'edit' && workspace.pending !== null;
+  const commandPending = workspace?.kind === 'edit' && workspace.pending !== null && workspace.pending !== 'proof';
   return (
     <Drawer
       width={720}
@@ -76,11 +77,7 @@ function DefinitionEditor(
           type="error"
           showIcon
           message={t(monitorDefinitionFailureMessageKey(workspace.failure))}
-          action={
-            monitorDefinitionCanRefreshAuthoritativeDraft(workspace) ? (
-              <Button onClick={props.onRefreshAuthoritativeDraft}>{t('monitorDefinitions.refreshConflict')}</Button>
-            ) : undefined
-          }
+          action={definitionFailureAction(workspace, props, t)}
         />
       )}
       {workspace.validation && (
@@ -91,27 +88,54 @@ function DefinitionEditor(
         id="monitor-definition-yaml"
         className={styles.editor ?? ''}
         value={workspace.draft.definition}
-        disabled={workspace.pending !== null}
+        disabled={workspace.pending !== null || workspace.writeRecovery !== null}
         onChange={event => props.onChange(event.target.value)}
         autoSize={{ minRows: 18, maxRows: 30 }}
         spellCheck={false}
       />
-      <Space wrap>
-        <Button onClick={props.onCancel} disabled={workspace.pending !== null}>
-          {t('common.cancel')}
-        </Button>
-        <Button onClick={props.onValidate} loading={workspace.pending === 'validate'}>
-          {t('monitorDefinitions.validate')}
-        </Button>
-        <Button
-          type="primary"
-          onClick={props.onSave}
-          loading={workspace.pending === 'save'}
-          disabled={!workspace.draft.definition.trim()}
-        >
-          {t('common.save')}
-        </Button>
-      </Space>
+      <DefinitionEditorActions {...props} workspace={workspace} />
+    </Space>
+  );
+}
+
+function definitionFailureAction(
+  workspace: Extract<MonitorDefinitionWorkspace, { kind: 'edit' }>,
+  props: Parameters<typeof MonitorDefinitionWorkspaceView>[0],
+  t: TFunction
+) {
+  if (workspace.writeRecovery === 'uncertain') {
+    return (
+      <Button loading={workspace.pending === 'proof'} onClick={props.onRetryCatalogProof}>
+        {t('common.refresh')}
+      </Button>
+    );
+  }
+  if (monitorDefinitionCanRefreshAuthoritativeDraft(workspace)) {
+    return <Button onClick={props.onRefreshAuthoritativeDraft}>{t('monitorDefinitions.refreshConflict')}</Button>;
+  }
+  return undefined;
+}
+
+function DefinitionEditorActions(props: Parameters<typeof DefinitionEditor>[0]) {
+  const { t } = useTranslation();
+  const { workspace } = props;
+  const commandLocked = workspace.pending !== null || workspace.writeRecovery !== null;
+  return (
+    <Space wrap>
+      <Button onClick={props.onCancel} disabled={workspace.pending !== null && workspace.pending !== 'proof'}>
+        {t('common.cancel')}
+      </Button>
+      <Button onClick={props.onValidate} loading={workspace.pending === 'validate'} disabled={commandLocked}>
+        {t('monitorDefinitions.validate')}
+      </Button>
+      <Button
+        type="primary"
+        onClick={props.onSave}
+        loading={workspace.pending === 'save'}
+        disabled={!workspace.draft.definition.trim() || commandLocked}
+      >
+        {t('common.save')}
+      </Button>
     </Space>
   );
 }

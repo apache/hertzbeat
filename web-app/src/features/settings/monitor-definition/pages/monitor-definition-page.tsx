@@ -49,6 +49,7 @@ export function MonitorDefinitionPage() {
         onCancel={controller.actions.closeWorkspace}
         onChange={controller.actions.setDefinition}
         onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
+        onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
         onRetry={() => void controller.actions.retryWorkspace()}
         onSave={() => void controller.actions.save()}
         onValidate={() => void controller.actions.validate()}
@@ -99,8 +100,12 @@ function DeleteDialog({ controller }: { controller: ReturnType<typeof useMonitor
       title={t('monitorDefinitions.deleteTitle')}
       okText={t('common.delete')}
       cancelText={t('common.cancel')}
-      okButtonProps={{ danger: true, loading: controller.deletePending }}
-      cancelButtonProps={{ disabled: controller.deletePending }}
+      okButtonProps={{
+        danger: true,
+        loading: controller.deletePending && controller.deleteWriteRecovery === null,
+        disabled: controller.deleteWriteRecovery !== null
+      }}
+      cancelButtonProps={{ disabled: controller.deletePending && controller.deleteWriteRecovery === null }}
       onCancel={controller.actions.cancelDelete}
       onOk={() => void controller.actions.confirmDelete()}
     >
@@ -108,7 +113,18 @@ function DeleteDialog({ controller }: { controller: ReturnType<typeof useMonitor
         {t('monitorDefinitions.deleteConfirm', { app: controller.deleteTarget?.label ?? '' })}
       </Typography.Paragraph>
       {controller.deleteFailure && (
-        <Alert type="error" showIcon message={t(monitorDefinitionFailureMessageKey(controller.deleteFailure))} />
+        <Alert
+          type="error"
+          showIcon
+          message={t(monitorDefinitionFailureMessageKey(controller.deleteFailure))}
+          action={
+            controller.deleteWriteRecovery === 'uncertain' ? (
+              <Button loading={controller.deletePending} onClick={() => void controller.actions.retryDeleteProof()}>
+                {t('common.refresh')}
+              </Button>
+            ) : undefined
+          }
+        />
       )}
     </Modal>
   );

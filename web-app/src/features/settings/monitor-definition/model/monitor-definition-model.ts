@@ -49,8 +49,9 @@ export type MonitorDefinitionWorkspace =
       kind: 'edit';
       draft: MonitorDefinitionDraft;
       failure: MonitorDefinitionFailureKind | null;
-      pending: 'load' | 'validate' | 'save' | 'refresh' | null;
+      pending: 'load' | 'validate' | 'save' | 'refresh' | 'proof' | null;
       validation: MonitorDefinitionValidation | null;
+      writeRecovery: 'uncertain' | null;
     };
 
 export type MonitorDefinitionFailureKind =
@@ -104,15 +105,12 @@ export function userCanWriteMonitorDefinitions(roles: readonly string[]) {
   return roles.includes('ADMIN');
 }
 
-export function monitorDefinitionNeedsCatalogReconciliation(failure: MonitorDefinitionFailureKind) {
-  return failure === 'state-uncertain';
-}
-
 export function monitorDefinitionCanRefreshAuthoritativeDraft(workspace: MonitorDefinitionWorkspace) {
   return (
     workspace.kind === 'edit' &&
     workspace.draft.mode === 'update' &&
-    (workspace.failure === 'revision-conflict' || workspace.failure === 'state-uncertain')
+    workspace.failure === 'revision-conflict' &&
+    workspace.writeRecovery === null
   );
 }
 

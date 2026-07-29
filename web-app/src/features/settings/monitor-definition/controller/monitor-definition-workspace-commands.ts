@@ -15,18 +15,23 @@ import {
 import {
   buildUpdateDraft,
   monitorDefinitionDraftRequiredFailure,
-  monitorDefinitionNeedsCatalogReconciliation,
   type MonitorDefinitionDetail,
   type MonitorDefinitionDraft,
   type MonitorDefinitionFailureKind,
   type MonitorDefinitionValidation,
   type MonitorDefinitionWorkspace
 } from '../model/monitor-definition-model';
+import {
+  monitorDefinitionWriteNeedsCatalogProof,
+  proveOwnedMonitorDefinitionCatalog,
+  type MonitorDefinitionCatalogProof
+} from './monitor-definition-catalog-proof';
 import type { MonitorDefinitionOperation, MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
 
-type Pending = 'load' | 'validate' | 'save' | 'refresh' | null;
+type Pending = 'load' | 'validate' | 'save' | 'refresh' | 'proof' | null;
 type EditorCommandOptions = {
   canWriteRef: { current: boolean };
+  catalogProof: MonitorDefinitionCatalogProof;
   language: string;
   onChanged: () => void;
 };
@@ -53,7 +58,7 @@ export async function loadMonitorDefinitionWorkspace(
 }
 
 export async function runMonitorDefinitionEditorCommand(
-  operation: Exclude<Pending, 'load' | null>,
+  operation: Exclude<Pending, 'load' | 'proof' | null>,
   workspace: MonitorDefinitionWorkspace | null,
   actionEpoch: number,
   workspaceRef: { current: MonitorDefinitionWorkspace | null },
@@ -74,8 +79,14 @@ export async function runMonitorDefinitionEditorCommand(
   } catch (error) {
     if (!owner.owns(command)) return;
     const failure = monitorDefinitionFailureKind(error);
-    if (operation === 'save' && monitorDefinitionNeedsCatalogReconciliation(failure)) options.onChanged();
-    publish({ ...workspace, pending: null, failure });
+    const writeUncertain = operation === 'save' && monitorDefinitionWriteNeedsCatalogProof(error);
+    if (writeUncertain) {
+      owner.markCatalogProof(command);
+      publish({ ...workspace, pending: 'proof', failure, writeRecovery: 'uncertain' });
+      await proveOwnedMonitorDefinitionCatalog(options.catalogProof, command, owner);
+    }
+    if (!owner.owns(command)) return;
+    publish({ ...workspace, pending: null, failure, writeRecovery: writeUncertain ? 'uncertain' : null });
   } finally {
     owner.complete(command);
   }
@@ -85,7 +96,7 @@ export function editMonitorDefinitionWorkspace(
   draft: MonitorDefinitionDraft,
   failure: MonitorDefinitionFailureKind | null = null
 ): MonitorDefinitionWorkspace {
-  return { kind: 'edit', draft, failure, pending: null, validation: null };
+  return { kind: 'edit', draft, failure, pending: null, validation: null, writeRecovery: null };
 }
 
 export function monitorDefinitionWorkspaceRequiresWrite(workspace: MonitorDefinitionWorkspace | null) {
@@ -108,6 +119,7 @@ function editorCommandAllowed(
     workspaceRef.current === workspace &&
     workspace?.kind === 'edit' &&
     !workspace.pending &&
+    workspace.writeRecovery === null &&
     !owner.busy()
   );
 }

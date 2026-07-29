@@ -28,15 +28,24 @@ export function useMonitorDefinitionController() {
   const canWrite = userCanWriteMonitorDefinitions(session?.roles ?? []);
   const [search, setSearch] = useState('');
   const queryClient = useQueryClient();
+  const catalogQueryKey = monitorDefinitionQueryKeys.catalog(language);
   const catalog = useQuery({
-    queryKey: monitorDefinitionQueryKeys.catalog(language),
-    queryFn: () => loadMonitorDefinitionCatalog(language)
+    queryKey: catalogQueryKey,
+    queryFn: ({ signal }) => loadMonitorDefinitionCatalog(language, signal)
   });
   const changed = () => {
     void queryClient.invalidateQueries({ queryKey: monitorDefinitionQueryKeys.all });
   };
-  const workspace = useMonitorDefinitionWorkspace({ canWrite, language, onChanged: changed });
-  const deletion = useMonitorDefinitionDelete(canWrite, changed);
+  const catalogProof = {
+    load: async (signal: AbortSignal) => {
+      await queryClient.cancelQueries({ queryKey: catalogQueryKey });
+      signal.throwIfAborted();
+      return loadMonitorDefinitionCatalog(language, signal);
+    },
+    publish: (value: NonNullable<typeof catalog.data>) => queryClient.setQueryData(catalogQueryKey, value)
+  };
+  const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language, onChanged: changed });
+  const deletion = useMonitorDefinitionDelete(canWrite, catalogProof, changed);
   const records = catalog.data?.items ?? [];
   const failure = catalog.error instanceof MonitorDefinitionRequestError ? catalog.error.kind : 'error';
   let listState: ListState = { kind: 'ready' };
@@ -48,6 +57,7 @@ export function useMonitorDefinitionController() {
     deleteFailure: deletion.deleteFailure,
     deletePending: deletion.deletePending,
     deleteTarget: deletion.deleteTarget,
+    deleteWriteRecovery: deletion.deleteWriteRecovery,
     items: filterMonitorDefinitions(records, search),
     listState,
     notice: deletion.notice,

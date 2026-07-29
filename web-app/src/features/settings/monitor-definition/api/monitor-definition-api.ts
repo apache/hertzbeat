@@ -12,6 +12,7 @@ import {
   apiMessagePost,
   apiMessagePut
 } from '@/core/http/api-message';
+import { apiMessageWriteOutcome, type ApiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import type {
   MonitorDefinitionFailureKind,
@@ -31,17 +32,23 @@ const monitorDefinitionEndpoint = '/api/monitor-definitions/v1';
 
 export class MonitorDefinitionRequestError extends Error {
   readonly kind: MonitorDefinitionFailureKind;
+  readonly writeOutcome: ApiMessageWriteOutcome | null;
 
-  constructor(kind: MonitorDefinitionFailureKind) {
+  constructor(kind: MonitorDefinitionFailureKind, writeOutcome: ApiMessageWriteOutcome | null = null) {
     super('Monitor definition request failed');
     this.name = 'MonitorDefinitionRequestError';
     this.kind = kind;
+    this.writeOutcome = writeOutcome;
   }
 }
 
-export function loadMonitorDefinitionCatalog(language?: string) {
+export function loadMonitorDefinitionCatalog(language?: string, signal?: AbortSignal) {
   return request(async () =>
-    parseMonitorDefinitionCatalog(await apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/catalog`, language)))
+    parseMonitorDefinitionCatalog(
+      await (signal
+        ? apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/catalog`, language), { signal })
+        : apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/catalog`, language)))
+    )
   );
 }
 
@@ -61,14 +68,15 @@ export function validateMonitorDefinition(value: MonitorDefinitionValidationRequ
 }
 
 export function createMonitorDefinition(definition: string, language?: string, signal?: AbortSignal) {
-  return request(async () => {
+  return request(async dispatch => {
     const payload = parseMonitorDefinitionWriteRequest({ definition });
     signal?.throwIfAborted();
     const path = withLanguage(monitorDefinitionEndpoint, language);
+    dispatch();
     return parseMonitorDefinitionDetail(
       await (signal ? apiMessagePost(path, payload, { signal }) : apiMessagePost(path, payload))
     );
-  });
+  }, 'write');
 }
 
 export function updateMonitorDefinition(
@@ -78,30 +86,32 @@ export function updateMonitorDefinition(
   language?: string,
   signal?: AbortSignal
 ) {
-  return request(async () => {
+  return request(async dispatch => {
     const payload = parseMonitorDefinitionWriteRequest({ definition });
     const options = revisionHeader(revision);
     signal?.throwIfAborted();
+    dispatch();
     const response = await apiMessagePut(
       withLanguage(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, language),
       payload,
       signal ? { ...options, signal } : options
     );
     return parseMonitorDefinitionDetail(response);
-  });
+  }, 'write');
 }
 
 export function deleteMonitorDefinition(app: string, revision: string, signal?: AbortSignal) {
-  return request(async () => {
+  return request(async dispatch => {
     const options = revisionHeader(revision);
     signal?.throwIfAborted();
+    dispatch();
     return parseMonitorDefinitionDelete(
       await apiMessageDelete(
         `${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`,
         signal ? { ...options, signal } : options
       )
     );
-  });
+  }, 'write');
 }
 
 const stableFailures = new Map<string, MonitorDefinitionFailureKind>([
@@ -122,20 +132,45 @@ const stableFailures = new Map<string, MonitorDefinitionFailureKind>([
   ['monitor_definition_state_uncertain', 'state-uncertain']
 ]);
 
-async function request<T>(operation: () => Promise<T>) {
+async function request<T>(operation: (dispatch: () => void) => Promise<T>, phase: 'read' | 'write' = 'read') {
+  let dispatched = false;
   try {
-    return await operation();
+    return await operation(() => {
+      dispatched = true;
+    });
   } catch (error) {
-    if (error instanceof MonitorDefinitionContractError) throw new MonitorDefinitionRequestError('contract');
-    if (!(error instanceof ApiMessageError)) throw new MonitorDefinitionRequestError('error');
+    if (error instanceof MonitorDefinitionRequestError) throw error;
+    const outcome = phase === 'write' ? (dispatched ? dispatchedWriteOutcome(error) : 'rejected') : null;
+    if (error instanceof MonitorDefinitionContractError) throw new MonitorDefinitionRequestError('contract', outcome);
+    if (!(error instanceof ApiMessageError)) throw new MonitorDefinitionRequestError('error', outcome);
     const stable = stableFailures.get(error.message);
-    if (stable) throw new MonitorDefinitionRequestError(stable);
-    if (error.status === 401 || error.status === 403) throw new MonitorDefinitionRequestError('forbidden');
-    if (error.cause !== undefined || error.status === undefined || error.status === 0 || error.status >= 500) {
-      throw new MonitorDefinitionRequestError('unavailable');
+    if (stable) throw new MonitorDefinitionRequestError(stable, outcome);
+    if (error.status === 401 || error.status === 403) throw new MonitorDefinitionRequestError('forbidden', outcome);
+    if (hasUncertainTransportEvidence(error)) {
+      throw new MonitorDefinitionRequestError('unavailable', outcome);
     }
-    throw new MonitorDefinitionRequestError('error');
+    throw new MonitorDefinitionRequestError('error', outcome);
   }
+}
+
+const uncertainStableFailures = new Set<MonitorDefinitionFailureKind>(['persistence-failed', 'state-uncertain']);
+
+function dispatchedWriteOutcome(error: unknown): ApiMessageWriteOutcome {
+  if (!(error instanceof ApiMessageError)) return 'uncertain';
+  if (hasUncertainTransportEvidence(error)) return 'uncertain';
+  const stable = stableFailures.get(error.message);
+  if (stable) return uncertainStableFailures.has(stable) ? 'uncertain' : 'rejected';
+  return apiMessageWriteOutcome(error);
+}
+
+function hasUncertainTransportEvidence(error: ApiMessageError) {
+  return (
+    error.cause !== undefined ||
+    error.status === undefined ||
+    error.status === 0 ||
+    error.status === 408 ||
+    error.status >= 500
+  );
 }
 
 function withLanguage(path: string, language?: string) {
@@ -144,6 +179,6 @@ function withLanguage(path: string, language?: string) {
 }
 
 function revisionHeader(revision: string) {
-  if (!/^[0-9a-f]{64}$/.test(revision)) throw new MonitorDefinitionRequestError('revision-invalid');
+  if (!/^[0-9a-f]{64}$/.test(revision)) throw new MonitorDefinitionRequestError('revision-invalid', 'rejected');
   return { headers: { 'If-Match': `"${revision}"` } };
 }

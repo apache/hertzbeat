@@ -87,14 +87,91 @@ describe('monitor definition API', () => {
     abort.abort();
 
     await expect(createMonitorDefinition('app: mysql', 'en-US', abort.signal)).rejects.toMatchObject({
-      kind: 'error'
+      kind: 'error',
+      writeOutcome: 'rejected'
     });
     await expect(updateMonitorDefinition('mysql', 'app: mysql', revision, 'en-US', abort.signal)).rejects.toMatchObject(
       {
-        kind: 'error'
+        kind: 'error',
+        writeOutcome: 'rejected'
       }
     );
-    await expect(deleteMonitorDefinition('mysql', revision, abort.signal)).rejects.toMatchObject({ kind: 'error' });
+    await expect(deleteMonitorDefinition('mysql', revision, abort.signal)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'rejected'
+    });
+    expect(messageApi.post).not.toHaveBeenCalled();
+    expect(messageApi.put).not.toHaveBeenCalled();
+    expect(messageApi.delete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [new ApiMessageError('private', { cause: new TypeError('offline') }), 'unavailable', 'uncertain'],
+    [new ApiMessageError('private', { status: 0 }), 'unavailable', 'uncertain'],
+    [new ApiMessageError('private', { status: 408 }), 'unavailable', 'uncertain'],
+    [new ApiMessageError('private', { status: 503 }), 'unavailable', 'uncertain'],
+    [new ApiMessageError('private', { status: 403 }), 'forbidden', 'rejected'],
+    [new ApiMessageError('private', { status: 422 }), 'error', 'rejected'],
+    [new Error('unknown dispatched failure'), 'error', 'uncertain']
+  ] as const)('classifies dispatched write evidence %#', async (error, kind, writeOutcome) => {
+    messageApi.put.mockRejectedValue(error);
+
+    await expect(updateMonitorDefinition('mysql', 'app: mysql', revision)).rejects.toMatchObject({
+      kind,
+      writeOutcome
+    });
+  });
+
+  it.each([
+    ['monitor_definition_revision_conflict', 'revision-conflict', 'rejected'],
+    ['monitor_definition_runtime_update_failed', 'runtime-update-failed', 'rejected'],
+    ['monitor_definition_persistence_failed', 'persistence-failed', 'uncertain'],
+    ['monitor_definition_state_uncertain', 'state-uncertain', 'uncertain'],
+    ['private_unknown_business_code', 'error', 'uncertain']
+  ] as const)('classifies business write envelope %s as %s/%s', async (message, kind, writeOutcome) => {
+    messageApi.put.mockRejectedValue(new ApiMessageError(message, { code: 1, status: 200 }));
+
+    await expect(updateMonitorDefinition('mysql', 'app: mysql', revision)).rejects.toMatchObject({
+      kind,
+      writeOutcome
+    });
+  });
+
+  it.each([[{ cause: new TypeError('connection reset') }], [{ status: 408 }], [{ status: 503 }]] as const)(
+    'keeps ambiguous transport evidence authoritative over a stable business code %#',
+    async options => {
+      messageApi.put.mockRejectedValue(new ApiMessageError('monitor_definition_revision_conflict', options));
+
+      await expect(updateMonitorDefinition('mysql', 'app: mysql', revision)).rejects.toMatchObject({
+        kind: 'revision-conflict',
+        writeOutcome: 'uncertain'
+      });
+    }
+  );
+
+  it('treats malformed post-write success data as uncertain contract evidence', async () => {
+    messageApi.post.mockResolvedValue({ schemaVersion: 1, app: 'mysql', private: 'invalid' });
+
+    await expect(createMonitorDefinition('app: mysql')).rejects.toMatchObject({
+      kind: 'contract',
+      writeOutcome: 'uncertain'
+    });
+    expect(messageApi.post).toHaveBeenCalledOnce();
+  });
+
+  it('classifies local request, revision, and abort preflight failures as rejected without transport', async () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    await expect(createMonitorDefinition('')).rejects.toMatchObject({ kind: 'contract', writeOutcome: 'rejected' });
+    await expect(updateMonitorDefinition('mysql', 'app: mysql', 'weak')).rejects.toMatchObject({
+      kind: 'revision-invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(deleteMonitorDefinition('mysql', revision, abort.signal)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'rejected'
+    });
     expect(messageApi.post).not.toHaveBeenCalled();
     expect(messageApi.put).not.toHaveBeenCalled();
     expect(messageApi.delete).not.toHaveBeenCalled();

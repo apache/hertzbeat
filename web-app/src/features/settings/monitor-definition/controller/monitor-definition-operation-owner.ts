@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-export type MonitorDefinitionOperationKind = 'detail-load' | 'exclusive-command';
+export type MonitorDefinitionOperationKind = 'detail-load' | 'exclusive-command' | 'catalog-proof';
 
 export type MonitorDefinitionOperation = {
   generation: number;
@@ -41,12 +41,18 @@ export function createMonitorDefinitionOperationOwner() {
     complete(operation: MonitorDefinitionOperation) {
       if (active === operation) active = null;
     },
+    markCatalogProof(operation: MonitorDefinitionOperation) {
+      if (active === operation) operation.kind = 'catalog-proof';
+    },
     retire,
     busy() {
       return active !== null;
     },
     closeBlocked() {
       return active?.kind === 'exclusive-command';
+    },
+    recoveryCancelable() {
+      return active?.kind === 'catalog-proof';
     }
   };
 }

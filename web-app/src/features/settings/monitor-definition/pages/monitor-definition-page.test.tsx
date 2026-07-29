@@ -79,7 +79,8 @@ describe('MonitorDefinitionPage', () => {
         draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
         failure: 'revision-conflict',
         pending: null,
-        validation: null
+        validation: null,
+        writeRecovery: null
       }
     });
     owner.useController.mockReturnValue(controller);
@@ -98,22 +99,48 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
   });
 
-  it('offers authoritative refresh for an uncertain update draft', () => {
+  it('freezes an uncertain draft and offers only catalog evidence refresh or cancel', () => {
     const controller = buildController({
       workspace: {
         kind: 'edit',
         draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
         failure: 'state-uncertain',
         pending: null,
-        validation: null
+        validation: null,
+        writeRecovery: 'uncertain'
       }
     });
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh latest definition' }));
+    expect(screen.getByLabelText('Definition YAML')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Validate' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Refresh latest definition' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Refresh' })[1]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
+    expect(controller.actions.retryWorkspaceProof).toHaveBeenCalledOnce();
+    expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
+  });
+
+  it('freezes uncertain delete confirmation and offers only catalog evidence refresh or cancel', () => {
+    const controller = buildController({
+      deleteFailure: 'unavailable',
+      deleteTarget: item,
+      deleteWriteRecovery: 'uncertain'
+    });
+    owner.useController.mockReturnValue(controller);
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Refresh' })[1]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(controller.actions.retryDeleteProof).toHaveBeenCalledOnce();
+    expect(controller.actions.confirmDelete).not.toHaveBeenCalled();
+    expect(controller.actions.cancelDelete).toHaveBeenCalledOnce();
   });
 
   it('renders localized required evidence for a blank definition draft', () => {
@@ -124,7 +151,8 @@ describe('MonitorDefinitionPage', () => {
           draft: { mode: 'create', expectedApp: null, definition: '' },
           failure: 'definition-required',
           pending: null,
-          validation: null
+          validation: null,
+          writeRecovery: null
         }
       })
     );
@@ -177,6 +205,8 @@ function buildController(overrides: Record<string, unknown> = {}) {
       openView: vi.fn(),
       refresh: vi.fn(),
       refreshAuthoritativeDraft: vi.fn(),
+      retryDeleteProof: vi.fn(),
+      retryWorkspaceProof: vi.fn(),
       retryWorkspace: vi.fn(),
       requestDelete: vi.fn(),
       save: vi.fn(),
@@ -188,6 +218,7 @@ function buildController(overrides: Record<string, unknown> = {}) {
     deleteFailure: null,
     deletePending: false,
     deleteTarget: null,
+    deleteWriteRecovery: null,
     items: [item],
     listState: { kind: 'ready' },
     notice: null,
