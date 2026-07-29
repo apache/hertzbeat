@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Scheduled executor that checks for due SOP schedules and executes them.
@@ -82,7 +83,11 @@ public class SopScheduleExecutor {
             log.info("Found {} due schedules to execute", dueSchedules.size());
             
             for (SopSchedule schedule : dueSchedules) {
-                executeSchedule(schedule);
+                try {
+                    executeSchedule(schedule);
+                } catch (Exception e) {
+                    log.error("Unexpected error processing scheduled SOP {}", schedule.getId(), e);
+                }
             }
         } catch (Exception e) {
             log.error("Error checking due schedules", e);
@@ -108,11 +113,12 @@ public class SopScheduleExecutor {
             // Parse parameters
             Map<String, Object> params = new HashMap<>();
             if (schedule.getSopParams() != null && !schedule.getSopParams().isEmpty()) {
-                try {
-                    params = JsonUtil.fromJson(schedule.getSopParams(), Map.class);
-                } catch (Exception e) {
-                    log.warn("Failed to parse SOP params: {}", schedule.getSopParams());
+                Map<String, Object> parsedParams = JsonUtil.fromJson(
+                        schedule.getSopParams(), new TypeReference<>() {});
+                if (parsedParams == null) {
+                    throw new IllegalArgumentException("SOP schedule parameters must be a valid JSON object");
                 }
+                params = parsedParams;
             }
             
             // Execute SOP
