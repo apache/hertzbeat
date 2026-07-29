@@ -72,6 +72,7 @@ import org.apache.hertzbeat.observability.instrumentation.service.Instrumentatio
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2;
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationDetectionV2Service;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
@@ -110,6 +111,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     private static final String SERVICE_NAMESPACE = "commerce";
     private static final String ENVIRONMENT = "proof";
     private static final String COLLECTOR_ID = "collector-e2e";
+    private static final String SERVER_PROFILE_ID = "server-e2e";
     private static final String INSTANCE_ID = "checkout-e2e-7d9";
     private static final String ENDPOINT = "/checkout";
     private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
@@ -254,7 +256,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     }
 
     private void advertiseCollectorProfile() {
-        String advertisement = new CollectorIntakeAdvertisementCodec().encode(
+        CollectorIntakeAdvertisementCodec codec = new CollectorIntakeAdvertisementCodec();
+        String advertisement = codec.encode(
                 new CollectorIntakeAdvertisementRequest(
                         1,
                         Gateway.COLLECTOR,
@@ -267,12 +270,23 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
                 .instrumentationIntake(advertisement)
                 .build());
+        String serverAdvertisement = codec.encode(new CollectorIntakeAdvertisementRequest(
+                1,
+                Gateway.SERVER,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "http://127.0.0.1:4318",
+                null));
+        collectorDao.save(Collector.builder()
+                .name(SERVER_PROFILE_ID)
+                .ip("127.0.0.1")
+                .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                .instrumentationIntake(serverAdvertisement)
+                .build());
     }
 
     private void assertCurrentDetectionContract(long startedAt) {
         var response = currentDetectionService.detect(
-                new org.apache.hertzbeat.observability.instrumentation.v2.api
-                        .InstrumentationDetectionV2.DetectionRequest(
+                new InstrumentationDetectionV2.DetectionRequest(
                         2,
                         SourceKind.QUICK_START,
                         "opentelemetry_telemetrygen",
@@ -287,13 +301,31 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                         startedAt));
         assertThat(response.signals().values())
                 .allMatch(signal -> signal.status()
-                        == org.apache.hertzbeat.observability.instrumentation.v2.api
-                                .InstrumentationDetectionV2.DetectionStatus.RECEIVED);
+                        == InstrumentationDetectionV2.DetectionStatus.RECEIVED);
         assertThat(response.queryJumps()).hasSize(3).allMatch(jump -> jump.enabled()
                 && COLLECTOR_ID.equals(jump.context().collectorId())
                 && INSTANCE_ID.equals(jump.context().serviceInstanceId())
                 && ENDPOINT.equals(jump.context().endpoint())
                 && startedAt == jump.context().startedAt());
+
+        var directServerResponse = currentDetectionService.detect(
+                new InstrumentationDetectionV2.DetectionRequest(
+                        2,
+                        SourceKind.QUICK_START,
+                        "opentelemetry_telemetrygen",
+                        null,
+                        null,
+                        null,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        new ServiceIdentity(
+                                SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
+                        "server:" + SERVER_PROFILE_ID,
+                        startedAt));
+        assertThat(directServerResponse.signals().values())
+                .allMatch(signal -> signal.status()
+                        != InstrumentationDetectionV2.DetectionStatus.RECEIVED);
+        assertThat(directServerResponse.queryJumps()).hasSize(3).allMatch(jump -> !jump.enabled());
     }
 
     private void assertNativeContextMappings(long startedAt, long detectedAt) {

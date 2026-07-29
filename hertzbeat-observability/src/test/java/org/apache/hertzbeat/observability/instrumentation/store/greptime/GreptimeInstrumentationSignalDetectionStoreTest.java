@@ -153,10 +153,14 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         String logs = queryFactory.latestReceivedAt(LOGS, directServer);
         String traces = queryFactory.latestReceivedAt(TRACES, directServer);
 
-        assertTrue(metrics.contains("hertzbeat_collector IS NULL"));
+        assertTrue(metrics.contains("hertzbeat_collector_id IS NULL"));
         assertTrue(logs.contains(
+                "json_get_string(resource_attributes,'$[\"hertzbeat.collector.id\"]') IS NULL"));
+        assertTrue(traces.contains("\"resource_attributes.hertzbeat.collector.id\" IS NULL"));
+        assertFalse(metrics.contains("hertzbeat_collector IS NULL"));
+        assertFalse(logs.contains(
                 "json_get_string(resource_attributes,'$[\"hertzbeat.collector\"]') IS NULL"));
-        assertTrue(traces.contains("\"resource_attributes.hertzbeat.collector\" IS NULL"));
+        assertFalse(traces.contains("\"resource_attributes.hertzbeat.collector\" IS NULL"));
         assertTrue(metrics.contains("service_namespace = 'commerce'"));
         assertTrue(metrics.contains("deployment_environment_name = 'prod'"));
         assertTrue(logs.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
