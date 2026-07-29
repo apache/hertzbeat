@@ -21,16 +21,28 @@ import { AlertIntegrationContractError, AlertIntegrationRequestFailure } from '.
 
 export function normalizeAlertIntegrationFailure(error: unknown) {
   if (!(error instanceof ApiMessageError)) return error;
-  if (error.status === 401 || error.status === 403) return new AlertIntegrationRequestFailure('permission');
-  if (error.status !== undefined && error.status >= 200 && error.status <= 299 && error.code === undefined) {
+  if (isPermissionFailure(error.status)) return new AlertIntegrationRequestFailure('permission');
+  if (isMalformedSuccessfulEnvelope(error)) {
     return new AlertIntegrationContractError();
   }
-  const unavailable =
+  return new AlertIntegrationRequestFailure(isUnavailableFailure(error) ? 'unavailable' : 'error');
+}
+
+function isPermissionFailure(status: number | undefined) {
+  return status === 401 || status === 403;
+}
+
+function isMalformedSuccessfulEnvelope(error: ApiMessageError) {
+  return error.status !== undefined && error.status >= 200 && error.status <= 299 && error.code === undefined;
+}
+
+function isUnavailableFailure(error: ApiMessageError) {
+  return (
     error.cause !== undefined ||
     error.status === undefined ||
     error.status === 0 ||
-    (error.status >= 500 && error.status <= 599);
-  return new AlertIntegrationRequestFailure(unavailable ? 'unavailable' : 'error');
+    (error.status >= 500 && error.status <= 599)
+  );
 }
 
 export async function alertIntegrationApiRequest<T>(operation: () => Promise<T>): Promise<T> {

@@ -22,10 +22,11 @@ export function useAlertGroupController() {
   const commandController = useAlertGroupCommandController(readController.rereadList, capabilities);
   const labelSuggestions = useAlertLabelSuggestionController();
   const selection = useAlertGroupSelection(queryController.state.query, readController.state.list);
+  const { selectedIds, selectIds } = selection;
   useAlertGroupPageCorrection(queryController.state.query, readController.state.list, queryController.replacePageIndex);
   useEffect(() => {
-    if (!capabilities.canDelete) selection.selectIds([]);
-  }, [capabilities.canDelete, selection.selectIds]);
+    if (!capabilities.canDelete) selectIds([]);
+  }, [capabilities.canDelete, selectIds]);
 
   return {
     capabilities,
@@ -34,12 +35,12 @@ export function useAlertGroupController() {
       ...queryController.state,
       ...readController.state,
       labelSuggestions,
-      selectedIds: capabilities.canDelete ? selection.selectedIds : []
+      selectedIds: capabilities.canDelete ? selectedIds : []
     },
     ...queryController.actions,
     refresh: readController.refresh,
     selectIds: (ids: number[]) => {
-      if (capabilities.canDelete) selection.selectIds(ids);
+      if (capabilities.canDelete) selectIds(ids);
     },
     ...commandController.actions
   };

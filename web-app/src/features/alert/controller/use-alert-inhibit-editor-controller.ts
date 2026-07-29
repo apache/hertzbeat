@@ -111,11 +111,13 @@ export function useAlertInhibitEditorController(operation: AlertInhibitOperation
     if (operation.isLocked()) return;
     draftStore.patch(patch);
   };
+  const invalidateDetail = detailEditor.invalidate;
+  const publishDraft = draftStore.publish;
   const retire = useCallback(() => {
-    detailEditor.invalidate();
-    draftStore.publish(null);
+    invalidateDetail();
+    publishDraft(null);
     setEditorFailure(undefined);
-  }, [detailEditor.invalidate, draftStore.publish]);
+  }, [invalidateDetail, publishDraft]);
   return {
     state: { detail: detailEditor.detail, draft: draftStore.draft, editorFailure },
     controls: {

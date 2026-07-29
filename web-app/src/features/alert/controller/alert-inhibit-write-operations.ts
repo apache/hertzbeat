@@ -21,10 +21,10 @@ import {
   loadExactAlertInhibit,
   proveAlertInhibitsMissing,
   requireAlertInhibitsAbsent,
-  requireAlertInhibitConvergence,
-  snapshotAlertInhibitIds
+  requireAlertInhibitConvergence
 } from '../api/alert-inhibit-write-proof';
 import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
+import { prepareAlertInhibitReceipt } from './alert-inhibit-receipt-preparation';
 import type { AlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import type {
   AlertInhibitOperationController,
@@ -123,18 +123,7 @@ async function advanceReceipt(
   receipt: AlertInhibitReceipt
 ) {
   // A retained receipt moves forward only; Retry never repeats a write whose outcome may be committed.
-  if (receipt.kind === 'save' && receipt.phase === 'prepare') {
-    const previousIds = await snapshotAlertInhibitIds();
-    if (!context.operation.isCurrent(owner)) return false;
-    receipt.previousIds = previousIds;
-    receipt.phase = 'write';
-  }
-  if (receipt.kind === 'toggle' && receipt.phase === 'prepare') {
-    receipt.record = await loadExactAlertInhibit(receipt.record.id);
-    if (!context.operation.isCurrent(owner)) return false;
-    receipt.expected = { ...receipt.record, enable: receipt.enable };
-    receipt.phase = 'write';
-  }
+  if (!(await prepareAlertInhibitReceipt(context.operation, owner, receipt))) return false;
   if (receipt.phase === 'write') {
     await mutate(receipt);
     if (!context.operation.isCurrent(owner)) return false;

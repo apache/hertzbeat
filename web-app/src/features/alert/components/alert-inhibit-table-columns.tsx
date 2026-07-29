@@ -1,12 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Popconfirm, Space, Switch, Tag } from 'antd';
+import { Switch, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import type { AlertInhibit } from '../model/alert-inhibit-model';
 import styles from '../shared/alert-policy-page.module.css';
+import { AlertInhibitActions } from './alert-inhibit-actions';
 
 type AlertInhibitTableActions = {
   edit: (id: number) => unknown;
@@ -59,52 +60,6 @@ export function buildAlertInhibitColumns(
       )
     }
   ];
-}
-
-function AlertInhibitActions({
-  t,
-  busy,
-  capabilities,
-  inhibit,
-  edit,
-  remove
-}: {
-  t: TFunction;
-  busy: boolean;
-  capabilities: AlertActionCapabilities;
-  inhibit: AlertInhibit;
-  edit: AlertInhibitTableActions['edit'];
-  remove: AlertInhibitTableActions['remove'];
-}) {
-  return (
-    <Space>
-      {capabilities.canWrite && (
-        <Button
-          type="link"
-          disabled={busy}
-          onClick={() => {
-            if (!busy) void edit(inhibit.id);
-          }}
-        >
-          {t('common.edit')}
-        </Button>
-      )}
-      {capabilities.canDelete && (
-        <Popconfirm
-          disabled={busy}
-          title={t('alertInhibits.deleteConfirm')}
-          okButtonProps={{ disabled: busy }}
-          onConfirm={() => {
-            if (!busy) void remove(inhibit.id);
-          }}
-        >
-          <Button type="link" danger disabled={busy}>
-            {t('alertInhibits.delete')}
-          </Button>
-        </Popconfirm>
-      )}
-    </Space>
-  );
 }
 
 function labelMap(labels: Record<string, string> | null) {

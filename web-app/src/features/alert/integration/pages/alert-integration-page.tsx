@@ -52,7 +52,7 @@ export function AlertIntegrationPage() {
           t={t}
           onCopyEndpoint={() => void controller.actions.copyEndpoint()}
           onCopyAuthorization={() => void controller.actions.copyAuthorizationHeader()}
-          onOpenTokenSettings={controller.actions.openTokenSettings}
+          onOpenTokenSettings={() => void controller.actions.openTokenSettings()}
         />
       </div>
     </div>

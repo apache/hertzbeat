@@ -67,11 +67,11 @@ export function parseAlertIntegrationCatalog(value: unknown): AlertIntegrationCa
   if (new Set(catalog.items.map(item => item.source)).size !== catalog.items.length) {
     throw new AlertIntegrationContractError();
   }
-  return catalog as AlertIntegrationCatalog;
+  return catalog;
 }
 
 export function parseAlertIntegrationGuide(value: unknown, source: string): AlertIntegrationGuide {
-  const guide = parse(guideSchema, value) as AlertIntegrationGuide;
+  const guide = parse(guideSchema, value);
   if (guide.source !== source) throw new AlertIntegrationContractError();
   return guide;
 }

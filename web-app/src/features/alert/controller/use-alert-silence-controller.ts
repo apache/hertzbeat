@@ -80,7 +80,9 @@ export function useAlertSilenceController() {
     mutations,
     setSearch,
     updateQuery,
-    refresh: () => refreshAlertSilences(mutations.recovery !== null, canRetryRecovery, mutations.retry, rereadList),
+    refresh: () => {
+      void refreshAlertSilences(mutations.recovery !== null, canRetryRecovery, mutations.retry, rereadList);
+    },
     selectIds,
     managementActions
   });

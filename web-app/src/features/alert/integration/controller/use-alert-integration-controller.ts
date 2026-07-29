@@ -16,7 +16,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
@@ -46,8 +46,8 @@ export function useAlertIntegrationController() {
     enabled: catalogItem !== undefined,
     retry: false
   });
-  const [copyState, setCopyState] = useState<AlertIntegrationCopyState>(null);
-  useEffect(() => setCopyState(null), [selectedSource]);
+  const [copyEvidence, setCopyEvidence] = useState<AlertIntegrationCopyState>(null);
+  const copyState = copyEvidence?.source === selectedSource ? copyEvidence : null;
   const state = resolveState(catalogQuery, detailQuery, catalogItem !== undefined);
   const guide = state.kind === 'ready' ? state.guide : undefined;
   const contract = guide ? buildAlertIngressContract(window.location.origin, guide) : undefined;
@@ -55,9 +55,9 @@ export function useAlertIntegrationController() {
     if (!guide || guide.readiness === 'guide_blocked' || !value) return;
     try {
       await navigator.clipboard.writeText(value);
-      setCopyState({ source: guide.source, target, outcome: 'copied' });
+      setCopyEvidence({ source: guide.source, target, outcome: 'copied' });
     } catch {
-      setCopyState({ source: guide.source, target, outcome: 'failed' });
+      setCopyEvidence({ source: guide.source, target, outcome: 'failed' });
     }
   };
   return {
@@ -68,7 +68,7 @@ export function useAlertIntegrationController() {
     tokenSettingsPath: settingsPaths.tokens,
     actions: {
       selectSource: (source: string) => {
-        setCopyState(null);
+        setCopyEvidence(null);
         void navigate(buildAlertIntegrationPath(source));
       },
       retry: () => retryFailedState(state, catalogQuery, detailQuery, catalogItem !== undefined),

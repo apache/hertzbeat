@@ -68,11 +68,13 @@ export function useAlertCenterController() {
   useEffect(() => {
     if (!capabilities.canSelect) selectIds([]);
   }, [capabilities.canSelect, selectIds]);
+  const { recovery, retireRecovery } = operation;
+  const canRetryRecovery = canRetryAlertCenterRecovery(capabilities, recovery);
   useEffect(() => {
-    if (operation.recovery && !canRetryAlertCenterRecovery(capabilities, operation.recovery)) {
-      operation.retireRecovery();
+    if (recovery && !canRetryRecovery) {
+      retireRecovery();
     }
-  }, [capabilities.canDeleteGroups, capabilities.canUpdateStatus, operation.recovery, operation.retireRecovery]);
+  }, [canRetryRecovery, recovery, retireRecovery]);
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));

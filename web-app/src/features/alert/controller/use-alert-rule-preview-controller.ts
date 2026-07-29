@@ -12,7 +12,11 @@ import {
   type AlertRuleDraft,
   type AlertRulePreviewRequest
 } from '../model/alert-rule-model';
-import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
+import type {
+  AlertRuleEditorIdentityController,
+  AlertRuleEditorOperationIdentity,
+  AlertRuleRouteUpdate
+} from './alert-rule-editor-state';
 
 export function useAlertRulePreviewController(
   canPreview: boolean,
@@ -44,23 +48,7 @@ export function useAlertRulePreviewController(
     const epoch = previewEpochRef.current + 1;
     previewEpochRef.current = epoch;
     updateRoute({ preview: { kind: 'loading' } });
-    try {
-      const evidence = await previewAlertRule(request);
-      if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
-      updateRoute({
-        preview: evidence.rowCount === 0 ? { kind: 'empty' } : { kind: 'ready', ...evidence }
-      });
-    } catch (reason) {
-      if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
-      const failure = alertRuleFailureKind(reason);
-      const kind =
-        reason instanceof AlertRuleContractError
-          ? 'invalid'
-          : failure === 'permission' || failure === 'unavailable'
-            ? failure
-            : 'error';
-      updateRoute({ preview: { kind } });
-    }
+    await runPreviewRequest(request, owner, epoch, previewEpochRef, identity, updateRoute);
   };
   useEffect(() => {
     const lostAccess = previousCanPreviewRef.current && !canPreview;
@@ -70,4 +58,31 @@ export function useAlertRulePreviewController(
     updateRoute({ preview: { kind: 'idle' } });
   }, [canPreview, updateRoute]);
   return { invalidate, preview };
+}
+
+async function runPreviewRequest(
+  request: AlertRulePreviewRequest,
+  owner: AlertRuleEditorOperationIdentity,
+  epoch: number,
+  previewEpochRef: { current: number },
+  identity: AlertRuleEditorIdentityController,
+  updateRoute: AlertRuleRouteUpdate
+) {
+  try {
+    const evidence = await previewAlertRule(request);
+    if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
+    updateRoute({
+      preview: evidence.rowCount === 0 ? { kind: 'empty' } : { kind: 'ready', ...evidence }
+    });
+  } catch (reason) {
+    if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
+    updateRoute({ preview: { kind: resolvePreviewFailureKind(reason) } });
+  }
+}
+
+function resolvePreviewFailureKind(reason: unknown) {
+  if (reason instanceof AlertRuleContractError) return 'invalid';
+  const failure = alertRuleFailureKind(reason);
+  if (failure === 'permission' || failure === 'unavailable') return failure;
+  return 'error';
 }
