@@ -16,7 +16,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useState, type PropsWithChildren } from 'react';
 
 import { refreshBrowserSessionResult } from '@/core/http/http-client';
 
@@ -64,13 +64,15 @@ function classifySessionReadFailure(error: unknown): SessionReadFailureKind {
 }
 
 function useSessionExpiry(session: UiSession | undefined, replaceIdentity: ReplaceSessionIdentity) {
-  const [state, setState] = useState<ExpiryRenewalState>({ status: 'idle' });
-  const retryRef = useRef<() => void>(() => undefined);
+  const [renewal, setRenewal] = useState<SessionExpiryRenewal>(() => ({
+    session,
+    state: idleExpiryRenewalState
+  }));
+  const state = renewal.session === session ? renewal.state : idleExpiryRenewalState;
 
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    setState({ status: 'idle' });
     if (!session?.authenticated || !session.expiresAt) return retire;
     const expiresAt = Date.parse(session.expiresAt);
     if (!Number.isFinite(expiresAt)) {
@@ -80,12 +82,20 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: Repla
 
     async function renewSession() {
       if (!active) return;
-      setState({ status: 'renewing' });
+      setRenewal({ session, state: { status: 'renewing' } });
       const result = await refreshBrowserSessionResult({ convergence: 'local-only' });
       if (!active || result.status !== 'uncertain') return;
-      setState({ status: 'failed', failure: result.failure, retry: renewSession });
+      setRenewal({
+        session,
+        state: {
+          status: 'failed',
+          failure: result.failure,
+          retry: () => {
+            void renewSession();
+          }
+        }
+      });
     }
-    retryRef.current = renewSession;
 
     const expireWhenDue = () => {
       const remainingMs = expiresAt - Date.now();
@@ -109,13 +119,20 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: Repla
     }
   }, [replaceIdentity, session]);
 
-  return state.status === 'failed' ? { ...state, retry: () => retryRef.current() } : state;
+  return state;
 }
+
+type SessionExpiryRenewal = {
+  session: UiSession | undefined;
+  state: ExpiryRenewalState;
+};
 
 type ExpiryRenewalState =
   | { status: 'idle' }
   | { status: 'renewing' }
   | { status: 'failed'; failure: SessionReadFailureKind; retry: () => void };
+
+const idleExpiryRenewalState: ExpiryRenewalState = { status: 'idle' };
 
 /**
  * Authentication is fail-closed during render. The expiry effect rotates the

@@ -6,7 +6,8 @@
  */
 
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+
+import { useSourceScopedValue } from '@/shared/query-context';
 
 import { classifyEntityReadError, loadEntityMonitors } from '../api/entity-api';
 import type { EntityMonitorQuery } from '../model/entity-contract';
@@ -17,14 +18,11 @@ import { entityQueryKeys } from './entity-query-keys';
 type MonitorScope = EntityMonitorQuery & { entityId: number | undefined };
 
 export function useEntityMonitorsController(entityId: number | undefined) {
-  const [stored, setStored] = useState<MonitorScope>(() => monitorScope(entityId));
-  const scope = stored.entityId === entityId ? stored : monitorScope(entityId);
+  const { value: scope, setValue: setScope } = useSourceScopedValue(
+    entityId === undefined ? 'missing' : String(entityId),
+    monitorScope(entityId)
+  );
   const query = normalizeEntityMonitorQuery(scope);
-  useEffect(() => {
-    // Derivation above switches the request synchronously; persisting the new scope prevents an old page
-    // from returning if navigation later comes back to the previous entity.
-    setStored(current => (current.entityId === entityId ? current : monitorScope(entityId)));
-  }, [entityId]);
   const result = useQuery({
     queryKey: entityQueryKeys.monitors(entityId, query),
     queryFn: entityId === undefined ? skipToken : ({ signal }) => loadEntityMonitors(entityId, query, signal),
@@ -38,10 +36,10 @@ export function useEntityMonitorsController(entityId: number | undefined) {
     },
     actions: {
       changeMonitorPage: (pageIndex: number) => {
-        setStored(current => ({ ...currentScope(current, entityId), pageIndex }));
+        setScope({ ...scope, pageIndex });
       },
       changeMonitorFilters: (filters: Pick<EntityMonitorQuery, 'status' | 'app'>) => {
-        setStored(() => ({ ...monitorScope(entityId), ...normalizeEntityMonitorQuery(filters) }));
+        setScope({ ...monitorScope(entityId), ...normalizeEntityMonitorQuery(filters) });
       },
       refreshMonitors: () => {
         void result.refetch();
@@ -52,10 +50,6 @@ export function useEntityMonitorsController(entityId: number | undefined) {
 
 function monitorScope(entityId: number | undefined): MonitorScope {
   return { entityId, ...defaultEntityMonitorQuery };
-}
-
-function currentScope(current: MonitorScope, entityId: number | undefined) {
-  return current.entityId === entityId ? current : monitorScope(entityId);
 }
 
 function resolveMonitors(

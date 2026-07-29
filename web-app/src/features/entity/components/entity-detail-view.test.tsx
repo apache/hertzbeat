@@ -301,31 +301,62 @@ describe('EntityDetailView', () => {
   );
 });
 
+type RenderViewOptions = {
+  explore?: Parameters<typeof EntityDetailView>[0]['actions']['explore'];
+  remove?: () => void;
+  deleting?: boolean;
+  deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
+  manageNoiseControls?: Parameters<typeof EntityDetailView>[0]['actions']['manageNoiseControls'];
+  canDelete?: boolean;
+  refresh?: () => void;
+  canWrite?: boolean;
+  monitors?: Parameters<typeof EntityDetailView>[0]['state']['monitors'];
+  changeMonitorPage?: Parameters<typeof EntityDetailView>[0]['actions']['changeMonitorPage'];
+};
+
 function renderView(
   evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'],
+  options: RenderViewOptions = {}
+) {
+  return renderResolvedView(evidence, {
+    explore: options.explore ?? (() => undefined),
+    remove: options.remove ?? (() => undefined),
+    deleting: options.deleting ?? false,
+    deleteFailure: options.deleteFailure,
+    manageNoiseControls: options.manageNoiseControls ?? (() => undefined),
+    canDelete: options.canDelete ?? true,
+    refresh: options.refresh ?? (() => undefined),
+    canWrite: options.canWrite ?? true,
+    monitors: options.monitors,
+    changeMonitorPage: options.changeMonitorPage ?? (() => undefined)
+  });
+}
+
+function renderResolvedView(
+  evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'],
   {
-    explore = () => undefined,
-    remove = () => undefined,
-    deleting = false,
+    explore,
+    remove,
+    deleting,
     deleteFailure,
-    manageNoiseControls = () => undefined,
-    canDelete = true,
-    refresh = () => undefined,
-    canWrite = true,
+    manageNoiseControls,
+    canDelete,
+    refresh,
+    canWrite,
     monitors,
-    changeMonitorPage = () => undefined
+    changeMonitorPage
   }: {
-    explore?: Parameters<typeof EntityDetailView>[0]['actions']['explore'];
-    remove?: () => void;
-    deleting?: boolean;
-    deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
-    manageNoiseControls?: Parameters<typeof EntityDetailView>[0]['actions']['manageNoiseControls'];
-    canDelete?: boolean;
-    refresh?: () => void;
-    canWrite?: boolean;
-    monitors?: Parameters<typeof EntityDetailView>[0]['state']['monitors'];
-    changeMonitorPage?: Parameters<typeof EntityDetailView>[0]['actions']['changeMonitorPage'];
-  } = {}
+    explore: NonNullable<RenderViewOptions['explore']>;
+    remove: NonNullable<RenderViewOptions['remove']>;
+    deleting: boolean;
+    deleteFailure: RenderViewOptions['deleteFailure'];
+    manageNoiseControls: NonNullable<RenderViewOptions['manageNoiseControls']>;
+    canDelete: boolean;
+    refresh: NonNullable<RenderViewOptions['refresh']>;
+    canWrite: boolean;
+    monitors: RenderViewOptions['monitors'];
+    changeMonitorPage: NonNullable<RenderViewOptions['changeMonitorPage']>;
+  }
 ) {
   const records = evidence.kind === 'ready' ? evidence.detail.monitorPreview.items : [];
   const monitorState =

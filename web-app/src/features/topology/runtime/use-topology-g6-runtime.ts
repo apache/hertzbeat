@@ -8,6 +8,9 @@ import {
   createPendingResources,
   disposeGraph,
   initializeCandidateGraph,
+  ownsActiveResources,
+  retainPendingResources,
+  retirePendingResources,
   type GraphResources,
   type RuntimeRefs
 } from './topology-g6-lifecycle';
@@ -105,7 +108,7 @@ function useTopologyBootstrap(
       viewport
     };
     const resources = createPendingResources(inputRef, structureKey);
-    pendingResources.current = resources;
+    retainPendingResources(runtimeRefs, resources);
     publishState(inputRef, 'loading');
     // Keep G6 inside the mounted runtime so route chunks do not evaluate it before a canvas is requested.
     void import('@antv/g6')
@@ -114,15 +117,15 @@ function useTopologyBootstrap(
         if (candidate) commitCandidateGraph(candidate, resources, runtimeRefs);
       })
       .catch(() => {
-        if (cancelled || activeResources.current === resources) return;
+        if (cancelled || ownsActiveResources(runtimeRefs, resources)) return;
         disposeGraph(resources, graph, viewport, false);
-        if (pendingResources.current === resources) pendingResources.current = undefined;
+        retirePendingResources(runtimeRefs, resources);
         publishState(inputRef, 'failure');
       });
     return () => {
       cancelled = true;
-      if (pendingResources.current === resources) pendingResources.current = undefined;
-      if (activeResources.current !== resources) disposeGraph(resources, graph, viewport, false);
+      retirePendingResources(runtimeRefs, resources);
+      if (!ownsActiveResources(runtimeRefs, resources)) disposeGraph(resources, graph, viewport, false);
     };
   }, [
     activeInput,

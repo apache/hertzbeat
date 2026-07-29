@@ -54,6 +54,18 @@ export function createPendingResources(input: TopologyG6InputRef, structureKey: 
   };
 }
 
+export function retainPendingResources(refs: RuntimeRefs, resources: GraphResources) {
+  refs.pendingResources.current = resources;
+}
+
+export function retirePendingResources(refs: RuntimeRefs, resources: GraphResources) {
+  if (refs.pendingResources.current === resources) refs.pendingResources.current = undefined;
+}
+
+export function ownsActiveResources(refs: RuntimeRefs, resources: GraphResources) {
+  return refs.activeResources.current === resources;
+}
+
 export async function initializeCandidateGraph(
   module: TopologyG6Module,
   container: HTMLDivElement,
