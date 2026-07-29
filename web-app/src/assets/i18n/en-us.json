@@ -490,6 +490,7 @@
     "message": "Message",
     "trace": "Trace",
     "operation": "Operation",
+    "operationContext": "Operation: {{value}}",
     "duration": "Duration",
     "relatedLogs": "Related logs",
     "open": "Open",

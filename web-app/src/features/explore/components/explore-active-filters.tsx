@@ -77,7 +77,13 @@ function activeFilter(value: unknown, key: keyof ExploreQueryPatch, label: strin
 }
 
 function signalActiveFilters(query: ExploreQuery, t: TFunction): ActiveFilter[] {
-  if (query.signal === 'metrics') return [];
+  if (query.signal === 'metrics') {
+    return activeFilter(
+      query.operationName,
+      'operationName',
+      t('explore.operationContext', { value: query.operationName })
+    );
+  }
   const trace = activeFilter(query.traceId, 'traceId', t('explore.traceIdContext', { value: query.traceId }));
   if (query.signal === 'logs') {
     return [

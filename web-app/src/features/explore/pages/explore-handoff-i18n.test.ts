@@ -35,7 +35,8 @@ const handoffKeys = [
   'traceId',
   'spanId',
   'traceIdContext',
-  'spanIdContext'
+  'spanIdContext',
+  'operationContext'
 ] as const;
 
 describe('Explore handoff locale contract', () => {

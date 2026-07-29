@@ -39,6 +39,7 @@ function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | u
       {
         relativeTimeRange,
         query: query.query,
+        operationName: query.operationName,
         metricFilter: query.metricFilter,
         groupBy: query.groupBy,
         aggregation: query.aggregation,

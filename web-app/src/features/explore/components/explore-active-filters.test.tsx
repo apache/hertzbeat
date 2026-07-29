@@ -72,6 +72,30 @@ describe('Explore active filters', () => {
     expect(removeFilter).toHaveBeenCalledWith('serviceNamespace');
     expect(updateQuery).toHaveBeenCalledWith({ serviceNamespace: undefined });
   });
+
+  it('shows and independently removes the metrics operation context', () => {
+    const removeFilter = vi.fn(() => false);
+    const updateQuery = vi.fn();
+    render(
+      <ExploreActiveFilters
+        query={{
+          signal: 'metrics',
+          timeRange: 'last-30m',
+          serviceName: 'checkout',
+          operationName: 'POST /checkout'
+        }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
+
+    expect(screen.getByText('Operation: POST /checkout')).toBeInTheDocument();
+    closeFilter('Operation: POST /checkout');
+    expect(removeFilter).toHaveBeenCalledWith('operationName');
+    expect(updateQuery).toHaveBeenCalledWith({ operationName: undefined });
+    expect(screen.getByText('Service: checkout')).toBeInTheDocument();
+  });
 });
 
 function closeFilter(label: string) {

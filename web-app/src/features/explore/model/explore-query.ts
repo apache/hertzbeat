@@ -37,6 +37,7 @@ type SharedExploreQuery = {
 
 export type MetricExploreQuery = SharedExploreQuery & {
   signal: 'metrics';
+  operationName?: string | undefined;
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;
@@ -87,6 +88,7 @@ export type ExploreQueryPatch = {
   spanId?: string | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
+  operationName?: string | undefined;
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;

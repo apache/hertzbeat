@@ -48,6 +48,7 @@ export function mergeExploreContextChanges(context: QueryContext, changes: Explo
   return {
     traceId: undefined,
     spanId: undefined,
+    operationName: undefined,
     pageIndex: undefined,
     ...changes,
     intakeProfileId: next.intakeProfileId,

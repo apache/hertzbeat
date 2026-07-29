@@ -71,6 +71,9 @@ describe('explore API paths', () => {
     expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe(
       '/api/ingestion/otlp/metrics/console?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&query=timeout'
     );
+    expect(buildSignalApiPath({ ...base, signal: 'metrics', operationName: 'POST /checkout' }, 1_000_000)).toContain(
+      '&query=timeout&operationName=POST+%2Fcheckout'
+    );
     expect(buildLogStreamPath(base)).toBe(
       '/api/logs/sse/subscribe?serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&logContent=timeout&traceId=trace-1'
     );

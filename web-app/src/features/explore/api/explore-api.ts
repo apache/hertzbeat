@@ -81,6 +81,7 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
 
   if (query.signal === 'metrics') {
     setValue(params, 'query', query.query);
+    setValue(params, 'operationName', query.operationName);
     setValue(params, 'filter', query.metricFilter);
     setValue(params, 'groupBy', query.groupBy);
     setValue(params, 'aggregation', acceptedExploreField(parseMetricAggregation(query.aggregation)));

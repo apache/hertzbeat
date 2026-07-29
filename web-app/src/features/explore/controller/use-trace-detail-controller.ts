@@ -62,11 +62,13 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   const openRelatedMetrics = () => {
     if (state.kind !== 'ready') return;
     const serviceName = state.selected?.serviceName ?? state.detail.serviceName ?? undefined;
+    const operationName = rootMetricOperationName(state);
     openPath(
       buildExplorePath(
         mergeExploreQuery(query, {
           signal: 'metrics',
           ...mergeExploreContextChanges(exploreQueryContext(query), { serviceName }),
+          operationName,
           query: undefined,
           traceId: undefined,
           pageIndex: undefined
@@ -84,6 +86,12 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
     openRelatedLogs,
     openRelatedMetrics
   };
+}
+
+function rootMetricOperationName(state: Extract<TraceDetailState, { kind: 'ready' }>) {
+  const rootSpanName = state.detail.rootSpanName?.trim();
+  if (!rootSpanName || state.selected?.spanId !== state.detail.rootSpanId) return undefined;
+  return state.selected.spanName === rootSpanName ? rootSpanName : undefined;
 }
 
 function useScopedTraceSelection(scopeKey: string) {

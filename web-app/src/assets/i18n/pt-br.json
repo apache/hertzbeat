@@ -493,6 +493,7 @@
     "message": "Mensagem",
     "trace": "Trace",
     "operation": "Operação",
+    "operationContext": "Operação: {{value}}",
     "duration": "Duração",
     "relatedLogs": "Logs relacionados",
     "open": "Abrir",

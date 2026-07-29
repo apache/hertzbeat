@@ -67,6 +67,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     spanId: readValue(params.get('spanId')),
     resourceFilter: readValue(params.get('resourceFilter')),
     attributeFilter: readValue(params.get('attributeFilter')),
+    operationName: readValue(params.get('operationName')),
     metricFilter: readValue(params.get('metricFilter')),
     groupBy: readValue(params.get('groupBy')),
     ...parseExploreFilterParams(params),
@@ -120,7 +121,7 @@ export function buildCrossSignalPath(
  * depending on the selected signal.
  */
 export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
-  return { signal, query: undefined, live: undefined, pageIndex: undefined };
+  return { signal, query: undefined, operationName: undefined, live: undefined, pageIndex: undefined };
 }
 
 export function querySubmissionTimePatch(query: ExploreQuery, routeWindow?: ExactTimeWindow): ExploreQueryPatch {
@@ -178,6 +179,7 @@ function setValue(params: URLSearchParams, key: string, value: string | undefine
 
 function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
   if (query.signal === 'metrics') {
+    setValue(params, 'operationName', query.operationName);
     setValue(params, 'metricFilter', query.metricFilter);
     setValue(params, 'groupBy', query.groupBy);
     setValue(params, 'aggregation', query.aggregation);
@@ -220,6 +222,7 @@ function normalizeExploreQuery(
     return {
       ...shared,
       signal: 'metrics',
+      operationName: query.operationName,
       metricFilter: query.metricFilter,
       groupBy: query.groupBy,
       aggregation: query.aggregation,

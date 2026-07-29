@@ -487,6 +487,7 @@
     "message": "メッセージ",
     "trace": "トレース",
     "operation": "操作",
+    "operationContext": "操作: {{value}}",
     "duration": "所要時間",
     "relatedLogs": "関連ログ",
     "open": "開く",

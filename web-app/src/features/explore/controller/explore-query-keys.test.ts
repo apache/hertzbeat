@@ -45,7 +45,8 @@ const metricQuery: ExploreQuery = {
   metricFilter: 'status=500',
   groupBy: 'service.name',
   aggregation: 'sum',
-  step: '30s'
+  step: '30s',
+  operationName: 'POST /checkout'
 };
 
 describe('Explore Query Key factory', () => {
@@ -71,7 +72,8 @@ describe('Explore Query Key factory', () => {
         metricFilter: 'status=500',
         groupBy: 'service.name',
         aggregation: 'sum',
-        step: '30s'
+        step: '30s',
+        operationName: 'POST /checkout'
       }
     ]);
     expect(exploreQueryKeys.history({ ...metricQuery }, { ...window }, 3)).toEqual(
@@ -117,7 +119,8 @@ describe('Explore Query Key factory', () => {
       ['metricFilter', 'region=west'],
       ['groupBy', 'service.namespace'],
       ['aggregation', 'max'],
-      ['step', '1m']
+      ['step', '1m'],
+      ['operationName', 'GET /health']
     ] as const) {
       expect(exploreQueryKeys.history({ ...metricQuery, [field]: value }, window, 3)).not.toEqual(metrics);
     }

@@ -50,6 +50,7 @@ describe('Trace detail controller', () => {
     expect(openPath).toHaveBeenLastCalledWith(expect.stringMatching(/signal=logs.*traceId=trace-1/));
     act(() => view.result.current.openRelatedMetrics());
     expect(openPath).toHaveBeenLastCalledWith(expect.stringMatching(/signal=metrics.*serviceName=payments/));
+    expect(openPath).toHaveBeenLastCalledWith(expect.not.stringContaining('operationName='));
     act(() => view.result.current.changePage(3));
     expect(openPath).toHaveBeenLastCalledWith(expect.stringContaining('page=2'));
     act(() => view.result.current.close());
@@ -58,6 +59,36 @@ describe('Trace detail controller', () => {
     await waitFor(() =>
       expect(view.result.current.state).toMatchObject({ kind: 'ready', selected: { spanId: 'span-1' } })
     );
+  });
+
+  it('injects operationName only from an honestly selected matching root span', async () => {
+    api.loadTraceDetail.mockResolvedValue(rootAlignedTraceDetail('trace-1'));
+    const openPath = vi.fn();
+    const view = renderController(openPath);
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    act(() => view.result.current.openRelatedMetrics());
+
+    expect(openPath).toHaveBeenLastCalledWith(expect.stringContaining('operationName=POST+%2Fcheckout'));
+  });
+
+  it.each([
+    ['child selection', rootAlignedTraceDetail('trace-1'), 'span-2'],
+    ['root name mismatch', traceDetail('trace-1'), undefined],
+    ['missing root name', { ...rootAlignedTraceDetail('trace-1'), rootSpanName: null }, undefined],
+    ['missing root selection', { ...rootAlignedTraceDetail('trace-1'), rootSpanId: 'missing-span' }, undefined]
+  ] as const)('does not inject operationName for %s', async (_label, detail, selectedSpanId) => {
+    api.loadTraceDetail.mockResolvedValue(detail);
+    const openPath = vi.fn();
+    const view = renderController(openPath);
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+    if (selectedSpanId) act(() => view.result.current.selectSpan(selectedSpanId));
+
+    act(() => view.result.current.openRelatedMetrics());
+
+    expect(openPath).toHaveBeenLastCalledWith(expect.not.stringContaining('operationName='));
   });
 
   it('preserves full context for trace logs and clears downstream identity when a span changes the metric service', async () => {
@@ -254,12 +285,20 @@ function traceDetail(traceId: string): TraceDetail {
     spans: [span(traceId, 'span-1', 'checkout'), span(traceId, 'span-2', 'payments')]
   };
 }
-function span(traceId: string, spanId: string, serviceName: string) {
+function rootAlignedTraceDetail(traceId: string): TraceDetail {
+  const detail = traceDetail(traceId);
+  return {
+    ...detail,
+    rootSpanName: 'POST /checkout',
+    spans: [span(traceId, 'span-1', 'checkout', 'POST /checkout'), span(traceId, 'span-2', 'payments')]
+  };
+}
+function span(traceId: string, spanId: string, serviceName: string, spanName = spanId) {
   return {
     traceId,
     spanId,
     parentSpanId: null,
-    spanName: spanId,
+    spanName,
     serviceName,
     status: 'OK',
     spanKind: null,

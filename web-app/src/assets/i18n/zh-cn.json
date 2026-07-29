@@ -479,6 +479,7 @@
     "message": "日志内容",
     "trace": "链路",
     "operation": "操作",
+    "operationContext": "操作：{{value}}",
     "duration": "耗时",
     "relatedLogs": "相关日志",
     "open": "打开",

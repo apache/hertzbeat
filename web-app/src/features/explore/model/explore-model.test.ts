@@ -80,6 +80,21 @@ describe('explore query state', () => {
     );
   });
 
+  it('roundtrips operationName only for metrics', () => {
+    const metrics = parseExploreQuery(
+      new URLSearchParams('signal=metrics&timeRange=last-30m&operationName=POST%20%2Fcheckout')
+    );
+    expect(metrics).toMatchObject({ signal: 'metrics', operationName: 'POST /checkout' });
+    expect(buildExplorePath(metrics)).toContain('operationName=POST+%2Fcheckout');
+
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&operationName=ignored'))).not.toHaveProperty(
+      'operationName'
+    );
+    expect(parseExploreQuery(new URLSearchParams('signal=traces&operationName=ignored'))).not.toHaveProperty(
+      'operationName'
+    );
+  });
+
   it('parses canonical and legacy live log URLs but only serializes the canonical mode', () => {
     expect(parseExploreQuery(new URLSearchParams('signal=logs&mode=live'))).toMatchObject({
       signal: 'logs',
@@ -392,6 +407,28 @@ describe('explore query state', () => {
       pageIndex: undefined,
       start: 1_710_000_000_000,
       end: 1_710_000_005_000
+    });
+  });
+
+  it('clears a metric operation dependency when upstream context changes', () => {
+    const current = parseExploreQuery(
+      new URLSearchParams(
+        'signal=metrics&serviceName=checkout&environment=prod&instance=checkout-7d9' +
+          '&endpoint=%2Fcheckout&operationName=POST%20%2Fcheckout'
+      )
+    );
+    const next = mergeExploreQuery(
+      current,
+      mergeExploreContextChanges(exploreQueryContext(current), { serviceName: 'payments' })
+    );
+
+    expect(next).toMatchObject({
+      signal: 'metrics',
+      serviceName: 'payments',
+      environment: undefined,
+      instance: undefined,
+      endpoint: undefined,
+      operationName: undefined
     });
   });
 
