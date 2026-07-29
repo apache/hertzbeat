@@ -426,6 +426,14 @@
     "filter": "Label filter, key=value",
     "groupBy": "Group by label",
     "aggregation": "Aggregation",
+    "temporalAggregation": "Temporal aggregation",
+    "temporalAggregationContext": "Temporal aggregation: {{value}}",
+    "temporalAggregationValues": {
+      "raw": "Raw samples",
+      "rate": "Rate per second",
+      "increase": "Increase",
+      "delta": "Delta"
+    },
     "step": "Step in seconds, for example 60"
   },
   "exploreLog": {
@@ -436,6 +444,8 @@
     "openTrace": "Open trace",
     "resourceFilter": "Resource attributes, key=value",
     "attributeFilter": "Log attributes, key:value",
+    "hideInternal": "Hide internal logs",
+    "hideNoise": "Hide noise logs",
     "resourceAttributes": "Resource attributes",
     "logAttributes": "Log attributes",
     "connecting": "Connecting to log stream",
@@ -464,7 +474,14 @@
     "relatedMetrics": "Related metrics",
     "minDuration": "Minimum duration (ms)",
     "maxDuration": "Maximum duration (ms)",
-    "errorOnly": "Errors only"
+    "errorOnly": "Errors only",
+    "spanScope": "Span scope",
+    "spanScopeContext": "Span scope: {{value}}",
+    "spanScopeValues": {
+      "root": "Root spans",
+      "entrypoint": "Entrypoint spans"
+    },
+    "hideInternal": "Hide internal spans"
   },
   "explore": {
     "title": "Observability",

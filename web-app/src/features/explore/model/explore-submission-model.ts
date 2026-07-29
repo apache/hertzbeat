@@ -22,6 +22,7 @@ import {
   parseMetricStep,
   parseTraceDuration
 } from './explore-field-contract';
+import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
 
 export { EXPLORE_METRIC_AGGREGATIONS } from './explore-field-contract';
 
@@ -38,6 +39,7 @@ export type MetricExploreSubmissionDraft = SharedExploreSubmissionDraft & {
   metricFilter: string;
   groupBy: string;
   aggregation: string;
+  temporalAggregation: string;
   stepSeconds: string;
 };
 
@@ -48,6 +50,8 @@ export type LogExploreSubmissionDraft = SharedExploreSubmissionDraft & {
   spanId: string;
   resourceFilter: string;
   attributeFilter: string;
+  hideInternal: boolean;
+  hideNoise: boolean;
 };
 
 export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
@@ -58,6 +62,8 @@ export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
   minDurationMs: string;
   maxDurationMs: string;
   errorOnly: boolean;
+  spanScope: string;
+  hideInternal: boolean;
 };
 
 export type ExploreSubmissionDraft =
@@ -75,7 +81,7 @@ export type ExploreDraftField = Exclude<KeysOfUnion<ExploreSubmissionDraft>, 'si
 export type ExploreDraftFieldUpdate = {
   [Field in ExploreDraftField]: {
     field: Field;
-    value: Field extends 'errorOnly' ? boolean : string;
+    value: Field extends 'errorOnly' | 'hideInternal' | 'hideNoise' ? boolean : string;
   };
 }[ExploreDraftField];
 
@@ -111,6 +117,7 @@ function metricDraftFromQuery(query: Extract<ExploreQuery, { signal: 'metrics' }
     metricFilter: query.metricFilter ?? '',
     groupBy: query.groupBy ?? '',
     aggregation: query.aggregation ?? '',
+    temporalAggregation: query.temporalAggregation ?? '',
     stepSeconds: query.step ?? ''
   };
 }
@@ -123,7 +130,9 @@ function logDraftFromQuery(query: Extract<ExploreQuery, { signal: 'logs' }>): Lo
     traceId: query.traceId ?? '',
     spanId: query.spanId ?? '',
     resourceFilter: query.resourceFilter ?? '',
-    attributeFilter: query.attributeFilter ?? ''
+    attributeFilter: query.attributeFilter ?? '',
+    hideInternal: Boolean(query.hideInternal),
+    hideNoise: Boolean(query.hideNoise)
   };
 }
 
@@ -136,7 +145,9 @@ function traceDraftFromQuery(query: Extract<ExploreQuery, { signal: 'traces' }>)
     attributeFilter: query.attributeFilter ?? '',
     minDurationMs: query.minDurationMs == null ? '' : String(query.minDurationMs),
     maxDurationMs: query.maxDurationMs == null ? '' : String(query.maxDurationMs),
-    errorOnly: Boolean(query.errorOnly)
+    errorOnly: Boolean(query.errorOnly),
+    spanScope: query.spanScope ?? '',
+    hideInternal: Boolean(query.hideInternal)
   };
 }
 
@@ -168,6 +179,7 @@ function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): Explor
       metricFilter: normalizedValue(draft.metricFilter),
       groupBy: normalizedValue(draft.groupBy),
       aggregation: aggregation.valid ? aggregation.value : undefined,
+      temporalAggregation: temporalAggregationValue(draft.temporalAggregation.trim()),
       step: step.valid ? step.value : undefined,
       pageIndex: undefined
     }
@@ -184,6 +196,8 @@ function buildLogSubmissionPatch(draft: LogExploreSubmissionDraft): ExploreSubmi
       spanId: normalizedValue(draft.spanId),
       resourceFilter: normalizedValue(draft.resourceFilter),
       attributeFilter: normalizedValue(draft.attributeFilter),
+      hideInternal: enabledFilterValue(draft.hideInternal),
+      hideNoise: enabledFilterValue(draft.hideNoise),
       pageIndex: undefined
     }
   };
@@ -209,6 +223,8 @@ function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreS
       minDurationMs: minDuration.value,
       maxDurationMs: maxDuration.value,
       errorOnly: draft.errorOnly || undefined,
+      spanScope: traceSpanScopeValue(draft.spanScope.trim()),
+      hideInternal: enabledFilterValue(draft.hideInternal),
       pageIndex: undefined
     }
   };

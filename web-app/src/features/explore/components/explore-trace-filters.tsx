@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { Checkbox, Input } from 'antd';
+import { Checkbox, Input, Select } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { TRACE_SPAN_SCOPES } from '../model/explore-parity-filter-model';
 import type { ExploreSubmissionViewModel, TraceExploreSubmissionDraft } from '../model/explore-submission-model';
 import { ExploreFilterField } from './explore-filter-field';
 
@@ -66,11 +67,36 @@ export function ExploreTraceFilters({ draft, errors, t, updateField }: Props) {
         onChange={event => updateField({ field: 'attributeFilter', value: event.target.value })}
         placeholder={t('exploreLog.attributeFilter')}
       />
+      <TraceScopeFilters draft={draft} errors={errors} t={t} updateField={updateField} />
       <Checkbox
         checked={draft.errorOnly}
         onChange={event => updateField({ field: 'errorOnly', value: event.target.checked })}
       >
         {t('exploreTrace.errorOnly')}
+      </Checkbox>
+    </>
+  );
+}
+
+function TraceScopeFilters({ draft, t, updateField }: Props) {
+  return (
+    <>
+      <Select
+        aria-label={t('exploreTrace.spanScope')}
+        allowClear
+        value={draft.spanScope || undefined}
+        placeholder={t('exploreTrace.spanScope')}
+        options={TRACE_SPAN_SCOPES.map(value => ({
+          value,
+          label: t(`exploreTrace.spanScopeValues.${value}`)
+        }))}
+        onChange={value => updateField({ field: 'spanScope', value: value ?? '' })}
+      />
+      <Checkbox
+        checked={draft.hideInternal}
+        onChange={event => updateField({ field: 'hideInternal', value: event.target.checked })}
+      >
+        {t('exploreTrace.hideInternal')}
       </Checkbox>
     </>
   );

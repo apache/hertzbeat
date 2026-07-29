@@ -43,6 +43,7 @@ function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | u
         metricFilter: query.metricFilter,
         groupBy: query.groupBy,
         aggregation: query.aggregation,
+        temporalAggregation: query.temporalAggregation,
         step: query.step
       }
     ] as const;
@@ -57,6 +58,8 @@ function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | u
         severityText: query.severityText,
         resourceFilter: query.resourceFilter,
         attributeFilter: query.attributeFilter,
+        hideInternal: query.hideInternal,
+        hideNoise: query.hideNoise,
         pageIndex: query.pageIndex
       }
     ] as const;
@@ -71,6 +74,8 @@ function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | u
       minDurationMs: query.minDurationMs,
       maxDurationMs: query.maxDurationMs,
       errorOnly: query.errorOnly,
+      spanScope: query.spanScope,
+      hideInternal: query.hideInternal,
       pageIndex: query.pageIndex
     }
   ] as const;

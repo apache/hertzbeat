@@ -97,13 +97,18 @@ describe('explore API paths', () => {
       traceId: 'trace-1',
       spanId: 'span-1',
       resourceFilter: 'service.version=1.2.3',
-      attributeFilter: 'http.route:/checkout'
+      attributeFilter: 'http.route:/checkout',
+      hideInternal: true,
+      hideNoise: true
     };
     expect(buildSignalApiPath(query, 2_000_000)).toContain(
-      'severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout'
+      'severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout' +
+        '&hideInternal=true&hideNoise=true'
     );
     expect(buildLogStreamPath(query)).toBe(
-      '/api/logs/sse/subscribe?serviceName=checkout&logContent=timeout&traceId=trace-1&spanId=span-1&severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout'
+      '/api/logs/sse/subscribe?serviceName=checkout&logContent=timeout&traceId=trace-1&spanId=span-1' +
+        '&severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout' +
+        '&hideInternal=true&hideNoise=true'
     );
   });
 
@@ -116,11 +121,14 @@ describe('explore API paths', () => {
         metricFilter: 'method=POST',
         groupBy: 'service_name',
         aggregation: 'avg',
+        temporalAggregation: 'delta',
         step: '60'
       },
       4_000_000
     );
-    expect(metricPath).toContain('filter=method%3DPOST&groupBy=service_name&aggregation=avg&step=60');
+    expect(metricPath).toContain(
+      'filter=method%3DPOST&groupBy=service_name&aggregation=avg&temporalAggregation=delta&step=60'
+    );
 
     const tracePath = buildSignalApiPath(
       {
@@ -132,13 +140,16 @@ describe('explore API paths', () => {
         attributeFilter: 'http.route=/checkout',
         minDurationMs: 100,
         maxDurationMs: 5000,
-        errorOnly: true
+        errorOnly: true,
+        spanScope: 'root',
+        hideInternal: true
       },
       4_000_000
     );
     expect(tracePath).toContain(
       'traceId=trace-1&resourceFilter=cloud.region%3Dap-southeast-1' +
-        '&attributeFilter=http.route%3D%2Fcheckout&minDurationMs=100&maxDurationMs=5000&errorOnly=true'
+        '&attributeFilter=http.route%3D%2Fcheckout&minDurationMs=100&maxDurationMs=5000' +
+        '&errorOnly=true&spanScope=root&hideInternal=true'
     );
     expect(tracePath).not.toContain('spanId');
   });

@@ -33,9 +33,42 @@ describe('Explore submission locale contract', () => {
     expect(en.exploreMetric.step).toBe('Step in seconds, for example 60');
     expect(pt.exploreMetric.step).toBe('Passo em segundos, por exemplo 60');
   });
+
+  it('localizes every visible signal-parity filter and enum option', () => {
+    for (const locale of runtimeLocales) {
+      expect(Object.values(locale.exploreMetric.temporalAggregationValues)).toHaveLength(4);
+      expect(Object.values(locale.exploreTrace.spanScopeValues)).toHaveLength(2);
+      for (const label of [
+        locale.exploreMetric.temporalAggregation,
+        locale.exploreMetric.temporalAggregationContext,
+        locale.exploreLog.hideInternal,
+        locale.exploreLog.hideNoise,
+        locale.exploreTrace.spanScope,
+        locale.exploreTrace.spanScopeContext,
+        locale.exploreTrace.hideInternal,
+        ...Object.values(locale.exploreMetric.temporalAggregationValues),
+        ...Object.values(locale.exploreTrace.spanScopeValues)
+      ]) {
+        expect(label).toEqual(expect.any(String));
+        expect(label).not.toBe('');
+      }
+    }
+  });
 });
 
 type LocaleRoot = {
   explore: { submissionErrors: Record<(typeof submissionErrorKeys)[number], string> };
-  exploreMetric: { step: string };
+  exploreMetric: {
+    step: string;
+    temporalAggregation: string;
+    temporalAggregationContext: string;
+    temporalAggregationValues: Record<'raw' | 'rate' | 'increase' | 'delta', string>;
+  };
+  exploreLog: { hideInternal: string; hideNoise: string };
+  exploreTrace: {
+    spanScope: string;
+    spanScopeContext: string;
+    spanScopeValues: Record<'root' | 'entrypoint', string>;
+    hideInternal: string;
+  };
 };

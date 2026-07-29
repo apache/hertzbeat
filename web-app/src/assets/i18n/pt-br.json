@@ -429,6 +429,14 @@
     "filter": "Filtro de rótulo key=value",
     "groupBy": "Agrupar por rótulo",
     "aggregation": "Agregação",
+    "temporalAggregation": "Agregação temporal",
+    "temporalAggregationContext": "Agregação temporal: {{value}}",
+    "temporalAggregationValues": {
+      "raw": "Amostras brutas",
+      "rate": "Taxa por segundo",
+      "increase": "Aumento",
+      "delta": "Delta"
+    },
     "step": "Passo em segundos, por exemplo 60"
   },
   "exploreLog": {
@@ -439,6 +447,8 @@
     "openTrace": "Abrir trace",
     "resourceFilter": "Atributos do recurso key=value",
     "attributeFilter": "Atributos do log key:value",
+    "hideInternal": "Ocultar logs internos",
+    "hideNoise": "Ocultar logs ruidosos",
     "resourceAttributes": "Atributos do recurso",
     "logAttributes": "Atributos do log",
     "connecting": "Conectando ao fluxo de logs",
@@ -467,7 +477,14 @@
     "relatedMetrics": "Métricas relacionadas",
     "minDuration": "Duração mínima (ms)",
     "maxDuration": "Duração máxima (ms)",
-    "errorOnly": "Somente erros"
+    "errorOnly": "Somente erros",
+    "spanScope": "Escopo do span",
+    "spanScopeContext": "Escopo do span: {{value}}",
+    "spanScopeValues": {
+      "root": "Spans raiz",
+      "entrypoint": "Spans de entrada"
+    },
+    "hideInternal": "Ocultar spans internos"
   },
   "explore": {
     "title": "Observabilidade",

@@ -73,7 +73,7 @@ export function useExploreSubmission(
   const removeFilter = (key: keyof ExploreQueryPatch) => {
     const field = draftFieldForQueryKey(draft, key);
     if (!field) return false;
-    const value = field === 'errorOnly' ? false : '';
+    const value = isBooleanDraftField(field) ? false : '';
     setDraft(current => ({ ...current, [field]: value }));
     setErrors(current => withoutErrors(current, [field]));
     onSubmitPatch({ [key]: undefined, pageIndex: undefined });
@@ -128,23 +128,37 @@ const signalDraftFields: Record<
   ExploreSubmissionDraft['signal'],
   Partial<Record<keyof ExploreQueryPatch, ExploreDraftField>>
 > = {
-  metrics: { metricFilter: 'metricFilter', groupBy: 'groupBy', aggregation: 'aggregation', step: 'stepSeconds' },
+  metrics: {
+    metricFilter: 'metricFilter',
+    groupBy: 'groupBy',
+    aggregation: 'aggregation',
+    temporalAggregation: 'temporalAggregation',
+    step: 'stepSeconds'
+  },
   logs: {
     severityText: 'severityText',
     traceId: 'traceId',
     spanId: 'spanId',
     resourceFilter: 'resourceFilter',
-    attributeFilter: 'attributeFilter'
+    attributeFilter: 'attributeFilter',
+    hideInternal: 'hideInternal',
+    hideNoise: 'hideNoise'
   },
   traces: {
     traceId: 'traceId',
     resourceFilter: 'resourceFilter',
     minDurationMs: 'minDurationMs',
     maxDurationMs: 'maxDurationMs',
-    errorOnly: 'errorOnly'
+    errorOnly: 'errorOnly',
+    spanScope: 'spanScope',
+    hideInternal: 'hideInternal'
   }
 };
 
 function draftFieldForQueryKey(draft: ExploreSubmissionDraft, key: keyof ExploreQueryPatch) {
   return sharedDraftFields[key] ?? signalDraftFields[draft.signal][key];
+}
+
+function isBooleanDraftField(field: ExploreDraftField) {
+  return field === 'errorOnly' || field === 'hideInternal' || field === 'hideNoise';
 }

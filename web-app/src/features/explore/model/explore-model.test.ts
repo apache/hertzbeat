@@ -65,6 +65,52 @@ describe('explore query state', () => {
     });
   });
 
+  it('roundtrips only strict signal-specific parity filters', () => {
+    const metrics = parseExploreQuery(
+      new URLSearchParams('signal=metrics&temporalAggregation=rate&spanScope=root&hideInternal=true')
+    );
+    const logs = parseExploreQuery(
+      new URLSearchParams('signal=logs&hideInternal=true&hideNoise=true&temporalAggregation=delta')
+    );
+    const traces = parseExploreQuery(
+      new URLSearchParams('signal=traces&spanScope=entrypoint&hideInternal=true&hideNoise=true')
+    );
+
+    expect(metrics).toMatchObject({ signal: 'metrics', temporalAggregation: 'rate' });
+    expect(buildExplorePath(metrics)).toContain('temporalAggregation=rate');
+    expect(metrics).not.toHaveProperty('spanScope');
+    expect(metrics).not.toHaveProperty('hideInternal');
+    expect(logs).toMatchObject({ signal: 'logs', hideInternal: true, hideNoise: true });
+    expect(buildExplorePath(logs)).toContain('hideInternal=true&hideNoise=true');
+    expect(logs).not.toHaveProperty('temporalAggregation');
+    expect(traces).toMatchObject({ signal: 'traces', spanScope: 'entrypoint', hideInternal: true });
+    expect(buildExplorePath(traces)).toContain('spanScope=entrypoint&hideInternal=true');
+    expect(traces).not.toHaveProperty('hideNoise');
+
+    for (const invalid of ['sum', 'RATE', 'false', '']) {
+      const query = parseExploreQuery(new URLSearchParams(`signal=metrics&temporalAggregation=${invalid}`));
+      expect(query).toMatchObject({ temporalAggregation: undefined });
+      expect(buildExplorePath(query)).not.toContain('temporalAggregation=');
+    }
+    for (const invalid of ['server', 'ROOT', 'false', '']) {
+      const query = parseExploreQuery(new URLSearchParams(`signal=traces&spanScope=${invalid}`));
+      expect(query).toMatchObject({ spanScope: undefined });
+      expect(buildExplorePath(query)).not.toContain('spanScope=');
+    }
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&hideInternal=false&hideNoise=1'))).toMatchObject({
+      signal: 'logs',
+      hideInternal: undefined,
+      hideNoise: undefined
+    });
+    expect(buildExplorePath(metrics)).not.toMatch(/spanScope|hideInternal|hideNoise/u);
+    expect(buildExplorePath(logs)).not.toContain('temporalAggregation');
+    expect(
+      buildExplorePath(parseExploreQuery(new URLSearchParams('signal=logs&hideInternal=false&hideNoise=false')))
+    ).not.toMatch(/hideInternal|hideNoise/u);
+    expect(buildCrossSignalPath(metrics, 'logs', {})).not.toContain('temporalAggregation');
+    expect(buildCrossSignalPath(logs, 'traces', {})).not.toMatch(/hideInternal|hideNoise/u);
+  });
+
   it('builds a reproducible path and drops an incomplete exact window', () => {
     expect(
       buildExplorePath({
@@ -179,7 +225,7 @@ describe('explore query state', () => {
         'signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
           '&instance=checkout-1&endpoint=%2Fcheckout&query=POST%20%2Fcheckout&traceId=trace-1' +
           '&spanId=span-1&resourceFilter=cloud.region%3Dus-east&attributeFilter=http.route%3D%2Fcheckout' +
-          '&minDurationMs=100&maxDurationMs=200&errorOnly=true&page=2'
+          '&minDurationMs=100&maxDurationMs=200&errorOnly=true&spanScope=root&hideInternal=true&page=2'
       )
     );
 

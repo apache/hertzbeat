@@ -101,11 +101,15 @@ export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
     resourceFilter: undefined,
     attributeFilter: undefined,
     errorOnly: undefined,
+    spanScope: undefined,
+    hideInternal: undefined,
+    hideNoise: undefined,
     minDurationMs: undefined,
     maxDurationMs: undefined,
     metricFilter: undefined,
     groupBy: undefined,
     aggregation: undefined,
+    temporalAggregation: undefined,
     step: undefined
   };
 }

@@ -15,22 +15,16 @@
  * limitations under the License.
  */
 
-import { Input, Select } from 'antd';
+import { Input } from 'antd';
 import type { TFunction } from 'i18next';
 
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
-import {
-  EXPLORE_METRIC_AGGREGATIONS,
-  type ExploreSubmissionViewModel,
-  type LogExploreSubmissionDraft,
-  type MetricExploreSubmissionDraft
-} from '../model/explore-submission-model';
-import { ExploreFilterField } from './explore-filter-field';
+import type { ExploreSubmissionViewModel } from '../model/explore-submission-model';
+import { ExploreLogFilters } from './explore-log-filters';
+import { ExploreMetricFilters } from './explore-metric-filters';
 import { ExploreTraceFilters } from './explore-trace-filters';
 import styles from './explore-query-bar.module.css';
-
-const LOG_SEVERITIES = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
 
 type Props = Pick<ExploreSubmissionViewModel, 'draft' | 'errors' | 'updateField'> & { t: TFunction };
 
@@ -49,8 +43,10 @@ export function ExploreAdvancedFilters({ draft, errors, t, updateField }: Props)
           onChange={event => updateField({ field: QUERY_CONTEXT_FIELDS.endpoint, value: event.target.value })}
           placeholder={t('explore.httpRouteTemplate')}
         />
-        {draft.signal === 'metrics' && <MetricFilters draft={draft} errors={errors} t={t} updateField={updateField} />}
-        {draft.signal === 'logs' && <LogFilters draft={draft} t={t} updateField={updateField} />}
+        {draft.signal === 'metrics' && (
+          <ExploreMetricFilters draft={draft} errors={errors} t={t} updateField={updateField} />
+        )}
+        {draft.signal === 'logs' && <ExploreLogFilters draft={draft} t={t} updateField={updateField} />}
         {draft.signal === 'traces' && (
           <ExploreTraceFilters draft={draft} errors={errors} t={t} updateField={updateField} />
         )}
@@ -58,88 +54,6 @@ export function ExploreAdvancedFilters({ draft, errors, t, updateField }: Props)
     </details>
   );
 }
-
-function MetricFilters({ draft, errors, t, updateField }: ValidatedDraftFilterProps<MetricExploreSubmissionDraft>) {
-  return (
-    <>
-      <Input
-        value={draft.metricFilter}
-        onChange={event => updateField({ field: 'metricFilter', value: event.target.value })}
-        placeholder={t('exploreMetric.filter')}
-      />
-      <Input
-        value={draft.groupBy}
-        onChange={event => updateField({ field: 'groupBy', value: event.target.value })}
-        placeholder={t('exploreMetric.groupBy')}
-      />
-      <ExploreFilterField id="explore-aggregation" error={errors.aggregation} t={t}>
-        <Select
-          aria-invalid={Boolean(errors.aggregation)}
-          aria-describedby={errors.aggregation ? 'explore-aggregation-error' : undefined}
-          aria-label={t('exploreMetric.aggregation')}
-          allowClear
-          status={errors.aggregation ? 'error' : ''}
-          value={draft.aggregation || undefined}
-          placeholder={t('exploreMetric.aggregation')}
-          options={EXPLORE_METRIC_AGGREGATIONS.map(value => ({ value, label: value }))}
-          onChange={aggregation => updateField({ field: 'aggregation', value: aggregation ?? '' })}
-        />
-      </ExploreFilterField>
-      <ExploreFilterField id="explore-step" error={errors.stepSeconds} t={t}>
-        <Input
-          aria-invalid={Boolean(errors.stepSeconds)}
-          aria-describedby={errors.stepSeconds ? 'explore-step-error' : undefined}
-          status={errors.stepSeconds ? 'error' : ''}
-          value={draft.stepSeconds}
-          onChange={event => updateField({ field: 'stepSeconds', value: event.target.value })}
-          placeholder={t('exploreMetric.step')}
-        />
-      </ExploreFilterField>
-    </>
-  );
-}
-
-function LogFilters({ draft, t, updateField }: DraftFilterProps<LogExploreSubmissionDraft>) {
-  return (
-    <>
-      <Select
-        aria-label={t('explore.severity')}
-        allowClear
-        value={draft.severityText || undefined}
-        placeholder={t('explore.severity')}
-        options={LOG_SEVERITIES.map(value => ({ value, label: value }))}
-        onChange={severityText => updateField({ field: 'severityText', value: severityText ?? '' })}
-      />
-      <Input
-        value={draft.traceId}
-        onChange={event => updateField({ field: 'traceId', value: event.target.value })}
-        placeholder={t('explore.traceId')}
-      />
-      <Input
-        value={draft.spanId}
-        onChange={event => updateField({ field: 'spanId', value: event.target.value })}
-        placeholder={t('explore.spanId')}
-      />
-      <Input
-        value={draft.resourceFilter}
-        onChange={event => updateField({ field: 'resourceFilter', value: event.target.value })}
-        placeholder={t('exploreLog.resourceFilter')}
-      />
-      <Input
-        value={draft.attributeFilter}
-        onChange={event => updateField({ field: 'attributeFilter', value: event.target.value })}
-        placeholder={t('exploreLog.attributeFilter')}
-      />
-    </>
-  );
-}
-
-type DraftFilterProps<T> = Pick<ExploreSubmissionViewModel, 'updateField'> & {
-  draft: T;
-  t: TFunction;
-};
-
-type ValidatedDraftFilterProps<T> = DraftFilterProps<T> & Pick<ExploreSubmissionViewModel, 'errors'>;
 
 function hasAdvancedFilter(draft: ExploreSubmissionViewModel['draft']) {
   return [draft.instance, draft.endpoint, ...signalFilters(draft)].some(
@@ -150,9 +64,17 @@ function hasAdvancedFilter(draft: ExploreSubmissionViewModel['draft']) {
 function signalFilters(draft: ExploreSubmissionViewModel['draft']) {
   switch (draft.signal) {
     case 'metrics':
-      return [draft.metricFilter, draft.groupBy, draft.aggregation, draft.stepSeconds];
+      return [draft.metricFilter, draft.groupBy, draft.aggregation, draft.temporalAggregation, draft.stepSeconds];
     case 'logs':
-      return [draft.severityText, draft.traceId, draft.spanId, draft.resourceFilter, draft.attributeFilter];
+      return [
+        draft.severityText,
+        draft.traceId,
+        draft.spanId,
+        draft.resourceFilter,
+        draft.attributeFilter,
+        draft.hideInternal,
+        draft.hideNoise
+      ];
     case 'traces':
       return [
         draft.traceId,
@@ -160,7 +82,9 @@ function signalFilters(draft: ExploreSubmissionViewModel['draft']) {
         draft.attributeFilter,
         draft.minDurationMs,
         draft.maxDurationMs,
-        draft.errorOnly
+        draft.errorOnly,
+        draft.spanScope,
+        draft.hideInternal
       ];
   }
 }

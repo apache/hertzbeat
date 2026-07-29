@@ -423,6 +423,14 @@
     "filter": "ラベル条件 key=value",
     "groupBy": "ラベルでグループ化",
     "aggregation": "集計",
+    "temporalAggregation": "時間集約",
+    "temporalAggregationContext": "時間集約: {{value}}",
+    "temporalAggregationValues": {
+      "raw": "未加工サンプル",
+      "rate": "1 秒あたりのレート",
+      "increase": "増加量",
+      "delta": "差分"
+    },
     "step": "ステップ（秒）、例: 60"
   },
   "exploreLog": {
@@ -433,6 +441,8 @@
     "openTrace": "トレースを開く",
     "resourceFilter": "リソース属性 key=value",
     "attributeFilter": "ログ属性 key:value",
+    "hideInternal": "内部ログを非表示",
+    "hideNoise": "ノイズログを非表示",
     "resourceAttributes": "リソース属性",
     "logAttributes": "ログ属性",
     "connecting": "ログストリームに接続中",
@@ -461,7 +471,14 @@
     "relatedMetrics": "関連メトリクス",
     "minDuration": "最小時間（ms）",
     "maxDuration": "最大時間（ms）",
-    "errorOnly": "エラーのみ"
+    "errorOnly": "エラーのみ",
+    "spanScope": "スパン範囲",
+    "spanScopeContext": "スパン範囲: {{value}}",
+    "spanScopeValues": {
+      "root": "ルートスパン",
+      "entrypoint": "エントリーポイントスパン"
+    },
+    "hideInternal": "内部スパンを非表示"
   },
   "explore": {
     "title": "オブザーバビリティ",

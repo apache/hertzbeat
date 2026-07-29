@@ -33,6 +33,7 @@ describe('explore submission model', () => {
         metricFilter: 'method=POST',
         groupBy: 'service_name',
         aggregation: 'avg',
+        temporalAggregation: 'rate',
         step: '60'
       })
     ).toEqual({
@@ -45,6 +46,7 @@ describe('explore submission model', () => {
       metricFilter: 'method=POST',
       groupBy: 'service_name',
       aggregation: 'avg',
+      temporalAggregation: 'rate',
       stepSeconds: '60'
     });
 
@@ -56,7 +58,9 @@ describe('explore submission model', () => {
         attributeFilter: 'http.route=/checkout',
         minDurationMs: 10,
         maxDurationMs: 500,
-        errorOnly: true
+        errorOnly: true,
+        spanScope: 'root',
+        hideInternal: true
       })
     ).toEqual({
       signal: 'traces',
@@ -70,7 +74,9 @@ describe('explore submission model', () => {
       attributeFilter: 'http.route=/checkout',
       minDurationMs: '10',
       maxDurationMs: '500',
-      errorOnly: true
+      errorOnly: true,
+      spanScope: 'root',
+      hideInternal: true
     });
   });
 
@@ -86,6 +92,7 @@ describe('explore submission model', () => {
         metricFilter: ' method=POST ',
         groupBy: ' service_name ',
         aggregation: ' AVG ',
+        temporalAggregation: 'increase',
         stepSeconds: ' 86400 '
       })
     ).toEqual({
@@ -99,6 +106,7 @@ describe('explore submission model', () => {
         metricFilter: 'method=POST',
         groupBy: 'service_name',
         aggregation: 'avg',
+        temporalAggregation: 'increase',
         step: '86400',
         pageIndex: undefined
       }
@@ -116,6 +124,7 @@ describe('explore submission model', () => {
           metricFilter: '',
           groupBy: '',
           aggregation: 'p95',
+          temporalAggregation: '',
           stepSeconds
         })
       ).toEqual({
@@ -142,6 +151,8 @@ describe('explore submission model', () => {
         spanId: ' span-1 ',
         resourceFilter: ' service.version=1 ',
         attributeFilter: ' http.status_code=500 ',
+        hideInternal: true,
+        hideNoise: true,
         metricFilter: 'must-not-leak',
         minDurationMs: '100'
       } as never)
@@ -158,6 +169,8 @@ describe('explore submission model', () => {
         spanId: 'span-1',
         resourceFilter: 'service.version=1',
         attributeFilter: 'http.status_code=500',
+        hideInternal: true,
+        hideNoise: true,
         pageIndex: undefined
       }
     });
@@ -177,7 +190,9 @@ describe('explore submission model', () => {
         attributeFilter: ' http.route=/checkout ',
         minDurationMs: ' 0 ',
         maxDurationMs: ' 9007199254740991 ',
-        errorOnly: false
+        errorOnly: false,
+        spanScope: ' entrypoint ',
+        hideInternal: true
       })
     ).toEqual({
       valid: true,
@@ -193,6 +208,8 @@ describe('explore submission model', () => {
         minDurationMs: 0,
         maxDurationMs: Number.MAX_SAFE_INTEGER,
         errorOnly: undefined,
+        spanScope: 'entrypoint',
+        hideInternal: true,
         pageIndex: undefined
       }
     });
@@ -215,7 +232,9 @@ describe('explore submission model', () => {
         attributeFilter: '',
         minDurationMs,
         maxDurationMs,
-        errorOnly: false
+        errorOnly: false,
+        spanScope: '',
+        hideInternal: false
       });
       expect(result).toEqual({ valid: false, errors: [{ field, code }] });
     }

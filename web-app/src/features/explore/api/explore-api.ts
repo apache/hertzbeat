@@ -101,6 +101,7 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
     setValue(params, 'filter', query.metricFilter);
     setValue(params, 'groupBy', query.groupBy);
     setValue(params, 'aggregation', acceptedExploreField(parseMetricAggregation(query.aggregation)));
+    setValue(params, 'temporalAggregation', query.temporalAggregation);
     setValue(params, 'step', acceptedExploreField(parseMetricStep(query.step)));
     return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
   }
@@ -114,6 +115,8 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
     setValue(params, 'severityText', query.severityText);
     setValue(params, 'resourceFilter', query.resourceFilter);
     setValue(params, 'attributeFilter', query.attributeFilter);
+    setEnabled(params, 'hideInternal', query.hideInternal);
+    setEnabled(params, 'hideNoise', query.hideNoise);
     return `/api/logs/list?${params.toString()}`;
   }
 
@@ -128,6 +131,8 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
     if (maximumDuration != null) params.set('maxDurationMs', String(maximumDuration));
   }
   if (query.errorOnly) params.set('errorOnly', 'true');
+  setValue(params, 'spanScope', query.spanScope);
+  setEnabled(params, 'hideInternal', query.hideInternal);
   return `/api/traces/list?${params.toString()}`;
 }
 
@@ -146,6 +151,8 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   setValue(params, 'severityText', query.severityText);
   setValue(params, 'resourceFilter', query.resourceFilter);
   setValue(params, 'attributeFilter', query.attributeFilter);
+  setEnabled(params, 'hideInternal', query.hideInternal);
+  setEnabled(params, 'hideNoise', query.hideNoise);
   const suffix = params.toString();
   return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
 }
@@ -199,6 +206,10 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
+}
+
+function setEnabled(params: URLSearchParams, key: string, value: boolean | undefined) {
+  if (value) params.set(key, 'true');
 }
 
 function appendOptionalDimensions(params: URLSearchParams, query: ExploreQuery) {

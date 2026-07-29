@@ -415,6 +415,14 @@
     "filter": "标签条件 key=value",
     "groupBy": "按标签分组",
     "aggregation": "聚合方式",
+    "temporalAggregation": "时间聚合",
+    "temporalAggregationContext": "时间聚合：{{value}}",
+    "temporalAggregationValues": {
+      "raw": "原始采样",
+      "rate": "每秒速率",
+      "increase": "增量",
+      "delta": "差值"
+    },
     "step": "步长（秒），例如 60"
   },
   "exploreLog": {
@@ -425,6 +433,8 @@
     "openTrace": "查看链路",
     "resourceFilter": "资源属性 key=value",
     "attributeFilter": "日志属性 key:value",
+    "hideInternal": "隐藏内部日志",
+    "hideNoise": "隐藏噪声日志",
     "resourceAttributes": "资源属性",
     "logAttributes": "日志属性",
     "connecting": "正在连接日志流",
@@ -453,7 +463,14 @@
     "relatedMetrics": "相关指标",
     "minDuration": "最短耗时（毫秒）",
     "maxDuration": "最长耗时（毫秒）",
-    "errorOnly": "仅错误链路"
+    "errorOnly": "仅错误链路",
+    "spanScope": "Span 范围",
+    "spanScopeContext": "Span 范围：{{value}}",
+    "spanScopeValues": {
+      "root": "根 Span",
+      "entrypoint": "入口 Span"
+    },
+    "hideInternal": "隐藏内部 Span"
   },
   "explore": {
     "title": "可观测性",

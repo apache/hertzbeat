@@ -415,6 +415,14 @@
     "filter": "標籤條件 key=value",
     "groupBy": "按標籤分組",
     "aggregation": "聚合方式",
+    "temporalAggregation": "時間彙總",
+    "temporalAggregationContext": "時間彙總：{{value}}",
+    "temporalAggregationValues": {
+      "raw": "原始取樣",
+      "rate": "每秒速率",
+      "increase": "增量",
+      "delta": "差值"
+    },
     "step": "步長（秒），例如 60"
   },
   "exploreLog": {
@@ -425,6 +433,8 @@
     "openTrace": "查看鏈路",
     "resourceFilter": "資源屬性 key=value",
     "attributeFilter": "日誌屬性 key:value",
+    "hideInternal": "隱藏內部日誌",
+    "hideNoise": "隱藏雜訊日誌",
     "resourceAttributes": "資源屬性",
     "logAttributes": "日誌屬性",
     "connecting": "正在連接日誌流",
@@ -453,7 +463,14 @@
     "relatedMetrics": "相關指標",
     "minDuration": "最短耗時（毫秒）",
     "maxDuration": "最長耗時（毫秒）",
-    "errorOnly": "僅錯誤鏈路"
+    "errorOnly": "僅錯誤鏈路",
+    "spanScope": "Span 範圍",
+    "spanScopeContext": "Span 範圍：{{value}}",
+    "spanScopeValues": {
+      "root": "根 Span",
+      "entrypoint": "入口 Span"
+    },
+    "hideInternal": "隱藏內部 Span"
   },
   "explore": {
     "title": "可觀測性",

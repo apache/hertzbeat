@@ -78,19 +78,41 @@ function activeFilter(value: unknown, key: keyof ExploreQueryPatch, label: strin
 
 function signalActiveFilters(query: ExploreQuery, t: TFunction): ActiveFilter[] {
   if (query.signal === 'metrics') {
-    return activeFilter(
-      query.operationName,
-      'operationName',
-      t('explore.operationContext', { value: query.operationName })
-    );
+    return [
+      ...activeFilter(
+        query.operationName,
+        'operationName',
+        t('explore.operationContext', { value: query.operationName })
+      ),
+      ...activeFilter(
+        query.temporalAggregation,
+        'temporalAggregation',
+        t('exploreMetric.temporalAggregationContext', {
+          value: t(`exploreMetric.temporalAggregationValues.${query.temporalAggregation}`)
+        })
+      )
+    ];
   }
   const trace = activeFilter(query.traceId, 'traceId', t('explore.traceIdContext', { value: query.traceId }));
   if (query.signal === 'logs') {
     return [
       ...activeFilter(query.severityText, 'severityText', `${t('explore.severity')}: ${query.severityText}`),
       ...trace,
-      ...activeFilter(query.spanId, 'spanId', t('explore.spanIdContext', { value: query.spanId }))
+      ...activeFilter(query.spanId, 'spanId', t('explore.spanIdContext', { value: query.spanId })),
+      ...activeFilter(query.hideInternal, 'hideInternal', t('exploreLog.hideInternal')),
+      ...activeFilter(query.hideNoise, 'hideNoise', t('exploreLog.hideNoise'))
     ];
   }
-  return [...trace, ...activeFilter(query.errorOnly, 'errorOnly', t('exploreTrace.errorOnly'))];
+  return [
+    ...trace,
+    ...activeFilter(query.errorOnly, 'errorOnly', t('exploreTrace.errorOnly')),
+    ...activeFilter(
+      query.spanScope,
+      'spanScope',
+      t('exploreTrace.spanScopeContext', {
+        value: query.spanScope ? t(`exploreTrace.spanScopeValues.${query.spanScope}`) : undefined
+      })
+    ),
+    ...activeFilter(query.hideInternal, 'hideInternal', t('exploreTrace.hideInternal'))
+  ];
 }

@@ -280,6 +280,28 @@ describe('ExplorePage instrumentation context boundary', () => {
     );
   });
 
+  it('renders localized signal-specific parity controls in the advanced filter surface', async () => {
+    renderPage('/explore?signal=metrics');
+    fireEvent.click(screen.getByText(en.explore.advancedFilters));
+    const temporalAggregation = screen.getByRole('combobox', { name: en.exploreMetric.temporalAggregation });
+    await selectOption(temporalAggregation, en.exploreMetric.temporalAggregationValues.rate);
+    expect(screen.getAllByText(en.exploreMetric.temporalAggregationValues.rate).length).toBeGreaterThan(0);
+
+    cleanup();
+    renderPage('/explore?signal=traces');
+    fireEvent.click(screen.getByText(en.explore.advancedFilters));
+    const spanScope = screen.getByRole('combobox', { name: en.exploreTrace.spanScope });
+    await selectOption(spanScope, en.exploreTrace.spanScopeValues.root);
+    expect(screen.getAllByText(en.exploreTrace.spanScopeValues.root).length).toBeGreaterThan(0);
+    expect(screen.getByRole('checkbox', { name: en.exploreTrace.hideInternal })).toBeInTheDocument();
+
+    cleanup();
+    renderPage('/explore?signal=logs');
+    fireEvent.click(screen.getByText(en.explore.advancedFilters));
+    expect(screen.getByRole('checkbox', { name: en.exploreLog.hideInternal })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: en.exploreLog.hideNoise })).toBeInTheDocument();
+  });
+
   it('associates trace duration validation feedback with the invalid field', async () => {
     renderPage('/explore?signal=traces');
     fireEvent.click(screen.getByText(en.explore.advancedFilters));

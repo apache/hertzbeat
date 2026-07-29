@@ -96,6 +96,44 @@ describe('Explore active filters', () => {
     expect(updateQuery).toHaveBeenCalledWith({ operationName: undefined });
     expect(screen.getByText('Service: checkout')).toBeInTheDocument();
   });
+
+  it('shows signal-specific parity filters and delegates their removal', () => {
+    const removeFilter = vi.fn(() => true);
+    const updateQuery = vi.fn();
+    const { rerender } = render(
+      <ExploreActiveFilters
+        query={{ signal: 'metrics', timeRange: 'last-30m', temporalAggregation: 'rate' }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
+    expect(screen.getByText('Temporal aggregation: Rate per second')).toBeInTheDocument();
+
+    rerender(
+      <ExploreActiveFilters
+        query={{ signal: 'traces', timeRange: 'last-30m', spanScope: 'root', hideInternal: true }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
+    expect(screen.getByText('Span scope: Root spans')).toBeInTheDocument();
+    expect(screen.getByText('Hide internal spans')).toBeInTheDocument();
+
+    rerender(
+      <ExploreActiveFilters
+        query={{ signal: 'logs', timeRange: 'last-30m', hideInternal: true, hideNoise: true }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
+    expect(screen.getByText('Hide internal logs')).toBeInTheDocument();
+    closeFilter('Hide noise logs');
+    expect(removeFilter).toHaveBeenCalledWith('hideNoise');
+    expect(updateQuery).not.toHaveBeenCalled();
+  });
 });
 
 function closeFilter(label: string) {

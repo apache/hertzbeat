@@ -19,6 +19,7 @@ import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { parseQueryContext, writeQueryContext } from '@/shared/query-context';
 
 import { parseExploreFilterParams } from './explore-field-contract';
+import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
 import type {
   ExploreQuery,
   ExploreQueryPatch,
@@ -43,6 +44,8 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     windowMode: params.get('windowMode') === 'preset' ? 'preset' : undefined,
     traceId: readValue(params.get('traceId')),
     errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
+    hideInternal: enabledFilterValue(params.get('hideInternal')),
+    hideNoise: enabledFilterValue(params.get('hideNoise')),
     autoRefreshMs: readAutoRefresh(params.get('autoRefresh')),
     start: time.start,
     end: time.end,
@@ -54,6 +57,8 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     operationName: readValue(params.get('operationName')),
     metricFilter: readValue(params.get('metricFilter')),
     groupBy: readValue(params.get('groupBy')),
+    temporalAggregation: temporalAggregationValue(params.get('temporalAggregation')),
+    spanScope: traceSpanScopeValue(params.get('spanScope')),
     ...parseExploreFilterParams(params),
     pageIndex: readPageIndex(params.get('page'))
   });
@@ -100,6 +105,7 @@ export function normalizeExploreQuery(
       metricFilter: query.metricFilter,
       groupBy: query.groupBy,
       aggregation: query.aggregation,
+      temporalAggregation: temporalAggregationValue(query.temporalAggregation),
       step: query.step
     };
   const traceContext = {
@@ -115,13 +121,17 @@ export function normalizeExploreQuery(
       signal: 'logs',
       live: query.live,
       severityText: query.severityText,
-      spanId: query.spanId
+      spanId: query.spanId,
+      hideInternal: enabledFilterValue(query.hideInternal),
+      hideNoise: enabledFilterValue(query.hideNoise)
     };
   return {
     ...traceContext,
     signal: 'traces',
     spanId: query.spanId,
     errorOnly: query.errorOnly,
+    spanScope: traceSpanScopeValue(query.spanScope),
+    hideInternal: enabledFilterValue(query.hideInternal),
     minDurationMs: query.minDurationMs,
     maxDurationMs: query.maxDurationMs
   };
@@ -143,6 +153,7 @@ function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
       ['metricFilter', query.metricFilter],
       ['groupBy', query.groupBy],
       ['aggregation', query.aggregation],
+      ['temporalAggregation', query.temporalAggregation],
       ['step', query.step]
     ] as const)
       setValue(params, key, value);
@@ -156,9 +167,13 @@ function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
   if (query.signal === 'logs') {
     if (query.live) params.set('mode', 'live');
     setValue(params, 'severityText', query.severityText);
+    setEnabled(params, 'hideInternal', query.hideInternal);
+    setEnabled(params, 'hideNoise', query.hideNoise);
     return;
   }
   if (query.errorOnly) params.set('errorOnly', 'true');
+  setValue(params, 'spanScope', query.spanScope);
+  setEnabled(params, 'hideInternal', query.hideInternal);
   if (query.minDurationMs != null) params.set('minDurationMs', String(query.minDurationMs));
   if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
 }
@@ -212,4 +227,8 @@ function aliasedValue(params: URLSearchParams, canonical: string, alias: string)
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
+}
+
+function setEnabled(params: URLSearchParams, key: string, value: boolean | undefined) {
+  if (value) params.set(key, 'true');
 }

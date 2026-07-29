@@ -19,6 +19,8 @@
 export type ExploreSignal = 'metrics' | 'logs' | 'traces';
 
 export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' | 'last-24h';
+export type MetricTemporalAggregation = 'raw' | 'rate' | 'increase' | 'delta';
+export type TraceSpanScope = 'root' | 'entrypoint';
 
 type SharedExploreQuery = {
   timeRange: ExploreTimeRange;
@@ -42,6 +44,7 @@ export type MetricExploreQuery = SharedExploreQuery & {
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;
+  temporalAggregation?: MetricTemporalAggregation | undefined;
   step?: string | undefined;
 };
 
@@ -53,6 +56,8 @@ export type LogExploreQuery = SharedExploreQuery & {
   spanId?: string | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
+  hideInternal?: boolean | undefined;
+  hideNoise?: boolean | undefined;
   pageIndex?: number | undefined;
 };
 
@@ -63,6 +68,8 @@ export type TraceExploreQuery = SharedExploreQuery & {
   errorOnly?: boolean | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
+  spanScope?: TraceSpanScope | undefined;
+  hideInternal?: boolean | undefined;
   minDurationMs?: number | undefined;
   maxDurationMs?: number | undefined;
   pageIndex?: number | undefined;
@@ -96,9 +103,13 @@ export type ExploreQueryPatch = {
   metricFilter?: string | undefined;
   groupBy?: string | undefined;
   aggregation?: string | undefined;
+  temporalAggregation?: MetricTemporalAggregation | undefined;
   step?: string | undefined;
   minDurationMs?: number | undefined;
   maxDurationMs?: number | undefined;
+  spanScope?: TraceSpanScope | undefined;
+  hideInternal?: boolean | undefined;
+  hideNoise?: boolean | undefined;
   pageIndex?: number | undefined;
 };
 

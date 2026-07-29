@@ -45,6 +45,7 @@ const metricQuery: ExploreQuery = {
   metricFilter: 'status=500',
   groupBy: 'service.name',
   aggregation: 'sum',
+  temporalAggregation: 'raw',
   step: '30s',
   operationName: 'POST /checkout'
 };
@@ -72,6 +73,7 @@ describe('Explore Query Key factory', () => {
         metricFilter: 'status=500',
         groupBy: 'service.name',
         aggregation: 'sum',
+        temporalAggregation: 'raw',
         step: '30s',
         operationName: 'POST /checkout'
       }
@@ -119,6 +121,7 @@ describe('Explore Query Key factory', () => {
       ['metricFilter', 'region=west'],
       ['groupBy', 'service.namespace'],
       ['aggregation', 'max'],
+      ['temporalAggregation', 'rate'],
       ['step', '1m'],
       ['operationName', 'GET /health']
     ] as const) {
@@ -133,6 +136,8 @@ describe('Explore Query Key factory', () => {
       severityText: 'ERROR',
       resourceFilter: 'service.version=1',
       attributeFilter: 'http.status_code=500',
+      hideInternal: true,
+      hideNoise: true,
       pageIndex: 2
     };
     const logKey = exploreQueryKeys.history(logs, window, 3);
@@ -143,6 +148,8 @@ describe('Explore Query Key factory', () => {
       ['severityText', 'WARN'],
       ['resourceFilter', 'service.version=2'],
       ['attributeFilter', 'http.status_code=503'],
+      ['hideInternal', false],
+      ['hideNoise', false],
       ['pageIndex', 3]
     ] as const) {
       expect(exploreQueryKeys.history({ ...logs, [field]: value }, window, 3)).not.toEqual(logKey);
@@ -157,6 +164,8 @@ describe('Explore Query Key factory', () => {
       attributeFilter: 'http.route=/checkout',
       minDurationMs: 100,
       maxDurationMs: 2_000,
+      spanScope: 'root',
+      hideInternal: true,
       pageIndex: 2
     };
     const traceKey = exploreQueryKeys.history(traces, window, 3);
@@ -168,6 +177,8 @@ describe('Explore Query Key factory', () => {
       ['attributeFilter', 'http.route=/payments'],
       ['minDurationMs', 200],
       ['maxDurationMs', 3_000],
+      ['spanScope', 'entrypoint'],
+      ['hideInternal', false],
       ['pageIndex', 3]
     ] as const) {
       expect(exploreQueryKeys.history({ ...traces, [field]: value }, window, 3)).not.toEqual(traceKey);
