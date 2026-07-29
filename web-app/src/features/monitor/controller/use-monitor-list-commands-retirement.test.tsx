@@ -79,11 +79,12 @@ describe('useMonitorListCommands retirement', () => {
       queryClient.setQueryData(monitorQueryKeys.detail(7), retainedDetail);
       const selection = selectionController();
       const reread = vi.fn().mockResolvedValue(page);
+      const initialProps: { capabilities: ListCapabilities } = { capabilities: initialCapabilities };
       const view = renderHook(
         ({ capabilities }: { capabilities: ListCapabilities }) =>
           useMonitorListCommands('page=0', reread, selection, capabilities),
         {
-          initialProps: { capabilities: initialCapabilities as ListCapabilities },
+          initialProps,
           wrapper: providers(queryClient)
         }
       );

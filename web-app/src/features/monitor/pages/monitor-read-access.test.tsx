@@ -104,7 +104,7 @@ describe('monitor read page composition', () => {
     [[], 'detail'],
     [['OWNER'], 'list'],
     [['OWNER'], 'detail']
-  ] as const)('keeps roles %j outside the %s workspace and hides cached assets', async (roles, pageKind) => {
+  ] as const)('keeps roles %j outside the %s workspace and hides cached assets', (roles, pageKind) => {
     const view = renderPage(pageKind, [...roles]);
 
     expect(screen.getByText(i18n.t('monitor.permission.title'))).toBeInTheDocument();
@@ -189,9 +189,9 @@ describe('monitor read page composition', () => {
     const favorites = deferred<never[]>();
     const realtime = deferred<{ time: null; fields: never[]; valueRows: never[] }>();
     const history = deferred<{ values: Record<string, never[]> }>();
-    api.loadFavoriteMetrics.mockImplementation((_id, signal) => favorites.run(signal));
-    api.loadRealtimeMetric.mockImplementation((_id, _metric, signal) => realtime.run(signal));
-    api.loadHistoryMetric.mockImplementation((_monitor, _metric, _range, signal) => history.run(signal));
+    api.loadFavoriteMetrics.mockImplementation((_id, signal: AbortSignal) => favorites.run(signal));
+    api.loadRealtimeMetric.mockImplementation((_id, _metric, signal: AbortSignal) => realtime.run(signal));
+    api.loadHistoryMetric.mockImplementation((_monitor, _metric, _range, signal: AbortSignal) => history.run(signal));
     const view = renderPage('detail', ['GUEST']);
     await waitFor(() => expect(screen.getByText('cached-checkout')).toBeInTheDocument());
     await waitFor(() => expect(api.loadRealtimeMetric).toHaveBeenCalledOnce());

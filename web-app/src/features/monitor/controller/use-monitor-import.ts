@@ -30,10 +30,10 @@ import {
 import { executeMonitorImport, type MonitorImportExecutionOwner as ImportOwner } from './monitor-import-execution';
 
 type ImportRetirement = {
-  currentCanImport: RefObject<boolean>;
-  active: RefObject<ImportOwner | null>;
-  generation: RefObject<number>;
-  mounted: RefObject<boolean>;
+  currentCanImportRef: RefObject<boolean>;
+  activeRef: RefObject<ImportOwner | null>;
+  generationRef: RefObject<number>;
+  mountedRef: RefObject<boolean>;
   closeDraft: () => void;
   setBusy: (busy: boolean) => void;
   setFailure: (failure: MonitorImportFailureKind | null) => void;
@@ -107,10 +107,10 @@ function useMonitorImportOperation(
   const mounted = useRef(true);
 
   useMonitorImportRetirement(canImport, {
-    currentCanImport,
-    active,
-    generation,
-    mounted,
+    currentCanImportRef: currentCanImport,
+    activeRef: active,
+    generationRef: generation,
+    mountedRef: mounted,
     closeDraft,
     setBusy,
     setFailure
@@ -165,40 +165,40 @@ function ownsMonitorImport(
 }
 
 function useMonitorImportRetirement(canImport: boolean, retirement: ImportRetirement) {
-  const { currentCanImport, active, generation, mounted, closeDraft, setBusy, setFailure } = retirement;
+  const { currentCanImportRef, activeRef, generationRef, mountedRef, closeDraft, setBusy, setFailure } = retirement;
   const retire = useCallback(
     (owner: ImportOwner) => {
-      if (active.current !== owner) return;
-      active.current = null;
-      generation.current += 1;
-      if (mounted.current) {
+      if (activeRef.current !== owner) return;
+      activeRef.current = null;
+      generationRef.current += 1;
+      if (mountedRef.current) {
         setBusy(false);
         setFailure(null);
         closeDraft();
       }
       owner.controller.abort();
     },
-    [active, closeDraft, generation, mounted, setBusy, setFailure]
+    [activeRef, closeDraft, generationRef, mountedRef, setBusy, setFailure]
   );
   useLayoutEffect(() => {
-    currentCanImport.current = canImport;
+    currentCanImportRef.current = canImport;
     if (canImport) return;
-    const owner = active.current;
+    const owner = activeRef.current;
     if (owner) retire(owner);
     else {
       closeDraft();
       setFailure(null);
     }
-  }, [active, canImport, closeDraft, currentCanImport, retire, setFailure]);
+  }, [activeRef, canImport, closeDraft, currentCanImportRef, retire, setFailure]);
   useLayoutEffect(() => {
-    mounted.current = true;
+    mountedRef.current = true;
     return () => {
-      mounted.current = false;
-      const owner = active.current;
+      mountedRef.current = false;
+      const owner = activeRef.current;
       if (!owner) return;
-      active.current = null;
-      generation.current += 1;
+      activeRef.current = null;
+      generationRef.current += 1;
       owner.controller.abort();
     };
-  }, [active, generation, mounted]);
+  }, [activeRef, generationRef, mountedRef]);
 }

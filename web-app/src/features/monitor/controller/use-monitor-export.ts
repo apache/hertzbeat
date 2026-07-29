@@ -24,43 +24,25 @@ export function useMonitorExport(selectedIds: number[], capabilities: Pick<Monit
   const ownership = useMonitorExportOwnership(canExport, setExporting);
 
   const run = async (scope: MonitorExportScope, format: MonitorExportFormat) => {
-    if (
-      !ownership.mounted.current ||
-      !ownership.currentCanExport.current ||
-      ownership.active.current ||
-      (scope.kind === 'selected' && scope.ids.length === 0)
-    )
-      return false;
-    const controller = new AbortController();
-    const owner = { generation: ownership.generation.current + 1, controller };
-    ownership.generation.current = owner.generation;
-    ownership.active.current = owner;
-    setExporting(true);
-    const ownsExport = () =>
-      ownership.mounted.current &&
-      ownership.currentCanExport.current &&
-      ownership.active.current === owner &&
-      ownership.generation.current === owner.generation;
+    if (scope.kind === 'selected' && scope.ids.length === 0) return false;
+    const owner = ownership.begin();
+    if (!owner) return false;
     try {
-      const artifact = await requestMonitorExport(scope, format, controller.signal);
+      const artifact = await requestMonitorExport(scope, format, owner.controller.signal);
       // Abort is advisory: a retired transport may still resolve, so each
       // externally visible publication must re-check the exact current owner.
-      if (!ownsExport()) return false;
+      if (!ownership.owns(owner)) return false;
       saveMonitorExport(artifact);
-      if (!ownsExport()) return false;
+      if (!ownership.owns(owner)) return false;
       void message.success(t('monitor.export.success'));
-      return ownsExport();
+      return ownership.owns(owner);
     } catch (error) {
-      if (!ownsExport()) return false;
+      if (!ownership.owns(owner)) return false;
       const kind = error instanceof MonitorExportError ? error.kind : 'error';
       void message.error(t(`monitor.export.failure.${kind}`));
       return false;
     } finally {
-      if (ownsExport()) {
-        ownership.active.current = null;
-        ownership.generation.current += 1;
-        setExporting(false);
-      }
+      ownership.finish(owner);
     }
   };
 
@@ -77,6 +59,22 @@ function useMonitorExportOwnership(canExport: boolean, setExporting: (exporting:
   const generation = useRef(0);
   const currentCanExport = useRef(canExport);
   const mounted = useRef(true);
+  const owns = (owner: ExportOwner) =>
+    mounted.current && currentCanExport.current && active.current === owner && generation.current === owner.generation;
+  const begin = () => {
+    if (!mounted.current || !currentCanExport.current || active.current) return null;
+    const owner = { generation: generation.current + 1, controller: new AbortController() };
+    generation.current = owner.generation;
+    active.current = owner;
+    setExporting(true);
+    return owner;
+  };
+  const finish = (owner: ExportOwner) => {
+    if (!owns(owner)) return;
+    active.current = null;
+    generation.current += 1;
+    setExporting(false);
+  };
   const retire = useCallback(
     (owner: ExportOwner) => {
       if (active.current !== owner) return;
@@ -103,5 +101,5 @@ function useMonitorExportOwnership(canExport: boolean, setExporting: (exporting:
       owner.controller.abort();
     };
   }, []);
-  return { active, generation, currentCanExport, mounted };
+  return { begin, finish, owns };
 }

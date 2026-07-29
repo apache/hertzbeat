@@ -121,23 +121,25 @@ function useListCapabilityScope(
   removeSelection: (ids: readonly number[]) => void,
   validatedIds: () => number[]
 ) {
+  const { canDelete, canWrite } = capabilities;
   useLayoutEffect(() => {
+    const nextCapabilities = { canDelete, canWrite };
     const previous = currentCapabilitiesRef.current;
-    currentCapabilitiesRef.current = capabilities;
+    currentCapabilitiesRef.current = nextCapabilities;
     const active = activeOperationRef.current;
-    if (active && !canUseListAction(active.action, capabilities)) {
+    if (active && !canUseListAction(active.action, nextCapabilities)) {
       activeOperationRef.current = null;
       setBusyOperation(current => (current?.token === active.token ? undefined : current));
       active.controller.abort();
     }
-    if (previous.canWrite && !capabilities.canWrite) {
+    if (previous.canWrite && !canWrite) {
       const selectedIds = validatedIds();
       if (selectedIds.length > 0) removeSelection(selectedIds);
     }
   }, [
     activeOperationRef,
-    capabilities.canDelete,
-    capabilities.canWrite,
+    canDelete,
+    canWrite,
     currentCapabilitiesRef,
     removeSelection,
     setBusyOperation,

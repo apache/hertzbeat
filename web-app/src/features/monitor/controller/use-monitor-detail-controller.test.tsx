@@ -314,7 +314,7 @@ describe('useMonitorDetailController', () => {
       enabled: true,
       template: null
     });
-    api.loadMonitorDetail.mockImplementation(id =>
+    api.loadMonitorDetail.mockImplementation((id: number) =>
       Promise.resolve({
         ...detail,
         monitor: { ...detail.monitor, id },

@@ -91,36 +91,23 @@ function useGrafanaDashboardDelete(
   const [error, setError] = useState(false);
   const ownership = useGrafanaDeleteOwnership(id, canDeleteGrafanaDashboard, setDeleting, setError);
   const run = async () => {
-    const operationId = ownership.currentId.current;
-    if (!ownership.currentCanDelete.current || operationId === undefined || ownership.operation.current) return;
-    const controller = new AbortController();
-    const owner = { id: operationId, epoch: ownership.epoch.current + 1, controller };
-    ownership.epoch.current = owner.epoch;
-    ownership.operation.current = owner;
+    const owner = ownership.begin();
+    if (!owner) return;
     setDeleting(true);
     setError(false);
-    const ownsOperation = () =>
-      ownership.operation.current === owner &&
-      ownership.epoch.current === owner.epoch &&
-      ownership.currentId.current === owner.id &&
-      ownership.currentCanDelete.current;
     try {
-      await deleteMonitorGrafanaDashboard(operationId, controller.signal);
-      if (!ownsOperation()) return;
-      queryClient.setQueryData<MonitorDetail>(monitorQueryKeys.detail(operationId), detail => {
-        if (!ownsOperation()) return detail;
+      await deleteMonitorGrafanaDashboard(owner.id, owner.controller.signal);
+      if (!ownership.owns(owner)) return;
+      queryClient.setQueryData<MonitorDetail>(monitorQueryKeys.detail(owner.id), detail => {
+        if (!ownership.owns(owner)) return detail;
         return detail?.grafanaDashboard
           ? { ...detail, grafanaDashboard: { ...detail.grafanaDashboard, enabled: false, url: null } }
           : detail;
       });
     } catch {
-      if (ownsOperation() && !controller.signal.aborted) setError(true);
+      if (ownership.owns(owner) && !owner.controller.signal.aborted) setError(true);
     } finally {
-      if (ownsOperation()) {
-        ownership.operation.current = null;
-        ownership.epoch.current += 1;
-        setDeleting(false);
-      }
+      if (ownership.finish(owner)) setDeleting(false);
     }
   };
   return { deleting, error, run };
@@ -136,6 +123,25 @@ function useGrafanaDeleteOwnership(
   const epoch = useRef(0);
   const currentId = useRef(id);
   const currentCanDelete = useRef(canDelete);
+  const owns = (owner: DeleteOwner) =>
+    operation.current === owner &&
+    epoch.current === owner.epoch &&
+    currentId.current === owner.id &&
+    currentCanDelete.current;
+  const begin = () => {
+    const operationId = currentId.current;
+    if (!currentCanDelete.current || operationId === undefined || operation.current) return null;
+    const owner = { id: operationId, epoch: epoch.current + 1, controller: new AbortController() };
+    epoch.current = owner.epoch;
+    operation.current = owner;
+    return owner;
+  };
+  const finish = (owner: DeleteOwner) => {
+    if (!owns(owner)) return false;
+    operation.current = null;
+    epoch.current += 1;
+    return true;
+  };
   // Retire ownership before abort so a transport that ignores cancellation cannot publish into a new route or role.
   const retire = useCallback(
     (owner: DeleteOwner) => {
@@ -164,7 +170,7 @@ function useGrafanaDeleteOwnership(
     },
     []
   );
-  return { operation, epoch, currentId, currentCanDelete };
+  return { begin, finish, owns };
 }
 
 function resolveMonitorDetail(

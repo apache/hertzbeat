@@ -22,7 +22,6 @@ import {
   monitorStatusFilters,
   type Monitor,
   type MonitorAction,
-  type MonitorApp,
   type MonitorPage,
   type MonitorQuery
 } from '../model/monitor-contract';
