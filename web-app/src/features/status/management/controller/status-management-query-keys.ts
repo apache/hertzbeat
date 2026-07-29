@@ -11,6 +11,7 @@ const rootKey = ['status-management'] as const;
 
 // Query identity contains every URL-owned input that can change incident evidence.
 export const statusManagementQueryKeys = {
+  root: () => rootKey,
   org: () => [...rootKey, 'org'] as const,
   components: () => [...rootKey, 'components'] as const,
   incidents: (query: StatusIncidentQuery) =>

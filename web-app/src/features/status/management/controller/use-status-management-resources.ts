@@ -5,13 +5,21 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLayoutEffect } from 'react';
 
 import { loadStatusComponents, loadStatusIncidents, loadStatusOrg } from '../api/status-management-api';
 import type { StatusIncidentQuery } from '../model/status-incident-query';
 import { statusManagementQueryKeys } from './status-management-query-keys';
 
 export function useStatusManagementResources(query: StatusIncidentQuery, canRead: boolean) {
+  const queryClient = useQueryClient();
+  useLayoutEffect(() => {
+    if (canRead) return;
+    const filters = { queryKey: statusManagementQueryKeys.root() };
+    void queryClient.cancelQueries(filters);
+    queryClient.removeQueries(filters);
+  }, [canRead, queryClient]);
   return {
     org: useQuery({
       queryKey: statusManagementQueryKeys.org(),

@@ -21,6 +21,11 @@ import {
   startComponentSave,
   type ComponentWriteContext
 } from './status-component-write-operations';
+import {
+  type StatusDeleteReceipt,
+  type StatusWriteRecovery,
+  useStatusOperationScope
+} from './status-transaction-recovery';
 import type { StatusManagementNotifications } from './use-status-management-notifications';
 
 type ComponentEditor = { complete: (epoch: number) => void; currentEpoch: () => number };
@@ -37,27 +42,32 @@ export function useStatusComponentTransactions(
   const [deleteRecovery, setDeleteRecovery] = useState(false);
   const [deleteRecoveryPending, setDeleteRecoveryPending] = useState(false);
   const committedDeletes = useRef(new Set<number>());
-  const recoveryProofPending = useRef(false);
+  const writeRecoveryProofPending = useRef(false);
+  const deleteRecoveryProofPending = useRef(false);
+  const writeOperation = useStatusOperationScope(command);
+  const deleteOperation = useStatusOperationScope(command);
+  const writeRecoveryRef = useRef<StatusWriteRecovery<StatusComponent> | undefined>(undefined);
+  const deleteRecoveryRef = useRef<StatusDeleteReceipt | undefined>(undefined);
   const writeContext: ComponentWriteContext = {
-    command,
+    command: writeOperation.command,
     editor,
     retireIncidentDetail,
     notify,
     queryClient,
     committedDeletes,
-    recovery: useRef(undefined),
-    recoveryProofPending,
+    recovery: writeRecoveryRef,
+    recoveryProofPending: writeRecoveryProofPending,
     setSaving,
     setWriteRecovery
   };
   const deleteContext: ComponentDeleteContext = {
-    command,
+    command: deleteOperation.command,
     retireIncidentDetail,
     notify,
     queryClient,
     committedDeletes,
-    recovery: useRef(undefined),
-    recoveryProofPending,
+    recovery: deleteRecoveryRef,
+    recoveryProofPending: deleteRecoveryProofPending,
     setDeleteRecovery,
     setDeleteRecoveryPending
   };
@@ -66,6 +76,20 @@ export function useStatusComponentTransactions(
     retryWrite: () => retryComponentWrite(writeContext),
     remove: (id: number) => startComponentRemove(deleteContext, id),
     refresh: () => refreshComponentProjection(deleteContext),
+    retireWrite: () => {
+      writeOperation.retire();
+      writeRecoveryRef.current = undefined;
+      writeRecoveryProofPending.current = false;
+      setSaving(false);
+      setWriteRecovery(undefined);
+    },
+    retireDelete: () => {
+      deleteOperation.retire();
+      deleteRecoveryRef.current = undefined;
+      deleteRecoveryProofPending.current = false;
+      setDeleteRecovery(false);
+      setDeleteRecoveryPending(false);
+    },
     saving,
     writeRecovery,
     deleteRecovery,

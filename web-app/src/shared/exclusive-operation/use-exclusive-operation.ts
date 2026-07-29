@@ -22,6 +22,12 @@ export function useExclusiveOperation(scope: string) {
     ownerRef.current = undefined;
     setPending(false);
   };
+  const retire = (owner: OperationOwner) => {
+    if (!isCurrent(owner)) return false;
+    ownerRef.current = undefined;
+    setPending(false);
+    return true;
+  };
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -29,7 +35,7 @@ export function useExclusiveOperation(scope: string) {
       ownerRef.current = undefined;
     };
   }, []);
-  return { begin, end, isCurrent, isLocked: () => ownerRef.current !== undefined, pending };
+  return { begin, end, retire, isCurrent, isLocked: () => ownerRef.current !== undefined, pending };
 }
 
 export type ExclusiveOperation = ReturnType<typeof useExclusiveOperation>;

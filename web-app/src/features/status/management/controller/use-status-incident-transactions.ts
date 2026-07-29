@@ -18,6 +18,11 @@ import {
   type IncidentDeleteContext
 } from './status-incident-delete-operations';
 import { retryIncidentWrite, startIncidentSave, type IncidentWriteContext } from './status-incident-write-operations';
+import {
+  type StatusDeleteReceipt,
+  type StatusWriteRecovery,
+  useStatusOperationScope
+} from './status-transaction-recovery';
 import type { StatusManagementNotifications } from './use-status-management-notifications';
 
 type IncidentEditor = { complete: (epoch: number) => void; currentEpoch: () => number; retireDetail: () => void };
@@ -38,28 +43,33 @@ export function useStatusIncidentTransactions(
   }, [query]);
   const queryClient = useQueryClient();
   const committedDeletes = useRef(new Set<number>());
-  const recoveryProofPending = useRef(false);
+  const writeRecoveryProofPending = useRef(false);
+  const deleteRecoveryProofPending = useRef(false);
+  const writeOperation = useStatusOperationScope(command);
+  const deleteOperation = useStatusOperationScope(command);
+  const writeRecoveryRef = useRef<StatusWriteRecovery<StatusIncident> | undefined>(undefined);
+  const deleteRecoveryRef = useRef<StatusDeleteReceipt | undefined>(undefined);
   const writeContext: IncidentWriteContext = {
     query: latestQuery,
-    command,
+    command: writeOperation.command,
     editor,
     notify,
     queryClient,
     committedDeletes,
-    recovery: useRef(undefined),
-    recoveryProofPending,
+    recovery: writeRecoveryRef,
+    recoveryProofPending: writeRecoveryProofPending,
     setSaving,
     setWriteRecovery
   };
   const deleteContext: IncidentDeleteContext = {
     query: latestQuery,
-    command,
+    command: deleteOperation.command,
     retireDetail: editor.retireDetail,
     notify,
     queryClient,
     committedDeletes,
-    recovery: useRef(undefined),
-    recoveryProofPending,
+    recovery: deleteRecoveryRef,
+    recoveryProofPending: deleteRecoveryProofPending,
     setDeleteRecovery,
     setDeleteRecoveryPending
   };
@@ -68,6 +78,20 @@ export function useStatusIncidentTransactions(
     retryWrite: () => retryIncidentWrite(writeContext),
     remove: (id: number) => startIncidentRemove(deleteContext, id),
     refresh: () => refreshIncidentProjection(deleteContext),
+    retireWrite: () => {
+      writeOperation.retire();
+      writeRecoveryRef.current = undefined;
+      writeRecoveryProofPending.current = false;
+      setSaving(false);
+      setWriteRecovery(undefined);
+    },
+    retireDelete: () => {
+      deleteOperation.retire();
+      deleteRecoveryRef.current = undefined;
+      deleteRecoveryProofPending.current = false;
+      setDeleteRecovery(false);
+      setDeleteRecoveryPending(false);
+    },
     saving,
     writeRecovery,
     deleteRecovery,

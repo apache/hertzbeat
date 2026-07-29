@@ -5,6 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 import { useExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { statusManagementFailureKind, type StatusManagementFailureKind } from '../api/status-management-api';
 import {
@@ -32,6 +33,7 @@ import { useStatusOrgSave } from './use-status-org-save';
 
 export function useStatusManagementController() {
   const capabilities = useStatusManagementActionCapabilities();
+  const canRefresh = useStatusReadAdmission(capabilities.canRead);
   const command = useExclusiveOperation('status-management-command');
   const incidentQuery = useStatusIncidentQuery();
   const resources = useStatusManagementResources(incidentQuery.query, capabilities.canRead);
@@ -41,17 +43,15 @@ export function useStatusManagementController() {
   const orgSave = useStatusOrgSave(resources.org.data, command, notify);
   const components = useStatusComponentTransactions(command, componentEditor, notify, incidentEditor.retireDetail);
   const incidents = useStatusIncidentTransactions(incidentQuery.query, command, incidentEditor, notify);
-  const orgState = resolveOrgState(resources.org.isPending, resources.org.error, resources.org.data);
-  const componentState = resolveComponentState(
-    resources.components.isPending,
-    resources.components.error,
-    resources.components.data
-  );
-  const incidentState = resolveIncidentState(
-    resources.incidents.isPending,
-    resources.incidents.error,
-    resources.incidents.data
-  );
+  const orgState = capabilities.canRead
+    ? resolveOrgState(resources.org.isPending, resources.org.error, resources.org.data)
+    : ({ kind: 'permission' } as const);
+  const componentState = capabilities.canRead
+    ? resolveComponentState(resources.components.isPending, resources.components.error, resources.components.data)
+    : ({ kind: 'permission' } as const);
+  const incidentState = capabilities.canRead
+    ? resolveIncidentState(resources.incidents.isPending, resources.incidents.error, resources.incidents.data)
+    : ({ kind: 'permission' } as const);
   const actions = useStatusManagementActions({
     capabilities,
     command,
@@ -84,9 +84,23 @@ export function useStatusManagementController() {
     incidentSaving: incidents.saving,
     orgWriteRecovery: orgSave.writeRecovery,
     ...actions,
-    refreshComponents: components.refresh,
-    refreshIncidents: incidents.refresh
+    refreshComponents: () => (canRefresh() ? components.refresh() : Promise.resolve(false)),
+    refreshIncidents: () => (canRefresh() ? incidents.refresh() : Promise.resolve(false))
   };
+}
+
+function useStatusReadAdmission(canRead: boolean) {
+  const [epoch, setEpoch] = useState(0);
+  const currentEpoch = useRef(0);
+  const previousCanRead = useRef(canRead);
+  useLayoutEffect(() => {
+    if (previousCanRead.current && !canRead) {
+      currentEpoch.current += 1;
+      setEpoch(currentEpoch.current);
+    }
+    previousCanRead.current = canRead;
+  }, [canRead]);
+  return () => canRead && currentEpoch.current === epoch;
 }
 
 function guardedIncidentQuery<

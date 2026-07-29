@@ -24,6 +24,23 @@ it('accepts an owner after the Strict Mode effect replay', () => {
   expect(hook.result.current.begin()).toBeTruthy();
 });
 
+it('explicitly retires only the selected owner and unlocks immediately', () => {
+  const hook = renderHook(() => useExclusiveOperation('capability-operation'));
+  let owner!: NonNullable<ReturnType<typeof hook.result.current.begin>>;
+  act(() => {
+    owner = hook.result.current.begin()!;
+  });
+
+  act(() => {
+    expect(hook.result.current.retire({ token: Symbol('other') })).toBe(false);
+    expect(hook.result.current.retire(owner)).toBe(true);
+  });
+
+  expect(hook.result.current.isCurrent(owner)).toBe(false);
+  expect(hook.result.current.isLocked()).toBe(false);
+  expect(hook.result.current.pending).toBe(false);
+});
+
 function StrictModeWrapper({ children }: PropsWithChildren) {
   return <StrictMode>{children}</StrictMode>;
 }

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
 import { StatusRequestFailure } from '@/features/status/shared/status-error-model';
@@ -32,7 +32,7 @@ type StatusManagementActionsContext = {
 
 export function useStatusManagementActions(context: StatusManagementActionsContext) {
   const { capabilities } = context;
-  useStatusRoleLossRetirement(capabilities, context.componentEditor, context.incidentEditor);
+  useStatusRoleLossRetirement(capabilities, context);
 
   return {
     capabilities,
@@ -89,19 +89,26 @@ export function useStatusManagementActions(context: StatusManagementActionsConte
 
 function useStatusRoleLossRetirement(
   capabilities: StatusManagementActionCapabilities,
-  componentEditor: ReturnType<typeof useStatusComponentEditor>,
-  incidentEditor: ReturnType<typeof useStatusIncidentEditor>
+  context: StatusManagementActionsContext
 ) {
   const previousCapabilities = useRef(capabilities);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previous = previousCapabilities.current;
     previousCapabilities.current = capabilities;
     const lostWrite =
       (previous.canCreate && !capabilities.canCreate) || (previous.canUpdate && !capabilities.canUpdate);
-    if (!lostWrite) return;
-    componentEditor.retire();
-    incidentEditor.retire();
-  }, [capabilities, componentEditor, incidentEditor]);
+    if (lostWrite) {
+      context.componentEditor.retire();
+      context.incidentEditor.retire();
+      context.orgSave.retireWrite();
+      context.components.retireWrite();
+      context.incidents.retireWrite();
+    }
+    if (previous.canDelete && !capabilities.canDelete) {
+      context.components.retireDelete();
+      context.incidents.retireDelete();
+    }
+  }, [capabilities, context]);
 }
 
 function canSave(id: number | undefined, capabilities: StatusManagementActionCapabilities) {
