@@ -79,6 +79,8 @@ resourceRole:
   - /api/account/token===get===[admin]
   - /api/account/token/**===post===[admin]
   - /api/account/token/**===delete===[admin]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 

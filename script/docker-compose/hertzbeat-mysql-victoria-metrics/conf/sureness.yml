@@ -85,6 +85,8 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
   # web ui resource
   - /===get
   - /assets/**===get
