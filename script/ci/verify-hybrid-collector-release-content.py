@@ -104,6 +104,46 @@ ALLOWED_JVM_NATIVE_JAR_PREFIXES = (
     "xugu-jdbc-",
     "zstd-jni-",
 )
+ALLOWED_STARTUP_NATIVE_JAR_PREFIXES = (
+    "grpc-netty-shaded-",
+    "jna-",
+    "lz4-java-",
+    "netty-resolver-dns-native-",
+    "netty-tcnative-boringssl-static-",
+    "netty-transport-native-",
+    "questdb-",
+    "snappy-java-",
+    "zstd-jni-",
+)
+HERTZBEAT_STARTUP_JAR_NAME = re.compile(
+    r"^apache-hertzbeat-[0-9][a-z0-9_.-]*\.jar$"
+)
+XUGU_JDBC_JAR_PATH = re.compile(
+    r"^boot-inf/lib/xugu-jdbc-[0-9][a-z0-9_.-]*\.jar$"
+)
+XUGU_JDBC_NATIVE_MEMBERS = {
+    "com/xugu/ssl/arm/libxgssl.so",
+    "com/xugu/ssl/linux64/libxgssl.so",
+    "com/xugu/ssl/loongarch64/libxgssl.so",
+    "com/xugu/ssl/win32/xgssl.dll",
+    "com/xugu/ssl/win64/xgssl.dll",
+}
+DUCKDB_JDBC_JAR_PATH = re.compile(
+    r"^boot-inf/lib/duckdb_jdbc-[0-9][a-z0-9_.-]*\.jar$"
+)
+DUCKDB_JDBC_NATIVE_MEMBERS = {
+    "libduckdb_java.so_linux_amd64",
+    "libduckdb_java.so_linux_arm64",
+    "libduckdb_java.so_osx_universal",
+    "libduckdb_java.so_windows_amd64",
+}
+LOMBOK_JAR_PATH = re.compile(
+    r"^boot-inf/lib/lombok-[0-9][a-z0-9_.-]*\.jar$"
+)
+LOMBOK_INSTALLER_NATIVE_MEMBERS = {
+    "lombok/installer/windowsdriveinfo-i386.binary",
+    "lombok/installer/windowsdriveinfo-x86_64.binary",
+}
 MACH_O_MAGICS = {
     b"\xfe\xed\xfa\xce",
     b"\xce\xfa\xed\xfe",
@@ -168,6 +208,30 @@ def native_binary_kind(prefix: bytes) -> str | None:
     return None
 
 
+def is_allowed_startup_nested_native_path(logical_path: str) -> bool:
+    archive_chain = normalized_name(logical_path).split("!/")
+    if len(archive_chain) != 3:
+        return False
+    startup_jar, nested_jar, native_member = archive_chain
+    if HERTZBEAT_STARTUP_JAR_NAME.fullmatch(PurePosixPath(startup_jar).name) is None:
+        return False
+    if (XUGU_JDBC_JAR_PATH.fullmatch(nested_jar) is not None
+            and native_member in XUGU_JDBC_NATIVE_MEMBERS):
+        return True
+    if (DUCKDB_JDBC_JAR_PATH.fullmatch(nested_jar) is not None
+            and native_member in DUCKDB_JDBC_NATIVE_MEMBERS):
+        return True
+    if (LOMBOK_JAR_PATH.fullmatch(nested_jar) is not None
+            and native_member in LOMBOK_INSTALLER_NATIVE_MEMBERS):
+        return True
+    nested_path = PurePosixPath(nested_jar)
+    return (
+        nested_path.parent == PurePosixPath("boot-inf/lib")
+        and nested_path.name.startswith(ALLOWED_STARTUP_NATIVE_JAR_PREFIXES)
+        and native_member.endswith((".so", ".dll", ".dylib", ".jnilib"))
+    )
+
+
 def is_allowed_packaged_native_path(name: str, logical_path: str) -> bool:
     parts = PurePosixPath(normalized_name(name)).parts
     if len(parts) >= 2 and parts[0].startswith("apache-hertzbeat-collector-"):
@@ -188,6 +252,8 @@ def is_allowed_packaged_native_path(name: str, logical_path: str) -> bool:
             return parts[1] == expected
 
     normalized_logical = normalized_name(logical_path)
+    if is_allowed_startup_nested_native_path(normalized_logical):
+        return True
     if re.search(
             r"!/apache-hertzbeat-collector-[^/]+/(?:java|jre)/",
             normalized_logical):

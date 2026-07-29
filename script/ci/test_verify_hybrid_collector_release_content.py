@@ -539,6 +539,76 @@ class ReleaseContentPolicyTest(unittest.TestCase):
 
         release_content.inspect_release_archive(startup)
 
+    def test_startup_fat_jar_allows_owned_xugu_jdbc_native_library(self) -> None:
+        xugu_jdbc = zip_bytes({
+            "com/xugu/ssl/arm/libxgssl.so": b"\x7fELF" + b"\0" * 64,
+        })
+        startup = self.write("apache-hertzbeat-1.8.0.jar", zip_bytes({
+            "BOOT-INF/lib/xugu-jdbc-12.3.5.jar": xugu_jdbc,
+        }))
+
+        release_content.inspect_release_archive(startup)
+
+    def test_startup_fat_jar_allows_owned_netty_native_library(self) -> None:
+        netty_native = zip_bytes({
+            "META-INF/native/libnetty_tcnative_linux_x86_64.so":
+                b"\x7fELF" + b"\0" * 64,
+        })
+        startup = self.write("apache-hertzbeat-1.8.0.jar", zip_bytes({
+            "BOOT-INF/lib/netty-tcnative-boringssl-static-2.0.69.Final-linux-x86_64.jar":
+                netty_native,
+        }))
+
+        release_content.inspect_release_archive(startup)
+
+    def test_startup_fat_jar_allows_owned_jdbc_and_installer_native_members(self) -> None:
+        startup = self.write("apache-hertzbeat-1.8.0.jar", zip_bytes({
+            "BOOT-INF/lib/duckdb_jdbc-1.4.2.0.jar": zip_bytes({
+                "libduckdb_java.so_linux_amd64": b"\x7fELF" + b"\0" * 64,
+            }),
+            "BOOT-INF/lib/lombok-1.18.42.jar": zip_bytes({
+                "lombok/installer/WindowsDriveInfo-x86_64.binary":
+                    b"MZ" + b"\0" * 64,
+            }),
+        }))
+
+        release_content.inspect_release_archive(startup)
+
+    def test_startup_fat_jar_rejects_native_outside_owned_paths(self) -> None:
+        fixtures = {
+            "wrong-outer": ("other-server-1.8.0.jar", {
+                "BOOT-INF/lib/xugu-jdbc-12.3.5.jar": zip_bytes({
+                    "com/xugu/ssl/arm/libxgssl.so": b"\x7fELF" + b"\0" * 64,
+                }),
+            }),
+            "wrong-jar": ("apache-hertzbeat-1.8.0-wrong-jar.jar", {
+                "BOOT-INF/lib/other-jdbc-12.3.5.jar": zip_bytes({
+                    "com/xugu/ssl/arm/libxgssl.so": b"\x7fELF" + b"\0" * 64,
+                }),
+            }),
+            "wrong-member": ("apache-hertzbeat-1.8.0-wrong-member.jar", {
+                "BOOT-INF/lib/xugu-jdbc-12.3.5.jar": zip_bytes({
+                    "com/example/ssl/arm/libxgssl.so": b"\x7fELF" + b"\0" * 64,
+                }),
+            }),
+            "wrong-approved-member": ("apache-hertzbeat-1.8.0-wrong-native.jar", {
+                "BOOT-INF/lib/netty-tcnative-boringssl-static-2.0.69.Final.jar":
+                    zip_bytes({
+                        "META-INF/native/helper.bin": b"\x7fELF" + b"\0" * 64,
+                    }),
+            }),
+            "wrong-duckdb-member": ("apache-hertzbeat-1.8.0-wrong-duckdb.jar", {
+                "BOOT-INF/lib/duckdb_jdbc-1.4.2.0.jar": zip_bytes({
+                    "libduckdb_java.so_linux_unknown": b"\x7fELF" + b"\0" * 64,
+                }),
+            }),
+        }
+        for name, (archive_name, entries) in fixtures.items():
+            with self.subTest(name=name):
+                startup = self.write(archive_name, zip_bytes(entries))
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.inspect_release_archive(startup)
+
     def test_collector_sbom_rejects_ecosystem_specific_sdk_purls(self) -> None:
         purls = [
             "pkg:npm/%40opentelemetry/sdk-node@0.204.0",
