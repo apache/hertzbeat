@@ -25,6 +25,7 @@ import {
 } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
 import { useEntityCapabilities } from './use-entity-capabilities';
+import { useEntityMonitorsController } from './use-entity-monitors-controller';
 
 export function useEntityDetailController() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export function useEntityDetailController() {
   const [params] = useSearchParams();
   const capabilities = useEntityCapabilities();
   const id = parseEntityId(entityId);
+  const monitors = useEntityMonitorsController(id);
   const result = useQuery({
     queryKey: entityQueryKeys.detail(id),
     queryFn: id === undefined ? skipToken : ({ signal }) => loadEntityDetail(id, signal),
@@ -49,6 +51,7 @@ export function useEntityDetailController() {
       refreshing: result.isFetching && !result.isPending,
       canWrite: capabilities.canWrite,
       canDelete: capabilities.canDelete,
+      monitors: monitors.state,
       ...deletion.state
     },
     actions: {
@@ -73,6 +76,7 @@ export function useEntityDetailController() {
       manageNoiseControls: (ruleType: EntityNoiseControlType) => {
         if (evidence.kind === 'ready') void navigate(buildEntityNoiseControlPath(evidence.detail, ruleType));
       },
+      ...monitors.actions,
       remove: deletion.remove
     }
   };

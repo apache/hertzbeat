@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-const api = vi.hoisted(() => ({ deleteEntity: vi.fn(), loadEntityDetail: vi.fn() }));
+const api = vi.hoisted(() => ({ deleteEntity: vi.fn(), loadEntityDetail: vi.fn(), loadEntityMonitors: vi.fn() }));
 const modal = vi.hoisted(() => ({ confirm: vi.fn() }));
 const capability = vi.hoisted(() => ({ useEntityCapabilities: vi.fn() }));
 vi.mock('../api/entity-api', async importOriginal => ({
@@ -30,14 +30,22 @@ import { useEntityDetailController } from './use-entity-detail-controller';
 const detail = {
   entity: { id: 7, type: 'service', name: 'checkout', displayName: 'Checkout API' },
   identities: [],
-  boundMonitors: [],
+  monitorPreview: { items: [], total: 0, complete: true },
   relations: []
+};
+const monitorPage = {
+  content: [{ id: 3, name: 'checkout-http', app: 'website', status: 2 }],
+  totalElements: 75,
+  totalPages: 2,
+  number: 0,
+  size: 50
 };
 
 describe('useEntityDetailController deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadEntityDetail.mockResolvedValue(detail);
+    api.loadEntityMonitors.mockResolvedValue(monitorPage);
     api.deleteEntity.mockResolvedValue(undefined);
     capability.useEntityCapabilities.mockReturnValue({ canWrite: true, canDelete: true });
   });
@@ -105,6 +113,46 @@ describe('useEntityDetailController deletion', () => {
     expect(routed.current().state.evidence.kind).toBe('ready');
   });
 
+  it('loads page zero from the operational endpoint and owns next, previous, and normalized filters', async () => {
+    api.loadEntityMonitors.mockImplementation((_id: number, query: { pageIndex: number }) =>
+      Promise.resolve({ ...monitorPage, number: query.pageIndex })
+    );
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.monitors.evidence.kind).toBe('ready'));
+    expect(api.loadEntityMonitors).toHaveBeenLastCalledWith(7, { pageIndex: 0, pageSize: 50 }, expect.any(AbortSignal));
+
+    act(() => routed.current().actions.changeMonitorPage(1));
+    await waitFor(() =>
+      expect(api.loadEntityMonitors).toHaveBeenLastCalledWith(
+        7,
+        { pageIndex: 1, pageSize: 50 },
+        expect.any(AbortSignal)
+      )
+    );
+    act(() => routed.current().actions.changeMonitorPage(0));
+    await waitFor(() => expect(routed.current().state.monitors.query.pageIndex).toBe(0));
+
+    act(() => routed.current().actions.changeMonitorFilters({ status: 2, app: ' website ' }));
+    await waitFor(() =>
+      expect(api.loadEntityMonitors).toHaveBeenLastCalledWith(
+        7,
+        { status: 2, app: 'website', pageIndex: 0, pageSize: 50 },
+        expect.any(AbortSignal)
+      )
+    );
+    act(() => routed.current().actions.changeMonitorFilters({ app: '   ' }));
+    await waitFor(() => expect(routed.current().state.monitors.query).toEqual({ pageIndex: 0, pageSize: 50 }));
+  });
+
+  it('keeps detail ready when the monitor section alone is forbidden', async () => {
+    api.loadEntityMonitors.mockRejectedValueOnce(new ApiMessageError('private monitor detail', { status: 403 }));
+    const routed = renderController('/entities/7');
+
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    await waitFor(() => expect(routed.current().state.monitors.evidence.kind).toBe('permission'));
+    expect(JSON.stringify(routed.current().state)).not.toContain('private');
+  });
+
   it('cancels an old entity scope and never publishes its late detail', async () => {
     const old = deferred<typeof detail>();
     const next = deferred<typeof detail>();
@@ -122,6 +170,44 @@ describe('useEntityDetailController deletion', () => {
     next.resolve({ ...detail, entity: { ...detail.entity, id: 8, name: 'payments' } });
     await waitFor(() => expect(readyEntityName(routed.current())).toBe('payments'));
     expect(api.loadEntityDetail.mock.calls[0]?.[1]).toMatchObject({ aborted: true });
+  });
+
+  it('resets monitor paging synchronously by entity scope and retires the old monitor request', async () => {
+    const old = deferred<typeof monitorPage>();
+    const next = deferred<typeof monitorPage>();
+    api.loadEntityMonitors.mockImplementation((id: number) => (id === 7 ? old.promise : next.promise));
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(api.loadEntityMonitors).toHaveBeenCalledTimes(1));
+    act(() => routed.current().actions.changeMonitorPage(1));
+    await waitFor(() => expect(api.loadEntityMonitors).toHaveBeenCalledTimes(2));
+    const oldPageSignal = api.loadEntityMonitors.mock.calls[1]?.[2] as AbortSignal;
+
+    await act(() => routed.router.navigate('/entities/8'));
+    expect(routed.current().state.monitors.query.pageIndex).toBe(0);
+    next.resolve({ ...monitorPage, content: [{ id: 8, name: 'payments', app: 'website', status: 1 }] });
+    await waitFor(() => expect(readyMonitorName(routed.current())).toBe('payments'));
+    expect(oldPageSignal.aborted).toBe(true);
+    old.resolve({
+      ...monitorPage,
+      number: 1,
+      content: [{ id: 7, name: 'late-checkout', app: 'website', status: 2 }]
+    });
+    expect(readyMonitorName(routed.current())).toBe('payments');
+  });
+
+  it('does not resurrect an old entity page when navigation returns to that entity', async () => {
+    api.loadEntityMonitors.mockImplementation((_id: number, query: { pageIndex: number }) =>
+      Promise.resolve({ ...monitorPage, number: query.pageIndex })
+    );
+    const routed = renderController('/entities/7');
+    await waitFor(() => expect(routed.current().state.monitors.evidence.kind).toBe('ready'));
+    act(() => routed.current().actions.changeMonitorPage(1));
+    await waitFor(() => expect(routed.current().state.monitors.query.pageIndex).toBe(1));
+
+    await act(() => routed.router.navigate('/entities/8'));
+    expect(routed.current().state.monitors.query.pageIndex).toBe(0);
+    await act(() => routed.router.navigate('/entities/7'));
+    expect(routed.current().state.monitors.query.pageIndex).toBe(0);
   });
 
   it('prevents pending double submit, invalidates entity caches, and returns safely after success', async () => {
@@ -242,4 +328,9 @@ function deferred<T>() {
 
 function readyEntityName(controller: ReturnType<typeof useEntityDetailController>) {
   return controller.state.evidence.kind === 'ready' ? controller.state.evidence.detail.entity.name : undefined;
+}
+
+function readyMonitorName(controller: ReturnType<typeof useEntityDetailController>) {
+  const evidence = controller.state.monitors.evidence;
+  return evidence.kind === 'ready' ? evidence.records[0]?.name : undefined;
 }

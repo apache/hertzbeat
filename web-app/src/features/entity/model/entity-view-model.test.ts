@@ -19,7 +19,11 @@ describe('entity Explore handoff', () => {
       entity: { id: 8, type: 'queue', name: 'orders' },
       identities: [],
       evidence: { logHintCount: 2 },
-      boundMonitors: [{ id: 3, name: 'queue-depth', app: 'rabbitmq' }],
+      monitorPreview: {
+        items: [{ id: 3, name: 'queue-depth', app: 'rabbitmq' }],
+        total: 1,
+        complete: true
+      },
       relations: []
     };
     expect(entityExploreSignals(queue)).toEqual([]);
@@ -29,7 +33,11 @@ describe('entity Explore handoff', () => {
     const queue: EntityDetail = {
       entity: { id: 8, type: 'queue', name: 'orders', environment: 'prod' },
       identities: [],
-      boundMonitors: [{ id: 3, name: 'queue-depth', app: 'rabbitmq', instance: 'rabbitmq-1' }],
+      monitorPreview: {
+        items: [{ id: 3, name: 'queue-depth', app: 'rabbitmq', instance: 'rabbitmq-1' }],
+        total: 1,
+        complete: true
+      },
       relations: []
     };
     expect(entityExploreSignals(queue)).toEqual(['metrics']);
@@ -42,6 +50,21 @@ describe('entity Explore handoff', () => {
     };
     expect(entityExploreSignals(service)).toEqual(['metrics', 'logs']);
     expect(buildEntityExplorePath(service, 'logs')).toContain('serviceName=checkout');
+  });
+
+  it('does not infer a unique non-service instance from an incomplete preview', () => {
+    const queue: EntityDetail = {
+      entity: { id: 8, type: 'queue', name: 'orders' },
+      identities: [],
+      monitorPreview: {
+        items: [{ id: 3, name: 'queue-depth', app: 'rabbitmq', instance: 'rabbitmq-1' }],
+        total: 75,
+        complete: false
+      },
+      relations: []
+    };
+
+    expect(entityExploreSignals(queue)).toEqual([]);
   });
 });
 
@@ -91,7 +114,7 @@ describe('entity noise-control navigation', () => {
         matchingInhibits: [{ id: 41, name: 'Critical first', type: 'inhibit', global: false, matchedLabels: [] }],
         possibleAlertSuppression: true
       },
-      boundMonitors: [],
+      monitorPreview: { items: [], total: 0, complete: true },
       relations: []
     };
 

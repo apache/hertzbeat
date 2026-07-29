@@ -203,6 +203,11 @@
       "monitors": "モニター関連付けはありません。",
       "relations": "関係情報はありません。"
     },
+    "monitors": {
+      "app": "監視タイプで絞り込む",
+      "reset": "監視フィルターをリセット",
+      "range": "{{start}}–{{end}}/{{total}}"
+    },
     "evidence": {
       "alerts": "発生中アラート",
       "downMonitors": "異常モニター",

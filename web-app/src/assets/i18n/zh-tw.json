@@ -198,6 +198,11 @@
       "monitors": "沒有監控綁定。",
       "relations": "沒有關係記錄。"
     },
+    "monitors": {
+      "app": "依監控類型篩選",
+      "reset": "重設監控篩選",
+      "range": "{{start}}–{{end}}/{{total}}"
+    },
     "evidence": {
       "alerts": "活躍警報",
       "downMonitors": "異常監控",

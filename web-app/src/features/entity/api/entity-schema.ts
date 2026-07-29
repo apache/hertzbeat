@@ -9,6 +9,7 @@ import {
   type EntityEvidenceSummary,
   type EntityIdentity,
   type EntityMonitor,
+  type EntityMonitorPage,
   type EntityNoiseControlSummary,
   type EntityPage,
   type EntityRecord,
@@ -117,6 +118,8 @@ const noiseControlSummarySchema = z
   .refine(value => value.matchingInhibits.every(rule => rule.type === 'inhibit'))
   .refine(value => value.activeSilenceCount >= value.activeSilences.length)
   .refine(value => value.matchingInhibitCount >= value.matchingInhibits.length);
+const richEvidenceSchema = z.record(z.string(), z.unknown());
+const monitorSummarySchema = richEvidenceSchema.and(z.object({ totalBoundMonitors: count }));
 const detailSchema = z.object({
   entity: z.object({
     entity: entitySchema,
@@ -127,6 +130,14 @@ const detailSchema = z.object({
   status: statusSchema.nullish(),
   evidenceSummary: evidenceSchema.nullish(),
   noiseControlSummary: noiseControlSummarySchema.nullish(),
+  monitorSummary: monitorSummarySchema.nullish(),
+  logSummary: richEvidenceSchema.nullish(),
+  traceSummary: richEvidenceSchema.nullish(),
+  metricEvidence: z.array(richEvidenceSchema).nullish(),
+  logEvidence: z.array(richEvidenceSchema).nullish(),
+  traceEvidence: z.array(richEvidenceSchema).nullish(),
+  unifiedEvidenceSummary: richEvidenceSchema.nullish(),
+  triageRecommendation: richEvidenceSchema.nullish(),
   boundMonitors: z.array(monitorSchema).nullish(),
   topologyNeighbors: z.array(relationSchema).nullish()
 });
@@ -141,14 +152,43 @@ export function parseEntityDetail(value: unknown): EntityDetail {
   const parsed = detailSchema.safeParse(value);
   if (!parsed.success) throw new EntityContractError();
   const wire = parsed.data;
+  const monitorItems = (wire.boundMonitors ?? []).map(value => clean(value) as EntityMonitor);
+  const totalMonitors = wire.monitorSummary?.totalBoundMonitors ?? monitorItems.length;
+  if (totalMonitors < monitorItems.length) {
+    throw new EntityContractError('Entity monitor preview exceeds its reported total');
+  }
   return {
     entity: mapEntity(wire.entity.entity),
     identities: (wire.entity.identities ?? []).map(value => clean(value) as EntityIdentity),
     ...(wire.status ? { status: clean(wire.status) as EntityStatus } : {}),
     ...(wire.evidenceSummary ? { evidence: clean(wire.evidenceSummary) as EntityEvidenceSummary } : {}),
     ...(wire.noiseControlSummary ? { noiseControls: cleanNoiseControlSummary(wire.noiseControlSummary) } : {}),
-    boundMonitors: (wire.boundMonitors ?? []).map(value => clean(value) as EntityMonitor),
+    monitorPreview: {
+      items: monitorItems,
+      total: totalMonitors,
+      complete: monitorItems.length >= totalMonitors
+    },
+    ...copyRichDetail(wire),
     relations: (wire.topologyNeighbors ?? []).map(value => clean(value) as EntityRelation)
+  };
+}
+
+export function parseEntityMonitorPage(value: unknown): EntityMonitorPage {
+  const parsed = createSpringPageSchema(monitorSchema).safeParse(value);
+  if (!parsed.success) throw new EntityContractError();
+  return { ...parsed.data, content: parsed.data.content.map(item => clean(item) as EntityMonitor) };
+}
+
+function copyRichDetail(wire: z.output<typeof detailSchema>) {
+  return {
+    ...(wire.monitorSummary ? { monitorSummary: wire.monitorSummary } : {}),
+    ...(wire.logSummary ? { logSummary: wire.logSummary } : {}),
+    ...(wire.traceSummary ? { traceSummary: wire.traceSummary } : {}),
+    ...(wire.metricEvidence ? { metricEvidence: wire.metricEvidence } : {}),
+    ...(wire.logEvidence ? { logEvidence: wire.logEvidence } : {}),
+    ...(wire.traceEvidence ? { traceEvidence: wire.traceEvidence } : {}),
+    ...(wire.unifiedEvidenceSummary ? { unifiedEvidenceSummary: wire.unifiedEvidenceSummary } : {}),
+    ...(wire.triageRecommendation ? { triageRecommendation: wire.triageRecommendation } : {})
   };
 }
 

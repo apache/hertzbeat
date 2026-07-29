@@ -203,6 +203,11 @@
       "monitors": "No monitor bindings are available.",
       "relations": "No relation evidence is available."
     },
+    "monitors": {
+      "app": "Filter by monitor type",
+      "reset": "Reset monitor filters",
+      "range": "{{start}}–{{end}}/{{total}}"
+    },
     "evidence": {
       "alerts": "Active alerts",
       "downMonitors": "Down monitors",

@@ -7,7 +7,7 @@ import {
   entityRoutePaths
 } from '@/shared/navigation/app-paths';
 import { compactTablePageSizes } from '@/shared/pagination';
-import type { EntityDetail, EntityQuery, EntitySummary } from './entity-contract';
+import type { EntityDetail, EntityMonitor, EntityMonitorQuery, EntityQuery, EntitySummary } from './entity-contract';
 import {
   buildEntityDiscoveryPath,
   defaultEntityDiscoveryQuery,
@@ -47,6 +47,18 @@ export type EntityDetailEvidence =
   | { kind: 'unavailable' }
   | { kind: 'error' }
   | { kind: 'ready'; detail: EntityDetail };
+export type EntityMonitorEvidence =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: EntityMonitor[]; total: number };
+export type EntityMonitorViewState = {
+  query: EntityMonitorQuery;
+  evidence: EntityMonitorEvidence;
+  refreshing: boolean;
+};
 export type EntityExploreSignal = 'metrics' | 'logs';
 export type EntityNoiseControlType = 'silence' | 'inhibit';
 
@@ -128,7 +140,7 @@ export function buildEntitySavedDetailPath(id: number, listReturnTo: string) {
 export function entityExploreSignals(detail: EntityDetail): EntityExploreSignal[] {
   const hasContext = detail.entity.type === 'service' || uniqueMonitorInstance(detail) !== undefined;
   return [
-    ...(hasContext && detail.boundMonitors.length > 0 ? (['metrics'] as const) : []),
+    ...(hasContext && detail.monitorPreview.items.length > 0 ? (['metrics'] as const) : []),
     ...(hasContext && (detail.evidence?.logHintCount ?? 0) > 0 ? (['logs'] as const) : [])
   ];
 }
@@ -164,8 +176,11 @@ export function buildEntityNoiseControlPath(detail: EntityDetail, ruleType: Enti
 }
 
 function uniqueMonitorInstance(detail: EntityDetail) {
+  if (!detail.monitorPreview.complete) return undefined;
   const instances = [
-    ...new Set(detail.boundMonitors.map(monitor => monitor.instance).filter((value): value is string => Boolean(value)))
+    ...new Set(
+      detail.monitorPreview.items.map(monitor => monitor.instance).filter((value): value is string => Boolean(value))
+    )
   ];
   return instances.length === 1 ? instances[0] : undefined;
 }

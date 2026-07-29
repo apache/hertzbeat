@@ -40,7 +40,11 @@ describe('EntityDetailView', () => {
         identities: [{ identityType: 'derived', identityKey: 'service.name', identityValue: 'checkout' }],
         status: { status: 'degraded', reason: 'monitor down' },
         evidence: { logHintCount: 1 },
-        boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website', status: 2 }],
+        monitorPreview: {
+          items: [{ id: 3, name: 'checkout-http', app: 'website', status: 2 }],
+          total: 1,
+          complete: true
+        },
         relations: [{ entityName: 'payments', relationType: 'depends_on', direction: 'outgoing' }]
       }
     });
@@ -63,7 +67,13 @@ describe('EntityDetailView', () => {
     renderView(
       {
         kind: 'ready',
-        detail: { entity, identities: [], evidence: { logHintCount: 1 }, boundMonitors: [], relations: [] }
+        detail: {
+          entity,
+          identities: [],
+          evidence: { logHintCount: 1 },
+          monitorPreview: { items: [], total: 0, complete: true },
+          relations: []
+        }
       },
       { explore }
     );
@@ -85,7 +95,7 @@ describe('EntityDetailView', () => {
           identityCount: 1,
           logHintCount: 0
         },
-        boundMonitors: [],
+        monitorPreview: { items: [], total: 0, complete: true },
         relations: []
       }
     });
@@ -99,7 +109,10 @@ describe('EntityDetailView', () => {
   });
 
   it('labels absent evidence as missing instead of turning it into zeros', () => {
-    renderView({ kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } });
+    renderView({
+      kind: 'ready',
+      detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+    });
     const evidence = screen.getByRole('region', { name: i18n.t('entity.sections.evidence') });
     expect(within(evidence).getByText(i18n.t('entity.missing.evidence'))).toBeInTheDocument();
     expect(within(evidence).queryByText('0')).not.toBeInTheDocument();
@@ -136,7 +149,7 @@ describe('EntityDetailView', () => {
             ],
             possibleAlertSuppression: true
           },
-          boundMonitors: [],
+          monitorPreview: { items: [], total: 0, complete: true },
           relations: []
         }
       },
@@ -157,7 +170,10 @@ describe('EntityDetailView', () => {
   it('offers resource deletion and renders only localized redacted failures', () => {
     const remove = vi.fn();
     renderView(
-      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      {
+        kind: 'ready',
+        detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+      },
       { remove, deleteFailure: 'permission' }
     );
     fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.delete.action') }));
@@ -172,24 +188,117 @@ describe('EntityDetailView', () => {
   it('hides deletion without permission and exposes explicit refresh', () => {
     const refresh = vi.fn();
     renderView(
-      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      {
+        kind: 'ready',
+        detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+      },
       { canDelete: false, refresh }
     );
 
     expect(screen.queryByRole('button', { name: i18n.t('entity.delete.action') })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.refresh') }));
+    const header = screen.getByRole('heading', { name: 'checkout' }).closest('header');
+    fireEvent.click(within(header!).getByRole('button', { name: i18n.t('common.refresh') }));
     expect(refresh).toHaveBeenCalledOnce();
   });
 
   it('hides edit and definition entry points without write permission', () => {
     renderView(
-      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      {
+        kind: 'ready',
+        detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+      },
       { canDelete: false, canWrite: false }
     );
 
     expect(screen.queryByRole('button', { name: i18n.t('common.edit') })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: i18n.t('entity.definition.action') })).not.toBeInTheDocument();
   });
+
+  it('renders authoritative monitor ranges and pages without using the bind-order preview', () => {
+    const changeMonitorPage = vi.fn();
+    const records = Array.from({ length: 50 }, (_, index) => ({
+      id: index + 100,
+      name: `monitor-${index}`,
+      app: 'website'
+    }));
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          monitorPreview: { items: [{ id: 3, name: 'preview-only', app: 'legacy' }], total: 75, complete: false },
+          relations: []
+        }
+      },
+      {
+        monitors: {
+          query: { pageIndex: 0, pageSize: 50 },
+          evidence: { kind: 'ready', records, total: 75 },
+          refreshing: false
+        },
+        changeMonitorPage
+      }
+    );
+
+    expect(screen.getByText('1–50/75')).toBeInTheDocument();
+    expect(screen.queryByText('preview-only')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('2'));
+    expect(changeMonitorPage).toHaveBeenCalledWith(1);
+  });
+
+  it('renders the final operational monitor range from page identity and total', () => {
+    const records = Array.from({ length: 25 }, (_, index) => ({
+      id: index + 150,
+      name: `monitor-${index + 50}`,
+      app: 'website'
+    }));
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          monitorPreview: { items: [], total: 75, complete: false },
+          relations: []
+        }
+      },
+      {
+        monitors: {
+          query: { pageIndex: 1, pageSize: 50 },
+          evidence: { kind: 'ready', records, total: 75 },
+          refreshing: false
+        }
+      }
+    );
+    expect(screen.getByText('51–75/75')).toBeInTheDocument();
+  });
+
+  it.each(['permission', 'unavailable', 'error'] as const)(
+    'keeps detail visible when only monitor loading ends in %s',
+    kind => {
+      renderView(
+        {
+          kind: 'ready',
+          detail: {
+            entity,
+            identities: [],
+            monitorPreview: { items: [], total: 0, complete: true },
+            relations: []
+          }
+        },
+        {
+          monitors: {
+            query: { pageIndex: 0, pageSize: 50 },
+            evidence: { kind },
+            refreshing: false
+          }
+        }
+      );
+      expect(screen.getByRole('heading', { name: 'checkout' })).toBeInTheDocument();
+      expect(screen.queryByText(i18n.t('entity.missing.monitors'))).not.toBeInTheDocument();
+    }
+  );
 });
 
 function renderView(
@@ -202,7 +311,9 @@ function renderView(
     manageNoiseControls = () => undefined,
     canDelete = true,
     refresh = () => undefined,
-    canWrite = true
+    canWrite = true,
+    monitors,
+    changeMonitorPage = () => undefined
   }: {
     explore?: Parameters<typeof EntityDetailView>[0]['actions']['explore'];
     remove?: () => void;
@@ -212,8 +323,18 @@ function renderView(
     canDelete?: boolean;
     refresh?: () => void;
     canWrite?: boolean;
+    monitors?: Parameters<typeof EntityDetailView>[0]['state']['monitors'];
+    changeMonitorPage?: Parameters<typeof EntityDetailView>[0]['actions']['changeMonitorPage'];
   } = {}
 ) {
+  const records = evidence.kind === 'ready' ? evidence.detail.monitorPreview.items : [];
+  const monitorState =
+    monitors ??
+    ({
+      query: { pageIndex: 0, pageSize: 50 },
+      evidence: records.length > 0 ? { kind: 'ready', records, total: records.length } : { kind: 'empty' },
+      refreshing: false
+    } as const);
   return render(
     <I18nextProvider i18n={i18n}>
       <EntityDetailView
@@ -223,6 +344,7 @@ function renderView(
           refreshing: false,
           canWrite,
           canDelete,
+          monitors: monitorState,
           ...(deleteFailure ? { deleteFailure } : {})
         }}
         actions={{
@@ -232,7 +354,10 @@ function renderView(
           explore,
           refresh,
           remove,
-          manageNoiseControls
+          manageNoiseControls,
+          changeMonitorPage,
+          changeMonitorFilters: () => undefined,
+          refreshMonitors: () => undefined
         }}
       />
     </I18nextProvider>

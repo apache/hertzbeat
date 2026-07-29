@@ -198,6 +198,11 @@
       "monitors": "暂无监控绑定。",
       "relations": "暂无关系记录。"
     },
+    "monitors": {
+      "app": "按监控类型筛选",
+      "reset": "重置监控筛选",
+      "range": "{{start}}–{{end}}/{{total}}"
+    },
     "evidence": {
       "alerts": "活跃告警",
       "downMonitors": "异常监控",

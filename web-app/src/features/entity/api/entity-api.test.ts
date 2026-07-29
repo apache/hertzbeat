@@ -18,6 +18,7 @@ import {
   classifyEntityDeleteError,
   deleteEntity,
   loadEntityDetail,
+  loadEntityMonitors,
   loadEntities
 } from './entity-api';
 
@@ -131,6 +132,14 @@ describe('entity API', () => {
         ],
         possibleAlertSuppression: true
       },
+      monitorSummary: { totalBoundMonitors: 75 },
+      logSummary: { totalLogs: 3 },
+      traceSummary: { totalTraces: 2 },
+      metricEvidence: [{ metric: 'latency' }],
+      logEvidence: [{ message: 'failed' }],
+      traceEvidence: [{ traceId: 'trace-1' }],
+      unifiedEvidenceSummary: { metricsActive: true },
+      triageRecommendation: { priority: 'high' },
       boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website', instance: 'checkout', status: 2 }],
       topologyNeighbors: [
         {
@@ -156,8 +165,96 @@ describe('entity API', () => {
         activeSilences: [{ id: 31, type: 'silence' }],
         matchingInhibits: [{ id: 41, type: 'inhibit' }]
       },
-      boundMonitors: [{ id: 3 }],
+      monitorPreview: { items: [{ id: 3 }], total: 75, complete: false },
+      monitorSummary: { totalBoundMonitors: 75 },
+      logSummary: { totalLogs: 3 },
+      traceSummary: { totalTraces: 2 },
+      metricEvidence: [{ metric: 'latency' }],
+      logEvidence: [{ message: 'failed' }],
+      traceEvidence: [{ traceId: 'trace-1' }],
+      unifiedEvidenceSummary: { metricsActive: true },
+      triageRecommendation: { priority: 'high' },
       relations: [{ entityId: 8 }]
+    });
+  });
+
+  it('marks a bounded monitor preview complete only when every bound monitor is present', async () => {
+    apiMessageGet.mockResolvedValue({
+      entity: { entity, identities: [], monitorBinds: [], relations: [] },
+      monitorSummary: { totalBoundMonitors: 1 },
+      boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website' }],
+      topologyNeighbors: []
+    });
+
+    await expect(loadEntityDetail(7)).resolves.toMatchObject({
+      monitorPreview: { total: 1, complete: true }
+    });
+  });
+
+  it('rejects a monitor summary whose total is smaller than its preview', async () => {
+    apiMessageGet.mockResolvedValue({
+      entity: { entity, identities: [], monitorBinds: [], relations: [] },
+      monitorSummary: { totalBoundMonitors: 0 },
+      boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website' }],
+      topologyNeighbors: []
+    });
+
+    await expect(loadEntityDetail(7)).rejects.toBeInstanceOf(EntityContractError);
+  });
+
+  it('loads one normalized operational monitor page through the feature API', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet.mockResolvedValue({
+      content: Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        name: `checkout-http-${index}`,
+        app: 'website',
+        status: 2
+      })),
+      totalElements: 75,
+      totalPages: 2,
+      number: 0,
+      size: 50,
+      first: true,
+      last: false,
+      empty: false,
+      numberOfElements: 50,
+      pageable: {},
+      sort: {}
+    });
+
+    await expect(
+      loadEntityMonitors(7, { status: 2, app: ' website ', pageIndex: 0, pageSize: 50 }, signal)
+    ).resolves.toMatchObject({ totalElements: 75, number: 0, size: 50 });
+    expect(apiMessageGet).toHaveBeenCalledWith(
+      '/api/entities/7/monitors?pageIndex=0&pageSize=50&status=2&app=website',
+      { signal }
+    );
+  });
+
+  it('rejects an operational monitor page that does not match the requested page', async () => {
+    apiMessageGet.mockResolvedValue({
+      content: [],
+      totalElements: 75,
+      totalPages: 2,
+      number: 1,
+      size: 50
+    });
+
+    await expect(loadEntityMonitors(7, { pageIndex: 0, pageSize: 50 })).rejects.toBeInstanceOf(EntityContractError);
+  });
+
+  it('accepts the backend case-insensitive app filter contract', async () => {
+    apiMessageGet.mockResolvedValue({
+      content: [{ id: 3, name: 'checkout-http', app: 'springboot3', status: 2 }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 50
+    });
+
+    await expect(loadEntityMonitors(7, { app: 'SpringBoot3', pageIndex: 0, pageSize: 50 })).resolves.toMatchObject({
+      totalElements: 1
     });
   });
 

@@ -1,9 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { ApiMessageError, apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
-import { EntityContractError, type EntityQuery } from '../model/entity-contract';
+import { z } from 'zod';
+
+import { EntityContractError, type EntityMonitorQuery, type EntityQuery } from '../model/entity-contract';
+import { normalizeEntityMonitorQuery } from '../model/entity-monitor-query';
 import { writeEntityQuery } from '../model/entity-query';
-import { parseEntityDetail, parseEntityPage } from './entity-schema';
+import { parseEntityDetail, parseEntityMonitorPage, parseEntityPage } from './entity-schema';
 
 class EntityMissingError extends Error {
   constructor() {
@@ -13,6 +16,14 @@ class EntityMissingError extends Error {
 }
 
 const entityMissingResponseCodes = new Set([3, 15]);
+const entityMonitorQuerySchema = z
+  .object({
+    status: z.number().int().nonnegative().safe().optional(),
+    app: z.string().trim().min(1).optional(),
+    pageIndex: z.number().int().nonnegative().safe(),
+    pageSize: z.literal(50)
+  })
+  .strict();
 
 // HertzBeat reports domain-level missing records inside an HTTP 200 envelope.
 // Code 3 is the current backend contract; code 15 keeps rolling upgrades readable.
@@ -43,6 +54,40 @@ export async function loadEntityDetail(id: number, signal?: AbortSignal) {
   const detail = parseEntityDetail(value);
   if (detail.entity.id !== id) throw new EntityContractError('Entity detail does not match its request');
   return detail;
+}
+
+export async function loadEntityMonitors(id: number, input: EntityMonitorQuery, signal?: AbortSignal) {
+  if (!Number.isSafeInteger(id) || id <= 0) throw new EntityMissingError();
+  const parsed = entityMonitorQuerySchema.safeParse(normalizeEntityMonitorQuery(input));
+  if (!parsed.success) throw new EntityContractError('Entity monitor query is invalid');
+  const query = normalizeEntityMonitorQuery(parsed.data);
+  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  if (query.status !== undefined) params.set('status', String(query.status));
+  if (query.app) params.set('app', query.app);
+  const value = await apiMessageGet(
+    `/api/entities/${id}/monitors?${params.toString()}`,
+    signal ? { signal } : undefined
+  );
+  const page = parseEntityMonitorPage(value);
+  if (!validEntityMonitorPage(page, query)) {
+    throw new EntityContractError('Entity monitor page does not match its request');
+  }
+  return page;
+}
+
+function validEntityMonitorPage(page: Awaited<ReturnType<typeof parseEntityMonitorPage>>, query: EntityMonitorQuery) {
+  const expectedRows = Math.min(page.size, Math.max(0, page.totalElements - page.number * page.size));
+  const ids = new Set(page.content.map(item => item.id));
+  const normalizedApp = query.app?.toLocaleLowerCase();
+  return (
+    page.number === query.pageIndex &&
+    page.size === query.pageSize &&
+    page.totalPages === Math.ceil(page.totalElements / page.size) &&
+    page.content.length === expectedRows &&
+    ids.size === page.content.length &&
+    (query.status === undefined || page.content.every(item => item.status === query.status)) &&
+    (normalizedApp === undefined || page.content.every(item => item.app.toLocaleLowerCase() === normalizedApp))
+  );
 }
 
 export async function deleteEntity(id: number) {

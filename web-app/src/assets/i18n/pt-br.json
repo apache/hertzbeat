@@ -203,6 +203,11 @@
       "monitors": "Nenhum vínculo de monitor disponível.",
       "relations": "Nenhuma evidência de relação disponível."
     },
+    "monitors": {
+      "app": "Filtrar por tipo de monitor",
+      "reset": "Redefinir filtros de monitor",
+      "range": "{{start}}–{{end}}/{{total}}"
+    },
     "evidence": {
       "alerts": "Alertas ativos",
       "downMonitors": "Monitores inativos",

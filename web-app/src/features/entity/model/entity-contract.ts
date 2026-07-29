@@ -72,6 +72,17 @@ export type EntityIdentity = {
 };
 
 export type EntityMonitor = { id: number; name: string; app: string; instance?: string; status?: number };
+export type EntityMonitorQuery = {
+  status?: number;
+  app?: string;
+  pageIndex: number;
+  pageSize: 50;
+};
+export type EntityMonitorPreview = {
+  items: EntityMonitor[];
+  total: number;
+  complete: boolean;
+};
 export type EntityRelation = {
   relationId?: number;
   entityId?: number;
@@ -116,11 +127,20 @@ export type EntityDetail = {
   status?: EntityStatus;
   evidence?: EntityEvidenceSummary;
   noiseControls?: EntityNoiseControlSummary;
-  boundMonitors: EntityMonitor[];
+  monitorPreview: EntityMonitorPreview;
+  monitorSummary?: Record<string, unknown>;
+  logSummary?: Record<string, unknown>;
+  traceSummary?: Record<string, unknown>;
+  metricEvidence?: Record<string, unknown>[];
+  logEvidence?: Record<string, unknown>[];
+  traceEvidence?: Record<string, unknown>[];
+  unifiedEvidenceSummary?: Record<string, unknown>;
+  triageRecommendation?: Record<string, unknown>;
   relations: EntityRelation[];
 };
 
 export type EntityPage = PagedCollection<EntitySummary>;
+export type EntityMonitorPage = PagedCollection<EntityMonitor>;
 
 export class EntityContractError extends Error {
   constructor(message = 'Entity response is invalid') {
