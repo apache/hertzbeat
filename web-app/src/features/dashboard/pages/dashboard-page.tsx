@@ -20,6 +20,7 @@ import { Link } from 'react-router-dom';
 
 import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import { DashboardAlertSummary } from '../components/dashboard-alert-results';
+import { DashboardCollectorResults } from '../components/dashboard-collector-results';
 import { DashboardMonitorDistribution, DashboardMonitorSummary } from '../components/dashboard-monitor-results';
 import { useDashboardController } from '../controller/use-dashboard-controller';
 import styles from '../components/dashboard.module.css';
@@ -63,6 +64,7 @@ export function DashboardPage() {
         </section>
       </section>
       <DashboardMonitorDistribution state={dashboard.monitorState} />
+      <DashboardCollectorResults state={dashboard.collectorState} />
     </div>
   );
 }

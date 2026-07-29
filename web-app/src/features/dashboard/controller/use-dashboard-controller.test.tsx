@@ -18,18 +18,25 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiMessageError } from '@/core/http/api-message';
 import { DashboardContractError, DashboardRequestFailure } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 import { DASHBOARD_REFRESH_INTERVAL_MS, useDashboardController } from './use-dashboard-controller';
 
 const api = vi.hoisted(() => ({ loadDashboardSummary: vi.fn(), loadDashboardAlertSummary: vi.fn() }));
+const collectors = vi.hoisted(() => ({ loadCollectorManagementPage: vi.fn() }));
 vi.mock('../api/dashboard-api', () => api);
+vi.mock('@/features/settings/collector', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/settings/collector')>()),
+  loadCollectorManagementPage: collectors.loadCollectorManagementPage
+}));
 
 describe('dashboard controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadDashboardSummary.mockResolvedValue({ apps: [app] });
     api.loadDashboardAlertSummary.mockResolvedValue(alert(2));
+    collectors.loadCollectorManagementPage.mockResolvedValue(collectorPage([collector]));
   });
   afterEach(() => vi.useRealTimers());
 
@@ -69,6 +76,58 @@ describe('dashboard controller', () => {
     await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
   });
 
+  it('owns a complete collector page query, AbortSignal, and independent ready state', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const view = renderController(client);
+
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'ready' },
+        alertState: { kind: 'ready' },
+        collectorState: { kind: 'ready', records: [{ name: 'edge-a', online: true }], total: 1 }
+      })
+    );
+
+    expect(collectors.loadCollectorManagementPage).toHaveBeenCalledWith(
+      dashboardCollectorQuery,
+      expect.any(AbortSignal)
+    );
+    expect(client.getQueryState(['settings', 'collectors', dashboardCollectorQuery])).toBeDefined();
+    const collectorSignal = collectors.loadCollectorManagementPage.mock.calls[0]?.[1];
+    expect(collectorSignal).not.toBe(api.loadDashboardSummary.mock.calls[0]?.[0]);
+    expect(collectorSignal).not.toBe(api.loadDashboardAlertSummary.mock.calls[0]?.[0]);
+  });
+
+  it('keeps ready summaries visible while collector evidence loads, then publishes authoritative empty', async () => {
+    const pending = deferred<ReturnType<typeof collectorPage>>();
+    collectors.loadCollectorManagementPage.mockReturnValue(pending.promise);
+    const view = renderController();
+
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'ready' },
+        alertState: { kind: 'ready' },
+        collectorState: { kind: 'loading' }
+      })
+    );
+
+    act(() => pending.resolve(collectorPage([])));
+    await waitFor(() => expect(view.result.current.collectorState).toEqual({ kind: 'empty' }));
+  });
+
+  it.each([
+    [new ApiMessageError('private', { status: 403 }), 'permission'],
+    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new Error('failed'), 'error']
+  ] as const)('classifies collector failure as %s without hiding ready summaries', async (reason, kind) => {
+    collectors.loadCollectorManagementPage.mockRejectedValue(reason);
+    const view = renderController();
+
+    await waitFor(() => expect(view.result.current.collectorState).toEqual({ kind }));
+    expect(view.result.current.monitorState).toEqual({ kind: 'ready', apps: [app] });
+    expect(view.result.current.alertState).toMatchObject({ kind: 'ready', summary: { total: 2 } });
+  });
+
   it.each([
     [{ apps: null }, alert(0), 'missing'],
     [new DashboardRequestFailure('permission'), alert(0), 'permission'],
@@ -105,6 +164,7 @@ describe('dashboard controller', () => {
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
+    expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardSummary.mock.calls[1]?.[0]).not.toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
     await waitFor(() => expect(view.result.current.monitorState).toEqual({ kind: 'unavailable' }));
     expect(view.result.current.alertState).toMatchObject({ kind: 'ready', summary: { total: 9 } });
@@ -140,11 +200,13 @@ describe('dashboard controller', () => {
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(1);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(1);
+    expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(1);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
+    expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(2);
     expect(view.result.current.monitorState).toHaveProperty('apps');
     expect(view.result.current.alertState).toHaveProperty('summary');
   });
@@ -245,6 +307,29 @@ function renderController(client = new QueryClient({ defaultOptions: { queries: 
   return renderHook(useDashboardController, { wrapper });
 }
 const app = { app: 'mysql', category: 'db', size: 1, availableSize: 1, unAvailableSize: 0, unManageSize: 0 };
+const dashboardCollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
+const collector = {
+  name: 'edge-a',
+  address: '10.0.0.8',
+  version: '2.0.0',
+  mode: 'public',
+  online: true,
+  immutable: false,
+  pinMonitorNum: 2,
+  dispatchMonitorNum: 3,
+  updatedAt: '2026-07-29T10:00:00Z',
+  runtimeReport: null,
+  instrumentationIntake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
+};
+function collectorPage(content: (typeof collector)[]) {
+  return {
+    content,
+    totalElements: content.length,
+    totalPages: content.length === 0 ? 0 : 1,
+    number: 0,
+    size: 8
+  };
+}
 function alert(total: number) {
   return {
     total,

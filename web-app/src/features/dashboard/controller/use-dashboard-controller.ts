@@ -15,11 +15,19 @@
  * limitations under the License.
  */
 import { useQuery } from '@tanstack/react-query';
+
+import {
+  collectorQueryKeys,
+  loadCollectorManagementPage,
+  resolveCollectorListState,
+  type CollectorQuery
+} from '@/features/settings/collector';
 import { loadDashboardAlertSummary, loadDashboardSummary } from '../api/dashboard-api';
 import { dashboardFailureKind, type DashboardAlertState, type DashboardMonitorState } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export const DASHBOARD_REFRESH_INTERVAL_MS = 30_000;
+export const dashboardCollectorQuery: CollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
 
 export function useDashboardController() {
   const monitorQuery = useQuery({
@@ -34,11 +42,18 @@ export function useDashboardController() {
     retry: false,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
+  const collectorQuery = useQuery({
+    queryKey: collectorQueryKeys.page(dashboardCollectorQuery),
+    queryFn: ({ signal }) => loadCollectorManagementPage(dashboardCollectorQuery, signal),
+    retry: false,
+    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
+  });
   return {
     monitorState: monitorState(monitorQuery.isPending, monitorQuery.error, monitorQuery.data),
     alertState: alertState(alertQuery.isPending, alertQuery.error, alertQuery.data),
+    collectorState: resolveCollectorListState(collectorQuery, false, true),
     refresh: async () => {
-      await Promise.allSettled([monitorQuery.refetch(), alertQuery.refetch()]);
+      await Promise.allSettled([monitorQuery.refetch(), alertQuery.refetch(), collectorQuery.refetch()]);
     }
   };
 }
