@@ -50,6 +50,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final String CONNECT_STR = "||";
+    private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
 
     /**
      * Processing probe failure
@@ -195,10 +196,8 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleDataAccessException(DataAccessException exception) {
         String errorMessage = "database error happen";
-        if (exception != null) {
-            errorMessage = exception.getMessage();
-        }
-        log.warn("[database error happen]-{}", errorMessage, exception);
+        String exceptionType = exception == null ? "unknown" : exception.getClass().getName();
+        log.warn("[database error happen]-exceptionType={}", exceptionType);
         Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
@@ -262,12 +261,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleUnknownException(Exception exception) {
-        String errorMessage = "unknown error happen";
-        if (exception != null) {
-            errorMessage = exception.getMessage();
-        }
-        log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
+        String exceptionType = exception == null ? "unknown" : exception.getClass().getName();
+        log.error("[monitor]-[unknown error happen]-exceptionType={}", exceptionType);
+        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, UNKNOWN_ERROR_MESSAGE);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
     }
 }

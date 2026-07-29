@@ -123,4 +123,26 @@ class EntityEvidenceReadModelServiceTest {
         verify(entityMonitorEvidenceReadModelService).buildEntityMonitorPage(
                 List.of(monitor), (byte) 2, "mysql", 0, 10);
     }
+
+    @Test
+    void getEntityMonitorsDoesNotReuseAccessibleEntityEvidenceForAnotherEntity() {
+        Monitor firstEntityMonitor = Monitor.builder().id(2101L).name("entity-a-api").app("http").build();
+        Page<MonitorInfo> firstEntityPage =
+                new PageImpl<>(List.of(MonitorInfo.fromEntity(firstEntityMonitor)));
+        when(entityWorkspaceAccessService.isEntityAccessibleForRequestWorkspace(1101L)).thenReturn(true);
+        when(entityWorkspaceAccessService.isEntityAccessibleForRequestWorkspace(1102L)).thenReturn(false);
+        when(entityMonitorBindService.findEntityMonitors(1101L)).thenReturn(List.of(firstEntityMonitor));
+        when(entityMonitorEvidenceReadModelService.buildEntityMonitorPage(
+                List.of(firstEntityMonitor), null, null, 0, 10)).thenReturn(firstEntityPage);
+
+        Page<MonitorInfo> accessible = entityEvidenceReadModelService.getEntityMonitors(
+                1101L, null, null, 0, 10);
+        Page<MonitorInfo> inaccessible = entityEvidenceReadModelService.getEntityMonitors(
+                1102L, null, null, 0, 10);
+
+        assertEquals(List.of(2101L), accessible.getContent().stream().map(MonitorInfo::getId).toList());
+        assertTrue(inaccessible.isEmpty());
+        verify(entityMonitorBindService).findEntityMonitors(1101L);
+        verify(entityMonitorBindService, org.mockito.Mockito.never()).findEntityMonitors(1102L);
+    }
 }

@@ -74,6 +74,35 @@ class EntityMonitorEvidenceReadModelServiceTest {
     }
 
     @Test
+    void buildEntityMonitorPageUsesTheCompleteStatusAndRecencyOrderingContract() {
+        LocalDateTime sameUpdate = LocalDateTime.of(2026, 5, 10, 12, 0);
+        Monitor olderDown = monitor(
+                621L, "db-old", "mysql", CommonConstants.MONITOR_DOWN_CODE,
+                LocalDateTime.of(2026, 5, 10, 11, 0));
+        Monitor firstDownById = monitor(
+                622L, "db-a", "mysql", CommonConstants.MONITOR_DOWN_CODE, sameUpdate);
+        Monitor secondDownById = monitor(
+                623L, "db-b", "mysql", CommonConstants.MONITOR_DOWN_CODE, sameUpdate);
+        Monitor up = monitor(
+                624L, "api", "http", CommonConstants.MONITOR_UP_CODE,
+                LocalDateTime.of(2026, 5, 10, 12, 30));
+        Monitor paused = monitor(
+                625L, "worker", "jvm", CommonConstants.MONITOR_PAUSED_CODE,
+                LocalDateTime.of(2026, 5, 10, 12, 40));
+        Monitor other = monitor(
+                626L, "unknown", "custom", (byte) 4,
+                LocalDateTime.of(2026, 5, 10, 12, 50));
+
+        Page<MonitorInfo> page = monitorEvidenceReadModelService.buildEntityMonitorPage(
+                List.of(other, paused, up, olderDown, firstDownById, secondDownById),
+                null, null, 0, 10);
+
+        assertEquals(6, page.getTotalElements());
+        assertEquals(List.of(623L, 622L, 621L, 624L, 625L, 626L),
+                page.getContent().stream().map(MonitorInfo::getId).toList());
+    }
+
+    @Test
     void buildEntityMonitorPagePaginatesAfterFilteringAndPrioritySort() {
         Monitor firstDown = monitor(
                 701L, "db-a", "mysql", CommonConstants.MONITOR_DOWN_CODE,
@@ -100,6 +129,24 @@ class EntityMonitorEvidenceReadModelServiceTest {
         assertTrue(page.isEmpty());
         assertEquals(0, page.getNumber());
         assertEquals(10, page.getSize());
+    }
+
+    @Test
+    void buildEntityMonitorPageCapsPageSizeAtOneHundredWithoutTruncatingTotalElements() {
+        List<Monitor> monitors = java.util.stream.LongStream.rangeClosed(1, 125)
+                .mapToObj(id -> monitor(
+                        id, "monitor-" + id, "http", CommonConstants.MONITOR_UP_CODE,
+                        LocalDateTime.of(2026, 5, 10, 10, 0).plusSeconds(id)))
+                .toList();
+
+        Page<MonitorInfo> page = monitorEvidenceReadModelService.buildEntityMonitorPage(
+                monitors, null, null, 0, 1000);
+
+        assertEquals(100, page.getSize());
+        assertEquals(100, page.getNumberOfElements());
+        assertEquals(125, page.getTotalElements());
+        assertEquals(125L, page.getContent().getFirst().getId());
+        assertEquals(26L, page.getContent().getLast().getId());
     }
 
     private Monitor monitor(Long id, String name, String app, byte status, LocalDateTime updatedAt) {
