@@ -169,7 +169,7 @@ describe('Bulletin editor controller', () => {
     expect(result.current.gate.isLocked()).toBe(false);
   });
 
-  it('atomically stops pending proof once and retires every late publication path', async () => {
+  it('atomically stops pending proof once and retires every late publication path', () => {
     const { result } = renderEditorController();
     const submitted = { ...bulletin(7, 'Operations'), monitorIds: [1], fields: { responseTime: ['duration'] } };
     let owner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
@@ -278,7 +278,9 @@ describe('Bulletin editor controller', () => {
     });
     expect(result.current.gate.recovery).toMatchObject({ stage: 'projection', operation: 'save' });
 
-    act(() => result.current.gate.retire('save'));
+    act(() => {
+      result.current.gate.retire('save');
+    });
     expect(result.current.gate.recovery).toBeNull();
     expect(result.current.gate.notice).toEqual({
       kind: 'projection-stopped',

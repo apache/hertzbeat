@@ -89,5 +89,5 @@ function freezeDraft<T extends BulletinDraft>(draft: T): Readonly<T> {
   const fields = Object.freeze(
     Object.fromEntries(Object.entries(draft.fields).map(([metric, values]) => [metric, Object.freeze([...values])]))
   );
-  return Object.freeze({ ...draft, monitorIds: Object.freeze([...draft.monitorIds]), fields }) as Readonly<T>;
+  return Object.freeze({ ...draft, monitorIds: Object.freeze([...draft.monitorIds]), fields });
 }

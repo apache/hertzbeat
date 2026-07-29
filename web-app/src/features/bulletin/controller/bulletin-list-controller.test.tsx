@@ -7,6 +7,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BulletinRequestFailure } from '../model/bulletin-failure';
+import type { loadBulletinMetrics, loadBulletins } from '../api/bulletin-api';
 import type { BulletinQuery } from '../model/bulletin-model';
 import {
   useBulletinBatchSelection,
@@ -19,7 +20,10 @@ import { useBulletinPageCorrection } from './bulletin-page-correction-controller
 import { useBulletinQueryController } from './bulletin-query-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
-const api = vi.hoisted(() => ({ loadBulletinMetrics: vi.fn(), loadBulletins: vi.fn() }));
+const api = vi.hoisted(() => ({
+  loadBulletinMetrics: vi.fn<typeof loadBulletinMetrics>(),
+  loadBulletins: vi.fn<typeof loadBulletins>()
+}));
 
 vi.mock('../api/bulletin-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/bulletin-api')>()),
@@ -188,7 +192,7 @@ describe('Bulletin list controller', () => {
   });
 
   it('synchronously retires selection and metrics when the canonical list query changes', async () => {
-    api.loadBulletinMetrics.mockReturnValue(new Promise(() => undefined));
+    api.loadBulletinMetrics.mockReturnValue(new Promise<never>(() => undefined));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const firstQuery = { search: '', pageIndex: 0, pageSize: 8 };
     const secondQuery = { ...firstQuery, pageIndex: 1 };
@@ -321,7 +325,8 @@ describe('Bulletin list controller', () => {
     const requests: Array<{ query: BulletinQuery; signal: AbortSignal }> = [];
     const firstQuery = { search: 'old', pageIndex: 0, pageSize: 8 };
     const secondQuery = { ...firstQuery, search: 'latest' };
-    api.loadBulletins.mockImplementation((current: BulletinQuery, signal: AbortSignal) => {
+    api.loadBulletins.mockImplementation((current: BulletinQuery, signal?: AbortSignal) => {
+      if (!signal) return Promise.reject(new Error('Expected the list query to own cancellation.'));
       requests.push({ query: current, signal });
       if (current.search === 'latest') return Promise.resolve({ ...page([]), totalPages: 0 });
       return new Promise((_resolve, reject) => {

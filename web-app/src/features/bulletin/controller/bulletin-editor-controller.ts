@@ -18,36 +18,47 @@ function useBulletinDraftStore() {
   return { draft, get: () => draftRef.current, publish };
 }
 
-function createBulletinDraftActions(
-  draftStore: ReturnType<typeof useBulletinDraftStore>,
+type BulletinDraftStore = ReturnType<typeof useBulletinDraftStore>;
+
+function createBulletinDraftAction(
+  draftStore: BulletinDraftStore,
   gate: BulletinOperationGate,
   canWriteRef: RefObject<boolean>,
   invalidateDetail: () => void
 ) {
-  const create = () => {
-    if (!canWriteRef.current || gate.isLocked()) return false;
-    invalidateDetail();
-    draftStore.publish(createBulletinDraft());
-    return true;
-  };
-  const close = () => {
-    if (gate.isLocked()) return false;
-    invalidateDetail();
-    draftStore.publish(null);
-    return true;
-  };
-  const update = (patch: Partial<BulletinDraft>) => {
-    if (!canWriteRef.current || gate.isLocked()) return false;
-    const current = draftStore.get();
-    if (!current) return false;
-    draftStore.publish({ ...current, ...patch });
-    return true;
-  };
-  const retireWriteAccess = () => {
-    invalidateDetail();
-    draftStore.publish(null);
-  };
-  return { close, create, retireWriteAccess, update };
+  if (!canWriteRef.current || gate.isLocked()) return false;
+  invalidateDetail();
+  draftStore.publish(createBulletinDraft());
+  return true;
+}
+
+function closeBulletinDraftAction(
+  draftStore: BulletinDraftStore,
+  gate: BulletinOperationGate,
+  invalidateDetail: () => void
+) {
+  if (gate.isLocked()) return false;
+  invalidateDetail();
+  draftStore.publish(null);
+  return true;
+}
+
+function updateBulletinDraftAction(
+  draftStore: BulletinDraftStore,
+  gate: BulletinOperationGate,
+  canWriteRef: RefObject<boolean>,
+  patch: Partial<BulletinDraft>
+) {
+  if (!canWriteRef.current || gate.isLocked()) return false;
+  const current = draftStore.get();
+  if (!current) return false;
+  draftStore.publish({ ...current, ...patch });
+  return true;
+}
+
+function retireBulletinDraft(draftStore: BulletinDraftStore, invalidateDetail: () => void) {
+  invalidateDetail();
+  draftStore.publish(null);
 }
 
 export function useBulletinEditorController(
@@ -88,16 +99,20 @@ export function useBulletinEditorController(
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;
     }
   };
-  const draftActions = createBulletinDraftActions(draftStore, gate, canWriteRef, invalidateDetail);
   return {
     state: { draft: draftStore.draft },
     controls: {
       getDraft: draftStore.get,
       invalidateDetail,
-      retireWriteAccess: draftActions.retireWriteAccess,
+      retireWriteAccess: () => retireBulletinDraft(draftStore, invalidateDetail),
       setDraft: draftStore.publish
     },
-    actions: { close: draftActions.close, create: draftActions.create, edit, update: draftActions.update }
+    actions: {
+      close: () => closeBulletinDraftAction(draftStore, gate, invalidateDetail),
+      create: () => createBulletinDraftAction(draftStore, gate, canWriteRef, invalidateDetail),
+      edit,
+      update: (patch: Partial<BulletinDraft>) => updateBulletinDraftAction(draftStore, gate, canWriteRef, patch)
+    }
   };
 }
 
