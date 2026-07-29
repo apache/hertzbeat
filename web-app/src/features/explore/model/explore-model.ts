@@ -25,7 +25,7 @@ import {
 } from './explore-query';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
-import { buildExplorePath, normalizeExploreQuery, parseExploreQuery } from './explore-url-model';
+import { buildExplorePath, normalizeExploreQuery } from './explore-url-model';
 
 export { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
 export {

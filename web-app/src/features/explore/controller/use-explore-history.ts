@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { queryOptions, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
 import type { ExploreQuery } from '../model/explore-model';
@@ -27,26 +27,26 @@ type ExactWindow = { from: number; to: number } | undefined;
 
 export function useExploreHistory(query: ExploreQuery, window: ExactWindow, enabled: boolean, refreshRevision: number) {
   const evidenceOwner = useMemo(() => historyEvidenceOwner(query, window), [query, window]);
+  const queryClient = useQueryClient();
   const queryResult = useQuery({
-    queryKey: exploreQueryKeys.history(query, window, refreshRevision),
-    queryFn: ({ signal }) => loadHistorical(query, signal),
+    ...historyQueryOptions(query, window, refreshRevision),
     enabled,
-    retry: false,
-    staleTime: 0,
     placeholderData: (previous, previousQuery) =>
       previousQuery && historyEvidenceOwnerFromKey(previousQuery.queryKey) === evidenceOwner ? previous : undefined
   });
-  const retainedEvidence = useRef<{ owner: string; evidence: HistoricalEvidence } | undefined>(undefined);
-  useEffect(() => {
-    if (queryResult.data?.signal === query.signal) {
-      retainedEvidence.current = { owner: evidenceOwner, evidence: queryResult.data };
-    }
-  }, [evidenceOwner, query.signal, queryResult.data]);
+  const retainedEvidence = latestHistoryEvidence(queryClient, evidenceOwner, query.signal);
   // A failed refresh generation drops placeholderData, so retention is explicitly bounded by the stable request owner.
-  const evidence =
-    queryResult.data ??
-    (retainedEvidence.current?.owner === evidenceOwner ? retainedEvidence.current.evidence : undefined);
+  const evidence = queryResult.data ?? retainedEvidence;
   return { queryResult, evidence };
+}
+
+function historyQueryOptions(query: ExploreQuery, window: ExactWindow, refreshRevision: number) {
+  return queryOptions({
+    queryKey: exploreQueryKeys.history(query, window, refreshRevision),
+    queryFn: ({ signal }) => loadHistorical(query, signal),
+    retry: false,
+    staleTime: 0
+  });
 }
 
 function historyEvidenceOwner(query: ExploreQuery, window: ExactWindow) {
@@ -62,8 +62,28 @@ function historyEvidenceOwnerFromKey(queryKey: readonly unknown[]) {
     !('refreshRevision' in generation)
   )
     return undefined;
-  const { refreshRevision: _refreshRevision, ...owner } = generation;
-  return JSON.stringify([queryKey[0], { ...owner, refreshRevision: 0 }, ...queryKey.slice(2)]);
+  return JSON.stringify([queryKey[0], { ...generation, refreshRevision: 0 }, ...queryKey.slice(2)]);
+}
+
+function latestHistoryEvidence(queryClient: QueryClient, owner: string, signal: ExploreQuery['signal']) {
+  const matches = queryClient.getQueriesData<HistoricalEvidence>({
+    predicate: candidate => historyEvidenceOwnerFromKey(candidate.queryKey) === owner
+  });
+  return matches.reduce<{ revision: number; evidence?: HistoricalEvidence }>(
+    (latest, [queryKey, evidence]) => {
+      const revision = historyRefreshRevisionFromKey(queryKey);
+      if (revision === undefined || revision <= latest.revision || evidence?.signal !== signal) return latest;
+      return { revision, evidence };
+    },
+    { revision: -1 }
+  ).evidence;
+}
+
+function historyRefreshRevisionFromKey(queryKey: readonly unknown[]) {
+  const generation = queryKey[1];
+  if (generation == null || typeof generation !== 'object' || !('refreshRevision' in generation)) return undefined;
+  const revision = generation.refreshRevision;
+  return Number.isSafeInteger(revision) && Number(revision) >= 0 ? Number(revision) : undefined;
 }
 
 async function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalEvidence> {

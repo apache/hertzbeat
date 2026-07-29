@@ -20,13 +20,7 @@ import { parseQueryContext, writeQueryContext } from '@/shared/query-context';
 
 import { parseExploreFilterParams } from './explore-field-contract';
 import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
-import type {
-  ExploreQuery,
-  ExploreQueryPatch,
-  ExploreSignal,
-  ExploreTimeRange,
-  TraceExploreQuery
-} from './explore-query';
+import type { ExploreQuery, ExploreQueryPatch, ExploreSignal, ExploreTimeRange } from './explore-query';
 
 const DEFAULT_SIGNAL: ExploreSignal = 'traces';
 const DEFAULT_TIME_RANGE: ExploreTimeRange = 'last-30m';

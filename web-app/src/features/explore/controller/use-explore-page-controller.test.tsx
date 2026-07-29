@@ -187,7 +187,9 @@ describe('Explore page controller', () => {
     ]);
     await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledOnce());
 
-    act(() => routed.current().submission.removeFilter('serviceName'));
+    act(() => {
+      routed.current().submission.removeFilter('serviceName');
+    });
 
     await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledTimes(2));
     expect(routed.router.state.location.search).not.toMatch(

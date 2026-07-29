@@ -313,6 +313,7 @@ function renderController(
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
 ) {
   type ControllerProps = { query: TraceExploreQuery; parentEvidenceCurrent?: boolean };
+  const initialProps: ControllerProps = { query: defaultQuery };
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
@@ -320,7 +321,7 @@ function renderController(
     ({ query, parentEvidenceCurrent }: ControllerProps) =>
       useTraceDetailController(query, openPath, parentEvidenceCurrent ?? true),
     {
-      initialProps: { query: defaultQuery } as ControllerProps,
+      initialProps,
       wrapper
     }
   );

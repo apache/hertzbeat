@@ -21,11 +21,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 export function useCanonicalExploreLocation(currentSearch: string, canonicalSearch: string) {
   const location = useLocation();
   const navigate = useNavigate();
+  const historyState: unknown = location.state;
   useEffect(() => {
     if (currentSearch === canonicalSearch) return;
     void navigate(
       { pathname: location.pathname, search: canonicalSearch ? `?${canonicalSearch}` : '' },
-      { replace: true, state: location.state }
+      { replace: true, state: historyState }
     );
-  }, [canonicalSearch, currentSearch, location.pathname, location.state, navigate]);
+  }, [canonicalSearch, currentSearch, historyState, location.pathname, navigate]);
 }
