@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertGroupContractError, AlertGroupMissingError } from '../model/alert-group-model';
+import { AlertGroupContractError } from '../model/alert-group-model';
 import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
 
 const persisted = {
@@ -61,8 +61,8 @@ describe('alert group wire schemas', () => {
     expect(() => parseAlertGroupDetail(value)).toThrow(AlertGroupContractError);
   });
 
-  it('keeps missing detail distinct from malformed detail', () => {
-    expect(() => parseAlertGroupDetail(null)).toThrow(AlertGroupMissingError);
+  it('treats null and malformed success detail as contract errors', () => {
+    expect(() => parseAlertGroupDetail(null)).toThrow(AlertGroupContractError);
     expect(() => parseAlertGroupDetail({})).toThrow(AlertGroupContractError);
   });
 

@@ -50,6 +50,7 @@ describe('Alert Group API failure boundary', () => {
     ['server application response', new ApiMessageError('failed', { code: 12, status: 500 }), 'error', 'uncertain'],
     ['request timeout response', new ApiMessageError('failed', { status: 408 }), 'error', 'uncertain'],
     ['other client rejection', new ApiMessageError('failed', { status: 400 }), 'error', 'rejected'],
+    ['validated parameter rejection', new ApiMessageError('failed', { code: 1, status: 200 }), 'error', 'rejected'],
     [
       'client rejection with application code',
       new ApiMessageError('failed', { code: 12, status: 422 }),

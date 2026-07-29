@@ -15,7 +15,7 @@ const unavailableStatuses = new Set([0, 502, 503, 504]);
 /** Converts transport evidence once, before it can escape the Alert Group API. */
 export function normalizeAlertGroupApiFailure(error: unknown) {
   if (!(error instanceof ApiMessageError)) return error;
-  return new AlertGroupRequestFailure(readFailureKind(error), apiMessageWriteOutcome(error));
+  return new AlertGroupRequestFailure(readFailureKind(error), writeOutcome(error));
 }
 
 /** Runs one transport operation behind the Alert Group domain boundary. */
@@ -35,4 +35,10 @@ function readFailureKind(error: ApiMessageError): AlertGroupFailure {
   }
   if (error.status === 404 || (error.status === 200 && error.code === 3)) return 'missing';
   return 'error';
+}
+
+function writeOutcome(error: ApiMessageError) {
+  // PARAM_INVALID_CODE is returned before Alert Group persistence is invoked.
+  if (error.status === 200 && error.code === 1) return 'rejected' as const;
+  return apiMessageWriteOutcome(error);
 }

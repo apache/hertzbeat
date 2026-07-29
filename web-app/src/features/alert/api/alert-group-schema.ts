@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import {
   AlertGroupContractError,
-  AlertGroupMissingError,
   type AlertGroupConverge,
   type AlertGroupPage,
   type AlertGroupQuery
@@ -54,7 +53,6 @@ const alertGroupPageSchema = z.object({
 });
 
 export function parseAlertGroupDetail(value: unknown): AlertGroupConverge {
-  if (value == null) throw new AlertGroupMissingError();
   return mapAlertGroup(parseSchema(alertGroupSchema, value, 'Alert group detail'));
 }
 

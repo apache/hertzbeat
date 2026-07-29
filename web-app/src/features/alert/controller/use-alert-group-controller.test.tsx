@@ -280,6 +280,37 @@ describe('Alert Group controller', () => {
     expect(result.current.state.editorFailure).toBe('error');
   });
 
+  it.each(['create', 'update'] as const)(
+    'keeps a code=1 rejected %s editor retryable without GET-only recovery',
+    async kind => {
+      const { result } = renderController();
+      await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+      const rejected = normalizeAlertGroupApiFailure(new ApiMessageError('private', { code: 1, status: 200 }));
+      if (kind === 'create') {
+        api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+        act(() => result.current.create());
+        act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+      } else {
+        await act(async () => result.current.edit(7));
+      }
+      api.saveAlertGroup.mockRejectedValue(rejected);
+
+      await act(async () => result.current.submit());
+
+      expect(result.current.state.draft).toMatchObject(kind === 'create' ? { name: 'New' } : { id: 7 });
+      expect(result.current.state.createAcknowledged).toBe(false);
+      expect(result.current.state.editorFailure).toBe('error');
+      expect(result.current.state.recovery).toBeUndefined();
+      expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+
+      if (kind === 'create') api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+      await act(async () => result.current.submit());
+      expect(api.saveAlertGroup).toHaveBeenCalledTimes(2);
+      expect(result.current.state.createAcknowledged).toBe(false);
+      expect(result.current.state.recovery).toBeUndefined();
+    }
+  );
+
   it('does not report create success when a successful reread cannot prove the new record', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
