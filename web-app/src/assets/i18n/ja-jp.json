@@ -1266,6 +1266,30 @@
     "takeSelectedOffline": "選択項目をオフラインにする",
     "deleteSelected": "選択項目を削除",
     "mutationSuccess": "コレクターの状態を更新しました。",
+    "deploy": {
+      "action": "デプロイ情報を生成",
+      "title": "Collector デプロイ情報",
+      "name": "Collector 名",
+      "placeholder": "一意の Collector 名を入力",
+      "generate": "生成",
+      "retry": "再試行",
+      "close": "閉じる",
+      "identity": "ID",
+      "host": "Manager ホスト",
+      "dockerTitle": "Docker",
+      "dockerHelp": "生成された ID と Manager ホストで public Collector を起動します。",
+      "packageTitle": "パッケージ設定",
+      "packageHelp": "Collector パッケージをダウンロード後、これらの値を application.yml に設定します。",
+      "releases": "Collector リリースをダウンロード",
+      "required": "Collector 名は必須です。",
+      "failure": {
+        "permission": "Collector デプロイ情報を生成する権限がありません。",
+        "validation": "Collector 名が拒否されました。別の名前で再試行してください。",
+        "unavailable": "デプロイ情報は一時的に利用できません。再試行してください。",
+        "contract": "サーバーから無効なデプロイ情報が返されました。",
+        "error": "デプロイ情報を生成できませんでした。"
+      }
+    },
     "intake": {
       "configure": "受信設定",
       "configureNamed": "{{name}} の受信設定を構成",

@@ -1255,6 +1255,30 @@
     "takeSelectedOffline": "所选设为离线",
     "deleteSelected": "删除所选",
     "mutationSuccess": "采集器状态已刷新。",
+    "deploy": {
+      "action": "生成部署信息",
+      "title": "采集器部署信息",
+      "name": "采集器名称",
+      "placeholder": "输入唯一的采集器名称",
+      "generate": "生成",
+      "retry": "重试",
+      "close": "关闭",
+      "identity": "身份标识",
+      "host": "管理端地址",
+      "dockerTitle": "Docker",
+      "dockerHelp": "使用生成的身份标识和管理端地址运行公共采集器。",
+      "packageTitle": "安装包配置",
+      "packageHelp": "下载采集器安装包后，将这些值配置到 application.yml。",
+      "releases": "下载采集器发行包",
+      "required": "请输入采集器名称。",
+      "failure": {
+        "permission": "你没有生成采集器部署信息的权限。",
+        "validation": "采集器名称被拒绝，请更换名称后重试。",
+        "unavailable": "部署信息暂时不可用，请重试。",
+        "contract": "服务端返回了无效的部署信息。",
+        "error": "无法生成部署信息。"
+      }
+    },
     "intake": {
       "configure": "接收配置",
       "configureNamed": "配置 {{name}} 接收端",

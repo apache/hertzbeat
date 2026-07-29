@@ -1274,6 +1274,30 @@
     "takeSelectedOffline": "Colocar selecionados offline",
     "deleteSelected": "Excluir selecionados",
     "mutationSuccess": "O estado dos coletores foi atualizado.",
+    "deploy": {
+      "action": "Gerar informações de implantação",
+      "title": "Informações de implantação do Collector",
+      "name": "Nome do Collector",
+      "placeholder": "Digite um nome exclusivo para o Collector",
+      "generate": "Gerar",
+      "retry": "Tentar novamente",
+      "close": "Fechar",
+      "identity": "Identidade",
+      "host": "Host do Manager",
+      "dockerTitle": "Docker",
+      "dockerHelp": "Execute o Collector público com a identidade e o host do Manager gerados.",
+      "packageTitle": "Configuração do pacote",
+      "packageHelp": "Após baixar o pacote do Collector, aplique estes valores em application.yml.",
+      "releases": "Baixar versões do Collector",
+      "required": "O nome do Collector é obrigatório.",
+      "failure": {
+        "permission": "Você não tem permissão para gerar informações de implantação do Collector.",
+        "validation": "O nome do Collector foi rejeitado. Escolha outro nome e tente novamente.",
+        "unavailable": "As informações de implantação estão temporariamente indisponíveis. Tente novamente.",
+        "contract": "O servidor retornou informações de implantação inválidas.",
+        "error": "Não foi possível gerar as informações de implantação."
+      }
+    },
     "intake": {
       "configure": "Entrada",
       "configureNamed": "Configurar entrada de {{name}}",

@@ -1270,6 +1270,30 @@
     "takeSelectedOffline": "Take selected offline",
     "deleteSelected": "Delete selected",
     "mutationSuccess": "Collector state refreshed.",
+    "deploy": {
+      "action": "Generate deployment information",
+      "title": "Collector deployment information",
+      "name": "Collector name",
+      "placeholder": "Enter a unique Collector name",
+      "generate": "Generate",
+      "retry": "Retry",
+      "close": "Close",
+      "identity": "Identity",
+      "host": "Manager host",
+      "dockerTitle": "Docker",
+      "dockerHelp": "Run the public Collector with the generated identity and manager host.",
+      "packageTitle": "Package configuration",
+      "packageHelp": "After downloading the Collector package, apply these values in application.yml.",
+      "releases": "Download Collector releases",
+      "required": "Collector name is required.",
+      "failure": {
+        "permission": "You do not have permission to generate Collector deployment information.",
+        "validation": "The Collector name was rejected. Choose another name and try again.",
+        "unavailable": "Deployment information is temporarily unavailable. Try again.",
+        "contract": "The server returned invalid deployment information.",
+        "error": "Deployment information could not be generated."
+      }
+    },
     "intake": {
       "configure": "Intake",
       "configureNamed": "Configure {{name}} intake",

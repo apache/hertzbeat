@@ -1255,6 +1255,30 @@
     "takeSelectedOffline": "所選設為離線",
     "deleteSelected": "刪除所選",
     "mutationSuccess": "採集器狀態已重新整理。",
+    "deploy": {
+      "action": "產生部署資訊",
+      "title": "採集器部署資訊",
+      "name": "採集器名稱",
+      "placeholder": "輸入唯一的採集器名稱",
+      "generate": "產生",
+      "retry": "重試",
+      "close": "關閉",
+      "identity": "身分識別",
+      "host": "管理端位址",
+      "dockerTitle": "Docker",
+      "dockerHelp": "使用產生的身分識別與管理端位址執行公共採集器。",
+      "packageTitle": "安裝包設定",
+      "packageHelp": "下載採集器安裝包後，將這些值設定到 application.yml。",
+      "releases": "下載採集器發行包",
+      "required": "請輸入採集器名稱。",
+      "failure": {
+        "permission": "你沒有產生採集器部署資訊的權限。",
+        "validation": "採集器名稱遭到拒絕，請更換名稱後重試。",
+        "unavailable": "部署資訊暫時無法使用，請重試。",
+        "contract": "伺服器回傳了無效的部署資訊。",
+        "error": "無法產生部署資訊。"
+      }
+    },
     "intake": {
       "configure": "接收設定",
       "configureNamed": "設定 {{name}} 接收端",

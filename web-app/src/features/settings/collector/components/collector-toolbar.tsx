@@ -17,6 +17,7 @@ type Props = {
   selected: string[];
   mutating: boolean;
   refreshing: boolean;
+  onDeploy: () => void;
   onName: (name: string) => void;
   onSearch: () => void;
   onRefresh: () => void;
@@ -44,6 +45,9 @@ export function CollectorToolbar(props: Props) {
       </Button>
       {props.canWrite && (
         <>
+          <Button disabled={props.mutating} onClick={props.onDeploy}>
+            {t('collectors.deploy.action')}
+          </Button>
           <Button disabled={disabled} onClick={() => props.onAction('online', props.selected)}>
             {t('collectors.takeSelectedOnline')}
           </Button>

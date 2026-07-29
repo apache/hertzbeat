@@ -11,18 +11,21 @@ import { useTranslation } from 'react-i18next';
 import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import { CollectorActionDialog } from '../components/collector-action-dialog';
+import { CollectorDeployDialog } from '../components/collector-deploy-dialog';
 import { CollectorIntakeDialog } from '../components/collector-intake-dialog';
 import { CollectorList } from '../components/collector-list';
 import { CollectorRuntimeConfigDialog } from '../components/collector-runtime-config-dialog';
 import { CollectorRuntimeApplicationAlert } from '../components/collector-runtime-application-alert';
 import { CollectorToolbar } from '../components/collector-toolbar';
 import { useCollectorController } from '../controller/use-collector-controller';
+import { useCollectorDeployController } from '../controller/use-collector-deploy-controller';
 import type { CollectorMutationFailure } from '../model/collector-model';
 import styles from './collector-page.module.css';
 
 export function CollectorPage() {
   const { t } = useTranslation();
   const controller = useCollectorController();
+  const deploy = useCollectorDeployController({ canWrite: controller.capabilities.canWrite });
   const selected = controller.selected;
   const submitSearch = () => controller.actions.submitName();
   return (
@@ -43,6 +46,7 @@ export function CollectorPage() {
           onName={controller.actions.setNameDraft}
           onSearch={submitSearch}
           onRefresh={controller.actions.refresh}
+          onDeploy={deploy.open}
           onAction={controller.actions.requestAction}
         />
       </div>
@@ -61,6 +65,12 @@ export function CollectorPage() {
         onRuntime={name => void controller.actions.openRuntimeConfig(name)}
       />
       <CollectorDialogs controller={controller} />
+      <CollectorDeployDialog
+        state={deploy.state}
+        onSubmit={collector => void deploy.submit(collector)}
+        onCancel={deploy.cancel}
+        onClose={deploy.close}
+      />
     </OperationalPage>
   );
 }

@@ -17,11 +17,15 @@ import { requireDomElement } from '@/test/dom-element';
 import type { CollectorRuntimeReport } from '../model/collector-runtime-report-model';
 
 const resource = vi.hoisted(() => ({
-  useCollectorController: vi.fn()
+  useCollectorController: vi.fn(),
+  useCollectorDeployController: vi.fn()
 }));
 
 vi.mock('../controller/use-collector-controller', () => ({
   useCollectorController: resource.useCollectorController
+}));
+vi.mock('../controller/use-collector-deploy-controller', () => ({
+  useCollectorDeployController: resource.useCollectorDeployController
 }));
 
 import { CollectorPage } from './collector-page';
@@ -32,7 +36,10 @@ describe('CollectorPage', () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
-  beforeEach(() => resource.useCollectorController.mockReturnValue(buildController()));
+  beforeEach(() => {
+    resource.useCollectorController.mockReturnValue(buildController());
+    resource.useCollectorDeployController.mockReturnValue(buildDeployController());
+  });
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -85,6 +92,64 @@ describe('CollectorPage', () => {
     expect(screen.queryByRole('button', { name: 'Take edge offline' }) !== null).toBe(canWrite);
     expect(screen.queryByRole('button', { name: 'Delete edge' }) !== null).toBe(canDelete);
     expect(screen.queryByRole('checkbox', { name: 'Select edge' }) !== null).toBe(canWrite || canDelete);
+    expect(screen.queryByRole('button', { name: 'Generate deployment information' }) !== null).toBe(canWrite);
+  });
+
+  it('keeps required deployment validation in the dialog before submit', async () => {
+    const deploy = buildDeployController({ state: { kind: 'editing', collector: '' } });
+    resource.useCollectorDeployController.mockReturnValue(deploy);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate deployment information' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+
+    expect(await screen.findByText('Collector name is required.')).toBeInTheDocument();
+    expect(deploy.submit).not.toHaveBeenCalled();
+  });
+
+  it('allows a rejected deployment name to be corrected before retrying', async () => {
+    const deploy = buildDeployController({
+      state: { kind: 'failed', collector: 'edge', failure: 'validation' }
+    });
+    resource.useCollectorDeployController.mockReturnValue(deploy);
+    renderPage();
+    const dialog = screen.getByRole('dialog', { name: 'Collector deployment information' });
+
+    fireEvent.change(within(dialog).getByLabelText('Collector name'), { target: { value: 'edge-west' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(deploy.submit).toHaveBeenCalledWith('edge-west'));
+  });
+
+  it('clears successful deployment evidence when closed and reopened', () => {
+    const deploy = buildDeployController({
+      state: { kind: 'ready', collector: 'edge', deployment: { identity: 'edge', host: '10.0.0.7' } }
+    });
+    resource.useCollectorDeployController.mockReturnValue(deploy);
+    const view = renderPage();
+    const dialog = screen.getByRole('dialog', { name: 'Collector deployment information' });
+    expect(within(dialog).getByText('edge')).toBeInTheDocument();
+    expect(within(dialog).getByText('10.0.0.7')).toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'Download Collector releases' })).toHaveAttribute(
+      'href',
+      'https://github.com/apache/hertzbeat/releases'
+    );
+    expect(dialog).not.toHaveTextContent(/registered|online|list refreshed/i);
+
+    const closeAction = within(dialog).getAllByRole('button', { name: 'Close' }).at(-1);
+    if (!closeAction) throw new Error('Deployment close action is missing.');
+    fireEvent.click(closeAction);
+    expect(deploy.close).toHaveBeenCalledOnce();
+    resource.useCollectorDeployController.mockReturnValue(
+      buildDeployController({ state: { kind: 'editing', collector: '' } })
+    );
+    view.rerender(<CollectorPageTestRoot />);
+
+    const reopenedDialog = screen.getByRole('dialog', {
+      name: 'Collector deployment information'
+    });
+    expect(within(reopenedDialog).queryByText('10.0.0.7')).not.toBeInTheDocument();
+    expect(within(reopenedDialog).getByLabelText('Collector name')).toHaveValue('');
   });
 
   it('wires controller application and record runtime reports into the page', () => {
@@ -658,6 +723,17 @@ function buildController(overrides: Record<string, unknown> = {}) {
       cancelAction: vi.fn(),
       confirmAction: vi.fn()
     },
+    ...overrides
+  };
+}
+
+function buildDeployController(overrides: Record<string, unknown> = {}) {
+  return {
+    state: { kind: 'closed' },
+    open: vi.fn(),
+    submit: vi.fn(),
+    cancel: vi.fn(),
+    close: vi.fn(),
     ...overrides
   };
 }
