@@ -73,23 +73,33 @@ export function useSystemConfigFormController(options: FormOptions) {
     retrySave,
     retryTimezones,
     save,
-    state: {
-      current,
-      accepting: transaction.accepting,
-      canConfigure: options.canConfigure,
-      canUseCurrentServerSettings: transaction.canUseCurrentServerSettings,
-      dirty,
-      locked: transaction.isLocked(),
-      proving: transaction.proving,
-      recovery: transaction.recovery,
-      saving: transaction.saving,
-      timezoneOptions: options.timezoneOptions,
-      timezonesFailed: options.timezonesFailed,
-      timezonesPending: options.timezonesPending,
-      valid
-    },
+    state: projectSystemConfigFormState(options, transaction, current, dirty, valid),
     update,
     useCurrentServerSettings: transaction.useCurrentServerSettings
+  };
+}
+
+function projectSystemConfigFormState(
+  options: FormOptions,
+  transaction: ReturnType<typeof useSystemConfigSaveTransaction>,
+  current: SystemConfigDraft,
+  dirty: boolean,
+  valid: boolean
+) {
+  return {
+    current,
+    accepting: transaction.accepting,
+    canConfigure: options.canConfigure,
+    canUseCurrentServerSettings: transaction.canUseCurrentServerSettings,
+    dirty,
+    locked: transaction.isLocked(),
+    proving: transaction.proving,
+    recovery: transaction.recovery,
+    saving: transaction.saving,
+    timezoneOptions: options.timezoneOptions,
+    timezonesFailed: options.timezonesFailed,
+    timezonesPending: options.timezonesPending,
+    valid
   };
 }
 

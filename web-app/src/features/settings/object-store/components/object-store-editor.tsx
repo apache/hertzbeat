@@ -87,23 +87,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
         />
       )}
       <div className={styles.form}>
-        <label className={styles.field}>
-          <span className={styles.label}>{t('objectStore.type.label')}</span>
-          <span className={styles.control}>
-            <Select
-              disabled={!props.canWrite || props.locked}
-              value={current.type}
-              options={objectStoreTypeDefinitions.map(definition => ({
-                value: definition.value,
-                label: t(definition.labelKey)
-              }))}
-              onChange={type => props.onUpdate(changeObjectStoreType(current, type))}
-            />
-            <Typography.Text type="secondary">
-              {t(`objectStore.typeHelp.${current.type.toLowerCase()}`)}
-            </Typography.Text>
-          </span>
-        </label>
+        <ObjectStoreTypeField current={current} disabled={!props.canWrite || props.locked} onUpdate={props.onUpdate} />
         {current.type === 'OBS' &&
           obsFieldDefinitions.map(field => (
             <ObjectStoreField
@@ -132,6 +116,35 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
         </div>
       )}
     </>
+  );
+}
+
+function ObjectStoreTypeField({
+  current,
+  disabled,
+  onUpdate
+}: {
+  current: ObjectStoreDraft;
+  disabled: boolean;
+  onUpdate: (draft: ObjectStoreDraft) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className={styles.field}>
+      <span className={styles.label}>{t('objectStore.type.label')}</span>
+      <span className={styles.control}>
+        <Select
+          disabled={disabled}
+          value={current.type}
+          options={objectStoreTypeDefinitions.map(definition => ({
+            value: definition.value,
+            label: t(definition.labelKey)
+          }))}
+          onChange={type => onUpdate(changeObjectStoreType(current, type))}
+        />
+        <Typography.Text type="secondary">{t(`objectStore.typeHelp.${current.type.toLowerCase()}`)}</Typography.Text>
+      </span>
+    </label>
   );
 }
 

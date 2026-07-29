@@ -16,7 +16,7 @@
  */
 
 import { useList, type HttpError } from '@refinedev/core';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import {
   labelActionCapabilities,
@@ -70,23 +70,14 @@ export function useLabelResourceController(
   const mutations = useLabelMutationController(convergeProjection, onDeleteConfirmed, capabilities);
   const actions = useLabelActionsController();
   const isMutationInFlight = mutations.isInFlight;
-  const listState = useMemo(() => {
-    if (!capabilities.canRead) return { kind: 'permission' } as const;
-    return resolveListState(
-      list.query.isPending,
-      list.query.isError,
-      list.query.error,
-      list.result.data,
-      list.result.total
-    );
-  }, [
+  const listState = resolveListState(
     capabilities.canRead,
-    list.query.error,
-    list.query.isError,
     list.query.isPending,
+    list.query.isError,
+    list.query.error,
     list.result.data,
     list.result.total
-  ]);
+  );
 
   const refresh = useCallback(() => {
     if (!mounted.current || !capabilities.canRead || isMutationInFlight()) return false;
@@ -104,12 +95,14 @@ export function useLabelResourceController(
 }
 
 function resolveListState(
+  canRead: boolean,
   isPending: boolean,
   isError: boolean,
   error: HttpError | null,
   records: LabelRecord[],
   total: number | undefined
 ): LabelListState {
+  if (!canRead) return { kind: 'permission' };
   if (isPending) return { kind: 'loading' };
   if (isError) return { kind: classifyLabelReadFailure(error) };
   if (typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0 || records.length > total) {

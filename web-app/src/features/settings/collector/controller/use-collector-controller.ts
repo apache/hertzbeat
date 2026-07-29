@@ -31,7 +31,6 @@ import { useCollectorRoleLossRetirement } from './use-collector-role-loss-retire
 export function useCollectorController() {
   const capabilities = useCollectorActionCapabilities();
   const queryClient = useQueryClient();
-  const sourceCoordinator = useMemo(() => createRuntimeSourceCoordinator(), []);
   const state = useCollectorQueryState(capabilities.canRead);
   const runtimeApplication = useCollectorRuntimeApplicationController();
   const mutation = useCollectorMutationController({
@@ -43,36 +42,12 @@ export function useCollectorController() {
     navigateQuery: state.navigateQuery,
     clearSelection: () => state.setSelected([])
   });
-  const intake = useCollectorIntakeController({
-    query: state.query,
-    queryRef: state.queryRef,
-    records: state.records,
+  const { intake, runtime, prometheus, fileLog } = useManagedCollectorEditors(
+    state,
+    mutation,
     queryClient,
-    locked: mutation.mutating
-  });
-  const runtime = useCollectorRuntimeConfigController({
-    query: state.query,
-    queryRef: state.queryRef,
-    records: state.records,
-    locked: mutation.mutating || intake.saving,
-    onManagementSaved: runtimeApplication.track
-  });
-  const prometheus = useCollectorPrometheusSourceController({
-    queryRef: state.queryRef,
-    session: runtime.editor,
-    closeRuntime: runtime.cancel,
-    owner: 'prometheus',
-    coordinator: sourceCoordinator,
-    onManagementSaved: runtimeApplication.track
-  });
-  const fileLog = useCollectorFileLogSourceController({
-    queryRef: state.queryRef,
-    session: runtime.editor,
-    closeRuntime: runtime.cancel,
-    owner: 'fileLog',
-    coordinator: sourceCoordinator,
-    onManagementSaved: runtimeApplication.track
-  });
+    runtimeApplication.track
+  );
   useCollectorRoleLossRetirement({ capabilities, mutation, intake, runtime, prometheus, fileLog });
   const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure, capabilities.canRead);
   const busy = mutation.mutating || intake.saving || runtime.busy || prometheus.saving || fileLog.saving;
@@ -88,6 +63,46 @@ export function useCollectorController() {
     runtimeApplication.state,
     capabilities
   );
+}
+
+function useManagedCollectorEditors(
+  state: ReturnType<typeof useCollectorQueryState>,
+  mutation: ReturnType<typeof useCollectorMutationController>,
+  queryClient: ReturnType<typeof useQueryClient>,
+  onManagementSaved: ReturnType<typeof useCollectorRuntimeApplicationController>['track']
+) {
+  const sourceCoordinator = useMemo(() => createRuntimeSourceCoordinator(), []);
+  const intake = useCollectorIntakeController({
+    query: state.query,
+    queryRef: state.queryRef,
+    records: state.records,
+    queryClient,
+    locked: mutation.mutating
+  });
+  const runtime = useCollectorRuntimeConfigController({
+    query: state.query,
+    queryRef: state.queryRef,
+    records: state.records,
+    locked: mutation.mutating || intake.saving,
+    onManagementSaved
+  });
+  const prometheus = useCollectorPrometheusSourceController({
+    queryRef: state.queryRef,
+    session: runtime.editor,
+    closeRuntime: runtime.cancel,
+    owner: 'prometheus',
+    coordinator: sourceCoordinator,
+    onManagementSaved
+  });
+  const fileLog = useCollectorFileLogSourceController({
+    queryRef: state.queryRef,
+    session: runtime.editor,
+    closeRuntime: runtime.cancel,
+    owner: 'fileLog',
+    coordinator: sourceCoordinator,
+    onManagementSaved
+  });
+  return { intake, runtime, prometheus, fileLog };
 }
 
 function collectorPageModel(

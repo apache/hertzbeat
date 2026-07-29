@@ -31,10 +31,16 @@ type ActionOptions = {
 };
 
 export function buildCollectorActions(options: ActionOptions) {
-  const managedBusy = () =>
-    options.intake.saving || options.runtime.busy || options.prometheus.saving || options.fileLog.saving;
   return {
     setNameDraft: options.setNameDraft,
+    ...buildCollectorListActions(options),
+    ...buildCollectorEditorActions(options),
+    ...buildCollectorSelectionActions(options)
+  };
+}
+
+function buildCollectorListActions(options: ActionOptions) {
+  return {
     submitName: () => {
       const name = options.nameDraft.trim();
       const current = options.queryRef.current;
@@ -43,10 +49,10 @@ export function buildCollectorActions(options: ActionOptions) {
     setPage: (pageIndex: number, pageSize: CollectorPageSize) =>
       options.navigateQuery({ ...options.queryRef.current, pageIndex, pageSize }),
     refresh: () => {
-      if (!managedBusy()) options.mutation.refresh(options.refetch);
+      if (!managedCollectorEditorBusy(options)) options.mutation.refresh(options.refetch);
     },
     requestAction: (action: Parameters<typeof options.mutation.requestAction>[0], collectors: string[]) => {
-      if (!managedBusy() && actionAllowed(action, options.capabilities)) {
+      if (!managedCollectorEditorBusy(options) && actionAllowed(action, options.capabilities)) {
         options.mutation.requestAction(action, collectors);
       }
     },
@@ -56,7 +62,12 @@ export function buildCollectorActions(options: ActionOptions) {
       return action && actionAllowed(action, options.capabilities)
         ? options.mutation.confirmAction()
         : Promise.resolve();
-    },
+    }
+  };
+}
+
+function buildCollectorEditorActions(options: ActionOptions) {
+  return {
     openIntake: (name: string) => {
       if (options.capabilities.canWrite) options.intake.open(name);
     },
@@ -87,12 +98,17 @@ export function buildCollectorActions(options: ActionOptions) {
     saveFileLogSources: () => (options.capabilities.canWrite ? options.fileLog.save() : Promise.resolve()),
     cancelFileLogSources: options.fileLog.cancel,
     closeFileLogSources: options.fileLog.close,
-    cancelFileLogSource: options.fileLog.cancelSource,
+    cancelFileLogSource: options.fileLog.cancelSource
+  };
+}
+
+function buildCollectorSelectionActions(options: ActionOptions) {
+  return {
     toggleSelection: (name: string, checked: boolean) => {
       if (
         (!options.capabilities.canWrite && !options.capabilities.canDelete) ||
         options.mutation.mutating ||
-        managedBusy() ||
+        managedCollectorEditorBusy(options) ||
         !options.visibleMutableNames.includes(name)
       )
         return;
@@ -104,12 +120,16 @@ export function buildCollectorActions(options: ActionOptions) {
       if (
         (options.capabilities.canWrite || options.capabilities.canDelete) &&
         !options.mutation.mutating &&
-        !managedBusy()
+        !managedCollectorEditorBusy(options)
       ) {
         options.setSelected(checked ? options.visibleMutableNames : []);
       }
     }
   };
+}
+
+function managedCollectorEditorBusy(options: ActionOptions) {
+  return options.intake.saving || options.runtime.busy || options.prometheus.saving || options.fileLog.saving;
 }
 
 function actionAllowed(

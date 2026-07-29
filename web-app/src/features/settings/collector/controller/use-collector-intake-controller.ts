@@ -39,9 +39,15 @@ export function useCollectorIntakeController(options: Options) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [editor, setEditor] = useState<Editor | null>(null);
-  const operationRef = useRef(0);
-  const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<CollectorMutationFailure | null>(null);
+  const onSuccess = useCallback(() => void message.success(t('collectors.intake.success')), [message, t]);
+  const { execute, retire, saving } = useCollectorIntakeTransaction({
+    queryRef: options.queryRef,
+    queryClient: options.queryClient,
+    setEditor,
+    setFailure,
+    onSuccess
+  });
   const open = useCallback(
     (name: string) => {
       if (options.locked || saving) return;
@@ -52,32 +58,13 @@ export function useCollectorIntakeController(options: Options) {
     },
     [options.locked, options.query, options.records, saving]
   );
-  const execute = useCallback(
-    async (request?: CollectorIntakeAdvertisementRequest) => {
-      if (!editor || saving) return;
-      if (!sameCollectorQuery(editor.query, options.queryRef.current)) return setEditor(null);
-      const operation = ++operationRef.current;
-      setSaving(true);
-      setFailure(null);
-      await options.queryClient.cancelQueries({ queryKey: collectorQueryKeys.page(editor.query), exact: true });
-      const result = await persistAndProveIntake(editor, request, options.queryClient);
-      if (operation !== operationRef.current) return;
-      const current = sameCollectorQuery(editor.query, options.queryRef.current);
-      setSaving(false);
-      if (!current) return setEditor(null);
-      if (result) return setFailure(result);
-      setEditor(null);
-      void message.success(t('collectors.intake.success'));
-    },
-    [editor, message, options.queryClient, options.queryRef, saving, t]
-  );
   const save = useCallback(
     async (value: unknown) => {
       const request = parseCollectorIntakeAdvertisementRequest(value);
       if (!request) return setFailure('validation');
-      await execute(request);
+      if (editor) await execute(editor, request);
     },
-    [execute]
+    [editor, execute]
   );
   return {
     editor,
@@ -85,13 +72,8 @@ export function useCollectorIntakeController(options: Options) {
     failure,
     open,
     save,
-    clear: () => execute(),
-    retire: () => {
-      operationRef.current += 1;
-      setEditor(null);
-      setSaving(false);
-      setFailure(null);
-    },
+    clear: () => (editor ? execute(editor) : Promise.resolve()),
+    retire,
     cancel: () => {
       if (!saving) {
         setEditor(null);
@@ -99,6 +81,48 @@ export function useCollectorIntakeController(options: Options) {
       }
     }
   };
+}
+
+function useCollectorIntakeTransaction({
+  queryRef,
+  queryClient,
+  setEditor,
+  setFailure,
+  onSuccess
+}: {
+  queryRef: Options['queryRef'];
+  queryClient: QueryClient;
+  setEditor: (editor: Editor | null) => void;
+  setFailure: (failure: CollectorMutationFailure | null) => void;
+  onSuccess: () => void;
+}) {
+  const operationRef = useRef(0);
+  const [saving, setSaving] = useState(false);
+  const execute = useCallback(
+    async (editor: Editor, request?: CollectorIntakeAdvertisementRequest) => {
+      if (saving) return;
+      if (!sameCollectorQuery(editor.query, queryRef.current)) return setEditor(null);
+      const operation = ++operationRef.current;
+      setSaving(true);
+      setFailure(null);
+      await queryClient.cancelQueries({ queryKey: collectorQueryKeys.page(editor.query), exact: true });
+      const result = await persistAndProveIntake(editor, request, queryClient);
+      if (operation !== operationRef.current) return;
+      setSaving(false);
+      if (!sameCollectorQuery(editor.query, queryRef.current)) return setEditor(null);
+      if (result) return setFailure(result);
+      setEditor(null);
+      onSuccess();
+    },
+    [onSuccess, queryClient, queryRef, saving, setEditor, setFailure]
+  );
+  const retire = useCallback(() => {
+    operationRef.current += 1;
+    setEditor(null);
+    setSaving(false);
+    setFailure(null);
+  }, [setEditor, setFailure]);
+  return { execute, retire, saving };
 }
 
 async function persistAndProveIntake(
