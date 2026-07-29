@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
@@ -78,6 +81,44 @@ class EntityTopologyQueryServiceTest {
 
     @Mock
     private EntityActivityReadModelService entityActivityReadModelService;
+
+    @Test
+    void rejectsUnknownSourceKindBeforeQueryingTopologyData() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> entityTopologyQueryService.buildFocusedTopology(
+                        10L, 1, "prod", "unknown' OR 1=1 -- private-sql"));
+
+        assertEquals("topology_source_kind_invalid", exception.getMessage());
+        verifyNoInteractions(
+                entityWorkspaceAccessService,
+                entityRelationQueryService,
+                entityMonitorBindQueryService,
+                entityMonitorQueryService,
+                entityIdentityReadModelService,
+                traceCallTopologyQueryService,
+                entityActivityReadModelService);
+    }
+
+    @Test
+    void acceptsDefaultAllAndEverySupportedSourceKind() {
+        assertDoesNotThrow(() -> entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", null));
+        for (String sourceKind : List.of(
+                " ",
+                "all",
+                "MONITOR-BIND",
+                "entity-relation",
+                "monitor-bind",
+                "monitor-ownership",
+                "otlp-trace-call",
+                "cmdb-manual-label",
+                "database-middleware-connection",
+                "template-dependency",
+                "k8s-workload",
+                "alert-impact")) {
+            assertDoesNotThrow(() ->
+                    entityTopologyQueryService.buildFocusedTopology(null, 1, "prod", sourceKind));
+        }
+    }
 
     @Test
     void filtersFocusedTopologyToExplicitMonitorOwnershipSourceKind() {

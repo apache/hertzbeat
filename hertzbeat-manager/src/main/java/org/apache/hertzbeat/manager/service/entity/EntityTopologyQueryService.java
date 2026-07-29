@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -56,6 +57,7 @@ public class EntityTopologyQueryService {
     private static final String SOURCE_KIND_MONITOR_BIND = "monitor-bind";
     private static final String SOURCE_KIND_OTLP_TRACE_CALL = "otlp-trace-call";
     private static final String SOURCE_KIND_K8S_WORKLOAD = "k8s-workload";
+    private static final String SOURCE_KIND_INVALID_ERROR = "topology_source_kind_invalid";
     private static final String RELATION_TYPE_MONITORS = "monitors";
     private static final String RELATION_TYPE_TRACE_CALL = "trace-call";
     private static final String RELATION_TYPE_DEPLOYED_ON = "deployed_on";
@@ -283,7 +285,7 @@ public class EntityTopologyQueryService {
         if (!StringUtils.hasText(sourceKind)) {
             return TopologySourceSelection.all();
         }
-        String normalized = sourceKind.trim().toLowerCase();
+        String normalized = sourceKind.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
             case SOURCE_KIND_MONITOR_BIND, "monitor-ownership" -> new TopologySourceSelection(false, true, false);
             case SOURCE_KIND_OTLP_TRACE_CALL -> new TopologySourceSelection(false, false, true);
@@ -292,8 +294,8 @@ public class EntityTopologyQueryService {
                     "database-middleware-connection",
                     "template-dependency",
                     SOURCE_KIND_K8S_WORKLOAD -> new TopologySourceSelection(true, false, false);
-            case "alert-impact" -> TopologySourceSelection.all();
-            default -> TopologySourceSelection.all();
+            case "all", "alert-impact" -> TopologySourceSelection.all();
+            default -> throw new IllegalArgumentException(SOURCE_KIND_INVALID_ERROR);
         };
     }
 
