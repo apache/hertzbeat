@@ -21,6 +21,7 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$repo_root"
 
 dockerfile=script/docker/collector/Dockerfile.native
+jvm_dockerfile=script/docker/collector/Dockerfile
 foreground=script/assembly/collector/bin-native/foreground.sh
 systemd_unit=script/assembly/collector/systemd/hertzbeat-collector.service
 systemd_installer=script/assembly/collector/systemd/install-systemd.sh
@@ -41,7 +42,7 @@ jvm_package_verifier=script/ci/verify-hybrid-collector-jvm-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
-for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
+for required in "$dockerfile" "$jvm_dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
   "$release_assets" "$release_workflow" "$nightly_workflow" \
   "$release_scanner" "$release_scanner_test" "$jvm_runtime_asset_verifier" "$jvm_package_verifier_test" \
   "$runtime_sbom_platform_verifier" "$runtime_sbom_platform_test" \
@@ -120,23 +121,52 @@ grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
 grep -q 'prepare-hybrid-collector-native-container-context.sh' "$release_workflow"
 grep -q 'context: target/native-container-context' "$release_workflow"
 
-nightly_verify_line=$(grep -n 'verify-hybrid-collector-jvm-package.sh.*"\$1".*generic' \
+nightly_runtime_build_line=$(grep -n 'make -C hertzbeat-otel-runtime release-assets' \
+  "$nightly_workflow" | head -1 | cut -d: -f1)
+nightly_no_cgo_verify_line=$(grep -n 'verify-otel-runtime-package-layout.sh' \
+  "$nightly_workflow" | head -1 | cut -d: -f1)
+nightly_amd64_verify_line=$(grep -n 'verify-hybrid-collector-jvm-package.sh.*linux-amd64' \
+  "$nightly_workflow" | head -1 | cut -d: -f1)
+nightly_arm64_verify_line=$(grep -n 'verify-hybrid-collector-jvm-package.sh.*linux-arm64' \
   "$nightly_workflow" | head -1 | cut -d: -f1)
 nightly_backend_build_line=$(grep -n 'name: Build the Backend' "$nightly_workflow" \
   | head -1 | cut -d: -f1)
 nightly_collector_image_line=$(grep -n 'name: Build and Push Collector' "$nightly_workflow" \
   | head -1 | cut -d: -f1)
-if [ -z "$nightly_backend_build_line" ] || [ -z "$nightly_verify_line" ] \
+if [ -z "$nightly_runtime_build_line" ] || [ -z "$nightly_no_cgo_verify_line" ] \
+    || [ -z "$nightly_backend_build_line" ] || [ -z "$nightly_amd64_verify_line" ] \
+    || [ -z "$nightly_arm64_verify_line" ] \
     || [ -z "$nightly_collector_image_line" ] \
-    || [ "$nightly_backend_build_line" -ge "$nightly_verify_line" ] \
-    || [ "$nightly_verify_line" -ge "$nightly_collector_image_line" ]; then
-  echo "nightly Collector archive must pass the JVM package verifier before image publication" >&2
+    || [ "$nightly_runtime_build_line" -ge "$nightly_no_cgo_verify_line" ] \
+    || [ "$nightly_no_cgo_verify_line" -ge "$nightly_backend_build_line" ] \
+    || [ "$nightly_backend_build_line" -ge "$nightly_amd64_verify_line" ] \
+    || [ "$nightly_backend_build_line" -ge "$nightly_arm64_verify_line" ] \
+    || [ "$nightly_amd64_verify_line" -ge "$nightly_collector_image_line" ] \
+    || [ "$nightly_arm64_verify_line" -ge "$nightly_collector_image_line" ]; then
+  echo "nightly Collector must verify no-CGO runtimes and both Linux JVM Hybrid packages before publication" >&2
   exit 1
 fi
-grep -Fq 'set -- dist/apache-hertzbeat-collector-*-bin.tar.gz' "$nightly_workflow"
-grep -Fq 'if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then' "$nightly_workflow"
-if grep -q -- '-print -quit' "$nightly_workflow"; then
-  echo "nightly Collector release gate must not select an arbitrary first archive" >&2
+grep -q 'java-version: 25' "$nightly_workflow"
+grep -q -- '-Pruntime' "$nightly_workflow"
+grep -Fq 'dist/apache-hertzbeat-collector-*-bin-linux_amd64.tar.gz' "$nightly_workflow"
+grep -Fq 'dist/apache-hertzbeat-collector-*-bin-linux_arm64.tar.gz' "$nightly_workflow"
+if grep -q 'verify-hybrid-collector-jvm-package.sh.*generic' "$nightly_workflow"; then
+  echo "nightly Collector publication must not verify or publish the generic JVM-only package" >&2
+  exit 1
+fi
+
+required_java=$(sed -n 's:.*<java.version>\([0-9][0-9]*\)</java.version>.*:\1:p' pom.xml | head -1)
+jvm_runtime_java=$(sed -n 's#^FROM eclipse-temurin:\([0-9][0-9]*\)-.*#\1#p' "$jvm_dockerfile" | head -1)
+if [ -z "$required_java" ] || [ "$required_java" != "25" ] \
+    || [ "$jvm_runtime_java" != "$required_java" ]; then
+  echo "JVM Hybrid Collector image runtime must match the repository Java 25 target" >&2
+  exit 1
+fi
+grep -q '^ARG TARGETARCH$' "$jvm_dockerfile"
+grep -Fq 'apache-hertzbeat-collector-*-bin-linux_${TARGETARCH}.tar.gz' "$jvm_dockerfile"
+grep -Fq 'WORKDIR /opt/hertzbeat-collector' "$jvm_dockerfile"
+if grep -Fq 'apache-hertzbeat-collector-*-bin.tar.gz' "$jvm_dockerfile"; then
+  echo "JVM Hybrid Collector image must not consume the generic JVM-only package" >&2
   exit 1
 fi
 

@@ -31,27 +31,46 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: hertzbeat-otel-runtime/go.mod
+        cache-dependency-path: hertzbeat-otel-runtime/go.mod
+    - uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: 25
     - name: Build the Frontend
       run: |
         cd web-next
         npm ci
         npm run build
-        
+
+    - name: Build and verify managed Collector runtimes
+      run: |
+        make -C hertzbeat-otel-runtime release-assets
+        ./script/ci/verify-otel-runtime-package-layout.sh
+
     - name: Build the Backend
       run: |
         mvn clean install
         mvn clean package -Prelease -DskipTests
-        cd hertzbeat-collector
-        mvn clean package -Pcluster -DskipTests
+        ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
+          -Pruntime -DskipTests package
 
-    - name: Verify Collector release content
+    - name: Verify Linux Collector release content
       run: |
-        set -- dist/apache-hertzbeat-collector-*-bin.tar.gz
+        set -- dist/apache-hertzbeat-collector-*-bin-linux_amd64.tar.gz
         if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
-          echo "expected exactly one generated generic Collector archive and no other matching archives" >&2
+          echo "expected exactly one generated linux-amd64 Hybrid Collector archive" >&2
           exit 1
         fi
-        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" generic
+        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" linux-amd64
+        set -- dist/apache-hertzbeat-collector-*-bin-linux_arm64.tar.gz
+        if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+          echo "expected exactly one generated linux-arm64 Hybrid Collector archive" >&2
+          exit 1
+        fi
+        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" linux-arm64
 
     - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3

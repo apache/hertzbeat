@@ -15,23 +15,29 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:25-jdk
 
-MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
+LABEL org.opencontainers.image.authors="Apache HertzBeat <dev@hertzbeat.apache.org>"
 
-ARG VERSION
+ARG TARGETARCH
 
 # Install SSH
 RUN  sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
 
-ADD apache-hertzbeat-collector-*-bin.tar.gz /opt/
+ADD apache-hertzbeat-collector-*-bin-linux_${TARGETARCH}.tar.gz /opt/collector-package/
 
-ENV JAVA_OPTS ""
+RUN package_dir="$(find /opt/collector-package -mindepth 1 -maxdepth 1 -type d \
+        -name 'apache-hertzbeat-collector-*' -print -quit)" \
+    && test -n "$package_dir" \
+    && mv "$package_dir" /opt/hertzbeat-collector \
+    && rmdir /opt/collector-package
+
+ENV JAVA_OPTS=""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-WORKDIR /opt/apache-hertzbeat-collector-${VERSION}-bin/
+WORKDIR /opt/hertzbeat-collector
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
