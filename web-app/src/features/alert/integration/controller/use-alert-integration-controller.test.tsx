@@ -65,7 +65,7 @@ describe('useAlertIntegrationController', () => {
     expect(api.loadAlertIntegrationGuide).not.toHaveBeenCalled();
   });
 
-  it('does not request arbitrary detail while catalog ownership is unresolved', async () => {
+  it('does not request arbitrary detail while catalog ownership is unresolved', () => {
     api.loadAlertIntegrationCatalog.mockReturnValue(new Promise(() => undefined));
     const view = renderController('/alerts/integrations/webhook');
 

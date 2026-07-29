@@ -10,14 +10,16 @@ import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AlertGroupTargetStatus } from '../model/alert-model';
+
 const capability = vi.hoisted(() => ({ useAlertCapabilities: vi.fn() }));
 const operation = vi.hoisted(() => ({
   command: 'idle',
   recovery: null as null | { kind: 'delete' | 'status' },
-  remove: vi.fn(),
+  remove: vi.fn<(ids: number[]) => Promise<boolean>>(),
   retireRecovery: vi.fn(),
-  retry: vi.fn(),
-  updateStatus: vi.fn()
+  retry: vi.fn<() => Promise<boolean>>(),
+  updateStatus: vi.fn<(ids: number[], status: AlertGroupTargetStatus) => Promise<boolean>>()
 }));
 const reads = vi.hoisted(() => ({
   refetchList: vi.fn(),

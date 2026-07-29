@@ -395,7 +395,7 @@ describe('Alert Rule editor controller', () => {
     await act(async () => result.current.preview());
 
     expect(result.current.state.preview).toEqual({ kind });
-    expect(JSON.stringify(result.current.state.preview)).not.toContain('\"rows\"');
+    expect(JSON.stringify(result.current.state.preview)).not.toContain('"rows"');
   });
 
   it('rejects an over-limit preview expression as input before API transport', async () => {
@@ -461,7 +461,7 @@ describe('Alert Rule editor controller', () => {
     await act(async () => view.result.current.preview());
 
     expect(api.previewAlertRule).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(view.result.current.state)).not.toContain('\"rows\"');
+    expect(JSON.stringify(view.result.current.state)).not.toContain('"rows"');
   });
 
   it('keeps an in-flight save owned and unlocks it after write access is lost and restored', async () => {

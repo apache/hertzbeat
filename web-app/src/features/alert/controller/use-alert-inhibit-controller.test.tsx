@@ -73,7 +73,9 @@ describe('Alert Inhibit controller composition', () => {
     );
     const view = renderAlertInhibitController();
     await waitFor(() => expect(view.result.current.state.list.kind).toBe('ready'));
-    act(() => view.result.current.selectIds([persistedAlertInhibit.id]));
+    act(() => {
+      view.result.current.selectIds([persistedAlertInhibit.id]);
+    });
     expect(view.result.current.state.selectedIds).toEqual([persistedAlertInhibit.id]);
 
     access.capabilities = { canWrite: true, canDelete: false };

@@ -25,6 +25,7 @@ import {
   AlertContractError,
   AlertRequestFailure,
   type AlertPage,
+  type AlertGroupTargetStatus,
   type AlertQuery,
   type AlertSummary
 } from '../model/alert-model';
@@ -37,7 +38,7 @@ const api = vi.hoisted(() => ({
   loadAlertSummary: vi.fn(),
   notification: vi.fn(),
   openAlertGroupStream: vi.fn(),
-  updateAlertGroupStatus: vi.fn()
+  updateAlertGroupStatus: vi.fn<(ids: number[], status: AlertGroupTargetStatus) => Promise<void>>()
 }));
 
 vi.mock('../api/alert-api', () => ({

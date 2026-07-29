@@ -30,7 +30,8 @@ import {
   AlertSilenceMissingError,
   AlertSilenceRequestFailure,
   buildAlertSilencePayload,
-  type AlertSilence
+  type AlertSilence,
+  type AlertSilenceDraft
 } from '../model/alert-silence-model';
 import { alertSilenceDetailDraft } from '../model/alert-silence-page-model';
 import { normalizeAlertSilenceApiFailure } from '../api/alert-silence-api-failure';
@@ -94,7 +95,7 @@ describe('useAlertSilenceController', () => {
     Object.values(api).forEach(mock => mock.mockReset());
     api.loadAlertSilences.mockResolvedValue(page());
     api.loadMatchedAlertSilences.mockResolvedValue({ records: [], missingCount: 0 });
-    api.saveAlertSilence.mockImplementation(draft =>
+    api.saveAlertSilence.mockImplementation((draft: AlertSilenceDraft) =>
       Promise.resolve(
         (savedCanonical = {
           ...record,
@@ -196,7 +197,7 @@ describe('useAlertSilenceController', () => {
 
     expect(view.result.current.controller.state.recovery).toMatchObject({ kind: 'update', phase: 'proof' });
     api.loadAlertSilence.mockClear();
-    await act(async () => view.result.current.controller.actions.refresh());
+    act(() => view.result.current.controller.actions.refresh());
     expect(api.loadAlertSilence).not.toHaveBeenCalled();
     expect(api.saveAlertSilence).toHaveBeenCalledOnce();
   });
@@ -420,8 +421,8 @@ describe('useAlertSilenceController', () => {
     expect(await screen.findByText(i18n.t('alertSilences.saveSuccess'))).toBeInTheDocument();
     expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
 
-    await act(() => view.result.current.controller.actions.refresh());
-    expect(view.result.current.controller.state.list.kind).toBe('ready');
+    act(() => view.result.current.controller.actions.refresh());
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     expect(view.result.current.controller.state.busy).toBe(false);
   });
 
@@ -632,9 +633,9 @@ describe('useAlertSilenceController', () => {
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
 
     api.loadAlertSilence.mockResolvedValueOnce({ ...editable, name: 'Updated' });
-    await act(() => view.result.current.controller.actions.refresh());
+    act(() => view.result.current.controller.actions.refresh());
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
-    expect(view.result.current.controller.state.recovery).toBeNull();
+    await waitFor(() => expect(view.result.current.controller.state.recovery).toBeNull());
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
@@ -659,10 +660,10 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
     expect(api.loadAlertSilence).toHaveBeenCalledTimes(1);
 
-    await act(() => view.result.current.controller.actions.refresh());
+    act(() => view.result.current.controller.actions.refresh());
 
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
-    expect(view.result.current.controller.state.recovery).toBeNull();
+    await waitFor(() => expect(view.result.current.controller.state.recovery).toBeNull());
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
 
     await act(() => view.result.current.controller.actions.edit(8));
@@ -688,9 +689,9 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
     expect(api.loadAlertSilence).not.toHaveBeenCalled();
 
-    await act(() => view.result.current.controller.actions.refresh());
+    act(() => view.result.current.controller.actions.refresh());
     expect(api.updateAlertSilenceEnabled).toHaveBeenCalledTimes(1);
-    expect(view.result.current.controller.state.recovery).toBeNull();
+    await waitFor(() => expect(view.result.current.controller.state.recovery).toBeNull());
   });
 
   it('recovers an uncertain delete through exact missing proof without repeating DELETE', async () => {
@@ -703,9 +704,9 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.recovery).toEqual({ kind: 'delete', phase: 'proof', retryable: true });
     api.loadAlertSilence.mockRejectedValueOnce(new AlertSilenceMissingError());
 
-    await act(() => view.result.current.controller.actions.refresh());
+    act(() => view.result.current.controller.actions.refresh());
     expect(api.deleteAlertSilence).toHaveBeenCalledTimes(1);
-    expect(view.result.current.controller.state.recovery).toBeNull();
+    await waitFor(() => expect(view.result.current.controller.state.recovery).toBeNull());
   });
 
   it('does not replace an in-flight save draft with a new draft', async () => {
@@ -763,10 +764,12 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.list.kind).toBe('error');
 
     api.loadAlertSilence.mockResolvedValue({ ...record, enable: false });
-    await act(() => view.result.current.controller.actions.refresh());
-    expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
-    expect(view.result.current.controller.state.list.kind).toBe('ready');
-    expect(view.result.current.controller.state.recovery).toBeNull();
+    act(() => view.result.current.controller.actions.refresh());
+    await waitFor(() => {
+      expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
+      expect(view.result.current.controller.state.list.kind).toBe('ready');
+      expect(view.result.current.controller.state.recovery).toBeNull();
+    });
 
     api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
     await act(() => view.result.current.controller.actions.remove(7));

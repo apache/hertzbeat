@@ -23,13 +23,15 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
+type SaveAlertSilence = (draft: AlertSilenceDraft) => Promise<AlertSilence>;
+
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
   deleteAlertSilences: vi.fn(),
   loadAlertSilence: vi.fn(),
   loadAlertSilences: vi.fn(),
   loadMatchedAlertSilences: vi.fn(),
-  saveAlertSilence: vi.fn(),
+  saveAlertSilence: vi.fn<SaveAlertSilence>(),
   updateAlertSilenceEnabled: vi.fn()
 }));
 const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
@@ -340,7 +342,7 @@ describe('AlertSilencePage', () => {
 });
 
 function createdPageFromLastWrite() {
-  const draft = api.saveAlertSilence.mock.calls[0]?.[0] as AlertSilenceDraft | undefined;
+  const draft = api.saveAlertSilence.mock.calls[0]?.[0];
   if (!draft) return { content: [record], totalElements: 1 };
   return {
     content: [{ id: 8, times: null, ...buildAlertSilencePayload(draft) }],

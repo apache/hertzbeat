@@ -31,7 +31,9 @@ describe('Alert Rule preview presentation', () => {
 
     expect(result.truncated).toBe(true);
     expect(result.text.length).toBeLessThanOrEqual(alertRulePreviewMaxCellCharacters);
-    expect(() => JSON.parse(result.text)).not.toThrow();
+    expect(() => {
+      JSON.parse(result.text);
+    }).not.toThrow();
     expect(result.text.endsWith('}')).toBe(true);
     expect(stringify.mock.calls.every(([candidate]) => typeof candidate === 'string')).toBe(true);
   });
@@ -47,7 +49,9 @@ describe('Alert Rule preview presentation', () => {
     expect(result).toMatchObject({ truncated: true });
     expect(result.text).toContain('"…"');
     expect(result.text.length).toBeLessThanOrEqual(alertRulePreviewMaxCellCharacters);
-    expect(() => JSON.parse(result.text)).not.toThrow();
+    expect(() => {
+      JSON.parse(result.text);
+    }).not.toThrow();
     expect(result.text.endsWith('}')).toBe(true);
   });
 
@@ -60,7 +64,9 @@ describe('Alert Rule preview presentation', () => {
 
     expect(result.truncated).toBe(true);
     expect(result.text.length).toBeLessThanOrEqual(alertRulePreviewMaxCellCharacters);
-    expect(() => JSON.parse(result.text)).not.toThrow();
+    expect(() => {
+      JSON.parse(result.text);
+    }).not.toThrow();
     expect(result.text.endsWith('}')).toBe(true);
   });
 
@@ -72,7 +78,9 @@ describe('Alert Rule preview presentation', () => {
 
     expect(result.truncated).toBe(true);
     expect(result.text.length).toBeLessThanOrEqual(alertRulePreviewMaxCellCharacters);
-    expect(() => JSON.parse(result.text)).not.toThrow();
+    expect(() => {
+      JSON.parse(result.text);
+    }).not.toThrow();
     expect(result.text.startsWith('{')).toBe(true);
     expect(result.text.endsWith('}')).toBe(true);
   });

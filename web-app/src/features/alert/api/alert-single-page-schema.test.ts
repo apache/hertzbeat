@@ -46,7 +46,17 @@ describe('SingleAlert page schema', () => {
         request
       )
     ).toEqual({
-      content: content.map(({ fingerprint: _fingerprint, ...item }) => item),
+      content: content.map(item => ({
+        id: item.id,
+        labels: item.labels,
+        annotations: item.annotations,
+        content: item.content,
+        status: item.status,
+        triggerTimes: item.triggerTimes,
+        startAt: item.startAt,
+        activeAt: item.activeAt,
+        endAt: item.endAt
+      })),
       totalElements: 12,
       totalPages: 2,
       number: 0,
