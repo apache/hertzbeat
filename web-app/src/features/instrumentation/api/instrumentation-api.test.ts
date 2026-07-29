@@ -96,6 +96,48 @@ describe('instrumentation API', () => {
     expect(JSON.parse(String(apiFetch.mock.calls[1]?.[1]?.body))).toEqual({ ...request, startedAt: 1_000 });
   });
 
+  it('accepts a canonical response after optional service fields are cleared', async () => {
+    const request = {
+      schemaVersion: 2,
+      sourceKind: 'quick_start',
+      recipeId: 'opentelemetry_telemetrygen',
+      intakeProfileId: 'server-default',
+      service: {
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod',
+        serviceInstanceId: ' checkout-7d9 ',
+        endpoint: ' '
+      }
+    } as const;
+    apiFetch.mockResolvedValueOnce(
+      response({
+        ...renderFixture(),
+        service: {
+          name: 'checkout',
+          namespace: 'shop',
+          environment: 'prod',
+          serviceInstanceId: 'checkout-7d9'
+        }
+      })
+    );
+
+    await expect(renderInstrumentationGuide(request)).resolves.toMatchObject({
+      service: {
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod',
+        serviceInstanceId: 'checkout-7d9'
+      }
+    });
+    expect(JSON.parse(String(apiFetch.mock.calls[0]?.[1]?.body)).service).toEqual({
+      name: 'checkout',
+      namespace: 'shop',
+      environment: 'prod',
+      serviceInstanceId: 'checkout-7d9'
+    });
+  });
+
   it('rejects mismatched response context with a stable non-sensitive contract error', async () => {
     apiFetch.mockResolvedValueOnce(response({ ...renderFixture(), recipeId: 'other-recipe' }));
     const promise = renderInstrumentationGuide({

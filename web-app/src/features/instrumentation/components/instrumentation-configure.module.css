@@ -15,6 +15,22 @@
   gap: 12px;
 }
 
+.advancedIdentity {
+  max-width: 692px;
+}
+
+.advancedIdentity summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--hb-text-secondary);
+}
+
+.advancedIdentityFields {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .destinationGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

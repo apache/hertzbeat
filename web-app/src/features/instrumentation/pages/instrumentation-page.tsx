@@ -97,7 +97,7 @@ function ConfigureStage({ page }: { page: PageController }) {
       <InstrumentationConfigureStep
         profiles={page.profiles}
         profileId={page.draft.intakeProfileId}
-        serviceName={page.draft.service.name}
+        service={page.draft.service}
         platform={page.draft.platform}
         platformOptions={page.platformOptions}
         canRender={page.canRender}
@@ -109,7 +109,7 @@ function ConfigureStage({ page }: { page: PageController }) {
         tokenError={page.tokenError}
         canGenerateToken={page.canGenerateToken}
         onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
-        onServiceName={page.patchServiceName}
+        onService={page.patchService}
         onPlatform={platform => page.patchDraft({ platform })}
         onToken={page.setToken}
         onRender={() => void page.renderGuide()}

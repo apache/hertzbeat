@@ -138,7 +138,13 @@ describe('instrumentation v2 interaction', () => {
   it('keeps every destination visible and explains a missing Hybrid Collector without inventing an endpoint', () => {
     const props = {
       profileId: '',
-      serviceName: '',
+      service: {
+        name: '',
+        namespace: 'default',
+        environment: 'default',
+        serviceInstanceId: '',
+        endpoint: ''
+      },
       platformOptions: [],
       canRender: false,
       rendering: false,
@@ -149,7 +155,7 @@ describe('instrumentation v2 interaction', () => {
       tokenError: false,
       canGenerateToken: true,
       onProfile: vi.fn(),
-      onServiceName: vi.fn(),
+      onService: vi.fn(),
       onPlatform: vi.fn(),
       onToken: vi.fn(),
       onRender: vi.fn(),
@@ -179,12 +185,31 @@ describe('instrumentation v2 interaction', () => {
         {...props}
       />
     );
-    expect(screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' })).toBeVisible();
-    expect(screen.getAllByRole('textbox')).toHaveLength(1);
-    expect(screen.queryByText('instrumentation.field.serviceNamespace')).toBeNull();
-    expect(screen.queryByText('instrumentation.field.serviceEnvironment')).toBeNull();
-    expect(screen.queryByText('instrumentation.field.serviceInstanceId')).toBeNull();
-    expect(screen.queryByText('instrumentation.field.endpoint')).toBeNull();
+    const serviceName = screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' });
+    const serviceEnvironment = screen.getByRole('textbox', {
+      name: 'instrumentation.field.serviceEnvironment'
+    });
+    expect(serviceName).toBeVisible();
+    expect(serviceEnvironment).toBeVisible();
+    fireEvent.change(serviceName, { target: { value: 'checkout' } });
+    fireEvent.change(serviceEnvironment, { target: { value: 'production' } });
+    expect(screen.getByRole('textbox', { name: 'instrumentation.field.serviceNamespace' })).not.toBeVisible();
+    fireEvent.click(screen.getByText('instrumentation.action.reviewContext'));
+    const namespace = screen.getByRole('textbox', { name: 'instrumentation.field.serviceNamespace' });
+    const instance = screen.getByRole('textbox', { name: 'instrumentation.field.serviceInstanceId' });
+    const endpoint = screen.getByRole('textbox', { name: 'instrumentation.field.endpoint' });
+    expect(namespace).toBeVisible();
+    expect(instance).toBeVisible();
+    expect(endpoint).toBeVisible();
+    fireEvent.change(namespace, { target: { value: 'payments' } });
+    fireEvent.change(instance, { target: { value: 'checkout-7d9' } });
+    fireEvent.change(endpoint, { target: { value: '/checkout' } });
+    expect(props.onService).toHaveBeenNthCalledWith(1, { name: 'checkout' });
+    expect(props.onService).toHaveBeenNthCalledWith(2, { environment: 'production' });
+    expect(props.onService).toHaveBeenNthCalledWith(3, { namespace: 'payments' });
+    expect(props.onService).toHaveBeenNthCalledWith(4, { serviceInstanceId: 'checkout-7d9' });
+    expect(props.onService).toHaveBeenNthCalledWith(5, { endpoint: '/checkout' });
+    expect(screen.queryByText(/entity/iu)).toBeNull();
     expect(screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.server/ })).toBeEnabled();
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.hertzbeat_collector/ })
@@ -223,7 +248,7 @@ describe('instrumentation v2 interaction', () => {
           profiles: [guide.intakeProfile]
         }}
         profileId="server-default"
-        serviceName="checkout"
+        service={configureService}
         platformOptions={[]}
         canRender={false}
         rendering={false}
@@ -234,7 +259,7 @@ describe('instrumentation v2 interaction', () => {
         tokenError
         canGenerateToken
         onProfile={vi.fn()}
-        onServiceName={vi.fn()}
+        onService={vi.fn()}
         onPlatform={vi.fn()}
         onToken={vi.fn()}
         onRender={vi.fn()}
@@ -266,7 +291,7 @@ describe('instrumentation v2 interaction', () => {
           profiles: [guide.intakeProfile]
         }}
         profileId="server-default"
-        serviceName="checkout"
+        service={configureService}
         platformOptions={[]}
         canRender={false}
         rendering={false}
@@ -276,7 +301,7 @@ describe('instrumentation v2 interaction', () => {
         tokenError={false}
         canGenerateToken={false}
         onProfile={vi.fn()}
-        onServiceName={vi.fn()}
+        onService={vi.fn()}
         onPlatform={vi.fn()}
         onToken={onToken}
         onRender={vi.fn()}
@@ -310,7 +335,7 @@ describe('instrumentation v2 interaction', () => {
           ]
         }}
         profileId="server-default"
-        serviceName="checkout"
+        service={configureService}
         platformOptions={[]}
         canRender={false}
         rendering={false}
@@ -320,7 +345,7 @@ describe('instrumentation v2 interaction', () => {
         tokenError={false}
         canGenerateToken
         onProfile={vi.fn()}
-        onServiceName={vi.fn()}
+        onService={vi.fn()}
         onPlatform={vi.fn()}
         onToken={vi.fn()}
         onRender={vi.fn()}
@@ -520,6 +545,11 @@ const context = {
   intakeProfileId: 'server-default',
   startedAt: 1000,
   detectedAt: 2000
+};
+const configureService = {
+  name: 'checkout',
+  namespace: 'default',
+  environment: 'default'
 };
 const guide = {
   schemaVersion: 2 as const,

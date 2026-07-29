@@ -133,7 +133,7 @@ describe('useInstrumentationPageController', () => {
     act(() => result.current.chooseSource('quick_start'));
     expect(result.current.draft.recipeId).toBe('telemetrygen');
     act(() => result.current.setStage('configure'));
-    act(() => result.current.patchServiceName('checkout'));
+    act(() => result.current.patchService({ name: 'checkout' }));
 
     await act(async () => result.current.renderGuide());
     now.mockReturnValue(5_000);
@@ -155,6 +155,119 @@ describe('useInstrumentationPageController', () => {
     now.mockRestore();
   });
 
+  it.each([
+    ['name', 'cart'],
+    ['namespace', 'commerce'],
+    ['environment', 'staging'],
+    ['serviceInstanceId', 'checkout-8'],
+    ['endpoint', '/v2/checkout']
+  ] as const)('retires guide, detection, and detection window when service %s changes', async (field, value) => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    api.detectInstrumentationSignals.mockResolvedValue({
+      polling: { decision: 'continue_polling', pollAfterMs: 30_000, deadlineAt: Date.now() + 60_000 },
+      queryJumps: []
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    await act(async () => result.current.renderGuide());
+    await act(async () => result.current.detect());
+    expect(result.current.guide).toBeDefined();
+    expect(result.current.detection).toBeDefined();
+    expect(result.current.detecting).toBe(true);
+    const localStorageBefore = storageSnapshot(window.localStorage);
+    const sessionStorageBefore = storageSnapshot(window.sessionStorage);
+    const locationBefore = window.location.href;
+
+    act(() => result.current.patchService({ [field]: value }));
+
+    expect(result.current.draft.service[field]).toBe(value);
+    expect(result.current.guide).toBeUndefined();
+    expect(result.current.detection).toBeUndefined();
+    expect(result.current.detecting).toBe(false);
+    await act(async () => result.current.detect());
+    expect(api.detectInstrumentationSignals).toHaveBeenCalledOnce();
+    expect(result.current.detectionError).toBe(true);
+    expect(storageSnapshot(window.localStorage)).toEqual(localStorageBefore);
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionStorageBefore);
+    expect(window.location.href).toBe(locationBefore);
+  });
+
+  it('suppresses a late guide receipt after the service context epoch retires', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const guideReceipt = deferred<{ schemaVersion: number }>();
+    api.renderInstrumentationGuide.mockReturnValue(guideReceipt.promise);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    let rendering: Promise<void> | undefined;
+    act(() => {
+      rendering = result.current.renderGuide();
+    });
+
+    act(() => result.current.patchService({ environment: 'production' }));
+    await act(async () => {
+      guideReceipt.resolve({ schemaVersion: 2 });
+      await rendering;
+    });
+
+    expect(result.current.guide).toBeUndefined();
+    expect(result.current.rendering).toBe(false);
+  });
+
+  it('suppresses a late detection receipt after the service context epoch retires', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    const detectionReceipt = deferred<{
+      polling: { decision: 'complete'; deadlineAt: number };
+      queryJumps: [];
+    }>();
+    api.detectInstrumentationSignals.mockReturnValue(detectionReceipt.promise);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    await act(async () => result.current.renderGuide());
+    let detecting: Promise<void> | undefined;
+    act(() => {
+      detecting = result.current.detect();
+    });
+
+    act(() => result.current.patchService({ endpoint: '/checkout' }));
+    await act(async () => {
+      detectionReceipt.resolve({
+        polling: { decision: 'complete', deadlineAt: Date.now() + 60_000 },
+        queryJumps: []
+      });
+      await detecting;
+    });
+
+    expect(result.current.detection).toBeUndefined();
+    expect(result.current.detecting).toBe(false);
+    expect(result.current.detectionError).toBe(false);
+  });
+
   it('keeps a generated token in controller memory only and clears it at every Configure boundary', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({
@@ -173,7 +286,7 @@ describe('useInstrumentationPageController', () => {
 
     act(() => result.current.chooseSource('quick_start'));
     act(() => result.current.setStage('configure'));
-    act(() => result.current.patchServiceName('checkout'));
+    act(() => result.current.patchService({ name: 'checkout' }));
     expect(result.current.canRender).toBe(false);
     act(() => result.current.openTokenGenerator());
     act(() =>
@@ -193,7 +306,7 @@ describe('useInstrumentationPageController', () => {
     await act(async () => result.current.renderGuide());
     expect(JSON.stringify(api.renderInstrumentationGuide.mock.calls)).not.toContain('hb_generated_once');
 
-    act(() => result.current.patchServiceName('cart'));
+    act(() => result.current.patchService({ name: 'cart' }));
     expect(result.current.token).toBe('');
     await act(async () => result.current.generateToken());
     expect(result.current.token).toBe('');
@@ -331,7 +444,7 @@ describe('useInstrumentationPageController', () => {
     await waitFor(() => expect(result.current.catalogState).toBe('ready'));
     act(() => result.current.chooseSource('quick_start'));
     act(() => result.current.setStage('configure'));
-    act(() => result.current.patchServiceName('checkout'));
+    act(() => result.current.patchService({ name: 'checkout' }));
     let rendering: Promise<void> | undefined;
     act(() => {
       rendering = result.current.renderGuide();

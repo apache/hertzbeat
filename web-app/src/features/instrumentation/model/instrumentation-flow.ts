@@ -7,16 +7,17 @@
 
 import { buildSignalHandoffPath } from '@/shared/query-context/query-context-model';
 
-import type {
-  CatalogResponse,
-  DetectionRequest,
-  QueryJumpContext,
-  Recipe,
-  RenderRequest,
-  Selection,
-  ServiceIdentity,
-  Signal,
-  SourceKind
+import {
+  canonicalServiceIdentity,
+  type CatalogResponse,
+  type DetectionRequest,
+  type QueryJumpContext,
+  type Recipe,
+  type RenderRequest,
+  type Selection,
+  type ServiceIdentity,
+  type Signal,
+  type SourceKind
 } from './instrumentation-v2-contract';
 
 export type InstrumentationDraft = Omit<Selection, 'sourceKind'> & {
@@ -43,16 +44,19 @@ export const emptyDraft = (): InstrumentationDraft => ({
   service: { name: '', namespace: 'default', environment: 'default' }
 });
 
-export function selectSource(catalog: CatalogResponse, sourceId: string): InstrumentationDraft {
+export function selectSource(
+  catalog: CatalogResponse,
+  sourceId: string,
+  service: ServiceIdentity = emptyDraft().service
+): InstrumentationDraft {
   const source = catalog.sources.find(item => item.id === sourceId);
   if (!source?.sourceKind || source.support === 'unsupported') {
     throw new Error('Instrumentation source is unavailable');
   }
-  const draft = { ...emptyDraft(), sourceId, sourceKind: source.sourceKind };
+  const draft = { ...emptyDraft(), service, sourceId, sourceKind: source.sourceKind };
   const recipes = sourceRecipes(catalog, draft);
-  if (source.sourceKind !== 'application')
-    return withDerivedServiceContext({ ...draft, ...selectionFromRecipe(recipes[0]) });
-  return withDerivedServiceContext(hydrateApplicationDraft(draft, recipes));
+  if (source.sourceKind !== 'application') return { ...draft, ...selectionFromRecipe(recipes[0]) };
+  return hydrateApplicationDraft(draft, recipes);
 }
 
 export function applicationQuestionOptions(
@@ -80,7 +84,7 @@ export function answerApplicationQuestion(
   const next = { ...draft, [field]: value };
   delete next.recipeId;
   for (const dependent of APPLICATION_QUESTIONS.slice(index + 1)) delete next[dependent];
-  return withDerivedServiceContext(hydrateApplicationDraft(next, sourceRecipes(catalog, next)));
+  return hydrateApplicationDraft(next, sourceRecipes(catalog, next));
 }
 
 export function previousApplicationSelection(draft: InstrumentationDraft, catalog: CatalogResponse) {
@@ -113,7 +117,7 @@ export function buildRenderRequest(draft: InstrumentationDraft): RenderRequest {
     schemaVersion: 2,
     ...copySelection(draft),
     intakeProfileId: draft.intakeProfileId,
-    service: derivedServiceIdentity(draft)
+    service: canonicalServiceIdentity(draft.service)
   };
 }
 
@@ -156,7 +160,12 @@ export function draftReady(draft: InstrumentationDraft) {
 function validateDraft(
   draft: InstrumentationDraft
 ): asserts draft is InstrumentationDraft & { sourceKind: SourceKind; recipeId: string } {
-  if (!draft.intakeProfileId || !draft.service.name.trim()) {
+  if (
+    !draft.intakeProfileId ||
+    !draft.service.name.trim() ||
+    !draft.service.namespace.trim() ||
+    !draft.service.environment.trim()
+  ) {
     throw new Error('Instrumentation context is incomplete');
   }
   if (!draft.sourceKind || !draft.recipeId) throw new Error('Instrumentation selection is required');
@@ -208,11 +217,11 @@ function clearSourceSelection(draft: InstrumentationDraft) {
 }
 
 function preserveOnboardingContext(selection: InstrumentationDraft, draft: InstrumentationDraft) {
-  return withDerivedServiceContext({
+  return {
     ...selection,
     intakeProfileId: draft.intakeProfileId,
     service: draft.service
-  });
+  };
 }
 
 function hydrateApplicationDraft(draft: InstrumentationDraft, recipes: Recipe[]) {
@@ -244,18 +253,4 @@ function recipeValues(recipe: Recipe, field: ApplicationQuestion | 'language'): 
 
 function recipeHas(recipe: Recipe, field: ApplicationQuestion | 'language', value: string | undefined) {
   return Boolean(value && recipeValues(recipe, field).includes(value));
-}
-
-function withDerivedServiceContext(draft: InstrumentationDraft): InstrumentationDraft {
-  return { ...draft, service: derivedServiceIdentity(draft) };
-}
-
-function derivedServiceIdentity(draft: InstrumentationDraft): ServiceIdentity {
-  return {
-    name: draft.service.name,
-    namespace: 'default',
-    // Recipe environment describes where the process runs, not the semantic
-    // service environment used to correlate telemetry.
-    environment: 'default'
-  };
 }

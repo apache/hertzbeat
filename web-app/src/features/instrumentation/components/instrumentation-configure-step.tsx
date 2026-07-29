@@ -14,13 +14,14 @@ import {
 } from '@/shared/access-token/access-token-generation-model';
 
 import { intakeEndpointEntries, profileUsesPlaintext } from '../model/intake-profile';
-import type { IntakeProfilesResponse } from '../model/instrumentation-v2-contract';
+import type { IntakeProfilesResponse, ServiceIdentity } from '../model/instrumentation-v2-contract';
 import styles from './instrumentation-configure.module.css';
+import { InstrumentationServiceIdentityFields } from './instrumentation-service-identity-fields';
 
 type ConfigureStepProps = {
   profiles: IntakeProfilesResponse;
   profileId: string;
-  serviceName: string;
+  service: ServiceIdentity;
   platform?: string | undefined;
   platformOptions: string[];
   canRender: boolean;
@@ -32,7 +33,7 @@ type ConfigureStepProps = {
   tokenError: boolean;
   canGenerateToken: boolean;
   onProfile: (intakeProfileId: string) => void;
-  onServiceName: (name: string) => void;
+  onService: (patch: Partial<ServiceIdentity>) => void;
   onPlatform: (platform: string) => void;
   onToken: (token: string) => void;
   onRender: () => void;
@@ -56,14 +57,7 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
           message={t(`instrumentation.v2.profile.${props.profiles.status}`)}
         />
       )}
-      <label className={styles.serviceNameField}>
-        <Typography.Text strong>{t('instrumentation.field.serviceName')}</Typography.Text>
-        <Input
-          aria-label={t('instrumentation.field.serviceName')}
-          value={props.serviceName}
-          onChange={event => props.onServiceName(event.target.value)}
-        />
-      </label>
+      <InstrumentationServiceIdentityFields service={props.service} onService={props.onService} />
       {props.platformOptions.length > 1 && (
         <label className={styles.serviceNameField}>
           <Typography.Text strong>{t('instrumentation.field.platform')}</Typography.Text>

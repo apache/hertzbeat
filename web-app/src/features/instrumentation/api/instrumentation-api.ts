@@ -7,7 +7,12 @@
 
 import { apiFetch } from '@/core/http/http-client';
 
-import type { DetectionRequest, RenderRequest, Selection } from '../model/instrumentation-v2-contract';
+import {
+  canonicalServiceIdentity,
+  type DetectionRequest,
+  type RenderRequest,
+  type Selection
+} from '../model/instrumentation-v2-contract';
 import { messageEnvelopeSchema } from './instrumentation-v2-schema';
 import {
   InstrumentationContractError,
@@ -117,24 +122,20 @@ function copyRequest<T extends RenderRequest | DetectionRequest>(value: T): T {
     ...(value.environment ? { environment: value.environment } : {}),
     ...(value.platform ? { platform: value.platform } : {}),
     intakeProfileId: value.intakeProfileId,
-    service: {
-      name: value.service.name,
-      namespace: value.service.namespace,
-      environment: value.service.environment,
-      ...(value.service.serviceInstanceId ? { serviceInstanceId: value.service.serviceInstanceId } : {}),
-      ...(value.service.endpoint ? { endpoint: value.service.endpoint } : {})
-    },
+    service: canonicalServiceIdentity(value.service),
     ...('startedAt' in value ? { startedAt: value.startedAt } : {})
   } as T;
 }
 
 function sameService(left: RenderRequest['service'], right: RenderRequest['service']) {
+  const canonicalLeft = canonicalServiceIdentity(left);
+  const canonicalRight = canonicalServiceIdentity(right);
   return (
-    left.name === right.name &&
-    left.namespace === right.namespace &&
-    left.environment === right.environment &&
-    left.serviceInstanceId === right.serviceInstanceId &&
-    left.endpoint === right.endpoint
+    canonicalLeft.name === canonicalRight.name &&
+    canonicalLeft.namespace === canonicalRight.namespace &&
+    canonicalLeft.environment === canonicalRight.environment &&
+    canonicalLeft.serviceInstanceId === canonicalRight.serviceInstanceId &&
+    canonicalLeft.endpoint === canonicalRight.endpoint
   );
 }
 

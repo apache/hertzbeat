@@ -18,7 +18,7 @@ import {
   type ApplicationQuestion,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
-import type { CatalogResponse, GuideBlock } from '../model/instrumentation-v2-contract';
+import type { CatalogResponse, GuideBlock, ServiceIdentity } from '../model/instrumentation-v2-contract';
 import type { InstrumentationControllerState } from './instrumentation-controller-state';
 
 export function useDraftActions(
@@ -33,7 +33,9 @@ export function useDraftActions(
     generationRef.current += 1;
     state.setGuide(undefined);
     state.setDetection(undefined);
+    state.setDetecting(false);
     state.setRenderError(false);
+    state.setRendering(false);
     state.setDetectionError(false);
     state.setToken('');
     state.setTokenDraft(undefined);
@@ -45,7 +47,10 @@ export function useDraftActions(
     (sourceId: string) => {
       if (!catalog) return;
       resetResults();
-      state.setDraft({ ...selectSource(catalog, sourceId), intakeProfileId: defaultProfileId ?? '' });
+      state.setDraft(current => ({
+        ...selectSource(catalog, sourceId, current.service),
+        intakeProfileId: defaultProfileId ?? ''
+      }));
     },
     [catalog, defaultProfileId, resetResults, state]
   );
@@ -64,10 +69,10 @@ export function useDraftActions(
     },
     [resetResults, state]
   );
-  const patchServiceName = useCallback(
-    (name: string) => {
+  const patchService = useCallback(
+    (patch: Partial<ServiceIdentity>) => {
       resetResults();
-      state.setDraft(current => ({ ...current, service: { ...current.service, name } }));
+      state.setDraft(current => ({ ...current, service: { ...current.service, ...patch } }));
     },
     [resetResults, state]
   );
@@ -78,7 +83,7 @@ export function useDraftActions(
     state.setSourceDirectoryRevision(current => current + 1);
   }, [defaultProfileId, resetResults, state]);
   const goBack = useBackAction(state, resetResults, catalog);
-  return { chooseSource, answerApplication, patchDraft, patchServiceName, reset, goBack };
+  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
 }
 
 function clearDetectionWindow(timerRef: RefObject<number | undefined>, startedAtRef: RefObject<number | undefined>) {

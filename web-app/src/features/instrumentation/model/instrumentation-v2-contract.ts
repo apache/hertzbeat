@@ -36,6 +36,18 @@ export type ServiceIdentity = {
   endpoint?: string | undefined;
 };
 
+export function canonicalServiceIdentity(service: ServiceIdentity): ServiceIdentity {
+  const serviceInstanceId = service.serviceInstanceId?.trim();
+  const endpoint = service.endpoint?.trim();
+  return {
+    name: service.name,
+    namespace: service.namespace,
+    environment: service.environment,
+    ...(serviceInstanceId ? { serviceInstanceId } : {}),
+    ...(endpoint ? { endpoint } : {})
+  };
+}
+
 type OfficialComponent = {
   name: string;
   sourceUrl: string;

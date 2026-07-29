@@ -12,6 +12,7 @@ import {
   buildDetectionRequest,
   buildQueryJump,
   buildRenderRequest,
+  draftReady,
   materializeBlock,
   previousApplicationSelection,
   selectSource,
@@ -75,22 +76,77 @@ describe('instrumentation v2 flow', () => {
     expect(() => selectSource(catalog, 'fluent_bit')).toThrow('Instrumentation source is unavailable');
   });
 
-  it('derives stable hidden service context without treating the runtime as a service environment', () => {
+  it('preserves the complete service identity for render and detection', () => {
     const start = selectSource(catalog, 'java');
     const spring = answerApplicationQuestion(start, catalog, 'framework', 'spring_boot');
     const docker = answerApplicationQuestion(spring, catalog, 'environment', 'docker');
-    const draft = { ...docker, intakeProfileId: 'server-default', service: { ...docker.service, name: 'checkout' } };
+    const service = {
+      name: 'checkout',
+      namespace: 'payments',
+      environment: 'production',
+      serviceInstanceId: 'checkout-7d9',
+      endpoint: '/checkout'
+    };
+    const draft = { ...docker, intakeProfileId: 'server-default', service };
 
-    expect(buildRenderRequest(draft)).toMatchObject({
-      intakeProfileId: 'server-default',
-      service: { name: 'checkout', namespace: 'default', environment: 'default' }
-    });
-    expect(buildDetectionRequest(draft, 1000)).toMatchObject({
-      startedAt: 1000,
-      service: { name: 'checkout', namespace: 'default', environment: 'default' }
-    });
+    expect(buildRenderRequest(draft).service).toEqual(service);
+    expect(buildDetectionRequest(draft, 1000)).toMatchObject({ startedAt: 1000, service });
     expect(JSON.stringify(buildRenderRequest(draft))).not.toContain('token');
     expect(JSON.stringify(buildDetectionRequest(draft, 1000))).not.toContain('token');
+  });
+
+  it('keeps the complete service identity through source, application answer, and Back transitions', () => {
+    const service = {
+      name: 'checkout',
+      namespace: 'payments',
+      environment: 'production',
+      serviceInstanceId: 'checkout-7d9',
+      endpoint: '/checkout'
+    };
+    const start = selectSource(catalog, 'java', service);
+    const spring = answerApplicationQuestion(start, catalog, 'framework', 'spring_boot');
+    const docker = answerApplicationQuestion(spring, catalog, 'environment', 'docker');
+
+    expect(start.service).toEqual(service);
+    expect(spring.service).toEqual(service);
+    expect(docker.service).toEqual(service);
+    expect(previousApplicationSelection(docker, catalog).service).toEqual(service);
+    expect(selectSource(catalog, 'quick_start', service).service).toEqual(service);
+  });
+
+  it('requires the primary service scope while allowing empty optional identity fields', () => {
+    const selected = selectSource(catalog, 'quick_start');
+    const complete = {
+      ...selected,
+      intakeProfileId: 'server-default',
+      service: {
+        name: 'checkout',
+        namespace: 'payments',
+        environment: 'production',
+        serviceInstanceId: ' checkout-7d9 ',
+        endpoint: ' /checkout '
+      }
+    };
+    const cleared = {
+      ...complete,
+      service: { ...complete.service, serviceInstanceId: '', endpoint: '' }
+    };
+
+    expect(draftReady(complete)).toBe(true);
+    expect(buildRenderRequest(complete).service).toEqual({
+      name: 'checkout',
+      namespace: 'payments',
+      environment: 'production',
+      serviceInstanceId: 'checkout-7d9',
+      endpoint: '/checkout'
+    });
+    expect(buildRenderRequest(cleared).service).toEqual({
+      name: 'checkout',
+      namespace: 'payments',
+      environment: 'production'
+    });
+    expect(draftReady({ ...complete, service: { ...complete.service, namespace: ' ' } })).toBe(false);
+    expect(draftReady({ ...complete, service: { ...complete.service, environment: ' ' } })).toBe(false);
   });
 
   it('resolves the recipe before platform selection and exposes platforms for Configure', () => {
