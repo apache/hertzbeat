@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -284,6 +286,27 @@ class TraceCallTopologyQueryServiceTest {
         assertTrue(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt) < 1000);
         assertTrue(readModel.entityById().isEmpty());
         assertTrue(readModel.edges().isEmpty());
+    }
+
+    @Test
+    void reportsSafeUnavailableErrorWhenBothGreptimeQueriesFail() {
+        ObserveEntity checkout = entity(10L, "checkout-api", "commerce", "prod");
+        when(entityIdentityQueryService.findIdentities(10L)).thenReturn(List.of(
+                identity(10L, "service.name", "checkout-api")));
+        when(traceQueryRepository.queryTraceServiceGraphRows(
+                eq(1500), eq(1710000000000L), eq(1710003600000L), eq("prod"),
+                argThat(serviceNames -> serviceNames != null && serviceNames.contains("checkout-api")),
+                eq(true)))
+                .thenThrow(new IllegalStateException("SELECT secret_service_graph_payload"));
+        when(traceQueryRepository.queryRecentTraceRows(
+                1500, 1710000000000L, 1710003600000L, null, "prod", true))
+                .thenThrow(new IllegalStateException("SELECT secret_trace_payload"));
+
+        CommonException failure = assertThrows(CommonException.class,
+                () -> traceCallTopologyQueryService.findTraceCallEdges(
+                        List.of(checkout), "prod", 1710000000000L, 1710003600000L));
+
+        assertEquals("trace_topology_unavailable", failure.getMessage());
     }
 
     @Test

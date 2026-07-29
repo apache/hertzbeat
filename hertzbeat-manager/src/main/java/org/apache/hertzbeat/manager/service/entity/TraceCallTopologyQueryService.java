@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -54,6 +55,7 @@ public class TraceCallTopologyQueryService {
     private static final int TRACE_ROW_LIMIT = 1500;
     private static final Duration SERVICE_GRAPH_QUERY_TIMEOUT = Duration.ofSeconds(3);
     private static final String SERVICE_NAME_KEY = "service.name";
+    private static final String TRACE_TOPOLOGY_UNAVAILABLE = "trace_topology_unavailable";
     private static final Set<String> SERVICE_IDENTITY_KEYS = Set.of(SERVICE_NAME_KEY);
 
     private final TraceQueryRepository traceQueryRepository;
@@ -119,13 +121,19 @@ public class TraceCallTopologyQueryService {
                                                          Boolean hideInternal,
                                                          boolean scopeToSeedEntities) {
         boolean shouldHideInternal = hideInternal == null || hideInternal;
-        TraceCallTopologyReadModel serviceGraphReadModel =
+        QueryResult<TraceCallTopologyReadModel> serviceGraphQuery =
                 findServiceGraphReadModel(seedEntities, environment, start, end, shouldHideInternal,
                         scopeToSeedEntities);
+        TraceCallTopologyReadModel serviceGraphReadModel = serviceGraphQuery.value();
         if (!serviceGraphReadModel.edges().isEmpty()) {
             return serviceGraphReadModel;
         }
-        List<TraceSpanRow> spans = queryRecentTraceRows(start, end, environment, shouldHideInternal)
+        QueryResult<List<Map<String, Object>>> rawTraceQuery =
+                queryRecentTraceRows(start, end, environment, shouldHideInternal);
+        if (!serviceGraphQuery.succeeded() && !rawTraceQuery.succeeded()) {
+            throw new CommonException(TRACE_TOPOLOGY_UNAVAILABLE);
+        }
+        List<TraceSpanRow> spans = rawTraceQuery.value()
                 .stream()
                 .map(this::toTraceSpanRow)
                 .filter(Objects::nonNull)
@@ -148,17 +156,19 @@ public class TraceCallTopologyQueryService {
         return new TraceCallTopologyReadModel(entityById, edges);
     }
 
-    private TraceCallTopologyReadModel findServiceGraphReadModel(Collection<ObserveEntity> seedEntities,
-                                                                 String environment,
-                                                                 Long start,
-                                                                 Long end,
-                                                                 Boolean hideInternal,
-                                                                 boolean scopeToSeedEntities) {
+    private QueryResult<TraceCallTopologyReadModel> findServiceGraphReadModel(
+            Collection<ObserveEntity> seedEntities,
+            String environment,
+            Long start,
+            Long end,
+            Boolean hideInternal,
+            boolean scopeToSeedEntities) {
         Set<String> seedServiceNames = scopeToSeedEntities ? seedServiceNames(seedEntities) : Collections.emptySet();
-        List<TraceServiceGraphRow> serviceGraphRows = queryServiceGraphRows(
+        QueryResult<List<TraceServiceGraphRow>> serviceGraphQuery = queryServiceGraphRows(
                 start, end, environment, seedServiceNames, hideInternal);
+        List<TraceServiceGraphRow> serviceGraphRows = serviceGraphQuery.value();
         if (serviceGraphRows.isEmpty()) {
-            return TraceCallTopologyReadModel.empty();
+            return new QueryResult<>(TraceCallTopologyReadModel.empty(), serviceGraphQuery.succeeded());
         }
         Set<String> observedServices = serviceGraphRows.stream()
                 .flatMap(row -> java.util.stream.Stream.of(row.sourceServiceName(), row.targetServiceName()))
@@ -180,43 +190,48 @@ public class TraceCallTopologyQueryService {
                 entityById.putIfAbsent(target.getId(), target);
             }
         }
-        return new TraceCallTopologyReadModel(entityById, edges);
+        return new QueryResult<>(
+                new TraceCallTopologyReadModel(entityById, edges), serviceGraphQuery.succeeded());
     }
 
-    private List<TraceServiceGraphRow> queryServiceGraphRows(Long start,
-                                                             Long end,
-                                                             String environment,
-                                                             Set<String> seedServiceNames,
-                                                             Boolean hideInternal) {
+    private QueryResult<List<TraceServiceGraphRow>> queryServiceGraphRows(Long start,
+                                                                          Long end,
+                                                                          String environment,
+                                                                          Set<String> seedServiceNames,
+                                                                          Boolean hideInternal) {
         try {
-            return CompletableFuture.supplyAsync(() -> safeList(traceQueryRepository.queryTraceServiceGraphRows(
+            List<TraceServiceGraphRow> rows =
+                    CompletableFuture.supplyAsync(() -> safeList(traceQueryRepository.queryTraceServiceGraphRows(
                             TRACE_ROW_LIMIT, start, end, environment, seedServiceNames, hideInternal)))
                     .get(serviceGraphQueryTimeout.toMillis(), TimeUnit.MILLISECONDS)
                     .stream()
                     .map(this::toTraceServiceGraphRow)
                     .filter(Objects::nonNull)
                     .toList();
+            return new QueryResult<>(rows, true);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return Collections.emptyList();
+            return new QueryResult<>(Collections.emptyList(), false);
         } catch (ExecutionException | TimeoutException | RuntimeException ex) {
-            return Collections.emptyList();
+            return new QueryResult<>(Collections.emptyList(), false);
         }
     }
 
-    private List<Map<String, Object>> queryRecentTraceRows(Long start,
-                                                           Long end,
-                                                           String environment,
-                                                           Boolean hideInternal) {
+    private QueryResult<List<Map<String, Object>>> queryRecentTraceRows(Long start,
+                                                                        Long end,
+                                                                        String environment,
+                                                                        Boolean hideInternal) {
         try {
-            return CompletableFuture.supplyAsync(() -> safeList(traceQueryRepository.queryRecentTraceRows(
+            List<Map<String, Object>> rows =
+                    CompletableFuture.supplyAsync(() -> safeList(traceQueryRepository.queryRecentTraceRows(
                             TRACE_ROW_LIMIT, start, end, null, environment, hideInternal)))
                     .get(serviceGraphQueryTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            return new QueryResult<>(rows, true);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return Collections.emptyList();
+            return new QueryResult<>(Collections.emptyList(), false);
         } catch (ExecutionException | TimeoutException | RuntimeException ex) {
-            return Collections.emptyList();
+            return new QueryResult<>(Collections.emptyList(), false);
         }
     }
 
@@ -733,6 +748,9 @@ public class TraceCallTopologyQueryService {
             return list;
         }
         return new ArrayList<>(values);
+    }
+
+    private record QueryResult<T>(T value, boolean succeeded) {
     }
 
     private record TraceSpanRow(String traceId,

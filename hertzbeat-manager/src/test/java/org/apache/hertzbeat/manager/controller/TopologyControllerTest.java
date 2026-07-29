@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
 import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
@@ -80,6 +81,23 @@ class TopologyControllerTest {
         verify(entityTopologyQueryService).buildFocusedTopology(
                 null, 1, null, unknownSourceKind, null, null,
                 null, null, null, null);
+    }
+
+    @Test
+    void returnsSafeUnavailableEvidenceThroughExistingMessageLayer() throws Exception {
+        when(entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "otlp-trace-call", null, null,
+                null, null, null, null))
+                .thenThrow(new CommonException("trace_topology_unavailable"));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/topology")
+                        .param("environment", "prod")
+                        .param("sourceKind", "otlp-trace-call"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("trace_topology_unavailable"))
+                .andExpect(content().string(not(containsString("SELECT"))))
+                .andExpect(content().string(not(containsString("secret"))));
     }
 
     @Test
