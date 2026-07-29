@@ -22,6 +22,7 @@ import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import type { Monitor, MonitorQuery } from '../model/monitor-contract';
@@ -124,7 +125,7 @@ describe('MonitorListPage scoped bulk selection', () => {
     fireEvent.click(within(bulk!).getByRole('button', { name: 'Enable' }));
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
 
-    await waitFor(() => expect(mutateMonitors).toHaveBeenCalledWith('enable', [8]));
+    await waitFor(() => expect(mutateMonitors).toHaveBeenCalledWith('enable', [8], expect.any(AbortSignal)));
   });
 });
 
@@ -147,10 +148,24 @@ function renderPage(initialEntry: string) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
-          <App>
-            <MonitorListPage />
-            <ScopeControls />
-          </App>
+          <SessionContext.Provider
+            value={{
+              session: {
+                authenticated: true,
+                username: 'admin',
+                workspaceId: null,
+                roles: ['ADMIN'],
+                expiresAt: null
+              },
+              loading: false,
+              retry: () => undefined
+            }}
+          >
+            <App>
+              <MonitorListPage />
+              <ScopeControls />
+            </App>
+          </SessionContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>
