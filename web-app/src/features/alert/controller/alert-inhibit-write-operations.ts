@@ -123,7 +123,10 @@ async function advanceReceipt(
   receipt: AlertInhibitReceipt
 ) {
   // A retained receipt moves forward only; Retry never repeats a write whose outcome may be committed.
-  if (!(await prepareAlertInhibitReceipt(context.operation, owner, receipt))) return false;
+  if (receipt.phase === 'prepare') {
+    if (!(await prepareAlertInhibitReceipt(context.operation, owner, receipt))) return false;
+    if (!context.operation.isCurrent(owner)) return false;
+  }
   if (receipt.phase === 'write') {
     await mutate(receipt);
     if (!context.operation.isCurrent(owner)) return false;
