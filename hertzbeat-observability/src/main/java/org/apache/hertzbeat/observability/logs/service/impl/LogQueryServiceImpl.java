@@ -44,6 +44,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.observability.ingestion.enricher.OtlpCorrelationEnricher;
+import org.apache.hertzbeat.observability.logs.query.LogVisibilityFilter;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,24 +89,6 @@ public class LogQueryServiceImpl implements LogQueryService {
             "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+EXISTS|EXISTS)\\s*$",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
-            "otelcol-contrib",
-            "otel-collector",
-            "opentelemetry-collector",
-            "jaeger",
-            "prometheus",
-            "grafana",
-            "opensearch",
-            "frontend-proxy"
-    );
-    private static final Set<String> DEMO_INFRA_SERVICE_NAMES = Set.of(
-            "kafka",
-            "load-generator",
-            "valkey-cart",
-            "postgresql",
-            "flagd",
-            "flagd-ui"
-    );
     private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
             OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE,
             AuthTokenScopes.CLAIM_WORKSPACE_ID,
@@ -1169,21 +1152,11 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     private Set<String> hiddenServiceNames(boolean hideInternal, boolean hideNoise) {
-        if (!hideInternal && !hideNoise) {
-            return Collections.emptySet();
-        }
-        Set<String> names = new LinkedHashSet<>();
-        if (hideInternal || hideNoise) {
-            names.addAll(WORKSPACE_INFRA_SERVICE_NAMES);
-        }
-        if (hideNoise) {
-            names.addAll(DEMO_INFRA_SERVICE_NAMES);
-        }
-        return names;
+        return new LogVisibilityFilter(hideInternal, hideNoise).hiddenServiceNames();
     }
 
     private boolean shouldRequireServiceName(boolean hideInternal, boolean hideNoise) {
-        return hideInternal || hideNoise;
+        return new LogVisibilityFilter(hideInternal, hideNoise).requireServiceName();
     }
 
     private String trimToNull(String value) {
@@ -1566,14 +1539,7 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     private boolean shouldHideWorkspaceLog(LogEntry logEntry, boolean hideInternal, boolean hideNoise) {
-        String serviceName = resolveServiceName(logEntry);
-        if (!StringUtils.hasText(serviceName)) {
-            return hideInternal || hideNoise;
-        }
-        if ((hideInternal || hideNoise) && WORKSPACE_INFRA_SERVICE_NAMES.contains(serviceName)) {
-            return true;
-        }
-        return hideNoise && DEMO_INFRA_SERVICE_NAMES.contains(serviceName);
+        return new LogVisibilityFilter(hideInternal, hideNoise).hides(resolveServiceName(logEntry));
     }
 
     private boolean matchesServiceContext(LogEntry logEntry, String serviceName, String serviceNamespace,

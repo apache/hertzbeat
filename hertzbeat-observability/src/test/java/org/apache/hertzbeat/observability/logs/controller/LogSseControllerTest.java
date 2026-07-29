@@ -85,6 +85,8 @@ class LogSseControllerTest {
         Assertions.assertNull(capturedCriteria.getSeverityNumber());
         Assertions.assertNull(capturedCriteria.getTraceId());
         Assertions.assertNull(capturedCriteria.getSpanId());
+        Assertions.assertFalse(capturedCriteria.isHideInternal());
+        Assertions.assertFalse(capturedCriteria.isHideNoise());
     }
 
     @Test
@@ -153,6 +155,21 @@ class LogSseControllerTest {
                 resourceFilter + " and service.instance.id=\"checkout-7d9\"");
         Assertions.assertEquals(capturedCriteria.getAttributeFilter(),
                 attributeFilter + " and http.route=\"/checkout\"");
+    }
+
+    @Test
+    void subscribePreservesHistoricalVisibilityFilterIntent() throws Exception {
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("hideInternal", "true")
+                        .param("hideNoise", "true")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertTrue(capturedCriteria.isHideInternal());
+        Assertions.assertTrue(capturedCriteria.isHideNoise());
     }
 
     @Test

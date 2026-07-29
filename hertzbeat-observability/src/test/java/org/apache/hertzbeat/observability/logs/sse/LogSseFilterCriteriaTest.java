@@ -170,6 +170,28 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void hideInternalMatchesHistoricalWorkspaceInfrastructureSemantics() {
+        filterCriteria.setHideInternal(true);
+
+        assertFalse(filterCriteria.matches(logFromService(null)));
+        assertFalse(filterCriteria.matches(logFromService("otelcol-contrib")));
+        assertFalse(filterCriteria.matches(logFromService("frontend-proxy")));
+        assertTrue(filterCriteria.matches(logFromService("kafka")));
+        assertTrue(filterCriteria.matches(logFromService("checkout")));
+    }
+
+    @Test
+    void hideNoiseMatchesHistoricalInternalAndDemoInfrastructureSemantics() {
+        filterCriteria.setHideNoise(true);
+
+        assertFalse(filterCriteria.matches(logFromService(null)));
+        assertFalse(filterCriteria.matches(logFromService("opentelemetry-collector")));
+        assertFalse(filterCriteria.matches(logFromService("load-generator")));
+        assertFalse(filterCriteria.matches(logFromService("postgresql")));
+        assertTrue(filterCriteria.matches(logFromService("checkout")));
+    }
+
+    @Test
     void testMatchesWithServiceContextFilters() {
         LogEntry checkoutProdLog = LogEntry.builder()
                 .severityText("INFO")
@@ -487,5 +509,15 @@ class LogSseFilterCriteriaTest {
 
         // Test matching
         assertTrue(criteria.matches(testLogEntry));
+    }
+
+    private LogEntry logFromService(String serviceName) {
+        java.util.Map<String, Object> resource = serviceName == null
+                ? java.util.Map.of()
+                : java.util.Map.of("service.name", serviceName);
+        return LogEntry.builder()
+                .resource(resource)
+                .body("live log")
+                .build();
     }
 }

@@ -32,6 +32,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.observability.logs.query.LogVisibilityFilter;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.springframework.util.StringUtils;
 
@@ -101,6 +102,14 @@ public class LogSseFilterCriteria {
             accessMode = READ_WRITE)
     private String attributeFilter;
 
+    @Schema(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs",
+            accessMode = READ_WRITE)
+    private boolean hideInternal;
+
+    @Schema(description = "Hide demo infrastructure noise logs such as kafka/load-generator",
+            accessMode = READ_WRITE)
+    private boolean hideNoise;
+
     @Schema(description = "Server-bound workspace boundary.", accessMode = READ_ONLY)
     private String workspaceId;
 
@@ -144,7 +153,8 @@ public class LogSseFilterCriteria {
                 endpoint,
                 AuthTokenScopes.normalizeWorkspaceId(workspaceId),
                 LogSseAttributeFilter.parse(resourceFilter),
-                LogSseAttributeFilter.parse(attributeFilter));
+                LogSseAttributeFilter.parse(attributeFilter),
+                new LogVisibilityFilter(hideInternal, hideNoise));
     }
 
     public void normalizeQueryContext() {
@@ -253,7 +263,8 @@ public class LogSseFilterCriteria {
             String endpoint,
             String workspaceId,
             LogSseAttributeFilter resourceAttributes,
-            LogSseAttributeFilter logAttributes) implements Predicate<LogEntry> {
+            LogSseAttributeFilter logAttributes,
+            LogVisibilityFilter visibilityFilter) implements Predicate<LogEntry> {
 
         @Override
         public boolean test(LogEntry log) {
@@ -273,6 +284,9 @@ public class LogSseFilterCriteria {
                 return false;
             }
             if (StringUtils.hasText(spanId) && !spanId.equalsIgnoreCase(log.getSpanId())) {
+                return false;
+            }
+            if (visibilityFilter.hides(resolveValue(log, "service.name", "service_name"))) {
                 return false;
             }
             return matchesServiceContext(log, this)
