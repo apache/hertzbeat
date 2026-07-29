@@ -264,4 +264,45 @@ class SqlSecurityValidatorTest {
         assertThrows(SqlSecurityException.class, () -> validator.validate(
             "SELECT * FROM hertzbeat_logs WHERE id = 1 + (SELECT id FROM secret_table)"));
     }
+
+    /**
+     * `CCJSqlParserUtil.parse` returns the first statement and silently discards the rest,
+     * so a stacked statement used to validate as a plain select while the caller still
+     * handed the whole string to the database.
+     */
+    @Test
+    void testStackedStatementIsRejected() {
+        assertThrows(SqlSecurityException.class, () -> validator.validate(
+            "SELECT * FROM hertzbeat_logs; DROP TABLE hertzbeat_logs"));
+        assertThrows(SqlSecurityException.class, () -> SqlSecurityValidator.selectOnly().validate(
+            "SELECT 1; DROP TABLE cpu"));
+    }
+
+    @Test
+    void testTrailingSemicolonIsStillAcceptedAsOneStatement() {
+        assertDoesNotThrow(() -> validator.validate("SELECT * FROM hertzbeat_logs ; "));
+    }
+
+    @Test
+    void testSelectOnlyRejectsWrites() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DROP TABLE cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DELETE FROM cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("INSERT INTO cpu VALUES (1)"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("UPDATE cpu SET value = 1"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("TRUNCATE TABLE cpu"));
+    }
+
+    /**
+     * Metric tables are created per metric on demand, so this mode constrains what a
+     * statement may do, not which table it may touch.
+     */
+    @Test
+    void testSelectOnlyAcceptsAnyTableAndNestedReads() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT value FROM any_metric_table"));
+        assertDoesNotThrow(() -> selectOnly.validate(
+            "SELECT value FROM cpu WHERE host = (SELECT host FROM hosts LIMIT 1)"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT a FROM t1 UNION ALL SELECT b FROM t2"));
+    }
 }

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
 import net.sf.jsqlparser.statement.select.ParenthesedSelect;
 import net.sf.jsqlparser.statement.select.Select;
@@ -47,6 +48,8 @@ public class SqlSecurityValidator {
 
     private final Set<String> allowedTables;
 
+    private final boolean restrictTables;
+
     public SqlSecurityValidator(Collection<String> allowedTables) {
         if (CollectionUtils.isEmpty(allowedTables)) {
             this.allowedTables = new HashSet<>();
@@ -55,6 +58,29 @@ public class SqlSecurityValidator {
                     .map(this::normalizeIdentifier)
                     .collect(Collectors.toSet());
         }
+        this.restrictTables = true;
+    }
+
+    private SqlSecurityValidator() {
+        this.allowedTables = new HashSet<>();
+        this.restrictTables = false;
+    }
+
+    /**
+     * A validator whose whole policy is "this statement may only read".
+     *
+     * <p>Use it where there is no table list to validate against: metric tables are created
+     * on demand, one per metric, so the whitelisting constructor would reject every
+     * legitimate metric query.
+     *
+     * <p>It deliberately keeps subqueries, unions and ctes, unlike the whitelisting mode.
+     * Those structures are blocked there because they are the ways a statement can reach a
+     * table the whitelist never mentions; with every table already readable they buy no
+     * protection, while alert expressions do use subqueries and nested aggregation.
+     * @return a validator that only rejects statements which are not plain selects
+     */
+    public static SqlSecurityValidator selectOnly() {
+        return new SqlSecurityValidator();
     }
 
     public void validate(String sql) throws SqlSecurityException {
@@ -62,16 +88,29 @@ public class SqlSecurityValidator {
             throw new SqlSecurityException("SQL statement cannot be empty");
         }
 
-        Statement statement;
+        Statements statements;
         try {
-            statement = CCJSqlParserUtil.parse(sql);
+            statements = CCJSqlParserUtil.parseStatements(sql);
         } catch (JSQLParserException e) {
             log.warn("Failed to parse SQL: {}", sql, e);
             throw new SqlSecurityException("Invalid SQL syntax: " + e.getMessage(), e);
         }
 
+        // parseStatements rather than parse: parse() returns the first statement and discards
+        // the rest, so "select 1; drop table x" would validate as a plain select while the
+        // caller still hands the whole string to the database
+        if (statements.getStatements().size() != 1) {
+            throw new SqlSecurityException("Only a single statement is allowed.");
+        }
+        Statement statement = statements.getStatements().get(0);
+
         if (!(statement instanceof Select select)) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
+        }
+
+        if (!restrictTables) {
+            // read only is the whole policy in this mode, see selectOnly()
+            return;
         }
 
         // Check for CTE at top level

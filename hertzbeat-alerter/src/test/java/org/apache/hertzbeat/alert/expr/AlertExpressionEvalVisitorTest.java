@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.expr;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -862,6 +865,67 @@ class AlertExpressionEvalVisitorTest {
         result = evaluate(promql);
         assertEquals(1, result.size());
         assertEquals(0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void testSqlCallRunsPlainRead() {
+        when(mockExecutor.execute("select value from cpu where host = 'server1'"))
+                .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        List<Map<String, Object>> result = evaluate("sql(\"select value from cpu where host = 'server1'\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void testSqlCallRejectsNonSelectStatement() {
+        assertSqlRejected("sql(\"drop table cpu\") > 70");
+        assertSqlRejected("sql(\"delete from cpu\") > 70");
+        assertSqlRejected("sql(\"insert into cpu values (1)\") > 70");
+    }
+
+    @Test
+    void testSqlCallRejectsStatementThatOnlyStartsAsSelect() {
+        assertSqlRejected("sql(\"select 1; drop table cpu\") > 70");
+        assertSqlRejected("sql(\"truncate table cpu\") > 70");
+    }
+
+    /**
+     * Subqueries and nested aggregation are supported in alert expressions, and with every
+     * metric table already readable, rejecting them would cost features without denying an
+     * attacker anything. The policy stops at read only on purpose.
+     */
+    @Test
+    void testSqlCallKeepsSubqueriesWorking() {
+        String sql = "select value from cpu where host = (select host from hosts limit 1)";
+        when(mockExecutor.execute(sql)).thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        List<Map<String, Object>> result = evaluate("sql(\"" + sql + "\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
+    /**
+     * The promql spelling shares the call syntax but never reaches a sql parser, so it has
+     * to keep working for expressions that are not valid sql at all.
+     */
+    @Test
+    void testPromqlCallIsNotSqlValidated() {
+        when(mockExecutor.execute("rate(http_requests_total[5m])"))
+                .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+
+        List<Map<String, Object>> result = evaluate("promql(\"rate(http_requests_total[5m])\") > 70");
+
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+    }
+
+    private void assertSqlRejected(String expression) {
+        AlertExpressionException thrown = assertThrows(AlertExpressionException.class, () -> evaluate(expression));
+        assertTrue(thrown.getMessage().contains("SQL security validation failed"), thrown.getMessage());
+        Mockito.verify(mockExecutor, Mockito.never()).execute(anyString());
     }
 
     private List<Map<String, Object>> evaluate(String expression) {
