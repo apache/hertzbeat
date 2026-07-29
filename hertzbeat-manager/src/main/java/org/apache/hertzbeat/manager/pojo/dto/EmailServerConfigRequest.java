@@ -26,6 +26,7 @@ import lombok.Data;
 @Data
 public class EmailServerConfigRequest {
 
+    private String expectedRevision;
     private Integer type;
     private String emailHost;
     private String emailUsername;

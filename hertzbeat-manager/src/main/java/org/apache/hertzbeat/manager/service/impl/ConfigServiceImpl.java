@@ -67,6 +67,17 @@ public class ConfigServiceImpl implements ConfigService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public void handleConfig(String type, Object config) {
+        rejectDedicatedObjectStoreType(type);
+        GeneralConfigService<Object> configService = configServiceMap.get(type);
+        if (configService == null) {
+            throw new IllegalArgumentException("Not supported this config type: " + type);
+        }
+        configService.handler(config);
+    }
+
+    @Override
     public void updateTemplateAppConfig(String app, TemplateConfig.AppTemplate template){
         GeneralConfigService configService = configServiceMap.get(TEMPLATE_CONFIG_TYPE);
         if (!(configService instanceof TemplateConfigServiceImpl)) {

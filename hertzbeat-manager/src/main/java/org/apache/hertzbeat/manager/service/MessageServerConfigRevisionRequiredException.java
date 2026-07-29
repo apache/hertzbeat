@@ -15,25 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.manager.service;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import lombok.Data;
+/** Stable, non-secret-bearing signal when a write omits its required precondition. */
+public class MessageServerConfigRevisionRequiredException extends RuntimeException {
 
-/** Write contract for one selected SMS provider. */
-@Data
-public class SmsServerConfigRequest {
+    public static final String ERROR_CODE = "message_server_config_revision_required";
 
-    private String expectedRevision;
-    private Boolean enable;
-    private String type;
-    private SmsServerConfigOptions options = new SmsServerConfigOptions();
-    private Set<String> clearSecrets = new LinkedHashSet<>();
-
-    @JsonAnySetter
-    public void rejectUnknownField(String name, Object value) {
-        throw new IllegalArgumentException("Unsupported SMS server field: " + name);
+    public MessageServerConfigRevisionRequiredException() {
+        super(ERROR_CODE);
     }
 }

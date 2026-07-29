@@ -17,24 +17,33 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.util.UUID;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigRequest;
 import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
 import org.apache.hertzbeat.manager.service.ConfigService;
+import org.apache.hertzbeat.manager.service.MessageServerConfigConflictException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigMapper;
+import org.apache.hertzbeat.manager.service.MessageServerConfigRevisionRequiredException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
-/** Coordinates safe mapping, persistence, and authoritative rereads. */
+/** Coordinates safe mapping and atomic persistence for message-server configuration. */
 @Service
 public class MessageServerConfigServiceImpl implements MessageServerConfigService {
+
+    private static final String MISSING_REVISION = "missing";
 
     private final ConfigService configService;
     private final MessageServerConfigMapper mapper;
@@ -49,66 +58,103 @@ public class MessageServerConfigServiceImpl implements MessageServerConfigServic
 
     @Override
     public MessageServerConfigResult<EmailServerConfigResponse> getEmailConfig() {
-        MailServerConfig config = readEmail();
-        return config == null ? MessageServerConfigResult.missing()
-                : MessageServerConfigResult.configured(mapper.toEmailResponse(config));
+        GeneralConfig stored = generalConfigDao.findByType(GeneralConfigTypeEnum.email.name());
+        if (stored == null) {
+            return MessageServerConfigResult.missing();
+        }
+        MailServerConfig config = read(stored, new TypeReference<>() { });
+        return MessageServerConfigResult.configured(stored.getRevision(), mapper.toEmailResponse(config));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MessageServerConfigResult<EmailServerConfigResponse> saveEmailConfig(EmailServerConfigRequest request) {
-        lockExistingConfigForMutation(GeneralConfigTypeEnum.email.name());
-        configService.saveConfig(GeneralConfigTypeEnum.email.name(), mapper.toEmailConfig(request, readEmail()));
-        MailServerConfig saved = readEmail();
-        if (saved == null) {
-            throw new IllegalStateException("Email server config was not persisted");
-        }
-        return MessageServerConfigResult.configured(mapper.toEmailResponse(saved));
+        requireExpectedRevision(request.getExpectedRevision());
+        String type = GeneralConfigTypeEnum.email.name();
+        GeneralConfig stored = generalConfigDao.findByType(type);
+        MailServerConfig existing = stored == null ? null : read(stored, new TypeReference<>() { });
+        MailServerConfig merged = mapper.toEmailConfig(request, existing);
+        String revision = persist(type, request.getExpectedRevision(), stored, merged);
+        configService.handleConfig(type, merged);
+        return MessageServerConfigResult.configured(revision, mapper.toEmailResponse(merged));
     }
 
     @Override
     public MessageServerConfigResult<SmsServerConfigResponse> getSmsConfig() {
-        SmsConfig config = readSms();
-        return config == null ? MessageServerConfigResult.missing()
-                : MessageServerConfigResult.configured(mapper.toSmsResponse(config));
+        GeneralConfig stored = generalConfigDao.findByType(GeneralConfigTypeEnum.sms.name());
+        if (stored == null) {
+            return MessageServerConfigResult.missing();
+        }
+        SmsConfig config = read(stored, new TypeReference<>() { });
+        return MessageServerConfigResult.configured(stored.getRevision(), mapper.toSmsResponse(config));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MessageServerConfigResult<SmsServerConfigResponse> saveSmsConfig(SmsServerConfigRequest request) {
-        lockExistingConfigForMutation(GeneralConfigTypeEnum.sms.name());
-        configService.saveConfig(GeneralConfigTypeEnum.sms.name(), mapper.toSmsConfig(request, readSms()));
-        SmsConfig saved = readSms();
-        if (saved == null) {
-            throw new IllegalStateException("SMS server config was not persisted");
-        }
-        return MessageServerConfigResult.configured(mapper.toSmsResponse(saved));
+        requireExpectedRevision(request.getExpectedRevision());
+        String type = GeneralConfigTypeEnum.sms.name();
+        GeneralConfig stored = generalConfigDao.findByType(type);
+        SmsConfig existing = stored == null ? null : read(stored, new TypeReference<>() { });
+        SmsConfig merged = mapper.toSmsConfig(request, existing);
+        String revision = persist(type, request.getExpectedRevision(), stored, merged);
+        configService.handleConfig(type, merged);
+        return MessageServerConfigResult.configured(revision, mapper.toSmsResponse(merged));
     }
 
-    private MailServerConfig readEmail() {
-        Object config = configService.getConfig(GeneralConfigTypeEnum.email.name());
+    private String persist(String type, String expectedRevision, GeneralConfig stored, Object config) {
+        if (stored == null) {
+            if (!MISSING_REVISION.equals(expectedRevision)) {
+                throw new MessageServerConfigConflictException();
+            }
+            return create(type, config);
+        }
+        if (!stored.getRevision().equals(expectedRevision)) {
+            throw new MessageServerConfigConflictException();
+        }
+        String nextRevision = UUID.randomUUID().toString();
+        int updated = generalConfigDao.updateContentIfRevision(
+                type, serialize(config), nextRevision, expectedRevision);
+        if (updated != 1) {
+            throw new MessageServerConfigConflictException();
+        }
+        return nextRevision;
+    }
+
+    private String create(String type, Object config) {
+        String revision = UUID.randomUUID().toString();
+        GeneralConfig entity = GeneralConfig.builder()
+                .type(type)
+                .content(serialize(config))
+                .revision(revision)
+                .build();
+        try {
+            generalConfigDao.saveAndFlush(entity);
+        } catch (DataIntegrityViolationException exception) {
+            throw new MessageServerConfigConflictException();
+        }
+        return revision;
+    }
+
+    private <T> T read(GeneralConfig stored, TypeReference<T> typeReference) {
+        T config = JsonUtil.fromJson(stored.getContent(), typeReference);
         if (config == null) {
-            return null;
+            throw new IllegalStateException("Message server config could not be read");
         }
-        if (!(config instanceof MailServerConfig email)) {
-            throw new IllegalStateException("Unexpected email server config type");
-        }
-        return email;
+        return config;
     }
 
-    private SmsConfig readSms() {
-        Object config = configService.getConfig(GeneralConfigTypeEnum.sms.name());
-        if (config == null) {
-            return null;
+    private String serialize(Object config) {
+        String content = JsonUtil.toJson(config);
+        if (content == null) {
+            throw new IllegalStateException("Message server config could not be serialized");
         }
-        if (!(config instanceof SmsConfig sms)) {
-            throw new IllegalStateException("Unexpected SMS server config type");
-        }
-        return sms;
+        return content;
     }
 
-    private void lockExistingConfigForMutation(String type) {
-        // Once configured, hold the exact row lock across secret merge, persistence, and authoritative reread.
-        generalConfigDao.findByTypeForUpdate(type);
+    private void requireExpectedRevision(String expectedRevision) {
+        if (expectedRevision == null || expectedRevision.isBlank()) {
+            throw new MessageServerConfigRevisionRequiredException();
+        }
     }
 }

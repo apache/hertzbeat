@@ -27,6 +27,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -59,6 +60,10 @@ public class GeneralConfig {
     @Schema(title = "Config content", description = "Config content，formatjson", accessMode = READ_WRITE)
     @Column(length = 8192)
     private String content;
+
+    @Builder.Default
+    @Column(name = "config_revision", nullable = false, length = 36)
+    private String revision = UUID.randomUUID().toString();
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy

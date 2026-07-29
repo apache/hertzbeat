@@ -18,13 +18,13 @@
 package org.apache.hertzbeat.manager.pojo.dto;
 
 /** Explicit read/write convergence state for a message-server configuration. */
-public record MessageServerConfigResult<T>(String status, T config) {
+public record MessageServerConfigResult<T>(String status, String revision, T config) {
 
-    public static <T> MessageServerConfigResult<T> configured(T config) {
-        return new MessageServerConfigResult<>("configured", config);
+    public static <T> MessageServerConfigResult<T> configured(String revision, T config) {
+        return new MessageServerConfigResult<>("configured", revision, config);
     }
 
     public static <T> MessageServerConfigResult<T> missing() {
-        return new MessageServerConfigResult<>("missing", null);
+        return new MessageServerConfigResult<>("missing", "missing", null);
     }
 }

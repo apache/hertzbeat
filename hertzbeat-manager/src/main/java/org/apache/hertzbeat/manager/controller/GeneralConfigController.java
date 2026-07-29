@@ -35,10 +35,13 @@ import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfigRequest;
 import org.apache.hertzbeat.manager.service.ConfigService;
+import org.apache.hertzbeat.manager.service.MessageServerConfigConflictException;
+import org.apache.hertzbeat.manager.service.MessageServerConfigRevisionRequiredException;
 import org.apache.hertzbeat.manager.service.MessageServerConfigService;
 import org.apache.hertzbeat.manager.service.SystemConfigService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -174,6 +177,12 @@ public class GeneralConfigController {
     private <T> ResponseEntity<Message<T>> handleMessageServer(Supplier<T> action) {
         try {
             return ResponseEntity.ok(Message.success(action.get()));
+        } catch (MessageServerConfigRevisionRequiredException exception) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED)
+                    .body(Message.fail(FAIL_CODE, MessageServerConfigRevisionRequiredException.ERROR_CODE));
+        } catch (MessageServerConfigConflictException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Message.fail(FAIL_CODE, MessageServerConfigConflictException.ERROR_CODE));
         } catch (DataAccessException exception) {
             log.error("Message server storage unavailable: {}", exception.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Message server storage unavailable"));
