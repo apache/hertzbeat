@@ -24,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.usthe.sureness.configuration.SurenessJakartaServletFilter;
 import com.usthe.sureness.mgt.SecurityManager;
 import com.usthe.sureness.processor.exception.ExpiredCredentialsException;
 import com.usthe.sureness.processor.exception.UnauthorizedException;
@@ -33,6 +32,7 @@ import com.usthe.sureness.subject.SubjectSum;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.manager.config.SurenessSpring7ServletFilter;
 import org.apache.hertzbeat.manager.controller.PluginController;
 import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
@@ -79,7 +79,7 @@ class UiSessionProtectedPluginMockMvcTest {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .addFilters(
                         new UiSessionCookieAuthenticationFilter(new UiSessionCookieManager(), sessionService),
-                        new SurenessJakartaServletFilter(securityManager))
+                        new SurenessSpring7ServletFilter(securityManager))
                 .build();
     }
 
