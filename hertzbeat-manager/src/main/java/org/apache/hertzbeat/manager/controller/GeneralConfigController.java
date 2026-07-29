@@ -23,11 +23,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.ConfigService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,6 +64,18 @@ public class GeneralConfigController {
 
     private static final Set<String> ZONE_IDS = ZoneId.getAvailableZoneIds();
 
+    /**
+     * Config types that must never travel over the rest api.
+     *
+     * <p>The {@code secret} config holds the jwt signing key and the aes key that protects
+     * every stored monitor credential. Both are loaded straight from the persistence layer
+     * while the application boots and no part of the ui reads them, so handing them out
+     * over http has no legitimate use and would let a reader mint admin tokens and decrypt
+     * stored credentials. Refusing the read here keeps the guarantee even if the rbac rules
+     * for this route are ever loosened again.
+     */
+    private static final Set<String> NON_READABLE_TYPES = Set.of(GeneralConfigTypeEnum.secret.name());
+
     @Resource
     private ConfigService configService;
 
@@ -80,6 +95,12 @@ public class GeneralConfigController {
     public ResponseEntity<Message<Object>> getConfig(
             @Parameter(description = "Config Type", example = "email")
             @PathVariable("type") @NotNull final String type) {
+        if (NON_READABLE_TYPES.contains(type)) {
+            log.warn("Refused to serve the {} config over the rest api", type);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Message.fail(CommonConstants.FAIL_CODE,
+                            "The " + type + " config can not be read through the rest api."));
+        }
         return ResponseUtil.handle(() -> configService.getConfig(type));
     }
 
