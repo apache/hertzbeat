@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.http;
 import com.google.common.collect.Lists;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -381,6 +382,48 @@ class HttpCollectImplTest {
         assertEquals(1, capturedRows.size());
         firstRow = capturedRows.get(0);
         assertEquals("0.268751364291017", firstRow.getColumns(0));
+    }
+
+    @Test
+    void parseResponseByJsonPathKeepsRowAlignmentWhenAliasPathMissing() throws Exception {
+        String jsonResponse = "{\"items\": ["
+                + "{\"metadata\": {\"name\": \"pod-a\"}, \"status\": {\"phase\": \"Running\","
+                + " \"containerStatuses\": [{\"name\": \"c1\", \"ready\": true, \"restartCount\": 5}]}},"
+                + "{\"metadata\": {\"name\": \"pod-b-pending\"}, \"status\": {\"phase\": \"Pending\"}},"
+                + "{\"metadata\": {\"name\": \"pod-c\"}, \"status\": {\"phase\": \"Running\","
+                + " \"containerStatuses\": [{\"name\": \"c3\", \"ready\": true, \"restartCount\": 2}]}}"
+                + "]}";
+        HttpProtocol http = HttpProtocol.builder()
+                .parseType(DispatchConstants.PARSE_JSON_PATH)
+                .parseScript("$.items.*")
+                .build();
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByJsonPath",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, jsonResponse,
+                Lists.newArrayList("$.metadata.name", "$.status.containerStatuses[0].restartCount"), http, builder, 100L);
+
+        assertEquals(3, capturedRows.size());
+        assertEquals("pod-a", capturedRows.get(0).getColumns(0));
+        assertEquals("5", capturedRows.get(0).getColumns(1));
+        assertEquals("pod-b-pending", capturedRows.get(1).getColumns(0));
+        assertEquals(CommonConstants.NULL_VALUE, capturedRows.get(1).getColumns(1));
+        assertEquals("pod-c", capturedRows.get(2).getColumns(0));
+        assertEquals("2", capturedRows.get(2).getColumns(1));
     }
 
     @Test
