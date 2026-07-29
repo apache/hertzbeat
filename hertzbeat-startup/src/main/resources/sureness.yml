@@ -79,19 +79,21 @@ resourceRole:
   - /api/account/token===get===[admin]
   - /api/account/token/**===post===[admin]
   - /api/account/token/**===delete===[admin]
+  # the alert stream carries full alert payloads and the manager stream carries import
+  # progress; both are scoped like the log stream above rather than left anonymous
+  - /api/alert/sse/**===get===[admin,user,guest]
+  - /api/manager/sse/**===get===[admin,user,guest]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
-  - /api/alert/sse/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/observability/capability===get
   - /api/push/**===*
   - /api/status/page/public/**===*
-  - /api/manager/sse/**===*
   # web ui resource
   - /===get
   - /assets/**===get
