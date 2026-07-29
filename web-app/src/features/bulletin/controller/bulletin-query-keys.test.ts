@@ -15,7 +15,8 @@ describe('Bulletin Query Keys', () => {
   });
 
   it('scopes dependencies, hierarchy, and metrics by their result inputs', () => {
-    expect(bulletinQueryKeys.apps()).toEqual(['bulletin', 'dependencies', 'apps']);
+    expect(bulletinQueryKeys.apps('en-US')).toEqual(['bulletin', 'dependencies', 'apps', 'en-US']);
+    expect(bulletinQueryKeys.apps('en-US')).not.toEqual(bulletinQueryKeys.apps('zh-CN'));
     expect(bulletinQueryKeys.monitors('website')).toEqual(['bulletin', 'dependencies', 'monitors', 'website']);
     expect(bulletinQueryKeys.hierarchy('website', 'en-US')).toEqual([
       'bulletin',

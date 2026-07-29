@@ -202,10 +202,10 @@ describe('monitor list API contracts', () => {
     http.apiMessageGet.mockResolvedValue([
       { category: 'http', value: 'website', label: 'Website', hide: false, ignored: 1 }
     ]);
-    await expect(loadMonitorApps(signal)).resolves.toEqual([
+    await expect(loadMonitorApps('en-US', signal)).resolves.toEqual([
       { category: 'http', value: 'website', label: 'Website', hide: false }
     ]);
-    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy', { signal });
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy?lang=en-US', { signal });
     for (const malformed of [
       null,
       {},
@@ -215,13 +215,13 @@ describe('monitor list API contracts', () => {
       [{ category: 'http', value: 'website', label: 'Website', hide: 'false' }]
     ]) {
       http.apiMessageGet.mockResolvedValueOnce(malformed);
-      await expect(loadMonitorApps()).rejects.toBeInstanceOf(MonitorContractError);
+      await expect(loadMonitorApps('en-US')).rejects.toBeInstanceOf(MonitorContractError);
     }
   });
 
   it('accepts nullable hierarchy metadata and falls back to the required value label', async () => {
     http.apiMessageGet.mockResolvedValue([{ value: 'custom', category: null, label: null, hide: null }]);
-    const apps = await loadMonitorApps();
+    const apps = await loadMonitorApps('en-US');
     expect(apps).toEqual([{ value: 'custom', category: null, label: null, hide: null }]);
     expect(monitorAppOptions(apps)).toEqual([{ value: 'custom', label: 'custom' }]);
   });

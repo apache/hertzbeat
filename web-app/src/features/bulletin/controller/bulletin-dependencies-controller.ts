@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { resolveLocale } from '@/core/i18n/i18n';
+import { resolveLocale, type SupportedLocale } from '@/core/i18n/i18n';
 import {
   classifyMonitorReadError,
   loadMonitorAppHierarchy,
@@ -73,8 +73,8 @@ function useBulletinDependencyResources(draft: BulletinDraft | null, canRead: bo
   const app = draft?.app ?? '';
   const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const apps = useQuery({
-    queryKey: bulletinQueryKeys.apps(),
-    queryFn: loadBulletinApps,
+    queryKey: bulletinQueryKeys.apps(locale),
+    queryFn: ({ signal }) => loadBulletinApps(locale, signal),
     enabled: canRead && draft != null,
     retry: false,
     staleTime: bulletinDependencyStaleTimeMs
@@ -111,8 +111,8 @@ export function resolveBulletinDependencies(
   return { kind, fieldSelection, monitorSelection, metricTree: metricTree ?? [], ...records };
 }
 
-export function loadBulletinApps({ signal }: { signal: AbortSignal }) {
-  return loadMonitorApps(signal);
+export function loadBulletinApps(locale: SupportedLocale, signal?: AbortSignal) {
+  return loadMonitorApps(locale, signal);
 }
 
 export function buildBulletinDependencyRecords(

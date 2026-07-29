@@ -17,7 +17,9 @@
 
 import { focusManager, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { resolveLocale } from '@/core/i18n/i18n';
 import { loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import type { MonitorQuery } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
@@ -34,7 +36,9 @@ export function monitorListQueryOptions(query: MonitorQuery) {
 }
 
 export function useMonitorListResources(query: MonitorQuery) {
+  const { i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const { app, labels, order, pageIndex, pageSize, search, sort, status } = query;
   const stableQuery = useMemo(
     () => ({ app, labels, order, pageIndex, pageSize, search, sort, status }),
@@ -44,8 +48,8 @@ export function useMonitorListResources(query: MonitorQuery) {
   const readMode = useRef('authoritative') as MonitorListReadModeRef;
   const monitors = useQuery(options);
   const apps = useQuery({
-    queryKey: monitorQueryKeys.apps(),
-    queryFn: ({ signal }) => loadMonitorApps(signal),
+    queryKey: monitorQueryKeys.apps(locale),
+    queryFn: ({ signal }) => loadMonitorApps(locale, signal),
     retry: false
   });
 

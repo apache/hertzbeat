@@ -40,7 +40,7 @@ const historySource = {
 describe('Monitor Query Key factory', () => {
   it('keeps equivalent resource inputs stable', () => {
     expect(monitorQueryKeys.list(listQuery)).toEqual(monitorQueryKeys.list({ ...listQuery }));
-    expect(monitorQueryKeys.apps()).toEqual(monitorQueryKeys.apps());
+    expect(monitorQueryKeys.apps('en-US')).toEqual(monitorQueryKeys.apps('en-US'));
     expect(monitorQueryKeys.detail(7)).toEqual(monitorQueryKeys.detail(7));
     expect(monitorQueryKeys.collectors()).toEqual(monitorQueryKeys.collectors());
     expect(monitorQueryKeys.appDefines('website')).toEqual(monitorQueryKeys.appDefines('website'));
@@ -73,6 +73,7 @@ describe('Monitor Query Key factory', () => {
   });
 
   it('separates editor and metric resources by every result-changing input', () => {
+    expect(monitorQueryKeys.apps('pt-BR')).not.toEqual(monitorQueryKeys.apps('en-US'));
     expect(monitorQueryKeys.detail(8)).not.toEqual(monitorQueryKeys.detail(7));
     expect(monitorQueryKeys.appDefines('jvm')).not.toEqual(monitorQueryKeys.appDefines('website'));
     expect(monitorQueryKeys.sdDefines('ssh')).not.toEqual(monitorQueryKeys.sdDefines('http'));

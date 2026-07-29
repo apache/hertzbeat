@@ -16,13 +16,23 @@
  */
 
 import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MonitorQuery } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
 import { monitorListAutoRefreshMs, useMonitorListResources } from './use-monitor-list-resources';
+
+const runtime = vi.hoisted(() => ({ locale: 'en' }));
+const api = vi.hoisted(() => ({ loadMonitorApps: vi.fn() }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: runtime.locale, resolvedLanguage: runtime.locale } })
+}));
+vi.mock('../api/monitor-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/monitor-api')>()),
+  loadMonitorApps: api.loadMonitorApps
+}));
 
 const query: MonitorQuery = {
   search: '',
@@ -37,7 +47,12 @@ const query: MonitorQuery = {
 const page = { content: [], totalElements: 0 };
 
 describe('useMonitorListResources', () => {
-  beforeEach(() => vi.useFakeTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+    runtime.locale = 'en';
+    api.loadMonitorApps.mockReset();
+    api.loadMonitorApps.mockResolvedValue([]);
+  });
   afterEach(() => {
     cleanup();
     focusManager.setFocused(undefined);
@@ -50,7 +65,7 @@ describe('useMonitorListResources', () => {
       defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false, staleTime: Infinity } }
     });
     client.setQueryData(monitorQueryKeys.list(query), page);
-    client.setQueryData(monitorQueryKeys.apps(), []);
+    client.setQueryData(monitorQueryKeys.apps('en-US'), []);
     const fetchQuery = vi.spyOn(client, 'fetchQuery');
     focusManager.setFocused(false);
     const rendered = renderHook(() => useMonitorListResources(query), { wrapper: wrapper(client) });
@@ -69,6 +84,20 @@ describe('useMonitorListResources', () => {
     });
     expect(fetchQuery).toHaveBeenCalledTimes(1);
     expect(rendered.result.current.readMode.current).toBe('automatic');
+  });
+
+  it('reloads application labels when the active locale changes', async () => {
+    vi.useRealTimers();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const rendered = renderHook(() => useMonitorListResources(query), { wrapper: wrapper(client) });
+
+    await waitFor(() => expect(api.loadMonitorApps).toHaveBeenLastCalledWith('en-US', expect.any(AbortSignal)));
+
+    runtime.locale = 'pt';
+    rendered.rerender();
+
+    await waitFor(() => expect(api.loadMonitorApps).toHaveBeenLastCalledWith('pt-BR', expect.any(AbortSignal)));
+    expect(api.loadMonitorApps).toHaveBeenCalledTimes(2);
   });
 });
 

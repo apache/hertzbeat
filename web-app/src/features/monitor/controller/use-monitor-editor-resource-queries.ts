@@ -2,7 +2,9 @@
 
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { resolveLocale } from '@/core/i18n/i18n';
 import { loadLabelSuggestions } from '@/features/settings';
 
 import { loadMonitorApps, loadMonitorCollectors, loadMonitorDetail, loadMonitorParamDefines } from '../api/monitor-api';
@@ -31,10 +33,12 @@ export function useMonitorEditorResourceQueries(input: MonitorEditorResourceInpu
 }
 
 function useMonitorEditorBaseQueries(input: MonitorEditorResourceInput) {
+  const { i18n } = useTranslation();
+  const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const detailId = input.mode === 'edit' ? input.id : undefined;
   const apps = useQuery({
-    queryKey: monitorQueryKeys.apps(),
-    queryFn: ({ signal }) => loadMonitorApps(signal),
+    queryKey: monitorQueryKeys.apps(locale),
+    queryFn: ({ signal }) => loadMonitorApps(locale, signal),
     enabled: input.validRoute,
     retry: false
   });

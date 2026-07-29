@@ -25,12 +25,12 @@ describe('bulletin controller boundaries', () => {
     expect(classifyBulletinMonitorError(new Error('unexpected'))).toBe('error');
   });
 
-  it('unwraps TanStack query context and converges application metadata', async () => {
+  it('forwards the resolved locale and cancellation when loading application metadata', async () => {
     const signal = new AbortController().signal;
     const apps = [{ value: 'website', label: 'Website', hide: false }];
     const load = vi.spyOn(monitorApi, 'loadMonitorApps').mockResolvedValue(apps);
-    await expect(loadBulletinApps({ signal })).resolves.toEqual(apps);
-    expect(load).toHaveBeenCalledWith(signal);
+    await expect(loadBulletinApps('en-US', signal)).resolves.toEqual(apps);
+    expect(load).toHaveBeenCalledWith('en-US', signal);
   });
 
   it('keeps monitor-authoring applications even when hidden from definition settings', () => {

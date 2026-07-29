@@ -103,6 +103,7 @@ describe('Bulletin dependency controller', () => {
 
     await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
     expect(hook.result.current).toMatchObject({ monitorSelection: 'valid', fieldSelection: 'valid' });
+    expect(monitor.loadMonitorApps).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
     expect(monitor.loadMonitors).not.toHaveBeenCalled();
     expect(monitor.loadMonitorAppHierarchy).not.toHaveBeenCalled();
   });

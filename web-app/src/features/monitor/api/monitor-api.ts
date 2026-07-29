@@ -16,6 +16,7 @@
  */
 
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
+import type { SupportedLocale } from '@/core/i18n/i18n';
 import {
   MonitorContractError,
   monitorStatusFilters,
@@ -113,10 +114,9 @@ export async function loadMonitors(query: MonitorQuery, signal?: AbortSignal) {
   return parseMonitorPage(value, query);
 }
 
-export function loadMonitorApps(): Promise<MonitorApp[]>;
-export function loadMonitorApps(signal: AbortSignal): Promise<MonitorApp[]>;
-export async function loadMonitorApps(signal?: AbortSignal) {
-  const value = await apiMessageGet('/api/apps/hierarchy', signal ? { signal } : undefined);
+export async function loadMonitorApps(locale: SupportedLocale, signal?: AbortSignal) {
+  const path = `/api/apps/hierarchy?${new URLSearchParams({ lang: locale }).toString()}`;
+  const value = await apiMessageGet(path, signal ? { signal } : undefined);
   return parseMonitorApps(value);
 }
 

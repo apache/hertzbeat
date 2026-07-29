@@ -33,6 +33,7 @@ const api = vi.hoisted(() => ({
   saveMonitor: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), info: vi.fn(), success: vi.fn(), warning: vi.fn() }));
+const runtime = vi.hoisted(() => ({ locale: 'en' }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
@@ -41,7 +42,12 @@ vi.mock('antd', async importOriginal => ({
   ...(await importOriginal<typeof import('antd')>()),
   App: { useApp: () => ({ message: notify }) }
 }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: runtime.locale, resolvedLanguage: runtime.locale }
+  })
+}));
 
 import { useMonitorEditorController } from './use-monitor-editor-controller';
 import { monitorQueryKeys } from './monitor-query-keys';
@@ -90,6 +96,7 @@ const headersDefine = {
 describe('useMonitorEditorController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runtime.locale = 'en';
     api.loadMonitorApps.mockResolvedValue([{ value: 'website', label: 'Website' }]);
     api.loadMonitorCollectors.mockResolvedValue([{ name: 'collector-a', online: true }]);
     api.loadMonitorDetail.mockResolvedValue(detail);
@@ -114,9 +121,20 @@ describe('useMonitorEditorController', () => {
   it('forwards query AbortSignals and creates a draft from URL application state', async () => {
     const routed = renderController('new', '/monitors/new?app=website&scrape=static');
     await waitFor(() => expect(routed.current().state.draft?.monitor.app).toBe('website'));
-    expect(api.loadMonitorApps).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(api.loadMonitorApps).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
     expect(api.loadMonitorCollectors).toHaveBeenCalledWith(expect.any(AbortSignal));
     expect(api.loadMonitorParamDefines).toHaveBeenCalledWith('website', expect.any(AbortSignal));
+  });
+
+  it('reloads editor application labels when the active locale changes', async () => {
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(api.loadMonitorApps).toHaveBeenLastCalledWith('en-US', expect.any(AbortSignal)));
+
+    runtime.locale = 'pt';
+    await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=static'));
+
+    await waitFor(() => expect(api.loadMonitorApps).toHaveBeenLastCalledWith('pt-BR', expect.any(AbortSignal)));
+    expect(api.loadMonitorApps).toHaveBeenCalledTimes(2);
   });
 
   it('locks detect and save commands, aborting without notifying when the source changes', async () => {

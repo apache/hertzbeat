@@ -37,7 +37,7 @@ export const monitorQueryKeys = {
       query.pageIndex,
       query.pageSize
     ] as const,
-  apps: () => [...rootKey, 'apps'] as const,
+  apps: (locale: string) => [...rootKey, 'apps', locale] as const,
   detail: (id: number | undefined) => [...rootKey, 'detail', id] as const,
   collectors: () => [...rootKey, 'collectors'] as const,
   labelSuggestions: () => [...rootKey, 'editor', 'label-suggestions'] as const,
