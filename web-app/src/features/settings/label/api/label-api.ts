@@ -16,7 +16,8 @@
  */
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
-import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
+import { buildLabelDisplayName } from '@/shared/labels/label-display-model';
+import type { LabelDrilldownCatalog } from '@/shared/labels/label-suggestion-model';
 
 import {
   LabelContractError,
@@ -25,7 +26,7 @@ import {
   type LabelPage,
   type LabelRecord
 } from '../model/label-model';
-import { labelApiRequest } from './label-api-failure';
+import { labelApiRequest, LabelTransportFailure } from './label-api-failure';
 import { parseLabelPage, parseLabelWriteReceipt } from './label-schema';
 
 export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
@@ -59,7 +60,7 @@ export async function loadLabels(query: LabelListRequest, signal?: AbortSignal) 
   return parseLabelPage(response, query);
 }
 
-export async function loadLabelSuggestions(signal?: AbortSignal): Promise<LabelSuggestionCatalog> {
+export async function loadLabelSuggestions(signal?: AbortSignal): Promise<LabelDrilldownCatalog> {
   const request = { search: '', pageIndex: 0, pageSize: 100 };
   const first = await loadLabels(request, signal);
   assertBoundedProof(first.totalPages);
@@ -185,7 +186,15 @@ function normalizeLabelValue(value?: string) {
   return value?.trim() ?? '';
 }
 
-function buildLabelSuggestionCatalog(labels: LabelRecord[]): LabelSuggestionCatalog {
+export function classifyLabelSuggestionFailure(reason: unknown): 'permission' | 'unavailable' | 'contract' | 'error' {
+  if (reason instanceof LabelContractError) return 'contract';
+  if (reason instanceof LabelTransportFailure) {
+    if (reason.kind === 'permission' || reason.kind === 'unavailable') return reason.kind;
+  }
+  return 'error';
+}
+
+function buildLabelSuggestionCatalog(labels: LabelRecord[]): LabelDrilldownCatalog {
   const catalog = new Map<string, Set<string>>();
   labels.forEach(label => {
     const key = label.name.trim();
@@ -198,6 +207,7 @@ function buildLabelSuggestionCatalog(labels: LabelRecord[]): LabelSuggestionCata
   const keys = [...catalog.keys()].sort();
   return {
     keys,
-    valuesByKey: Object.fromEntries(keys.map(key => [key, [...(catalog.get(key) ?? [])].sort()]))
+    valuesByKey: Object.fromEntries(keys.map(key => [key, [...(catalog.get(key) ?? [])].sort()])),
+    displayNames: [...new Set(labels.map(buildLabelDisplayName))].sort()
   };
 }

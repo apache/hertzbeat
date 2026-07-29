@@ -29,10 +29,16 @@ const api = vi.hoisted(() => ({
   loadDashboardRecentAlerts: vi.fn()
 }));
 const collectors = vi.hoisted(() => ({ loadCollectorManagementPage: vi.fn() }));
+const labels = vi.hoisted(() => ({
+  classifyLabelSuggestionFailure: vi.fn(),
+  loadLabelSuggestions: vi.fn()
+}));
 vi.mock('../api/dashboard-api', () => api);
-vi.mock('@/features/settings/collector', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/settings/collector')>()),
-  loadCollectorManagementPage: collectors.loadCollectorManagementPage
+vi.mock('@/features/settings', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/settings')>()),
+  classifyLabelSuggestionFailure: labels.classifyLabelSuggestionFailure,
+  loadCollectorManagementPage: collectors.loadCollectorManagementPage,
+  loadLabelSuggestions: labels.loadLabelSuggestions
 }));
 
 describe('dashboard controller', () => {
@@ -42,6 +48,12 @@ describe('dashboard controller', () => {
     api.loadDashboardAlertSummary.mockResolvedValue(alert(2));
     api.loadDashboardRecentAlerts.mockResolvedValue(recentAlertPage());
     collectors.loadCollectorManagementPage.mockResolvedValue(collectorPage([collector]));
+    labels.loadLabelSuggestions.mockResolvedValue({
+      keys: ['env', 'region'],
+      valuesByKey: { env: ['prod'], region: [] },
+      displayNames: ['env:prod', 'region']
+    });
+    labels.classifyLabelSuggestionFailure.mockReturnValue('error');
   });
   afterEach(() => vi.useRealTimers());
 
@@ -102,6 +114,38 @@ describe('dashboard controller', () => {
     expect(collectorSignal).not.toBe(api.loadDashboardSummary.mock.calls[0]?.[0]);
     expect(collectorSignal).not.toBe(api.loadDashboardAlertSummary.mock.calls[0]?.[0]);
   });
+
+  it('loads exact label drilldowns as independent Dashboard evidence', async () => {
+    const view = renderController();
+
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        labelState: { kind: 'ready', labels: ['env:prod', 'region'] },
+        monitorState: { kind: 'ready' },
+        alertState: { kind: 'ready' }
+      })
+    );
+
+    expect(labels.loadLabelSuggestions).toHaveBeenCalledWith(expect.any(AbortSignal));
+    const labelSignal = labels.loadLabelSuggestions.mock.calls[0]?.[0];
+    expect(labelSignal).not.toBe(api.loadDashboardSummary.mock.calls[0]?.[0]);
+    expect(labelSignal).not.toBe(collectors.loadCollectorManagementPage.mock.calls[0]?.[1]);
+  });
+
+  it.each(['permission', 'unavailable', 'contract', 'error'] as const)(
+    'keeps ready Dashboard sections visible when label evidence is %s',
+    async kind => {
+      const reason = new Error(kind);
+      labels.loadLabelSuggestions.mockRejectedValue(reason);
+      labels.classifyLabelSuggestionFailure.mockReturnValue(kind);
+      const view = renderController();
+
+      await waitFor(() => expect(view.result.current.labelState).toEqual({ kind }));
+      expect(labels.classifyLabelSuggestionFailure).toHaveBeenCalledWith(reason);
+      expect(view.result.current.monitorState).toEqual({ kind: 'ready', apps: [app] });
+      expect(view.result.current.alertState).toMatchObject({ kind: 'ready', summary: { total: 2 } });
+    }
+  );
 
   it('keeps ready summaries visible while collector evidence loads, then publishes authoritative empty', async () => {
     const pending = deferred<ReturnType<typeof collectorPage>>();
@@ -170,6 +214,7 @@ describe('dashboard controller', () => {
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
     expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(2);
+    expect(labels.loadLabelSuggestions).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardSummary.mock.calls[1]?.[0]).not.toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
     await waitFor(() => expect(view.result.current.monitorState).toEqual({ kind: 'unavailable' }));
     expect(view.result.current.alertState).toMatchObject({ kind: 'ready', summary: { total: 9 } });
@@ -206,12 +251,14 @@ describe('dashboard controller', () => {
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(1);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(1);
     expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(1);
+    expect(labels.loadLabelSuggestions).toHaveBeenCalledTimes(1);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
     expect(collectors.loadCollectorManagementPage).toHaveBeenCalledTimes(2);
+    expect(labels.loadLabelSuggestions).toHaveBeenCalledTimes(2);
     expect(view.result.current.monitorState).toHaveProperty('apps');
     expect(view.result.current.alertState).toHaveProperty('summary');
   });

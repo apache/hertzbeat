@@ -220,6 +220,45 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('link', { name: appName })).toHaveAttribute('href', expectedTarget);
   });
 
+  it('uses the central monitor-list builder for exact label drilldowns', () => {
+    const label = 'region:west/east & prod';
+    controller.useDashboardController.mockReturnValue(
+      withCollector({
+        labelState: { kind: 'ready', labels: [label] },
+        monitorState: { kind: 'ready', apps: [app] },
+        alertState: { kind: 'ready', summary: alert(1) },
+        refresh: vi.fn()
+      })
+    );
+    renderPage();
+
+    const expectedTarget = buildMonitorListPath({ labels: label });
+    expect(expectedTarget).toBe('/monitors?labels=region%3Awest%2Feast+%26+prod');
+    expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', expectedTarget);
+  });
+
+  it.each([
+    ['empty', 'dashboard.labels.empty'],
+    ['permission', 'dashboard.labels.states.permission'],
+    ['unavailable', 'dashboard.labels.states.unavailable'],
+    ['contract', 'dashboard.labels.states.contract'],
+    ['error', 'dashboard.labels.states.error']
+  ] as const)('renders label %s independently from ready summaries', (kind, messageKey) => {
+    controller.useDashboardController.mockReturnValue(
+      withCollector({
+        labelState: { kind },
+        monitorState: { kind: 'ready', apps: [app] },
+        alertState: { kind: 'ready', summary: alert(2) },
+        refresh: vi.fn()
+      })
+    );
+    renderPage();
+
+    expect(screen.getByLabelText(i18n.t('dashboard.labels.title'))).toHaveTextContent(i18n.t(messageKey));
+    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
+    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('2');
+  });
+
   it('renders read-only collector status without hiding ready monitor and alert evidence', () => {
     controller.useDashboardController.mockReturnValue(
       withCollector(
@@ -321,7 +360,7 @@ const collector = {
   instrumentationIntake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
 };
 function withCollector<T extends object>(value: T, collectorState: object = { kind: 'empty' }) {
-  return { recentAlertState: { kind: 'empty' }, ...value, collectorState };
+  return { labelState: { kind: 'empty' }, recentAlertState: { kind: 'empty' }, ...value, collectorState };
 }
 function alert(total: number) {
   return {

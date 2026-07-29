@@ -33,6 +33,7 @@ import { LabelContractError } from '../model/label-model';
 import { LabelTransportFailure } from './label-api-failure';
 import {
   buildLabelPayload,
+  classifyLabelSuggestionFailure,
   deleteLabel,
   findCanonicalLabel,
   LabelCanonicalProofLimitError,
@@ -174,17 +175,29 @@ describe('label API', () => {
           { ...label, id: 8, name: ' region ', tagValue: ' west ' },
           { ...label, id: 7, name: 'env', tagValue: 'prod' },
           { ...label, id: 9, name: 'env', tagValue: ' staging ' },
-          { ...label, id: 10, name: 'env', tagValue: 'prod' }
+          { ...label, id: 10, name: 'env', tagValue: 'prod' },
+          { ...label, id: 11, name: 'region', tagValue: ' ' }
         ],
-        { totalElements: 4 }
+        { totalElements: 5 }
       )
     );
 
     await expect(loadLabelSuggestions(signal)).resolves.toEqual({
       keys: ['env', 'region'],
-      valuesByKey: { env: ['prod', 'staging'], region: ['west'] }
+      valuesByKey: { env: ['prod', 'staging'], region: ['west'] },
+      displayNames: ['env:prod', 'env:staging', 'region', 'region:west']
     });
     expect(apiMessageGet).toHaveBeenCalledWith(`${labelEndpoint}?pageIndex=0&pageSize=100`, { signal });
+  });
+
+  it.each([
+    [new LabelTransportFailure('permission'), 'permission'],
+    [new LabelTransportFailure('unavailable'), 'unavailable'],
+    [new LabelContractError(), 'contract'],
+    [new LabelTransportFailure('error'), 'error'],
+    [new Error('unknown'), 'error']
+  ] as const)('classifies label suggestion failure without leaking transport detail', (reason, kind) => {
+    expect(classifyLabelSuggestionFailure(reason)).toBe(kind);
   });
 
   it.each([

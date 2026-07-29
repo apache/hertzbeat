@@ -111,6 +111,18 @@ describe('monitor list API contracts', () => {
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/monitors?pageIndex=0&pageSize=10', { signal });
   });
 
+  it('forwards the canonical label drilldown to the Monitor list endpoint', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue(page);
+
+    await loadMonitors({ ...query, labels: 'region:west/east & prod' }, signal);
+
+    expect(http.apiMessageGet).toHaveBeenCalledWith(
+      '/api/monitors?pageIndex=0&pageSize=10&labels=region%3Awest%2Feast+%26+prod',
+      { signal }
+    );
+  });
+
   it.each([
     null,
     {},

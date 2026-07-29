@@ -962,6 +962,16 @@
         "contract": "Os alertas ativos recentes não correspondem ao contrato esperado.",
         "error": "Não foi possível carregar os alertas ativos recentes."
       }
+    },
+    "labels": {
+      "title": "Rótulos de monitores",
+      "empty": "Nenhum rótulo de monitor está configurado.",
+      "states": {
+        "permission": "Você não tem permissão para ler os rótulos de monitores.",
+        "unavailable": "Os rótulos de monitores estão indisponíveis.",
+        "contract": "Os rótulos de monitores não correspondem ao contrato esperado.",
+        "error": "Não foi possível carregar os rótulos de monitores."
+      }
     }
   },
   "bulletin": {

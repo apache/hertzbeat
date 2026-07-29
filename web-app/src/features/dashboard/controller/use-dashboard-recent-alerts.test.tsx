@@ -17,10 +17,12 @@ const api = vi.hoisted(() => ({
   loadDashboardRecentAlerts: vi.fn()
 }));
 const collectors = vi.hoisted(() => ({ loadCollectorManagementPage: vi.fn() }));
+const labels = vi.hoisted(() => ({ loadLabelSuggestions: vi.fn() }));
 vi.mock('../api/dashboard-api', () => api);
-vi.mock('@/features/settings/collector', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/settings/collector')>()),
-  loadCollectorManagementPage: collectors.loadCollectorManagementPage
+vi.mock('@/features/settings', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/settings')>()),
+  loadCollectorManagementPage: collectors.loadCollectorManagementPage,
+  loadLabelSuggestions: labels.loadLabelSuggestions
 }));
 
 describe('Dashboard recent firing alerts', () => {
@@ -30,6 +32,7 @@ describe('Dashboard recent firing alerts', () => {
     api.loadDashboardAlertSummary.mockResolvedValue(alertSummary);
     api.loadDashboardRecentAlerts.mockResolvedValue(recentPage([recentAlert]));
     collectors.loadCollectorManagementPage.mockResolvedValue(collectorPage);
+    labels.loadLabelSuggestions.mockResolvedValue({ keys: [], valuesByKey: {}, displayNames: [] });
   });
   afterEach(() => vi.useRealTimers());
 

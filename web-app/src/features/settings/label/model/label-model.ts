@@ -16,7 +16,10 @@
  */
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
+import { buildLabelDisplayName } from '@/shared/labels/label-display-model';
 import type { PagedCollection } from '@/shared/pagination';
+
+export { buildLabelDisplayName } from '@/shared/labels/label-display-model';
 
 export const labelResourceName = 'labels' as const;
 
@@ -97,11 +100,6 @@ export type LabelListState =
   | { kind: 'unavailable' }
   | { kind: 'error' }
   | { kind: 'ready'; records: LabelRecord[]; total: number };
-
-export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
-  const value = label.tagValue?.trim();
-  return value ? `${label.name}:${value}` : label.name;
-}
 
 export function buildLabelMonitorPath(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
   return buildMonitorListPath({ labels: buildLabelDisplayName(label) });

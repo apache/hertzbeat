@@ -11,7 +11,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
-import type { CollectorListState, CollectorRecord } from '@/features/settings/collector';
+import type { CollectorListState, CollectorRecord } from '@/features/settings';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 import styles from './dashboard.module.css';
 

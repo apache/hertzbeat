@@ -57,6 +57,14 @@ export type DashboardRecentAlertState =
   | { kind: 'contract' }
   | { kind: 'error' }
   | { kind: 'ready'; records: AlertRecord[]; total: number };
+export type DashboardLabelState =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'contract' }
+  | { kind: 'error' }
+  | { kind: 'ready'; labels: string[] };
 
 export class DashboardContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {

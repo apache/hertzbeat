@@ -115,6 +115,7 @@ function dashboardState(recentAlertState: object, alertKind: 'ready' | 'unavaila
     monitorState: { kind: 'ready', apps: [app] },
     alertState: alertKind === 'ready' ? { kind: 'ready', summary: alertSummary } : { kind: alertKind },
     recentAlertState,
+    labelState: { kind: 'empty' },
     collectorState: { kind: 'empty' },
     refresh: vi.fn()
   };

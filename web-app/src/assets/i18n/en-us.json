@@ -957,6 +957,16 @@
         "contract": "Recent firing alerts did not match the expected contract.",
         "error": "Recent firing alerts could not be loaded."
       }
+    },
+    "labels": {
+      "title": "Monitor labels",
+      "empty": "No monitor labels are configured.",
+      "states": {
+        "permission": "You do not have permission to read monitor labels.",
+        "unavailable": "Monitor labels are unavailable.",
+        "contract": "Monitor labels did not match the expected contract.",
+        "error": "Monitor labels could not be loaded."
+      }
     }
   },
   "bulletin": {

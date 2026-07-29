@@ -17,15 +17,18 @@
 import { useQuery } from '@tanstack/react-query';
 
 import {
+  classifyLabelSuggestionFailure,
   collectorQueryKeys,
+  loadLabelSuggestions,
   loadCollectorManagementPage,
   resolveCollectorListState,
   type CollectorQuery
-} from '@/features/settings/collector';
+} from '@/features/settings';
 import { loadDashboardAlertSummary, loadDashboardRecentAlerts, loadDashboardSummary } from '../api/dashboard-api';
 import {
   dashboardFailureKind,
   type DashboardAlertState,
+  type DashboardLabelState,
   type DashboardMonitorState,
   type DashboardRecentAlertState
 } from '../model/dashboard-model';
@@ -59,20 +62,40 @@ export function useDashboardController() {
     retry: false,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
+  const labelQuery = useQuery({
+    queryKey: dashboardQueryKeys.labels(),
+    queryFn: ({ signal }) => loadLabelSuggestions(signal),
+    retry: false,
+    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
+  });
   return {
     monitorState: monitorState(monitorQuery.isPending, monitorQuery.error, monitorQuery.data),
     alertState: alertState(alertQuery.isPending, alertQuery.error, alertQuery.data),
     recentAlertState: recentAlertState(recentAlertQuery.isPending, recentAlertQuery.error, recentAlertQuery.data),
     collectorState: resolveCollectorListState(collectorQuery, false, true),
+    labelState: labelState(labelQuery.isPending, labelQuery.error, labelQuery.data),
     refresh: async () => {
       await Promise.allSettled([
         monitorQuery.refetch(),
         alertQuery.refetch(),
         recentAlertQuery.refetch(),
-        collectorQuery.refetch()
+        collectorQuery.refetch(),
+        labelQuery.refetch()
       ]);
     }
   };
+}
+
+function labelState(
+  pending: boolean,
+  error: Error | null,
+  result: Awaited<ReturnType<typeof loadLabelSuggestions>> | undefined
+): DashboardLabelState {
+  if (pending) return { kind: 'loading' };
+  if (error) return { kind: classifyLabelSuggestionFailure(error) };
+  if (!result) return { kind: 'error' };
+  if (result.displayNames.length === 0) return { kind: 'empty' };
+  return { kind: 'ready', labels: result.displayNames };
 }
 
 function recentAlertState(

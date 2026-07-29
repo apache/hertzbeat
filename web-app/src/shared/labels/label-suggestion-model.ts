@@ -4,3 +4,7 @@ export type LabelSuggestionCatalog = {
   keys: string[];
   valuesByKey: Record<string, string[]>;
 };
+
+export type LabelDrilldownCatalog = LabelSuggestionCatalog & {
+  displayNames: string[];
+};
