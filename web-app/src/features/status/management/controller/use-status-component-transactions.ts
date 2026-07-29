@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
@@ -21,11 +21,7 @@ import {
   startComponentSave,
   type ComponentWriteContext
 } from './status-component-write-operations';
-import {
-  type StatusDeleteReceipt,
-  type StatusWriteRecovery,
-  useStatusOperationScope
-} from './status-transaction-recovery';
+import { useStatusDeleteRecovery, useStatusWriteRecovery } from './status-transaction-recovery';
 import type { StatusManagementNotifications } from './use-status-management-notifications';
 
 type ComponentEditor = { complete: (epoch: number) => void; currentEpoch: () => number };
@@ -37,62 +33,34 @@ export function useStatusComponentTransactions(
   retireIncidentDetail: () => void
 ) {
   const queryClient = useQueryClient();
-  const [saving, setSaving] = useState(false);
-  const [writeRecovery, setWriteRecovery] = useState<'proof' | 'commit-uncertain'>();
-  const [deleteRecovery, setDeleteRecovery] = useState(false);
-  const [deleteRecoveryPending, setDeleteRecoveryPending] = useState(false);
   const committedDeletes = useRef(new Set<number>());
-  const writeRecoveryProofPending = useRef(false);
-  const deleteRecoveryProofPending = useRef(false);
-  const writeOperation = useStatusOperationScope(command);
-  const deleteOperation = useStatusOperationScope(command);
-  const writeRecoveryRef = useRef<StatusWriteRecovery<StatusComponent> | undefined>(undefined);
-  const deleteRecoveryRef = useRef<StatusDeleteReceipt | undefined>(undefined);
+  const write = useStatusWriteRecovery<StatusComponent>(command);
+  const deletion = useStatusDeleteRecovery(command);
   const writeContext: ComponentWriteContext = {
-    command: writeOperation.command,
+    ...write.context,
     editor,
     retireIncidentDetail,
     notify,
     queryClient,
-    committedDeletes,
-    recovery: writeRecoveryRef,
-    recoveryProofPending: writeRecoveryProofPending,
-    setSaving,
-    setWriteRecovery
+    committedDeletes
   };
   const deleteContext: ComponentDeleteContext = {
-    command: deleteOperation.command,
+    ...deletion.context,
     retireIncidentDetail,
     notify,
     queryClient,
-    committedDeletes,
-    recovery: deleteRecoveryRef,
-    recoveryProofPending: deleteRecoveryProofPending,
-    setDeleteRecovery,
-    setDeleteRecoveryPending
+    committedDeletes
   };
   return {
     save: (value: StatusComponent) => startComponentSave(writeContext, value),
     retryWrite: () => retryComponentWrite(writeContext),
     remove: (id: number) => startComponentRemove(deleteContext, id),
     refresh: () => refreshComponentProjection(deleteContext),
-    retireWrite: () => {
-      writeOperation.retire();
-      writeRecoveryRef.current = undefined;
-      writeRecoveryProofPending.current = false;
-      setSaving(false);
-      setWriteRecovery(undefined);
-    },
-    retireDelete: () => {
-      deleteOperation.retire();
-      deleteRecoveryRef.current = undefined;
-      deleteRecoveryProofPending.current = false;
-      setDeleteRecovery(false);
-      setDeleteRecoveryPending(false);
-    },
-    saving,
-    writeRecovery,
-    deleteRecovery,
-    deleteRecoveryPending
+    retireWrite: write.retire,
+    retireDelete: deletion.retire,
+    saving: write.saving,
+    writeRecovery: write.stage,
+    deleteRecovery: deletion.recovering,
+    deleteRecoveryPending: deletion.proofPendingState
   };
 }

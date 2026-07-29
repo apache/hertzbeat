@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
 
@@ -50,3 +50,55 @@ export type StatusDeleteReceipt = {
   id: number;
   owner: StatusOperationOwner;
 };
+
+export function useStatusWriteRecovery<T>(command: ExclusiveOperation) {
+  const operation = useStatusOperationScope(command);
+  const [saving, setSaving] = useState(false);
+  const [stage, setStage] = useState<'proof' | 'commit-uncertain'>();
+  const recovery = useRef<StatusWriteRecovery<T> | undefined>(undefined);
+  const proofPending = useRef(false);
+  return {
+    context: {
+      command: operation.command,
+      recovery,
+      recoveryProofPending: proofPending,
+      setSaving,
+      setWriteRecovery: setStage
+    },
+    saving,
+    stage,
+    retire: () => {
+      operation.retire();
+      recovery.current = undefined;
+      proofPending.current = false;
+      setSaving(false);
+      setStage(undefined);
+    }
+  };
+}
+
+export function useStatusDeleteRecovery(command: ExclusiveOperation) {
+  const operation = useStatusOperationScope(command);
+  const [recovering, setRecovering] = useState(false);
+  const [proofPendingState, setProofPendingState] = useState(false);
+  const recovery = useRef<StatusDeleteReceipt | undefined>(undefined);
+  const proofPending = useRef(false);
+  return {
+    context: {
+      command: operation.command,
+      recovery,
+      recoveryProofPending: proofPending,
+      setDeleteRecovery: setRecovering,
+      setDeleteRecoveryPending: setProofPendingState
+    },
+    recovering,
+    proofPendingState,
+    retire: () => {
+      operation.retire();
+      recovery.current = undefined;
+      proofPending.current = false;
+      setRecovering(false);
+      setProofPendingState(false);
+    }
+  };
+}

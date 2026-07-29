@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
@@ -18,11 +18,7 @@ import {
   type IncidentDeleteContext
 } from './status-incident-delete-operations';
 import { retryIncidentWrite, startIncidentSave, type IncidentWriteContext } from './status-incident-write-operations';
-import {
-  type StatusDeleteReceipt,
-  type StatusWriteRecovery,
-  useStatusOperationScope
-} from './status-transaction-recovery';
+import { useStatusDeleteRecovery, useStatusWriteRecovery } from './status-transaction-recovery';
 import type { StatusManagementNotifications } from './use-status-management-notifications';
 
 type IncidentEditor = { complete: (epoch: number) => void; currentEpoch: () => number; retireDetail: () => void };
@@ -33,68 +29,45 @@ export function useStatusIncidentTransactions(
   editor: IncidentEditor,
   notify: StatusManagementNotifications
 ) {
-  const [saving, setSaving] = useState(false);
-  const [writeRecovery, setWriteRecovery] = useState<'proof' | 'commit-uncertain'>();
-  const [deleteRecovery, setDeleteRecovery] = useState(false);
-  const [deleteRecoveryPending, setDeleteRecoveryPending] = useState(false);
-  const latestQuery = useRef(query);
-  useLayoutEffect(() => {
-    latestQuery.current = query;
-  }, [query]);
+  const latestQuery = useLatestIncidentQuery(query);
   const queryClient = useQueryClient();
   const committedDeletes = useRef(new Set<number>());
-  const writeRecoveryProofPending = useRef(false);
-  const deleteRecoveryProofPending = useRef(false);
-  const writeOperation = useStatusOperationScope(command);
-  const deleteOperation = useStatusOperationScope(command);
-  const writeRecoveryRef = useRef<StatusWriteRecovery<StatusIncident> | undefined>(undefined);
-  const deleteRecoveryRef = useRef<StatusDeleteReceipt | undefined>(undefined);
+  const write = useStatusWriteRecovery<StatusIncident>(command);
+  const deletion = useStatusDeleteRecovery(command);
   const writeContext: IncidentWriteContext = {
+    ...write.context,
     query: latestQuery,
-    command: writeOperation.command,
     editor,
     notify,
     queryClient,
-    committedDeletes,
-    recovery: writeRecoveryRef,
-    recoveryProofPending: writeRecoveryProofPending,
-    setSaving,
-    setWriteRecovery
+    committedDeletes
   };
   const deleteContext: IncidentDeleteContext = {
+    ...deletion.context,
     query: latestQuery,
-    command: deleteOperation.command,
     retireDetail: editor.retireDetail,
     notify,
     queryClient,
-    committedDeletes,
-    recovery: deleteRecoveryRef,
-    recoveryProofPending: deleteRecoveryProofPending,
-    setDeleteRecovery,
-    setDeleteRecoveryPending
+    committedDeletes
   };
   return {
     save: (value: StatusIncident) => startIncidentSave(writeContext, value),
     retryWrite: () => retryIncidentWrite(writeContext),
     remove: (id: number) => startIncidentRemove(deleteContext, id),
     refresh: () => refreshIncidentProjection(deleteContext),
-    retireWrite: () => {
-      writeOperation.retire();
-      writeRecoveryRef.current = undefined;
-      writeRecoveryProofPending.current = false;
-      setSaving(false);
-      setWriteRecovery(undefined);
-    },
-    retireDelete: () => {
-      deleteOperation.retire();
-      deleteRecoveryRef.current = undefined;
-      deleteRecoveryProofPending.current = false;
-      setDeleteRecovery(false);
-      setDeleteRecoveryPending(false);
-    },
-    saving,
-    writeRecovery,
-    deleteRecovery,
-    deleteRecoveryPending
+    retireWrite: write.retire,
+    retireDelete: deletion.retire,
+    saving: write.saving,
+    writeRecovery: write.stage,
+    deleteRecovery: deletion.recovering,
+    deleteRecoveryPending: deletion.proofPendingState
   };
+}
+
+function useLatestIncidentQuery(query: StatusIncidentQuery) {
+  const latestQuery = useRef(query);
+  useLayoutEffect(() => {
+    latestQuery.current = query;
+  }, [query]);
+  return latestQuery;
 }

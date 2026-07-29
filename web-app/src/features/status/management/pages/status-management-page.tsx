@@ -29,9 +29,6 @@ export function StatusManagementPage() {
   const controller = useStatusManagementController();
   const statusOrg = controller.org.kind === 'ready' ? controller.org.record : undefined;
   const statusComponents = controller.components.kind === 'ready' ? controller.components.records : [];
-  const statusIncidents = controller.incidents.kind === 'ready' ? controller.incidents.records : [];
-  const incidentTotal = controller.incidents.kind === 'ready' ? controller.incidents.total : 0;
-  const { query } = controller.incidentQuery;
   return (
     <div className={styles.page}>
       <StatusManagementHeader publicStatusHref={publicStatusPath} />
@@ -59,34 +56,51 @@ export function StatusManagementPage() {
         onEdit={controller.editComponent}
         onDelete={controller.deleteComponent}
       />
-      <StatusIncidentSection
-        canCreate={controller.capabilities.canCreate}
-        canUpdate={controller.capabilities.canUpdate}
-        canDelete={controller.capabilities.canDelete}
-        orgId={statusOrg?.id}
-        componentCount={statusComponents.length}
-        draftSearch={controller.incidentQuery.draftSearch}
-        state={controller.incidents}
-        detailLoading={controller.incidentDetailLoading}
-        detailState={controller.incidentDetailState}
-        records={statusIncidents}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        total={incidentTotal}
-        commandLocked={controller.commandLocked}
-        deleteRecovery={controller.incidentDeleteRecovery}
-        deleteRecoveryPending={controller.incidentDeleteRecoveryPending}
-        onDraftSearch={controller.incidentQuery.setDraftSearch}
-        onQuery={controller.incidentQuery.submit}
-        onRefresh={controller.refreshIncidents}
-        onNew={controller.openNewIncident}
-        onPageChange={controller.incidentQuery.changePage}
-        onEdit={controller.openIncident}
-        onDelete={controller.deleteIncident}
-      />
+      <StatusIncidentWorkspace controller={controller} orgId={statusOrg?.id} componentCount={statusComponents.length} />
 
       <StatusEditorLayer controller={controller} components={statusComponents} />
     </div>
+  );
+}
+
+function StatusIncidentWorkspace({
+  controller,
+  orgId,
+  componentCount
+}: {
+  controller: ReturnType<typeof useStatusManagementController>;
+  orgId: number | undefined;
+  componentCount: number;
+}) {
+  const records = controller.incidents.kind === 'ready' ? controller.incidents.records : [];
+  const total = controller.incidents.kind === 'ready' ? controller.incidents.total : 0;
+  const { query } = controller.incidentQuery;
+  return (
+    <StatusIncidentSection
+      canCreate={controller.capabilities.canCreate}
+      canUpdate={controller.capabilities.canUpdate}
+      canDelete={controller.capabilities.canDelete}
+      orgId={orgId}
+      componentCount={componentCount}
+      draftSearch={controller.incidentQuery.draftSearch}
+      state={controller.incidents}
+      detailLoading={controller.incidentDetailLoading}
+      detailState={controller.incidentDetailState}
+      records={records}
+      pageIndex={query.pageIndex}
+      pageSize={query.pageSize}
+      total={total}
+      commandLocked={controller.commandLocked}
+      deleteRecovery={controller.incidentDeleteRecovery}
+      deleteRecoveryPending={controller.incidentDeleteRecoveryPending}
+      onDraftSearch={controller.incidentQuery.setDraftSearch}
+      onQuery={controller.incidentQuery.submit}
+      onRefresh={controller.refreshIncidents}
+      onNew={controller.openNewIncident}
+      onPageChange={controller.incidentQuery.changePage}
+      onEdit={controller.openIncident}
+      onDelete={controller.deleteIncident}
+    />
   );
 }
 

@@ -48,22 +48,12 @@ export function PublicStatusIncidents({
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
-        <Space>
-          <Typography.Text>{t('status.incidentYear')}</Typography.Text>
-          <InputNumber
-            aria-label={t('status.incidentYear')}
-            precision={0}
-            min={earliestPublicStatusIncidentYear}
-            max={new Date().getFullYear()}
-            value={range.year}
-            onChange={value => {
-              if (typeof value === 'number') onYearChange(value);
-            }}
-          />
-          <Button loading={refreshing} onClick={() => void onRefresh()}>
-            {t('common.refresh')}
-          </Button>
-        </Space>
+        <IncidentYearToolbar
+          year={range.year}
+          refreshing={refreshing}
+          onYearChange={onYearChange}
+          onRefresh={onRefresh}
+        />
       </div>
       {loading ? (
         <Skeleton active paragraph={{ rows: 3 }} />
@@ -95,6 +85,38 @@ export function PublicStatusIncidents({
         <Empty description={t('status.noIncidents')} />
       )}
     </section>
+  );
+}
+
+function IncidentYearToolbar({
+  year,
+  refreshing,
+  onYearChange,
+  onRefresh
+}: {
+  year: number;
+  refreshing: boolean;
+  onYearChange: (year: number) => void;
+  onRefresh: () => unknown;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Space>
+      <Typography.Text>{t('status.incidentYear')}</Typography.Text>
+      <InputNumber
+        aria-label={t('status.incidentYear')}
+        precision={0}
+        min={earliestPublicStatusIncidentYear}
+        max={new Date().getFullYear()}
+        value={year}
+        onChange={value => {
+          if (typeof value === 'number') onYearChange(value);
+        }}
+      />
+      <Button loading={refreshing} onClick={() => void onRefresh()}>
+        {t('common.refresh')}
+      </Button>
+    </Space>
   );
 }
 
