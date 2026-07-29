@@ -8,6 +8,7 @@
 type MonitorDefinitionOrigin = 'builtin' | 'custom' | 'override';
 type MonitorDefinitionOperation = 'create' | 'update';
 export type MonitorDefinitionDeleteDisposition = 'removed' | 'builtin_restored';
+export const MONITOR_DEFINITION_APP_MAX_LENGTH = 128;
 
 export type MonitorDefinitionCatalogItem = {
   app: string;
@@ -103,6 +104,43 @@ export function monitorDefinitionDraftRequiredFailure(
 
 export function userCanWriteMonitorDefinitions(roles: readonly string[]) {
   return roles.includes('ADMIN');
+}
+
+export function readMonitorDefinitionAppQuery(params: URLSearchParams) {
+  const rawApp = params.get('app');
+  const app = normalizeMonitorDefinitionRouteApp(rawApp);
+  const canonical = writeMonitorDefinitionAppQuery(params, app);
+  return { app, canonicalSearch: canonical.toString() };
+}
+
+export function writeMonitorDefinitionAppQuery(params: URLSearchParams, app: string | null) {
+  const next = new URLSearchParams(params);
+  const normalized = normalizeMonitorDefinitionRouteApp(app);
+  if (normalized) next.set('app', normalized);
+  else next.delete('app');
+  return next;
+}
+
+export function normalizeMonitorDefinitionRouteApp(value: string | null) {
+  const app = value?.trim() ?? '';
+  if (
+    !app ||
+    app.length > MONITOR_DEFINITION_APP_MAX_LENGTH ||
+    Array.from(app).some(character => /\p{Cc}/u.test(character))
+  )
+    return null;
+  return app;
+}
+
+export function monitorDefinitionWorkspaceApp(workspace: MonitorDefinitionWorkspace | null) {
+  if (!workspace) return null;
+  if (workspace.kind === 'loading' || workspace.kind === 'error') return workspace.app;
+  if (workspace.kind === 'view') return workspace.detail.app;
+  return workspace.draft.expectedApp;
+}
+
+export function monitorDefinitionWorkspaceHasUncertainWrite(workspace: MonitorDefinitionWorkspace | null) {
+  return workspace?.kind === 'edit' && workspace.writeRecovery === 'uncertain';
 }
 
 export function monitorDefinitionCanRefreshAuthoritativeDraft(workspace: MonitorDefinitionWorkspace) {

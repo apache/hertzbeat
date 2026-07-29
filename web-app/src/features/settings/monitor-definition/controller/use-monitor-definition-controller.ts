@@ -19,6 +19,7 @@ import {
 } from '../model/monitor-definition-model';
 import { monitorDefinitionQueryKeys } from './monitor-definition-query-keys';
 import { useMonitorDefinitionDelete } from './use-monitor-definition-delete';
+import { useMonitorDefinitionRouteController } from './use-monitor-definition-route-controller';
 import { useMonitorDefinitionWorkspace } from './use-monitor-definition-workspace';
 
 export function useMonitorDefinitionController() {
@@ -45,6 +46,7 @@ export function useMonitorDefinitionController() {
     publish: (value: NonNullable<typeof catalog.data>) => queryClient.setQueryData(catalogQueryKey, value)
   };
   const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language, onChanged: changed });
+  const routeActions = useMonitorDefinitionRouteController(workspace.workspace, workspace.actions);
   const deletion = useMonitorDefinitionDelete(canWrite, catalogProof, changed);
   const records = catalog.data?.items ?? [];
   const failure = catalog.error instanceof MonitorDefinitionRequestError ? catalog.error.kind : 'error';
@@ -65,6 +67,7 @@ export function useMonitorDefinitionController() {
     workspace: workspace.workspace,
     actions: {
       ...workspace.actions,
+      ...routeActions,
       ...deletion.actions,
       refresh: () => void catalog.refetch(),
       setSearch

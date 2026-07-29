@@ -7,7 +7,12 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { buildCreateDraft, type MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
+import {
+  buildCreateDraft,
+  monitorDefinitionWorkspaceApp,
+  monitorDefinitionWorkspaceHasUncertainWrite,
+  type MonitorDefinitionWorkspace
+} from '../model/monitor-definition-model';
 import {
   proveOwnedMonitorDefinitionCatalog,
   type MonitorDefinitionCatalogProof
@@ -45,7 +50,10 @@ export function useMonitorDefinitionWorkspace(options: {
   }, [options.canWrite, owner]);
   useEffect(() => () => owner.retire(), [owner]);
   const context = { workspace, workspaceRef, canWriteRef, actionEpoch, owner, setWorkspace, ...options };
-  return { workspace, actions: { ...workspaceOpenActions(context), ...workspaceEditorActions(context) } };
+  return {
+    workspace,
+    actions: { ...workspaceOpenActions(context), ...workspaceEditorActions(context), ...workspaceRouteActions(context) }
+  };
 }
 
 type WorkspaceActionContext = {
@@ -64,16 +72,21 @@ type WorkspaceActionContext = {
 function workspaceOpenActions(context: WorkspaceActionContext) {
   const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, language } = context;
   return {
-    openView: (app: string) =>
-      owner.busy() ? Promise.resolve() : loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace),
-    openEdit: (app: string) =>
-      !canWriteRef.current || !owner.matches(actionEpoch) || owner.busy()
-        ? Promise.resolve()
-        : loadMonitorDefinitionWorkspace('edit', app, language, owner, setWorkspace),
+    openView: (app: string) => {
+      if (workspaceOpenBlocked(owner, workspaceRef.current)) return rejectedWorkspaceOpen();
+      return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace));
+    },
+    openEdit: (app: string) => {
+      if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
+        return rejectedWorkspaceOpen();
+      return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('edit', app, language, owner, setWorkspace));
+    },
     openCreate: () => {
-      if (!canWriteRef.current || !owner.matches(actionEpoch) || owner.busy()) return;
+      if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
+        return false;
       owner.retire();
       setWorkspace(editMonitorDefinitionWorkspace(buildCreateDraft()));
+      return true;
     },
     retryWorkspace: () =>
       owner.matches(actionEpoch) &&
@@ -84,6 +97,18 @@ function workspaceOpenActions(context: WorkspaceActionContext) {
         ? loadMonitorDefinitionWorkspace(workspace.mode, workspace.app, language, owner, setWorkspace)
         : Promise.resolve()
   };
+}
+
+function workspaceOpenBlocked(owner: MonitorDefinitionOperationOwner, workspace: MonitorDefinitionWorkspace | null) {
+  return owner.busy() || monitorDefinitionWorkspaceHasUncertainWrite(workspace);
+}
+
+function rejectedWorkspaceOpen() {
+  return { admitted: false as const, completion: Promise.resolve() };
+}
+
+function admittedWorkspaceOpen(completion: Promise<void>) {
+  return { admitted: true as const, completion };
 }
 
 function workspaceEditorActions(context: WorkspaceActionContext) {
@@ -107,9 +132,10 @@ function workspaceEditorActions(context: WorkspaceActionContext) {
         owner.closeBlocked() ||
         (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
       )
-        return;
+        return false;
       owner.retire();
       setWorkspace(null);
+      return true;
     },
     setDefinition: (definition: string) => {
       if (
@@ -126,6 +152,26 @@ function workspaceEditorActions(context: WorkspaceActionContext) {
     save: () => run('save'),
     refreshAuthoritativeDraft: () => run('refresh'),
     retryWorkspaceProof: () => retryWorkspaceCatalogProof(context)
+  };
+}
+
+function workspaceRouteActions(context: WorkspaceActionContext) {
+  const { owner, workspaceRef, setWorkspace, language } = context;
+  return {
+    followRoute: (app: string | null) => {
+      const current = workspaceRef.current;
+      if (app && monitorDefinitionWorkspaceApp(current) === app) return true;
+      // Route identity may retire reads and ordinary drafts, but never owns an exclusive or uncertain command.
+      if (owner.closeBlocked() || monitorDefinitionWorkspaceHasUncertainWrite(current)) return false;
+      if (!app) {
+        if (!current) return true;
+        owner.retire();
+        setWorkspace(null);
+        return true;
+      }
+      void loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace);
+      return true;
+    }
   };
 }
 

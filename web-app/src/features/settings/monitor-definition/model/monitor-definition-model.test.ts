@@ -11,6 +11,9 @@ import {
   buildCreateDraft,
   buildUpdateDraft,
   filterMonitorDefinitions,
+  MONITOR_DEFINITION_APP_MAX_LENGTH,
+  readMonitorDefinitionAppQuery,
+  writeMonitorDefinitionAppQuery,
   monitorDefinitionDraftRequiredFailure,
   monitorDefinitionFailureMessageKey,
   userCanWriteMonitorDefinitions
@@ -73,5 +76,33 @@ describe('monitor definition model', () => {
     expect(monitorDefinitionFailureMessageKey('definition-required')).toBe(
       'monitorDefinitions.failure.definitionRequired'
     );
+  });
+
+  it('reads and writes the canonical app query without owning sibling parameters', () => {
+    expect(readMonitorDefinitionAppQuery(new URLSearchParams('scope=all&app=%20mysql%20'))).toEqual({
+      app: 'mysql',
+      canonicalSearch: 'scope=all&app=mysql'
+    });
+    expect(writeMonitorDefinitionAppQuery(new URLSearchParams('scope=all&app=mysql'), ' jvm ').toString()).toBe(
+      'scope=all&app=jvm'
+    );
+    expect(writeMonitorDefinitionAppQuery(new URLSearchParams('scope=all&app=mysql'), '  ').toString()).toBe(
+      'scope=all'
+    );
+  });
+
+  it('removes unsafe app query values before a detail request can consume them', () => {
+    const unsafe = `mysql${String.fromCharCode(0)}`;
+
+    expect(readMonitorDefinitionAppQuery(new URLSearchParams({ scope: 'all', app: unsafe }))).toEqual({
+      app: null,
+      canonicalSearch: 'scope=all'
+    });
+    expect(
+      readMonitorDefinitionAppQuery(new URLSearchParams({ app: 'x'.repeat(MONITOR_DEFINITION_APP_MAX_LENGTH + 1) }))
+    ).toEqual({
+      app: null,
+      canonicalSearch: ''
+    });
   });
 });

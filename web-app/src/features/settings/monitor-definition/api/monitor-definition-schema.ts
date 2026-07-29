@@ -7,12 +7,13 @@
 
 import { z } from 'zod';
 
-import type {
-  MonitorDefinitionCatalog,
-  MonitorDefinitionDelete,
-  MonitorDefinitionDetail,
-  MonitorDefinitionValidation,
-  MonitorDefinitionValidationRequest
+import {
+  MONITOR_DEFINITION_APP_MAX_LENGTH,
+  type MonitorDefinitionCatalog,
+  type MonitorDefinitionDelete,
+  type MonitorDefinitionDetail,
+  type MonitorDefinitionValidation,
+  type MonitorDefinitionValidationRequest
 } from '../model/monitor-definition-model';
 
 export class MonitorDefinitionContractError extends Error {
@@ -32,7 +33,7 @@ const revision = z.string().regex(/^[0-9a-f]{64}$/);
 const origin = z.enum(['builtin', 'custom', 'override']);
 const item = z
   .object({
-    app: safeText.max(128),
+    app: safeText.max(MONITOR_DEFINITION_APP_MAX_LENGTH),
     label: safeText,
     origin,
     editable: z.boolean(),
@@ -45,7 +46,7 @@ const detail = item.extend({ schemaVersion: z.literal(1), definition }).strict()
 const validationRequest = z
   .object({
     operation: z.enum(['create', 'update']),
-    expectedApp: safeText.max(128).nullable(),
+    expectedApp: safeText.max(MONITOR_DEFINITION_APP_MAX_LENGTH).nullable(),
     definition
   })
   .strict()
@@ -58,13 +59,18 @@ const validationRequest = z
     }
   });
 const validation = z
-  .object({ schemaVersion: z.literal(1), valid: z.literal(true), app: safeText.max(128), origin })
+  .object({
+    schemaVersion: z.literal(1),
+    valid: z.literal(true),
+    app: safeText.max(MONITOR_DEFINITION_APP_MAX_LENGTH),
+    origin
+  })
   .strict();
 const writeRequest = z.object({ definition }).strict();
 const deleted = z
   .object({
     schemaVersion: z.literal(1),
-    app: safeText.max(128),
+    app: safeText.max(MONITOR_DEFINITION_APP_MAX_LENGTH),
     disposition: z.enum(['removed', 'builtin_restored'])
   })
   .strict();
