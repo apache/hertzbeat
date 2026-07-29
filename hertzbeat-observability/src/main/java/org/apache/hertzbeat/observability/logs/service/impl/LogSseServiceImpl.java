@@ -43,14 +43,17 @@ public class LogSseServiceImpl implements LogSseService {
         LogSseFilterCriteria effectiveCriteria = filterCriteria == null
                 ? new LogSseFilterCriteria()
                 : filterCriteria;
+        bindRequestWorkspace(effectiveCriteria);
         effectiveCriteria.validate();
         Long clientId = SnowFlakeIdGenerator.generateId();
-        bindRequestWorkspace(effectiveCriteria);
         return emitterManager.createEmitter(clientId, effectiveCriteria);
     }
 
     private void bindRequestWorkspace(LogSseFilterCriteria filterCriteria) {
-        filterCriteria.setWorkspaceId(
-                AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()));
+        String workspaceId = AuthTokenRequestContext.currentAuthenticatedWorkspaceId();
+        if (workspaceId == null || workspaceId.isBlank()) {
+            throw new IllegalArgumentException("Authenticated workspace is required");
+        }
+        filterCriteria.setWorkspaceId(AuthTokenScopes.normalizeWorkspaceId(workspaceId));
     }
 }

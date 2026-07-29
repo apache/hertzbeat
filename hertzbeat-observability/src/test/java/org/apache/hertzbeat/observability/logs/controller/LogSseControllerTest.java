@@ -62,6 +62,7 @@ class LogSseControllerTest {
     void setUp() {
         LogSseController logSseController = new LogSseController(new LogSseServiceImpl(emitterManager));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logSseController).build();
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId("default");
     }
 
     @AfterEach
@@ -156,7 +157,7 @@ class LogSseControllerTest {
 
     @Test
     void subscribeBindsRequestWorkspaceToLiveLogCriteria() throws Exception {
-        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        AuthTokenRequestContext.bindAuthenticatedWorkspaceId("team-a");
 
         mockMvc.perform(get("/api/logs/sse/subscribe")
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
@@ -175,7 +176,7 @@ class LogSseControllerTest {
     }
 
     @Test
-    void subscribeUsesDefaultAuthenticatedWorkspaceInsteadOfClientWorkspace() throws Exception {
+    void subscribeUsesAuthenticatedWorkspaceInsteadOfClientWorkspace() throws Exception {
         mockMvc.perform(get("/api/logs/sse/subscribe")
                         .param("workspaceId", "client-controlled")
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
@@ -183,6 +184,18 @@ class LogSseControllerTest {
 
         verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
         Assertions.assertEquals("default", filterCriteriaCaptor.getValue().getWorkspaceId());
+    }
+
+    @Test
+    void subscribeRejectsMissingAuthenticatedWorkspaceWithoutOpeningEmitter() throws Exception {
+        AuthTokenRequestContext.clear();
+
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .param("workspaceId", "client-controlled")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isForbidden());
+
+        verify(emitterManager, never()).createEmitter(anyLong(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

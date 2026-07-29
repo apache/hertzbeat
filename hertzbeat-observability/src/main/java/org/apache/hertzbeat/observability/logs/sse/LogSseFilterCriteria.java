@@ -125,6 +125,9 @@ public class LogSseFilterCriteria {
     }
 
     Predicate<LogEntry> compile() {
+        if (!StringUtils.hasText(workspaceId)) {
+            throw new IllegalArgumentException("Workspace boundary is required");
+        }
         return new CompiledMatcher(
                 severityNumber,
                 severityText,

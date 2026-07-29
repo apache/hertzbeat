@@ -117,7 +117,10 @@ public class LogSseManager {
     }
 
     SseEmitter createEmitter(Long clientId, LogSseFilterCriteria filters, SseEmitter emitter) {
-        Predicate<LogEntry> matcher = filters == null ? ignored -> true : filters.compile();
+        if (filters == null) {
+            throw new IllegalArgumentException("Workspace-bound log filters are required");
+        }
+        Predicate<LogEntry> matcher = filters.compile();
         ExecutorService sender = new ThreadPoolExecutor(
                 1,
                 1,

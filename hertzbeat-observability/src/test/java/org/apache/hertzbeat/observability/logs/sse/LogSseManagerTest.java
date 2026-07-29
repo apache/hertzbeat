@@ -50,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -80,7 +81,7 @@ class LogSseManagerTest {
     @Test
     void shouldCreateAndStoreEmitter() {
         // When: Creating a new emitter for a client
-        SseEmitter emitter = logSseManager.createEmitter(CLIENT_ID, new LogSseFilterCriteria());
+        SseEmitter emitter = logSseManager.createEmitter(CLIENT_ID, defaultWorkspaceCriteria());
 
         // Then: The emitter should be created and stored
         assertNotNull(emitter);
@@ -89,10 +90,19 @@ class LogSseManagerTest {
     }
 
     @Test
+    void shouldRejectNullOrUnboundWorkspaceCriteria() {
+        assertThrows(IllegalArgumentException.class,
+                () -> logSseManager.createEmitter(CLIENT_ID, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> logSseManager.createEmitter(CLIENT_ID, new LogSseFilterCriteria()));
+        assertFalse(hasSubscriber(CLIENT_ID));
+    }
+
+    @Test
     void subscriberRegistrationMustShareTheBroadcastQueueBoundary() throws Exception {
         Object queueLock = readPrivateField("queueLock");
         FutureTask<SseEmitter> registration = new FutureTask<>(
-                () -> logSseManager.createEmitter(CLIENT_ID, null));
+                () -> logSseManager.createEmitter(CLIENT_ID, defaultWorkspaceCriteria()));
         Thread registrationThread;
         synchronized (queueLock) {
             registrationThread = Thread.ofVirtual().start(registration);
@@ -203,6 +213,22 @@ class LogSseManagerTest {
 
         // Then: The log is sent only to the client subscribed to "INFO" logs
         verify(errorEmitter, never()).send(any(SseEmitter.SseEventBuilder.class));
+    }
+
+    @Test
+    void shouldBroadcastOnlyWithinSubscriberWorkspace() throws IOException, InterruptedException {
+        LogSseFilterCriteria filters = new LogSseFilterCriteria();
+        filters.setWorkspaceId("team-a");
+        SseEmitter emitter = mock(SseEmitter.class);
+        logSseManager.createEmitter(CLIENT_ID, filters, emitter);
+
+        logSseManager.broadcast(LogEntry.builder()
+                .resource(Map.of("hertzbeat.workspace_id", "team-b"))
+                .body("other workspace")
+                .build());
+
+        Thread.sleep(300);
+        verify(emitter, never()).send(any(SseEmitter.SseEventBuilder.class));
     }
 
     @Test
@@ -814,7 +840,18 @@ class LogSseManagerTest {
      * Helper method to create a subscriber and inject a mock emitter for testing
      */
     private void subscribeClient(Long clientId, LogSseFilterCriteria filters, SseEmitter mockEmitter) {
+        if (filters == null) {
+            filters = defaultWorkspaceCriteria();
+        } else if (filters.getWorkspaceId() == null) {
+            filters.setWorkspaceId("default");
+        }
         logSseManager.createEmitter(clientId, filters, mockEmitter);
+    }
+
+    private LogSseFilterCriteria defaultWorkspaceCriteria() {
+        LogSseFilterCriteria criteria = new LogSseFilterCriteria();
+        criteria.setWorkspaceId("default");
+        return criteria;
     }
 
     /**
@@ -824,6 +861,7 @@ class LogSseManagerTest {
         return LogEntry.builder()
                 .severityText(severityText)
                 .body(body)
+                .resource(Map.of("hertzbeat.workspace_id", "default"))
                 .build();
     }
 

@@ -78,6 +78,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         throws IOException {
         AuthTokenRequestContext.clear();
         SubjectSum subject = SurenessContextHolder.getBindSubject();
+        bindAuthenticatedWorkspace(subject);
         bindRequestedWorkspace(request, subject);
         if (subject == null || !isManagedToken(subject)) {
             return true;
@@ -235,6 +236,13 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         String workspaceId = resolveRequestedWorkspaceId(request, subject);
         if (workspaceId != null) {
             AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+        }
+    }
+
+    private void bindAuthenticatedWorkspace(SubjectSum subject) {
+        String workspaceId = resolveSubjectWorkspaceId(subject);
+        if (workspaceId != null) {
+            AuthTokenRequestContext.bindAuthenticatedWorkspaceId(workspaceId);
         }
     }
 

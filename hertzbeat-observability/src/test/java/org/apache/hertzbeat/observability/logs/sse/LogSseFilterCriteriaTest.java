@@ -48,6 +48,7 @@ class LogSseFilterCriteriaTest {
                 .build();
 
         filterCriteria = new LogSseFilterCriteria();
+        filterCriteria.setWorkspaceId("default");
     }
 
     @Test
@@ -372,13 +373,28 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
-    void missingSubscriptionWorkspaceIsRestrictedToDefaultWorkspace() {
-        assertTrue(filterCriteria.matches(LogEntry.builder()
+    void missingSubscriptionWorkspaceFailsClosed() {
+        filterCriteria.setWorkspaceId(null);
+
+        assertThrows(IllegalArgumentException.class, filterCriteria::validate);
+        assertThrows(IllegalArgumentException.class, () -> filterCriteria.matches(LogEntry.builder()
                 .resource(java.util.Map.of("hertzbeat_workspace_id", "default"))
                 .build()));
-        assertFalse(filterCriteria.matches(LogEntry.builder()
-                .resource(java.util.Map.of("hertzbeat_workspace_id", "team-a"))
-                .build()));
+    }
+
+    @Test
+    void workspaceBoundaryRecognizesOnlySupportedResourceAliases() {
+        filterCriteria.setWorkspaceId("team-a");
+
+        for (String key : java.util.List.of(
+                "hertzbeat.workspace_id", "hertzbeat_workspace_id", "workspace_id", "workspace.id")) {
+            assertTrue(filterCriteria.matches(LogEntry.builder()
+                    .resource(java.util.Map.of(key, "team-a"))
+                    .build()));
+            assertFalse(filterCriteria.matches(LogEntry.builder()
+                    .resource(java.util.Map.of(key, "team-b"))
+                    .build()));
+        }
     }
 
     @Test
@@ -439,6 +455,7 @@ class LogSseFilterCriteriaTest {
         LogSseFilterCriteria criteria = new LogSseFilterCriteria(
                 9, "INFO", null, "1234567890abcdef1234567890abcdef", "1234567890abcdef"
         );
+        criteria.setWorkspaceId("default");
 
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
@@ -460,6 +477,7 @@ class LogSseFilterCriteriaTest {
         criteria.setLogContent("Test log");
         criteria.setTraceId("1234567890abcdef1234567890abcdef");
         criteria.setSpanId("1234567890abcdef");
+        criteria.setWorkspaceId("default");
 
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
