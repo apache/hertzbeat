@@ -26,12 +26,46 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
+import org.apache.hertzbeat.observability.shared.query.ObservabilityQueryRequestException;
 import org.springframework.data.domain.Page;
 
 /**
  * Read-only trace query service.
  */
 public interface EntityTraceQueryService {
+
+    /** Complete storage-neutral context for an exact trace detail query. */
+    record TraceDetailQuery(
+            Long entityId,
+            String traceId,
+            String spanId,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String resourceFilter,
+            String attributeFilter,
+            Long minDurationMs,
+            Long maxDurationMs) {
+
+        private static final String ID_PATTERN = "[A-Za-z0-9][A-Za-z0-9._:-]{0,127}";
+
+        public TraceDetailQuery {
+            if (!hasSafeId(traceId) || spanId != null && !hasSafeId(spanId)
+                    || start != null && start < 0 || end != null && end < 0
+                    || start != null && end != null && start > end
+                    || minDurationMs != null && minDurationMs < 0
+                    || maxDurationMs != null && maxDurationMs < 0
+                    || minDurationMs != null && maxDurationMs != null && minDurationMs > maxDurationMs) {
+                throw new ObservabilityQueryRequestException();
+            }
+        }
+
+        private static boolean hasSafeId(String value) {
+            return value != null && value.matches(ID_PATTERN);
+        }
+    }
 
     EntityTraceSummaryDto buildEntityTraceSummary(ObservedEntityContext entityContext);
 
@@ -77,7 +111,12 @@ public interface EntityTraceQueryService {
                 resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal);
     }
 
-    TraceDetailDto getTraceDetail(Long entityId, String traceId);
+    default TraceDetailDto getTraceDetail(Long entityId, String traceId) {
+        return getTraceDetail(new TraceDetailQuery(
+                entityId, traceId, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    TraceDetailDto getTraceDetail(TraceDetailQuery query);
 
     List<TraceSpanNodeDto> getTraceSpans(Long entityId, String traceId);
 

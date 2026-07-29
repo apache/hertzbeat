@@ -64,7 +64,7 @@ public record TelemetryQueryContextScope(String instance, String endpoint) {
             return normalizedFilter;
         }
         if (containsFilterKey(normalizedFilter, key)) {
-            throw new IllegalArgumentException(key + " must use the dedicated query parameter");
+            throw new ObservabilityQueryRequestException();
         }
         String exactFilter = key + "=\"" + value + "\"";
         return StringUtils.hasText(normalizedFilter) ? normalizedFilter + " and " + exactFilter : exactFilter;
@@ -82,7 +82,7 @@ public record TelemetryQueryContextScope(String instance, String endpoint) {
         }
         if (normalized.indexOf('#') >= 0 || normalized.startsWith("//") || normalized.contains("://")
                 || normalized.chars().anyMatch(Character::isWhitespace) || hasQueryString(normalized)) {
-            throw new IllegalArgumentException("Endpoint must be a low-cardinality HTTP route template");
+            throw new ObservabilityQueryRequestException();
         }
         return normalized;
     }
@@ -165,7 +165,7 @@ public record TelemetryQueryContextScope(String instance, String endpoint) {
         }
         if (normalized.length() > maxLength || normalized.indexOf('"') >= 0 || normalized.indexOf('\\') >= 0
                 || normalized.chars().anyMatch(Character::isISOControl)) {
-            throw new IllegalArgumentException(label + " contains unsupported characters");
+            throw new ObservabilityQueryRequestException();
         }
         return normalized;
     }

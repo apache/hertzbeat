@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -163,6 +164,71 @@ class TraceQueryControllerTest {
                 null, 100L, 200L, null, false, "checkout", "commerce", "prod",
                 "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
                 "http.route=\"/checkout\"");
+    }
+
+    @Test
+    void shouldForwardVerifiedContextToTraceDetailQuery() throws Exception {
+        TraceDetailQuery query = new TraceDetailQuery(
+                7L,
+                "trace-7",
+                "span-7",
+                100L,
+                200L,
+                "checkout",
+                "commerce",
+                "prod",
+                "hertzbeat.collector.id=\"collector-a\" and service.instance.id=\"checkout-7d9\"",
+                "http.route=\"/checkout\"",
+                10L,
+                500L);
+
+        mockMvc.perform(get("/api/traces/trace-7")
+                        .param("entityId", "7")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("spanId", "span-7")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("collectorId", "collector-a")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout")
+                        .param("minDurationMs", "10")
+                        .param("maxDurationMs", "500"))
+                .andExpect(status().isOk());
+
+        verify(entityTraceQueryService).getTraceDetail(query);
+    }
+
+    @Test
+    void shouldNotBypassVerifiedContextWhenQueryingTraceSpans() throws Exception {
+        TraceDetailQuery query = new TraceDetailQuery(
+                7L,
+                "trace-7",
+                null,
+                100L,
+                200L,
+                "checkout",
+                "commerce",
+                "prod",
+                "hertzbeat.collector.id=\"collector-a\" and service.instance.id=\"checkout-7d9\"",
+                "http.route=\"/checkout\"",
+                null,
+                null);
+
+        mockMvc.perform(get("/api/traces/trace-7/spans")
+                        .param("entityId", "7")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("collectorId", "collector-a")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout"))
+                .andExpect(status().isOk());
+
+        verify(entityTraceQueryService).getTraceDetail(query);
     }
 
     @Test

@@ -20,7 +20,9 @@
 package org.apache.hertzbeat.warehouse.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +31,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceRowQuery;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +50,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -648,6 +655,102 @@ class GreptimeTraceQueryRepositoryTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1'"));
         assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
         assertTrue(sql.endsWith("ORDER BY timestamp ASC LIMIT 25"));
+    }
+
+    @Test
+    void queryTraceRowsPushesTypedSpanAndAttributeContextIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+
+        repository.queryTraceRows(new TraceRowQuery(
+                "trace-'1",
+                "span-'1",
+                1710000000000L,
+                1710003600000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                100_000_000L,
+                500_000_000L,
+                "team-a",
+                Map.of(
+                        "hertzbeat.collector.id", Set.of("collector-a"),
+                        "service.instance.id", Set.of("checkout-7d9")),
+                Map.of("http.route", Set.of("/checkout")),
+                false),
+                25);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTrue(sql.contains("trace_id = 'trace-''1'"));
+        assertTrue(sql.contains("span_id = 'span-''1'"));
+        assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') "
+                + "= 'collector-a'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') "
+                + "= 'checkout-7d9'"));
+        assertTrue(sql.contains("json_get_string(span_attributes, '$[\"http.route\"]') = '/checkout'"));
+        assertTrue(sql.contains("duration_nano >= 100000000"));
+        assertTrue(sql.contains("duration_nano <= 500000000"));
+    }
+
+    @Test
+    void queryRecentTraceRowsPushesListAttributeContextBeforeApplyingLimit() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+
+        repository.queryRecentTraceRows(new TraceRowQuery(
+                null,
+                null,
+                1710000000000L,
+                1710003600000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                null,
+                null,
+                "team-a",
+                Map.of("service.instance.id", Set.of("checkout-7d9")),
+                Map.of("http.route", Set.of("/checkout")),
+                false),
+                1500);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') "
+                + "= 'checkout-7d9'"));
+        assertTrue(sql.contains("json_get_string(span_attributes, '$[\"http.route\"]') = '/checkout'"));
+        assertTrue(sql.endsWith("ORDER BY timestamp DESC LIMIT 1500"));
+    }
+
+    @Test
+    void queryFailureLogsOnlyStableCategoryWithoutSqlOrThrowableBody() {
+        String secretSentinel = "Bearer secret-token";
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString()))
+                .thenThrow(new IllegalStateException(secretSentinel));
+        Logger logger = (Logger) LoggerFactory.getLogger(GreptimeTraceQueryRepository.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            assertTrue(repository.queryTraceRows("trace-1", 5).isEmpty());
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        assertEquals(1, appender.list.size());
+        ILoggingEvent event = appender.list.getFirst();
+        assertEquals("Trace query failed", event.getFormattedMessage());
+        assertFalse(event.getFormattedMessage().contains(secretSentinel));
+        assertFalse(event.getFormattedMessage().contains("SELECT"));
+        assertNull(event.getThrowableProxy());
     }
 
     private void assertTraceSqlProjectsAttribution(String sql) {

@@ -717,6 +717,47 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
+    public List<Map<String, Object>> queryTraceRows(TraceRowQuery query, int limit) {
+        if (query == null || !StringUtils.hasText(query.traceId())) {
+            return Collections.emptyList();
+        }
+        return queryTraceRows(query, limit, true);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryRecentTraceRows(TraceRowQuery query, int limit) {
+        if (query == null) {
+            return Collections.emptyList();
+        }
+        return queryTraceRows(query, limit, false);
+    }
+
+    private List<Map<String, Object>> queryTraceRows(TraceRowQuery query, int limit, boolean exactTrace) {
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append(TRACE_SELECT_COLUMNS)
+                .append(" FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        if (StringUtils.hasText(query.traceId())) {
+            filters.add("trace_id = '" + escapeSql(query.traceId()) + "'");
+        } else if (exactTrace) {
+            return Collections.emptyList();
+        }
+        if (StringUtils.hasText(query.spanId())) {
+            filters.add("span_id = '" + escapeSql(query.spanId()) + "'");
+        }
+        addTraceRowFilters(filters, query);
+        if (!filters.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", filters));
+        }
+        sql.append(" ORDER BY timestamp ")
+                .append(exactTrace ? "ASC" : "DESC")
+                .append(" LIMIT ")
+                .append(Math.max(limit, 1));
+        return queryRows(sql.toString());
+    }
+
+    @Override
     public List<Map<String, Object>> queryTraceRows(String traceId,
                                                     int limit,
                                                     Long start,
@@ -775,13 +816,82 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         return queryRows(sql.toString());
     }
 
+    private void addTraceRowFilters(List<String> filters, TraceRowQuery query) {
+        if (query.start() != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + query.start() + ")");
+        }
+        if (query.end() != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + query.end() + ")");
+        }
+        if (StringUtils.hasText(query.serviceName())) {
+            filters.add("service_name = '" + escapeSql(query.serviceName()) + "'");
+        }
+        addTraceSpanFilters(
+                filters, query.operationName(), query.minDurationNanos(), query.maxDurationNanos());
+        if (StringUtils.hasText(query.serviceNamespace())) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", query.serviceNamespace()));
+        }
+        if (StringUtils.hasText(query.environment()) && !"all".equalsIgnoreCase(query.environment().trim())) {
+            String filter = environmentFilter(null, query.environment());
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(query.workspaceId())) {
+            String filter = workspaceFilter(null, query.workspaceId());
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        addResourceIdentityFilters(
+                filters, null, query.resourceFilters(), query.serviceName(), query.serviceNamespace());
+        addSpanAttributeFilters(filters, query.attributeFilters());
+        if (Boolean.TRUE.equals(query.hideInternal())) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+    }
+
+    private void addSpanAttributeFilters(List<String> filters, Map<String, Set<String>> attributeFilters) {
+        if (CollectionUtils.isEmpty(attributeFilters)) {
+            return;
+        }
+        attributeFilters.forEach((key, values) -> {
+            List<String> valueFilters = values.stream()
+                    .map(value -> spanAttributeFilter(key, value))
+                    .filter(StringUtils::hasText)
+                    .toList();
+            if (!valueFilters.isEmpty()) {
+                filters.add(valueFilters.size() == 1
+                        ? valueFilters.getFirst()
+                        : "(" + String.join(" OR ", valueFilters) + ")");
+            }
+        });
+    }
+
+    private String spanAttributeFilter(String key, String value) {
+        String expression = spanAttributeExpression(key);
+        return StringUtils.hasText(expression)
+                ? expression + " = '" + escapeSql(value.trim()) + "'"
+                : null;
+    }
+
+    private String spanAttributeExpression(String key) {
+        Set<String> columns = traceTableColumns();
+        String normalizedKey = key.trim();
+        String flattenedColumn = "span_attributes." + normalizedKey;
+        if (columns.contains(flattenedColumn)) {
+            return qualifiedColumn(null, flattenedColumn);
+        }
+        return "json_get_string(span_attributes, '$[\"" + escapeJsonPathKey(normalizedKey) + "\"]')";
+    }
+
     private List<Map<String, Object>> queryRows(String sql) {
         GreptimeSqlQueryExecutor executor = greptimeSqlQueryExecutorProvider.getIfAvailable();
         if (executor != null) {
             try {
                 return executor.execute(sql);
             } catch (Exception ex) {
-                log.warn("Query trace rows failed, sql={}, message={}", sql, ex.getMessage());
+                log.warn("Trace query failed");
                 return Collections.emptyList();
             }
         }
@@ -847,7 +957,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             }
             return results;
         } catch (Exception ex) {
-            log.warn("Query trace rows fallback failed, sql={}, message={}", sql, ex.getMessage());
+            log.warn("Trace query fallback failed");
             return Collections.emptyList();
         }
     }

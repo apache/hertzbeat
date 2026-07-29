@@ -31,6 +31,7 @@ import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanti
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService.TraceDetailQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -151,15 +152,95 @@ public class TraceQueryController {
     @GetMapping("/{traceId}")
     @Operation(summary = "Query single trace detail")
     public ResponseEntity<Message<TraceDetailDto>> detail(@PathVariable("traceId") String traceId,
-                                                          @RequestParam(value = "entityId", required = false) Long entityId) {
-        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceDetail(entityId, traceId)));
+                                                          @RequestParam(value = "entityId", required = false) Long entityId,
+                                                          @RequestParam(value = "start", required = false) Long start,
+                                                          @RequestParam(value = "end", required = false) Long end,
+                                                          @RequestParam(value = "spanId", required = false) String spanId,
+                                                          @RequestParam(value = "serviceName", required = false)
+                                                          String serviceName,
+                                                          @RequestParam(value = "serviceNamespace", required = false)
+                                                          String serviceNamespace,
+                                                          @RequestParam(value = "environment", required = false)
+                                                          String environment,
+                                                          @RequestParam(value = "collectorId", required = false)
+                                                          String collectorId,
+                                                          @RequestParam(value = "instance", required = false)
+                                                          String instance,
+                                                          @RequestParam(value = "endpoint", required = false)
+                                                          String endpoint,
+                                                          @RequestParam(value = "resourceFilter", required = false)
+                                                          String resourceFilter,
+                                                          @RequestParam(value = "attributeFilter", required = false)
+                                                          String attributeFilter,
+                                                          @RequestParam(value = "minDurationMs", required = false)
+                                                          Long minDurationMs,
+                                                          @RequestParam(value = "maxDurationMs", required = false)
+                                                          Long maxDurationMs) {
+        TraceDetailQuery query = detailQuery(
+                entityId, traceId, spanId, start, end, serviceName, serviceNamespace, environment, collectorId,
+                instance, endpoint, resourceFilter, attributeFilter, minDurationMs, maxDurationMs);
+        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceDetail(query)));
     }
 
     @GetMapping("/{traceId}/spans")
     @Operation(summary = "Query spans by trace id")
     public ResponseEntity<Message<List<TraceSpanNodeDto>>> spans(@PathVariable("traceId") String traceId,
-                                                                 @RequestParam(value = "entityId", required = false) Long entityId) {
-        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceSpans(entityId, traceId)));
+                                                                 @RequestParam(value = "entityId", required = false)
+                                                                 Long entityId,
+                                                                 @RequestParam(value = "start", required = false)
+                                                                 Long start,
+                                                                 @RequestParam(value = "end", required = false)
+                                                                 Long end,
+                                                                 @RequestParam(value = "spanId", required = false)
+                                                                 String spanId,
+                                                                 @RequestParam(value = "serviceName", required = false)
+                                                                 String serviceName,
+                                                                 @RequestParam(value = "serviceNamespace", required = false)
+                                                                 String serviceNamespace,
+                                                                 @RequestParam(value = "environment", required = false)
+                                                                 String environment,
+                                                                 @RequestParam(value = "collectorId", required = false)
+                                                                 String collectorId,
+                                                                 @RequestParam(value = "instance", required = false)
+                                                                 String instance,
+                                                                 @RequestParam(value = "endpoint", required = false)
+                                                                 String endpoint,
+                                                                 @RequestParam(value = "resourceFilter", required = false)
+                                                                 String resourceFilter,
+                                                                 @RequestParam(value = "attributeFilter", required = false)
+                                                                 String attributeFilter,
+                                                                 @RequestParam(value = "minDurationMs", required = false)
+                                                                 Long minDurationMs,
+                                                                 @RequestParam(value = "maxDurationMs", required = false)
+                                                                 Long maxDurationMs) {
+        TraceDetailQuery query = detailQuery(
+                entityId, traceId, spanId, start, end, serviceName, serviceNamespace, environment, collectorId,
+                instance, endpoint, resourceFilter, attributeFilter, minDurationMs, maxDurationMs);
+        TraceDetailDto detail = entityTraceQueryService.getTraceDetail(query);
+        return ResponseEntity.ok(Message.success(detail == null ? List.of() : detail.getSpans()));
+    }
+
+    private TraceDetailQuery detailQuery(
+            Long entityId,
+            String traceId,
+            String spanId,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String collectorId,
+            String instance,
+            String endpoint,
+            String resourceFilter,
+            String attributeFilter,
+            Long minDurationMs,
+            Long maxDurationMs) {
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, null, collectorId, instance, endpoint, resourceFilter, attributeFilter);
+        return new TraceDetailQuery(
+                entityId, traceId, spanId, start, end, serviceName, serviceNamespace, environment,
+                scopedFilters.resourceFilter(), scopedFilters.attributeFilter(), minDurationMs, maxDurationMs);
     }
 
     private String mergeEntityContextResourceFilter(Long entityId, String entityType, String resourceFilter) {

@@ -37,11 +37,11 @@ public final class CollectorResourceScope {
             return normalizedFilter;
         }
         if (!normalizedCollectorId.matches(COLLECTOR_ID_PATTERN)) {
-            throw new IllegalArgumentException("Collector ID contains unsupported characters");
+            throw new ObservabilityQueryRequestException();
         }
         if (StringUtils.hasText(normalizedFilter)
                 && normalizedFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID)) {
-            throw new IllegalArgumentException("Collector ID must use the dedicated query parameter");
+            throw new ObservabilityQueryRequestException();
         }
         String collectorFilter = OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID
                 + "=\"" + normalizedCollectorId + "\"";
