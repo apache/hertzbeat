@@ -26,7 +26,7 @@ describe('Collector deployment configuration', () => {
       host: '10.0.0.7; shutdown -h now'
     });
 
-    expect(command).toContain(`IDENTITY='edge'\"'\"'$(touch /tmp/collector-pwned)'`);
+    expect(command).toContain(`IDENTITY='edge'"'"'$(touch /tmp/collector-pwned)'`);
     expect(command).toContain(`MANAGER_HOST='10.0.0.7; shutdown -h now'`);
     expect(command).not.toContain('IDENTITY=edge');
     expect(command).not.toContain('MANAGER_HOST=10.0.0.7;');

@@ -18,7 +18,12 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn() }));
+type ApiMessagePost = typeof import('@/core/http/api-message').apiMessagePost;
+
+const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({
+  apiMessageGet: vi.fn(),
+  apiMessagePost: vi.fn<ApiMessagePost>()
+}));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
   apiMessageGet,

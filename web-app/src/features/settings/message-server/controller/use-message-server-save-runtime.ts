@@ -73,12 +73,13 @@ function useMessageServerRuntimeOwnership(setCommand: (command: SaveCommand) => 
     clearRecovery();
   }, [clearRecovery, setCommand]);
   useEffect(() => {
-    ownershipRef.current.mounted = true;
+    const ownership = ownershipRef.current;
+    ownership.mounted = true;
     return () => {
-      ownershipRef.current.mounted = false;
-      retire();
+      ownership.mounted = false;
+      invalidateOwnership(ownership);
     };
-  }, [retire]);
+  }, []);
 
   const isCurrent = (owner: MessageServerSaveOwner) => ownsCommand(ownershipRef.current, owner);
   const begin = (action: SaveAction) => {

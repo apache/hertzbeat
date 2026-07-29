@@ -50,8 +50,8 @@ export function useMessageServerSaveTransaction<Draft, Evidence extends Revision
   const { retire } = runtime;
   const canWriteRef = useRef(canWrite);
   const previousCanWriteRef = useRef(canWrite);
-  canWriteRef.current = canWrite;
   useLayoutEffect(() => {
+    canWriteRef.current = canWrite;
     const lostWriteAccess = previousCanWriteRef.current && !canWrite;
     previousCanWriteRef.current = canWrite;
     if (!lostWriteAccess) return;

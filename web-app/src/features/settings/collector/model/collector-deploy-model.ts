@@ -63,7 +63,7 @@ export function collectorDeployPackageConfig(deployment: CollectorDeployInfo) {
 }
 
 function quotePosixShell(value: string) {
-  return `'${value.replaceAll("'", `'\"'\"'`)}'`;
+  return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 
 function quoteYamlScalar(value: string) {

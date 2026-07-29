@@ -30,7 +30,7 @@ export function useCollectorDeployController({ canWrite }: { canWrite: boolean }
   return {
     state,
     open: () => {
-      if (canWrite && !lifecycle.activeRef.current) {
+      if (canWrite && !lifecycle.isActive()) {
         lifecycle.retire();
         setState({ kind: 'editing', collector: '' });
       }
@@ -46,24 +46,36 @@ function useDeployLifecycle(canWrite: boolean, setState: (state: CollectorDeploy
   const operationRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const activeRef = useRef(false);
-  const retire = useCallback(() => {
+  const invalidate = useCallback(() => {
     operationRef.current += 1;
     activeRef.current = false;
     abortRef.current?.abort();
     abortRef.current = null;
-    setState({ kind: 'closed' });
   }, []);
+  const retire = useCallback(() => {
+    invalidate();
+    setState({ kind: 'closed' });
+  }, [invalidate, setState]);
+  const begin = useCallback(() => {
+    if (activeRef.current) return null;
+    operationRef.current += 1;
+    activeRef.current = true;
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
+    return { epoch: operationRef.current, signal: abort.signal };
+  }, []);
+  const finish = useCallback((epoch: number) => {
+    if (epoch !== operationRef.current) return false;
+    activeRef.current = false;
+    return true;
+  }, []);
+  const isActive = useCallback(() => activeRef.current, []);
   useEffect(() => {
     if (!canWrite) retire();
   }, [canWrite, retire]);
-  useEffect(
-    () => () => {
-      operationRef.current += 1;
-      abortRef.current?.abort();
-    },
-    []
-  );
-  return { operationRef, abortRef, activeRef, retire };
+  useEffect(() => () => invalidate(), [invalidate]);
+  return { begin, finish, isActive, retire };
 }
 
 function useDeployExecutor(
@@ -71,35 +83,31 @@ function useDeployExecutor(
   lifecycle: ReturnType<typeof useDeployLifecycle>,
   setState: (state: CollectorDeployState) => void
 ) {
+  const { begin, finish, isActive } = lifecycle;
   const execute = useCallback(
     async (collector: string) => {
-      if (!canWrite || lifecycle.activeRef.current) return;
+      if (!canWrite || isActive()) return;
       let collectorId: string;
       try {
         collectorId = normalizeCollectorId(collector);
       } catch {
         return setState({ kind: 'failed', collector: collector.trim(), failure: 'validation' });
       }
-      const operation = ++lifecycle.operationRef.current;
-      lifecycle.activeRef.current = true;
-      lifecycle.abortRef.current?.abort();
-      const abort = new AbortController();
-      lifecycle.abortRef.current = abort;
+      const owner = begin();
+      if (!owner) return;
       setState({ kind: 'submitting', collector: collectorId });
       try {
-        const deployment = await generateCollectorDeployInfo(collectorId, abort.signal);
-        if (operation === lifecycle.operationRef.current) {
-          lifecycle.activeRef.current = false;
+        const deployment = await generateCollectorDeployInfo(collectorId, owner.signal);
+        if (finish(owner.epoch)) {
           setState({ kind: 'ready', collector: collectorId, deployment });
         }
       } catch (error) {
-        if (operation === lifecycle.operationRef.current) {
-          lifecycle.activeRef.current = false;
+        if (finish(owner.epoch)) {
           setState({ kind: 'failed', collector: collectorId, failure: deployFailure(error) });
         }
       }
     },
-    [canWrite, lifecycle, setState]
+    [begin, canWrite, finish, isActive, setState]
   );
   return execute;
 }
