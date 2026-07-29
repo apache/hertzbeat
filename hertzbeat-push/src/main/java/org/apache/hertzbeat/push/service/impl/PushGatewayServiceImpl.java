@@ -19,6 +19,7 @@
 
 package org.apache.hertzbeat.push.service.impl;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.LinkedList;
@@ -37,6 +38,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.push.dao.PushMonitorDao;
 import org.apache.hertzbeat.push.service.PushGatewayService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -52,12 +54,45 @@ public class PushGatewayServiceImpl implements PushGatewayService {
     private final PushMonitorDao pushMonitorDao;
     
     private final Map<String, Long> jobInstanceMap;
-    
-    public PushGatewayServiceImpl(CommonDataQueue commonDataQueue, PushMonitorDao pushMonitorDao) {
+
+    /**
+     * Cap on push monitors created automatically from unknown job/instance pairs.
+     *
+     * <p>The route is unauthenticated by design, and every new pair used to persist a
+     * monitor row and add a `jobInstanceMap` entry that is never removed, so a caller
+     * iterating over made up names could grow the database and the heap without bound.
+     * Above the cap an unknown pair is refused while the pairs already known keep working,
+     * which is why eviction is not used here: evicting a live entry would make the next
+     * push for that pair create a second monitor for the same job and instance.
+     */
+    private final int maxAutoCreatedMonitors;
+
+    /**
+     * Cap on how many bytes a single push body may carry.
+     *
+     * <p>`OnlineParser.parseMetrics` builds its result in memory with no limit of its own,
+     * and the servlet container does not bound a non form request body, so one unbounded
+     * request was enough to exhaust the heap.
+     */
+    private final long maxBodyBytes;
+
+    /**
+     * Cap on how many samples a single push body may carry, applied after parsing so a body
+     * that is small on the wire cannot still flood the collection queue.
+     */
+    private final int maxSamples;
+
+    public PushGatewayServiceImpl(CommonDataQueue commonDataQueue, PushMonitorDao pushMonitorDao,
+                                  @Value("${hertzbeat.push.max-auto-created-monitors:10000}") int maxAutoCreatedMonitors,
+                                  @Value("${hertzbeat.push.max-body-bytes:5242880}") long maxBodyBytes,
+                                  @Value("${hertzbeat.push.max-samples:10000}") int maxSamples) {
         this.commonDataQueue = commonDataQueue;
         this.pushMonitorDao = pushMonitorDao;
+        this.maxAutoCreatedMonitors = maxAutoCreatedMonitors;
+        this.maxBodyBytes = maxBodyBytes;
+        this.maxSamples = maxSamples;
         jobInstanceMap = new ConcurrentHashMap<>();
-        pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor -> 
+        pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor ->
                 jobInstanceMap.put(monitor.getApp() + "_" + monitor.getName(), monitor.getId()));
     }
 
@@ -65,16 +100,32 @@ public class PushGatewayServiceImpl implements PushGatewayService {
     public boolean pushPrometheusMetrics(InputStream inputStream, String job, String instance) {
         try {
             long curTime = Instant.now().toEpochMilli();
-            Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+            Map<String, MetricFamily> metricFamilyMap =
+                    OnlineParser.parseMetrics(new BoundedInputStream(inputStream, maxBodyBytes));
             if (metricFamilyMap == null) {
                 log.error("parse prometheus metrics is null, job: {}, instance: {}", job, instance);
+                return false;
+            }
+            int samples = metricFamilyMap.values().stream()
+                    .mapToInt(family -> family.getMetricList().size())
+                    .sum();
+            if (samples > maxSamples) {
+                log.warn("reject prometheus push carrying {} samples, limit is {}, job: {}, instance: {}",
+                        samples, maxSamples, job, instance);
                 return false;
             }
             long id = 0L;
             if (job != null && instance != null) {
                 // auto create monitor when job and instance not null
                 // job is app, instance is the name
-                id = jobInstanceMap.computeIfAbsent(job + "_" + instance, key -> {
+                String key = job + "_" + instance;
+                if (!jobInstanceMap.containsKey(key) && jobInstanceMap.size() >= maxAutoCreatedMonitors) {
+                    log.warn("reject prometheus push for unknown job: {}, instance: {}, "
+                                    + "already tracking {} push monitors, limit is {}",
+                            job, instance, jobInstanceMap.size(), maxAutoCreatedMonitors);
+                    return false;
+                }
+                id = jobInstanceMap.computeIfAbsent(key, ignored -> {
                     log.info("auto create monitor by prometheus push, job: {}, instance: {}", job, instance);
                     long monitorId = SnowFlakeIdGenerator.generateId();
                     Monitor monitor = Monitor.builder()
@@ -128,6 +179,55 @@ public class PushGatewayServiceImpl implements PushGatewayService {
         } catch (Exception e) {
             log.error("push prometheus metrics error", e);
             return false;
+        }
+    }
+
+    /**
+     * Fails the read once the body has delivered more than {@code limit} bytes, instead of
+     * letting the parser accumulate an unbounded body in memory. Reading stops at the
+     * failure, so the bytes beyond the limit are never buffered.
+     */
+    static final class BoundedInputStream extends InputStream {
+
+        private final InputStream delegate;
+
+        private final long limit;
+
+        private long read;
+
+        BoundedInputStream(InputStream delegate, long limit) {
+            this.delegate = delegate;
+            this.limit = limit;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int value = delegate.read();
+            if (value != -1) {
+                count(1);
+            }
+            return value;
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            int count = delegate.read(buffer, offset, length);
+            if (count > 0) {
+                count(count);
+            }
+            return count;
+        }
+
+        private void count(int increment) throws IOException {
+            read += increment;
+            if (read > limit) {
+                throw new IOException("push body exceeds the " + limit + " byte limit");
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
         }
     }
 }
