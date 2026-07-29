@@ -79,6 +79,36 @@ KNOWN_AGENT_PREMAIN = re.compile(
     r"org\.apache\.skywalking|com\.navercorp\.pinpoint|com\.newrelic)",
     re.IGNORECASE,
 )
+NATIVE_PACKAGE_ROOT = re.compile(
+    r"^apache-hertzbeat-collector-native-(?P<version>.+)-"
+    r"(?P<platform>macos-arm64|macos-amd64|linux-arm64|linux-amd64|windows-amd64)-bin$"
+)
+RUNTIME_PLATFORMS = {
+    "macos-arm64",
+    "macos-amd64",
+    "linux-arm64",
+    "linux-amd64",
+    "windows-amd64",
+}
+ALLOWED_JVM_NATIVE_JAR_PREFIXES = (
+    "jna-",
+    "lz4-java-",
+    "netty-resolver-dns-native-",
+    "netty-tcnative-boringssl-static-",
+    "netty-transport-native-",
+    "snappy-java-",
+    "xugu-jdbc-",
+    "zstd-jni-",
+)
+MACH_O_MAGICS = {
+    b"\xfe\xed\xfa\xce",
+    b"\xce\xfa\xed\xfe",
+    b"\xfe\xed\xfa\xcf",
+    b"\xcf\xfa\xed\xfe",
+    b"\xca\xfe\xba\xbf",
+    b"\xbf\xba\xfe\xca",
+    b"\xbe\xba\xfe\xca",
+}
 
 
 class ReleasePolicyError(RuntimeError):
@@ -108,6 +138,68 @@ def has_archive_signature(payload: bytes) -> bool:
     """Recognize renamed nested ZIP, gzip, and uncompressed tar members."""
     return (payload.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08", b"\x1f\x8b"))
             or len(payload) >= 265 and payload[257:262] == b"ustar")
+
+
+def native_binary_kind(prefix: bytes) -> str | None:
+    if prefix.startswith(b"\x7fELF"):
+        return "ELF"
+    if prefix.startswith(b"MZ"):
+        return "PE"
+    magic = prefix[:4]
+    if magic in MACH_O_MAGICS:
+        return "Mach-O"
+    if magic == b"\xca\xfe\xba\xbe":
+        # CAFEBABE is shared by Java class files and 32-bit fat Mach-O. Actual
+        # Java class versions occupy this range; ordinary fat binaries have a
+        # small architecture count in the same four bytes.
+        if len(prefix) >= 8:
+            major = int.from_bytes(prefix[6:8], "big")
+            if 45 <= major <= 100:
+                return None
+        return "Mach-O"
+    return None
+
+
+def is_allowed_packaged_native_path(name: str, logical_path: str) -> bool:
+    parts = PurePosixPath(normalized_name(name)).parts
+    if len(parts) >= 2 and parts[0].startswith("apache-hertzbeat-collector-"):
+        if parts[1] in {"java", "jre"}:
+            return len(parts) >= 3
+        if (len(parts) == 4
+                and parts[1] == "runtime"
+                and parts[2] in RUNTIME_PLATFORMS):
+            expected = ("hertzbeat-otel-runtime.exe"
+                        if parts[2] == "windows-amd64"
+                        else "hertzbeat-otel-runtime")
+            return parts[3] == expected
+        native_root = NATIVE_PACKAGE_ROOT.fullmatch(parts[0])
+        if native_root is not None and len(parts) == 2:
+            expected = f"apache-hertzbeat-collector-native-{native_root.group('version')}"
+            if native_root.group("platform") == "windows-amd64":
+                expected += ".exe"
+            return parts[1] == expected
+
+    normalized_logical = normalized_name(logical_path)
+    if re.search(
+            r"!/apache-hertzbeat-collector-[^/]+/(?:java|jre)/",
+            normalized_logical):
+        return True
+    jvm_native = re.search(
+        r"!/apache-hertzbeat-collector-[^/]+/lib/([^/]+\.jar)!/([^!]+)$",
+        normalized_logical,
+    )
+    if jvm_native is None:
+        return False
+    jar_name, native_member = jvm_native.groups()
+    return (jar_name.startswith(ALLOWED_JVM_NATIVE_JAR_PREFIXES)
+            and native_member.endswith((".so", ".dll", ".dylib", ".jnilib")))
+
+
+def reject_unknown_native(name: str, prefix: bytes, logical_path: str) -> None:
+    binary_kind = native_binary_kind(prefix)
+    if binary_kind is not None and not is_allowed_packaged_native_path(name, logical_path):
+        raise ReleasePolicyError(
+            f"unknown packaged {binary_kind} executable or shared library: {logical_path}")
 
 
 def reject_distribution_name(path: str) -> None:
@@ -170,6 +262,7 @@ def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
             member_path = f"{logical_path}!/{info.filename}"
             with archive.open(info) as member:
                 prefix = member.read(512)
+            reject_unknown_native(info.filename, prefix, member_path)
             if not looks_like_archive(info.filename) and not has_archive_signature(prefix):
                 if normalized_name(info.filename).endswith("hertzbeat-collector.cdx.json"):
                     verify_collector_sbom_payload(archive.read(info), member_path)
@@ -208,6 +301,7 @@ def inspect_tar(payload: bytes, logical_path: str, depth: int) -> None:
             if extracted is None:
                 continue
             prefix = extracted.read(512)
+            reject_unknown_native(member.name, prefix, member_path)
             normalized = normalized_name(member.name)
             if (normalized.endswith(".dist-info/metadata")
                     or normalized.endswith(".nuspec")

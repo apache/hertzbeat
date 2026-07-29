@@ -312,6 +312,73 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.inspect_release_archive(release)
 
+    def test_renamed_standalone_native_payloads_are_rejected_by_magic(self) -> None:
+        pe_payload = (
+            b"MZ" + b"\0" * 58 + b"\x40\0\0\0" + b"PE\0\0" + b"\0" * 32
+        )
+        fixtures = [
+            ("elf.zip", zip_bytes({"release/helper.bin": b"\x7fELF" + b"\0" * 64})),
+            ("dotnet-native.tar.gz", tar_bytes({
+                "release/helper": pe_payload,
+            })),
+            ("macho.zip", zip_bytes({
+                "release/helper.bin": b"\xcf\xfa\xed\xfe" + b"\0" * 64,
+            })),
+            ("fat-macho.zip", zip_bytes({
+                "release/helper.bin": b"\xca\xfe\xba\xbe\x00\x00\x00\x02" + b"\0" * 64,
+            })),
+            ("nested-native.tar.gz", tar_bytes({
+                "release/deps.zip": zip_bytes({
+                    "helper.bin": b"\x7fELF" + b"\0" * 64,
+                }),
+            })),
+        ]
+        for archive_name, payload in fixtures:
+            with self.subTest(archive_name=archive_name):
+                release = self.write(archive_name, payload)
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.inspect_release_archive(release)
+
+    def test_release_allows_native_payloads_only_at_assembled_runtime_paths(self) -> None:
+        release = self.write("assembled-native-paths.tar.gz", tar_bytes({
+            "apache-hertzbeat-collector-2.0.0/java/bin/java":
+                b"\x7fELF" + b"\0" * 64,
+            "apache-hertzbeat-collector-2.0.0/jre/bin/java":
+                b"\x7fELF" + b"\0" * 64,
+            "apache-hertzbeat-collector-2.0.0/runtime/linux-amd64/hertzbeat-otel-runtime":
+                b"\x7fELF" + b"\0" * 64,
+            "apache-hertzbeat-collector-2.0.0/runtime/windows-amd64/"
+            "hertzbeat-otel-runtime.exe":
+                b"MZ" + b"\0" * 64,
+            "apache-hertzbeat-collector-native-2.0.0-macos-arm64-bin/"
+            "apache-hertzbeat-collector-native-2.0.0":
+                b"\xcf\xfa\xed\xfe" + b"\0" * 64,
+            "apache-hertzbeat-collector-native-2.0.0-windows-amd64-bin/"
+            "apache-hertzbeat-collector-native-2.0.0.exe":
+                b"MZ" + b"\0" * 64,
+            "apache-hertzbeat-collector-2.0.0/lib/"
+            "netty-transport-native-epoll-4.1.117.Final-linux-x86_64.jar":
+                zip_bytes({
+                    "META-INF/native/libnetty_transport_native_epoll_x86_64.so":
+                        b"\x7fELF" + b"\0" * 64,
+                }),
+        }))
+
+        release_content.inspect_release_archive(release)
+
+    def test_java_class_magic_is_not_treated_as_fat_macho(self) -> None:
+        old_java_class = b"\xca\xfe\xba\xbe\x00\x03\x00\x2d" + b"\0" * 64
+        java_21_class = b"\xca\xfe\xba\xbe\x00\x00\x00\x41" + b"\0" * 64
+        release = self.write("old-java-class.tar.gz", tar_bytes({
+            "apache-hertzbeat-collector-2.0.0-bin/lib/woodstox-core.jar":
+                zip_bytes({
+                    "shaded/Datatype.class": old_java_class,
+                    "org/apache/hertzbeat/Current.class": java_21_class,
+                }),
+        }))
+
+        release_content.inspect_release_archive(release)
+
     def test_archive_rejects_parent_and_absolute_member_paths(self) -> None:
         for index, member_path in enumerate(("../../escape", "/absolute/escape", "C:\\escape")):
             with self.subTest(member_path=member_path):
