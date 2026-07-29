@@ -171,6 +171,23 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.inspect_release_archive(native)
 
+    def test_embedded_runtime_sbom_is_checked_recursively(self) -> None:
+        sbom = json.dumps({
+            "bomFormat": "CycloneDX",
+            "components": [{"name": "opentelemetry-sdk-node"}],
+        }).encode()
+        entries = {"runtime/hertzbeat-otel-runtime.cdx.json": sbom}
+        archives = {
+            "native.tar.gz": tar_bytes(entries),
+            "windows.zip": zip_bytes(entries),
+        }
+
+        for name, payload in archives.items():
+            with self.subTest(name=name):
+                release = self.write(name, payload)
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.inspect_release_archive(release)
+
     def test_release_inventory_checks_both_embedded_sboms(self) -> None:
         collector_sbom = json.dumps({"bomFormat": "CycloneDX", "components": []}).encode()
         runtime_sbom = json.dumps({"bomFormat": "CycloneDX", "components": []}).encode()

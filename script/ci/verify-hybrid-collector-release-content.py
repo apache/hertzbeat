@@ -37,6 +37,10 @@ MAX_ARCHIVE_MEMBER_BYTES = 512 * 1024 * 1024
 MAX_PACKAGE_METADATA_BYTES = 4 * 1024 * 1024
 JAVA_AGENT_GROUP = "io.opentelemetry.javaagent"
 JAVA_AGENT_ARTIFACT = "opentelemetry-javaagent"
+RELEASE_SBOM_NAMES = {
+    "hertzbeat-collector.cdx.json",
+    "hertzbeat-otel-runtime.cdx.json",
+}
 
 FORBIDDEN_DISTRIBUTION_NAME = re.compile(
     r"(?:^|[/_.-])(?:"
@@ -117,6 +121,10 @@ class ReleasePolicyError(RuntimeError):
 
 def normalized_name(name: str) -> str:
     return str(PurePosixPath(name.replace("\\", "/"))).lower()
+
+
+def is_release_sbom(name: str) -> bool:
+    return PurePosixPath(normalized_name(name)).name in RELEASE_SBOM_NAMES
 
 
 def reject_unsafe_archive_member(name: str, logical_path: str) -> None:
@@ -264,8 +272,8 @@ def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
                 prefix = member.read(512)
             reject_unknown_native(info.filename, prefix, member_path)
             if not looks_like_archive(info.filename) and not has_archive_signature(prefix):
-                if normalized_name(info.filename).endswith("hertzbeat-collector.cdx.json"):
-                    verify_collector_sbom_payload(archive.read(info), member_path)
+                if is_release_sbom(info.filename):
+                    verify_release_sbom_payload(archive.read(info), member_path)
                 continue
             if info.file_size > MAX_ARCHIVE_MEMBER_BYTES:
                 raise ReleasePolicyError(f"nested archive member exceeds safety limit: {logical_path}!/{info.filename}")
@@ -317,13 +325,13 @@ def inspect_tar(payload: bytes, logical_path: str, depth: int) -> None:
                     lambda sibling: read_tar_member(archive, member_by_normalized[normalized_name(sibling)]),
                 )
                 continue
-            is_collector_sbom = normalized_name(member.name).endswith("hertzbeat-collector.cdx.json")
+            is_sbom = is_release_sbom(member.name)
             is_archive = looks_like_archive(member.name) or has_archive_signature(prefix)
-            if not is_collector_sbom and not is_archive:
+            if not is_sbom and not is_archive:
                 continue
             member_payload = prefix + extracted.read(MAX_ARCHIVE_MEMBER_BYTES + 1 - len(prefix))
-            if is_collector_sbom:
-                verify_collector_sbom_payload(member_payload, member_path)
+            if is_sbom:
+                verify_release_sbom_payload(member_payload, member_path)
             if is_archive:
                 inspect_nested_member(member_payload, member_path, depth + 1)
 
@@ -432,10 +440,10 @@ def walk_components(components: list[dict]) -> list[dict]:
     return flattened
 
 
-def verify_collector_sbom_payload(payload: bytes, logical_path: str) -> None:
+def verify_release_sbom_payload(payload: bytes, logical_path: str) -> None:
     document = json.loads(payload.decode("utf-8"))
     if document.get("bomFormat") != "CycloneDX":
-        raise ReleasePolicyError(f"Collector SBOM is not CycloneDX: {logical_path}")
+        raise ReleasePolicyError(f"release SBOM is not CycloneDX: {logical_path}")
     for component in walk_components(document.get("components") or []):
         value = component_values(component)
         if (JAVA_AGENT_GROUP in value and JAVA_AGENT_ARTIFACT in value
@@ -448,7 +456,7 @@ def verify_collector_sbom_payload(payload: bytes, logical_path: str) -> None:
 
 
 def verify_collector_sbom(path: Path) -> None:
-    verify_collector_sbom_payload(path.read_bytes(), str(path))
+    verify_release_sbom_payload(path.read_bytes(), str(path))
 
 
 def parse_args() -> argparse.Namespace:
