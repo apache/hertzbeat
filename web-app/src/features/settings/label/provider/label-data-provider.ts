@@ -40,7 +40,7 @@ export const labelDataProvider: DataProvider = {
     return protect(async () => {
       assertLabelResource(params.resource);
       const query = readLabelListQuery(params);
-      const page = await loadLabels(query);
+      const page = await loadLabels(query, readQuerySignal(params.meta));
       return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
   },
@@ -97,6 +97,11 @@ export const labelDataProvider: DataProvider = {
 
   getApiUrl: () => labelEndpoint
 };
+
+function readQuerySignal(meta: unknown) {
+  if (meta == null || typeof meta !== 'object' || !('signal' in meta)) return undefined;
+  return meta.signal instanceof AbortSignal ? meta.signal : undefined;
+}
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {

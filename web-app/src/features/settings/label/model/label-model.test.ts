@@ -19,10 +19,25 @@ import {
   buildLabelDisplayName,
   buildLabelExpectedWrite,
   buildLabelMonitorPath,
+  labelActionCapabilities,
+  labelCapabilitySignature,
   labelSaveConverged
 } from './label-model';
 
 describe('label model', () => {
+  it.each([
+    [['ADMIN'], { canRead: true, canCreate: true, canUpdate: true, canDelete: true }],
+    [['USER'], { canRead: true, canCreate: true, canUpdate: true, canDelete: false }],
+    [['GUEST'], { canRead: true, canCreate: false, canUpdate: false, canDelete: false }],
+    [['UNKNOWN'], { canRead: false, canCreate: false, canUpdate: false, canDelete: false }],
+    [[], { canRead: false, canCreate: false, canUpdate: false, canDelete: false }]
+  ] as const)('maps %j to the exact Label capability matrix', (roles, expected) => {
+    const capabilities = labelActionCapabilities(roles);
+
+    expect(capabilities).toEqual(expected);
+    expect(labelCapabilitySignature(capabilities)).toBe(Object.values(expected).map(Number).join(':'));
+  });
+
   it('formats labels and builds Monitor query context', () => {
     expect(buildLabelDisplayName({ name: 'env', tagValue: 'prod' })).toBe('env:prod');
     expect(buildLabelDisplayName({ name: 'team', tagValue: ' ' })).toBe('team');

@@ -24,21 +24,31 @@ import type { useLabelEditorController } from '../controller/label-editor-contro
 import type { useLabelQueryController } from '../controller/label-query-controller';
 import type { useLabelResourceController } from '../controller/label-resource-controller';
 import type { LabelRecovery } from '../controller/label-save-recovery-controller';
+import type { LabelActionCapabilities } from '../model/label-model';
 
 type LabelQueryController = ReturnType<typeof useLabelQueryController>;
 type LabelResourceController = ReturnType<typeof useLabelResourceController>;
 type LabelEditorController = ReturnType<typeof useLabelEditorController>;
 
-export function LabelPageActions({ locked, onCreate }: { locked: boolean; onCreate: () => void }) {
+export function LabelPageActions({
+  canCreate,
+  locked,
+  onCreate
+}: {
+  canCreate: boolean;
+  locked: boolean;
+  onCreate: () => void;
+}) {
   const { t } = useTranslation();
   return (
-    <Button type="primary" disabled={locked} onClick={onCreate}>
+    <Button type="primary" disabled={!canCreate || locked} onClick={onCreate}>
       {t('labels.new')}
     </Button>
   );
 }
 
 export function LabelWorkspace({
+  capabilities,
   queryController,
   resource,
   editor,
@@ -47,6 +57,7 @@ export function LabelWorkspace({
   onSearchChange,
   onSubmitSearch
 }: {
+  capabilities: LabelActionCapabilities;
   queryController: LabelQueryController;
   resource: LabelResourceController;
   editor: LabelEditorController;
@@ -74,6 +85,8 @@ export function LabelWorkspace({
       />
       <LabelResults
         busy={resource.isSaving}
+        canDelete={capabilities.canDelete}
+        canUpdate={capabilities.canUpdate}
         writeLocked={writeLocked}
         state={resource.listState}
         pageIndex={query.pageIndex}

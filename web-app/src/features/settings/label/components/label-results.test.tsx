@@ -124,6 +124,8 @@ describe('LabelResults', () => {
     render(
       <LabelResults
         busy={false}
+        canDelete={false}
+        canUpdate={false}
         writeLocked={false}
         state={{ kind: 'permission' }}
         pageIndex={0}
@@ -157,6 +159,8 @@ function labelResults(callbacks: ReturnType<typeof labelCallbacks>, busy: boolea
   return (
     <LabelResults
       busy={busy}
+      canDelete
+      canUpdate
       writeLocked={busy}
       state={{ kind: 'ready', records: [record], total: 33 }}
       pageIndex={2}

@@ -47,9 +47,13 @@ const resource = vi.hoisted(() => {
     updateLabel: vi.fn()
   };
 });
+const access = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 
 vi.mock('../controller/label-resource-controller', () => ({
   useLabelResourceController: () => resource
+}));
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { roles: access.roles }, loading: false, retry: vi.fn() })
 }));
 
 const serverLabel = {
@@ -68,6 +72,7 @@ describe('LabelPage', () => {
   });
   beforeEach(() => {
     vi.clearAllMocks();
+    access.roles = ['ADMIN'];
     resource.listState = { kind: 'ready', records: [serverLabel], total: 1 };
     resource.isSaving = false;
     resource.recovery = null;
@@ -99,6 +104,34 @@ describe('LabelPage', () => {
     expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Query' }));
     expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
     expect(commandBand).not.toContainElement(create);
+  });
+
+  it.each([
+    ['USER', false, false, true],
+    ['GUEST', true, true, true]
+  ] as const)(
+    'separates %s create, update, and delete controls',
+    (role, createDisabled, editDisabled, deleteDisabled) => {
+      access.roles = [role];
+      renderLabelPage();
+
+      expect(screen.getByRole('button', { name: 'New label' })).toHaveProperty('disabled', createDisabled);
+      expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty('disabled', editDisabled);
+      expect(screen.getByRole('button', { name: 'Delete' })).toHaveProperty('disabled', deleteDisabled);
+    }
+  );
+
+  it('retires the feature editor when the capability signature changes without leaving the route', async () => {
+    const view = renderLabelPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'New label' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    access.roles = ['GUEST'];
+    view.rerenderLabelPage();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('route')).toHaveTextContent('/settings/labels');
+    expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
   });
 
   it('canonicalizes the label query and delegates refresh from the search band', async () => {
@@ -314,7 +347,7 @@ describe('LabelPage', () => {
 });
 
 function renderLabelPage(initialEntry = '/settings/labels') {
-  return render(
+  const renderTree = () => (
     <I18nextProvider i18n={i18n}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <App>
@@ -324,6 +357,8 @@ function renderLabelPage(initialEntry = '/settings/labels') {
       </MemoryRouter>
     </I18nextProvider>
   );
+  const view = render(renderTree());
+  return { ...view, rerenderLabelPage: () => view.rerender(renderTree()) };
 }
 
 function LocationProbe() {

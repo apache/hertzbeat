@@ -123,7 +123,7 @@ export const appRouteCatalog = {
     resource: { labelKey: 'settingsNavigation.system' }
   }),
   labels: pageRoute('labels', settingsPaths.labels, {
-    resource: { labelKey: 'settingsNavigation.labels' }
+    resource: { labelKey: 'settingsNavigation.labels', requiredRoles: ['ADMIN', 'USER', 'GUEST'] }
   }),
   'object-store': pageRoute('object-store', settingsPaths.objectStore, {
     resource: { labelKey: 'settingsNavigation.objectStore' }

@@ -16,9 +16,15 @@
  */
 
 import { useList, type HttpError } from '@refinedev/core';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { labelResourceName, type LabelListState, type LabelRecord } from '../model/label-model';
+import {
+  labelActionCapabilities,
+  labelResourceName,
+  type LabelActionCapabilities,
+  type LabelListState,
+  type LabelRecord
+} from '../model/label-model';
 import { classifyLabelReadFailure, labelProjectionConverged, type LabelMutationEvidence } from '../model/label-failure';
 import type { LabelDeletePageReceipt, LabelQuery } from '../model/label-query-model';
 import { useLabelActionsController } from './label-actions-controller';
@@ -26,13 +32,22 @@ import { useLabelMutationController } from './label-mutation-controller';
 
 export function useLabelResourceController(
   query: LabelQuery,
-  reconcileConfirmedDelete?: (receipt: LabelDeletePageReceipt) => boolean
+  reconcileConfirmedDelete?: (receipt: LabelDeletePageReceipt) => boolean,
+  capabilities: LabelActionCapabilities = labelActionCapabilities(['ADMIN'])
 ) {
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const list = useList<LabelRecord, HttpError>({
     resource: labelResourceName,
     dataProviderName: labelResourceName,
     pagination: { currentPage: query.pageIndex + 1, pageSize: query.pageSize, mode: 'server' },
     filters: query.search ? [{ field: 'search', operator: 'contains', value: query.search }] : [],
+    queryOptions: { enabled: capabilities.canRead },
     errorNotification: false
   });
   const refetch = list.query.refetch;
@@ -52,19 +67,32 @@ export function useLabelResourceController(
   const onDeleteConfirmed = useCallback(() => {
     reconcileConfirmedDelete?.({ query, visibleRecords });
   }, [query, reconcileConfirmedDelete, visibleRecords]);
-  const mutations = useLabelMutationController(convergeProjection, onDeleteConfirmed);
+  const mutations = useLabelMutationController(convergeProjection, onDeleteConfirmed, capabilities);
   const actions = useLabelActionsController();
   const isMutationInFlight = mutations.isInFlight;
-  const listState = useMemo(
-    () =>
-      resolveListState(list.query.isPending, list.query.isError, list.query.error, list.result.data, list.result.total),
-    [list.query.error, list.query.isError, list.query.isPending, list.result.data, list.result.total]
-  );
+  const listState = useMemo(() => {
+    if (!capabilities.canRead) return { kind: 'permission' } as const;
+    return resolveListState(
+      list.query.isPending,
+      list.query.isError,
+      list.query.error,
+      list.result.data,
+      list.result.total
+    );
+  }, [
+    capabilities.canRead,
+    list.query.error,
+    list.query.isError,
+    list.query.isPending,
+    list.result.data,
+    list.result.total
+  ]);
 
   const refresh = useCallback(() => {
-    if (isMutationInFlight()) return;
+    if (!mounted.current || !capabilities.canRead || isMutationInFlight()) return false;
     void refetch();
-  }, [isMutationInFlight, refetch]);
+    return true;
+  }, [capabilities.canRead, isMutationInFlight, refetch]);
 
   return {
     ...actions,

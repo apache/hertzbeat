@@ -17,6 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
+import { useSession } from '@/core/auth/session-context';
 import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 import { useStringQueryDraft } from '@/shared/query-context';
 
@@ -24,15 +25,21 @@ import { LabelEditor } from '../components/label-editor';
 import { useLabelEditorController } from '../controller/label-editor-controller';
 import { useLabelQueryController } from '../controller/label-query-controller';
 import { useLabelResourceController } from '../controller/label-resource-controller';
+import { labelActionCapabilities, labelCapabilitySignature, type LabelActionCapabilities } from '../model/label-model';
 import { LabelPageActions, LabelWorkspace } from './label-page-workspace';
 
 export function LabelPage() {
+  const capabilities = labelActionCapabilities(useSession().session?.roles ?? []);
+  return <LabelCapabilityWorkspace key={labelCapabilitySignature(capabilities)} capabilities={capabilities} />;
+}
+
+function LabelCapabilityWorkspace({ capabilities }: { capabilities: LabelActionCapabilities }) {
   const { t } = useTranslation();
   const queryController = useLabelQueryController();
   const { query, reconcileConfirmedDelete, setSearch } = queryController;
-  const resource = useLabelResourceController(query, reconcileConfirmedDelete);
+  const resource = useLabelResourceController(query, reconcileConfirmedDelete, capabilities);
   const { value: draftSearch, setValue: setDraftSearch } = useStringQueryDraft(query.search, query.search);
-  const editor = useLabelEditorController(resource);
+  const editor = useLabelEditorController(resource, capabilities);
   const writeLocked = resource.isLocked();
   const submitSearch = () => {
     const search = draftSearch.trim();
@@ -44,9 +51,12 @@ export function LabelPage() {
       <OperationalPageHeader
         title={t('labels.title')}
         description={t('labels.description')}
-        actions={<LabelPageActions locked={writeLocked} onCreate={editor.actions.create} />}
+        actions={
+          <LabelPageActions canCreate={capabilities.canCreate} locked={writeLocked} onCreate={editor.actions.create} />
+        }
       />
       <LabelWorkspace
+        capabilities={capabilities}
         queryController={queryController}
         resource={resource}
         editor={editor}
@@ -58,7 +68,7 @@ export function LabelPage() {
       {editor.state.editor && (
         <LabelEditor
           editor={editor.state.editor}
-          locked={writeLocked}
+          locked={writeLocked || (editor.state.editor.isNew ? !capabilities.canCreate : !capabilities.canUpdate)}
           saving={resource.isSaving}
           onCancel={editor.actions.close}
           onSubmit={editor.actions.submit}

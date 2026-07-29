@@ -56,6 +56,7 @@ describe('Label Refine data provider', () => {
   });
 
   it('translates only the Label list contract and its 1-based pagination', async () => {
+    const abortController = new AbortController();
     labelApi.loadLabels.mockResolvedValue({
       content: [serverLabel],
       totalElements: 1,
@@ -68,10 +69,40 @@ describe('Label Refine data provider', () => {
       labelDataProvider.getList<LabelRecord>({
         resource: 'labels',
         pagination: { currentPage: 2, pageSize: 50, mode: 'server' },
-        filters: [{ field: 'search', operator: 'contains', value: ' env ' }]
+        filters: [{ field: 'search', operator: 'contains', value: ' env ' }],
+        meta: { signal: abortController.signal }
       })
     ).resolves.toEqual({ data: [serverLabel], total: 1 });
-    expect(labelApi.loadLabels).toHaveBeenCalledWith({ search: 'env', pageIndex: 1, pageSize: 50 });
+    expect(abortController.signal.aborted).toBe(false);
+    expect(labelApi.loadLabels).toHaveBeenCalledWith(
+      { search: 'env', pageIndex: 1, pageSize: 50 },
+      abortController.signal
+    );
+  });
+
+  it('preserves an already-aborted list signal for the HTTP cancellation boundary', async () => {
+    const abortController = new AbortController();
+    abortController.abort();
+    labelApi.loadLabels.mockResolvedValue({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 20
+    });
+
+    await expect(
+      labelDataProvider.getList<LabelRecord>({
+        resource: 'labels',
+        meta: { signal: abortController.signal }
+      })
+    ).resolves.toEqual({ data: [], total: 0 });
+
+    expect(abortController.signal.aborted).toBe(true);
+    expect(labelApi.loadLabels).toHaveBeenCalledWith(
+      { search: '', pageIndex: 0, pageSize: 20 },
+      abortController.signal
+    );
   });
 
   it('fails unsupported resource, sorter, filter, and getOne without transport', async () => {

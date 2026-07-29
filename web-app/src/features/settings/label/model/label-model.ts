@@ -20,6 +20,31 @@ import type { PagedCollection } from '@/shared/pagination';
 
 export const labelResourceName = 'labels' as const;
 
+export type LabelActionCapabilities = {
+  canRead: boolean;
+  canCreate: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+};
+
+const labelReadRoles = new Set(['ADMIN', 'USER', 'GUEST']);
+const labelWriteRoles = new Set(['ADMIN', 'USER']);
+
+export function labelActionCapabilities(roles: readonly string[]): LabelActionCapabilities {
+  return {
+    canRead: roles.some(role => labelReadRoles.has(role)),
+    canCreate: roles.some(role => labelWriteRoles.has(role)),
+    canUpdate: roles.some(role => labelWriteRoles.has(role)),
+    canDelete: roles.includes('ADMIN')
+  };
+}
+
+export function labelCapabilitySignature(capabilities: LabelActionCapabilities) {
+  return [capabilities.canRead, capabilities.canCreate, capabilities.canUpdate, capabilities.canDelete]
+    .map(Number)
+    .join(':');
+}
+
 export type LabelRecord = {
   id: number;
   name: string;

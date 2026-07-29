@@ -16,6 +16,7 @@
  */
 
 import { act, renderHook } from '@testing-library/react';
+import { Fragment, type PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -24,7 +25,7 @@ import {
   LabelRequestFailure,
   type LabelWriteRecovery
 } from '../model/label-failure';
-import { buildLabelExpectedWrite, type LabelRecord } from '../model/label-model';
+import { buildLabelExpectedWrite, type LabelActionCapabilities, type LabelRecord } from '../model/label-model';
 import { useLabelResourceController } from './label-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -69,6 +70,30 @@ const exclusiveMutationCases = [
   ['update', ['create', 'delete']],
   ['delete', ['create', 'update']]
 ] as const;
+const adminCapabilities: LabelActionCapabilities = {
+  canRead: true,
+  canCreate: true,
+  canUpdate: true,
+  canDelete: true
+};
+const userCapabilities: LabelActionCapabilities = {
+  canRead: true,
+  canCreate: true,
+  canUpdate: true,
+  canDelete: false
+};
+const guestCapabilities: LabelActionCapabilities = {
+  canRead: true,
+  canCreate: false,
+  canUpdate: false,
+  canDelete: false
+};
+const unknownCapabilities: LabelActionCapabilities = {
+  canRead: false,
+  canCreate: false,
+  canUpdate: false,
+  canDelete: false
+};
 
 describe('Label resource controller', () => {
   beforeEach(() => {
@@ -152,6 +177,163 @@ describe('Label resource controller', () => {
     );
     expect(deleteParams.successNotification).toBe(false);
     expect(deleteParams.errorNotification).toBe(false);
+  });
+
+  it.each([
+    ['GUEST', guestCapabilities],
+    ['unknown', unknownCapabilities]
+  ] as const)('rejects current and retained %s mutation callbacks before transport', (_role, capabilities) => {
+    let workspaceKey = 'admin';
+    const wrapper = ({ children }: PropsWithChildren) => <Fragment key={workspaceKey}>{children}</Fragment>;
+    const view = renderHook(
+      ({ current }) => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, undefined, current),
+      { initialProps: { current: adminCapabilities }, wrapper }
+    );
+    const retained = {
+      create: view.result.current.createLabel,
+      update: view.result.current.updateLabel,
+      remove: view.result.current.deleteLabel
+    };
+
+    workspaceKey = _role;
+    view.rerender({ current: capabilities });
+    const accepted: boolean[] = [];
+    act(() => {
+      accepted.push(
+        view.result.current.createLabel({ name: 'current' }, vi.fn()),
+        view.result.current.updateLabel(serverLabel, { description: 'current' }, vi.fn()),
+        view.result.current.deleteLabel(serverLabel),
+        retained.create({ name: 'retained' }, vi.fn()),
+        retained.update(serverLabel, { description: 'retained' }, vi.fn()),
+        retained.remove(serverLabel)
+      );
+    });
+
+    expect(accepted).toEqual([false, false, false, false, false, false]);
+    expect(refine.createMutate).not.toHaveBeenCalled();
+    expect(refine.updateMutate).not.toHaveBeenCalled();
+    expect(refine.deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it('allows USER create/update but refuses delete before transport', () => {
+    const { result } = renderHook(() =>
+      useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, undefined, userCapabilities)
+    );
+
+    act(() => {
+      expect(result.current.createLabel({ name: 'team' }, vi.fn())).toBe(true);
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: serverLabel });
+      expect(result.current.updateLabel(serverLabel, { description: 'user' }, vi.fn())).toBe(true);
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: serverLabel });
+      expect(result.current.deleteLabel(serverLabel)).toBe(false);
+    });
+
+    expect(refine.createMutate).toHaveBeenCalledOnce();
+    expect(refine.updateMutate).toHaveBeenCalledOnce();
+    expect(refine.deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['update', 'success'],
+    ['update', 'error'],
+    ['delete', 'success'],
+    ['delete', 'error']
+  ] as const)('suppresses a late %s %s after its capability workspace retires', (operation, completion) => {
+    let workspaceKey = operation === 'delete' ? 'admin' : 'user';
+    const wrapper = ({ children }: PropsWithChildren) => <Fragment key={workspaceKey}>{children}</Fragment>;
+    const onConfirmed = vi.fn();
+    const reconcileDelete = vi.fn();
+    const initial = operation === 'delete' ? adminCapabilities : userCapabilities;
+    const next = operation === 'delete' ? userCapabilities : guestCapabilities;
+    const view = renderHook(
+      ({ current }) => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, reconcileDelete, current),
+      { initialProps: { current: initial }, wrapper }
+    );
+    act(() => {
+      if (operation === 'delete') view.result.current.deleteLabel(serverLabel);
+      else view.result.current.updateLabel(serverLabel, { description: 'pending' }, onConfirmed);
+    });
+    const transport = operation === 'delete' ? refine.deleteMutate : refine.updateMutate;
+    const callbacks = transport.mock.calls[0]?.[1];
+
+    workspaceKey = operation === 'delete' ? 'user' : 'guest';
+    view.rerender({ current: next });
+    act(() => {
+      if (completion === 'success') void callbacks?.onSuccess?.({ data: serverLabel });
+      else void callbacks?.onError?.(new LabelRequestFailure('unavailable', 'uncertain'));
+    });
+
+    expect(onConfirmed).not.toHaveBeenCalled();
+    expect(reconcileDelete).not.toHaveBeenCalled();
+    expect(refine.notificationOpen).not.toHaveBeenCalled();
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(view.result.current.recovery).toBeNull();
+    expect(view.result.current.isLocked()).toBe(false);
+  });
+
+  it('clears retained recovery when the corresponding write capability is lost', () => {
+    let workspaceKey = 'user';
+    const wrapper = ({ children }: PropsWithChildren) => <Fragment key={workspaceKey}>{children}</Fragment>;
+    const view = renderHook(
+      ({ current }) => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, undefined, current),
+      { initialProps: { current: userCapabilities }, wrapper }
+    );
+    act(() => {
+      view.result.current.updateLabel(serverLabel, { description: 'uncertain' }, vi.fn());
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(new LabelRequestFailure('unavailable', 'uncertain'));
+    });
+    expect(view.result.current.recovery).toBe('proof');
+
+    workspaceKey = 'guest';
+    view.rerender({ current: guestCapabilities });
+
+    expect(view.result.current.recovery).toBeNull();
+    expect(view.result.current.isLocked()).toBe(false);
+  });
+
+  it('publishes permission and rejects current or retained refresh after read loss', () => {
+    let workspaceKey = 'guest';
+    const wrapper = ({ children }: PropsWithChildren) => <Fragment key={workspaceKey}>{children}</Fragment>;
+    const view = renderHook(
+      ({ current }) => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, undefined, current),
+      { initialProps: { current: guestCapabilities }, wrapper }
+    );
+    const retainedRefresh = view.result.current.refresh;
+
+    workspaceKey = 'unknown';
+    view.rerender({ current: unknownCapabilities });
+    act(() => {
+      view.result.current.refresh();
+      retainedRefresh();
+    });
+
+    expect(view.result.current.listState).toEqual({ kind: 'permission' });
+    expect(refine.useList).toHaveBeenLastCalledWith(expect.objectContaining({ queryOptions: { enabled: false } }));
+    expect(refine.refetch).not.toHaveBeenCalled();
+  });
+
+  it('restores the mounted epoch after StrictMode replay and retires refresh on final unmount', () => {
+    const view = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }), {
+      reactStrictMode: true
+    });
+    const retainedRefresh = view.result.current.refresh;
+
+    act(() => {
+      view.result.current.refresh();
+    });
+    expect(refine.refetch).toHaveBeenCalledOnce();
+
+    view.unmount();
+    act(() => {
+      retainedRefresh();
+    });
+    expect(refine.refetch).toHaveBeenCalledOnce();
   });
 
   it.each(exclusiveMutationCases)(
@@ -559,7 +741,9 @@ describe('Label resource controller', () => {
       );
     });
 
-    act(() => result.current.refresh());
+    act(() => {
+      result.current.refresh();
+    });
 
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(result.current.isLocked()).toBe(true);
@@ -655,7 +839,9 @@ describe('Label resource controller', () => {
   it('owns refresh, copy notifications, and Monitor query navigation', async () => {
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
-    act(() => result.current.refresh());
+    act(() => {
+      result.current.refresh();
+    });
     await act(() => result.current.copyLabel(serverLabel));
     act(() => result.current.inspectLabel(serverLabel));
 

@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
 
 import { createLabelDeleteEvidence, type LabelMutationEvidence } from '../model/label-failure';
-import { labelResourceName, type LabelRecord } from '../model/label-model';
+import { labelResourceName, type LabelActionCapabilities, type LabelRecord } from '../model/label-model';
 import { useLabelSaveMutationController } from './label-save-mutation-controller';
 import type { LabelSaveRecoveryController } from './label-save-recovery-controller';
 
@@ -31,17 +31,27 @@ type Translate = ReturnType<typeof useTranslation>['t'];
 
 export function useLabelMutationController(
   convergeProjection: (evidence: LabelMutationEvidence) => Promise<boolean>,
-  onDeleteConfirmed: () => void
+  onDeleteConfirmed: () => void,
+  capabilities: LabelActionCapabilities
 ) {
   const { t } = useTranslation();
   const notification = useNotification();
   const remove = useDelete<LabelRecord, HttpError, LabelRecord>();
   const operation = useExclusiveOperation('label-mutation');
   const save = useLabelSaveMutationController(operation, notification, t, convergeProjection);
-  const deleteLabel = useDeleteLabel(remove, operation, save.recoveryController, notification, t, onDeleteConfirmed);
+  const deleteLabel = useDeleteLabel(
+    remove,
+    operation,
+    save.recoveryController,
+    notification,
+    t,
+    onDeleteConfirmed,
+    capabilities.canDelete
+  );
 
   return {
-    createLabel: save.createLabel,
+    createLabel: (...args: Parameters<typeof save.createLabel>) =>
+      capabilities.canCreate ? save.createLabel(...args) : false,
     deleteLabel,
     isInFlight: save.isInFlight,
     isLocked: save.isLocked,
@@ -49,7 +59,8 @@ export function useLabelMutationController(
     recovery: save.recovery,
     recoveryCommand: save.recoveryCommand,
     retryMutationProof: save.retryMutationProof,
-    updateLabel: save.updateLabel
+    updateLabel: (...args: Parameters<typeof save.updateLabel>) =>
+      capabilities.canUpdate ? save.updateLabel(...args) : false
   };
 }
 
@@ -59,12 +70,14 @@ function useDeleteLabel(
   recovery: LabelSaveRecoveryController,
   notification: ReturnType<typeof useNotification>,
   t: Translate,
-  onDeleteConfirmed: () => void
+  onDeleteConfirmed: () => void,
+  canDelete: boolean
 ) {
   // Provider proof can precede list projection, so retire IDs from stale table rows.
   const confirmedDeletedIdsRef = useRef(new Set<number>());
   return useCallback(
     (record: LabelRecord) => {
+      if (!canDelete) return false;
       const id = record.id;
       if (id === undefined) {
         notification.open?.({ message: t('labels.deleteFailed'), type: 'error' });
@@ -83,7 +96,7 @@ function useDeleteLabel(
       );
       return true;
     },
-    [notification, onDeleteConfirmed, operation, recovery, remove, t]
+    [canDelete, notification, onDeleteConfirmed, operation, recovery, remove, t]
   );
 }
 

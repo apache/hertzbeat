@@ -2,7 +2,12 @@
 
 import { useRef, useState } from 'react';
 
-import type { LabelEditorState, LabelRecord } from '../model/label-model';
+import {
+  labelActionCapabilities,
+  type LabelActionCapabilities,
+  type LabelEditorState,
+  type LabelRecord
+} from '../model/label-model';
 
 type LabelEditorMutations = {
   createLabel: (values: Partial<LabelRecord>, onConfirmed: () => void) => boolean;
@@ -12,7 +17,10 @@ type LabelEditorMutations = {
 };
 
 /** Owns editor identity so an old mutation callback cannot close a newer dialog. */
-export function useLabelEditorController(mutations: LabelEditorMutations) {
+export function useLabelEditorController(
+  mutations: LabelEditorMutations,
+  capabilities: LabelActionCapabilities = labelActionCapabilities(['ADMIN'])
+) {
   const [editor, setEditor] = useState<LabelEditorState>();
   const editorRef = useRef<LabelEditorState | undefined>(undefined);
   const publish = (next: LabelEditorState | undefined) => {
@@ -20,12 +28,12 @@ export function useLabelEditorController(mutations: LabelEditorMutations) {
     setEditor(next);
   };
   const create = () => {
-    if (mutations.isLocked()) return false;
+    if (!capabilities.canCreate || mutations.isLocked()) return false;
     publish({ value: {}, isNew: true });
     return true;
   };
   const edit = (record: LabelRecord) => {
-    if (mutations.isLocked()) return false;
+    if (!capabilities.canUpdate || mutations.isLocked()) return false;
     publish({ value: { ...record }, isNew: false });
     return true;
   };
@@ -37,6 +45,7 @@ export function useLabelEditorController(mutations: LabelEditorMutations) {
   const submit = (values: Partial<LabelRecord>) => {
     const submitted = editorRef.current;
     if (!submitted || mutations.isLocked()) return false;
+    if (submitted.isNew ? !capabilities.canCreate : !capabilities.canUpdate) return false;
     const closeSubmittedEditor = () => {
       if (editorRef.current === submitted) publish(undefined);
     };

@@ -252,12 +252,14 @@ describe('route registry', () => {
     );
   });
 
-  it('owns administrative read access only for the two backend ADMIN-only settings resources', () => {
+  it('owns backend read roles for restricted settings resources', () => {
     expect(getAppRoute('tokens').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('plugins').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
+    expect(getAppRoute('labels').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER', 'GUEST'] });
     expect(routeRegistry.flatMap(route => (route.resource?.requiredRoles ? [route.id] : []))).toEqual([
       'tokens',
-      'plugins'
+      'plugins',
+      'labels'
     ]);
   });
 
