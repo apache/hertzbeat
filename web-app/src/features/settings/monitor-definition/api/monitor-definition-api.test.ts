@@ -60,22 +60,44 @@ describe('monitor definition API', () => {
     messageApi.post.mockResolvedValue(detail);
     messageApi.put.mockResolvedValue(detail);
     messageApi.delete.mockResolvedValue({ schemaVersion: 1, app: 'mysql', disposition: 'builtin_restored' });
+    const signal = new AbortController().signal;
 
-    await createMonitorDefinition('app: mysql', 'en-US');
-    await updateMonitorDefinition('mysql', 'app: mysql', revision, 'en-US');
-    await deleteMonitorDefinition('mysql', revision);
+    await createMonitorDefinition('app: mysql', 'en-US', signal);
+    await updateMonitorDefinition('mysql', 'app: mysql', revision, 'en-US', signal);
+    await deleteMonitorDefinition('mysql', revision, signal);
 
-    expect(messageApi.post).toHaveBeenCalledWith('/api/monitor-definitions/v1?lang=en-US', {
-      definition: 'app: mysql'
-    });
+    expect(messageApi.post).toHaveBeenCalledWith(
+      '/api/monitor-definitions/v1?lang=en-US',
+      { definition: 'app: mysql' },
+      { signal }
+    );
     expect(messageApi.put).toHaveBeenCalledWith(
       '/api/monitor-definitions/v1/mysql?lang=en-US',
       { definition: 'app: mysql' },
-      { headers: { 'If-Match': `"${revision}"` } }
+      { headers: { 'If-Match': `"${revision}"` }, signal }
     );
     expect(messageApi.delete).toHaveBeenCalledWith('/api/monitor-definitions/v1/mysql', {
-      headers: { 'If-Match': `"${revision}"` }
+      headers: { 'If-Match': `"${revision}"` },
+      signal
     });
+  });
+
+  it('starts no write transport when the supplied signal is already aborted', async () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    await expect(createMonitorDefinition('app: mysql', 'en-US', abort.signal)).rejects.toMatchObject({
+      kind: 'error'
+    });
+    await expect(updateMonitorDefinition('mysql', 'app: mysql', revision, 'en-US', abort.signal)).rejects.toMatchObject(
+      {
+        kind: 'error'
+      }
+    );
+    await expect(deleteMonitorDefinition('mysql', revision, abort.signal)).rejects.toMatchObject({ kind: 'error' });
+    expect(messageApi.post).not.toHaveBeenCalled();
+    expect(messageApi.put).not.toHaveBeenCalled();
+    expect(messageApi.delete).not.toHaveBeenCalled();
   });
 
   it.each([

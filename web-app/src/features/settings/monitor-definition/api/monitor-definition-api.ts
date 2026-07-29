@@ -60,33 +60,48 @@ export function validateMonitorDefinition(value: MonitorDefinitionValidationRequ
   });
 }
 
-export function createMonitorDefinition(definition: string, language?: string) {
+export function createMonitorDefinition(definition: string, language?: string, signal?: AbortSignal) {
   return request(async () => {
     const payload = parseMonitorDefinitionWriteRequest({ definition });
+    signal?.throwIfAborted();
+    const path = withLanguage(monitorDefinitionEndpoint, language);
     return parseMonitorDefinitionDetail(
-      await apiMessagePost(withLanguage(monitorDefinitionEndpoint, language), payload)
+      await (signal ? apiMessagePost(path, payload, { signal }) : apiMessagePost(path, payload))
     );
   });
 }
 
-export function updateMonitorDefinition(app: string, definition: string, revision: string, language?: string) {
+export function updateMonitorDefinition(
+  app: string,
+  definition: string,
+  revision: string,
+  language?: string,
+  signal?: AbortSignal
+) {
   return request(async () => {
     const payload = parseMonitorDefinitionWriteRequest({ definition });
+    const options = revisionHeader(revision);
+    signal?.throwIfAborted();
     const response = await apiMessagePut(
       withLanguage(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, language),
       payload,
-      revisionHeader(revision)
+      signal ? { ...options, signal } : options
     );
     return parseMonitorDefinitionDetail(response);
   });
 }
 
-export function deleteMonitorDefinition(app: string, revision: string) {
-  return request(async () =>
-    parseMonitorDefinitionDelete(
-      await apiMessageDelete(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, revisionHeader(revision))
-    )
-  );
+export function deleteMonitorDefinition(app: string, revision: string, signal?: AbortSignal) {
+  return request(async () => {
+    const options = revisionHeader(revision);
+    signal?.throwIfAborted();
+    return parseMonitorDefinitionDelete(
+      await apiMessageDelete(
+        `${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`,
+        signal ? { ...options, signal } : options
+      )
+    );
+  });
 }
 
 const stableFailures = new Map<string, MonitorDefinitionFailureKind>([
