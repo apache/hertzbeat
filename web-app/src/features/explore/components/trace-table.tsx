@@ -32,17 +32,18 @@ type Props = {
   selectedTraceId?: string | undefined;
   openTrace: (traceId: string) => void;
   changePage: (page: number) => void;
+  evidenceCurrent: boolean;
 };
 
-export function TraceTable({ data, t, detailOpen, selectedTraceId, openTrace, changePage }: Props) {
+export function TraceTable({ data, t, detailOpen, selectedTraceId, openTrace, changePage, evidenceCurrent }: Props) {
   return (
     <Table<TraceRow>
-      className={styles.clickableTable ?? ''}
+      className={evidenceCurrent ? (styles.clickableTable ?? '') : ''}
       rowKey={row => row.traceId ?? row.rootSpanId ?? ''}
       size="small"
       dataSource={data.content ?? []}
       scroll={{ x: 900, y: 520 }}
-      onRow={row => interactiveTableRow(() => openTrace(row.traceId))}
+      onRow={row => (evidenceCurrent ? interactiveTableRow(() => openTrace(row.traceId)) : {})}
       rowClassName={row => (selectedTraceId === row.traceId ? (styles.selectedRow ?? '') : '')}
       pagination={{
         current: data.number + 1,
@@ -50,7 +51,10 @@ export function TraceTable({ data, t, detailOpen, selectedTraceId, openTrace, ch
         total: data.totalElements,
         showSizeChanger: false,
         hideOnSinglePage: true,
-        onChange: changePage
+        disabled: !evidenceCurrent,
+        onChange: page => {
+          if (evidenceCurrent) changePage(page);
+        }
       }}
       columns={traceColumns(t, detailOpen)}
     />

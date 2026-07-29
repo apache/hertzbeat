@@ -316,7 +316,75 @@ describe('ExplorePage instrumentation context boundary', () => {
     expect(await screen.findByText(i18n.t(messageKey))).toBeInTheDocument();
     expect(screen.queryByText(en.explore.empty.logs)).not.toBeInTheDocument();
   });
+
+  it('labels retained log evidence during refresh and disables stale drilldowns until replacement succeeds', async () => {
+    const refresh = deferred(logPage('fresh evidence', 'trace-fresh'));
+    api.loadLogSignal
+      .mockResolvedValueOnce(logPage('cached evidence', 'trace-cached'))
+      .mockReturnValueOnce(refresh.promise);
+    renderPage('/explore?signal=logs');
+    expect(await screen.findByText('cached evidence')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: en.common.refresh }));
+
+    expect(await screen.findByText(i18n.t('explore.states.refreshing'))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'trace-cached' })).toBeDisabled();
+    expect(screen.getByText('cached evidence')).toBeInTheDocument();
+
+    refresh.resolve();
+    expect(await screen.findByText('fresh evidence')).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('explore.states.refreshing'))).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'trace-fresh' })).toBeEnabled();
+  });
+
+  it('keeps refresh failure classification visible while retained evidence remains non-actionable', async () => {
+    api.loadLogSignal
+      .mockResolvedValueOnce(logPage('cached evidence', 'trace-cached'))
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    renderPage('/explore?signal=logs');
+    expect(await screen.findByText('cached evidence')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: en.common.refresh }));
+
+    expect(await screen.findByText(/Refresh failed/u)).toHaveTextContent(i18n.t('explore.states.transportError'));
+    expect(screen.getByRole('button', { name: 'trace-cached' })).toBeDisabled();
+  });
 });
+
+function logPage(body: string, traceId: string) {
+  return {
+    content: [
+      {
+        timeUnixNano: null,
+        observedTimeUnixNano: null,
+        severityNumber: null,
+        severityText: 'INFO',
+        body,
+        attributes: null,
+        droppedAttributesCount: null,
+        traceId,
+        spanId: null,
+        traceFlags: null,
+        resource: null,
+        resourceSchemaUrl: null,
+        instrumentationScope: null,
+        scopeSchemaUrl: null
+      }
+    ],
+    totalElements: 1,
+    totalPages: 1,
+    number: 0,
+    size: 20
+  };
+}
+
+function deferred<T>(value: T) {
+  let resolvePromise!: (value: T) => void;
+  const promise = new Promise<T>(resolve => {
+    resolvePromise = resolve;
+  });
+  return { promise, resolve: () => resolvePromise(value) };
+}
 
 function metricState(emptyStateReason: string, errorMessage: string | null): MetricConsole {
   return {

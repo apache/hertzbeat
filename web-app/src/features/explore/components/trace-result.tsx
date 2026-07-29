@@ -38,11 +38,13 @@ export type TraceDetailView = {
 export function TraceResult({
   data,
   t,
-  trace
+  trace,
+  evidenceCurrent = true
 }: {
   data: ExplorePageResult<TraceRow>;
   t: TFunction;
   trace: TraceDetailView;
+  evidenceCurrent?: boolean | undefined;
 }) {
   const detailOpen = trace.state.kind !== 'closed';
   const selectedTraceId = trace.state.kind === 'closed' ? undefined : trace.state.traceId;
@@ -60,6 +62,7 @@ export function TraceResult({
               selectedTraceId={selectedTraceId}
               openTrace={trace.openTrace}
               changePage={trace.changePage}
+              evidenceCurrent={evidenceCurrent}
             />
           )}
         </div>

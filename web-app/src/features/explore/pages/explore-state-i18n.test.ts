@@ -13,7 +13,14 @@ import pt from '@/assets/i18n/explore/pt-br.json';
 import zhCn from '@/assets/i18n/explore/zh-cn.json';
 import zhTw from '@/assets/i18n/explore/zh-tw.json';
 
-const stateKeys = ['unsupportedQuery', 'storageUnavailable', 'transportError', 'contractError'] as const;
+const stateKeys = [
+  'unsupportedQuery',
+  'storageUnavailable',
+  'transportError',
+  'contractError',
+  'refreshing',
+  'staleError'
+] as const;
 
 describe('Explore result state locale contract', () => {
   it('keeps every honest result state available in all runtime locales', () => {

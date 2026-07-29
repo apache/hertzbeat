@@ -209,6 +209,28 @@ describe('Trace detail controller', () => {
     await waitFor(() => expect(signal?.aborted).toBe(true));
   });
 
+  it('retires subordinate detail evidence while its parent history is not current', async () => {
+    const pending = deferred<TraceDetail>();
+    let signal: AbortSignal | undefined;
+    api.loadTraceDetail.mockImplementation((_traceId: string, requestSignal: AbortSignal) => {
+      signal = requestSignal;
+      return pending.promise;
+    });
+    const view = renderController(vi.fn());
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(signal).toBeDefined());
+
+    view.rerender({ query: defaultQuery, parentEvidenceCurrent: false });
+
+    expect(view.result.current.state.kind).toBe('closed');
+    await waitFor(() => expect(signal?.aborted).toBe(true));
+    act(() => view.result.current.openTrace('trace-2'));
+    expect(api.loadTraceDetail).toHaveBeenCalledOnce();
+
+    view.rerender({ query: defaultQuery, parentEvidenceCurrent: true });
+    expect(view.result.current.state.kind).toBe('closed');
+  });
+
   it('allows an explicit detail open in the new scope without cleanup clearing it', async () => {
     api.loadTraceDetail.mockImplementation((traceId: string) => Promise.resolve(traceDetail(traceId)));
     const view = renderController(vi.fn());
@@ -259,13 +281,18 @@ function renderController(
   openPath: (path: string) => void,
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
 ) {
+  type ControllerProps = { query: TraceExploreQuery; parentEvidenceCurrent?: boolean };
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return renderHook(({ query }) => useTraceDetailController(query, openPath), {
-    initialProps: { query: defaultQuery },
-    wrapper
-  });
+  return renderHook(
+    ({ query, parentEvidenceCurrent }: ControllerProps) =>
+      useTraceDetailController(query, openPath, parentEvidenceCurrent ?? true),
+    {
+      initialProps: { query: defaultQuery } as ControllerProps,
+      wrapper
+    }
+  );
 }
 
 const defaultQuery: TraceExploreQuery = { signal: 'traces', timeRange: 'last-30m' };

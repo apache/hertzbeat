@@ -43,6 +43,7 @@ export function LogRows({
   query,
   t,
   navigate,
+  evidenceCurrent = true,
   live,
   connection,
   actions
@@ -52,6 +53,7 @@ export function LogRows({
   query: LogExploreQuery;
   t: TFunction;
   navigate: Navigate;
+  evidenceCurrent?: boolean | undefined;
   live?: boolean | undefined;
   connection?: ReactNode | undefined;
   actions?: ReactNode | undefined;
@@ -68,24 +70,29 @@ export function LogRows({
       actions={actions}
     >
       <Table<LogRow>
-        className={styles.clickableTable ?? ''}
+        className={evidenceCurrent ? (styles.clickableTable ?? '') : ''}
         rowKey={row =>
           `${row.timeUnixNano ?? row.observedTimeUnixNano ?? 'log'}-${row.traceId ?? ''}-${row.spanId ?? ''}`
         }
         size="small"
         virtual
         dataSource={rows}
-        pagination={logPagination(data, query, navigate)}
+        pagination={logPagination(data, query, navigate, evidenceCurrent)}
         scroll={{ x: 980, y: 520 }}
-        onRow={row => interactiveTableRow(() => setSelection({ scopeKey, row }))}
-        columns={logColumns(t, query, navigate)}
+        onRow={row => (evidenceCurrent ? interactiveTableRow(() => setSelection({ scopeKey, row })) : {})}
+        columns={logColumns(t, query, navigate, evidenceCurrent)}
       />
       <LogDetail row={selected} t={t} query={query} navigate={navigate} onClose={() => setSelection(undefined)} />
     </SignalResultFrame>
   );
 }
 
-function logColumns(t: TFunction, query: LogExploreQuery, navigate: Navigate): ColumnsType<LogRow> {
+function logColumns(
+  t: TFunction,
+  query: LogExploreQuery,
+  navigate: Navigate,
+  evidenceCurrent: boolean
+): ColumnsType<LogRow> {
   return [
     { title: t('explore.time'), width: 190, render: (_, row) => formatLogTime(row) },
     {
@@ -103,6 +110,7 @@ function logColumns(t: TFunction, query: LogExploreQuery, navigate: Navigate): C
           <Button
             className={styles.traceLink ?? ''}
             type="link"
+            disabled={!evidenceCurrent}
             onClick={event => {
               event.stopPropagation();
               void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId ?? undefined }));
@@ -117,7 +125,12 @@ function logColumns(t: TFunction, query: LogExploreQuery, navigate: Navigate): C
   ];
 }
 
-function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogExploreQuery, navigate: Navigate) {
+function logPagination(
+  data: ExplorePageResult<LogRow> | undefined,
+  query: LogExploreQuery,
+  navigate: Navigate,
+  evidenceCurrent: boolean
+) {
   if (!data) return false as const;
   return {
     current: data.number + 1,
@@ -125,8 +138,9 @@ function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogEx
     total: data.totalElements,
     hideOnSinglePage: true,
     showSizeChanger: false,
+    disabled: !evidenceCurrent,
     onChange: (page: number) => {
-      void navigate(buildExplorePath({ ...query, pageIndex: page - 1 || undefined }));
+      if (evidenceCurrent) void navigate(buildExplorePath({ ...query, pageIndex: page - 1 || undefined }));
     }
   };
 }

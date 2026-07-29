@@ -13,7 +13,9 @@
       "unsupportedQuery": "Collector スコープのメトリクスでは、任意の PromQL 式ではなくメトリクス名を指定してください。",
       "storageUnavailable": "このクエリではメトリクスストレージを利用できません。",
       "transportError": "シグナル要求がバックエンドに到達できませんでした。",
-      "contractError": "バックエンドの応答が Explore コントラクトと一致しません。"
+      "contractError": "バックエンドの応答が Explore コントラクトと一致しません。",
+      "refreshing": "結果を更新しています。表示中のエビデンスは、前回成功した要求のものです。",
+      "staleError": "更新に失敗しました。表示中のエビデンスは古いものです。{{reason}}"
     }
   }
 }

@@ -23,7 +23,11 @@ import { ExploreWorkbench } from '../components/explore-workbench';
 import { LogResult } from '../components/log-result';
 import { MetricResult } from '../components/metric-result';
 import { TraceResult } from '../components/trace-result';
-import { useExplorePageController, type ExplorePageResultState } from '../controller/use-explore-page-controller';
+import {
+  useExplorePageController,
+  type ExploreCurrentResultState,
+  type ExplorePageResultState
+} from '../controller/use-explore-page-controller';
 import { useLiveLogController } from '../controller/use-live-log-controller';
 import { useTraceDetailController } from '../controller/use-trace-detail-controller';
 import type { ExploreQuery, LogExploreQuery, TraceExploreQuery } from '../model/explore-model';
@@ -103,7 +107,49 @@ function ResultPanel({
     );
   if (result.kind === 'live')
     return query.signal === 'logs' ? <LiveLogPanel query={query} openPath={openPath} /> : null;
-  return <HistoricalResult query={query} result={result} retry={retry} openPath={openPath} />;
+  if (result.kind === 'refreshing')
+    return (
+      <>
+        <ExploreMessageResult type="info" message={t('explore.states.refreshing')} />
+        <HistoricalResult
+          key="refreshing"
+          query={query}
+          result={result.evidence}
+          retry={retry}
+          openPath={openPath}
+          evidenceCurrent={false}
+        />
+      </>
+    );
+  if (result.kind === 'stale_error')
+    return (
+      <>
+        <ExploreMessageResult
+          type="warning"
+          message={t('explore.states.staleError', { reason: t(refreshFailureMessageKey(result.errorKind)) })}
+          retry={retry}
+          retryLabel={t('common.retry')}
+        />
+        <HistoricalResult
+          key="stale-error"
+          query={query}
+          result={result.evidence}
+          retry={retry}
+          openPath={openPath}
+          evidenceCurrent={false}
+        />
+      </>
+    );
+  return (
+    <HistoricalResult key="current" query={query} result={result} retry={retry} openPath={openPath} evidenceCurrent />
+  );
+}
+
+function refreshFailureMessageKey(errorKind: Extract<ExplorePageResultState, { kind: 'stale_error' }>['errorKind']) {
+  if (errorKind === 'permission') return 'common.permission.roleRequiredDescription';
+  if (errorKind === 'transport_error') return 'explore.states.transportError';
+  if (errorKind === 'contract_error') return 'explore.states.contractError';
+  return 'explore.loadFailed';
 }
 
 function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (path: string) => void }) {
@@ -120,12 +166,14 @@ function HistoricalResult({
   query,
   result,
   retry,
-  openPath
+  openPath,
+  evidenceCurrent
 }: {
   query: ExploreQuery;
-  result: Extract<ExplorePageResultState, { kind: 'metric' | 'ready' | 'empty' }>;
+  result: ExploreCurrentResultState;
   retry: () => Promise<void>;
   openPath: (path: string) => void;
+  evidenceCurrent: boolean;
 }) {
   const { t } = useTranslation();
   if (result.kind === 'metric') {
@@ -136,28 +184,30 @@ function HistoricalResult({
   if (result.signal === 'logs' && query.signal === 'logs')
     return (
       <ExploreResultFrame>
-        <LogResult data={result.data} query={query} t={t} navigate={openPath} />
+        <LogResult data={result.data} query={query} t={t} navigate={openPath} evidenceCurrent={evidenceCurrent} />
       </ExploreResultFrame>
     );
   if (result.signal === 'traces' && query.signal === 'traces')
-    return <TracePanel data={result.data} query={query} openPath={openPath} />;
+    return <TracePanel data={result.data} query={query} openPath={openPath} evidenceCurrent={evidenceCurrent} />;
   return null;
 }
 
 function TracePanel({
   data,
   query,
-  openPath
+  openPath,
+  evidenceCurrent
 }: {
   data: ExplorePageResult<TraceRow>;
   query: TraceExploreQuery;
   openPath: (path: string) => void;
+  evidenceCurrent: boolean;
 }) {
   const { t } = useTranslation();
-  const trace = useTraceDetailController(query, openPath);
+  const trace = useTraceDetailController(query, openPath, evidenceCurrent);
   return (
     <ExploreResultFrame>
-      <TraceResult data={data} t={t} trace={trace} />
+      <TraceResult data={data} t={t} trace={trace} evidenceCurrent={evidenceCurrent} />
     </ExploreResultFrame>
   );
 }

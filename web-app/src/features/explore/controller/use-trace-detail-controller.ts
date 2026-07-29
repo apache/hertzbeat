@@ -34,13 +34,17 @@ import { exploreQueryKeys } from './explore-query-keys';
 type OpenTrace = { scopeKey: string; traceId: string };
 type ScopedTraceSelection = OpenTrace & { spanId?: string | undefined };
 
-export function useTraceDetailController(query: TraceExploreQuery, openPath: (path: string) => void) {
+export function useTraceDetailController(
+  query: TraceExploreQuery,
+  openPath: (path: string) => void,
+  parentEvidenceCurrent = true
+) {
   const scopeKey = exploreEvidenceScopeKey(query);
-  const selection = useScopedTraceSelection(scopeKey);
+  const selection = useScopedTraceSelection(scopeKey, parentEvidenceCurrent);
   const detailQuery = useQuery({
     queryKey: exploreQueryKeys.detail(scopeKey, selection.traceId),
     queryFn: ({ signal }) => loadTraceDetail(selection.traceId ?? '', signal),
-    enabled: Boolean(selection.traceId),
+    enabled: parentEvidenceCurrent && Boolean(selection.traceId),
     retry: false
   });
   const state = resolveTraceDetailState(
@@ -94,11 +98,11 @@ function rootMetricOperationName(state: Extract<TraceDetailState, { kind: 'ready
   return state.selected.spanName === rootSpanName ? rootSpanName : undefined;
 }
 
-function useScopedTraceSelection(scopeKey: string) {
+function useScopedTraceSelection(scopeKey: string, evidenceCurrent: boolean) {
   const client = useQueryClient();
   const [stored, setStored] = useState<ScopedTraceSelection>();
   const storedRef = useRef(stored);
-  const current = stored?.scopeKey === scopeKey ? stored : undefined;
+  const current = evidenceCurrent && stored?.scopeKey === scopeKey ? stored : undefined;
 
   useEffect(() => {
     storedRef.current = stored;
@@ -106,22 +110,22 @@ function useScopedTraceSelection(scopeKey: string) {
 
   useEffect(() => {
     const stale = storedRef.current;
-    if (stale && stale.scopeKey !== scopeKey) {
+    if (stale && (!evidenceCurrent || stale.scopeKey !== scopeKey)) {
       cancelTraceDetail(client, stale);
-      setStored(value => (value?.scopeKey === scopeKey ? value : undefined));
+      setStored(value => (evidenceCurrent && value?.scopeKey === scopeKey ? value : undefined));
     }
     return () => {
       const opened = storedRef.current;
       if (opened?.scopeKey === scopeKey) cancelTraceDetail(client, opened);
     };
-  }, [client, scopeKey]);
+  }, [client, evidenceCurrent, scopeKey]);
 
   const replace = (next: ScopedTraceSelection | undefined) => {
     storedRef.current = next;
     setStored(next);
   };
   const openTrace = (traceId: string) => {
-    if (!traceId || traceId === current?.traceId) return;
+    if (!evidenceCurrent || !traceId || traceId === current?.traceId) return;
     cancelTraceDetail(client, current);
     replace({ scopeKey, traceId });
   };

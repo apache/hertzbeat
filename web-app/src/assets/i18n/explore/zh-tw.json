@@ -13,7 +13,9 @@
       "unsupportedQuery": "Collector 範圍的指標查詢僅支援指標名稱，不支援任意 PromQL 表達式。",
       "storageUnavailable": "目前查詢無法使用指標儲存。",
       "transportError": "訊號請求未能連線至後端。",
-      "contractError": "後端回應不符合 Explore 契約。"
+      "contractError": "後端回應不符合 Explore 契約。",
+      "refreshing": "正在重新整理結果。目前顯示的證據來自上一次成功要求。",
+      "staleError": "重新整理失敗。目前顯示的是過期證據。{{reason}}"
     }
   }
 }

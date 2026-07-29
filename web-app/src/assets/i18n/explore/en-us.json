@@ -13,7 +13,9 @@
       "unsupportedQuery": "Collector-scoped metrics accept a metric name, not an arbitrary PromQL expression.",
       "storageUnavailable": "Metric storage is unavailable for this query.",
       "transportError": "The signal request could not reach the backend.",
-      "contractError": "The backend response did not match the Explore contract."
+      "contractError": "The backend response did not match the Explore contract.",
+      "refreshing": "Refreshing results. The visible evidence is from the previous successful request.",
+      "staleError": "Refresh failed. The visible evidence is stale. {{reason}}"
     }
   }
 }

@@ -451,14 +451,94 @@ describe('Explore page controller', () => {
 
     await waitFor(() =>
       expect(routed.current().result).toMatchObject({
-        kind: 'ready',
-        signal: 'logs',
-        data: { content: [{ body: 'cached' }] }
+        kind: 'refreshing',
+        evidence: {
+          kind: 'ready',
+          signal: 'logs',
+          data: { content: [{ body: 'cached' }] }
+        }
       })
     );
     expect(api.loadLogSignal).toHaveBeenCalledOnce();
     routed.unmount();
     await waitFor(() => expect(refreshSignal?.aborted).toBe(true));
+  });
+
+  it('projects cached history as refreshing until a successful request atomically replaces it', async () => {
+    const refresh = deferred<ReturnType<typeof page>>();
+    api.loadLogSignal.mockReturnValue(refresh.promise);
+    const query: ExploreQuery = { signal: 'logs', timeRange: 'last-30m', query: 'cached' };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
+      signal: 'logs',
+      data: page([logRow({ body: 'cached' })])
+    });
+
+    const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
+
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'refreshing',
+        evidence: { kind: 'ready', signal: 'logs', data: { content: [{ body: 'cached' }] } }
+      })
+    );
+    act(() => refresh.resolve(page([logRow({ body: 'fresh' })])));
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'ready',
+        signal: 'logs',
+        data: { content: [{ body: 'fresh' }] }
+      })
+    );
+  });
+
+  it('retains cached history after refresh failure only as stale error evidence', async () => {
+    api.loadLogSignal.mockRejectedValue(new Error('refresh failed'));
+    const query: ExploreQuery = { signal: 'logs', timeRange: 'last-30m', query: 'cached' };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
+      signal: 'logs',
+      data: page([logRow({ body: 'cached' })])
+    });
+
+    const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
+
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'stale_error',
+        errorKind: 'error',
+        evidence: { kind: 'ready', signal: 'logs', data: { content: [{ body: 'cached' }] } }
+      })
+    );
+  });
+
+  it('carries evidence only across refresh generations, never across query identity changes', async () => {
+    api.loadLogSignal.mockResolvedValueOnce(page([logRow({ body: 'generation-0' })]));
+    const routed = renderController(['/explore?signal=logs&query=owned']);
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'ready',
+        signal: 'logs',
+        data: { content: [{ body: 'generation-0' }] }
+      })
+    );
+
+    const refresh = deferred<ReturnType<typeof page>>();
+    api.loadLogSignal.mockReturnValueOnce(refresh.promise);
+    act(() => {
+      void routed.current().refresh();
+    });
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'refreshing',
+        evidence: { data: { content: [{ body: 'generation-0' }] } }
+      })
+    );
+
+    const nextIdentity = deferred<ReturnType<typeof page>>();
+    api.loadLogSignal.mockReturnValueOnce(nextIdentity.promise);
+    act(() => routed.current().updateQuery({ query: 'different' }));
+    await waitFor(() => expect(routed.current().result).toEqual({ kind: 'loading' }));
   });
 
   it('rejects cached history evidence owned by another signal', async () => {

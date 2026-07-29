@@ -31,12 +31,14 @@ export function LogResult({
   query,
   t,
   navigate,
+  evidenceCurrent = true,
   live
 }: {
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
   navigate: (path: string) => void;
+  evidenceCurrent?: boolean | undefined;
   live?: LiveLogView | undefined;
 }) {
   if (query.live && live) return <LogStreamResult stream={live} query={query} t={t} navigate={navigate} />;
@@ -50,5 +52,14 @@ export function LogResult({
     );
   }
 
-  return <LogRows rows={data.content} data={data} query={query} t={t} navigate={navigate} />;
+  return (
+    <LogRows
+      rows={data.content}
+      data={data}
+      query={query}
+      t={t}
+      navigate={navigate}
+      evidenceCurrent={evidenceCurrent}
+    />
+  );
 }
