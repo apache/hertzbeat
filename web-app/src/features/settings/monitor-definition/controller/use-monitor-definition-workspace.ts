@@ -5,28 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  buildCreateDraft,
-  monitorDefinitionWorkspaceApp,
-  monitorDefinitionWorkspaceHasUncertainWrite,
-  type MonitorDefinitionWorkspace
-} from '../model/monitor-definition-model';
-import {
-  proveOwnedMonitorDefinitionCatalog,
-  type MonitorDefinitionCatalogProof
-} from './monitor-definition-catalog-proof';
-import {
-  createMonitorDefinitionOperationOwner,
-  type MonitorDefinitionOperationOwner
-} from './monitor-definition-operation-owner';
-import {
-  editMonitorDefinitionWorkspace,
-  loadMonitorDefinitionWorkspace,
-  monitorDefinitionWorkspaceRequiresWrite,
-  runMonitorDefinitionEditorCommand
-} from './monitor-definition-workspace-commands';
+import type { MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
+import type { MonitorDefinitionCatalogProof } from './monitor-definition-catalog-proof';
+import { createMonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
+import { monitorDefinitionWorkspaceRequiresWrite } from './monitor-definition-workspace-commands';
+import { useMonitorDefinitionWorkspaceEditor } from './use-monitor-definition-workspace-editor';
+import { useMonitorDefinitionWorkspaceOpen } from './use-monitor-definition-workspace-open';
+import { useMonitorDefinitionWorkspaceRoute } from './use-monitor-definition-workspace-route';
 
 export function useMonitorDefinitionWorkspace(options: {
   canWrite: boolean;
@@ -34,163 +21,62 @@ export function useMonitorDefinitionWorkspace(options: {
   language: string;
   onChanged: () => void;
 }) {
-  const [workspace, setWorkspace] = useState<MonitorDefinitionWorkspace | null>(null);
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
+  const authority = useMemo(() => createMonitorDefinitionOperationOwner(), []);
+  const [storedWorkspace, setStoredWorkspace] = useState<StoredWorkspace>(() => ({
+    authorityEpoch: authority.snapshot(),
+    value: null
+  }));
+  const storedValue = authority.matches(storedWorkspace.authorityEpoch) ? storedWorkspace.value : null;
+  const requiresWrite = monitorDefinitionWorkspaceRequiresWrite(storedValue);
+  const workspace = !options.canWrite && requiresWrite ? null : storedValue;
+  const setWorkspace = useCallback(
+    (value: MonitorDefinitionWorkspace | null) => {
+      setStoredWorkspace({ authorityEpoch: authority.snapshot(), value });
+    },
+    [authority]
+  );
   const canWriteRef = useRef(options.canWrite);
   const workspaceRef = useRef(workspace);
-  canWriteRef.current = options.canWrite;
-  workspaceRef.current = workspace;
   const actionEpoch = owner.snapshot();
   useLayoutEffect(() => {
-    if (options.canWrite) return;
-    if (monitorDefinitionWorkspaceRequiresWrite(workspaceRef.current)) {
+    canWriteRef.current = options.canWrite;
+    workspaceRef.current = workspace;
+  }, [options.canWrite, workspace]);
+  useLayoutEffect(() => {
+    if (options.canWrite || !requiresWrite) return;
+    authority.retire();
+    owner.retire();
+  }, [authority, options.canWrite, owner, requiresWrite]);
+  useEffect(
+    () => () => {
+      authority.retire();
       owner.retire();
-      setWorkspace(null);
-    }
-  }, [options.canWrite, owner]);
-  useEffect(() => () => owner.retire(), [owner]);
-  const context = { workspace, workspaceRef, canWriteRef, actionEpoch, owner, setWorkspace, ...options };
+    },
+    [authority, owner]
+  );
+  const context = {
+    workspace,
+    workspaceRef,
+    canWriteRef,
+    actionEpoch,
+    owner,
+    setWorkspace,
+    catalogProof: options.catalogProof,
+    language: options.language,
+    onChanged: options.onChanged
+  };
   return {
     workspace,
-    actions: { ...workspaceOpenActions(context), ...workspaceEditorActions(context), ...workspaceRouteActions(context) }
-  };
-}
-
-type WorkspaceActionContext = {
-  workspace: MonitorDefinitionWorkspace | null;
-  workspaceRef: { current: MonitorDefinitionWorkspace | null };
-  canWriteRef: { current: boolean };
-  actionEpoch: number;
-  owner: MonitorDefinitionOperationOwner;
-  setWorkspace: (value: MonitorDefinitionWorkspace | null) => void;
-  canWrite: boolean;
-  catalogProof: MonitorDefinitionCatalogProof;
-  language: string;
-  onChanged: () => void;
-};
-
-function workspaceOpenActions(context: WorkspaceActionContext) {
-  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, language } = context;
-  return {
-    openView: (app: string) => {
-      if (workspaceOpenBlocked(owner, workspaceRef.current)) return rejectedWorkspaceOpen();
-      return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace));
-    },
-    openEdit: (app: string) => {
-      if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
-        return rejectedWorkspaceOpen();
-      return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('edit', app, language, owner, setWorkspace));
-    },
-    openCreate: () => {
-      if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
-        return false;
-      owner.retire();
-      setWorkspace(editMonitorDefinitionWorkspace(buildCreateDraft()));
-      return true;
-    },
-    retryWorkspace: () =>
-      owner.matches(actionEpoch) &&
-      workspaceRef.current === workspace &&
-      !owner.busy() &&
-      workspace?.kind === 'error' &&
-      (workspace.mode === 'view' || canWriteRef.current)
-        ? loadMonitorDefinitionWorkspace(workspace.mode, workspace.app, language, owner, setWorkspace)
-        : Promise.resolve()
-  };
-}
-
-function workspaceOpenBlocked(owner: MonitorDefinitionOperationOwner, workspace: MonitorDefinitionWorkspace | null) {
-  return owner.busy() || monitorDefinitionWorkspaceHasUncertainWrite(workspace);
-}
-
-function rejectedWorkspaceOpen() {
-  return { admitted: false as const, completion: Promise.resolve() };
-}
-
-function admittedWorkspaceOpen(completion: Promise<void>) {
-  return { admitted: true as const, completion };
-}
-
-function workspaceEditorActions(context: WorkspaceActionContext) {
-  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, catalogProof, language, onChanged } =
-    context;
-  const run = (operation: 'validate' | 'save' | 'refresh') =>
-    runMonitorDefinitionEditorCommand(
-      operation,
-      workspace,
-      actionEpoch,
-      workspaceRef,
-      { canWriteRef, catalogProof, language, onChanged },
-      owner,
-      setWorkspace
-    );
-  return {
-    closeWorkspace: () => {
-      if (
-        !owner.matches(actionEpoch) ||
-        workspaceRef.current !== workspace ||
-        owner.closeBlocked() ||
-        (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
-      )
-        return false;
-      owner.retire();
-      setWorkspace(null);
-      return true;
-    },
-    setDefinition: (definition: string) => {
-      if (
-        !canWriteRef.current ||
-        !owner.matches(actionEpoch) ||
-        workspaceRef.current !== workspace ||
-        workspace?.kind !== 'edit' ||
-        workspace.writeRecovery
-      )
-        return;
-      setWorkspace({ ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null });
-    },
-    validate: () => run('validate'),
-    save: () => run('save'),
-    refreshAuthoritativeDraft: () => run('refresh'),
-    retryWorkspaceProof: () => retryWorkspaceCatalogProof(context)
-  };
-}
-
-function workspaceRouteActions(context: WorkspaceActionContext) {
-  const { owner, workspaceRef, setWorkspace, language } = context;
-  return {
-    followRoute: (app: string | null) => {
-      const current = workspaceRef.current;
-      if (app && monitorDefinitionWorkspaceApp(current) === app) return true;
-      // Route identity may retire reads and ordinary drafts, but never owns an exclusive or uncertain command.
-      if (owner.closeBlocked() || monitorDefinitionWorkspaceHasUncertainWrite(current)) return false;
-      if (!app) {
-        if (!current) return true;
-        owner.retire();
-        setWorkspace(null);
-        return true;
-      }
-      void loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace);
-      return true;
+    actions: {
+      ...useMonitorDefinitionWorkspaceOpen(context),
+      ...useMonitorDefinitionWorkspaceEditor(context),
+      ...useMonitorDefinitionWorkspaceRoute(context)
     }
   };
 }
 
-async function retryWorkspaceCatalogProof(context: WorkspaceActionContext) {
-  const { workspace, workspaceRef, canWriteRef, actionEpoch, owner, catalogProof, setWorkspace } = context;
-  if (
-    !canWriteRef.current ||
-    !owner.matches(actionEpoch) ||
-    workspaceRef.current !== workspace ||
-    workspace?.kind !== 'edit' ||
-    workspace.writeRecovery !== 'uncertain' ||
-    owner.busy()
-  )
-    return;
-  const operation = owner.begin('catalog-proof');
-  setWorkspace({ ...workspace, pending: 'proof' });
-  await proveOwnedMonitorDefinitionCatalog(catalogProof, operation, owner);
-  if (owner.owns(operation)) {
-    owner.complete(operation);
-    setWorkspace({ ...workspace, pending: null });
-  }
-}
+type StoredWorkspace = {
+  authorityEpoch: number;
+  value: MonitorDefinitionWorkspace | null;
+};

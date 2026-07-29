@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -28,10 +28,9 @@ type RouteWorkspaceActions = {
 };
 
 type RouteState = {
-  interactionApp: { current: string | null | typeof unobserved };
-  latestQueryApp: { current: string | null };
-  observedApp: { current: string | null | typeof unobserved };
-  pendingRoute: { current: { active: boolean; app: string | null } };
+  write: (app: string | null) => void;
+  interact: (app: string | null) => void;
+  reconcile: (app: string | null, workspace: MonitorDefinitionWorkspace | null, actions: RouteWorkspaceActions) => void;
 };
 
 export function useMonitorDefinitionRouteController(
@@ -46,8 +45,7 @@ export function useMonitorDefinitionRouteController(
   useMonitorDefinitionWorkspaceRoute(query.app, workspace, actions, route);
   const writeApp = (app: string | null, replace = false) => {
     const normalized = normalizeMonitorDefinitionRouteApp(app);
-    route.observedApp.current = normalized;
-    route.pendingRoute.current = { active: false, app: normalized };
+    route.write(normalized);
     setParams(writeMonitorDefinitionAppQuery(params, normalized), { replace });
   };
   return monitorDefinitionRouteActions(workspace, query.app, actions, route, writeApp);
@@ -58,8 +56,37 @@ function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
   const observedApp = useRef<string | null | typeof unobserved>(unobserved);
   const pendingRoute = useRef({ active: false, app: null as string | null });
   const interactionApp = useRef<string | null | typeof unobserved>(unobserved);
-  latestQueryApp.current = queryApp;
-  return { latestQueryApp, observedApp, pendingRoute, interactionApp };
+  useLayoutEffect(() => {
+    latestQueryApp.current = queryApp;
+  }, [queryApp]);
+  return {
+    write: (app: string | null) => {
+      observedApp.current = app;
+      pendingRoute.current = { active: false, app };
+    },
+    interact: (app: string | null) => {
+      interactionApp.current = app;
+    },
+    reconcile: (app: string | null, workspace: MonitorDefinitionWorkspace | null, actions: RouteWorkspaceActions) => {
+      if (latestQueryApp.current !== app) return;
+      if (interactionApp.current !== unobserved && interactionApp.current !== app) return;
+      if (interactionApp.current === app) {
+        if (monitorDefinitionWorkspaceApp(workspace) !== app) return;
+        interactionApp.current = unobserved;
+        observedApp.current = app;
+        pendingRoute.current.active = false;
+      }
+      if (observedApp.current !== app) {
+        observedApp.current = app;
+        pendingRoute.current = { active: true, app };
+      } else if (app && workspace === null && !pendingRoute.current.active) {
+        // Authority loss retires edit state; a still-owned route may only restore its read-only view.
+        pendingRoute.current = { active: true, app };
+      }
+      if (!pendingRoute.current.active) return;
+      if (actions.followRoute(pendingRoute.current.app)) pendingRoute.current.active = false;
+    }
+  };
 }
 
 function useCanonicalMonitorDefinitionAppQuery(
@@ -79,23 +106,7 @@ function useMonitorDefinitionWorkspaceRoute(
   route: RouteState
 ) {
   useEffect(() => {
-    if (route.latestQueryApp.current !== queryApp) return;
-    if (route.interactionApp.current !== unobserved && route.interactionApp.current !== queryApp) return;
-    if (route.interactionApp.current === queryApp) {
-      if (monitorDefinitionWorkspaceApp(workspace) !== queryApp) return;
-      route.interactionApp.current = unobserved;
-      route.observedApp.current = queryApp;
-      route.pendingRoute.current.active = false;
-    }
-    if (route.observedApp.current !== queryApp) {
-      route.observedApp.current = queryApp;
-      route.pendingRoute.current = { active: true, app: queryApp };
-    } else if (queryApp && workspace === null && !route.pendingRoute.current.active) {
-      // Authority loss retires edit state; a still-owned route may only restore its read-only view.
-      route.pendingRoute.current = { active: true, app: queryApp };
-    }
-    if (!route.pendingRoute.current.active) return;
-    if (actions.followRoute(route.pendingRoute.current.app)) route.pendingRoute.current.active = false;
+    route.reconcile(queryApp, workspace, actions);
   }, [actions, queryApp, route, workspace]);
 }
 
@@ -109,7 +120,7 @@ function monitorDefinitionRouteActions(
   return {
     openCreate: () => {
       if (!actions.openCreate()) return;
-      route.interactionApp.current = null;
+      route.interact(null);
       writeApp(null);
     },
     openEdit: (app: string) => {
@@ -117,7 +128,7 @@ function monitorDefinitionRouteActions(
       if (!normalized) return Promise.resolve();
       const opening = actions.openEdit(normalized);
       if (!opening.admitted) return opening.completion;
-      route.interactionApp.current = normalized;
+      route.interact(normalized);
       writeApp(normalized);
       return opening.completion;
     },
@@ -126,7 +137,7 @@ function monitorDefinitionRouteActions(
       if (!normalized) return Promise.resolve();
       const opening = actions.openView(normalized);
       if (!opening.admitted) return opening.completion;
-      route.interactionApp.current = normalized;
+      route.interact(normalized);
       writeApp(normalized);
       return opening.completion;
     },

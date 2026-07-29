@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 
 import { deleteMonitorDefinition, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
 import {
@@ -28,66 +28,65 @@ export function useMonitorDefinitionDelete(
   catalogProof: MonitorDefinitionCatalogProof,
   onChanged: () => void
 ) {
-  const [deleteTarget, setDeleteTarget] = useState<MonitorDefinitionCatalogItem | null>(null);
-  const [deletePending, setDeletePending] = useState(false);
-  const [deleteFailure, setDeleteFailure] = useState<MonitorDefinitionFailureKind | null>(null);
-  const [deleteWriteRecovery, setDeleteWriteRecovery] = useState<'uncertain' | null>(null);
-  const [notice, setNotice] = useState<MonitorDefinitionDeleteDisposition | null>(null);
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
-  const canWriteRef = useRef(canWrite);
-  const targetRef = useRef(deleteTarget);
-  const deleteWriteRecoveryRef = useRef(deleteWriteRecovery);
-  canWriteRef.current = canWrite;
-  targetRef.current = deleteTarget;
-  deleteWriteRecoveryRef.current = deleteWriteRecovery;
+  const authority = useMemo(() => createMonitorDefinitionOperationOwner(), []);
+  const [state, setState] = useState<DeleteState>(() => emptyDeleteState(authority.snapshot()));
+  const [notice, setNotice] = useState<MonitorDefinitionDeleteDisposition | null>(null);
+  const authorityEpoch = authority.snapshot();
   const actionEpoch = owner.snapshot();
   useLayoutEffect(() => {
     if (canWrite) return;
+    authority.retire();
     owner.retire();
-    setDeleteTarget(null);
-    setDeletePending(false);
-    setDeleteFailure(null);
-    setDeleteWriteRecovery(null);
-  }, [canWrite, owner]);
-  useEffect(() => () => owner.retire(), [owner]);
+  }, [authority, canWrite, owner]);
+  useEffect(
+    () => () => {
+      authority.retire();
+      owner.retire();
+    },
+    [authority, owner]
+  );
+  const visibleState = canWrite && authority.matches(state.authorityEpoch) ? state : emptyDeleteState(authorityEpoch);
   const context = {
-    target: deleteTarget,
-    targetRef,
-    deleteWriteRecoveryRef,
-    canWriteRef,
+    state: visibleState,
+    canWrite,
+    authority,
+    authorityEpoch,
     actionEpoch,
     owner,
     catalogProof,
     onChanged,
-    setDeleteTarget,
-    setDeletePending,
-    setDeleteFailure,
-    setDeleteWriteRecovery,
+    setState,
     setNotice
   };
   return {
-    deleteFailure,
-    deletePending,
-    deleteTarget,
-    deleteWriteRecovery,
+    deleteFailure: visibleState.failure,
+    deletePending: visibleState.pending,
+    deleteTarget: visibleState.target,
+    deleteWriteRecovery: visibleState.writeRecovery,
     notice,
     actions: monitorDefinitionDeleteActions(context)
   };
 }
 
-type DeleteActionContext = {
+type DeleteState = {
+  authorityEpoch: number;
   target: MonitorDefinitionCatalogItem | null;
-  targetRef: { current: MonitorDefinitionCatalogItem | null };
-  deleteWriteRecoveryRef: { current: 'uncertain' | null };
-  canWriteRef: { current: boolean };
+  pending: boolean;
+  failure: MonitorDefinitionFailureKind | null;
+  writeRecovery: 'uncertain' | null;
+};
+
+type DeleteActionContext = {
+  state: DeleteState;
+  canWrite: boolean;
+  authority: MonitorDefinitionOperationOwner;
+  authorityEpoch: number;
   actionEpoch: number;
   owner: MonitorDefinitionOperationOwner;
   catalogProof: MonitorDefinitionCatalogProof;
   onChanged: () => void;
-  setDeleteTarget: (value: MonitorDefinitionCatalogItem | null) => void;
-  setDeletePending: (value: boolean) => void;
-  setDeleteFailure: (value: MonitorDefinitionFailureKind | null) => void;
-  setDeleteWriteRecovery: (value: 'uncertain' | null) => void;
+  setState: Dispatch<SetStateAction<DeleteState>>;
   setNotice: (value: MonitorDefinitionDeleteDisposition) => void;
 };
 
@@ -95,29 +94,31 @@ function monitorDefinitionDeleteActions(context: DeleteActionContext) {
   return {
     requestDelete: (item: MonitorDefinitionCatalogItem) => {
       if (
-        !context.canWriteRef.current ||
+        !context.canWrite ||
+        !context.authority.matches(context.authorityEpoch) ||
         !context.owner.matches(context.actionEpoch) ||
         !item.deletable ||
-        context.targetRef.current !== null ||
+        context.state.target !== null ||
         context.owner.busy()
       )
         return;
       context.owner.retire();
-      context.setDeleteFailure(null);
-      context.setDeleteWriteRecovery(null);
-      context.setDeleteTarget(item);
+      context.setState({
+        authorityEpoch: context.authority.snapshot(),
+        target: item,
+        pending: false,
+        failure: null,
+        writeRecovery: null
+      });
     },
     cancelDelete: () => {
       if (
+        context.authority.matches(context.state.authorityEpoch) &&
         context.owner.matches(context.actionEpoch) &&
-        context.targetRef.current === context.target &&
         (!context.owner.busy() || context.owner.recoveryCancelable())
       ) {
         context.owner.retire();
-        context.setDeletePending(false);
-        context.setDeleteFailure(null);
-        context.setDeleteWriteRecovery(null);
-        context.setDeleteTarget(null);
+        context.setState(emptyDeleteState(context.authority.snapshot()));
       }
     },
     confirmDelete: () => confirmMonitorDefinitionDelete(context),
@@ -126,62 +127,71 @@ function monitorDefinitionDeleteActions(context: DeleteActionContext) {
 }
 
 async function confirmMonitorDefinitionDelete(context: DeleteActionContext) {
-  const { target, owner } = context;
-  if (
-    !target ||
-    !context.canWriteRef.current ||
-    !owner.matches(context.actionEpoch) ||
-    context.targetRef.current !== target ||
-    context.deleteWriteRecoveryRef.current !== null ||
-    owner.busy()
-  )
-    return;
+  const { owner } = context;
+  const target = admittedDeleteTarget(context, null);
+  if (!target) return;
   const operation = owner.begin('exclusive-command');
-  context.setDeletePending(true);
-  context.setDeleteFailure(null);
+  context.setState(current => ({ ...current, pending: true, failure: null }));
   try {
     const receipt = await deleteMonitorDefinition(target.app, target.revision, operation.abort.signal);
     if (!owner.owns(operation)) return;
     context.setNotice(receipt.disposition);
-    context.setDeleteWriteRecovery(null);
-    context.setDeleteTarget(null);
+    context.setState(emptyDeleteState(context.authority.snapshot()));
     context.onChanged();
   } catch (error) {
-    if (!owner.owns(operation)) return;
-    const failure = error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
-    if (monitorDefinitionWriteNeedsCatalogProof(error)) {
-      owner.markCatalogProof(operation);
-      context.setDeleteWriteRecovery('uncertain');
-      context.setDeleteFailure(failure);
-      await proveOwnedMonitorDefinitionCatalog(context.catalogProof, operation, owner);
-    }
-    if (!owner.owns(operation)) return;
-    if (!monitorDefinitionWriteNeedsCatalogProof(error)) context.setDeleteWriteRecovery(null);
-    context.setDeleteFailure(failure);
+    await handleMonitorDefinitionDeleteFailure(context, operation, error);
   } finally {
     if (owner.owns(operation)) {
       owner.complete(operation);
-      context.setDeletePending(false);
+      context.setState(current => ({ ...current, pending: false }));
     }
   }
 }
 
 async function retryMonitorDefinitionDeleteProof(context: DeleteActionContext) {
-  const { owner, target } = context;
-  if (
-    !target ||
-    !context.canWriteRef.current ||
-    !owner.matches(context.actionEpoch) ||
-    context.targetRef.current !== target ||
-    context.deleteWriteRecoveryRef.current !== 'uncertain' ||
-    owner.busy()
-  )
-    return;
+  const { owner } = context;
+  if (!admittedDeleteTarget(context, 'uncertain')) return;
   const operation = owner.begin('catalog-proof');
-  context.setDeletePending(true);
+  context.setState(current => ({ ...current, pending: true }));
   await proveOwnedMonitorDefinitionCatalog(context.catalogProof, operation, owner);
   if (owner.owns(operation)) {
     owner.complete(operation);
-    context.setDeletePending(false);
+    context.setState(current => ({ ...current, pending: false }));
   }
+}
+
+function admittedDeleteTarget(context: DeleteActionContext, recovery: 'uncertain' | null) {
+  return context.canWrite &&
+    context.authority.matches(context.state.authorityEpoch) &&
+    context.owner.matches(context.actionEpoch) &&
+    context.state.writeRecovery === recovery &&
+    !context.owner.busy()
+    ? context.state.target
+    : null;
+}
+
+async function handleMonitorDefinitionDeleteFailure(
+  context: DeleteActionContext,
+  operation: Parameters<MonitorDefinitionOperationOwner['owns']>[0],
+  error: unknown
+) {
+  if (!context.owner.owns(operation)) return;
+  const failure = error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
+  const requiresProof = monitorDefinitionWriteNeedsCatalogProof(error);
+  if (requiresProof) {
+    context.owner.markCatalogProof(operation);
+    context.setState(current => ({ ...current, pending: true, failure, writeRecovery: 'uncertain' }));
+    await proveOwnedMonitorDefinitionCatalog(context.catalogProof, operation, context.owner);
+  }
+  if (!context.owner.owns(operation)) return;
+  context.setState(current => ({
+    ...current,
+    pending: true,
+    failure,
+    writeRecovery: requiresProof ? 'uncertain' : null
+  }));
+}
+
+function emptyDeleteState(authorityEpoch: number): DeleteState {
+  return { authorityEpoch, target: null, pending: false, failure: null, writeRecovery: null };
 }

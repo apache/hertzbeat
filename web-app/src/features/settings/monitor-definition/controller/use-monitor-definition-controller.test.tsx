@@ -9,7 +9,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { StrictMode, type PropsWithChildren } from 'react';
+import { StrictMode, useLayoutEffect, type PropsWithChildren } from 'react';
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -46,14 +46,16 @@ const revision = 'a'.repeat(64);
 const newerRevision = 'b'.repeat(64);
 const item = { app: 'mysql', label: 'MySQL', origin: 'override' as const, editable: true, deletable: true, revision };
 const detail = { schemaVersion: 1 as const, ...item, definition: 'app: mysql' };
-const route: { navigate: NavigateFunction; search: string } = {
-  navigate: undefined as unknown as NavigateFunction,
+const route: { navigate: NavigateFunction | null; search: string } = {
+  navigate: null,
   search: ''
 };
 
 describe('useMonitorDefinitionController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    route.navigate = null;
+    route.search = '';
     auth.roles = ['ADMIN'];
     api.catalog.mockResolvedValue({ schemaVersion: 1, items: [item] });
     api.detail.mockResolvedValue(detail);
@@ -224,68 +226,23 @@ describe('useMonitorDefinitionController', () => {
     async (operation, outcome, catalogCalls) => {
       const writeError = new MonitorDefinitionRequestError('unavailable', outcome);
       const provedItem = { ...item, label: 'Authoritative MySQL' };
-      api.catalog.mockResolvedValue({ schemaVersion: 1, items: [item] });
-      if (outcome === 'uncertain') {
-        api.catalog
-          .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
-          .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] })
-          .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] });
-      }
-      if (operation === 'create') api.create.mockRejectedValueOnce(writeError);
-      if (operation === 'update') api.update.mockRejectedValueOnce(writeError);
-      if (operation === 'delete') api.remove.mockRejectedValueOnce(writeError);
+      prepareCatalogProof(outcome, provedItem);
+      rejectMonitorDefinitionWrite(operation, writeError);
       const client = testClient();
       const publish = vi.spyOn(client, 'setQueryData');
       const view = renderController(client);
       await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
 
-      if (operation === 'create') {
-        act(() => view.result.current.actions.openCreate());
-        act(() => view.result.current.actions.setDefinition('app: custom'));
-        await act(() => view.result.current.actions.save());
-        expect(view.result.current.workspace).toMatchObject({
-          kind: 'edit',
-          draft: { mode: 'create', definition: 'app: custom' },
-          failure: 'unavailable',
-          writeRecovery: outcome === 'uncertain' ? 'uncertain' : null
-        });
-      } else if (operation === 'update') {
-        await act(() => view.result.current.actions.openEdit('mysql'));
-        act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
-        await act(() => view.result.current.actions.save());
-        expect(view.result.current.workspace).toMatchObject({
-          kind: 'edit',
-          draft: { mode: 'update', definition: 'app: mysql\nname: local', revision },
-          failure: 'unavailable',
-          writeRecovery: outcome === 'uncertain' ? 'uncertain' : null
-        });
-      } else {
-        act(() => view.result.current.actions.requestDelete(item));
-        await act(() => view.result.current.actions.confirmDelete());
-        expect(view.result.current.deleteTarget).toEqual(item);
-        expect(view.result.current.deleteFailure).toBe('unavailable');
-        expect(view.result.current.deleteWriteRecovery).toBe(outcome === 'uncertain' ? 'uncertain' : null);
-      }
+      await exerciseRejectedWrite(view, operation, outcome);
 
       await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(catalogCalls));
-      let write = api.remove;
-      if (operation === 'create') write = api.create;
-      else if (operation === 'update') write = api.update;
       if (outcome === 'uncertain') {
         expect(publish).toHaveBeenCalled();
         await waitFor(() => expect(view.result.current.items).toEqual([provedItem]));
-        if (operation === 'delete') {
-          await act(() => view.result.current.actions.confirmDelete());
-          await act(() => view.result.current.actions.retryDeleteProof());
-        } else {
-          await act(() => view.result.current.actions.save());
-          await act(() => view.result.current.actions.validate());
-          act(() => view.result.current.actions.setDefinition('replaced'));
-          await act(() => view.result.current.actions.retryWorkspaceProof());
-        }
+        await exerciseRetainedRecovery(view, operation);
         expect(api.catalog).toHaveBeenCalledTimes(3);
       }
-      expect(write).toHaveBeenCalledOnce();
+      expectMonitorDefinitionWriteOnce(operation);
       expect(view.result.current.notice).toBeNull();
     }
   );
@@ -781,18 +738,26 @@ describe('useMonitorDefinitionController', () => {
     const view = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql');
     await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'loading', mode: 'view', app: 'mysql' }));
 
-    act(() => route.navigate('/settings/monitor-definitions?scope=all&app=jvm'));
+    act(() => {
+      void observedNavigate()('/settings/monitor-definitions?scope=all&app=jvm');
+    });
     await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
     mysql.resolve(detail);
     await act(async () => mysql.promise);
     expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail });
 
-    act(() => route.navigate(-1));
+    act(() => {
+      void observedNavigate()(-1);
+    });
     await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
-    act(() => route.navigate(1));
+    act(() => {
+      void observedNavigate()(1);
+    });
     await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
 
-    act(() => route.navigate('/settings/monitor-definitions?scope=all'));
+    act(() => {
+      void observedNavigate()('/settings/monitor-definitions?scope=all');
+    });
     await waitFor(() => expect(view.result.current.workspace).toBeNull());
     expect(route.search).toBe('?scope=all');
     expect(api.detail).toHaveBeenCalledTimes(4);
@@ -828,7 +793,9 @@ describe('useMonitorDefinitionController', () => {
     });
     await waitFor(() => expect(api.validate).toHaveBeenCalledOnce());
 
-    act(() => route.navigate('/settings/monitor-definitions?app=jvm'));
+    act(() => {
+      void observedNavigate()('/settings/monitor-definitions?app=jvm');
+    });
     expect(view.result.current.workspace).toMatchObject({ kind: 'edit', pending: 'validate' });
     expect(api.detail).toHaveBeenCalledTimes(2);
     validation.resolve({ schemaVersion: 1, valid: true, app: 'mysql', origin: 'override' });
@@ -851,7 +818,9 @@ describe('useMonitorDefinitionController', () => {
       expect(view.result.current.workspace).toMatchObject({ kind: 'edit', writeRecovery: 'uncertain' })
     );
 
-    act(() => route.navigate('/settings/monitor-definitions?app=jvm'));
+    act(() => {
+      void observedNavigate()('/settings/monitor-definitions?app=jvm');
+    });
     expect(view.result.current.workspace).toMatchObject({
       kind: 'edit',
       draft: { expectedApp: 'mysql' },
@@ -928,7 +897,9 @@ describe('useMonitorDefinitionController', () => {
 
     act(() => view.result.current.actions.closeWorkspace());
     await waitFor(() => expect(route.search).toBe('?scope=all'));
-    act(() => route.navigate(-1));
+    act(() => {
+      void observedNavigate()(-1);
+    });
 
     await waitFor(() => expect(route.search).toBe('?scope=all'));
     expect(view.result.current.workspace).toBeNull();
@@ -963,6 +934,76 @@ describe('useMonitorDefinitionController', () => {
   });
 });
 
+type WriteOperation = 'create' | 'update' | 'delete';
+type WriteOutcome = 'uncertain' | 'rejected';
+type ControllerView = ReturnType<typeof renderController>;
+
+function prepareCatalogProof(outcome: WriteOutcome, provedItem: typeof item) {
+  api.catalog.mockResolvedValue({ schemaVersion: 1, items: [item] });
+  if (outcome !== 'uncertain') return;
+  api.catalog
+    .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+    .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] })
+    .mockResolvedValueOnce({ schemaVersion: 1, items: [provedItem] });
+}
+
+function rejectMonitorDefinitionWrite(operation: WriteOperation, error: MonitorDefinitionRequestError) {
+  if (operation === 'create') api.create.mockRejectedValueOnce(error);
+  else if (operation === 'update') api.update.mockRejectedValueOnce(error);
+  else api.remove.mockRejectedValueOnce(error);
+}
+
+async function exerciseRejectedWrite(view: ControllerView, operation: WriteOperation, outcome: WriteOutcome) {
+  const writeRecovery = outcome === 'uncertain' ? 'uncertain' : null;
+  if (operation === 'create') {
+    act(() => view.result.current.actions.openCreate());
+    act(() => view.result.current.actions.setDefinition('app: custom'));
+    await act(() => view.result.current.actions.save());
+    expect(view.result.current.workspace).toMatchObject({
+      kind: 'edit',
+      draft: { mode: 'create', definition: 'app: custom' },
+      failure: 'unavailable',
+      writeRecovery
+    });
+    return;
+  }
+  if (operation === 'update') {
+    await act(() => view.result.current.actions.openEdit('mysql'));
+    act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
+    await act(() => view.result.current.actions.save());
+    expect(view.result.current.workspace).toMatchObject({
+      kind: 'edit',
+      draft: { mode: 'update', definition: 'app: mysql\nname: local', revision },
+      failure: 'unavailable',
+      writeRecovery
+    });
+    return;
+  }
+  act(() => view.result.current.actions.requestDelete(item));
+  await act(() => view.result.current.actions.confirmDelete());
+  expect(view.result.current.deleteTarget).toEqual(item);
+  expect(view.result.current.deleteFailure).toBe('unavailable');
+  expect(view.result.current.deleteWriteRecovery).toBe(writeRecovery);
+}
+
+async function exerciseRetainedRecovery(view: ControllerView, operation: WriteOperation) {
+  if (operation === 'delete') {
+    await act(() => view.result.current.actions.confirmDelete());
+    await act(() => view.result.current.actions.retryDeleteProof());
+    return;
+  }
+  await act(() => view.result.current.actions.save());
+  await act(() => view.result.current.actions.validate());
+  act(() => view.result.current.actions.setDefinition('replaced'));
+  await act(() => view.result.current.actions.retryWorkspaceProof());
+}
+
+function expectMonitorDefinitionWriteOnce(operation: WriteOperation) {
+  if (operation === 'create') expect(api.create).toHaveBeenCalledOnce();
+  else if (operation === 'update') expect(api.update).toHaveBeenCalledOnce();
+  else expect(api.remove).toHaveBeenCalledOnce();
+}
+
 function testClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
 }
@@ -990,9 +1031,17 @@ function renderControllerWithOptions(client: QueryClient, initialEntry: string, 
 function RouterObserver() {
   const navigate = useNavigate();
   const location = useLocation();
-  route.navigate = navigate;
-  route.search = location.search;
+  useLayoutEffect(() => {
+    route.navigate = navigate;
+    route.search = location.search;
+  }, [location.search, navigate]);
   return null;
+}
+
+function observedNavigate() {
+  const navigate = route.navigate;
+  if (navigate === null) throw new Error('Router observer is not ready');
+  return navigate;
 }
 
 function deferred<T>() {
