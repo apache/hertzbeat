@@ -440,11 +440,20 @@ def walk_components(components: list[dict]) -> list[dict]:
     return flattened
 
 
+def all_sbom_components(document: dict) -> list[dict]:
+    component_roots = []
+    metadata = document.get("metadata")
+    if isinstance(metadata, dict) and isinstance(metadata.get("component"), dict):
+        component_roots.append(metadata["component"])
+    component_roots.extend(document.get("components") or [])
+    return walk_components(component_roots)
+
+
 def verify_release_sbom_payload(payload: bytes, logical_path: str) -> None:
     document = json.loads(payload.decode("utf-8"))
     if document.get("bomFormat") != "CycloneDX":
         raise ReleasePolicyError(f"release SBOM is not CycloneDX: {logical_path}")
-    for component in walk_components(document.get("components") or []):
+    for component in all_sbom_components(document):
         value = component_values(component)
         if (JAVA_AGENT_GROUP in value and JAVA_AGENT_ARTIFACT in value
                 or FORBIDDEN_DISTRIBUTION_NAME.search(value)

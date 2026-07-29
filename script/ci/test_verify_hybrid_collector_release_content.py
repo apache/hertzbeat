@@ -226,6 +226,52 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.verify_collector_sbom(node_sdk)
 
+    def test_release_sbom_rejects_forbidden_metadata_components(self) -> None:
+        standalone = self.write("metadata-agent.cdx.json", json.dumps({
+            "bomFormat": "CycloneDX",
+            "metadata": {
+                "component": {
+                    "group": "io.opentelemetry.javaagent",
+                    "name": "opentelemetry-javaagent",
+                },
+            },
+        }).encode())
+        embedded = self.write("metadata-sdk.tar.gz", tar_bytes({
+            "runtime/hertzbeat-otel-runtime.cdx.json": json.dumps({
+                "bomFormat": "CycloneDX",
+                "metadata": {
+                    "component": {
+                        "group": "org.apache.hertzbeat",
+                        "name": "hertzbeat-otel-runtime",
+                        "components": [{"name": "opentelemetry-sdk-python"}],
+                    },
+                },
+            }).encode(),
+        }))
+
+        checks = {
+            "standalone-root": lambda: release_content.verify_collector_sbom(standalone),
+            "embedded-nested": lambda: release_content.inspect_release_archive(embedded),
+        }
+        for name, check in checks.items():
+            with self.subTest(name=name):
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    check()
+
+    def test_release_sbom_allows_hertzbeat_metadata_root(self) -> None:
+        sbom = self.write("metadata-hertzbeat.cdx.json", json.dumps({
+            "bomFormat": "CycloneDX",
+            "metadata": {
+                "component": {
+                    "group": "org.apache.hertzbeat",
+                    "name": "hertzbeat-collector",
+                    "purl": "pkg:maven/org.apache.hertzbeat/hertzbeat-collector@2.0.0",
+                },
+            },
+        }).encode())
+
+        release_content.verify_collector_sbom(sbom)
+
     def test_collector_sbom_allows_internal_java_telemetry_libraries(self) -> None:
         sbom = self.write("collector.cdx.json", json.dumps({
             "bomFormat": "CycloneDX",
