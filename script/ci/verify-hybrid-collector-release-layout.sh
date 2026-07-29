@@ -32,6 +32,8 @@ release_workflow=.github/workflows/hybrid-collector-release.yml
 nightly_workflow=.github/workflows/nightly-build.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
+runtime_sbom_platform_verifier=script/ci/verify-otel-runtime-sbom-platform.py
+runtime_sbom_platform_test=script/ci/test_verify_otel_runtime_sbom_platform.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
 jvm_package_verifier=script/ci/verify-hybrid-collector-jvm-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
@@ -39,7 +41,8 @@ native_container_context=script/ci/prepare-hybrid-collector-native-container-con
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
   "$release_assets" "$release_workflow" "$nightly_workflow" \
-  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
+  "$release_scanner" "$release_scanner_test" "$runtime_sbom_platform_verifier" "$runtime_sbom_platform_test" \
+  "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
   if [ ! -f "$required" ]; then
     echo "missing Hybrid Collector release file: $required" >&2
@@ -86,6 +89,8 @@ grep -q 'go-licenses/v2@v2.0.1' "$release_assets"
 grep -q 'govulncheck@v1.6.0' "$release_assets"
 grep -q 'cyclonedx-maven-plugin:2.9.1:makeBom' "$release_assets"
 grep -q -- '--collector-sbom' "$release_assets"
+grep -q 'GOOS="\$target_goos" GOARCH="\$target_goarch"' "$release_assets"
+grep -q 'verify-otel-runtime-sbom-platform.py.*"\$target_dir"' "$release_assets"
 grep -q 'govulncheck.*-tags.*build_tags' "$release_assets"
 if grep -q 'govulncheck.*-mode binary' "$release_assets"; then
   echo "stripped Go binaries must use source call-graph vulnerability evidence" >&2
@@ -98,6 +103,7 @@ grep -q 'macos-15-intel' "$release_workflow"
 grep -q 'windows-2025' "$release_workflow"
 grep -q 'java-version: 25' "$release_workflow"
 grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
+grep -q 'test_verify_otel_runtime_sbom_platform.py' "$release_workflow"
 grep -q 'test_prepare_hybrid_collector_native_container_context.py' "$release_workflow"
 grep -q -- '--source' "$release_workflow"
 grep -q -- '--jvm' "$jvm_package_verifier"

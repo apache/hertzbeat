@@ -91,17 +91,28 @@ platforms="macos-arm64 macos-amd64 linux-arm64 linux-amd64 windows-amd64"
 for platform in $platforms; do
   target_dir="$runtime_dir/dist/$platform"
   binary=hertzbeat-otel-runtime
-  if [ "$platform" = windows-amd64 ]; then
-    binary=hertzbeat-otel-runtime.exe
-  fi
+  case "$platform" in
+    macos-arm64) target_goos=darwin; target_goarch=arm64 ;;
+    macos-amd64) target_goos=darwin; target_goarch=amd64 ;;
+    linux-arm64) target_goos=linux; target_goarch=arm64 ;;
+    linux-amd64) target_goos=linux; target_goarch=amd64 ;;
+    windows-amd64)
+      target_goos=windows
+      target_goarch=amd64
+      binary=hertzbeat-otel-runtime.exe
+      ;;
+    *) echo "unsupported runtime release platform: $platform" >&2; exit 1 ;;
+  esac
   if [ ! -f "$target_dir/$binary" ]; then
     echo "missing runtime binary for release assets: $platform/$binary" >&2
     exit 1
   fi
 
-  "$tools_dir/cyclonedx-gomod$tool_suffix" bin -json \
+  GOOS="$target_goos" GOARCH="$target_goarch" \
+    "$tools_dir/cyclonedx-gomod$tool_suffix" bin -json \
     -output "$target_dir/hertzbeat-otel-runtime.cdx.json" \
     -version "v$runtime_version" "$target_dir/$binary"
+  python3 "$repo_root/script/ci/verify-otel-runtime-sbom-platform.py" "$target_dir"
   cp "$collector_sbom" "$target_dir/hertzbeat-collector.cdx.json"
 
   collector_sbom_sha512=$(sha512_digest "$target_dir/hertzbeat-collector.cdx.json")
