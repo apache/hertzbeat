@@ -45,7 +45,7 @@ export function ExplorePage() {
       <ExploreQueryBar
         query={controller.query}
         t={t}
-        updateQuery={controller.updateQuery}
+        updateQuery={controller.updateManualQuery}
         submission={controller.submission}
       />
       <ResultPanel

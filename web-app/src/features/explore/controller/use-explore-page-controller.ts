@@ -32,6 +32,7 @@ import {
   mergeExploreQuery,
   parseExploreQuery,
   querySubmissionTimePatch,
+  retireInstrumentationHandoff,
   type ExploreQuery,
   type ExploreQueryPatch
 } from '../model/explore-model';
@@ -78,8 +79,13 @@ export function useExplorePageController() {
     const next = mergeExploreQuery(query, mergeExploreContextChanges(context, changes));
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
+  const updateManualQuery = (changes: ExploreQueryPatch) => {
+    const contextual = mergeExploreContextChanges(context, withoutHandoffMarkerChanges(changes));
+    const next = retireInstrumentationHandoff(mergeExploreQuery(query, contextual));
+    setSearchParams(searchFromPath(buildExplorePath(next)));
+  };
   const submission = useExploreSubmission(query, patch =>
-    updateQuery({
+    updateManualQuery({
       ...patch,
       ...querySubmissionTimePatch(query, fixedWindow),
       pageIndex: undefined
@@ -101,11 +107,20 @@ export function useExplorePageController() {
     result: resolveResult(query, handoff, queryResult.isPending, queryResult.error, queryResult.data),
     time: sharedTime,
     updateQuery,
+    updateManualQuery,
     refresh,
     openPath: (path: string) => {
       void navigate(path);
     }
   };
+}
+
+function withoutHandoffMarkerChanges(changes: ExploreQueryPatch): ExploreQueryPatch {
+  const ordinaryChanges = { ...changes };
+  delete ordinaryChanges.intakeProfileId;
+  delete ordinaryChanges.collectorId;
+  delete ordinaryChanges.windowMode;
+  return ordinaryChanges;
 }
 
 function exactWindow(query: ExploreQuery) {

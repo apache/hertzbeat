@@ -28,6 +28,7 @@ import {
   parseExploreQuery,
   presetTimeRangePatch,
   querySubmissionTimePatch,
+  retireInstrumentationHandoff,
   signalSelectionPatch,
   timeRangeMilliseconds
 } from './explore-model';
@@ -302,6 +303,97 @@ describe('explore query state', () => {
       start: undefined,
       end: undefined
     });
+  });
+
+  it('retires only instrumentation markers while preserving an exact ordinary query and its filters', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&intakeProfileId=primary-ingress&collectorId=collector-east&windowMode=preset' +
+          '&serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-1' +
+          '&endpoint=%2Fcheckout&query=timeout&severityText=ERROR&attributeFilter=http.status_code%3D500'
+      )
+    );
+    const exact = mergeExploreQuery(query, { windowMode: undefined, start: 1_000, end: 2_000 });
+
+    expect(retireInstrumentationHandoff(exact)).toEqual({
+      ...exact,
+      intakeProfileId: undefined,
+      collectorId: undefined,
+      windowMode: undefined
+    });
+  });
+
+  it('retires a preset handoff as a relative query without manufacturing an exact window', () => {
+    const preset = parseExploreQuery(
+      new URLSearchParams(
+        'signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce' +
+          '&environment=prod&windowMode=preset&query=rate%28up%5B5m%5D%29'
+      )
+    );
+
+    expect(retireInstrumentationHandoff(preset)).toMatchObject({
+      signal: 'metrics',
+      timeRange: 'last-30m',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      query: 'rate(up[5m])',
+      intakeProfileId: undefined,
+      collectorId: undefined,
+      windowMode: undefined,
+      start: undefined,
+      end: undefined
+    });
+  });
+
+  it('retires after hierarchical service and environment cleanup without clearing unrelated query fields', () => {
+    const current = parseExploreQuery(
+      new URLSearchParams(
+        'signal=logs&collectorId=collector-east&serviceName=checkout&serviceNamespace=commerce' +
+          '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout&query=timeout&severityText=ERROR' +
+          '&start=1000&end=2000'
+      )
+    );
+    const serviceChanged = retireInstrumentationHandoff(
+      mergeExploreQuery(current, mergeExploreContextChanges(exploreQueryContext(current), { serviceName: 'payments' }))
+    );
+    const environmentChanged = retireInstrumentationHandoff(
+      mergeExploreQuery(current, mergeExploreContextChanges(exploreQueryContext(current), { environment: 'staging' }))
+    );
+
+    expect(serviceChanged).toMatchObject({
+      serviceName: 'payments',
+      serviceNamespace: undefined,
+      environment: undefined,
+      instance: undefined,
+      endpoint: undefined,
+      collectorId: undefined,
+      query: 'timeout',
+      severityText: 'ERROR',
+      start: 1_000,
+      end: 2_000
+    });
+    expect(environmentChanged).toMatchObject({
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'staging',
+      instance: undefined,
+      endpoint: undefined,
+      collectorId: undefined,
+      query: 'timeout',
+      severityText: 'ERROR'
+    });
+  });
+
+  it('leaves an ordinary Explore query unchanged', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-1&endpoint=%2Fcheckout&query=slow&errorOnly=true&start=1000&end=2000'
+      )
+    );
+
+    expect(retireInstrumentationHandoff(query)).toEqual(query);
   });
 
   it('preserves the complete scoped window across signals and marks partial or reversed handoffs invalid', () => {

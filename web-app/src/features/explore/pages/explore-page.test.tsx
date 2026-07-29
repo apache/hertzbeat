@@ -17,7 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -154,6 +154,32 @@ describe('ExplorePage instrumentation context boundary', () => {
         }),
         expect.any(AbortSignal)
       )
+    );
+  });
+
+  it('retires instrumentation markers when removing a query-bar active filter', async () => {
+    api.loadMetricSignal.mockResolvedValue(metricState('no_context', null));
+    renderPage(
+      '/explore?signal=metrics&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+        '&collectorId=east&windowMode=preset'
+    );
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
+
+    const collector = screen.getByText(i18n.t('explore.collectorContext', { value: 'east' })).closest('.ant-tag');
+    expect(collector).not.toBeNull();
+    fireEvent.click(within(collector as HTMLElement).getByRole('img', { name: 'Close' }));
+
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
+    expect(locationParams()).not.toHaveProperty('collectorId');
+    expect(locationParams()).not.toHaveProperty('intakeProfileId');
+    expect(locationParams()).not.toHaveProperty('windowMode');
+    expect(locationParams()).toEqual(
+      expect.objectContaining({
+        signal: 'metrics',
+        serviceName: 'checkout',
+        serviceNamespace: 'commerce',
+        environment: 'prod'
+      })
     );
   });
 

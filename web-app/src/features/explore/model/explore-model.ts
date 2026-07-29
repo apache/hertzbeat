@@ -102,6 +102,15 @@ export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatc
   });
 }
 
+export function retireInstrumentationHandoff(query: ExploreQuery): ExploreQuery {
+  if (query.intakeProfileId == null && query.collectorId == null && query.windowMode == null) return query;
+  return mergeExploreQuery(query, {
+    intakeProfileId: undefined,
+    collectorId: undefined,
+    windowMode: undefined
+  });
+}
+
 export function buildCrossSignalPath(
   query: ExploreQuery,
   signal: ExploreSignal,

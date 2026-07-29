@@ -117,6 +117,97 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).not.toHaveBeenCalled();
   });
 
+  it('retires a complete handoff on query submission and requests the resulting ordinary exact query', async () => {
+    const routed = renderController([
+      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
+        '&environment=prod&start=1000&end=2000'
+    ]);
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
+    act(() => routed.current().submission.updateField({ field: 'query', value: 'rate(up[5m])' }));
+    act(() => routed.current().submission.submit());
+
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
+    expect(routed.router.state.location.search).not.toMatch(/collectorId|intakeProfileId|windowMode/u);
+    expect(routed.router.state.location.search).toContain('start=1000&end=2000');
+    expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({
+      query: 'rate(up[5m])',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      collectorId: undefined,
+      start: 1_000,
+      end: 2_000
+    });
+  });
+
+  it('turns an invalid partial handoff into a requestable ordinary query after a valid manual submit', async () => {
+    const routed = renderController(['/explore?signal=traces&collectorId=east']);
+    await waitFor(() => expect(routed.current().handoff).toBe('invalid'));
+    expect(api.loadTraceSignal).not.toHaveBeenCalled();
+
+    act(() => routed.current().submission.updateField({ field: 'query', value: 'checkout' }));
+    act(() => routed.current().submission.submit());
+
+    await waitFor(() => expect(api.loadTraceSignal).toHaveBeenCalledOnce());
+    expect(routed.current().handoff).toBe('none');
+    expect(routed.router.state.location.search).not.toMatch(/collectorId|intakeProfileId|windowMode/u);
+    expect(api.loadTraceSignal.mock.calls[0]?.[0]).toMatchObject({ query: 'checkout', collectorId: undefined });
+  });
+
+  it('retires handoff markers when an editable active filter is removed', async () => {
+    const routed = renderController([
+      '/explore?signal=logs&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
+        '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout&windowMode=preset&severityText=ERROR'
+    ]);
+    await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledOnce());
+
+    act(() => routed.current().submission.removeFilter('serviceName'));
+
+    await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledTimes(2));
+    expect(routed.router.state.location.search).not.toMatch(
+      /collectorId|intakeProfileId|windowMode|serviceName|serviceNamespace|environment|instance|endpoint/u
+    );
+    expect(routed.router.state.location.search).toContain('severityText=ERROR');
+  });
+
+  it('keeps handoff markers for workbench signal and time changes', async () => {
+    const routed = renderController([
+      '/explore?signal=logs&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
+        '&environment=prod&windowMode=preset'
+    ]);
+    await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledOnce());
+
+    act(() => routed.current().updateQuery({ signal: 'metrics' }));
+    await waitFor(() => expect(routed.current().query.signal).toBe('metrics'));
+    expect(routed.router.state.location.search).toContain('collectorId=east');
+    expect(routed.router.state.location.search).toContain('windowMode=preset');
+
+    act(() => routed.current().updateQuery({ timeRange: 'last-1h' }));
+    await waitFor(() => expect(routed.current().query.timeRange).toBe('last-1h'));
+    expect(routed.router.state.location.search).toContain('collectorId=east');
+    expect(routed.router.state.location.search).toContain('windowMode=preset');
+  });
+
+  it('restores handoff and retired ordinary URLs exactly across Back and Forward', async () => {
+    const handoff =
+      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
+      '&environment=prod&windowMode=preset';
+    const routed = renderController([handoff]);
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
+
+    act(() => routed.current().updateManualQuery({ query: 'up' }));
+    await waitFor(() => expect(routed.current().handoff).toBe('none'));
+    const ordinarySearch = routed.router.state.location.search;
+
+    await act(async () => routed.router.navigate(-1));
+    await waitFor(() => expect(routed.current().handoff).toBe('scoped'));
+    expect(routed.router.state.location.search).toContain('collectorId=east');
+
+    await act(async () => routed.router.navigate(1));
+    await waitFor(() => expect(routed.current().handoff).toBe('none'));
+    expect(routed.router.state.location.search).toBe(ordinarySearch);
+  });
+
   it('keeps preset ranges relative and exact onboarding windows fixed', async () => {
     const relative = renderController(['/explore?signal=metrics']);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalled());
