@@ -7,16 +7,22 @@ import { publishTopologyScale, scaleEventsSuppressed, type ScaleSuppressions } f
 export function bindTopologyInteractionEvents(
   graph: TopologyG6Graph,
   module: TopologyG6Module,
-  input: TopologyG6InputRef
+  input: TopologyG6InputRef,
+  ownsGraph: () => boolean
 ) {
-  graph.on(module.NodeEvent.CLICK, event =>
-    routeNodeEvent(event, input, input.current.callbacks.onNodeSelect, input.current.callbacks.onEdgeSelect)
-  );
-  graph.on(module.EdgeEvent.CLICK, event => withEventId(event, input.current.callbacks.onEdgeSelect));
-  graph.on(module.NodeEvent.POINTER_OVER, event =>
-    routeNodeEvent(event, input, input.current.callbacks.onNodeHover, input.current.callbacks.onEdgeHover)
-  );
+  graph.on(module.NodeEvent.CLICK, event => {
+    if (ownsGraph())
+      routeNodeEvent(event, input, input.current.callbacks.onNodeSelect, input.current.callbacks.onEdgeSelect);
+  });
+  graph.on(module.EdgeEvent.CLICK, event => {
+    if (ownsGraph()) withEventId(event, input.current.callbacks.onEdgeSelect);
+  });
+  graph.on(module.NodeEvent.POINTER_OVER, event => {
+    if (ownsGraph())
+      routeNodeEvent(event, input, input.current.callbacks.onNodeHover, input.current.callbacks.onEdgeHover);
+  });
   graph.on(module.NodeEvent.POINTER_LEAVE, event => {
+    if (!ownsGraph()) return;
     const routed = routeNodeEvent(
       event,
       input,
@@ -25,19 +31,26 @@ export function bindTopologyInteractionEvents(
     );
     if (!routed) input.current.callbacks.onNodeHover(null);
   });
-  graph.on(module.EdgeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onEdgeHover));
-  graph.on(module.EdgeEvent.POINTER_LEAVE, () => input.current.callbacks.onEdgeHover(null));
-  graph.on(module.CanvasEvent.CLICK, () => input.current.callbacks.onClearSelection());
+  graph.on(module.EdgeEvent.POINTER_OVER, event => {
+    if (ownsGraph()) withEventId(event, input.current.callbacks.onEdgeHover);
+  });
+  graph.on(module.EdgeEvent.POINTER_LEAVE, () => {
+    if (ownsGraph()) input.current.callbacks.onEdgeHover(null);
+  });
+  graph.on(module.CanvasEvent.CLICK, () => {
+    if (ownsGraph()) input.current.callbacks.onClearSelection();
+  });
 }
 
 export function bindTopologyViewportEvents(
   graph: TopologyG6Graph,
   module: TopologyG6Module,
   input: TopologyG6InputRef,
-  suppressions: ScaleSuppressions
+  suppressions: ScaleSuppressions,
+  ownsGraph: () => boolean
 ) {
   graph.on(module.GraphEvent.AFTER_TRANSFORM, () => {
-    if (!scaleEventsSuppressed(suppressions, graph)) publishTopologyScale(graph, input);
+    if (ownsGraph() && !scaleEventsSuppressed(suppressions, graph)) publishTopologyScale(graph, input);
   });
 }
 

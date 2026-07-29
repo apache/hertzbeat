@@ -2,133 +2,140 @@
 
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
-import { topologyG6Options } from './topology-g6-adapter';
-import { reconcileBootstrapInput, useTopologyGraphUpdates } from './topology-g6-draw-runtime';
-import { bindTopologyInteractionEvents, bindTopologyViewportEvents } from './topology-g6-events';
+import { useTopologyGraphUpdates } from './topology-g6-draw-runtime';
+import {
+  commitCandidateGraph,
+  createPendingResources,
+  disposeGraph,
+  initializeCandidateGraph,
+  type GraphResources,
+  type RuntimeRefs
+} from './topology-g6-lifecycle';
 import type {
   TopologyG6Graph,
-  TopologyG6GraphRef,
   TopologyG6InputRef,
-  TopologyG6Module,
   TopologyG6RuntimeInput,
   TopologyRuntimeState
 } from './topology-g6-runtime-contract';
 import {
   fitTopologyGraph,
-  publishTopologyScale,
-  readTopologyViewport,
-  restoreOrFitTopologyGraph,
   zoomTopologyGraph,
   type ScaleSuppressions,
   type TopologyViewport
 } from './topology-g6-viewport';
 
-type GraphResources = {
-  disposed: boolean;
-  graph: TopologyG6Graph | undefined;
-  observer: ResizeObserver | undefined;
-};
-
 export type { TopologyRuntimeState } from './topology-g6-runtime-contract';
 
 export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: TopologyG6RuntimeInput) {
   const graphRef = useRef<TopologyG6Graph | undefined>(undefined);
+  const activeInputRef = useRef<TopologyG6InputRef | undefined>(undefined);
+  const activeResourcesRef = useRef<GraphResources | undefined>(undefined);
+  const activeStructureKeyRef = useRef<string | undefined>(undefined);
+  const pendingResourcesRef = useRef<GraphResources | undefined>(undefined);
   const viewportRef = useRef<TopologyViewport | undefined>(undefined);
   const suppressedScaleEventsRef = useRef<ScaleSuppressions>(new WeakMap());
   const inputRef = useRef(input);
+  const refs: RuntimeRefs = {
+    activeInput: activeInputRef,
+    activeResources: activeResourcesRef,
+    activeStructureKey: activeStructureKeyRef,
+    graph: graphRef,
+    pendingResources: pendingResourcesRef,
+    scaleSuppressions: suppressedScaleEventsRef,
+    viewport: viewportRef
+  };
   useEffect(() => {
     inputRef.current = input;
-  }, [input]);
-  useTopologyBootstrap(
-    host,
-    graphRef,
-    viewportRef,
-    suppressedScaleEventsRef,
-    inputRef,
-    input.presentation.graphStructureKey
+    const structureKey = input.presentation.graphStructureKey;
+    if (activeStructureKeyRef.current === structureKey && activeInputRef.current) {
+      activeInputRef.current.current = input;
+    }
+    const pending = pendingResourcesRef.current;
+    if (pending?.structureKey === structureKey) pending.input.current = input;
+  }, [input, activeInputRef, activeStructureKeyRef, pendingResourcesRef]);
+  useTopologyBootstrap(host, refs, inputRef, input.presentation.graphStructureKey);
+  useTopologyGraphUpdates(graphRef, activeStructureKeyRef, activeInputRef, input);
+  useEffect(
+    () => () => {
+      const active = activeResourcesRef.current;
+      const pending = pendingResourcesRef.current;
+      if (pending && pending !== active) disposeGraph(pending, graphRef, viewportRef, false);
+      if (active) disposeGraph(active, graphRef, viewportRef, true);
+      activeInputRef.current = undefined;
+      activeResourcesRef.current = undefined;
+      activeStructureKeyRef.current = undefined;
+      pendingResourcesRef.current = undefined;
+    },
+    [activeInputRef, activeResourcesRef, activeStructureKeyRef, graphRef, pendingResourcesRef, viewportRef]
   );
-  useTopologyGraphUpdates(graphRef, inputRef, input);
-  const fit = useCallback(() => fitTopologyGraph(graphRef, inputRef, suppressedScaleEventsRef.current), []);
-  const zoomIn = useCallback(() => zoomTopologyGraph(graphRef, inputRef, 1.2), []);
-  const zoomOut = useCallback(() => zoomTopologyGraph(graphRef, inputRef, 1 / 1.2), []);
+  const fit = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) fitTopologyGraph(graphRef, activeInput, suppressedScaleEventsRef.current);
+  }, []);
+  const zoomIn = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) zoomTopologyGraph(graphRef, activeInput, 1.2);
+  }, []);
+  const zoomOut = useCallback(() => {
+    const activeInput = activeInputRef.current;
+    if (activeInput) zoomTopologyGraph(graphRef, activeInput, 1 / 1.2);
+  }, []);
   return { fit, zoomIn, zoomOut };
 }
 
 function useTopologyBootstrap(
   host: RefObject<HTMLDivElement | null>,
-  graphRef: TopologyG6GraphRef,
-  viewportRef: React.MutableRefObject<TopologyViewport | undefined>,
-  suppressedScaleEventsRef: React.MutableRefObject<ScaleSuppressions>,
+  refs: RuntimeRefs,
   inputRef: TopologyG6InputRef,
   structureKey: string
 ) {
+  const { activeInput, activeResources, activeStructureKey, graph, pendingResources, scaleSuppressions, viewport } =
+    refs;
   useEffect(() => {
     const container = host.current;
     if (!container) return;
     let cancelled = false;
-    const resources: GraphResources = { disposed: false, graph: undefined, observer: undefined };
+    const runtimeRefs = {
+      activeInput,
+      activeResources,
+      activeStructureKey,
+      graph,
+      pendingResources,
+      scaleSuppressions,
+      viewport
+    };
+    const resources = createPendingResources(inputRef, structureKey);
+    pendingResources.current = resources;
     publishState(inputRef, 'loading');
     // Keep G6 inside the mounted runtime so route chunks do not evaluate it before a canvas is requested.
     void import('@antv/g6')
       .then(async module => {
-        if (cancelled) return;
-        const graph = createGraph(module, container, inputRef.current);
-        resources.graph = graph;
-        bindTopologyInteractionEvents(graph, module, inputRef);
-        resources.observer = observeSize(container, graph);
-        await graph.render();
-        if (cancelled) return;
-        await restoreOrFitTopologyGraph(graph, viewportRef.current);
-        if (cancelled) return;
-        await reconcileBootstrapInput(graph, inputRef, () => cancelled);
-        if (cancelled) return;
-        graphRef.current = graph;
-        viewportRef.current = undefined;
-        bindTopologyViewportEvents(graph, module, inputRef, suppressedScaleEventsRef.current);
-        publishTopologyScale(graph, inputRef);
-        publishState(inputRef, 'ready');
+        const candidate = await initializeCandidateGraph(module, container, resources, runtimeRefs, () => cancelled);
+        if (candidate) commitCandidateGraph(candidate, resources, runtimeRefs);
       })
       .catch(() => {
-        if (cancelled) return;
-        disposeGraph(resources, graphRef, viewportRef, false);
+        if (cancelled || activeResources.current === resources) return;
+        disposeGraph(resources, graph, viewport, false);
+        if (pendingResources.current === resources) pendingResources.current = undefined;
         publishState(inputRef, 'failure');
       });
     return () => {
       cancelled = true;
-      disposeGraph(resources, graphRef, viewportRef, true);
+      if (pendingResources.current === resources) pendingResources.current = undefined;
+      if (activeResources.current !== resources) disposeGraph(resources, graph, viewport, false);
     };
-  }, [graphRef, host, inputRef, structureKey, suppressedScaleEventsRef, viewportRef]);
-}
-
-function disposeGraph(
-  resources: GraphResources,
-  graphRef: TopologyG6GraphRef,
-  viewportRef: React.MutableRefObject<TopologyViewport | undefined>,
-  rememberViewport: boolean
-) {
-  if (resources.disposed) return;
-  resources.disposed = true;
-  resources.observer?.disconnect();
-  const graph = resources.graph;
-  if (!graph) return;
-  if (rememberViewport && graphRef.current === graph) viewportRef.current = readTopologyViewport(graph);
-  graph.off();
-  graph.destroy();
-  if (graphRef.current === graph) graphRef.current = undefined;
-}
-
-function createGraph(module: TopologyG6Module, container: HTMLDivElement, input: TopologyG6RuntimeInput) {
-  return new module.Graph({ container, ...topologyG6Options(input.presentation, input.interaction, input.palette) });
-}
-
-function observeSize(container: HTMLDivElement, graph: TopologyG6Graph) {
-  if (typeof ResizeObserver === 'undefined') return undefined;
-  const observer = new ResizeObserver(entries => {
-    const { width, height } = entries[0]?.contentRect ?? {};
-    if (width && height) graph.setSize(width, height);
-  });
-  observer.observe(container);
-  return observer;
+  }, [
+    activeInput,
+    activeResources,
+    activeStructureKey,
+    graph,
+    host,
+    inputRef,
+    pendingResources,
+    scaleSuppressions,
+    structureKey,
+    viewport
+  ]);
 }
 
 function publishState(input: TopologyG6InputRef, kind: TopologyRuntimeState['kind']) {

@@ -17,16 +17,18 @@ type DrawDrain = { running: boolean; pending: DrawInput | undefined };
 
 export function useTopologyGraphUpdates(
   graphRef: TopologyG6GraphRef,
-  inputRef: TopologyG6InputRef,
+  activeStructureKeyRef: React.MutableRefObject<string | undefined>,
+  activeInputRef: React.MutableRefObject<TopologyG6InputRef | undefined>,
   input: TopologyG6RuntimeInput
 ) {
   const drainsRef = useRef(new WeakMap<TopologyG6Graph, DrawDrain>());
   const { interaction, palette, presentation } = input;
   useEffect(() => {
     const graph = graphRef.current;
-    if (!graph) return;
-    queueGraphInput(graph, { interaction, palette, presentation }, graphRef, inputRef, drainsRef.current);
-  }, [graphRef, inputRef, interaction, palette, presentation]);
+    const graphInput = activeInputRef.current;
+    if (!graph || !graphInput || activeStructureKeyRef.current !== presentation.graphStructureKey) return;
+    queueGraphInput(graph, { interaction, palette, presentation }, graphRef, graphInput, drainsRef.current);
+  }, [activeInputRef, activeStructureKeyRef, graphRef, interaction, palette, presentation]);
 }
 
 export async function reconcileBootstrapInput(

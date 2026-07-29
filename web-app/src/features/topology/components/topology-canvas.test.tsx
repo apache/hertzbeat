@@ -8,15 +8,17 @@ import { externalPresentation, interaction, presentation } from './topology-canv
 
 const runtime = vi.hoisted(() => {
   const instances: MockGraph[] = [];
+  const renderResults: Array<Promise<void>> = [];
   let initialScale = 1;
   const Graph = vi.fn(function (options: unknown) {
-    const graph = createMockGraph(options);
+    const graph = createMockGraph(options, renderResults.shift());
     instances.push(graph);
     return graph;
   });
   return {
     Graph,
     instances,
+    renderResults,
     get initialScale() {
       return initialScale;
     },
@@ -58,6 +60,7 @@ const resize = vi.hoisted(() => ({ observers: [] as MockResizeObserver[] }));
 describe('TopologyCanvas runtime lifecycle', () => {
   beforeEach(() => {
     runtime.instances.length = 0;
+    runtime.renderResults.length = 0;
     runtime.Graph.mockClear();
     runtime.initialScale = 1;
     resize.observers.length = 0;
@@ -100,11 +103,147 @@ describe('TopologyCanvas runtime lifecycle', () => {
     expect(second.zoomTo).toHaveBeenCalledWith(1.4, false);
     expect(second.fitView).not.toHaveBeenCalled();
   });
+
+  it('keeps the active graph alive until its replacement is ready, then swaps and disposes exactly once', async () => {
+    const replacementRender = deferred<void>();
+    const firstCallbacks = eventCallbacks();
+    const replacementCallbacks = eventCallbacks();
+    const handle = createRef<TopologyCanvasHandle>();
+    const view = render(
+      <TopologyCanvas ref={handle} {...props(presentation('structure-a'), interaction(), firstCallbacks)} />
+    );
+    const first = await renderedGraph();
+    first.getZoom.mockReturnValue(1.4);
+    first.getPosition.mockReturnValue([22, 33]);
+    first.setData.mockClear();
+    runtime.renderResults.push(replacementRender.promise);
+
+    view.rerender(
+      <TopologyCanvas ref={handle} {...props(presentation('structure-b'), interaction(), replacementCallbacks)} />
+    );
+
+    await waitFor(() => expect(runtime.Graph).toHaveBeenCalledTimes(2));
+    const second = runtime.instances[1];
+    if (!second) throw new Error('The replacement graph was not created.');
+    expect(second.render).toHaveBeenCalledOnce();
+    expect(first.destroy).not.toHaveBeenCalled();
+    expect(first.setData).not.toHaveBeenCalled();
+    const [activeLayer, candidateLayer] = graphLayers(view.container);
+    expect(activeLayer).toHaveStyle({ pointerEvents: 'auto', visibility: 'visible' });
+    expect(candidateLayer).toHaveStyle({ pointerEvents: 'none', visibility: 'hidden' });
+    expect(candidateLayer).toHaveAttribute('aria-hidden', 'true');
+    emit(first, 'node:click', 'node-a');
+    expect(firstCallbacks.onNodeSelect).toHaveBeenCalledWith('node-a');
+    expect(replacementCallbacks.onNodeSelect).not.toHaveBeenCalled();
+    emit(second, 'node:click', 'node-a');
+    expect(replacementCallbacks.onNodeSelect).not.toHaveBeenCalled();
+    firstCallbacks.onScaleChange.mockClear();
+    replacementCallbacks.onScaleChange.mockClear();
+    first.fitView.mockClear();
+    act(() => handle.current?.fit());
+    await waitFor(() => expect(firstCallbacks.onScaleChange).toHaveBeenCalledWith(1.4));
+    expect(replacementCallbacks.onScaleChange).not.toHaveBeenCalled();
+    firstCallbacks.onRuntimeStateChange.mockClear();
+    replacementCallbacks.onRuntimeStateChange.mockClear();
+    first.zoomTo.mockClear();
+    act(() => handle.current?.zoomIn());
+    await waitFor(() => expect(first.zoomTo).toHaveBeenCalledWith(1.68, false));
+    expect(firstCallbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'ready' });
+    expect(replacementCallbacks.onRuntimeStateChange).not.toHaveBeenCalledWith({ kind: 'ready' });
+
+    act(() => replacementRender.resolve());
+    await waitFor(() => expect(first.destroy).toHaveBeenCalledOnce());
+    expect(second.translateTo).toHaveBeenCalledWith([22, 33], false);
+    expect(second.zoomTo).toHaveBeenCalledWith(1.4, false);
+    expect(second.destroy).not.toHaveBeenCalled();
+    expect(graphLayers(view.container)).toEqual([candidateLayer]);
+    expect(candidateLayer).toHaveStyle({ pointerEvents: 'auto', visibility: 'visible' });
+    expect(candidateLayer).not.toHaveAttribute('aria-hidden');
+    emit(first, 'node:click', 'node-a');
+    expect(firstCallbacks.onNodeSelect).toHaveBeenCalledOnce();
+    emit(second, 'node:click', 'node-a');
+    expect(replacementCallbacks.onNodeSelect).toHaveBeenCalledWith('node-a');
+
+    view.unmount();
+    expect(first.destroy).toHaveBeenCalledOnce();
+    expect(second.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the active graph and viewport when replacement rendering fails and retires failed callbacks', async () => {
+    const replacementRender = deferred<void>();
+    const callbacks = eventCallbacks();
+    const handle = createRef<TopologyCanvasHandle>();
+    const view = render(
+      <TopologyCanvas ref={handle} {...props(presentation('structure-a'), interaction(), callbacks)} />
+    );
+    const first = await renderedGraph();
+    first.getZoom.mockReturnValue(1.4);
+    first.getPosition.mockReturnValue([22, 33]);
+    runtime.renderResults.push(replacementRender.promise);
+
+    view.rerender(<TopologyCanvas ref={handle} {...props(presentation('structure-b'), interaction(), callbacks)} />);
+    await waitFor(() => expect(runtime.Graph).toHaveBeenCalledTimes(2));
+    const failed = runtime.instances[1];
+    if (!failed) throw new Error('The failed replacement graph was not created.');
+    const [activeLayer, failedLayer] = graphLayers(view.container);
+    expect(activeLayer).toHaveStyle({ pointerEvents: 'auto', visibility: 'visible' });
+    expect(failedLayer).toHaveStyle({ pointerEvents: 'none', visibility: 'hidden' });
+
+    act(() => replacementRender.reject(new Error('private replacement failure')));
+    await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'failure' }));
+    expect(first.destroy).not.toHaveBeenCalled();
+    expect(first.getZoom()).toBe(1.4);
+    expect(first.getPosition()).toEqual([22, 33]);
+    expect(failed.off).toHaveBeenCalledOnce();
+    expect(failed.destroy).toHaveBeenCalledOnce();
+    expect(graphLayers(view.container)).toEqual([activeLayer]);
+
+    callbacks.onNodeSelect.mockClear();
+    emit(failed, 'node:click', 'node-a');
+    expect(callbacks.onNodeSelect).not.toHaveBeenCalled();
+    emit(first, 'node:click', 'node-a');
+    expect(callbacks.onNodeSelect).toHaveBeenCalledWith('node-a');
+
+    first.fitView.mockClear();
+    act(() => handle.current?.fit());
+    expect(first.fitView).toHaveBeenCalledOnce();
+
+    view.unmount();
+    expect(first.destroy).toHaveBeenCalledOnce();
+    expect(failed.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('does not half-commit a candidate that fails during final initialization', async () => {
+    const replacementRender = deferred<void>();
+    const callbacks = eventCallbacks();
+    const view = render(<TopologyCanvas {...props(presentation('structure-a'), interaction(), callbacks)} />);
+    const first = await renderedGraph();
+    runtime.renderResults.push(replacementRender.promise);
+
+    view.rerender(<TopologyCanvas {...props(presentation('structure-b'), interaction(), callbacks)} />);
+    await waitFor(() => expect(runtime.Graph).toHaveBeenCalledTimes(2));
+    const failed = runtime.instances[1];
+    if (!failed) throw new Error('The failed replacement graph was not created.');
+    failed.getZoom.mockImplementation(() => {
+      throw new Error('private initialized scale failure');
+    });
+
+    act(() => replacementRender.resolve());
+    await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'failure' }));
+    expect(first.destroy).not.toHaveBeenCalled();
+    expect(failed.destroy).toHaveBeenCalledOnce();
+    expect(graphLayers(view.container)).toHaveLength(1);
+
+    view.unmount();
+    expect(first.destroy).toHaveBeenCalledOnce();
+    expect(failed.destroy).toHaveBeenCalledOnce();
+  });
 });
 
 describe('TopologyCanvas event and resource bridge', () => {
   beforeEach(() => {
     runtime.instances.length = 0;
+    runtime.renderResults.length = 0;
     runtime.Graph.mockClear();
     runtime.initialScale = 1;
     resize.observers.length = 0;
@@ -255,7 +394,7 @@ describe('TopologyCanvas event and resource bridge', () => {
 type EventHandler = (event: { target?: { id?: string } }) => void;
 type MockGraph = ReturnType<typeof createMockGraph>;
 
-function createMockGraph(options: unknown) {
+function createMockGraph(options: unknown, renderResult: Promise<void> | undefined) {
   const handlers = new Map<string, EventHandler>();
   let scale = runtime.initialScale;
   return {
@@ -266,9 +405,9 @@ function createMockGraph(options: unknown) {
     fitView: vi.fn().mockResolvedValue(undefined),
     getPosition: vi.fn(() => [0, 0]),
     getZoom: vi.fn(() => scale),
-    off: vi.fn(),
+    off: vi.fn(() => handlers.clear()),
     on: vi.fn((event: string, handler: EventHandler) => handlers.set(event, handler)),
-    render: vi.fn().mockResolvedValue(undefined),
+    render: vi.fn(() => renderResult ?? Promise.resolve()),
     setData: vi.fn(),
     setEdge: vi.fn(),
     setNode: vi.fn(),
@@ -304,6 +443,10 @@ function emit(graph: MockGraph, event: string, id?: string) {
   act(() => graph.handlers.get(event)?.(id ? { target: { id } } : {}));
 }
 
+function graphLayers(container: HTMLElement) {
+  return Array.from(container.firstElementChild?.children ?? []);
+}
+
 function eventCallbacks() {
   return {
     onClearSelection: vi.fn(),
@@ -326,8 +469,10 @@ function props(
 
 function deferred<T>() {
   let resolve: (value: T) => void = () => undefined;
-  const promise = new Promise<T>(done => {
+  let reject: (reason?: unknown) => void = () => undefined;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, reject, resolve };
 }
