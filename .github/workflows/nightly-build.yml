@@ -44,6 +44,15 @@ jobs:
         cd hertzbeat-collector
         mvn clean package -Pcluster -DskipTests
 
+    - name: Verify Collector release content
+      run: |
+        set -- dist/apache-hertzbeat-collector-*-bin.tar.gz
+        if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+          echo "expected exactly one generated generic Collector archive and no other matching archives" >&2
+          exit 1
+        fi
+        ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" generic
+
     - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3
     - name: Log in to Docker Hub

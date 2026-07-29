@@ -29,6 +29,7 @@ native_assembly=script/assembly/collector/assembly-native.xml
 collector_pom=hertzbeat-collector/hertzbeat-collector-collector/pom.xml
 release_assets=script/ci/generate-hybrid-collector-release-assets.sh
 release_workflow=.github/workflows/hybrid-collector-release.yml
+nightly_workflow=.github/workflows/nightly-build.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
@@ -37,7 +38,7 @@ native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
-  "$release_assets" "$release_workflow" \
+  "$release_assets" "$release_workflow" "$nightly_workflow" \
   "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
   if [ ! -f "$required" ]; then
@@ -105,6 +106,39 @@ grep -q 'verify-hybrid-collector-jvm-package.sh' "$release_workflow"
 grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
 grep -q 'prepare-hybrid-collector-native-container-context.sh' "$release_workflow"
 grep -q 'context: target/native-container-context' "$release_workflow"
+
+nightly_verify_line=$(grep -n 'verify-hybrid-collector-jvm-package.sh.*"\$1".*generic' \
+  "$nightly_workflow" | head -1 | cut -d: -f1)
+nightly_backend_build_line=$(grep -n 'name: Build the Backend' "$nightly_workflow" \
+  | head -1 | cut -d: -f1)
+nightly_collector_image_line=$(grep -n 'name: Build and Push Collector' "$nightly_workflow" \
+  | head -1 | cut -d: -f1)
+if [ -z "$nightly_backend_build_line" ] || [ -z "$nightly_verify_line" ] \
+    || [ -z "$nightly_collector_image_line" ] \
+    || [ "$nightly_backend_build_line" -ge "$nightly_verify_line" ] \
+    || [ "$nightly_verify_line" -ge "$nightly_collector_image_line" ]; then
+  echo "nightly Collector archive must pass the JVM package verifier before image publication" >&2
+  exit 1
+fi
+grep -Fq 'set -- dist/apache-hertzbeat-collector-*-bin.tar.gz' "$nightly_workflow"
+grep -Fq 'if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then' "$nightly_workflow"
+if grep -q -- '-print -quit' "$nightly_workflow"; then
+  echo "nightly Collector release gate must not select an arbitrary first archive" >&2
+  exit 1
+fi
+
+for release_path in \
+  "'pom.xml'" \
+  "'.github/workflows/nightly-build.yml'" \
+  "'hertzbeat-observability/**'" \
+  "'hertzbeat-otel/**'" \
+  "'hertzbeat-startup/**'"; do
+  if ! grep -Fq -- "- $release_path" "$release_workflow"; then
+    echo "Hybrid Collector release workflow does not watch $release_path" >&2
+    exit 1
+  fi
+done
+
 grep -q '^COPY collector-native-linux-${TARGETARCH}\.tar\.gz ' "$dockerfile"
 grep -q 'verify-hybrid-collector-release-content.py' "$dockerfile"
 if grep -q '^ADD ' "$dockerfile"; then

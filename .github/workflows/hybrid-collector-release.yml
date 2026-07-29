@@ -21,10 +21,15 @@ on:
   pull_request:
     paths:
       - '.github/workflows/hybrid-collector-release.yml'
+      - '.github/workflows/nightly-build.yml'
+      - 'pom.xml'
       - 'hertzbeat-collector/**'
       - 'hertzbeat-common-core/**'
       - 'hertzbeat-manager/**'
+      - 'hertzbeat-observability/**'
+      - 'hertzbeat-otel/**'
       - 'hertzbeat-otel-runtime/**'
+      - 'hertzbeat-startup/**'
       - 'script/assembly/collector/**'
       - 'script/ci/*hybrid-collector*'
       - 'script/ci/*otel-runtime*'
