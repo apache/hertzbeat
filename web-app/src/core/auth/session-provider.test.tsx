@@ -18,16 +18,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionQueryRuntime } from '@/app/refine/session-query-runtime';
+import { apiFetch } from '@/core/http/http-client';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+const sessionApi = vi.hoisted(() => ({ refreshSession: vi.fn() }));
 const convergence = vi.hoisted(() => ({
   broadcast: vi.fn(),
   close: vi.fn(),
   notify: undefined as (() => void) | undefined
+}));
+vi.mock('@/core/auth/session-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/auth/session-api')>()),
+  refreshSession: sessionApi.refreshSession
 }));
 vi.mock('@/core/auth/session-convergence-channel', () => ({
   createSessionConvergenceChannel: (notify: () => void) => {
@@ -36,9 +41,9 @@ vi.mock('@/core/auth/session-convergence-channel', () => ({
   }
 }));
 
-import { AuthGate } from './auth-gate';
-import { anonymousSession, sessionQueryKey, type UiSession } from './session-api';
+import { anonymousSession, sessionQueryKey, SessionRequestError, type UiSession } from './session-api';
 import { useSession } from './session-context';
+import { useSessionIdentityBoundary } from './session-identity-context';
 import { SessionIdentityProvider } from './session-identity-provider';
 import { SessionProvider } from './session-provider';
 
@@ -53,6 +58,7 @@ const authenticatedSession: UiSession = {
 describe('SessionProvider read state', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionApi.refreshSession.mockReset();
     convergence.notify = undefined;
   });
 
@@ -124,7 +130,7 @@ describe('SessionProvider expiry ownership', () => {
     vi.useRealTimers();
   });
 
-  it('rotates an expired authenticated identity to a new anonymous client and login route', async () => {
+  it('refreshes an expiring identity before publishing a new authenticated generation', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
     const clients: QueryClient[] = [];
@@ -135,6 +141,8 @@ describe('SessionProvider expiry ownership', () => {
       workspaceId: 'workspace-a',
       expiresAt: '2030-01-01T00:00:01.000Z'
     };
+    const renewedSession = { ...expiringSession, expiresAt: '2030-01-01T00:30:00.000Z' };
+    sessionApi.refreshSession.mockResolvedValue(renewedSession);
     const createQueryClient = () => {
       const client = new QueryClient({
         defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } }
@@ -149,31 +157,176 @@ describe('SessionProvider expiry ownership', () => {
         {runtime => (
           <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
             <SessionProvider>
-              <MemoryRouter initialEntries={['/dashboard']}>
-                <Routes>
-                  <Route element={<AuthGate />}>
-                    <Route path="/dashboard" element={<div>protected dashboard</div>} />
-                  </Route>
-                  <Route path="/passport/login" element={<LocationProbe />} />
-                </Routes>
-              </MemoryRouter>
+              <SessionAuthenticationProbe />
             </SessionProvider>
           </QueryClientProvider>
         )}
       </SessionQueryRuntime>
     );
 
-    expect(screen.getByText('protected dashboard')).toBeInTheDocument();
+    expect(screen.getByText('authenticated')).toBeInTheDocument();
     clients[0]?.setQueryData(['protected', 'workspace-a'], 'operator-a');
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
 
-    expect(screen.getByTestId('location')).toHaveTextContent('/passport/login');
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(clients).toHaveLength(2);
+    expect(clients[1]?.getQueryData(sessionQueryKey)).toEqual(renewedSession);
+    expect(clients[1]?.getQueryData(['protected', 'workspace-a'])).toBeUndefined();
+    expect(screen.getByText('authenticated')).toBeInTheDocument();
+  });
+
+  it('rotates anonymous only after a definite current-owner refresh failure', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+    const clients: QueryClient[] = [];
+    sessionApi.refreshSession.mockRejectedValue(new SessionRequestError('error', { status: 200 }));
+    renderExpirySession(clients, expiringSession());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
     expect(clients).toHaveLength(2);
     expect(clients[1]?.getQueryData(sessionQueryKey)).toEqual(anonymousSession);
-    expect(clients[1]?.getQueryData(['protected', 'workspace-a'])).toBeUndefined();
+    expect(screen.getByText('anonymous')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['unavailable', new SessionRequestError('unavailable')],
+    ['contract', new SessionRequestError('contract', { status: 200 })]
+  ] as const)(
+    'fails closed with retryable %s evidence without retiring the identity cache or starting a loop',
+    async (expectedFailure, refreshFailure) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+      const clients: QueryClient[] = [];
+      sessionApi.refreshSession.mockRejectedValue(refreshFailure);
+      renderExpirySession(clients, expiringSession());
+      clients[0]?.setQueryData(['protected', 'workspace-a'], 'private-cache');
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1_000);
+      });
+
+      expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+      expect(clients).toHaveLength(1);
+      expect(clients[0]?.getQueryData(['protected', 'workspace-a'])).toBe('private-cache');
+      expect(screen.getByTestId('failure')).toHaveTextContent(expectedFailure);
+      expect(screen.getByTestId('session')).toHaveTextContent('none');
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+      expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    }
+  );
+
+  it('retries an uncertain expiry renewal through the same coordinator and recovers', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+    const clients: QueryClient[] = [];
+    const renewedSession = { ...authenticatedSession, expiresAt: '2030-01-01T00:30:00.000Z' };
+    sessionApi.refreshSession
+      .mockRejectedValueOnce(new SessionRequestError('unavailable'))
+      .mockResolvedValueOnce(renewedSession);
+    renderExpirySession(clients, expiringSession());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    expect(screen.getByTestId('failure')).toHaveTextContent('unavailable');
+
+    fireEvent.click(screen.getByRole('button', { name: 'retry session' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(sessionApi.refreshSession).toHaveBeenCalledTimes(2);
+    expect(clients).toHaveLength(2);
+    expect(clients[1]?.getQueryData(sessionQueryKey)).toEqual(renewedSession);
+    expect(screen.getByTestId('failure')).toHaveTextContent('none');
+    expect(screen.getByTestId('session')).toHaveTextContent('authenticated');
+  });
+
+  it('does not let a retired expiry refresh overwrite a newer generation', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+    const clients: QueryClient[] = [];
+    const refresh = deferred<UiSession>();
+    sessionApi.refreshSession.mockReturnValue(refresh.promise);
+    renderExpirySession(clients, expiringSession());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'publish user b' }));
+    const currentClient = clients.at(-1);
+    await act(async () => {
+      refresh.resolve({ ...authenticatedSession, expiresAt: '2030-01-01T00:30:00.000Z' });
+      await refresh.promise;
+    });
+
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(currentClient?.getQueryData(sessionQueryKey)).toMatchObject({ username: 'operator-b' });
+  });
+
+  it('does not publish a late expiry refresh after runtime unmount', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+    const clients: QueryClient[] = [];
+    const refresh = deferred<UiSession>();
+    sessionApi.refreshSession.mockReturnValue(refresh.promise);
+    const view = renderExpirySession(clients, expiringSession());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    view.unmount();
+    await act(async () => {
+      refresh.resolve({ ...authenticatedSession, expiresAt: '2030-01-01T00:30:00.000Z' });
+      await refresh.promise;
+    });
+
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(clients).toHaveLength(1);
+  });
+
+  it('shares one refresh between concurrent timer expiry and a safe-read 401', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'));
+    const clients: QueryClient[] = [];
+    const refresh = deferred<UiSession>();
+    sessionApi.refreshSession.mockReturnValue(refresh.promise);
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    renderExpirySession(clients, expiringSession());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    const request = apiFetch('/api/protected');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      refresh.resolve({ ...authenticatedSession, expiresAt: '2030-01-01T00:30:00.000Z' });
+      await refresh.promise;
+    });
+
+    await expect(request).resolves.toMatchObject({ status: 200 });
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(clients).toHaveLength(2);
   });
 
   it('publishes an already expired cached identity as anonymous on the first render', () => {
@@ -206,6 +359,7 @@ describe('SessionProvider expiry ownership', () => {
     const clients: QueryClient[] = [];
     const currentSession = { ...authenticatedSession, expiresAt: null };
     const expiredSession = { ...authenticatedSession, expiresAt: '2000-01-01T00:00:00.000Z' };
+    sessionApi.refreshSession.mockResolvedValue(anonymousSession);
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(sessionResponse(expiredSession)));
     const createQueryClient = () => {
       const client = new QueryClient({
@@ -238,9 +392,51 @@ describe('SessionProvider expiry ownership', () => {
   });
 });
 
-function LocationProbe() {
-  const location = useLocation();
-  return <output data-testid="location">{location.pathname}</output>;
+function renderExpirySession(clients: QueryClient[], session: UiSession) {
+  const createQueryClient = () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } }
+    });
+    if (clients.length === 0) client.setQueryData(sessionQueryKey, session);
+    clients.push(client);
+    return client;
+  };
+  return render(
+    <SessionQueryRuntime createQueryClient={createQueryClient}>
+      {runtime => (
+        <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
+          <SessionProvider>
+            <SessionStateProbe />
+            <ExpiryIdentityControl />
+          </SessionProvider>
+        </QueryClientProvider>
+      )}
+    </SessionQueryRuntime>
+  );
+}
+
+function ExpiryIdentityControl() {
+  const replaceIdentity = useSessionIdentityBoundary();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        replaceIdentity({
+          authenticated: true,
+          username: 'operator-b',
+          roles: ['USER'],
+          workspaceId: 'workspace-b',
+          expiresAt: null
+        })
+      }
+    >
+      publish user b
+    </button>
+  );
+}
+
+function expiringSession(): UiSession {
+  return { ...authenticatedSession, expiresAt: '2030-01-01T00:00:01.000Z' };
 }
 
 function SessionAuthenticationProbe() {

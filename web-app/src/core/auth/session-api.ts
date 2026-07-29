@@ -40,6 +40,14 @@ export class SessionRequestError extends Error {
   }
 }
 
+/**
+ * Only an explicit server rejection proves that the shared refresh cookie is
+ * unusable. Transport, contract, and abort failures cannot retire identity.
+ */
+export function isDefiniteSessionRefreshFailure(reason: unknown) {
+  return reason instanceof SessionRequestError && reason.kind === 'error';
+}
+
 export function getSession(options?: Pick<RequestInit, 'signal'>) {
   return sessionRequest('/api/ui/session', options, 'read');
 }

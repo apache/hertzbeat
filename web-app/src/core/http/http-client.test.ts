@@ -31,7 +31,7 @@ describe('apiFetch', () => {
   });
 
   it('refreshes and retries a read once after an unauthorized response', async () => {
-    const refresh = vi.fn().mockResolvedValue(true);
+    const refresh = vi.fn().mockResolvedValue({ status: 'renewed' } as const);
     unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -47,7 +47,7 @@ describe('apiFetch', () => {
   });
 
   it('returns the unauthorized read when the session coordinator cannot recover', async () => {
-    const refresh = vi.fn().mockResolvedValue(false);
+    const refresh = vi.fn().mockResolvedValue({ status: 'uncertain', failure: 'unavailable' } as const);
     unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
@@ -60,7 +60,7 @@ describe('apiFetch', () => {
   });
 
   it('never replays a mutation', async () => {
-    const refresh = vi.fn().mockResolvedValue(true);
+    const refresh = vi.fn().mockResolvedValue({ status: 'renewed' } as const);
     unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
@@ -76,7 +76,7 @@ describe('apiFetch', () => {
   });
 
   it('does not recursively refresh when the refresh endpoint itself rejects the session', async () => {
-    const refresh = vi.fn().mockResolvedValue(true);
+    const refresh = vi.fn().mockResolvedValue({ status: 'renewed' } as const);
     unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
@@ -91,7 +91,7 @@ describe('apiFetch', () => {
   it.each([new URL('http://localhost/api/ui/session/refresh'), new Request('http://localhost/api/ui/session/refresh')])(
     'recognizes the refresh endpoint from URL and Request inputs',
     async input => {
-      const refresh = vi.fn().mockResolvedValue(true);
+      const refresh = vi.fn().mockResolvedValue({ status: 'renewed' } as const);
       unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
       const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
       vi.stubGlobal('fetch', fetchMock);

@@ -21,10 +21,20 @@ import { flushSync } from 'react-dom';
 
 import { createCheckingSessionQueryClient, createSessionQueryClient } from '@/core/auth/session-cache-boundary';
 import { createSessionConvergenceChannel } from '@/core/auth/session-convergence-channel';
-import { anonymousSession, refreshSession, type UiSession } from '@/core/auth/session-api';
+import {
+  anonymousSession,
+  isDefiniteSessionRefreshFailure,
+  refreshSession,
+  SessionRequestError,
+  type UiSession
+} from '@/core/auth/session-api';
 import type { ReplaceSessionIdentity, ReplaceSessionIdentityOptions } from '@/core/auth/session-identity-context';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
-import { registerBrowserSessionRefreshCoordinator } from '@/core/http/http-client';
+import {
+  registerBrowserSessionRefreshCoordinator,
+  type BrowserSessionRefreshOptions,
+  type BrowserSessionRefreshResult
+} from '@/core/http/http-client';
 
 export type SessionQueryRuntimeValue = {
   generation: number;
@@ -40,7 +50,7 @@ type SessionQueryRuntimeProps = {
 
 type PendingSessionRefresh = {
   generation: number;
-  promise: Promise<boolean>;
+  promise: Promise<BrowserSessionRefreshResult>;
 };
 
 export function SessionQueryRuntime({ children, createQueryClient }: SessionQueryRuntimeProps) {
@@ -109,32 +119,56 @@ function useSessionRefresh(
   replaceIdentity: ReplaceSessionIdentity
 ) {
   const refreshRequestRef = useRef<PendingSessionRefresh | undefined>(undefined);
-  const refreshIdentity = useCallback(() => {
-    async function refreshIdentityGeneration(generation: number) {
-      try {
-        const refreshedSession = await refreshSession();
-        if (!mountedRef.current || runtimeRef.current.generation !== generation) return false;
-        replaceIdentity(refreshedSession);
-        return refreshedSession.authenticated;
-      } catch {
-        if (!mountedRef.current || runtimeRef.current.generation !== generation) return false;
-        replaceIdentity(anonymousSession);
-        return false;
+  const refreshIdentity = useCallback(
+    (options?: BrowserSessionRefreshOptions) => {
+      async function refreshIdentityGeneration(generation: number) {
+        try {
+          const refreshedSession = await refreshSession();
+          if (!mountedRef.current || runtimeRef.current.generation !== generation) {
+            return { status: 'retired' } satisfies BrowserSessionRefreshResult;
+          }
+          replaceIdentity(refreshedSession, options);
+          return {
+            status: refreshedSession.authenticated ? 'renewed' : 'rejected'
+          } satisfies BrowserSessionRefreshResult;
+        } catch (reason) {
+          if (!mountedRef.current || runtimeRef.current.generation !== generation) {
+            return { status: 'retired' } satisfies BrowserSessionRefreshResult;
+          }
+          if (isDefiniteSessionRefreshFailure(reason)) {
+            replaceIdentity(anonymousSession, options);
+            return { status: 'rejected' } satisfies BrowserSessionRefreshResult;
+          }
+          return {
+            status: 'uncertain',
+            failure: classifyUncertainSessionRefreshFailure(reason)
+          } satisfies BrowserSessionRefreshResult;
+        }
       }
-    }
 
-    if (!mountedRef.current) return Promise.resolve(false);
-    const ownerGeneration = runtimeRef.current.generation;
-    const pendingRefresh = refreshRequestRef.current;
-    if (pendingRefresh?.generation === ownerGeneration) return pendingRefresh.promise;
+      if (!mountedRef.current) {
+        return Promise.resolve({ status: 'retired' } satisfies BrowserSessionRefreshResult);
+      }
+      const ownerGeneration = runtimeRef.current.generation;
+      const pendingRefresh = refreshRequestRef.current;
+      if (pendingRefresh?.generation === ownerGeneration) return pendingRefresh.promise;
 
-    const refreshPromise = refreshIdentityGeneration(ownerGeneration).finally(() => {
-      if (refreshRequestRef.current?.promise === refreshPromise) refreshRequestRef.current = undefined;
-    });
-    refreshRequestRef.current = { generation: ownerGeneration, promise: refreshPromise };
-    return refreshPromise;
-  }, [mountedRef, replaceIdentity, runtimeRef]);
+      const refreshPromise = refreshIdentityGeneration(ownerGeneration).finally(() => {
+        if (refreshRequestRef.current?.promise === refreshPromise) refreshRequestRef.current = undefined;
+      });
+      refreshRequestRef.current = { generation: ownerGeneration, promise: refreshPromise };
+      return refreshPromise;
+    },
+    [mountedRef, replaceIdentity, runtimeRef]
+  );
   return refreshIdentity;
+}
+
+function classifyUncertainSessionRefreshFailure(reason: unknown) {
+  if (reason instanceof SessionRequestError && (reason.kind === 'unavailable' || reason.kind === 'contract')) {
+    return reason.kind;
+  }
+  return 'error';
 }
 
 type Current<T> = { current: T };

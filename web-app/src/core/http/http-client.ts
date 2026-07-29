@@ -21,7 +21,19 @@ const SESSION_REFRESH_PATH = '/api/ui/session/refresh';
 const REQUEST_TIMEOUT_MS = 30_000;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-type BrowserSessionRefreshCoordinator = () => Promise<boolean>;
+export type BrowserSessionRefreshOptions = {
+  convergence: 'local-only';
+};
+
+export type BrowserSessionRefreshResult =
+  | { status: 'renewed' }
+  | { status: 'rejected' }
+  | { status: 'uncertain'; failure: 'unavailable' | 'contract' | 'error' }
+  | { status: 'retired' };
+
+type BrowserSessionRefreshCoordinator = (
+  options?: BrowserSessionRefreshOptions
+) => Promise<BrowserSessionRefreshResult>;
 
 let sessionRefreshCoordinator: BrowserSessionRefreshCoordinator | undefined;
 
@@ -62,10 +74,18 @@ function withBrowserSession(init: RequestInit): RequestInit {
   return { ...init, method, headers, credentials: 'same-origin' };
 }
 
-export function refreshBrowserSession() {
+export function refreshBrowserSession(options?: BrowserSessionRefreshOptions) {
+  return refreshBrowserSessionResult(options).then(result => result.status === 'renewed');
+}
+
+export function refreshBrowserSessionResult(options?: BrowserSessionRefreshOptions) {
   return Promise.resolve()
-    .then(() => sessionRefreshCoordinator?.() ?? false)
-    .catch(() => false);
+    .then(
+      () =>
+        sessionRefreshCoordinator?.(options) ??
+        ({ status: 'uncertain', failure: 'unavailable' } satisfies BrowserSessionRefreshResult)
+    )
+    .catch(() => ({ status: 'uncertain', failure: 'error' }) satisfies BrowserSessionRefreshResult);
 }
 
 /**

@@ -21,7 +21,13 @@ import { useEffect, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
-import { anonymousSession, getSession, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
+import {
+  anonymousSession,
+  getSession,
+  sessionQueryKey,
+  SessionRequestError,
+  type UiSession
+} from '@/core/auth/session-api';
 import { apiFetch } from '@/core/http/http-client';
 
 const sessionApi = vi.hoisted(() => ({ refreshSession: vi.fn() }));
@@ -228,7 +234,7 @@ describe('SessionQueryRuntime', () => {
 
   it('converges a failed safe-read refresh to a new anonymous QueryClient', async () => {
     const clients: QueryClient[] = [];
-    sessionApi.refreshSession.mockRejectedValue(new Error('refresh unavailable'));
+    sessionApi.refreshSession.mockRejectedValue(new SessionRequestError('error', { status: 200 }));
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
     renderRuntime(clients);
@@ -240,6 +246,22 @@ describe('SessionQueryRuntime', () => {
     expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
     expect(clients).toHaveLength(3);
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the current identity generation after an uncertain refresh failure', async () => {
+    const clients: QueryClient[] = [];
+    sessionApi.refreshSession.mockRejectedValue(new SessionRequestError('unavailable'));
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+
+    await expect(apiFetch('/api/protected')).resolves.toMatchObject({ status: 401 });
+
+    expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(userA);
   });
 
   it('does not let a refresh from a retired identity overwrite a newer identity', async () => {

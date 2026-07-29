@@ -17,7 +17,14 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession, loginSession, logoutSession, refreshSession, SessionRequestError } from './session-api';
+import {
+  getSession,
+  isDefiniteSessionRefreshFailure,
+  loginSession,
+  logoutSession,
+  refreshSession,
+  SessionRequestError
+} from './session-api';
 
 const authenticatedSession = {
   authenticated: true,
@@ -32,6 +39,14 @@ describe('UI session API contract', () => {
     document.cookie = 'hb_ui_csrf=csrf-proof; path=/';
   });
   afterEach(() => vi.unstubAllGlobals());
+
+  it('retires identity only for an explicit server refresh rejection', () => {
+    expect(isDefiniteSessionRefreshFailure(new SessionRequestError('error', { status: 200 }))).toBe(true);
+    expect(isDefiniteSessionRefreshFailure(new SessionRequestError('unavailable'))).toBe(false);
+    expect(isDefiniteSessionRefreshFailure(new SessionRequestError('contract', { status: 200 }))).toBe(false);
+    expect(isDefiniteSessionRefreshFailure(new DOMException('retired owner', 'AbortError'))).toBe(false);
+    expect(isDefiniteSessionRefreshFailure(new Error('unexpected'))).toBe(false);
+  });
 
   it('uses the frozen GET, login POST, refresh POST, and logout DELETE endpoints', async () => {
     const fetchMock = vi
