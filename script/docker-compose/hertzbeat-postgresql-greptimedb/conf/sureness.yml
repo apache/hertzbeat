@@ -54,6 +54,23 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  # queue depth of the hertzbeat process itself, operational data
+  - /api/metrics===get===[admin]
+  # per account metric favourites rendered on the monitor pages
+  - /api/metrics/**===get===[admin,user,guest]
+  - /api/metrics/**===post===[admin,user,guest]
+  - /api/metrics/**===delete===[admin,user,guest]
+  - /api/label/**===get===[admin,user,guest]
+  - /api/label/**===post===[admin,user]
+  - /api/label/**===put===[admin,user]
+  - /api/label/**===delete===[admin]
+  # the storage availability probe is read by every monitor page, while the query
+  # route forwards a raw promql expression straight to the time series database
+  - /api/warehouse/**===get===[admin,user,guest]
+  - /api/warehouse/query===post===[admin]
+  - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs===delete===[admin]
+  - /api/v2/alerts===post===[admin,user]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
