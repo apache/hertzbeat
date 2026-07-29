@@ -32,6 +32,8 @@ release_workflow=.github/workflows/hybrid-collector-release.yml
 nightly_workflow=.github/workflows/nightly-build.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
+jvm_runtime_asset_verifier=script/ci/verify-hybrid-collector-jvm-runtime-assets.py
+jvm_package_verifier_test=script/ci/test_verify_hybrid_collector_jvm_package.py
 runtime_sbom_platform_verifier=script/ci/verify-otel-runtime-sbom-platform.py
 runtime_sbom_platform_test=script/ci/test_verify_otel_runtime_sbom_platform.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
@@ -41,7 +43,8 @@ native_container_context=script/ci/prepare-hybrid-collector-native-container-con
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
   "$release_assets" "$release_workflow" "$nightly_workflow" \
-  "$release_scanner" "$release_scanner_test" "$runtime_sbom_platform_verifier" "$runtime_sbom_platform_test" \
+  "$release_scanner" "$release_scanner_test" "$jvm_runtime_asset_verifier" "$jvm_package_verifier_test" \
+  "$runtime_sbom_platform_verifier" "$runtime_sbom_platform_test" \
   "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
   if [ ! -f "$required" ]; then
@@ -103,12 +106,16 @@ grep -q 'macos-15-intel' "$release_workflow"
 grep -q 'windows-2025' "$release_workflow"
 grep -q 'java-version: 25' "$release_workflow"
 grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
+grep -q 'test_verify_hybrid_collector_jvm_package.py' "$release_workflow"
 grep -q 'test_verify_otel_runtime_sbom_platform.py' "$release_workflow"
 grep -q 'test_prepare_hybrid_collector_native_container_context.py' "$release_workflow"
 grep -q -- '--source' "$release_workflow"
+grep -q -- '-Pruntime' "$release_workflow"
 grep -q -- '--jvm' "$jvm_package_verifier"
+grep -q 'verify-hybrid-collector-jvm-runtime-assets.py' "$jvm_package_verifier"
 grep -q -- '--native' "$native_package_verifier"
 grep -q 'verify-hybrid-collector-jvm-package.sh' "$release_workflow"
+grep -q 'verify-hybrid-collector-jvm-package.sh.*"\$1".*linux-amd64' "$release_workflow"
 grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
 grep -q 'prepare-hybrid-collector-native-container-context.sh' "$release_workflow"
 grep -q 'context: target/native-container-context' "$release_workflow"
@@ -168,6 +175,17 @@ for descriptor in script/assembly/collector/assembly-macos-arm64.xml \
   grep -Fq '<directory>../../script/ext-lib</directory>' "$descriptor"
   grep -Fq '<directory>../../</directory>' "$descriptor"
   grep -Fq '<directory>../../material/licenses/collector</directory>' "$descriptor"
+  for runtime_asset in runtime-manifest.json hertzbeat-collector.cdx.json \
+      hertzbeat-otel-runtime.cdx.json release-inventory.json SHA512SUMS; do
+    if [ "$(grep -Fc "<include>$runtime_asset</include>" "$descriptor")" -ne 1 ]; then
+      echo "platform JVM descriptor must package $runtime_asset exactly once: $descriptor" >&2
+      exit 1
+    fi
+  done
+  if [ "$(grep -Fc 'runtime-licenses</directory>' "$descriptor")" -ne 1 ]; then
+    echo "platform JVM descriptor must package runtime licenses exactly once: $descriptor" >&2
+    exit 1
+  fi
   if grep -Eq '<directory>\.\./[^.]' "$descriptor"; then
     echo "platform JVM descriptor contains a stale module-relative input: $descriptor" >&2
     exit 1

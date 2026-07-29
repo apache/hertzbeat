@@ -62,6 +62,7 @@ jobs:
       - name: Verify source and dependency contracts
         run: |
           python3 script/ci/test_verify_hybrid_collector_release_content.py -v
+          python3 script/ci/test_verify_hybrid_collector_jvm_package.py -v
           python3 script/ci/test_verify_otel_runtime_sbom_platform.py -v
           python3 script/ci/test_prepare_hybrid_collector_native_container_context.py -v
           python3 script/ci/test_hybrid_collector_systemd_install.py -v
@@ -79,11 +80,15 @@ jobs:
       - name: Verify Java runtime and Spring AOT
         run: |
           ./script/ci/verify-hybrid-collector-java.sh
+          make -C hertzbeat-otel-runtime release-assets
           ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
-            -Pcluster -DskipTests package
-          archive=$(find dist -maxdepth 1 -type f -name 'apache-hertzbeat-collector-*-bin.tar.gz' -print -quit)
-          test -n "$archive"
-          sh ./script/ci/verify-hybrid-collector-jvm-package.sh "$archive" generic
+            -Pruntime -DskipTests package
+          set -- dist/apache-hertzbeat-collector-*-bin.tar.gz
+          test "$#" -eq 1 && test -f "$1"
+          sh ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" generic
+          set -- dist/apache-hertzbeat-collector-*-bin-linux_amd64.tar.gz
+          test "$#" -eq 1 && test -f "$1"
+          sh ./script/ci/verify-hybrid-collector-jvm-package.sh "$1" linux-amd64
 
   source-policy:
     strategy:

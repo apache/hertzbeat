@@ -57,6 +57,8 @@ if [ "$(printf '%s\n' "$application_jars" | sed '/^$/d' | wc -l | tr -d ' ')" -n
   exit 1
 fi
 
+python3 "$repo_root/script/ci/verify-hybrid-collector-jvm-runtime-assets.py" "$root" "$platform"
+
 case "$platform" in
   windows-*)
     if [ ! -f "$root/bin/startup.bat" ] || [ ! -f "$root/bin/shutdown.bat" ]; then
