@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { OptionalRemoteValueState } from '@/shared/remote-state';
-import { compactTablePageSizes } from '@/shared/pagination';
+import { authoritativePageIndexCorrection, compactTablePageSizes } from '@/shared/pagination';
 
 import { BulletinRequestFailure } from './bulletin-failure';
 
@@ -28,7 +28,7 @@ export type BulletinMetricsState = OptionalRemoteValueState<
   'missing' | 'invalid' | 'permission' | 'unavailable' | 'error'
 >;
 
-type BulletinPageEvidence = {
+export type BulletinPageEvidence = {
   content: readonly unknown[];
   totalElements: number;
   totalPages: number;
@@ -43,6 +43,12 @@ export function isBulletinPageComplete(page: BulletinPageEvidence) {
   if (page.number >= page.totalPages) return page.content.length === 0;
   const expectedRecords = Math.min(page.size, page.totalElements - page.number * page.size);
   return page.content.length === expectedRecords;
+}
+
+export function bulletinPageIndexCorrection(query: BulletinQuery, page?: BulletinPageEvidence) {
+  if (!page || page.number !== query.pageIndex || page.size !== query.pageSize || !isBulletinPageComplete(page))
+    return undefined;
+  return authoritativePageIndexCorrection(query.pageIndex, page.totalPages);
 }
 
 export function readBulletinQuery(params: URLSearchParams): BulletinQuery {

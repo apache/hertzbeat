@@ -3,6 +3,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BulletinRequestFailure } from '../model/bulletin-failure';
@@ -14,6 +15,8 @@ import {
   type BulletinListState
 } from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
+import { useBulletinPageCorrection } from './bulletin-page-correction-controller';
+import { useBulletinQueryController } from './bulletin-query-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 const api = vi.hoisted(() => ({ loadBulletinMetrics: vi.fn(), loadBulletins: vi.fn() }));
@@ -89,6 +92,7 @@ describe('Bulletin list controller', () => {
     const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
 
     await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'permission' }));
+    expect(hook.result.current.page).toBeUndefined();
   });
 
   it('returns false when the query function throws during refetch', async () => {
@@ -116,6 +120,71 @@ describe('Bulletin list controller', () => {
     const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
 
     await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'invalid' }));
+  });
+
+  it('presents an authoritative non-empty overflow page as correcting instead of empty', async () => {
+    const overflowQuery = { search: 'ops', pageIndex: 2, pageSize: 8 };
+    api.loadBulletins.mockResolvedValue({
+      content: [],
+      totalElements: 9,
+      totalPages: 2,
+      number: 2,
+      size: 8
+    });
+    const hook = renderHook(() => useBulletinListController(overflowQuery), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'correcting' }));
+    expect(hook.result.current.page).toMatchObject({ number: 2, totalElements: 9, totalPages: 2, size: 8 });
+  });
+
+  it('presents only authoritative zero-total page zero as empty', async () => {
+    api.loadBulletins.mockResolvedValue({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 8
+    });
+    const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'empty' }));
+  });
+
+  it('loads the final legal page after a delete refresh proves the current page is empty', async () => {
+    const legalRecords = Array.from({ length: 8 }, (_, index) => bulletin(20 + index, `Record ${index}`));
+    api.loadBulletins
+      .mockResolvedValueOnce({
+        content: [oldRecord],
+        totalElements: 17,
+        totalPages: 3,
+        number: 2,
+        size: 8
+      })
+      .mockResolvedValueOnce({
+        content: [],
+        totalElements: 16,
+        totalPages: 2,
+        number: 2,
+        size: 8
+      })
+      .mockResolvedValueOnce({
+        content: legalRecords,
+        totalElements: 16,
+        totalPages: 2,
+        number: 1,
+        size: 8
+      });
+    const hook = renderHook(usePaginationRecoveryHarness, { wrapper: createRouteWrapper() });
+    await waitFor(() => expect(hook.result.current.list.state.kind).toBe('ready'));
+
+    await act(async () => expect(hook.result.current.list.refresh()).resolves.toBe(true));
+
+    await waitFor(() => {
+      expect(hook.result.current.query.query.pageIndex).toBe(1);
+      expect(hook.result.current.list.state).toMatchObject({ kind: 'ready', records: legalRecords, total: 16 });
+    });
+    expect(hook.result.current.location.search).toBe('?pageIndex=1&pageSize=8&search=ops');
+    expect(api.loadBulletins.mock.calls.map(([request]) => request.pageIndex)).toEqual([2, 2, 1]);
   });
 
   it('synchronously retires selection and metrics when the canonical list query changes', async () => {
@@ -278,6 +347,24 @@ function createWrapper(client = new QueryClient({ defaultOptions: { queries: { r
   return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
+}
+
+function createRouteWrapper() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/bulletin?search=ops&pageIndex=2&pageSize=8']}>{children}</MemoryRouter>
+      </QueryClientProvider>
+    );
+  };
+}
+
+function usePaginationRecoveryHarness() {
+  const query = useBulletinQueryController();
+  const list = useBulletinListController(query.query);
+  useBulletinPageCorrection(query.query, list.page, query.replacePageIndex);
+  return { list, location: useLocation(), query };
 }
 
 function useSelectionHarness(query: BulletinQuery, list: BulletinListState) {

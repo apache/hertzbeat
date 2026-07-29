@@ -20,7 +20,7 @@ type BulletinTableProps = {
   actions: BulletinTableActions;
   busy: boolean;
   capabilities: BulletinActionCapabilities;
-  listKind: 'idle' | 'loading' | 'ready' | 'empty' | 'invalid' | 'permission' | 'unavailable' | 'error';
+  listKind: 'idle' | 'loading' | 'correcting' | 'ready' | 'empty' | 'invalid' | 'permission' | 'unavailable' | 'error';
   query: BulletinQuery;
   records: Bulletin[];
   selectedId: number | null;
@@ -30,11 +30,11 @@ type BulletinTableProps = {
 
 export function BulletinTable(props: BulletinTableProps) {
   const { t } = useTranslation();
-  if (props.listKind !== 'loading' && props.listKind !== 'ready') return null;
+  if (props.listKind !== 'loading' && props.listKind !== 'correcting' && props.listKind !== 'ready') return null;
   return (
     <Table<Bulletin>
       rowKey="id"
-      loading={props.listKind === 'loading'}
+      loading={props.listKind === 'loading' || props.listKind === 'correcting'}
       dataSource={props.records}
       rowClassName={record => (record.id === props.selectedId ? (styles.selectedRow ?? '') : '')}
       onRow={record => (props.busy ? {} : { onClick: () => props.actions.select(record.id) })}

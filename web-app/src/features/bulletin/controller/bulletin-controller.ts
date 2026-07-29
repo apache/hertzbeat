@@ -12,18 +12,15 @@ import { useBulletinDependencies } from './bulletin-dependencies-controller';
 import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
 import { useBulletinBatchSelection, useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
+import { useBulletinPageCorrection } from './bulletin-page-correction-controller';
 import { useBulletinQueryController } from './bulletin-query-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
 
 export function useBulletinController() {
   const { t } = useTranslation();
   const notification = useNotification();
-  const capabilities = bulletinActionCapabilities(useSession().session?.roles ?? []);
-  const capabilityRefs = useCurrentBulletinCapabilities(capabilities);
-  const query = useBulletinQueryController();
-  const list = useBulletinListController(query.query, capabilities.canRead);
-  const selection = useBulletinSelection(query.query, list.state);
-  const batchSelection = useBulletinBatchSelection(query.query, list.state);
+  const { capabilities, capabilityRefs } = useBulletinCapabilities();
+  const { batchSelection, list, query, selection } = useBulletinListWorkspace(capabilities.canRead);
   const gate = useBulletinOperationGate();
   const editor = useBulletinEditorController(
     gate,
@@ -79,6 +76,20 @@ export function useBulletinController() {
       updateDraft: editor.actions.update
     }
   };
+}
+
+function useBulletinCapabilities() {
+  const capabilities = bulletinActionCapabilities(useSession().session?.roles ?? []);
+  return { capabilities, capabilityRefs: useCurrentBulletinCapabilities(capabilities) };
+}
+
+function useBulletinListWorkspace(canRead: boolean) {
+  const query = useBulletinQueryController();
+  const list = useBulletinListController(query.query, canRead);
+  useBulletinPageCorrection(query.query, list.page, query.replacePageIndex);
+  const selection = useBulletinSelection(query.query, list.state);
+  const batchSelection = useBulletinBatchSelection(query.query, list.state);
+  return { batchSelection, list, query, selection };
 }
 
 function useCurrentBulletinCapabilities(capabilities: ReturnType<typeof bulletinActionCapabilities>) {

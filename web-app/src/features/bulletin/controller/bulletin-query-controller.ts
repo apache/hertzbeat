@@ -45,10 +45,17 @@ export function useBulletinQueryController() {
     },
     [query, setParams]
   );
+  const replacePageIndex = useCallback(
+    (pageIndex: number) => {
+      setParams(writeBulletinQuery({ ...query, pageIndex }), { replace: true });
+    },
+    [query, setParams]
+  );
 
   return {
     changePage,
     query,
+    replacePageIndex,
     search,
     setSearch,
     submitSearch

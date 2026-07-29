@@ -8,11 +8,18 @@ import { useAuthoritativePageSelection } from '@/shared/table-selection';
 
 import { loadBulletins } from '../api/bulletin-api';
 import { classifyBulletinFailure } from '../model/bulletin-failure';
-import { isBulletinPageComplete, writeBulletinQuery, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
+import {
+  bulletinPageIndexCorrection,
+  isBulletinPageComplete,
+  writeBulletinQuery,
+  type Bulletin,
+  type BulletinQuery
+} from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinListFailure = 'invalid' | 'permission' | 'unavailable' | 'error';
-export type BulletinListState = RemotePageState<Bulletin, BulletinListFailure> | { kind: 'idle' };
+export type BulletinListState =
+  RemotePageState<Bulletin, BulletinListFailure> | { kind: 'idle' } | { kind: 'correcting' };
 
 export function useBulletinListController(query: BulletinQuery, canRead = true) {
   const canReadRef = useRef(canRead);
@@ -39,9 +46,10 @@ export function useBulletinListController(query: BulletinQuery, canRead = true) 
   }, [refetch]);
 
   return {
+    page: canRead && list.isSuccess ? list.data : undefined,
     refresh,
     refreshing: canRead && list.isFetching,
-    state: canRead ? resolveListState(list) : { kind: 'idle' as const }
+    state: canRead ? resolveListState(query, list) : { kind: 'idle' as const }
   };
 }
 
@@ -93,7 +101,12 @@ export function useBulletinSelection(query: BulletinQuery, list: BulletinListSta
 }
 
 export function useBulletinBatchSelection(query: BulletinQuery, list: BulletinListState) {
-  const source = list.kind === 'invalid' || list.kind === 'idle' ? ({ kind: 'error' } as const) : list;
+  const source =
+    list.kind === 'correcting'
+      ? ({ kind: 'loading' } as const)
+      : list.kind === 'invalid' || list.kind === 'idle'
+        ? ({ kind: 'error' } as const)
+        : list;
   return useAuthoritativePageSelection(writeBulletinQuery(query).toString(), source);
 }
 
@@ -112,12 +125,15 @@ function reduceBulletinSelection(state: BulletinSelection, action: BulletinSelec
 }
 
 function resolveListState(
+  query: BulletinQuery,
   list: ReturnType<typeof useQuery<Awaited<ReturnType<typeof loadBulletins>>>>
 ): BulletinListState {
   if (list.isPending) return { kind: 'loading' };
   if (list.isError) return { kind: classifyListFailure(list.error) };
   if (!isBulletinPageComplete(list.data)) return { kind: 'invalid' };
-  if (list.data.content.length === 0) return { kind: 'empty' };
+  if (bulletinPageIndexCorrection(query, list.data) !== undefined) return { kind: 'correcting' };
+  if (list.data.totalElements === 0) return { kind: 'empty' };
+  if (list.data.content.length === 0) return { kind: 'invalid' };
   return { kind: 'ready', records: list.data.content, total: list.data.totalElements };
 }
 

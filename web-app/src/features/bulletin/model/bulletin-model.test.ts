@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildBulletinPayload,
+  bulletinPageIndexCorrection,
   bulletinMonitorMatchesSearch,
   formatBulletinTime,
   readBulletinQuery,
@@ -12,6 +13,62 @@ import {
 } from './bulletin-model';
 
 describe('bulletin model', () => {
+  it('derives page correction only from matching authoritative page evidence', () => {
+    const query = { search: 'ops', pageIndex: 4, pageSize: 15 };
+
+    expect(
+      bulletinPageIndexCorrection(query, {
+        content: [],
+        totalElements: 16,
+        totalPages: 2,
+        number: 4,
+        size: 15
+      })
+    ).toBe(1);
+    expect(
+      bulletinPageIndexCorrection(query, {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        number: 4,
+        size: 15
+      })
+    ).toBe(0);
+    expect(
+      bulletinPageIndexCorrection(query, {
+        content: [],
+        totalElements: 16,
+        totalPages: 2,
+        number: 3,
+        size: 15
+      })
+    ).toBeUndefined();
+    expect(
+      bulletinPageIndexCorrection(query, {
+        content: [],
+        totalElements: 16,
+        totalPages: 3,
+        number: 4,
+        size: 15
+      })
+    ).toBeUndefined();
+    expect(
+      bulletinPageIndexCorrection(query, {
+        content: [],
+        totalElements: 16,
+        totalPages: 2,
+        number: 4,
+        size: 8
+      })
+    ).toBeUndefined();
+    expect(
+      bulletinPageIndexCorrection(
+        { ...query, pageIndex: 0 },
+        { content: [], totalElements: 0, totalPages: 0, number: 0, size: 15 }
+      )
+    ).toBeUndefined();
+  });
+
   it('canonicalizes search and pagination query state', () => {
     expect(readBulletinQuery(new URLSearchParams('search= api &pageIndex=2&pageSize=15'))).toEqual({
       search: 'api',
