@@ -29,10 +29,14 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { SessionQueryRuntime } from '@/app/refine/session-query-runtime';
 
 const sessionApi = vi.hoisted(() => ({ loginSession: vi.fn() }));
+const convergence = vi.hoisted(() => ({ broadcast: vi.fn(), close: vi.fn() }));
 vi.mock('@/core/auth/session-api', async () => {
   const actual = await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api');
   return { ...actual, loginSession: sessionApi.loginSession };
 });
+vi.mock('@/core/auth/session-convergence-channel', () => ({
+  createSessionConvergenceChannel: () => convergence
+}));
 
 import { LoginPage } from './login-page';
 
@@ -109,6 +113,7 @@ describe('LoginPage', () => {
     expect(queryClients[1]).not.toBe(queryClients[0]);
     expect(queryClients[1]?.getQueryData(sessionQueryKey)).toEqual(authenticated);
     expect(queryClients[1]?.getQueryData(['protected', 'previous-user'])).toBeUndefined();
+    expect(convergence.broadcast).toHaveBeenCalledOnce();
   });
 
   it('redirects an existing authenticated session through a safe local target', async () => {

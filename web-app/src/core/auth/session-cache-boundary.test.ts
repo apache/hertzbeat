@@ -19,7 +19,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import { anonymousSession, sessionQueryKey, type UiSession } from './session-api';
-import { createSessionQueryClient } from './session-cache-boundary';
+import { createCheckingSessionQueryClient, createSessionQueryClient } from './session-cache-boundary';
 
 const userA: UiSession = {
   authenticated: true,
@@ -38,6 +38,18 @@ const userB: UiSession = {
 };
 
 describe('session cache identity boundary', () => {
+  it('creates an empty checking generation without session or protected data', () => {
+    const sourceClient = new QueryClient();
+    sourceClient.setQueryData(sessionQueryKey, userA);
+    sourceClient.setQueryData(['protected', 'workspace-a'], { owner: 'operator-a' });
+
+    const checkingClient = createCheckingSessionQueryClient(() => new QueryClient());
+
+    expect(checkingClient.getQueryData(sessionQueryKey)).toBeUndefined();
+    expect(checkingClient.getQueryData(['protected', 'workspace-a'])).toBeUndefined();
+    expect(checkingClient.getQueryCache().getAll()).toHaveLength(0);
+  });
+
   it('isolates anonymous and user B from late user A query and mutation callbacks', async () => {
     const createQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const userAClient = createSessionQueryClient(createQueryClient, userA);

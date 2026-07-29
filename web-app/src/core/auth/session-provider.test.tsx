@@ -19,11 +19,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionQueryRuntime } from '@/app/refine/session-query-runtime';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+const convergence = vi.hoisted(() => ({
+  broadcast: vi.fn(),
+  close: vi.fn(),
+  notify: undefined as (() => void) | undefined
+}));
+vi.mock('@/core/auth/session-convergence-channel', () => ({
+  createSessionConvergenceChannel: (notify: () => void) => {
+    convergence.notify = notify;
+    return { broadcast: convergence.broadcast, close: convergence.close };
+  }
+}));
 
 import { AuthGate } from './auth-gate';
 import { anonymousSession, sessionQueryKey, type UiSession } from './session-api';
@@ -40,6 +51,11 @@ const authenticatedSession: UiSession = {
 };
 
 describe('SessionProvider read state', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    convergence.notify = undefined;
+  });
+
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
@@ -98,6 +114,11 @@ describe('SessionProvider read state', () => {
 });
 
 describe('SessionProvider expiry ownership', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    convergence.notify = undefined;
+  });
+
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
@@ -179,6 +200,41 @@ describe('SessionProvider expiry ownership', () => {
 
     expect(firstRender).toContain('anonymous');
     expect(firstRender).not.toContain('authenticated');
+  });
+
+  it('does not echo an external signal when its authoritative session response is already expired', async () => {
+    const clients: QueryClient[] = [];
+    const currentSession = { ...authenticatedSession, expiresAt: null };
+    const expiredSession = { ...authenticatedSession, expiresAt: '2000-01-01T00:00:00.000Z' };
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(sessionResponse(expiredSession)));
+    const createQueryClient = () => {
+      const client = new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } }
+      });
+      if (clients.length === 0) client.setQueryData(sessionQueryKey, currentSession);
+      clients.push(client);
+      return client;
+    };
+    render(
+      <SessionQueryRuntime createQueryClient={createQueryClient}>
+        {runtime => (
+          <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
+            <SessionProvider>
+              <SessionAuthenticationProbe />
+            </SessionProvider>
+          </QueryClientProvider>
+        )}
+      </SessionQueryRuntime>
+    );
+    expect(screen.getByText('authenticated')).toBeInTheDocument();
+
+    act(() => convergence.notify?.());
+
+    await waitFor(() => expect(clients).toHaveLength(3));
+    expect(clients[1]?.getQueryData(sessionQueryKey)).toBeUndefined();
+    expect(clients[2]?.getQueryData(sessionQueryKey)).toEqual(anonymousSession);
+    expect(screen.getByText('anonymous')).toBeInTheDocument();
+    expect(convergence.broadcast).not.toHaveBeenCalled();
   });
 });
 

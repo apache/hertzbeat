@@ -32,6 +32,7 @@ import { ShellHeader } from './shell-header';
 
 const sessionApi = vi.hoisted(() => ({ logoutSession: vi.fn() }));
 const monitorImportTasks = vi.hoisted(() => ({ useShellMonitorImportTaskNotifications: vi.fn() }));
+const convergence = vi.hoisted(() => ({ broadcast: vi.fn(), close: vi.fn() }));
 vi.mock('@/core/auth/session-api', async () => ({
   ...(await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api')),
   logoutSession: sessionApi.logoutSession
@@ -56,6 +57,9 @@ vi.mock('@/features/alert/shell', () => ({
   })
 }));
 vi.mock('@/features/monitor/shell', () => monitorImportTasks);
+vi.mock('@/core/auth/session-convergence-channel', () => ({
+  createSessionConvergenceChannel: () => convergence
+}));
 
 describe('ShellHeader logout', () => {
   beforeAll(async () => {
@@ -120,6 +124,7 @@ describe('ShellHeader logout', () => {
     expect(queryClients).toHaveLength(2);
     expect(queryClients[1]?.getQueryData(sessionQueryKey)).toEqual(anonymousSession);
     expect(queryClients[1]?.getQueryData(['protected', 'user-a'])).toBeUndefined();
+    expect(convergence.broadcast).toHaveBeenCalledOnce();
   });
 });
 

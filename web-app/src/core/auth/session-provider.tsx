@@ -20,7 +20,7 @@ import { useEffect, type PropsWithChildren } from 'react';
 
 import { SessionContext, type SessionReadFailureKind } from './session-context';
 import { anonymousSession, getSession, sessionQueryKey, SessionRequestError, type UiSession } from './session-api';
-import { useSessionIdentityBoundary } from './session-identity-context';
+import { useSessionIdentityBoundary, type ReplaceSessionIdentity } from './session-identity-context';
 
 const MAXIMUM_EXPIRY_TIMER_MS = 2_147_483_647;
 
@@ -55,12 +55,12 @@ function classifySessionReadFailure(error: unknown): SessionReadFailureKind {
   return error.kind;
 }
 
-function useSessionExpiry(session: UiSession | undefined, replaceIdentity: (session: UiSession) => void) {
+function useSessionExpiry(session: UiSession | undefined, replaceIdentity: ReplaceSessionIdentity) {
   useEffect(() => {
     if (!session?.authenticated || !session.expiresAt) return undefined;
     const expiresAt = Date.parse(session.expiresAt);
     if (!Number.isFinite(expiresAt)) {
-      replaceIdentity(anonymousSession);
+      replaceIdentity(anonymousSession, { convergence: 'local-only' });
       return undefined;
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -68,7 +68,7 @@ function useSessionExpiry(session: UiSession | undefined, replaceIdentity: (sess
     const expireWhenDue = () => {
       const remainingMs = expiresAt - Date.now();
       if (remainingMs <= 0) {
-        replaceIdentity(anonymousSession);
+        replaceIdentity(anonymousSession, { convergence: 'local-only' });
         return;
       }
       // Browsers clamp larger delays. Re-arming avoids treating a far-future

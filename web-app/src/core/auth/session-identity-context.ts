@@ -19,7 +19,13 @@ import { createContext, useContext } from 'react';
 
 import type { UiSession } from './session-api';
 
-export type ReplaceSessionIdentity = (nextSession: UiSession) => void;
+export type ReplaceSessionIdentityOptions = {
+  // Client-side expiry does not change the shared HttpOnly cookie, so it must
+  // not wake other tabs and create an expiry-convergence feedback loop.
+  convergence: 'local-only';
+};
+
+export type ReplaceSessionIdentity = (nextSession: UiSession, options?: ReplaceSessionIdentityOptions) => void;
 
 export const SessionIdentityContext = createContext<ReplaceSessionIdentity | null>(null);
 

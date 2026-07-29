@@ -28,3 +28,7 @@ export function createSessionQueryClient(createQueryClient: () => QueryClient, n
   queryClient.setQueryData(sessionQueryKey, nextSession);
   return queryClient;
 }
+
+export function createCheckingSessionQueryClient(createQueryClient: () => QueryClient) {
+  return createQueryClient();
+}

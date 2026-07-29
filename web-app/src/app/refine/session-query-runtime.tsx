@@ -19,8 +19,10 @@ import type { QueryClient } from '@tanstack/react-query';
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 
-import { createSessionQueryClient } from '@/core/auth/session-cache-boundary';
+import { createCheckingSessionQueryClient, createSessionQueryClient } from '@/core/auth/session-cache-boundary';
+import { createSessionConvergenceChannel } from '@/core/auth/session-convergence-channel';
 import { anonymousSession, refreshSession, type UiSession } from '@/core/auth/session-api';
+import type { ReplaceSessionIdentity, ReplaceSessionIdentityOptions } from '@/core/auth/session-identity-context';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
 import { registerBrowserSessionRefreshCoordinator } from '@/core/http/http-client';
 
@@ -28,6 +30,8 @@ export type SessionQueryRuntimeValue = {
   generation: number;
   queryClient: QueryClient;
 };
+
+type SessionConvergenceChannel = ReturnType<typeof createSessionConvergenceChannel>;
 
 type SessionQueryRuntimeProps = {
   children: (runtime: SessionQueryRuntimeValue) => ReactNode;
@@ -40,33 +44,71 @@ type PendingSessionRefresh = {
 };
 
 export function SessionQueryRuntime({ children, createQueryClient }: SessionQueryRuntimeProps) {
+  const { runtime, runtimeRef, mountedRef, convergenceRef, replaceIdentity, convergeExternalIdentity } =
+    useSessionClientGeneration(createQueryClient);
+  const refreshIdentity = useSessionRefresh(runtimeRef, mountedRef, replaceIdentity);
+
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    const convergence = createSessionConvergenceChannel(convergeExternalIdentity);
+    convergenceRef.current = convergence;
+    const unregister = registerBrowserSessionRefreshCoordinator(refreshIdentity);
+    return () => {
+      mountedRef.current = false;
+      convergenceRef.current = undefined;
+      convergence.close();
+      unregister();
+    };
+  }, [convergeExternalIdentity, convergenceRef, mountedRef, refreshIdentity]);
+
+  return <SessionIdentityProvider replaceIdentity={replaceIdentity}>{children(runtime)}</SessionIdentityProvider>;
+}
+
+function useSessionClientGeneration(createQueryClient: () => QueryClient) {
   const [runtime, setRuntime] = useState<SessionQueryRuntimeValue>(() => ({
     generation: 0,
     queryClient: createQueryClient()
   }));
   const runtimeRef = useRef(runtime);
   const mountedRef = useRef(true);
-  const refreshRequestRef = useRef<PendingSessionRefresh | undefined>(undefined);
+  const convergenceRef = useRef<SessionConvergenceChannel | undefined>(undefined);
+  const rotateClient = useCallback((nextClient: QueryClient, flushImmediately = true) => {
+    if (!mountedRef.current) return;
+    const previousClient = runtimeRef.current.queryClient;
+    const nextRuntime = {
+      generation: runtimeRef.current.generation + 1,
+      queryClient: nextClient
+    };
+
+    // Synchronous detachment prevents previous-generation mutation callbacks
+    // from becoming visible before React mounts the isolated client.
+    runtimeRef.current = nextRuntime;
+    if (flushImmediately) flushSync(() => setRuntime(nextRuntime));
+    else setRuntime(nextRuntime);
+    previousClient.clear();
+  }, []);
   const replaceIdentity = useCallback(
-    (nextSession: UiSession) => {
+    (nextSession: UiSession, options?: ReplaceSessionIdentityOptions) => {
       if (!mountedRef.current) return;
-      const previousClient = runtimeRef.current.queryClient;
-      const nextRuntime = {
-        generation: runtimeRef.current.generation + 1,
-        queryClient: createSessionQueryClient(createQueryClient, nextSession)
-      };
-
-      // Synchronous detachment prevents previous-generation mutation callbacks
-      // from becoming visible before React mounts the isolated client.
-      flushSync(() => {
-        runtimeRef.current = nextRuntime;
-        setRuntime(nextRuntime);
-      });
-      previousClient.clear();
+      const announce = options?.convergence !== 'local-only';
+      rotateClient(createSessionQueryClient(createQueryClient, nextSession), announce);
+      if (announce) convergenceRef.current?.broadcast();
     },
-    [createQueryClient]
+    [createQueryClient, rotateClient]
   );
+  const convergeExternalIdentity = useCallback(() => {
+    if (!mountedRef.current) return;
+    rotateClient(createCheckingSessionQueryClient(createQueryClient));
+  }, [createQueryClient, rotateClient]);
+  return { runtime, runtimeRef, mountedRef, convergenceRef, replaceIdentity, convergeExternalIdentity };
+}
 
+function useSessionRefresh(
+  runtimeRef: Current<SessionQueryRuntimeValue>,
+  mountedRef: Current<boolean>,
+  replaceIdentity: ReplaceSessionIdentity
+) {
+  const refreshRequestRef = useRef<PendingSessionRefresh | undefined>(undefined);
   const refreshIdentity = useCallback(() => {
     async function refreshIdentityGeneration(generation: number) {
       try {
@@ -91,16 +133,8 @@ export function SessionQueryRuntime({ children, createQueryClient }: SessionQuer
     });
     refreshRequestRef.current = { generation: ownerGeneration, promise: refreshPromise };
     return refreshPromise;
-  }, [replaceIdentity]);
-
-  useLayoutEffect(() => {
-    mountedRef.current = true;
-    const unregister = registerBrowserSessionRefreshCoordinator(refreshIdentity);
-    return () => {
-      mountedRef.current = false;
-      unregister();
-    };
-  }, [refreshIdentity]);
-
-  return <SessionIdentityProvider replaceIdentity={replaceIdentity}>{children(runtime)}</SessionIdentityProvider>;
+  }, [mountedRef, replaceIdentity, runtimeRef]);
+  return refreshIdentity;
 }
+
+type Current<T> = { current: T };

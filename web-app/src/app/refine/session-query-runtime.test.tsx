@@ -17,16 +17,28 @@
 
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useEffect, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
-import { anonymousSession, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
+import { anonymousSession, getSession, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
 import { apiFetch } from '@/core/http/http-client';
 
 const sessionApi = vi.hoisted(() => ({ refreshSession: vi.fn() }));
+const convergence = vi.hoisted(() => ({
+  broadcast: vi.fn(),
+  close: vi.fn(),
+  notify: undefined as (() => void) | undefined
+}));
 vi.mock('@/core/auth/session-api', async () => ({
   ...(await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api')),
   refreshSession: sessionApi.refreshSession
+}));
+vi.mock('@/core/auth/session-convergence-channel', () => ({
+  createSessionConvergenceChannel: (notify: () => void) => {
+    convergence.notify = notify;
+    return { broadcast: convergence.broadcast, close: convergence.close };
+  }
 }));
 
 import { SessionQueryRuntime, type SessionQueryRuntimeValue } from './session-query-runtime';
@@ -37,6 +49,7 @@ const userB = authenticatedSession('operator-b', 'workspace-b');
 describe('SessionQueryRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    convergence.notify = undefined;
   });
 
   afterEach(() => {
@@ -96,6 +109,101 @@ describe('SessionQueryRuntime', () => {
     expect(userBClient?.getQueryData(['protected', 'late-a'])).toBeUndefined();
   });
 
+  it('broadcasts one identity-free event for a local rotation and never echoes an external signal', () => {
+    const clients: QueryClient[] = [];
+    renderRuntime(clients);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    expect(convergence.broadcast).toHaveBeenCalledOnce();
+
+    convergence.notify?.();
+    expect(convergence.broadcast).toHaveBeenCalledOnce();
+    expect(clients).toHaveLength(3);
+    expect(clients.at(-1)?.getQueryData(sessionQueryKey)).toBeUndefined();
+  });
+
+  it('moves an external signal to an empty checking client before the authoritative session read', async () => {
+    const clients: QueryClient[] = [];
+    const sessionRead = deferred<Response>();
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockReturnValue(sessionRead.promise));
+    renderRuntimeWithSessionProvider(clients);
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    sessionRead.resolve(sessionResponse(userA));
+    await screen.findByText('operator-a');
+    const userAClient = clients.at(-1);
+    userAClient?.setQueryData(['protected', 'workspace-a'], 'operator-a');
+
+    const userBRead = deferred<Response>();
+    vi.mocked(fetch).mockReturnValueOnce(userBRead.promise);
+    convergence.notify?.();
+
+    const checkingClient = clients.at(-1);
+    expect(checkingClient).not.toBe(userAClient);
+    expect(checkingClient?.getQueryData(sessionQueryKey)).toBeUndefined();
+    expect(checkingClient?.getQueryData(['protected', 'workspace-a'])).toBeUndefined();
+    userBRead.resolve(sessionResponse(userB));
+
+    await screen.findByText('operator-b');
+    expect(checkingClient?.getQueryData(sessionQueryKey)).toEqual(userB);
+    expect(checkingClient?.getQueryData(['protected', 'workspace-a'])).toBeUndefined();
+  });
+
+  it('keeps a failed external convergence read fail closed without restoring user A', async () => {
+    const clients: QueryClient[] = [];
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(sessionResponse(userA))
+      .mockRejectedValueOnce(new TypeError('offline'));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRuntimeWithSessionProvider(clients);
+    await screen.findByText('operator-a');
+
+    convergence.notify?.();
+
+    await screen.findByText('none');
+    const failedClient = clients.at(-1);
+    expect(failedClient?.getQueryData(sessionQueryKey)).toBeUndefined();
+    expect(failedClient?.getQueryCache().find({ queryKey: sessionQueryKey })?.state.status).toBe('error');
+    expect(screen.queryByText('operator-a')).not.toBeInTheDocument();
+    expect(convergence.broadcast).not.toHaveBeenCalled();
+  });
+
+  it('contains late user A query and mutation completions in the retired client', async () => {
+    const clients: QueryClient[] = [];
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(sessionResponse(userA));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRuntimeWithSessionProvider(clients);
+    await screen.findByText('operator-a');
+    const userAClient = clients.at(-1);
+    if (!userAClient) throw new Error('User A QueryClient was not created.');
+    const lateQuery = deferred<string>();
+    const lateMutation = deferred<void>();
+    const queryPromise = userAClient.fetchQuery({
+      queryKey: ['protected', 'late-query-a'],
+      queryFn: () => lateQuery.promise
+    });
+    const mutationPromise = userAClient
+      .getMutationCache()
+      .build(userAClient, {
+        mutationFn: () => lateMutation.promise,
+        onSuccess: () => userAClient.setQueryData(['protected', 'late-mutation-a'], 'operator-a')
+      })
+      .execute(undefined);
+    fetchMock.mockResolvedValueOnce(sessionResponse(userB));
+
+    convergence.notify?.();
+    const userBClient = clients.at(-1);
+    lateQuery.resolve('operator-a');
+    lateMutation.resolve();
+
+    await expect(queryPromise).rejects.toThrow();
+    await mutationPromise;
+    await screen.findByText('operator-b');
+    expect(userAClient.getQueryData(['protected', 'late-mutation-a'])).toBe('operator-a');
+    expect(userBClient?.getQueryData(['protected', 'late-query-a'])).toBeUndefined();
+    expect(userBClient?.getQueryData(['protected', 'late-mutation-a'])).toBeUndefined();
+  });
+
   it('publishes the full refreshed session through a new QueryClient before retrying a safe read', async () => {
     const clients: QueryClient[] = [];
     const refreshed = { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' };
@@ -107,11 +215,13 @@ describe('SessionQueryRuntime', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderRuntime(clients);
     fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    convergence.broadcast.mockClear();
 
     await expect(apiFetch('/api/protected')).resolves.toMatchObject({ status: 200 });
 
     await waitFor(() => expect(clients.at(-1)?.getQueryData(sessionQueryKey)).toEqual(refreshed));
     expect(sessionApi.refreshSession).toHaveBeenCalledOnce();
+    expect(convergence.broadcast).toHaveBeenCalledOnce();
     expect(clients).toHaveLength(3);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -211,6 +321,34 @@ function renderRuntime(clients: QueryClient[]) {
   );
 }
 
+function renderRuntimeWithSessionProvider(clients: QueryClient[]) {
+  const createQueryClient = () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    clients.push(client);
+    return client;
+  };
+  return render(
+    <SessionQueryRuntime createQueryClient={createQueryClient}>
+      {runtime => (
+        <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
+          <SessionReadProbe />
+        </QueryClientProvider>
+      )}
+    </SessionQueryRuntime>
+  );
+}
+
+function SessionReadProbe() {
+  const client = useQueryClient();
+  const [session, setSession] = useState<UiSession>();
+  useEffect(() => {
+    void client
+      .fetchQuery({ queryKey: sessionQueryKey, queryFn: () => getSession() })
+      .then(setSession, () => setSession(undefined));
+  }, [client]);
+  return <output>{session?.username ?? 'none'}</output>;
+}
+
 function RuntimeProbe({ runtime }: { runtime: SessionQueryRuntimeValue }) {
   const mountedClient = useQueryClient();
   const replaceIdentity = useSessionIdentityBoundary();
@@ -240,4 +378,8 @@ function deferred<T>() {
     resolve = fulfill;
   });
   return { promise, resolve };
+}
+
+function sessionResponse(data: UiSession) {
+  return new Response(JSON.stringify({ code: 0, msg: null, data }), { status: 200 });
 }
