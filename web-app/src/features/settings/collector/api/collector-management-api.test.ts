@@ -159,14 +159,28 @@ describe('Collector management API', () => {
   it('uses repeated encoded collectors parameters for online, offline, and delete', async () => {
     put.mockResolvedValue(undefined);
     remove.mockResolvedValue(undefined);
+    const signal = new AbortController().signal;
 
-    await mutateCollectors('online', [' edge/a ', 'west']);
-    await mutateCollectors('offline', ['edge/a']);
-    await mutateCollectors('delete', ['edge/a', 'west']);
+    await mutateCollectors('online', [' edge/a ', 'west'], signal);
+    await mutateCollectors('offline', ['edge/a'], signal);
+    await mutateCollectors('delete', ['edge/a', 'west'], signal);
 
-    expect(put).toHaveBeenNthCalledWith(1, '/api/collector/online?collectors=edge%2Fa&collectors=west', null);
-    expect(put).toHaveBeenNthCalledWith(2, '/api/collector/offline?collectors=edge%2Fa', null);
-    expect(remove).toHaveBeenCalledWith('/api/collector?collectors=edge%2Fa&collectors=west');
+    expect(put).toHaveBeenNthCalledWith(1, '/api/collector/online?collectors=edge%2Fa&collectors=west', null, {
+      signal
+    });
+    expect(put).toHaveBeenNthCalledWith(2, '/api/collector/offline?collectors=edge%2Fa', null, { signal });
+    expect(remove).toHaveBeenCalledWith('/api/collector?collectors=edge%2Fa&collectors=west', { signal });
+  });
+
+  it('starts no mutation transport when the supplied signal is already aborted', () => {
+    const abort = new AbortController();
+    abort.abort();
+
+    expect(() => mutateCollectors('offline', ['edge'], abort.signal)).toThrow(
+      expect.objectContaining({ name: 'AbortError' })
+    );
+    expect(put).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
   });
 
   it('saves and clears the exact safe intake advertisement at the encoded Collector path', async () => {

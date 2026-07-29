@@ -151,6 +151,205 @@ describe('useCollectorController', () => {
     expect(mutate).not.toHaveBeenCalled();
   });
 
+  it.each(['resolve', 'reject'] as const)(
+    'retires an unauthorized pending write and ignores its late %s',
+    async completion => {
+      access.roles = ['USER'];
+      const write = deferred<unknown>();
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const setQueryData = vi.spyOn(queryClient, 'setQueryData');
+      load.mockResolvedValue(page(0, [collector('edge')], 1));
+      mutate.mockReturnValue(write.promise);
+      const view = renderHook(() => useCollectorController(), {
+        wrapper: wrapper('/settings/collectors', queryClient)
+      });
+      await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+      setQueryData.mockClear();
+      act(() => {
+        view.result.current.actions.toggleSelection('edge', true);
+        view.result.current.actions.requestAction('offline', ['edge']);
+      });
+      let confirmation!: Promise<void>;
+      act(() => {
+        confirmation = view.result.current.actions.confirmAction();
+      });
+      await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
+      const signal = mutate.mock.calls[0]?.[2];
+
+      access.roles = ['GUEST'];
+      view.rerender();
+      await waitFor(() => expect(view.result.current.mutating).toBe(false));
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(true);
+      expect(view.result.current.pendingAction).toBeNull();
+      expect(view.result.current.selected).toEqual([]);
+      const successBefore = document.body.textContent?.match(/collectors\.mutationSuccess/gu)?.length ?? 0;
+
+      if (completion === 'resolve') write.resolve(undefined);
+      else write.reject(new Error('late retired failure'));
+      await act(async () => confirmation);
+
+      expect(loadProof).not.toHaveBeenCalled();
+      expect(setQueryData).not.toHaveBeenCalled();
+      expect(view.result.current.mutationFailure).toBeNull();
+      expect(view.result.current.listState.kind).toBe('ready');
+      expect(document.body.textContent?.match(/collectors\.mutationSuccess/gu)?.length ?? 0).toBe(successBefore);
+    }
+  );
+
+  it.each(['resolve', 'reject'] as const)(
+    'retires an unauthorized pending proof and ignores its late %s',
+    async completion => {
+      access.roles = ['USER'];
+      const proof = deferred<ReturnType<typeof page>>();
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const setQueryData = vi.spyOn(queryClient, 'setQueryData');
+      load.mockResolvedValue(page(0, [collector('edge')], 1));
+      mutate.mockResolvedValue(undefined);
+      loadProof.mockReturnValue(proof.promise);
+      const view = renderHook(() => useCollectorController(), {
+        wrapper: wrapper('/settings/collectors', queryClient)
+      });
+      await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+      setQueryData.mockClear();
+      act(() => view.result.current.actions.requestAction('offline', ['edge']));
+      let confirmation!: Promise<void>;
+      act(() => {
+        confirmation = view.result.current.actions.confirmAction();
+      });
+      await waitFor(() => expect(loadProof).toHaveBeenCalledOnce());
+      const signal = loadProof.mock.calls[0]?.[1];
+
+      access.roles = ['GUEST'];
+      view.rerender();
+      await waitFor(() => expect(view.result.current.mutating).toBe(false));
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(true);
+
+      if (completion === 'resolve') proof.resolve(page(0, [{ ...collector('edge'), online: false }], 1));
+      else proof.reject(new Error('late retired proof failure'));
+      await act(async () => confirmation);
+
+      expect(setQueryData).not.toHaveBeenCalled();
+      expect(view.result.current.pendingAction).toBeNull();
+      expect(view.result.current.mutationFailure).toBeNull();
+      expect(view.result.current.listState.kind).toBe('ready');
+    }
+  );
+
+  it('retires during deferred query-cancel preflight without starting mutation transport', async () => {
+    access.roles = ['USER'];
+    const preflight = deferred<void>();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const cancelQueries = vi.spyOn(queryClient, 'cancelQueries').mockReturnValue(preflight.promise);
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    const view = renderHook(() => useCollectorController(), {
+      wrapper: wrapper('/settings/collectors', queryClient)
+    });
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    act(() => view.result.current.actions.requestAction('offline', ['edge']));
+    let confirmation!: Promise<void>;
+    act(() => {
+      confirmation = view.result.current.actions.confirmAction();
+    });
+    await waitFor(() => expect(cancelQueries).toHaveBeenCalledOnce());
+
+    access.roles = ['GUEST'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.mutating).toBe(false));
+    preflight.resolve(undefined);
+    await act(async () => confirmation);
+
+    expect(mutate).not.toHaveBeenCalled();
+    expect(loadProof).not.toHaveBeenCalled();
+    expect(view.result.current.pendingAction).toBeNull();
+    expect(view.result.current.mutating).toBe(false);
+  });
+
+  it('retires an in-flight delete after ADMIN downgrades to USER without clearing writable selection', async () => {
+    const write = deferred<unknown>();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    mutate.mockReturnValue(write.promise);
+    const view = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    act(() => {
+      view.result.current.actions.toggleSelection('edge', true);
+      view.result.current.actions.requestAction('delete', ['edge']);
+    });
+    let confirmation!: Promise<void>;
+    act(() => {
+      confirmation = view.result.current.actions.confirmAction();
+    });
+    await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
+    const signal = mutate.mock.calls[0]?.[2];
+
+    access.roles = ['USER'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.mutating).toBe(false));
+
+    expect(signal?.aborted).toBe(true);
+    expect(view.result.current.pendingAction).toBeNull();
+    expect(view.result.current.selected).toEqual(['edge']);
+    const queryBeforeCompletion = view.result.current.query;
+    const successBefore = document.body.textContent?.match(/collectors\.mutationSuccess/gu)?.length ?? 0;
+    write.resolve(undefined);
+    await act(async () => confirmation);
+
+    expect(loadProof).not.toHaveBeenCalled();
+    expect(view.result.current.selected).toEqual(['edge']);
+    expect(view.result.current.query).toEqual(queryBeforeCompletion);
+    expect(document.body.textContent?.match(/collectors\.mutationSuccess/gu)?.length ?? 0).toBe(successBefore);
+  });
+
+  it('keeps an authorized offline mutation owned after ADMIN downgrades to USER', async () => {
+    const write = deferred<unknown>();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    mutate.mockReturnValue(write.promise);
+    loadProof.mockResolvedValue(page(0, [{ ...collector('edge'), online: false }], 1));
+    const view = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    act(() => view.result.current.actions.requestAction('offline', ['edge']));
+    let confirmation!: Promise<void>;
+    act(() => {
+      confirmation = view.result.current.actions.confirmAction();
+    });
+    await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
+    const signal = mutate.mock.calls[0]?.[2];
+
+    access.roles = ['USER'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.capabilities.canDelete).toBe(false));
+
+    expect(view.result.current.mutating).toBe(true);
+    expect(signal?.aborted).toBe(false);
+    write.resolve(undefined);
+    await act(async () => confirmation);
+    expect(loadProof).toHaveBeenCalledOnce();
+    expect(view.result.current.mutationFailure).toBeNull();
+  });
+
+  it('retires mutation ownership on unmount and starts no proof transport after a late write', async () => {
+    const write = deferred<unknown>();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    mutate.mockReturnValue(write.promise);
+    const view = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    act(() => view.result.current.actions.requestAction('offline', ['edge']));
+    let confirmation!: Promise<void>;
+    act(() => {
+      confirmation = view.result.current.actions.confirmAction();
+    });
+    await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
+    const signal = mutate.mock.calls[0]?.[2];
+
+    view.unmount();
+    expect(signal?.aborted).toBe(true);
+    write.resolve(undefined);
+    await confirmation;
+
+    expect(loadProof).not.toHaveBeenCalled();
+  });
+
   it.each([401, 403])('renders HTTP %s Collector list rejection as permission evidence', async status => {
     load.mockRejectedValue(new ApiMessageError('redacted', { status }));
     const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
@@ -171,8 +370,8 @@ describe('useCollectorController', () => {
     act(() => result.current.actions.requestAction('delete', ['edge']));
     await act(async () => result.current.actions.confirmAction());
 
-    expect(mutate).toHaveBeenCalledWith('delete', ['edge']);
-    expect(loadProof).toHaveBeenCalledWith({ name: '', pageIndex: 2, pageSize: 8 });
+    expect(mutate).toHaveBeenCalledWith('delete', ['edge'], expect.any(AbortSignal));
+    expect(loadProof).toHaveBeenCalledWith({ name: '', pageIndex: 2, pageSize: 8 }, expect.any(AbortSignal));
     expect(load.mock.calls[1]?.[0]).toEqual({ name: '', pageIndex: 1, pageSize: 8 });
     expect(result.current.query.pageIndex).toBe(1);
     expect(result.current.mutationFailure).toBeNull();
@@ -192,7 +391,7 @@ describe('useCollectorController', () => {
     act(() => result.current.actions.requestAction('delete', ['edge']));
     await act(async () => result.current.actions.confirmAction());
 
-    expect(loadProof).toHaveBeenCalledWith({ name: '', pageIndex: 2, pageSize: 8 });
+    expect(loadProof).toHaveBeenCalledWith({ name: '', pageIndex: 2, pageSize: 8 }, expect.any(AbortSignal));
     expect(load).toHaveBeenCalledTimes(1);
     expect(result.current.query.pageIndex).toBe(2);
     expect(result.current.mutationFailure).toBe('validation');
@@ -289,7 +488,7 @@ describe('useCollectorController', () => {
     await act(async () => result.current.actions.confirmAction());
 
     expect(refreshAborted).toBe(true);
-    expect(mutate).toHaveBeenCalledWith('offline', ['edge']);
+    expect(mutate).toHaveBeenCalledWith('offline', ['edge'], expect.any(AbortSignal));
     expect(result.current.mutationFailure).toBeNull();
     resolveRefresh(page(0, [collector('edge')], 1));
   });
@@ -1027,8 +1226,10 @@ describe('useCollectorController', () => {
   });
 });
 
-function wrapper(initialEntry: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function wrapper(
+  initialEntry: string,
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+) {
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <MemoryRouter initialEntries={[initialEntry]}>
@@ -1056,10 +1257,12 @@ function NavigationProbe() {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 function page(number: number, content: ReturnType<typeof collector>[], totalElements: number) {

@@ -59,7 +59,7 @@ async function loadCollectorPage(
   return parse(value, canonicalQuery);
 }
 
-export function mutateCollectors(action: CollectorMutationAction, collectors: string[]) {
+export function mutateCollectors(action: CollectorMutationAction, collectors: string[], signal?: AbortSignal) {
   const normalized = collectors.map(collector => collector.trim());
   if (
     normalized.length === 0 ||
@@ -71,7 +71,9 @@ export function mutateCollectors(action: CollectorMutationAction, collectors: st
   const params = new URLSearchParams();
   normalized.forEach(collector => params.append('collectors', collector));
   const path = `${collectorEndpoint}${action === 'delete' ? '' : `/${action}`}?${params.toString()}`;
-  return action === 'delete' ? apiMessageDelete(path) : apiMessagePut(path, null);
+  signal?.throwIfAborted();
+  if (action === 'delete') return signal ? apiMessageDelete(path, { signal }) : apiMessageDelete(path);
+  return signal ? apiMessagePut(path, null, { signal }) : apiMessagePut(path, null);
 }
 
 export async function saveCollectorInstrumentationIntake(collector: string, value: unknown) {
