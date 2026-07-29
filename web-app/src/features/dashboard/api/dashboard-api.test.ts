@@ -22,7 +22,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 }));
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { loadDashboardAlertSummary, loadDashboardSummary } from './dashboard-api';
+import { loadDashboardAlertSummary, loadDashboardRecentAlerts, loadDashboardSummary } from './dashboard-api';
 import { DashboardContractError } from '../model/dashboard-model';
 
 describe('dashboard API', () => {
@@ -42,6 +42,38 @@ describe('dashboard API', () => {
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/summary', { signal });
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alerts/summary', { signal });
   });
+
+  it('loads only the fixed recent firing-alert preview and forwards its AbortSignal', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue({
+      content: [singleAlert],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 10
+    });
+
+    await expect(loadDashboardRecentAlerts(signal)).resolves.toMatchObject({
+      content: [{ id: 11, status: 'firing' }],
+      totalElements: 1
+    });
+    expect(http.apiMessageGet).toHaveBeenCalledWith(
+      '/api/alerts?status=firing&sort=gmtUpdate&order=desc&pageIndex=0&pageSize=10',
+      { signal }
+    );
+  });
+
+  it('classifies malformed recent-alert pages as contract failures', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      content: [{ ...singleAlert, status: 'resolved' }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 10
+    });
+
+    await expect(loadDashboardRecentAlerts()).rejects.toBeInstanceOf(DashboardContractError);
+  });
   it('rejects malformed payloads instead of manufacturing zeros', async () => {
     http.apiMessageGet.mockResolvedValueOnce({ apps: null }).mockResolvedValueOnce({});
     await expect(loadDashboardSummary()).resolves.toEqual({ apps: null });
@@ -56,3 +88,15 @@ describe('dashboard API', () => {
     await expect(loadDashboardAlertSummary()).rejects.toMatchObject({ kind: 'error' });
   });
 });
+
+const singleAlert = {
+  id: 11,
+  labels: { alertname: 'HighLatency', severity: 'critical' },
+  annotations: null,
+  content: 'Checkout latency is high.',
+  status: 'firing',
+  triggerTimes: 2,
+  startAt: 1784250000000,
+  activeAt: 1784250060000,
+  endAt: null
+};

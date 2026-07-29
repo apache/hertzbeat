@@ -8,5 +8,6 @@
 export const dashboardQueryKeys = {
   all: () => ['dashboard'] as const,
   monitorSummary: () => [...dashboardQueryKeys.all(), 'monitor-summary'] as const,
-  alertSummary: () => [...dashboardQueryKeys.all(), 'alert-summary'] as const
+  alertSummary: () => [...dashboardQueryKeys.all(), 'alert-summary'] as const,
+  recentAlerts: () => [...dashboardQueryKeys.all(), 'recent-alerts'] as const
 };

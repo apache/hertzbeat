@@ -948,6 +948,19 @@
       "unavailable": "O resumo de alertas está indisponível. Os contadores foram ocultados.",
       "contract": "O resumo de alertas não corresponde ao contrato esperado. Os contadores foram ocultados.",
       "error": "Não foi possível carregar o resumo de alertas. Os contadores foram ocultados."
+    },
+    "recentAlerts": {
+      "title": "Alertas ativos recentes",
+      "preview": "Prévia: mostrando {{shown}} de {{total}} alertas ativos na ordem do servidor.",
+      "empty": "Nenhum alerta ativo foi informado.",
+      "notReported": "Não informado",
+      "noContent": "Nenhum conteúdo de alerta foi informado.",
+      "states": {
+        "permission": "Você não tem permissão para ler os alertas ativos recentes.",
+        "unavailable": "Os alertas ativos recentes estão indisponíveis.",
+        "contract": "Os alertas ativos recentes não correspondem ao contrato esperado.",
+        "error": "Não foi possível carregar os alertas ativos recentes."
+      }
     }
   },
   "bulletin": {

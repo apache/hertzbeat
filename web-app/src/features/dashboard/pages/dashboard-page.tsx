@@ -22,6 +22,7 @@ import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-path
 import { DashboardAlertSummary } from '../components/dashboard-alert-results';
 import { DashboardCollectorResults } from '../components/dashboard-collector-results';
 import { DashboardMonitorDistribution, DashboardMonitorSummary } from '../components/dashboard-monitor-results';
+import { DashboardRecentAlertResults } from '../components/dashboard-recent-alert-results';
 import { useDashboardController } from '../controller/use-dashboard-controller';
 import styles from '../components/dashboard.module.css';
 
@@ -63,6 +64,7 @@ export function DashboardPage() {
           <DashboardAlertSummary state={dashboard.alertState} />
         </section>
       </section>
+      <DashboardRecentAlertResults state={dashboard.recentAlertState} />
       <DashboardMonitorDistribution state={dashboard.monitorState} />
       <DashboardCollectorResults state={dashboard.collectorState} />
     </div>

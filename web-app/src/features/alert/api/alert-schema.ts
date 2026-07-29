@@ -18,6 +18,7 @@
 import { z } from 'zod';
 
 import { AlertSummaryContractError, parseAlertSummaryWire } from '@/shared/alert-summary/alert-summary-contract';
+import type { PagedCollection } from '@/shared/pagination';
 import {
   AlertContractError,
   alertRecordStatuses,
@@ -27,6 +28,7 @@ import {
   type AlertPage,
   type AlertQuery,
   type AlertSummary,
+  type AlertRecord,
   type ServerLocalDateTime
 } from '../model/alert-model';
 
@@ -56,6 +58,14 @@ const alertRecordSchema = z.object({
   startAt: nullableTimestampSchema,
   activeAt: nullableTimestampSchema,
   endAt: nullableTimestampSchema
+});
+
+const singleAlertPageSchema = z.object({
+  content: z.array(alertRecordSchema),
+  totalElements: nonNegativeIntegerSchema,
+  totalPages: nonNegativeIntegerSchema,
+  number: nonNegativeIntegerSchema,
+  size: positiveIntegerSchema
 });
 
 // GroupAlert contains persistence fields that the center does not consume.
@@ -106,8 +116,43 @@ export function parseAlertSummary(value: unknown): AlertSummary {
 
 export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPage {
   const page = parseSchema(alertGroupPageSchema, value, 'Alert group page');
+  validatePageEnvelope(page, query);
+  if (page.content.some(item => new Set(item.alerts.map(alert => alert.id)).size !== item.alerts.length)) {
+    throw new AlertContractError('Duplicate child alert ids are not allowed');
+  }
+  // Status and OTLP scope are exact backend predicates visible on each group.
+  // Search is fuzzy and severity is evaluated against hydrated child alerts, so
+  // neither can be proven from this intentionally smaller list-row contract.
+  if (page.content.some(item => !matchesRequestedAlertScope(item, query))) {
+    throw new AlertContractError('Page content does not match the requested scope');
+  }
+  return { ...page, content: page.content.map(mapAlertGroup) };
+}
+
+export function parseSingleAlertPage(
+  value: unknown,
+  request: { status: 'firing' | 'acknowledged' | 'resolved'; pageIndex: number; pageSize: number }
+): PagedCollection<AlertRecord> {
+  const page = parseSchema(singleAlertPageSchema, value, 'Single alert page');
+  validatePageEnvelope(page, request);
+  for (const record of page.content) {
+    if (record.status !== request.status) {
+      throw new AlertContractError('Page content does not match the requested status');
+    }
+    const severity = record.labels?.severity;
+    if (severity !== undefined && !alertSeverities.includes(severity as (typeof alertSeverities)[number])) {
+      throw new AlertContractError('SingleAlert severity is unsupported');
+    }
+  }
+  return page;
+}
+
+function validatePageEnvelope<T extends { id: number }>(
+  page: { content: T[]; totalElements: number; totalPages: number; number: number; size: number },
+  request: { pageIndex: number; pageSize: number }
+) {
   // A valid page belonging to another request must not be rendered as current evidence.
-  if (page.number !== query.pageIndex || page.size !== query.pageSize) {
+  if (page.number !== request.pageIndex || page.size !== request.pageSize) {
     throw new AlertContractError('Page does not match the request');
   }
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
@@ -120,16 +165,6 @@ export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPag
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
     throw new AlertContractError('Duplicate ids are not allowed');
   }
-  if (page.content.some(item => new Set(item.alerts.map(alert => alert.id)).size !== item.alerts.length)) {
-    throw new AlertContractError('Duplicate child alert ids are not allowed');
-  }
-  // Status and OTLP scope are exact backend predicates visible on each group.
-  // Search is fuzzy and severity is evaluated against hydrated child alerts, so
-  // neither can be proven from this intentionally smaller list-row contract.
-  if (page.content.some(item => !matchesRequestedAlertScope(item, query))) {
-    throw new AlertContractError('Page content does not match the requested scope');
-  }
-  return { ...page, content: page.content.map(mapAlertGroup) };
 }
 
 function matchesRequestedAlertScope(source: z.output<typeof alertGroupSchema>, query: AlertQuery) {

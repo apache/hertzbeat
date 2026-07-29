@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { AlertRecord } from '@/features/alert';
+
 export type AppCount = {
   app: string;
   category: string;
@@ -47,6 +49,14 @@ export type DashboardAlertState =
   | { kind: 'contract' }
   | { kind: 'error' }
   | { kind: 'ready' | 'empty'; summary: DashboardAlertSummary };
+export type DashboardRecentAlertState =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'permission' }
+  | { kind: 'unavailable' }
+  | { kind: 'contract' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: AlertRecord[]; total: number };
 
 export class DashboardContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -79,10 +89,13 @@ export function dashboardFailureKind(error: unknown): DashboardFailureKind {
   return error instanceof DashboardRequestFailure ? error.kind : 'error';
 }
 
-/** Keeps both Dashboard data sources aligned when a new failure state is introduced. */
+/** Keeps Dashboard evidence renderers aligned when a new failure state is introduced. */
 export function isDashboardFailureState(
-  state: DashboardMonitorState | DashboardAlertState
-): state is Extract<DashboardMonitorState | DashboardAlertState, { kind: DashboardFailureStateKind }> {
+  state: DashboardMonitorState | DashboardAlertState | DashboardRecentAlertState
+): state is Extract<
+  DashboardMonitorState | DashboardAlertState | DashboardRecentAlertState,
+  { kind: DashboardFailureStateKind }
+> {
   return dashboardFailureStateKinds.has(state.kind as DashboardFailureStateKind);
 }
 

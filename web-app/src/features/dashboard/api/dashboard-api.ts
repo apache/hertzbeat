@@ -15,11 +15,15 @@
  * limitations under the License.
  */
 import { apiMessageGet } from '@/core/http/api-message';
+import { AlertContractError, parseSingleAlertPage } from '@/features/alert';
 import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 import { dashboardApiRequest } from './dashboard-api-failure';
 import { parseAlertSummary, parseDashboardSummary } from './dashboard-schema';
+import { DashboardContractError } from '../model/dashboard-model';
 
 const dashboardSummaryEndpoint = '/api/summary';
+const dashboardRecentAlertsEndpoint = '/api/alerts?status=firing&sort=gmtUpdate&order=desc&pageIndex=0&pageSize=10';
+const dashboardRecentAlertsRequest = { status: 'firing', pageIndex: 0, pageSize: 10 } as const;
 
 export function loadDashboardSummary(signal?: AbortSignal) {
   return dashboardApiRequest(async () =>
@@ -31,4 +35,18 @@ export function loadDashboardAlertSummary(signal?: AbortSignal) {
   return dashboardApiRequest(async () =>
     parseAlertSummary(await apiMessageGet(alertSummaryEndpoint, signal ? { signal } : undefined))
   );
+}
+
+export function loadDashboardRecentAlerts(signal?: AbortSignal) {
+  return dashboardApiRequest(async () => {
+    const value = await apiMessageGet(dashboardRecentAlertsEndpoint, signal ? { signal } : undefined);
+    try {
+      return parseSingleAlertPage(value, dashboardRecentAlertsRequest);
+    } catch (error) {
+      if (error instanceof AlertContractError) {
+        throw new DashboardContractError(error.message, { cause: error });
+      }
+      throw error;
+    }
+  });
 }

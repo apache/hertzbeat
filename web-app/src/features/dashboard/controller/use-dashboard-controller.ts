@@ -22,8 +22,13 @@ import {
   resolveCollectorListState,
   type CollectorQuery
 } from '@/features/settings/collector';
-import { loadDashboardAlertSummary, loadDashboardSummary } from '../api/dashboard-api';
-import { dashboardFailureKind, type DashboardAlertState, type DashboardMonitorState } from '../model/dashboard-model';
+import { loadDashboardAlertSummary, loadDashboardRecentAlerts, loadDashboardSummary } from '../api/dashboard-api';
+import {
+  dashboardFailureKind,
+  type DashboardAlertState,
+  type DashboardMonitorState,
+  type DashboardRecentAlertState
+} from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export const DASHBOARD_REFRESH_INTERVAL_MS = 30_000;
@@ -42,6 +47,12 @@ export function useDashboardController() {
     retry: false,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
+  const recentAlertQuery = useQuery({
+    queryKey: dashboardQueryKeys.recentAlerts(),
+    queryFn: ({ signal }) => loadDashboardRecentAlerts(signal),
+    retry: false,
+    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
+  });
   const collectorQuery = useQuery({
     queryKey: collectorQueryKeys.page(dashboardCollectorQuery),
     queryFn: ({ signal }) => loadCollectorManagementPage(dashboardCollectorQuery, signal),
@@ -51,11 +62,29 @@ export function useDashboardController() {
   return {
     monitorState: monitorState(monitorQuery.isPending, monitorQuery.error, monitorQuery.data),
     alertState: alertState(alertQuery.isPending, alertQuery.error, alertQuery.data),
+    recentAlertState: recentAlertState(recentAlertQuery.isPending, recentAlertQuery.error, recentAlertQuery.data),
     collectorState: resolveCollectorListState(collectorQuery, false, true),
     refresh: async () => {
-      await Promise.allSettled([monitorQuery.refetch(), alertQuery.refetch(), collectorQuery.refetch()]);
+      await Promise.allSettled([
+        monitorQuery.refetch(),
+        alertQuery.refetch(),
+        recentAlertQuery.refetch(),
+        collectorQuery.refetch()
+      ]);
     }
   };
+}
+
+function recentAlertState(
+  pending: boolean,
+  error: Error | null,
+  result: Awaited<ReturnType<typeof loadDashboardRecentAlerts>> | undefined
+): DashboardRecentAlertState {
+  if (pending) return { kind: 'loading' };
+  if (error) return { kind: dashboardFailureKind(error) };
+  if (!result) return { kind: 'error' };
+  if (result.content.length === 0) return { kind: 'empty' };
+  return { kind: 'ready', records: result.content, total: result.totalElements };
 }
 
 function monitorState(

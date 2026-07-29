@@ -321,7 +321,7 @@ const collector = {
   instrumentationIntake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
 };
 function withCollector<T extends object>(value: T, collectorState: object = { kind: 'empty' }) {
-  return { ...value, collectorState };
+  return { recentAlertState: { kind: 'empty' }, ...value, collectorState };
 }
 function alert(total: number) {
   return {

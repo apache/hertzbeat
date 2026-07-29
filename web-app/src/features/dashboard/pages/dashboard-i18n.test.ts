@@ -21,6 +21,7 @@ describe('Dashboard locale contract', () => {
     }
     expect(expected).toContain('monitorStates.unavailable');
     expect(expected).toContain('alertStates.error');
+    expect(expected).toContain('recentAlerts.states.contract');
   });
 });
 

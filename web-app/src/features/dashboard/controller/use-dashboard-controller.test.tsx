@@ -23,7 +23,11 @@ import { DashboardContractError, DashboardRequestFailure } from '../model/dashbo
 import { dashboardQueryKeys } from './dashboard-query-keys';
 import { DASHBOARD_REFRESH_INTERVAL_MS, useDashboardController } from './use-dashboard-controller';
 
-const api = vi.hoisted(() => ({ loadDashboardSummary: vi.fn(), loadDashboardAlertSummary: vi.fn() }));
+const api = vi.hoisted(() => ({
+  loadDashboardSummary: vi.fn(),
+  loadDashboardAlertSummary: vi.fn(),
+  loadDashboardRecentAlerts: vi.fn()
+}));
 const collectors = vi.hoisted(() => ({ loadCollectorManagementPage: vi.fn() }));
 vi.mock('../api/dashboard-api', () => api);
 vi.mock('@/features/settings/collector', async importOriginal => ({
@@ -36,6 +40,7 @@ describe('dashboard controller', () => {
     vi.clearAllMocks();
     api.loadDashboardSummary.mockResolvedValue({ apps: [app] });
     api.loadDashboardAlertSummary.mockResolvedValue(alert(2));
+    api.loadDashboardRecentAlerts.mockResolvedValue(recentAlertPage());
     collectors.loadCollectorManagementPage.mockResolvedValue(collectorPage([collector]));
   });
   afterEach(() => vi.useRealTimers());
@@ -339,6 +344,10 @@ function alert(total: number) {
     priorityCriticalNum: 0,
     priorityEmergencyNum: 0
   };
+}
+
+function recentAlertPage() {
+  return { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
 }
 
 function deferred<T>() {

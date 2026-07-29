@@ -932,6 +932,19 @@
       "unavailable": "告警概览暂不可用，计数已隐藏。",
       "contract": "告警概览不符合预期契约，计数已隐藏。",
       "error": "告警概览加载失败，计数已隐藏。"
+    },
+    "recentAlerts": {
+      "title": "最近触发的告警",
+      "preview": "预览：按服务端顺序显示 {{total}} 条触发中告警中的 {{shown}} 条。",
+      "empty": "当前未报告触发中的告警。",
+      "notReported": "未报告",
+      "noContent": "未报告告警内容。",
+      "states": {
+        "permission": "当前账号无权读取最近触发的告警。",
+        "unavailable": "最近触发的告警暂不可用。",
+        "contract": "最近触发的告警不符合预期契约。",
+        "error": "最近触发的告警加载失败。"
+      }
     }
   },
   "bulletin": {

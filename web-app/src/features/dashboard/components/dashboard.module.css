@@ -105,6 +105,44 @@
   min-height: 300px;
 }
 
+.recentAlertSection {
+  min-height: 180px;
+}
+
+.recentAlertSection :global(.ant-typography) {
+  margin-top: 0;
+}
+
+.recentAlertList {
+  margin: 12px 0 0;
+  padding: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  list-style: none;
+}
+
+.recentAlertItem {
+  display: grid;
+  grid-template-columns: 180px 112px minmax(140px, 0.45fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 9px 12px;
+}
+
+.recentAlertItem + .recentAlertItem {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.recentAlertTime {
+  color: var(--hb-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.recentAlertContent {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
   .summaryRow {
     grid-template-columns: 1fr;
@@ -113,5 +151,10 @@
 
   .monitorEvidence {
     gap: 24px;
+  }
+
+  .recentAlertItem {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }

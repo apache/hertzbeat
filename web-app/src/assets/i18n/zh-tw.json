@@ -932,6 +932,19 @@
       "unavailable": "警報摘要暫時無法使用，計數已隱藏。",
       "contract": "警報摘要不符合預期契約，計數已隱藏。",
       "error": "警報摘要載入失敗，計數已隱藏。"
+    },
+    "recentAlerts": {
+      "title": "最近觸發的警報",
+      "preview": "預覽：依伺服器順序顯示 {{total}} 筆觸發中警報中的 {{shown}} 筆。",
+      "empty": "目前未回報觸發中的警報。",
+      "notReported": "未回報",
+      "noContent": "未回報警報內容。",
+      "states": {
+        "permission": "目前帳號無權讀取最近觸發的警報。",
+        "unavailable": "最近觸發的警報暫時無法使用。",
+        "contract": "最近觸發的警報不符合預期契約。",
+        "error": "最近觸發的警報載入失敗。"
+      }
     }
   },
   "bulletin": {

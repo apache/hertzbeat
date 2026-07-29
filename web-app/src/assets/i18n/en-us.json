@@ -943,6 +943,19 @@
       "unavailable": "Alert summary is unavailable. Counters are hidden.",
       "contract": "Alert summary did not match the expected contract. Counters are hidden.",
       "error": "Alert summary could not be loaded. Counters are hidden."
+    },
+    "recentAlerts": {
+      "title": "Recent firing alerts",
+      "preview": "Preview: showing {{shown}} of {{total}} firing alerts in server order.",
+      "empty": "No firing alerts are reported.",
+      "notReported": "Not reported",
+      "noContent": "No alert content was reported.",
+      "states": {
+        "permission": "You do not have permission to read recent firing alerts.",
+        "unavailable": "Recent firing alerts are unavailable.",
+        "contract": "Recent firing alerts did not match the expected contract.",
+        "error": "Recent firing alerts could not be loaded."
+      }
     }
   },
   "bulletin": {
