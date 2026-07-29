@@ -180,6 +180,36 @@ describe('Alert Center realtime refresh', () => {
     await act(async () => vi.advanceTimersByTimeAsync(30_000));
     expect(refresh).toHaveBeenCalledTimes(2);
   });
+
+  it('rebuilds session ownership when refresh or alert callbacks change', async () => {
+    const firstRefresh = vi.fn().mockResolvedValue(undefined);
+    const secondRefresh = vi.fn().mockResolvedValue(undefined);
+    const firstOnAlert = vi.fn();
+    const secondOnAlert = vi.fn();
+    const view = renderHook(({ refresh, onAlert }) => useAlertCenterRealtimeRefresh(refresh, onAlert), {
+      initialProps: { refresh: firstRefresh, onAlert: firstOnAlert }
+    });
+    const first = FakeStream.instances[0]!;
+
+    view.rerender({ refresh: secondRefresh, onAlert: firstOnAlert });
+    expect(first.close).toHaveBeenCalledOnce();
+    const second = FakeStream.instances[1]!;
+    view.rerender({ refresh: secondRefresh, onAlert: secondOnAlert });
+    expect(second.close).toHaveBeenCalledOnce();
+    const third = FakeStream.instances[2]!;
+
+    act(() => {
+      first.alert();
+      second.alert();
+      third.alert();
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+
+    expect(firstOnAlert).not.toHaveBeenCalled();
+    expect(secondOnAlert).toHaveBeenCalledOnce();
+    expect(firstRefresh).not.toHaveBeenCalled();
+    expect(secondRefresh).toHaveBeenCalledOnce();
+  });
 });
 
 type StreamHandlers = {

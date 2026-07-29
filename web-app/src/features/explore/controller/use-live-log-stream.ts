@@ -49,56 +49,20 @@ export function useLiveLogStream(options: LiveLogStreamOptions) {
   useEffect(() => {
     if (paused) return;
     const token = beginGeneration(connectionScope);
-    let source: { close: () => void } | undefined;
-    let closed = false;
-    let opened = false;
-    const closeSource = () => {
-      if (closed) return;
-      closed = true;
-      source?.close();
-    };
-    const setStatus = (value: LiveLogConnectionStatus) => {
-      if (ownsGeneration(token)) setConnectionState({ scope: connectionScope, value });
-    };
-    const markDegraded = (droppedCount?: number) => {
-      if (ownsGeneration(token)) degradeEvidence(setEvidenceState, evidenceScopeRef.current, droppedCount);
-    };
-    try {
-      source = openLogStream(path, {
-        onOpen: () => {
-          opened = true;
-          setStatus('connected');
-        },
-        onRetrying: () => {
-          if (opened) markDegraded();
-          setStatus('waiting');
-        },
-        onUnavailable: () => {
-          setStatus('unavailable');
-          retireGeneration(token);
-        },
-        onContractError: () => {
-          if (!ownsGeneration(token)) return;
-          setStatus('contract');
-          retireGeneration(token);
-          closeSource();
-        },
-        onGap: gap => markDegraded(gap.droppedCount),
-        onLog: row => {
-          if (!ownsGeneration(token)) return;
-          setStatus('connected');
-          appendLogEvidence(setEvidenceState, evidenceScopeRef.current, row);
-        }
-      });
-      if (closed) source.close();
-    } catch {
-      setStatus('error');
-      retireGeneration(token);
-      return;
-    }
+    const stream = new OwnedLiveLogStream({
+      path,
+      connectionScope,
+      evidenceScopeRef,
+      setConnectionState,
+      setEvidenceState,
+      token,
+      ownsGeneration,
+      retireGeneration
+    });
+    if (!stream.connect()) return;
     return () => {
       retireGeneration(token);
-      closeSource();
+      stream.close();
     };
   }, [
     beginGeneration,
@@ -112,6 +76,98 @@ export function useLiveLogStream(options: LiveLogStreamOptions) {
     setConnectionState,
     setEvidenceState
   ]);
+}
+
+type OwnedLiveLogStreamOptions = {
+  path: string;
+  connectionScope: string;
+  evidenceScopeRef: RefObject<string>;
+  setConnectionState: ConnectionSetter;
+  setEvidenceState: EvidenceSetter;
+  token: symbol;
+  ownsGeneration: (token: symbol) => boolean;
+  retireGeneration: (token: symbol) => void;
+};
+
+class OwnedLiveLogStream {
+  private source: { close: () => void } | undefined;
+  private closed = false;
+  private opened = false;
+
+  constructor(private readonly options: OwnedLiveLogStreamOptions) {}
+
+  connect() {
+    try {
+      this.source = openLogStream(this.options.path, {
+        onOpen: () => this.handleOpen(),
+        onRetrying: () => this.handleRetrying(),
+        onUnavailable: () => this.handleUnavailable(),
+        onContractError: () => this.handleContractError(),
+        onGap: gap => this.markDegraded(gap.droppedCount),
+        onLog: row => this.handleLog(row)
+      });
+      if (this.closed) this.source.close();
+      return true;
+    } catch {
+      this.setStatus('error');
+      this.retire();
+      return false;
+    }
+  }
+
+  close() {
+    if (this.closed) return;
+    this.closed = true;
+    this.source?.close();
+  }
+
+  private ownsGeneration() {
+    return this.options.ownsGeneration(this.options.token);
+  }
+
+  private retire() {
+    this.options.retireGeneration(this.options.token);
+  }
+
+  private setStatus(value: LiveLogConnectionStatus) {
+    if (this.ownsGeneration()) {
+      this.options.setConnectionState({ scope: this.options.connectionScope, value });
+    }
+  }
+
+  private markDegraded(droppedCount?: number) {
+    if (this.ownsGeneration()) {
+      degradeEvidence(this.options.setEvidenceState, this.options.evidenceScopeRef.current, droppedCount);
+    }
+  }
+
+  private handleOpen() {
+    this.opened = true;
+    this.setStatus('connected');
+  }
+
+  private handleRetrying() {
+    if (this.opened) this.markDegraded();
+    this.setStatus('waiting');
+  }
+
+  private handleUnavailable() {
+    this.setStatus('unavailable');
+    this.retire();
+  }
+
+  private handleContractError() {
+    if (!this.ownsGeneration()) return;
+    this.setStatus('contract');
+    this.retire();
+    this.close();
+  }
+
+  private handleLog(row: Parameters<typeof appendLogEvidence>[2]) {
+    if (!this.ownsGeneration()) return;
+    this.setStatus('connected');
+    appendLogEvidence(this.options.setEvidenceState, this.options.evidenceScopeRef.current, row);
+  }
 }
 
 function useConnectionGeneration(

@@ -85,6 +85,19 @@ describe('Live Log controller', () => {
     expect(view.result.current.rows.map(row => row.body)).toEqual(['replacement']);
   });
 
+  it('closes a source returned after a synchronous contract callback', () => {
+    const close = vi.fn();
+    api.openLogStream.mockImplementationOnce((_path: string, handlers: FakeHandlers) => {
+      handlers.onContractError();
+      return { close };
+    });
+
+    const view = renderLive(query());
+
+    expect(view.result.current.status).toBe('contract');
+    expect(close).toHaveBeenCalledOnce();
+  });
+
   it('retries source construction failures explicitly', () => {
     api.openLogStream
       .mockImplementationOnce(() => {

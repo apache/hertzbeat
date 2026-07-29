@@ -21,112 +21,154 @@ export function useAlertCenterRealtimeRefresh(
   onAlert?: (event: AlertEventSignal | null) => void
 ) {
   useEffect(() => {
-    let closed = false;
-    let running = false;
-    let trailing = false;
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-    let fallbackTimer: ReturnType<typeof setInterval> | undefined;
-    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-    let stream: { close: () => void } | undefined;
-    let streamGeneration = 0;
-
-    const scheduleRefresh = () => {
-      if (closed) return;
-      if (running) {
-        trailing = true;
-        return;
-      }
-      if (refreshTimer) return;
-      refreshTimer = setTimeout(() => {
-        refreshTimer = undefined;
-        void runRefresh();
-      }, alertRefreshCoalesceMs);
-    };
-    const runRefresh = async () => {
-      if (closed || running) return;
-      running = true;
-      try {
-        await refresh();
-      } catch {
-        // Existing list and summary states already expose honest request
-        // failures. The stream must not create a second competing error owner.
-      } finally {
-        running = false;
-        if (trailing && !closed) {
-          trailing = false;
-          scheduleRefresh();
-        }
-      }
-    };
-    const stopFallback = () => {
-      if (fallbackTimer) clearInterval(fallbackTimer);
-      fallbackTimer = undefined;
-    };
-    const startFallback = () => {
-      scheduleRefresh();
-      if (!fallbackTimer) fallbackTimer = setInterval(scheduleRefresh, alertFallbackPollingMs);
-    };
-    const stopReconnect = () => {
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      reconnectTimer = undefined;
-    };
-    const scheduleReconnect = () => {
-      if (closed || reconnectTimer) return;
-      reconnectTimer = setTimeout(() => {
-        reconnectTimer = undefined;
-        connectStream();
-      }, alertStreamCircuitBreakerMs);
-    };
-    const connectStream = () => {
-      if (closed) return;
-      stopReconnect();
-      stream?.close();
-      stream = undefined;
-      const generation = ++streamGeneration;
-      const ownsConnection = () => !closed && generation === streamGeneration;
-      try {
-        stream = openAlertGroupStream({
-          onOpen: () => {
-            if (!ownsConnection()) return;
-            scheduleRefresh();
-            stopFallback();
-            stopReconnect();
-          },
-          onAlert: event => {
-            if (!ownsConnection()) return;
-            onAlert?.(event);
-            scheduleRefresh();
-          },
-          onMutation: () => {
-            if (!ownsConnection()) return;
-            scheduleRefresh();
-          },
-          onRetrying: () => undefined,
-          onUnavailable: () => {
-            if (!ownsConnection()) return;
-            streamGeneration += 1;
-            const exhausted = stream;
-            stream = undefined;
-            exhausted?.close();
-            startFallback();
-            scheduleReconnect();
-          }
-        });
-      } catch {
-        if (!ownsConnection()) return;
-        startFallback();
-        scheduleReconnect();
-      }
-    };
-
-    connectStream();
-
-    return () => {
-      closed = true;
-      if (refreshTimer) clearTimeout(refreshTimer);
-      stopFallback();
-      stopReconnect();
-      stream?.close();
-    };
+    const session = new AlertRealtimeSession(refresh, onAlert);
+    session.connect();
+    return () => session.close();
   }, [onAlert, refresh]);
+}
+
+class CoalescedAlertRefresh {
+  private closed = false;
+  private running = false;
+  private trailing = false;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor(private readonly refresh: () => Promise<unknown>) {}
+
+  schedule = () => {
+    if (this.closed) return;
+    if (this.running) {
+      this.trailing = true;
+      return;
+    }
+    if (this.timer) return;
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      void this.run();
+    }, alertRefreshCoalesceMs);
+  };
+
+  close() {
+    this.closed = true;
+    if (this.timer) clearTimeout(this.timer);
+  }
+
+  private async run() {
+    if (this.closed || this.running) return;
+    this.running = true;
+    try {
+      await this.refresh();
+    } catch {
+      // Existing list and summary states already expose honest request
+      // failures. The stream must not create a second competing error owner.
+    } finally {
+      this.running = false;
+      if (this.trailing && !this.closed) {
+        this.trailing = false;
+        this.schedule();
+      }
+    }
+  }
+}
+
+class AlertRealtimeSession {
+  private closed = false;
+  private fallbackTimer: ReturnType<typeof setInterval> | undefined;
+  private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  private stream: { close: () => void } | undefined;
+  private streamGeneration = 0;
+  private readonly refreshScheduler: CoalescedAlertRefresh;
+
+  constructor(
+    refresh: () => Promise<unknown>,
+    private readonly onAlert?: (event: AlertEventSignal | null) => void
+  ) {
+    this.refreshScheduler = new CoalescedAlertRefresh(refresh);
+  }
+
+  connect = () => {
+    if (this.closed) return;
+    this.stopReconnect();
+    this.stream?.close();
+    this.stream = undefined;
+    const generation = ++this.streamGeneration;
+    const ownsConnection = () => this.ownsConnection(generation);
+    try {
+      this.stream = openAlertGroupStream({
+        onOpen: () => this.handleOpen(ownsConnection),
+        onAlert: event => this.handleAlert(ownsConnection, event),
+        onMutation: () => this.handleMutation(ownsConnection),
+        onRetrying: () => undefined,
+        onUnavailable: () => this.handleUnavailable(ownsConnection)
+      });
+    } catch {
+      if (!ownsConnection()) return;
+      this.startFallback();
+      this.scheduleReconnect();
+    }
+  };
+
+  close() {
+    this.closed = true;
+    this.refreshScheduler.close();
+    this.stopFallback();
+    this.stopReconnect();
+    this.stream?.close();
+  }
+
+  private ownsConnection(generation: number) {
+    return !this.closed && generation === this.streamGeneration;
+  }
+
+  private handleOpen(ownsConnection: () => boolean) {
+    if (!ownsConnection()) return;
+    this.refreshScheduler.schedule();
+    this.stopFallback();
+    this.stopReconnect();
+  }
+
+  private handleAlert(ownsConnection: () => boolean, event: AlertEventSignal | null) {
+    if (!ownsConnection()) return;
+    this.onAlert?.(event);
+    this.refreshScheduler.schedule();
+  }
+
+  private handleMutation(ownsConnection: () => boolean) {
+    if (ownsConnection()) this.refreshScheduler.schedule();
+  }
+
+  private handleUnavailable(ownsConnection: () => boolean) {
+    if (!ownsConnection()) return;
+    this.streamGeneration += 1;
+    const exhausted = this.stream;
+    this.stream = undefined;
+    exhausted?.close();
+    this.startFallback();
+    this.scheduleReconnect();
+  }
+
+  private startFallback() {
+    this.refreshScheduler.schedule();
+    if (!this.fallbackTimer) {
+      this.fallbackTimer = setInterval(this.refreshScheduler.schedule, alertFallbackPollingMs);
+    }
+  }
+
+  private stopFallback() {
+    if (this.fallbackTimer) clearInterval(this.fallbackTimer);
+    this.fallbackTimer = undefined;
+  }
+
+  private scheduleReconnect() {
+    if (this.closed || this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = undefined;
+      this.connect();
+    }, alertStreamCircuitBreakerMs);
+  }
+
+  private stopReconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = undefined;
+  }
 }

@@ -46,26 +46,11 @@ export function LogStreamResult({
   navigate: (path: string) => void;
 }) {
   const terminal = isTerminalStreamStatus(stream.status);
-  const retryable = terminal || stream.status === 'degraded';
   const gapMessage =
     stream.gapDroppedCount == null
       ? t('exploreLog.streamGap')
       : t('exploreLog.streamGapCount', { count: stream.gapDroppedCount });
-  const actions = (
-    <div className={styles.streamActions}>
-      <Button size="small" disabled={terminal} onClick={stream.togglePaused}>
-        {t(stream.status === 'paused' ? 'exploreLog.resume' : 'exploreLog.pause')}
-      </Button>
-      {retryable && (
-        <Button size="small" onClick={stream.retry}>
-          {t('common.retry')}
-        </Button>
-      )}
-      <Button size="small" disabled={stream.rows.length === 0} onClick={stream.clear}>
-        {t('exploreLog.clear')}
-      </Button>
-    </div>
-  );
+  const actions = <LogStreamActions stream={stream} t={t} />;
   const connection = <StreamConnection status={stream.status} t={t} />;
 
   return (
@@ -94,6 +79,26 @@ export function LogStreamResult({
           actions={actions}
         />
       )}
+    </div>
+  );
+}
+
+function LogStreamActions({ stream, t }: { stream: LiveLogView; t: TFunction }) {
+  const terminal = isTerminalStreamStatus(stream.status);
+  const retryable = terminal || stream.status === 'degraded';
+  return (
+    <div className={styles.streamActions}>
+      <Button size="small" disabled={terminal} onClick={stream.togglePaused}>
+        {t(stream.status === 'paused' ? 'exploreLog.resume' : 'exploreLog.pause')}
+      </Button>
+      {retryable && (
+        <Button size="small" onClick={stream.retry}>
+          {t('common.retry')}
+        </Button>
+      )}
+      <Button size="small" disabled={stream.rows.length === 0} onClick={stream.clear}>
+        {t('exploreLog.clear')}
+      </Button>
     </div>
   );
 }

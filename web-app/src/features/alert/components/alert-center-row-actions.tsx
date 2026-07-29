@@ -12,6 +12,31 @@ import { alertGroupIdentity, type AlertGroup } from '../model/alert-model';
 import type { AlertCenterActionPolicy } from '../model/alert-capability-model';
 import { AlertCenterConfirmedAction } from './alert-center-confirmed-action';
 
+const alertStatusActionCopy = {
+  acknowledge: {
+    labelKey: 'alert.acknowledge',
+    confirmKey: 'alert.acknowledgeConfirm',
+    confirmLabelKey: 'alert.confirmAcknowledge'
+  },
+  reopen: {
+    labelKey: 'alert.reopen',
+    confirmKey: 'alert.reopenConfirm',
+    confirmLabelKey: 'alert.confirmReopen'
+  },
+  resolve: {
+    labelKey: 'alert.resolve',
+    confirmKey: 'alert.resolveConfirm',
+    confirmLabelKey: 'alert.confirmResolve'
+  },
+  unacknowledge: {
+    labelKey: 'alert.unacknowledge',
+    confirmKey: 'alert.unacknowledgeConfirm',
+    confirmLabelKey: 'alert.confirmUnacknowledge'
+  }
+} as const;
+
+type AlertStatusAction = keyof typeof alertStatusActionCopy;
+
 type AlertCenterRowActionsProps = {
   actionPolicy: AlertCenterActionPolicy;
   acknowledge: (group: AlertGroup) => void | Promise<unknown>;
@@ -52,62 +77,49 @@ function AlertCenterRowStatusActions({
   resolve,
   unacknowledge
 }: AlertCenterRowActionsProps) {
-  const { t } = useTranslation();
   if (group.status === 'acknowledged') {
     return (
       <>
-        <AlertCenterConfirmedAction
-          type="link"
-          label={t('alert.unacknowledge')}
-          confirm={t('alert.unacknowledgeConfirm')}
-          confirmLabel={t('alert.confirmUnacknowledge')}
-          disabled={busy}
-          run={() => unacknowledge(group)}
-        />
-        <AlertCenterConfirmedAction
-          type="link"
-          label={t('alert.resolve')}
-          confirm={t('alert.resolveConfirm')}
-          confirmLabel={t('alert.confirmResolve')}
-          disabled={busy}
-          run={() => resolve(group)}
-        />
+        <AlertCenterStatusAction action="unacknowledge" busy={busy} group={group} run={unacknowledge} />
+        <AlertCenterStatusAction action="resolve" busy={busy} group={group} run={resolve} />
       </>
     );
   }
   if (group.status === 'resolved') {
-    return (
-      <AlertCenterConfirmedAction
-        type="link"
-        label={t('alert.reopen')}
-        confirm={t('alert.reopenConfirm')}
-        confirmLabel={t('alert.confirmReopen')}
-        disabled={busy}
-        run={() => reopen(group)}
-      />
-    );
+    return <AlertCenterStatusAction action="reopen" busy={busy} group={group} run={reopen} />;
   }
   if (group.status === 'firing') {
     return (
       <>
-        <AlertCenterConfirmedAction
-          type="link"
-          label={t('alert.acknowledge')}
-          confirm={t('alert.acknowledgeConfirm')}
-          confirmLabel={t('alert.confirmAcknowledge')}
-          disabled={busy}
-          run={() => acknowledge(group)}
-        />
-        <AlertCenterConfirmedAction
-          type="link"
-          label={t('alert.resolve')}
-          confirm={t('alert.resolveConfirm')}
-          confirmLabel={t('alert.confirmResolve')}
-          disabled={busy}
-          run={() => resolve(group)}
-        />
+        <AlertCenterStatusAction action="acknowledge" busy={busy} group={group} run={acknowledge} />
+        <AlertCenterStatusAction action="resolve" busy={busy} group={group} run={resolve} />
       </>
     );
   }
   return null;
+}
+
+function AlertCenterStatusAction({
+  action,
+  busy,
+  group,
+  run
+}: {
+  action: AlertStatusAction;
+  busy: boolean;
+  group: AlertGroup;
+  run: (group: AlertGroup) => void | Promise<unknown>;
+}) {
+  const { t } = useTranslation();
+  const copy = alertStatusActionCopy[action];
+  return (
+    <AlertCenterConfirmedAction
+      type="link"
+      label={t(copy.labelKey)}
+      confirm={t(copy.confirmKey)}
+      confirmLabel={t(copy.confirmLabelKey)}
+      disabled={busy}
+      run={() => run(group)}
+    />
+  );
 }
