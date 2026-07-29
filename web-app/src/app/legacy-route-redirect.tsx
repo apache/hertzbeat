@@ -5,12 +5,13 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 
 import { legacyRedirectTarget } from './legacy-route-target';
 import type { LegacyRouteDefinition } from './route-registry';
 
 export function LegacyRouteRedirect({ definition }: { definition: LegacyRouteDefinition }) {
   const location = useLocation();
-  return <Navigate replace to={legacyRedirectTarget(definition, location.search, location.hash)} />;
+  const params = useParams();
+  return <Navigate replace to={legacyRedirectTarget(definition, location.search, location.hash, params)} />;
 }

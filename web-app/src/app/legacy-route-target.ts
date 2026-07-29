@@ -9,12 +9,36 @@ import { safeRedirectTarget } from '@/core/auth/navigation';
 
 import { getAppRoute, type LegacyRouteDefinition } from './route-registry';
 
-export function legacyRedirectTarget(definition: LegacyRouteDefinition, search: string, hash: string) {
+export function legacyRedirectTarget(
+  definition: LegacyRouteDefinition,
+  search: string,
+  hash: string,
+  routeParams: Readonly<Record<string, string | undefined>> = {}
+) {
   const targetPath = getAppRoute(definition.targetRouteId).path;
   const sanitized = safeRedirectTarget(`${targetPath}${search}${hash}`) ?? targetPath;
   const { pathname, search: safeSearch, hash: safeHash } = splitLocalTarget(sanitized);
+  const resolvedPathname = resolveTargetPath(pathname, definition, routeParams);
   const mergedSearch = mergeFixedSearch(safeSearch, definition.fixedSearch);
-  return `${pathname}${mergedSearch}${safeHash}`;
+  return `${resolvedPathname}${mergedSearch}${safeHash}`;
+}
+
+function resolveTargetPath(
+  targetPath: string,
+  definition: LegacyRouteDefinition,
+  routeParams: Readonly<Record<string, string | undefined>>
+) {
+  if (!definition.targetPathParam) return targetPath;
+  const value = routeParams[definition.targetPathParam];
+  if (value === undefined) throw new Error(`Missing legacy route parameter: ${definition.targetPathParam}`);
+  return targetPath.replace(`:${definition.targetPathParam}`, encodePathSegment(value));
+}
+
+function encodePathSegment(value: string) {
+  const encoded = encodeURIComponent(value);
+  if (encoded === '.') return '%2E';
+  if (encoded === '..') return '%2E%2E';
+  return encoded;
 }
 
 function splitLocalTarget(target: string) {

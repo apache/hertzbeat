@@ -45,6 +45,19 @@ describe('route registry', () => {
     ).toEqual([
       { id: 'legacy-overview', path: '/overview', targetRouteId: 'dashboard', fixedSearch: [] },
       {
+        id: 'legacy-metrics-manage',
+        path: '/metrics/manage',
+        targetRouteId: 'explore',
+        fixedSearch: [['signal', 'metrics']]
+      },
+      {
+        id: 'legacy-trace-manage',
+        path: '/trace/manage',
+        targetRouteId: 'explore',
+        fixedSearch: [['signal', 'traces']]
+      },
+      { id: 'legacy-log', path: '/log', targetRouteId: 'instrumentation', fixedSearch: [] },
+      {
         id: 'legacy-log-stream',
         path: '/log/stream',
         targetRouteId: 'explore',
@@ -75,6 +88,44 @@ describe('route registry', () => {
         id: 'legacy-ingestion-otlp-child',
         path: '/ingestion/otlp/*',
         targetRouteId: 'instrumentation',
+        fixedSearch: []
+      },
+      { id: 'legacy-alert', path: '/alert', targetRouteId: 'alerts', fixedSearch: [] },
+      { id: 'legacy-alert-center', path: '/alert/center', targetRouteId: 'alerts', fixedSearch: [] },
+      {
+        id: 'legacy-alert-setting',
+        path: '/alert/setting',
+        targetRouteId: 'alert-rules',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-alert-notice',
+        path: '/alert/notice',
+        targetRouteId: 'notice-receivers',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-alert-silence',
+        path: '/alert/silence',
+        targetRouteId: 'alert-silences',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-alert-group',
+        path: '/alert/group',
+        targetRouteId: 'alert-groups',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-alert-inhibit',
+        path: '/alert/inhibit',
+        targetRouteId: 'alert-inhibits',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-alert-integration',
+        path: '/alert/integration/:source',
+        targetRouteId: 'alert-integrations',
         fixedSearch: []
       },
       {
@@ -115,6 +166,24 @@ describe('route registry', () => {
         fixedSearch: []
       },
       { id: 'legacy-plugins', path: '/setting/plugin', targetRouteId: 'plugins', fixedSearch: [] },
+      {
+        id: 'legacy-plugins-plural',
+        path: '/setting/plugins',
+        targetRouteId: 'plugins',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-settings',
+        path: '/setting/settings',
+        targetRouteId: 'system-settings',
+        fixedSearch: []
+      },
+      {
+        id: 'legacy-token',
+        path: '/setting/settings/token',
+        targetRouteId: 'tokens',
+        fixedSearch: []
+      },
       { id: 'legacy-collectors', path: '/setting/collector', targetRouteId: 'collectors', fixedSearch: [] },
       {
         id: 'legacy-monitor-definitions',

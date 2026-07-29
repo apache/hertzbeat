@@ -26,8 +26,18 @@ describe('LegacyRouteRedirect', () => {
     ],
     ['/log/integration/filebeat?tab=setup#agent', '/observability/integration?tab=setup#agent'],
     ['/log/manage?service=checkout', '/explore?signal=logs&service=checkout'],
+    ['/metrics/manage?signal=logs&service=checkout#chart', '/explore?signal=metrics&service=checkout#chart'],
+    ['/trace/manage?signal=logs&service=checkout#span', '/explore?signal=traces&service=checkout#span'],
+    ['/log?tab=setup#agent', '/observability/integration?tab=setup#agent'],
     ['/ingestion/otlp?tab=java', '/observability/integration?tab=java'],
     ['/ingestion/otlp/grpc/java?tab=setup#sdk', '/observability/integration?tab=setup#sdk'],
+    ['/alert?status=firing#active', '/alerts?status=firing#active'],
+    ['/alert/center?status=pending', '/alerts?status=pending'],
+    ['/alert/setting?search=latency', '/alerts/rules?search=latency'],
+    ['/alert/notice?pageIndex=2', '/settings/notifications/receivers?pageIndex=2'],
+    ['/alert/silence?search=maintenance', '/alerts/silences?search=maintenance'],
+    ['/alert/group?search=platform', '/alerts/groups?search=platform'],
+    ['/alert/inhibit?search=dependency', '/alerts/inhibits?search=dependency'],
     ['/alerts/notifications/receivers?pageIndex=2#receiver', '/settings/notifications/receivers?pageIndex=2#receiver'],
     ['/alerts/notifications/templates?channel=email', '/settings/notifications/templates?channel=email'],
     ['/alerts/notifications/rules?enabled=true', '/settings/notifications/rules?enabled=true'],
@@ -36,6 +46,9 @@ describe('LegacyRouteRedirect', () => {
     ['/setting/settings/object-store?tab=s3', '/settings/storage/object-store?tab=s3'],
     ['/setting/labels?search=production', '/settings/labels?search=production'],
     ['/setting/plugin?search=jdbc', '/settings/plugins?search=jdbc'],
+    ['/setting/plugins?search=jdbc', '/settings/plugins?search=jdbc'],
+    ['/setting/settings?tab=mail', '/settings/system?tab=mail'],
+    ['/setting/settings/token?pageIndex=2', '/settings/tokens?pageIndex=2'],
     [
       '/setting/collector?pageIndex=2&status=online#collector-7',
       '/settings/collectors?pageIndex=2&status=online#collector-7'
@@ -47,6 +60,21 @@ describe('LegacyRouteRedirect', () => {
 
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(expected));
   });
+
+  it.each([
+    ['/alert/integration/webhook?tab=setup#receiver', '/alerts/integrations/webhook?tab=setup#receiver'],
+    ['/alert/integration/otel%2Fhttp', '/alerts/integrations/otel%2Fhttp'],
+    ['/alert/integration/otel%252Fhttp', '/alerts/integrations/otel%2Fhttp'],
+    ['/alert/integration/%2E%2E', '/alerts/integrations/%2E%2E']
+  ])(
+    'redirects the decoded integration source in %s to one safely encoded target segment',
+    async (source, expected) => {
+      renderLegacyRoutes(source);
+
+      await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(expected));
+      expect(screen.getByTestId('location')).not.toHaveTextContent(':source');
+    }
+  );
 
   it('drops secret-like search and hash fields without logging their values', async () => {
     const secret = 'must-not-leak';
@@ -101,6 +129,7 @@ function renderLegacyRoutes(initialEntry: string) {
         <Route path="/dashboard" element={<LocationProbe />} />
         <Route path="/explore" element={<LocationProbe />} />
         <Route path="/observability/integration" element={<LocationProbe />} />
+        <Route path="/alerts/*" element={<LocationProbe />} />
         <Route path="/settings/*" element={<LocationProbe />} />
         <Route path="*" element={<output data-testid="not-found">not found</output>} />
       </Routes>

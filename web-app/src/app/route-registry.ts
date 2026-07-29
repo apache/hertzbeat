@@ -150,10 +150,14 @@ export type LegacyRouteDefinition = {
   path: string;
   targetRouteId: AppRouteId;
   fixedSearch: readonly (readonly [string, string])[];
+  targetPathParam?: string;
 };
 
 export const legacyRouteCatalog = [
   legacyRoute('legacy-overview', '/overview', 'dashboard'),
+  legacyRoute('legacy-metrics-manage', '/metrics/manage', 'explore', [['signal', 'metrics']]),
+  legacyRoute('legacy-trace-manage', '/trace/manage', 'explore', [['signal', 'traces']]),
+  legacyRoute('legacy-log', '/log', 'instrumentation'),
   legacyRoute('legacy-log-stream', '/log/stream', 'explore', [
     ['signal', 'logs'],
     ['mode', 'live']
@@ -162,6 +166,14 @@ export const legacyRouteCatalog = [
   legacyRoute('legacy-log-manage', '/log/manage', 'explore', [['signal', 'logs']]),
   legacyRoute('legacy-ingestion-otlp', '/ingestion/otlp', 'instrumentation'),
   legacyRoute('legacy-ingestion-otlp-child', '/ingestion/otlp/*', 'instrumentation'),
+  legacyRoute('legacy-alert', '/alert', 'alerts'),
+  legacyRoute('legacy-alert-center', '/alert/center', 'alerts'),
+  legacyRoute('legacy-alert-setting', '/alert/setting', 'alert-rules'),
+  legacyRoute('legacy-alert-notice', '/alert/notice', 'notice-receivers'),
+  legacyRoute('legacy-alert-silence', '/alert/silence', 'alert-silences'),
+  legacyRoute('legacy-alert-group', '/alert/group', 'alert-groups'),
+  legacyRoute('legacy-alert-inhibit', '/alert/inhibit', 'alert-inhibits'),
+  legacyRoute('legacy-alert-integration', '/alert/integration/:source', 'alert-integrations', [], 'source'),
   legacyRoute('legacy-notice-receivers', '/alerts/notifications/receivers', 'notice-receivers'),
   legacyRoute('legacy-notice-templates', '/alerts/notifications/templates', 'notice-templates'),
   legacyRoute('legacy-notice-rules', '/alerts/notifications/rules', 'notice-rules'),
@@ -170,6 +182,9 @@ export const legacyRouteCatalog = [
   legacyRoute('legacy-labels', '/setting/labels', 'labels'),
   legacyRoute('legacy-object-store', '/setting/settings/object-store', 'object-store'),
   legacyRoute('legacy-plugins', '/setting/plugin', 'plugins'),
+  legacyRoute('legacy-plugins-plural', '/setting/plugins', 'plugins'),
+  legacyRoute('legacy-settings', '/setting/settings', 'system-settings'),
+  legacyRoute('legacy-token', '/setting/settings/token', 'tokens'),
   legacyRoute('legacy-collectors', '/setting/collector', 'collectors'),
   legacyRoute('legacy-monitor-definitions', '/setting/define', 'monitor-definitions'),
   legacyRoute('legacy-status-management', '/setting/status', 'status-management')
@@ -208,7 +223,8 @@ function legacyRoute(
   id: LegacyRouteDefinition['id'],
   path: string,
   targetRouteId: AppRouteId,
-  fixedSearch: LegacyRouteDefinition['fixedSearch'] = []
+  fixedSearch: LegacyRouteDefinition['fixedSearch'] = [],
+  targetPathParam?: string
 ): LegacyRouteDefinition {
-  return { id, path, targetRouteId, fixedSearch };
+  return { id, path, targetRouteId, fixedSearch, ...(targetPathParam ? { targetPathParam } : {}) };
 }
