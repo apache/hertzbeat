@@ -3,18 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { resolveLocale, type SupportedLocale } from '@/core/i18n/i18n';
-import {
-  classifyMonitorReadError,
-  loadMonitorAppHierarchy,
-  loadMonitorApps,
-  loadMonitors,
-  MonitorContractError,
-  type Monitor
-} from '@/features/monitor';
+import { resolveLocale } from '@/core/i18n/i18n';
+import { classifyMonitorReadError, MonitorContractError, type Monitor } from '@/features/monitor';
 import {
   BulletinMetricTreeError,
-  buildBulletinMetricTree,
   resolveSavedMetricTreeSelection,
   type BulletinMetricTreeMetricNode
 } from '../model/bulletin-metric-tree-model';
@@ -26,12 +18,13 @@ import type {
 import type { BulletinDraft } from '../model/bulletin-model';
 import {
   BulletinMonitorPaginationEvidenceError,
-  BulletinMonitorPaginationProof,
-  bulletinMonitorProofPolicy,
   isBulletinDependencyApplication
 } from '../model/bulletin-dependency-policy';
+import { loadAllBulletinMonitors, loadBulletinApps, loadBulletinMetricTree } from './bulletin-dependency-loaders';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 import { normalizeBulletinApiFailure } from '../api/bulletin-api-failure';
+
+export { loadBulletinApps } from './bulletin-dependency-loaders';
 
 const bulletinDependencyStaleTimeMs = 30_000;
 
@@ -46,7 +39,7 @@ type DependencyResource<T> = {
 
 type BulletinDependencyResources = {
   app: string;
-  apps: DependencyResource<Awaited<ReturnType<typeof loadMonitorApps>>>;
+  apps: DependencyResource<Awaited<ReturnType<typeof loadBulletinApps>>>;
   monitors: DependencyResource<Monitor[]>;
   hierarchy: DependencyResource<BulletinMetricTreeMetricNode[]>;
 };
@@ -81,7 +74,7 @@ function useBulletinDependencyResources(draft: BulletinDraft | null, canRead: bo
   });
   const monitors = useQuery({
     queryKey: bulletinQueryKeys.monitors(app),
-    queryFn: ({ signal }) => loadAllMonitors(app, signal),
+    queryFn: ({ signal }) => loadAllBulletinMonitors(app, signal),
     enabled: canRead && Boolean(draft && app),
     retry: false
   });
@@ -111,12 +104,8 @@ export function resolveBulletinDependencies(
   return { kind, fieldSelection, monitorSelection, metricTree: metricTree ?? [], ...records };
 }
 
-export function loadBulletinApps(locale: SupportedLocale, signal?: AbortSignal) {
-  return loadMonitorApps(locale, signal);
-}
-
 export function buildBulletinDependencyRecords(
-  apps: Awaited<ReturnType<typeof loadMonitorApps>> | undefined,
+  apps: Awaited<ReturnType<typeof loadBulletinApps>> | undefined,
   monitors: Monitor[] | undefined,
   metricTree: BulletinMetricTreeMetricNode[] | undefined
 ) {
@@ -196,32 +185,4 @@ function hasUnknownMonitorSelection(draft: BulletinDraft, monitors: Monitor[]) {
 
 function hasUnknownFieldSelection(draft: BulletinDraft, tree: BulletinMetricTreeMetricNode[]) {
   return Object.keys(resolveSavedMetricTreeSelection(tree, draft.fields).unknownFields).length > 0;
-}
-
-async function loadBulletinMetricTree(app: string, locale: string, signal: AbortSignal) {
-  return buildBulletinMetricTree(await loadMonitorAppHierarchy(app, locale, signal));
-}
-
-async function loadAllMonitors(app: string, signal?: AbortSignal): Promise<Monitor[]> {
-  if (!app) return [];
-  const proof = new BulletinMonitorPaginationProof();
-  let pageIndex = 0;
-  do {
-    const page = await loadMonitors(
-      {
-        search: '',
-        app,
-        status: bulletinMonitorProofPolicy.status,
-        labels: '',
-        sort: null,
-        order: null,
-        pageIndex,
-        pageSize: bulletinMonitorProofPolicy.pageSize
-      },
-      signal
-    );
-    proof.accept(page, pageIndex);
-    pageIndex += 1;
-  } while (pageIndex < proof.totalPages);
-  return proof.finish();
 }

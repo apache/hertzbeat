@@ -5,16 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Modal, Select, Tag, Typography } from 'antd';
+import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import {
-  accessTokenExpirationDefinitions,
-  type AccessTokenGenerationDraft
-} from '@/shared/access-token/access-token-generation-model';
+import type { AccessTokenGenerationDraft } from '@/shared/access-token/access-token-generation-model';
 
 import { intakeEndpointEntries, profileUsesPlaintext } from '../model/intake-profile';
 import type { IntakeProfilesResponse, ServiceIdentity } from '../model/instrumentation-v2-contract';
+import { InstrumentationAccessTokenModal } from './instrumentation-access-token-modal';
+import { InstrumentationPlatformField, InstrumentationTokenField } from './instrumentation-configuration-fields';
 import styles from './instrumentation-configure.module.css';
 import { InstrumentationServiceIdentityFields } from './instrumentation-service-identity-fields';
 
@@ -58,35 +57,16 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         />
       )}
       <InstrumentationServiceIdentityFields service={props.service} onService={props.onService} />
-      {props.platformOptions.length > 1 && (
-        <label className={styles.serviceNameField}>
-          <Typography.Text strong>{t('instrumentation.field.platform')}</Typography.Text>
-          <Select
-            aria-label={t('instrumentation.field.platform')}
-            value={props.platform ?? null}
-            options={props.platformOptions.map(platform => ({
-              value: platform,
-              label: t(`instrumentation.platform.${platform}`, { defaultValue: platform })
-            }))}
-            onChange={props.onPlatform}
-          />
-        </label>
-      )}
+      <InstrumentationPlatformField
+        platform={props.platform}
+        options={props.platformOptions}
+        onPlatform={props.onPlatform}
+      />
       <DestinationCards profiles={props.profiles} profileId={props.profileId} onProfile={props.onProfile} />
       {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
         <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
       )}
-      <label className={styles.serviceNameField}>
-        <Typography.Text strong>{t('instrumentation.field.token')}</Typography.Text>
-        <Input.Password
-          aria-label={t('instrumentation.field.token')}
-          autoComplete="off"
-          placeholder={t('instrumentation.field.tokenPlaceholder')}
-          value={props.token}
-          onChange={event => props.onToken(event.target.value)}
-        />
-        <Typography.Text type="secondary">{t('instrumentation.field.tokenMemory')}</Typography.Text>
-      </label>
+      <InstrumentationTokenField token={props.token} onToken={props.onToken} />
       <div className={styles.configureActions}>
         {props.canGenerateToken && (
           <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
@@ -99,7 +79,16 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         </Button>
       </div>
       {props.renderError && <Alert type="error" showIcon message={t('instrumentation.v2.renderError')} />}
-      {props.canGenerateToken && props.tokenDraft && <AccessTokenModal {...props} draft={props.tokenDraft} />}
+      {props.canGenerateToken && props.tokenDraft && (
+        <InstrumentationAccessTokenModal
+          draft={props.tokenDraft}
+          tokenGenerating={props.tokenGenerating}
+          tokenError={props.tokenError}
+          onClose={props.onCloseToken}
+          onDraft={props.onTokenDraft}
+          onGenerate={props.onGenerateToken}
+        />
+      )}
     </section>
   );
 }
@@ -173,51 +162,4 @@ function profileReasonKey(errorCode?: string) {
     return 'instrumentation.v2.profileReason.destinationUnavailable';
   }
   return 'instrumentation.v2.profileReason.unavailable';
-}
-
-function AccessTokenModal(props: ConfigureStepProps & { draft: AccessTokenGenerationDraft }) {
-  const { t } = useTranslation();
-  return (
-    <Modal
-      open
-      title={t('instrumentation.token.generateTitle')}
-      okText={t('instrumentation.token.generate')}
-      cancelText={t('common.cancel')}
-      confirmLoading={props.tokenGenerating}
-      closable={!props.tokenGenerating}
-      maskClosable={!props.tokenGenerating}
-      onCancel={props.onCloseToken}
-      onOk={props.onGenerateToken}
-    >
-      {props.tokenError && <Alert type="error" showIcon message={t('instrumentation.token.generateError')} />}
-      <div className={styles.tokenForm}>
-        <label>
-          <Typography.Text strong>{t('instrumentation.token.name')}</Typography.Text>
-          <Input
-            aria-label={t('instrumentation.token.name')}
-            disabled={props.tokenGenerating}
-            value={props.draft.name}
-            onChange={event => props.onTokenDraft({ ...props.draft, name: event.target.value })}
-          />
-        </label>
-        <label>
-          <Typography.Text strong>{t('instrumentation.token.expires')}</Typography.Text>
-          <Select
-            aria-label={t('instrumentation.token.expires')}
-            disabled={props.tokenGenerating}
-            value={props.draft.expireSeconds}
-            options={accessTokenExpirationDefinitions.map(definition => ({
-              value: definition.value,
-              label: t(definition.labelKey)
-            }))}
-            onChange={expireSeconds => props.onTokenDraft({ ...props.draft, expireSeconds })}
-          />
-        </label>
-        <div>
-          <Typography.Text strong>{t('instrumentation.token.scope')}</Typography.Text>
-          <Typography.Text>{t('instrumentation.token.fixedScope')}</Typography.Text>
-        </div>
-      </div>
-    </Modal>
-  );
 }

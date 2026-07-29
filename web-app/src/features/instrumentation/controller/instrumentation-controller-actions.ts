@@ -29,20 +29,7 @@ export function useDraftActions(
   timerRef: RefObject<number | undefined>,
   generationRef: RefObject<number>
 ) {
-  const resetResults = useCallback(() => {
-    generationRef.current += 1;
-    state.setGuide(undefined);
-    state.setDetection(undefined);
-    state.setDetecting(false);
-    state.setRenderError(false);
-    state.setRendering(false);
-    state.setDetectionError(false);
-    state.setToken('');
-    state.setTokenDraft(undefined);
-    state.setTokenError(false);
-    state.setTokenGenerating(false);
-    clearDetectionWindow(timerRef, startedAtRef);
-  }, [generationRef, startedAtRef, state, timerRef]);
+  const resetResults = useResetInstrumentationResults(state, generationRef, startedAtRef, timerRef);
   const chooseSource = useCallback(
     (sourceId: string) => {
       if (!catalog) return;
@@ -84,6 +71,28 @@ export function useDraftActions(
   }, [defaultProfileId, resetResults, state]);
   const goBack = useBackAction(state, resetResults, catalog);
   return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
+}
+
+function useResetInstrumentationResults(
+  state: InstrumentationControllerState,
+  generationRef: RefObject<number>,
+  startedAtRef: RefObject<number | undefined>,
+  timerRef: RefObject<number | undefined>
+) {
+  return useCallback(() => {
+    generationRef.current += 1;
+    state.setGuide(undefined);
+    state.setDetection(undefined);
+    state.setDetecting(false);
+    state.setRenderError(false);
+    state.setRendering(false);
+    state.setDetectionError(false);
+    state.setToken('');
+    state.setTokenDraft(undefined);
+    state.setTokenError(false);
+    state.setTokenGenerating(false);
+    clearDetectionWindow(timerRef, startedAtRef);
+  }, [generationRef, startedAtRef, state, timerRef]);
 }
 
 function clearDetectionWindow(timerRef: RefObject<number | undefined>, startedAtRef: RefObject<number | undefined>) {
