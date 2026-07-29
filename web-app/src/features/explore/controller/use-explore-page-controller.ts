@@ -43,12 +43,16 @@ import type {
 } from '../model/explore-result-model';
 import { metricResultState } from '../model/explore-signal-model';
 import { useExploreHistory } from './use-explore-history';
+import { useCanonicalExploreLocation } from './use-canonical-explore-location';
+import { useExploreRouteTime } from './use-explore-route-time';
 
 export function useExplorePageController() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const locationSearch = searchParams.toString();
   const parsedQuery = useMemo(() => parseExploreQuery(new URLSearchParams(locationSearch)), [locationSearch]);
+  const canonicalSearch = useMemo(() => searchFromPath(buildExplorePath(parsedQuery)).toString(), [parsedQuery]);
+  useCanonicalExploreLocation(locationSearch, canonicalSearch);
   const sharedContext = useQueryContextOptional();
   const sharedTime = useSharedTimeOptional();
   const fixedWindow = exactWindow(parsedQuery);
@@ -66,6 +70,7 @@ export function useExplorePageController() {
     const next = retireInstrumentationHandoff(mergeExploreQuery(query, contextual));
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
+  const time = useExploreRouteTime(query, sharedTime, updateQuery);
   const submission = useExploreSubmission(query, patch =>
     updateManualQuery({
       ...patch,
@@ -79,7 +84,7 @@ export function useExplorePageController() {
     handoff,
     submission,
     result: resolveResult(query, handoff, queryResult.isPending, queryResult.isFetching, queryResult.error, evidence),
-    time: sharedTime,
+    time,
     updateQuery,
     updateManualQuery,
     refresh,

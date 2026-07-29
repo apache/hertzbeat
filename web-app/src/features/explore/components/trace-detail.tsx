@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Descriptions, Empty, Skeleton, Typography } from 'antd';
+import { Button, Descriptions, Empty, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
 import type { TraceSpan } from '../model/explore-signal-contract';
 import { traceDurationMs, type TraceDetailState, type TraceSpanTiming } from '../model/explore-signal-model';
 import { OtlpAttributeList, OtlpAttributeSection } from './otlp-attribute-list';
+import { TraceDetailStatus } from './trace-detail-status';
 import { formatTraceDuration } from './trace-display';
 import styles from './trace-result.module.css';
-
 type Props = {
   state: Exclude<TraceDetailState, { kind: 'closed' }>;
   t: TFunction;
@@ -33,7 +33,6 @@ type Props = {
   openRelatedLogs: () => void;
   openRelatedMetrics: () => void;
 };
-
 export function TraceDetail({ state, t, close, selectSpan, retry, openRelatedLogs, openRelatedMetrics }: Props) {
   const title =
     state.kind === 'ready' ? (state.detail.rootSpanName ?? t('exploreTrace.detail')) : t('exploreTrace.detail');
@@ -46,14 +45,7 @@ export function TraceDetail({ state, t, close, selectSpan, retry, openRelatedLog
         </Button>
       </div>
       <div className={styles.detailBody}>
-        {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 10 }} />}
-        {state.kind === 'missing' && <Empty description={t('explore.empty.traces')} />}
-        {state.kind === 'unavailable' && (
-          <TraceFailure type="warning" message={t('common.unavailable')} retry={retry} t={t} />
-        )}
-        {state.kind === 'error' && (
-          <TraceFailure type="error" message={t('exploreTrace.loadFailed')} retry={retry} t={t} />
-        )}
+        <TraceDetailStatus state={state} retry={retry} t={t} />
         {state.kind === 'ready' && (
           <TraceDetailContent
             state={state}
@@ -67,36 +59,6 @@ export function TraceDetail({ state, t, close, selectSpan, retry, openRelatedLog
     </aside>
   );
 }
-
-function TraceFailure({
-  type,
-  message,
-  retry,
-  t
-}: {
-  type: 'warning' | 'error';
-  message: string;
-  retry: () => Promise<void>;
-  t: TFunction;
-}) {
-  return (
-    <Alert
-      type={type}
-      showIcon
-      message={message}
-      action={
-        <Button
-          onClick={() => {
-            void retry();
-          }}
-        >
-          {t('common.retry')}
-        </Button>
-      }
-    />
-  );
-}
-
 function TraceDetailContent({
   state,
   t,

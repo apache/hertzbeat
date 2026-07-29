@@ -173,6 +173,7 @@ describe('TraceResult', () => {
 
   it.each([
     [{ kind: 'missing', traceId: 'trace-1' } as const, 'explore.empty.traces'],
+    [{ kind: 'permission', traceId: 'trace-1' } as const, 'common.permission.roleRequiredDescription'],
     [{ kind: 'unavailable', traceId: 'trace-1' } as const, 'common.unavailable'],
     [{ kind: 'error', traceId: 'trace-1' } as const, 'exploreTrace.loadFailed']
   ])('renders truthful detail state $state.kind', (state, messageKey) => {

@@ -74,6 +74,10 @@ describe('ExplorePage instrumentation context boundary', () => {
       '/explore?signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce&start=1000&end=2000',
       '/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east&start=2000&end=1000',
       '/explore?signal=traces&collectorId=east',
+      '/explore?signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+        '&collectorId=east&windowMode=preset&start=1000',
+      '/explore?signal=traces&windowMode=preset&start=1000',
+      '/explore?signal=traces&windowMode=preset&start=2000&end=1000',
       '/explore?signal=logs&mode=live&collectorId=east'
     ];
 
@@ -214,6 +218,14 @@ describe('ExplorePage instrumentation context boundary', () => {
 
   it('drops an invalid URL filter and keeps typed controls local until a valid submission', async () => {
     renderPage('/explore?signal=metrics&page=4&aggregation=p95');
+    await waitFor(() =>
+      expect(locationParams()).toEqual(
+        expect.objectContaining({
+          signal: 'metrics',
+          timeRange: 'last-30m'
+        })
+      )
+    );
     const initialSearch = screen.getByTestId('location').textContent;
     fireEvent.click(screen.getByText(en.explore.advancedFilters));
     const step = screen.getByPlaceholderText(en.exploreMetric.step);
@@ -255,10 +267,17 @@ describe('ExplorePage instrumentation context boundary', () => {
     cleanup();
     renderPage('/explore?signal=traces');
     fireEvent.click(screen.getByText(en.explore.advancedFilters));
+    const attributeFilter = screen.getByPlaceholderText(en.exploreLog.attributeFilter);
+    fireEvent.change(attributeFilter, { target: { value: 'http.route=/checkout' } });
     fireEvent.click(screen.getByRole('checkbox', { name: en.exploreTrace.errorOnly }));
     expect(locationParams()).not.toHaveProperty('errorOnly');
+    expect(locationParams()).not.toHaveProperty('attributeFilter');
     fireEvent.click(querySubmitButton());
-    await waitFor(() => expect(locationParams()).toHaveProperty('errorOnly', 'true'));
+    await waitFor(() =>
+      expect(locationParams()).toEqual(
+        expect.objectContaining({ errorOnly: 'true', attributeFilter: 'http.route=/checkout' })
+      )
+    );
   });
 
   it('associates trace duration validation feedback with the invalid field', async () => {
@@ -416,7 +435,7 @@ function renderPage(initialEntry: string) {
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
           <GlobalTimeProvider>
-            <RouteTimeProvider policy="route_owned">
+            <RouteTimeProvider policy="route_owned" canonicalizeInvalidExact={false}>
               <App>
                 <ExplorePage />
                 <LocationProbe />

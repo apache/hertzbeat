@@ -54,6 +54,7 @@ export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
   signal: 'traces';
   traceId: string;
   resourceFilter: string;
+  attributeFilter: string;
   minDurationMs: string;
   maxDurationMs: string;
   errorOnly: boolean;
@@ -132,6 +133,7 @@ function traceDraftFromQuery(query: Extract<ExploreQuery, { signal: 'traces' }>)
     signal: 'traces',
     traceId: query.traceId ?? '',
     resourceFilter: query.resourceFilter ?? '',
+    attributeFilter: query.attributeFilter ?? '',
     minDurationMs: query.minDurationMs == null ? '' : String(query.minDurationMs),
     maxDurationMs: query.maxDurationMs == null ? '' : String(query.maxDurationMs),
     errorOnly: Boolean(query.errorOnly)
@@ -203,6 +205,7 @@ function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreS
       ...sharedSubmissionPatch(draft),
       traceId: normalizedValue(draft.traceId),
       resourceFilter: normalizedValue(draft.resourceFilter),
+      attributeFilter: normalizedValue(draft.attributeFilter),
       minDurationMs: minDuration.value,
       maxDurationMs: maxDuration.value,
       errorOnly: draft.errorOnly || undefined,

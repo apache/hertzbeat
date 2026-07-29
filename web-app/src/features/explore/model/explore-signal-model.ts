@@ -25,7 +25,7 @@ export type TraceSpanTiming =
 export type TraceSpanLayout = TraceSpan & { depth: number; timing: TraceSpanTiming };
 export type TraceDetailState =
   | { kind: 'closed' }
-  | { kind: 'loading' | 'missing' | 'unavailable' | 'error'; traceId: string }
+  | { kind: 'loading' | 'missing' | 'permission' | 'unavailable' | 'error'; traceId: string }
   | {
       kind: 'ready';
       traceId: string;

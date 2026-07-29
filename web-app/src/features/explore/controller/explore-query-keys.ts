@@ -67,6 +67,7 @@ function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | u
       query: query.query,
       traceId: query.traceId,
       resourceFilter: query.resourceFilter,
+      attributeFilter: query.attributeFilter,
       minDurationMs: query.minDurationMs,
       maxDurationMs: query.maxDurationMs,
       errorOnly: query.errorOnly,

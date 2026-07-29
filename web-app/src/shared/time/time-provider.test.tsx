@@ -44,6 +44,12 @@ describe('RouteTimeProvider', () => {
     await waitFor(() => expect(routed.router.state.location.search).toBe('?signal=metrics'));
   });
 
+  it('lets a route-owned canonical model preserve invalid exact evidence until it replaces the location', () => {
+    const routed = renderTime(['/explore?signal=traces&windowMode=preset&start=1000'], 0, 'route_owned', false);
+    expect(routed.router.state.location.search).toBe('?signal=traces&windowMode=preset&start=1000');
+    expect(routed.current().headerMode).toBe('hidden');
+  });
+
   it('exposes a window only for global and route-owned time policies', () => {
     const global = renderTime(['/explore'], 0, 'global');
     expect(global.current().window).toEqual(
@@ -107,7 +113,12 @@ describe('RouteTimeProvider', () => {
   });
 });
 
-function renderTime(entries: string[], initialIndex = 0, policy: TimeOwnership = 'route_owned') {
+function renderTime(
+  entries: string[],
+  initialIndex = 0,
+  policy: TimeOwnership = 'route_owned',
+  canonicalizeInvalidExact = true
+) {
   let value: ReturnType<typeof useSharedTime> | undefined;
   function Probe() {
     value = useSharedTime();
@@ -119,7 +130,7 @@ function renderTime(entries: string[], initialIndex = 0, policy: TimeOwnership =
         path: '/explore',
         element: (
           <GlobalTimeProvider>
-            <RouteTimeProvider policy={policy}>
+            <RouteTimeProvider policy={policy} canonicalizeInvalidExact={canonicalizeInvalidExact}>
               <Probe />
             </RouteTimeProvider>
           </GlobalTimeProvider>

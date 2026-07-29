@@ -38,7 +38,7 @@ import {
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 import { parseLogPage, parseLogRow, parseLogStreamGap } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
-import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
+import { parseTraceDetail, parseTracePage, parseTraceSpans } from './explore-trace-schema';
 
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
   return parseMetricConsole(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)));
@@ -54,10 +54,26 @@ export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSi
   return parseTracePage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
 }
 
-export async function loadTraceDetail(traceId: string, signal?: AbortSignal) {
+export async function loadTraceDetail(query: TraceExploreQuery, traceId: string, signal?: AbortSignal) {
   if (!traceId) throw new ExploreSignalContractError('traceId is required');
-  const raw = await apiMessageGet(`/api/traces/${encodeURIComponent(traceId)}`, requestSignal(signal));
-  return parseTraceDetail(raw, traceId);
+  const observedAt = Date.now();
+  const [detail, spans] = await Promise.all([
+    apiMessageGet(buildTraceDetailApiPath(query, traceId, false, observedAt), requestSignal(signal)),
+    apiMessageGet(buildTraceDetailApiPath(query, traceId, true, observedAt), requestSignal(signal))
+  ]);
+  return { ...parseTraceDetail(detail, traceId), spans: parseTraceSpans(spans, traceId) };
+}
+
+export function buildTraceDetailApiPath(query: TraceExploreQuery, traceId: string, spans = false, now = Date.now()) {
+  requireQueryableScope(query);
+  if (!traceId) throw new ExploreSignalContractError('traceId is required');
+  const params = sharedSignalParams(query, now);
+  setValue(params, 'spanId', query.spanId);
+  setValue(params, 'resourceFilter', query.resourceFilter);
+  setValue(params, 'attributeFilter', query.attributeFilter);
+  if (query.minDurationMs != null) params.set('minDurationMs', String(query.minDurationMs));
+  if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
+  return `/api/traces/${encodeURIComponent(traceId)}${spans ? '/spans' : ''}?${params.toString()}`;
 }
 
 export function classifyExploreSignalError(
@@ -104,6 +120,7 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   setValue(params, 'operationName', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'resourceFilter', query.resourceFilter);
+  setValue(params, 'attributeFilter', query.attributeFilter);
   const minimumDuration = acceptedExploreField(parseTraceDuration(String(query.minDurationMs ?? '')));
   const maximumDuration = acceptedExploreField(parseTraceDuration(String(query.maxDurationMs ?? '')));
   if (isOrderedTraceDurationRange(minimumDuration, maximumDuration)) {

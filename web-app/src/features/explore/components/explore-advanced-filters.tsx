@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Checkbox, Input, Select } from 'antd';
+import { Input, Select } from 'antd';
 import type { TFunction } from 'i18next';
 
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
@@ -24,10 +24,10 @@ import {
   EXPLORE_METRIC_AGGREGATIONS,
   type ExploreSubmissionViewModel,
   type LogExploreSubmissionDraft,
-  type MetricExploreSubmissionDraft,
-  type TraceExploreSubmissionDraft
+  type MetricExploreSubmissionDraft
 } from '../model/explore-submission-model';
 import { ExploreFilterField } from './explore-filter-field';
+import { ExploreTraceFilters } from './explore-trace-filters';
 import styles from './explore-query-bar.module.css';
 
 const LOG_SEVERITIES = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
@@ -51,7 +51,9 @@ export function ExploreAdvancedFilters({ draft, errors, t, updateField }: Props)
         />
         {draft.signal === 'metrics' && <MetricFilters draft={draft} errors={errors} t={t} updateField={updateField} />}
         {draft.signal === 'logs' && <LogFilters draft={draft} t={t} updateField={updateField} />}
-        {draft.signal === 'traces' && <TraceFilters draft={draft} errors={errors} t={t} updateField={updateField} />}
+        {draft.signal === 'traces' && (
+          <ExploreTraceFilters draft={draft} errors={errors} t={t} updateField={updateField} />
+        )}
       </div>
     </details>
   );
@@ -132,51 +134,6 @@ function LogFilters({ draft, t, updateField }: DraftFilterProps<LogExploreSubmis
   );
 }
 
-function TraceFilters({ draft, errors, t, updateField }: ValidatedDraftFilterProps<TraceExploreSubmissionDraft>) {
-  return (
-    <>
-      <Input
-        value={draft.traceId}
-        onChange={event => updateField({ field: 'traceId', value: event.target.value })}
-        placeholder={t('explore.traceId')}
-      />
-      <ExploreFilterField id="explore-min-duration" error={errors.minDurationMs} t={t}>
-        <Input
-          aria-invalid={Boolean(errors.minDurationMs)}
-          aria-describedby={errors.minDurationMs ? 'explore-min-duration-error' : undefined}
-          status={errors.minDurationMs ? 'error' : ''}
-          value={draft.minDurationMs}
-          onChange={event => updateField({ field: 'minDurationMs', value: event.target.value })}
-          placeholder={t('exploreTrace.minDuration')}
-          inputMode="numeric"
-        />
-      </ExploreFilterField>
-      <ExploreFilterField id="explore-max-duration" error={errors.maxDurationMs} t={t}>
-        <Input
-          aria-invalid={Boolean(errors.maxDurationMs)}
-          aria-describedby={errors.maxDurationMs ? 'explore-max-duration-error' : undefined}
-          status={errors.maxDurationMs ? 'error' : ''}
-          value={draft.maxDurationMs}
-          onChange={event => updateField({ field: 'maxDurationMs', value: event.target.value })}
-          placeholder={t('exploreTrace.maxDuration')}
-          inputMode="numeric"
-        />
-      </ExploreFilterField>
-      <Input
-        value={draft.resourceFilter}
-        onChange={event => updateField({ field: 'resourceFilter', value: event.target.value })}
-        placeholder={t('exploreLog.resourceFilter')}
-      />
-      <Checkbox
-        checked={draft.errorOnly}
-        onChange={event => updateField({ field: 'errorOnly', value: event.target.checked })}
-      >
-        {t('exploreTrace.errorOnly')}
-      </Checkbox>
-    </>
-  );
-}
-
 type DraftFilterProps<T> = Pick<ExploreSubmissionViewModel, 'updateField'> & {
   draft: T;
   t: TFunction;
@@ -197,6 +154,13 @@ function signalFilters(draft: ExploreSubmissionViewModel['draft']) {
     case 'logs':
       return [draft.severityText, draft.traceId, draft.spanId, draft.resourceFilter, draft.attributeFilter];
     case 'traces':
-      return [draft.traceId, draft.resourceFilter, draft.minDurationMs, draft.maxDurationMs, draft.errorOnly];
+      return [
+        draft.traceId,
+        draft.resourceFilter,
+        draft.attributeFilter,
+        draft.minDurationMs,
+        draft.maxDurationMs,
+        draft.errorOnly
+      ];
   }
 }

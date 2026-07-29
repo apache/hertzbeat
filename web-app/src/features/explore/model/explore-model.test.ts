@@ -65,7 +65,7 @@ describe('explore query state', () => {
     });
   });
 
-  it('builds a reproducible path without internal entity context', () => {
+  it('builds a reproducible path and drops an incomplete exact window', () => {
     expect(
       buildExplorePath({
         signal: 'traces',
@@ -77,7 +77,8 @@ describe('explore query state', () => {
         end: 2000
       })
     ).toBe(
-      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&environment=prod&query=POST+%2Fcheckout&errorOnly=true&end=2000'
+      '/explore?signal=traces&timeRange=last-30m&query=POST+%2Fcheckout&errorOnly=true' +
+        '&serviceName=checkout&environment=prod'
     );
   });
 
@@ -123,6 +124,30 @@ describe('explore query state', () => {
     expect(canonical).not.toContain('live=true');
   });
 
+  it('normalizes supported context aliases and drops invalid or unknown URL values', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=invalid&range=last-1h&namespace=commerce&serviceInstanceId=checkout-7d9' +
+          '&http.route=%2Fcheckout&autoRefresh=30000&start=-1&end=unsafe&unknown=private'
+      )
+    );
+
+    expect(query).toMatchObject({
+      signal: 'traces',
+      timeRange: 'last-1h',
+      serviceNamespace: 'commerce',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
+      autoRefreshMs: 30_000,
+      start: undefined,
+      end: undefined
+    });
+    expect(buildExplorePath(query)).toBe(
+      '/explore?signal=traces&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
+        '&instance=checkout-7d9&endpoint=%2Fcheckout'
+    );
+  });
+
   it('drops live mode when moving away from logs', () => {
     const metrics = mergeExploreQuery(
       parseExploreQuery(new URLSearchParams('signal=logs&mode=live')),
@@ -145,7 +170,27 @@ describe('explore query state', () => {
         'traces',
         { traceId: 'trace-1' }
       )
-    ).toBe('/explore?signal=traces&timeRange=last-30m&serviceName=checkout&traceId=trace-1');
+    ).toBe('/explore?signal=traces&timeRange=last-30m&traceId=trace-1&serviceName=checkout');
+  });
+
+  it('keeps only shared context and an explicit trace handoff across signals', () => {
+    const source = parseExploreQuery(
+      new URLSearchParams(
+        'signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-1&endpoint=%2Fcheckout&query=POST%20%2Fcheckout&traceId=trace-1' +
+          '&spanId=span-1&resourceFilter=cloud.region%3Dus-east&attributeFilter=http.route%3D%2Fcheckout' +
+          '&minDurationMs=100&maxDurationMs=200&errorOnly=true&page=2'
+      )
+    );
+
+    expect(buildCrossSignalPath(source, 'logs', { traceId: 'trace-1' })).toBe(
+      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&serviceName=checkout' +
+        '&serviceNamespace=commerce&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
+    );
+    expect(buildCrossSignalPath(source, 'metrics', {})).toBe(
+      '/explore?signal=metrics&timeRange=last-30m&serviceName=checkout&serviceNamespace=commerce' +
+        '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
+    );
   });
 
   it('keeps ordinary direct Explore filters outside onboarding handoff validation', () => {
@@ -203,9 +248,9 @@ describe('explore query state', () => {
     expect(exploreHandoffState(query)).toBe('scoped');
     expect(exploreUsesExactWindow(query)).toBe(true);
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=metrics&timeRange=last-30m&collectorId=collector-east&serviceName=checkout-api' +
-        '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout' +
-        '&start=1710000000000&end=1710000005000'
+      '/explore?signal=metrics&timeRange=last-30m&start=1710000000000&end=1710000005000' +
+        '&collectorId=collector-east&serviceName=checkout-api&serviceNamespace=commerce' +
+        '&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout'
     );
     expect(buildExplorePath(query)).not.toContain('token');
   });
@@ -232,8 +277,8 @@ describe('explore query state', () => {
     expect(exploreHandoffState(query)).toBe('scoped');
     expect(exploreUsesExactWindow(query)).toBe(true);
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=metrics&timeRange=last-30m&intakeProfileId=primary-ingress&serviceName=checkout-api' +
-        '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
+      '/explore?signal=metrics&timeRange=last-30m&start=1710000000000&end=1710000005000' +
+        '&intakeProfileId=primary-ingress&serviceName=checkout-api&serviceNamespace=commerce&environment=prod'
     );
     expect(buildExplorePath(query)).not.toContain('token');
     expect(
@@ -279,8 +324,8 @@ describe('explore query state', () => {
     expect(exploreHandoffState(preset)).toBe('scoped');
     expect(exploreUsesExactWindow(preset)).toBe(false);
     expect(buildExplorePath(preset)).toBe(
-      '/explore?signal=metrics&timeRange=last-1h&collectorId=collector-east&serviceName=checkout-api' +
-        '&serviceNamespace=commerce&environment=prod&windowMode=preset'
+      '/explore?signal=metrics&timeRange=last-1h&windowMode=preset&collectorId=collector-east' +
+        '&serviceName=checkout-api&serviceNamespace=commerce&environment=prod'
     );
     expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(buildExplorePath(preset).split('?')[1])))).toBe(
       'scoped'
@@ -404,8 +449,8 @@ describe('explore query state', () => {
       )
     );
     expect(buildCrossSignalPath(scoped, 'traces', {})).toBe(
-      '/explore?signal=traces&timeRange=last-30m&collectorId=collector-east&serviceName=checkout-api' +
-        '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
+      '/explore?signal=traces&timeRange=last-30m&start=1710000000000&end=1710000005000' +
+        '&collectorId=collector-east&serviceName=checkout-api&serviceNamespace=commerce&environment=prod'
     );
 
     expect(
@@ -499,6 +544,19 @@ describe('explore query state', () => {
       pageIndex: undefined,
       start: 1_710_000_000_000,
       end: 1_710_000_005_000
+    });
+  });
+
+  it('clears trace and span identity when the owning time window changes', () => {
+    const current = parseExploreQuery(
+      new URLSearchParams('signal=traces&timeRange=last-30m&traceId=trace-old&spanId=span-old&page=3')
+    );
+
+    expect(mergeExploreQuery(current, { timeRange: 'last-1h' })).toMatchObject({
+      timeRange: 'last-1h',
+      traceId: undefined,
+      spanId: undefined,
+      pageIndex: undefined
     });
   });
 

@@ -36,6 +36,7 @@ vi.mock('@/core/http/event-stream', () => ({ openBrowserEventStream }));
 import {
   buildLogStreamPath,
   buildSignalApiPath,
+  buildTraceDetailApiPath,
   classifyExploreSignalError,
   loadLogSignal,
   loadMetricSignal,
@@ -125,7 +126,10 @@ describe('explore API paths', () => {
       {
         signal: 'traces',
         timeRange: 'last-1h',
+        traceId: 'trace-1',
+        spanId: 'span-selection-only',
         resourceFilter: 'cloud.region=ap-southeast-1',
+        attributeFilter: 'http.route=/checkout',
         minDurationMs: 100,
         maxDurationMs: 5000,
         errorOnly: true
@@ -133,8 +137,10 @@ describe('explore API paths', () => {
       4_000_000
     );
     expect(tracePath).toContain(
-      'resourceFilter=cloud.region%3Dap-southeast-1&minDurationMs=100&maxDurationMs=5000&errorOnly=true'
+      'traceId=trace-1&resourceFilter=cloud.region%3Dap-southeast-1' +
+        '&attributeFilter=http.route%3D%2Fcheckout&minDurationMs=100&maxDurationMs=5000&errorOnly=true'
     );
+    expect(tracePath).not.toContain('spanId');
   });
 
   it('does not forward invalid URL-owned field values to signal APIs', () => {
@@ -233,10 +239,47 @@ describe('explore API paths', () => {
 
   it('loads encoded trace detail through the parser boundary', async () => {
     const signal = new AbortController().signal;
-    apiMessageGet.mockResolvedValue({ ...traceRow('trace / 1'), spans: null });
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-1&endpoint=%2Fcheckout&traceId=trace%20%2F%201&spanId=span-1' +
+          '&resourceFilter=service.version%3D1&attributeFilter=http.route%3D%2Fcheckout' +
+          '&minDurationMs=100&maxDurationMs=200&start=1000&end=2000'
+      )
+    );
+    if (query.signal !== 'traces') throw new Error('trace query expected');
+    apiMessageGet.mockResolvedValueOnce({ ...traceRow('trace / 1'), spans: null }).mockResolvedValueOnce([]);
 
-    await expect(loadTraceDetail('trace / 1', signal)).resolves.toMatchObject({ traceId: 'trace / 1', spans: null });
-    expect(apiMessageGet).toHaveBeenCalledWith('/api/traces/trace%20%2F%201', { signal });
+    await expect(loadTraceDetail(query, 'trace / 1', signal)).resolves.toMatchObject({
+      traceId: 'trace / 1',
+      spans: []
+    });
+    const context =
+      'serviceName=checkout&serviceNamespace=commerce&environment=prod&instance=checkout-1' +
+      '&endpoint=%2Fcheckout&start=1000&end=2000&spanId=span-1&resourceFilter=service.version%3D1' +
+      '&attributeFilter=http.route%3D%2Fcheckout&minDurationMs=100&maxDurationMs=200';
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, `/api/traces/trace%20%2F%201?${context}`, { signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, `/api/traces/trace%20%2F%201/spans?${context}`, { signal });
+    expect(buildTraceDetailApiPath(query, 'trace / 1', false, 9_999)).toContain('start=1000&end=2000');
+  });
+
+  it('uses one relative time snapshot for trace detail and spans', async () => {
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValueOnce(4_000_000).mockReturnValueOnce(9_000_000);
+    try {
+      apiMessageGet.mockResolvedValueOnce({ ...traceRow('trace-1'), spans: null }).mockResolvedValueOnce([]);
+
+      await loadTraceDetail({ signal: 'traces', timeRange: 'last-30m' }, 'trace-1');
+
+      expect(dateNow).toHaveBeenCalledTimes(1);
+      expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/traces/trace-1?start=2200000&end=4000000', {
+        signal: null
+      });
+      expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/traces/trace-1/spans?start=2200000&end=4000000', {
+        signal: null
+      });
+    } finally {
+      dateNow.mockRestore();
+    }
   });
 
   it('passes AbortSignal and parses every raw signal response', async () => {

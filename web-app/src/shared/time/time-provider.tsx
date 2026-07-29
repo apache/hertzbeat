@@ -67,7 +67,12 @@ export function GlobalTimeProvider({ children }: PropsWithChildren) {
   return <GlobalContext.Provider value={value}>{children}</GlobalContext.Provider>;
 }
 
-export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ policy: TimeOwnership }>) {
+type RouteTimeProviderProps = PropsWithChildren<{
+  policy: TimeOwnership;
+  canonicalizeInvalidExact?: boolean;
+}>;
+
+export function RouteTimeProvider({ children, policy, canonicalizeInvalidExact = true }: RouteTimeProviderProps) {
   const global = useGlobalTime();
   const [params, setParams] = useSearchParams();
   const [inherited] = useState(() => globalTimeWindow(global.state));
@@ -78,9 +83,9 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
   const [routeRefreshRevision, bumpRouteRefresh] = useReducer(revision => revision + 1, 0);
 
   useEffect(() => {
-    if (!invalidExact) return;
+    if (!canonicalizeInvalidExact || !invalidExact) return;
     setParams(clearExactTimeWindow(params), { replace: true });
-  }, [invalidExact, params, setParams]);
+  }, [canonicalizeInvalidExact, invalidExact, params, setParams]);
 
   const { commitWindow, requestRefresh, setAutoRefresh, setRange } = useRouteTimeCommands(
     global,

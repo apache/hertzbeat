@@ -56,6 +56,32 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().query.query).toBe('current'));
   });
 
+  it('replaces legacy or invalid URL state with one canonical entry', async () => {
+    const routed = renderController(
+      [
+        '/explore?signal=logs&query=previous',
+        {
+          pathname: '/explore',
+          search:
+            '?signal=invalid&range=last-1h&namespace=commerce&serviceInstanceId=checkout-1' +
+            '&http.route=%2Fcheckout&autoRefresh=30000&unknown=drop',
+          state: { returnTo: '/entities/7' }
+        }
+      ],
+      1
+    );
+    expect(routed.router.state.location.state).toEqual({ returnTo: '/entities/7' });
+
+    await waitFor(() =>
+      expect(routed.router.state.location.search).toBe(
+        '?signal=traces&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
+          '&instance=checkout-1&endpoint=%2Fcheckout'
+      )
+    );
+    await act(async () => routed.router.navigate(-1));
+    expect(routed.router.state.location.search).toBe('?signal=logs&timeRange=last-30m&query=previous');
+  });
+
   it('writes canonical live mode for log controls and clears it for other signals', async () => {
     const routed = renderController(['/explore?signal=logs']);
     await waitFor(() => expect(routed.current().query.signal).toBe('logs'));
@@ -558,7 +584,7 @@ describe('Explore page controller', () => {
 });
 
 function renderController(
-  entries: string[],
+  entries: Array<string | { pathname: string; search: string; state: unknown }>,
   initialIndex = 0,
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
 ) {
@@ -577,7 +603,7 @@ function renderController(
           <QueryClientProvider client={client}>
             <QueryContextProvider>
               <GlobalTimeProvider>
-                <RouteTimeProvider policy="route_owned">
+                <RouteTimeProvider policy="route_owned" canonicalizeInvalidExact={false}>
                   <Probe />
                 </RouteTimeProvider>
               </GlobalTimeProvider>

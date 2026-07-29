@@ -20,7 +20,7 @@ import { describe, expect, it } from 'vitest';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 import { parseLogPage } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
-import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
+import { parseTraceDetail, parseTracePage, parseTraceSpans } from './explore-trace-schema';
 
 describe('Explore signal contracts', () => {
   it('strips unknown metric fields while retaining explicit console evidence', () => {
@@ -286,6 +286,14 @@ describe('Explore signal contracts', () => {
     }));
     expect(() => parseTraceDetail({ ...traceRow('trace-1'), spans }, 'trace-1')).toThrow(ExploreSignalContractError);
   });
+
+  it('rejects missing, mismatched, and duplicate identities from the dedicated spans response', () => {
+    expect(() => parseTraceSpans([traceSpan('trace-1', null)], 'trace-1')).toThrow(ExploreSignalContractError);
+    expect(() => parseTraceSpans([traceSpan('trace-2', 'span-1')], 'trace-1')).toThrow(ExploreSignalContractError);
+    expect(() => parseTraceSpans([traceSpan('trace-1', 'span-1'), traceSpan('trace-1', 'span-1')], 'trace-1')).toThrow(
+      ExploreSignalContractError
+    );
+  });
 });
 
 function springPage(content: unknown[]) {
@@ -304,5 +312,29 @@ function traceRow(traceId: unknown) {
     startTime: null,
     errorSpanCount: 0,
     resourceAttributes: null
+  };
+}
+
+function traceSpan(traceId: string, spanId: string | null) {
+  return {
+    traceId,
+    spanId,
+    parentSpanId: null,
+    spanName: null,
+    serviceName: null,
+    status: null,
+    spanKind: null,
+    statusMessage: null,
+    traceState: null,
+    scopeName: null,
+    scopeVersion: null,
+    durationNanos: null,
+    startTime: null,
+    highlighted: false,
+    resourceAttributes: null,
+    spanAttributes: null,
+    events: null,
+    links: null,
+    codeNavigationHint: null
   };
 }

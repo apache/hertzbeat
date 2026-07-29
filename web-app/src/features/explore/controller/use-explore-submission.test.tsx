@@ -36,9 +36,10 @@ describe('useExploreSubmission', () => {
       changes: [
         { field: 'minDurationMs', value: ' 10 ' },
         { field: 'maxDurationMs', value: ' 20 ' },
+        { field: 'attributeFilter', value: ' http.route=/checkout ' },
         { field: 'errorOnly', value: true }
       ],
-      patch: { minDurationMs: 10, maxDurationMs: 20, errorOnly: true }
+      patch: { minDurationMs: 10, maxDurationMs: 20, attributeFilter: 'http.route=/checkout', errorOnly: true }
     }
   ])('submits a typed $query.signal patch and normalizes its draft', ({ query, changes, patch }) => {
     const submit = vi.fn();

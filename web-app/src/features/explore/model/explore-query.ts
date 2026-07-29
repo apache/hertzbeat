@@ -31,6 +31,7 @@ type SharedExploreQuery = {
   endpoint?: string | undefined;
   query?: string | undefined;
   windowMode?: 'preset' | undefined;
+  autoRefreshMs?: number | undefined;
   start?: number | undefined;
   end?: number | undefined;
 };
@@ -58,8 +59,10 @@ export type LogExploreQuery = SharedExploreQuery & {
 export type TraceExploreQuery = SharedExploreQuery & {
   signal: 'traces';
   traceId?: string | undefined;
+  spanId?: string | undefined;
   errorOnly?: boolean | undefined;
   resourceFilter?: string | undefined;
+  attributeFilter?: string | undefined;
   minDurationMs?: number | undefined;
   maxDurationMs?: number | undefined;
   pageIndex?: number | undefined;
@@ -79,6 +82,7 @@ export type ExploreQueryPatch = {
   endpoint?: string | undefined;
   query?: string | undefined;
   windowMode?: 'preset' | undefined;
+  autoRefreshMs?: number | undefined;
   start?: number | undefined;
   end?: number | undefined;
   traceId?: string | undefined;

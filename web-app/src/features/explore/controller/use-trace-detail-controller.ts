@@ -43,7 +43,7 @@ export function useTraceDetailController(
   const selection = useScopedTraceSelection(scopeKey, parentEvidenceCurrent);
   const detailQuery = useQuery({
     queryKey: exploreQueryKeys.detail(scopeKey, selection.traceId),
-    queryFn: ({ signal }) => loadTraceDetail(selection.traceId ?? '', signal),
+    queryFn: ({ signal }) => loadTraceDetail({ ...query, spanId: selection.spanId }, selection.traceId ?? '', signal),
     enabled: parentEvidenceCurrent && Boolean(selection.traceId),
     retry: false
   });
@@ -82,7 +82,7 @@ export function useTraceDetailController(
   };
   return {
     state,
-    openTrace: selection.openTrace,
+    openTrace: (traceId: string) => selection.openTrace(traceId, traceId === query.traceId ? query.spanId : undefined),
     close: selection.close,
     selectSpan,
     retry: () => detailQuery.refetch().then(() => undefined),
@@ -124,10 +124,10 @@ function useScopedTraceSelection(scopeKey: string, evidenceCurrent: boolean) {
     storedRef.current = next;
     setStored(next);
   };
-  const openTrace = (traceId: string) => {
+  const openTrace = (traceId: string, spanId?: string) => {
     if (!evidenceCurrent || !traceId || traceId === current?.traceId) return;
     cancelTraceDetail(client, current);
-    replace({ scopeKey, traceId });
+    replace({ scopeKey, traceId, spanId });
   };
   const close = () => {
     cancelTraceDetail(client, current);
@@ -157,6 +157,7 @@ function resolveTraceDetailState(
   if (error) {
     const kind = classifyExploreSignalError(error);
     if (kind === 'missing') return { kind, traceId };
+    if (kind === 'permission') return { kind, traceId };
     if (kind === 'transport_error') return { kind: 'unavailable', traceId };
     return { kind: 'error', traceId };
   }

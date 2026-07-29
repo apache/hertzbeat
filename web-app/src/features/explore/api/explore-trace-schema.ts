@@ -128,6 +128,21 @@ export function parseTraceDetail(value: unknown, expectedTraceId: string): Trace
   return detail;
 }
 
+export function parseTraceSpans(value: unknown, expectedTraceId: string): TraceSpan[] {
+  const result = z.array(traceSpanSchema).safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  const spans = result.data;
+  const spanIds = spans.map(span => {
+    if (!span.spanId) throw new ExploreSignalContractError('trace spanId is required');
+    if (span.traceId !== null && span.traceId !== expectedTraceId) {
+      throw new ExploreSignalContractError('span traceId does not match request');
+    }
+    return span.spanId;
+  });
+  requireUnique(spanIds, 'trace detail contains duplicate spanId');
+  return spans;
+}
+
 function requireUnique(values: string[], message: string) {
   if (new Set(values).size !== values.length) throw new ExploreSignalContractError(message);
 }

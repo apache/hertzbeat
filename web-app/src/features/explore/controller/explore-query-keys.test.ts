@@ -154,6 +154,7 @@ describe('Explore Query Key factory', () => {
       traceId: 'trace-1',
       errorOnly: true,
       resourceFilter: 'service.version=1',
+      attributeFilter: 'http.route=/checkout',
       minDurationMs: 100,
       maxDurationMs: 2_000,
       pageIndex: 2
@@ -164,6 +165,7 @@ describe('Explore Query Key factory', () => {
       ['traceId', 'trace-2'],
       ['errorOnly', false],
       ['resourceFilter', 'service.version=2'],
+      ['attributeFilter', 'http.route=/payments'],
       ['minDurationMs', 200],
       ['maxDurationMs', 3_000],
       ['pageIndex', 3]

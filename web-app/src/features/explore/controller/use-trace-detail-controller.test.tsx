@@ -61,6 +61,27 @@ describe('Trace detail controller', () => {
     );
   });
 
+  it('uses a canonical span id only as detail selection identity', async () => {
+    api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
+    const view = renderController(vi.fn());
+    view.rerender({ query: { ...defaultQuery, traceId: 'trace-1', spanId: 'span-2' } });
+
+    act(() => view.result.current.openTrace('trace-1'));
+
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({
+        kind: 'ready',
+        detail: { traceId: 'trace-1' },
+        selected: { spanId: 'span-2' }
+      })
+    );
+    expect(api.loadTraceDetail).toHaveBeenCalledWith(
+      expect.objectContaining({ signal: 'traces', traceId: 'trace-1', spanId: 'span-2' }),
+      'trace-1',
+      expect.any(AbortSignal)
+    );
+  });
+
   it('injects operationName only from an honestly selected matching root span', async () => {
     api.loadTraceDetail.mockResolvedValue(rootAlignedTraceDetail('trace-1'));
     const openPath = vi.fn();
@@ -113,21 +134,25 @@ describe('Trace detail controller', () => {
 
     act(() => view.result.current.openRelatedLogs());
     expect(openPath).toHaveBeenLastCalledWith(
-      '/explore?signal=logs&timeRange=last-30m&collectorId=collector-east&serviceName=checkout' +
-        '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout' +
-        '&traceId=trace-1&start=1000&end=2000'
+      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&start=1000&end=2000' +
+        '&collectorId=collector-east&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+        '&instance=checkout-7d9&endpoint=%2Fcheckout'
     );
 
     act(() => view.result.current.selectSpan('span-2'));
     act(() => view.result.current.openRelatedMetrics());
     expect(openPath).toHaveBeenLastCalledWith(
-      '/explore?signal=metrics&timeRange=last-30m&collectorId=collector-east&serviceName=payments' +
-        '&start=1000&end=2000'
+      '/explore?signal=metrics&timeRange=last-30m&start=1000&end=2000' +
+        '&collectorId=collector-east&serviceName=payments'
     );
   });
 
   it.each([
     ['missing', async () => new (await import('../model/explore-signal-contract')).ExploreSignalMissingError()],
+    [
+      'permission',
+      async () => new (await import('@/core/http/api-message')).ApiMessageError('forbidden', { status: 403 })
+    ],
     [
       'unavailable',
       async () => new (await import('@/core/http/api-message')).ApiMessageError('offline', { status: 503 })
@@ -149,7 +174,7 @@ describe('Trace detail controller', () => {
     const first = deferred<TraceDetail>();
     const second = deferred<TraceDetail>();
     const signals: AbortSignal[] = [];
-    api.loadTraceDetail.mockImplementation((traceId: string, signal: AbortSignal) => {
+    api.loadTraceDetail.mockImplementation((_query: TraceExploreQuery, traceId: string, signal: AbortSignal) => {
       signals.push(signal);
       return traceId === 'trace-1' ? first.promise : second.promise;
     });
@@ -164,7 +189,7 @@ describe('Trace detail controller', () => {
       expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-2' } })
     );
     const third = deferred<TraceDetail>();
-    api.loadTraceDetail.mockImplementationOnce((_traceId: string, signal: AbortSignal) => {
+    api.loadTraceDetail.mockImplementationOnce((_query: TraceExploreQuery, _traceId: string, signal: AbortSignal) => {
       signals.push(signal);
       return third.promise;
     });
@@ -195,10 +220,12 @@ describe('Trace detail controller', () => {
   it('aborts pending detail work when its query scope changes', async () => {
     const pending = deferred<TraceDetail>();
     let signal: AbortSignal | undefined;
-    api.loadTraceDetail.mockImplementation((_traceId: string, requestSignal: AbortSignal) => {
-      signal = requestSignal;
-      return pending.promise;
-    });
+    api.loadTraceDetail.mockImplementation(
+      (_query: TraceExploreQuery, _traceId: string, requestSignal: AbortSignal) => {
+        signal = requestSignal;
+        return pending.promise;
+      }
+    );
     const view = renderController(vi.fn());
     act(() => view.result.current.openTrace('trace-1'));
     await waitFor(() => expect(signal).toBeDefined());
@@ -212,10 +239,12 @@ describe('Trace detail controller', () => {
   it('retires subordinate detail evidence while its parent history is not current', async () => {
     const pending = deferred<TraceDetail>();
     let signal: AbortSignal | undefined;
-    api.loadTraceDetail.mockImplementation((_traceId: string, requestSignal: AbortSignal) => {
-      signal = requestSignal;
-      return pending.promise;
-    });
+    api.loadTraceDetail.mockImplementation(
+      (_query: TraceExploreQuery, _traceId: string, requestSignal: AbortSignal) => {
+        signal = requestSignal;
+        return pending.promise;
+      }
+    );
     const view = renderController(vi.fn());
     act(() => view.result.current.openTrace('trace-1'));
     await waitFor(() => expect(signal).toBeDefined());
@@ -232,7 +261,9 @@ describe('Trace detail controller', () => {
   });
 
   it('allows an explicit detail open in the new scope without cleanup clearing it', async () => {
-    api.loadTraceDetail.mockImplementation((traceId: string) => Promise.resolve(traceDetail(traceId)));
+    api.loadTraceDetail.mockImplementation((_query: TraceExploreQuery, traceId: string) =>
+      Promise.resolve(traceDetail(traceId))
+    );
     const view = renderController(vi.fn());
     act(() => view.result.current.openTrace('trace-1'));
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));

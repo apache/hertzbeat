@@ -53,6 +53,7 @@ describe('explore submission model', () => {
         signal: 'traces',
         timeRange: 'last-30m',
         traceId: 'trace-1',
+        attributeFilter: 'http.route=/checkout',
         minDurationMs: 10,
         maxDurationMs: 500,
         errorOnly: true
@@ -66,6 +67,7 @@ describe('explore submission model', () => {
       query: '',
       traceId: 'trace-1',
       resourceFilter: '',
+      attributeFilter: 'http.route=/checkout',
       minDurationMs: '10',
       maxDurationMs: '500',
       errorOnly: true
@@ -172,6 +174,7 @@ describe('explore submission model', () => {
         query: '',
         traceId: '',
         resourceFilter: '',
+        attributeFilter: ' http.route=/checkout ',
         minDurationMs: ' 0 ',
         maxDurationMs: ' 9007199254740991 ',
         errorOnly: false
@@ -186,6 +189,7 @@ describe('explore submission model', () => {
         query: undefined,
         traceId: undefined,
         resourceFilter: undefined,
+        attributeFilter: 'http.route=/checkout',
         minDurationMs: 0,
         maxDurationMs: Number.MAX_SAFE_INTEGER,
         errorOnly: undefined,
@@ -208,6 +212,7 @@ describe('explore submission model', () => {
         query: '',
         traceId: '',
         resourceFilter: '',
+        attributeFilter: '',
         minDurationMs,
         maxDurationMs,
         errorOnly: false

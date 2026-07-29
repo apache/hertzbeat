@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useResourceParams } from '@refinedev/core';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { QueryContextProvider } from '@/shared/query-context';
 import { GlobalTimeProvider, RouteTimeProvider, type TimeOwnership } from '@/shared/time';
 
@@ -33,7 +34,11 @@ function RouteOwnedShell() {
   const { action, resource } = useResourceParams();
   const policy: TimeOwnership = resolveShellTimePolicy(readShellResourceMeta(resource?.meta?.shell), action);
   return (
-    <RouteTimeProvider key={`${location.pathname}:${policy}`} policy={policy}>
+    <RouteTimeProvider
+      key={`${location.pathname}:${policy}`}
+      policy={policy}
+      canonicalizeInvalidExact={location.pathname !== applicationRoutePaths.explore}
+    >
       <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
         <ShellHeader collapsed={collapsed} />
         <div className={styles.shellBody}>
