@@ -984,6 +984,19 @@
     "deleteSelected": "Delete selected",
     "deleteSelectedConfirm": "Delete {{count}} selected bulletins?",
     "deleteSelectedSuccess": "Selected bulletins deleted and verified.",
+    "recovery": {
+      "stop": "Stop verification",
+      "dismiss": "Dismiss",
+      "projectionStale": "The mutation was verified, but the bulletin list is stale. Retry the list refresh or stop verification.",
+      "create": "Verification stopped for new bulletin “{{name}}”. Its write outcome is unknown; review current data before saving again.",
+      "update": "Verification stopped for bulletin #{{id}} “{{name}}”. Its write outcome is unknown; review current data before saving again.",
+      "delete": "Verification stopped for bulletin {{ids}}. Its deletion outcome is unknown; review current data before deleting again.",
+      "deleteBatch": "Verification stopped for {{count}} bulletins ({{ids}}). Their deletion outcome is unknown; review current data before deleting again.",
+      "projection": {
+        "save": "The bulletin save was verified, but its list projection remains stale.",
+        "delete": "The bulletin deletion was verified, but its list projection remains stale."
+      }
+    },
     "list": {
       "invalid": "The bulletin list response is invalid.",
       "permission": "You do not have permission to view bulletins.",

@@ -14,20 +14,22 @@ type BulletinPageControlsProps = {
     setSearch: (value: string) => unknown;
     submitSearch: () => unknown;
   };
-  busy: boolean;
   capabilities: BulletinActionCapabilities;
+  commandActive: boolean;
   refreshing: boolean;
   search: string;
   selectedIds: number[];
+  writeLocked: boolean;
 };
 
 export function BulletinPageControls({
   actions,
-  busy,
   capabilities,
+  commandActive,
   refreshing,
   search,
-  selectedIds
+  selectedIds,
+  writeLocked
 }: BulletinPageControlsProps) {
   const { t } = useTranslation();
   return (
@@ -46,13 +48,13 @@ export function BulletinPageControls({
               okButtonProps={{ danger: true }}
               onConfirm={() => actions.removeMany(selectedIds)}
             >
-              <Button danger disabled={busy}>
+              <Button danger disabled={writeLocked}>
                 {t('bulletin.deleteSelected')}
               </Button>
             </Popconfirm>
           )}
           {capabilities.canWrite && (
-            <Button type="primary" disabled={busy} onClick={actions.create}>
+            <Button type="primary" disabled={writeLocked} onClick={actions.create}>
               {t('bulletin.create')}
             </Button>
           )}
@@ -62,14 +64,14 @@ export function BulletinPageControls({
         <Input
           value={search}
           placeholder={t('bulletin.search')}
-          disabled={busy}
+          disabled={commandActive}
           onChange={event => actions.setSearch(event.target.value)}
           onPressEnter={actions.submitSearch}
         />
-        <Button type="primary" disabled={busy} onClick={actions.submitSearch}>
+        <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
           {t('common.query')}
         </Button>
-        <Button loading={refreshing} disabled={busy} onClick={() => void actions.refresh()}>
+        <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
           {t('common.refresh')}
         </Button>
       </Space.Compact>

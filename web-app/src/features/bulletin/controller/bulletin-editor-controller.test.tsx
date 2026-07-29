@@ -12,7 +12,8 @@ vi.mock('../api/bulletin-api', async importOriginal => ({
   loadBulletin: api.loadBulletin
 }));
 
-import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
+import { useBulletinEditorController } from './bulletin-editor-controller';
+import { useBulletinOperationGate } from './bulletin-operation-gate';
 
 describe('Bulletin editor controller', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -168,6 +169,100 @@ describe('Bulletin editor controller', () => {
     expect(result.current.gate.isLocked()).toBe(false);
   });
 
+  it('atomically stops pending proof once and retires every late publication path', async () => {
+    const { result } = renderEditorController();
+    const submitted = { ...bulletin(7, 'Operations'), monitorIds: [1], fields: { responseTime: ['duration'] } };
+    let owner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      owner = result.current.gate.begin('saving')!;
+      result.current.gate.setRecovery(owner, {
+        stage: 'update-proof',
+        draft: submitted,
+        failure: 'unavailable'
+      });
+    });
+
+    act(() => {
+      expect(result.current.gate.cancelRecovery()).toBe(true);
+      expect(result.current.gate.cancelRecovery()).toBe(false);
+    });
+
+    expect(result.current.gate.command).toBe('idle');
+    expect(result.current.gate.recovery).toBeNull();
+    expect(result.current.gate.notice).toMatchObject({
+      kind: 'proof-stopped',
+      operation: 'save',
+      stage: 'update-proof',
+      draft: { id: 7, name: 'Operations' }
+    });
+    expect(result.current.gate.isCurrent(owner)).toBe(false);
+    expect(result.current.gate.setRecovery(owner, { stage: 'update-proof', draft: submitted, failure: 'error' })).toBe(
+      false
+    );
+    expect(result.current.gate.clearRecovery(owner)).toBe(false);
+    act(() => {
+      expect(result.current.gate.dismissNotice()).toBe(true);
+      expect(result.current.gate.dismissNotice()).toBe(false);
+    });
+    expect(result.current.gate.notice).toBeNull();
+  });
+
+  it('records confirmed mutation separately from a stale projection when verification stops', () => {
+    const { result } = renderEditorController();
+    let owner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      owner = result.current.gate.begin('deleting')!;
+      result.current.gate.setRecovery(owner, {
+        stage: 'projection',
+        operation: 'delete',
+        failure: 'unavailable'
+      });
+      result.current.gate.end(owner);
+      expect(result.current.gate.cancelRecovery()).toBe(true);
+    });
+
+    expect(result.current.gate.notice).toEqual({
+      kind: 'projection-stopped',
+      operation: 'delete',
+      mutation: 'confirmed',
+      projection: 'stale'
+    });
+    expect(result.current.gate.isLocked()).toBe(false);
+  });
+
+  it('preserves a stopped outcome through later commands until explicit dismissal', () => {
+    const { result } = renderEditorController();
+    let stoppedOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      stoppedOwner = result.current.gate.begin('saving')!;
+      result.current.gate.setRecovery(stoppedOwner, {
+        stage: 'update-proof',
+        draft: { ...bulletin(7, 'Submitted before role loss') },
+        failure: 'unavailable'
+      });
+      expect(result.current.gate.retire('save')).toBe(true);
+    });
+
+    expect(result.current.gate.notice).toMatchObject({
+      kind: 'proof-stopped',
+      stage: 'update-proof',
+      draft: { id: 7, name: 'Submitted before role loss' }
+    });
+
+    let nextOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      nextOwner = result.current.gate.begin('saving')!;
+      result.current.gate.end(nextOwner);
+    });
+    expect(result.current.gate.notice).toMatchObject({
+      kind: 'proof-stopped',
+      draft: { id: 7, name: 'Submitted before role loss' }
+    });
+
+    act(() => expect(result.current.gate.dismissNotice()).toBe(true));
+    expect(result.current.gate.notice).toBeNull();
+  });
+
   it('selectively retires pending owners and typed recovery by operation', () => {
     const { result } = renderEditorController();
     let saveOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
@@ -185,6 +280,12 @@ describe('Bulletin editor controller', () => {
 
     act(() => result.current.gate.retire('save'));
     expect(result.current.gate.recovery).toBeNull();
+    expect(result.current.gate.notice).toEqual({
+      kind: 'projection-stopped',
+      operation: 'save',
+      mutation: 'confirmed',
+      projection: 'stale'
+    });
 
     let deleteOwner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
     act(() => {

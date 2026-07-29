@@ -3,8 +3,8 @@
 import { Alert, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { BulletinCommand, BulletinRecovery } from '../model/bulletin-operation-state';
-import { BulletinRecoveryAlert } from './bulletin-recovery-alert';
+import type { BulletinCommand, BulletinOutcomeNotice, BulletinRecovery } from '../model/bulletin-operation-state';
+import { BulletinOutcomeNoticeAlert, BulletinRecoveryAlert } from './bulletin-recovery-alert';
 
 type BulletinListKind =
   'idle' | 'loading' | 'correcting' | 'empty' | 'ready' | 'invalid' | 'permission' | 'unavailable' | 'error';
@@ -12,13 +12,19 @@ type BulletinListKind =
 export function BulletinPageStatus({
   command,
   list,
+  notice,
   recovery,
-  onRetry
+  onDismissNotice,
+  onRetry,
+  onStopVerification
 }: {
   command: BulletinCommand;
   list: { kind: BulletinListKind };
+  notice: BulletinOutcomeNotice | null;
   recovery: BulletinRecovery | null;
+  onDismissNotice: () => void;
   onRetry: () => void;
+  onStopVerification: () => void;
 }) {
   const { t } = useTranslation();
   const listFailed =
@@ -27,7 +33,13 @@ export function BulletinPageStatus({
     <>
       {listFailed && <Alert type="error" showIcon message={t(`bulletin.list.${list.kind}`)} />}
       {list.kind === 'empty' && <Empty description={t('bulletin.empty')} />}
-      <BulletinRecoveryAlert recovery={recovery} recovering={command === 'recovering'} onRetry={onRetry} />
+      <BulletinRecoveryAlert
+        recovery={recovery}
+        recovering={command === 'recovering'}
+        onRetry={onRetry}
+        onStop={onStopVerification}
+      />
+      <BulletinOutcomeNoticeAlert notice={notice} onDismiss={onDismissNotice} />
     </>
   );
 }

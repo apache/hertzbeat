@@ -86,6 +86,7 @@ describe('bulletin page', () => {
 
   it('keeps retained proof recovery visible and retries only through its recovery action', () => {
     const current = pageController({
+      draft: record,
       recovery: {
         stage: 'update-proof',
         draft: { ...record },
@@ -99,8 +100,45 @@ describe('bulletin page', () => {
     expect(screen.getByText('bulletin.save.unavailable')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.getByPlaceholderText('bulletin.search')).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(current.actions.retry).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'bulletin.recovery.stop' }));
+    expect(current.actions.stopVerification).toHaveBeenCalledOnce();
+  });
+
+  it('shows a non-blocking stopped outcome until an explicit dismiss', () => {
+    const current = pageController({
+      draft: record,
+      notice: {
+        kind: 'proof-stopped',
+        operation: 'delete',
+        stage: 'delete-proof',
+        ids: [7, 9],
+        batch: true,
+        count: 2
+      }
+    });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByText('bulletin.recovery.deleteBatch')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(current.actions.close).toHaveBeenCalledOnce();
+    expect(screen.getByText('bulletin.recovery.deleteBatch')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'bulletin.recovery.dismiss' }));
+    expect(current.actions.dismissNotice).toHaveBeenCalledOnce();
   });
 
   it('keeps GUEST read controls and metrics selection while hiding every write and delete affordance', () => {
@@ -204,6 +242,7 @@ function pageController({
   capabilities = { canRead: true, canWrite: true, canDelete: true },
   command = 'idle',
   draft = null,
+  notice = null,
   recovery = null,
   selectedId = null,
   selectedIds = []
@@ -211,6 +250,14 @@ function pageController({
   capabilities?: { canRead: boolean; canWrite: boolean; canDelete: boolean };
   command?: 'idle' | 'saving';
   draft?: typeof record | null;
+  notice?: null | {
+    kind: 'proof-stopped';
+    operation: 'delete';
+    stage: 'delete-proof';
+    ids: readonly number[];
+    batch: boolean;
+    count: number;
+  };
   recovery?: null | {
     stage: 'update-proof';
     draft: typeof record;
@@ -223,6 +270,7 @@ function pageController({
     changePage: vi.fn(),
     close: vi.fn(),
     create: vi.fn(),
+    dismissNotice: vi.fn(),
     edit: vi.fn(),
     refresh: vi.fn(),
     remove: vi.fn(),
@@ -232,6 +280,7 @@ function pageController({
     select: vi.fn(),
     selectIds: vi.fn(),
     setSearch: vi.fn(),
+    stopVerification: vi.fn(),
     submitSearch: vi.fn(),
     updateDraft: vi.fn()
   };
@@ -253,6 +302,7 @@ function pageController({
         draft,
         list: { kind: 'ready', records: [record], total: 1 },
         metrics: { kind: 'idle' },
+        notice,
         query: { search: '', pageIndex: 0, pageSize: 8 },
         recovery,
         refreshing: false,

@@ -9,9 +9,10 @@ import { useSession } from '@/core/auth/session-context';
 import { bulletinActionCapabilities } from '../model/bulletin-action-capability';
 import { applyBulletinCapabilityLoss } from './bulletin-access-retirement';
 import { useBulletinDependencies } from './bulletin-dependencies-controller';
-import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
+import { useBulletinEditorController } from './bulletin-editor-controller';
 import { useBulletinBatchSelection, useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
+import { useBulletinOperationGate } from './bulletin-operation-gate';
 import { useBulletinPageCorrection } from './bulletin-page-correction-controller';
 import { useBulletinQueryController } from './bulletin-query-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
@@ -43,6 +44,7 @@ export function useBulletinController() {
     t
   });
   useBulletinCapabilityRetirement(capabilities, editor, gate, batchSelection.selectIds);
+  const actions = createBulletinActions({ batchSelection, editor, gate, list, query, selection, transactions });
 
   return {
     state: {
@@ -52,6 +54,7 @@ export function useBulletinController() {
       draft: editor.state.draft,
       list: list.state,
       metrics,
+      notice: gate.notice,
       query: query.query,
       recovery: gate.recovery,
       refreshing: list.refreshing,
@@ -59,22 +62,52 @@ export function useBulletinController() {
       selectedId: selection.selectedId,
       selectedIds: batchSelection.selectedIds
     },
-    actions: {
-      changePage: query.changePage,
-      close: editor.actions.close,
-      create: editor.actions.create,
-      edit: editor.actions.edit,
-      refresh: list.refresh,
-      remove: transactions.remove,
-      removeMany: transactions.removeMany,
-      retry: transactions.retry,
-      save: transactions.save,
-      select: selection.setSelectedId,
-      selectIds: batchSelection.selectIds,
-      setSearch: query.setSearch,
-      submitSearch: query.submitSearch,
-      updateDraft: editor.actions.update
-    }
+    actions
+  };
+}
+
+type BulletinActionSources = {
+  batchSelection: ReturnType<typeof useBulletinBatchSelection>;
+  editor: ReturnType<typeof useBulletinEditorController>;
+  gate: ReturnType<typeof useBulletinOperationGate>;
+  list: ReturnType<typeof useBulletinListController>;
+  query: ReturnType<typeof useBulletinQueryController>;
+  selection: ReturnType<typeof useBulletinSelection>;
+  transactions: ReturnType<typeof useBulletinTransactions>;
+};
+
+function createBulletinActions(source: BulletinActionSources) {
+  const admitRead =
+    <Args extends unknown[]>(action: (...args: Args) => unknown) =>
+    (...args: Args) => {
+      if (source.gate.isCommandActive()) return false;
+      action(...args);
+      return true;
+    };
+  const admitReadAsync = (action: () => Promise<boolean>) => async () =>
+    source.gate.isCommandActive() ? false : action();
+  const admitBatchSelection = (ids: number[]) => {
+    if (source.gate.isLocked()) return false;
+    source.batchSelection.selectIds(ids);
+    return true;
+  };
+  return {
+    changePage: admitRead(source.query.changePage),
+    close: source.editor.actions.close,
+    create: source.editor.actions.create,
+    dismissNotice: source.gate.dismissNotice,
+    edit: source.editor.actions.edit,
+    refresh: admitReadAsync(source.list.refresh),
+    remove: source.transactions.remove,
+    removeMany: source.transactions.removeMany,
+    retry: source.transactions.retry,
+    save: source.transactions.save,
+    select: admitRead(source.selection.setSelectedId),
+    selectIds: admitBatchSelection,
+    setSearch: admitRead(source.query.setSearch),
+    stopVerification: source.gate.cancelRecovery,
+    submitSearch: admitRead(source.query.submitSearch),
+    updateDraft: source.editor.actions.update
   };
 }
 

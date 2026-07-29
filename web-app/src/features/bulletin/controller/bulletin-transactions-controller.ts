@@ -8,7 +8,8 @@ import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof
 import { classifyBulletinFailure, type BulletinFailureKind } from '../model/bulletin-failure';
 import { normalizeBulletinIds, type Bulletin } from '../model/bulletin-model';
 import { bulletinRecoveryOperation } from '../model/bulletin-operation-state';
-import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
+import type { BulletinEditorController } from './bulletin-editor-controller';
+import type { BulletinOperationGate } from './bulletin-operation-gate';
 import { refreshBulletinListProjection } from './bulletin-list-projection';
 import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
 import {

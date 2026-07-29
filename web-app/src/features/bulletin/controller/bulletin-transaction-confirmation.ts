@@ -5,7 +5,8 @@ import type { useQueryClient } from '@tanstack/react-query';
 import type { Dispatch, SetStateAction } from 'react';
 
 import type { Bulletin } from '../model/bulletin-model';
-import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
+import type { BulletinEditorController } from './bulletin-editor-controller';
+import type { BulletinOperationGate } from './bulletin-operation-gate';
 import { refreshBulletinListProjection } from './bulletin-list-projection';
 import type { BulletinProofResult } from './bulletin-write-operations';
 

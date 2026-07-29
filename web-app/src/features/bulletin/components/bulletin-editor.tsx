@@ -15,14 +15,14 @@ type BulletinEditorProps = {
   draft: BulletinDraft | null;
   dependencies: BulletinEditorDependencies;
   saving: boolean;
-  busy: boolean;
+  writeLocked: boolean;
   onClose: () => void;
   onSave: () => void;
   onChange: (patch: Partial<BulletinDraft>) => void;
 };
 
 export function BulletinEditor(props: BulletinEditorProps) {
-  const { draft, dependencies, saving, busy, onClose, onSave } = props;
+  const { draft, dependencies, saving, writeLocked, onClose, onSave } = props;
   const { t } = useTranslation();
   const canSave =
     dependencies.kind === 'ready' &&
@@ -35,15 +35,15 @@ export function BulletinEditor(props: BulletinEditorProps) {
       title={t(draft?.id == null ? 'bulletin.create' : 'bulletin.edit')}
       onClose={onClose}
       destroyOnHidden
-      closable={!busy}
-      keyboard={!busy}
+      closable={!writeLocked}
+      keyboard={!writeLocked}
       maskClosable={false}
       footer={
         <Space>
-          <Button disabled={busy} onClick={onClose}>
+          <Button disabled={writeLocked} onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button type="primary" loading={saving} disabled={busy || !canSave} onClick={onSave}>
+          <Button type="primary" loading={saving} disabled={writeLocked || !canSave} onClick={onSave}>
             {t('common.save')}
           </Button>
         </Space>
@@ -57,25 +57,23 @@ export function BulletinEditor(props: BulletinEditorProps) {
 function BulletinEditorForm({
   draft,
   dependencies,
-  busy,
+  writeLocked,
   onChange,
   t
 }: BulletinEditorProps & {
   draft: BulletinDraft;
   t: (key: string) => string;
 }) {
-  const monitorById = new Map(dependencies.monitors.map(monitor => [monitor.id, monitor]));
-  const monitorOptions = dependencies.monitors.map(monitor => ({ value: monitor.id, label: monitor.name }));
   return (
     <Form layout="vertical">
       <Form.Item label={t('bulletin.name')} required>
-        <Input disabled={busy} value={draft.name} onChange={event => onChange({ name: event.target.value })} />
+        <Input disabled={writeLocked} value={draft.name} onChange={event => onChange({ name: event.target.value })} />
       </Form.Item>
       <Form.Item label={t('bulletin.application')} required>
         <Select
           value={draft.app || null}
           showSearch
-          disabled={busy || draft.id != null}
+          disabled={writeLocked || draft.id != null}
           options={dependencies.apps.map(app => ({ value: app.value, label: app.label || app.value }))}
           onChange={(app: string) => onChange({ app, monitorIds: [], fields: {} })}
         />
@@ -87,24 +85,25 @@ function BulletinEditorForm({
       {dependencies.kind === 'ready' && draft.app && (
         <>
           <Form.Item label={t('bulletin.monitors')} required>
-            <Select
-              mode="multiple"
-              disabled={busy}
-              value={draft.monitorIds}
-              options={monitorOptions}
-              placeholder={t('bulletin.monitorsPlaceholder')}
-              filterOption={(input, option) => {
-                const monitor = typeof option?.value === 'number' ? monitorById.get(option.value) : undefined;
-                return monitor ? bulletinMonitorMatchesSearch(monitor, input) : false;
-              }}
-              onChange={monitorIds => onChange({ monitorIds })}
+            <BulletinMonitorSelection
+              dependencies={dependencies}
+              draft={draft}
+              onChange={onChange}
+              t={t}
+              writeLocked={writeLocked}
             />
           </Form.Item>
           {dependencies.monitorSelection === 'stale' && (
             <Alert type="warning" showIcon message={t('bulletin.validation')} />
           )}
           <Form.Item label={t('bulletin.fields')} required>
-            <BulletinFieldSelection draft={draft} dependencies={dependencies} busy={busy} onChange={onChange} t={t} />
+            <BulletinFieldSelection
+              draft={draft}
+              dependencies={dependencies}
+              writeLocked={writeLocked}
+              onChange={onChange}
+              t={t}
+            />
           </Form.Item>
         </>
       )}
@@ -112,16 +111,46 @@ function BulletinEditorForm({
   );
 }
 
+function BulletinMonitorSelection({
+  dependencies,
+  draft,
+  onChange,
+  t,
+  writeLocked
+}: {
+  dependencies: BulletinEditorDependencies;
+  draft: BulletinDraft;
+  onChange: (patch: Partial<BulletinDraft>) => void;
+  t: (key: string) => string;
+  writeLocked: boolean;
+}) {
+  const monitorById = new Map(dependencies.monitors.map(monitor => [monitor.id, monitor]));
+  return (
+    <Select
+      mode="multiple"
+      disabled={writeLocked}
+      value={draft.monitorIds}
+      options={dependencies.monitors.map(monitor => ({ value: monitor.id, label: monitor.name }))}
+      placeholder={t('bulletin.monitorsPlaceholder')}
+      filterOption={(input, option) => {
+        const monitor = typeof option?.value === 'number' ? monitorById.get(option.value) : undefined;
+        return monitor ? bulletinMonitorMatchesSearch(monitor, input) : false;
+      }}
+      onChange={monitorIds => onChange({ monitorIds })}
+    />
+  );
+}
+
 function BulletinFieldSelection({
   draft,
   dependencies,
-  busy,
+  writeLocked,
   onChange,
   t
 }: {
   draft: BulletinDraft;
   dependencies: BulletinEditorDependencies;
-  busy: boolean;
+  writeLocked: boolean;
   onChange: (patch: Partial<BulletinDraft>) => void;
   t: (key: string) => string;
 }) {
@@ -136,7 +165,7 @@ function BulletinFieldSelection({
       ) : (
         <BulletinMetricTree
           key={draft.app}
-          disabled={busy}
+          disabled={writeLocked}
           fields={draft.fields}
           tree={dependencies.metricTree}
           onChange={fields => onChange({ fields })}

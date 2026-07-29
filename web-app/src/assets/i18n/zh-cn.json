@@ -973,6 +973,19 @@
     "deleteSelected": "删除所选项",
     "deleteSelectedConfirm": "确认删除选中的 {{count}} 个看板？",
     "deleteSelectedSuccess": "所选看板已删除并验证。",
+    "recovery": {
+      "stop": "停止验证",
+      "dismiss": "关闭",
+      "projectionStale": "变更已验证成功，但看板列表尚未更新。可重试刷新列表或停止验证。",
+      "create": "已停止验证新看板“{{name}}”。写入结果未知；再次保存前请先检查当前数据。",
+      "update": "已停止验证看板 #{{id}}“{{name}}”。写入结果未知；再次保存前请先检查当前数据。",
+      "delete": "已停止验证看板 {{ids}}。删除结果未知；再次删除前请先检查当前数据。",
+      "deleteBatch": "已停止验证 {{count}} 个看板（{{ids}}）。删除结果未知；再次删除前请先检查当前数据。",
+      "projection": {
+        "save": "看板保存已验证成功，但列表仍未更新。",
+        "delete": "看板删除已验证成功，但列表仍未更新。"
+      }
+    },
     "list": {
       "invalid": "看板列表响应无效。",
       "permission": "您没有查看看板的权限。",

@@ -18,7 +18,6 @@ type BulletinTableActions = {
 
 type BulletinTableProps = {
   actions: BulletinTableActions;
-  busy: boolean;
   capabilities: BulletinActionCapabilities;
   listKind: 'idle' | 'loading' | 'correcting' | 'ready' | 'empty' | 'invalid' | 'permission' | 'unavailable' | 'error';
   query: BulletinQuery;
@@ -26,6 +25,8 @@ type BulletinTableProps = {
   selectedId: number | null;
   selectedIds: number[];
   total: number;
+  readLocked: boolean;
+  writeLocked: boolean;
 };
 
 export function BulletinTable(props: BulletinTableProps) {
@@ -37,7 +38,7 @@ export function BulletinTable(props: BulletinTableProps) {
       loading={props.listKind === 'loading' || props.listKind === 'correcting'}
       dataSource={props.records}
       rowClassName={record => (record.id === props.selectedId ? (styles.selectedRow ?? '') : '')}
-      onRow={record => (props.busy ? {} : { onClick: () => props.actions.select(record.id) })}
+      onRow={record => (props.readLocked ? {} : { onClick: () => props.actions.select(record.id) })}
       {...createBulletinRowSelectionProps(props)}
       pagination={
         props.listKind === 'ready'
@@ -47,12 +48,12 @@ export function BulletinTable(props: BulletinTableProps) {
               total: props.total,
               showSizeChanger: true,
               pageSizeOptions: [...bulletinPageSizes],
-              disabled: props.busy,
+              disabled: props.readLocked,
               onChange: props.actions.changePage
             }
           : false
       }
-      columns={createBulletinColumns(props.actions, props.busy, props.capabilities, t)}
+      columns={createBulletinColumns(props.actions, props.readLocked, props.writeLocked, props.capabilities, t)}
     />
   );
 }
@@ -62,9 +63,9 @@ function createBulletinRowSelectionProps(props: BulletinTableProps): Pick<TableP
   return {
     rowSelection: {
       selectedRowKeys: props.selectedIds,
-      getCheckboxProps: () => ({ disabled: props.busy }),
+      getCheckboxProps: () => ({ disabled: props.writeLocked }),
       onChange: keys => {
-        if (!props.busy) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+        if (!props.writeLocked) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
       }
     }
   };
@@ -72,7 +73,8 @@ function createBulletinRowSelectionProps(props: BulletinTableProps): Pick<TableP
 
 function createBulletinColumns(
   actions: BulletinTableActions,
-  busy: boolean,
+  readLocked: boolean,
+  writeLocked: boolean,
   capabilities: BulletinActionCapabilities,
   t: TFunction
 ): NonNullable<TableProps<Bulletin>['columns']> {
@@ -87,21 +89,21 @@ function createBulletinColumns(
       fixed: 'right',
       render: (_, record) => (
         <Space onClick={event => event.stopPropagation()}>
-          <Button type="link" disabled={busy} onClick={() => actions.select(record.id)}>
+          <Button type="link" disabled={readLocked} onClick={() => actions.select(record.id)}>
             {t('bulletin.viewMetrics')}
           </Button>
           {capabilities.canWrite && (
-            <Button type="link" disabled={busy} onClick={() => void actions.edit(record.id)}>
+            <Button type="link" disabled={writeLocked} onClick={() => void actions.edit(record.id)}>
               {t('common.edit')}
             </Button>
           )}
           {capabilities.canDelete && (
             <Popconfirm
-              disabled={busy}
+              disabled={writeLocked}
               title={t('bulletin.deleteConfirm')}
               onConfirm={() => void actions.remove(record)}
             >
-              <Button type="link" danger disabled={busy}>
+              <Button type="link" danger disabled={writeLocked}>
                 {t('bulletin.delete')}
               </Button>
             </Popconfirm>

@@ -5,89 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { loadBulletin } from '../api/bulletin-api';
 import { classifyBulletinFailure, type BulletinFailureKind } from '../model/bulletin-failure';
 import { createBulletinDraft, type BulletinDraft } from '../model/bulletin-model';
-import {
-  bulletinRecoveryOperation,
-  type BulletinCommand,
-  type BulletinRecovery,
-  type BulletinRecoveryOperation
-} from '../model/bulletin-operation-state';
-
-export type BulletinOperationOwner = {
-  command: Exclude<BulletinCommand, 'idle'>;
-  operation: BulletinRecoveryOperation;
-};
-
-export function useBulletinOperationGate() {
-  const mountedRef = useRef(true);
-  const ownerRef = useRef<BulletinOperationOwner | undefined>(undefined);
-  const recoveryRef = useRef<BulletinRecovery | null>(null);
-  const [command, setCommand] = useState<BulletinCommand>('idle');
-  const [recovery, setRecoveryState] = useState<BulletinRecovery | null>(null);
-  const replace = (next: BulletinOperationOwner['command'], operation: BulletinRecoveryOperation) => {
-    const owner = { command: next, operation };
-    ownerRef.current = owner;
-    setCommand(next);
-    return owner;
-  };
-  const begin = (next: 'saving' | 'deleting') => {
-    // React state is asynchronous, so the ref closes same-tick command admission.
-    if (!mountedRef.current || ownerRef.current || recoveryRef.current) return undefined;
-    return replace(next, next === 'deleting' ? 'delete' : 'save');
-  };
-  const beginRecovery = () => {
-    if (!mountedRef.current || ownerRef.current || !recoveryRef.current) return undefined;
-    const recovery = recoveryRef.current;
-    return { owner: replace('recovering', bulletinRecoveryOperation(recovery)), recovery };
-  };
-  const isCurrent = (owner: BulletinOperationOwner) => mountedRef.current && ownerRef.current === owner;
-  const publishRecovery = (owner: BulletinOperationOwner, next: BulletinRecovery | null) => {
-    if (!isCurrent(owner)) return false;
-    recoveryRef.current = next;
-    setRecoveryState(next);
-    return true;
-  };
-  const end = (owner: BulletinOperationOwner) => {
-    // A stale finally block must never unlock a newer command owner.
-    if (!isCurrent(owner)) return;
-    ownerRef.current = undefined;
-    setCommand('idle');
-  };
-  const retire = (operation: BulletinRecoveryOperation) => {
-    if (ownerRef.current?.operation === operation) {
-      ownerRef.current = undefined;
-      setCommand('idle');
-    }
-    const currentRecovery = recoveryRef.current;
-    if (currentRecovery && bulletinRecoveryOperation(currentRecovery) === operation) {
-      recoveryRef.current = null;
-      setRecoveryState(null);
-    }
-  };
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      // Async continuations lose permission to publish as soon as the page unmounts.
-      mountedRef.current = false;
-      ownerRef.current = undefined;
-      recoveryRef.current = null;
-    };
-  }, []);
-  return {
-    begin,
-    beginRecovery,
-    clearRecovery: (owner: BulletinOperationOwner) => publishRecovery(owner, null),
-    command,
-    end,
-    getRecovery: () => recoveryRef.current,
-    isCurrent,
-    isLocked: () => ownerRef.current !== undefined || recoveryRef.current !== null,
-    recovery,
-    retire,
-    setRecovery: (owner: BulletinOperationOwner, next: BulletinRecovery) => publishRecovery(owner, next)
-  };
-}
-
-export type BulletinOperationGate = ReturnType<typeof useBulletinOperationGate>;
+import type { BulletinOperationGate } from './bulletin-operation-gate';
 
 function useBulletinDraftStore() {
   const [draft, setDraft] = useState<BulletinDraft | null>(null);
@@ -98,6 +16,38 @@ function useBulletinDraftStore() {
     setDraft(next);
   };
   return { draft, get: () => draftRef.current, publish };
+}
+
+function createBulletinDraftActions(
+  draftStore: ReturnType<typeof useBulletinDraftStore>,
+  gate: BulletinOperationGate,
+  canWriteRef: RefObject<boolean>,
+  invalidateDetail: () => void
+) {
+  const create = () => {
+    if (!canWriteRef.current || gate.isLocked()) return false;
+    invalidateDetail();
+    draftStore.publish(createBulletinDraft());
+    return true;
+  };
+  const close = () => {
+    if (gate.isLocked()) return false;
+    invalidateDetail();
+    draftStore.publish(null);
+    return true;
+  };
+  const update = (patch: Partial<BulletinDraft>) => {
+    if (!canWriteRef.current || gate.isLocked()) return false;
+    const current = draftStore.get();
+    if (!current) return false;
+    draftStore.publish({ ...current, ...patch });
+    return true;
+  };
+  const retireWriteAccess = () => {
+    invalidateDetail();
+    draftStore.publish(null);
+  };
+  return { close, create, retireWriteAccess, update };
 }
 
 export function useBulletinEditorController(
@@ -138,33 +88,16 @@ export function useBulletinEditorController(
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;
     }
   };
-  const create = () => {
-    if (!canWriteRef.current || gate.isLocked()) return false;
-    invalidateDetail();
-    draftStore.publish(createBulletinDraft());
-    return true;
-  };
-  const close = () => {
-    if (gate.isLocked()) return false;
-    invalidateDetail();
-    draftStore.publish(null);
-    return true;
-  };
-  const update = (patch: Partial<BulletinDraft>) => {
-    if (!canWriteRef.current || gate.isLocked()) return false;
-    const current = draftStore.get();
-    if (!current) return false;
-    draftStore.publish({ ...current, ...patch });
-    return true;
-  };
-  const retireWriteAccess = () => {
-    invalidateDetail();
-    draftStore.publish(null);
-  };
+  const draftActions = createBulletinDraftActions(draftStore, gate, canWriteRef, invalidateDetail);
   return {
     state: { draft: draftStore.draft },
-    controls: { getDraft: draftStore.get, invalidateDetail, retireWriteAccess, setDraft: draftStore.publish },
-    actions: { close, create, edit, update }
+    controls: {
+      getDraft: draftStore.get,
+      invalidateDetail,
+      retireWriteAccess: draftActions.retireWriteAccess,
+      setDraft: draftStore.publish
+    },
+    actions: { close: draftActions.close, create: draftActions.create, edit, update: draftActions.update }
   };
 }
 

@@ -184,7 +184,7 @@ function editor({
     <BulletinEditor
       draft={{ ...(editing ? { id: 7 } : {}), name: 'Ops', app: 'website', monitorIds, fields }}
       saving={false}
-      busy={busy}
+      writeLocked={busy}
       dependencies={{
         kind: 'ready',
         fieldSelection,

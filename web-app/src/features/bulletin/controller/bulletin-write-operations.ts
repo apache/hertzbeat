@@ -12,7 +12,7 @@ import {
 import { classifyBulletinFailure, isBulletinWriteRejection } from '../model/bulletin-failure';
 import { normalizeBulletinIds, type Bulletin, type BulletinDraft } from '../model/bulletin-model';
 import type { BulletinRecovery } from '../model/bulletin-operation-state';
-import type { BulletinOperationGate, BulletinOperationOwner } from './bulletin-editor-controller';
+import type { BulletinOperationGate, BulletinOperationOwner } from './bulletin-operation-gate';
 
 export type BulletinProofResult =
   { operation: 'save'; saved: Bulletin } | { operation: 'delete'; ids: number[]; batch: boolean };

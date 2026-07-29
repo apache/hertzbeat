@@ -989,6 +989,19 @@
     "deleteSelected": "Excluir selecionados",
     "deleteSelectedConfirm": "Excluir {{count}} quadros selecionados?",
     "deleteSelectedSuccess": "Quadros selecionados excluídos e verificados.",
+    "recovery": {
+      "stop": "Parar verificação",
+      "dismiss": "Dispensar",
+      "projectionStale": "A alteração foi verificada, mas a lista de quadros está desatualizada. Tente atualizar a lista ou pare a verificação.",
+      "create": "A verificação do novo quadro “{{name}}” foi interrompida. O resultado da gravação é desconhecido; revise os dados antes de salvar novamente.",
+      "update": "A verificação do quadro #{{id}} “{{name}}” foi interrompida. O resultado da gravação é desconhecido; revise os dados antes de salvar novamente.",
+      "delete": "A verificação do quadro {{ids}} foi interrompida. O resultado da exclusão é desconhecido; revise os dados antes de excluir novamente.",
+      "deleteBatch": "A verificação de {{count}} quadros ({{ids}}) foi interrompida. O resultado da exclusão é desconhecido; revise os dados antes de excluir novamente.",
+      "projection": {
+        "save": "O salvamento do quadro foi verificado, mas a projeção da lista continua desatualizada.",
+        "delete": "A exclusão do quadro foi verificada, mas a projeção da lista continua desatualizada."
+      }
+    },
     "list": {
       "invalid": "A resposta da lista é inválida.",
       "permission": "Você não tem permissão para ver os quadros.",

@@ -1,15 +1,20 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { normalizeBulletinApiFailure } from '../api/bulletin-api-failure';
 import { BulletinRequestFailure } from '../model/bulletin-failure';
-import type { BulletinRecovery } from '../model/bulletin-operation-state';
+import {
+  createBulletinOutcomeNotice,
+  type BulletinOutcomeNotice,
+  type BulletinRecovery
+} from '../model/bulletin-operation-state';
 import { bulletinQueryKeys } from './bulletin-query-keys';
-import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
+import { useBulletinEditorController } from './bulletin-editor-controller';
+import { useBulletinOperationGate } from './bulletin-operation-gate';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
 import type { BulletinDraft } from '../model/bulletin-model';
 
@@ -381,6 +386,28 @@ describe('Bulletin transactions controller', () => {
     expect(context.getRecovery()).toBeNull();
   });
 
+  it('stops stale projection recovery without reopening the confirmed mutation or list read', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValue(false);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(true));
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection', operation: 'save' });
+    const notifications = mocks.notification.mock.calls.length;
+    expect(context.value.gate.cancelRecovery()).toBe(true);
+    expect(context.getNotice()).toEqual({
+      kind: 'projection-stopped',
+      operation: 'save',
+      mutation: 'confirmed',
+      projection: 'stale'
+    });
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(false));
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(context.refresh).toHaveBeenCalledTimes(1);
+    expect(mocks.notification).toHaveBeenCalledTimes(notifications);
+  });
+
   it('does not retry delete projection after ADMIN loses delete capability', async () => {
     const context = createContext({ selectedId: 7 });
     context.refresh.mockResolvedValue(false);
@@ -476,6 +503,110 @@ describe('Bulletin transactions controller', () => {
     }
   );
 
+  it('stops pending proof without side effects and admits only a later explicit save', async () => {
+    const pending = deferred<ReturnType<typeof bulletin>>();
+    const setSelectedId = vi.fn();
+    mocks.proveBulletinCreated.mockReturnValueOnce(pending.promise);
+    const hook = renderHook(() => {
+      const gate = useBulletinOperationGate();
+      const editor = useBulletinEditorController(gate, vi.fn(), { current: true });
+      const transactions = useBulletinTransactions({
+        ...createContext().value,
+        editor,
+        gate,
+        setSelectedId
+      });
+      return { editor, gate, transactions };
+    });
+    act(() => hook.result.current.editor.controls.setDraft(createContext().initialDraft));
+    const retainedRetry = hook.result.current.transactions.retry;
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = hook.result.current.transactions.save();
+    });
+    await waitFor(() => expect(hook.result.current.gate.recovery).toMatchObject({ stage: 'create-proof' }));
+
+    act(() => expect(hook.result.current.gate.cancelRecovery()).toBe(true));
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.notification).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+    expect(setSelectedId).not.toHaveBeenCalled();
+    expect(hook.result.current.editor.controls.getDraft()).toEqual(createContext().initialDraft);
+
+    act(() => pending.resolve(bulletin(7, 'Operations')));
+    await expect(saving).resolves.toBe(false);
+    await expect(retainedRetry()).resolves.toBe(false);
+    expect(mocks.captureBulletinCreateBaseline).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinCreated).toHaveBeenCalledTimes(1);
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.notification).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+
+    mocks.proveBulletinCreated.mockResolvedValueOnce(bulletin(8, 'Operations'));
+    await act(async () => expect(hook.result.current.transactions.save()).resolves.toBe(true));
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops while the original create request is pending without starting proof or replaying POST', async () => {
+    const pendingCreate = deferred<void>();
+    mocks.createBulletin.mockReturnValueOnce(pendingCreate.promise);
+    const hook = renderHook(() => {
+      const gate = useBulletinOperationGate();
+      const editor = useBulletinEditorController(gate, vi.fn(), { current: true });
+      const transactions = useBulletinTransactions({
+        ...createContext().value,
+        editor,
+        gate
+      });
+      return { editor, gate, transactions };
+    });
+    act(() => hook.result.current.editor.controls.setDraft(createContext().initialDraft));
+
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = hook.result.current.transactions.save();
+    });
+    await waitFor(() => expect(hook.result.current.gate.recovery).toMatchObject({ stage: 'create-proof' }));
+    act(() => expect(hook.result.current.gate.cancelRecovery()).toBe(true));
+    act(() => pendingCreate.resolve(undefined));
+
+    await expect(saving).resolves.toBe(false);
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinCreated).not.toHaveBeenCalled();
+    expect(mocks.notification).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+    await expect(hook.result.current.transactions.retry()).resolves.toBe(false);
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a rejected proof continuation after verification stops', async () => {
+    const pending = deferred<ReturnType<typeof bulletin>>();
+    mocks.proveBulletinCreated.mockReturnValue(pending.promise);
+    const hook = renderHook(() => {
+      const gate = useBulletinOperationGate();
+      const editor = useBulletinEditorController(gate, vi.fn(), { current: true });
+      const transactions = useBulletinTransactions({
+        ...createContext().value,
+        editor,
+        gate
+      });
+      return { editor, gate, transactions };
+    });
+    act(() => hook.result.current.editor.controls.setDraft(createContext().initialDraft));
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = hook.result.current.transactions.save();
+    });
+    await waitFor(() => expect(hook.result.current.gate.recovery).toMatchObject({ stage: 'create-proof' }));
+    act(() => expect(hook.result.current.gate.cancelRecovery()).toBe(true));
+    act(() => pending.reject(new BulletinRequestFailure('unavailable', 'uncertain')));
+
+    await expect(saving).resolves.toBe(false);
+    expect(mocks.notification).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+    expect(hook.result.current.editor.controls.getDraft()).toEqual(createContext().initialDraft);
+  });
+
   it('does not publish or notify after a pending save loses ownership on unmount', async () => {
     const pending = deferred<ReturnType<typeof bulletin>>();
     const setSelectedId = vi.fn();
@@ -518,6 +649,7 @@ function createContext(options: { selectedId?: number } = {}) {
   let draft: typeof initialDraft | null = initialDraft;
   let owner: { command: 'saving' | 'deleting' | 'recovering'; operation: 'save' | 'delete' } | undefined;
   let recovery: BulletinRecovery | null = null;
+  let notice: BulletinOutcomeNotice | null = null;
   const setDraft = vi.fn((next: typeof initialDraft | null) => {
     draft = next;
   });
@@ -555,6 +687,13 @@ function createContext(options: { selectedId?: number } = {}) {
         };
         return { owner, recovery };
       },
+      cancelRecovery: () => {
+        if (!recovery) return false;
+        notice = createBulletinOutcomeNotice(recovery);
+        recovery = null;
+        owner = undefined;
+        return true;
+      },
       clearRecovery: candidate => {
         if (owner !== candidate) return false;
         recovery = null;
@@ -563,9 +702,16 @@ function createContext(options: { selectedId?: number } = {}) {
       end: candidate => {
         if (owner === candidate) owner = undefined;
       },
+      dismissNotice: () => {
+        if (!notice) return false;
+        notice = null;
+        return true;
+      },
       isCurrent: candidate => owner === candidate,
+      isCommandActive: () => owner !== undefined,
       isLocked: () => owner !== undefined || recovery !== null,
       getRecovery: () => recovery,
+      notice: null,
       recovery: null,
       retire: vi.fn(),
       setRecovery: (candidate, next) => {
@@ -583,6 +729,7 @@ function createContext(options: { selectedId?: number } = {}) {
     canDeleteRef,
     canWriteRef,
     getRecovery: () => recovery,
+    getNotice: () => notice,
     initialDraft,
     refresh,
     setDraft,
@@ -607,8 +754,10 @@ function bulletin(id: number, name: string) {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, reject, resolve };
 }

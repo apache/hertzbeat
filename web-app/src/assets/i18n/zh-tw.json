@@ -973,6 +973,19 @@
     "deleteSelected": "刪除所選項目",
     "deleteSelectedConfirm": "確定刪除選取的 {{count}} 個看板？",
     "deleteSelectedSuccess": "所選看板已刪除並驗證。",
+    "recovery": {
+      "stop": "停止驗證",
+      "dismiss": "關閉",
+      "projectionStale": "變更已驗證成功，但看板列表尚未更新。可重試重新整理列表或停止驗證。",
+      "create": "已停止驗證新看板「{{name}}」。寫入結果未知；再次儲存前請先檢查目前資料。",
+      "update": "已停止驗證看板 #{{id}}「{{name}}」。寫入結果未知；再次儲存前請先檢查目前資料。",
+      "delete": "已停止驗證看板 {{ids}}。刪除結果未知；再次刪除前請先檢查目前資料。",
+      "deleteBatch": "已停止驗證 {{count}} 個看板（{{ids}}）。刪除結果未知；再次刪除前請先檢查目前資料。",
+      "projection": {
+        "save": "看板儲存已驗證成功，但列表仍未更新。",
+        "delete": "看板刪除已驗證成功，但列表仍未更新。"
+      }
+    },
     "list": {
       "invalid": "看板列表回應無效。",
       "permission": "您沒有查看看板的權限。",

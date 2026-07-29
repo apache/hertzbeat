@@ -32,4 +32,20 @@ describe('Bulletin locale coverage', () => {
       expect(locale.bulletin.metrics.permission).toBeTruthy();
     }
   });
+
+  it('provides recovery stop and immutable outcome copy in every runtime locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.bulletin.recovery.stop).toBeTruthy();
+      expect(locale.bulletin.recovery.dismiss).toBeTruthy();
+      expect(locale.bulletin.recovery.projectionStale).toBeTruthy();
+      expect(locale.bulletin.recovery.create).toContain('{{name}}');
+      expect(locale.bulletin.recovery.update).toContain('{{id}}');
+      expect(locale.bulletin.recovery.update).toContain('{{name}}');
+      expect(locale.bulletin.recovery.delete).toContain('{{ids}}');
+      expect(locale.bulletin.recovery.deleteBatch).toContain('{{count}}');
+      expect(locale.bulletin.recovery.deleteBatch).toContain('{{ids}}');
+      expect(locale.bulletin.recovery.projection.save).toBeTruthy();
+      expect(locale.bulletin.recovery.projection.delete).toBeTruthy();
+    }
+  });
 });
