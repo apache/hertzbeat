@@ -103,7 +103,7 @@ describe('Bulletin editor metric Tree', () => {
     const checkboxes = () => [...document.querySelectorAll<HTMLElement>('.ant-tree-checkbox')];
 
     fireEvent.click(checkboxes()[0]!);
-    expect(onChange).toHaveBeenLastCalledWith({ fields: { summary: ['responseTime', 'status'] } });
+    expect(onChange).toHaveBeenLastCalledWith({ fields: { summary: ['status', 'responseTime'] } });
 
     rerender(editor({ onChange, fields: { summary: ['status'] } }));
     expect(document.querySelector('.ant-tree-checkbox-indeterminate')).toBeInTheDocument();

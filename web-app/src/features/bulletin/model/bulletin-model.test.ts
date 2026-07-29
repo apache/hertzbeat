@@ -61,6 +61,23 @@ describe('bulletin model', () => {
     ).toEqual({ id: 7, name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } });
   });
 
+  it('cleans field values without alphabetizing operator hierarchy order', () => {
+    const payload = buildBulletinPayload({
+      name: ' Ops ',
+      app: ' website ',
+      monitorIds: [1],
+      fields: {
+        ' zMetric ': [' zField ', 'aField', 'zField', ' '],
+        aMetric: ['zField', ' aField ', 'zField']
+      }
+    });
+
+    expect(Object.entries(payload.fields)).toEqual([
+      ['zMetric', ['zField', 'aField']],
+      ['aMetric', ['zField', 'aField']]
+    ]);
+  });
+
   it('matches monitor choices by name, label key, or label value', () => {
     const monitor = {
       id: 1,

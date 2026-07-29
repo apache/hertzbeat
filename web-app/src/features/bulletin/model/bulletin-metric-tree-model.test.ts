@@ -90,19 +90,51 @@ describe('bulletin metric tree model', () => {
     expect(reordered.find(node => node.metric === 'summary')).toEqual(first.find(node => node.metric === 'summary'));
   });
 
-  it('converts checked leaves only and canonicalizes select-all, partial, and uncheck-all payloads', () => {
+  it('converts checked leaves only and preserves select-all, partial, and uncheck-all hierarchy order', () => {
     const tree = buildBulletinMetricTree(hierarchy);
     const allKeys = tree.flatMap(node => [node.key, ...node.children.map(child => child.key)]);
 
     expect(fieldsFromMetricTreeKeys(tree, allKeys)).toEqual({
-      availability: ['status'],
-      summary: ['responseTime', 'status']
+      summary: ['status', 'responseTime'],
+      availability: ['status']
     });
     expect(fieldsFromMetricTreeKeys(tree, [tree[0]!.key, tree[0]!.children[0]!.key])).toEqual({ summary: ['status'] });
     expect(fieldsFromMetricTreeKeys(tree, [])).toEqual({});
     expect(fieldsFromMetricTreeKeys(tree, [tree[0]!.children[0]!.key, tree[0]!.children[0]!.key])).toEqual({
       summary: ['status']
     });
+  });
+
+  it('preserves backend hierarchy and checked-leaf order in fields', () => {
+    const firstMetric = hierarchy.children[0]!;
+    const secondMetric = hierarchy.children[1]!;
+    const tree = buildBulletinMetricTree({
+      ...hierarchy,
+      children: [
+        {
+          ...firstMetric,
+          value: 'zMetric',
+          children: [
+            { ...firstMetric.children[0]!, value: 'zField' },
+            { ...firstMetric.children[1]!, value: 'aField' }
+          ]
+        },
+        {
+          ...secondMetric,
+          value: 'aMetric',
+          children: [
+            { ...secondMetric.children[0]!, value: 'zField' },
+            { ...firstMetric.children[1]!, value: 'aField' }
+          ]
+        }
+      ]
+    });
+    const checkedLeaves = tree.flatMap(metric => metric.children.map(field => field.key));
+
+    expect(Object.entries(fieldsFromMetricTreeKeys(tree, checkedLeaves))).toEqual([
+      ['zMetric', ['zField', 'aField']],
+      ['aMetric', ['zField', 'aField']]
+    ]);
   });
 
   it('backfills known saved leaves and reports unknown saved fields explicitly', () => {

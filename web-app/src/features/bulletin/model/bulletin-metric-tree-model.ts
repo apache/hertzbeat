@@ -71,10 +71,7 @@ export function buildBulletinMetricTree(root: MonitorAppHierarchyNode): Bulletin
 
 function canonicalFields(fields: Map<string, Set<string>>): BulletinFields {
   return Object.fromEntries(
-    [...fields.entries()]
-      .filter(([, values]) => values.size > 0)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([metric, values]) => [metric, [...values].sort()])
+    [...fields.entries()].filter(([, values]) => values.size > 0).map(([metric, values]) => [metric, [...values]])
   );
 }
 

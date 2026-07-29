@@ -118,12 +118,27 @@ describe('bulletin api', () => {
   });
 
   it('sends void create, update, and delete mutations through their owned endpoints', async () => {
-    const draft = { name: 'Ops', app: 'website', monitorIds: [1], fields: { responseTime: ['duration'] } };
+    let postedFields: [string, string[]][] = [];
+    let putFields: [string, string[]][] = [];
+    http.apiMessagePost.mockImplementationOnce((_path: string, payload: { fields: Record<string, string[]> }) => {
+      postedFields = Object.entries(payload.fields);
+    });
+    http.apiMessagePut.mockImplementationOnce((_path: string, payload: { fields: Record<string, string[]> }) => {
+      putFields = Object.entries(payload.fields);
+    });
+    const draft = {
+      name: 'Ops',
+      app: 'website',
+      monitorIds: [1],
+      fields: { zMetric: ['zField', 'aField'], aMetric: ['zField', 'aField'] }
+    };
     await expect(createBulletin(draft)).resolves.toBeUndefined();
     expect(http.apiMessagePost).toHaveBeenCalledWith('/api/bulletin', draft);
+    expect(postedFields).toEqual(Object.entries(draft.fields));
 
     await expect(updateBulletin({ id: 7, ...draft, name: 'Renamed' })).resolves.toBeUndefined();
     expect(http.apiMessagePut).toHaveBeenCalledWith('/api/bulletin', { id: 7, ...draft, name: 'Renamed' });
+    expect(putFields).toEqual(Object.entries(draft.fields));
 
     await expect(deleteBulletins([7])).resolves.toBeUndefined();
     expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/bulletin?ids=7');

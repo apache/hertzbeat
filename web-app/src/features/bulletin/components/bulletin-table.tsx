@@ -38,17 +38,7 @@ export function BulletinTable(props: BulletinTableProps) {
       dataSource={props.records}
       rowClassName={record => (record.id === props.selectedId ? (styles.selectedRow ?? '') : '')}
       onRow={record => (props.busy ? {} : { onClick: () => props.actions.select(record.id) })}
-      rowSelection={
-        props.capabilities.canDelete
-          ? {
-              selectedRowKeys: props.selectedIds,
-              getCheckboxProps: () => ({ disabled: props.busy }),
-              onChange: keys => {
-                if (!props.busy) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
-              }
-            }
-          : undefined
-      }
+      {...createBulletinRowSelectionProps(props)}
       pagination={
         props.listKind === 'ready'
           ? {
@@ -65,6 +55,19 @@ export function BulletinTable(props: BulletinTableProps) {
       columns={createBulletinColumns(props.actions, props.busy, props.capabilities, t)}
     />
   );
+}
+
+function createBulletinRowSelectionProps(props: BulletinTableProps): Pick<TableProps<Bulletin>, 'rowSelection'> {
+  if (!props.capabilities.canDelete) return {};
+  return {
+    rowSelection: {
+      selectedRowKeys: props.selectedIds,
+      getCheckboxProps: () => ({ disabled: props.busy }),
+      onChange: keys => {
+        if (!props.busy) props.actions.selectIds(keys.filter((key): key is number => typeof key === 'number'));
+      }
+    }
+  };
 }
 
 function createBulletinColumns(

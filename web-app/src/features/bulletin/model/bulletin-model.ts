@@ -86,9 +86,9 @@ export function formatBulletinTime(value: string | null | undefined, locale?: st
 
 export function buildBulletinPayload(draft: BulletinDraft): BulletinDraft {
   const fields: BulletinFields = {};
-  for (const [rawMetric, names] of Object.entries(draft.fields).sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [rawMetric, names] of Object.entries(draft.fields)) {
     const metric = rawMetric.trim();
-    const normalizedNames = [...new Set(names.map(name => name.trim()).filter(Boolean))].sort();
+    const normalizedNames = [...new Set(names.map(name => name.trim()).filter(Boolean))];
     if (metric && normalizedNames.length) fields[metric] = normalizedNames;
   }
   return {
