@@ -20,56 +20,27 @@ export function useMonitorExport(selectedIds: number[], capabilities: Pick<Monit
   const { message } = App.useApp();
   const { t } = useTranslation();
   const { canExport } = capabilities;
-  const active = useRef<ExportOwner | null>(null);
-  const generation = useRef(0);
-  const currentCanExport = useRef(canExport);
-  const mounted = useRef(true);
   const [exporting, setExporting] = useState(false);
-
-  const retire = useCallback((owner: ExportOwner) => {
-    if (active.current !== owner) return;
-    active.current = null;
-    generation.current += 1;
-    if (mounted.current) setExporting(false);
-    owner.controller.abort();
-  }, []);
-
-  useLayoutEffect(() => {
-    currentCanExport.current = canExport;
-    const owner = active.current;
-    if (!canExport && owner) retire(owner);
-  }, [canExport, retire]);
-
-  useLayoutEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      const owner = active.current;
-      if (!owner) return;
-      active.current = null;
-      generation.current += 1;
-      owner.controller.abort();
-    };
-  }, []);
+  const ownership = useMonitorExportOwnership(canExport, setExporting);
 
   const run = async (scope: MonitorExportScope, format: MonitorExportFormat) => {
     if (
-      !mounted.current ||
-      !currentCanExport.current ||
-      active.current ||
+      !ownership.mounted.current ||
+      !ownership.currentCanExport.current ||
+      ownership.active.current ||
       (scope.kind === 'selected' && scope.ids.length === 0)
     )
       return false;
     const controller = new AbortController();
-    const owner = { generation: generation.current + 1, controller };
-    generation.current = owner.generation;
-    active.current = owner;
+    const owner = { generation: ownership.generation.current + 1, controller };
+    ownership.generation.current = owner.generation;
+    ownership.active.current = owner;
     setExporting(true);
     const ownsExport = () =>
-      mounted.current &&
-      currentCanExport.current &&
-      active.current === owner &&
-      generation.current === owner.generation;
+      ownership.mounted.current &&
+      ownership.currentCanExport.current &&
+      ownership.active.current === owner &&
+      ownership.generation.current === owner.generation;
     try {
       const artifact = await requestMonitorExport(scope, format, controller.signal);
       // Abort is advisory: a retired transport may still resolve, so each
@@ -86,8 +57,8 @@ export function useMonitorExport(selectedIds: number[], capabilities: Pick<Monit
       return false;
     } finally {
       if (ownsExport()) {
-        active.current = null;
-        generation.current += 1;
+        ownership.active.current = null;
+        ownership.generation.current += 1;
         setExporting(false);
       }
     }
@@ -99,4 +70,38 @@ export function useMonitorExport(selectedIds: number[], capabilities: Pick<Monit
     exportSelected: (format: MonitorExportFormat) => run({ kind: 'selected', ids: selectedIds }, format),
     exportAll: (format: MonitorExportFormat) => run({ kind: 'all' }, format)
   };
+}
+
+function useMonitorExportOwnership(canExport: boolean, setExporting: (exporting: boolean) => void) {
+  const active = useRef<ExportOwner | null>(null);
+  const generation = useRef(0);
+  const currentCanExport = useRef(canExport);
+  const mounted = useRef(true);
+  const retire = useCallback(
+    (owner: ExportOwner) => {
+      if (active.current !== owner) return;
+      active.current = null;
+      generation.current += 1;
+      if (mounted.current) setExporting(false);
+      owner.controller.abort();
+    },
+    [setExporting]
+  );
+  useLayoutEffect(() => {
+    currentCanExport.current = canExport;
+    const owner = active.current;
+    if (!canExport && owner) retire(owner);
+  }, [canExport, retire]);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      const owner = active.current;
+      if (!owner) return;
+      active.current = null;
+      generation.current += 1;
+      owner.controller.abort();
+    };
+  }, []);
+  return { active, generation, currentCanExport, mounted };
 }

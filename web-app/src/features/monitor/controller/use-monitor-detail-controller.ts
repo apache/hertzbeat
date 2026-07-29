@@ -33,6 +33,8 @@ import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-mod
 import { useMonitorCapabilities } from './use-monitor-capabilities';
 import { monitorQueryKeys } from './monitor-query-keys';
 
+type DeleteOwner = { id: number; epoch: number; controller: AbortController };
+
 export function useMonitorDetailController() {
   const capabilities = useMonitorCapabilities();
   const queryClient = useQueryClient();
@@ -85,52 +87,23 @@ function useGrafanaDashboardDelete(
   queryClient: ReturnType<typeof useQueryClient>,
   canDeleteGrafanaDashboard: boolean
 ) {
-  type DeleteOwner = { id: number; epoch: number; controller: AbortController };
-  const operation = useRef<DeleteOwner | null>(null);
-  const epoch = useRef(0);
-  const currentId = useRef(id);
-  const currentCanDelete = useRef(canDeleteGrafanaDashboard);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(false);
-  // Retire ownership before abort so a transport that ignores cancellation cannot publish into a new route or role.
-  const retire = useCallback((owner: DeleteOwner) => {
-    if (operation.current !== owner) return;
-    operation.current = null;
-    epoch.current += 1;
-    setDeleting(false);
-    setError(false);
-    owner.controller.abort();
-  }, []);
-  useLayoutEffect(() => {
-    currentId.current = id;
-    currentCanDelete.current = canDeleteGrafanaDashboard;
-    const owner = operation.current;
-    if (owner && (!canDeleteGrafanaDashboard || owner.id !== id)) retire(owner);
-  }, [canDeleteGrafanaDashboard, id, retire]);
-  useLayoutEffect(
-    () => () => {
-      const owner = operation.current;
-      if (!owner) return;
-      operation.current = null;
-      epoch.current += 1;
-      owner.controller.abort();
-    },
-    []
-  );
+  const ownership = useGrafanaDeleteOwnership(id, canDeleteGrafanaDashboard, setDeleting, setError);
   const run = async () => {
-    const operationId = currentId.current;
-    if (!currentCanDelete.current || operationId === undefined || operation.current) return;
+    const operationId = ownership.currentId.current;
+    if (!ownership.currentCanDelete.current || operationId === undefined || ownership.operation.current) return;
     const controller = new AbortController();
-    const owner = { id: operationId, epoch: epoch.current + 1, controller };
-    epoch.current = owner.epoch;
-    operation.current = owner;
+    const owner = { id: operationId, epoch: ownership.epoch.current + 1, controller };
+    ownership.epoch.current = owner.epoch;
+    ownership.operation.current = owner;
     setDeleting(true);
     setError(false);
     const ownsOperation = () =>
-      operation.current === owner &&
-      epoch.current === owner.epoch &&
-      currentId.current === owner.id &&
-      currentCanDelete.current;
+      ownership.operation.current === owner &&
+      ownership.epoch.current === owner.epoch &&
+      ownership.currentId.current === owner.id &&
+      ownership.currentCanDelete.current;
     try {
       await deleteMonitorGrafanaDashboard(operationId, controller.signal);
       if (!ownsOperation()) return;
@@ -144,13 +117,54 @@ function useGrafanaDashboardDelete(
       if (ownsOperation() && !controller.signal.aborted) setError(true);
     } finally {
       if (ownsOperation()) {
-        operation.current = null;
-        epoch.current += 1;
+        ownership.operation.current = null;
+        ownership.epoch.current += 1;
         setDeleting(false);
       }
     }
   };
   return { deleting, error, run };
+}
+
+function useGrafanaDeleteOwnership(
+  id: number | undefined,
+  canDelete: boolean,
+  setDeleting: (deleting: boolean) => void,
+  setError: (error: boolean) => void
+) {
+  const operation = useRef<DeleteOwner | null>(null);
+  const epoch = useRef(0);
+  const currentId = useRef(id);
+  const currentCanDelete = useRef(canDelete);
+  // Retire ownership before abort so a transport that ignores cancellation cannot publish into a new route or role.
+  const retire = useCallback(
+    (owner: DeleteOwner) => {
+      if (operation.current !== owner) return;
+      operation.current = null;
+      epoch.current += 1;
+      setDeleting(false);
+      setError(false);
+      owner.controller.abort();
+    },
+    [setDeleting, setError]
+  );
+  useLayoutEffect(() => {
+    currentId.current = id;
+    currentCanDelete.current = canDelete;
+    const owner = operation.current;
+    if (owner && (!canDelete || owner.id !== id)) retire(owner);
+  }, [canDelete, id, retire]);
+  useLayoutEffect(
+    () => () => {
+      const owner = operation.current;
+      if (!owner) return;
+      operation.current = null;
+      epoch.current += 1;
+      owner.controller.abort();
+    },
+    []
+  );
+  return { operation, epoch, currentId, currentCanDelete };
 }
 
 function resolveMonitorDetail(

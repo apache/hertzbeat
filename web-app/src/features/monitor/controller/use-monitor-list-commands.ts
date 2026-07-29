@@ -20,22 +20,12 @@ import { App } from 'antd';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { deleteMonitorGrafanaDashboards, mutateMonitors } from '../api/monitor-api';
 import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import { type MonitorAction, type MonitorPage } from '../model/monitor-contract';
-import type { MonitorWriteVerification } from '../model/monitor-write-verification';
-import { verifyMonitorMutation, type MonitorDetailCacheEvidence } from './monitor-command-verification';
-import { reconcileFailedMonitorCopy } from './monitor-copy-failure-reconciliation';
-import { monitorQueryKeys } from './monitor-query-keys';
+import { executeMonitorListOperation, refreshMonitorList, type ActiveListOperation } from './monitor-list-operation';
 import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
 
-type ActiveListOperation = {
-  action: MonitorAction;
-  source: string;
-  token: number;
-  controller: AbortController;
-};
 export function useMonitorListCommands(
   source: string,
   reread: () => Promise<MonitorPage>,
@@ -66,29 +56,15 @@ export function useMonitorListCommands(
     const operation = { action, source, token: ++sequence.current, controller: new AbortController() };
     activeOperationRef.current = operation;
     setBusyOperation(operation);
+    const owns = () => ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation);
     try {
-      await mutateMonitors(action, ids, operation.controller.signal);
-      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
-      const verification = await verifyMonitorMutation(action, ids, operation.controller.signal);
-      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
-      const grafanaCleanupFailed =
-        action === 'delete' ? await deleteMonitorGrafanaDashboards(ids, operation.controller.signal) : false;
-      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
-      publishMonitorDetailEvidence(queryClient, verification);
-      selection.remove(ids);
-      notifyCommittedMutation(verification, message, t);
-      if (grafanaCleanupFailed) void message.warning(t('monitor.grafana.cleanupFailure'));
-      // The mutation is already committed at this point. A failed list refresh
-      // must surface as read evidence, not rewrite a successful command as failed.
-      try {
-        await reread();
-      } catch {
-        return;
-      }
-    } catch (error) {
-      if (!ownsListOperation(activeOperationRef.current, currentSourceRef.current, operation)) return;
-      void message.error(t('monitorActions.failed'));
-      await reconcileFailedMonitorCopy(action, error, reread);
+      await executeMonitorListOperation(operation, ids, owns, {
+        queryClient,
+        removeSelection: selection.remove,
+        reread,
+        message,
+        t
+      });
     } finally {
       releaseListOperation(source, operation, currentSourceRef, activeOperationRef, setBusyOperation);
     }
@@ -101,15 +77,6 @@ export function useMonitorListCommands(
     run,
     runBulk: (action: MonitorAction) => run(action, selection.validatedIds())
   };
-}
-
-async function refreshMonitorList(reread: () => Promise<MonitorPage>) {
-  try {
-    await reread();
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function canStartListCommand(
@@ -197,28 +164,4 @@ function releaseListOperation(
   if (currentSourceRef.current === source) {
     setBusyOperation(current => (current?.token === operation.token ? undefined : current));
   }
-}
-
-function notifyCommittedMutation(
-  verification: MonitorWriteVerification<unknown>,
-  message: ReturnType<typeof App.useApp>['message'],
-  t: ReturnType<typeof useTranslation>['t']
-) {
-  void message.success(t('monitorActions.success'));
-  if (verification.kind === 'unavailable') void message.warning(t('common.unavailable'));
-  if (verification.kind === 'error') void message.error(t('common.routeError.description'));
-}
-
-function publishMonitorDetailEvidence(
-  queryClient: ReturnType<typeof useQueryClient>,
-  verification: MonitorWriteVerification<MonitorDetailCacheEvidence[]>
-) {
-  if (!('evidence' in verification) || !verification.evidence) return;
-  verification.evidence.forEach(evidence => {
-    if (evidence.kind === 'detail') {
-      queryClient.setQueryData(monitorQueryKeys.detail(evidence.detail.monitor.id), evidence.detail);
-    } else {
-      queryClient.removeQueries({ queryKey: monitorQueryKeys.detail(evidence.id), exact: true });
-    }
-  });
 }

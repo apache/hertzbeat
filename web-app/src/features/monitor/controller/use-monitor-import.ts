@@ -125,10 +125,7 @@ function useMonitorImportOperation(
     setBusy(true);
     setFailure(null);
     const owns = () =>
-      mounted.current &&
-      currentCanImport.current &&
-      active.current === owner &&
-      generation.current === owner.generation;
+      ownsMonitorImport(mounted.current, currentCanImport.current, active.current, generation.current, owner);
     return executeMonitorImport(file, {
       owner,
       owns,
@@ -155,6 +152,16 @@ function useMonitorImportOperation(
     },
     execute
   };
+}
+
+function ownsMonitorImport(
+  mounted: boolean,
+  canImport: boolean,
+  active: ImportOwner | null,
+  generation: number,
+  owner: ImportOwner
+) {
+  return mounted && canImport && active === owner && generation === owner.generation;
 }
 
 function useMonitorImportRetirement(canImport: boolean, retirement: ImportRetirement) {
