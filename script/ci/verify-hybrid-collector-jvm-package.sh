@@ -50,6 +50,11 @@ for required in config/application.yml README.md LICENSE NOTICE; do
     exit 1
   fi
 done
+root_jars=$(find "$root" -mindepth 1 -maxdepth 1 -type f -iname '*.jar' -print)
+if [ "$(printf '%s\n' "$root_jars" | sed '/^$/d' | wc -l | tr -d ' ')" -ne 1 ]; then
+  echo "JVM archive must contain exactly one root JAR" >&2
+  exit 1
+fi
 application_jars=$(find "$root" -mindepth 1 -maxdepth 1 -type f \
   -name 'apache-hertzbeat-collector-*.jar' ! -name 'apache-hertzbeat-collector-native-*.jar' -print)
 if [ "$(printf '%s\n' "$application_jars" | sed '/^$/d' | wc -l | tr -d ' ')" -ne 1 ]; then

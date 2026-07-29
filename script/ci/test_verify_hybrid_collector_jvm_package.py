@@ -173,6 +173,22 @@ class JvmPackageVerifierTest(unittest.TestCase):
         )
         self.assertNotEqual(0, self.verify(disguised_hybrid, "generic").returncode)
 
+    def test_archive_rejects_every_additional_root_jar(self) -> None:
+        for extra_name in (
+            "stale-build-output.jar",
+            "apache-hertzbeat-collector-native-2.0.0.jar",
+        ):
+            with self.subTest(extra_name=extra_name):
+                entries = {
+                    **base_entries(),
+                    f"{ROOT}/{extra_name}": zip_bytes({
+                        "META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n",
+                    }),
+                }
+                archive = self.archive(f"extra-{extra_name}.tar.gz", entries)
+
+                self.assertNotEqual(0, self.verify(archive, "generic").returncode)
+
 
 if __name__ == "__main__":
     unittest.main()

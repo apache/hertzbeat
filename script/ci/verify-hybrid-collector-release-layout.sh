@@ -165,6 +165,22 @@ if [ -z "$verify_line" ] || [ -z "$extract_line" ] || [ "$verify_line" -ge "$ext
   exit 1
 fi
 
+for descriptor in script/assembly/collector/assembly.xml \
+  script/assembly/collector/assembly-macos-arm64.xml \
+  script/assembly/collector/assembly-macos-amd64.xml \
+  script/assembly/collector/assembly-linux-arm64.xml \
+  script/assembly/collector/assembly-linux-amd64.xml \
+  script/assembly/collector/assembly-windows-64.xml; do
+  if [ "$(grep -Fc '<include>${project.build.finalName}.jar</include>' "$descriptor")" -ne 1 ]; then
+    echo "JVM descriptor must select exactly the application build artifact: $descriptor" >&2
+    exit 1
+  fi
+  if grep -Fq '<include>*.jar</include>' "$descriptor"; then
+    echo "JVM descriptor must not select arbitrary target JARs: $descriptor" >&2
+    exit 1
+  fi
+done
+
 for descriptor in script/assembly/collector/assembly-macos-arm64.xml \
   script/assembly/collector/assembly-macos-amd64.xml \
   script/assembly/collector/assembly-linux-arm64.xml \
