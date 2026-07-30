@@ -102,13 +102,13 @@ public class UniSmsClientImpl implements SmsClient {
             String payload = JsonUtil.toJson(params);
             httpPost.setEntity(new StringEntity(payload, StandardCharsets.UTF_8));
 
-            log.info("Sending SMS request to UniSMS, payload: {}, url: {}", payload, url);
+            log.debug("Sending SMS request via UniSMS");
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                handleResponse(response, receiver.getPhone());
+                handleResponse(response);
             }
         } catch (Exception e) {
-            log.error("Failed to send SMS via UniSMS: {}", e.getMessage());
+            log.error("Failed to send SMS via UniSMS");
             throw new SendMessageException(e.getMessage());
         }
     }
@@ -145,11 +145,11 @@ public class UniSmsClientImpl implements SmsClient {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
 
-    private void handleResponse(CloseableHttpResponse response, String phone) throws IOException {
+    private void handleResponse(CloseableHttpResponse response) throws IOException {
         int statusCode = response.getStatusLine().getStatusCode();
         String responseBody = EntityUtils.toString(response.getEntity());
 
-        log.info("UniSMS response status: {}, body: {}", statusCode, responseBody);
+        log.debug("UniSMS response status: {}", statusCode);
 
         if (statusCode != 200) {
             throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
@@ -162,7 +162,7 @@ public class UniSmsClientImpl implements SmsClient {
             throw new SendMessageException(code + ":" + message);
         }
 
-        log.info("Successfully sent SMS to phone: {}", phone);
+        log.info("Successfully sent SMS via UniSMS");
     }
 
     @Override

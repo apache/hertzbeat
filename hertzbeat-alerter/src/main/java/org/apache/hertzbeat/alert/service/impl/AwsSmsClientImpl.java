@@ -40,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -116,10 +115,10 @@ public class AwsSmsClientImpl implements SmsClient {
             URI requestUri = new URI(endpoint);
 
             HttpPost httpPost = createHttpPost(requestUri, amzDate, payloadInString);
-            log.info("Sending AWS SMS request to {}", requestUri + "," + "headers: " + Arrays.toString(httpPost.getAllHeaders()));
-            executeRequest(httpClient, httpPost, phoneNumber);
+            log.debug("Sending SMS request via AWS");
+            executeRequest(httpClient, httpPost);
         } catch (Exception e) {
-            log.warn("Failed to send SMS: {}", e.getMessage());
+            log.warn("Failed to send SMS via AWS");
             throw new SendMessageException(e.getMessage());
         }
     }
@@ -149,11 +148,11 @@ public class AwsSmsClientImpl implements SmsClient {
         return httpPost;
     }
 
-    private void executeRequest(CloseableHttpClient httpClient, HttpPost httpPost, String phoneNumber) throws Exception {
+    private void executeRequest(CloseableHttpClient httpClient, HttpPost httpPost) throws Exception {
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             int statusCode = response.getStatusLine().getStatusCode();
             String responseBody = EntityUtils.toString(response.getEntity());
-            log.info("SMS response status: {}, body: {}", statusCode, responseBody);
+            log.debug("AWS SMS response status: {}", statusCode);
 
             if (statusCode != 200) {
                 throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
@@ -170,7 +169,7 @@ public class AwsSmsClientImpl implements SmsClient {
             }
 
             String messageId = responseNode.asText();
-            log.info("Successfully sent SMS to phone: {}, messageId: {}", phoneNumber, messageId);
+            log.info("Successfully sent SMS via AWS, messageId: {}", messageId);
         }
     }
 
@@ -285,5 +284,4 @@ public class AwsSmsClientImpl implements SmsClient {
 
     }
 }
-
 

@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,14 +153,14 @@ public class AlibabaSmsClientImpl implements SmsClient {
             httpPost.setHeader("x-acs-content-sha256",
                     CryptoUtils.sha256Hex(""));
 
-            log.info("Sending Alibaba SMS request to {}", url + ", params: " + templateParam + "headers: " + Arrays.toString(httpPost.getAllHeaders()));
+            log.debug("Sending SMS request via Alibaba Cloud");
 
             // Send request and handle response
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
 
-                log.info("SMS response status: {}, body: {}", statusCode, responseBody);
+                log.debug("Alibaba Cloud SMS response status: {}", statusCode);
 
                 if (statusCode != 200) {
                     throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
@@ -174,10 +173,10 @@ public class AlibabaSmsClientImpl implements SmsClient {
                     throw new SendMessageException(code + ":" + message);
                 }
 
-                log.info("Successfully sent SMS to phone: {}", phoneNumber);
+                log.info("Successfully sent SMS via Alibaba Cloud");
             }
         } catch (Exception e) {
-            LogUtil.warn(logger, "Failed to send SMS: {0}", e.getMessage());
+            LogUtil.warn(logger, "Failed to send SMS via Alibaba Cloud");
             throw new SendMessageException(e.getMessage());
         }
     }
