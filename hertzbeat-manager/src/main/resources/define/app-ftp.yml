@@ -106,6 +106,31 @@ params:
     type: boolean
     # required-true or false
     required: true
+  - field: hostKeyFingerprint
+    name:
+      zh-CN: SFTP主机密钥指纹（必填，可填写多个）
+      en-US: SFTP Host Key Fingerprints (Required, Multiple Allowed)
+      ja-JP: SFTPホストキーフィンガープリント（必須、複数可）
+    type: textarea
+    limit: 2048
+    placeholder: 'SHA256:... (one per line; verify through a trusted channel)'
+    required: false
+    hide: true
+    depend:
+      ssl:
+        - true
+  - field: insecureSkipVerify
+    name:
+      zh-CN: 危险：临时跳过SFTP主机密钥验证
+      en-US: 'DANGER: Temporarily Skip SFTP Host Key Verification'
+      ja-JP: 危険：SFTPホストキー検証を一時的にスキップ
+    type: boolean
+    defaultValue: false
+    required: false
+    hide: true
+    depend:
+      ssl:
+        - true
 # collect metrics config list
 metrics:
   # metrics - basic
@@ -144,3 +169,5 @@ metrics:
       direction: ^_^direction^_^
       timeout: ^_^timeout^_^
       ssl: ^_^ssl^_^
+      hostKeyFingerprint: ^_^hostKeyFingerprint^_^
+      insecureSkipVerify: ^_^insecureSkipVerify^_^

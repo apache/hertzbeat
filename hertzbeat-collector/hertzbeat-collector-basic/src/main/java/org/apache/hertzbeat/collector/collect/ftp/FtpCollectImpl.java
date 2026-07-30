@@ -18,7 +18,11 @@
 package org.apache.hertzbeat.collector.collect.ftp;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,7 +36,10 @@ import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
+import org.apache.sshd.client.keyverifier.ServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.sftp.client.SftpClient;
 import org.apache.sshd.sftp.client.SftpClientFactory;
 import org.springframework.util.Assert;
@@ -60,6 +67,11 @@ public class FtpCollectImpl extends AbstractCollect {
         Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
         Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
         Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
+        if (Boolean.parseBoolean(ftpProtocol.getSsl())
+                && !Boolean.parseBoolean(ftpProtocol.getInsecureSkipVerify())) {
+            Assert.hasText(ftpProtocol.getHostKeyFingerprint(),
+                    "Sftp Protocol host key fingerprint is required.");
+        }
     }
 
     @Override
@@ -202,6 +214,7 @@ public class FtpCollectImpl extends AbstractCollect {
         SshClient client = null;
         try {
             client = SshClient.setUpDefaultClient();
+            client.setServerKeyVerifier(createServerKeyVerifier(ftpProtocol));
             session = connect(client, ftpProtocol);
             sftpClient = SftpClientFactory.instance().createSftpClient(session);
             Map<String, String> valueMap = collectValue(sftpClient, ftpProtocol);
@@ -228,5 +241,36 @@ public class FtpCollectImpl extends AbstractCollect {
                 log.error("[SFTPClient] error while closing: {}",  CommonUtil.getMessageFromThrowable(e), e);
             }
         }
+    }
+
+    static ServerKeyVerifier createServerKeyVerifier(FtpProtocol ftpProtocol) {
+        if (Boolean.parseBoolean(ftpProtocol.getInsecureSkipVerify())) {
+            log.warn("[SFTPClient] host key verification is disabled for {}:{}; "
+                            + "configure trusted host key fingerprints before disabling compatibility mode",
+                    ftpProtocol.getHost(), ftpProtocol.getPort());
+            return AcceptAllServerKeyVerifier.INSTANCE;
+        }
+        Assert.hasText(ftpProtocol.getHostKeyFingerprint(),
+                "Sftp Protocol host key fingerprint is required. "
+                        + "Obtain it through a trusted channel; see the FTP monitor guide.");
+        List<String> expectedFingerprints = Arrays.stream(ftpProtocol.getHostKeyFingerprint()
+                        .split("[,;\\r\\n]+"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+        Assert.notEmpty(expectedFingerprints,
+                "Sftp Protocol host key fingerprint list must not be empty.");
+        return (clientSession, remoteAddress, serverKey) -> {
+            String actualFingerprint = KeyUtils.getFingerPrint(serverKey);
+            boolean matches = actualFingerprint != null && expectedFingerprints.stream()
+                    .anyMatch(expectedFingerprint -> MessageDigest.isEqual(
+                            expectedFingerprint.getBytes(StandardCharsets.UTF_8),
+                            actualFingerprint.getBytes(StandardCharsets.UTF_8)));
+            if (!matches) {
+                log.warn("[SFTPClient] server host key did not match for {}:{}",
+                        ftpProtocol.getHost(), ftpProtocol.getPort());
+            }
+            return matches;
+        };
     }
 }

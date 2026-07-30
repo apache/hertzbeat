@@ -71,6 +71,17 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
      */
     private String ssl = "false";
 
+    /**
+     * Expected SFTP server host key fingerprints, separated by commas or line
+     * breaks, for example SHA256:base64.
+     */
+    private String hostKeyFingerprint;
+
+    /**
+     * Whether SFTP host key verification is explicitly disabled.
+     */
+    private String insecureSkipVerify;
+
     @Override
     public boolean isInvalid() {
         if (!validateIpDomain(host) || !validPort(port) || StringUtils.isBlank(direction) || StringUtils.isBlank(timeout)) {
@@ -84,6 +95,17 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
                 && !"false".equalsIgnoreCase(ssl)) {
             return true;
         }
-        return "true".equalsIgnoreCase(ssl) && StringUtils.isAnyBlank(username, password);
+        if (StringUtils.isNotBlank(insecureSkipVerify)
+                && !"true".equalsIgnoreCase(insecureSkipVerify)
+                && !"false".equalsIgnoreCase(insecureSkipVerify)) {
+            return true;
+        }
+        if (!"true".equalsIgnoreCase(ssl)) {
+            return false;
+        }
+        if (StringUtils.isAnyBlank(username, password)) {
+            return true;
+        }
+        return !"true".equalsIgnoreCase(insecureSkipVerify) && StringUtils.isBlank(hostKeyFingerprint);
     }
 }

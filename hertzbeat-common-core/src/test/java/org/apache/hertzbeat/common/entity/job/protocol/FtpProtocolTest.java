@@ -46,6 +46,7 @@ class FtpProtocolTest {
                 .ssl("true")
                 .username("admin")
                 .password("secret")
+                .hostKeyFingerprint("SHA256:expected")
                 .build();
         assertFalse(protocol.isInvalid());
     }
@@ -83,6 +84,35 @@ class FtpProtocolTest {
                 .username("admin")
                 .build();
         assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWithoutHostIdentityConfiguration() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isValidSftpWithExplicitVerificationOptOut() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .insecureSkipVerify("true")
+                .build();
+        assertFalse(protocol.isInvalid());
     }
 
     @Test
