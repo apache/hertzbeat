@@ -365,6 +365,26 @@ class OtelRuntimeConfigRendererTest {
     }
 
     @Test
+    void rendersBearerAuthenticationWithoutTlsForExplicitPlaintextGateway() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setOtlpGatewayEnabled(true);
+        properties.setOtlpGatewayAllowPlaintext(true);
+        properties.setOtlpGatewayBearerToken("strong-inline-secret-token");
+        properties.setOtlpGrpcEndpoint("0.0.0.0:4317");
+        properties.setOtlpHttpEndpoint("0.0.0.0:4318");
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertEquals(2, occurrences(yaml, "auth:\n          authenticator: bearertokenauth"));
+        assertFalse(yaml.contains("        tls:"));
+        assertTrue(yaml.contains("bearertokenauth:\n    token: ${env:HERTZBEAT_OTLP_GATEWAY_TOKEN}"));
+        assertTrue(yaml.contains("extensions: [health_check, file_storage, bearertokenauth]"));
+        assertFalse(yaml.contains("strong-inline-secret-token"));
+    }
+
+    @Test
     void replacingSourcesDoesNotLeaveStaleReceiverOrPipelineReferences() throws Exception {
         Path logs = Files.createDirectories(tempDir.resolve("logs/payments"));
         OtelRuntimeProperties properties = new OtelRuntimeProperties();

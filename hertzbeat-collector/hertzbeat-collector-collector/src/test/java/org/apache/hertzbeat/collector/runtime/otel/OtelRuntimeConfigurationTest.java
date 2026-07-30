@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ class OtelRuntimeConfigurationTest {
             assertEquals(OtelRuntimeState.STOPPED, supervisor.snapshot().state());
             assertEquals(Duration.ofSeconds(5),
                     context.getBean(OtelRuntimeProperties.class).getOtlpHttpExporterTimeout());
+            assertFalse(context.getBean(OtelRuntimeProperties.class).isOtlpGatewayAllowPlaintext());
             assertTrue(context.getBean(CollectorRuntimeStatusProvider.class) instanceof OtelRuntimeStatusProvider);
         });
     }
@@ -102,6 +104,7 @@ class OtelRuntimeConfigurationTest {
         contextRunner
                 .withPropertyValues(
                         "collector.otel-runtime.otlp-gateway-enabled=true",
+                        "collector.otel-runtime.otlp-gateway-allow-plaintext=true",
                         "collector.otel-runtime.otlp-grpc-endpoint=0.0.0.0:4317",
                         "collector.otel-runtime.otlp-http-endpoint=0.0.0.0:4318",
                         "collector.otel-runtime.otlp-max-request-mi-b=8",
@@ -121,6 +124,7 @@ class OtelRuntimeConfigurationTest {
                     assertTrue(context.isRunning());
                     OtelRuntimeProperties properties = context.getBean(OtelRuntimeProperties.class);
                     assertTrue(properties.isOtlpGatewayEnabled());
+                    assertTrue(properties.isOtlpGatewayAllowPlaintext());
                     assertEquals("0.0.0.0:4317", properties.getOtlpGrpcEndpoint());
                     assertEquals(8, properties.getOtlpMaxRequestMiB());
                     assertEquals(Duration.ofSeconds(12), properties.getOtlpHttpExporterTimeout());

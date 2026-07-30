@@ -60,13 +60,7 @@ final class OtelRuntimeGatewayPolicy {
             return new ResolvedGateway(grpcEndpoint, httpEndpoint, false,
                     readTimeout, writeTimeout, idleTimeout, null, null, null, null);
         }
-        Path certificate = regularFile(properties, properties.getOtlpGatewayCertificateFile(),
-                "Gateway TLS certificate");
-        Path privateKey = regularFile(properties, properties.getOtlpGatewayPrivateKeyFile(),
-                "Gateway TLS private key");
-        ownerOnly(privateKey, "Gateway TLS private key");
-        Path clientCa = optionalRegularFile(properties, properties.getOtlpGatewayClientCaFile(),
-                "Gateway client CA");
+        ResolvedTls tls = resolveGatewayTls(properties);
         String inlineToken = properties.getOtlpGatewayBearerToken() == null
                 ? "" : properties.getOtlpGatewayBearerToken();
         Path tokenFile = optionalRegularFile(properties, properties.getOtlpGatewayBearerTokenFile(),
@@ -86,7 +80,33 @@ final class OtelRuntimeGatewayPolicy {
             validateTokenFile(tokenFile);
         }
         return new ResolvedGateway(grpcEndpoint, httpEndpoint, true,
-                readTimeout, writeTimeout, idleTimeout, certificate, privateKey, clientCa, tokenFile);
+                readTimeout, writeTimeout, idleTimeout,
+                tls.certificateFile(), tls.privateKeyFile(), tls.clientCaFile(), tokenFile);
+    }
+
+    private static ResolvedTls resolveGatewayTls(OtelRuntimeProperties properties) throws IOException {
+        Path configuredCertificate = properties.getOtlpGatewayCertificateFile();
+        Path configuredPrivateKey = properties.getOtlpGatewayPrivateKeyFile();
+        Path configuredClientCa = properties.getOtlpGatewayClientCaFile();
+        if ((configuredCertificate == null) != (configuredPrivateKey == null)) {
+            throw new IllegalArgumentException(
+                    "Gateway TLS certificate and private key must be configured together");
+        }
+        if (configuredCertificate == null) {
+            if (configuredClientCa != null) {
+                throw new IllegalArgumentException("Gateway client CA requires TLS certificate and private key");
+            }
+            if (!properties.isOtlpGatewayAllowPlaintext()) {
+                throw new IllegalArgumentException(
+                        "Gateway TLS certificate and private key are required unless plaintext is explicitly allowed");
+            }
+            return new ResolvedTls(null, null, null);
+        }
+        Path certificate = regularFile(properties, configuredCertificate, "Gateway TLS certificate");
+        Path privateKey = regularFile(properties, configuredPrivateKey, "Gateway TLS private key");
+        ownerOnly(privateKey, "Gateway TLS private key");
+        Path clientCa = optionalRegularFile(properties, configuredClientCa, "Gateway client CA");
+        return new ResolvedTls(certificate, privateKey, clientCa);
     }
 
     private static String endpoint(String value, String label) {
@@ -198,5 +218,8 @@ final class OtelRuntimeGatewayPolicy {
     record ResolvedGateway(String grpcEndpoint, String httpEndpoint, boolean enabled,
                            Duration readTimeout, Duration writeTimeout, Duration idleTimeout,
                            Path certificateFile, Path privateKeyFile, Path clientCaFile, Path bearerTokenFile) {
+    }
+
+    private record ResolvedTls(Path certificateFile, Path privateKeyFile, Path clientCaFile) {
     }
 }

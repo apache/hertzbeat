@@ -240,15 +240,17 @@ public class OtelRuntimeConfigRenderer {
         if (!gateway.enabled()) {
             return;
         }
-        yaml.append("        tls:\n")
-                .append("          cert_file: ").append(yamlScalar(gateway.certificateFile().toString())).append('\n')
-                .append("          key_file: ").append(yamlScalar(gateway.privateKeyFile().toString())).append('\n')
-                .append("          min_version: '1.2'\n")
-                .append("          reload_interval: 1m\n");
-        if (gateway.clientCaFile() != null) {
-            yaml.append("          client_ca_file: ")
-                    .append(yamlScalar(gateway.clientCaFile().toString())).append('\n')
-                    .append("          client_ca_file_reload: true\n");
+        if (gateway.certificateFile() != null) {
+            yaml.append("        tls:\n")
+                    .append("          cert_file: ").append(yamlScalar(gateway.certificateFile().toString())).append('\n')
+                    .append("          key_file: ").append(yamlScalar(gateway.privateKeyFile().toString())).append('\n')
+                    .append("          min_version: '1.2'\n")
+                    .append("          reload_interval: 1m\n");
+            if (gateway.clientCaFile() != null) {
+                yaml.append("          client_ca_file: ")
+                        .append(yamlScalar(gateway.clientCaFile().toString())).append('\n')
+                        .append("          client_ca_file_reload: true\n");
+            }
         }
         yaml.append("        auth:\n")
                 .append("          authenticator: bearertokenauth\n");
