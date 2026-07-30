@@ -66,8 +66,21 @@ python3 "$repo_root/script/ci/verify-hybrid-collector-jvm-runtime-assets.py" "$r
 
 case "$platform" in
   windows-*)
-    if [ ! -f "$root/bin/startup.bat" ] || [ ! -f "$root/bin/shutdown.bat" ]; then
+    startup=$root/bin/startup.bat
+    if [ ! -f "$startup" ] || [ ! -f "$root/bin/shutdown.bat" ]; then
       echo "JVM archive is missing its Windows startup or shutdown launcher" >&2
+      exit 1
+    fi
+    if ! python3 - "$startup" <<'PY'
+import pathlib
+import sys
+
+expected = r"set CLASSPATH=%DEPLOY_DIR%\%JAR_NAME%;%LIB_PATH%\*;%EXT_LIB_PATH%\*"
+lines = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+sys.exit(0 if expected in lines else 1)
+PY
+    then
+      echo "JVM Windows startup launcher must include root, lib\\*, and ext-lib\\* in its classpath" >&2
       exit 1
     fi
     ;;
@@ -80,6 +93,10 @@ case "$platform" in
     fi
     if [ ! -x "$startup" ] || [ ! -x "$shutdown" ]; then
       echo "JVM startup and shutdown launchers must be executable" >&2
+      exit 1
+    fi
+    if ! grep -Fqx 'CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"' "$startup"; then
+      echo "JVM startup launcher must include root, lib/*, and ext-lib/* in its classpath" >&2
       exit 1
     fi
     ;;

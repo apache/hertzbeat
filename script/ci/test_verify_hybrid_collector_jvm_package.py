@@ -87,8 +87,18 @@ def base_entries() -> dict[str, bytes]:
         f"{ROOT}/README.md": b"readme",
         f"{ROOT}/LICENSE": b"license",
         f"{ROOT}/NOTICE": b"notice",
-        f"{ROOT}/bin/startup.sh": b"#!/bin/sh\n",
+        f"{ROOT}/bin/startup.sh": (
+            b"#!/bin/sh\n"
+            b'LIB_PATH="$DEPLOY_DIR/lib"\n'
+            b'CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"\n'
+        ),
         f"{ROOT}/bin/shutdown.sh": b"#!/bin/sh\n",
+        f"{ROOT}/bin/startup.bat": (
+            b"@echo off\r\n"
+            b"set LIB_PATH=%DEPLOY_DIR%\\lib\r\n"
+            b"set CLASSPATH=%DEPLOY_DIR%\\%JAR_NAME%;%LIB_PATH%\\*;%EXT_LIB_PATH%\\*\r\n"
+        ),
+        f"{ROOT}/bin/shutdown.bat": b"@echo off\r\n",
         f"{ROOT}/apache-hertzbeat-collector-2.0.0.jar": zip_bytes({
             "META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n",
         }),
@@ -188,6 +198,40 @@ class JvmPackageVerifierTest(unittest.TestCase):
                 archive = self.archive(f"extra-{extra_name}.tar.gz", entries)
 
                 self.assertNotEqual(0, self.verify(archive, "generic").returncode)
+
+    def test_archive_requires_startup_script_to_load_packaged_dependencies(self) -> None:
+        entries = base_entries()
+        entries[f"{ROOT}/bin/startup.sh"] = (
+            b"#!/bin/sh\n"
+            b'CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"\n'
+        )
+        archive = self.archive("missing-lib-classpath.tar.gz", entries)
+
+        result = self.verify(archive, "generic")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("lib/*", result.stderr)
+
+    def test_windows_archive_requires_startup_script_to_load_packaged_dependencies(self) -> None:
+        entries = {**base_entries(), **runtime_entries("windows-amd64")}
+        entries[f"{ROOT}/bin/startup.bat"] = (
+            b"@echo off\r\n"
+            b"set CLASSPATH=%DEPLOY_DIR%\\%JAR_NAME%;%EXT_LIB_PATH%\\*\r\n"
+        )
+        archive = self.archive("windows-missing-lib-classpath.tar.gz", entries)
+
+        result = self.verify(archive, "windows-amd64")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("lib\\*", result.stderr)
+
+    def test_windows_archive_accepts_exact_classpath_with_crlf_line_endings(self) -> None:
+        entries = {**base_entries(), **runtime_entries("windows-amd64")}
+        archive = self.archive("windows-crlf-classpath.tar.gz", entries)
+
+        result = self.verify(archive, "windows-amd64")
+
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 if __name__ == "__main__":
