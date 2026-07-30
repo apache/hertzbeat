@@ -22,6 +22,7 @@ package org.apache.hertzbeat.warehouse.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -47,6 +48,9 @@ class PromqlMetricQueryRepositoryTest {
         MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of());
 
         assertFalse(repository.hasPromqlExecutor());
+        assertEquals(
+                "promql_executor_unavailable",
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s").errorMessage());
     }
 
     @Test
@@ -67,5 +71,31 @@ class PromqlMetricQueryRepositoryTest {
         assertEquals(queryData, result.results());
         assertEquals(null, result.errorMessage());
         verify(promqlQueryExecutor).query(any(DatasourceQuery.class));
+    }
+
+    @Test
+    void mapsNullNonSuccessAndExceptionsToStableSafeErrorCodes() {
+        when(promqlQueryExecutor.support("promql")).thenReturn(true);
+        when(promqlQueryExecutor.getDatasource()).thenReturn("Greptime-promql");
+        when(promqlQueryExecutor.query(any(DatasourceQuery.class)))
+                .thenReturn(new DatasourceQueryData(
+                        "ref", 503, "SELECT secret FROM metrics WHERE endpoint='/private'", List.of()))
+                .thenReturn(null)
+                .thenThrow(new IllegalStateException("connection failed for collector-secret"));
+        MetricQueryRepository repository = new PromqlMetricQueryRepository(List.of(promqlQueryExecutor));
+
+        MetricQueryRepository.PromqlRangeQueryResult nonSuccess =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+        MetricQueryRepository.PromqlRangeQueryResult nullResult =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+        MetricQueryRepository.PromqlRangeQueryResult exception =
+                repository.queryPromqlRange("ref", "up", 1000L, 2000L, "30s");
+
+        assertNull(nonSuccess.results());
+        assertEquals("promql_query_failed", nonSuccess.errorMessage());
+        assertNull(nullResult.results());
+        assertEquals("promql_query_failed", nullResult.errorMessage());
+        assertNull(exception.results());
+        assertEquals("promql_query_failed", exception.errorMessage());
     }
 }

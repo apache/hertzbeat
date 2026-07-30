@@ -46,7 +46,7 @@ public class PromqlMetricQueryRepository implements MetricQueryRepository {
     public PromqlRangeQueryResult queryPromqlRange(String refId, String query, long start, long end, String step) {
         QueryExecutor queryExecutor = resolvePromqlExecutor();
         if (queryExecutor == null) {
-            return new PromqlRangeQueryResult(null, null, null);
+            return new PromqlRangeQueryResult(null, null, PROMQL_EXECUTOR_UNAVAILABLE);
         }
         DatasourceQuery datasourceQuery = DatasourceQuery.builder()
                 .refId(refId)
@@ -60,9 +60,19 @@ public class PromqlMetricQueryRepository implements MetricQueryRepository {
                 .build();
         try {
             DatasourceQueryData results = queryExecutor.query(datasourceQuery);
+            if (results == null) {
+                return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, PROMQL_QUERY_FAILED);
+            }
+            Integer status = results.getStatus();
+            if (status == null || status < 200 || status >= 300) {
+                return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, PROMQL_QUERY_FAILED);
+            }
             return new PromqlRangeQueryResult(queryExecutor.getDatasource(), results, null);
         } catch (Exception ex) {
-            return new PromqlRangeQueryResult(queryExecutor.getDatasource(), null, ex.getMessage());
+            return new PromqlRangeQueryResult(
+                    queryExecutor.getDatasource(),
+                    null,
+                    PROMQL_QUERY_FAILED);
         }
     }
 

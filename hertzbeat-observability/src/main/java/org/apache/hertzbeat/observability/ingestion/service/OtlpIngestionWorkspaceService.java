@@ -42,9 +42,48 @@ public interface OtlpIngestionWorkspaceService {
                                             String temporalAggregation, String step, String limit,
                                             String operationName);
 
+    default OtlpMetricsConsoleDto getMetricsConsole(
+            Long entityId,
+            String entityType,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String collectorId,
+            String instance,
+            String endpoint,
+            String query,
+            String filter,
+            String groupBy,
+            String aggregation,
+            String temporalAggregation,
+            String step,
+            String limit,
+            String operationName) {
+        return getMetricsConsole(entityId, entityType, start, end, serviceName, serviceNamespace, environment, query,
+                filter, groupBy, aggregation, temporalAggregation, step, limit, operationName);
+    }
+
     OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
                                                 String serviceName, String serviceNamespace, String environment,
                                                 String limit);
+
+    default OtlpMetricsInventoryDto getMetricsInventory(
+            Long entityId,
+            String entityType,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String collectorId,
+            String instance,
+            String endpoint,
+            String limit) {
+        return getMetricsInventory(
+                entityId, entityType, start, end, serviceName, serviceNamespace, environment, limit);
+    }
 
     OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
                                             String serviceNamespace, String environment, String filter,

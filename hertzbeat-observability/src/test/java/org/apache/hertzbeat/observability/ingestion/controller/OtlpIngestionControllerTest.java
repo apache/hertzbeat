@@ -290,7 +290,10 @@ class OtlpIngestionControllerTest {
                         java.util.Map.of("__name__", "http_server_duration", "service_name", "checkout")
                 ))
         );
-        when(otlpIngestionWorkspaceService.getMetricsInventory(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod", "20"))
+        when(collectorScopedMetricsQueryService.inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                        "collector-a", "checkout-01", "/orders", "20")))
                 .thenReturn(inventory);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/inventory")
@@ -301,6 +304,9 @@ class OtlpIngestionControllerTest {
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
+                        .param("collectorId", "collector-a")
+                        .param("instance", "checkout-01")
+                        .param("endpoint", "/orders")
                         .param("limit", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
@@ -312,8 +318,10 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.items[0].timeSeriesCount").value(2))
                 .andExpect(jsonPath("$.data.items[0].labels.service_name").value("checkout"));
 
-        verify(otlpIngestionWorkspaceService)
-                .getMetricsInventory(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod", "20");
+        verify(collectorScopedMetricsQueryService).inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                        "collector-a", "checkout-01", "/orders", "20"));
     }
 
     @Test

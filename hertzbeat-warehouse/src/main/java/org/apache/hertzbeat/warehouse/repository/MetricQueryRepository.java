@@ -26,6 +26,9 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
  */
 public interface MetricQueryRepository {
 
+    String PROMQL_EXECUTOR_UNAVAILABLE = "promql_executor_unavailable";
+    String PROMQL_QUERY_FAILED = "promql_query_failed";
+
     /**
      * Whether a promql-capable metric query executor exists.
      *
@@ -57,5 +60,12 @@ public interface MetricQueryRepository {
             DatasourceQueryData results,
             String errorMessage
     ) {
+        public PromqlRangeQueryResult {
+            if (errorMessage != null
+                    && !PROMQL_EXECUTOR_UNAVAILABLE.equals(errorMessage)
+                    && !PROMQL_QUERY_FAILED.equals(errorMessage)) {
+                errorMessage = PROMQL_QUERY_FAILED;
+            }
+        }
     }
 }

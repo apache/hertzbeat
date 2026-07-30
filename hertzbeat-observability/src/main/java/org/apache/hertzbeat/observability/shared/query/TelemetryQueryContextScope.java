@@ -50,6 +50,11 @@ public record TelemetryQueryContextScope(String instance, String endpoint) {
         return appendExactFilter(scoped, OtlpMetricSemanticLabels.HTTP_ROUTE, endpoint);
     }
 
+    public void validateMetricFilter(String filter) {
+        rejectDuplicateFilter(filter, OtlpMetricSemanticLabels.SERVICE_INSTANCE_ID, instance);
+        rejectDuplicateFilter(filter, OtlpMetricSemanticLabels.HTTP_ROUTE, endpoint);
+    }
+
     public String applyResourceFilter(String filter) {
         return appendExactFilter(filter, OtlpResourceSemanticAttributes.SERVICE_INSTANCE_ID, instance);
     }
@@ -63,11 +68,15 @@ public record TelemetryQueryContextScope(String instance, String endpoint) {
         if (!StringUtils.hasText(value)) {
             return normalizedFilter;
         }
-        if (containsFilterKey(normalizedFilter, key)) {
-            throw new ObservabilityQueryRequestException();
-        }
+        rejectDuplicateFilter(normalizedFilter, key, value);
         String exactFilter = key + "=\"" + value + "\"";
         return StringUtils.hasText(normalizedFilter) ? normalizedFilter + " and " + exactFilter : exactFilter;
+    }
+
+    private static void rejectDuplicateFilter(String filter, String key, String value) {
+        if (StringUtils.hasText(value) && containsFilterKey(filter, key)) {
+            throw new ObservabilityQueryRequestException();
+        }
     }
 
     private static String normalizeInstance(String value) {
