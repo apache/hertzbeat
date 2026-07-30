@@ -19,10 +19,14 @@
 
 package org.apache.hertzbeat.common.entity.message;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test case for {@link CollectRep}
@@ -41,6 +45,24 @@ public class CollectRepTest {
         field2.setName(name2);
        
         assertEquals(field1.equals(field2), result);
+    }
+
+    @Test
+    void boundsArrowStringValueSize() {
+        String oversizedValue = "a".repeat(100_000);
+        CollectRep.Field field = CollectRep.Field.newBuilder()
+                .setName("payload")
+                .setType(1)
+                .build();
+        CollectRep.ValueRow row = new CollectRep.ValueRow(List.of(oversizedValue));
+
+        try (CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .addField(field)
+                .addValueRow(row)
+                .build()) {
+            String storedValue = metricsData.getValues().getFirst().getColumns(0);
+            assertTrue(storedValue.getBytes(StandardCharsets.UTF_8).length <= 32_700);
+        }
     }
 
 }
