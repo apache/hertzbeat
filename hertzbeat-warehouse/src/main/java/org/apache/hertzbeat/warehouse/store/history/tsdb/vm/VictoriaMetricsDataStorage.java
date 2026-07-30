@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -99,10 +100,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
-    private static final Set<String> RESERVED_LABEL_KEYS = Set.of(
+    private static final Set<String> MANAGED_LABEL_KEYS = Set.of(
         LABEL_KEY_NAME,
-        LABEL_KEY_JOB,
-        LABEL_KEY_INSTANCE,
         LABEL_KEY_MONITOR_ID,
         MONITOR_METRICS_KEY,
         MONITOR_METRIC_KEY);
@@ -176,6 +175,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse victoria-metrics] flush metrics data {} {} {} is null, ignore.",
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
+            return;
+        }
+        Set<String> managedLabelCollisions = findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
+                    + "HertzBeat-managed keys {}.", metricsData.getId(), managedLabelCollisions);
             return;
         }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
@@ -264,11 +269,21 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         if (ObjectUtils.isEmpty(customizedLabels)) {
             return;
         }
-        customizedLabels.forEach((key, value) -> {
-            if (!RESERVED_LABEL_KEYS.contains(key)) {
-                labels.put(key, value);
-            }
-        });
+        Set<String> managedLabelCollisions = findManagedLabelCollisions(customizedLabels);
+        if (!managedLabelCollisions.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Custom labels contain HertzBeat-managed keys " + managedLabelCollisions);
+        }
+        labels.putAll(customizedLabels);
+    }
+
+    static Set<String> findManagedLabelCollisions(Map<String, String> customizedLabels) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return Set.of();
+        }
+        Set<String> collisions = new TreeSet<>(customizedLabels.keySet());
+        collisions.retainAll(MANAGED_LABEL_KEYS);
+        return collisions;
     }
 
     @Override

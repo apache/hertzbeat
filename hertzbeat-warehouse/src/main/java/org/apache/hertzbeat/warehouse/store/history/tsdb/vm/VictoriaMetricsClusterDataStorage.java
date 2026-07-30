@@ -185,6 +185,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
+        var managedLabelCollisions =
+                VictoriaMetricsDataStorage.findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
+                    + "HertzBeat-managed keys {}.", metricsData.getId(), managedLabelCollisions);
+            return;
+        }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto;

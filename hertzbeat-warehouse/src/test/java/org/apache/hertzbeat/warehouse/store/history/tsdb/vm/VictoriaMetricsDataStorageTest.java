@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,18 +49,20 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test case for {@link VictoriaMetricsDataStorage}
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 class VictoriaMetricsDataStorageTest {
 
@@ -75,6 +78,7 @@ class VictoriaMetricsDataStorageTest {
     private VictoriaMetricsDataStorage victoriaMetricsDataStorage;
 
     private final AtomicInteger postForEntityCount = new AtomicInteger(0);
+    private final AtomicReference<String> lastPayload = new AtomicReference<>();
 
     @BeforeEach
     void setUp() {
@@ -99,6 +103,10 @@ class VictoriaMetricsDataStorageTest {
                 eq(String.class)
         )).thenAnswer(invocation -> {
             postForEntityCount.incrementAndGet();
+            HttpEntity<?> httpEntity = invocation.getArgument(1);
+            if (httpEntity.getBody() instanceof String payload) {
+                lastPayload.set(payload);
+            }
             return responseEntity;
         });
     }
@@ -187,33 +195,47 @@ class VictoriaMetricsDataStorageTest {
     }
 
     @Test
-    void customizedLabelsDoNotReplaceStorageIdentity() {
-        Map<String, String> labels = new HashMap<>(Map.of(
-                "__name__", "cpu_usage",
-                "job", "linux",
-                "instance", "server-01",
-                "__monitor_id__", "42",
-                "__metrics__", "cpu",
-                "__metric__", "usage"));
-        Map<String, String> customizedLabels = Map.of(
-                "__name__", "other_metric",
-                "job", "other_job",
-                "instance", "server-02",
-                "__monitor_id__", "99",
-                "__metrics__", "memory",
-                "__metric__", "free",
-                "region", "west");
+    void existingJobAndInstanceLabelsKeepTheirSeriesIdentity() {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
+        CollectRep.MetricsData metricsData = generateMockedMetricsData();
+        when(metricsData.getLabels()).thenReturn(Map.of(
+                "job", "custom-job",
+                "instance", "custom-instance",
+                "region", "west"));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
 
-        VictoriaMetricsDataStorage.addCustomizedLabels(labels, customizedLabels);
+        victoriaMetricsDataStorage.saveData(metricsData);
 
-        assertThat(labels)
-                .containsEntry("__name__", "cpu_usage")
-                .containsEntry("job", "linux")
-                .containsEntry("instance", "server-01")
-                .containsEntry("__monitor_id__", "42")
-                .containsEntry("__metrics__", "cpu")
-                .containsEntry("__metric__", "usage")
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
+        VictoriaMetricsDataStorage.VictoriaMetricsContent content =
+                JsonUtil.fromJson(lastPayload.get().trim(), VictoriaMetricsDataStorage.VictoriaMetricsContent.class);
+        assertThat(content.getMetric())
+                .containsEntry("job", "custom-job")
+                .containsEntry("instance", "custom-instance")
                 .containsEntry("region", "west");
+    }
+
+    @Test
+    void managedLabelCollisionsRejectTheBatchWithDiagnostics(CapturedOutput output) {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
+        CollectRep.MetricsData metricsData = generateMockedMetricsData();
+        when(metricsData.getLabels()).thenReturn(Map.of(
+                "__name__", "custom-name",
+                "__monitor_id__", "custom-monitor"));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.saveData(metricsData);
+
+        assertThat(postForEntityCount.get()).isZero();
+        assertThat(output.getAll())
+                .contains("__name__")
+                .contains("__monitor_id__")
+                .doesNotContain("custom-name")
+                .doesNotContain("custom-monitor");
     }
 
     @AfterEach
@@ -232,6 +254,8 @@ class VictoriaMetricsDataStorageTest {
         when(mockMetricsData.getTime()).thenReturn(System.currentTimeMillis());
         when(mockMetricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
         when(mockMetricsData.getApp()).thenReturn("app");
+        when(mockMetricsData.getInstance()).thenReturn("storage-instance");
+        when(mockMetricsData.getLabels()).thenReturn(Map.of());
 
         CollectRep.ValueRow mockValueRow = Mockito.mock(CollectRep.ValueRow.class);
         List<String> columnValues = List.of("server-test-01", "68.7");
