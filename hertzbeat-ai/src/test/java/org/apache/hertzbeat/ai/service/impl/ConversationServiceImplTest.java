@@ -18,9 +18,13 @@
 package org.apache.hertzbeat.ai.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +38,7 @@ import org.apache.hertzbeat.ai.dao.ChatMessageDao;
 import org.apache.hertzbeat.ai.dao.SopScheduleDao;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
+import org.apache.hertzbeat.ai.pojo.dto.SecurityData;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
@@ -78,29 +83,30 @@ class ConversationServiceImplTest {
 
     @Test
     void streamChatShouldKeepCompleteConversationHistory() {
-        SubjectSum subject = org.mockito.Mockito.mock(SubjectSum.class);
-        SurenessContextHolder.bindSubject(subject);
+        SubjectSum subject = bindSubject("alice");
         ChatConversation conversation = ChatConversation.builder()
             .id(CONVERSATION_ID)
-            .title("已命名会话")
+            .title("Named conversation")
+            .creator("alice")
             .build();
         List<ChatMessage> history = List.of(
             ChatMessage.builder()
                 .id(11L)
                 .conversationId(CONVERSATION_ID)
                 .role("user")
-                .content("上一轮问题")
+                .content("Previous question")
                 .build(),
             ChatMessage.builder()
                 .id(12L)
                 .conversationId(CONVERSATION_ID)
                 .role("assistant")
-                .content("上一轮回答")
+                .content("Previous answer")
                 .build());
         AtomicLong messageId = new AtomicLong(20L);
 
         when(chatClientProviderService.isConfigured()).thenReturn(true);
-        when(conversationDao.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.of(conversation));
         when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID)).thenReturn(history);
         when(messageDao.save(any(ChatMessage.class))).thenAnswer(invocation -> {
             ChatMessage savedMessage = invocation.getArgument(0);
@@ -108,10 +114,10 @@ class ConversationServiceImplTest {
             return savedMessage;
         });
         when(chatClientProviderService.streamChat(any(ChatRequestContext.class)))
-            .thenReturn(Flux.just("本轮回答"));
+            .thenReturn(Flux.just("Current answer"));
 
         List<ServerSentEvent<ChatResponseChunk>> events = conversationService
-            .streamChat("本轮问题", CONVERSATION_ID)
+            .streamChat("Current question", CONVERSATION_ID)
             .collectList()
             .block();
 
@@ -128,12 +134,20 @@ class ConversationServiceImplTest {
      */
     @Test
     void deleteConversationShouldRemoveSchedulesMessagesAndConversationInOrder() {
+        bindSubject("alice");
+        ChatConversation conversation = ChatConversation.builder()
+            .id(CONVERSATION_ID)
+            .title("Owned conversation")
+            .creator("alice")
+            .build();
         ChatMessage message = ChatMessage.builder()
             .id(11L)
             .conversationId(CONVERSATION_ID)
             .role("user")
             .content("message to delete")
             .build();
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.of(conversation));
         when(messageDao.findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID))
             .thenReturn(List.of(message));
 
@@ -143,5 +157,89 @@ class ConversationServiceImplTest {
         deletionOrder.verify(sopScheduleDao).deleteByConversationId(CONVERSATION_ID);
         deletionOrder.verify(messageDao).deleteAll(List.of(message));
         deletionOrder.verify(conversationDao).deleteById(CONVERSATION_ID);
+    }
+
+    @Test
+    void listConversationsShouldExcludeOtherCreators() {
+        bindSubject("alice");
+        ChatConversation ownedConversation = ChatConversation.builder()
+            .id(CONVERSATION_ID)
+            .title("Owned conversation")
+            .creator("alice")
+            .build();
+        when(conversationDao.findAllByCreatorOrderByIdDesc("alice"))
+            .thenReturn(List.of(ownedConversation));
+        when(messageDao.findByConversationIdInOrderByGmtCreateAsc(List.of(CONVERSATION_ID)))
+            .thenReturn(List.of());
+
+        List<ChatConversation> result = conversationService.getAllConversations();
+
+        assertEquals(List.of(ownedConversation), result);
+        verify(conversationDao).findAllByCreatorOrderByIdDesc("alice");
+    }
+
+    @Test
+    void getConversationShouldRejectAnotherCreator() {
+        bindSubject("alice");
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+            () -> conversationService.getConversation(CONVERSATION_ID));
+        verify(messageDao, never()).findByConversationIdOrderByGmtCreateAsc(CONVERSATION_ID);
+    }
+
+    @Test
+    void deleteConversationShouldRejectAnotherCreator() {
+        bindSubject("alice");
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+            () -> conversationService.deleteConversation(CONVERSATION_ID));
+        verify(sopScheduleDao, never()).deleteByConversationId(CONVERSATION_ID);
+        verify(conversationDao, never()).deleteById(CONVERSATION_ID);
+    }
+
+    @Test
+    void streamChatShouldRejectAnotherCreator() {
+        bindSubject("alice");
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+            () -> conversationService.streamChat("Current question", CONVERSATION_ID));
+        verify(messageDao, never()).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void createConversationShouldRecordCurrentCreator() {
+        bindSubject("alice");
+        when(conversationDao.save(any(ChatConversation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatConversation conversation = conversationService.createConversation();
+
+        assertEquals("alice", conversation.getCreator());
+    }
+
+    @Test
+    void saveSecurityDataShouldRejectAnotherCreator() {
+        bindSubject("alice");
+        SecurityData securityData = new SecurityData();
+        securityData.setConversationId(CONVERSATION_ID);
+        securityData.setSecurityData("sensitive-value");
+        when(conversationDao.findByIdAndCreator(CONVERSATION_ID, "alice"))
+            .thenReturn(Optional.empty());
+
+        assertFalse(conversationService.saveSecurityData(securityData));
+        verify(conversationDao, never()).save(any(ChatConversation.class));
+    }
+
+    private SubjectSum bindSubject(String principal) {
+        SubjectSum subject = mock(SubjectSum.class);
+        when(subject.getPrincipal()).thenReturn(principal);
+        SurenessContextHolder.bindSubject(subject);
+        return subject;
     }
 }

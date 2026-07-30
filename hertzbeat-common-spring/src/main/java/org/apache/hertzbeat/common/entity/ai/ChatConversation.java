@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -81,5 +82,6 @@ public class ChatConversation {
     @OneToMany(mappedBy = "conversation")
     private List<ChatMessage> messages;
 
+    @JsonIgnore
     private String securityData;
 }

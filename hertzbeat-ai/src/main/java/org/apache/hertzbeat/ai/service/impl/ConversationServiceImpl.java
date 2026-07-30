@@ -33,7 +33,6 @@ import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +65,8 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public Flux<ServerSentEvent<ChatResponseChunk>> streamChat(String message, Long conversationId) {
+        String creator = requireCurrentUserId();
+        ChatConversation conversation = requireOwnedConversation(conversationId, creator);
 
         // Check if provider is properly configured
         if (!chatClientProviderService.isConfigured()) {
@@ -79,8 +80,6 @@ public class ConversationServiceImpl implements ConversationService {
         }
 
         log.info("Starting streaming conversation: {}", conversationId);
-        ChatConversation conversation = conversationDao.findById(conversationId)
-            .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
 
         // Manually load messages for conversation history
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
@@ -162,6 +161,7 @@ public class ConversationServiceImpl implements ConversationService {
     public ChatConversation createConversation() {
         ChatConversation conversation = new ChatConversation();
         conversation.setTitle("conversation-" + UUID.randomUUID().toString().substring(0, 4));
+        conversation.setCreator(requireCurrentUserId());
         return conversationDao.save(conversation);
     }
 
@@ -170,17 +170,16 @@ public class ConversationServiceImpl implements ConversationService {
         if (conversationId == null) {
             return null;
         }
-        ChatConversation conversation = conversationDao.findById(conversationId).orElse(null);
-        if (conversation != null) {
-            List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
-            conversation.setMessages(messages);
-        }
+        ChatConversation conversation = requireOwnedConversation(conversationId, requireCurrentUserId());
+        List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
+        conversation.setMessages(messages);
         return conversation;
     }
 
     @Override
     public List<ChatConversation> getAllConversations() {
-        List<ChatConversation> conversations = conversationDao.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        List<ChatConversation> conversations =
+            conversationDao.findAllByCreatorOrderByIdDesc(requireCurrentUserId());
         if (conversations.isEmpty()) {
             return conversations;
         }
@@ -201,6 +200,7 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long conversationId) {
+        requireOwnedConversation(conversationId, requireCurrentUserId());
         // Delete associated schedules first to prevent tasks from writing orphaned messages.
         sopScheduleDao.deleteByConversationId(conversationId);
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
@@ -212,7 +212,8 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public Boolean saveSecurityData(SecurityData securityData) {
-        Optional<ChatConversation> chatConversation = conversationDao.findById(securityData.getConversationId());
+        Optional<ChatConversation> chatConversation = conversationDao.findByIdAndCreator(
+            securityData.getConversationId(), requireCurrentUserId());
         if (chatConversation.isPresent()) {
             ChatConversation conversation = chatConversation.get();
             conversation.setSecurityData(AesUtil.aesEncode(securityData.getSecurityData()));
@@ -220,6 +221,19 @@ public class ConversationServiceImpl implements ConversationService {
             return true;
         }
         return false;
+    }
+
+    private String requireCurrentUserId() {
+        SubjectSum subject = SurenessContextHolder.getBindSubject();
+        if (subject == null || subject.getPrincipal() == null) {
+            throw new IllegalStateException("No authenticated user");
+        }
+        return String.valueOf(subject.getPrincipal());
+    }
+
+    private ChatConversation requireOwnedConversation(Long conversationId, String creator) {
+        return conversationDao.findByIdAndCreator(conversationId, creator)
+            .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
     }
 
 }
