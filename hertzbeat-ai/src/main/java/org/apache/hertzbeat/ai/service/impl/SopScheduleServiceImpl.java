@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.ai.dao.SopScheduleDao;
 import org.apache.hertzbeat.ai.service.SopScheduleService;
+import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.SopSchedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.support.CronExpression;
@@ -36,23 +41,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class SopScheduleServiceImpl implements SopScheduleService {
 
     private final SopScheduleDao sopScheduleDao;
+    private final ChatConversationDao conversationDao;
 
     @Autowired
-    public SopScheduleServiceImpl(SopScheduleDao sopScheduleDao) {
+    public SopScheduleServiceImpl(SopScheduleDao sopScheduleDao,
+                                  ChatConversationDao conversationDao) {
         this.sopScheduleDao = sopScheduleDao;
+        this.conversationDao = conversationDao;
     }
 
     @Override
     @Transactional
     public SopSchedule createSchedule(SopSchedule schedule) {
-        // Validate cron expression
+        String creator = requireCurrentUserId();
+        requireOwnedConversation(schedule.getConversationId(), creator);
         validateCronExpression(schedule.getCronExpression());
-        
-        // Calculate next run time
-        schedule.setNextRunTime(calculateNextRunTime(schedule.getCronExpression()));
-        schedule.setEnabled(schedule.getEnabled() != null ? schedule.getEnabled() : true);
-        
-        SopSchedule saved = sopScheduleDao.save(schedule);
+
+        SopSchedule persisted = SopSchedule.builder()
+                .conversationId(schedule.getConversationId())
+                .sopName(schedule.getSopName())
+                .sopParams(schedule.getSopParams())
+                .cronExpression(schedule.getCronExpression())
+                .enabled(schedule.getEnabled() != null ? schedule.getEnabled() : true)
+                .nextRunTime(calculateNextRunTime(schedule.getCronExpression()))
+                .creator(creator)
+                .build();
+        SopSchedule saved = sopScheduleDao.save(persisted);
         log.info("Created schedule {} for conversation {} with SOP {}", 
                 saved.getId(), saved.getConversationId(), saved.getSopName());
         return saved;
@@ -61,57 +75,59 @@ public class SopScheduleServiceImpl implements SopScheduleService {
     @Override
     @Transactional
     public SopSchedule updateSchedule(SopSchedule schedule) {
-        SopSchedule existing = sopScheduleDao.findById(schedule.getId())
+        SopSchedule existing = sopScheduleDao.findByIdAndCreator(
+                        schedule.getId(), requireCurrentUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Schedule not found: " + schedule.getId()));
-        
-        // Update fields
+
         existing.setSopName(schedule.getSopName());
         existing.setSopParams(schedule.getSopParams());
-        
-        // If cron expression changed, recalculate next run time
+
         if (!existing.getCronExpression().equals(schedule.getCronExpression())) {
             validateCronExpression(schedule.getCronExpression());
             existing.setCronExpression(schedule.getCronExpression());
             existing.setNextRunTime(calculateNextRunTime(schedule.getCronExpression()));
         }
-        
+
         if (schedule.getEnabled() != null) {
             existing.setEnabled(schedule.getEnabled());
         }
-        
+
         return sopScheduleDao.save(existing);
     }
 
     @Override
     @Transactional
     public void deleteSchedule(Long id) {
+        SopSchedule schedule = sopScheduleDao.findByIdAndCreator(id, requireCurrentUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Schedule not found: " + id));
         log.info("Deleting schedule {}", id);
-        sopScheduleDao.deleteById(id);
+        sopScheduleDao.delete(schedule);
     }
 
     @Override
     public SopSchedule getSchedule(Long id) {
-        return sopScheduleDao.findById(id).orElse(null);
+        return sopScheduleDao.findByIdAndCreator(id, requireCurrentUserId()).orElse(null);
     }
 
     @Override
     public List<SopSchedule> getSchedulesByConversation(Long conversationId) {
-        return sopScheduleDao.findByConversationId(conversationId);
+        String creator = requireCurrentUserId();
+        requireOwnedConversation(conversationId, creator);
+        return sopScheduleDao.findByConversationIdAndCreator(conversationId, creator);
     }
 
     @Override
     @Transactional
     public SopSchedule toggleSchedule(Long id, boolean enabled) {
-        SopSchedule schedule = sopScheduleDao.findById(id)
+        SopSchedule schedule = sopScheduleDao.findByIdAndCreator(id, requireCurrentUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Schedule not found: " + id));
-        
+
         schedule.setEnabled(enabled);
-        
-        // If enabling, recalculate next run time
+
         if (enabled) {
             schedule.setNextRunTime(calculateNextRunTime(schedule.getCronExpression()));
         }
-        
+
         log.info("Schedule {} {} ", id, enabled ? "enabled" : "disabled");
         return sopScheduleDao.save(schedule);
     }
@@ -123,16 +139,34 @@ public class SopScheduleServiceImpl implements SopScheduleService {
 
     @Override
     @Transactional
-    public void updateAfterExecution(Long id) {
+    public SopSchedule getScheduleForExecution(Long id) {
         SopSchedule schedule = sopScheduleDao.findById(id).orElse(null);
+        if (schedule == null || !Boolean.TRUE.equals(schedule.getEnabled())) {
+            return null;
+        }
+        if (StringUtils.isBlank(schedule.getCreator())
+                || conversationDao.findByIdAndCreator(
+                        schedule.getConversationId(), schedule.getCreator()).isEmpty()) {
+            schedule.setEnabled(false);
+            sopScheduleDao.save(schedule);
+            log.warn("Disabled schedule {} because its execution owner is missing", id);
+            return null;
+        }
+        return schedule;
+    }
+
+    @Override
+    @Transactional
+    public void updateAfterExecution(Long id) {
+        SopSchedule schedule = getScheduleForExecution(id);
         if (schedule == null) {
             return;
         }
-        
+
         schedule.setLastRunTime(LocalDateTime.now());
         schedule.setNextRunTime(calculateNextRunTime(schedule.getCronExpression()));
         sopScheduleDao.save(schedule);
-        
+
         log.debug("Updated schedule {} - Last run: {}, Next run: {}", 
                 id, schedule.getLastRunTime(), schedule.getNextRunTime());
     }
@@ -153,5 +187,19 @@ public class SopScheduleServiceImpl implements SopScheduleService {
             log.error("Failed to calculate next run time for cron: {}", cronExpression, e);
             return null;
         }
+    }
+
+    private String requireCurrentUserId() {
+        SubjectSum subject = SurenessContextHolder.getBindSubject();
+        if (subject == null || subject.getPrincipal() == null) {
+            throw new IllegalStateException("No authenticated user");
+        }
+        return String.valueOf(subject.getPrincipal());
+    }
+
+    private ChatConversation requireOwnedConversation(Long conversationId, String creator) {
+        return conversationDao.findByIdAndCreator(conversationId, creator)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Conversation not found: " + conversationId));
     }
 }

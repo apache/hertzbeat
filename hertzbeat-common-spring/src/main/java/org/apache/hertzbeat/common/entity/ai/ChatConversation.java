@@ -26,6 +26,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
@@ -48,7 +49,9 @@ import java.util.List;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_ai_conversation")
+@Table(name = "hzb_ai_conversation", indexes = {
+    @Index(name = "idx_ai_conversation_creator", columnList = "creator")
+})
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatConversation {

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.schedule;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,6 +76,8 @@ class SopScheduleExecutorTest {
                 .content("ok")
                 .build();
         when(scheduleService.getDueSchedules()).thenReturn(List.of(first, second));
+        when(scheduleService.getScheduleForExecution(1L)).thenReturn(first, first);
+        when(scheduleService.getScheduleForExecution(2L)).thenReturn(second, second);
         when(skillRegistry.getSkill("daily_inspection")).thenReturn(definition);
         when(sopEngine.executeSync(any(SopDefinition.class), anyMap())).thenReturn(result);
         doThrow(new IllegalStateException("database unavailable"))
@@ -83,6 +86,8 @@ class SopScheduleExecutorTest {
         executor.checkAndExecuteDueSchedules();
 
         verify(sopEngine, times(2)).executeSync(any(SopDefinition.class), anyMap());
+        verify(chatMessageDao, times(2)).save(argThat(
+                message -> "alice".equals(message.getCreator())));
         verify(scheduleService).updateAfterExecution(2L);
     }
 
@@ -90,6 +95,7 @@ class SopScheduleExecutorTest {
     void checkShouldRejectInvalidScheduleParameters() {
         SopSchedule schedule = schedule(1L, "not-json");
         when(scheduleService.getDueSchedules()).thenReturn(List.of(schedule));
+        when(scheduleService.getScheduleForExecution(1L)).thenReturn(schedule, schedule);
         when(skillRegistry.getSkill("daily_inspection"))
                 .thenReturn(SopDefinition.builder().name("daily_inspection").build());
 
@@ -100,12 +106,46 @@ class SopScheduleExecutorTest {
         verify(scheduleService).updateAfterExecution(1L);
     }
 
+    @Test
+    void checkShouldSkipScheduleWithoutValidatedOwner() {
+        SopSchedule schedule = schedule(1L, null);
+        when(scheduleService.getDueSchedules()).thenReturn(List.of(schedule));
+        when(scheduleService.getScheduleForExecution(1L)).thenReturn(null);
+
+        executor.checkAndExecuteDueSchedules();
+
+        verifyNoInteractions(sopEngine, chatMessageDao);
+        verify(scheduleService, times(0)).updateAfterExecution(1L);
+    }
+
+    @Test
+    void checkShouldNotDeliverWhenOwnerChangesDuringExecution() {
+        SopSchedule schedule = schedule(1L, null);
+        SopSchedule changedOwner = schedule(1L, null);
+        changedOwner.setCreator("bob");
+        changedOwner.setConversationId(20L);
+        when(scheduleService.getDueSchedules()).thenReturn(List.of(schedule));
+        when(scheduleService.getScheduleForExecution(1L))
+                .thenReturn(schedule, changedOwner, changedOwner);
+        when(skillRegistry.getSkill("daily_inspection"))
+                .thenReturn(SopDefinition.builder().name("daily_inspection").build());
+        when(sopEngine.executeSync(any(SopDefinition.class), anyMap()))
+                .thenReturn(SopResult.builder().status("SUCCESS").content("ok").build());
+
+        executor.checkAndExecuteDueSchedules();
+
+        verify(sopEngine).executeSync(any(SopDefinition.class), anyMap());
+        verifyNoInteractions(chatMessageDao);
+        verify(scheduleService).updateAfterExecution(1L);
+    }
+
     private SopSchedule schedule(Long id, String params) {
         return SopSchedule.builder()
                 .id(id)
                 .conversationId(10L)
                 .sopName("daily_inspection")
                 .sopParams(params)
+                .creator("alice")
                 .build();
     }
 }

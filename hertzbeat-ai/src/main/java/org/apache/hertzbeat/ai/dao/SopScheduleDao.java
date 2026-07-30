@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.dao;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.ai.SopSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -37,14 +38,23 @@ public interface SopScheduleDao extends JpaRepository<SopSchedule, Long>, JpaSpe
      * @param conversationId The conversation ID
      * @return List of schedules
      */
-    List<SopSchedule> findByConversationId(Long conversationId);
+    List<SopSchedule> findByConversationIdAndCreator(Long conversationId, String creator);
+
+    /**
+     * Find a schedule only when it belongs to the supplied creator.
+     * @param id schedule identity
+     * @param creator authenticated creator
+     * @return matching schedule
+     */
+    Optional<SopSchedule> findByIdAndCreator(Long id, String creator);
 
     /**
      * Find all enabled schedules that are due for execution.
      * @param currentTime The current time to compare against
      * @return List of due schedules
      */
-    @Query("SELECT s FROM SopSchedule s WHERE s.enabled = true AND s.nextRunTime <= :currentTime")
+    @Query("SELECT s FROM SopSchedule s "
+            + "WHERE s.enabled = true AND s.creator IS NOT NULL AND s.nextRunTime <= :currentTime")
     List<SopSchedule> findDueSchedules(@Param("currentTime") LocalDateTime currentTime);
 
     /**
