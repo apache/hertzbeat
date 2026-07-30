@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,6 +85,47 @@ class OtelRuntimeGatewayPolicyTest {
         assertEquals(tokenFile.toRealPath(), gateway.bearerTokenFile());
 
         Files.writeString(tokenFile, "short");
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeGatewayPolicy().resolve(properties));
+    }
+
+    @Test
+    void allowsExplicitPlaintextGatewayWithOneStrongBearerToken() throws Exception {
+        OtelRuntimeProperties properties = gatewayProperties();
+        properties.setOtlpGatewayAllowPlaintext(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeGatewayPolicy().resolve(properties));
+
+        properties.setOtlpGatewayBearerToken("strong-inline-token");
+        OtelRuntimeGatewayPolicy.ResolvedGateway gateway = new OtelRuntimeGatewayPolicy().resolve(properties);
+
+        assertTrue(gateway.enabled());
+        assertNull(gateway.certificateFile());
+        assertNull(gateway.privateKeyFile());
+        assertNull(gateway.clientCaFile());
+    }
+
+    @Test
+    void rejectsPartialTlsAndClientCaForPlaintextGateway() throws Exception {
+        OtelRuntimeProperties properties = gatewayProperties();
+        properties.setOtlpGatewayAllowPlaintext(true);
+        properties.setOtlpGatewayBearerToken("strong-inline-token");
+        Path certificate = Files.writeString(tempDir.resolve("gateway.crt"), "certificate");
+        Path privateKey = Files.writeString(tempDir.resolve("gateway.key"), "private-key");
+        Path clientCa = Files.writeString(tempDir.resolve("client-ca.crt"), "client-ca");
+
+        properties.setOtlpGatewayCertificateFile(certificate);
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeGatewayPolicy().resolve(properties));
+
+        properties.setOtlpGatewayCertificateFile(null);
+        properties.setOtlpGatewayPrivateKeyFile(privateKey);
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeGatewayPolicy().resolve(properties));
+
+        properties.setOtlpGatewayPrivateKeyFile(null);
+        properties.setOtlpGatewayClientCaFile(clientCa);
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeGatewayPolicy().resolve(properties));
     }

@@ -129,6 +129,26 @@ class OtelRuntimeSupervisorTest {
     }
 
     @Test
+    void passesBearerTokenToExplicitPlaintextGatewayRuntime() throws Exception {
+        properties.setOtlpGatewayEnabled(true);
+        properties.setOtlpGatewayAllowPlaintext(true);
+        properties.setOtlpGatewayBearerToken("strong-gateway-token");
+        Process validation = successfulValidation();
+        Process runtime = runningProcess(4201, new CompletableFuture<>());
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(validation, runtime);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> environment = ArgumentCaptor.forClass(Map.class);
+        verify(launcher, atLeastOnce()).start(any(), any(), any(), any(), environment.capture(), anyBoolean());
+        assertEquals("strong-gateway-token", environment.getValue().get("HERTZBEAT_OTLP_GATEWAY_TOKEN"));
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+    }
+
+    @Test
     void unexpectedExitDegradesThenRestartsWithoutStoppingJava() throws Exception {
         CompletableFuture<Process> firstExit = new CompletableFuture<>();
         Process firstRuntime = runningProcess(4201, firstExit);

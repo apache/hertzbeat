@@ -114,6 +114,12 @@ public class OtelRuntimeProperties {
 
     private boolean otlpGatewayEnabled;
 
+    /**
+     * Explicitly permits bearer-authenticated OTLP Gateway listeners without TLS for trusted internal/local networks.
+     * Authentication remains mandatory, and the secure TLS requirement stays enabled by default.
+     */
+    private boolean otlpGatewayAllowPlaintext;
+
     private Path otlpGatewayCertificateFile;
 
     private Path otlpGatewayPrivateKeyFile;
