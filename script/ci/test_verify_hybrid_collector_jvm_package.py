@@ -22,9 +22,11 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import subprocess
 import tarfile
 import tempfile
+import time
 import unittest
 import zipfile
 from pathlib import Path
@@ -32,6 +34,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 VERIFIER = REPO_ROOT / "script/ci/verify-hybrid-collector-jvm-package.sh"
+SHUTDOWN_TEMPLATE = REPO_ROOT / "script/assembly/collector/bin/shutdown.sh"
 ROOT = "apache-hertzbeat-collector-2.0.0"
 
 
@@ -92,7 +95,7 @@ def base_entries() -> dict[str, bytes]:
             b'LIB_PATH="$DEPLOY_DIR/lib"\n'
             b'CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$LIB_PATH/*:$EXT_LIB_PATH/*"\n'
         ),
-        f"{ROOT}/bin/shutdown.sh": b"#!/bin/sh\n",
+        f"{ROOT}/bin/shutdown.sh": SHUTDOWN_TEMPLATE.read_bytes(),
         f"{ROOT}/bin/startup.bat": (
             b"@echo off\r\n"
             b"set LIB_PATH=%DEPLOY_DIR%\\lib\r\n"
@@ -211,6 +214,140 @@ class JvmPackageVerifierTest(unittest.TestCase):
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("lib/*", result.stderr)
+
+    def test_unix_archive_rejects_direct_sigkill_without_managed_child_cleanup(self) -> None:
+        entries = base_entries()
+        entries[f"{ROOT}/bin/shutdown.sh"] = (
+            b"#!/bin/bash\n"
+            b"PID=\"$(ps -ef | awk '/java/ { print $2 }')\"\n"
+            b'kill -9 $PID\n'
+        )
+        archive = self.archive("direct-sigkill-shutdown.tar.gz", entries)
+
+        result = self.verify(archive, "generic")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("graceful", result.stderr)
+
+    def test_unix_shutdown_terminates_captured_managed_child(self) -> None:
+        shutdown = self.root / "shutdown.sh"
+        shutdown.write_text(
+            SHUTDOWN_TEMPLATE.read_text()
+            .replace("${project.artifactId}", "hertzbeat-collector-collector")
+            .replace("${project.build.finalName}", "apache-hertzbeat-collector-2.0.0")
+        )
+        shutdown.chmod(0o755)
+        marker = self.root / "signals.log"
+        child_pid_file = self.root / "child.pid"
+        child = self.root / "managed-child.sh"
+        child.write_text(
+            "#!/bin/bash\n"
+            "marker=\"$1\"\n"
+            "trap 'printf \"%s\\n\" child-term >> \"$marker\"; exit 0' TERM\n"
+            "while :; do sleep 1; done\n"
+        )
+        child.chmod(0o755)
+        parent = self.root / "java-parent"
+        parent.write_text(
+            "#!/bin/bash\n"
+            "child=\"$2\"\n"
+            "marker=\"$3\"\n"
+            "child_pid_file=\"$4\"\n"
+            "trap 'printf \"%s\\n\" parent-term >> \"$marker\"; exit 0' TERM\n"
+            "\"$child\" \"$marker\" &\n"
+            "child_pid=$!\n"
+            "printf '%s\\n' \"$child_pid\" > \"$child_pid_file\"\n"
+            "wait \"$child_pid\"\n"
+        )
+        parent.chmod(0o755)
+        process = subprocess.Popen(
+            [
+                str(parent),
+                "apache-hertzbeat-collector-2.0.0.jar",
+                str(child),
+                str(marker),
+                str(child_pid_file),
+            ],
+            cwd=self.root,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        child_pid = None
+        try:
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and not child_pid_file.exists():
+                time.sleep(0.05)
+            self.assertTrue(child_pid_file.exists(), "managed child did not start")
+            child_pid = int(child_pid_file.read_text().strip())
+            time.sleep(0.2)
+
+            env = {
+                **os.environ,
+                "SHUTDOWN_TIMEOUT_SECONDS": "5",
+                "KILL_WAIT_SECONDS": "2",
+            }
+            result = subprocess.run(
+                [str(shutdown)],
+                cwd=self.root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=12,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            process.wait(timeout=5)
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and self.process_exists(child_pid):
+                time.sleep(0.05)
+            self.assertFalse(self.process_exists(child_pid), "managed child remained after shutdown")
+            signals = marker.read_text().splitlines()
+            self.assertIn("parent-term", signals)
+            self.assertIn("child-term", signals)
+        finally:
+            for pid in (child_pid, process.pid):
+                if pid is not None and self.process_exists(pid):
+                    os.kill(pid, 9)
+            process.wait(timeout=5)
+
+    def test_unix_shutdown_rejects_invalid_timeout_values(self) -> None:
+        shutdown = self.root / "shutdown.sh"
+        shutdown.write_text(
+            SHUTDOWN_TEMPLATE.read_text()
+            .replace("${project.artifactId}", "hertzbeat-collector-collector")
+            .replace("${project.build.finalName}", "apache-hertzbeat-collector-2.0.0")
+        )
+        shutdown.chmod(0o755)
+        invalid_environments = (
+            {"SHUTDOWN_TIMEOUT_SECONDS": "1:2"},
+            {"SHUTDOWN_TIMEOUT_SECONDS": "08"},
+            {"SHUTDOWN_TIMEOUT_SECONDS": "0"},
+            {"KILL_WAIT_SECONDS": "1:2"},
+            {"KILL_WAIT_SECONDS": "08"},
+            {"KILL_WAIT_SECONDS": "0"},
+        )
+
+        for overrides in invalid_environments:
+            with self.subTest(overrides=overrides):
+                result = subprocess.run(
+                    [str(shutdown)],
+                    cwd=self.root,
+                    env={**os.environ, **overrides},
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+
+                self.assertEqual(2, result.returncode)
+                self.assertIn("positive integer seconds", result.stderr)
+
+    @staticmethod
+    def process_exists(pid: int) -> bool:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        return True
 
     def test_windows_archive_requires_startup_script_to_load_packaged_dependencies(self) -> None:
         entries = {**base_entries(), **runtime_entries("windows-amd64")}
