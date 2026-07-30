@@ -88,6 +88,97 @@ In private mode, collectors operate in isolated networks while still reporting t
 | `manager-host` | IP address of the HertzBeat server  | IP               |
 | `manager-port` | Port of the HertzBeat server        | 1158                      |
 
+## Cluster Message Authentication
+
+Manager and standalone Collector authenticate Netty cluster messages with a
+versioned, connection-bound HMAC envelope. A standalone Collector also needs
+the same AES `COMMON_SECRET` used by Manager to process encrypted collection
+data. Configure both values on both sides and keep them independent.
+
+```yaml
+common:
+  secret: ${COMMON_SECRET:}
+
+authentication:
+  mode: required
+  active-key-id: primary
+  active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
+  previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
+  previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
+  max-clock-skew: 5m
+  handshake-timeout: 3s
+```
+
+Generate both values once and store them in the deployment secret manager:
+
+```shell
+export COMMON_SECRET="$(openssl rand -hex 16)"
+export CLUSTER_AUTH_ACTIVE_SECRET="$(openssl rand -hex 32)"
+```
+
+`openssl rand -hex 16` produces 32 ASCII bytes, which is a valid AES-256
+`COMMON_SECRET`; the accepted AES lengths are exactly 16, 24, or 32 bytes.
+`openssl rand -hex 32` produces a separate 64-character authentication secret
+and must not be reused directly as `COMMON_SECRET`. Provision the same two
+values on Manager and every standalone Collector, and preserve both across
+restarts and upgrades. Blank, known-default, short authentication secrets and
+invalid-length AES secrets are rejected during startup. Never put either value
+in an image, command history, or public configuration file.
+
+### Rolling Upgrade
+
+Use this order to avoid interrupting collection:
+
+1. Before changing binaries, preserve or establish the same valid-length
+   `COMMON_SECRET` and configure the same independent
+   `CLUSTER_AUTH_ACTIVE_SECRET` on Manager and every Collector. Explicitly set
+   `CLUSTER_AUTH_MODE=optional` on every node. Older versions ignore the new
+   authentication properties. Optional mode is only a mixed-version rollout
+   setting; it is not the shipped steady-state default.
+2. Upgrade Collectors first. A new optional Collector signs outbound traffic,
+   while an old Manager ignores the added protobuf fields; the new Collector
+   temporarily accepts the old Manager's unsigned responses.
+3. Upgrade Manager instances. Optional Manager instances accept remaining
+   unsigned Collectors and advertise a channel-binding challenge to new ones.
+4. Wait until
+   `hertzbeat.cluster.message.authentication.legacy.accepted` remains at zero
+   and investigate every
+   `hertzbeat.cluster.message.authentication.rejected` reason.
+5. Remove the `CLUSTER_AUTH_MODE=optional` override (or explicitly set
+   `mode: required`) on both sides. Required mode rejects unsigned peers and
+   is the shipped default.
+
+Do not upgrade Manager before its old Collectors have the new secret and
+optional mode configured. The preceding local-key change intentionally stops
+Manager from sending encryption key material over unauthenticated Netty.
+
+### Key Rotation
+
+The active key signs new traffic. The previous key is accepted only for
+verification, which provides a dual-key transition:
+
+1. Deploy the next key as `previous-key-id` and `previous-secret` everywhere.
+2. Gradually make that key active, and retain the old key as previous.
+3. Confirm that all instances use the new active key, then remove the old key.
+
+An existing 16-byte `common.secret` may be supplied temporarily as the previous
+secret while rotating to an independent 32-byte authentication secret. Key IDs
+must be different and do not contain secret material.
+
+### Replay and Clock Model
+
+Manager sends a fresh random challenge for every Netty connection. The
+challenge is covered by every subsequent signature, so a message captured from
+one connection cannot be replayed through another Manager instance or after a
+reconnect. A bounded local cache rejects duplicate signatures on the active
+connection. This connection-level binding supports multi-Manager deployments
+without a shared replay database.
+
+Authentication timestamps use the configured `max-clock-skew`. Keep Manager
+and Collector clocks synchronized. Stale, future, replayed, unknown-key,
+malformed, channel-mismatched, and invalid-signature messages are counted by
+low-cardinality rejection-reason metrics.
+
 ## Collector Management
 
 You can manage collectors through the HertzBeat web interface:

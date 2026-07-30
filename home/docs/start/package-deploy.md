@@ -45,7 +45,22 @@ The current branch uses `Java 25`, and the standard installation package no long
    If you need modify account or password, configure `config/sureness.yml`.
    For detail steps, please refer to [Configure Account Password](account-modify)
 
-4. Start the service
+4. Generate two independent private secrets and store both in your deployment
+   secret manager. `COMMON_SECRET` must be exactly 16, 24, or 32 bytes and
+   identical on Manager and every standalone Collector. The first command
+   below produces 32 ASCII bytes. `CLUSTER_AUTH_ACTIVE_SECRET` is a separate
+   message authentication secret; do not reuse its 64-character output as
+   `COMMON_SECRET`.
+
+   ```shell
+   export COMMON_SECRET="$(openssl rand -hex 16)"
+   export CLUSTER_AUTH_ACTIVE_SECRET="$(openssl rand -hex 32)"
+   ```
+
+   Run Manager and every standalone Collector with those same two environment
+   values, and preserve both across upgrades.
+
+5. Start the service
 
    Execute the startup script in the installation directory `bin/`, or `startup.bat` in windows.
 
@@ -53,7 +68,7 @@ The current branch uses `Java 25`, and the standard installation package no long
    ./startup.sh
    ```
 
-5. Begin to explore HertzBeat
+6. Begin to explore HertzBeat
 
    Access [http://ip:1157/](http://ip:1157/) using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
@@ -95,6 +110,9 @@ Before choosing it, review the trade-offs in [Native Collector Guide](native-col
    Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
 
    ```yaml
+   common:
+     secret: ${COMMON_SECRET:}
+
    collector:
      dispatch:
        entrance:
@@ -104,6 +122,10 @@ Before choosing it, review the trade-offs in [Native Collector Guide](native-col
            mode: ${MODE:public}
            manager-host: ${MANAGER_HOST:127.0.0.1}
            manager-port: ${MANAGER_PORT:1158}
+           authentication:
+             mode: ${CLUSTER_AUTH_MODE:required}
+             active-key-id: ${CLUSTER_AUTH_ACTIVE_KEY_ID:primary}
+             active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
    ```
 
    > Parameters detailed explanation
@@ -113,7 +135,8 @@ Before choosing it, review the trade-offs in [Native Collector Guide](native-col
    - `manager-host` : Important, configure the address of the connected HertzBeat Server,
    - `manager-port` : (optional) Configure the port of the connected HertzBeat Server, default 1158.
 
-3. Start the service
+3. Confirm that both `COMMON_SECRET` and `CLUSTER_AUTH_ACTIVE_SECRET` are the
+   same values used by Manager, then start the service.
 
    Run `$ ./bin/startup.sh` or `bin/startup.bat` for the JVM collector package. Run `$ ./bin/startup.sh` for Linux or macOS native collector packages, and `bin\\startup.bat` for the Windows native collector package.
 

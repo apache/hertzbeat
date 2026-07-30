@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.scheduler;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.remoting.netty.ClusterMessageAuthConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +54,8 @@ public class SchedulerProperties {
          * unit: s
          */
         private int idleStateEventTriggerTime = 100;
+
+        private ClusterMessageAuthConfig authentication = new ClusterMessageAuthConfig();
 
     }
     

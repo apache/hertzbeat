@@ -57,6 +57,10 @@ application-pg.yml
 /package.json
 /yarn.lock
 
+# Local deployment secrets
+/.env
+/script/docker-compose/*/.env
+
 # Local Codex workspace files
 .codex/
 AGENTS.md

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.dispatch;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.remoting.netty.ClusterMessageAuthConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -109,6 +110,11 @@ public class DispatchProperties {
              * connect cluster master port
              */
             private int managerPort = 1158;
+
+            /**
+             * Versioned message authentication and rolling-upgrade settings.
+             */
+            private ClusterMessageAuthConfig authentication = new ClusterMessageAuthConfig();
             
             public boolean isEnabled() {
                 return enabled;
@@ -148,6 +154,14 @@ public class DispatchProperties {
             
             public void setManagerPort(int managerPort) {
                 this.managerPort = managerPort;
+            }
+
+            public ClusterMessageAuthConfig getAuthentication() {
+                return authentication;
+            }
+
+            public void setAuthentication(ClusterMessageAuthConfig authentication) {
+                this.authentication = authentication;
             }
         }
     }

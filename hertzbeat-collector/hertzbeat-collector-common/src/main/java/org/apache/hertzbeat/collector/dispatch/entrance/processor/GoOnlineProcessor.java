@@ -22,10 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.util.AesUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
@@ -43,16 +40,7 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
 
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        if (message.getMsg().isEmpty()) {
-            log.warn("The message that server response to collector is empty, please upgrade server");
-        } else {
-            ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg().toStringUtf8(), ServerInfo.class);
-            if (serverInfo == null || serverInfo.getAesSecret() == null) {
-                log.warn("The message that server response to collector has not secret empty, please check");
-            } else {
-                AesUtil.setDefaultSecretKey(serverInfo.getAesSecret());
-            }
-        }
+        // Ignore the response payload so an unauthenticated Manager response cannot override the local AES key.
         if (ClusterMsg.Direction.REQUEST.equals(message.getDirection())) {
             timerDispatch.goOnline();
         }

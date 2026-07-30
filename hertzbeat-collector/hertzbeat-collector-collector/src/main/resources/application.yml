@@ -64,12 +64,24 @@ collector:
         mode: ${MODE:public}
         manager-host: ${MANAGER_HOST:}${MANAGER_IP:}
         manager-port: ${MANAGER_PORT:1158}
+        authentication:
+          # Required by default. Set optional explicitly only during a mixed-version rolling upgrade.
+          mode: ${CLUSTER_AUTH_MODE:required}
+          active-key-id: ${CLUSTER_AUTH_ACTIVE_KEY_ID:primary}
+          # Leave empty to derive a domain-separated key from common.secret.
+          active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
+          previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
+          previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
+          max-clock-skew: ${CLUSTER_AUTH_MAX_CLOCK_SKEW:5m}
+          handshake-timeout: ${CLUSTER_AUTH_HANDSHAKE_TIMEOUT:3s}
 
 push:
   uri: "127.0.0.1:1157"
 
 
 common:
+  # Use the same key as Manager. Inject it through deployment configuration, never over Netty.
+  secret: ${COMMON_SECRET:}
   queue:
     type: netty
 

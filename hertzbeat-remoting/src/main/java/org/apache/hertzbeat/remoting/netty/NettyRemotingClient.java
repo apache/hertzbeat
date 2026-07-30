@@ -36,6 +36,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Supplier;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
@@ -70,8 +71,19 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         this.threadPool = threadPool;
     }
 
+    public NettyRemotingClient(final NettyClientConfig nettyClientConfig,
+                               final NettyEventListener nettyEventListener,
+                               final BackgroundTaskExecutor threadPool,
+                               final ClusterMessageAuthConfig authConfig,
+                               final Supplier<String> fallbackSecretSupplier) {
+        super(nettyEventListener, EndpointRole.CLIENT, authConfig, fallbackSecretSupplier);
+        this.nettyClientConfig = nettyClientConfig;
+        this.threadPool = threadPool;
+    }
+
     @Override
     public void start() {
+        initializeAuthentication();
         this.threadPool.executeLongRunning(() -> {
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
                     .setUncaughtExceptionHandler((thread, throwable) -> {

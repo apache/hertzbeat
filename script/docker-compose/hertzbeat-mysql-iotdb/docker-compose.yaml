@@ -69,6 +69,10 @@ services:
     restart: always
     environment:
       HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE: auto
+      COMMON_SECRET: ${COMMON_SECRET:?Set COMMON_SECRET in .env before startup}
+      CLUSTER_AUTH_MODE: ${CLUSTER_AUTH_MODE:-required}
+      CLUSTER_AUTH_ACTIVE_KEY_ID: ${CLUSTER_AUTH_ACTIVE_KEY_ID:-primary}
+      CLUSTER_AUTH_ACTIVE_SECRET: ${CLUSTER_AUTH_ACTIVE_SECRET:?Set CLUSTER_AUTH_ACTIVE_SECRET in .env before startup}
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:

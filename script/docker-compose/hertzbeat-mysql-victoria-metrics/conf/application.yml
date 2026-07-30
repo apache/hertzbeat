@@ -168,6 +168,7 @@ warehouse:
       db: 0
 
 common:
+  secret: ${COMMON_SECRET:}
   queue:
     # memory or kafka
     type: memory
@@ -228,6 +229,14 @@ scheduler:
   server:
     enabled: true
     port: 1158
+    authentication:
+      mode: ${CLUSTER_AUTH_MODE:required}
+      active-key-id: ${CLUSTER_AUTH_ACTIVE_KEY_ID:primary}
+      active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
+      previous-key-id: ${CLUSTER_AUTH_PREVIOUS_KEY_ID:}
+      previous-secret: ${CLUSTER_AUTH_PREVIOUS_SECRET:}
+      max-clock-skew: ${CLUSTER_AUTH_MAX_CLOCK_SKEW:5m}
+      handshake-timeout: ${CLUSTER_AUTH_HANDSHAKE_TIMEOUT:3s}
 
 grafana:
   enabled: false

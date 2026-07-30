@@ -58,10 +58,16 @@
 
 ##### 方式一：Docker 方式快速安装
 
-1. `docker` 环境仅需一条命令即可开始
+1. 创建并妥善保存两个相互独立的安装密钥。`COMMON_SECRET` 是 Manager 与所有
+   独立 Collector 必须完全相同的 32 字节 AES 密钥；
+   `CLUSTER_AUTH_ACTIVE_SECRET` 是另一份消息认证密钥。不要复用两个值，也不要
+   提交 `.env`。
 
    ```shell
-   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
@@ -69,7 +75,7 @@
 3. 部署采集器集群（可选）
 
    ```shell
-   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   docker run -d --env-file .env -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
    - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
@@ -83,10 +89,13 @@
 ##### 方式二：通过安装包安装
 
 1. 下载您系统环境对应的安装包 `apache-hertzbeat-xx-bin.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
-3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
-4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-5. 部署采集器集群（可选）
+2. 按上面的命令生成两份独立密钥。在 Manager 和所有独立 Collector 上配置
+   完全相同且长度为 16/24/32 字节的 `COMMON_SECRET`，并另外配置相同的
+   `CLUSTER_AUTH_ACTIVE_SECRET`；升级时必须保留两者。
+3. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
+4. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+5. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+6. 部署采集器集群（可选）
    - 下载采集器安装包 `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM 采集器）或与你目标平台匹配的 Native 采集器安装包，例如 `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`，到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml

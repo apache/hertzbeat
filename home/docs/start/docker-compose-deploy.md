@@ -39,12 +39,19 @@ Run the `docker compose version` command to check if you have a Docker Compose e
    cd hertzbeat-postgresql-victoria-metrics
    ```
 
-   - One-click start
+   - Create and preserve two independent private secrets, then start.
+     `COMMON_SECRET` is the AES key shared by Manager and every standalone
+     Collector; `CLUSTER_AUTH_ACTIVE_SECRET` authenticates cluster messages.
+     Do not commit `.env`, reuse either value for the other purpose, or change
+     either value during an upgrade.
 
    > Run script in `hertzbeat-postgresql-victoria-metrics` directory
 
    ```shell
-   docker-compose up -d
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   docker compose up -d
    ```
 
    - View service status

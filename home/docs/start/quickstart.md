@@ -9,7 +9,14 @@ description: Install Apache HertzBeat monitoring system in minutes using Docker,
 
 Install Apache HertzBeat™ in under 5 minutes using Docker with a single command. HertzBeat supports Docker, binary packages, and source code installation on X86/ARM64 architectures.
 
-**Quick Install Command:** `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
+**Quick Install Commands:**
+
+```shell
+umask 077
+printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+```
 
 ## Installation Methods
 
@@ -33,16 +40,24 @@ HertzBeat provides multiple installation options:
 
 ### 1：Install quickly via docker
 
-1. Just one command to get started:
+1. Create and preserve two independent private secrets, then start HertzBeat.
+   `COMMON_SECRET` is a 32-byte AES key shared by Manager and standalone
+   Collectors. `CLUSTER_AUTH_ACTIVE_SECRET` is a separate message
+   authentication secret; do not reuse one value for both:
 
-    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```shell
+    umask 077
+    printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+    printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+    docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+    ```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
 3. Deploy collector clusters(Optional)
 
     ```shell
-    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    docker run -d --env-file .env -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
     ```
 
    - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
@@ -55,15 +70,21 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 #### 2：Install via package
 
 1. Download the release package `apache-hertzbeat-xx-bin.tar.gz` [Download Page](https://hertzbeat.apache.org/docs/download)
-2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
-3. Run command `$ ./bin/startup.sh` or `bin/startup.bat`
-4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
-5. Deploy collector clusters(Optional)
+2. Generate and securely store the same two independent secrets shown above.
+   Provide the same 16/24/32-byte `COMMON_SECRET` and the same separate
+   `CLUSTER_AUTH_ACTIVE_SECRET` to Manager and every standalone Collector.
+3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
+4. Run command `$ ./bin/startup.sh` or `bin/startup.bat`
+5. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+6. Deploy collector clusters(Optional)
    - If you do not need external JDBC drivers from `ext-lib`, prefer the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase can use the built-in query engine directly when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set. See [Native Collector Guide](native-collector).
    - Download the release package `apache-hertzbeat-collector-xx-bin.tar.gz` (JVM collector) or the native collector package for your target platform, such as `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`, to the new machine [Download Page](https://hertzbeat.apache.org/docs/download)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
 
      ```yaml
+     common:
+       secret: ${COMMON_SECRET:}
+
      collector:
        dispatch:
          entrance:
@@ -73,6 +94,10 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
              mode: ${MODE:public}
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
+             authentication:
+               mode: ${CLUSTER_AUTH_MODE:required}
+               active-key-id: ${CLUSTER_AUTH_ACTIVE_KEY_ID:primary}
+               active-secret: ${CLUSTER_AUTH_ACTIVE_SECRET:}
      ```
 
    - Native collector trade-offs: platform-specific packages, no runtime `ext-lib` JDBC loading, and less suitable for JVM-style runtime classpath extension. See [Native Collector Guide](native-collector).
@@ -139,8 +164,12 @@ Yes. After first login, navigate to Settings → Account Management to change th
 docker stop hertzbeat
 docker rm hertzbeat
 docker pull apache/hertzbeat:latest
-docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ```
+
+Preserve the private `.env` and reuse both the same valid-length
+`COMMON_SECRET` and the same independent `CLUSTER_AUTH_ACTIVE_SECRET` across
+upgrades.
 
 ### What database does HertzBeat use?
 

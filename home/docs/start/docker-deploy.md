@@ -15,10 +15,17 @@ It is necessary to have Docker environment in your environment. If not installed
 
 ## Deploy HertzBeat Server
 
-1. Execute the following command
+1. Generate two independent install-specific secrets, preserve the private
+   `.env` across upgrades, and execute the following command. The 32-character
+   `COMMON_SECRET` produced by `rand -hex 16` is a valid 32-byte AES key;
+   `CLUSTER_AUTH_ACTIVE_SECRET` is separate and must not be reused as that AES
+   key.
 
    ```shell
-   $ docker run -d -p 1157:1157 -p 1158:1158 \
+   $ umask 077
+   $ printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   $ printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   $ docker run -d --env-file .env -p 1157:1157 -p 1158:1158 \
        -e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto \
        -v $(pwd)/data:/opt/hertzbeat/data \
        -v $(pwd)/logs:/opt/hertzbeat/logs \
@@ -31,6 +38,7 @@ It is necessary to have Docker environment in your environment. If not installed
    > Command parameter explanation
 
    - `docker run -d` : Run a container in the background via Docker
+   - `--env-file .env` : Supply the private AES and cluster authentication secrets. Use the same file for Manager and standalone Collectors, and do not commit it.
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due to creating or deleting container.
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional) Mount the log file to the local host to facilitate viewing.
@@ -68,7 +76,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 1. Execute the following command
 
    ```shell
-   $ docker run -d \
+   $ docker run -d --env-file .env \
        -e IDENTITY=custom-collector-name \
        -e MODE=public \
        -e MANAGER_HOST=127.0.0.1 \
@@ -80,6 +88,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    > Command parameter explanation
 
    - `docker run -d` : Run a container in the background via Docker
+   - `--env-file .env` : Supply the same valid-length `COMMON_SECRET` and the same independent `CLUSTER_AUTH_ACTIVE_SECRET` used by Manager.
    - `-e IDENTITY=custom-collector-name`  : (optional) Set the collector unique identity name. Attention the clusters collector name must unique.
    - `-e MODE=public` : set the running mode(public or private), public cluster or private
    - `-e MANAGER_HOST=127.0.0.1` : Important, Set the main hertzbeat server ip host, must use the server host instead of 127.0.0.1.
