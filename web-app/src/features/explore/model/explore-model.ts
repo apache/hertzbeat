@@ -24,8 +24,9 @@ import {
   type ExploreTimeRange
 } from './explore-query';
 
-import type { ExactTimeWindow } from '@/shared/query-context';
+import type { ExactTimeWindow, QueryContext } from '@/shared/query-context';
 import { buildExplorePath, normalizeExploreQuery } from './explore-url-model';
+import { mergeExploreContextChanges } from './explore-context-model';
 
 export { exploreQueryContext, mergeExploreContextChanges } from './explore-context-model';
 export {
@@ -68,6 +69,20 @@ export function retireInstrumentationHandoff(query: ExploreQuery): ExploreQuery 
     collectorId: undefined,
     windowMode: undefined
   });
+}
+
+export function mergeManualExploreQuery(
+  query: ExploreQuery,
+  context: QueryContext,
+  changes: ExploreQueryPatch
+): ExploreQuery {
+  const retireRequested = handoffMarkerFields.some(field => Object.hasOwn(changes, field));
+  const ordinaryChanges = { ...changes };
+  for (const field of handoffMarkerFields) delete ordinaryChanges[field];
+  const next = mergeExploreQuery(query, mergeExploreContextChanges(context, ordinaryChanges));
+  return !retireRequested && exploreHandoffState(query) === 'scoped' && exploreHandoffState(next) === 'scoped'
+    ? next
+    : retireInstrumentationHandoff(next);
 }
 
 export function buildCrossSignalPath(
@@ -144,3 +159,5 @@ function dependentFilterCleanup(query: ExploreQuery, changes: ExploreQueryPatch)
     pageIndex: Object.hasOwn(changes, 'pageIndex') ? changes.pageIndex : undefined
   };
 }
+
+const handoffMarkerFields = ['intakeProfileId', 'collectorId', 'windowMode'] as const;

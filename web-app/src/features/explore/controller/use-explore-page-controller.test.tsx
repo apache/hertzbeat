@@ -143,24 +143,26 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).not.toHaveBeenCalled();
   });
 
-  it('retires a complete handoff on query submission and requests the resulting ordinary exact query', async () => {
+  it('preserves a complete handoff on query submission and requests the resulting scoped exact query', async () => {
     const routed = renderController([
-      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
-        '&environment=prod&start=1000&end=2000'
+      '/explore?signal=metrics&intakeProfileId=collector%3Aeast&collectorId=east&serviceName=checkout' +
+        '&serviceNamespace=commerce&environment=prod&start=1000&end=2000'
     ]);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
     act(() => routed.current().submission.updateField({ field: 'query', value: 'rate(up[5m])' }));
     act(() => routed.current().submission.submit());
 
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
-    expect(routed.router.state.location.search).not.toMatch(/collectorId|intakeProfileId|windowMode/u);
+    expect(routed.router.state.location.search).toContain('intakeProfileId=collector%3Aeast');
+    expect(routed.router.state.location.search).toContain('collectorId=east');
     expect(routed.router.state.location.search).toContain('start=1000&end=2000');
     expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({
       query: 'rate(up[5m])',
       serviceName: 'checkout',
       serviceNamespace: 'commerce',
       environment: 'prod',
-      collectorId: undefined,
+      intakeProfileId: 'collector:east',
+      collectorId: 'east',
       start: 1_000,
       end: 2_000
     });
@@ -216,7 +218,7 @@ describe('Explore page controller', () => {
     expect(routed.router.state.location.search).toContain('windowMode=preset');
   });
 
-  it('restores handoff and retired ordinary URLs exactly across Back and Forward', async () => {
+  it('restores exact scoped handoff submissions across Back and Forward', async () => {
     const handoff =
       '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
       '&environment=prod&windowMode=preset';
@@ -224,16 +226,19 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
 
     act(() => routed.current().updateManualQuery({ query: 'up' }));
-    await waitFor(() => expect(routed.current().handoff).toBe('none'));
-    const ordinarySearch = routed.router.state.location.search;
+    await waitFor(() => expect(routed.current().query.query).toBe('up'));
+    expect(routed.current().handoff).toBe('scoped');
+    const submittedSearch = routed.router.state.location.search;
 
     await act(async () => routed.router.navigate(-1));
     await waitFor(() => expect(routed.current().handoff).toBe('scoped'));
     expect(routed.router.state.location.search).toContain('collectorId=east');
+    expect(routed.router.state.location.search).not.toContain('query=up');
 
     await act(async () => routed.router.navigate(1));
-    await waitFor(() => expect(routed.current().handoff).toBe('none'));
-    expect(routed.router.state.location.search).toBe(ordinarySearch);
+    await waitFor(() => expect(routed.current().query.query).toBe('up'));
+    expect(routed.current().handoff).toBe('scoped');
+    expect(routed.router.state.location.search).toBe(submittedSearch);
   });
 
   it('keeps preset ranges relative and exact onboarding windows fixed', async () => {

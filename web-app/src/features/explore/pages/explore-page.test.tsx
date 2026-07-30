@@ -161,6 +161,39 @@ describe('ExplorePage instrumentation context boundary', () => {
     );
   });
 
+  it.each(['logs', 'traces'] as const)(
+    'keeps the exact instrumentation scope and Collector chip when submitting a %s query',
+    async signal => {
+      renderPage(
+        `/explore?signal=${signal}&serviceName=checkout&serviceNamespace=commerce&environment=prod` +
+          '&intakeProfileId=collector%3Aeast&collectorId=east&instance=checkout-1&endpoint=%2Fcheckout' +
+          '&start=1710000000000&end=1710000005000'
+      );
+      const collectorLabel = i18n.t('explore.collectorContext', { value: 'east' });
+
+      expect(await screen.findByText(collectorLabel)).toBeInTheDocument();
+      fireEvent.click(querySubmitButton());
+
+      await waitFor(() =>
+        expect(locationParams()).toEqual(
+          expect.objectContaining({
+            signal,
+            serviceName: 'checkout',
+            serviceNamespace: 'commerce',
+            environment: 'prod',
+            intakeProfileId: 'collector:east',
+            collectorId: 'east',
+            instance: 'checkout-1',
+            endpoint: '/checkout',
+            start: '1710000000000',
+            end: '1710000005000'
+          })
+        )
+      );
+      expect(screen.getByText(collectorLabel)).toBeInTheDocument();
+    }
+  );
+
   it('retires instrumentation markers when removing a query-bar active filter', async () => {
     api.loadMetricSignal.mockResolvedValue(metricState('no_context', null));
     renderPage(

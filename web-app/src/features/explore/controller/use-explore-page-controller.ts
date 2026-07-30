@@ -27,11 +27,11 @@ import {
   buildExplorePath,
   exploreHandoffState,
   mergeExploreContextChanges,
+  mergeManualExploreQuery,
   exploreQueryContext,
   mergeExploreQuery,
   parseExploreQuery,
   querySubmissionTimePatch,
-  retireInstrumentationHandoff,
   type ExploreQuery,
   type ExploreQueryPatch
 } from '../model/explore-model';
@@ -66,8 +66,7 @@ export function useExplorePageController() {
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
   const updateManualQuery = (changes: ExploreQueryPatch) => {
-    const contextual = mergeExploreContextChanges(context, withoutHandoffMarkerChanges(changes));
-    const next = retireInstrumentationHandoff(mergeExploreQuery(query, contextual));
+    const next = mergeManualExploreQuery(query, context, changes);
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
   const time = useExploreRouteTime(query, sharedTime, updateQuery);
@@ -106,14 +105,6 @@ function refreshHistory(
     return Promise.resolve();
   }
   return refetch().then(() => undefined);
-}
-
-function withoutHandoffMarkerChanges(changes: ExploreQueryPatch): ExploreQueryPatch {
-  const ordinaryChanges = { ...changes };
-  delete ordinaryChanges.intakeProfileId;
-  delete ordinaryChanges.collectorId;
-  delete ordinaryChanges.windowMode;
-  return ordinaryChanges;
 }
 
 function exactWindow(query: ExploreQuery) {
