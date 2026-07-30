@@ -20,6 +20,7 @@ If you want to run this MCP server locally using the default settings provided b
 
 ```shell
 export MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>"
+export MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com"
 cargo run
 ```
 
@@ -27,7 +28,17 @@ This MCP server will be deployed at `http://127.0.0.1:4000/mcp`, and you can use
 
 Production mode requires `MCP_OAUTH_APPROVAL_SECRET`. The operator enters this
 secret on the OAuth approval page; it is separate from dynamically registered
-client credentials. Development mode does not require it.
+client credentials. Production also requires an explicit HTTPS
+`MCP_OAUTH_PUBLIC_BASE_URL`; OAuth metadata never derives public endpoints from
+the request `Host` header. Development mode generates a temporary approval
+secret and may derive a loopback HTTP URL from the local bind address.
+
+Dynamic registration supports public clients (`token_endpoint_auth_method:
+none`) and confidential clients (`client_secret_post`). Authorization requests
+must use PKCE S256. Authorization transactions and codes are one-time and
+short-lived; access tokens expire after one hour, and refresh tokens expire
+after one day and rotate on every use. OAuth form and JSON bodies are limited
+to 16 KiB.
 
 For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
@@ -54,6 +65,7 @@ After building, use the following command to run it:
 ```shell
 docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
   -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
   --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
@@ -70,6 +82,7 @@ Container's workdir is `/app` and it will run the `/app/mcp-bash-server` when it
 ```shell
 docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
   -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
   -v `pwd`/config.toml:/app/config.toml \
   --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
@@ -79,6 +92,7 @@ If you are using SELinux, you may need to run the command instead to let the con
 ```shell
 docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
   -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -e MCP_OAUTH_PUBLIC_BASE_URL="https://mcp.example.com" \
   -v `pwd`/config.toml:/app/config.toml:Z \
   --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
@@ -115,14 +129,9 @@ Start the MCP Server in daemon mode, then add the settings to your Vscode Copilo
 }
 ```
 
-**Currently Vscode MCP OAuth can not automatically authorize this bash-server**
-The vscode mcp OAuth flow is:
-
-1. GET /.well-known/oauth-authorization-server
-2. GET /authorize with query-params
-3. ...
-
-But we requires the client registration before accessing endpoint `/authorize` with query-params that contains invalid client-id. So we can only set the token manually now.
+OAuth-capable MCP clients can discover the authorization metadata, dynamically
+register a public client, and complete the PKCE flow. A manually configured
+bearer token remains available for clients that do not implement MCP OAuth.
 
 ## Configuration
 

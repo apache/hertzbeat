@@ -129,10 +129,8 @@
         </div>
         
         <form action="/approve" method="post">
-            <input type="hidden" name="client_id" value="{{ client_id }}">
-            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
-            <input type="hidden" name="scope" value="{{ scope }}">
-            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="transaction_id" value="{{ transaction_id }}">
+            <input type="hidden" name="consent_nonce" value="{{ consent_nonce }}">
 
             <div class="approval-secret">
                 <label for="approval_secret">Approval secret</label>
