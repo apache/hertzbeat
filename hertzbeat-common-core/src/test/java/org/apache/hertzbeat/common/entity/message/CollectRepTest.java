@@ -21,12 +21,14 @@ package org.apache.hertzbeat.common.entity.message;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * Test case for {@link CollectRep}
@@ -47,22 +49,41 @@ public class CollectRepTest {
         assertEquals(field1.equals(field2), result);
     }
 
-    @Test
-    void boundsArrowStringValueSize() {
-        String oversizedValue = "a".repeat(100_000);
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("largeMetricValues")
+    void preservesArrowStringValue(String description, String value) {
         CollectRep.Field field = CollectRep.Field.newBuilder()
                 .setName("payload")
                 .setType(1)
                 .build();
-        CollectRep.ValueRow row = new CollectRep.ValueRow(List.of(oversizedValue));
+        CollectRep.ValueRow row = new CollectRep.ValueRow(List.of(value));
 
         try (CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                 .addField(field)
                 .addValueRow(row)
                 .build()) {
             String storedValue = metricsData.getValues().getFirst().getColumns(0);
-            assertTrue(storedValue.getBytes(StandardCharsets.UTF_8).length <= 32_700);
+            assertEquals(
+                    value.getBytes(StandardCharsets.UTF_8).length,
+                    storedValue.getBytes(StandardCharsets.UTF_8).length);
+            assertEquals(value, storedValue);
         }
+    }
+
+    private static Stream<Arguments> largeMetricValues() {
+        String ideograph = "\u4e2d";
+        String emoji = new String(Character.toChars(0x1F600));
+        return Stream.of(
+                arguments("ASCII before previous boundary", "a".repeat(32_699)),
+                arguments("ASCII at previous boundary", "a".repeat(32_700)),
+                arguments("ASCII after previous boundary", "a".repeat(32_701)),
+                arguments("large ASCII value", "a".repeat(100_000)),
+                arguments("multibyte before previous boundary", ideograph.repeat(10_899)),
+                arguments("multibyte at previous boundary", ideograph.repeat(10_900)),
+                arguments("multibyte after previous boundary", ideograph.repeat(10_901)),
+                arguments("emoji before previous boundary", emoji.repeat(8_174)),
+                arguments("emoji at previous boundary", emoji.repeat(8_175)),
+                arguments("emoji after previous boundary", emoji.repeat(8_176)));
     }
 
 }

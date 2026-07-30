@@ -21,10 +21,7 @@ package org.apache.hertzbeat.common.entity.message;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.Channels;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,8 +48,6 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 @SuppressWarnings("all")
 @Slf4j
 public final class CollectRep {
-    private static final int MAX_ARROW_VALUE_BYTES = 32_700;
-
     private CollectRep() {}
 
     /**
@@ -290,8 +285,9 @@ public final class CollectRep {
                 Row row = iterator.next();
                 ValueRow valueRow = ValueRow.newBuilder()
                     .setColumns(fieldNames.stream()
-                        .map(fieldName -> new String(((VarCharVector)
-                            table.getVector(fieldName)).get(row.getRowNumber())))
+                        .map(fieldName -> new String(
+                                ((VarCharVector) table.getVector(fieldName)).get(row.getRowNumber()),
+                                StandardCharsets.UTF_8))
                         .collect(Collectors.toList()))
                     .build();
                 values.add(valueRow);
@@ -448,7 +444,8 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        byte[] bytes = encodeMetricValue(value);
+                                        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+                                        // setSafe grows the variable-width data buffer beyond its initial allocation.
                                         vector.setSafe(rowIndex, bytes);
                                     }
                                 }
@@ -469,18 +466,6 @@ public final class CollectRep {
                 }
             }
 
-            private static byte[] encodeMetricValue(String value) {
-                ByteBuffer buffer = ByteBuffer.allocate(MAX_ARROW_VALUE_BYTES);
-                StandardCharsets.UTF_8.newEncoder()
-                        .onMalformedInput(CodingErrorAction.REPLACE)
-                        .onUnmappableCharacter(CodingErrorAction.REPLACE)
-                        .encode(CharBuffer.wrap(value), buffer, true);
-                buffer.flip();
-                byte[] encoded = new byte[buffer.remaining()];
-                buffer.get(encoded);
-                return encoded;
-            }
-            
             public long getId() {
                 return Long.parseLong(metadata.getOrDefault(MetricDataConstants.ID, "0"));
             }
