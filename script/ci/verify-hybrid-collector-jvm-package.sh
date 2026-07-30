@@ -99,6 +99,37 @@ PY
       echo "JVM startup launcher must include root, lib/*, and ext-lib/* in its classpath" >&2
       exit 1
     fi
+    if ! python3 - "$shutdown" <<'PY'
+import pathlib
+import re
+import sys
+
+source = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+required = (
+    'SHUTDOWN_TIMEOUT_SECONDS="${SHUTDOWN_TIMEOUT_SECONDS:-30}"',
+    "APPLICATION_PIDS=()",
+    "MANAGED_PIDS=()",
+    "TARGET_PIDS=()",
+    "capture_descendants",
+    'kill -TERM "$pid"',
+    "deadline=$((SECONDS + SHUTDOWN_TIMEOUT_SECONDS))",
+    "while (( SECONDS < deadline ))",
+    'kill -KILL "$pid"',
+    "exit 1",
+)
+term_index = source.find('kill -TERM "$pid"')
+kill_index = source.find('kill -KILL "$pid"')
+valid = (
+    all(fragment in source for fragment in required)
+    and not re.search(r"\bkill\s+-9(?:\s|$)", source)
+    and 0 <= term_index < kill_index
+)
+sys.exit(0 if valid else 1)
+PY
+    then
+      echo "JVM Unix shutdown launcher must use graceful bounded shutdown and clean up captured managed children" >&2
+      exit 1
+    fi
     ;;
 esac
 
