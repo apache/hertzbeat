@@ -94,7 +94,12 @@ public class BulletinServiceImpl implements BulletinService {
         if (optional.isEmpty()) {
             throw new IllegalArgumentException("Bulletin not found");
         }
-        bulletinDao.save(bulletin);
+        Bulletin storedBulletin = optional.get();
+        storedBulletin.setName(bulletin.getName());
+        storedBulletin.setMonitorIds(bulletin.getMonitorIds());
+        storedBulletin.setApp(bulletin.getApp());
+        storedBulletin.setFields(bulletin.getFields());
+        bulletinDao.save(storedBulletin);
     }
 
     /**
@@ -103,7 +108,13 @@ public class BulletinServiceImpl implements BulletinService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addBulletin(Bulletin bulletin) {
-        bulletinDao.save(bulletin);
+        Bulletin newBulletin = Bulletin.builder()
+                .name(bulletin.getName())
+                .monitorIds(bulletin.getMonitorIds())
+                .app(bulletin.getApp())
+                .fields(bulletin.getFields())
+                .build();
+        bulletinDao.save(newBulletin);
     }
 
     /**

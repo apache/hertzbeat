@@ -24,6 +24,7 @@ import org.apache.hertzbeat.manager.service.impl.BulletinServiceImpl;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,19 +33,24 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -117,6 +123,60 @@ public class BulletinServiceTest {
         assertDoesNotThrow(() -> {
             bulletinService.addBulletin(bulletinDto);
         });
+    }
+
+    @Test
+    void addBulletinIgnoresClientManagedFields() {
+        Bulletin bulletin = new Bulletin();
+        bulletin.setId(7L);
+        bulletin.setCreator("submitted-creator");
+        bulletin.setModifier("submitted-modifier");
+        bulletin.setGmtCreate(LocalDateTime.of(2020, 1, 1, 0, 0));
+        bulletin.setGmtUpdate(LocalDateTime.of(2020, 1, 2, 0, 0));
+
+        bulletinService.addBulletin(bulletin);
+
+        ArgumentCaptor<Bulletin> saved = ArgumentCaptor.forClass(Bulletin.class);
+        verify(bulletinDao).save(saved.capture());
+        assertNull(saved.getValue().getId());
+        assertNull(saved.getValue().getCreator());
+        assertNull(saved.getValue().getModifier());
+        assertNull(saved.getValue().getGmtCreate());
+        assertNull(saved.getValue().getGmtUpdate());
+    }
+
+    @Test
+    void editBulletinPreservesStoredManagedFields() {
+        LocalDateTime createdAt = LocalDateTime.of(2020, 1, 1, 0, 0);
+        LocalDateTime updatedAt = LocalDateTime.of(2020, 1, 2, 0, 0);
+        Bulletin stored = Bulletin.builder()
+                .id(7L)
+                .name("old-name")
+                .creator("stored-creator")
+                .modifier("stored-modifier")
+                .gmtCreate(createdAt)
+                .gmtUpdate(updatedAt)
+                .build();
+        Bulletin submitted = Bulletin.builder()
+                .id(7L)
+                .name("new-name")
+                .creator("submitted-creator")
+                .modifier("submitted-modifier")
+                .gmtCreate(createdAt.minusYears(1))
+                .gmtUpdate(updatedAt.minusYears(1))
+                .build();
+        when(bulletinDao.findById(7L)).thenReturn(Optional.of(stored));
+
+        bulletinService.editBulletin(submitted);
+
+        ArgumentCaptor<Bulletin> saved = ArgumentCaptor.forClass(Bulletin.class);
+        verify(bulletinDao).save(saved.capture());
+        assertSame(stored, saved.getValue());
+        assertEquals("new-name", saved.getValue().getName());
+        assertEquals("stored-creator", saved.getValue().getCreator());
+        assertEquals("stored-modifier", saved.getValue().getModifier());
+        assertEquals(createdAt, saved.getValue().getGmtCreate());
+        assertEquals(updatedAt, saved.getValue().getGmtUpdate());
     }
 
     @Test

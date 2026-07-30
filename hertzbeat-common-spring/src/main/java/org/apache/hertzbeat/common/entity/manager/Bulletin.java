@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -55,7 +56,7 @@ public class Bulletin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Bulletin ID", example = "1")
+    @Schema(description = "Bulletin ID", example = "1", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(description = "Bulletin Name", example = "Bulletin1", accessMode = READ_WRITE)
@@ -74,19 +75,19 @@ public class Bulletin {
     @Convert(converter = JsonMapListAttributeConverter.class)
     private Map<String, List<String>> fields;
 
-    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_WRITE)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_WRITE)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
+    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
+    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 }
