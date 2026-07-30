@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -110,9 +111,21 @@ public class Job {
      */
     private long defaultInterval = 600L;
     /**
-     * Refresh time list for one cycle of the job.
+     * Explicit refresh delays used for one-time overrides and fallback schedules.
      */
     private ConcurrentLinkedDeque<Long> intervals;
+
+    /**
+     * Collector-only periods used to generate the next refresh delay lazily.
+     */
+    @JsonIgnore
+    private transient long[] metricsSchedulePeriods;
+
+    /**
+     * Collector-only time remaining until each metric period is due.
+     */
+    @JsonIgnore
+    private transient long[] metricsScheduleRemaining;
     /**
      * Whether it is a recurring periodic task true is yes, false is no.
      */
@@ -328,7 +341,7 @@ public class Job {
         if (array != null && !array.isEmpty()) {
             long result = array.get(0);
             for (int i = 1; i < array.size(); i++) {
-                result = result / gcd(result, array.get(i)) * array.get(i);
+                result = Math.multiplyExact(result / gcd(result, array.get(i)), array.get(i));
             }
             return result;
         }
@@ -340,29 +353,50 @@ public class Job {
      * Generate a list of refresh intervals for metric collection.
      */
     public synchronized void generateMetricsIntervals(List<Long> metricsIntervals) {
-        // 1. To find the least common multiple (LCM) of all metric refresh intervals
-        long lcm = lcm(metricsIntervals);
-        List<Long> refreshTimes = new LinkedList<>();
-        // 2. Calculate all possible refresh intervals in one round
-        for (long interval : metricsIntervals) {
-            for (long t = interval; t <= lcm; t += interval) {
-                if (!refreshTimes.contains(t)) {
-                    refreshTimes.add(t);
-                }
-            }
+        long[] periods = metricsIntervals == null
+                ? new long[0]
+                : metricsIntervals.stream()
+                        .filter(Objects::nonNull)
+                        .mapToLong(Long::longValue)
+                        .filter(interval -> interval > 0)
+                        .distinct()
+                        .sorted()
+                        .toArray();
+        if (periods.length == 0) {
+            metricsSchedulePeriods = null;
+            metricsScheduleRemaining = null;
+            intervals = new ConcurrentLinkedDeque<>(List.of(Math.max(1L, defaultInterval)));
+            return;
         }
-        // 3. Sort from smallest to largest
-        Collections.sort(refreshTimes);
-        // 4. Calculate the refresh interval list for Job's cycle
-        LinkedList<Long> intervals = new LinkedList<>();
-        intervals.add(refreshTimes.get(0));
-        for (int i = 1; i < refreshTimes.size(); i++) {
-            intervals.add(refreshTimes.get(i) - refreshTimes.get(i - 1));
-        }
-        setIntervals(new ConcurrentLinkedDeque<>(intervals));
+        metricsSchedulePeriods = periods;
+        metricsScheduleRemaining = periods.clone();
+        intervals = null;
+    }
+
+    public synchronized void setIntervals(ConcurrentLinkedDeque<Long> intervals) {
+        this.intervals = intervals;
+        metricsSchedulePeriods = null;
+        metricsScheduleRemaining = null;
     }
 
     public synchronized long getInterval() {
+        if (metricsScheduleRemaining != null && metricsSchedulePeriods != null
+                && metricsScheduleRemaining.length == metricsSchedulePeriods.length
+                && metricsScheduleRemaining.length > 0) {
+            long nextInterval = Long.MAX_VALUE;
+            for (long remaining : metricsScheduleRemaining) {
+                nextInterval = Math.min(nextInterval, remaining);
+            }
+            if (nextInterval > 0) {
+                for (int i = 0; i < metricsScheduleRemaining.length; i++) {
+                    metricsScheduleRemaining[i] -= nextInterval;
+                    if (metricsScheduleRemaining[i] == 0) {
+                        metricsScheduleRemaining[i] = metricsSchedulePeriods[i];
+                    }
+                }
+                return nextInterval;
+            }
+        }
         if (this.intervals != null && !this.intervals.isEmpty()) {
             Long interval = this.intervals.removeFirst();
             if (interval != null) {
