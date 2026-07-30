@@ -34,6 +34,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.when;
 
 /**
@@ -131,5 +132,29 @@ public class AlarmCacheManagerTest {
         assertNotNull(singleAlert);
         historicalSingleAlert = alarmCacheManager.getFiring(4L, fingerprint);
         assertNull(historicalSingleAlert);
+    }
+
+    @Test
+    void restartShouldRebuildCacheKeyWithoutChangingPersistedFingerprint() {
+        Map<String, String> labels = Map.of(
+                CommonConstants.LABEL_DEFINE_ID, "7",
+                CommonConstants.LABEL_ALERT_NAME, "disk_full",
+                "instance", "db-1");
+        SingleAlert persistedAlert = SingleAlert.builder()
+                .id(99L)
+                .fingerprint("alertname:disk_full,define_id:7,instance:db-1")
+                .labels(labels)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .build();
+        when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING))
+                .thenReturn(Collections.singletonList(persistedAlert));
+
+        alarmCacheManager = new AlarmCacheManager(singleAlertDao);
+        String rebuiltCacheKey = AlertUtil.calculateFingerprint(labels);
+        SingleAlert resolved = alarmCacheManager.removeFiring(7L, rebuiltCacheKey);
+
+        assertSame(persistedAlert, resolved);
+        assertEquals("alertname:disk_full,define_id:7,instance:db-1", resolved.getFingerprint());
+        assertNull(alarmCacheManager.getFiring(7L, rebuiltCacheKey));
     }
 }

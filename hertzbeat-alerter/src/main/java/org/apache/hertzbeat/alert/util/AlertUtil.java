@@ -26,8 +26,14 @@ import java.util.Map;
 public class AlertUtil {
 
     /**
-     * calculate fingerprint
-     * @param fingerPrints finger prints
+     * Calculate an in-memory alert cache coordinate.
+     *
+     * <p>This value is rebuilt from persisted alert labels when the process
+     * starts. It is not the durable {@code SingleAlert.fingerprint} used by
+     * persistence, grouping, silence, or inhibition.</p>
+     *
+     * @param fingerPrints labels used by the calculator cache
+     * @return deterministic cache coordinate
      */
     public static String calculateFingerprint(Map<String, String> fingerPrints) {
         StringBuilder canonicalLabels = new StringBuilder();
