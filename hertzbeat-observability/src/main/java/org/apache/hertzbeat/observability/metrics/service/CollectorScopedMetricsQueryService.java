@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.metrics.service;
 
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 
 /**
  * Applies Collector identity scope before delegating to the existing metrics console.
@@ -25,6 +26,10 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleD
 public interface CollectorScopedMetricsQueryService {
 
     OtlpMetricsConsoleDto query(Request request);
+
+    default OtlpMetricsInventoryDto inventory(InventoryRequest request) {
+        throw new UnsupportedOperationException("Metric inventory is unavailable");
+    }
 
     /**
      * Storage-neutral metrics console request including the optional Collector scope.
@@ -48,6 +53,24 @@ public interface CollectorScopedMetricsQueryService {
             String step,
             String limit,
             String operationName
+    ) {
+    }
+
+    /**
+     * Storage-neutral metric inventory request using the same Collector scope as console queries.
+     */
+    record InventoryRequest(
+            Long entityId,
+            String entityType,
+            Long start,
+            Long end,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            String collectorId,
+            String instance,
+            String endpoint,
+            String limit
     ) {
     }
 }

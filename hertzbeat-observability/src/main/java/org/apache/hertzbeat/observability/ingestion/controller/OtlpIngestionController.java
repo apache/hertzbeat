@@ -115,9 +115,14 @@ public class OtlpIngestionController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "limit", required = false) String limit) {
-        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsInventory(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment, limit)));
+        return ResponseEntity.ok(Message.success(collectorScopedMetricsQueryService.inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        entityId, entityType, start, end, serviceName, serviceNamespace, environment,
+                        collectorId, instance, endpoint, limit))));
     }
 
     @GetMapping("/metrics/related")

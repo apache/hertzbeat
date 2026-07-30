@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,9 +51,9 @@ class CollectorScopedMetricsQueryServiceImplTest {
         OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
         result.setContext(new OtlpMetricsConsoleDto.Context());
         when(workspaceService.getMetricsConsole(
-                null, null, 100L, 200L, "checkout", "commerce", "prod", "http_server_duration",
-                "span_kind=server and hertzbeat_collector_id=\"collector-a\"", null, null,
-                null, "60s", null, null)).thenReturn(result);
+                null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", null, null, "http_server_duration", "span_kind=server",
+                null, null, null, "60s", null, null)).thenReturn(result);
 
         OtlpMetricsConsoleDto actual = service.query(request("collector-a", "http_server_duration"));
 
@@ -64,9 +65,9 @@ class CollectorScopedMetricsQueryServiceImplTest {
         OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
         result.setContext(new OtlpMetricsConsoleDto.Context());
         when(workspaceService.getMetricsConsole(
-                null, null, 100L, 200L, "checkout", "commerce", "prod", null,
-                "span_kind=server and hertzbeat_collector_id=\"collector-east\"", null, null,
-                null, "60s", null, null)).thenReturn(result);
+                null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-east", null, null, null, "span_kind=server",
+                null, null, null, "60s", null, null)).thenReturn(result);
 
         OtlpMetricsConsoleDto actual = service.query(request("collector-east", null));
 
@@ -78,9 +79,8 @@ class CollectorScopedMetricsQueryServiceImplTest {
         OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
         result.setContext(new OtlpMetricsConsoleDto.Context());
         when(workspaceService.getMetricsConsole(
-                null, null, 100L, 200L, "checkout", "commerce", "prod", "http_server_duration",
-                "span_kind=server and hertzbeat_collector_id=\"collector-a\""
-                        + " and service_instance_id=\"checkout-7d9\" and http_route=\"/checkout\"",
+                null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", "checkout-7d9", "/checkout", "http_server_duration", "span_kind=server",
                 null, null, null, "60s", null, null)).thenReturn(result);
 
         OtlpMetricsConsoleDto actual = service.query(new CollectorScopedMetricsQueryService.Request(
@@ -108,8 +108,9 @@ class CollectorScopedMetricsQueryServiceImplTest {
         OtlpMetricsConsoleDto result = new OtlpMetricsConsoleDto();
         result.setContext(new OtlpMetricsConsoleDto.Context());
         when(workspaceService.getMetricsConsole(
-                null, null, 100L, 200L, "checkout", "commerce", "prod", "http_server_duration",
-                "span_kind=server", null, null, null, "60s", null, null)).thenReturn(result);
+                null, null, 100L, 200L, "checkout", "commerce", "prod",
+                null, null, null, "http_server_duration", "span_kind=server",
+                null, null, null, "60s", null, null)).thenReturn(result);
 
         OtlpMetricsConsoleDto actual = service.query(request(" ", "http_server_duration"));
 
@@ -134,6 +135,32 @@ class CollectorScopedMetricsQueryServiceImplTest {
                 null, null, 100L, 200L, "checkout", "commerce", "prod", "collector-a", null, null, null,
                 "hertzbeat_collector_id=collector-b", null, null, null, "60s", null, null)));
         verifyNoInteractions(workspaceService);
+    }
+
+    @Test
+    void validatesAndPassesDedicatedInventoryScopeThroughTheSharedBoundary() {
+        OtlpMetricsInventoryDto result = new OtlpMetricsInventoryDto();
+        result.setContext(new OtlpMetricsConsoleDto.Context());
+        when(workspaceService.getMetricsInventory(
+                null, null, 100L, 200L, "checkout", "commerce", "prod",
+                "collector-a", "checkout-01", "/checkout", "20")).thenReturn(result);
+
+        OtlpMetricsInventoryDto actual = service.inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        null, null, 100L, 200L, "checkout", "commerce", "prod",
+                        "collector-a", "checkout-01", "/checkout", "20"));
+
+        assertEquals("collector-a", actual.getContext().getCollectorId());
+        assertEquals("checkout-01", actual.getContext().getInstance());
+        assertEquals("/checkout", actual.getContext().getEndpoint());
+        assertThrows(IllegalArgumentException.class, () -> service.inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        null, null, 100L, 200L, "checkout", "commerce", "prod",
+                        "collector-a\"bad", "checkout-01", "/checkout", "20")));
+        assertThrows(IllegalArgumentException.class, () -> service.inventory(
+                new CollectorScopedMetricsQueryService.InventoryRequest(
+                        null, null, 100L, 200L, "checkout", "commerce", "prod",
+                        "collector-a", "checkout-01", "POST /checkout", "20")));
     }
 
     private CollectorScopedMetricsQueryService.Request request(String collectorId, String query) {

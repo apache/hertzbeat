@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.metrics.service.impl;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
@@ -49,13 +50,30 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
                 && !SIMPLE_METRIC_NAME.matcher(query).matches()) {
             return unsupportedQuery(request, collectorId, queryContextScope);
         }
-        String scopedFilter = queryContextScope.applyMetricFilter(
-                applyCollectorFilter(request.filter(), collectorId));
+        String scopedFilter = applyCollectorFilter(request.filter(), collectorId);
+        queryContextScope.validateMetricFilter(scopedFilter);
         OtlpMetricsConsoleDto result = workspaceService.getMetricsConsole(
                 request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
-                request.serviceNamespace(), request.environment(), request.query(), scopedFilter, request.groupBy(),
-                request.aggregation(), request.temporalAggregation(), request.step(), request.limit(),
-                request.operationName());
+                request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
+                queryContextScope.endpoint(), request.query(), scopedFilter, request.groupBy(), request.aggregation(),
+                request.temporalAggregation(), request.step(), request.limit(), request.operationName());
+        if (result != null && result.getContext() != null) {
+            result.getContext().setCollectorId(collectorId);
+            result.getContext().setInstance(queryContextScope.instance());
+            result.getContext().setEndpoint(queryContextScope.endpoint());
+        }
+        return result;
+    }
+
+    @Override
+    public OtlpMetricsInventoryDto inventory(InventoryRequest request) {
+        String collectorId = normalizeCollectorId(request.collectorId());
+        TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(
+                request.instance(), request.endpoint());
+        OtlpMetricsInventoryDto result = workspaceService.getMetricsInventory(
+                request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
+                request.serviceNamespace(), request.environment(), collectorId, queryContextScope.instance(),
+                queryContextScope.endpoint(), request.limit());
         if (result != null && result.getContext() != null) {
             result.getContext().setCollectorId(collectorId);
             result.getContext().setInstance(queryContextScope.instance());
@@ -84,10 +102,7 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
                 && normalizedFilter.contains(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID)) {
             throw new IllegalArgumentException("Collector ID must use the dedicated query parameter");
         }
-        String collectorFilter = OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID + "=\"" + collectorId + "\"";
-        return StringUtils.hasText(normalizedFilter)
-                ? normalizedFilter + " and " + collectorFilter
-                : collectorFilter;
+        return normalizedFilter;
     }
 
     private OtlpMetricsConsoleDto unsupportedQuery(Request request, String collectorId,
