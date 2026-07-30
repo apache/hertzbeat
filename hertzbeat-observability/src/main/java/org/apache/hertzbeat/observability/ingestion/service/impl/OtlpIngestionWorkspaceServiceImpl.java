@@ -984,9 +984,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<String> relatedMetricCandidateNames(OtlpMetricsConsoleDto.Context context, long start, long end) {
+        return relatedMetricCandidateNames(context, start, end, null);
+    }
+
+    private List<String> relatedMetricCandidateNames(
+            OtlpMetricsConsoleDto.Context context, long start, long end, String filter) {
         List<String> candidates = new ArrayList<>();
         if (metricQueryRepository.hasPromqlExecutor()) {
-            candidates.addAll(collectPromqlRelatedMetricNames(context, start, end));
+            candidates.addAll(collectPromqlRelatedMetricNames(context, start, end, filter));
         }
         candidates.addAll(candidateMetricNames(context));
         return normalizeCandidateMetricNames(candidates);
@@ -1046,7 +1051,12 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<String> collectPromqlRelatedMetricNames(OtlpMetricsConsoleDto.Context context, long start, long end) {
-        String query = buildRelatedMetricInventoryQuery(context);
+        return collectPromqlRelatedMetricNames(context, start, end, null);
+    }
+
+    private List<String> collectPromqlRelatedMetricNames(
+            OtlpMetricsConsoleDto.Context context, long start, long end, String filter) {
+        String query = buildRelatedMetricInventoryQuery(context, filter);
         if (!StringUtils.hasText(query)) {
             return List.of();
         }
@@ -1068,24 +1078,36 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private String buildRelatedMetricInventoryQuery(OtlpMetricsConsoleDto.Context context) {
+        return buildRelatedMetricInventoryQuery(context, null);
+    }
+
+    private String buildRelatedMetricInventoryQuery(OtlpMetricsConsoleDto.Context context, String filter) {
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
             return null;
         }
         List<String> matchers = new ArrayList<>();
+        Set<String> scopedLabels = new LinkedHashSet<>();
         matchers.add("__name__=~\".+\"");
+        scopedLabels.add("__name__");
         matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
+        scopedLabels.add("service_name");
         if (StringUtils.hasText(context.getServiceNamespace())) {
             matchers.add("service_namespace=\"" + escapePromqlLabelValue(context.getServiceNamespace()) + "\"");
+            scopedLabels.add("service_namespace");
         }
         if (StringUtils.hasText(context.getEnvironment())) {
             matchers.add("deployment_environment_name=\"" + escapePromqlLabelValue(context.getEnvironment()) + "\"");
+            scopedLabels.add("deployment_environment_name");
         }
         if (context.getEntityId() != null) {
             matchers.add("hertzbeat_entity_id=\"" + escapePromqlLabelValue(String.valueOf(context.getEntityId())) + "\"");
+            scopedLabels.add("hertzbeat_entity_id");
         }
         if (StringUtils.hasText(context.getEntityType())) {
             matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");
+            scopedLabels.add("hertzbeat_entity_type");
         }
+        matchers.addAll(parseMetricsFilterMatchers(filter, scopedLabels));
         return "sum by (__name__) ({" + String.join(", ", matchers) + "})";
     }
 
@@ -2019,7 +2041,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         OtlpMetricsConsoleDto firstEmptyConsole = null;
         String lastErrorMessage = null;
         for (OtlpMetricsConsoleDto.Context candidateContext : candidateContexts) {
-            for (String metricName : candidateMetricNames(candidateContext)) {
+            for (String metricName :
+                    relatedMetricCandidateNames(candidateContext, resolvedStart, resolvedEnd, filter)) {
                 for (String candidateQuery : buildMetricsQueriesForMetric(candidateContext, metricName, filter, groupBy,
                         aggregation, temporalAggregation, operationName)) {
                     MetricsQueryExecution execution = executeMetricsConsoleQuery(candidateQuery, resolvedStart,
