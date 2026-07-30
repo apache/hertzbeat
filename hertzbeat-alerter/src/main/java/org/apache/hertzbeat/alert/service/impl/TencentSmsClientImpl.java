@@ -134,41 +134,56 @@ public class TencentSmsClientImpl implements SmsClient {
             httpPost.setHeader("Authorization", authorization);
             httpPost.setEntity(new StringEntity(payload, StandardCharsets.UTF_8));
 
-            log.debug("Sending SMS request to {}, payload: {}", httpPost.getURI(), payload);
+            log.debug("Sending SMS request via Tencent Cloud");
 
             // send http request and handle response
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
 
-                log.debug("SMS response status: {}, body: {}", statusCode, responseBody);
+                log.debug("Tencent Cloud SMS response status: {}", statusCode);
 
                 if (statusCode != 200) {
-                    throw new SendMessageException("HTTP request failed with status code: " + statusCode);
+                    throw SmsFailureMessages.httpStatus("Tencent Cloud SMS", statusCode);
                 }
 
                 JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+                if (jsonResponse == null) {
+                    throw SmsFailureMessages.invalidResponse("Tencent Cloud SMS");
+                }
                 JsonNode responseNode = jsonResponse.get("Response");
+                if (responseNode == null) {
+                    throw SmsFailureMessages.invalidResponse("Tencent Cloud SMS");
+                }
                 JsonNode error = responseNode.get("Error");
                 if (error != null) {
-                    String code = error.get("Code").asText();
-                    String message = error.get("Message").asText();
-                    throw new SendMessageException(code + ":" + message);
+                    JsonNode codeNode = error.get("Code");
+                    if (codeNode == null) {
+                        throw SmsFailureMessages.invalidResponse("Tencent Cloud SMS");
+                    }
+                    throw SmsFailureMessages.providerCode("Tencent Cloud SMS", codeNode.asText());
                 }
                 JsonNode sendStatusSet = responseNode.get("SendStatusSet");
-                if (sendStatusSet != null && sendStatusSet.isArray() && sendStatusSet.size() > 0) {
-                    JsonNode firstStatus = sendStatusSet.get(0);
-                    String code = firstStatus.get("Code").asText();
-                    String message = firstStatus.get("Message").asText();
-                    if (!RESPONSE_OK.equals(code)) {
-                        throw new SendMessageException(code + ":" + message);
-                    }
+                if (sendStatusSet == null || !sendStatusSet.isArray() || sendStatusSet.isEmpty()) {
+                    throw SmsFailureMessages.invalidResponse("Tencent Cloud SMS");
                 }
-                log.info("Successfully sent SMS to phones: {}", String.join(",", phones));
+                JsonNode codeNode = sendStatusSet.get(0).get("Code");
+                if (codeNode == null) {
+                    throw SmsFailureMessages.invalidResponse("Tencent Cloud SMS");
+                }
+                String code = codeNode.asText();
+                if (!RESPONSE_OK.equals(code)) {
+                    throw SmsFailureMessages.providerCode("Tencent Cloud SMS", code);
+                }
+                log.info("Successfully sent SMS via Tencent Cloud");
             }
+        } catch (SendMessageException e) {
+            log.warn("Failed to send SMS via Tencent Cloud");
+            throw e;
         } catch (Exception e) {
-            log.warn("Failed to send SMS: {}", e.getMessage());
-            throw new SendMessageException(e.getMessage());
+            log.warn("Failed to send SMS via Tencent Cloud, failure type: {}",
+                    e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("Tencent Cloud SMS");
         }
     }
 

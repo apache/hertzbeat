@@ -107,9 +107,12 @@ public class UniSmsClientImpl implements SmsClient {
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 handleResponse(response);
             }
+        } catch (SendMessageException e) {
+            log.warn("Failed to send SMS via UniSMS");
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to send SMS via UniSMS");
-            throw new SendMessageException(e.getMessage());
+            log.warn("Failed to send SMS via UniSMS, failure type: {}", e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("UniSMS");
         }
     }
 
@@ -152,14 +155,16 @@ public class UniSmsClientImpl implements SmsClient {
         log.debug("UniSMS response status: {}", statusCode);
 
         if (statusCode != 200) {
-            throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
+            throw SmsFailureMessages.httpStatus("UniSMS", statusCode);
         }
 
         JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+        if (jsonResponse == null || jsonResponse.get("code") == null) {
+            throw SmsFailureMessages.invalidResponse("UniSMS");
+        }
         String code = jsonResponse.get("code").asText();
         if (!SUCCESS_CODE.equals(code)) {
-            String message = jsonResponse.get("message").asText();
-            throw new SendMessageException(code + ":" + message);
+            throw SmsFailureMessages.providerCode("UniSMS", code);
         }
 
         log.info("Successfully sent SMS via UniSMS");

@@ -117,9 +117,12 @@ public class AwsSmsClientImpl implements SmsClient {
             HttpPost httpPost = createHttpPost(requestUri, amzDate, payloadInString);
             log.debug("Sending SMS request via AWS");
             executeRequest(httpClient, httpPost);
-        } catch (Exception e) {
+        } catch (SendMessageException e) {
             log.warn("Failed to send SMS via AWS");
-            throw new SendMessageException(e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.warn("Failed to send SMS via AWS, failure type: {}", e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("AWS SMS");
         }
     }
 
@@ -155,21 +158,20 @@ public class AwsSmsClientImpl implements SmsClient {
             log.debug("AWS SMS response status: {}", statusCode);
 
             if (statusCode != 200) {
-                throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
+                throw SmsFailureMessages.httpStatus("AWS SMS", statusCode);
             }
 
             JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
             if (jsonResponse == null) {
-                throw new SendMessageException(statusCode + ":" + responseBody);
+                throw SmsFailureMessages.invalidResponse("AWS SMS");
             }
 
             JsonNode responseNode = jsonResponse.get("MessageId");
             if (responseNode == null) {
-                throw new SendMessageException(statusCode + ":" + responseBody);
+                throw SmsFailureMessages.invalidResponse("AWS SMS");
             }
 
-            String messageId = responseNode.asText();
-            log.info("Successfully sent SMS via AWS, messageId: {}", messageId);
+            log.info("Successfully sent SMS via AWS");
         }
     }
 
@@ -284,4 +286,3 @@ public class AwsSmsClientImpl implements SmsClient {
 
     }
 }
-

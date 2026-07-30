@@ -97,11 +97,15 @@ public class TwilioSmsClientImpl implements SmsClient {
             URI requestUri = new URI(endpoint);
 
             HttpPost httpPost = createHttpPost(requestUri, phoneNumber, message);
-            log.info("Sending Twilio SMS request to {}", requestUri);
-            executeRequest(httpClient, httpPost, phoneNumber);
+            log.debug("Sending SMS request via Twilio");
+            executeRequest(httpClient, httpPost);
+        } catch (SendMessageException e) {
+            log.warn("Failed to send SMS via Twilio");
+            throw e;
         } catch (Exception e) {
-            log.warn("Failed to send SMS: {}", e.getMessage());
-            throw new SendMessageException(e.getMessage());
+            log.warn("Failed to send SMS via Twilio, failure type: {}",
+                    e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("Twilio SMS");
         }
     }
 
@@ -121,41 +125,36 @@ public class TwilioSmsClientImpl implements SmsClient {
             httpPost.setEntity(new UrlEncodedFormEntity(parameters));
             return httpPost;
         } catch (Exception e) {
-            log.error("Failed to create HTTP request: {}", e.getMessage());
-            throw new SendMessageException(e.getMessage());
+            log.warn("Failed to create Twilio SMS request, failure type: {}",
+                    e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("Twilio SMS");
         }
     }
 
-    private void executeRequest(CloseableHttpClient httpClient, HttpPost httpPost, String phoneNumber)
-            throws Exception {
+    private void executeRequest(CloseableHttpClient httpClient, HttpPost httpPost) throws Exception {
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             int statusCode = response.getStatusLine().getStatusCode();
             String responseBody = EntityUtils.toString(response.getEntity());
-            log.info("SMS response status: {}, body: {}", statusCode, responseBody);
+            log.debug("Twilio SMS response status: {}", statusCode);
 
             if (statusCode < 200 || statusCode >= 300) {
-
                 if (responseBody.contains("21608")) {
-                    throw new SendMessageException(
-                            "The Twilio trial account can only send SMS to verified phone numbers");
-                } else {
-                    throw new SendMessageException(
-                            "HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
+                    throw SmsFailureMessages.providerCode("Twilio SMS", "21608");
                 }
+                throw SmsFailureMessages.httpStatus("Twilio SMS", statusCode);
             }
 
             JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
             if (jsonResponse == null) {
-                throw new SendMessageException(statusCode + ":" + responseBody);
+                throw SmsFailureMessages.invalidResponse("Twilio SMS");
             }
 
             JsonNode sidNode = jsonResponse.get("sid");
             if (sidNode == null) {
-                throw new SendMessageException(statusCode + ":" + responseBody);
+                throw SmsFailureMessages.invalidResponse("Twilio SMS");
             }
 
-            String sid = sidNode.asText();
-            log.info("Successfully sent SMS to phone: {}, sid: {}", phoneNumber, sid);
+            log.info("Successfully sent SMS via Twilio");
         }
     }
 

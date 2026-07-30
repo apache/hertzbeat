@@ -26,14 +26,11 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.LogUtil;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -64,7 +61,6 @@ public class AlibabaSmsClientImpl implements SmsClient {
     private final String accessKeySecret;
     private final String signName;
     private final String templateCode;
-    private static final Logger logger = LoggerFactory.getLogger(AlibabaSmsClientImpl.class);
 
     public AlibabaSmsClientImpl(AlibabaSmsProperties config) {
         if (config != null) {
@@ -163,21 +159,27 @@ public class AlibabaSmsClientImpl implements SmsClient {
                 log.debug("Alibaba Cloud SMS response status: {}", statusCode);
 
                 if (statusCode != 200) {
-                    throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
+                    throw SmsFailureMessages.httpStatus("Alibaba Cloud SMS", statusCode);
                 }
 
                 JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+                if (jsonResponse == null || jsonResponse.get("Code") == null) {
+                    throw SmsFailureMessages.invalidResponse("Alibaba Cloud SMS");
+                }
                 String code = jsonResponse.get("Code").asText();
                 if (!"OK".equals(code)) {
-                    String message = jsonResponse.get("Message").asText();
-                    throw new SendMessageException(code + ":" + message);
+                    throw SmsFailureMessages.providerCode("Alibaba Cloud SMS", code);
                 }
 
                 log.info("Successfully sent SMS via Alibaba Cloud");
             }
+        } catch (SendMessageException e) {
+            log.warn("Failed to send SMS via Alibaba Cloud");
+            throw e;
         } catch (Exception e) {
-            LogUtil.warn(logger, "Failed to send SMS via Alibaba Cloud");
-            throw new SendMessageException(e.getMessage());
+            log.warn("Failed to send SMS via Alibaba Cloud, failure type: {}",
+                    e.getClass().getSimpleName());
+            throw SmsFailureMessages.requestFailed("Alibaba Cloud SMS");
         }
     }
 
@@ -195,7 +197,8 @@ public class AlibabaSmsClientImpl implements SmsClient {
             // Step 4: Build authorization header
             return ALGORITHM + " Credential=" + accessKeyId + ",SignedHeaders=host;x-acs-action;x-acs-content-sha256;x-acs-date;" + "x-acs-signature-nonce;x-acs-version,Signature=" + signature;
         } catch (Exception e) {
-            LogUtil.warn(logger, "Failed to calculate authorization {0}", e.getMessage());
+            log.warn("Failed to calculate Alibaba Cloud authorization, failure type: {}",
+                    e.getClass().getSimpleName());
             throw new RuntimeException("Failed to calculate authorization", e);
         }
     }
