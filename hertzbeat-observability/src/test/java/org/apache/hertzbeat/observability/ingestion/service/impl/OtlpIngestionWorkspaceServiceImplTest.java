@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,6 +112,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 List.of(),
                 List.of()
         );
+        stubEmptyPersistentMetricsInventory();
     }
 
     @AfterEach
@@ -135,6 +137,16 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 anyLong(),
                 anyString()
         )).thenReturn(promqlSuccess(queryData));
+    }
+
+    private void stubEmptyPersistentMetricsInventory() {
+        lenient().when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(emptyMetricsConsoleData()));
     }
 
     private static String groupedMetricPromql(String filter) {
@@ -2681,6 +2693,160 @@ class OtlpIngestionWorkspaceServiceImplTest {
 
         assertEquals(demoQuery, console.getQuery());
         assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void querylessMetricsConsoleUsesPersistentInventoryWithinExactScopedWindow() {
+        String exactScopeFilter = "service.name=\"checkout\" and hertzbeat_collector_id=\"collector-east\" "
+                + "and service.instance.id=\"checkout-01\" and http.route=\"/orders\"";
+        String neighborMetric = "neighbor_requests_total";
+        String businessMetric = "orders_processed_total";
+        String businessQuery = groupedMetricPromql("__name__=\"orders_processed_total\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", "
+                + "deployment_environment_name=\"prod\", hertzbeat_collector_id=\"collector-east\", "
+                + "service_instance_id=\"checkout-01\", http_route=\"/orders\"");
+        stubQuerylessMetricsInventory(
+                businessQuery,
+                emptyMetricsConsoleData(),
+                relatedMetricsInventoryData(neighborMetric, businessMetric),
+                businessMetricData(businessMetric)
+        );
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                exactScopeFilter,
+                null,
+                null
+        );
+
+        assertEquals("checkout", console.getContext().getServiceName());
+        assertEquals("commerce", console.getContext().getServiceNamespace());
+        assertEquals("prod", console.getContext().getEnvironment());
+        assertEquals(1_000L, console.getContext().getStart());
+        assertEquals(2_000L, console.getContext().getEnd());
+        assertEquals(businessQuery, console.getQuery());
+        assertTrue(console.getStats().getNonEmptySeries() > 0);
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                argThat(OtlpIngestionWorkspaceServiceImplTest::containsExactInventoryScope),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                argThat(query -> query.contains("__name__=\"" + neighborMetric + "\"")
+                        && query.contains("hertzbeat_collector_id=\"collector-east\"")
+                        && query.contains("service_instance_id=\"checkout-01\"")
+                        && query.contains("http_route=\"/orders\"")),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
+    private static DatasourceQueryData emptyMetricsConsoleData() {
+        return new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+    }
+
+    private static DatasourceQueryData relatedMetricsInventoryData(String neighborMetric, String businessMetric) {
+        return new DatasourceQueryData(
+                "otlp-related-metrics-inventory",
+                200,
+                null,
+                List.of(
+                        inventoryMetricData(neighborMetric, 3.0),
+                        inventoryMetricData(businessMetric, 7.0)
+                )
+        );
+    }
+
+    private static DatasourceQueryData.SchemaData inventoryMetricData(String metricName, double value) {
+        return new DatasourceQueryData.SchemaData(
+                new DatasourceQueryData.MetricSchema(
+                        List.of(new DatasourceQueryData.MetricField("__value__", "number", null)),
+                        Map.of("__name__", metricName),
+                        Map.of()
+                ),
+                Collections.singletonList(new Object[] {value})
+        );
+    }
+
+    private static DatasourceQueryData businessMetricData(String businessMetric) {
+        return new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(new DatasourceQueryData.SchemaData(
+                        new DatasourceQueryData.MetricSchema(
+                                List.of(
+                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                ),
+                                Map.of(
+                                        "__name__", businessMetric,
+                                        "service_name", "checkout",
+                                        "service_namespace", "commerce",
+                                        "deployment_environment_name", "prod",
+                                        "hertzbeat_collector_id", "collector-east",
+                                        "service_instance_id", "checkout-01",
+                                        "http_route", "/orders"
+                                ),
+                                Map.of()
+                        ),
+                        Collections.singletonList(new Object[] {1_750L, 7.0})
+                ))
+        );
+    }
+
+    private void stubQuerylessMetricsInventory(
+            String businessQuery,
+            DatasourceQueryData emptyData,
+            DatasourceQueryData inventoryData,
+            DatasourceQueryData businessData) {
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                anyString(),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String refId = invocation.getArgument(0);
+            String query = invocation.getArgument(1);
+            long start = invocation.getArgument(2);
+            long end = invocation.getArgument(3);
+            if ("otlp-related-metrics-inventory".equals(refId)
+                    && start == 1_000L
+                    && end == 2_000L
+                    && containsExactInventoryScope(query)) {
+                return promqlSuccess(inventoryData);
+            }
+            if ("otlp-metrics-console".equals(refId)
+                    && businessQuery.equals(query)
+                    && start == 1_000L
+                    && end == 2_000L) {
+                return promqlSuccess(businessData);
+            }
+            return promqlSuccess(emptyData);
+        });
+    }
+
+    private static boolean containsExactInventoryScope(String query) {
+        String serviceMatcher = "service_name=\"checkout\"";
+        return query.contains(serviceMatcher)
+                && query.indexOf(serviceMatcher) == query.lastIndexOf(serviceMatcher)
+                && query.contains("service_namespace=\"commerce\"")
+                && query.contains("deployment_environment_name=\"prod\"")
+                && query.contains("hertzbeat_collector_id=\"collector-east\"")
+                && query.contains("service_instance_id=\"checkout-01\"")
+                && query.contains("http_route=\"/orders\"");
     }
 
     private static final class InMemoryObservabilitySignalIntakeGateway implements ObservabilitySignalIntakeGateway {
