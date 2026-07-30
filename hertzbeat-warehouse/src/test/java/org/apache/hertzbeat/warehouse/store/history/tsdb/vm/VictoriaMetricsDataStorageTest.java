@@ -50,7 +50,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -182,6 +184,36 @@ class VictoriaMetricsDataStorageTest {
                         assertThat(postForEntityCount.get())
                                 // minimum flushes: ensure all data is processed (threadCount * writeSize / bufferSize)
                                 .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
+    }
+
+    @Test
+    void customizedLabelsDoNotReplaceStorageIdentity() {
+        Map<String, String> labels = new HashMap<>(Map.of(
+                "__name__", "cpu_usage",
+                "job", "linux",
+                "instance", "server-01",
+                "__monitor_id__", "42",
+                "__metrics__", "cpu",
+                "__metric__", "usage"));
+        Map<String, String> customizedLabels = Map.of(
+                "__name__", "other_metric",
+                "job", "other_job",
+                "instance", "server-02",
+                "__monitor_id__", "99",
+                "__metrics__", "memory",
+                "__metric__", "free",
+                "region", "west");
+
+        VictoriaMetricsDataStorage.addCustomizedLabels(labels, customizedLabels);
+
+        assertThat(labels)
+                .containsEntry("__name__", "cpu_usage")
+                .containsEntry("job", "linux")
+                .containsEntry("instance", "server-01")
+                .containsEntry("__monitor_id__", "42")
+                .containsEntry("__metrics__", "cpu")
+                .containsEntry("__metric__", "usage")
+                .containsEntry("region", "west");
     }
 
     @AfterEach

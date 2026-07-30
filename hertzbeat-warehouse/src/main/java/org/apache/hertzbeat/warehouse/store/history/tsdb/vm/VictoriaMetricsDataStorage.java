@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -98,6 +99,13 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
+    private static final Set<String> RESERVED_LABEL_KEYS = Set.of(
+        LABEL_KEY_NAME,
+        LABEL_KEY_JOB,
+        LABEL_KEY_INSTANCE,
+        LABEL_KEY_MONITOR_ID,
+        MONITOR_METRICS_KEY,
+        MONITOR_METRIC_KEY);
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
 
@@ -226,10 +234,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                             }
                             labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                             // add customized labels as identifier
-                            var customizedLabels = metricsData.getLabels();
-                            if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                labels.putAll(customizedLabels);
-                            }
+                            addCustomizedLabels(labels, metricsData.getLabels());
                             VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                 .metric(new HashMap<>(labels))
                                 .values(new Double[]{entry.getValue()})
@@ -253,6 +258,17 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         sendVictoriaMetrics(contentList);
+    }
+
+    static void addCustomizedLabels(Map<String, String> labels, Map<String, String> customizedLabels) {
+        if (ObjectUtils.isEmpty(customizedLabels)) {
+            return;
+        }
+        customizedLabels.forEach((key, value) -> {
+            if (!RESERVED_LABEL_KEYS.contains(key)) {
+                labels.put(key, value);
+            }
+        });
     }
 
     @Override

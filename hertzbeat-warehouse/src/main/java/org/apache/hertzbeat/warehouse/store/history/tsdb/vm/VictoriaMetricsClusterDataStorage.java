@@ -69,7 +69,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -243,10 +242,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 }
                                 labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
-                                var customizedLabels = metricsData.getLabels();
-                                if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                    labels.putAll(customizedLabels);
-                                }
+                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, metricsData.getLabels());
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
                                     .values(new Double[]{entry.getValue()})
