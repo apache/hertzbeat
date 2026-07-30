@@ -32,8 +32,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    # PostgreSQL is an implementation detail of this stack. Keep it local;
+    # containers reach it through the hertzbeat bridge network.
     ports:
-      - '15432:5432'
+      - '127.0.0.1:15432:5432'
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: 123456
@@ -58,11 +60,13 @@ services:
       start_period: 30s
     environment:
         TZ: Asia/Shanghai
+    # GreptimeDB is an implementation detail of this stack. Keep all of its
+    # published protocols local and use the bridge network from containers.
     ports:
-      - "14000:4000"
-      - "14001:4001"
-      - "14002:4002"
-      - "14003:4003"
+      - "127.0.0.1:14000:4000"
+      - "127.0.0.1:14001:4001"
+      - "127.0.0.1:14002:4002"
+      - "127.0.0.1:14003:4003"
     volumes:
       - greptime-tsdb-data:/greptimedb_data
     command:
@@ -100,8 +104,11 @@ services:
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
       - ./logs:/opt/hertzbeat/logs
       - ./ext-lib:/opt/hertzbeat/ext-lib
+    # Keep the quick-start manager and collector listeners local by default.
+    # Set HERTZBEAT_BIND_ADDRESS explicitly only after replacing the bundled
+    # credentials and applying the required network access controls.
     ports:
-      - "1157:1157"
-      - "1158:1158"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1157:1157"
+      - "${HERTZBEAT_BIND_ADDRESS:-127.0.0.1}:1158:1158"
     networks:
       - hertzbeat
