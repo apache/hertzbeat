@@ -298,7 +298,7 @@ describe('CollectorPage', () => {
     expect(within(dialog).queryByLabelText('OTLP gRPC HTTP(S) endpoint')).not.toBeInTheDocument();
   });
 
-  it('edits only managed runtime core fields and keeps source policy as a redacted summary', async () => {
+  it('keeps source policy as a redacted summary and delegates dedicated editors', () => {
     const controller = buildController({
       runtimeEditor: { record: collector('edge'), config: runtimeConfig() }
     });
@@ -317,7 +317,16 @@ describe('CollectorPage', () => {
     expect(dialog).not.toHaveTextContent('payments-key-ref');
     expect(dialog).not.toHaveTextContent('internal-ca');
     expect(within(dialog).queryByLabelText(/token|secret|raw json/i)).not.toBeInTheDocument();
+  });
 
+  it('edits only managed runtime core fields', async () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() }
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
     fireEvent.change(within(dialog).getByLabelText('Environment'), { target: { value: 'staging' } });
     fireEvent.change(within(dialog).getByLabelText('Host metrics interval (seconds)'), { target: { value: '45' } });
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Disk' }));

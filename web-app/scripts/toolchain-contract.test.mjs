@@ -20,6 +20,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { assertRuntimeMajor, readToolchainRequirements } from './check-toolchain.mjs';
+import vitestResourcePolicy from './vitest-resource-policy.json' with { type: 'json' };
 
 const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const preCommitHook = readFileSync(new URL('../../.githooks/pre-commit', import.meta.url), 'utf8');
@@ -66,4 +67,11 @@ test('toolchain requirements have one source of truth and reject unsupported maj
       }),
     /must declare the same pnpm major/
   );
+});
+
+test('the jsdom release gate keeps bounded parallelism and a bounded time budget', () => {
+  assert.deepEqual(vitestResourcePolicy, {
+    maxWorkers: 2,
+    timeoutMilliseconds: 30_000
+  });
 });

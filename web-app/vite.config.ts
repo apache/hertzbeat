@@ -20,6 +20,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import bundleLimits from './scripts/bundle-limits.json' with { type: 'json' };
+import vitestResourcePolicy from './scripts/vitest-resource-policy.json' with { type: 'json' };
 
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
 const backendProxy = {
@@ -79,12 +80,12 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     exclude: [...configDefaults.exclude, '.tmp/**', 'scripts/**'],
-    maxWorkers: 4,
+    maxWorkers: vitestResourcePolicy.maxWorkers,
     pool: 'forks',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     restoreMocks: true,
-    testTimeout: 15_000,
-    hookTimeout: 15_000
+    testTimeout: vitestResourcePolicy.timeoutMilliseconds,
+    hookTimeout: vitestResourcePolicy.timeoutMilliseconds
   }
 });

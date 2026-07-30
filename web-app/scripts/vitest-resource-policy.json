@@ -1,0 +1,4 @@
+{
+  "maxWorkers": 2,
+  "timeoutMilliseconds": 30000
+}

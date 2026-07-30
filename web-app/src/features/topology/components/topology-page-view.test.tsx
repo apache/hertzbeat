@@ -61,12 +61,15 @@ describe('TopologyPageView evidence', () => {
     }
   );
 
-  it('keeps canvas, table, detail, hover and selection linked in memory', () => {
+  it('keeps canvas node selection linked to detail evidence in memory', () => {
     renderLinkedView();
     fireEvent.click(screen.getByRole('button', { name: 'canvas node' }));
     expect(screen.getAllByText('checkout').length).toBeGreaterThan(1);
     expect(screen.getByTestId('topology-canvas').dataset.interaction).toContain('"nodeId":"node-1"');
+  });
 
+  it('keeps canvas edge hover and table drilldown linked in memory', () => {
+    renderLinkedView();
     fireEvent.click(screen.getByRole('button', { name: 'canvas edge hover' }));
     expect(screen.getByRole('row', { name: /payments\.example/ }).className).toContain('topologyRowActive');
     fireEvent.click(screen.getByRole('row', { name: /payments\.example/ }));

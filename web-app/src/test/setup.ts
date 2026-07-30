@@ -17,6 +17,10 @@
 
 import '@testing-library/jest-dom/vitest';
 
+import { installTestDomStyleCompatibility } from './test-dom-style-compatibility';
+
+installTestDomStyleCompatibility(window);
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
