@@ -989,11 +989,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
 
     private List<String> relatedMetricCandidateNames(
             OtlpMetricsConsoleDto.Context context, long start, long end, String filter) {
-        List<String> candidates = new ArrayList<>();
+        List<String> candidates = new ArrayList<>(serviceContextMetricCandidateNames(context));
         if (metricQueryRepository.hasPromqlExecutor()) {
+            // Greptime wildcard inventory can over-return across metric schemas and exceed the bounded console budget.
+            // Recent service-context names lead; the final PromQL applies collector/instance/endpoint filters.
+            // Persistent scope precedes unrelated global fallback so discovery remains restart-safe.
             candidates.addAll(collectPromqlRelatedMetricNames(context, start, end, filter));
         }
-        candidates.addAll(candidateMetricNames(context));
+        candidates.addAll(globalRecentMetricCandidateNames());
         return normalizeCandidateMetricNames(candidates);
     }
 
@@ -2116,20 +2119,28 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     private List<String> candidateMetricNames(OtlpMetricsConsoleDto.Context context) {
+        List<String> contextCandidates = serviceContextMetricCandidateNames(context);
+        if (!CollectionUtils.isEmpty(contextCandidates)) {
+            return contextCandidates;
+        }
+        return globalRecentMetricCandidateNames();
+    }
+
+    private List<String> serviceContextMetricCandidateNames(OtlpMetricsConsoleDto.Context context) {
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
             return List.of();
         }
         List<String> candidates = new ArrayList<>(contextServiceExperienceMetricNames(context));
-        List<String> contextNames = observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
+        candidates.addAll(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
                 context.getServiceName(),
                 context.getServiceNamespace(),
                 context.getEnvironment(),
                 DEFAULT_RECENT_METRIC_NAME_LIMIT
-        );
-        candidates.addAll(contextNames);
-        if (!CollectionUtils.isEmpty(candidates)) {
-            return normalizeCandidateMetricNames(candidates);
-        }
+        ));
+        return normalizeCandidateMetricNames(candidates);
+    }
+
+    private List<String> globalRecentMetricCandidateNames() {
         return normalizeCandidateMetricNames(observabilitySignalIntakeGateway.collectRecentOtlpMetricNames(
                 null,
                 null,

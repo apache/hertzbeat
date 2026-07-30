@@ -2751,8 +2751,119 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
     }
 
+    @Test
+    void querylessMetricsConsolePrioritizesRecentServiceContextBeforeNoisyPersistentInventory() {
+        String exactScopeFilter = "hertzbeat_collector_id=\"collector-east\" "
+                + "and service.instance.id=\"checkout-01\" and http.route=\"/orders\"";
+        String businessMetric = "orders_processed_total_20260730";
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod",
+                        "hertzbeat.collector.id", "collector-east",
+                        "service.instance.id", "checkout-01"
+                ),
+                1_750L,
+                businessMetric,
+                "sum",
+                "1",
+                7.0,
+                Map.of("http.route", "/orders")
+        );
+        String businessQuery = groupedMetricPromql("__name__=\"" + businessMetric + "\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", "
+                + "deployment_environment_name=\"prod\", hertzbeat_collector_id=\"collector-east\", "
+                + "service_instance_id=\"checkout-01\", http_route=\"/orders\"");
+        stubQuerylessMetricsInventory(
+                businessQuery,
+                emptyMetricsConsoleData(),
+                noisyRelatedMetricsInventoryData(70),
+                businessMetricData(businessMetric)
+        );
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null, 1_000L, 2_000L, "checkout", "commerce", "prod",
+                null, exactScopeFilter, null, null
+        );
+
+        assertEquals(businessQuery, console.getQuery());
+        assertTrue(console.getStats().getNonEmptySeries() > 0);
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                anyString(),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
+    @Test
+    void querylessMetricsConsolePrioritizesPersistentScopeBeforeUnrelatedGlobalRecentNames() {
+        for (int index = 0; index < 70; index++) {
+            observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                    Map.of(
+                            "service.name", "unrelated-service",
+                            "service.namespace", "shared",
+                            "deployment.environment.name", "prod"
+                    ),
+                    1_500L + index,
+                    "unrelated_metric_" + index,
+                    "gauge",
+                    "1",
+                    1.0,
+                    Map.of()
+            );
+        }
+        String exactScopeFilter = "hertzbeat_collector_id=\"collector-east\" "
+                + "and service.instance.id=\"checkout-01\" and http.route=\"/orders\"";
+        String businessMetric = "checkout_business_latency_custom";
+        String businessQuery = groupedMetricPromql("__name__=\"" + businessMetric + "\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", "
+                + "deployment_environment_name=\"prod\", hertzbeat_collector_id=\"collector-east\", "
+                + "service_instance_id=\"checkout-01\", http_route=\"/orders\"");
+        stubQuerylessMetricsInventory(
+                businessQuery,
+                emptyMetricsConsoleData(),
+                persistentMetricInventoryData(businessMetric),
+                businessMetricData(businessMetric)
+        );
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null, 1_000L, 2_000L, "checkout", "commerce", "prod",
+                null, exactScopeFilter, null, null
+        );
+
+        assertEquals(businessQuery, console.getQuery());
+        assertTrue(console.getStats().getNonEmptySeries() > 0);
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                argThat(OtlpIngestionWorkspaceServiceImplTest::containsExactInventoryScope),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
     private static DatasourceQueryData emptyMetricsConsoleData() {
         return new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+    }
+
+    private static DatasourceQueryData persistentMetricInventoryData(String metricName) {
+        return new DatasourceQueryData(
+                "otlp-related-metrics-inventory",
+                200,
+                null,
+                List.of(inventoryMetricData(metricName, 7.0))
+        );
+    }
+
+    private static DatasourceQueryData noisyRelatedMetricsInventoryData(int count) {
+        List<DatasourceQueryData.SchemaData> frames = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            frames.add(inventoryMetricData("system_network_dropped_packets_" + index, index));
+        }
+        return new DatasourceQueryData("otlp-related-metrics-inventory", 200, null, frames);
     }
 
     private static DatasourceQueryData relatedMetricsInventoryData(String neighborMetric, String businessMetric) {
