@@ -43,6 +43,7 @@ use rmcp::transport::auth::{
     AuthorizationMetadata, ClientRegistrationRequest, ClientRegistrationResponse, OAuthClientConfig,
 };
 use serde::{Deserialize, Serialize};
+use subtle::ConstantTimeEq;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
@@ -61,11 +62,22 @@ pub struct McpOAuthStore {
     pub auth_sessions: Arc<RwLock<HashMap<String, AuthSession>>>,
     /// Valid access tokens indexed by token string
     pub access_tokens: Arc<RwLock<HashMap<String, McpAccessToken>>>,
+    /// Secret required for a resource owner to approve an authorization request
+    approval_secret: Arc<String>,
 }
 
 impl McpOAuthStore {
-    /// Create a new OAuth store with a default client configuration
+    /// Create a new OAuth store with a random approval secret.
+    ///
+    /// Production callers should use [`Self::with_approval_secret`] so an
+    /// operator-controlled secret protects the approval step.
+    #[cfg(test)]
     pub fn new() -> Self {
+        Self::with_approval_secret(generate_random_string(32))
+    }
+
+    /// Create a new OAuth store with an operator-controlled approval secret.
+    pub fn with_approval_secret(approval_secret: String) -> Self {
         let mut clients = HashMap::new();
         clients.insert(
             "mcp-client".to_string(),
@@ -81,7 +93,13 @@ impl McpOAuthStore {
             clients: Arc::new(RwLock::new(clients)),
             auth_sessions: Arc::new(RwLock::new(HashMap::new())),
             access_tokens: Arc::new(RwLock::new(HashMap::new())),
+            approval_secret: Arc::new(approval_secret),
         }
+    }
+
+    /// Validate the resource-owner credential used by the approval form.
+    pub fn validate_approval_secret(&self, candidate: &str) -> bool {
+        bool::from(self.approval_secret.as_bytes().ct_eq(candidate.as_bytes()))
     }
 
     /// Validate client credentials and redirect URI
@@ -102,6 +120,22 @@ impl McpOAuthStore {
             error!("Invalid client_id: {client_id}");
         }
         None
+    }
+
+    /// Validate confidential client credentials and redirect URI.
+    pub async fn validate_client_credentials(
+        &self,
+        client_id: &str,
+        client_secret: &str,
+        redirect_uri: &str,
+    ) -> Option<OAuthClientConfig> {
+        let client = self.validate_client(client_id, redirect_uri).await?;
+        let expected_secret = client.client_secret.as_deref()?;
+        if bool::from(expected_secret.as_bytes().ct_eq(client_secret.as_bytes())) {
+            Some(client)
+        } else {
+            None
+        }
     }
 
     /// Create a new authorization session for the OAuth flow
@@ -146,6 +180,7 @@ impl McpOAuthStore {
 
     /// Create a new MCP access token linked to an authorization session
     /// Returns the generated McpAccessToken on success
+    #[cfg(test)]
     pub async fn create_mcp_token(&self, session_id: &str) -> Result<McpAccessToken, String> {
         let sessions = self.auth_sessions.read().await;
         if let Some(session) = sessions.get(session_id) {
@@ -174,6 +209,43 @@ impl McpOAuthStore {
         } else {
             Err("Session not found".to_string())
         }
+    }
+
+    /// Exchange an authorization code once and bind it to the approved client.
+    pub async fn exchange_authorization_code(
+        &self,
+        session_id: &str,
+        client_id: &str,
+    ) -> Result<McpAccessToken, String> {
+        let mut sessions = self.auth_sessions.write().await;
+        let session = sessions
+            .get(session_id)
+            .ok_or_else(|| "Authorization code not found or already used".to_string())?;
+        if session.client_id != client_id {
+            return Err("Authorization code does not belong to client".to_string());
+        }
+        let session = sessions
+            .remove(session_id)
+            .ok_or_else(|| "Authorization code not found or already used".to_string())?;
+        let auth_token = session
+            .auth_token
+            .ok_or_else(|| "No third-party token available for session".to_string())?;
+
+        let access_token = format!("mcp-token-{}", Uuid::new_v4());
+        let token = McpAccessToken {
+            access_token: access_token.clone(),
+            token_type: "bearer".to_string(),
+            expires_in: Some(3600),
+            refresh_token: Some(format!("mcp-refresh-{}", Uuid::new_v4())),
+            scope: session.scope,
+            auth_token,
+            client_id: session.client_id,
+        };
+        self.access_tokens
+            .write()
+            .await
+            .insert(access_token, token.clone());
+        Ok(token)
     }
 
     /// Validate an access token and return the associated McpAccessToken if valid
@@ -268,6 +340,8 @@ pub struct ApprovalForm {
     pub scope: String,
     pub state: String,
     pub approved: String,
+    #[serde(default)]
+    pub approval_secret: String,
 }
 
 /// Generate a cryptographically secure random string
@@ -321,6 +395,32 @@ pub async fn oauth_approve(
     State(state): State<Arc<McpOAuthStore>>,
     Form(form): Form<ApprovalForm>,
 ) -> impl IntoResponse {
+    if state
+        .validate_client(&form.client_id, &form.redirect_uri)
+        .await
+        .is_none()
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "invalid_request",
+                "error_description": "invalid client id or redirect uri"
+            })),
+        )
+            .into_response();
+    }
+    if !state.validate_approval_secret(&form.approval_secret) {
+        warn!("Rejected OAuth approval with an invalid resource-owner credential");
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({
+                "error": "access_denied",
+                "error_description": "approval authentication failed"
+            })),
+        )
+            .into_response();
+    }
+
     if form.approved != "true" {
         // user rejected the authorization request
         let redirect_url = format!(
@@ -381,7 +481,7 @@ pub async fn oauth_approve(
         }
     );
 
-    info!("authorization approved, redirecting to: {}", redirect_url);
+    info!("Authorization approved for client {}", form.client_id);
     Redirect::to(&redirect_url).into_response()
 }
 
@@ -408,12 +508,12 @@ pub async fn oauth_token(
         }
     };
 
-    let body_str = String::from_utf8_lossy(&bytes);
-    info!("request body: {}", body_str);
-
     let token_req = match serde_urlencoded::from_bytes::<TokenRequest>(&bytes) {
         Ok(form) => {
-            info!("successfully parsed form data: {:?}", form);
+            debug!(
+                "Parsed token request for grant type {} and client {}",
+                form.grant_type, form.client_id
+            );
             form
         }
         Err(e) => {
@@ -453,7 +553,7 @@ pub async fn oauth_token(
 
     // get session_id from code
     if !token_req.code.starts_with("mcp-code-") {
-        info!("invalid authorization code: {}", token_req.code);
+        warn!("invalid authorization code format");
         return (
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({
@@ -464,24 +564,27 @@ pub async fn oauth_token(
             .into_response();
     }
 
-    // handle empty client_id
-    let client_id = if token_req.client_id.is_empty() {
-        "mcp-client".to_string()
-    } else {
-        token_req.client_id.clone()
-    };
-
-    // validate client
+    // Validate the confidential client before consuming the authorization code.
     match state
-        .validate_client(&client_id, &token_req.redirect_uri)
+        .validate_client_credentials(
+            &token_req.client_id,
+            &token_req.client_secret,
+            &token_req.redirect_uri,
+        )
         .await
     {
         Some(_) => {
-            let session_id = token_req.code.replace("mcp-code-", "");
-            info!("got session id: {}", session_id);
+            let session_id = token_req.code.strip_prefix("mcp-code-").unwrap_or_default();
+            debug!(
+                "Exchanging authorization code for client {}",
+                token_req.client_id
+            );
 
-            // create mcp access token
-            match state.create_mcp_token(&session_id).await {
+            // Consume the authorization code and create an MCP access token.
+            match state
+                .exchange_authorization_code(session_id, &token_req.client_id)
+                .await
+            {
                 Ok(token) => {
                     info!("successfully created access token");
                     (
@@ -497,12 +600,12 @@ pub async fn oauth_token(
                         .into_response()
                 }
                 Err(e) => {
-                    error!("failed to create access token: {}", e);
+                    warn!("failed to exchange authorization code: {}", e);
                     (
-                        StatusCode::INTERNAL_SERVER_ERROR,
+                        StatusCode::BAD_REQUEST,
                         Json(serde_json::json!({
-                            "error": "server_error",
-                            "error_description": format!("failed to create access token: {}", e)
+                            "error": "invalid_grant",
+                            "error_description": "authorization code is invalid or already used"
                         })),
                     )
                         .into_response()
@@ -510,15 +613,12 @@ pub async fn oauth_token(
             }
         }
         None => {
-            info!(
-                "invalid client id or redirect uri: {} / {}",
-                client_id, token_req.redirect_uri
-            );
+            warn!("invalid confidential client credentials");
             (
-                StatusCode::BAD_REQUEST,
+                StatusCode::UNAUTHORIZED,
                 Json(serde_json::json!({
                     "error": "invalid_client",
-                    "error_description": "invalid client id or redirect uri"
+                    "error_description": "client authentication failed"
                 })),
             )
                 .into_response()
@@ -708,6 +808,153 @@ mod tests {
             .validate_client("mcp-client", "http://malicious.com/callback")
             .await;
         assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_approve_rejects_direct_unauthenticated_post() {
+        let store = Arc::new(create_test_oauth_store());
+        let form = ApprovalForm {
+            client_id: "mcp-client".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            scope: "profile".to_string(),
+            state: "state123".to_string(),
+            approved: "true".to_string(),
+            approval_secret: String::new(),
+        };
+
+        let response = oauth_approve(State(store.clone()), Form(form))
+            .await
+            .into_response();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert!(store.auth_sessions.read().await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_token_rejects_invalid_client_secret() {
+        let store = Arc::new(create_test_oauth_store());
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "secret-check-session".to_string(),
+            )
+            .await;
+        let auth_token = AuthToken::new(
+            AccessToken::new("third-party-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        store
+            .update_auth_session_token(&session_id, auth_token)
+            .await
+            .unwrap();
+        let request_body = serde_urlencoded::to_string(TokenRequest {
+            grant_type: "authorization_code".to_string(),
+            code: format!("mcp-code-{session_id}"),
+            client_id: "mcp-client".to_string(),
+            client_secret: "wrong-secret".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            code_verifier: None,
+            refresh_token: String::new(),
+        })
+        .unwrap();
+        let request = Request::builder()
+            .header("content-type", "application/x-www-form-urlencoded")
+            .body(Body::from(request_body))
+            .unwrap();
+
+        let response = oauth_token(State(store), request).await.into_response();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_oauth_approve_requires_valid_client_and_resource_owner_secret() {
+        let store = Arc::new(McpOAuthStore::with_approval_secret(
+            "resource-owner-secret-with-32-characters".to_string(),
+        ));
+        let valid_form = ApprovalForm {
+            client_id: "mcp-client".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            scope: "profile".to_string(),
+            state: "state123".to_string(),
+            approved: "true".to_string(),
+            approval_secret: "resource-owner-secret-with-32-characters".to_string(),
+        };
+
+        let response = oauth_approve(State(store.clone()), Form(valid_form))
+            .await
+            .into_response();
+
+        assert_eq!(response.status(), StatusCode::SEE_OTHER);
+        assert_eq!(store.auth_sessions.read().await.len(), 1);
+
+        let invalid_redirect_form = ApprovalForm {
+            client_id: "mcp-client".to_string(),
+            redirect_uri: "http://attacker.invalid/callback".to_string(),
+            scope: "profile".to_string(),
+            state: "state123".to_string(),
+            approved: "true".to_string(),
+            approval_secret: "resource-owner-secret-with-32-characters".to_string(),
+        };
+        let response = oauth_approve(State(store.clone()), Form(invalid_redirect_form))
+            .await
+            .into_response();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(store.auth_sessions.read().await.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_oauth_token_consumes_authorization_code_once() {
+        let store = Arc::new(create_test_oauth_store());
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "single-use-session".to_string(),
+            )
+            .await;
+        let auth_token = AuthToken::new(
+            AccessToken::new("third-party-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        store
+            .update_auth_session_token(&session_id, auth_token)
+            .await
+            .unwrap();
+        let request_body = serde_urlencoded::to_string(TokenRequest {
+            grant_type: "authorization_code".to_string(),
+            code: format!("mcp-code-{session_id}"),
+            client_id: "mcp-client".to_string(),
+            client_secret: "mcp-client-secret".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            code_verifier: None,
+            refresh_token: String::new(),
+        })
+        .unwrap();
+
+        let first_request = Request::builder()
+            .header("content-type", "application/x-www-form-urlencoded")
+            .body(Body::from(request_body.clone()))
+            .unwrap();
+        let first_response = oauth_token(State(store.clone()), first_request)
+            .await
+            .into_response();
+        assert_eq!(first_response.status(), StatusCode::OK);
+
+        let replay_request = Request::builder()
+            .header("content-type", "application/x-www-form-urlencoded")
+            .body(Body::from(request_body))
+            .unwrap();
+        let replay_response = oauth_token(State(store), replay_request)
+            .await
+            .into_response();
+        assert_eq!(replay_response.status(), StatusCode::BAD_REQUEST);
     }
 
     #[tokio::test]

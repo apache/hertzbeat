@@ -18,11 +18,16 @@ Version `1.88.0` can absolutely work, and we recommend using the latest version 
 
 If you want to run this MCP server locally using the default settings provided by the project, simply run the following command in the project root directory:
 
-```Rust
+```shell
+export MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>"
 cargo run
 ```
 
 This MCP server will be deployed at `http://127.0.0.1:4000/mcp`, and you can use the `modelcontextprotocol/inspector` tool to connect to and use this MCP server.
+
+Production mode requires `MCP_OAUTH_APPROVAL_SECRET`. The operator enters this
+secret on the OAuth approval page; it is separate from dynamically registered
+client credentials. Development mode does not require it.
 
 For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
@@ -47,23 +52,35 @@ docker build --build-arg HTTPS_PROXY=<your https_proxy> --build-arg HTTP_PROXY=<
 After building, use the following command to run it:
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
-The MCP Server inside the container runs on 0.0.0.0:4000. On the host machine, use the inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server inside the container.
+The MCP Server inside the container runs on 0.0.0.0:4000, while the example
+publishes it only on the host loopback interface. On the host machine, use the
+inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server
+inside the container. Remote deployments must terminate TLS before forwarding
+OAuth endpoints to the container.
 
 #### Use custom config in container
 
 Container's workdir is `/app` and it will run the `/app/mcp-bash-server` when it start, this program will read the `config.toml` at the same directory, so you can put the `config.toml` in the `/app` directory to cover the default config in image. Use the command below to do it.
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -v `pwd`/config.toml:/app/config.toml \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
 If you are using SELinux, you may need to run the command instead to let the container access the file in host.
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml:Z --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 127.0.0.1:4000:4000 \
+  -e MCP_OAUTH_APPROVAL_SECRET="<at-least-32-random-characters>" \
+  -v `pwd`/config.toml:/app/config.toml:Z \
+  --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
 To check if the config.toml is used, do this
@@ -231,7 +248,8 @@ The method for using OAuth verification and connection is as follows:
 
 1. Click `Open Auth Settings`
 2. Click `Quick OAuth Flow`
-3. Click `Approve` on the pop-up webpage
+3. Enter the server operator's `MCP_OAUTH_APPROVAL_SECRET`, then click `Approve`
+   on the pop-up webpage
 4. Return to the MCP inspector, click on the Access Tokens under `Authentication Complete` in `OAuth Flow Progress`. Copy the `access_token` from there
 5. Click `Authentication`, paste the previously copied token into the `Bearer Token` field, then click Connect
 

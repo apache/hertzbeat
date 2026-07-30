@@ -30,7 +30,7 @@
 use std::sync::OnceLock;
 use std::{net::SocketAddr, sync::Arc};
 
-use anyhow::Result;
+use anyhow::{Context, Result, bail};
 use axum::{
     Router,
     body::Body,
@@ -51,8 +51,8 @@ mod common;
 use common::bash_server::BashServer;
 use common::config;
 use common::oauth::{
-    McpOAuthStore, oauth_approve, oauth_authorization_server, oauth_authorize, oauth_register,
-    oauth_token, validate_token_middleware,
+    McpOAuthStore, generate_random_string, oauth_approve, oauth_authorization_server,
+    oauth_authorize, oauth_register, oauth_token, validate_token_middleware,
 };
 
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
@@ -85,8 +85,12 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
     // Log headers
     let headers = request.headers().clone();
     let mut header_log = String::new();
-    for (key, value) in headers.iter() {
-        let value_str = value.to_str().unwrap_or("<binary>");
+    for (key, value) in &headers {
+        let value_str = if key == "authorization" || key == "cookie" {
+            "<redacted>"
+        } else {
+            value.to_str().unwrap_or("<binary>")
+        };
         header_log.push_str(&format!("\n  {key}: {value_str}"));
     }
 
@@ -116,6 +120,18 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
     response
 }
 
+fn approval_secret_for_mode(is_dev: bool, configured: Option<String>) -> Result<String> {
+    if is_dev {
+        return Ok(configured.unwrap_or_else(|| generate_random_string(32)));
+    }
+    let approval_secret = configured
+        .context("MCP_OAUTH_APPROVAL_SECRET must be set when the server runs in production mode")?;
+    if approval_secret.len() < 32 {
+        bail!("MCP_OAUTH_APPROVAL_SECRET must contain at least 32 characters");
+    }
+    Ok(approval_secret)
+}
+
 /// Main application entry point
 /// Sets up logging, OAuth store, HTTP server, and starts the MCP bash server
 #[tokio::main]
@@ -142,8 +158,11 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|| "production".to_string());
     let is_dev = env_mode == "development";
 
-    // Create the OAuth store
-    let oauth_store = Arc::new(McpOAuthStore::new());
+    let approval_secret =
+        approval_secret_for_mode(is_dev, std::env::var("MCP_OAUTH_APPROVAL_SECRET").ok())?;
+
+    // Create the OAuth store with an operator-controlled resource-owner secret.
+    let oauth_store = Arc::new(McpOAuthStore::with_approval_secret(approval_secret));
 
     let host = config.settings.host.clone();
     let port = config.settings.port;
@@ -265,6 +284,24 @@ mod tests {
     fn test_index_html_constant() {
         // Test that INDEX_HTML is not empty and contains expected content
         assert!(INDEX_HTML.contains("html") || INDEX_HTML.contains("HTML"));
+    }
+
+    #[test]
+    fn test_production_requires_strong_oauth_approval_secret() {
+        assert!(approval_secret_for_mode(false, None).is_err());
+        assert!(approval_secret_for_mode(false, Some("too-short".to_string())).is_err());
+
+        let configured = "resource-owner-secret-with-32-characters".to_string();
+        assert_eq!(
+            approval_secret_for_mode(false, Some(configured.clone())).unwrap(),
+            configured
+        );
+    }
+
+    #[test]
+    fn test_development_generates_oauth_approval_secret() {
+        let generated = approval_secret_for_mode(true, None).unwrap();
+        assert_eq!(generated.len(), 32);
     }
 
     #[tokio::test]

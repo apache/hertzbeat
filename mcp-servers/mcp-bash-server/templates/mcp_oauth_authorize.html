@@ -72,6 +72,25 @@
             justify-content: center;
         }
 
+        .approval-secret {
+            margin-bottom: 1.5rem;
+        }
+
+        .approval-secret label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .approval-secret input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
         .btn {
             padding: 0.75rem 1.5rem;
             border-radius: 6px;
@@ -114,7 +133,13 @@
             <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
             <input type="hidden" name="scope" value="{{ scope }}">
             <input type="hidden" name="state" value="{{ state }}">
-            
+
+            <div class="approval-secret">
+                <label for="approval_secret">Approval secret</label>
+                <input id="approval_secret" name="approval_secret" type="password"
+                       minlength="32" autocomplete="current-password" required>
+            </div>
+
             <div class="btn-group">
                 <button type="submit" name="approved" value="true" class="btn btn-primary">Approve</button>
                 <button type="submit" name="approved" value="false" class="btn btn-secondary">Reject</button>
