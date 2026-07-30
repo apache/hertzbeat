@@ -23,10 +23,11 @@
 //! it still enforces the protocol properties on which bearer-token safety
 //! depends: registered redirect URIs, PKCE S256, one-time authorization and
 //! consent transactions, expiring codes and tokens, refresh-token rotation,
-//! bounded request bodies, and a configured public issuer URL.
+//! bounded request bodies and registration state, and a configured public
+//! issuer URL.
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     sync::Arc,
 };
 
@@ -35,7 +36,7 @@ use axum::{
     Json,
     body::Body,
     extract::{Query, State},
-    http::{Request, StatusCode},
+    http::{HeaderValue, Request, StatusCode, header::RETRY_AFTER},
     middleware::Next,
     response::{Html, IntoResponse, Redirect, Response},
 };
@@ -49,7 +50,7 @@ use rmcp::transport::auth::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
 use url::Url;
 use uuid::Uuid;
@@ -59,6 +60,9 @@ const AUTH_TRANSACTION_TTL_SECONDS: i64 = 5 * 60;
 const AUTHORIZATION_CODE_TTL_SECONDS: i64 = 2 * 60;
 const ACCESS_TOKEN_TTL_SECONDS: i64 = 60 * 60;
 const REFRESH_TOKEN_TTL_SECONDS: i64 = 24 * 60 * 60;
+const REGISTERED_CLIENT_IDLE_TTL_SECONDS: i64 = 60 * 60;
+const REGISTRATION_RATE_WINDOW_SECONDS: i64 = 60;
+const MAX_REGISTRATIONS_PER_WINDOW: usize = 16;
 const MAX_CLIENTS: usize = 1_024;
 const MAX_AUTH_TRANSACTIONS: usize = 4_096;
 const MAX_AUTHORIZATION_CODES: usize = 4_096;
@@ -95,6 +99,7 @@ struct RegisteredClient {
     client_secret: Option<String>,
     redirect_uris: Vec<String>,
     token_endpoint_auth_method: TokenEndpointAuthMethod,
+    expires_at: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug)]
@@ -153,6 +158,7 @@ pub struct McpOAuthStore {
     authorization_codes: Arc<RwLock<HashMap<String, AuthorizationCode>>>,
     access_tokens: Arc<RwLock<HashMap<String, McpAccessToken>>>,
     refresh_tokens: Arc<RwLock<HashMap<String, RefreshTokenRecord>>>,
+    registration_attempts: Arc<Mutex<VecDeque<DateTime<Utc>>>>,
     approval_secret: Arc<String>,
     public_base_url: Arc<Url>,
 }
@@ -167,6 +173,7 @@ impl McpOAuthStore {
             authorization_codes: Arc::new(RwLock::new(HashMap::new())),
             access_tokens: Arc::new(RwLock::new(HashMap::new())),
             refresh_tokens: Arc::new(RwLock::new(HashMap::new())),
+            registration_attempts: Arc::new(Mutex::new(VecDeque::new())),
             approval_secret: Arc::new(approval_secret),
             public_base_url: Arc::new(public_base_url),
         }
@@ -186,6 +193,7 @@ impl McpOAuthStore {
                 client_secret: None,
                 redirect_uris: vec!["http://127.0.0.1:8080/callback".to_string()],
                 token_endpoint_auth_method: TokenEndpointAuthMethod::None,
+                expires_at: Utc::now() + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
             },
         );
         clients.insert(
@@ -195,6 +203,7 @@ impl McpOAuthStore {
                 client_secret: Some("test-only-confidential-secret".to_string()),
                 redirect_uris: vec!["https://client.example/callback".to_string()],
                 token_endpoint_auth_method: TokenEndpointAuthMethod::ClientSecretPost,
+                expires_at: Utc::now() + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
             },
         );
         store
@@ -213,7 +222,9 @@ impl McpOAuthStore {
         client_id: &str,
         redirect_uri: &str,
     ) -> Option<RegisteredClient> {
-        let clients = self.clients.read().await;
+        let now = Utc::now();
+        let mut clients = self.clients.write().await;
+        clients.retain(|_, client| client.expires_at > now);
         let client = clients.get(client_id)?;
         client
             .redirect_uris
@@ -227,7 +238,9 @@ impl McpOAuthStore {
         client_id: &str,
         client_secret: &str,
     ) -> Option<RegisteredClient> {
-        let clients = self.clients.read().await;
+        let now = Utc::now();
+        let mut clients = self.clients.write().await;
+        clients.retain(|_, client| client.expires_at > now);
         let client = clients.get(client_id)?;
         match client.token_endpoint_auth_method {
             TokenEndpointAuthMethod::None => client_secret.is_empty().then(|| client.clone()),
@@ -236,6 +249,29 @@ impl McpOAuthStore {
                 bool::from(expected.as_bytes().ct_eq(client_secret.as_bytes()))
                     .then(|| client.clone())
             }
+        }
+    }
+
+    async fn allow_registration(&self, now: DateTime<Utc>) -> bool {
+        let window_start = now - Duration::seconds(REGISTRATION_RATE_WINDOW_SECONDS);
+        let mut attempts = self.registration_attempts.lock().await;
+        while attempts
+            .front()
+            .is_some_and(|attempt| *attempt <= window_start)
+        {
+            attempts.pop_front();
+        }
+        if attempts.len() >= MAX_REGISTRATIONS_PER_WINDOW {
+            return false;
+        }
+        attempts.push_back(now);
+        true
+    }
+
+    async fn refresh_client_expiry(&self, client_id: &str, now: DateTime<Utc>) {
+        let mut clients = self.clients.write().await;
+        if let Some(client) = clients.get_mut(client_id) {
+            client.expires_at = now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS);
         }
     }
 
@@ -377,6 +413,7 @@ impl McpOAuthStore {
             .ok_or(OAuthError::InvalidGrant)?;
         drop(codes);
 
+        self.refresh_client_expiry(&code.client_id, now).await;
         self.issue_tokens(code.client_id, code.scope).await
     }
 
@@ -403,6 +440,7 @@ impl McpOAuthStore {
             .ok_or(OAuthError::InvalidGrant)?;
         drop(refresh_tokens);
 
+        self.refresh_client_expiry(&record.client_id, now).await;
         self.issue_tokens(record.client_id, record.scope).await
     }
 
@@ -467,6 +505,7 @@ enum OAuthError {
     InvalidClient,
     InvalidGrant,
     InvalidTransaction,
+    RateLimited,
     TemporarilyUnavailable,
 }
 
@@ -491,6 +530,17 @@ impl OAuthError {
                 "invalid_request",
                 "authorization transaction is invalid, expired, or already used",
             ),
+            Self::RateLimited => {
+                let mut response = oauth_json_error(
+                    StatusCode::TOO_MANY_REQUESTS,
+                    "temporarily_unavailable",
+                    "client registration rate limit exceeded",
+                );
+                response
+                    .headers_mut()
+                    .insert(RETRY_AFTER, HeaderValue::from_static("60"));
+                response
+            }
             Self::TemporarilyUnavailable => oauth_json_error(
                 StatusCode::SERVICE_UNAVAILABLE,
                 "temporarily_unavailable",
@@ -961,7 +1011,12 @@ pub async fn oauth_register(
     let client_id = random_prefixed("client");
     let client_secret = (auth_method == TokenEndpointAuthMethod::ClientSecretPost)
         .then(|| generate_random_string(48));
+    let now = Utc::now();
+    if !state.allow_registration(now).await {
+        return OAuthError::RateLimited.response();
+    }
     let mut clients = state.clients.write().await;
+    clients.retain(|_, client| client.expires_at > now);
     if clients.len() >= MAX_CLIENTS {
         return OAuthError::TemporarilyUnavailable.response();
     }
@@ -978,6 +1033,7 @@ pub async fn oauth_register(
             client_secret: client_secret.clone(),
             redirect_uris: unique_redirects.clone(),
             token_endpoint_auth_method: auth_method.clone(),
+            expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
         },
     );
     drop(clients);
@@ -1413,6 +1469,91 @@ mod tests {
             .unwrap();
         let registered: ClientRegistrationResponse = serde_json::from_slice(&body).unwrap();
         assert_eq!(registered.client_secret.unwrap().len(), 48);
+    }
+
+    #[tokio::test]
+    async fn dynamic_registration_is_rate_limited_before_client_capacity_is_exhausted() {
+        assert!(
+            MAX_REGISTRATIONS_PER_WINDOW
+                * ((REGISTERED_CLIENT_IDLE_TTL_SECONDS / REGISTRATION_RATE_WINDOW_SECONDS)
+                    as usize)
+                < MAX_CLIENTS
+        );
+        let store = Arc::new(McpOAuthStore::new());
+        let registration = ClientRegistrationRequest {
+            client_name: "bounded-client".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9911/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+
+        for _ in 0..MAX_REGISTRATIONS_PER_WINDOW {
+            let response = oauth_register(
+                State(store.clone()),
+                Request::builder()
+                    .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                    .unwrap(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::CREATED);
+        }
+
+        let limited = oauth_register(
+            State(store),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(limited.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(
+            limited.headers().get(RETRY_AFTER),
+            Some(&HeaderValue::from_static("60"))
+        );
+    }
+
+    #[tokio::test]
+    async fn expired_dynamic_clients_are_pruned_before_the_capacity_check() {
+        let store = Arc::new(McpOAuthStore::new());
+        let mut clients = store.clients.write().await;
+        let template = clients.get("public-test-client").unwrap().clone();
+        clients.clear();
+        for index in 0..MAX_CLIENTS {
+            clients.insert(
+                format!("expired-{index}"),
+                RegisteredClient {
+                    client_id: format!("expired-{index}"),
+                    expires_at: Utc::now() - Duration::seconds(1),
+                    ..template.clone()
+                },
+            );
+        }
+        drop(clients);
+
+        let registration = ClientRegistrationRequest {
+            client_name: "replacement-client".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9911/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+        let response = oauth_register(
+            State(store.clone()),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::CREATED);
+        let clients = store.clients.read().await;
+        assert_eq!(clients.len(), 1);
+        assert!(
+            clients
+                .values()
+                .all(|client| client.expires_at > Utc::now())
+        );
     }
 
     #[test]
