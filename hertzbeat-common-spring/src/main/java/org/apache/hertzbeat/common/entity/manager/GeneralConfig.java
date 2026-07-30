@@ -62,7 +62,7 @@ public class GeneralConfig {
     private String content;
 
     @Builder.Default
-    @Column(name = "config_revision", nullable = false, length = 36)
+    @Column(name = "config_revision", length = 36)
     private String revision = UUID.randomUUID().toString();
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
