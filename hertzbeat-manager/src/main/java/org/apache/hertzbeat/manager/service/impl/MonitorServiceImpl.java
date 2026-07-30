@@ -43,6 +43,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
@@ -103,6 +104,10 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
     private static final byte ALL_MONITOR_STATUS = 9;
+    private static final Map<String, Set<String>> CREDENTIAL_DESTINATION_FIELDS = Map.of(
+            "apiKey", Set.of("host", "port", "ssl"),
+            "__sd_token__", Set.of("__sd_url__", "__sd_authType__"),
+            "__sd_password__", Set.of("__sd_url__", "__sd_authType__"));
     public static final String PARAM_FIELD_PORT = "port";
 
     @Autowired
@@ -307,6 +312,18 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Parameter definition structure verification
         List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(monitor.getApp());
+        boolean restoresMaskedCredential = Boolean.TRUE.equals(isModify)
+                && !CollectionUtils.isEmpty(paramDefines)
+                && paramDefines.stream()
+                        .filter(paramDefine -> "password".equals(paramDefine.getType()))
+                        .map(ParamDefineInfo::getField)
+                        .map(paramMap::get)
+                        .filter(Objects::nonNull)
+                        .anyMatch(param -> MonitorParam.isSecretMask(param.getParamValue()));
+        Map<String, Param> storedParams = restoresMaskedCredential
+                ? paramDao.findParamsByMonitorId(monitor.getId()).stream()
+                    .collect(Collectors.toMap(Param::getField, param -> param))
+                : Map.of();
         if (!CollectionUtils.isEmpty(paramDefines)) {
             boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
                     || !StringUtils.hasText(monitor.getScrape());
@@ -317,6 +334,27 @@ public class MonitorServiceImpl implements MonitorService {
                 if (!isStatic && "host".equals(field)) {
                     continue;
                 }
+                if ("password".equals(paramDefine.getType())
+                        && param != null
+                        && MonitorParam.isSecretMask(param.getParamValue())) {
+                    if (!Boolean.TRUE.equals(isModify)) {
+                        throw new IllegalArgumentException("The credential mask cannot be used as a new value.");
+                    }
+                    Param storedParam = storedParams.get(field);
+                    if (storedParam == null || !StringUtils.hasText(storedParam.getParamValue())) {
+                        throw new IllegalArgumentException("The masked credential has no stored value.");
+                    }
+                    String storedValue = storedParam.getParamValue();
+                    boolean currentCiphertext = AesUtil.isCiphertext(storedValue);
+                    boolean legacyCiphertext = !AesUtil.DEFAULT_ENCODE_RULES.equals(AesUtil.getDefaultSecretKey())
+                            && AesUtil.isCiphertext(storedValue, AesUtil.DEFAULT_ENCODE_RULES);
+                    if (!currentCiphertext && !legacyCiphertext) {
+                        throw new IllegalStateException("The stored credential migration is incomplete.");
+                    }
+                    validateCredentialDestination(field, paramMap, storedParams);
+                    param.setParamValue(storedValue);
+                    param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
+                }
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
@@ -326,6 +364,23 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
         checkJobFields(monitorDto.getMonitor().getApp());
+    }
+
+    private void validateCredentialDestination(
+            String credentialField,
+            Map<String, MonitorParam> submittedParams,
+            Map<String, Param> storedParams) {
+        for (String destinationField : CREDENTIAL_DESTINATION_FIELDS.getOrDefault(
+                credentialField, Set.of())) {
+            MonitorParam submitted = submittedParams.get(destinationField);
+            Param stored = storedParams.get(destinationField);
+            String submittedValue = submitted == null ? null : submitted.getParamValue();
+            String storedValue = stored == null ? null : stored.getParamValue();
+            if (!Objects.equals(submittedValue, storedValue)) {
+                throw new IllegalArgumentException(
+                        "A credential must be re-entered when its destination changes.");
+            }
+        }
     }
 
     private void checkJobFields(String app) {

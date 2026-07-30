@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Param;
 
 /**
@@ -33,6 +34,8 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MonitorParam {
+
+    public static final String SECRET_MASK = "******";
 
     private Long id;
 
@@ -60,11 +63,19 @@ public class MonitorParam {
         monitorParam.setId(param.getId());
         monitorParam.setMonitorId(param.getMonitorId());
         monitorParam.setField(param.getField());
-        monitorParam.setParamValue(param.getParamValue());
+        String value = param.getParamValue();
+        if (param.getType() == CommonConstants.PARAM_TYPE_PASSWORD && value != null && !value.isEmpty()) {
+            value = SECRET_MASK;
+        }
+        monitorParam.setParamValue(value);
         monitorParam.setType(param.getType());
         monitorParam.setGmtCreate(param.getGmtCreate());
         monitorParam.setGmtUpdate(param.getGmtUpdate());
         return monitorParam;
+    }
+
+    public static boolean isSecretMask(String value) {
+        return SECRET_MASK.equals(value);
     }
 
     public Param toEntity() {
