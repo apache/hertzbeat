@@ -10,6 +10,7 @@ import {
   buildEntityExplorePath,
   buildEntityNoiseControlPath,
   entityExploreSignals,
+  safeEntityReturnTo,
   safeEntityEditorReturnTo
 } from './entity-view-model';
 
@@ -65,6 +66,14 @@ describe('entity Explore handoff', () => {
     };
 
     expect(entityExploreSignals(queue)).toEqual([]);
+  });
+
+  it('accepts an exact safe topology return target without carrying sensitive query data', () => {
+    expect(
+      safeEntityReturnTo(
+        '/topology?focusEntityId=7&depth=2&environment=prod&pageIndex=3&pageSize=50&token=private&unknown=value'
+      )
+    ).toBe('/topology?focusEntityId=7&depth=2&environment=prod&pageIndex=3&pageSize=50');
   });
 });
 

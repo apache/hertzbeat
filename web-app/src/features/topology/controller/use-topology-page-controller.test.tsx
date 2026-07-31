@@ -108,6 +108,23 @@ describe('topology page controller evidence and time scope', () => {
     await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1&pageIndex=3&pageSize=50'));
     expect(view.router.state.location.search).not.toContain('start=');
   });
+
+  it('opens an entity with the exact safe topology pathname and query as return context', async () => {
+    const view = renderController(
+      '/topology?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&relationType=calls' +
+        '&hideInternal=true&pageIndex=3&pageSize=50&token=private'
+    );
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+
+    act(() => view.current().actions.openEntity(7));
+
+    await waitFor(() => expect(view.router.state.location.pathname).toBe('/entities/7'));
+    expect(new URLSearchParams(view.router.state.location.search).get('returnTo')).toBe(
+      '/topology?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&relationType=calls' +
+        '&hideInternal=true&pageIndex=3&pageSize=50'
+    );
+    expect(view.router.state.location.search).not.toContain('private');
+  });
 });
 
 describe('topology page controller lifecycle', () => {

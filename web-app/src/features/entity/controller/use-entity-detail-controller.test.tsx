@@ -113,6 +113,23 @@ describe('useEntityDetailController deletion', () => {
     expect(routed.current().state.evidence.kind).toBe('ready');
   });
 
+  it('returns to the exact safe topology query context', async () => {
+    const returnTo =
+      '/topology?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&relationType=calls' +
+      '&hideInternal=true&pageIndex=3&pageSize=50&token=private';
+    const routed = renderController(`/entities/7?returnTo=${encodeURIComponent(returnTo)}`);
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.back());
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/topology'));
+    expect(routed.router.state.location.search).toBe(
+      '?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&relationType=calls' +
+        '&hideInternal=true&pageIndex=3&pageSize=50'
+    );
+    expect(routed.router.state.location.search).not.toContain('private');
+  });
+
   it('loads page zero from the operational endpoint and owns next, previous, and normalized filters', async () => {
     api.loadEntityMonitors.mockImplementation((_id: number, query: { pageIndex: number }) =>
       Promise.resolve({ ...monitorPage, number: query.pageIndex })
@@ -303,6 +320,7 @@ function renderController(entry: string) {
         )
       },
       { path: '/entities', element: null },
+      { path: '/topology', element: null },
       { path: '/alerts/silences', element: null }
     ],
     { initialEntries: [entry] }

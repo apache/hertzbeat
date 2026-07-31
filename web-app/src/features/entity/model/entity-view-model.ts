@@ -6,6 +6,7 @@ import {
   buildEntityEditPath,
   entityRoutePaths
 } from '@/shared/navigation/app-paths';
+import { safeTopologyReturnTo } from '@/features/topology';
 import { compactTablePageSizes } from '@/shared/pagination';
 import type { EntityDetail, EntityMonitor, EntityMonitorQuery, EntityQuery, EntitySummary } from './entity-contract';
 import {
@@ -91,6 +92,10 @@ export function buildEntityDetailPath(id: number, query: EntityQuery) {
 
 export function safeEntityReturnTo(value: string | null) {
   if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
+  if (value?.startsWith('/')) {
+    const url = new URL(value, 'https://hertzbeat.local');
+    if (url.pathname === applicationRoutePaths.topology) return safeTopologyReturnTo(value);
+  }
   return safeEntityListPath(value);
 }
 

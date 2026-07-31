@@ -2,7 +2,7 @@
 
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
 
@@ -33,6 +33,7 @@ const invalidQueryKey = ['topology', 'invalid'] as const;
 
 export function useTopologyPageController(options: ControllerOptions = {}): TopologyPageController {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const request = resolveTopologyRequest(params, options.effectiveWindow, options.refreshRevision ?? 0);
   const semanticScope = request?.semanticScope ?? 'invalid';
@@ -50,7 +51,8 @@ export function useTopologyPageController(options: ControllerOptions = {}): Topo
     state: topologyPageState(request?.query, presentation, interaction.interaction, result.isFetching, failure),
     actions: {
       ...interaction.actions,
-      openEntity: entityId => void navigate(buildTopologyEntityPath(entityId)),
+      openEntity: entityId =>
+        void navigate(buildTopologyEntityPath(entityId, `${location.pathname}${location.search}`)),
       querySignals: (node, window) => {
         const path = buildTopologySignalPath(node, window);
         if (path) void navigate(path);

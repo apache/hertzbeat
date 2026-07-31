@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildAlertIntegrationPath,
+  buildEntityDetailPath,
   buildEntityEditPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
@@ -61,6 +62,7 @@ describe('application path builders', () => {
     expect(entityRoutePaths.discovery).toBe('/entities/discovery');
     expect(entityRoutePaths.import).toBe('/entities/import');
     expect(entityRoutePaths.definition).toBe('/entities/:entityId/definition');
+    expect(buildEntityDetailPath(7, '/topology?depth=2')).toBe('/entities/7?returnTo=%2Ftopology%3Fdepth%3D2');
     expect(buildEntityEditPath(7)).toBe('/entities/7/edit');
   });
 

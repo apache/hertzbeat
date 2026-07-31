@@ -95,6 +95,7 @@ export function buildEntityEditPath(entityId: number) {
   return entityRoutePaths.edit.replace(':entityId', String(entityId));
 }
 
-export function buildEntityDetailPath(entityId: number) {
-  return entityRoutePaths.detail.replace(':entityId', String(entityId));
+export function buildEntityDetailPath(entityId: number, returnTo?: string) {
+  const path = entityRoutePaths.detail.replace(':entityId', String(entityId));
+  return returnTo ? `${path}?returnTo=${encodeURIComponent(returnTo)}` : path;
 }
