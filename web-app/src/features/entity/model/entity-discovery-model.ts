@@ -33,7 +33,7 @@ export type EntityDiscoveryPage = {
   content: EntityDiscoveryRow[];
 };
 export type EntityDiscoveryFailure = 'not-found' | 'unsupported' | 'unavailable' | 'error';
-export type EntityDiscoveryEvidence =
+type EntityDiscoveryEvidence =
   | EntityDiscoveryState<'loading' | 'empty' | EntityDiscoveryFailure>
   | { kind: 'ready'; records: EntityDiscoveryRow[]; total: number };
 type EntityDiscoveryState<Kind extends string> = Kind extends string ? { kind: Kind } : never;

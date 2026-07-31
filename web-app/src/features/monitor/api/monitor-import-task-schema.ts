@@ -50,7 +50,7 @@ function hasFailedEvidence(value: MonitorImportTask) {
   return value.status === 'FAILED' && value.progress < 100 && value.completedAt !== null && value.errorCode !== null;
 }
 
-export class MonitorImportTaskContractError extends Error {
+class MonitorImportTaskContractError extends Error {
   constructor() {
     super('Invalid monitor import task response');
     this.name = 'MonitorImportTaskContractError';
