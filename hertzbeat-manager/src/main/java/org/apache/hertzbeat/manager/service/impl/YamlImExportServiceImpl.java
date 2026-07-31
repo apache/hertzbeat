@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.common.util.export.YamlExportUtils;
 import org.apache.hertzbeat.manager.service.helper.MonitorYamlImportParser;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 
 /**
  * Configure the import and export Yaml format
@@ -68,7 +69,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     private static ExportMonitorDTO toExportMonitor(Object record) {
         ExportMonitorDTO monitor = JsonUtil.convertValueQuietly(record, ExportMonitorDTO.class);
         if (monitor == null || monitor.getMonitor() == null) {
-            throw new IllegalArgumentException(MonitorYamlImportParser.INVALID_CONTENT_MESSAGE);
+            throw InvalidImportContentException.forYaml();
         }
         return monitor;
     }

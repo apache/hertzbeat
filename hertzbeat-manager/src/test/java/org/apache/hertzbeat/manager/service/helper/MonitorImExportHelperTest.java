@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskErrorCode;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskStatus;
 import org.springframework.core.task.SyncTaskExecutor;
@@ -34,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -43,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -105,5 +108,45 @@ class MonitorImExportHelperTest {
 
         assertEquals(ImportTaskStatus.FAILED, task.status());
         assertEquals(ImportTaskErrorCode.IMPORT_UNSUPPORTED_TYPE, task.errorCode());
+    }
+
+    @Test
+    void importConfig_UnexpectedIllegalArgumentFailureRemainsGeneric() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getOriginalFilename()).thenReturn("test.json");
+        when(file.getBytes()).thenReturn("{}".getBytes());
+        doThrow(new IllegalArgumentException("unexpected downstream failure"))
+                .when(imExportService).importConfig(anyString(), any(InputStream.class));
+
+        var task = helper.importConfig(file);
+
+        assertEquals(ImportTaskStatus.FAILED, task.status());
+        assertEquals(ImportTaskErrorCode.IMPORT_FAILED, task.errorCode());
+    }
+
+    @Test
+    void importConfig_DeterministicContentRejectionUsesStableCode() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getOriginalFilename()).thenReturn("test.json");
+        when(file.getBytes()).thenReturn("{}".getBytes());
+        doThrow(new InvalidImportContentException())
+                .when(imExportService).importConfig(anyString(), any(InputStream.class));
+
+        var task = helper.importConfig(file);
+
+        assertEquals(ImportTaskStatus.FAILED, task.status());
+        assertEquals(ImportTaskErrorCode.IMPORT_INVALID_CONTENT, task.errorCode());
+    }
+
+    @Test
+    void importConfig_UploadReadFailureRemainsGeneric() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getOriginalFilename()).thenReturn("test.json");
+        when(file.getBytes()).thenThrow(new IOException("read failed"));
+
+        var task = helper.importConfig(file);
+
+        assertEquals(ImportTaskStatus.FAILED, task.status());
+        assertEquals(ImportTaskErrorCode.IMPORT_FAILED, task.errorCode());
     }
 }

@@ -30,10 +30,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -69,7 +70,16 @@ class JsonImExportServiceTest {
         String invalidJson = "invalid json";
         ByteArrayInputStream bis = new ByteArrayInputStream(invalidJson.getBytes(StandardCharsets.UTF_8));
 
-        assertThrows(RuntimeException.class, () -> jsonImExportService.parseImport(bis));
+        IllegalArgumentException exception = assertThrows(
+                InvalidImportContentException.class, () -> jsonImExportService.parseImport(bis));
+        assertEquals(InvalidImportContentException.MESSAGE, exception.getMessage());
+    }
+
+    @Test
+    void testParseImportRejectsMissingMonitorShape() {
+        ByteArrayInputStream input = new ByteArrayInputStream("[{}]".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(InvalidImportContentException.class, () -> jsonImExportService.parseImport(input));
     }
 
     @Test
@@ -101,9 +111,9 @@ class JsonImExportServiceTest {
     @Test
     void importConfigRestoresInstanceFromLegacyHostParam() {
         MonitorService monitorService = org.mockito.Mockito.mock(MonitorService.class);
-        ManagerSseManager managerSseManager = org.mockito.Mockito.mock(ManagerSseManager.class);
+        ImportTaskService importTaskService = org.mockito.Mockito.mock(ImportTaskService.class);
         ReflectionTestUtils.setField(jsonImExportService, "monitorService", monitorService);
-        ReflectionTestUtils.setField(jsonImExportService, "managerSseManager", managerSseManager);
+        ReflectionTestUtils.setField(jsonImExportService, "importTaskService", importTaskService);
         String json = """
                 [{
                   "monitor": {
