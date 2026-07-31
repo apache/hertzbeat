@@ -37,13 +37,22 @@ Dynamic registration supports public clients (`token_endpoint_auth_method:
 none`) and confidential clients (`client_secret_post`). Authorization requests
 must use PKCE S256. Authorization transactions and codes are one-time and
 short-lived; access tokens expire after one hour, and refresh tokens expire
-after one day and rotate on every use. Open client registration is limited to
-16 successful registrations per minute. An unused registered client expires
-after one hour; a successful authorization-code or refresh-token exchange
-renews that idle period. Expired clients are removed before the 1,024-client
-capacity check, so anonymous registration cannot fill the client store
-permanently. A client that receives `invalid_client` after an idle period must
-dynamically register again. OAuth form and JSON bodies are limited to 16 KiB.
+after one day and rotate on every use. A client that holds a refresh token
+remains registered for at least that token's full lifetime. Open client
+registration is limited to 16 successful registrations per minute for each
+TCP peer, so one source cannot consume every caller's admission window. The
+rate-limit source table is bounded. Deployments behind a reverse proxy can set
+`MCP_OAUTH_TRUSTED_PROXY_CIDRS` to a comma-separated list of the exact proxy
+networks. Only connections from those networks may supply `X-Forwarded-For`;
+untrusted peers cannot spoof the limiter identity, and `/0` networks are
+rejected. The proxy must overwrite or safely append that header. An unused
+registered client expires after one hour; expired clients are removed before
+the 1,024-client capacity check.
+When anonymous registrations fill the remaining capacity, the oldest client
+that has never received a refresh token is reclaimed; clients with live
+refresh credentials are not evicted. A client that receives `invalid_client`
+after an unused registration expires must dynamically register again. OAuth
+form and JSON bodies are limited to 16 KiB.
 
 For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 

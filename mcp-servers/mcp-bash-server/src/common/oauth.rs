@@ -28,6 +28,7 @@
 
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
 
@@ -35,13 +36,14 @@ use askama::Template;
 use axum::{
     Json,
     body::Body,
-    extract::{Query, State},
+    extract::{ConnectInfo, Query, State},
     http::{HeaderValue, Request, StatusCode, header::RETRY_AFTER},
     middleware::Next,
     response::{Html, IntoResponse, Redirect, Response},
 };
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use chrono::{DateTime, Duration, Utc};
+use ipnet::IpNet;
 use rand::{Rng, distributions::Alphanumeric};
 use rmcp::serde_json::{self, Value};
 use rmcp::transport::auth::{
@@ -63,6 +65,8 @@ const REFRESH_TOKEN_TTL_SECONDS: i64 = 24 * 60 * 60;
 const REGISTERED_CLIENT_IDLE_TTL_SECONDS: i64 = 60 * 60;
 const REGISTRATION_RATE_WINDOW_SECONDS: i64 = 60;
 const MAX_REGISTRATIONS_PER_WINDOW: usize = 16;
+const MAX_REGISTRATION_SOURCES: usize = 4_096;
+const MAX_FORWARDED_FOR_HOPS: usize = 32;
 const MAX_CLIENTS: usize = 1_024;
 const MAX_AUTH_TRANSACTIONS: usize = 4_096;
 const MAX_AUTHORIZATION_CODES: usize = 4_096;
@@ -99,7 +103,9 @@ struct RegisteredClient {
     client_secret: Option<String>,
     redirect_uris: Vec<String>,
     token_endpoint_auth_method: TokenEndpointAuthMethod,
+    registered_at: DateTime<Utc>,
     expires_at: DateTime<Utc>,
+    refresh_expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Debug)]
@@ -158,7 +164,8 @@ pub struct McpOAuthStore {
     authorization_codes: Arc<RwLock<HashMap<String, AuthorizationCode>>>,
     access_tokens: Arc<RwLock<HashMap<String, McpAccessToken>>>,
     refresh_tokens: Arc<RwLock<HashMap<String, RefreshTokenRecord>>>,
-    registration_attempts: Arc<Mutex<VecDeque<DateTime<Utc>>>>,
+    registration_attempts: Arc<Mutex<HashMap<IpAddr, VecDeque<DateTime<Utc>>>>>,
+    trusted_proxies: Arc<Vec<IpNet>>,
     approval_secret: Arc<String>,
     public_base_url: Arc<Url>,
 }
@@ -166,14 +173,19 @@ pub struct McpOAuthStore {
 impl McpOAuthStore {
     /// Create the production store. Clients are registered dynamically; there
     /// is intentionally no repository-known default confidential credential.
-    pub fn with_settings(approval_secret: String, public_base_url: Url) -> Self {
+    pub fn with_trusted_proxies(
+        approval_secret: String,
+        public_base_url: Url,
+        trusted_proxies: Vec<IpNet>,
+    ) -> Self {
         Self {
             clients: Arc::new(RwLock::new(HashMap::new())),
             auth_transactions: Arc::new(RwLock::new(HashMap::new())),
             authorization_codes: Arc::new(RwLock::new(HashMap::new())),
             access_tokens: Arc::new(RwLock::new(HashMap::new())),
             refresh_tokens: Arc::new(RwLock::new(HashMap::new())),
-            registration_attempts: Arc::new(Mutex::new(VecDeque::new())),
+            registration_attempts: Arc::new(Mutex::new(HashMap::new())),
+            trusted_proxies: Arc::new(trusted_proxies),
             approval_secret: Arc::new(approval_secret),
             public_base_url: Arc::new(public_base_url),
         }
@@ -181,11 +193,13 @@ impl McpOAuthStore {
 
     #[cfg(test)]
     fn new() -> Self {
-        let mut store = Self::with_settings(
+        let mut store = Self::with_trusted_proxies(
             generate_random_string(32),
             Url::parse("http://127.0.0.1:4000/").unwrap(),
+            Vec::new(),
         );
         let clients = Arc::get_mut(&mut store.clients).unwrap().get_mut();
+        let now = Utc::now();
         clients.insert(
             "public-test-client".to_string(),
             RegisteredClient {
@@ -193,7 +207,9 @@ impl McpOAuthStore {
                 client_secret: None,
                 redirect_uris: vec!["http://127.0.0.1:8080/callback".to_string()],
                 token_endpoint_auth_method: TokenEndpointAuthMethod::None,
-                expires_at: Utc::now() + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+                registered_at: now,
+                expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+                refresh_expires_at: None,
             },
         );
         clients.insert(
@@ -203,7 +219,9 @@ impl McpOAuthStore {
                 client_secret: Some("test-only-confidential-secret".to_string()),
                 redirect_uris: vec!["https://client.example/callback".to_string()],
                 token_endpoint_auth_method: TokenEndpointAuthMethod::ClientSecretPost,
-                expires_at: Utc::now() + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+                registered_at: now,
+                expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+                refresh_expires_at: None,
             },
         );
         store
@@ -252,27 +270,78 @@ impl McpOAuthStore {
         }
     }
 
-    async fn allow_registration(&self, now: DateTime<Utc>) -> bool {
+    async fn allow_registration(&self, source: IpAddr, now: DateTime<Utc>) -> bool {
         let window_start = now - Duration::seconds(REGISTRATION_RATE_WINDOW_SECONDS);
-        let mut attempts = self.registration_attempts.lock().await;
-        while attempts
-            .front()
-            .is_some_and(|attempt| *attempt <= window_start)
+        let mut attempts_by_source = self.registration_attempts.lock().await;
+        attempts_by_source.retain(|_, attempts| {
+            while attempts
+                .front()
+                .is_some_and(|attempt| *attempt <= window_start)
+            {
+                attempts.pop_front();
+            }
+            !attempts.is_empty()
+        });
+        if !attempts_by_source.contains_key(&source)
+            && attempts_by_source.len() >= MAX_REGISTRATION_SOURCES
         {
-            attempts.pop_front();
+            let oldest_source = attempts_by_source
+                .iter()
+                .min_by_key(|(_, attempts)| attempts.back().copied())
+                .map(|(source, _)| *source);
+            if let Some(oldest_source) = oldest_source {
+                attempts_by_source.remove(&oldest_source);
+            }
         }
-        if attempts.len() >= MAX_REGISTRATIONS_PER_WINDOW {
+        let source_attempts = attempts_by_source.entry(source).or_default();
+        if source_attempts.len() >= MAX_REGISTRATIONS_PER_WINDOW {
             return false;
         }
-        attempts.push_back(now);
+        source_attempts.push_back(now);
         true
     }
 
-    async fn refresh_client_expiry(&self, client_id: &str, now: DateTime<Utc>) {
-        let mut clients = self.clients.write().await;
-        if let Some(client) = clients.get_mut(client_id) {
-            client.expires_at = now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS);
+    fn registration_source(&self, request: &Request<Body>) -> IpAddr {
+        let peer = request
+            .extensions()
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|connect_info| connect_info.0.ip())
+            .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED));
+        if !self
+            .trusted_proxies
+            .iter()
+            .any(|trusted_proxy| trusted_proxy.contains(&peer))
+        {
+            return peer;
         }
+        let Some(forwarded_for) = request
+            .headers()
+            .get("x-forwarded-for")
+            .and_then(|value| value.to_str().ok())
+        else {
+            return peer;
+        };
+        let hops: Vec<&str> = forwarded_for.split(',').map(str::trim).collect();
+        if hops.is_empty() || hops.len() > MAX_FORWARDED_FOR_HOPS {
+            return peer;
+        }
+        let mut parsed_hops = Vec::with_capacity(hops.len());
+        for hop in hops {
+            let Ok(hop) = hop.parse::<IpAddr>() else {
+                return peer;
+            };
+            parsed_hops.push(hop);
+        }
+        parsed_hops
+            .into_iter()
+            .rev()
+            .find(|hop| {
+                !self
+                    .trusted_proxies
+                    .iter()
+                    .any(|trusted_proxy| trusted_proxy.contains(hop))
+            })
+            .unwrap_or(peer)
     }
 
     async fn create_authorization_transaction(
@@ -413,7 +482,6 @@ impl McpOAuthStore {
             .ok_or(OAuthError::InvalidGrant)?;
         drop(codes);
 
-        self.refresh_client_expiry(&code.client_id, now).await;
         self.issue_tokens(code.client_id, code.scope).await
     }
 
@@ -440,7 +508,6 @@ impl McpOAuthStore {
             .ok_or(OAuthError::InvalidGrant)?;
         drop(refresh_tokens);
 
-        self.refresh_client_expiry(&record.client_id, now).await;
         self.issue_tokens(record.client_id, record.scope).await
     }
 
@@ -452,6 +519,7 @@ impl McpOAuthStore {
         let now = Utc::now();
         let access_token_value = random_prefixed("mcp-token");
         let refresh_token_value = random_prefixed("mcp-refresh");
+        let refresh_expires_at = now + Duration::seconds(REFRESH_TOKEN_TTL_SECONDS);
         let access = McpAccessToken {
             access_token: access_token_value.clone(),
             token_type: "bearer".to_string(),
@@ -463,6 +531,11 @@ impl McpOAuthStore {
             expires_at: now + Duration::seconds(ACCESS_TOKEN_TTL_SECONDS),
         };
 
+        let mut clients = self.clients.write().await;
+        clients.retain(|_, client| client.expires_at > now);
+        let client = clients
+            .get_mut(&client_id)
+            .ok_or(OAuthError::InvalidClient)?;
         let mut access_tokens = self.access_tokens.write().await;
         access_tokens.retain(|_, token| token.expires_at > now);
         if access_tokens.len() >= MAX_ACCESS_TOKENS {
@@ -479,9 +552,11 @@ impl McpOAuthStore {
             RefreshTokenRecord {
                 client_id,
                 scope,
-                expires_at: now + Duration::seconds(REFRESH_TOKEN_TTL_SECONDS),
+                expires_at: refresh_expires_at,
             },
         );
+        client.expires_at = refresh_expires_at;
+        client.refresh_expires_at = Some(refresh_expires_at);
         Ok(IssuedTokens { access })
     }
 
@@ -606,6 +681,30 @@ pub fn generate_random_string(length: usize) -> String {
 
 fn random_prefixed(prefix: &str) -> String {
     format!("{prefix}-{}-{}", Uuid::new_v4(), generate_random_string(24))
+}
+
+pub fn parse_trusted_proxy_cidrs(configured: Option<&str>) -> Result<Vec<IpNet>, String> {
+    let Some(configured) = configured
+        .map(str::trim)
+        .filter(|configured| !configured.is_empty())
+    else {
+        return Ok(Vec::new());
+    };
+    configured
+        .split(',')
+        .map(|network| {
+            let network = network.trim().parse::<IpNet>().map_err(|_| {
+                "MCP_OAUTH_TRUSTED_PROXY_CIDRS contains an invalid CIDR".to_string()
+            })?;
+            if network.prefix_len() == 0 {
+                return Err(
+                    "MCP_OAUTH_TRUSTED_PROXY_CIDRS must not trust an entire address family"
+                        .to_string(),
+                );
+            }
+            Ok(network)
+        })
+        .collect()
 }
 
 fn validate_scope(scope: Option<&str>) -> Result<Option<String>, OAuthError> {
@@ -942,6 +1041,7 @@ pub async fn oauth_register(
     State(state): State<Arc<McpOAuthStore>>,
     request: Request<Body>,
 ) -> Response {
+    let registration_source = state.registration_source(&request);
     let bytes = match read_limited_body(request).await {
         Ok(bytes) => bytes,
         Err(response) => return response,
@@ -1012,13 +1112,26 @@ pub async fn oauth_register(
     let client_secret = (auth_method == TokenEndpointAuthMethod::ClientSecretPost)
         .then(|| generate_random_string(48));
     let now = Utc::now();
-    if !state.allow_registration(now).await {
+    if !state.allow_registration(registration_source, now).await {
         return OAuthError::RateLimited.response();
     }
     let mut clients = state.clients.write().await;
     clients.retain(|_, client| client.expires_at > now);
     if clients.len() >= MAX_CLIENTS {
-        return OAuthError::TemporarilyUnavailable.response();
+        let reclaimable_client = clients
+            .iter()
+            .filter(|(_, client)| {
+                client
+                    .refresh_expires_at
+                    .is_none_or(|expires_at| expires_at <= now)
+            })
+            .min_by_key(|(_, client)| client.registered_at)
+            .map(|(client_id, _)| client_id.clone());
+        if let Some(reclaimable_client) = reclaimable_client {
+            clients.remove(&reclaimable_client);
+        } else {
+            return OAuthError::TemporarilyUnavailable.response();
+        }
     }
     let mut unique_redirects = Vec::new();
     for redirect in &request.redirect_uris {
@@ -1033,7 +1146,9 @@ pub async fn oauth_register(
             client_secret: client_secret.clone(),
             redirect_uris: unique_redirects.clone(),
             token_endpoint_auth_method: auth_method.clone(),
+            registered_at: now,
             expires_at: now + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+            refresh_expires_at: None,
         },
     );
     drop(clients);
@@ -1472,13 +1587,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn dynamic_registration_is_rate_limited_before_client_capacity_is_exhausted() {
-        assert!(
-            MAX_REGISTRATIONS_PER_WINDOW
-                * ((REGISTERED_CLIENT_IDLE_TTL_SECONDS / REGISTRATION_RATE_WINDOW_SECONDS)
-                    as usize)
-                < MAX_CLIENTS
-        );
+    async fn dynamic_registration_is_rate_limited_per_tcp_peer() {
         let store = Arc::new(McpOAuthStore::new());
         let registration = ClientRegistrationRequest {
             client_name: "bounded-client".to_string(),
@@ -1511,6 +1620,186 @@ mod tests {
             limited.headers().get(RETRY_AFTER),
             Some(&HeaderValue::from_static("60"))
         );
+    }
+
+    #[tokio::test]
+    async fn registration_rate_limit_is_isolated_by_tcp_peer() {
+        let store = Arc::new(McpOAuthStore::new());
+        let registration = ClientRegistrationRequest {
+            client_name: "peer-bounded-client".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9911/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+        let first_peer = std::net::SocketAddr::from(([192, 0, 2, 10], 41000));
+        let second_peer = std::net::SocketAddr::from(([198, 51, 100, 20], 42000));
+
+        for _ in 0..MAX_REGISTRATIONS_PER_WINDOW {
+            let mut request = Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap();
+            request
+                .extensions_mut()
+                .insert(axum::extract::ConnectInfo(first_peer));
+            assert_eq!(
+                oauth_register(State(store.clone()), request).await.status(),
+                StatusCode::CREATED
+            );
+        }
+
+        let mut first_peer_request = Request::builder()
+            .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+            .unwrap();
+        first_peer_request
+            .extensions_mut()
+            .insert(axum::extract::ConnectInfo(first_peer));
+        assert_eq!(
+            oauth_register(State(store.clone()), first_peer_request)
+                .await
+                .status(),
+            StatusCode::TOO_MANY_REQUESTS
+        );
+
+        let mut second_peer_request = Request::builder()
+            .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+            .unwrap();
+        second_peer_request
+            .extensions_mut()
+            .insert(axum::extract::ConnectInfo(second_peer));
+        assert_eq!(
+            oauth_register(State(store), second_peer_request)
+                .await
+                .status(),
+            StatusCode::CREATED
+        );
+    }
+
+    #[tokio::test]
+    async fn registration_source_limiter_remains_bounded() {
+        let store = McpOAuthStore::new();
+        let now = Utc::now();
+        for source in 0..=MAX_REGISTRATION_SOURCES {
+            assert!(
+                store
+                    .allow_registration(IpAddr::V6(std::net::Ipv6Addr::from(source as u128)), now,)
+                    .await
+            );
+        }
+
+        assert_eq!(
+            store.registration_attempts.lock().await.len(),
+            MAX_REGISTRATION_SOURCES
+        );
+    }
+
+    #[test]
+    fn registration_source_uses_forwarding_only_from_configured_proxies() {
+        let trusted_proxies = parse_trusted_proxy_cidrs(Some("10.0.0.0/8,fd00::/8")).unwrap();
+        let store = McpOAuthStore::with_trusted_proxies(
+            generate_random_string(32),
+            Url::parse("https://mcp.example/").unwrap(),
+            trusted_proxies,
+        );
+
+        let mut trusted_request = Request::builder()
+            .header("x-forwarded-for", "192.0.2.44, 10.1.0.8")
+            .body(Body::empty())
+            .unwrap();
+        trusted_request
+            .extensions_mut()
+            .insert(ConnectInfo("10.2.0.9:443".parse::<SocketAddr>().unwrap()));
+        assert_eq!(
+            store.registration_source(&trusted_request),
+            "192.0.2.44".parse::<IpAddr>().unwrap()
+        );
+
+        let mut untrusted_request = Request::builder()
+            .header("x-forwarded-for", "192.0.2.99")
+            .body(Body::empty())
+            .unwrap();
+        untrusted_request.extensions_mut().insert(ConnectInfo(
+            "198.51.100.7:443".parse::<SocketAddr>().unwrap(),
+        ));
+        assert_eq!(
+            store.registration_source(&untrusted_request),
+            "198.51.100.7".parse::<IpAddr>().unwrap()
+        );
+    }
+
+    #[test]
+    fn trusted_proxy_configuration_rejects_invalid_or_unbounded_networks() {
+        assert!(parse_trusted_proxy_cidrs(None).unwrap().is_empty());
+        assert!(parse_trusted_proxy_cidrs(Some("127.0.0.1/32")).is_ok());
+        assert!(parse_trusted_proxy_cidrs(Some("not-a-cidr")).is_err());
+        assert!(parse_trusted_proxy_cidrs(Some("0.0.0.0/0")).is_err());
+        assert!(parse_trusted_proxy_cidrs(Some("::/0")).is_err());
+    }
+
+    #[tokio::test]
+    async fn refresh_token_lifetime_keeps_its_registered_client_valid() {
+        let store = McpOAuthStore::new();
+        let issued = store
+            .issue_tokens("public-test-client".to_string(), Some("email".to_string()))
+            .await
+            .unwrap();
+        let refresh_token = issued.access.refresh_token.unwrap();
+        let refresh_expires_at = store
+            .refresh_tokens
+            .read()
+            .await
+            .get(&refresh_token)
+            .unwrap()
+            .expires_at;
+        let client_expires_at = store
+            .clients
+            .read()
+            .await
+            .get("public-test-client")
+            .unwrap()
+            .expires_at;
+
+        assert!(
+            client_expires_at >= refresh_expires_at,
+            "client registration must remain valid for the full refresh-token lifetime"
+        );
+    }
+
+    #[tokio::test]
+    async fn registration_capacity_reclaims_an_unactivated_client() {
+        let store = Arc::new(McpOAuthStore::new());
+        let mut clients = store.clients.write().await;
+        let template = clients.get("public-test-client").unwrap().clone();
+        clients.clear();
+        for index in 0..MAX_CLIENTS {
+            clients.insert(
+                format!("unused-{index}"),
+                RegisteredClient {
+                    client_id: format!("unused-{index}"),
+                    expires_at: Utc::now() + Duration::seconds(REGISTERED_CLIENT_IDLE_TTL_SECONDS),
+                    ..template.clone()
+                },
+            );
+        }
+        drop(clients);
+
+        let registration = ClientRegistrationRequest {
+            client_name: "replacement-client".to_string(),
+            redirect_uris: vec!["http://127.0.0.1:9911/callback".to_string()],
+            grant_types: vec!["authorization_code".to_string()],
+            token_endpoint_auth_method: "none".to_string(),
+            response_types: vec!["code".to_string()],
+        };
+        let response = oauth_register(
+            State(store.clone()),
+            Request::builder()
+                .body(Body::from(serde_json::to_vec(&registration).unwrap()))
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(response.status(), StatusCode::CREATED);
+        assert_eq!(store.clients.read().await.len(), MAX_CLIENTS);
     }
 
     #[tokio::test]

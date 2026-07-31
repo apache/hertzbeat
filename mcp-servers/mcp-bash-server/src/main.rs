@@ -42,8 +42,8 @@ use common::bash_server::BashServer;
 use common::config;
 use common::oauth::{
     McpOAuthStore, generate_random_string, oauth_approve, oauth_authorization_server,
-    oauth_authorize, oauth_register, oauth_token, validate_public_base_url,
-    validate_token_middleware,
+    oauth_authorize, oauth_register, oauth_token, parse_trusted_proxy_cidrs,
+    validate_public_base_url, validate_token_middleware,
 };
 
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
@@ -135,9 +135,13 @@ async fn main() -> Result<()> {
         std::env::var("MCP_OAUTH_PUBLIC_BASE_URL").ok(),
         &bind_address,
     )?;
-    let oauth_store = Arc::new(McpOAuthStore::with_settings(
+    let trusted_proxy_config = std::env::var("MCP_OAUTH_TRUSTED_PROXY_CIDRS").ok();
+    let trusted_proxies = parse_trusted_proxy_cidrs(trusted_proxy_config.as_deref())
+        .map_err(|message| anyhow::anyhow!(message))?;
+    let oauth_store = Arc::new(McpOAuthStore::with_trusted_proxies(
         approval_secret,
         public_base_url,
+        trusted_proxies,
     ));
 
     let service = StreamableHttpService::new(
@@ -180,9 +184,12 @@ async fn main() -> Result<()> {
 
     info!("MCP OAuth Server started on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    let _ = axum::serve(listener, app)
-        .with_graceful_shutdown(async { tokio::signal::ctrl_c().await.unwrap() })
-        .await;
+    let _ = axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async { tokio::signal::ctrl_c().await.unwrap() })
+    .await;
     Ok(())
 }
 
