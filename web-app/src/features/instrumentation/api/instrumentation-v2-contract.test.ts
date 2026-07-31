@@ -207,7 +207,8 @@ describe('instrumentation v2 wire contracts', () => {
             gateway: 'server',
             supportedTransports: ['http_protobuf'],
             endpoints: { http_protobuf: { url, security } },
-            authHeaderName: 'Authorization'
+            authentication: 'bearer_token',
+            authorizationHeader: 'Authorization'
           }
         ]
       })
@@ -231,7 +232,8 @@ describe('instrumentation v2 wire contracts', () => {
             gateway: 'server',
             supportedTransports: ['http_protobuf'],
             endpoints: { http_protobuf: { url, security } },
-            authHeaderName: 'Authorization'
+            authentication: 'bearer_token',
+            authorizationHeader: 'Authorization'
           }
         ]
       }).profiles[0]?.endpoints.http_protobuf
@@ -251,7 +253,8 @@ describe('instrumentation v2 wire contracts', () => {
             gateway: 'server',
             supportedTransports: ['http_protobuf'],
             httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
-            authHeaderName: 'Authorization'
+            authentication: 'bearer_token',
+            authorizationHeader: 'Authorization'
           }
         ]
       })
@@ -290,7 +293,8 @@ describe('instrumentation v2 wire contracts', () => {
             gateway: 'server',
             supportedTransports: ['grpc'],
             endpoints: { grpc: { url: 'https://example.test:4317', security: 'tls' } },
-            authHeaderName: 'Authorization'
+            authentication: 'bearer_token',
+            authorizationHeader: 'Authorization'
           }
         ]
       })
@@ -317,6 +321,57 @@ describe('instrumentation v2 wire contracts', () => {
     ).toBe('edge');
   });
 
+  it('parses an explicitly unauthenticated external destination without legacy authorization metadata', () => {
+    const response = parseIntakeProfilesResponse({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'external-local',
+      profiles: [
+        {
+          id: 'external-local',
+          kind: 'external_otel_collector',
+          availability: 'available',
+          gateway: 'external',
+          supportedTransports: ['http_protobuf'],
+          endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' } },
+          authentication: 'none'
+        }
+      ]
+    });
+
+    expect(response.profiles[0]).toMatchObject({
+      authentication: 'none',
+      authorizationHeader: null
+    });
+    expect(JSON.stringify(response)).not.toContain('authHeaderName');
+  });
+
+  it.each([
+    { authentication: 'none', authorizationHeader: 'Authorization' },
+    { authentication: 'bearer_token', authorizationHeader: null },
+    { authentication: 'bearer_token', authorizationHeader: 'X-Authorization' },
+    { authentication: 'none', authHeaderName: 'Authorization' }
+  ])('rejects inconsistent or legacy authentication metadata %#', authentication => {
+    expect(() =>
+      parseIntakeProfilesResponse({
+        schemaVersion: 2,
+        status: 'available',
+        defaultProfileId: 'external-local',
+        profiles: [
+          {
+            id: 'external-local',
+            kind: 'external_otel_collector',
+            availability: 'available',
+            gateway: 'external',
+            supportedTransports: ['http_protobuf'],
+            endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' } },
+            ...authentication
+          }
+        ]
+      })
+    ).toThrow();
+  });
+
   it.each([
     'http://example.test/docs',
     'https://user@example.test/docs',
@@ -335,7 +390,8 @@ describe('instrumentation v2 wire contracts', () => {
           gateway: 'server',
           supportedTransports: ['http_protobuf'],
           endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' } },
-          authHeaderName: 'Authorization'
+          authentication: 'bearer_token',
+          authorizationHeader: 'Authorization'
         },
         service,
         signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
@@ -369,7 +425,8 @@ describe('instrumentation v2 wire contracts', () => {
         gateway: 'server',
         supportedTransports: ['http_protobuf'],
         endpoints: { http_protobuf: { url: 'https://example.test/v1/otlp', security: 'tls' } },
-        authHeaderName: 'Authorization'
+        authentication: 'bearer_token',
+        authorizationHeader: 'Authorization'
       },
       service,
       signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
@@ -408,6 +465,64 @@ describe('instrumentation v2 wire contracts', () => {
     expect(value.blocks[0]).toMatchObject({ id: 'plaintext_transport_warning', type: 'warning' });
     expect(value.blocks[1]?.content).toContain('${HERTZBEAT_TOKEN}');
     expect(JSON.stringify(value)).not.toContain('secret-value');
+  });
+
+  it('accepts a no-auth guide only when token declarations, markers, and Authorization content are absent', () => {
+    const value = parseRenderResponse({
+      schemaVersion: 2,
+      sourceKind: 'existing_opentelemetry',
+      recipeId: 'existing_otlp',
+      intakeProfile: {
+        id: 'external-local',
+        kind: 'external_otel_collector',
+        availability: 'available',
+        gateway: 'external',
+        supportedTransports: ['http_protobuf'],
+        endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' } },
+        authentication: 'none'
+      },
+      service,
+      signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
+      components: [],
+      secretPlaceholders: {},
+      blocks: [
+        {
+          id: 'configure_exporter',
+          type: 'code',
+          titleKey: 'instrumentation.v2.block.configure_exporter',
+          executionLocationKey: 'instrumentation.location.otel_collector',
+          language: 'yaml',
+          content: 'endpoint: http://otel.example.test:4318',
+          placeholders: []
+        }
+      ]
+    });
+
+    expect(value.intakeProfile).toMatchObject({ authentication: 'none', authorizationHeader: null });
+    expect(value.secretPlaceholders).toEqual({});
+    expect(value.blocks[0]?.placeholders).toEqual([]);
+
+    expect(() =>
+      parseRenderResponse({
+        ...value,
+        blocks: [{ ...value.blocks[0]!, content: 'Authorization: Bearer ${HERTZBEAT_TOKEN}' }]
+      })
+    ).toThrow();
+    expect(() =>
+      parseRenderResponse({
+        ...value,
+        intakeProfile: {
+          ...value.intakeProfile,
+          availability: 'unavailable',
+          gateway: undefined,
+          supportedTransports: [],
+          endpoints: {},
+          authentication: undefined,
+          errorCode: 'intake_profile_unavailable'
+        },
+        blocks: []
+      })
+    ).toThrow();
   });
 
   it('requires exactly three backend query jumps and preserves their contexts', () => {

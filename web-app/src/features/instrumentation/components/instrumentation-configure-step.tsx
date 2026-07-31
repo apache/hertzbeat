@@ -30,6 +30,7 @@ type ConfigureStepProps = {
   tokenDraft?: AccessTokenGenerationDraft | undefined;
   tokenGenerating: boolean;
   tokenError: boolean;
+  requiresToken: boolean;
   canGenerateToken: boolean;
   onProfile: (intakeProfileId: string) => void;
   onService: (patch: Partial<ServiceIdentity>) => void;
@@ -63,33 +64,58 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         onPlatform={props.onPlatform}
       />
       <DestinationCards profiles={props.profiles} profileId={props.profileId} onProfile={props.onProfile} />
-      {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
-        <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
-      )}
-      <InstrumentationTokenField token={props.token} onToken={props.onToken} />
+      <TokenConfiguration {...props} />
       <div className={styles.configureActions}>
-        {props.canGenerateToken && (
-          <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
-        )}
-        <Typography.Text type={props.token ? 'success' : 'secondary'}>
-          {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
-        </Typography.Text>
+        <TokenActions {...props} />
         <Button type="primary" disabled={!props.canRender} loading={props.rendering} onClick={props.onRender}>
           {t('instrumentation.action.render')}
         </Button>
       </div>
       {props.renderError && <Alert type="error" showIcon message={t('instrumentation.v2.renderError')} />}
-      {props.canGenerateToken && props.tokenDraft && (
-        <InstrumentationAccessTokenModal
-          draft={props.tokenDraft}
-          tokenGenerating={props.tokenGenerating}
-          tokenError={props.tokenError}
-          onClose={props.onCloseToken}
-          onDraft={props.onTokenDraft}
-          onGenerate={props.onGenerateToken}
-        />
-      )}
+      <TokenModal {...props} />
     </section>
+  );
+}
+
+function TokenConfiguration(props: ConfigureStepProps) {
+  const { t } = useTranslation();
+  if (!props.requiresToken) return null;
+  return (
+    <>
+      {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
+        <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
+      )}
+      <InstrumentationTokenField token={props.token} onToken={props.onToken} />
+    </>
+  );
+}
+
+function TokenActions(props: ConfigureStepProps) {
+  const { t } = useTranslation();
+  if (!props.requiresToken) return null;
+  return (
+    <>
+      {props.canGenerateToken && (
+        <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
+      )}
+      <Typography.Text type={props.token ? 'success' : 'secondary'}>
+        {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
+      </Typography.Text>
+    </>
+  );
+}
+
+function TokenModal(props: ConfigureStepProps) {
+  if (!props.canGenerateToken || !props.tokenDraft) return null;
+  return (
+    <InstrumentationAccessTokenModal
+      draft={props.tokenDraft}
+      tokenGenerating={props.tokenGenerating}
+      tokenError={props.tokenError}
+      onClose={props.onCloseToken}
+      onDraft={props.onTokenDraft}
+      onGenerate={props.onGenerateToken}
+    />
   );
 }
 

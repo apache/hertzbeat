@@ -327,6 +327,140 @@ describe('useInstrumentationPageController', () => {
     unmount();
   });
 
+  it('renders an unauthenticated destination without creating, accepting, or requiring a token', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'external-local',
+      profiles: [noneProfile, serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({
+      schemaVersion: 2,
+      intakeProfile: noneProfile,
+      secretPlaceholders: {},
+      blocks: []
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.draft.intakeProfileId).toBe('external-local'));
+
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    expect(result.current.requiresToken).toBe(false);
+    expect(result.current.canGenerateToken).toBe(false);
+    expect(result.current.canRender).toBe(true);
+
+    act(() => result.current.setToken('must-not-be-retained'));
+    act(() => result.current.openTokenGenerator());
+    await act(async () => result.current.generateToken());
+    expect(result.current.token).toBe('');
+    expect(result.current.tokenDraft).toBeUndefined();
+    expect(tokenApi.generateAccessToken).not.toHaveBeenCalled();
+
+    await act(async () => result.current.renderGuide());
+    expect(api.renderInstrumentationGuide).toHaveBeenCalledWith(
+      expect.objectContaining({ intakeProfileId: 'external-local' })
+    );
+    expect(JSON.stringify(api.renderInstrumentationGuide.mock.calls)).not.toContain('must-not-be-retained');
+  });
+
+  it('refuses render while the selected profile is pending, missing, or unavailable', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    const profilesReceipt = deferred<{
+      schemaVersion: 2;
+      status: 'available';
+      profiles: (typeof serverProfile)[];
+    }>();
+    api.loadIntakeProfiles.mockReturnValue(profilesReceipt.promise);
+    const harness = createHarness();
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: harness.wrapper });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    act(() => result.current.patchDraft({ intakeProfileId: 'selected-profile' }));
+    expect(result.current.canRender).toBe(false);
+
+    act(() => profilesReceipt.resolve({ schemaVersion: 2, status: 'available', profiles: [serverProfile] }));
+    await waitFor(() => expect(result.current.profilesState).toBe('ready'));
+    expect(result.current.canRender).toBe(false);
+
+    act(
+      () =>
+        void harness.client.setQueryData(['instrumentation', 'intake-profiles'], {
+          schemaVersion: 2,
+          status: 'available',
+          profiles: [
+            {
+              id: 'selected-profile',
+              kind: 'external_otel_collector',
+              availability: 'unavailable',
+              supportedTransports: [],
+              endpoints: {},
+              authorizationHeader: null,
+              errorCode: 'intake_profile_unavailable'
+            }
+          ]
+        })
+    );
+    expect(result.current.canRender).toBe(false);
+
+    act(
+      () =>
+        void harness.client.setQueryData(['instrumentation', 'intake-profiles'], {
+          schemaVersion: 2,
+          status: 'available',
+          profiles: [{ ...noneProfile, id: 'selected-profile' }]
+        })
+    );
+    await waitFor(() => expect(result.current.canRender).toBe(true));
+  });
+
+  it('retires a bearer token and retained token commands when the destination changes to no auth', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile, noneProfile]
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.draft.intakeProfileId).toBe('server-default'));
+
+    const retainedSetToken = result.current.setToken;
+    act(() => result.current.setToken('existing-otlp-token'));
+    expect(result.current.token).toBe('existing-otlp-token');
+    act(() => result.current.patchDraft({ intakeProfileId: 'external-local' }));
+    expect(result.current.token).toBe('');
+    expect(result.current.requiresToken).toBe(false);
+
+    act(() => retainedSetToken('late-bearer-token'));
+    expect(result.current.token).toBe('');
+  });
+
+  it('rejects a retained manual token command after switching between Bearer destinations', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [
+        serverProfile,
+        { ...serverProfile, id: 'collector-edge', kind: 'hertzbeat_collector', gateway: 'collector' }
+      ]
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.draft.intakeProfileId).toBe('server-default'));
+
+    const retainedSetToken = result.current.setToken;
+    act(() => result.current.setToken('server-token'));
+    act(() => result.current.patchDraft({ intakeProfileId: 'collector-edge' }));
+    expect(result.current.token).toBe('');
+
+    act(() => retainedSetToken('late-server-token'));
+    expect(result.current.token).toBe('');
+  });
+
   it.each(['USER', 'GUEST'])('keeps manual token entry available without admitting generation for %s', async role => {
     auth.roles = [role];
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
@@ -577,7 +711,18 @@ const serverProfile = {
   gateway: 'server',
   supportedTransports: ['http_protobuf'],
   endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' as const } },
-  authHeaderName: 'Authorization'
+  authentication: 'bearer_token' as const,
+  authorizationHeader: 'Authorization' as const
+};
+const noneProfile = {
+  id: 'external-local',
+  kind: 'external_otel_collector' as const,
+  availability: 'available' as const,
+  gateway: 'external' as const,
+  supportedTransports: ['http_protobuf' as const],
+  endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' as const } },
+  authentication: 'none' as const,
+  authorizationHeader: null
 };
 const groups = [
   { id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' },

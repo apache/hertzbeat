@@ -19,32 +19,37 @@ import type { InstrumentationControllerState } from './instrumentation-controlle
 export function useInstrumentationTokenActions(
   state: InstrumentationControllerState,
   generationRef: RefObject<number>,
-  canGenerateToken: boolean
+  canGenerateToken: boolean,
+  requiresToken: boolean
 ) {
   const tokenGenerationRef = useRef(0);
-  const canGenerateTokenRef = useRef(canGenerateToken);
+  const tokenCommandsEnabled = canGenerateToken && requiresToken;
+  const tokenCommandsEnabledRef = useRef(tokenCommandsEnabled);
+  const requiresTokenRef = useRef(requiresToken);
   useLayoutEffect(() => {
-    canGenerateTokenRef.current = canGenerateToken;
-  }, [canGenerateToken]);
-  useRetireTokenGeneration(canGenerateToken, state, tokenGenerationRef);
+    tokenCommandsEnabledRef.current = tokenCommandsEnabled;
+    requiresTokenRef.current = requiresToken;
+  }, [requiresToken, tokenCommandsEnabled]);
+  useRetireTokenGeneration(tokenCommandsEnabled, requiresToken, state, tokenGenerationRef);
+  const setToken = useTokenSetter(state, generationRef, requiresTokenRef);
   const openTokenGenerator = useCallback(() => {
-    if (!canGenerateTokenRef.current || state.tokenGenerating) return;
+    if (!tokenCommandsEnabledRef.current || state.tokenGenerating) return;
     state.setTokenError(false);
     state.setTokenDraft({ ...createAccessTokenGenerationDraft('otlp-ingest'), scope: 'otlp-ingest' });
-  }, [canGenerateTokenRef, state]);
+  }, [state, tokenCommandsEnabledRef]);
   const closeTokenGenerator = useCallback(() => {
     if (!state.tokenGenerating) state.setTokenDraft(undefined);
   }, [state]);
   const updateTokenDraft = useCallback(
     (draft: AccessTokenGenerationDraft) => {
-      if (canGenerateTokenRef.current && !state.tokenGenerating) {
+      if (tokenCommandsEnabledRef.current && !state.tokenGenerating) {
         state.setTokenDraft({ ...draft, scope: 'otlp-ingest' });
       }
     },
-    [canGenerateTokenRef, state]
+    [state, tokenCommandsEnabledRef]
   );
   const generateToken = useCallback(async () => {
-    if (!canGenerateTokenRef.current) return;
+    if (!tokenCommandsEnabledRef.current) return;
     const draft = state.tokenDraft;
     if (!draft || validateAccessTokenGenerationDraft(draft).length > 0) {
       state.setTokenError(true);
@@ -68,25 +73,46 @@ export function useInstrumentationTokenActions(
         state.setTokenGenerating(false);
       }
     }
-  }, [canGenerateTokenRef, generationRef, state, tokenGenerationRef]);
-  return { openTokenGenerator, closeTokenGenerator, updateTokenDraft, generateToken };
+  }, [generationRef, state, tokenCommandsEnabledRef, tokenGenerationRef]);
+  return { setToken, openTokenGenerator, closeTokenGenerator, updateTokenDraft, generateToken };
+}
+
+function useTokenSetter(
+  state: InstrumentationControllerState,
+  generationRef: RefObject<number>,
+  requiresTokenRef: RefObject<boolean>
+) {
+  const flowGeneration = generationRef.current;
+  return useCallback(
+    (token: string) => {
+      // A retained callback must not repopulate secret state after its flow
+      // scope retires or the destination stops requiring Bearer auth.
+      if (requiresTokenRef.current && generationRef.current === flowGeneration) state.setToken(token);
+    },
+    [flowGeneration, generationRef, requiresTokenRef, state]
+  );
 }
 
 function useRetireTokenGeneration(
-  canGenerateToken: boolean,
+  tokenCommandsEnabled: boolean,
+  requiresToken: boolean,
   state: InstrumentationControllerState,
   tokenGenerationRef: RefObject<number>
 ) {
-  const previousCanGenerate = useRef(canGenerateToken);
+  const previousCommandsEnabled = useRef(tokenCommandsEnabled);
+  const previousRequiresToken = useRef(requiresToken);
   useLayoutEffect(() => {
-    const lostCapability = previousCanGenerate.current && !canGenerateToken;
-    previousCanGenerate.current = canGenerateToken;
-    if (!lostCapability) return;
+    const tokenRetired = previousRequiresToken.current && !requiresToken;
+    const generationRetired = previousCommandsEnabled.current && !tokenCommandsEnabled;
+    previousRequiresToken.current = requiresToken;
+    previousCommandsEnabled.current = tokenCommandsEnabled;
+    if (!tokenRetired && !generationRetired) return;
     tokenGenerationRef.current += 1;
+    if (tokenRetired) state.setToken('');
     state.setTokenDraft(undefined);
     state.setTokenGenerating(false);
     state.setTokenError(false);
-  }, [canGenerateToken, state, tokenGenerationRef]);
+  }, [requiresToken, state, tokenCommandsEnabled, tokenGenerationRef]);
 }
 
 function generationIsCurrent(

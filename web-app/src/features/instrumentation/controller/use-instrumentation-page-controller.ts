@@ -22,6 +22,7 @@ import {
   selectedRecipePlatforms,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
+import { profileCanRender, profileRequiresToken } from '../model/intake-profile';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
@@ -35,7 +36,7 @@ const keys = {
 
 export function useInstrumentationPageController() {
   const navigate = useNavigate();
-  const { canGenerateToken } = instrumentationTokenCapability(useSession().session?.roles ?? []);
+  const tokenCapability = instrumentationTokenCapability(useSession().session?.roles ?? []);
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const state = useInstrumentationControllerState();
   const startedAtRef = useRef<number | undefined>(undefined);
@@ -43,14 +44,7 @@ export function useInstrumentationPageController() {
   const generationRef = useRef(0);
 
   useDefaultProfile(profilesQuery.data?.defaultProfileId, state.setDraft);
-  useEffect(
-    () => () => {
-      // Token state is destroyed with this controller and is never persisted.
-      generationRef.current += 1;
-      if (timerRef.current) window.clearTimeout(timerRef.current);
-    },
-    []
-  );
+  useControllerLifetime(generationRef, timerRef);
 
   const draftActions = useDraftActions(
     state,
@@ -61,7 +55,15 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const guideActions = useGuideActions(state, generationRef, startedAtRef);
-  const tokenActions = useInstrumentationTokenActions(state, generationRef, canGenerateToken);
+  const selectedProfile = profilesQuery.data?.profiles.find(profile => profile.id === state.draft.intakeProfileId);
+  const requiresToken = profileRequiresToken(selectedProfile);
+  const canGenerateToken = tokenCapability.canGenerateToken && requiresToken;
+  const tokenActions = useInstrumentationTokenActions(
+    state,
+    generationRef,
+    tokenCapability.canGenerateToken,
+    requiresToken
+  );
   const detect = useDetection(
     state.draft,
     state.setDetection,
@@ -71,13 +73,7 @@ export function useInstrumentationPageController() {
     timerRef,
     generationRef
   );
-  const openQuery = useCallback(
-    (signal: Signal) => {
-      const jump = state.detection?.queryJumps.find(item => item.signal === signal);
-      if (jump?.enabled) void navigate(buildQueryJump(jump.signal, jump.context));
-    },
-    [navigate, state.detection]
-  );
+  const openQuery = useOpenQuery(state.detection, navigate);
 
   return {
     ...state,
@@ -89,15 +85,35 @@ export function useInstrumentationPageController() {
     ...guideActions,
     ...tokenActions,
     canGenerateToken,
+    requiresToken,
     detect,
     openQuery,
     hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),
     canContinueSource: Boolean(state.draft.recipeId),
     platformOptions: catalogQuery.data ? selectedRecipePlatforms(catalogQuery.data, state.draft) : [],
-    // Every advertised intake profile requires Authorization. Rendering only
-    // after generation avoids presenting copy-disabled commands as ready.
-    canRender: draftReady(state.draft) && Boolean(state.token.trim())
+    canRender: draftReady(state.draft) && profileCanRender(selectedProfile, state.token)
   };
+}
+
+function useControllerLifetime(generationRef: React.RefObject<number>, timerRef: React.RefObject<number | undefined>) {
+  useEffect(
+    () => () => {
+      // Token state is destroyed with this controller and is never persisted.
+      generationRef.current += 1;
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    },
+    [generationRef, timerRef]
+  );
+}
+
+function useOpenQuery(detection: DetectionResponse | undefined, navigate: ReturnType<typeof useNavigate>) {
+  return useCallback(
+    (signal: Signal) => {
+      const jump = detection?.queryJumps.find(item => item.signal === signal);
+      if (jump?.enabled) void navigate(buildQueryJump(jump.signal, jump.context));
+    },
+    [detection, navigate]
+  );
 }
 
 function useInstrumentationQueries() {

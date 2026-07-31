@@ -153,6 +153,7 @@ describe('instrumentation v2 interaction', () => {
       tokenDraft: undefined,
       tokenGenerating: false,
       tokenError: false,
+      requiresToken: true,
       canGenerateToken: true,
       onProfile: vi.fn(),
       onService: vi.fn(),
@@ -178,6 +179,7 @@ describe('instrumentation v2 interaction', () => {
               availability: 'unavailable',
               supportedTransports: [],
               endpoints: {},
+              authorizationHeader: null,
               errorCode: 'intake_profile_unavailable'
             }
           ]
@@ -257,6 +259,7 @@ describe('instrumentation v2 interaction', () => {
         tokenDraft={{ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' }}
         tokenGenerating={false}
         tokenError
+        requiresToken
         canGenerateToken
         onProfile={vi.fn()}
         onService={vi.fn()}
@@ -299,6 +302,7 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        requiresToken
         canGenerateToken={false}
         onProfile={vi.fn()}
         onService={vi.fn()}
@@ -343,6 +347,7 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        requiresToken
         canGenerateToken
         onProfile={vi.fn()}
         onService={vi.fn()}
@@ -358,6 +363,45 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.v2.transport.http_protobuf')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.security.plaintext')).toBeVisible();
     expect(screen.getByText('instrumentation.token.plaintextBearerWarning')).toBeVisible();
+  });
+
+  it('shows an unauthenticated destination without token controls, status, or Bearer warnings', () => {
+    render(
+      <InstrumentationConfigureStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'available',
+          defaultProfileId: 'external-local',
+          profiles: [noneGuide.intakeProfile]
+        }}
+        profileId="external-local"
+        service={configureService}
+        platformOptions={[]}
+        canRender
+        rendering={false}
+        renderError={false}
+        token=""
+        tokenGenerating={false}
+        tokenError={false}
+        requiresToken={false}
+        canGenerateToken={false}
+        onProfile={vi.fn()}
+        onService={vi.fn()}
+        onPlatform={vi.fn()}
+        onToken={vi.fn()}
+        onRender={vi.fn()}
+        onOpenToken={vi.fn()}
+        onCloseToken={vi.fn()}
+        onTokenDraft={vi.fn()}
+        onGenerateToken={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByLabelText('instrumentation.field.token')).not.toBeInTheDocument();
+    expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
+    expect(screen.queryByText('instrumentation.token.plaintextBearerWarning')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'instrumentation.token.generateAccess' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'instrumentation.action.render' })).toBeEnabled();
   });
 
   it('materializes the memory-only token visibly without mutating the backend guide', () => {
@@ -392,6 +436,35 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
     expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
     expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*220px minmax\(0,\s*1fr\) 300px/);
+  });
+
+  it('renders and copies backend no-auth guide blocks without token UI or substitution', async () => {
+    const onCopy = vi.fn().mockResolvedValue(undefined);
+    render(
+      <InstrumentationGuideWorkspace
+        catalog={catalog}
+        draft={{
+          sourceId: 'quick_start',
+          sourceKind: 'quick_start',
+          recipeId: 'telemetrygen',
+          intakeProfileId: 'external-local',
+          service: noneGuide.service
+        }}
+        guide={noneGuide}
+        token=""
+        detecting={false}
+        detectionError={false}
+        onCopy={onCopy}
+        onEdit={vi.fn()}
+        onDetect={vi.fn()}
+        onOpen={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('endpoint: http://otel.example.test:4318')).toBeVisible();
+    expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.copy' }));
+    await waitFor(() => expect(onCopy).toHaveBeenCalledWith(noneGuide.blocks[0]));
   });
 
   it('describes a component without a version as not applicable rather than unavailable', () => {
@@ -562,7 +635,8 @@ const guide = {
     gateway: 'server' as const,
     supportedTransports: ['http_protobuf' as const],
     endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' as const } },
-    authHeaderName: 'Authorization'
+    authentication: 'bearer_token' as const,
+    authorizationHeader: 'Authorization' as const
   },
   service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
   signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const },
@@ -579,6 +653,31 @@ const guide = {
       language: 'shell',
       content: 'token=${HERTZBEAT_TOKEN}',
       placeholders: ['authorizationToken' as const]
+    }
+  ]
+};
+const noneGuide = {
+  ...guide,
+  intakeProfile: {
+    id: 'external-local',
+    kind: 'external_otel_collector' as const,
+    availability: 'available' as const,
+    gateway: 'external' as const,
+    supportedTransports: ['http_protobuf' as const],
+    endpoints: { http_protobuf: { url: 'http://otel.example.test:4318', security: 'plaintext' as const } },
+    authentication: 'none' as const,
+    authorizationHeader: null
+  },
+  secretPlaceholders: {},
+  blocks: [
+    {
+      id: 'configure',
+      type: 'code' as const,
+      titleKey: 'instrumentation.v2.block.configure_exporter',
+      executionLocationKey: 'instrumentation.location.otel_collector',
+      language: 'yaml',
+      content: 'endpoint: http://otel.example.test:4318',
+      placeholders: []
     }
   ]
 };

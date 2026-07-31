@@ -107,6 +107,7 @@ function ConfigureStage({ page }: { page: PageController }) {
         tokenDraft={page.tokenDraft}
         tokenGenerating={page.tokenGenerating}
         tokenError={page.tokenError}
+        requiresToken={page.requiresToken}
         canGenerateToken={page.canGenerateToken}
         onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
         onService={page.patchService}

@@ -45,7 +45,8 @@ const intakeProfile = z
     gateway: z.enum(['server', 'collector', 'external']).optional(),
     supportedTransports: z.array(z.enum(['http_protobuf', 'grpc'])),
     endpoints: z.object({ http_protobuf: intakeEndpoint.optional(), grpc: intakeEndpoint.optional() }).strict(),
-    authHeaderName: text.optional(),
+    authentication: z.enum(['none', 'bearer_token']).optional(),
+    authorizationHeader: z.literal('Authorization').nullable().default(null),
     collectorId: text.optional(),
     errorCode: profileError.optional()
   })
@@ -80,11 +81,17 @@ function hasValidAvailableConnectivity(value: IntakeProfile) {
     value.supportedTransports.length > 0 &&
     value.supportedTransports.length === endpointCount &&
     transportsMatch &&
-    value.authHeaderName === 'Authorization' &&
+    hasConsistentAuthentication(value) &&
+    (value.kind === 'external_otel_collector' || value.authentication === 'bearer_token') &&
     !value.errorCode &&
     value.gateway === expectedGateway &&
     hasValidCollectorIdentity(value)
   );
+}
+
+function hasConsistentAuthentication(value: IntakeProfile) {
+  if (value.authentication === 'none') return value.authorizationHeader === null;
+  return value.authentication === 'bearer_token' && value.authorizationHeader === 'Authorization';
 }
 
 function hasAdvertisedConnectivity(value: IntakeProfile) {
@@ -92,7 +99,8 @@ function hasAdvertisedConnectivity(value: IntakeProfile) {
     value.gateway ||
     value.supportedTransports.length ||
     Object.values(value.endpoints).length ||
-    value.authHeaderName ||
+    value.authentication ||
+    value.authorizationHeader ||
     !value.errorCode ||
     !hasValidCollectorIdentity(value)
   );
@@ -136,6 +144,15 @@ function hasAvailableDefaultProfile(value: IntakeProfiles) {
   return value.profiles.some(profile => profile.id === value.defaultProfileId && profile.availability === 'available');
 }
 
+const secretPlaceholders = z
+  .object({
+    authorizationToken: z
+      .object({ marker: z.literal('${HERTZBEAT_TOKEN}'), kind: z.literal('authorization_token') })
+      .strict()
+      .optional()
+  })
+  .strict();
+
 export const renderSchema = z
   .object({
     schemaVersion: z.literal(2),
@@ -145,16 +162,33 @@ export const renderSchema = z
     service,
     signals: signalValues(capability),
     components: z.array(component),
-    secretPlaceholders: z
-      .object({
-        authorizationToken: z
-          .object({ marker: z.literal('${HERTZBEAT_TOKEN}'), kind: z.literal('authorization_token') })
-          .strict()
-      })
-      .strict(),
+    secretPlaceholders,
     blocks: z.array(guideBlock)
   })
-  .strict();
+  .strict()
+  .superRefine(validateRenderAuthentication);
+
+type RenderResponse = z.infer<typeof renderSchema>;
+
+function validateRenderAuthentication(value: RenderResponse, context: z.RefinementCtx) {
+  const available = value.intakeProfile.availability === 'available';
+  const bearer = value.intakeProfile.authentication === 'bearer_token';
+  const declared = Boolean(value.secretPlaceholders.authorizationToken);
+  const references = value.blocks.some(block => block.placeholders.includes('authorizationToken'));
+  const leakedMarker = value.blocks.some(
+    block => block.content?.includes('${HERTZBEAT_TOKEN}') && !block.placeholders.includes('authorizationToken')
+  );
+  const unauthenticatedAuthorization = value.blocks.some(block => block.content?.includes('Authorization'));
+  if (
+    !available ||
+    bearer !== declared ||
+    bearer !== references ||
+    leakedMarker ||
+    (!bearer && unauthenticatedAuthorization)
+  ) {
+    context.addIssue({ code: 'custom', message: 'render authentication guidance is inconsistent' });
+  }
+}
 
 export const messageEnvelopeSchema = z
   .object({ code: z.number().int(), msg: z.string().nullable().optional(), data: z.unknown() })

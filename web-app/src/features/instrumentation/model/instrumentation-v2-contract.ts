@@ -121,7 +121,8 @@ type IntakeProfile = {
     http_protobuf?: { url: string; security: 'tls' | 'plaintext' } | undefined;
     grpc?: { url: string; security: 'tls' | 'plaintext' } | undefined;
   };
-  authHeaderName?: string | undefined;
+  authentication?: 'none' | 'bearer_token' | undefined;
+  authorizationHeader: 'Authorization' | null;
   collectorId?: string | undefined;
   errorCode?: string | undefined;
 };
@@ -171,7 +172,9 @@ export type RenderResponse = {
   service: ServiceIdentity;
   signals: SignalValues<'supported' | 'preview' | 'unsupported'>;
   components: OfficialComponent[];
-  secretPlaceholders: { authorizationToken: { marker: '${HERTZBEAT_TOKEN}'; kind: 'authorization_token' } };
+  secretPlaceholders: {
+    authorizationToken?: { marker: '${HERTZBEAT_TOKEN}'; kind: 'authorization_token' } | undefined;
+  };
   blocks: GuideBlock[];
 };
 

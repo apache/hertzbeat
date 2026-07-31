@@ -8,7 +8,7 @@ import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { InstrumentationDraft } from '../model/instrumentation-flow';
-import { intakeEndpointEntries } from '../model/intake-profile';
+import { intakeEndpointEntries, profileRequiresToken } from '../model/intake-profile';
 import type {
   CatalogResponse,
   DetectionResponse,
@@ -97,9 +97,11 @@ function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>
           <code>{endpoint.url}</code>
         </div>
       ))}
-      <Typography.Text type={props.token ? 'success' : 'secondary'}>
-        {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
-      </Typography.Text>
+      {profileRequiresToken(props.guide.intakeProfile) && (
+        <Typography.Text type={props.token ? 'success' : 'secondary'}>
+          {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
+        </Typography.Text>
+      )}
       <Button type="primary" loading={props.detecting} onClick={props.onDetect}>
         {t('instrumentation.action.startDetection')}
       </Button>

@@ -242,7 +242,8 @@ function renderFixture() {
       gateway: 'server',
       supportedTransports: ['http_protobuf'],
       endpoints: { http_protobuf: { url: 'https://example.test/otlp', security: 'tls' } },
-      authHeaderName: 'Authorization'
+      authentication: 'bearer_token',
+      authorizationHeader: 'Authorization'
     },
     service: {
       name: 'checkout',

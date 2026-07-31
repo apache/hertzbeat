@@ -21,3 +21,13 @@ export function intakeEndpointEntries(profile: Profile): Array<[Transport, Endpo
 export function profileUsesPlaintext(profile: Profile | undefined) {
   return Boolean(profile && intakeEndpointEntries(profile).some(([, endpoint]) => endpoint.security === 'plaintext'));
 }
+
+export function profileRequiresToken(profile: Profile | undefined) {
+  return profile?.availability === 'available' && profile.authentication === 'bearer_token';
+}
+
+export function profileCanRender(profile: Profile | undefined, token: string) {
+  if (profile?.availability !== 'available') return false;
+  if (profile.authentication === 'none') return true;
+  return profile.authentication === 'bearer_token' && Boolean(token.trim());
+}
