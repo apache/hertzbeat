@@ -183,6 +183,7 @@ resource_attrs = [
     kv("hertzbeat.entity_type", entity_type),
     kv("hertzbeat.entity_name", entity_name),
     kv("hertzbeat.workspace_id", workspace_id),
+    kv("hertzbeat.collector.id", collector),
     kv("hertzbeat.collector", collector),
     kv("hertzbeat.template", template),
 ]
@@ -264,6 +265,7 @@ elif signal == "metrics":
             kv("hertzbeat.entity_type", entity_type),
             kv("hertzbeat.entity_name", entity_name),
             kv("hertzbeat.workspace_id", workspace_id),
+            kv("hertzbeat.collector.id", collector),
             kv("hertzbeat.collector", collector),
             kv("hertzbeat.template", template),
         ]
@@ -695,7 +697,7 @@ entity_name_q="$(url_encode "${HERTZBEAT_ENTITY_NAME}")"
 collector_q="$(url_encode "${HERTZBEAT_COLLECTOR}")"
 template_q="$(url_encode "${HERTZBEAT_TEMPLATE}")"
 metric_query_q="$(url_encode "hertzbeat_demo_checkout_latency_ms_milliseconds")"
-common_signal_context="entityId=${entity_id_q}&entityType=${entity_type_q}&entityName=${entity_name_q}&serviceName=${service_name_q}&serviceNamespace=${service_namespace_q}&environment=${deployment_environment_q}&collectorId=${collector_q}&template=${template_q}&source=otlp"
+common_signal_context="entityId=${entity_id_q}&entityType=${entity_type_q}&entityName=${entity_name_q}&serviceName=${service_name_q}&serviceNamespace=${service_namespace_q}&environment=${deployment_environment_q}&collectorId=${collector_q}&template=${template_q}&source=otlp&windowMode=preset"
 trace_url="${FRONTEND_BASE}/explore?signal=traces&traceId=${trace_id_q}&spanId=${root_span_id_q}&${common_signal_context}"
 log_stream_url="${FRONTEND_BASE}/explore?signal=logs&mode=live&${common_signal_context}"
 log_history_url="${FRONTEND_BASE}/explore?signal=logs&traceId=${trace_id_q}&spanId=${root_span_id_q}&${common_signal_context}"
@@ -890,10 +892,11 @@ print(json.dumps({
                 "k8s.pod.name",
                 "container.name",
                 "http.route",
-        "hertzbeat.entity_id",
-        "hertzbeat.entity_type",
-        "hertzbeat.entity_name",
+                "hertzbeat.entity_id",
+                "hertzbeat.entity_type",
+                "hertzbeat.entity_name",
                 "hertzbeat.workspace_id",
+                "hertzbeat.collector.id",
                 "hertzbeat.collector",
                 "hertzbeat.template",
                 "trace_id",
@@ -917,10 +920,11 @@ print(json.dumps({
                 "rpc.system",
                 "rpc.service",
                 "rpc.method",
-        "hertzbeat.entity_id",
-        "hertzbeat.entity_type",
-        "hertzbeat.entity_name",
+                "hertzbeat.entity_id",
+                "hertzbeat.entity_type",
+                "hertzbeat.entity_name",
                 "hertzbeat.workspace_id",
+                "hertzbeat.collector.id",
                 "hertzbeat.collector",
                 "hertzbeat.template",
                 "trace_id",
