@@ -72,11 +72,14 @@ public class MetricsRealTimeAlertCalculator {
     private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
 
-    private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
-    private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
+    private static final Pattern APP_PATTERN =
+            Pattern.compile("equals\\(\\s*__app__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
+    private static final Pattern AVAILABLE_PATTERN =
+            Pattern.compile("equals\\(\\s*__available__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
     private static final Pattern LABEL_PATTERN = Pattern.compile("contains\\(__labels__,\\s*\"([^\"]+)\"\\)");
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
-    private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
+    private static final Pattern METRICS_PATTERN =
+            Pattern.compile("equals\\(\\s*__metrics__\\s*,\\s*\"([^\"]+)\"\\s*\\)");
 
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
