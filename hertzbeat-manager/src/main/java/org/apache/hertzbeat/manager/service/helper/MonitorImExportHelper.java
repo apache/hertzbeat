@@ -27,6 +27,7 @@ import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskErrorCode;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpHeaders;
@@ -100,16 +101,16 @@ public class MonitorImExportHelper {
         try {
             var imExportService = imExportServiceMap.get(type);
             if (imExportService == null) {
-                throw new UnsupportedOperationException("Import type is not supported");
+                importTaskService.fail(taskId, ImportTaskErrorCode.IMPORT_UNSUPPORTED_TYPE);
+                log.warn("Monitor import task {} failed (unsupported type)", taskId);
+                return;
             }
             imExportService.importConfig(taskId, new ByteArrayInputStream(content));
             importTaskService.complete(taskId);
         } catch (Exception e) {
-            ImportTaskErrorCode errorCode = e instanceof UnsupportedOperationException
-                    ? ImportTaskErrorCode.IMPORT_UNSUPPORTED_TYPE
-                    : e instanceof IllegalArgumentException
-                            ? ImportTaskErrorCode.IMPORT_INVALID_CONTENT
-                            : ImportTaskErrorCode.IMPORT_FAILED;
+            ImportTaskErrorCode errorCode = e instanceof InvalidImportContentException
+                    ? ImportTaskErrorCode.IMPORT_INVALID_CONTENT
+                    : ImportTaskErrorCode.IMPORT_FAILED;
             importTaskService.fail(taskId, errorCode);
             log.warn("Monitor import task {} failed ({})", taskId, e.getClass().getSimpleName());
         } finally {

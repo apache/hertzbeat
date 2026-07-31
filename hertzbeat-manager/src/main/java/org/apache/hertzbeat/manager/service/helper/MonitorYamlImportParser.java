@@ -22,16 +22,18 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.manager.service.importtask.InvalidImportContentException;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * Parses an uploaded monitor YAML export into bounded map records.
  */
 public final class MonitorYamlImportParser {
 
-    public static final String INVALID_CONTENT_MESSAGE = "Monitor YAML import content is invalid.";
+    public static final String INVALID_CONTENT_MESSAGE = InvalidImportContentException.YAML_MESSAGE;
 
     private static final int MAX_CONTENT_LENGTH = 3 * 1024 * 1024;
     private static final int MAX_MONITOR_RECORDS = 100;
@@ -61,7 +63,7 @@ public final class MonitorYamlImportParser {
                 result.add(toStringKeyMap(record));
             }
             return result;
-        } catch (RuntimeException exception) {
+        } catch (YAMLException exception) {
             // Do not retain or propagate the parser cause because its message may echo uploaded content.
             throw invalidContent();
         }
@@ -89,7 +91,7 @@ public final class MonitorYamlImportParser {
         return record;
     }
 
-    private static IllegalArgumentException invalidContent() {
-        return new IllegalArgumentException(INVALID_CONTENT_MESSAGE);
+    private static InvalidImportContentException invalidContent() {
+        return InvalidImportContentException.forYaml();
     }
 }
