@@ -36,11 +36,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -87,6 +89,59 @@ class LogSseManagerTest {
         assertNotNull(emitter);
         assertEquals(Long.MAX_VALUE, emitter.getTimeout());
         assertTrue(hasSubscriber(CLIENT_ID));
+    }
+
+    @Test
+    void registrationMustSendContentFreeReadinessComment() throws IOException {
+        SseEmitter emitter = mock(SseEmitter.class);
+        List<Object> sentFragments = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> {
+            invocation.<SseEmitter.SseEventBuilder>getArgument(0).build().stream()
+                    .map(org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter
+                            .DataWithMediaType::getData)
+                    .forEach(sentFragments::add);
+            return null;
+        }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
+
+        logSseManager.createEmitter(CLIENT_ID, defaultWorkspaceCriteria(), emitter);
+
+        assertEquals(List.of(":ready\n\n"), sentFragments);
+        assertTrue(hasSubscriber(CLIENT_ID));
+    }
+
+    @Test
+    void failedReadinessMustRetireSubscriberWithoutLeakingFailureDetail() throws IOException {
+        Logger logger = (Logger) LoggerFactory.getLogger(LogSseManager.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        SseEmitter ioEmitter = mock(SseEmitter.class);
+        doAnswer(invocation -> {
+            throw new IOException("Authorization: Bearer private-readiness-token");
+        }).when(ioEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        SseEmitter stateEmitter = mock(SseEmitter.class);
+        doAnswer(invocation -> {
+            throw new IllegalStateException("private-illegal-state-detail");
+        }).when(stateEmitter).send(any(SseEmitter.SseEventBuilder.class));
+
+        try {
+            logSseManager.createEmitter(CLIENT_ID, defaultWorkspaceCriteria(), ioEmitter);
+            logSseManager.createEmitter(CLIENT_ID + 1, defaultWorkspaceCriteria(), stateEmitter);
+
+            assertFalse(hasSubscriber(CLIENT_ID));
+            assertFalse(hasSubscriber(CLIENT_ID + 1));
+            verify(ioEmitter).complete();
+            verify(stateEmitter).complete();
+            assertTrue(appender.list.stream().noneMatch(event ->
+                    event.getFormattedMessage().contains("Authorization")
+                            || event.getFormattedMessage().contains("Bearer")
+                            || event.getFormattedMessage().contains("private-readiness-token")
+                            || event.getFormattedMessage().contains("private-illegal-state-detail")));
+            assertTrue(appender.list.stream().allMatch(event -> event.getThrowableProxy() == null));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
     @Test
@@ -138,12 +193,12 @@ class LogSseManagerTest {
         SseEmitter mockEmitter = mock(SseEmitter.class);
         AtomicBoolean virtualThread = new AtomicBoolean(false);
         CountDownLatch latch = new CountDownLatch(1);
+        subscribeClient(CLIENT_ID, null, mockEmitter);
         doAnswer(invocation -> {
             virtualThread.set(Thread.currentThread().isVirtual());
             latch.countDown();
             return null;
         }).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, mockEmitter);
 
         logSseManager.broadcast(createLogEntry("INFO", "virtual-thread-send"));
 
@@ -220,7 +275,7 @@ class LogSseManagerTest {
         LogSseFilterCriteria filters = new LogSseFilterCriteria();
         filters.setWorkspaceId("team-a");
         SseEmitter emitter = mock(SseEmitter.class);
-        logSseManager.createEmitter(CLIENT_ID, filters, emitter);
+        subscribeClient(CLIENT_ID, filters, emitter);
 
         logSseManager.broadcast(LogEntry.builder()
                 .resource(Map.of("hertzbeat.workspace_id", "team-b"))
@@ -235,10 +290,10 @@ class LogSseManagerTest {
     void shouldRemoveEmitterWhenBroadcastFails() throws IOException {
         // Given: A client whose emitter will throw an exception on send
         SseEmitter mockEmitter = mock(SseEmitter.class);
+        subscribeClient(CLIENT_ID, null, mockEmitter);
         doAnswer(invocation -> {
             throw new IOException("Connection closed");
         }).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, mockEmitter);
         assertTrue(hasSubscriber(CLIENT_ID));
 
         LogEntry log = createLogEntry("ERROR", "An error occurred");
@@ -398,9 +453,8 @@ class LogSseManagerTest {
         }
 
         for (int batch = 0; batch < 12 && (queuedEntryCount() > 0 || hasPendingGap()); batch++) {
-            int before = sentData.size();
             invokeFlushBatch();
-            await().atMost(2, TimeUnit.SECONDS).until(() -> sentData.size() > before);
+            awaitSubscriberSenderIdle(CLIENT_ID);
         }
 
         assertEquals(11_002, sentData.size());
@@ -612,10 +666,10 @@ class LogSseManagerTest {
     void failedHeartbeatMustRetireSilentSubscriber() throws Exception {
         stopScheduler();
         SseEmitter emitter = mock(SseEmitter.class);
+        subscribeClient(CLIENT_ID, null, emitter);
         doAnswer(invocation -> {
             throw new IOException("silent disconnect");
         }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, emitter);
 
         invokeHeartbeats();
 
@@ -644,17 +698,17 @@ class LogSseManagerTest {
         CountDownLatch sendStarted = new CountDownLatch(1);
         CountDownLatch emitterCompleted = new CountDownLatch(1);
         doAnswer(invocation -> {
+            emitterCompleted.countDown();
+            return null;
+        }).when(emitter).complete();
+        subscribeClient(CLIENT_ID, null, emitter);
+        doAnswer(invocation -> {
             sendStarted.countDown();
             while (!emitterCompleted.await(50, TimeUnit.MILLISECONDS)) {
                 // The real response write is released by emitter completion, not executor interruption.
             }
             return null;
         }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        doAnswer(invocation -> {
-            emitterCompleted.countDown();
-            return null;
-        }).when(emitter).complete();
-        subscribeClient(CLIENT_ID, null, emitter);
         ExecutorService sender = subscriberSender(CLIENT_ID);
         logSseManager.broadcast(createLogEntry("INFO", "blocked-write"));
         invokeFlushBatch();
@@ -706,6 +760,7 @@ class LogSseManagerTest {
         CountDownLatch releaseFirstSend = new CountDownLatch(1);
         AtomicInteger activeSends = new AtomicInteger();
         AtomicInteger maximumConcurrentSends = new AtomicInteger();
+        subscribeClient(CLIENT_ID, null, emitter);
         doAnswer(invocation -> {
             int active = activeSends.incrementAndGet();
             maximumConcurrentSends.accumulateAndGet(active, Math::max);
@@ -717,7 +772,6 @@ class LogSseManagerTest {
             }
             return null;
         }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, emitter);
         for (int i = 0; i < 1_001; i++) {
             logSseManager.broadcast(createLogEntry("INFO", "log-" + i));
         }
@@ -743,12 +797,12 @@ class LogSseManagerTest {
         SseEmitter replacedEmitter = mock(SseEmitter.class);
         CountDownLatch sendStarted = new CountDownLatch(1);
         CountDownLatch releaseSend = new CountDownLatch(1);
+        subscribeClient(CLIENT_ID, null, replacedEmitter);
         doAnswer(invocation -> {
             sendStarted.countDown();
             releaseSend.await(1, TimeUnit.SECONDS);
             throw new IOException("Authorization: Bearer secret telemetry-body");
         }).when(replacedEmitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, replacedEmitter);
         logSseManager.broadcast(createLogEntry("ERROR", "Token=secret telemetry-body"));
         invokeFlushBatch();
         assertTrue(sendStarted.await(1, TimeUnit.SECONDS));
@@ -779,12 +833,12 @@ class LogSseManagerTest {
         SseEmitter emitter = mock(SseEmitter.class);
         CountDownLatch firstSendStarted = new CountDownLatch(1);
         CountDownLatch releaseFirstSend = new CountDownLatch(1);
+        subscribeClient(CLIENT_ID, null, emitter);
         doAnswer(invocation -> {
             firstSendStarted.countDown();
             releaseFirstSend.await(2, TimeUnit.SECONDS);
             return null;
         }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, emitter);
         for (int i = 0; i < 2_001; i++) {
             logSseManager.broadcast(createLogEntry("INFO", "log-" + i));
         }
@@ -811,12 +865,12 @@ class LogSseManagerTest {
         SseEmitter emitter = mock(SseEmitter.class);
         CountDownLatch firstSendStarted = new CountDownLatch(1);
         CountDownLatch releaseFirstSend = new CountDownLatch(1);
+        subscribeClient(CLIENT_ID, null, emitter);
         doAnswer(invocation -> {
             firstSendStarted.countDown();
             releaseFirstSend.await(2, TimeUnit.SECONDS);
             return null;
         }).when(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        subscribeClient(CLIENT_ID, null, emitter);
         for (int i = 0; i < 1_001; i++) {
             logSseManager.broadcast(createLogEntry("INFO", "log-" + i));
         }
@@ -846,6 +900,7 @@ class LogSseManagerTest {
             filters.setWorkspaceId("default");
         }
         logSseManager.createEmitter(clientId, filters, mockEmitter);
+        clearInvocations(mockEmitter);
     }
 
     private LogSseFilterCriteria defaultWorkspaceCriteria() {
@@ -933,6 +988,12 @@ class LogSseManagerTest {
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }
+    }
+
+    private void awaitSubscriberSenderIdle(Long clientId) {
+        ThreadPoolExecutor sender = (ThreadPoolExecutor) subscriberSender(clientId);
+        await().atMost(2, TimeUnit.SECONDS)
+                .until(() -> sender.getActiveCount() == 0 && sender.getQueue().isEmpty());
     }
 
     private int queuedEntryCount() {

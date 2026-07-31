@@ -31,6 +31,7 @@ import java.util.Set;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
+import org.apache.hertzbeat.manager.pojo.dto.PageResponse;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,7 @@ public class MonitorsController {
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
             description = "Obtain a list of monitoring information based on query filter items")
-    public ResponseEntity<Message<Page<MonitorInfo>>> getMonitors(
+    public ResponseEntity<Message<PageResponse<MonitorInfo>>> getMonitors(
             @Parameter(description = "Monitor ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
             @Parameter(description = "Legacy Monitor ID", example = "6565463543") @RequestParam(required = false) final String id,
             @Parameter(description = "Monitor Type", example = "linux") @RequestParam(required = false) final String app,
@@ -79,7 +80,9 @@ public class MonitorsController {
         String effectiveSearch = StringUtils.hasText(search) ? search : host;
         Page<Monitor> monitorPage = monitorService.getMonitors(
                 effectiveIds, app, effectiveSearch, status, sort, order, pageIndex, pageSize, labels);
-        Page<MonitorInfo> responsePage = monitorPage == null ? Page.empty() : monitorPage.map(MonitorInfo::fromEntity);
+        PageResponse<MonitorInfo> responsePage = monitorPage == null
+                ? new PageResponse<>(List.of(), 0, pageIndex, pageSize)
+                : PageResponse.from(monitorPage.map(MonitorInfo::fromEntity));
         return ResponseEntity.ok(Message.success(responsePage));
     }
 

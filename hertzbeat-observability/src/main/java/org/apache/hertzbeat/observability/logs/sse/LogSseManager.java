@@ -147,8 +147,24 @@ public class LogSseManager {
         }
         if (closed.get()) {
             safeComplete(clientId, subscriber);
+        } else {
+            sendReadiness(clientId, subscriber);
         }
         return emitter;
+    }
+
+    private void sendReadiness(Long clientId, SseSubscriber subscriber) {
+        if (emitters.get(clientId) != subscriber || subscriber.retired.get()) {
+            return;
+        }
+        try {
+            subscriber.emitter.send(SseEmitter.event().comment("ready"));
+        } catch (IOException | IllegalStateException e) {
+            safeComplete(clientId, subscriber);
+        } catch (Exception e) {
+            log.error("SSE log readiness delivery failed.");
+            safeComplete(clientId, subscriber);
+        }
     }
 
     /**

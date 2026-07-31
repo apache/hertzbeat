@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.hamcrest.Matchers.aMapWithSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
@@ -51,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
@@ -95,10 +97,10 @@ class MonitorsControllerTest {
         Monitor monitor = Monitor.builder().id(6565463543L).name("website-prod").app("website").build();
         when(monitorService.getMonitors(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any()))
-                .thenReturn(new PageImpl<>(List.of(monitor)));
+                .thenReturn(new PageImpl<>(List.of(monitor), PageRequest.of(1, 5), 13));
 
         this.mockMvc.perform(MockMvcRequestBuilders.get(
-                        "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
+                        "/api/monitors?app={app}&ids={ids}&host={host}&id={id}&pageIndex=1&pageSize=5",
                         "website",
                         6565463543L,
                         "127.0.0.1",
@@ -107,6 +109,14 @@ class MonitorsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content[0].name").value("website-prod"))
+                .andExpect(jsonPath("$.data.totalElements").value(13))
+                .andExpect(jsonPath("$.data.pageIndex").value(1))
+                .andExpect(jsonPath("$.data.pageSize").value(5))
+                .andExpect(jsonPath("$.data", aMapWithSize(4)))
+                .andExpect(jsonPath("$.data.pageable").doesNotExist())
+                .andExpect(jsonPath("$.data.sort").doesNotExist())
+                .andExpect(jsonPath("$.data.number").doesNotExist())
+                .andExpect(jsonPath("$.data.size").doesNotExist())
                 .andReturn();
     }
 

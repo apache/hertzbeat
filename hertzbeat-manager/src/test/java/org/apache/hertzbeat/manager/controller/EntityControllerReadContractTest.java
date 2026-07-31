@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -38,6 +39,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummary
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDetailDto;
+import org.apache.hertzbeat.manager.pojo.dto.EntitySummaryInfo;
 import org.apache.hertzbeat.manager.service.ObserveEntityService;
 import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,6 +94,39 @@ class EntityControllerReadContractTest {
                 .andExpect(jsonPath("$.data.boundMonitors[0].id").value(1))
                 .andExpect(jsonPath("$.data.boundMonitors[49].id").value(50))
                 .andExpect(jsonPath("$.data.monitorSummary.totalBoundMonitors").value(73));
+    }
+
+    @Test
+    void entityListEnvelopeUsesStablePageAllowlist() throws Exception {
+        EntitySummaryInfo entity = new EntitySummaryInfo();
+        when(observeEntityService.getEntities(
+                null, "service", "healthy", "payment", "team-sre", "manual",
+                "prod", "production", "tier1", "commerce-platform", "gmtUpdate", "desc", 1, 5))
+                .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(1, 5), 13));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/entities")
+                        .param("type", "service")
+                        .param("status", "healthy")
+                        .param("owner", "team-sre")
+                        .param("source", "manual")
+                        .param("environment", "prod")
+                        .param("lifecycle", "production")
+                        .param("tier", "tier1")
+                        .param("system", "commerce-platform")
+                        .param("search", "payment")
+                        .param("pageIndex", "1")
+                        .param("pageSize", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(13))
+                .andExpect(jsonPath("$.data.pageIndex").value(1))
+                .andExpect(jsonPath("$.data.pageSize").value(5))
+                .andExpect(jsonPath("$.data", aMapWithSize(4)))
+                .andExpect(jsonPath("$.data.pageable").doesNotExist())
+                .andExpect(jsonPath("$.data.sort").doesNotExist())
+                .andExpect(jsonPath("$.data.number").doesNotExist())
+                .andExpect(jsonPath("$.data.size").doesNotExist());
     }
 
     @Test
