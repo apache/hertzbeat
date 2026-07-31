@@ -22,9 +22,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
-import org.apache.hertzbeat.observability.logs.dto.LogPageResponse;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
@@ -55,7 +55,7 @@ public class LogQueryController {
     @GetMapping("/list")
     @Operation(summary = "Query logs by time range with optional filters",
             description = "Query logs by [start,end] in ms and optional filters with pagination. Returns paginated log entries sorted by timestamp in descending order.")
-    public ResponseEntity<Message<LogPageResponse<LogEntry>>> list(
+    public ResponseEntity<Message<PageResponse<LogEntry>>> list(
             @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
             @RequestParam(value = "entityId", required = false) Long entityId,
             @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
@@ -100,7 +100,7 @@ public class LogQueryController {
         Page<LogEntry> result = logQueryService.list(entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 pageIndex, pageSize, hideInternal, hideNoise);
-        return ResponseEntity.ok(Message.success(LogPageResponse.from(result)));
+        return ResponseEntity.ok(Message.success(PageResponse.from(result)));
     }
 
     @GetMapping("/context")
