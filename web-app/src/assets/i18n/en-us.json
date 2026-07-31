@@ -271,6 +271,8 @@
       "search": "Search monitor name, address, or type",
       "back": "Back to resource catalog",
       "empty": "No monitors match this search.",
+      "notFound": "Resource discovery endpoint was not found.",
+      "unsupported": "Resource discovery is not supported by this deployment.",
       "unavailable": "Resource discovery is temporarily unavailable.",
       "error": "Resource discovery could not be loaded.",
       "noCandidates": "No resource candidates found.",

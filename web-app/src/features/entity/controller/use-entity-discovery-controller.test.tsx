@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionContext } from '@/core/auth/session-context';
+import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({ loadEntityDiscovery: vi.fn() }));
 vi.mock('../api/entity-discovery-api', async importOriginal => ({
@@ -82,6 +83,33 @@ describe('useEntityDiscoveryController', () => {
     expect(routed.current().state.canWrite).toBe(false);
     act(() => routed.current().actions.create());
     expect(routed.location()).toContain('/entities/discovery');
+  });
+
+  it.each([
+    [new ApiMessageError('missing route', { status: 404 }), 'not-found'],
+    [new ApiMessageError('unsupported method', { status: 405 }), 'unsupported'],
+    [new ApiMessageError('offline', { status: 503 }), 'unavailable']
+  ] as const)('keeps %s distinct from a successful empty discovery page', async (failure, kind) => {
+    api.loadEntityDiscovery.mockRejectedValueOnce(failure);
+    const routed = renderController('/entities/discovery');
+
+    await waitFor(() => expect(routed.current().state.evidence).toEqual({ kind }));
+
+    expect(routed.current().state.evidence.kind).not.toBe('empty');
+  });
+
+  it('publishes empty only from a successful exact zero-total page', async () => {
+    api.loadEntityDiscovery.mockResolvedValueOnce({
+      schemaVersion: 1,
+      pageIndex: 0,
+      pageSize: 8,
+      totalElements: 0,
+      totalPages: 0,
+      content: []
+    });
+    const routed = renderController('/entities/discovery');
+
+    await waitFor(() => expect(routed.current().state.evidence).toEqual({ kind: 'empty' }));
   });
 });
 

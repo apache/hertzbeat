@@ -69,6 +69,9 @@ describe('entity discovery API', () => {
   it.each([
     [new ApiMessageError('entity_discovery_unavailable', { status: 200 }), 'unavailable'],
     [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new ApiMessageError('missing route', { status: 404 }), 'not-found'],
+    [new ApiMessageError('unsupported method', { status: 405 }), 'unsupported'],
+    [new ApiMessageError('unsupported server capability', { status: 501 }), 'unsupported'],
     [new ApiMessageError('entity_discovery_search_invalid', { status: 200 }), 'error'],
     [new EntityDiscoveryContractError(), 'error']
   ] as const)('classifies backend failures without exposing their body', (failure, expected) => {

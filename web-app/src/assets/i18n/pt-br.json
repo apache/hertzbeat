@@ -271,6 +271,8 @@
       "search": "Pesquisar nome, endereço ou tipo do monitor",
       "back": "Voltar ao catálogo de recursos",
       "empty": "Nenhum monitor corresponde a esta pesquisa.",
+      "notFound": "O endpoint de descoberta de recursos não foi encontrado.",
+      "unsupported": "A descoberta de recursos não é compatível com esta implantação.",
       "unavailable": "A descoberta de recursos está temporariamente indisponível.",
       "error": "Não foi possível carregar a descoberta de recursos.",
       "noCandidates": "Nenhum recurso candidato encontrado.",

@@ -51,6 +51,9 @@ function DiscoveryResults({ state, actions }: EntityDiscoveryViewModel) {
       </div>
     );
   if (evidence.kind === 'empty') return <Empty description={t('entity.discovery.empty')} />;
+  if (evidence.kind === 'not-found') return <Alert showIcon type="error" message={t('entity.discovery.notFound')} />;
+  if (evidence.kind === 'unsupported')
+    return <Alert showIcon type="warning" message={t('entity.discovery.unsupported')} />;
   if (evidence.kind === 'unavailable')
     return <Alert showIcon type="warning" message={t('entity.discovery.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('entity.discovery.error')} />;

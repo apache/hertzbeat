@@ -2,7 +2,6 @@
 
 import type { Monitor } from '@/features/monitor';
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
-import type { RemotePageState } from '@/shared/remote-state';
 import { safeEntityListPath } from './entity-query';
 
 export const defaultEntityDiscoveryQuery: EntityDiscoveryQuery = { search: '', pageIndex: 0, pageSize: 8 };
@@ -33,11 +32,16 @@ export type EntityDiscoveryPage = {
   totalPages: number;
   content: EntityDiscoveryRow[];
 };
+export type EntityDiscoveryFailure = 'not-found' | 'unsupported' | 'unavailable' | 'error';
+export type EntityDiscoveryEvidence =
+  | EntityDiscoveryState<'loading' | 'empty' | EntityDiscoveryFailure>
+  | { kind: 'ready'; records: EntityDiscoveryRow[]; total: number };
+type EntityDiscoveryState<Kind extends string> = Kind extends string ? { kind: Kind } : never;
 export type EntityDiscoveryViewModel = {
   state: {
     query: EntityDiscoveryQuery;
     draft: string;
-    evidence: RemotePageState<EntityDiscoveryRow, 'unavailable' | 'error'>;
+    evidence: EntityDiscoveryEvidence;
     refreshing: boolean;
     canWrite: boolean;
   };

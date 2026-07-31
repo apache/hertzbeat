@@ -4,6 +4,7 @@ import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
 import {
   EntityDiscoveryContractError,
   normalizeEntityDiscoveryQuery,
+  type EntityDiscoveryFailure,
   type EntityDiscoveryQuery
 } from '../model/entity-discovery-model';
 import { parseEntityDiscoveryPage } from './entity-discovery-schema';
@@ -24,15 +25,15 @@ export async function loadEntityDiscovery(query: EntityDiscoveryQuery, signal?: 
   return parseEntityDiscoveryPage(value, normalized);
 }
 
-export function classifyEntityDiscoveryError(error: unknown): 'unavailable' | 'error' {
+export function classifyEntityDiscoveryError(error: unknown): EntityDiscoveryFailure {
   if (error instanceof EntityDiscoveryContractError) return 'error';
-  if (
-    error instanceof ApiMessageError &&
-    (error.message === 'entity_discovery_unavailable' ||
-      error.cause !== undefined ||
-      [0, 502, 503, 504].includes(error.status ?? 0))
-  ) {
-    return 'unavailable';
+  if (error instanceof ApiMessageError) {
+    if (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status)) {
+      return 'unavailable';
+    }
+    if (error.status === 404) return 'not-found';
+    if (error.status === 405 || error.status === 501) return 'unsupported';
+    if (error.message === 'entity_discovery_unavailable') return 'unavailable';
   }
   return 'error';
 }

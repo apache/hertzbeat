@@ -88,11 +88,18 @@ describe('EntityDiscoveryView', () => {
     expect(screen.queryByRole('button', { name: 'Add resource' })).not.toBeInTheDocument();
   });
 
-  it.each(['loading', 'empty', 'unavailable', 'error'] as const)('keeps %s distinct from ready rows', kind => {
-    renderView({ evidence: { kind } });
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    if (kind === 'empty') expect(screen.getByText('No monitors match this search.')).toBeInTheDocument();
-  });
+  it.each(['loading', 'empty', 'not-found', 'unsupported', 'unavailable', 'error'] as const)(
+    'keeps %s distinct from ready rows',
+    kind => {
+      renderView({ evidence: { kind } });
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      if (kind === 'empty') expect(screen.getByText('No monitors match this search.')).toBeInTheDocument();
+      if (kind === 'not-found')
+        expect(screen.getByText('Resource discovery endpoint was not found.')).toBeInTheDocument();
+      if (kind === 'unsupported')
+        expect(screen.getByText('Resource discovery is not supported by this deployment.')).toBeInTheDocument();
+    }
+  );
 });
 
 function renderView(
