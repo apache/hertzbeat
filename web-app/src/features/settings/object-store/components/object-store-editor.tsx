@@ -172,7 +172,7 @@ function ObjectStoreField({
     <label className={styles.field}>
       <span className={`${styles.label} ${styles.required}`}>{t(definition.labelKey)}</span>
       <span className={styles.control}>
-        {definition.secret ? <Input.Password {...inputProps} /> : <Input {...inputProps} />}
+        {definition.secret ? <Input.Password {...inputProps} autoComplete="new-password" /> : <Input {...inputProps} />}
         {configured && !inputProps.value.trim() && (
           <Typography.Text type="secondary">{t('objectStore.obs.configuredCredential')}</Typography.Text>
         )}

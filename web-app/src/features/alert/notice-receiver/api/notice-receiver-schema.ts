@@ -9,8 +9,19 @@ import { z } from 'zod';
 
 import { createSpringPageSchema } from '@/shared/pagination';
 
-import { noticeReceiverTypes, type NoticeReceiverType } from '../model/notice-receiver-catalog';
-import type { NoticeReceiverQuery } from '../model/notice-receiver-model';
+import {
+  activeNoticeReceiverDefinition,
+  noticeReceiverAgentIdMax,
+  noticeReceiverLarkReceiveTypes,
+  noticeReceiverSecretKeyCatalog,
+  noticeReceiverSecretKeys,
+  noticeReceiverTypes,
+  noticeReceiverWebhookAuthTypes,
+  type NoticeReceiverOptionKey,
+  type NoticeReceiverSecretKey,
+  type NoticeReceiverType
+} from '../model/notice-receiver-catalog';
+import type { NoticeReceiverOptions, NoticeReceiverQuery } from '../model/notice-receiver-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
@@ -18,6 +29,9 @@ const nullableTextSchema = z
   .string()
   .nullish()
   .transform(value => value ?? null);
+const configuredSecretSchema = z
+  .array(z.enum(noticeReceiverSecretKeyCatalog))
+  .refine(items => new Set(items).size === items.length);
 
 export const noticeReceiverTypeSchema = z.custom<NoticeReceiverType>(value =>
   noticeReceiverTypes.some(type => type === value)
@@ -70,13 +84,13 @@ export class NoticeReceiverContractError extends Error {
 }
 
 export function parseNoticeReceiverWire(value: unknown) {
-  return parseSchema(noticeReceiverSchema, value, 'Notice receiver');
+  return parseStructuredNoticeReceiver(parseSchema(noticeReceiverSchema, value, 'Notice receiver'));
 }
 
 export function parseNoticeReceiverPageWire(value: unknown, query: NoticeReceiverQuery) {
   const page = parseSchema(noticeReceiverPageSchema, value, 'Notice receiver page');
   requireSpringPageIdentity(page, query);
-  return page;
+  return { ...page, content: page.content.map(parseStructuredNoticeReceiver) };
 }
 
 export function parseNoticeReceiverOptionsWire(value: unknown) {
@@ -84,7 +98,42 @@ export function parseNoticeReceiverOptionsWire(value: unknown) {
 }
 
 export function parseNoticeReceiverMutationWire(value: unknown) {
-  return parseSchema(noticeReceiverMutationSchema, value, 'Notice receiver mutation');
+  const mutation = parseSchema(noticeReceiverMutationSchema, value, 'Notice receiver mutation');
+  return {
+    ...mutation,
+    receiver: mutation.receiver === null ? null : parseStructuredNoticeReceiver(mutation.receiver)
+  };
+}
+
+function parseStructuredNoticeReceiver(source: z.output<typeof noticeReceiverSchema>): NoticeReceiverWire {
+  const optionResult = noticeReceiverOptionSchemas[source.type].safeParse(source.options);
+  const secretResult = configuredSecretSchema.safeParse(source.configuredSecrets);
+  if (!optionResult.success || !secretResult.success) throw new NoticeReceiverContractError();
+  const allowedSecrets = noticeReceiverSecretKeys(source.type);
+  if (secretResult.data.some(secret => !allowedSecrets.includes(secret))) throw new NoticeReceiverContractError();
+  return {
+    ...source,
+    options: optionResult.data as NoticeReceiverOptions,
+    configuredSecrets: [...secretResult.data]
+  };
+}
+
+const noticeReceiverOptionSchemas = Object.fromEntries(
+  noticeReceiverTypes.map(type => {
+    const shape = Object.fromEntries(
+      activeNoticeReceiverDefinition(type)
+        .fields.filter(field => !field.secret)
+        .map(field => [field.key, noticeReceiverOptionValueSchema(field.key).optional()])
+    );
+    return [type, z.object(shape).strict()];
+  })
+) as Record<NoticeReceiverType, z.ZodType>;
+
+function noticeReceiverOptionValueSchema(key: NoticeReceiverOptionKey) {
+  if (key === 'agentId') return safeIntegerSchema.nonnegative().max(noticeReceiverAgentIdMax);
+  if (key === 'hookAuthType') return z.enum(noticeReceiverWebhookAuthTypes);
+  if (key === 'larkReceiveType') return z.enum(noticeReceiverLarkReceiveTypes);
+  return z.string();
 }
 
 function parseSchema<T extends z.ZodType>(schema: T, value: unknown, label: string): z.output<T> {
@@ -107,4 +156,7 @@ function requireSpringPageIdentity(page: z.output<typeof noticeReceiverPageSchem
   }
 }
 
-export type NoticeReceiverWire = z.output<typeof noticeReceiverSchema>;
+export type NoticeReceiverWire = Omit<z.output<typeof noticeReceiverSchema>, 'options' | 'configuredSecrets'> & {
+  options: NoticeReceiverOptions;
+  configuredSecrets: NoticeReceiverSecretKey[];
+};

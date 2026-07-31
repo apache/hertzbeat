@@ -8,21 +8,13 @@
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
-  activeNoticeReceiverDefinition,
   buildNoticeReceiverPayload,
-  noticeReceiverLarkReceiveTypes,
-  noticeReceiverSecretKeys,
   noticeReceiverTypeKeys,
-  noticeReceiverWebhookAuthTypes,
   writeNoticeReceiverQuery,
   type NoticeReceiver,
   type NoticeReceiverDraft,
   type NoticeReceiverMutation,
-  type NoticeReceiverOptionKey,
-  type NoticeReceiverOptions,
-  type NoticeReceiverQuery,
-  type NoticeReceiverSecretKey,
-  type NoticeReceiverType
+  type NoticeReceiverQuery
 } from '../model/notice-receiver-model';
 import { noticeReceiverEndpoint, noticeReceiversEndpoint } from '../../api/notice-api-endpoints';
 import {
@@ -104,60 +96,13 @@ function mapNoticeReceiver(source: NoticeReceiverWire): NoticeReceiver {
     name: source.name,
     type,
     typeKey: source.typeKey,
-    options: mapNoticeReceiverOptions(source.options, type),
-    configuredSecrets: mapConfiguredSecrets(source.configuredSecrets, type),
+    options: source.options,
+    configuredSecrets: source.configuredSecrets,
     creator: source.creator,
     modifier: source.modifier,
     gmtCreate: source.gmtCreate,
     gmtUpdate: source.gmtUpdate
   };
-}
-
-function mapNoticeReceiverOptions(options: Record<string, unknown>, type: NoticeReceiverType): NoticeReceiverOptions {
-  // Only non-secret fields may return in options. Secrets are represented by
-  // configuredSecrets metadata and must never enter ordinary frontend state.
-  const allowedKeys = new Set(
-    activeNoticeReceiverDefinition(type)
-      .fields.filter(field => !field.secret)
-      .map(field => field.key)
-  );
-  const entries = Object.entries(options).map(([key, value]) => {
-    if (!allowedKeys.has(key as NoticeReceiverOptionKey)) throw new NoticeReceiverContractError();
-    return [key, mapNoticeReceiverOptionValue(key as NoticeReceiverOptionKey, value)] as const;
-  });
-  return Object.fromEntries(entries);
-}
-
-function mapNoticeReceiverOptionValue(key: NoticeReceiverOptionKey, value: unknown): string | number {
-  if (key === 'agentId') {
-    if (!Number.isSafeInteger(value) || Number(value) < 0) throw new NoticeReceiverContractError();
-    return Number(value);
-  }
-  if (key === 'larkReceiveType') {
-    if (!noticeReceiverLarkReceiveTypes.includes(value as (typeof noticeReceiverLarkReceiveTypes)[number])) {
-      throw new NoticeReceiverContractError();
-    }
-    return value as number;
-  }
-  if (key === 'hookAuthType') {
-    if (!noticeReceiverWebhookAuthTypes.includes(value as (typeof noticeReceiverWebhookAuthTypes)[number])) {
-      throw new NoticeReceiverContractError();
-    }
-    return value as string;
-  }
-  if (typeof value !== 'string') throw new NoticeReceiverContractError();
-  return value;
-}
-
-function mapConfiguredSecrets(secrets: string[], type: NoticeReceiverType): NoticeReceiverSecretKey[] {
-  // Treat configuredSecrets as capability metadata, not arbitrary field names.
-  // A crossed secret name often indicates a backend serialization regression.
-  const allowedSecrets = noticeReceiverSecretKeys(type);
-  if (new Set(secrets).size !== secrets.length) throw new NoticeReceiverContractError();
-  return secrets.map(secret => {
-    if (!allowedSecrets.includes(secret as NoticeReceiverSecretKey)) throw new NoticeReceiverContractError();
-    return secret as NoticeReceiverSecretKey;
-  });
 }
 
 function mapNoticeReceiverMutation(source: ReturnType<typeof parseNoticeReceiverMutationWire>): NoticeReceiverMutation {

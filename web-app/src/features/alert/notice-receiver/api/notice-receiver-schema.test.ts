@@ -78,6 +78,18 @@ describe('notice receiver wire schemas', () => {
     );
   });
 
+  it('rejects invalid structured options and configured secret names at the Zod boundary', () => {
+    expect(() => parseNoticeReceiverWire({ ...receiver, options: { hookAuthType: 'Digest' } })).toThrow(
+      NoticeReceiverContractError
+    );
+    expect(() =>
+      parseNoticeReceiverWire({ ...receiver, options: { hookAuthType: 'Bearer', hookUrl: 'echoed-secret' } })
+    ).toThrow(NoticeReceiverContractError);
+    expect(() => parseNoticeReceiverWire({ ...receiver, configuredSecrets: ['email'] })).toThrow(
+      NoticeReceiverContractError
+    );
+  });
+
   it('rejects unsupported types and unsafe identifiers', () => {
     expect(() => parseNoticeReceiverWire({ ...receiver, type: 15 })).toThrow(NoticeReceiverContractError);
     expect(() => parseNoticeReceiverWire({ ...receiver, id: 0 })).toThrow(NoticeReceiverContractError);

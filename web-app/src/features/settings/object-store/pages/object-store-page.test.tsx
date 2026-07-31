@@ -81,6 +81,8 @@ describe('ObjectStorePage', () => {
     renderObjectStorePage();
 
     expect(await screen.findByPlaceholderText('OBS secret key')).toHaveValue('');
+    expect(screen.getByPlaceholderText('OBS access key')).toHaveAttribute('autocomplete', 'new-password');
+    expect(screen.getByPlaceholderText('OBS secret key')).toHaveAttribute('autocomplete', 'new-password');
     expect(screen.getAllByText('A credential is already configured. Leave this field blank to keep it.')).toHaveLength(
       2
     );
