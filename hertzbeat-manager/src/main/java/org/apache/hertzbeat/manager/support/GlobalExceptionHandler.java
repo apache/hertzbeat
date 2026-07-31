@@ -22,6 +22,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
 import java.util.Objects;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -34,6 +35,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -262,6 +264,25 @@ public class GlobalExceptionHandler {
     void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException exception) {
         log.debug("[monitor]-[async response no longer usable]-exceptionType={}",
                 exception.getClass().getName());
+    }
+
+    /**
+     * Ignore a converter write failure only when an already committed response
+     * became unusable after an async client disconnect.
+     * @param exception response write failure
+     * @param response servlet response
+     * @return generic error response for genuine conversion failures
+     */
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleHttpMessageNotWritableException(
+            HttpMessageNotWritableException exception, HttpServletResponse response) {
+        if (response.isCommitted() && exception.contains(AsyncRequestNotUsableException.class)) {
+            log.debug("[monitor]-[committed response no longer writable]-exceptionType={}",
+                    exception.getClass().getName());
+            return null;
+        }
+        return handleUnknownException(exception);
     }
 
     /**

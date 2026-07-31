@@ -8,6 +8,7 @@
 package org.apache.hertzbeat.manager.support;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,9 +17,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -29,6 +32,7 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 class GlobalExceptionHandlerTest {
 
     private static final String PRIVATE_DISCONNECT_DETAIL = "private client disconnect detail";
+    private static final String PRIVATE_SERIALIZATION_DETAIL = "private serialization failure detail";
 
     private MockMvc mockMvc;
 
@@ -63,12 +67,101 @@ class GlobalExceptionHandlerTest {
         }
     }
 
+    @Test
+    void committedWriteFailureCausedByAsyncDisconnectDoesNotWriteJsonOrLogPrivateDetail() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.get("/committed-write-disconnect"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(""));
+
+            assertFalse(appender.list.stream().anyMatch(event -> event.getLevel() == Level.ERROR));
+            assertFalse(appender.list.stream()
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .anyMatch(message -> message.contains(PRIVATE_DISCONNECT_DETAIL)));
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(previousLevel);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void genuineDtoSerializationFailureRemainsServerError() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.get("/serialization-failure"))
+                    .andExpect(status().isInternalServerError());
+
+            assertTrue(appender.list.stream().anyMatch(event -> event.getLevel() == Level.ERROR));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void uncommittedWriteFailureWithAsyncCauseRemainsServerError() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            mockMvc.perform(MockMvcRequestBuilders.get("/uncommitted-write-failure"))
+                    .andExpect(status().isInternalServerError());
+
+            assertTrue(appender.list.stream().anyMatch(event -> event.getLevel() == Level.ERROR));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
     @RestController
     private static final class DisconnectController {
 
         @GetMapping(value = "/sse-disconnect", produces = TEXT_EVENT_STREAM_VALUE)
         void disconnect() throws AsyncRequestNotUsableException {
             throw new AsyncRequestNotUsableException(PRIVATE_DISCONNECT_DETAIL);
+        }
+
+        @GetMapping("/committed-write-disconnect")
+        void committedWriteDisconnect(HttpServletResponse response) throws Exception {
+            response.flushBuffer();
+            throw wrappedDisconnectFailure();
+        }
+
+        @GetMapping("/uncommitted-write-failure")
+        void uncommittedWriteFailure() {
+            throw wrappedDisconnectFailure();
+        }
+
+        @GetMapping("/serialization-failure")
+        SerializationFailureDto serializationFailure() {
+            return new SerializationFailureDto();
+        }
+
+        private HttpMessageNotWritableException wrappedDisconnectFailure() {
+            return new HttpMessageNotWritableException(
+                    PRIVATE_DISCONNECT_DETAIL,
+                    new IllegalStateException(
+                            "write failure wrapper",
+                            new AsyncRequestNotUsableException(PRIVATE_DISCONNECT_DETAIL)));
+        }
+    }
+
+    private static final class SerializationFailureDto {
+
+        public String getValue() {
+            throw new IllegalStateException(PRIVATE_SERIALIZATION_DETAIL);
         }
     }
 }

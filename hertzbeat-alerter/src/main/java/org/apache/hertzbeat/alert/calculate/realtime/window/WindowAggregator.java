@@ -179,14 +179,10 @@ public class WindowAggregator implements TimeService.WatermarkListener, Runnable
     public void stop() {
         if (aggregatorExecutor != null && !aggregatorExecutor.isShutdown()) {
             log.info("Shutting down WindowAggregator executor...");
-            aggregatorExecutor.shutdown();
+            aggregatorExecutor.shutdownNow();
             try {
-                if (!aggregatorExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-                    log.warn("WindowAggregator executor did not terminate within 10 seconds, forcing shutdown");
-                    aggregatorExecutor.shutdownNow();
-                    if (!aggregatorExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        log.error("WindowAggregator executor did not terminate");
-                    }
+                if (!aggregatorExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.error("WindowAggregator executor did not terminate");
                 }
             } catch (InterruptedException e) {
                 log.warn("Interrupted while waiting for WindowAggregator executor to terminate");

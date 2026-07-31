@@ -163,6 +163,9 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     final Set<Long> needCancelMonitorIdSet = subMonitorBindMap.values().stream()
                             .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
                     monitorService.deleteMonitors(needCancelMonitorIdSet);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    break;
                 } catch (CommonDataQueueUnknownException ue) {
                     if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
                         break;
