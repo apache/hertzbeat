@@ -28,6 +28,7 @@ export function useShellMonitorImportTaskNotifications() {
     let mounted = true;
     let active: AbortController | null = null;
     let pending = false;
+    let baselineEstablished = false;
     const reread = async () => {
       if (active) {
         pending = true;
@@ -39,7 +40,14 @@ export function useShellMonitorImportTaskNotifications() {
         try {
           const tasks = await loadMonitorImportTasks(active.signal);
           if (!mounted) return;
-          publishChangedTasks(delivery.current, observed, tasks);
+          const completedTransition = publishChangedTasks(delivery.current, observed, tasks, !baselineEstablished);
+          baselineEstablished = true;
+          if (completedTransition) {
+            await queryClient.refetchQueries(
+              { queryKey: monitorQueryKeys.lists(), type: 'active' },
+              { cancelRefetch: false }
+            );
+          }
           await queryClient.refetchQueries(
             { queryKey: monitorQueryKeys.importTasks(), type: 'active' },
             { cancelRefetch: false }
@@ -66,19 +74,33 @@ export function useShellMonitorImportTaskNotifications() {
   }, [queryClient]);
 }
 
-function publishChangedTasks(delivery: Delivery, observed: Map<string, string>, tasks: MonitorImportTask[]) {
+function publishChangedTasks(
+  delivery: Delivery,
+  observed: Map<string, string>,
+  tasks: MonitorImportTask[],
+  baseline: boolean
+) {
+  let completedTransition = false;
   for (const task of tasks) {
     const fingerprint = `${task.status}:${task.progress}:${task.errorCode ?? ''}`;
-    if (observed.get(task.taskId) === fingerprint) continue;
+    const previous = observed.get(task.taskId);
+    if (previous === fingerprint) continue;
     observed.set(task.taskId, fingerprint);
-    delivery.notification.open({
-      key: `monitor-import:${task.taskId}`,
-      type: importTaskNotificationType(task),
-      message: delivery.t('shell.importTasks.title'),
-      description: importTaskDescription(delivery.t, task),
-      duration: task.status === 'IN_PROGRESS' ? 0 : 4.5
-    });
+    if (baseline && task.status !== 'IN_PROGRESS') continue;
+    publishTask(delivery, task);
+    if (previous?.startsWith('IN_PROGRESS:') && task.status === 'COMPLETED') completedTransition = true;
   }
+  return completedTransition;
+}
+
+function publishTask(delivery: Delivery, task: MonitorImportTask) {
+  delivery.notification.open({
+    key: `monitor-import:${task.taskId}`,
+    type: importTaskNotificationType(task),
+    message: delivery.t('shell.importTasks.title'),
+    description: importTaskDescription(delivery.t, task),
+    duration: task.status === 'IN_PROGRESS' ? 0 : 4.5
+  });
 }
 
 function importTaskNotificationType(task: MonitorImportTask) {

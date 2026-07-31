@@ -30,6 +30,18 @@ import { useShellMonitorImportTaskNotifications } from './use-shell-monitor-impo
 
 const running = task('IN_PROGRESS', 40);
 const completed = task('COMPLETED', 100);
+const historicalCompleted = {
+  ...completed,
+  taskId: '323e4567-e89b-42d3-a456-426614174000'
+};
+const failed = {
+  ...running,
+  taskId: '223e4567-e89b-42d3-a456-426614174000',
+  status: 'FAILED' as const,
+  completedAt: '2026-07-31T12:00:10Z',
+  errorCode: 'IMPORT_FAILED' as const
+};
+const failedRunning = { ...running, taskId: failed.taskId };
 
 describe('shell monitor import canonical reread', () => {
   const open = vi.fn();
@@ -81,6 +93,48 @@ describe('shell monitor import canonical reread', () => {
     expect(open.mock.calls[1]?.[0]).toMatchObject({ key: `monitor-import:${running.taskId}`, type: 'success' });
     expect(JSON.stringify(open.mock.calls)).not.toContain('.json');
     expect(JSON.stringify(open.mock.calls)).not.toContain('filename');
+  });
+
+  it('establishes the first canonical list as a baseline without replaying historical terminal tasks', async () => {
+    api.loadMonitorImportTasks.mockResolvedValueOnce([historicalCompleted, failed, running]);
+    const client = new QueryClient();
+    const refetch = vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined);
+    renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(client) });
+
+    act(() => stream.handlers?.onCanonicalReread('manager-ready'));
+    await waitFor(() => expect(api.loadMonitorImportTasks).toHaveBeenCalledOnce());
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+
+    expect(open).toHaveBeenCalledWith(expect.objectContaining({ key: `monitor-import:${running.taskId}` }));
+    expect(open).not.toHaveBeenCalledWith(
+      expect.objectContaining({ key: `monitor-import:${historicalCompleted.taskId}` })
+    );
+    expect(open).not.toHaveBeenCalledWith(expect.objectContaining({ key: `monitor-import:${failed.taskId}` }));
+    expect(refetch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['monitor', 'list'] }),
+      expect.anything()
+    );
+  });
+
+  it('refetches monitor lists once for an observed completion, but not for duplicates or failures', async () => {
+    api.loadMonitorImportTasks
+      .mockResolvedValueOnce([running, failedRunning])
+      .mockResolvedValueOnce([completed, failed])
+      .mockResolvedValueOnce([completed, failed]);
+    const client = new QueryClient();
+    const refetch = vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined);
+    renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(client) });
+
+    for (const [index, eventName] of (['manager-ready', 'IMPORT_TASK_EVENT', 'IMPORT_TASK_EVENT'] as const).entries()) {
+      act(() => stream.handlers?.onCanonicalReread(eventName));
+      await waitFor(() => expect(api.loadMonitorImportTasks).toHaveBeenCalledTimes(index + 1));
+    }
+    await waitFor(() =>
+      expect(refetch).toHaveBeenCalledWith({ queryKey: ['monitor', 'list'], type: 'active' }, { cancelRefetch: false })
+    );
+
+    const listRefetches = refetch.mock.calls.filter(([filters]) => filters.queryKey?.join(':') === 'monitor:list');
+    expect(listRefetches).toHaveLength(1);
   });
 
   it('aborts a canonical read and closes the stream on unmount without late publication', async () => {
