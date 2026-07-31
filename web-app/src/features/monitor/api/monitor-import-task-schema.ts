@@ -21,23 +21,34 @@ const taskSchema = z
   .strict()
   .transform(value => ({ ...value, completedAt: value.completedAt ?? null, errorCode: value.errorCode ?? null }))
   .superRefine((value, context) => {
-    const terminal = value.status !== 'IN_PROGRESS';
-    const coherent =
-      (value.status === 'IN_PROGRESS' &&
-        value.progress < 100 &&
-        value.completedAt === null &&
-        value.errorCode === null) ||
-      (value.status === 'COMPLETED' &&
-        value.progress === 100 &&
-        value.completedAt !== null &&
-        value.errorCode === null) ||
-      (value.status === 'FAILED' && value.progress < 100 && value.completedAt !== null && value.errorCode !== null);
-    if (!coherent || terminal !== (value.completedAt !== null)) context.addIssue({ code: 'custom' });
+    if (!hasCoherentTaskEvidence(value)) context.addIssue({ code: 'custom' });
   });
 const taskListSchema = z.array(taskSchema).max(20);
 const canonicalRereadSchema = z
   .object({ schemaVersion: z.literal(1), delivery: z.literal('CANONICAL_REREAD') })
   .strict();
+
+function hasCoherentTaskEvidence(value: MonitorImportTask) {
+  const coherentStatus = hasInProgressEvidence(value) || hasCompletedEvidence(value) || hasFailedEvidence(value);
+  const terminal = value.status !== 'IN_PROGRESS';
+  return coherentStatus && terminal === (value.completedAt !== null);
+}
+
+function hasInProgressEvidence(value: MonitorImportTask) {
+  return (
+    value.status === 'IN_PROGRESS' && value.progress < 100 && value.completedAt === null && value.errorCode === null
+  );
+}
+
+function hasCompletedEvidence(value: MonitorImportTask) {
+  return (
+    value.status === 'COMPLETED' && value.progress === 100 && value.completedAt !== null && value.errorCode === null
+  );
+}
+
+function hasFailedEvidence(value: MonitorImportTask) {
+  return value.status === 'FAILED' && value.progress < 100 && value.completedAt !== null && value.errorCode !== null;
+}
 
 export class MonitorImportTaskContractError extends Error {
   constructor() {
