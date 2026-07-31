@@ -111,6 +111,17 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     }
 
     @Test
+    void filtersWhitespaceFormattedAvailabilityRuleFromNonAvailabilityMetrics() {
+        AlertDefine availabilityDefine = new AlertDefine();
+        availabilityDefine.setExpr("equals(__app__,\"springboot3\") && equals( __available__ , \"down\" )");
+
+        List<AlertDefine> filtered = metricsRealTimeAlertCalculator.filterThresholdsByAppAndMetrics(
+                List.of(availabilityDefine), "springboot3", "response_time", Map.of(), "1", 1);
+
+        assertEquals(0, filtered.size());
+    }
+
+    @Test
     void testPrometheusReplaceMultipleJobsApp() throws InterruptedException {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         builder.setId(518789738974464L)
@@ -252,6 +263,38 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         verify(alarmCacheManager, times(1)).getPending(any(), any());
         verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    @Test
+    void calculatesOrdinaryMonitorAlertWithWhitespaceFormattedEqualsArguments() {
+        CollectRep.MetricsData.Builder metricsBuilder = CollectRep.MetricsData.newBuilder();
+        metricsBuilder.setId(518679137103104L)
+                .setApp("springboot3")
+                .setMetrics("available")
+                .setPriority(0)
+                .setCode(CollectRep.Code.SUCCESS);
+        metricsBuilder.addMetadataAll(Map.of(
+                MetricDataConstants.INSTANCE_NAME, "ordinary-monitor",
+                MetricDataConstants.INSTANCE, "127.0.0.1"));
+        metricsBuilder.addAllFields(List.of(CollectRep.Field.newBuilder()
+                        .setName("responseTime")
+                        .setType(CommonConstants.TYPE_NUMBER)
+                        .build()));
+        metricsBuilder.addValueRow(CollectRep.ValueRow.newBuilder().addColumn("18").build());
+        CollectRep.MetricsData metricsData = metricsBuilder.build();
+        AlertDefine alertDefine = new AlertDefine();
+        alertDefine.setId(1L);
+        alertDefine.setName("ordinary-monitor-latency");
+        alertDefine.setExpr("equals( __app__ , \"springboot3\" )"
+                + " && equals( __metrics__ , \"available\" ) && responseTime > 10");
+        alertDefine.setTemplate("Response time ${responseTime}ms");
+        alertDefine.setTimes(1);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(alertDefine));
+
+        metricsRealTimeAlertCalculator.calculate(metricsData);
+
+        verify(alarmCacheManager).putFiring(any(), any(), any());
+        verify(alarmCommonReduce).reduceAndSendAlarm(any());
     }
 
 }
