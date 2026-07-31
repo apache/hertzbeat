@@ -1,71 +1,94 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { loadMonitorImportTasks } from '../api/monitor-import-api';
 import { openMonitorImportTaskStream } from '../api/monitor-import-task-stream';
-import type { MonitorImportTaskEvent } from '../api/monitor-import-task-schema';
+import type { MonitorImportTask } from '../model/monitor-import-model';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 type Notification = ReturnType<typeof App.useApp>['notification'];
-const progressNotificationDuration = 0;
-const terminalNotificationDuration = 4.5;
-const notificationKeyPrefix = 'monitor-import:';
+type Delivery = { notification: Notification; t: TFunction };
 
-/**
- * Restores the manager-wide import progress channel without sharing or
- * overwriting the alert SSE connection owned by the shell.
- */
 export function useShellMonitorImportTaskNotifications() {
+  const queryClient = useQueryClient();
   const { notification } = App.useApp();
   const { t } = useTranslation();
-  const delivery = useRef({ notification, t });
-
+  const delivery = useRef<Delivery>({ notification, t });
   useEffect(() => {
     delivery.current = { notification, t };
   }, [notification, t]);
 
   useEffect(() => {
+    const observed = new Map<string, string>();
+    let mounted = true;
+    let active: AbortController | null = null;
+    let pending = false;
+    const reread = async () => {
+      if (active) {
+        pending = true;
+        return;
+      }
+      do {
+        pending = false;
+        active = new AbortController();
+        try {
+          const tasks = await loadMonitorImportTasks(active.signal);
+          if (!mounted) return;
+          publishChangedTasks(delivery.current, observed, tasks);
+          await queryClient.refetchQueries(
+            { queryKey: monitorQueryKeys.importTasks(), type: 'active' },
+            { cancelRefetch: false }
+          );
+        } catch {
+          // Canonical task reads fail closed without projecting transport details.
+        } finally {
+          active = null;
+        }
+      } while (mounted && pending);
+    };
+    let stream: ReturnType<typeof openMonitorImportTaskStream> | undefined;
     try {
-      const stream = openMonitorImportTaskStream({
-        onTask: event => publishImportTaskNotification(delivery.current.notification, delivery.current.t, event)
-      });
-      return () => stream.close();
+      stream = openMonitorImportTaskStream({ onCanonicalReread: () => void reread() });
     } catch {
-      // Import submission and canonical reread remain usable when the optional
-      // progress channel is not supported by the current browser or server.
-      return undefined;
+      // Import submission and explicit task reads remain available without SSE.
     }
-  }, []);
+    return () => {
+      mounted = false;
+      pending = false;
+      active?.abort();
+      stream?.close();
+    };
+  }, [queryClient]);
 }
 
-function publishImportTaskNotification(notification: Notification, t: TFunction, event: MonitorImportTaskEvent) {
-  notification.open({
-    key: `${notificationKeyPrefix}${event.taskName}`,
-    type: notificationType(event),
-    message: t('shell.importTasks.title'),
-    description: notificationDescription(event, t),
-    duration: event.kind === 'progress' ? progressNotificationDuration : terminalNotificationDuration
-  });
+function publishChangedTasks(delivery: Delivery, observed: Map<string, string>, tasks: MonitorImportTask[]) {
+  for (const task of tasks) {
+    const fingerprint = `${task.status}:${task.progress}:${task.errorCode ?? ''}`;
+    if (observed.get(task.taskId) === fingerprint) continue;
+    observed.set(task.taskId, fingerprint);
+    delivery.notification.open({
+      key: `monitor-import:${task.taskId}`,
+      type: importTaskNotificationType(task),
+      message: delivery.t('shell.importTasks.title'),
+      description: importTaskDescription(delivery.t, task),
+      duration: task.status === 'IN_PROGRESS' ? 0 : 4.5
+    });
+  }
 }
 
-function notificationType(event: MonitorImportTaskEvent) {
-  if (event.kind === 'progress') return 'info' as const;
-  if (event.kind === 'success') return 'success' as const;
+function importTaskNotificationType(task: MonitorImportTask) {
+  if (task.status === 'IN_PROGRESS') return 'info' as const;
+  if (task.status === 'COMPLETED') return 'success' as const;
   return 'error' as const;
 }
 
-function notificationDescription(event: MonitorImportTaskEvent, t: TFunction) {
-  if (event.kind === 'progress') {
-    return t('shell.importTasks.progress', { taskName: event.taskName, progress: event.progress });
-  }
-  return t(event.kind === 'success' ? 'shell.importTasks.success' : 'shell.importTasks.failure', {
-    taskName: event.taskName
-  });
+function importTaskDescription(t: TFunction, task: MonitorImportTask) {
+  if (task.status === 'IN_PROGRESS') return t('shell.importTasks.progress', { progress: task.progress });
+  if (task.status === 'COMPLETED') return t('shell.importTasks.success');
+  return t(`monitor.import.task.failure.${task.errorCode ?? 'IMPORT_FAILED'}`);
 }

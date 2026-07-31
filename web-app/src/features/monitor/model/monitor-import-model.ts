@@ -21,13 +21,35 @@ export const monitorImportAccept = monitorImportFileExtensions.join(',');
 
 export type MonitorImportInvalidKind = 'required' | 'empty' | 'unsupported';
 export type MonitorImportFailureKind = 'validation' | 'forbidden' | 'unavailable' | 'error';
+export type MonitorImportTaskErrorCode = 'IMPORT_UNSUPPORTED_TYPE' | 'IMPORT_INVALID_CONTENT' | 'IMPORT_FAILED';
+export type MonitorImportTask = {
+  schemaVersion: 1;
+  taskId: string;
+  taskType: 'MONITOR_IMPORT';
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  progress: number;
+  createdAt: string;
+  startedAt: string;
+  completedAt: string | null;
+  errorCode: MonitorImportTaskErrorCode | null;
+};
 export type MonitorImportDraft = { file: File | null };
+export type MonitorImportTaskEvidence =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'ready'; task: MonitorImportTask; refreshing: boolean }
+  | { kind: 'not-queryable' }
+  | { kind: 'forbidden' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' };
 export type MonitorImportState = {
   canImport: boolean;
+  open: boolean;
   draft: MonitorImportDraft | null;
   invalid: MonitorImportInvalidKind | null;
   failure: MonitorImportFailureKind | null;
   busy: boolean;
+  task: MonitorImportTaskEvidence;
 };
 
 export function validateMonitorImportFile(

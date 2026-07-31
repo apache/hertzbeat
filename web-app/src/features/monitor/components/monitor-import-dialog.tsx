@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Form, Modal, Space, Typography, Upload } from 'antd';
+import { Alert, Button, Form, Modal, Progress, Space, Spin, Typography, Upload } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorImportAccept, type MonitorImportState } from '../model/monitor-import-model';
@@ -32,45 +32,88 @@ export function MonitorImportDialog({ state, onCancel, onFile, onSubmit }: Monit
   const file = state.draft?.file ?? null;
   return (
     <Modal
-      open={state.draft !== null}
+      open={state.open}
       title={t('monitor.import.title')}
-      okText={t('monitor.import.submit')}
-      cancelText={t('common.cancel')}
-      okButtonProps={{ loading: state.busy, disabled: state.busy }}
-      cancelButtonProps={{ disabled: state.busy }}
-      closable={!state.busy}
-      keyboard={!state.busy}
-      maskClosable={!state.busy}
+      footer={
+        state.task.kind === 'idle'
+          ? [
+              <Button key="cancel" onClick={onCancel}>
+                {t('common.cancel')}
+              </Button>,
+              <Button key="submit" type="primary" loading={state.busy} onClick={() => void onSubmit()}>
+                {t('monitor.import.submit')}
+              </Button>
+            ]
+          : [
+              <Button key="close" onClick={onCancel}>
+                {t('monitor.import.close')}
+              </Button>
+            ]
+      }
       onCancel={onCancel}
-      onOk={() => void onSubmit()}
     >
       <Typography.Paragraph type="secondary">{t('monitor.import.description')}</Typography.Paragraph>
       <ImportFeedback state={state} />
-      <Form layout="vertical">
-        <Form.Item
-          label={t('monitor.import.file')}
-          {...(state.invalid
-            ? { validateStatus: 'error' as const, help: t(`monitor.import.validation.${state.invalid}`) }
-            : {})}
-        >
-          <Space wrap>
-            <Upload
-              accept={monitorImportAccept}
-              disabled={state.busy}
-              maxCount={1}
-              showUploadList={false}
-              beforeUpload={selected => {
-                onFile(selected);
-                return false;
-              }}
-            >
-              <Button disabled={state.busy}>{t('monitor.import.choose')}</Button>
-            </Upload>
-            {file ? <Typography.Text>{t('monitor.import.selected', { name: file.name })}</Typography.Text> : null}
-          </Space>
-        </Form.Item>
-      </Form>
+      {state.task.kind === 'idle' ? (
+        <Form layout="vertical">
+          <Form.Item
+            label={t('monitor.import.file')}
+            {...(state.invalid
+              ? { validateStatus: 'error' as const, help: t(`monitor.import.validation.${state.invalid}`) }
+              : {})}
+          >
+            <Space wrap>
+              <Upload
+                accept={monitorImportAccept}
+                disabled={state.busy}
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={selected => {
+                  onFile(selected);
+                  return false;
+                }}
+              >
+                <Button disabled={state.busy}>{t('monitor.import.choose')}</Button>
+              </Upload>
+              {file ? <Typography.Text>{t('monitor.import.fileSelected')}</Typography.Text> : null}
+            </Space>
+          </Form.Item>
+        </Form>
+      ) : (
+        <ImportTaskEvidence task={state.task} />
+      )}
     </Modal>
+  );
+}
+
+function ImportTaskEvidence({ task }: { task: Exclude<MonitorImportState['task'], { kind: 'idle' }> }) {
+  const { t } = useTranslation();
+  if (task.kind === 'loading') {
+    return (
+      <Space>
+        <Spin size="small" />
+        <Typography.Text>{t('monitor.import.task.loading')}</Typography.Text>
+      </Space>
+    );
+  }
+  if (task.kind !== 'ready') {
+    return <Alert showIcon type="warning" message={t(`monitor.import.task.read.${task.kind}`)} />;
+  }
+
+  const { status, progress, errorCode } = task.task;
+  if (status === 'FAILED') {
+    return <Alert showIcon type="error" message={t(`monitor.import.task.failure.${errorCode}`)} />;
+  }
+  return (
+    <div>
+      <Space>
+        <Typography.Text strong>
+          {t(status === 'COMPLETED' ? 'monitor.import.task.completed' : 'monitor.import.task.inProgress')}
+        </Typography.Text>
+        {task.refreshing ? <Spin size="small" /> : null}
+      </Space>
+      <Progress percent={progress} status={status === 'COMPLETED' ? 'success' : 'active'} />
+    </div>
   );
 }
 

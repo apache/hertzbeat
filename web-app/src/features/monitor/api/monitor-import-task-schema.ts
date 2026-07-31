@@ -1,56 +1,67 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { z } from 'zod';
 
-const maxTaskNameLength = 255;
-const taskNameSchema = z.string().trim().min(1).max(maxTaskNameLength);
-const commonFields = {
-  managerEventType: z.literal('IMPORT_TASK_EVENT'),
-  taskName: taskNameSchema
-};
-const managerImportTaskSchema = z.discriminatedUnion('notifyLevel', [
-  z.object({
-    ...commonFields,
-    notifyLevel: z.literal('INFO'),
+import type { MonitorImportTask } from '../model/monitor-import-model';
+
+const instantSchema = z.string().datetime({ offset: true });
+const errorCodeSchema = z.enum(['IMPORT_UNSUPPORTED_TYPE', 'IMPORT_INVALID_CONTENT', 'IMPORT_FAILED']);
+const taskSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    taskId: z.string().uuid(),
+    taskType: z.literal('MONITOR_IMPORT'),
+    status: z.enum(['IN_PROGRESS', 'COMPLETED', 'FAILED']),
     progress: z.number().int().min(0).max(100),
-    status: z.literal('IN_PROGRESS')
-  }),
-  z.object({
-    ...commonFields,
-    notifyLevel: z.literal('SUCCESS'),
-    status: z.literal('COMPLETED')
-  }),
-  z.object({
-    ...commonFields,
-    notifyLevel: z.literal('ERROR'),
-    status: z.literal('FAILED')
+    createdAt: instantSchema,
+    startedAt: instantSchema,
+    completedAt: instantSchema.nullish(),
+    errorCode: errorCodeSchema.nullish()
   })
-]);
+  .strict()
+  .transform(value => ({ ...value, completedAt: value.completedAt ?? null, errorCode: value.errorCode ?? null }))
+  .superRefine((value, context) => {
+    const terminal = value.status !== 'IN_PROGRESS';
+    const coherent =
+      (value.status === 'IN_PROGRESS' &&
+        value.progress < 100 &&
+        value.completedAt === null &&
+        value.errorCode === null) ||
+      (value.status === 'COMPLETED' &&
+        value.progress === 100 &&
+        value.completedAt !== null &&
+        value.errorCode === null) ||
+      (value.status === 'FAILED' && value.progress < 100 && value.completedAt !== null && value.errorCode !== null);
+    if (!coherent || terminal !== (value.completedAt !== null)) context.addIssue({ code: 'custom' });
+  });
+const taskListSchema = z.array(taskSchema).max(20);
+const canonicalRereadSchema = z
+  .object({ schemaVersion: z.literal(1), delivery: z.literal('CANONICAL_REREAD') })
+  .strict();
 
-export type MonitorImportTaskEvent =
-  | { kind: 'progress'; taskName: string; progress: number }
-  | { kind: 'success'; taskName: string }
-  | { kind: 'failure'; taskName: string };
+export class MonitorImportTaskContractError extends Error {
+  constructor() {
+    super('Invalid monitor import task response');
+    this.name = 'MonitorImportTaskContractError';
+  }
+}
 
-/**
- * Projects the manager SSE payload to the small, safe contract required by
- * shell notifications. In particular, backend exception text is discarded.
- */
-export function parseMonitorImportTaskEvent(payload: string): MonitorImportTaskEvent | null {
+export function parseMonitorImportTask(value: unknown): MonitorImportTask {
+  const parsed = taskSchema.safeParse(value);
+  if (!parsed.success) throw new MonitorImportTaskContractError();
+  return parsed.data;
+}
+
+export function parseMonitorImportTasks(value: unknown): MonitorImportTask[] {
+  const parsed = taskListSchema.safeParse(value);
+  if (!parsed.success) throw new MonitorImportTaskContractError();
+  return parsed.data;
+}
+
+export function parseMonitorImportTaskReread(payload: string) {
   try {
-    const parsed = managerImportTaskSchema.safeParse(JSON.parse(payload));
-    if (!parsed.success) return null;
-    const event = parsed.data;
-    if (event.notifyLevel === 'INFO') {
-      return { kind: 'progress', taskName: event.taskName, progress: event.progress };
-    }
-    return { kind: event.notifyLevel === 'SUCCESS' ? 'success' : 'failure', taskName: event.taskName };
+    return canonicalRereadSchema.safeParse(JSON.parse(payload)).success;
   } catch {
-    return null;
+    return false;
   }
 }

@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({ importMonitorConfig: vi.fn() }));
@@ -36,27 +38,27 @@ import { useMonitorImport } from './use-monitor-import';
 describe('useMonitorImport', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    api.importMonitorConfig.mockResolvedValue(undefined);
+    api.importMonitorConfig.mockResolvedValue(running);
   });
 
-  it('imports an administrator-selected file and rereads the real list', async () => {
+  it('accepts an administrator-selected file without treating acceptance as completion', async () => {
     const reread = vi.fn().mockResolvedValue(undefined);
     const onImported = vi.fn();
     const file = new File(['[]'], 'monitors.json');
-    const view = renderHook(() => useMonitorImport(reread, { canWrite: true }, onImported));
+    const view = renderImportHook(() => useMonitorImport(reread, { canWrite: true }, onImported));
 
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(file));
     await act(() => view.result.current.actions.submit());
 
     expect(api.importMonitorConfig).toHaveBeenCalledWith(file, expect.any(AbortSignal));
-    expect(onImported).toHaveBeenCalledOnce();
-    expect(reread).toHaveBeenCalledOnce();
-    expect(view.result.current.state.draft).toBeNull();
+    expect(onImported).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
+    expect(view.result.current.state).toMatchObject({ open: true, draft: { file: null }, task: { kind: 'ready' } });
   });
 
   it('clears an unsubmitted file on cancel without writing', () => {
-    const view = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
+    const view = renderImportHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
 
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(new File(['[]'], 'monitors.json')));
@@ -67,20 +69,20 @@ describe('useMonitorImport', () => {
   });
 
   it('allows a server-authorized user to open the import draft', () => {
-    const allowed = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
+    const allowed = renderImportHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
     act(() => allowed.result.current.actions.open());
     expect(allowed.result.current.state.draft).toEqual({ file: null });
   });
 
   it('keeps a guest direct open inert', () => {
-    const denied = renderHook(() => useMonitorImport(vi.fn(), { canWrite: false }));
+    const denied = renderImportHook(() => useMonitorImport(vi.fn(), { canWrite: false }));
     act(() => denied.result.current.actions.open());
     expect(denied.result.current.state.draft).toBeNull();
     expect(api.importMonitorConfig).not.toHaveBeenCalled();
   });
 
   it('preserves validation and safe API failure kinds', async () => {
-    const admin = renderHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
+    const admin = renderImportHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
     act(() => admin.result.current.actions.open());
     act(() => admin.result.current.actions.selectFile(new File(['x'], 'monitors.toml')));
     await act(() => admin.result.current.actions.submit());
@@ -98,7 +100,7 @@ describe('useMonitorImport', () => {
     const file = new File(['[]'], 'monitors.json');
     const view = renderHook(
       ({ canWrite }: { canWrite: boolean }) => useMonitorImport(reread, { canWrite }, onImported),
-      { initialProps: { canWrite: true } }
+      { initialProps: { canWrite: true }, wrapper: queryWrapper() }
     );
     const retainedOpen = view.result.current.actions.open;
     act(() => view.result.current.actions.open());
@@ -131,16 +133,16 @@ describe('useMonitorImport', () => {
       let signal!: AbortSignal;
       api.importMonitorConfig.mockImplementation(
         (_file, observedSignal) =>
-          new Promise<void>((resolve, reject) => {
+          new Promise<typeof running>((resolve, reject) => {
             signal = observedSignal;
-            settle = () => (completion === 'resolve' ? resolve() : reject(new Error('late failure')));
+            settle = () => (completion === 'resolve' ? resolve(running) : reject(new Error('late failure')));
           })
       );
       const reread = vi.fn().mockResolvedValue(undefined);
       const onImported = vi.fn();
       const view = renderHook(
         ({ canWrite }: { canWrite: boolean }) => useMonitorImport(reread, { canWrite }, onImported),
-        { initialProps: { canWrite: true } }
+        { initialProps: { canWrite: true }, wrapper: queryWrapper() }
       );
       act(() => view.result.current.actions.open());
       act(() => view.result.current.actions.selectFile(new File(['[]'], 'monitors.json')));
@@ -181,14 +183,14 @@ describe('useMonitorImport', () => {
     let signal!: AbortSignal;
     api.importMonitorConfig.mockImplementation(
       (_file, observedSignal) =>
-        new Promise<void>(resolve => {
+        new Promise<typeof running>(resolve => {
           signal = observedSignal;
-          resolveImport = resolve;
+          resolveImport = () => resolve(running);
         })
     );
     const reread = vi.fn().mockResolvedValue(undefined);
     const onImported = vi.fn();
-    const view = renderHook(() => useMonitorImport(reread, { canWrite: true }, onImported));
+    const view = renderImportHook(() => useMonitorImport(reread, { canWrite: true }, onImported));
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(new File(['[]'], 'monitors.json')));
     const result = view.result.current.actions.submit();
@@ -207,15 +209,15 @@ describe('useMonitorImport', () => {
     const requests: Array<{ signal: AbortSignal; resolve: () => void }> = [];
     api.importMonitorConfig.mockImplementation(
       (_file, signal) =>
-        new Promise<void>(resolve => {
-          requests.push({ signal, resolve });
+        new Promise<typeof running>(resolve => {
+          requests.push({ signal, resolve: () => resolve(running) });
         })
     );
     const reread = vi.fn().mockResolvedValue(undefined);
     const onImported = vi.fn();
     const view = renderHook(
       ({ canWrite }: { canWrite: boolean }) => useMonitorImport(reread, { canWrite }, onImported),
-      { initialProps: { canWrite: true } }
+      { initialProps: { canWrite: true }, wrapper: queryWrapper() }
     );
     act(() => view.result.current.actions.open());
     act(() => view.result.current.actions.selectFile(new File(['[]'], 'first.json')));
@@ -243,8 +245,31 @@ describe('useMonitorImport', () => {
       requests[1]!.resolve();
       await expect(second).resolves.toBe(true);
     });
-    expect(onImported).toHaveBeenCalledOnce();
-    expect(reread).toHaveBeenCalledOnce();
-    expect(view.result.current.state).toMatchObject({ draft: null, busy: false });
+    expect(onImported).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
+    expect(view.result.current.state).toMatchObject({ draft: { file: null }, busy: false, task: { kind: 'ready' } });
   });
 });
+
+const running = {
+  schemaVersion: 1 as const,
+  taskId: '123e4567-e89b-42d3-a456-426614174000',
+  taskType: 'MONITOR_IMPORT' as const,
+  status: 'IN_PROGRESS' as const,
+  progress: 10,
+  createdAt: '2026-07-31T12:00:00Z',
+  startedAt: '2026-07-31T12:00:00Z',
+  completedAt: null,
+  errorCode: null
+};
+
+function renderImportHook<Result>(callback: () => Result) {
+  return renderHook(callback, { wrapper: queryWrapper() });
+}
+
+function queryWrapper() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return function Wrapper({ children }: PropsWithChildren) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}

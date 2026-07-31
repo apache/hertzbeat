@@ -2429,8 +2429,9 @@
       "description": "從 HertzBeat JSON、XLSX 或 YAML 檔案匯入監控定義。",
       "file": "設定檔案",
       "choose": "選擇檔案",
-      "selected": "已選擇：{{name}}",
+      "fileSelected": "已選擇設定檔案。",
       "submit": "匯入設定",
+      "close": "關閉",
       "success": "監控設定已匯入。",
       "refreshFailure": "匯入已成功，但無法重新整理監控清單。",
       "validation": {
@@ -2443,6 +2444,22 @@
         "forbidden": "目前帳號沒有匯入監控的權限。",
         "unavailable": "監控匯入暫時無法使用。",
         "error": "無法匯入監控設定。"
+      },
+      "task": {
+        "loading": "正在載入匯入狀態…",
+        "inProgress": "正在匯入",
+        "completed": "匯入已完成",
+        "read": {
+          "not-queryable": "此匯入任務已無法查詢。",
+          "forbidden": "目前帳號沒有檢視此匯入任務的權限。",
+          "unavailable": "匯入狀態暫時無法使用。",
+          "error": "無法載入匯入狀態。"
+        },
+        "failure": {
+          "IMPORT_UNSUPPORTED_TYPE": "不支援所選設定類型。",
+          "IMPORT_INVALID_CONTENT": "所選監控設定無效。",
+          "IMPORT_FAILED": "無法匯入監控設定。"
+        }
       }
     },
     "status": {

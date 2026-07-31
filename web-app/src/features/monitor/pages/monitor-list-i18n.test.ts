@@ -36,6 +36,11 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.import.action).toBeTruthy();
       expect(locale.monitor.import.title).toBeTruthy();
       expect(locale.monitor.import.validation.unsupported).toBeTruthy();
+      expect(locale.monitor.import.fileSelected).toBeTruthy();
+      expect(locale.monitor.import.task.inProgress).toBeTruthy();
+      expect(locale.monitor.import.task.completed).toBeTruthy();
+      expect(locale.monitor.import.task.read['not-queryable']).toBeTruthy();
+      expect(locale.monitor.import.task.failure.IMPORT_FAILED).toBeTruthy();
       expect(locale.monitor.import.failure.forbidden).toBeTruthy();
       expect(locale.monitor.import.failure.unavailable).toBeTruthy();
       expect(locale.monitor.import.failure.error).toBeTruthy();

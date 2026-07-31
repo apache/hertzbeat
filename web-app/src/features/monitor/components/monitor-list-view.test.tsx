@@ -37,7 +37,15 @@ describe('MonitorListView evidence states', () => {
     renderView(
       {
         canExport: true,
-        monitorImport: { canImport: true, draft: null, invalid: null, failure: null, busy: false },
+        monitorImport: {
+          canImport: true,
+          open: false,
+          draft: null,
+          invalid: null,
+          failure: null,
+          busy: false,
+          task: { kind: 'idle' }
+        },
         monitors: { kind: 'empty' }
       },
       { create, openImport }
@@ -99,7 +107,15 @@ describe('MonitorListView evidence states', () => {
     renderView({
       operating: true,
       canExport: true,
-      monitorImport: { canImport: true, draft: null, invalid: null, failure: null, busy: false },
+      monitorImport: {
+        canImport: true,
+        open: false,
+        draft: null,
+        invalid: null,
+        failure: null,
+        busy: false,
+        task: { kind: 'idle' }
+      },
       monitors: { kind: 'empty' }
     });
 
@@ -397,7 +413,15 @@ function renderView(
       canSelect: true
     },
     canExport: false,
-    monitorImport: { canImport: false, draft: null, invalid: null, failure: null, busy: false },
+    monitorImport: {
+      canImport: false,
+      open: false,
+      draft: null,
+      invalid: null,
+      failure: null,
+      busy: false,
+      task: { kind: 'idle' }
+    },
     apps: { kind: 'ready', options: [] },
     monitors: { kind: 'loading' },
     ...patch

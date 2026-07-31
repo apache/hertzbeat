@@ -19,23 +19,45 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-const http = vi.hoisted(() => ({ apiMessagePostForm: vi.fn() }));
+const http = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePostForm: vi.fn() }));
 vi.mock('@/core/http/api-message', async () => ({
   ...(await vi.importActual<typeof import('@/core/http/api-message')>('@/core/http/api-message')),
+  apiMessageGet: http.apiMessageGet,
   apiMessagePostForm: http.apiMessagePostForm
 }));
 
-import { importMonitorConfig, MonitorImportError } from './monitor-import-api';
+import {
+  importMonitorConfig,
+  loadMonitorImportTask,
+  loadMonitorImportTasks,
+  MonitorImportError,
+  MonitorImportTaskReadError
+} from './monitor-import-api';
+
+const task = {
+  schemaVersion: 1,
+  taskId: '123e4567-e89b-42d3-a456-426614174000',
+  taskType: 'MONITOR_IMPORT',
+  status: 'IN_PROGRESS',
+  progress: 0,
+  createdAt: '2026-07-31T12:00:00Z',
+  startedAt: '2026-07-31T12:00:00Z',
+  completedAt: null,
+  errorCode: null
+};
 
 describe('monitor import API', () => {
-  beforeEach(() => http.apiMessagePostForm.mockReset());
+  beforeEach(() => {
+    http.apiMessageGet.mockReset();
+    http.apiMessagePostForm.mockReset();
+  });
 
   it('posts the selected file as the canonical multipart field with cancellation', async () => {
     const file = new File(['[]'], 'monitors.json');
     const signal = new AbortController().signal;
-    http.apiMessagePostForm.mockResolvedValue(undefined);
+    http.apiMessagePostForm.mockResolvedValue(task);
 
-    await importMonitorConfig(file, signal);
+    await expect(importMonitorConfig(file, signal)).resolves.toEqual(task);
 
     expect(http.apiMessagePostForm).toHaveBeenCalledWith('/api/monitors/import', expect.any(FormData), { signal });
     const form = http.apiMessagePostForm.mock.calls[0]?.[1] as FormData;
@@ -43,11 +65,29 @@ describe('monitor import API', () => {
   });
 
   it.each(['json', 'yaml', 'yml', 'xlsx'])('accepts a backend-supported .%s file', async extension => {
-    http.apiMessagePostForm.mockResolvedValue(undefined);
+    http.apiMessagePostForm.mockResolvedValue(task);
 
     await importMonitorConfig(new File(['content'], `monitors.${extension}`));
 
     expect(http.apiMessagePostForm).toHaveBeenCalledOnce();
+  });
+
+  it('reads one canonical task and the bounded newest task list with cancellation', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValueOnce(task).mockResolvedValueOnce([task]);
+
+    await expect(loadMonitorImportTask(task.taskId, signal)).resolves.toEqual(task);
+    await expect(loadMonitorImportTasks(signal)).resolves.toEqual([task]);
+
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, `/api/manager/import-tasks/${task.taskId}`, { signal });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/manager/import-tasks?limit=20', { signal });
+  });
+
+  it('classifies a restarted-process 404 as no-longer-queryable without inventing terminal state', async () => {
+    http.apiMessageGet.mockRejectedValue(new ApiMessageError('private', { status: 404 }));
+
+    await expect(loadMonitorImportTask(task.taskId)).rejects.toMatchObject({ kind: 'not-queryable' });
+    await expect(loadMonitorImportTask(task.taskId)).rejects.toBeInstanceOf(MonitorImportTaskReadError);
   });
 
   it('rejects unsupported files before transport', async () => {

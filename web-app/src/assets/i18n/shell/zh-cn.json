@@ -103,9 +103,9 @@
     },
     "importTasks": {
       "title": "监控导入",
-      "progress": "正在导入 {{taskName}}：{{progress}}%",
-      "success": "{{taskName}} 已导入。",
-      "failure": "{{taskName}} 导入失败。"
+      "progress": "导入进度：{{progress}}%",
+      "success": "监控导入已完成。",
+      "failure": "无法导入监控配置。"
     },
     "capability": {
       "supported": "可用",

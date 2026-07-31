@@ -2446,8 +2446,9 @@
       "description": "HertzBeat の JSON、XLSX、または YAML ファイルから監視定義をインポートします。",
       "file": "設定ファイル",
       "choose": "ファイルを選択",
-      "selected": "選択済み: {{name}}",
+      "fileSelected": "設定ファイルを選択しました。",
       "submit": "設定をインポート",
+      "close": "閉じる",
       "success": "監視設定をインポートしました。",
       "refreshFailure": "インポートは成功しましたが、監視一覧を更新できませんでした。",
       "validation": {
@@ -2460,6 +2461,22 @@
         "forbidden": "このアカウントには監視をインポートする権限がありません。",
         "unavailable": "監視のインポートは一時的に利用できません。",
         "error": "監視設定をインポートできませんでした。"
+      },
+      "task": {
+        "loading": "インポート状態を読み込んでいます…",
+        "inProgress": "インポート中",
+        "completed": "インポート完了",
+        "read": {
+          "not-queryable": "このインポートタスクは参照できなくなりました。",
+          "forbidden": "このインポートタスクを確認する権限がありません。",
+          "unavailable": "インポート状態は一時的に利用できません。",
+          "error": "インポート状態を読み込めませんでした。"
+        },
+        "failure": {
+          "IMPORT_UNSUPPORTED_TYPE": "選択した設定形式はサポートされていません。",
+          "IMPORT_INVALID_CONTENT": "選択した監視設定は無効です。",
+          "IMPORT_FAILED": "監視設定をインポートできませんでした。"
+        }
       }
     },
     "status": {

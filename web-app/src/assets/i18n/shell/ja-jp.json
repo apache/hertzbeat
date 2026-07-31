@@ -103,9 +103,9 @@
     },
     "importTasks": {
       "title": "監視設定のインポート",
-      "progress": "{{taskName}} をインポート中：{{progress}}%",
-      "success": "{{taskName}} をインポートしました。",
-      "failure": "{{taskName}} をインポートできませんでした。"
+      "progress": "インポート進捗：{{progress}}%",
+      "success": "監視設定のインポートが完了しました。",
+      "failure": "監視設定をインポートできませんでした。"
     },
     "capability": {
       "supported": "利用可能",

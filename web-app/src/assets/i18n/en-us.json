@@ -2307,8 +2307,9 @@
       "description": "Import monitor definitions from a HertzBeat JSON, XLSX, or YAML file.",
       "file": "Configuration file",
       "choose": "Choose file",
-      "selected": "Selected: {{name}}",
+      "fileSelected": "Configuration file selected.",
       "submit": "Import configuration",
+      "close": "Close",
       "success": "Monitor configuration imported.",
       "refreshFailure": "The import succeeded, but the monitor list could not be refreshed.",
       "validation": {
@@ -2321,6 +2322,22 @@
         "forbidden": "Your account is not permitted to import monitors.",
         "unavailable": "Monitor import is temporarily unavailable.",
         "error": "Monitor configuration could not be imported."
+      },
+      "task": {
+        "loading": "Loading import status…",
+        "inProgress": "Import in progress",
+        "completed": "Import completed",
+        "read": {
+          "not-queryable": "This import task is no longer queryable.",
+          "forbidden": "You do not have permission to inspect this import task.",
+          "unavailable": "Import status is temporarily unavailable.",
+          "error": "Import status could not be loaded."
+        },
+        "failure": {
+          "IMPORT_UNSUPPORTED_TYPE": "The selected configuration type is not supported.",
+          "IMPORT_INVALID_CONTENT": "The selected monitor configuration is invalid.",
+          "IMPORT_FAILED": "The monitor configuration could not be imported."
+        }
       }
     },
     "status": {

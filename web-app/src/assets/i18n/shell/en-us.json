@@ -103,9 +103,9 @@
     },
     "importTasks": {
       "title": "Monitor import",
-      "progress": "Importing {{taskName}}: {{progress}}%",
-      "success": "{{taskName}} was imported.",
-      "failure": "{{taskName}} could not be imported."
+      "progress": "Import progress: {{progress}}%",
+      "success": "Monitor import completed.",
+      "failure": "Monitor configuration could not be imported."
     },
     "capability": {
       "supported": "Available",

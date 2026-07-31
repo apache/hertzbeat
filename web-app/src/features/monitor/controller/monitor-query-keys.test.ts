@@ -42,6 +42,8 @@ describe('Monitor Query Key factory', () => {
     expect(monitorQueryKeys.list(listQuery)).toEqual(monitorQueryKeys.list({ ...listQuery }));
     expect(monitorQueryKeys.apps('en-US')).toEqual(monitorQueryKeys.apps('en-US'));
     expect(monitorQueryKeys.detail(7)).toEqual(monitorQueryKeys.detail(7));
+    expect(monitorQueryKeys.importTasks()).toEqual(monitorQueryKeys.importTasks());
+    expect(monitorQueryKeys.importTask('7')).not.toEqual(monitorQueryKeys.importTask('8'));
     expect(monitorQueryKeys.collectors()).toEqual(monitorQueryKeys.collectors());
     expect(monitorQueryKeys.appDefines('website')).toEqual(monitorQueryKeys.appDefines('website'));
     expect(monitorQueryKeys.sdDefines('http')).toEqual(monitorQueryKeys.sdDefines('http'));

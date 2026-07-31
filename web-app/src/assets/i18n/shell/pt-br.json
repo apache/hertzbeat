@@ -103,9 +103,9 @@
     },
     "importTasks": {
       "title": "Importação de monitoramento",
-      "progress": "Importando {{taskName}}: {{progress}}%",
-      "success": "{{taskName}} foi importado.",
-      "failure": "Não foi possível importar {{taskName}}."
+      "progress": "Progresso da importação: {{progress}}%",
+      "success": "Importação de monitores concluída.",
+      "failure": "Não foi possível importar a configuração de monitor."
     },
     "capability": {
       "supported": "Disponível",

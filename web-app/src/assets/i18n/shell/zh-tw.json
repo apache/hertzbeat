@@ -103,9 +103,9 @@
     },
     "importTasks": {
       "title": "監控匯入",
-      "progress": "正在匯入 {{taskName}}：{{progress}}%",
-      "success": "{{taskName}} 已匯入。",
-      "failure": "{{taskName}} 匯入失敗。"
+      "progress": "匯入進度：{{progress}}%",
+      "success": "監控匯入已完成。",
+      "failure": "無法匯入監控設定。"
     },
     "capability": {
       "supported": "可用",

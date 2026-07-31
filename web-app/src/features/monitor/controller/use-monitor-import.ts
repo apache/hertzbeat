@@ -1,204 +1,186 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { loadMonitorImportTask, MonitorImportTaskReadError } from '../api/monitor-import-api';
 import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import {
   validateMonitorImportFile,
   type MonitorImportDraft,
   type MonitorImportFailureKind,
   type MonitorImportInvalidKind,
-  type MonitorImportState
+  type MonitorImportState,
+  type MonitorImportTask,
+  type MonitorImportTaskEvidence
 } from '../model/monitor-import-model';
-import { executeMonitorImport, type MonitorImportExecutionOwner as ImportOwner } from './monitor-import-execution';
-
-type ImportRetirement = {
-  currentCanImportRef: RefObject<boolean>;
-  activeRef: RefObject<ImportOwner | null>;
-  generationRef: RefObject<number>;
-  mountedRef: RefObject<boolean>;
-  closeDraft: () => void;
-  setBusy: (busy: boolean) => void;
-  setFailure: (failure: MonitorImportFailureKind | null) => void;
-};
+import { executeMonitorImport, type MonitorImportExecutionOwner } from './monitor-import-execution';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorImport(
   reread: () => Promise<unknown>,
   capabilities: Pick<MonitorCapabilities, 'canWrite'>,
   onImported: () => void = () => undefined
 ) {
-  const canImport = capabilities.canWrite;
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<MonitorImportDraft | null>(null);
   const [invalid, setInvalid] = useState<MonitorImportInvalidKind | null>(null);
-  const currentDraft = useRef(draft);
-  const closeDraft = useCallback(() => {
-    currentDraft.current = null;
+  const [failure, setFailure] = useState<MonitorImportFailureKind | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const lifecycle = useImportLifecycle(capabilities.canWrite, () => {
+    setOpen(false);
     setDraft(null);
     setInvalid(null);
-  }, []);
-  const operation = useMonitorImportOperation(canImport, reread, onImported, closeDraft);
+    setFailure(null);
+    setBusy(false);
+    setActiveTaskId(null);
+  });
+  const taskQuery = useQuery({
+    queryKey: monitorQueryKeys.importTask(activeTaskId),
+    queryFn: activeTaskId ? ({ signal }) => loadMonitorImportTask(activeTaskId, signal) : skipToken,
+    retry: false,
+    staleTime: Infinity
+  });
+  const task = resolveImportTaskEvidence(activeTaskId, taskQuery);
+  useCompletedImportConvergence(task, reread, onImported, lifecycle.mounted);
 
-  const open = () => {
-    if (!operation.canStart()) return;
-    const next = { file: null };
-    currentDraft.current = next;
-    setDraft(next);
+  const openDialog = () => {
+    if (!lifecycle.canStart()) return;
+    setOpen(true);
+    setDraft({ file: null });
     setInvalid(null);
-    operation.clearFailure();
+    setFailure(null);
+    setActiveTaskId(null);
   };
-  const cancel = () => {
-    if (operation.isActive()) return;
-    closeDraft();
-    operation.clearFailure();
-  };
+  const cancel = () => lifecycle.retire();
   const selectFile = (file: File | null) => {
-    if (!operation.canStart() || !currentDraft.current) return;
-    const next = { file };
-    currentDraft.current = next;
-    setDraft(next);
+    if (!lifecycle.canStart() || !open || activeTaskId) return;
+    setDraft({ file });
     setInvalid(null);
-    operation.clearFailure();
+    setFailure(null);
   };
   const submit = async () => {
-    const selectedDraft = currentDraft.current;
-    if (!operation.canStart() || !selectedDraft) return false;
-    const validation = validateMonitorImportFile(selectedDraft.file);
+    if (!lifecycle.canStart() || !open || !draft) return false;
+    const validation = validateMonitorImportFile(draft.file);
     if (!validation.valid) {
       setInvalid(validation.reason);
       return false;
     }
-    return operation.execute(validation.file);
-  };
-
-  const state: MonitorImportState = { canImport, draft, invalid, failure: operation.failure, busy: operation.busy };
-  return { state, actions: { open, cancel, selectFile, submit } };
-}
-
-function useMonitorImportOperation(
-  canImport: boolean,
-  reread: () => Promise<unknown>,
-  onImported: () => void,
-  closeDraft: () => void
-) {
-  const { message } = App.useApp();
-  const { t } = useTranslation();
-  const [failure, setFailure] = useState<MonitorImportFailureKind | null>(null);
-  const [busy, setBusy] = useState(false);
-  const active = useRef<ImportOwner | null>(null);
-  const generation = useRef(0);
-  const currentCanImport = useRef(canImport);
-  const mounted = useRef(true);
-
-  useMonitorImportRetirement(canImport, {
-    currentCanImportRef: currentCanImport,
-    activeRef: active,
-    generationRef: generation,
-    mountedRef: mounted,
-    closeDraft,
-    setBusy,
-    setFailure
-  });
-
-  const canStart = () => mounted.current && currentCanImport.current && active.current === null;
-  const execute = (file: File) => {
-    const controller = new AbortController();
-    const owner = { generation: generation.current + 1, controller };
-    generation.current = owner.generation;
-    active.current = owner;
+    const owner = lifecycle.begin();
+    if (!owner) return false;
     setBusy(true);
     setFailure(null);
-    const owns = () =>
-      ownsMonitorImport(mounted.current, currentCanImport.current, active.current, generation.current, owner);
-    return executeMonitorImport(file, {
+    return executeMonitorImport(validation.file, {
       owner,
-      owns,
-      onImported,
-      closeDraft,
-      reread,
-      warnRefresh: () => void message.warning(t('monitor.import.refreshFailure')),
+      owns: () => lifecycle.owns(owner),
+      accept: accepted => {
+        queryClient.setQueryData(monitorQueryKeys.importTask(accepted.taskId), accepted);
+        setActiveTaskId(accepted.taskId);
+        setDraft({ file: null });
+      },
       publishFailure: setFailure,
       finish: () => {
-        if (!owns()) return;
-        active.current = null;
-        generation.current += 1;
+        if (!lifecycle.finish(owner)) return;
         setBusy(false);
       }
     });
   };
-  return {
-    busy,
+  const state: MonitorImportState = {
+    canImport: capabilities.canWrite,
+    open,
+    draft,
+    invalid,
     failure,
-    canStart,
-    isActive: () => active.current !== null,
-    clearFailure: () => {
-      if (mounted.current) setFailure(null);
-    },
-    execute
+    busy,
+    task
   };
+  return { state, actions: { open: openDialog, cancel, selectFile, submit } };
 }
 
-function ownsMonitorImport(
-  mounted: boolean,
-  canImport: boolean,
-  active: ImportOwner | null,
-  generation: number,
-  owner: ImportOwner
+function resolveImportTaskEvidence(
+  activeTaskId: string | null,
+  query: ReturnType<typeof useQuery<MonitorImportTask>>
+): MonitorImportTaskEvidence {
+  if (!activeTaskId) return { kind: 'idle' };
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) {
+    return query.error instanceof MonitorImportTaskReadError ? { kind: query.error.kind } : { kind: 'error' };
+  }
+  return { kind: 'ready', task: query.data, refreshing: query.isFetching };
+}
+
+function useCompletedImportConvergence(
+  evidence: MonitorImportTaskEvidence,
+  reread: () => Promise<unknown>,
+  onImported: () => void,
+  mounted: React.RefObject<boolean>
 ) {
-  return mounted && canImport && active === owner && generation === owner.generation;
+  const { message } = App.useApp();
+  const { t } = useTranslation();
+  const converged = useRef(new Set<string>());
+  useEffect(() => {
+    if (evidence.kind !== 'ready' || evidence.task.status !== 'COMPLETED') return;
+    const taskId = evidence.task.taskId;
+    if (converged.current.has(taskId)) return;
+    converged.current.add(taskId);
+    onImported();
+    void reread().catch(() => {
+      if (mounted.current) void message.warning(t('monitor.import.refreshFailure'));
+    });
+  }, [evidence, message, mounted, onImported, reread, t]);
 }
 
-function useMonitorImportRetirement(canImport: boolean, retirement: ImportRetirement) {
-  const { currentCanImportRef, activeRef, generationRef, mountedRef, closeDraft, setBusy, setFailure } = retirement;
-  const retire = useCallback(
-    (owner: ImportOwner) => {
-      if (activeRef.current !== owner) return;
-      activeRef.current = null;
-      generationRef.current += 1;
-      if (mountedRef.current) {
-        setBusy(false);
-        setFailure(null);
-        closeDraft();
-      }
-      owner.controller.abort();
+function useImportLifecycle(canImport: boolean, reset: () => void) {
+  const active = useRef<MonitorImportExecutionOwner | null>(null);
+  const generation = useRef(0);
+  const mounted = useRef(true);
+  const currentCanImport = useRef(canImport);
+  const resetRef = useRef(reset);
+  resetRef.current = reset;
+  const retire = useCallback(() => {
+    const owner = active.current;
+    active.current = null;
+    generation.current += 1;
+    if (mounted.current) resetRef.current();
+    owner?.controller.abort();
+  }, []);
+  useLayoutEffect(() => {
+    currentCanImport.current = canImport;
+    if (!canImport) retire();
+  }, [canImport, retire]);
+  useLayoutEffect(
+    () => () => {
+      mounted.current = false;
+      const owner = active.current;
+      active.current = null;
+      generation.current += 1;
+      owner?.controller.abort();
     },
-    [activeRef, closeDraft, generationRef, mountedRef, setBusy, setFailure]
+    []
   );
-  useLayoutEffect(() => {
-    currentCanImportRef.current = canImport;
-    if (canImport) return;
-    const owner = activeRef.current;
-    if (owner) retire(owner);
-    else {
-      closeDraft();
-      setFailure(null);
+  const owns = (owner: MonitorImportExecutionOwner) =>
+    mounted.current && currentCanImport.current && active.current === owner && generation.current === owner.generation;
+  return {
+    mounted,
+    retire,
+    canStart: () => mounted.current && currentCanImport.current && active.current === null,
+    begin: () => {
+      if (!mounted.current || !currentCanImport.current || active.current) return null;
+      const owner = { generation: generation.current + 1, controller: new AbortController() };
+      generation.current = owner.generation;
+      active.current = owner;
+      return owner;
+    },
+    owns,
+    finish: (owner: MonitorImportExecutionOwner) => {
+      if (!owns(owner)) return false;
+      active.current = null;
+      generation.current += 1;
+      return true;
     }
-  }, [activeRef, canImport, closeDraft, currentCanImportRef, retire, setFailure]);
-  useLayoutEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      const owner = activeRef.current;
-      if (!owner) return;
-      activeRef.current = null;
-      generationRef.current += 1;
-      owner.controller.abort();
-    };
-  }, [activeRef, generationRef, mountedRef]);
+  };
 }

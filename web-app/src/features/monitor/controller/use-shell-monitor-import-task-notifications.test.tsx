@@ -1,51 +1,42 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { act, renderHook } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-
+const api = vi.hoisted(() => ({ loadMonitorImportTasks: vi.fn() }));
 const stream = vi.hoisted(() => ({
   close: vi.fn(),
-  handlers: undefined as
-    | {
-        onTask: (event: { kind: 'progress' | 'success' | 'failure'; taskName: string; progress?: number }) => void;
-      }
-    | undefined,
-  openMonitorImportTaskStream: vi.fn(
-    (handlers: {
-      onTask: (event: { kind: 'progress' | 'success' | 'failure'; taskName: string; progress?: number }) => void;
-    }) => {
-      stream.handlers = handlers;
-      return { close: stream.close };
-    }
-  )
+  handlers: undefined as { onCanonicalReread: (name: 'manager-ready' | 'IMPORT_TASK_EVENT') => void } | undefined,
+  openMonitorImportTaskStream: vi.fn(handlers => {
+    stream.handlers = handlers;
+    return { close: stream.close };
+  })
+}));
+vi.mock('../api/monitor-import-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/monitor-import-api')>()),
+  loadMonitorImportTasks: api.loadMonitorImportTasks
 }));
 vi.mock('../api/monitor-import-task-stream', () => ({
   openMonitorImportTaskStream: stream.openMonitorImportTaskStream
 }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string, values?: { progress?: number }) => `${key}:${values?.progress ?? ''}` })
+}));
 
 import { useShellMonitorImportTaskNotifications } from './use-shell-monitor-import-task-notifications';
 
-describe('shell monitor import task notifications', () => {
+const running = task('IN_PROGRESS', 40);
+const completed = task('COMPLETED', 100);
+
+describe('shell monitor import canonical reread', () => {
   const open = vi.fn();
-
-  beforeAll(async () => {
-    await initializeI18n();
-    await loadLocale('en-US');
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     stream.handlers = undefined;
+    api.loadMonitorImportTasks.mockResolvedValue([]);
     vi.spyOn(App, 'useApp').mockReturnValue({
       message: {},
       modal: {},
@@ -53,59 +44,90 @@ describe('shell monitor import task notifications', () => {
     } as unknown as ReturnType<typeof App.useApp>);
   });
 
-  it('updates one task notification from progress to terminal success and closes the stream on unmount', () => {
-    const view = renderHook(() => useShellMonitorImportTaskNotifications(), { wrapper });
+  it('single-flights duplicate manager triggers, rereads canonical list state, and refetches active task detail', async () => {
+    const request = deferred<(typeof running)[]>();
+    api.loadMonitorImportTasks.mockReturnValueOnce(request.promise).mockResolvedValueOnce([running]);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const refetch = vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined);
+    renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(client) });
 
-    act(() => stream.handlers?.onTask({ kind: 'progress', taskName: 'monitors.json', progress: 40 }));
-    act(() => stream.handlers?.onTask({ kind: 'success', taskName: 'monitors.json' }));
+    act(() => {
+      stream.handlers?.onCanonicalReread('manager-ready');
+      stream.handlers?.onCanonicalReread('IMPORT_TASK_EVENT');
+      stream.handlers?.onCanonicalReread('IMPORT_TASK_EVENT');
+    });
+    expect(api.loadMonitorImportTasks).toHaveBeenCalledOnce();
+    request.resolve([running]);
+    await waitFor(() => expect(api.loadMonitorImportTasks).toHaveBeenCalledTimes(2));
 
-    expect(stream.openMonitorImportTaskStream).toHaveBeenCalledOnce();
-    expect(open).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        key: 'monitor-import:monitors.json',
-        type: 'info',
-        duration: 0,
-        description: expect.stringContaining('40')
-      })
+    expect(refetch).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['monitor', 'import-tasks'], type: 'active' }),
+      { cancelRefetch: false }
     );
-    expect(open).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        key: 'monitor-import:monitors.json',
-        type: 'success',
-        duration: 4.5
-      })
+    expect(open).toHaveBeenCalledWith(
+      expect.objectContaining({ key: `monitor-import:${running.taskId}`, type: 'info' })
     );
+  });
+
+  it('derives terminal notification state only from canonical GET data and never records a filename', async () => {
+    api.loadMonitorImportTasks.mockResolvedValueOnce([running]).mockResolvedValueOnce([completed]);
+    renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(new QueryClient()) });
+
+    act(() => stream.handlers?.onCanonicalReread('manager-ready'));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+    act(() => stream.handlers?.onCanonicalReread('IMPORT_TASK_EVENT'));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
+
+    expect(open.mock.calls[1]?.[0]).toMatchObject({ key: `monitor-import:${running.taskId}`, type: 'success' });
+    expect(JSON.stringify(open.mock.calls)).not.toContain('.json');
+    expect(JSON.stringify(open.mock.calls)).not.toContain('filename');
+  });
+
+  it('aborts a canonical read and closes the stream on unmount without late publication', async () => {
+    let signal: AbortSignal | undefined;
+    api.loadMonitorImportTasks.mockImplementation(
+      (requestSignal: AbortSignal) =>
+        new Promise((_resolve, reject) => {
+          signal = requestSignal;
+          requestSignal.addEventListener('abort', () => reject(new DOMException('abort', 'AbortError')), {
+            once: true
+          });
+        })
+    );
+    const view = renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(new QueryClient()) });
+    act(() => stream.handlers?.onCanonicalReread('manager-ready'));
+    await waitFor(() => expect(signal).toBeInstanceOf(AbortSignal));
 
     view.unmount();
+
+    expect(signal?.aborted).toBe(true);
     expect(stream.close).toHaveBeenCalledOnce();
-  });
-
-  it('uses generic localized failure copy instead of exposing a backend exception body', () => {
-    renderHook(() => useShellMonitorImportTaskNotifications(), { wrapper });
-
-    act(() => stream.handlers?.onTask({ kind: 'failure', taskName: 'monitors.xlsx' }));
-
-    expect(open).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'error',
-        description: i18n.t('shell.importTasks.failure', { taskName: 'monitors.xlsx' })
-      })
-    );
-    expect(JSON.stringify(open.mock.calls)).not.toContain('errMsg');
-  });
-
-  it('leaves the deterministic import workflow usable when the supplemental stream cannot start', () => {
-    stream.openMonitorImportTaskStream.mockImplementationOnce(() => {
-      throw new Error('EventSource unavailable');
-    });
-
-    expect(() => renderHook(() => useShellMonitorImportTaskNotifications(), { wrapper })).not.toThrow();
     expect(open).not.toHaveBeenCalled();
   });
 });
 
-function wrapper({ children }: PropsWithChildren) {
-  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
+function task(status: 'IN_PROGRESS' | 'COMPLETED', progress: number) {
+  return {
+    schemaVersion: 1 as const,
+    taskId: '123e4567-e89b-42d3-a456-426614174000',
+    taskType: 'MONITOR_IMPORT' as const,
+    status,
+    progress,
+    createdAt: '2026-07-31T12:00:00Z',
+    startedAt: '2026-07-31T12:00:00Z',
+    completedAt: status === 'COMPLETED' ? '2026-07-31T12:00:10Z' : null,
+    errorCode: null
+  };
+}
+
+function wrapper(client: QueryClient) {
+  return function Wrapper({ children }: PropsWithChildren) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(complete => (resolve = complete));
+  return { promise, resolve };
 }

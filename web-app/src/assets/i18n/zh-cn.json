@@ -2292,8 +2292,9 @@
       "description": "从 HertzBeat JSON、XLSX 或 YAML 文件导入监控定义。",
       "file": "配置文件",
       "choose": "选择文件",
-      "selected": "已选择：{{name}}",
+      "fileSelected": "已选择配置文件。",
       "submit": "导入配置",
+      "close": "关闭",
       "success": "监控配置已导入。",
       "refreshFailure": "导入已成功，但无法刷新监控列表。",
       "validation": {
@@ -2306,6 +2307,22 @@
         "forbidden": "当前账号没有导入监控的权限。",
         "unavailable": "监控导入暂时不可用。",
         "error": "无法导入监控配置。"
+      },
+      "task": {
+        "loading": "正在加载导入状态…",
+        "inProgress": "正在导入",
+        "completed": "导入已完成",
+        "read": {
+          "not-queryable": "此导入任务已无法查询。",
+          "forbidden": "当前账号没有查看此导入任务的权限。",
+          "unavailable": "导入状态暂时不可用。",
+          "error": "无法加载导入状态。"
+        },
+        "failure": {
+          "IMPORT_UNSUPPORTED_TYPE": "不支持所选配置类型。",
+          "IMPORT_INVALID_CONTENT": "所选监控配置无效。",
+          "IMPORT_FAILED": "无法导入监控配置。"
+        }
       }
     },
     "status": {

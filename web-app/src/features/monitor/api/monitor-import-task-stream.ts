@@ -1,26 +1,24 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { openBrowserEventStream } from '@/core/http/event-stream';
 
-import { parseMonitorImportTaskEvent, type MonitorImportTaskEvent } from './monitor-import-task-schema';
+import { parseMonitorImportTaskReread } from './monitor-import-task-schema';
 
 const managerSseEndpoint = '/api/manager/sse/subscribe';
-const importTaskEventName = 'IMPORT_TASK_EVENT';
+const importTaskEventNames = ['manager-ready', 'IMPORT_TASK_EVENT'] as const;
 
-export function openMonitorImportTaskStream(handlers: { onTask: (event: MonitorImportTaskEvent) => void }) {
+export function openMonitorImportTaskStream(handlers: {
+  onCanonicalReread: (eventName: (typeof importTaskEventNames)[number]) => void;
+}) {
   return openBrowserEventStream(managerSseEndpoint, {
-    eventNames: [importTaskEventName],
+    eventNames: importTaskEventNames,
     onOpen: () => undefined,
     onRetrying: () => undefined,
     onUnavailable: () => undefined,
-    onEvent: (_name, payload) => {
-      const event = parseMonitorImportTaskEvent(payload);
-      if (event) handlers.onTask(event);
+    onEvent: (eventName, payload) => {
+      if (parseMonitorImportTaskReread(payload)) {
+        handlers.onCanonicalReread(eventName as (typeof importTaskEventNames)[number]);
+      }
     }
   });
 }

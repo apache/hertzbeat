@@ -39,6 +39,8 @@ export const monitorQueryKeys = {
     ] as const,
   apps: (locale: string) => [...rootKey, 'apps', locale] as const,
   detail: (id: number | undefined) => [...rootKey, 'detail', id] as const,
+  importTasks: () => [...rootKey, 'import-tasks'] as const,
+  importTask: (taskId: string | null) => [...rootKey, 'import-tasks', 'detail', taskId] as const,
   collectors: () => [...rootKey, 'collectors'] as const,
   labelSuggestions: () => [...rootKey, 'editor', 'label-suggestions'] as const,
   appDefines: (app: string) => [...rootKey, 'defines', 'app', app] as const,

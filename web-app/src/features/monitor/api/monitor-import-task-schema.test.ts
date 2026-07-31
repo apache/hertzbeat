@@ -1,71 +1,67 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { describe, expect, it } from 'vitest';
 
-import { parseMonitorImportTaskEvent } from './monitor-import-task-schema';
+import { parseMonitorImportTask, parseMonitorImportTaskReread } from './monitor-import-task-schema';
 
-describe('monitor import task event contract', () => {
-  it('projects the current manager payload to the bounded fields needed by the shell', () => {
-    expect(
-      parseMonitorImportTaskEvent(
-        JSON.stringify({
-          notifyLevel: 'INFO',
-          managerEventType: 'IMPORT_TASK_EVENT',
-          taskName: ' monitors.json ',
-          progress: 40,
-          status: 'IN_PROGRESS',
-          errMsg: 'must stay at the transport boundary',
-          unexpected: { nested: true }
-        })
-      )
-    ).toEqual({
-      kind: 'progress',
-      taskName: 'monitors.json',
-      progress: 40
-    });
+const task = {
+  schemaVersion: 1,
+  taskId: '123e4567-e89b-42d3-a456-426614174000',
+  taskType: 'MONITOR_IMPORT',
+  status: 'IN_PROGRESS',
+  progress: 40,
+  createdAt: '2026-07-31T12:00:00Z',
+  startedAt: '2026-07-31T12:00:00Z',
+  completedAt: null,
+  errorCode: null
+} as const;
+
+describe('monitor import task contract', () => {
+  it('parses the exact canonical task and normalizes omitted nullable fields', () => {
+    expect(parseMonitorImportTask(task)).toEqual(task);
+    expect(parseMonitorImportTask({ ...task, completedAt: undefined, errorCode: undefined })).toEqual(task);
   });
 
-  it('accepts terminal success and failure without exposing the server exception text', () => {
+  it('accepts only coherent terminal states and safe failure codes', () => {
     expect(
-      parseMonitorImportTaskEvent(
-        JSON.stringify({
-          notifyLevel: 'SUCCESS',
-          managerEventType: 'IMPORT_TASK_EVENT',
-          taskName: 'monitors.yaml',
-          progress: null,
-          status: 'COMPLETED',
-          errMsg: null
-        })
-      )
-    ).toEqual({ kind: 'success', taskName: 'monitors.yaml' });
+      parseMonitorImportTask({
+        ...task,
+        status: 'COMPLETED',
+        progress: 100,
+        completedAt: '2026-07-31T12:00:10Z'
+      })
+    ).toMatchObject({ status: 'COMPLETED', progress: 100, errorCode: null });
     expect(
-      parseMonitorImportTaskEvent(
-        JSON.stringify({
-          notifyLevel: 'ERROR',
-          managerEventType: 'IMPORT_TASK_EVENT',
-          taskName: 'monitors.xlsx',
-          progress: null,
-          status: 'FAILED',
-          errMsg: 'jdbc:password=secret'
-        })
-      )
-    ).toEqual({ kind: 'failure', taskName: 'monitors.xlsx' });
+      parseMonitorImportTask({
+        ...task,
+        status: 'FAILED',
+        completedAt: '2026-07-31T12:00:10Z',
+        errorCode: 'IMPORT_INVALID_CONTENT'
+      })
+    ).toMatchObject({ status: 'FAILED', errorCode: 'IMPORT_INVALID_CONTENT' });
   });
 
   it.each([
-    'not-json',
-    '{}',
-    '{"notifyLevel":"WARNING","managerEventType":"IMPORT_TASK_EVENT","taskName":"x","status":"FAILED"}',
-    '{"notifyLevel":"INFO","managerEventType":"IMPORT_TASK_EVENT","taskName":"x","progress":101,"status":"IN_PROGRESS"}',
-    '{"notifyLevel":"INFO","managerEventType":"OTHER","taskName":"x","progress":10,"status":"IN_PROGRESS"}',
-    '{"notifyLevel":"SUCCESS","managerEventType":"IMPORT_TASK_EVENT","taskName":" ","status":"COMPLETED"}',
-    '{"notifyLevel":"SUCCESS","managerEventType":"IMPORT_TASK_EVENT","taskName":"x","status":"FAILED"}'
-  ])('rejects malformed or contradictory payload %s', payload => {
-    expect(parseMonitorImportTaskEvent(payload)).toBeNull();
+    { ...task, schemaVersion: 2 },
+    { ...task, taskId: 'not-a-uuid' },
+    { ...task, taskType: 'OTHER' },
+    { ...task, progress: 101 },
+    { ...task, status: 'COMPLETED', progress: 99, completedAt: '2026-07-31T12:00:10Z' },
+    { ...task, status: 'FAILED', completedAt: '2026-07-31T12:00:10Z', errorCode: 'PRIVATE_EXCEPTION' },
+    { ...task, status: 'IN_PROGRESS', errorCode: 'IMPORT_FAILED' },
+    { ...task, privateMessage: 'must not cross the contract' }
+  ])('rejects malformed or contradictory task evidence %#', value => {
+    expect(() => parseMonitorImportTask(value)).toThrow('Invalid monitor import task response');
+  });
+
+  it('accepts only canonical-reread manager signals and never projects task state from SSE', () => {
+    expect(parseMonitorImportTaskReread('{"schemaVersion":1,"delivery":"CANONICAL_REREAD"}')).toBe(true);
+    expect(
+      parseMonitorImportTaskReread(
+        '{"schemaVersion":1,"delivery":"CANONICAL_REREAD","status":"COMPLETED","taskId":"private"}'
+      )
+    ).toBe(false);
+    expect(parseMonitorImportTaskReread('{"schemaVersion":1,"delivery":"DIRECT"}')).toBe(false);
+    expect(parseMonitorImportTaskReread('not-json')).toBe(false);
   });
 });
