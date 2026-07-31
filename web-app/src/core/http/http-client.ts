@@ -17,6 +17,7 @@
 
 const CSRF_COOKIE = 'hb_ui_csrf';
 const CSRF_HEADER = 'X-HertzBeat-CSRF';
+const SESSION_PATH = '/api/ui/session';
 const SESSION_REFRESH_PATH = '/api/ui/session/refresh';
 const REQUEST_TIMEOUT_MS = 30_000;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -42,7 +43,7 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   const response = await fetchWithTimeout(input, request);
   const method = (request.method ?? 'GET').toUpperCase();
 
-  if (response.status !== 401 || isSessionRefresh(input)) {
+  if (response.status !== 401 || isSessionManagementRequest(input)) {
     return response;
   }
   const refreshed = await refreshBrowserSession();
@@ -53,9 +54,14 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   return fetchWithTimeout(input, request);
 }
 
-function isSessionRefresh(input: RequestInfo | URL) {
+function isSessionManagementRequest(input: RequestInfo | URL) {
   const value = requestUrl(input);
-  return value === SESSION_REFRESH_PATH || value.endsWith(SESSION_REFRESH_PATH);
+  return (
+    value === SESSION_PATH ||
+    value.endsWith(SESSION_PATH) ||
+    value === SESSION_REFRESH_PATH ||
+    value.endsWith(SESSION_REFRESH_PATH)
+  );
 }
 
 function requestUrl(input: RequestInfo | URL) {

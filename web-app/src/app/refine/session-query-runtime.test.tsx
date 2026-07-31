@@ -324,6 +324,109 @@ describe('SessionQueryRuntime', () => {
     await expect(request).resolves.toMatchObject({ status: 401 });
     expect(clients).toHaveLength(2);
   });
+
+  it('coalesces focus and visible events into one authoritative read without rotating an unchanged identity', async () => {
+    const clients: QueryClient[] = [];
+    const sessionRead = deferred<Response>();
+    const fetchMock = vi.fn<typeof fetch>().mockReturnValue(sessionRead.promise);
+    vi.stubGlobal('fetch', fetchMock);
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+    convergence.broadcast.mockClear();
+
+    fireEvent(document, new Event('visibilitychange'));
+    expect(fetchMock).not.toHaveBeenCalled();
+    visibility.mockReturnValue('visible');
+    fireEvent.focus(window);
+    fireEvent(document, new Event('visibilitychange'));
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith('/api/ui/session', expect.objectContaining({ credentials: 'same-origin' }));
+    sessionRead.resolve(sessionResponse(userA));
+    await waitFor(() => expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(userA));
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(convergence.broadcast).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['capabilities', { ...userA, roles: ['USER'] }],
+    ['account', { ...userA, username: 'operator-b' }],
+    ['workspace', { ...userA, workspaceId: 'workspace-b' }],
+    ['expiry', { ...userA, expiresAt: '2030-01-01T00:30:00.000Z' }]
+  ])(
+    'rotates the QueryClient generation when foreground revalidation changes %s',
+    async (_boundary, changedSession) => {
+      const clients: QueryClient[] = [];
+      vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(sessionResponse(changedSession)));
+      renderRuntime(clients);
+      fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+      const previousClient = clients.at(-1);
+      previousClient?.setQueryData(['protected', 'admin'], 'sensitive');
+      convergence.broadcast.mockClear();
+
+      fireEvent.focus(window);
+
+      await waitFor(() => expect(clients.at(-1)?.getQueryData(sessionQueryKey)).toEqual(changedSession));
+      expect(clients.at(-1)).not.toBe(previousClient);
+      expect(clients.at(-1)?.getQueryData(['protected', 'admin'])).toBeUndefined();
+      expect(convergence.broadcast).toHaveBeenCalledOnce();
+    }
+  );
+
+  it.each([401, 403])('retires the current identity after an authoritative %s rejection', async status => {
+    const clients: QueryClient[] = [];
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status })));
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+
+    fireEvent.focus(window);
+
+    await waitFor(() => expect(clients.at(-1)?.getQueryData(sessionQueryKey)).toEqual(anonymousSession));
+    expect(sessionApi.refreshSession).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current generation after an uncertain foreground read failure', async () => {
+    const clients: QueryClient[] = [];
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(new TypeError('offline with credential=secret')));
+    renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+    const currentClient = clients.at(-1);
+
+    fireEvent.focus(window);
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(clients.at(-1)).toBe(currentClient);
+    expect(currentClient?.getQueryData(sessionQueryKey)).toEqual(userA);
+  });
+
+  it('ignores a late foreground response after identity rotation and after unmount', async () => {
+    const clients: QueryClient[] = [];
+    const firstRead = deferred<Response>();
+    const secondRead = deferred<Response>();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockReturnValueOnce(firstRead.promise).mockReturnValueOnce(secondRead.promise)
+    );
+    const view = renderRuntime(clients);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish user A' }));
+
+    fireEvent.focus(window);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish anonymous' }));
+    const anonymousClient = clients.at(-1);
+    const firstSignal = vi.mocked(fetch).mock.calls[0]?.[1]?.signal;
+
+    fireEvent.focus(window);
+    expect(firstSignal?.aborted).toBe(true);
+    view.unmount();
+    const secondSignal = vi.mocked(fetch).mock.calls[1]?.[1]?.signal;
+    expect(secondSignal?.aborted).toBe(true);
+    firstRead.resolve(sessionResponse(userB));
+    secondRead.resolve(sessionResponse(userB));
+    await Promise.all([firstRead.promise, secondRead.promise]);
+    expect(clients.at(-1)).toBe(anonymousClient);
+  });
 });
 
 function renderRuntime(clients: QueryClient[]) {

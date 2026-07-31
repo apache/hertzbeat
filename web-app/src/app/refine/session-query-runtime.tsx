@@ -25,11 +25,13 @@ import {
   anonymousSession,
   isDefiniteSessionRefreshFailure,
   refreshSession,
+  sessionQueryKey,
   SessionRequestError,
   type UiSession
 } from '@/core/auth/session-api';
 import type { ReplaceSessionIdentity, ReplaceSessionIdentityOptions } from '@/core/auth/session-identity-context';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
+import { startForegroundSessionRevalidation } from '@/core/auth/session-foreground-revalidation';
 import {
   registerBrowserSessionRefreshCoordinator,
   type BrowserSessionRefreshOptions,
@@ -63,13 +65,21 @@ export function SessionQueryRuntime({ children, createQueryClient }: SessionQuer
     const convergence = createSessionConvergenceChannel(convergeExternalIdentity);
     convergenceRef.current = convergence;
     const unregister = registerBrowserSessionRefreshCoordinator(refreshIdentity);
+    const stopForegroundRevalidation = startForegroundSessionRevalidation({
+      getSnapshot: () => ({
+        generation: runtimeRef.current.generation,
+        session: runtimeRef.current.queryClient.getQueryData<UiSession>(sessionQueryKey)
+      }),
+      replaceIdentity
+    });
     return () => {
       mountedRef.current = false;
+      stopForegroundRevalidation();
       convergenceRef.current = undefined;
       convergence.close();
       unregister();
     };
-  }, [convergeExternalIdentity, convergenceRef, mountedRef, refreshIdentity]);
+  }, [convergeExternalIdentity, convergenceRef, mountedRef, refreshIdentity, replaceIdentity, runtimeRef]);
 
   return <SessionIdentityProvider replaceIdentity={replaceIdentity}>{children(runtime)}</SessionIdentityProvider>;
 }
