@@ -76,9 +76,19 @@ describe('Explore signal contracts', () => {
     expect(() => parseMetricConsole(value)).toThrow(ExploreSignalContractError);
   });
 
+  it('normalizes the stable four-field log page response', () => {
+    expect(parseLogPage({ content: [], totalElements: 0, pageIndex: 0, pageSize: 20 }, 0, 20)).toEqual({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 20
+    });
+  });
+
   it('retains JSON-safe log body and attributes and strips unknown fields', () => {
     const page = parseLogPage(
-      springPage([
+      stableLogPage([
         {
           timeUnixNano: 10,
           observedTimeUnixNano: null,
@@ -108,7 +118,7 @@ describe('Explore signal contracts', () => {
     const epochNanos = 1_750_000_000_000_000_000;
     expect(
       parseLogPage(
-        springPage([
+        stableLogPage([
           {
             timeUnixNano: epochNanos,
             observedTimeUnixNano: epochNanos,
@@ -151,7 +161,7 @@ describe('Explore signal contracts', () => {
     };
     let error: unknown;
     try {
-      parseLogPage(springPage([value]), 0, 20);
+      parseLogPage(stableLogPage([value]), 0, 20);
     } catch (reason) {
       error = reason;
     }
@@ -160,16 +170,16 @@ describe('Explore signal contracts', () => {
   });
 
   it('rejects log rows with missing nullable protocol keys', () => {
-    expect(() => parseLogPage(springPage([{ body: 'partial' }]), 0, 20)).toThrow(ExploreSignalContractError);
+    expect(() => parseLogPage(stableLogPage([{ body: 'partial' }]), 0, 20)).toThrow(ExploreSignalContractError);
   });
 
   it.each([
-    { ...springPage([]), number: 1 },
-    { ...springPage([]), size: 19 },
-    { ...springPage([]), totalElements: 1, totalPages: 0 },
-    { ...springPage([]), totalElements: 1, totalPages: 1 },
-    { ...springPage([]), content: {} }
-  ])('rejects mismatched or malformed Spring pages', value => {
+    { ...stableLogPage([]), pageIndex: 1 },
+    { ...stableLogPage([]), pageSize: 19 },
+    { ...stableLogPage([]), totalElements: 1 },
+    { ...stableLogPage([]), content: {} },
+    { ...stableLogPage([]), number: 0, size: 20, totalPages: 0 }
+  ])('rejects mismatched, malformed, or legacy log pages', value => {
     expect(() => parseLogPage(value, 0, 20)).toThrow(ExploreSignalContractError);
   });
 
@@ -190,14 +200,12 @@ describe('Explore signal contracts', () => {
       instrumentationScope: null,
       scopeSchemaUrl: null
     }));
-    expect(() => parseLogPage({ content, totalElements: 21, totalPages: 2, number: 1, size: 20 }, 1, 20)).toThrow(
-      /content/
-    );
+    expect(() => parseLogPage({ content, totalElements: 21, pageIndex: 1, pageSize: 20 }, 1, 20)).toThrow(/content/);
   });
 
   it('keeps authoritative empty and out-of-range pages distinct', () => {
-    expect(parseLogPage(springPage([]), 0, 20)).toMatchObject({ content: [], totalElements: 0, number: 0 });
-    expect(parseLogPage({ ...springPage([]), number: 3, totalElements: 1, totalPages: 1 }, 3, 20)).toMatchObject({
+    expect(parseLogPage(stableLogPage([]), 0, 20)).toMatchObject({ content: [], totalElements: 0, number: 0 });
+    expect(parseLogPage({ ...stableLogPage([]), pageIndex: 3, totalElements: 1 }, 3, 20)).toMatchObject({
       content: [],
       totalElements: 1,
       number: 3
@@ -298,6 +306,10 @@ describe('Explore signal contracts', () => {
 
 function springPage(content: unknown[]) {
   return { content, totalElements: content.length, totalPages: content.length ? 1 : 0, number: 0, size: 20 };
+}
+
+function stableLogPage(content: unknown[]) {
+  return { content, totalElements: content.length, pageIndex: 0, pageSize: 20 };
 }
 
 function traceRow(traceId: unknown) {

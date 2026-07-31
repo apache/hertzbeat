@@ -306,7 +306,7 @@ describe('explore API paths', () => {
         emptyStateReason: null,
         errorMessage: null
       })
-      .mockResolvedValueOnce(springPage([]))
+      .mockResolvedValueOnce(stableLogPage([]))
       .mockResolvedValueOnce(springPage([traceRow('trace-1')]));
     await loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal);
     await loadLogSignal({ signal: 'logs', timeRange: 'last-15m', pageIndex: 0 }, signal);
@@ -378,6 +378,10 @@ describe('explore API paths', () => {
 
 function springPage(content: unknown[]) {
   return { content, totalElements: content.length, totalPages: content.length ? 1 : 0, number: 0, size: 20 };
+}
+
+function stableLogPage(content: unknown[]) {
+  return { content, totalElements: content.length, pageIndex: 0, pageSize: 20 };
 }
 
 function traceRow(traceId: string) {

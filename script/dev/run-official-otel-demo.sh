@@ -283,10 +283,10 @@ verify_demo() {
 
 体验地址:
   - Demo 商店: http://127.0.0.1:${ENVOY_PORT}
-  - HertzBeat OTLP 总览: http://127.0.0.1:4200/ingestion/otlp
-  - HertzBeat 日志工作台: http://127.0.0.1:4200/log/manage
-  - HertzBeat 链路工作台: http://127.0.0.1:4200/trace/manage
-  - HertzBeat 指标工作台: http://127.0.0.1:4200/ingestion/otlp/metrics
+  - HertzBeat OTLP 总览: http://127.0.0.1:4200/observability/integration
+  - HertzBeat 日志工作台: http://127.0.0.1:4200/explore?signal=logs
+  - HertzBeat 链路工作台: http://127.0.0.1:4200/explore?signal=traces
+  - HertzBeat 指标工作台: http://127.0.0.1:4200/explore?signal=metrics
 EOF
 }
 
@@ -330,8 +330,8 @@ verify_minimal_demo() {
   - recommendation
 
 体验地址:
-  - HertzBeat 日志工作台: http://127.0.0.1:4200/log/manage
-  - HertzBeat 链路工作台: http://127.0.0.1:4200/trace/manage
+  - HertzBeat 日志工作台: http://127.0.0.1:4200/explore?signal=logs
+  - HertzBeat 链路工作台: http://127.0.0.1:4200/explore?signal=traces
 EOF
 }
 
