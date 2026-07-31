@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Popover, Space, Tag, Typography } from 'antd';
+import { Space, Tag, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -44,28 +44,16 @@ export function CollectorRuntimeReportFacts({ report }: { report: CollectorRunti
               rejected: sourceCounts.REJECTED
             })}
           </Typography.Text>
-          <Popover
-            destroyOnHidden
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <div
-                className={styles.sourceList}
-                role="list"
-                aria-label={t('collectors.runtime.report.sourceListLabel')}
-              >
-                {report.sources.map(source => (
-                  <div className={styles.sourceListItem} key={`${source.type}:${source.name}`} role="listitem">
-                    <Typography.Text type="secondary">{sourceFact(source, t)}</Typography.Text>
-                  </div>
-                ))}
-              </div>
-            }
-          >
-            <Button type="link" size="small">
-              {t('collectors.runtime.report.viewSources', { count: report.sources.length })}
-            </Button>
-          </Popover>
+          <details className={styles.sourceDisclosure}>
+            <summary>{t('collectors.runtime.report.viewSources', { count: report.sources.length })}</summary>
+            <div className={styles.sourceList} role="list" aria-label={t('collectors.runtime.report.sourceListLabel')}>
+              {report.sources.map(source => (
+                <div className={styles.sourceListItem} key={`${source.type}:${source.name}`} role="listitem">
+                  <Typography.Text type="secondary">{sourceFact(source, t)}</Typography.Text>
+                </div>
+              ))}
+            </div>
+          </details>
         </>
       )}
     </Space>

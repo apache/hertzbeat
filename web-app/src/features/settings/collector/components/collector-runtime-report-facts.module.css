@@ -1,3 +1,16 @@
+.sourceDisclosure {
+  color: var(--ant-color-link);
+}
+
+.sourceDisclosure summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.sourceDisclosure[open] summary {
+  margin-bottom: var(--ant-margin-xxs);
+}
+
 .sourceList {
   max-height: min(20rem, 60vh);
   max-width: min(32rem, 80vw);

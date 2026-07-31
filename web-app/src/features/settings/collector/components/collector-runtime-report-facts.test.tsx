@@ -59,7 +59,7 @@ describe('CollectorRuntimeReportFacts', () => {
     expect(screen.getByText('Failure PORT_CONFLICT')).toBeInTheDocument();
   });
 
-  it('bounds a 49-source table fact while keeping the complete safe list accessible', async () => {
+  it('bounds a 49-source table fact while keeping the complete safe list accessible', () => {
     const sources: CollectorRuntimeReport['sources'] = [
       { type: 'HOST_METRICS', name: 'host', revision: 8, state: 'ACTIVE' },
       ...Array.from({ length: 32 }, (_, index) => ({
@@ -81,17 +81,25 @@ describe('CollectorRuntimeReportFacts', () => {
     });
 
     expect(screen.getByText('Sources: 49 · Active 1 · Desired 16 · Rejected 32')).toBeInTheDocument();
-    expect(screen.queryByText('Prometheus: prometheus-1 · REJECTED · Revision 8')).not.toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Runtime sources' })).not.toBeInTheDocument();
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    expect(screen.getByText('Prometheus: prometheus-1 · REJECTED · Revision 8')).not.toBeVisible();
+    const list = screen.getByRole('list', { name: 'Runtime sources' });
+    const summary = screen.getByText('View 49 sources');
+    const disclosure = summary.closest('details');
+    expect(disclosure).not.toHaveAttribute('open');
+    expect(list).not.toBeVisible();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View 49 sources' }));
+    fireEvent.click(summary);
 
-    const list = await screen.findByRole('list', { name: 'Runtime sources' });
+    expect(disclosure).toHaveAttribute('open');
+    expect(list).toBeVisible();
     expect(within(list).getAllByRole('listitem')).toHaveLength(49);
     expect(within(list).getByText('Host Metrics: host · ACTIVE · Revision 8')).toBeInTheDocument();
     expect(within(list).getByText('Prometheus: prometheus-32 · REJECTED · Revision 8')).toBeInTheDocument();
     expect(within(list).getByText('File Log: file-log-16 · DESIRED · Revision 9')).toBeInTheDocument();
+
+    fireEvent.click(summary);
+    expect(disclosure).not.toHaveAttribute('open');
+    expect(list).not.toBeVisible();
   });
 });
 
