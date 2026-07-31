@@ -34,9 +34,6 @@ export function useMonitorDefinitionController() {
     queryKey: catalogQueryKey,
     queryFn: ({ signal }) => loadMonitorDefinitionCatalog(language, signal)
   });
-  const changed = () => {
-    void queryClient.invalidateQueries({ queryKey: monitorDefinitionQueryKeys.all });
-  };
   const catalogProof = {
     load: async (signal: AbortSignal) => {
       await queryClient.cancelQueries({ queryKey: catalogQueryKey });
@@ -45,9 +42,9 @@ export function useMonitorDefinitionController() {
     },
     publish: (value: NonNullable<typeof catalog.data>) => queryClient.setQueryData(catalogQueryKey, value)
   };
-  const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language, onChanged: changed });
+  const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language });
   const routeActions = useMonitorDefinitionRouteController(workspace.workspace, workspace.actions);
-  const deletion = useMonitorDefinitionDelete(canWrite, catalogProof, changed);
+  const deletion = useMonitorDefinitionDelete(canWrite, catalogProof);
   const records = catalog.data?.items ?? [];
   const failure = catalog.error instanceof MonitorDefinitionRequestError ? catalog.error.kind : 'error';
   let listState: ListState = { kind: 'ready' };

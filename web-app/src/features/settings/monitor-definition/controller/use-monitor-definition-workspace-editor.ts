@@ -34,7 +34,6 @@ type WorkspaceEditorContext = {
   setWorkspace: (value: MonitorDefinitionWorkspace | null) => void;
   catalogProof: MonitorDefinitionCatalogProof;
   language: string;
-  onChanged: () => void;
 };
 
 type WorkspaceProofContext = Pick<
@@ -43,8 +42,7 @@ type WorkspaceProofContext = Pick<
 >;
 
 export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorContext) {
-  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, catalogProof, language, onChanged } =
-    context;
+  const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, catalogProof, language } = context;
   return useMemo(() => {
     const run = (operation: 'validate' | 'save' | 'refresh') =>
       runMonitorDefinitionEditorCommand(
@@ -52,7 +50,7 @@ export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorCont
         workspace,
         actionEpoch,
         workspaceRef,
-        { canWriteRef, catalogProof, language, onChanged },
+        { canWriteRef, catalogProof, language },
         owner,
         setWorkspace
       );
@@ -94,7 +92,7 @@ export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorCont
           setWorkspace
         })
     };
-  }, [actionEpoch, canWriteRef, catalogProof, language, onChanged, owner, setWorkspace, workspace, workspaceRef]);
+  }, [actionEpoch, canWriteRef, catalogProof, language, owner, setWorkspace, workspace, workspaceRef]);
 }
 
 async function retryWorkspaceCatalogProof(context: WorkspaceProofContext) {

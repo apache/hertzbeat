@@ -53,7 +53,7 @@ const route: { navigate: NavigateFunction | null; search: string } = {
 
 describe('useMonitorDefinitionController', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     route.navigate = null;
     route.search = '';
     auth.roles = ['ADMIN'];
@@ -116,6 +116,114 @@ describe('useMonitorDefinitionController', () => {
       'en-US',
       expect.any(AbortSignal)
     );
+  });
+
+  it('rereads the canonical detail and catalog after a successful create', async () => {
+    const mutationDetail = {
+      ...detail,
+      app: 'custom',
+      label: 'Mutation Custom',
+      definition: 'app: custom',
+      origin: 'custom' as const,
+      revision: newerRevision
+    };
+    const canonicalDetail = { ...mutationDetail, label: 'Canonical Custom', revision: 'c'.repeat(64) };
+    const canonicalItem = {
+      app: canonicalDetail.app,
+      label: canonicalDetail.label,
+      origin: canonicalDetail.origin,
+      editable: canonicalDetail.editable,
+      deletable: canonicalDetail.deletable,
+      revision: canonicalDetail.revision
+    };
+    api.create.mockResolvedValueOnce(mutationDetail);
+    api.detail.mockImplementation((app: string) => Promise.resolve(app === 'custom' ? canonicalDetail : detail));
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item, canonicalItem] });
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.openCreate());
+    act(() => result.current.actions.setDefinition('app: custom'));
+
+    await act(() => result.current.actions.save());
+
+    expect(api.detail).toHaveBeenCalledWith('custom', 'en-US', expect.any(AbortSignal));
+    expect(api.catalog).toHaveBeenCalledTimes(2);
+    expect(result.current.workspace).toEqual({ kind: 'view', detail: canonicalDetail });
+    expect(result.current.items).toEqual([item, canonicalItem]);
+  });
+
+  it('rereads the canonical detail and catalog after a successful revisioned update', async () => {
+    const mutationDetail = { ...detail, definition: 'app: mysql\nname: mutation', revision: newerRevision };
+    const canonicalDetail = { ...mutationDetail, definition: 'app: mysql\nname: canonical', revision: 'c'.repeat(64) };
+    const canonicalItem = {
+      app: canonicalDetail.app,
+      label: canonicalDetail.label,
+      origin: canonicalDetail.origin,
+      editable: canonicalDetail.editable,
+      deletable: canonicalDetail.deletable,
+      revision: canonicalDetail.revision
+    };
+    api.update.mockResolvedValueOnce(mutationDetail);
+    api.detail.mockResolvedValueOnce(detail).mockResolvedValueOnce(canonicalDetail);
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [canonicalItem] });
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(() => result.current.actions.openEdit('mysql'));
+    act(() => result.current.actions.setDefinition('app: mysql\nname: local'));
+
+    await act(() => result.current.actions.save());
+
+    expect(api.update).toHaveBeenCalledWith(
+      'mysql',
+      'app: mysql\nname: local',
+      revision,
+      'en-US',
+      expect.any(AbortSignal)
+    );
+    expect(api.detail).toHaveBeenLastCalledWith('mysql', 'en-US', expect.any(AbortSignal));
+    expect(api.catalog).toHaveBeenCalledTimes(2);
+    expect(result.current.workspace).toEqual({ kind: 'view', detail: canonicalDetail });
+    expect(result.current.items).toEqual([canonicalItem]);
+  });
+
+  it('keeps delete confirmation pending until the canonical catalog reread completes', async () => {
+    const canonicalCatalog = deferred<{ schemaVersion: 1; items: [] }>();
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockReturnValueOnce(canonicalCatalog.promise);
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.requestDelete(item));
+    let deletion!: Promise<void>;
+    act(() => {
+      deletion = result.current.actions.confirmDelete();
+    });
+    await waitFor(() => expect(api.remove).toHaveBeenCalledOnce());
+
+    expect(result.current.deletePending).toBe(true);
+    expect(result.current.deleteTarget).toEqual(item);
+    canonicalCatalog.resolve({ schemaVersion: 1, items: [] });
+    await act(async () => deletion);
+
+    expect(api.catalog).toHaveBeenCalledTimes(2);
+    expect(result.current.items).toEqual([]);
+    expect(result.current.deleteTarget).toBeNull();
+    expect(result.current.notice).toBe('builtin_restored');
+  });
+
+  it('preserves an immutable detail as an explicit failed edit admission', async () => {
+    api.detail.mockResolvedValueOnce({ ...detail, origin: 'builtin', editable: false, deletable: false });
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    await act(() => result.current.actions.openEdit('mysql'));
+
+    expect(result.current.workspace).toEqual({ kind: 'error', mode: 'edit', app: 'mysql', failure: 'immutable' });
+    expect(api.update).not.toHaveBeenCalled();
   });
 
   it('reports required YAML locally and sends no validate or save request for a blank create draft', async () => {
@@ -201,6 +309,25 @@ describe('useMonitorDefinitionController', () => {
     await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
   });
 
+  it('never replays an accepted update when its canonical detail reread fails', async () => {
+    api.detail.mockResolvedValueOnce(detail).mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable'));
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(() => result.current.actions.openEdit('mysql'));
+    act(() => result.current.actions.setDefinition('app: mysql\nname: accepted'));
+
+    await act(() => result.current.actions.save());
+
+    expect(api.update).toHaveBeenCalledOnce();
+    expect(result.current.workspace).toMatchObject({
+      kind: 'edit',
+      draft: { definition: 'app: mysql\nname: accepted', revision },
+      failure: 'unavailable',
+      writeRecovery: 'uncertain'
+    });
+    await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(3));
+  });
+
   it('reconciles the catalog after an uncertain delete while preserving its confirmation evidence', async () => {
     api.remove.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     const { result } = renderController();
@@ -212,6 +339,24 @@ describe('useMonitorDefinitionController', () => {
     expect(result.current.deleteFailure).toBe('state-uncertain');
     expect(result.current.deleteTarget).toEqual(item);
     await waitFor(() => expect(api.catalog).toHaveBeenCalledTimes(2));
+  });
+
+  it('never replays an accepted delete when its canonical catalog reread fails', async () => {
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable'))
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [] });
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    act(() => result.current.actions.requestDelete(item));
+
+    await act(() => result.current.actions.confirmDelete());
+
+    expect(api.remove).toHaveBeenCalledOnce();
+    expect(result.current.deleteTarget).toEqual(item);
+    expect(result.current.deleteFailure).toBe('unavailable');
+    expect(result.current.deleteWriteRecovery).toBe('uncertain');
+    expect(api.catalog).toHaveBeenCalledTimes(3);
   });
 
   it.each([
@@ -837,6 +982,7 @@ describe('useMonitorDefinitionController', () => {
     const write = deferred<typeof detail>();
     const createdDetail = { ...detail, app: 'custom', label: 'Custom', definition: 'app: custom' };
     api.create.mockReturnValueOnce(write.promise);
+    api.detail.mockImplementation((app: string) => Promise.resolve(app === 'custom' ? createdDetail : detail));
     const view = renderControllerAt('/settings/monitor-definitions?scope=all');
     act(() => view.result.current.actions.openCreate());
     act(() => view.result.current.actions.setDefinition('app: custom'));

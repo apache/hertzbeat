@@ -42,13 +42,14 @@ describe('monitor definition API', () => {
   it('uses the frozen read and validation routes with exact bodies', async () => {
     messageApi.get.mockResolvedValueOnce({ schemaVersion: 1, items: [item] }).mockResolvedValueOnce(detail);
     messageApi.post.mockResolvedValueOnce({ schemaVersion: 1, valid: true, app: 'mysql', origin: 'override' });
+    const signal = new AbortController().signal;
 
     await expect(loadMonitorDefinitionCatalog('en-US')).resolves.toEqual({ schemaVersion: 1, items: [item] });
-    await expect(loadMonitorDefinitionDetail('mysql', 'en-US')).resolves.toEqual(detail);
+    await expect(loadMonitorDefinitionDetail('mysql', 'en-US', signal)).resolves.toEqual(detail);
     await validateMonitorDefinition({ operation: 'update', expectedApp: 'mysql', definition: 'app: mysql' });
 
     expect(messageApi.get).toHaveBeenNthCalledWith(1, '/api/monitor-definitions/v1/catalog?lang=en-US');
-    expect(messageApi.get).toHaveBeenNthCalledWith(2, '/api/monitor-definitions/v1/mysql?lang=en-US');
+    expect(messageApi.get).toHaveBeenNthCalledWith(2, '/api/monitor-definitions/v1/mysql?lang=en-US', { signal });
     expect(messageApi.post).toHaveBeenCalledWith('/api/monitor-definitions/v1/validate', {
       operation: 'update',
       expectedApp: 'mysql',

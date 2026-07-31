@@ -23,11 +23,7 @@ import {
   type MonitorDefinitionOperationOwner
 } from './monitor-definition-operation-owner';
 
-export function useMonitorDefinitionDelete(
-  canWrite: boolean,
-  catalogProof: MonitorDefinitionCatalogProof,
-  onChanged: () => void
-) {
+export function useMonitorDefinitionDelete(canWrite: boolean, catalogProof: MonitorDefinitionCatalogProof) {
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const authority = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const [state, setState] = useState<DeleteState>(() => emptyDeleteState(authority.snapshot()));
@@ -55,7 +51,6 @@ export function useMonitorDefinitionDelete(
     actionEpoch,
     owner,
     catalogProof,
-    onChanged,
     setState,
     setNotice
   };
@@ -85,7 +80,6 @@ type DeleteActionContext = {
   actionEpoch: number;
   owner: MonitorDefinitionOperationOwner;
   catalogProof: MonitorDefinitionCatalogProof;
-  onChanged: () => void;
   setState: Dispatch<SetStateAction<DeleteState>>;
   setNotice: (value: MonitorDefinitionDeleteDisposition) => void;
 };
@@ -131,21 +125,33 @@ async function confirmMonitorDefinitionDelete(context: DeleteActionContext) {
   const target = admittedDeleteTarget(context, null);
   if (!target) return;
   const operation = owner.begin('exclusive-command');
+  let committed = false;
   context.setState(current => ({ ...current, pending: true, failure: null }));
   try {
     const receipt = await deleteMonitorDefinition(target.app, target.revision, operation.abort.signal);
+    committed = true;
+    const catalog = await context.catalogProof.load(operation.abort.signal);
     if (!owner.owns(operation)) return;
+    context.catalogProof.publish(catalog);
     context.setNotice(receipt.disposition);
     context.setState(emptyDeleteState(context.authority.snapshot()));
-    context.onChanged();
   } catch (error) {
-    await handleMonitorDefinitionDeleteFailure(context, operation, error);
+    await handleMonitorDefinitionDeleteFailure(
+      context,
+      operation,
+      committed ? committedDeleteProofError(error) : error
+    );
   } finally {
     if (owner.owns(operation)) {
       owner.complete(operation);
       context.setState(current => ({ ...current, pending: false }));
     }
   }
+}
+
+function committedDeleteProofError(error: unknown) {
+  const failure = error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
+  return new MonitorDefinitionRequestError(failure, 'uncertain');
 }
 
 async function retryMonitorDefinitionDeleteProof(context: DeleteActionContext) {

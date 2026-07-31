@@ -19,7 +19,6 @@ export function useMonitorDefinitionWorkspace(options: {
   canWrite: boolean;
   catalogProof: MonitorDefinitionCatalogProof;
   language: string;
-  onChanged: () => void;
 }) {
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const authority = useMemo(() => createMonitorDefinitionOperationOwner(), []);
@@ -63,8 +62,7 @@ export function useMonitorDefinitionWorkspace(options: {
     owner,
     setWorkspace,
     catalogProof: options.catalogProof,
-    language: options.language,
-    onChanged: options.onChanged
+    language: options.language
   };
   return {
     workspace,

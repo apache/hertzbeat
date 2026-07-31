@@ -52,10 +52,12 @@ export function loadMonitorDefinitionCatalog(language?: string, signal?: AbortSi
   );
 }
 
-export function loadMonitorDefinitionDetail(app: string, language?: string) {
+export function loadMonitorDefinitionDetail(app: string, language?: string, signal?: AbortSignal) {
   return request(async () =>
     parseMonitorDefinitionDetail(
-      await apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, language))
+      await (signal
+        ? apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, language), { signal })
+        : apiMessageGet(withLanguage(`${monitorDefinitionEndpoint}/${encodeURIComponent(app)}`, language)))
     )
   );
 }

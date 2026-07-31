@@ -33,8 +33,16 @@ type EditorCommandOptions = {
   canWriteRef: { current: boolean };
   catalogProof: MonitorDefinitionCatalogProof;
   language: string;
-  onChanged: () => void;
 };
+type EditorCommandResult =
+  | MonitorDefinitionDetail
+  | MonitorDefinitionValidation
+  | MonitorDefinitionDraft
+  | {
+      kind: 'canonical-write';
+      detail: MonitorDefinitionDetail;
+      catalog: Awaited<ReturnType<MonitorDefinitionCatalogProof['load']>>;
+    };
 
 export async function loadMonitorDefinitionWorkspace(
   mode: 'view' | 'edit',
@@ -46,9 +54,13 @@ export async function loadMonitorDefinitionWorkspace(
   const operation = owner.begin('detail-load');
   publish({ kind: 'loading', mode, app });
   try {
-    const detail = await loadMonitorDefinitionDetail(app, language);
+    const detail = await loadMonitorDefinitionDetail(app, language, operation.abort.signal);
     if (!owner.owns(operation)) return;
-    publish(mode === 'view' ? { kind: 'view', detail } : editMonitorDefinitionWorkspace(buildUpdateDraft(detail)));
+    if (mode === 'edit' && !detail.editable) {
+      publish({ kind: 'error', mode, app: detail.app, failure: 'immutable' });
+    } else {
+      publish(mode === 'view' ? { kind: 'view', detail } : editMonitorDefinitionWorkspace(buildUpdateDraft(detail)));
+    }
   } catch (error) {
     if (!owner.owns(operation)) return;
     publish({ kind: 'error', mode, app, failure: monitorDefinitionFailureKind(error) });
@@ -72,10 +84,15 @@ export async function runMonitorDefinitionEditorCommand(
   const command = owner.begin('exclusive-command');
   publish({ ...workspace, pending: operation, failure: null });
   try {
-    const next = await performEditorCommand(operation, workspace.draft, options.language, command);
+    const next = await performEditorCommand(
+      operation,
+      workspace.draft,
+      options.language,
+      options.catalogProof,
+      command
+    );
     if (!owner.owns(command)) return;
-    publishEditorResult(next, workspace, publish);
-    if (operation === 'save') options.onChanged();
+    publishEditorCommandResult(next, workspace, options.catalogProof, publish);
   } catch (error) {
     if (!owner.owns(command)) return;
     const failure = monitorDefinitionFailureKind(error);
@@ -134,10 +151,31 @@ function publishEditorResult(
   else publish(editMonitorDefinitionWorkspace(next));
 }
 
+function publishEditorCommandResult(
+  next: EditorCommandResult,
+  workspace: Extract<MonitorDefinitionWorkspace, { kind: 'edit' }>,
+  catalogProof: MonitorDefinitionCatalogProof,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  if (isCanonicalEditorWrite(next)) {
+    catalogProof.publish(next.catalog);
+    publishEditorResult(next.detail, workspace, publish);
+    return;
+  }
+  publishEditorResult(next, workspace, publish);
+}
+
+function isCanonicalEditorWrite(
+  next: EditorCommandResult
+): next is Extract<EditorCommandResult, { kind: 'canonical-write' }> {
+  return 'kind' in next && next.kind === 'canonical-write';
+}
+
 async function performEditorCommand(
   operation: 'validate' | 'save' | 'refresh',
   draft: MonitorDefinitionDraft,
   language: string,
+  catalogProof: MonitorDefinitionCatalogProof,
   command: MonitorDefinitionOperation
 ) {
   if (operation === 'validate') {
@@ -148,14 +186,30 @@ async function performEditorCommand(
     });
   }
   if (operation === 'refresh' && draft.mode === 'update') {
-    return buildUpdateDraft(await loadMonitorDefinitionDetail(draft.expectedApp, language));
+    return buildUpdateDraft(await loadMonitorDefinitionDetail(draft.expectedApp, language, command.abort.signal));
   }
   if (operation === 'refresh') return draft;
-  return draft.mode === 'create'
-    ? createMonitorDefinition(draft.definition, language, command.abort.signal)
-    : updateMonitorDefinition(draft.expectedApp, draft.definition, draft.revision, language, command.abort.signal);
+  let committed = false;
+  try {
+    const receipt = await (draft.mode === 'create'
+      ? createMonitorDefinition(draft.definition, language, command.abort.signal)
+      : updateMonitorDefinition(draft.expectedApp, draft.definition, draft.revision, language, command.abort.signal));
+    committed = true;
+    const [detail, catalog] = await Promise.all([
+      loadMonitorDefinitionDetail(receipt.app, language, command.abort.signal),
+      catalogProof.load(command.abort.signal)
+    ]);
+    return { kind: 'canonical-write' as const, detail, catalog };
+  } catch (error) {
+    if (!committed) throw error;
+    throw committedWriteProofError(error);
+  }
 }
 
 function monitorDefinitionFailureKind(error: unknown): MonitorDefinitionFailureKind {
   return error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
+}
+
+function committedWriteProofError(error: unknown) {
+  return new MonitorDefinitionRequestError(monitorDefinitionFailureKind(error), 'uncertain');
 }
