@@ -39,10 +39,10 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.YamlImExportServiceImpl;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -69,7 +69,7 @@ class YamlImExportServiceTest {
     private LabelService labelService;
 
     @Mock
-    private ManagerSseManager managerSseManager;
+    private ImportTaskService importTaskService;
 
     @Test
     void testType() {
@@ -140,7 +140,7 @@ class YamlImExportServiceTest {
         assertEquals("example.com", monitorDto.getMonitor().getInstance());
         assertEquals(1, monitorDto.getParams().size());
         verify(monitorService).addMonitor(any(Monitor.class), anyList(), isNull(), isNull());
-        verify(managerSseManager).broadcastImportTaskSuccess("monitors.yaml");
+        verify(importTaskService).complete("monitors.yaml");
     }
 
     @Test
@@ -149,7 +149,8 @@ class YamlImExportServiceTest {
                 "empty.yaml",
                 new ByteArrayInputStream(new byte[0])));
 
-        verifyNoInteractions(monitorService, managerSseManager);
+        verifyNoInteractions(monitorService);
+        verify(importTaskService).complete("empty.yaml");
     }
 
     @Test
@@ -168,7 +169,7 @@ class YamlImExportServiceTest {
 
         assertEquals(INVALID_YAML_MESSAGE, exception.getMessage());
         assertFalse(exception.getMessage().contains("private-input-value"));
-        verifyNoInteractions(monitorService, managerSseManager);
+        verifyNoInteractions(monitorService, importTaskService);
     }
 
     @Test
@@ -177,7 +178,7 @@ class YamlImExportServiceTest {
                 () -> yamlImExportService.importConfig("monitors.yaml", inputStream("- foo: bar")));
 
         assertEquals(INVALID_YAML_MESSAGE, exception.getMessage());
-        verifyNoInteractions(monitorService, managerSseManager);
+        verifyNoInteractions(monitorService, importTaskService);
     }
 
     @Test

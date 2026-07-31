@@ -33,6 +33,8 @@ class ManagerSseRouteAuthorizationConfigTest {
 
     private static final String MANAGER_SSE_GET_RULE =
             "  - /api/manager/sse/**===get===[admin,user,guest]";
+    private static final String IMPORT_TASK_GET_RULE =
+            "  - /api/manager/import-tasks/**===get===[admin,user]";
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
             "hertzbeat-manager/src/test/resources/sureness.yml",
@@ -55,10 +57,10 @@ class ManagerSseRouteAuthorizationConfigTest {
 
     private static void assertManagerStreamRule(String config) throws IOException {
         List<String> matchingRules = Files.readAllLines(repoRoot().resolve(config)).stream()
-                .filter(line -> line.contains("/api/manager/sse/"))
+                .filter(line -> line.contains("/api/manager/sse/") || line.contains("/api/manager/import-tasks/"))
                 .toList();
-        assertEquals(List.of(MANAGER_SSE_GET_RULE), matchingRules,
-                () -> config + " must authorize only authenticated manager stream reads");
+        assertEquals(List.of(IMPORT_TASK_GET_RULE, MANAGER_SSE_GET_RULE), matchingRules,
+                () -> config + " must keep import state workspace-capable and manager stream reads authenticated");
     }
 
     private static Path repoRoot() {

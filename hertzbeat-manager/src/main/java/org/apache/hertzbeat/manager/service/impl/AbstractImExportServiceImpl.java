@@ -27,11 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ImExportTaskConstant;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -60,10 +60,10 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private LabelService tagService;
 
     @Resource
-    private ManagerSseManager managerSseManager;
+    private ImportTaskService importTaskService;
 
     @Override
-    public void importConfig(String taskName, InputStream is) {
+    public void importConfig(String taskId, InputStream is) {
         var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
@@ -73,11 +73,11 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 monitorService.validate(monitorDto, false);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
                 if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
-                    managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
+                    importTaskService.updateProgress(taskId, (int) ((i + 1) * 100.0 / totalElements));
                 }
             }
-            managerSseManager.broadcastImportTaskSuccess(taskName);
         }
+        importTaskService.complete(taskId);
     }
 
     @Override

@@ -132,6 +132,7 @@ resourceRole:
   - /api/logs/**===get===[admin,user,guest]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
+  - /api/manager/import-tasks/**===get===[admin,user]
   - /api/manager/sse/**===get===[admin,user,guest]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]

@@ -36,10 +36,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.time.Instant;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskStatus;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -356,13 +359,18 @@ class MonitorsControllerTest {
         byte[] monitorConfig = "[{\"name\":\"website-prod\"}]".getBytes(StandardCharsets.UTF_8);
         MockMultipartFile file = new MockMultipartFile(
                 "file", "monitors.json", MediaType.APPLICATION_JSON_VALUE, monitorConfig);
-        doNothing().when(monitorService).importConfig(Mockito.any());
+        Instant startedAt = Instant.parse("2026-07-31T08:00:00Z");
+        when(monitorService.importConfig(Mockito.any())).thenReturn(new ImportTaskView(
+                1, "task-123", "MONITOR_IMPORT", ImportTaskStatus.IN_PROGRESS, 0,
+                startedAt, startedAt, null, null));
 
         this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/monitors/import")
                         .file(file))
-                .andExpect(status().isOk())
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.code").value("0"))
-                .andExpect(jsonPath("$.msg").value("Import success"));
+                .andExpect(jsonPath("$.data.schemaVersion").value(1))
+                .andExpect(jsonPath("$.data.taskId").value("task-123"))
+                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
 
         ArgumentCaptor<MultipartFile> importedFileCaptor = ArgumentCaptor.forClass(MultipartFile.class);
         verify(monitorService).importConfig(importedFileCaptor.capture());
