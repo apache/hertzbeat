@@ -17,6 +17,7 @@ import {
   noticeReceiverSecretKeys,
   noticeReceiverTypes,
   noticeReceiverWebhookAuthTypes,
+  type FeiShuReceiveType,
   type NoticeReceiverOptionKey,
   type NoticeReceiverSecretKey,
   type NoticeReceiverType
@@ -106,33 +107,40 @@ export function parseNoticeReceiverMutationWire(value: unknown) {
 }
 
 function parseStructuredNoticeReceiver(source: z.output<typeof noticeReceiverSchema>): NoticeReceiverWire {
-  const optionResult = noticeReceiverOptionSchemas[source.type].safeParse(source.options);
+  const optionSchema = noticeReceiverOptionSchemas.get(source.type);
+  if (!optionSchema) throw new NoticeReceiverContractError();
+  const optionResult = optionSchema.safeParse(source.options);
   const secretResult = configuredSecretSchema.safeParse(source.configuredSecrets);
   if (!optionResult.success || !secretResult.success) throw new NoticeReceiverContractError();
   const allowedSecrets = noticeReceiverSecretKeys(source.type);
   if (secretResult.data.some(secret => !allowedSecrets.includes(secret))) throw new NoticeReceiverContractError();
   return {
     ...source,
-    options: optionResult.data as NoticeReceiverOptions,
+    options: optionResult.data,
     configuredSecrets: [...secretResult.data]
   };
 }
 
-const noticeReceiverOptionSchemas = Object.fromEntries(
+const larkReceiveTypeSchema = z.custom<FeiShuReceiveType>(value =>
+  noticeReceiverLarkReceiveTypes.some(type => type === value)
+);
+
+const noticeReceiverOptionSchemas = new Map<NoticeReceiverType, z.ZodType<NoticeReceiverOptions>>(
   noticeReceiverTypes.map(type => {
     const shape = Object.fromEntries(
       activeNoticeReceiverDefinition(type)
         .fields.filter(field => !field.secret)
         .map(field => [field.key, noticeReceiverOptionValueSchema(field.key).optional()])
     );
-    return [type, z.object(shape).strict()];
+    const schema: z.ZodType<NoticeReceiverOptions> = z.object(shape).strict();
+    return [type, schema] as const;
   })
-) as Record<NoticeReceiverType, z.ZodType>;
+);
 
 function noticeReceiverOptionValueSchema(key: NoticeReceiverOptionKey) {
   if (key === 'agentId') return safeIntegerSchema.nonnegative().max(noticeReceiverAgentIdMax);
   if (key === 'hookAuthType') return z.enum(noticeReceiverWebhookAuthTypes);
-  if (key === 'larkReceiveType') return z.enum(noticeReceiverLarkReceiveTypes);
+  if (key === 'larkReceiveType') return larkReceiveTypeSchema;
   return z.string();
 }
 

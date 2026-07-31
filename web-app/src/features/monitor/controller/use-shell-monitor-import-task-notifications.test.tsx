@@ -137,7 +137,7 @@ describe('shell monitor import canonical reread', () => {
       expect(refetch).toHaveBeenCalledWith({ queryKey: ['monitor', 'list'], type: 'active' }, { cancelRefetch: false })
     );
 
-    const listRefetches = refetch.mock.calls.filter(([filters]) => filters.queryKey?.join(':') === 'monitor:list');
+    const listRefetches = refetch.mock.calls.filter(([filters]) => filters?.queryKey?.join(':') === 'monitor:list');
     expect(listRefetches).toHaveLength(1);
   });
 
@@ -155,7 +155,7 @@ describe('shell monitor import canonical reread', () => {
       await waitFor(() => expect(api.loadMonitorImportTasks).toHaveBeenCalledTimes(index + 1));
     }
 
-    const listRefetches = refetch.mock.calls.filter(([filters]) => filters.queryKey?.join(':') === 'monitor:list');
+    const listRefetches = refetch.mock.calls.filter(([filters]) => filters?.queryKey?.join(':') === 'monitor:list');
     expect(listRefetches).toHaveLength(1);
   });
 

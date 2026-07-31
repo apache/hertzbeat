@@ -23,6 +23,11 @@ type SessionIdentitySnapshot = {
   session: UiSession | undefined;
 };
 
+type SessionRevalidationOwner = {
+  generation: number;
+  session: UiSession;
+};
+
 type ForegroundSessionRevalidationOptions = {
   getSnapshot: () => SessionIdentitySnapshot;
   replaceIdentity: ReplaceSessionIdentity;
@@ -42,8 +47,9 @@ export function startForegroundSessionRevalidation({
   let pending: PendingSessionRead | undefined;
 
   function revalidate() {
-    const owner = getSnapshot();
-    if (!active || owner.session === undefined || pending?.generation === owner.generation) return;
+    const snapshot = getSnapshot();
+    if (!active || snapshot.session === undefined || pending?.generation === snapshot.generation) return;
+    const owner: SessionRevalidationOwner = { generation: snapshot.generation, session: snapshot.session };
     pending?.controller.abort();
     pending = undefined;
 
@@ -54,7 +60,7 @@ export function startForegroundSessionRevalidation({
     pending = { generation: owner.generation, controller, promise };
   }
 
-  async function readAuthoritativeSession(owner: SessionIdentitySnapshot, signal: AbortSignal) {
+  async function readAuthoritativeSession(owner: SessionRevalidationOwner, signal: AbortSignal) {
     try {
       const nextSession = await getSession({ signal });
       if (!ownsCurrentGeneration(owner.generation)) return;

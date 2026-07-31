@@ -2,8 +2,14 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { BrowserEventStreamHandlers } from '@/core/http/event-stream';
+
 const eventStream = vi.hoisted(() => ({
-  openBrowserEventStream: vi.fn(() => ({ close: vi.fn() }))
+  handlers: undefined as BrowserEventStreamHandlers | undefined,
+  openBrowserEventStream: vi.fn((_path: string, handlers: BrowserEventStreamHandlers) => {
+    eventStream.handlers = handlers;
+    return { close: vi.fn() };
+  })
 }));
 vi.mock('@/core/http/event-stream', () => eventStream);
 
@@ -20,7 +26,7 @@ describe('monitor import task stream', () => {
       '/api/manager/sse/subscribe',
       expect.objectContaining({ eventNames: ['manager-ready', 'IMPORT_TASK_EVENT'] })
     );
-    const handlers = eventStream.openBrowserEventStream.mock.calls[0]?.[1];
+    const handlers = eventStream.handlers;
     const payload = '{"schemaVersion":1,"delivery":"CANONICAL_REREAD"}';
     handlers?.onEvent('manager-ready', payload);
     handlers?.onEvent('IMPORT_TASK_EVENT', payload);
