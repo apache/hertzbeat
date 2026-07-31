@@ -1374,6 +1374,20 @@
         "revisions": "希望 {{desiredRevision}} · 稼働中 {{activeRevision}}",
         "reportedAt": "報告日時 {{time}}",
         "failure": "障害 {{failureCode}}",
+        "sourceSummary": "ソース: {{count}} · 稼働中 {{active}} · 希望 {{desired}} · 拒否 {{rejected}}",
+        "viewSources": "{{count}} 件のソースを表示",
+        "sourceListLabel": "ランタイムソース",
+        "source": "{{type}}: {{name}} · {{state}} · リビジョン {{revision}}",
+        "sourceType": {
+          "HOST_METRICS": "ホストメトリクス",
+          "PROMETHEUS": "Prometheus",
+          "FILE_LOG": "ファイルログ"
+        },
+        "sourceState": {
+          "DESIRED": "希望",
+          "ACTIVE": "稼働中",
+          "REJECTED": "拒否"
+        },
         "state": {
           "STOPPED": "停止",
           "STARTING": "起動中",

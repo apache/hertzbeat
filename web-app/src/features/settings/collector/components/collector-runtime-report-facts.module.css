@@ -1,0 +1,9 @@
+.sourceList {
+  max-height: min(20rem, 60vh);
+  max-width: min(32rem, 80vw);
+  overflow-y: auto;
+}
+
+.sourceListItem {
+  overflow-wrap: anywhere;
+}

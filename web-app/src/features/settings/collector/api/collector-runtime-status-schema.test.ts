@@ -48,6 +48,7 @@ describe('Collector runtime status boundary', () => {
       activeRevision: 7,
       failureCode: 'CONFIGURATION_ERROR',
       rejectedRevisions: [8],
+      sources: [{ type: 'PROMETHEUS', name: 'payments', revision: 8, state: 'REJECTED' }],
       reportedAt: '2026-07-22T10:01:05Z'
     });
     expect(JSON.stringify(result)).not.toContain(privateDiagnostic);

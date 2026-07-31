@@ -177,6 +177,7 @@ describe('CollectorPage', () => {
               activeRevision: 7,
               failureCode: 'BACKEND_UNAVAILABLE',
               rejectedRevisions: [],
+              sources: [],
               reportedAt: '2026-07-22T10:01:05Z'
             }),
             collector('main-default-collector', true)

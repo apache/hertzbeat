@@ -1378,6 +1378,20 @@
         "revisions": "Desired {{desiredRevision}} · Active {{activeRevision}}",
         "reportedAt": "Reported {{time}}",
         "failure": "Failure {{failureCode}}",
+        "sourceSummary": "Sources: {{count}} · Active {{active}} · Desired {{desired}} · Rejected {{rejected}}",
+        "viewSources": "View {{count}} sources",
+        "sourceListLabel": "Runtime sources",
+        "source": "{{type}}: {{name}} · {{state}} · Revision {{revision}}",
+        "sourceType": {
+          "HOST_METRICS": "Host Metrics",
+          "PROMETHEUS": "Prometheus",
+          "FILE_LOG": "File Log"
+        },
+        "sourceState": {
+          "DESIRED": "DESIRED",
+          "ACTIVE": "ACTIVE",
+          "REJECTED": "REJECTED"
+        },
         "state": {
           "STOPPED": "STOPPED",
           "STARTING": "STARTING",

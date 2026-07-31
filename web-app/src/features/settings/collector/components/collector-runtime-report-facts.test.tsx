@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -21,6 +21,7 @@ const report: CollectorRuntimeReport = {
   activeRevision: 8,
   failureCode: 'NONE',
   rejectedRevisions: [],
+  sources: [],
   reportedAt: '2026-07-22T10:01:05Z'
 };
 
@@ -56,6 +57,41 @@ describe('CollectorRuntimeReportFacts', () => {
       </I18nextProvider>
     );
     expect(screen.getByText('Failure PORT_CONFLICT')).toBeInTheDocument();
+  });
+
+  it('bounds a 49-source table fact while keeping the complete safe list accessible', async () => {
+    const sources: CollectorRuntimeReport['sources'] = [
+      { type: 'HOST_METRICS', name: 'host', revision: 8, state: 'ACTIVE' },
+      ...Array.from({ length: 32 }, (_, index) => ({
+        type: 'PROMETHEUS' as const,
+        name: `prometheus-${index + 1}`,
+        revision: 8,
+        state: 'REJECTED' as const
+      })),
+      ...Array.from({ length: 16 }, (_, index) => ({
+        type: 'FILE_LOG' as const,
+        name: `file-log-${index + 1}`,
+        revision: 9,
+        state: 'DESIRED' as const
+      }))
+    ];
+    renderFacts({
+      ...report,
+      sources
+    });
+
+    expect(screen.getByText('Sources: 49 · Active 1 · Desired 16 · Rejected 32')).toBeInTheDocument();
+    expect(screen.queryByText('Prometheus: prometheus-1 · REJECTED · Revision 8')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Runtime sources' })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'View 49 sources' }));
+
+    const list = await screen.findByRole('list', { name: 'Runtime sources' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(49);
+    expect(within(list).getByText('Host Metrics: host · ACTIVE · Revision 8')).toBeInTheDocument();
+    expect(within(list).getByText('Prometheus: prometheus-32 · REJECTED · Revision 8')).toBeInTheDocument();
+    expect(within(list).getByText('File Log: file-log-16 · DESIRED · Revision 9')).toBeInTheDocument();
   });
 });
 

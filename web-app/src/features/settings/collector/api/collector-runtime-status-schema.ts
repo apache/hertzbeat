@@ -9,6 +9,8 @@ import { z } from 'zod';
 
 import {
   collectorRuntimeFailureCodes,
+  collectorRuntimeSourceStates,
+  collectorRuntimeSourceTypes,
   collectorRuntimeStates,
   type CollectorRuntimeReport
 } from '../model/collector-runtime-report-model';
@@ -17,10 +19,10 @@ import { CollectorContractError } from '../model/collector-model';
 const instantSchema = z.string().datetime({ offset: true });
 const sourceStatusSchema = z
   .object({
-    type: z.enum(['HOST_METRICS', 'PROMETHEUS', 'FILE_LOG']),
+    type: z.enum(collectorRuntimeSourceTypes),
     name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/),
     revision: z.number().int().positive().safe(),
-    state: z.enum(['DESIRED', 'ACTIVE', 'REJECTED']),
+    state: z.enum(collectorRuntimeSourceStates),
     lastError: z.string().max(512)
   })
   .strict();
@@ -61,6 +63,7 @@ export function parseCollectorRuntimeReport(value: unknown, reportedAt: unknown)
     rejectedRevisions: [
       ...new Set(status.data.sources.filter(({ state }) => state === 'REJECTED').map(({ revision }) => revision))
     ],
+    sources: status.data.sources.map(({ type, name, revision, state }) => ({ type, name, revision, state })),
     reportedAt: timestamp.data
   };
 }

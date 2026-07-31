@@ -109,6 +109,7 @@ describe('Collector management API', () => {
         activeRevision: 7,
         failureCode: 'CONFIGURATION_ERROR',
         rejectedRevisions: [],
+        sources: [],
         reportedAt: '2026-07-22T10:01:05Z'
       }
     });

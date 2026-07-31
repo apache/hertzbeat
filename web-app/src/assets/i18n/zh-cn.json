@@ -1363,6 +1363,20 @@
         "revisions": "期望 {{desiredRevision}} · 活跃 {{activeRevision}}",
         "reportedAt": "上报于 {{time}}",
         "failure": "故障 {{failureCode}}",
+        "sourceSummary": "来源：{{count}} · 活跃 {{active}} · 期望 {{desired}} · 已拒绝 {{rejected}}",
+        "viewSources": "查看 {{count}} 个来源",
+        "sourceListLabel": "运行时来源",
+        "source": "{{type}}：{{name}} · {{state}} · 修订版 {{revision}}",
+        "sourceType": {
+          "HOST_METRICS": "主机指标",
+          "PROMETHEUS": "Prometheus",
+          "FILE_LOG": "文件日志"
+        },
+        "sourceState": {
+          "DESIRED": "期望",
+          "ACTIVE": "活跃",
+          "REJECTED": "已拒绝"
+        },
         "state": {
           "STOPPED": "已停止",
           "STARTING": "启动中",

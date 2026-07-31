@@ -17,6 +17,7 @@ const report = {
   activeRevision: 7,
   failureCode: 'NONE' as const,
   rejectedRevisions: [],
+  sources: [],
   reportedAt: '2026-07-22T10:01:05Z'
 };
 

@@ -18,9 +18,20 @@ export const collectorRuntimeFailureCodes = [
   'PROCESS_CRASH',
   'UNKNOWN'
 ] as const;
+export const collectorRuntimeSourceTypes = ['HOST_METRICS', 'PROMETHEUS', 'FILE_LOG'] as const;
+export const collectorRuntimeSourceStates = ['DESIRED', 'ACTIVE', 'REJECTED'] as const;
 
 type CollectorRuntimeState = (typeof collectorRuntimeStates)[number];
 type CollectorRuntimeFailureCode = (typeof collectorRuntimeFailureCodes)[number];
+type CollectorRuntimeSourceType = (typeof collectorRuntimeSourceTypes)[number];
+type CollectorRuntimeSourceState = (typeof collectorRuntimeSourceStates)[number];
+
+export type CollectorRuntimeSourceReport = {
+  type: CollectorRuntimeSourceType;
+  name: string;
+  revision: number;
+  state: CollectorRuntimeSourceState;
+};
 
 /** Safe revision evidence projected from a Collector heartbeat report. */
 export type CollectorRuntimeReport = {
@@ -31,6 +42,7 @@ export type CollectorRuntimeReport = {
   activeRevision: number;
   failureCode: CollectorRuntimeFailureCode;
   rejectedRevisions: number[];
+  sources: CollectorRuntimeSourceReport[];
   reportedAt: string;
 };
 
