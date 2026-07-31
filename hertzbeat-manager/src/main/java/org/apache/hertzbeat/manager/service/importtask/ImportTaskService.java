@@ -57,7 +57,7 @@ public class ImportTaskService {
                 UUID.randomUUID().toString(), normalizeWorkspace(workspaceId), ImportTaskStatus.IN_PROGRESS,
                 0, now, now, null, null);
         tasks.put(state.taskId(), state);
-        notifyChanged(state.taskId());
+        notifyChanged();
         return view(state);
     }
 
@@ -114,7 +114,7 @@ public class ImportTaskService {
     private ImportTaskView replaceAndNotify(ImportTaskState state) {
         tasks.put(state.taskId(), state);
         trimTerminalHistory();
-        notifyChanged(state.taskId());
+        notifyChanged();
         return view(state);
     }
 
@@ -139,9 +139,9 @@ public class ImportTaskService {
         return state;
     }
 
-    private void notifyChanged(String taskId) {
+    private void notifyChanged() {
         if (managerSseManager != null) {
-            managerSseManager.broadcastImportTaskChanged(taskId);
+            managerSseManager.broadcastImportTaskChanged();
         }
     }
 

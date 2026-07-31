@@ -90,9 +90,9 @@ public class ManagerSseManager {
     }
 
     @Async
-    public void broadcastImportTaskChanged(String taskId) {
+    public void broadcastImportTaskChanged() {
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(),
-                JsonUtil.toJson(new ImportTaskChanged(1, taskId, "CANONICAL_REREAD")));
+                JsonUtil.toJson(new ImportTaskChanged(1, "CANONICAL_REREAD")));
     }
 
     private void removeEmitter(Long clientId) {
@@ -106,6 +106,6 @@ public class ManagerSseManager {
     private record ManagerStreamReady(int schemaVersion, String delivery) {
     }
 
-    private record ImportTaskChanged(int schemaVersion, String taskId, String delivery) {
+    private record ImportTaskChanged(int schemaVersion, String delivery) {
     }
 }

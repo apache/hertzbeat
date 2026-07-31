@@ -36,14 +36,20 @@ class ManagerSseManagerTest {
     }
 
     @Test
-    void taskEventContainsOnlyOpaqueRereadTrigger() {
+    void taskEventContainsNoTaskOrWorkspaceIdentifier() {
         CapturingManager manager = new CapturingManager();
 
-        manager.broadcastImportTaskChanged("opaque-task-id");
+        manager.broadcastImportTaskChanged();
 
         assertEquals(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), manager.eventName);
-        assertTrue(manager.data.contains("opaque-task-id"));
+        assertEquals("{\"schemaVersion\":1,\"delivery\":\"CANONICAL_REREAD\"}", manager.data);
         assertTrue(manager.data.contains("CANONICAL_REREAD"));
+        assertFalse(manager.data.contains("opaque-task-id"));
+        assertFalse(manager.data.contains("taskId"));
+        assertFalse(manager.data.contains("workspace"));
+        assertFalse(manager.data.contains("filename"));
+        assertFalse(manager.data.contains("fileName"));
+        assertFalse(manager.data.contains("error"));
         assertFalse(manager.data.contains("errMsg"));
         assertFalse(manager.data.contains("taskName"));
     }

@@ -12,10 +12,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.junit.jupiter.api.Test;
 
 class ImportTaskServiceTest {
@@ -59,5 +62,15 @@ class ImportTaskServiceTest {
         assertEquals(2, service.list("team-a", 20).size());
         assertEquals(third.taskId(), service.list("team-a", 20).getFirst().taskId());
         assertNotEquals(second.taskId(), third.taskId());
+    }
+
+    @Test
+    void emitsOnlyIdentifierFreeCanonicalRereadSignal() {
+        ManagerSseManager managerSseManager = mock(ManagerSseManager.class);
+        ImportTaskService service = new ImportTaskService(managerSseManager, CLOCK, 100);
+
+        service.create("team-a");
+
+        verify(managerSseManager).broadcastImportTaskChanged();
     }
 }
