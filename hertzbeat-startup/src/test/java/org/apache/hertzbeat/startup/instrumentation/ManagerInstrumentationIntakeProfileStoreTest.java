@@ -24,18 +24,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Environment;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.guide.InstrumentationGuideAdapterRegistry;
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationCatalogService;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
@@ -72,6 +77,8 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         assertEquals(IntakeKind.SERVER, profiles.getFirst().kind());
         assertEquals("https://otel.example.test/v1", profiles.getFirst()
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
+        assertEquals(Authentication.BEARER_TOKEN, profiles.getFirst().authentication());
+        assertEquals("Authorization", profiles.getFirst().authorizationHeader());
         assertEquals(TransportSecurity.TLS, profiles.getFirst()
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
         assertNull(profiles.getFirst().collectorId());
@@ -101,7 +108,8 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 new ExternalOtelCollectorIntakeProperties(
                         "external-west",
                         "http://otel.example.test:4318",
-                        "https://otel.example.test:4317"));
+                        "https://otel.example.test:4317",
+                        "bearer_token"));
         InstrumentationIntakeProfileV2Service profiles = new InstrumentationIntakeProfileV2Service(store);
 
         var discovery = profiles.profiles();
@@ -116,7 +124,8 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         assertEquals(Gateway.EXTERNAL, external.gateway());
         assertEquals(List.of(OtlpTransport.HTTP_PROTOBUF, OtlpTransport.GRPC),
                 external.supportedTransports());
-        assertEquals("Authorization", external.authHeaderName());
+        assertEquals(Authentication.BEARER_TOKEN, external.authentication());
+        assertEquals("Authorization", external.authorizationHeader());
         assertNull(external.collectorId());
         assertEquals(TransportSecurity.PLAINTEXT,
                 external.endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
@@ -162,7 +171,8 @@ class ManagerInstrumentationIntakeProfileStoreTest {
             var profile = new ManagerInstrumentationIntakeProfileStore(
                             emptyDao(),
                             mock(CollectorIntakeAdvertisementReader.class),
-                            new ExternalOtelCollectorIntakeProperties("external-west", endpoint, null))
+                            new ExternalOtelCollectorIntakeProperties(
+                                    "external-west", endpoint, null, "bearer_token"))
                     .profiles()
                     .getFirst();
 
@@ -172,9 +182,140 @@ class ManagerInstrumentationIntakeProfileStoreTest {
             assertEquals(ErrorCode.ADVERTISEMENT_INVALID, profile.errorCode());
             assertEquals(Map.of(), profile.endpoints());
             assertNull(profile.gateway());
-            assertNull(profile.authHeaderName());
+            assertNull(profile.authentication());
+            assertNull(profile.authorizationHeader());
             assertFalse(profile.toString().contains(endpoint));
             assertFalse(profile.toString().contains("secret-value"));
+        }
+    }
+
+    @Test
+    void externalAuthenticationIsExplicitBoundedAndSecretFree() throws Exception {
+        var none = new ManagerInstrumentationIntakeProfileStore(
+                        emptyDao(),
+                        mock(CollectorIntakeAdvertisementReader.class),
+                        new ExternalOtelCollectorIntakeProperties(
+                                "external-none",
+                                "http://otel.example.test:4318",
+                                null,
+                                "none"))
+                .profiles()
+                .getFirst();
+
+        assertEquals(Availability.AVAILABLE, none.availability());
+        assertEquals(Authentication.NONE, none.authentication());
+        assertNull(none.authorizationHeader());
+        assertEquals(
+                "{\"id\":\"external-none\",\"kind\":\"external_otel_collector\","
+                        + "\"availability\":\"available\",\"gateway\":\"external\","
+                        + "\"supportedTransports\":[\"http_protobuf\"],"
+                        + "\"endpoints\":{\"http_protobuf\":{\"url\":\"http://otel.example.test:4318\","
+                        + "\"security\":\"plaintext\"}},\"authentication\":\"none\"}",
+                new ObjectMapper().writeValueAsString(none));
+
+        for (String authentication : List.of("", "basic", "Bearer secret-value")) {
+            var invalid = new ManagerInstrumentationIntakeProfileStore(
+                            emptyDao(),
+                            mock(CollectorIntakeAdvertisementReader.class),
+                            new ExternalOtelCollectorIntakeProperties(
+                                    "external-invalid",
+                                    "https://otel.example.test:4318",
+                                    null,
+                                    authentication))
+                    .profiles()
+                    .getFirst();
+            assertEquals(Availability.UNAVAILABLE, invalid.availability());
+            assertEquals(ErrorCode.ADVERTISEMENT_INVALID, invalid.errorCode());
+            assertNull(invalid.authentication());
+            assertNull(invalid.authorizationHeader());
+            if (!authentication.isEmpty()) {
+                assertFalse(invalid.toString().contains(authentication));
+            }
+            assertFalse(new ObjectMapper().writeValueAsString(invalid).contains("secret-value"));
+        }
+    }
+
+    @Test
+    void rendererOmitsBearerMaterialForEveryNoAuthenticationRecipeFamily() {
+        ExternalOtelCollectorIntakeProperties properties = new ExternalOtelCollectorIntakeProperties(
+                "external-none",
+                "http://otel.example.test:4318",
+                null,
+                "none");
+        InstrumentationGuideV2Renderer renderer = renderer(properties);
+        ServiceIdentity service = new ServiceIdentity(
+                "checkout-api", "commerce", "prod", "checkout-1", "/checkout");
+        List<RenderRequest> requests = new ArrayList<>(List.of(
+                new RenderRequest(
+                        2,
+                        SourceKind.QUICK_START,
+                        "opentelemetry_telemetrygen",
+                        null,
+                        null,
+                        null,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        "external-none",
+                        service),
+                new RenderRequest(
+                        2,
+                        SourceKind.APPLICATION,
+                        "java_spring_boot_zero_code",
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Language.JAVA,
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Framework.SPRING_BOOT,
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Method.ZERO_CODE,
+                        Environment.VM,
+                        Platform.LINUX_AMD64,
+                        "external-none",
+                        service),
+                new RenderRequest(
+                        2,
+                        SourceKind.EXISTING_OPENTELEMETRY,
+                        "existing_otlp",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "external-none",
+                        service)));
+        for (String recipeId : List.of(
+                "hertzbeat_hybrid_collector",
+                "opentelemetry_collector",
+                "existing_otlp",
+                "logstash",
+                "vector",
+                "hertzbeat_host_metrics",
+                "hertzbeat_prometheus",
+                "hertzbeat_file_logs")) {
+            requests.add(new RenderRequest(
+                    2,
+                    SourceKind.EXISTING_OPENTELEMETRY,
+                    recipeId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "external-none",
+                    service));
+        }
+
+        for (RenderRequest request : requests) {
+            var rendered = renderer.render(request);
+            String content = rendered.blocks().stream()
+                    .map(block -> block.content() == null ? "" : block.content())
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            assertEquals(Map.of(), rendered.secretPlaceholders());
+            assertFalse(content.contains("${HERTZBEAT_TOKEN}"));
+            assertFalse(content.contains("Authorization"));
+            assertFalse(content.contains("OTEL_EXPORTER_OTLP_HEADERS"));
+            assertFalse(content.contains("token:"));
+            assertFalse(rendered.blocks().stream()
+                    .anyMatch(block -> "plaintext_transport_warning".equals(block.id())));
         }
     }
 
@@ -188,7 +329,8 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var incomplete = new ManagerInstrumentationIntakeProfileStore(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
-                        new ExternalOtelCollectorIntakeProperties("external-west", null, null))
+                        new ExternalOtelCollectorIntakeProperties(
+                                "external-west", null, null, "bearer_token"))
                 .profiles()
                 .getFirst();
         assertEquals("external-west", incomplete.id());
@@ -198,7 +340,10 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
                         new ExternalOtelCollectorIntakeProperties(
-                                "external?token=secret-value", "https://otel.example.test:4318", null))
+                                "external?token=secret-value",
+                                "https://otel.example.test:4318",
+                                null,
+                                "bearer_token"))
                 .profiles()
                 .getFirst();
         assertEquals("external:configured", unsafeId.id());
@@ -217,7 +362,10 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 dao,
                 reader,
                 new ExternalOtelCollectorIntakeProperties(
-                        "server:server-advertisement", "https://otel.example.test:4318", null));
+                        "server:server-advertisement",
+                        "https://otel.example.test:4318",
+                        null,
+                        "bearer_token"));
 
         var discovery = new InstrumentationIntakeProfileV2Service(store).profiles();
 
@@ -241,7 +389,20 @@ class ManagerInstrumentationIntakeProfileStoreTest {
     }
 
     private ExternalOtelCollectorIntakeProperties unconfiguredExternal() {
-        return new ExternalOtelCollectorIntakeProperties(null, null, null);
+        return new ExternalOtelCollectorIntakeProperties(null, null, null, null);
+    }
+
+    private InstrumentationGuideV2Renderer renderer(ExternalOtelCollectorIntakeProperties properties) {
+        InstrumentationCatalogV2Service catalog =
+                new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
+        InstrumentationIntakeProfileV2Service profiles = new InstrumentationIntakeProfileV2Service(
+                new ManagerInstrumentationIntakeProfileStore(
+                        emptyDao(), mock(CollectorIntakeAdvertisementReader.class), properties));
+        return new InstrumentationGuideV2Renderer(
+                catalog,
+                profiles,
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog, InstrumentationGuideAdapterRegistry.official()));
     }
 
     private CollectorInstrumentationIntake availableServer() {

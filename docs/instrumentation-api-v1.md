@@ -185,7 +185,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes", "windows_service"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "supported", "logs": "supported", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry .NET Automatic Instrumentation",
                 "sourceUrl": "https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/tag/v1.15.0",

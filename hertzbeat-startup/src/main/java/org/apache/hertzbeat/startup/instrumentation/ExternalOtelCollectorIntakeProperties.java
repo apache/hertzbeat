@@ -30,10 +30,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record ExternalOtelCollectorIntakeProperties(
         String profileId,
         String otlpHttpEndpoint,
-        String otlpGrpcEndpoint) {
+        String otlpGrpcEndpoint,
+        String authentication) {
 
     boolean configured() {
-        return hasText(profileId) || hasText(otlpHttpEndpoint) || hasText(otlpGrpcEndpoint);
+        return hasText(profileId)
+                || hasText(otlpHttpEndpoint)
+                || hasText(otlpGrpcEndpoint)
+                || hasText(authentication);
     }
 
     private boolean hasText(String value) {

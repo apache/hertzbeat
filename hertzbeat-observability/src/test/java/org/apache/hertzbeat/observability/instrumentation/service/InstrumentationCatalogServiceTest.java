@@ -121,6 +121,7 @@ class InstrumentationCatalogServiceTest {
         var dotnet = service.requireMethod(Language.DOTNET, Framework.ASPNET_CORE, Method.ZERO_CODE);
         assertEquals("1.15.0", dotnet.component().version());
         assertFalse(dotnet.component().bundledWithHertzBeat());
+        assertEquals(Capability.PREVIEW, dotnet.signals().logs());
 
         var node = service.requireMethod(Language.NODEJS, Framework.EXPRESS, Method.ZERO_CODE);
         assertEquals("0.78.0", node.component().version());
@@ -216,7 +217,7 @@ class InstrumentationCatalogServiceTest {
                 signal("java", Language.JAVA, Framework.SPRING_BOOT, Method.ZERO_CODE,
                         Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
                 signal("dotnet", Language.DOTNET, Framework.ASPNET_CORE, Method.ZERO_CODE,
-                        Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
+                        Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
                 signal("node", Language.NODEJS, Framework.EXPRESS, Method.ZERO_CODE,
                         Capability.SUPPORTED, Capability.UNSUPPORTED, Capability.SUPPORTED),
                 signal("python", Language.PYTHON, Framework.DJANGO, Method.ZERO_CODE,

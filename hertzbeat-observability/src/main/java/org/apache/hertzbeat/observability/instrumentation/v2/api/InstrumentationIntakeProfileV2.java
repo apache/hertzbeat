@@ -102,6 +102,32 @@ public final class InstrumentationIntakeProfileV2 {
         }
     }
 
+    /** Explicit application-to-intake authentication contract. */
+    public enum Authentication {
+        NONE("none"),
+        BEARER_TOKEN("bearer_token");
+
+        private final String code;
+
+        Authentication(String code) {
+            this.code = code;
+        }
+
+        @JsonValue
+        public String code() {
+            return code;
+        }
+
+        public static Authentication fromCode(String code) {
+            for (Authentication value : values()) {
+                if (value.code.equals(code)) {
+                    return value;
+                }
+            }
+            throw new IllegalArgumentException("Intake authentication is invalid");
+        }
+    }
+
     /** One explicit endpoint paired with its scheme-derived transport security. */
     public record IntakeEndpoint(String url, TransportSecurity security) {
 
@@ -189,9 +215,33 @@ public final class InstrumentationIntakeProfileV2 {
             Gateway gateway,
             List<OtlpTransport> supportedTransports,
             Map<OtlpTransport, IntakeEndpoint> endpoints,
-            String authHeaderName,
+            Authentication authentication,
+            String authorizationHeader,
             String collectorId,
             ErrorCode errorCode) {
+
+        public IntakeProfile(
+                String id,
+                IntakeKind kind,
+                Availability availability,
+                Gateway gateway,
+                List<OtlpTransport> supportedTransports,
+                Map<OtlpTransport, IntakeEndpoint> endpoints,
+                String authorizationHeader,
+                String collectorId,
+                ErrorCode errorCode) {
+            this(
+                    id,
+                    kind,
+                    availability,
+                    gateway,
+                    supportedTransports,
+                    endpoints,
+                    availability == Availability.AVAILABLE ? Authentication.BEARER_TOKEN : null,
+                    authorizationHeader,
+                    collectorId,
+                    errorCode);
+        }
 
         public IntakeProfile {
             requireId(id);
@@ -201,10 +251,24 @@ public final class InstrumentationIntakeProfileV2 {
             endpoints = Map.copyOf(Objects.requireNonNull(endpoints, "endpoints"));
             if (availability == Availability.AVAILABLE) {
                 validateAvailable(
-                        kind, gateway, supportedTransports, endpoints, authHeaderName, collectorId, errorCode);
+                        kind,
+                        gateway,
+                        supportedTransports,
+                        endpoints,
+                        authentication,
+                        authorizationHeader,
+                        collectorId,
+                        errorCode);
             } else {
                 validateUnavailable(
-                        kind, gateway, supportedTransports, endpoints, authHeaderName, collectorId, errorCode);
+                        kind,
+                        gateway,
+                        supportedTransports,
+                        endpoints,
+                        authentication,
+                        authorizationHeader,
+                        collectorId,
+                        errorCode);
             }
         }
     }
@@ -257,13 +321,23 @@ public final class InstrumentationIntakeProfileV2 {
             Gateway gateway,
             List<OtlpTransport> transports,
             Map<OtlpTransport, IntakeEndpoint> endpoints,
-            String authHeaderName,
+            Authentication authentication,
+            String authorizationHeader,
             String collectorId,
             ErrorCode errorCode) {
         if (gateway == null || transports.isEmpty()
                 || transports.size() != endpoints.size() || !endpoints.keySet().containsAll(transports)
-                || !"Authorization".equals(authHeaderName) || errorCode != null) {
+                || authentication == null || errorCode != null) {
             throw new IllegalArgumentException("Available intake profile is invalid");
+        }
+        if (authentication == Authentication.BEARER_TOKEN
+                ? !"Authorization".equals(authorizationHeader)
+                : authorizationHeader != null) {
+            throw new IllegalArgumentException("Intake authentication metadata is inconsistent");
+        }
+        if (kind != IntakeKind.EXTERNAL_OTEL_COLLECTOR
+                && authentication != Authentication.BEARER_TOKEN) {
+            throw new IllegalArgumentException("HertzBeat intake profiles require bearer authentication");
         }
         if ((kind == IntakeKind.SERVER && gateway != Gateway.SERVER)
                 || (kind == IntakeKind.HERTZBEAT_COLLECTOR && gateway != Gateway.COLLECTOR)
@@ -285,10 +359,12 @@ public final class InstrumentationIntakeProfileV2 {
             Gateway gateway,
             List<OtlpTransport> transports,
             Map<OtlpTransport, IntakeEndpoint> endpoints,
-            String authHeaderName,
+            Authentication authentication,
+            String authorizationHeader,
             String collectorId,
             ErrorCode errorCode) {
-        if (gateway != null || !transports.isEmpty() || !endpoints.isEmpty() || authHeaderName != null
+        if (gateway != null || !transports.isEmpty() || !endpoints.isEmpty()
+                || authentication != null || authorizationHeader != null
                 || (kind == IntakeKind.HERTZBEAT_COLLECTOR && collectorId == null)
                 || (kind != IntakeKind.HERTZBEAT_COLLECTOR && collectorId != null) || errorCode == null) {
             throw new IllegalArgumentException("Unavailable intake profile cannot advertise connectivity");

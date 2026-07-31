@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.GuideBlock;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.ErrorCode;
 import org.springframework.stereotype.Component;
@@ -71,11 +72,16 @@ public class InstrumentationSourceGuideV2Registry {
     }
 
     /** Safe server-resolved values available to templates. */
-    public record GuideContext(String endpoint, String protocol, ServiceIdentity service) {
+    public record GuideContext(
+            String endpoint,
+            String protocol,
+            ServiceIdentity service,
+            Authentication authentication) {
         public GuideContext {
             Objects.requireNonNull(endpoint, "endpoint");
             Objects.requireNonNull(protocol, "protocol");
             Objects.requireNonNull(service, "service");
+            Objects.requireNonNull(authentication, "authentication");
         }
     }
 }

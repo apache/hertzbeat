@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.GuideBlock;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.guide.InstrumentationSourceGuideV2Registry.GuideContext;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +35,8 @@ class InstrumentationSourceGuideV2TemplatesTest {
     private final GuideContext context = new GuideContext(
             "https://otel.example.test/api/otlp",
             "http/protobuf",
-            new ServiceIdentity("checkout-api", "commerce", "prod", null, null));
+            new ServiceIdentity("checkout-api", "commerce", "prod", null, null),
+            Authentication.BEARER_TOKEN);
 
     @Test
     void rendersHybridCollectorEnvironmentWithoutSecretMaterial() {

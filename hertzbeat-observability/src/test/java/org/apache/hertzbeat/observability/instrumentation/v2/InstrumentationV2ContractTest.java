@@ -39,6 +39,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.SecretPlaceholder;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeEndpoint;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
@@ -177,10 +178,13 @@ class InstrumentationV2ContractTest {
         String json = mapper.writeValueAsString(profile);
         assertTrue(json.contains("\"id\":\"server-primary\""));
         assertTrue(json.contains("\"kind\":\"server\""));
+        assertTrue(json.contains("\"authentication\":\"bearer_token\""));
+        assertTrue(json.contains("\"authorizationHeader\":\"Authorization\""));
         assertTrue(json.contains("\"endpoints\":{\"http_protobuf\":"
                 + "{\"url\":\"https://otel.example.test/v1\",\"security\":\"tls\"}}"));
         assertFalse(json.contains("httpsEndpoints"));
-        assertFalse(json.contains("token"));
+        assertFalse(json.contains("\"token\":"));
+        assertFalse(json.contains("authHeaderName"));
         assertFalse(json.contains("collectorId"));
         IntakeProfile plaintext = new IntakeProfile(
                 "collector:loopback",
@@ -239,6 +243,32 @@ class InstrumentationV2ContractTest {
                 Map.of(
                         OtlpTransport.GRPC,
                         new IntakeEndpoint("https://otel.example.test:4317", TransportSecurity.TLS)),
+                "Authorization",
+                null,
+                null));
+        assertThrows(IllegalArgumentException.class, () -> new IntakeProfile(
+                "server-none",
+                IntakeKind.SERVER,
+                Availability.AVAILABLE,
+                Gateway.SERVER,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("https://otel.example.test:4318", TransportSecurity.TLS)),
+                Authentication.NONE,
+                null,
+                null,
+                null));
+        assertThrows(IllegalArgumentException.class, () -> new IntakeProfile(
+                "external-inconsistent",
+                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
+                Availability.AVAILABLE,
+                Gateway.EXTERNAL,
+                List.of(OtlpTransport.HTTP_PROTOBUF),
+                Map.of(
+                        OtlpTransport.HTTP_PROTOBUF,
+                        new IntakeEndpoint("https://otel.example.test:4318", TransportSecurity.TLS)),
+                Authentication.NONE,
                 "Authorization",
                 null,
                 null));

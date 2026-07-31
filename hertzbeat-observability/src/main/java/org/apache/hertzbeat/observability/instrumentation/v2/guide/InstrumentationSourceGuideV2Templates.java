@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.instrumentation.v2.guide;
 import java.util.List;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.GuideBlock;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.guide.InstrumentationSourceGuideV2Registry.GuideContext;
 
 /** Structured templates for Collector and managed-source recipes. */
@@ -38,14 +39,14 @@ final class InstrumentationSourceGuideV2Templates {
                 + "  otel-runtime:\n"
                 + "    enabled: ${HERTZBEAT_OTEL_RUNTIME_ENABLED}\n"
                 + "    export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT}\n"
-                + "    token: ${HERTZBEAT_OTLP_TOKEN}\n"
+                + tokenProperty(context)
                 + "    otlp-grpc-endpoint: ${HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT}\n"
                 + "    otlp-http-endpoint: ${HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT}";
         return common("hertzbeat_collector", environment, "yaml", configuration);
     }
 
     static List<GuideBlock> openTelemetry(GuideContext context) {
-        String environment = tokenEnvironment();
+        String environment = tokenEnvironment(context);
         String exporter = "processors:\n"
                 + "  resource/hertzbeat_context:\n"
                 + "    attributes:\n"
@@ -61,8 +62,7 @@ final class InstrumentationSourceGuideV2Templates {
                 + "exporters:\n"
                 + "  otlphttp/hertzbeat:\n"
                 + "    endpoint: " + context.endpoint() + "\n"
-                + "    headers:\n"
-                + "      Authorization: \"Bearer ${env:HERTZBEAT_TOKEN}\"\n"
+                + collectorAuthorization(context)
                 + "# Merge these entries into every intended service pipeline:\n"
                 + "# processors: [<existing-processors>, resource/hertzbeat_context]\n"
                 + "# exporters: [<existing-exporters>, otlphttp/hertzbeat]";
@@ -103,7 +103,7 @@ final class InstrumentationSourceGuideV2Templates {
     }
 
     static List<GuideBlock> logstash(GuideContext context) {
-        String environment = tokenEnvironment()
+        String environment = tokenEnvironment(context)
                 + "\nLOGSTASH_OTEL_TCP_HOST=otel-collector"
                 + "\nLOGSTASH_OTEL_TCP_PORT=2256";
         String configuration = "# OpenTelemetry Collector config\n"
@@ -116,8 +116,7 @@ final class InstrumentationSourceGuideV2Templates {
                 + "exporters:\n"
                 + "  otlphttp/hertzbeat:\n"
                 + "    endpoint: " + context.endpoint() + "\n"
-                + "    headers:\n"
-                + "      Authorization: \"Bearer ${env:HERTZBEAT_TOKEN}\"\n"
+                + collectorAuthorization(context)
                 + "processors:\n"
                 + "  transform/logstash_context:\n"
                 + "    log_statements:\n"
@@ -173,24 +172,22 @@ final class InstrumentationSourceGuideV2Templates {
                 + "      method: post\n"
                 + "      encoding:\n"
                 + "        codec: otlp\n"
-                + "      request:\n"
-                + "        headers:\n"
-                + "          Authorization: \"Bearer ${HERTZBEAT_TOKEN}\"";
-        return common("vector", tokenEnvironment(), "yaml", configuration);
+                + vectorAuthorization(context);
+        return common("vector", tokenEnvironment(context), "yaml", configuration);
     }
 
     static List<GuideBlock> hostMetrics(GuideContext context) {
         String environment = hybridEnvironment(context)
                 + "\nHERTZBEAT_OTEL_HOST_METRICS_ENABLED=true"
                 + "\nHERTZBEAT_OTEL_HOST_METRICS_INTERVAL=<10s-to-5m>";
-        String configuration = runtimePrefix()
+        String configuration = runtimePrefix(context)
                 + "    host-metrics-enabled: ${HERTZBEAT_OTEL_HOST_METRICS_ENABLED}\n"
                 + "    host-metrics-interval: ${HERTZBEAT_OTEL_HOST_METRICS_INTERVAL}";
         return common("hertzbeat_collector", environment, "yaml", configuration);
     }
 
     static List<GuideBlock> prometheus(GuideContext context) {
-        String configuration = runtimePrefix()
+        String configuration = runtimePrefix(context)
                 + "    prometheus-targets:\n"
                 + "      - name: \"" + context.service().name() + "\"\n"
                 + "        endpoint: <http-or-https-metrics-endpoint>\n"
@@ -200,7 +197,7 @@ final class InstrumentationSourceGuideV2Templates {
     }
 
     static List<GuideBlock> fileLogs(GuideContext context) {
-        String configuration = runtimePrefix()
+        String configuration = runtimePrefix(context)
                 + "    file-log-allow-roots:\n"
                 + "      - /var/log/<administrator-approved-service>\n"
                 + "    file-log-profiles:\n"
@@ -269,25 +266,49 @@ final class InstrumentationSourceGuideV2Templates {
                 id, type, titleKey, bodyKey, locationKey, null, null, null, List.of());
     }
 
-    private static String tokenEnvironment() {
-        return "HERTZBEAT_TOKEN=" + TOKEN;
+    private static String tokenEnvironment(GuideContext context) {
+        return bearer(context)
+                ? "HERTZBEAT_TOKEN=" + TOKEN
+                : "# This intake profile requires no authentication environment variable.";
     }
 
     private static String hybridEnvironment(GuideContext context) {
         return "HERTZBEAT_OTEL_RUNTIME_ENABLED=true\n"
                 + "HERTZBEAT_OTLP_HTTP_ENDPOINT=" + context.endpoint() + "\n"
-                + "HERTZBEAT_OTLP_TOKEN=" + TOKEN + "\n"
+                + (bearer(context) ? "HERTZBEAT_OTLP_TOKEN=" + TOKEN + "\n" : "")
                 + "OTEL_RESOURCE_ATTRIBUTES=service.name=" + context.service().name()
                 + ",service.namespace=" + context.service().namespace()
                 + ",deployment.environment.name=" + context.service().environment();
     }
 
-    private static String runtimePrefix() {
+    private static String runtimePrefix(GuideContext context) {
         return "collector:\n"
                 + "  otel-runtime:\n"
                 + "    enabled: ${HERTZBEAT_OTEL_RUNTIME_ENABLED}\n"
                 + "    export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT}\n"
-                + "    token: ${HERTZBEAT_OTLP_TOKEN}\n";
+                + tokenProperty(context);
+    }
+
+    private static String tokenProperty(GuideContext context) {
+        return bearer(context) ? "    token: ${HERTZBEAT_OTLP_TOKEN}\n" : "";
+    }
+
+    private static String collectorAuthorization(GuideContext context) {
+        return bearer(context)
+                ? "    headers:\n      Authorization: \"Bearer ${env:HERTZBEAT_TOKEN}\"\n"
+                : "";
+    }
+
+    private static String vectorAuthorization(GuideContext context) {
+        return bearer(context)
+                ? "      request:\n"
+                        + "        headers:\n"
+                        + "          Authorization: \"Bearer ${HERTZBEAT_TOKEN}\""
+                : "";
+    }
+
+    private static boolean bearer(GuideContext context) {
+        return context.authentication() == Authentication.BEARER_TOKEN;
     }
 
     private static String signalEndpoint(String endpoint, String signal) {
