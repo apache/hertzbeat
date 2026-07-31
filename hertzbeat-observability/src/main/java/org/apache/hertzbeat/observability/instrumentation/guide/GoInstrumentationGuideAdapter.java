@@ -140,8 +140,12 @@ public class GoInstrumentationGuideAdapter implements InstrumentationGuideAdapte
         String install = "git clone --branch v" + version
                 + " --depth 1 https://github.com/open-telemetry/opentelemetry-go-instrumentation.git\n"
                 + "cd opentelemetry-go-instrumentation && make build";
+        String authorizationEnvironment = request.collector().authorizationHeader() == null
+                ? ""
+                : ",OTEL_EXPORTER_OTLP_HEADERS";
         String start = "sudo --preserve-env=OTEL_SERVICE_NAME,OTEL_RESOURCE_ATTRIBUTES,"
-                + "OTEL_EXPORTER_OTLP_ENDPOINT,OTEL_EXPORTER_OTLP_PROTOCOL,OTEL_EXPORTER_OTLP_HEADERS,"
+                + "OTEL_EXPORTER_OTLP_ENDPOINT,OTEL_EXPORTER_OTLP_PROTOCOL"
+                + authorizationEnvironment + ","
                 + "OTEL_TRACES_EXPORTER,OTEL_METRICS_EXPORTER,OTEL_LOGS_EXPORTER "
                 + "OTEL_GO_AUTO_TARGET_EXE=/absolute/path/to/application ./otel-go-instrumentation";
         String container = request.environment() == Environment.KUBERNETES

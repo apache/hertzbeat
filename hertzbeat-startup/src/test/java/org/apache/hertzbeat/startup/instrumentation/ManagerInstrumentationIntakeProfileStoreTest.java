@@ -303,20 +303,63 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                     "external-none",
                     service));
         }
+        InstrumentationCatalogV2Service catalog =
+                new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
+        catalog.catalog().recipes().stream()
+                .filter(recipe -> recipe.kind() == SourceKind.APPLICATION)
+                .forEach(recipe -> requests.add(new RenderRequest(
+                        2,
+                        recipe.kind(),
+                        recipe.id(),
+                        recipe.language(),
+                        recipe.framework(),
+                        recipe.method(),
+                        recipe.environments().getFirst(),
+                        recipe.platforms().getFirst(),
+                        "external-none",
+                        service)));
 
         for (RenderRequest request : requests) {
             var rendered = renderer.render(request);
             String content = rendered.blocks().stream()
                     .map(block -> block.content() == null ? "" : block.content())
                     .collect(java.util.stream.Collectors.joining("\n"));
-            assertEquals(Map.of(), rendered.secretPlaceholders());
-            assertFalse(content.contains("${HERTZBEAT_TOKEN}"));
-            assertFalse(content.contains("Authorization"));
-            assertFalse(content.contains("OTEL_EXPORTER_OTLP_HEADERS"));
-            assertFalse(content.contains("token:"));
+            assertEquals(Map.of(), rendered.secretPlaceholders(), request.recipeId());
+            assertFalse(content.contains("${HERTZBEAT_TOKEN}"), request.recipeId());
+            assertFalse(content.contains("Authorization"), request.recipeId());
+            assertFalse(content.contains("OTEL_EXPORTER_OTLP_HEADERS"), request.recipeId());
+            assertFalse(content.contains("token:"), request.recipeId());
             assertFalse(rendered.blocks().stream()
-                    .anyMatch(block -> "plaintext_transport_warning".equals(block.id())));
+                    .anyMatch(block -> "plaintext_transport_warning".equals(block.id())),
+                    request.recipeId());
         }
+
+        var bearerGo = renderer(new ExternalOtelCollectorIntakeProperties(
+                        "external-bearer",
+                        "http://otel.example.test:4318",
+                        null,
+                        "bearer_token"))
+                .render(new RenderRequest(
+                        2,
+                        SourceKind.APPLICATION,
+                        "go_ebpf_preview",
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Language.GO,
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Framework.GO_GENERIC,
+                        org.apache.hertzbeat.observability.instrumentation.api
+                                .InstrumentationApiContract.Method.EBPF,
+                        Environment.KUBERNETES,
+                        Platform.LINUX_AMD64,
+                        "external-bearer",
+                        service));
+        String bearerGoContent = bearerGo.blocks().stream()
+                .map(block -> block.content() == null ? "" : block.content())
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertTrue(bearerGoContent.contains("OTEL_EXPORTER_OTLP_HEADERS"));
+        assertTrue(bearerGoContent.contains("Authorization"));
+        assertTrue(bearerGoContent.contains("${HERTZBEAT_TOKEN}"));
+        assertEquals(1, bearerGo.secretPlaceholders().size());
     }
 
     @Test
