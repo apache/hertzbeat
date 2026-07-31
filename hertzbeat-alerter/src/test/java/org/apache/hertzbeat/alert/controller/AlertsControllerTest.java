@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -120,6 +121,14 @@ class AlertsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(10))
+                .andExpect(jsonPath("$.data.pageIndex").value(0))
+                .andExpect(jsonPath("$.data.pageSize").value(10))
+                .andExpect(jsonPath("$.data", aMapWithSize(4)))
+                .andExpect(jsonPath("$.data.pageable").doesNotExist())
+                .andExpect(jsonPath("$.data.sort").doesNotExist())
+                .andExpect(jsonPath("$.data.number").doesNotExist())
+                .andExpect(jsonPath("$.data.size").doesNotExist())
                 .andReturn();
     }
 

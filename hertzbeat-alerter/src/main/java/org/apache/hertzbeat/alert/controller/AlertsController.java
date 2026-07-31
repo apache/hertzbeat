@@ -33,6 +33,7 @@ import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -82,7 +83,7 @@ public class AlertsController {
 
     @GetMapping("/group")
     @Operation(summary = "Query Group Alarms")
-    public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
+    public ResponseEntity<Message<PageResponse<GroupAlert>>> getGroupAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
             @Parameter(description = "Alarm severity", example = "critical") @RequestParam(required = false) String severity,
@@ -95,7 +96,7 @@ public class AlertsController {
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, severity, serviceName,
                 serviceNamespace, environment, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertPage));
+        return ResponseEntity.ok(Message.success(PageResponse.from(alertPage)));
     }
 
     @GetMapping("/group/evidence")

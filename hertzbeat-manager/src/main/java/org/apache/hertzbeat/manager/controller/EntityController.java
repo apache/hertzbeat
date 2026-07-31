@@ -30,6 +30,7 @@ import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityCatalogSuggestionsInfo;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDetailDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionWorkspaceActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionWorkspaceResumeInfo;
@@ -39,7 +40,6 @@ import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryGovernancePresetInfo
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.apache.hertzbeat.manager.pojo.dto.EntitySummaryInfo;
-import org.apache.hertzbeat.manager.pojo.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 import org.apache.hertzbeat.manager.service.ObserveEntityService;
