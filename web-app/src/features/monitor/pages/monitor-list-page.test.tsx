@@ -25,16 +25,20 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { SessionContext } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { importMonitorConfig, loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
-  importMonitorConfig: vi.fn(),
-  loadMonitorApps: vi.fn(),
-  loadMonitors: vi.fn(),
-  mutateMonitors: vi.fn()
-}));
+const { importMonitorConfig, loadMonitorImportTask, loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(
+  () => ({
+    importMonitorConfig: vi.fn(),
+    loadMonitorImportTask: vi.fn(),
+    loadMonitorApps: vi.fn(),
+    loadMonitors: vi.fn(),
+    mutateMonitors: vi.fn()
+  })
+);
 
 vi.mock('../api/monitor-import-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-import-api')>()),
-  importMonitorConfig
+  importMonitorConfig,
+  loadMonitorImportTask
 }));
 
 vi.mock('../api/monitor-api', async importOriginal => ({
@@ -45,6 +49,10 @@ vi.mock('../api/monitor-api', async importOriginal => ({
 }));
 
 import { MonitorListPage } from './monitor-list-page';
+import { monitorQueryKeys } from '../controller/monitor-query-keys';
+
+const acceptedTask = monitorImportTask('IN_PROGRESS', 25);
+const completedTask = monitorImportTask('COMPLETED', 100);
 
 describe('MonitorListPage label query', () => {
   beforeAll(async () => {
@@ -58,10 +66,12 @@ describe('MonitorListPage label query', () => {
     loadMonitors.mockReset();
     mutateMonitors.mockReset();
     importMonitorConfig.mockReset();
+    loadMonitorImportTask.mockReset();
     loadMonitorApps.mockResolvedValue([]);
     loadMonitors.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
     mutateMonitors.mockResolvedValue(undefined);
-    importMonitorConfig.mockResolvedValue(undefined);
+    importMonitorConfig.mockResolvedValue(acceptedTask);
+    loadMonitorImportTask.mockResolvedValue(completedTask);
   });
 
   afterEach(() => {
@@ -143,8 +153,8 @@ describe('MonitorListPage label query', () => {
     });
   });
 
-  it('keeps import explicit and refreshes the list after a successful administrator upload', async () => {
-    renderPage('/monitors');
+  it('keeps import explicit and refreshes the list after canonical task completion', async () => {
+    const page = renderPage('/monitors');
     await waitFor(() => expect(loadMonitors).toHaveBeenCalledOnce());
 
     fireEvent.click(screen.getByRole('button', { name: 'Import' }));
@@ -153,11 +163,19 @@ describe('MonitorListPage label query', () => {
     const file = new File(['[]'], 'monitors.json', { type: 'application/json' });
     fireEvent.change(fileInput!, { target: { files: [file] } });
 
-    expect(screen.getByText('Selected: monitors.json')).toBeInTheDocument();
+    expect(screen.getByText('Configuration file selected.')).toBeInTheDocument();
+    expect(screen.queryByText('monitors.json')).not.toBeInTheDocument();
     expect(importMonitorConfig).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Import configuration' }));
 
     await waitFor(() => expect(importMonitorConfig).toHaveBeenCalledWith(file, expect.any(AbortSignal)));
+    expect(await screen.findByText('Import in progress')).toBeInTheDocument();
+    expect(loadMonitors).toHaveBeenCalledOnce();
+    expect(loadMonitorImportTask).not.toHaveBeenCalled();
+
+    await page.client.refetchQueries({ queryKey: monitorQueryKeys.importTask(acceptedTask.taskId), exact: true });
+    expect(loadMonitorImportTask).toHaveBeenCalledWith(acceptedTask.taskId, expect.any(AbortSignal));
+    expect(await screen.findByText('Import completed')).toBeInTheDocument();
     await waitFor(() => expect(loadMonitors).toHaveBeenCalledTimes(2));
   });
 });
@@ -169,7 +187,7 @@ function renderPage(initialEntry: string) {
       mutations: { retry: false }
     }
   });
-  return render(
+  const page = render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -195,6 +213,21 @@ function renderPage(initialEntry: string) {
       </QueryClientProvider>
     </I18nextProvider>
   );
+  return { ...page, client };
+}
+
+function monitorImportTask(status: 'IN_PROGRESS' | 'COMPLETED', progress: number) {
+  return {
+    schemaVersion: 1 as const,
+    taskId: '123e4567-e89b-42d3-a456-426614174000',
+    taskType: 'MONITOR_IMPORT' as const,
+    status,
+    progress,
+    createdAt: '2026-07-31T12:00:00Z',
+    startedAt: '2026-07-31T12:00:00Z',
+    completedAt: status === 'COMPLETED' ? '2026-07-31T12:00:10Z' : null,
+    errorCode: null
+  };
 }
 
 function filterInputs() {
