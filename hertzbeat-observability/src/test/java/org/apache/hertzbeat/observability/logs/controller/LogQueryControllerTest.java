@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.observability.logs.controller;
 
+import static org.hamcrest.Matchers.aMapWithSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -133,8 +134,13 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.content.length()").value(2))
                 .andExpect(jsonPath("$.data.totalElements").value(2))
-                .andExpect(jsonPath("$.data.size").value(20))
-                .andExpect(jsonPath("$.data.number").value(0));
+                .andExpect(jsonPath("$.data.pageIndex").value(0))
+                .andExpect(jsonPath("$.data.pageSize").value(20))
+                .andExpect(jsonPath("$.data", aMapWithSize(4)))
+                .andExpect(jsonPath("$.data.pageable").doesNotExist())
+                .andExpect(jsonPath("$.data.sort").doesNotExist())
+                .andExpect(jsonPath("$.data.number").doesNotExist())
+                .andExpect(jsonPath("$.data.size").doesNotExist());
     }
 
     @Test
@@ -189,7 +195,7 @@ class LogQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
-                .andExpect(jsonPath("$.data.size").value(1000))
+                .andExpect(jsonPath("$.data.pageSize").value(1000))
                 .andExpect(jsonPath("$.data.totalElements").value(50000));
 
         verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(),
@@ -220,8 +226,8 @@ class LogQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
-                .andExpect(jsonPath("$.data.number").value(0))
-                .andExpect(jsonPath("$.data.size").value(20));
+                .andExpect(jsonPath("$.data.pageIndex").value(0))
+                .andExpect(jsonPath("$.data.pageSize").value(20));
 
         verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(),
                 any(), any(), any(), any(), any(), eq(0), eq(20));
