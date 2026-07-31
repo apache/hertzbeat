@@ -15,34 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.observability.logs.dto;
+package org.apache.hertzbeat.common.entity.dto;
 
 import java.util.List;
 import org.springframework.data.domain.Page;
 
 /**
- * Stable page response for log queries.
+ * Stable page response exposed at controller boundaries.
  *
- * @param content log page content
+ * @param content page content
  * @param totalElements total matching elements
  * @param pageIndex zero-based page index
  * @param pageSize requested page size
  * @param <T> content type
  */
-public record LogPageResponse<T>(List<T> content, long totalElements, int pageIndex, int pageSize) {
+public record PageResponse<T>(List<T> content, long totalElements, int pageIndex, int pageSize) {
 
-    public LogPageResponse {
+    public PageResponse {
         content = content == null ? List.of() : List.copyOf(content);
     }
 
     /**
-     * Convert an internal Spring Data page to the stable response contract.
+     * Create a stable response from an internal Spring Data page.
      *
      * @param page internal page
      * @param <T> content type
-     * @return stable log page response
+     * @return stable page response
      */
-    public static <T> LogPageResponse<T> from(Page<T> page) {
-        return new LogPageResponse<>(page.getContent(), page.getTotalElements(), page.getNumber(), page.getSize());
+    public static <T> PageResponse<T> from(Page<T> page) {
+        return new PageResponse<>(page.getContent(), page.getTotalElements(), page.getNumber(), page.getSize());
     }
 }
