@@ -19,16 +19,22 @@ package org.apache.hertzbeat.manager.service.helper;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.FileUtil;
-import org.apache.hertzbeat.manager.config.ManagerSseManager;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.service.ImExportService;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskErrorCode;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -46,11 +52,14 @@ public class MonitorImExportHelper {
             + "charset=" + StandardCharsets.UTF_8;
 
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
-    private final ManagerSseManager managerSseManager;
+    private final ImportTaskService importTaskService;
+    private final TaskExecutor taskExecutor;
 
-    public MonitorImExportHelper(List<ImExportService> imExportServiceList, ManagerSseManager managerSseManager) {
+    public MonitorImExportHelper(List<ImExportService> imExportServiceList, ImportTaskService importTaskService,
+                                 @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
-        this.managerSseManager = managerSseManager;
+        this.importTaskService = importTaskService;
+        this.taskExecutor = taskExecutor;
     }
 
     public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
@@ -67,19 +76,44 @@ public class MonitorImExportHelper {
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
 
-    public void importConfig(MultipartFile file) throws Exception {
-        var fileName = FileUtil.getFileName(file);
+    public ImportTaskView importConfig(MultipartFile file) {
+        return importConfig(file, AuthTokenRequestContext.currentWorkspaceId());
+    }
+
+    ImportTaskView importConfig(MultipartFile file, String workspaceId) {
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+        ImportTaskView task = importTaskService.create(normalizedWorkspaceId);
         var type = FileUtil.getFileType(file);
         try {
-            if (!imExportServiceMap.containsKey(type)) {
-                String errMsg = ExportFileConstants.FILE + " " + fileName + " is not supported.";
-                throw new RuntimeException(errMsg);
-            }
+            byte[] content = file.getBytes();
+            taskExecutor.execute(() -> executeImport(task.taskId(), normalizedWorkspaceId, type, content));
+        } catch (RuntimeException | java.io.IOException e) {
+            log.warn("Monitor import task {} could not be scheduled ({})", task.taskId(), e.getClass().getSimpleName());
+            return importTaskService.fail(task.taskId(), ImportTaskErrorCode.IMPORT_FAILED);
+        }
+        return importTaskService.find(task.taskId(), normalizedWorkspaceId).orElse(task);
+    }
+
+    private void executeImport(String taskId, String workspaceId, String type, byte[] content) {
+        String previousWorkspaceId = AuthTokenRequestContext.currentWorkspaceId();
+        AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+        try {
             var imExportService = imExportServiceMap.get(type);
-            imExportService.importConfig(fileName, file.getInputStream());
+            if (imExportService == null) {
+                throw new UnsupportedOperationException("Import type is not supported");
+            }
+            imExportService.importConfig(taskId, new ByteArrayInputStream(content));
+            importTaskService.complete(taskId);
         } catch (Exception e) {
-            managerSseManager.broadcastImportTaskFail(fileName, e.getMessage());
-            throw e;
+            ImportTaskErrorCode errorCode = e instanceof UnsupportedOperationException
+                    ? ImportTaskErrorCode.IMPORT_UNSUPPORTED_TYPE
+                    : e instanceof IllegalArgumentException
+                            ? ImportTaskErrorCode.IMPORT_INVALID_CONTENT
+                            : ImportTaskErrorCode.IMPORT_FAILED;
+            importTaskService.fail(taskId, errorCode);
+            log.warn("Monitor import task {} failed ({})", taskId, e.getClass().getSimpleName());
+        } finally {
+            AuthTokenRequestContext.bindWorkspaceId(previousWorkspaceId);
         }
     }
 }

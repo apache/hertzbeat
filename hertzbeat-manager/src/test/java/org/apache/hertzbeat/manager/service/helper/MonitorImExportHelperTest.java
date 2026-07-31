@@ -23,6 +23,10 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.service.ImExportService;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskErrorCode;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskService;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskStatus;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,12 +34,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -53,10 +58,13 @@ class MonitorImExportHelperTest {
     @Mock
     private ManagerSseManager managerSseManager;
 
+    private ImportTaskService importTaskService;
+
     @BeforeEach
     void setUp() {
         when(imExportService.type()).thenReturn("JSON");
-        helper = new MonitorImExportHelper(List.of(imExportService), managerSseManager);
+        importTaskService = new ImportTaskService(managerSseManager);
+        helper = new MonitorImExportHelper(List.of(imExportService), importTaskService, new SyncTaskExecutor());
     }
 
     @Test
@@ -81,12 +89,11 @@ class MonitorImExportHelperTest {
     void importConfig_Success() throws Exception {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn("test.json");
-        InputStream inputStream = new ByteArrayInputStream("{}".getBytes());
-        when(file.getInputStream()).thenReturn(inputStream);
+        when(file.getBytes()).thenReturn("{}".getBytes());
 
         helper.importConfig(file);
 
-        verify(imExportService).importConfig(eq("test.json"), any(InputStream.class));
+        verify(imExportService).importConfig(anyString(), any(InputStream.class));
     }
 
     @Test
@@ -94,7 +101,9 @@ class MonitorImExportHelperTest {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn("test.xml");
 
-        assertThrows(RuntimeException.class, () -> helper.importConfig(file));
-        verify(managerSseManager).broadcastImportTaskFail(eq("test.xml"), any());
+        var task = helper.importConfig(file);
+
+        assertEquals(ImportTaskStatus.FAILED, task.status());
+        assertEquals(ImportTaskErrorCode.IMPORT_UNSUPPORTED_TYPE, task.errorCode());
     }
 }

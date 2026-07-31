@@ -21,8 +21,6 @@ package org.apache.hertzbeat.manager.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
-import org.apache.hertzbeat.common.entity.dto.ImportTaskMessage;
-import org.apache.hertzbeat.common.entity.dto.ManagerMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -33,6 +31,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manager SSE
@@ -40,13 +39,26 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class ManagerSseManager {
+    public static final String READY_EVENT = "manager-ready";
+    public static final long RECONNECT_MILLIS = 3_000L;
+
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final AtomicLong eventSequence = new AtomicLong();
 
     public SseEmitter createEmitter(Long clientId) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitter.onCompletion(() -> removeEmitter(clientId));
         emitter.onTimeout(() -> removeEmitter(clientId));
         emitters.put(clientId, emitter);
+        try {
+            emitter.send(SseEmitter.event()
+                    .id(nextEventId())
+                    .name(READY_EVENT)
+                    .reconnectTime(RECONNECT_MILLIS)
+                    .data(JsonUtil.toJson(new ManagerStreamReady(1, "CANONICAL_REREAD"))));
+        } catch (IOException | IllegalStateException e) {
+            tryCompleteAndClean(clientId, emitter);
+        }
         return emitter;
     }
 
@@ -55,7 +67,7 @@ public class ManagerSseManager {
         emitters.forEach((clientId, emitter) -> {
             try {
                 emitter.send(SseEmitter.event()
-                        .id(String.valueOf(System.currentTimeMillis()))
+                        .id(nextEventId())
                         .name(eventName)
                         .data(data));
             } catch (IOException | IllegalStateException e) {
@@ -77,22 +89,23 @@ public class ManagerSseManager {
         removeEmitter(clientId);
     }
 
-    public void broadcastImportTaskInProgress(String taskName, Integer progress){
-        ManagerMessage managerMessage = ImportTaskMessage.createInProgressMessage(taskName, progress);
-        broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
-    }
-
-    public void broadcastImportTaskSuccess(String taskName){
-        ManagerMessage managerMessage = ImportTaskMessage.createCompletedMessage(taskName);
-        broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
-    }
-
-    public void broadcastImportTaskFail(String taskName, String errMsg){
-        ManagerMessage managerMessage = ImportTaskMessage.createFailedMessage(taskName, errMsg);
-        broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
+    @Async
+    public void broadcastImportTaskChanged(String taskId) {
+        broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(),
+                JsonUtil.toJson(new ImportTaskChanged(1, taskId, "CANONICAL_REREAD")));
     }
 
     private void removeEmitter(Long clientId) {
         emitters.remove(clientId);
+    }
+
+    private String nextEventId() {
+        return Long.toString(eventSequence.incrementAndGet());
+    }
+
+    private record ManagerStreamReady(int schemaVersion, String delivery) {
+    }
+
+    private record ImportTaskChanged(int schemaVersion, String taskId, String delivery) {
     }
 }

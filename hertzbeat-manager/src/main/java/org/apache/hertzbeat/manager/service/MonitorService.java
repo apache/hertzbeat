@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -186,9 +187,9 @@ public interface MonitorService {
      * Import Monitoring Configuration
      *
      * @param file configuration file
-     * @throws Exception This exception will be thrown if the export fails
+     * @return accepted canonical import task
      */
-    void importConfig(MultipartFile file) throws Exception;
+    ImportTaskView importConfig(MultipartFile file);
 
     /**
      * update app collect job by app

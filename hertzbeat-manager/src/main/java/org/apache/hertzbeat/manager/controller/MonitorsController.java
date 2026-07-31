@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -217,11 +218,10 @@ public class MonitorsController {
     }
 
     @PostMapping("/import")
-    @Operation(summary = "import monitor config", description = "import monitor config")
-    public ResponseEntity<Message<Void>> importMonitors(
-            @Parameter(description = "Monitor config file") @RequestParam("file") MultipartFile file) throws Exception {
-        monitorService.importConfig(file);
-        return ResponseEntity.ok(Message.success("Import success"));
+    @Operation(summary = "import monitor config", description = "accept an asynchronous monitor import task")
+    public ResponseEntity<Message<ImportTaskView>> importMonitors(
+            @Parameter(description = "Monitor config file") @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.accepted().body(Message.success(monitorService.importConfig(file)));
     }
 
     private static List<Long> resolveRequiredMonitorIds(List<Long> ids, String legacyId)

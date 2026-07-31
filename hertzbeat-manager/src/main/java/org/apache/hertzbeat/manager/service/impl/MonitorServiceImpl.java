@@ -65,6 +65,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelSer
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
 import org.apache.hertzbeat.manager.service.helper.MonitorJobScheduleMapper;
+import org.apache.hertzbeat.manager.service.importtask.ImportTaskView;
 import org.apache.hertzbeat.manager.support.exception.MonitorCopySourceNotFoundException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -262,8 +263,8 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public void importConfig(MultipartFile file) throws Exception {
-        monitorImExportHelper.importConfig(file);
+    public ImportTaskView importConfig(MultipartFile file) {
+        return monitorImExportHelper.importConfig(file);
     }
 
     @Override
