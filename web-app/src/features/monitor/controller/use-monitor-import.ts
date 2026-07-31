@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { loadMonitorImportTask, MonitorImportTaskReadError } from '../api/monitor-import-api';
 import type { MonitorCapabilities } from '../model/monitor-capability-model';
 import {
-  validateMonitorImportFile,
   type MonitorImportDraft,
   type MonitorImportFailureKind,
   type MonitorImportInvalidKind,
@@ -16,7 +15,8 @@ import {
   type MonitorImportTask,
   type MonitorImportTaskEvidence
 } from '../model/monitor-import-model';
-import { executeMonitorImport, type MonitorImportExecutionOwner } from './monitor-import-execution';
+import type { MonitorImportExecutionOwner } from './monitor-import-execution';
+import { createMonitorImportActions } from './monitor-import-actions';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorImport(
@@ -47,48 +47,19 @@ export function useMonitorImport(
   });
   const task = resolveImportTaskEvidence(activeTaskId, taskQuery);
   useCompletedImportConvergence(task, reread, onImported, lifecycle.mounted);
-
-  const openDialog = () => {
-    if (!lifecycle.canStart()) return;
-    setOpen(true);
-    setDraft({ file: null });
-    setInvalid(null);
-    setFailure(null);
-    setActiveTaskId(null);
-  };
-  const cancel = () => lifecycle.retire();
-  const selectFile = (file: File | null) => {
-    if (!lifecycle.canStart() || !open || activeTaskId) return;
-    setDraft({ file });
-    setInvalid(null);
-    setFailure(null);
-  };
-  const submit = async () => {
-    if (!lifecycle.canStart() || !open || !draft) return false;
-    const validation = validateMonitorImportFile(draft.file);
-    if (!validation.valid) {
-      setInvalid(validation.reason);
-      return false;
-    }
-    const owner = lifecycle.begin();
-    if (!owner) return false;
-    setBusy(true);
-    setFailure(null);
-    return executeMonitorImport(validation.file, {
-      owner,
-      owns: () => lifecycle.owns(owner),
-      accept: accepted => {
-        queryClient.setQueryData(monitorQueryKeys.importTask(accepted.taskId), accepted);
-        setActiveTaskId(accepted.taskId);
-        setDraft({ file: null });
-      },
-      publishFailure: setFailure,
-      finish: () => {
-        if (!lifecycle.finish(owner)) return;
-        setBusy(false);
-      }
-    });
-  };
+  const actions = createMonitorImportActions({
+    lifecycle,
+    queryClient,
+    open,
+    draft,
+    activeTaskId,
+    setOpen,
+    setDraft,
+    setInvalid,
+    setFailure,
+    setBusy,
+    setActiveTaskId
+  });
   const state: MonitorImportState = {
     canImport: capabilities.canWrite,
     open,
@@ -98,7 +69,7 @@ export function useMonitorImport(
     busy,
     task
   };
-  return { state, actions: { open: openDialog, cancel, selectFile, submit } };
+  return { state, actions };
 }
 
 function resolveImportTaskEvidence(
@@ -140,7 +111,10 @@ function useImportLifecycle(canImport: boolean, reset: () => void) {
   const mounted = useRef(true);
   const currentCanImport = useRef(canImport);
   const resetRef = useRef(reset);
-  resetRef.current = reset;
+  // Refresh the callback before the permission-loss layout effect can retire the current draft.
+  useLayoutEffect(() => {
+    resetRef.current = reset;
+  }, [reset]);
   const retire = useCallback(() => {
     const owner = active.current;
     active.current = null;
