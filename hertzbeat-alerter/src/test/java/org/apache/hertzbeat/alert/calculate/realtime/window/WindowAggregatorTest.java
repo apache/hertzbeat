@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.alert.calculate.realtime.window;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.junit.jupiter.api.AfterEach;
@@ -26,10 +30,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -235,5 +244,53 @@ class WindowAggregatorTest {
 
         // Then - second window should also be closed (total 2 windows)
         verify(alarmEvaluator, timeout(1000).times(2)).sendAndProcessWindowData(any(WindowAggregator.WindowData.class));
+    }
+
+    @Test
+    void stopInterruptsBlockedWorkerWithoutTimeoutWarning() throws InterruptedException {
+        Set<Thread> existingAggregatorThreads = currentAggregatorThreads();
+        Logger logger = (Logger) LoggerFactory.getLogger(WindowAggregator.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            windowAggregator.start();
+            Thread worker = awaitBlockedAggregatorThread(existingAggregatorThreads);
+
+            long startNanos = System.nanoTime();
+            windowAggregator.stop();
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+
+            assertTrue(elapsedMillis < 2_000, () -> "stop took " + elapsedMillis + " ms");
+            assertFalse(worker.isAlive());
+            assertTrue(worker.isInterrupted());
+            assertTrue(appender.list.stream().noneMatch(event ->
+                    event.getLevel() == Level.WARN
+                            && event.getFormattedMessage().contains("did not terminate within")));
+        } finally {
+            windowAggregator.stop();
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    private Set<Thread> currentAggregatorThreads() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(thread -> thread.getName().startsWith("window-aggregator-"))
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
+    private Thread awaitBlockedAggregatorThread(Set<Thread> existingThreads) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+        while (System.nanoTime() < deadline) {
+            for (Thread thread : currentAggregatorThreads()) {
+                if (!existingThreads.contains(thread) && thread.getState() == Thread.State.WAITING) {
+                    return thread;
+                }
+            }
+            Thread.sleep(10);
+        }
+        throw new AssertionError("WindowAggregator worker did not block on the event queue");
     }
 }
