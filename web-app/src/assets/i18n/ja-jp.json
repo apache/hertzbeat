@@ -992,6 +992,11 @@
   },
   "bulletin": {
     "title": "監視ボード",
+    "autoRefresh": {
+      "label": "自動更新",
+      "seconds": "{{count}}秒ごと",
+      "off": "オフ"
+    },
     "description": "運用担当者が設定したグループ監視ビューを確認します。",
     "search": "ボードを検索",
     "empty": "条件に一致するボードはありません。",

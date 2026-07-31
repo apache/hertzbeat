@@ -48,4 +48,12 @@ describe('Bulletin locale coverage', () => {
       expect(locale.bulletin.recovery.projection.delete).toBeTruthy();
     }
   });
+
+  it('provides auto-refresh control copy in every runtime locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.bulletin.autoRefresh.label).toBeTruthy();
+      expect(locale.bulletin.autoRefresh.seconds).toContain('{{count}}');
+      expect(locale.bulletin.autoRefresh.off).toBeTruthy();
+    }
+  });
 });

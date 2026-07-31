@@ -21,6 +21,19 @@ describe('bulletin page', () => {
     expect(current.actions.refresh).toHaveBeenCalledOnce();
   });
 
+  it('offers the Angular auto-refresh choices and keeps the selected cadence in controller memory', () => {
+    const current = pageController();
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+    const refreshSelect = screen.getByRole('combobox', { name: 'bulletin.autoRefresh.label' });
+    expect(refreshSelect.closest('.ant-select')).toHaveTextContent('bulletin.autoRefresh.seconds');
+    fireEvent.mouseDown(refreshSelect);
+    fireEvent.click(screen.getByText('bulletin.autoRefresh.off'));
+
+    expect(current.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
+  });
+
   it('keeps query drafting and explicit submission on the page controller boundary', () => {
     const current = pageController();
     controller.useBulletinController.mockReturnValue(current.value);
@@ -280,6 +293,7 @@ function pageController({
     select: vi.fn(),
     selectIds: vi.fn(),
     setSearch: vi.fn(),
+    setRefreshSeconds: vi.fn(),
     stopVerification: vi.fn(),
     submitSearch: vi.fn(),
     updateDraft: vi.fn()
@@ -306,6 +320,7 @@ function pageController({
         query: { search: '', pageIndex: 0, pageSize: 8 },
         recovery,
         refreshing: false,
+        refreshSeconds: 30,
         search: '',
         selectedId,
         selectedIds

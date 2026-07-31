@@ -996,6 +996,11 @@
   "bulletin": {
     "title": "Bulletin",
     "description": "Review grouped monitor views configured by operators.",
+    "autoRefresh": {
+      "label": "Auto refresh",
+      "seconds": "Every {{count}} seconds",
+      "off": "Off"
+    },
     "search": "Search bulletins",
     "empty": "No bulletins match the current query.",
     "name": "Name",

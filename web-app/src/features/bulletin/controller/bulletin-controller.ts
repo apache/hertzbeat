@@ -1,20 +1,27 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useNotification } from '@refinedev/core';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useSession } from '@/core/auth/session-context';
 
 import { bulletinActionCapabilities } from '../model/bulletin-action-capability';
+import {
+  defaultBulletinRefreshSeconds,
+  isBulletinRefreshChoice,
+  type BulletinRefreshChoice,
+  type BulletinRefreshSeconds
+} from '../model/bulletin-refresh-model';
 import { applyBulletinCapabilityLoss } from './bulletin-access-retirement';
 import { useBulletinDependencies } from './bulletin-dependencies-controller';
 import { useBulletinEditorController } from './bulletin-editor-controller';
 import { useBulletinBatchSelection, useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
-import { useBulletinMetrics } from './bulletin-metrics-controller';
+import { useBulletinMetricsController } from './bulletin-metrics-controller';
 import { useBulletinOperationGate } from './bulletin-operation-gate';
 import { useBulletinPageCorrection } from './bulletin-page-correction-controller';
 import { useBulletinQueryController } from './bulletin-query-controller';
+import { useBulletinRefreshController } from './bulletin-refresh-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
 
 export function useBulletinController() {
@@ -22,6 +29,7 @@ export function useBulletinController() {
   const notification = useNotification();
   const { capabilities, capabilityRefs } = useBulletinCapabilities();
   const { batchSelection, list, query, selection } = useBulletinListWorkspace(capabilities.canRead);
+  const [refreshSeconds, setRefreshSeconds] = useState<BulletinRefreshSeconds>(defaultBulletinRefreshSeconds);
   const gate = useBulletinOperationGate();
   const editor = useBulletinEditorController(
     gate,
@@ -31,7 +39,8 @@ export function useBulletinController() {
     capabilityRefs.canWriteRef
   );
   const dependencies = useBulletinDependencies(editor.state.draft, capabilities.canRead);
-  const metrics = useBulletinMetrics(selection.selectedId, capabilities.canRead);
+  const metrics = useBulletinMetricsController(selection.selectedId, capabilities.canRead, refreshSeconds);
+  const refresh = useBulletinRefreshController(capabilities.canRead, list.refresh, metrics.refresh);
   const transactions = useBulletinTransactions({
     canDeleteRef: capabilityRefs.canDeleteRef,
     canWriteRef: capabilityRefs.canWriteRef,
@@ -44,7 +53,17 @@ export function useBulletinController() {
     t
   });
   useBulletinCapabilityRetirement(capabilities, editor, gate, batchSelection.selectIds);
-  const actions = createBulletinActions({ batchSelection, editor, gate, list, query, selection, transactions });
+  const actions = createBulletinActions({
+    batchSelection,
+    editor,
+    gate,
+    list,
+    query,
+    refresh,
+    selection,
+    setRefreshSeconds,
+    transactions
+  });
 
   return {
     state: {
@@ -53,11 +72,12 @@ export function useBulletinController() {
       dependencies,
       draft: editor.state.draft,
       list: list.state,
-      metrics,
+      metrics: metrics.state,
       notice: gate.notice,
       query: query.query,
       recovery: gate.recovery,
-      refreshing: list.refreshing,
+      refreshing: list.refreshing || metrics.refreshing,
+      refreshSeconds,
       search: query.search,
       selectedId: selection.selectedId,
       selectedIds: batchSelection.selectedIds
@@ -72,7 +92,9 @@ type BulletinActionSources = {
   gate: ReturnType<typeof useBulletinOperationGate>;
   list: ReturnType<typeof useBulletinListController>;
   query: ReturnType<typeof useBulletinQueryController>;
+  refresh: ReturnType<typeof useBulletinRefreshController>;
   selection: ReturnType<typeof useBulletinSelection>;
+  setRefreshSeconds: (value: BulletinRefreshChoice) => void;
   transactions: ReturnType<typeof useBulletinTransactions>;
 };
 
@@ -97,7 +119,7 @@ function createBulletinActions(source: BulletinActionSources) {
     create: source.editor.actions.create,
     dismissNotice: source.gate.dismissNotice,
     edit: source.editor.actions.edit,
-    refresh: admitReadAsync(source.list.refresh),
+    refresh: admitReadAsync(source.refresh.refresh),
     remove: source.transactions.remove,
     removeMany: source.transactions.removeMany,
     retry: source.transactions.retry,
@@ -105,6 +127,11 @@ function createBulletinActions(source: BulletinActionSources) {
     select: admitRead(source.selection.setSelectedId),
     selectIds: admitBatchSelection,
     setSearch: admitRead(source.query.setSearch),
+    setRefreshSeconds: (value: BulletinRefreshChoice) => {
+      if (!isBulletinRefreshChoice(value)) return false;
+      source.setRefreshSeconds(value);
+      return true;
+    },
     stopVerification: source.gate.cancelRecovery,
     submitSearch: admitRead(source.query.submitSearch),
     updateDraft: source.editor.actions.update

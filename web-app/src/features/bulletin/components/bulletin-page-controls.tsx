@@ -4,19 +4,23 @@ import { Button, Input, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
+import type { BulletinRefreshChoice, BulletinRefreshSeconds } from '../model/bulletin-refresh-model';
 import styles from '../bulletin-page.module.css';
+import { BulletinRefreshSelect } from './bulletin-refresh-select';
 
 type BulletinPageControlsProps = {
   actions: {
     create: () => unknown;
     refresh: () => unknown;
     removeMany: (ids: readonly number[]) => unknown;
+    setRefreshSeconds: (value: BulletinRefreshChoice) => unknown;
     setSearch: (value: string) => unknown;
     submitSearch: () => unknown;
   };
   capabilities: BulletinActionCapabilities;
   commandActive: boolean;
   refreshing: boolean;
+  refreshSeconds: BulletinRefreshSeconds;
   search: string;
   selectedIds: number[];
   writeLocked: boolean;
@@ -27,6 +31,7 @@ export function BulletinPageControls({
   capabilities,
   commandActive,
   refreshing,
+  refreshSeconds,
   search,
   selectedIds,
   writeLocked
@@ -60,21 +65,41 @@ export function BulletinPageControls({
           )}
         </Space>
       </header>
-      <Space.Compact className={styles.toolbar}>
-        <Input
-          value={search}
-          placeholder={t('bulletin.search')}
-          disabled={commandActive}
-          onChange={event => actions.setSearch(event.target.value)}
-          onPressEnter={actions.submitSearch}
-        />
-        <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
-          {t('common.query')}
-        </Button>
-        <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
-          {t('common.refresh')}
-        </Button>
-      </Space.Compact>
+      <BulletinToolbar
+        actions={actions}
+        commandActive={commandActive}
+        refreshing={refreshing}
+        refreshSeconds={refreshSeconds}
+        search={search}
+      />
     </>
+  );
+}
+
+function BulletinToolbar({
+  actions,
+  commandActive,
+  refreshing,
+  refreshSeconds,
+  search
+}: Pick<BulletinPageControlsProps, 'actions' | 'commandActive' | 'refreshing' | 'refreshSeconds' | 'search'>) {
+  const { t } = useTranslation();
+  return (
+    <Space.Compact className={styles.toolbar}>
+      <Input
+        value={search}
+        placeholder={t('bulletin.search')}
+        disabled={commandActive}
+        onChange={event => actions.setSearch(event.target.value)}
+        onPressEnter={actions.submitSearch}
+      />
+      <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
+        {t('common.query')}
+      </Button>
+      <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
+        {t('common.refresh')}
+      </Button>
+      <BulletinRefreshSelect value={refreshSeconds} disabled={commandActive} onChange={actions.setRefreshSeconds} />
+    </Space.Compact>
   );
 }

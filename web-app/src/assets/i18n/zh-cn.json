@@ -984,6 +984,11 @@
   },
   "bulletin": {
     "title": "监控看板",
+    "autoRefresh": {
+      "label": "自动刷新",
+      "seconds": "每 {{count}} 秒",
+      "off": "关闭"
+    },
     "description": "查看运维人员配置的分组监控视图。",
     "search": "搜索看板",
     "empty": "当前条件下没有看板。",

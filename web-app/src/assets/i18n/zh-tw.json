@@ -984,6 +984,11 @@
   },
   "bulletin": {
     "title": "監控看板",
+    "autoRefresh": {
+      "label": "自動重新整理",
+      "seconds": "每 {{count}} 秒",
+      "off": "關閉"
+    },
     "description": "查看維運人員設定的群組監控視圖。",
     "search": "搜尋看板",
     "empty": "目前條件下沒有看板。",

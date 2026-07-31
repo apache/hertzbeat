@@ -1000,6 +1000,11 @@
   },
   "bulletin": {
     "title": "Quadros",
+    "autoRefresh": {
+      "label": "Atualização automática",
+      "seconds": "A cada {{count}} segundos",
+      "off": "Desativado"
+    },
     "description": "Consulte visões agrupadas configuradas pelos operadores.",
     "search": "Pesquisar quadros",
     "empty": "Nenhum quadro corresponde à consulta.",

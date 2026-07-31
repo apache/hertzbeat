@@ -24,6 +24,7 @@ export function BulletinPage() {
         capabilities={state.capabilities}
         commandActive={commandActive}
         refreshing={state.refreshing}
+        refreshSeconds={state.refreshSeconds}
         search={state.search}
         selectedIds={state.selectedIds}
         writeLocked={writeLocked}
