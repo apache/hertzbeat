@@ -130,6 +130,45 @@ class InstrumentationGuideRendererTest {
     }
 
     @Test
+    void javaAgentDownloadAndLaunchPathsStayConsistentAcrossPlatformsAndContainers() {
+        for (Platform platform : List.of(
+                Platform.LINUX_AMD64,
+                Platform.LINUX_ARM64,
+                Platform.MACOS_AMD64,
+                Platform.MACOS_ARM64)) {
+            var guide = renderer.render(request(
+                    Language.JAVA,
+                    Framework.SPRING_BOOT,
+                    Method.ZERO_CODE,
+                    Environment.VM,
+                    platform));
+            String install = stepContent(guide, StepType.INSTALL);
+            String start = stepContent(guide, StepType.START);
+            String container = stepContent(guide, StepType.CONTAINER);
+
+            assertTrue(install.contains("-o opentelemetry-javaagent.jar"), platform::name);
+            assertTrue(start.contains("-javaagent:./opentelemetry-javaagent.jar"), platform::name);
+            assertTrue(container.contains("COPY opentelemetry-javaagent.jar /opt/opentelemetry-javaagent.jar"),
+                    platform::name);
+            assertTrue(container.contains("JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar"),
+                    platform::name);
+        }
+
+        var windows = renderer.render(request(
+                Language.JAVA,
+                Framework.SPRING_BOOT,
+                Method.ZERO_CODE,
+                Environment.WINDOWS_SERVICE,
+                Platform.WINDOWS_AMD64));
+        assertTrue(stepContent(windows, StepType.INSTALL)
+                .contains("-OutFile .\\opentelemetry-javaagent.jar"));
+        assertTrue(stepContent(windows, StepType.START)
+                .contains("-javaagent:.\\opentelemetry-javaagent.jar"));
+        assertTrue(stepContent(windows, StepType.CONTAINER)
+                .contains("COPY opentelemetry-javaagent.jar /opt/opentelemetry-javaagent.jar"));
+    }
+
+    @Test
     void rendersEveryCatalogSelectionWithStructurallyBoundSecretMetadata() {
         InstrumentationCatalogService catalog = new InstrumentationCatalogService();
         int renderedSelections = 0;
@@ -445,6 +484,16 @@ class InstrumentationGuideRendererTest {
                         "http://collector.internal:4317",
                         "Authorization"),
                 new ServiceIdentity("checkout-api", "commerce", "prod"));
+    }
+
+    private String stepContent(
+            org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderResponse guide,
+            StepType type) {
+        return guide.steps().stream()
+                .filter(step -> step.type() == type)
+                .flatMap(step -> step.snippets().stream())
+                .map(snippet -> snippet.content())
+                .collect(Collectors.joining("\n"));
     }
 
     private GuideRenderRequest request(CollectorTarget collector) {

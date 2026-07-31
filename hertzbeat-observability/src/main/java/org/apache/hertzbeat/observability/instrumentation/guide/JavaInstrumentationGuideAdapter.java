@@ -45,11 +45,11 @@ public class JavaInstrumentationGuideAdapter implements InstrumentationGuideAdap
         if (windows) {
             scriptLanguage = "powershell";
             install = "$agentUrl = '" + artifact.downloadUrl() + "'\n"
-                    + "Invoke-WebRequest -Uri $agentUrl -OutFile opentelemetry-javaagent.jar\n"
+                    + "Invoke-WebRequest -Uri $agentUrl -OutFile .\\opentelemetry-javaagent.jar\n"
                     + "$expectedSha256 = '" + artifact.digest() + "'\n"
                     + "$actualSha256 = (Get-FileHash opentelemetry-javaagent.jar -Algorithm SHA256).Hash.ToLower()\n"
                     + "if ($actualSha256 -ne $expectedSha256) { throw 'Java Agent checksum mismatch' }";
-            start = "$env:JAVA_TOOL_OPTIONS='-javaagent:C:\\otel\\opentelemetry-javaagent.jar'\n"
+            start = "$env:JAVA_TOOL_OPTIONS='-javaagent:.\\opentelemetry-javaagent.jar'\n"
                     + "java -jar application.jar";
             disable = "# Remove -javaagent from JAVA_TOOL_OPTIONS, then restart the application";
         } else {
@@ -57,7 +57,7 @@ public class JavaInstrumentationGuideAdapter implements InstrumentationGuideAdap
             String verificationCommand = macos ? "shasum -a 256 -c -" : "sha256sum -c -";
             install = "curl -fL -o opentelemetry-javaagent.jar " + artifact.downloadUrl() + "\n"
                     + "echo '" + artifact.digest() + "  opentelemetry-javaagent.jar' | " + verificationCommand;
-            start = "JAVA_TOOL_OPTIONS='-javaagent:/opt/opentelemetry-javaagent.jar' "
+            start = "JAVA_TOOL_OPTIONS='-javaagent:./opentelemetry-javaagent.jar' "
                     + "java -jar application.jar";
             disable = "# Remove -javaagent from JAVA_TOOL_OPTIONS, then restart the application";
         }
