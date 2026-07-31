@@ -88,7 +88,10 @@ function publishChangedTasks(
     observed.set(task.taskId, fingerprint);
     if (baseline && task.status !== 'IN_PROGRESS') continue;
     publishTask(delivery, task);
-    if (previous?.startsWith('IN_PROGRESS:') && task.status === 'COMPLETED') completedTransition = true;
+    const newlyObservedAfterBaseline = !baseline && previous === undefined;
+    if (task.status === 'COMPLETED' && (newlyObservedAfterBaseline || previous?.startsWith('IN_PROGRESS:'))) {
+      completedTransition = true;
+    }
   }
   return completedTransition;
 }

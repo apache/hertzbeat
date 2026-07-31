@@ -34,6 +34,10 @@ const historicalCompleted = {
   ...completed,
   taskId: '323e4567-e89b-42d3-a456-426614174000'
 };
+const fastCompleted = {
+  ...completed,
+  taskId: '423e4567-e89b-42d3-a456-426614174000'
+};
 const failed = {
   ...running,
   taskId: '223e4567-e89b-42d3-a456-426614174000',
@@ -132,6 +136,24 @@ describe('shell monitor import canonical reread', () => {
     await waitFor(() =>
       expect(refetch).toHaveBeenCalledWith({ queryKey: ['monitor', 'list'], type: 'active' }, { cancelRefetch: false })
     );
+
+    const listRefetches = refetch.mock.calls.filter(([filters]) => filters.queryKey?.join(':') === 'monitor:list');
+    expect(listRefetches).toHaveLength(1);
+  });
+
+  it('converges once when a task first appears completed after the baseline', async () => {
+    api.loadMonitorImportTasks
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([fastCompleted, failed])
+      .mockResolvedValueOnce([fastCompleted, failed]);
+    const client = new QueryClient();
+    const refetch = vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined);
+    renderHook(useShellMonitorImportTaskNotifications, { wrapper: wrapper(client) });
+
+    for (const [index, eventName] of (['manager-ready', 'IMPORT_TASK_EVENT', 'IMPORT_TASK_EVENT'] as const).entries()) {
+      act(() => stream.handlers?.onCanonicalReread(eventName));
+      await waitFor(() => expect(api.loadMonitorImportTasks).toHaveBeenCalledTimes(index + 1));
+    }
 
     const listRefetches = refetch.mock.calls.filter(([filters]) => filters.queryKey?.join(':') === 'monitor:list');
     expect(listRefetches).toHaveLength(1);
