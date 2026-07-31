@@ -39,6 +39,7 @@ import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryGovernancePresetInfo
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.apache.hertzbeat.manager.pojo.dto.EntitySummaryInfo;
+import org.apache.hertzbeat.manager.pojo.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 import org.apache.hertzbeat.manager.service.ObserveEntityService;
@@ -146,7 +147,7 @@ public class EntityController {
 
     @GetMapping
     @Operation(summary = "Query entities", description = "Query entities with filters")
-    public ResponseEntity<Message<Page<EntitySummaryInfo>>> getEntities(
+    public ResponseEntity<Message<PageResponse<EntitySummaryInfo>>> getEntities(
             @Parameter(description = "Entity IDs") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Entity type", example = "service") @RequestParam(required = false) String type,
             @Parameter(description = "Entity status", example = "healthy") @RequestParam(required = false) String status,
@@ -164,7 +165,7 @@ public class EntityController {
         Page<EntitySummaryInfo> page = observeEntityService.getEntities(ids, type, status, search, owner, source,
                 environment, lifecycle, tier, system,
                 sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(page));
+        return ResponseEntity.ok(Message.success(PageResponse.from(page)));
     }
 
     @GetMapping("/{id:\\d+}/detail")
