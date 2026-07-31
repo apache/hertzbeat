@@ -40,6 +40,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -251,6 +252,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     void ignoreNoResourceFoundException(Exception ex) throws Exception {
         throw ex;
+    }
+
+    /**
+     * Ignore an async response that the client has already disconnected from.
+     * @param exception async response no longer usable
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException exception) {
+        log.debug("[monitor]-[async response no longer usable]-exceptionType={}",
+                exception.getClass().getName());
     }
 
     /**
