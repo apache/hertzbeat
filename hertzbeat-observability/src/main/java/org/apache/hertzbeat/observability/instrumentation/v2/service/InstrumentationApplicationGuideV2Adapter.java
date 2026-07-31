@@ -32,6 +32,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.GuideBlock;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderRequest;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.springframework.stereotype.Component;
@@ -73,7 +74,13 @@ public class InstrumentationApplicationGuideV2Adapter {
         List<GuideBlock> blocks = new ArrayList<>();
         blocks.add(link(method.component().sourceUrl()));
         addStep(blocks, recipe.id(), languageSteps.install());
-        blocks.add(environment(endpoint, protocol, service, request.platform(), profile.collectorId()));
+        blocks.add(environment(
+                endpoint,
+                protocol,
+                service,
+                request.platform(),
+                profile.collectorId(),
+                profile.authentication()));
         addStep(blocks, recipe.id(), languageSteps.start());
         addStep(blocks, recipe.id(), languageSteps.container());
         addStep(blocks, recipe.id(), languageSteps.disable());
@@ -86,7 +93,7 @@ public class InstrumentationApplicationGuideV2Adapter {
                 profile.collectorId() == null ? profile.id() : profile.collectorId(),
                 endpointUrl(profile, OtlpTransport.HTTP_PROTOBUF),
                 endpointUrl(profile, OtlpTransport.GRPC),
-                profile.authHeaderName());
+                profile.authorizationHeader());
     }
 
     private String endpointUrl(IntakeProfile profile, OtlpTransport transport) {
@@ -136,20 +143,30 @@ public class InstrumentationApplicationGuideV2Adapter {
     }
 
     private GuideBlock environment(
-            String endpoint, String protocol, ServiceIdentity service, Platform platform, String collectorId) {
+            String endpoint,
+            String protocol,
+            ServiceIdentity service,
+            Platform platform,
+            String collectorId,
+            Authentication authentication) {
         boolean windows = platform == Platform.WINDOWS_AMD64;
         String resourceAttributes = "service.namespace=" + service.namespace()
                 + ",deployment.environment.name=" + service.environment()
                 + (collectorId == null ? "" : ",hertzbeat.collector.id=" + collectorId);
+        String header = authentication == Authentication.BEARER_TOKEN
+                ? windows
+                        ? "$env:OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
+                        : "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
+                : "";
         String content = windows
                 ? "$env:OTEL_EXPORTER_OTLP_ENDPOINT='" + powershellValue(endpoint) + "'\n"
                         + "$env:OTEL_EXPORTER_OTLP_PROTOCOL='" + protocol + "'\n"
-                        + "$env:OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
+                        + header
                         + "$env:OTEL_SERVICE_NAME='" + service.name() + "'\n"
                         + "$env:OTEL_RESOURCE_ATTRIBUTES='" + powershellValue(resourceAttributes) + "'"
                 : "export OTEL_EXPORTER_OTLP_ENDPOINT=" + shellQuote(endpoint) + "\n"
                         + "export OTEL_EXPORTER_OTLP_PROTOCOL=" + shellQuote(protocol) + "\n"
-                        + "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_MARKER + "'\n"
+                        + header
                         + "export OTEL_SERVICE_NAME=" + service.name() + "\n"
                         + "export OTEL_RESOURCE_ATTRIBUTES=" + shellQuote(resourceAttributes);
         return new GuideBlock(
@@ -161,7 +178,7 @@ public class InstrumentationApplicationGuideV2Adapter {
                 windows ? "powershell" : "bash",
                 content,
                 null,
-                List.of(TOKEN_NAME));
+                authentication == Authentication.BEARER_TOKEN ? List.of(TOKEN_NAME) : List.of());
     }
 
     private GuideBlock link(String href) {

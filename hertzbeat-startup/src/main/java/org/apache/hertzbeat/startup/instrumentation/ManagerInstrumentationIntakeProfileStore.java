@@ -26,6 +26,7 @@ import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
@@ -132,6 +133,8 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
             if (transports.isEmpty()) {
                 return invalidExternal(profileId);
             }
+            Authentication authentication =
+                    Authentication.fromCode(normalize(externalProperties.authentication()));
             return new IntakeProfile(
                     profileId,
                     IntakeKind.EXTERNAL_OTEL_COLLECTOR,
@@ -139,7 +142,8 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
                     Gateway.EXTERNAL,
                     transports,
                     endpoints,
-                    AUTHORIZATION_HEADER,
+                    authentication,
+                    authentication == Authentication.BEARER_TOKEN ? AUTHORIZATION_HEADER : null,
                     null,
                     null);
         } catch (IllegalArgumentException exception) {

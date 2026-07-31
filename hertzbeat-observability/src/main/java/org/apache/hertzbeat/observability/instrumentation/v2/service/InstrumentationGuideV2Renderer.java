@@ -31,6 +31,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.RenderResponse;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.SecretPlaceholder;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
@@ -80,7 +81,7 @@ public class InstrumentationGuideV2Renderer {
         Target target = target(profile);
         List<GuideBlock> blocks = new ArrayList<>();
         if (target.security() == TransportSecurity.PLAINTEXT
-                && "Authorization".equals(profile.authHeaderName())) {
+                && profile.authentication() == Authentication.BEARER_TOKEN) {
             blocks.add(plaintextAuthorizationWarning());
         }
         blocks.addAll(blocks(request, recipe, profile, target, service));
@@ -92,7 +93,9 @@ public class InstrumentationGuideV2Renderer {
                 service,
                 recipe.signals(),
                 recipe.components(),
-                Map.of(TOKEN_NAME, SecretPlaceholder.authorizationToken()),
+                profile.authentication() == Authentication.BEARER_TOKEN
+                        ? Map.of(TOKEN_NAME, SecretPlaceholder.authorizationToken())
+                        : Map.of(),
                 blocks);
     }
 
@@ -105,14 +108,20 @@ public class InstrumentationGuideV2Renderer {
         return switch (recipe.kind()) {
             case APPLICATION -> applicationAdapter.blocks(
                     request, recipe, profile, target.endpoint(), target.protocol(), service);
-            case QUICK_START -> quickStartBlocks(target, service, recipe, profile.collectorId());
+            case QUICK_START -> quickStartBlocks(
+                    target, service, recipe, profile.collectorId(), profile.authentication());
             case EXISTING_OPENTELEMETRY -> sourceTemplates.render(
-                    recipe.id(), new GuideContext(target.endpoint(), target.protocol(), service));
+                    recipe.id(),
+                    new GuideContext(target.endpoint(), target.protocol(), service, profile.authentication()));
         };
     }
 
     private List<GuideBlock> quickStartBlocks(
-            Target target, ServiceIdentity service, RecipeOption recipe, String collectorId) {
+            Target target,
+            ServiceIdentity service,
+            RecipeOption recipe,
+            String collectorId,
+            Authentication authentication) {
         List<GuideBlock> blocks = new ArrayList<>();
         blocks.add(copyable(
                 "install_telemetrygen",
@@ -131,9 +140,9 @@ public class InstrumentationGuideV2Renderer {
                     "instrumentation.v2.block.send_" + signal,
                     "instrumentation.location.application_host",
                     "bash",
-                    telemetrygenCommand(signal, target, service, collectorId),
+                    telemetrygenCommand(signal, target, service, collectorId, authentication),
                     null,
-                    List.of(TOKEN_NAME)));
+                    authentication == Authentication.BEARER_TOKEN ? List.of(TOKEN_NAME) : List.of()));
         }
         blocks.add(check("validate_signals", "instrumentation.v2.check.detect_scoped_signals"));
         blocks.add(note(
@@ -154,7 +163,11 @@ public class InstrumentationGuideV2Renderer {
     }
 
     private String telemetrygenCommand(
-            String signal, Target target, ServiceIdentity service, String collectorId) {
+            String signal,
+            Target target,
+            ServiceIdentity service,
+            String collectorId,
+            Authentication authentication) {
         String countFlag = switch (signal) {
             case "metrics" -> "--metrics 1";
             case "logs" -> "--logs 1";
@@ -168,11 +181,14 @@ public class InstrumentationGuideV2Renderer {
         String collectorAttribute = collectorId == null
                 ? ""
                 : telemetrygenAttribute("hertzbeat.collector.id", collectorId);
+        String authenticationFlag = authentication == Authentication.BEARER_TOKEN
+                ? " --otlp-header 'Authorization=\"Bearer " + TOKEN_MARKER + "\"'"
+                : "";
         String command = "./.hertzbeat-telemetrygen/telemetrygen " + signal
                 + transport
                 + security
                 + " --otlp-endpoint " + shellQuote(target.authority())
-                + " --otlp-header 'Authorization=\"Bearer " + TOKEN_MARKER + "\"'"
+                + authenticationFlag
                 + " --service " + shellQuote(service.name())
                 + telemetrygenAttribute("service.namespace", service.namespace())
                 + telemetrygenAttribute("deployment.environment.name", service.environment())
