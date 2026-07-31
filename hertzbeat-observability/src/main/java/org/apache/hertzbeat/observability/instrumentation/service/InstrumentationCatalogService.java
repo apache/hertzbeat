@@ -108,7 +108,7 @@ public class InstrumentationCatalogService {
                 false,
                 DOTNET_ENVIRONMENTS,
                 PORTABLE_PLATFORMS,
-                capabilities(Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
+                capabilities(Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
                 component(
                         "OpenTelemetry .NET Automatic Instrumentation",
                         "https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/tag/v1.15.0",
