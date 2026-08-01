@@ -123,7 +123,6 @@ describe('Object Store resource controller', () => {
     ],
     ['error', { isError: true, error: { statusCode: 503 }, result: undefined }],
     ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],
-    ['missing', { isError: false, result: undefined }],
     ['ready', {}]
   ])('maps authoritative evidence to the %s state', (kind, override) => {
     refine.useOne.mockReturnValue(buildOneResult(override));
@@ -131,6 +130,47 @@ describe('Object Store resource controller', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
 
     expect(result.current.state.kind).toBe(kind);
+  });
+
+  it('creates an unsaved DATABASE baseline and accepts its first canonical save', async () => {
+    refine.useOne.mockReturnValue(buildOneResult({ isError: false, result: undefined }));
+    refine.providerUpdate.mockResolvedValue({ data: databaseRecord });
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      unconfigured: true,
+      current: { type: 'DATABASE', config: {}, configuredSecrets: [] },
+      dirty: false,
+      canSubmit: true
+    });
+
+    act(() => result.current.submit());
+
+    expect(refine.providerUpdate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      variables: { type: 'DATABASE', config: {}, configuredSecrets: [] }
+    });
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({
+        kind: 'ready',
+        unconfigured: false,
+        dirty: false,
+        canSubmit: false,
+        current: { type: 'DATABASE' }
+      })
+    );
+  });
+
+  it('keeps an unconfigured server non-editable for a read-only role', () => {
+    auth.roles = ['GUEST'];
+    refine.useOne.mockReturnValue(buildOneResult({ isError: false, result: undefined }));
+    const { result } = renderHook(() => useObjectStoreResourceController());
+
+    expect(result.current.state).toEqual({ kind: 'missing' });
+    act(() => result.current.submit());
+    expect(refine.providerUpdate).not.toHaveBeenCalled();
   });
 
   it('does not write for no-op, invalid, or discarded drafts', () => {

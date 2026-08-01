@@ -122,7 +122,6 @@ describe('ObjectStorePage', () => {
   });
 
   it.each([
-    ['missing', 'Object storage has not been configured.'],
     ['invalid', 'The object storage response is invalid.'],
     ['permission', 'Your account does not have permission to open this page.']
   ] as const)('renders %s evidence with fixed local copy', async (kind, message) => {
@@ -131,6 +130,33 @@ describe('ObjectStorePage', () => {
 
     expect(await screen.findByText(message)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('OBS access key')).not.toBeInTheDocument();
+  });
+
+  it('renders an editable DATABASE baseline for an administrator when configuration is missing', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(
+      buildController({
+        unconfigured: true,
+        current: { type: 'DATABASE', config: {}, configuredSecrets: [] },
+        dirty: false,
+        canSubmit: true
+      })
+    );
+    renderObjectStorePage();
+
+    expect(await screen.findByText('Object storage has not been configured.')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(controller.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps missing configuration non-editable for a read-only role', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'missing' }, false));
+    renderObjectStorePage();
+
+    expect(await screen.findByText('Object storage has not been configured.')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
   });
 
   it('renders loading without exposing stale editor values', () => {
@@ -196,6 +222,7 @@ function buildController(state: Record<string, unknown> = {}, canWrite = true) {
     retry: controller.retry,
     state: {
       kind: 'ready',
+      canSubmit: true,
       current: configuredObs,
       dirty: true,
       locked: false,

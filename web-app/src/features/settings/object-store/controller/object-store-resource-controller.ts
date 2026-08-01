@@ -74,13 +74,16 @@ export function useObjectStoreResourceController() {
     resource.query.error,
     resource.result
   );
+  const canEditMissingConfiguration = kind === 'missing' && canWrite;
 
   return {
     discard: editor.discard,
     canWrite,
     retry: editor.retry,
     state:
-      kind === 'ready' || editor.state.locked ? ({ kind: 'ready', ...editor.state } as const) : ({ kind } as const),
+      kind === 'ready' || canEditMissingConfiguration || editor.state.locked
+        ? ({ kind: 'ready', unconfigured: !editor.state.configured, ...editor.state } as const)
+        : ({ kind } as const),
     submit: editor.submit,
     updateDraft: editor.updateDraft
   };

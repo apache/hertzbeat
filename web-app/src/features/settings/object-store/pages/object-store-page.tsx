@@ -46,6 +46,7 @@ export function ObjectStorePage() {
       {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 6 }} />}
       {state.kind === 'ready' && (
         <>
+          {state.unconfigured && <Alert type="info" showIcon message={t('objectStore.missing')} />}
           {!controller.canWrite && <Alert type="info" showIcon message={t('objectStore.readOnly')} />}
           {state.recovery && (
             <Alert
@@ -61,6 +62,7 @@ export function ObjectStorePage() {
           )}
           <ObjectStoreEditor
             current={state.current}
+            canSubmit={state.canSubmit}
             missingFields={state.missingFields}
             dirty={state.dirty}
             locked={state.locked}

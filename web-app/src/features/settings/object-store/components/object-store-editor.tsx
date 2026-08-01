@@ -62,6 +62,7 @@ const obsFieldDefinitions = [
 
 type ObjectStoreEditorProps = {
   current: ObjectStoreDraft;
+  canSubmit: boolean;
   missingFields: string[];
   dirty: boolean;
   locked: boolean;
@@ -104,7 +105,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           <Button
             type="primary"
             loading={props.saving}
-            disabled={!props.dirty || props.locked}
+            disabled={!props.canSubmit || props.locked}
             onClick={props.onSubmit}
           >
             {t('common.save')}

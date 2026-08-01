@@ -29,6 +29,8 @@ export function useObjectStoreEditorController(
   const current = draft ?? canonical.baseline;
   const missingFields = validateObjectStoreDraft(current);
   const dirty = draft !== null && isObjectStoreDirty(draft, canonical.baseline);
+  // A missing server record can submit the default DATABASE baseline without pretending the user edited it.
+  const canSubmit = !canonical.configured || dirty;
   const transaction = useObjectStoreSaveTransaction({
     accept: value => {
       canonical.accept(value);
@@ -60,9 +62,11 @@ export function useObjectStoreEditorController(
       setShowValidation(true);
       return;
     }
-    if (dirty) transaction.submit(current);
+    if (canSubmit) transaction.submit(current);
   };
   const state = {
+    canSubmit,
+    configured: canonical.configured,
     current,
     canWrite,
     dirty,
@@ -82,9 +86,11 @@ function useAcceptedObjectStoreBaseline(record: ObjectStoreResourceRecord | unde
     value: ObjectStoreResourceRecord;
   } | null>(null);
   const acceptedRecord = accepted && accepted.source === record ? accepted.value : undefined;
+  const canonicalRecord = acceptedRecord ?? record;
   return {
     accept: (value: ObjectStoreResourceRecord) => setAccepted({ source: record, value }),
-    baseline: createObjectStoreDraft(acceptedRecord ?? record)
+    baseline: createObjectStoreDraft(canonicalRecord),
+    configured: canonicalRecord !== undefined
   };
 }
 
