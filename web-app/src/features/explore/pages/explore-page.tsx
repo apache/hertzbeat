@@ -17,17 +17,18 @@
 
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
+
 import { ExploreQueryBar } from '../components/explore-query-bar';
 import { ExploreWorkbench } from '../components/explore-workbench';
 import { useExplorePageController } from '../controller/use-explore-page-controller';
-import styles from './explore-page.module.css';
 import { ExploreResultPanel } from './explore-result-panel';
 
 export function ExplorePage() {
   const { t } = useTranslation();
   const controller = useExplorePageController();
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="workspace">
       <ExploreWorkbench
         query={controller.query}
         t={t}
@@ -41,12 +42,14 @@ export function ExplorePage() {
         updateQuery={controller.updateManualQuery}
         submission={controller.submission}
       />
-      <ExploreResultPanel
-        query={controller.query}
-        result={controller.result}
-        retry={controller.refresh}
-        openPath={controller.openPath}
-      />
-    </div>
+      <OperationalResultRegion>
+        <ExploreResultPanel
+          query={controller.query}
+          result={controller.result}
+          retry={controller.refresh}
+          openPath={controller.openPath}
+        />
+      </OperationalResultRegion>
+    </OperationalPage>
   );
 }

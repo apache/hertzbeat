@@ -16,13 +16,12 @@
  */
 
 .form {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--hb-border-subtle);
+  min-width: 0;
 }
 
 .primaryRow {
   display: grid;
-  grid-template-columns: minmax(280px, 1.6fr) minmax(180px, 0.8fr) minmax(160px, 0.7fr) 88px;
+  grid-template-columns: minmax(280px, 1.6fr) minmax(180px, 0.8fr) minmax(160px, 0.7fr);
   gap: 8px;
 }
 
@@ -92,5 +91,12 @@
   .primaryRow,
   .advancedFields {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .primaryRow,
+  .advancedFields {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

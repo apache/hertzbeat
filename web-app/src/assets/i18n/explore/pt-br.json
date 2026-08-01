@@ -9,6 +9,7 @@
     "instanceContext": "Instância: {{value}}",
     "endpointContext": "Rota HTTP: {{value}}",
     "states": {
+      "loading": "Carregando evidências de sinal…",
       "missingContext": "Escolha um nome de métrica ou um contexto de serviço antes de consultar métricas.",
       "unsupportedQuery": "Métricas com escopo de Collector aceitam um nome de métrica, não uma expressão PromQL arbitrária.",
       "storageUnavailable": "O armazenamento de métricas não está disponível para esta consulta.",

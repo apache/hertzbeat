@@ -162,6 +162,7 @@
   --state-accent: var(--hb-status-loading);
 }
 
+.statePanel[data-state='unsupported'],
 .statePanel[data-state='unavailable'],
 .statePanel[data-state='permission'] {
   --state-accent: var(--hb-status-degraded);

@@ -15,8 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton } from 'antd';
+import { Button } from 'antd';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
 import styles from './explore-state-panel.module.css';
 
@@ -29,21 +32,18 @@ export function ExploreResultFrame({ children }: { children: ReactNode }) {
 }
 
 export function ExploreLoadingResult() {
-  return (
-    <ExploreResultFrame>
-      <Skeleton active paragraph={{ rows: 8 }} />
-    </ExploreResultFrame>
-  );
+  const { t } = useTranslation();
+  return <OperationalStatePanel kind="loading" title={t('explore.states.loading')} />;
 }
 
 type MessageProps = {
-  type: 'error' | 'info' | 'warning';
+  kind: OperationalStateKind;
   message: string;
   retry?: (() => Promise<void>) | undefined;
   retryLabel?: string | undefined;
 };
 
-export function ExploreMessageResult({ type, message, retry, retryLabel }: MessageProps) {
+export function ExploreMessageResult({ kind, message, retry, retryLabel }: MessageProps) {
   const retryAction =
     retry && retryLabel ? (
       <Button
@@ -55,9 +55,5 @@ export function ExploreMessageResult({ type, message, retry, retryLabel }: Messa
       </Button>
     ) : undefined;
 
-  return (
-    <ExploreResultFrame>
-      <Alert type={type} showIcon message={message} action={retryAction} />
-    </ExploreResultFrame>
-  );
+  return <OperationalStatePanel kind={kind} title={message} action={retryAction} />;
 }

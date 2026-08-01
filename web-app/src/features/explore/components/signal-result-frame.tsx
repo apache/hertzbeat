@@ -17,6 +17,8 @@
 
 import type { ReactNode } from 'react';
 
+import { OperationalStatePanel } from '@/shared/operational-page';
+
 import styles from './signal-result-frame.module.css';
 
 type MetaItem = { label: string; value: ReactNode };
@@ -66,10 +68,5 @@ export function SignalResultFrame({
 }
 
 export function SignalEmptyState({ title, hint }: { title: string; hint: string }) {
-  return (
-    <div className={styles.empty} role="status">
-      <strong>{title}</strong>
-      <span>{hint}</span>
-    </div>
-  );
+  return <OperationalStatePanel kind="empty" title={title} description={hint} />;
 }

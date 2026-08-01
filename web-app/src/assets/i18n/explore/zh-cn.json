@@ -9,6 +9,7 @@
     "instanceContext": "实例：{{value}}",
     "endpointContext": "HTTP 路由：{{value}}",
     "states": {
+      "loading": "正在加载信号证据…",
       "missingContext": "查询指标前，请选择指标名称或服务上下文。",
       "unsupportedQuery": "Collector 范围的指标查询仅支持指标名称，不支持任意 PromQL 表达式。",
       "storageUnavailable": "当前查询无法使用指标存储。",

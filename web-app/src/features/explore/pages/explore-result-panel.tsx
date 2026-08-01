@@ -39,7 +39,7 @@ export function ExploreResultPanel({ query, result, retry, openPath }: ResultPan
   if (result.kind === 'invalid') return null;
   if (result.kind === 'loading') return <ExploreLoadingResult />;
   if (result.kind === 'permission')
-    return <ExploreMessageResult type="warning" message={t('common.permission.roleRequiredDescription')} />;
+    return <ExploreMessageResult kind="permission" message={t('common.permission.roleRequiredDescription')} />;
   if (result.kind === 'transport_error' || result.kind === 'contract_error' || result.kind === 'error')
     return <FailureResult kind={result.kind} retry={retry} />;
   if (result.kind === 'live')
@@ -52,7 +52,7 @@ export function ExploreResultPanel({ query, result, retry, openPath }: ResultPan
         result={result.evidence}
         retry={retry}
         openPath={openPath}
-        message={<ExploreMessageResult type="info" message={t('explore.states.refreshing')} />}
+        message={<ExploreMessageResult kind="loading" message={t('explore.states.refreshing')} />}
       />
     );
   if (result.kind === 'stale_error')
@@ -65,7 +65,7 @@ export function ExploreResultPanel({ query, result, retry, openPath }: ResultPan
         openPath={openPath}
         message={
           <ExploreMessageResult
-            type="warning"
+            kind="unavailable"
             message={t('explore.states.staleError', { reason: t(refreshFailureMessageKey(result.errorKind)) })}
             retry={retry}
             retryLabel={t('common.retry')}
@@ -86,13 +86,14 @@ function FailureResult({
   retry: () => Promise<void>;
 }) {
   const { t } = useTranslation();
-  const messageKey =
-    kind === 'transport_error'
-      ? 'explore.states.transportError'
-      : kind === 'contract_error'
-        ? 'explore.states.contractError'
-        : 'explore.loadFailed';
-  return <ExploreMessageResult type="error" message={t(messageKey)} retry={retry} retryLabel={t('common.retry')} />;
+  const messageKey = failureMessageKey(kind);
+  return <ExploreMessageResult kind="error" message={t(messageKey)} retry={retry} retryLabel={t('common.retry')} />;
+}
+
+function failureMessageKey(kind: 'transport_error' | 'contract_error' | 'error') {
+  if (kind === 'transport_error') return 'explore.states.transportError';
+  if (kind === 'contract_error') return 'explore.states.contractError';
+  return 'explore.loadFailed';
 }
 
 function RetainedResult({

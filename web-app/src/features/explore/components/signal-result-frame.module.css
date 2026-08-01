@@ -75,25 +75,6 @@
   font-weight: 550;
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 260px;
-  color: var(--hb-text-muted);
-}
-
-.empty strong {
-  margin-bottom: 5px;
-  color: var(--hb-text-primary);
-  font-weight: 550;
-}
-
-.empty span {
-  font-size: 13px;
-}
-
 @media (max-width: 900px) {
   .header {
     align-items: flex-start;

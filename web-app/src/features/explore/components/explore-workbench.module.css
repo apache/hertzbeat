@@ -15,22 +15,9 @@
  * limitations under the License.
  */
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 18px;
-}
-
-.title {
-  margin: 0 0 4px !important;
-  font-size: 27px !important;
-  letter-spacing: -0.025em;
-}
-
 .scope {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 2px;
 }
@@ -93,10 +80,4 @@
 .logMode :global(.ant-btn) {
   height: 28px;
   padding-inline: 12px;
-}
-
-@media (max-width: 900px) {
-  .header {
-    flex-direction: column;
-  }
 }

@@ -16,6 +16,5 @@
  */
 
 .results {
-  min-height: 360px;
-  padding-top: 16px;
+  min-width: 0;
 }

@@ -69,6 +69,17 @@ describe('ExplorePage instrumentation context boundary', () => {
     vi.useRealTimers();
   });
 
+  it('uses the shared operational workspace and compact loading evidence', () => {
+    renderPage('/explore?signal=metrics');
+
+    expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('explore.states.loading')).closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+  });
+
   it('does not widen partial or reversed instrumentation scope into any signal query or SSE stream', async () => {
     const invalidEntries = [
       '/explore?signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce&start=1000&end=2000',

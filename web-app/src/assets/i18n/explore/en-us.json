@@ -9,6 +9,7 @@
     "instanceContext": "Instance: {{value}}",
     "endpointContext": "HTTP route: {{value}}",
     "states": {
+      "loading": "Loading signal evidence…",
       "missingContext": "Choose a metric name or service context before querying metrics.",
       "unsupportedQuery": "Collector-scoped metrics accept a metric name, not an arbitrary PromQL expression.",
       "storageUnavailable": "Metric storage is unavailable for this query.",

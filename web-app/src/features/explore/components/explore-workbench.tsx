@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Select, Typography } from 'antd';
+import { Button, Select } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { OperationalPageHeader, OperationalStatePanel } from '@/shared/operational-page';
 import { globalAutoRefreshValues, type SharedTimeValue } from '@/shared/time';
 
 import {
@@ -68,7 +69,7 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh, time }: Props
         time={time}
         updateTimeRange={updateTimeRange}
       />
-      {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}
+      {handoffState === 'invalid' && <OperationalStatePanel kind="error" title={t('explore.handoffInvalid')} />}
       <ExploreSignalNavigation query={query} selectSignal={selectSignal} t={t} updateQuery={updateQuery} />
     </>
   );
@@ -91,47 +92,43 @@ function ExploreHeader({
     ? [{ value: EXACT_WINDOW_OPTION, label: t('explore.exactWindow'), disabled: true }]
     : [];
   return (
-    <header className={styles.header}>
-      <div>
-        <Typography.Title className={styles.title ?? ''} level={2}>
-          {t('explore.title')}
-        </Typography.Title>
-        <Typography.Text type="secondary">{t('explore.description')}</Typography.Text>
-      </div>
-      <div className={styles.scope} aria-label={t('explore.context')}>
-        <Select<string>
-          className={styles.timeRange ?? ''}
-          aria-label={t('explore.timeRange')}
-          value={exactWindow ? EXACT_WINDOW_OPTION : query.timeRange}
-          options={[
-            ...exactOption,
-            ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
-          ]}
-          onChange={updateTimeRange}
-        />
-        {!fixedWindowFields && time && (
-          <Select<number>
+    <OperationalPageHeader
+      title={t('explore.title')}
+      description={t('explore.description')}
+      actions={
+        <div className={styles.scope} aria-label={t('explore.context')}>
+          <Select<string>
             className={styles.timeRange ?? ''}
-            aria-label={
-              time.autoRefreshMs === 0
-                ? t('shell.time.autoRefreshOff')
-                : t('shell.time.autoRefreshSeconds', { seconds: time.autoRefreshMs / 1_000 })
-            }
-            value={time.autoRefreshMs}
-            options={globalAutoRefreshValues.map(interval => ({
-              value: interval,
-              label:
-                interval === 0
-                  ? t('shell.time.autoRefreshOff')
-                  : t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 })
-            }))}
-            onChange={interval => time.setAutoRefresh(interval)}
+            aria-label={t('explore.timeRange')}
+            value={exactWindow ? EXACT_WINDOW_OPTION : query.timeRange}
+            options={[
+              ...exactOption,
+              ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
+            ]}
+            onChange={updateTimeRange}
           />
-        )}
-        <Button onClick={() => void refresh()}>{t('common.refresh')}</Button>
-      </div>
-    </header>
+          {!fixedWindowFields && time && (
+            <Select<number>
+              className={styles.timeRange ?? ''}
+              aria-label={autoRefreshLabel(time.autoRefreshMs, t)}
+              value={time.autoRefreshMs}
+              options={globalAutoRefreshValues.map(interval => ({
+                value: interval,
+                label: autoRefreshLabel(interval, t)
+              }))}
+              onChange={interval => time.setAutoRefresh(interval)}
+            />
+          )}
+          <Button onClick={() => void refresh()}>{t('common.refresh')}</Button>
+        </div>
+      }
+    />
   );
+}
+
+function autoRefreshLabel(interval: number, t: TFunction) {
+  if (interval === 0) return t('shell.time.autoRefreshOff');
+  return t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 });
 }
 
 function ExploreSignalNavigation({

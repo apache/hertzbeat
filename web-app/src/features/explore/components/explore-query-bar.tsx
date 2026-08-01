@@ -18,6 +18,8 @@
 import { Button, Input } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page';
+
 import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import type { ExploreSubmissionViewModel } from '../model/explore-submission-model';
 import { ExploreActiveFilters } from './explore-active-filters';
@@ -41,27 +43,33 @@ export function ExploreQueryBar({ query, t, updateQuery, submission }: Props) {
         submission.submit();
       }}
     >
-      <div className={styles.primaryRow}>
-        <Input
-          className={styles.queryInput ?? ''}
-          value={draft.query}
-          onChange={event => updateField({ field: 'query', value: event.target.value })}
-          placeholder={t(`explore.queryPlaceholders.${query.signal}`)}
-        />
-        <Input
-          value={draft.serviceName}
-          onChange={event => updateField({ field: 'serviceName', value: event.target.value })}
-          placeholder={t('explore.serviceName')}
-        />
-        <Input
-          value={draft.environment}
-          onChange={event => updateField({ field: 'environment', value: event.target.value })}
-          placeholder={t('explore.environment')}
-        />
-        <Button className={styles.run ?? ''} type="primary" htmlType="submit">
-          {t('common.query')}
-        </Button>
-      </div>
+      <OperationalCommandBar
+        primary={
+          <div className={styles.primaryRow}>
+            <Input
+              className={styles.queryInput ?? ''}
+              value={draft.query}
+              onChange={event => updateField({ field: 'query', value: event.target.value })}
+              placeholder={t(`explore.queryPlaceholders.${query.signal}`)}
+            />
+            <Input
+              value={draft.serviceName}
+              onChange={event => updateField({ field: 'serviceName', value: event.target.value })}
+              placeholder={t('explore.serviceName')}
+            />
+            <Input
+              value={draft.environment}
+              onChange={event => updateField({ field: 'environment', value: event.target.value })}
+              placeholder={t('explore.environment')}
+            />
+          </div>
+        }
+        secondary={
+          <Button className={styles.run ?? ''} type="primary" htmlType="submit">
+            {t('common.query')}
+          </Button>
+        }
+      />
       <ExploreAdvancedFilters draft={draft} errors={errors} t={t} updateField={updateField} />
       <ExploreActiveFilters query={query} t={t} updateQuery={updateQuery} removeFilter={submission.removeFilter} />
     </form>

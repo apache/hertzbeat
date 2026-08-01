@@ -50,6 +50,7 @@ describe('Explore workbench', () => {
     expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Auto refresh/u })).toBeInTheDocument();
     expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
+    expect(screen.getByRole('banner')).toHaveAttribute('data-hb-operational-page-header');
     fireEvent.click(screen.getByRole('tab', { name: 'Metrics' }));
     expect(updateQuery).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: 'Logs' }));

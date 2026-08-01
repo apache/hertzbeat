@@ -123,7 +123,8 @@ export function OperationalSection({
   );
 }
 
-export type OperationalStateKind = 'loading' | 'empty' | 'no-match' | 'unavailable' | 'permission' | 'error';
+export type OperationalStateKind =
+  'loading' | 'empty' | 'no-match' | 'unsupported' | 'unavailable' | 'permission' | 'error';
 
 export function OperationalStatePanel({
   kind,

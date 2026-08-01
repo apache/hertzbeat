@@ -38,10 +38,10 @@ export function MetricResult({ data, state, retry, t }: MetricResultProps) {
     return <MetricFailure message={t('explore.states.storageUnavailable')} retry={retry} t={t} />;
   }
   if (state.kind === 'missing_context') {
-    return <ExploreMessageResult type="info" message={t('explore.states.missingContext')} />;
+    return <ExploreMessageResult kind="empty" message={t('explore.states.missingContext')} />;
   }
   if (state.kind === 'unsupported_query') {
-    return <ExploreMessageResult type="warning" message={t('explore.states.unsupportedQuery')} />;
+    return <ExploreMessageResult kind="unsupported" message={t('explore.states.unsupportedQuery')} />;
   }
   if (state.kind === 'empty') return <MetricEmptyResult t={t} />;
   return (
@@ -52,7 +52,7 @@ export function MetricResult({ data, state, retry, t }: MetricResultProps) {
 }
 
 function MetricFailure({ message, retry, t }: { message: string; retry: () => Promise<void>; t: TFunction }) {
-  return <ExploreMessageResult type="error" message={message} retry={retry} retryLabel={t('common.retry')} />;
+  return <ExploreMessageResult kind="error" message={message} retry={retry} retryLabel={t('common.retry')} />;
 }
 
 function MetricEmptyResult({ t }: { t: TFunction }) {
