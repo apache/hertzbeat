@@ -194,6 +194,7 @@
       "tags": "Tags"
     },
     "sections": {
+      "details": "Detalhes do recurso",
       "evidence": "Evidência operacional",
       "identities": "Evidências de identificação",
       "monitors": "Vínculos de monitor",
@@ -207,6 +208,7 @@
     },
     "monitors": {
       "app": "Filtrar por tipo de monitor",
+      "loading": "Carregando vínculos de monitores…",
       "reset": "Redefinir filtros de monitor",
       "range": "{{start}}–{{end}}/{{total}}"
     },
@@ -229,7 +231,44 @@
     },
     "operations": {
       "title": "Operações recomendadas",
-      "readiness": "Prontidão operacional {{score}}%"
+      "readiness": "Prontidão operacional {{score}}%",
+      "actions": {
+        "review_alerts": {
+          "title": "Revisar alertas ativos",
+          "summary": "Confirme o escopo afetado e o estado atual antes de aprofundar a investigação.",
+          "action": "Ver alertas ativos"
+        },
+        "complete_owner": {
+          "title": "Definir responsável",
+          "summary": "Defina um responsável claro pelas ações de diagnóstico e governança.",
+          "action": "Definir responsável"
+        },
+        "complete_runbook": {
+          "title": "Adicionar runbook",
+          "summary": "Adicione um procedimento de resposta para levar o alerta diretamente à recuperação.",
+          "action": "Adicionar runbook"
+        },
+        "bind_monitor": {
+          "title": "Vincular monitores",
+          "summary": "Vincule tarefas de monitoramento para fundamentar o estado em evidências operacionais.",
+          "action": "Vincular monitores"
+        },
+        "open_discovery": {
+          "title": "Combinar evidências do recurso",
+          "summary": "Use a descoberta para combinar evidências de monitores, identidades e telemetria.",
+          "action": "Abrir descoberta"
+        },
+        "inspect_logs": {
+          "title": "Revisar pistas nos logs",
+          "summary": "Use os filtros de recurso disponíveis para investigar logs relacionados.",
+          "action": "Ver logs"
+        },
+        "review_relations": {
+          "title": "Revisar relações principais",
+          "summary": "Inspecione os limites importantes das dependências anteriores e posteriores.",
+          "action": "Ver relações"
+        }
+      }
     },
     "values": {
       "type": {

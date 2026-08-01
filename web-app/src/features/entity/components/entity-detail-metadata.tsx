@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Descriptions, Space, Tag, Typography } from 'antd';
+import { Descriptions, Space, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { EntityDetail } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
@@ -11,15 +13,21 @@ export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
   const { t } = useTranslation();
   return (
     <>
-      <Descriptions bordered size="small" column={2} items={baseItems(t, detail)} />
-      <section className={styles.section} aria-label={t('entity.sections.evidence')}>
-        <Typography.Title level={4}>{t('entity.sections.evidence')}</Typography.Title>
+      <OperationalSection title={t('entity.sections.details')}>
+        <Descriptions className={styles.metadataGrid} size="small" column={2} items={baseItems(t, detail)} />
+      </OperationalSection>
+      <OperationalSection title={t('entity.sections.evidence')}>
         {detail.evidence ? (
-          <Descriptions size="small" column={5} items={evidenceItems(t, detail.evidence)} />
+          <Descriptions
+            className={styles.evidenceGrid}
+            size="small"
+            column={5}
+            items={evidenceItems(t, detail.evidence)}
+          />
         ) : (
-          <Typography.Text type="secondary">{t('entity.missing.evidence')}</Typography.Text>
+          <OperationalStatePanel kind="empty" title={t('entity.missing.evidence')} />
         )}
-      </section>
+      </OperationalSection>
     </>
   );
 }

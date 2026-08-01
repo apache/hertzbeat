@@ -194,6 +194,7 @@
       "tags": "Tags"
     },
     "sections": {
+      "details": "Resource details",
       "evidence": "Operational evidence",
       "identities": "Recognition evidence",
       "monitors": "Monitor bindings",
@@ -207,6 +208,7 @@
     },
     "monitors": {
       "app": "Filter by monitor type",
+      "loading": "Loading monitor bindings…",
       "reset": "Reset monitor filters",
       "range": "{{start}}–{{end}}/{{total}}"
     },
@@ -229,7 +231,44 @@
     },
     "operations": {
       "title": "Recommended operations",
-      "readiness": "Operational readiness {{score}}%"
+      "readiness": "Operational readiness {{score}}%",
+      "actions": {
+        "review_alerts": {
+          "title": "Review active alerts",
+          "summary": "Confirm the affected scope and current status before investigating deeper.",
+          "action": "View active alerts"
+        },
+        "complete_owner": {
+          "title": "Assign an owner",
+          "summary": "Give troubleshooting and governance work a clear accountable owner.",
+          "action": "Assign owner"
+        },
+        "complete_runbook": {
+          "title": "Add a runbook",
+          "summary": "Add a response procedure so alerts can lead directly to recovery.",
+          "action": "Add runbook"
+        },
+        "bind_monitor": {
+          "title": "Bind monitors",
+          "summary": "Link monitor tasks so status is backed by operational evidence.",
+          "action": "Link monitors"
+        },
+        "open_discovery": {
+          "title": "Merge resource evidence",
+          "summary": "Use discovery to combine monitor, identity, and telemetry evidence.",
+          "action": "Open discovery"
+        },
+        "inspect_logs": {
+          "title": "Review log clues",
+          "summary": "Use the available resource filters to investigate related logs.",
+          "action": "Review logs"
+        },
+        "review_relations": {
+          "title": "Review key relations",
+          "summary": "Inspect important upstream and downstream dependency boundaries.",
+          "action": "View relations"
+        }
+      }
     },
     "values": {
       "type": {

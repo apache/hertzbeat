@@ -5,14 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Input, List, Pagination, Select, Space, Spin, Tag, Typography } from 'antd';
+import { Button, Input, List, Pagination, Select, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalCommandBar, OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { EntityMonitorQuery } from '../model/entity-contract';
 import { entityMonitorStatuses } from '../model/entity-monitor-query';
 import type { EntityDetailEvidence, EntityMonitorViewState } from '../model/entity-view-model';
 import { localizeEntityCode } from '../model/entity-display';
-import styles from './entity-view.module.css';
 
 type Detail = Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
 type MonitorActions = {
@@ -55,40 +56,45 @@ export function EntityEvidenceLists({
 function MonitorSection({ state, actions }: { state: EntityMonitorViewState; actions: MonitorActions }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.section} aria-label={t('entity.sections.monitors')}>
-      <Typography.Title level={4}>{t('entity.sections.monitors')}</Typography.Title>
-      <Space wrap>
-        <Input.Search
-          key={state.query.app ?? ''}
-          defaultValue={state.query.app}
-          allowClear
-          aria-label={t('entity.monitors.app')}
-          placeholder={t('entity.monitors.app')}
-          onSearch={app =>
-            actions.changeMonitorFilters({
-              ...(state.query.status === undefined ? {} : { status: state.query.status }),
-              ...(app ? { app } : {})
-            })
-          }
-        />
-        <Select
-          aria-label={t('monitor.status.label')}
-          value={state.query.status ?? 'all'}
-          onChange={(status: number | 'all') =>
-            actions.changeMonitorFilters({
-              ...(status === 'all' ? {} : { status }),
-              ...(state.query.app ? { app: state.query.app } : {})
-            })
-          }
-          options={monitorStatusOptions(t)}
-        />
-        <Button onClick={() => actions.changeMonitorFilters({})}>{t('entity.monitors.reset')}</Button>
-        <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refreshMonitors}>
-          {t('common.refresh')}
-        </Button>
-      </Space>
+    <OperationalSection title={t('entity.sections.monitors')}>
+      <OperationalCommandBar
+        primary={
+          <Space wrap>
+            <Input.Search
+              key={state.query.app ?? ''}
+              defaultValue={state.query.app}
+              allowClear
+              aria-label={t('entity.monitors.app')}
+              placeholder={t('entity.monitors.app')}
+              onSearch={app =>
+                actions.changeMonitorFilters({
+                  ...(state.query.status === undefined ? {} : { status: state.query.status }),
+                  ...(app ? { app } : {})
+                })
+              }
+            />
+            <Select
+              aria-label={t('monitor.status.label')}
+              value={state.query.status ?? 'all'}
+              onChange={(status: number | 'all') =>
+                actions.changeMonitorFilters({
+                  ...(status === 'all' ? {} : { status }),
+                  ...(state.query.app ? { app: state.query.app } : {})
+                })
+              }
+              options={monitorStatusOptions(t)}
+            />
+            <Button onClick={() => actions.changeMonitorFilters({})}>{t('entity.monitors.reset')}</Button>
+          </Space>
+        }
+        secondary={
+          <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refreshMonitors}>
+            {t('common.refresh')}
+          </Button>
+        }
+      />
       <MonitorEvidence state={state} changePage={actions.changeMonitorPage} />
-    </section>
+    </OperationalSection>
   );
 }
 
@@ -114,13 +120,14 @@ function MonitorEvidence({
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
-  if (evidence.kind === 'loading') return <Spin />;
-  if (evidence.kind === 'empty')
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('entity.missing.monitors')} />;
+  if (evidence.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('entity.monitors.loading')} />;
+  if (evidence.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('entity.missing.monitors')} />;
   if (evidence.kind === 'permission')
-    return <Alert showIcon type="warning" message={t('common.permission.roleRequiredDescription')} />;
-  if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+  if (evidence.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (evidence.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   const start = state.query.pageIndex * state.query.pageSize + 1;
   const end = Math.min(start + evidence.records.length - 1, evidence.total);
   return (
@@ -178,9 +185,8 @@ function relationItem(t: (key: string) => string, item: Detail['relations'][numb
 
 function EvidenceSection(props: { title: string; empty: string; isEmpty: boolean; children: React.ReactNode }) {
   return (
-    <section className={styles.section}>
-      <Typography.Title level={4}>{props.title}</Typography.Title>
-      {props.isEmpty ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={props.empty} /> : props.children}
-    </section>
+    <OperationalSection title={props.title}>
+      {props.isEmpty ? <OperationalStatePanel kind="empty" title={props.empty} /> : props.children}
+    </OperationalSection>
   );
 }

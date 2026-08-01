@@ -1,11 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, List, Space, Typography } from 'antd';
+import { Button, List } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { EntityDetail, EntityNextActionType } from '../model/entity-contract';
+import { OperationalSection } from '@/shared/operational-page';
+
+import type { EntityDetail, EntityNextAction, EntityNextActionType } from '../model/entity-contract';
 import { entityNextActionRequiresWrite } from '../model/entity-operational-navigation';
-import styles from './entity-view.module.css';
 
 /**
  * Keeps server recommendations progressive: an ordinary entity remains compact,
@@ -28,15 +29,12 @@ export function EntityOperationalGuidance({
   );
   if (actions.length === 0) return null;
   return (
-    <section className={styles.section} aria-label={t('entity.operations.title')}>
-      <Space className={styles.sectionHeading ?? ''} align="baseline">
-        <Typography.Title level={4}>{t('entity.operations.title')}</Typography.Title>
-        {detail.opsSummary ? (
-          <Typography.Text type="secondary">
-            {t('entity.operations.readiness', { score: detail.opsSummary.readinessScore })}
-          </Typography.Text>
-        ) : null}
-      </Space>
+    <OperationalSection
+      title={t('entity.operations.title')}
+      description={
+        detail.opsSummary ? t('entity.operations.readiness', { score: detail.opsSummary.readinessScore }) : undefined
+      }
+    >
       <List
         size="small"
         dataSource={actions}
@@ -44,14 +42,23 @@ export function EntityOperationalGuidance({
           <List.Item
             actions={[
               <Button key={action.actionType} size="small" onClick={() => act(action.actionType)}>
-                {action.actionLabel}
+                {actionCopy(t, action, 'action')}
               </Button>
             ]}
           >
-            <List.Item.Meta title={action.title} description={action.summary} />
+            <List.Item.Meta title={actionCopy(t, action, 'title')} description={actionCopy(t, action, 'summary')} />
           </List.Item>
         )}
       />
-    </section>
+    </OperationalSection>
   );
+}
+
+/**
+ * Navigation is server-driven through the stable action code, while visible copy
+ * belongs to the active UI locale. This avoids leaking the server JVM locale into
+ * an otherwise consistently localized resource workspace.
+ */
+function actionCopy(t: (key: string) => string, action: EntityNextAction, field: 'title' | 'summary' | 'action') {
+  return t(`entity.operations.actions.${action.actionType}.${field}`);
 }

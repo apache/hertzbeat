@@ -193,7 +193,13 @@
       "labels": "標籤",
       "tags": "標記"
     },
-    "sections": { "evidence": "運行證據", "identities": "識別依據", "monitors": "監控綁定", "relations": "關係" },
+    "sections": {
+      "details": "資源詳情",
+      "evidence": "運行證據",
+      "identities": "識別依據",
+      "monitors": "監控綁定",
+      "relations": "關係"
+    },
     "missing": {
       "evidence": "暫無運行證據。",
       "identities": "沒有識別依據。",
@@ -202,6 +208,7 @@
     },
     "monitors": {
       "app": "依監控類型篩選",
+      "loading": "正在載入監控綁定…",
       "reset": "重設監控篩選",
       "range": "{{start}}–{{end}}/{{total}}"
     },
@@ -224,7 +231,44 @@
     },
     "operations": {
       "title": "建議操作",
-      "readiness": "運維就緒度 {{score}}%"
+      "readiness": "運維就緒度 {{score}}%",
+      "actions": {
+        "review_alerts": {
+          "title": "處理活躍告警",
+          "summary": "先確認目前告警的影響範圍和狀態，再繼續深入排查。",
+          "action": "查看活躍告警"
+        },
+        "complete_owner": {
+          "title": "補充負責人",
+          "summary": "為排障和治理操作明確責任歸屬。",
+          "action": "補充負責人"
+        },
+        "complete_runbook": {
+          "title": "補充處置手冊",
+          "summary": "新增回應流程，讓告警能夠直接推動故障復原。",
+          "action": "補充處置手冊"
+        },
+        "bind_monitor": {
+          "title": "關聯監控",
+          "summary": "關聯監控任務，讓資源狀態具有真實運維證據。",
+          "action": "關聯監控"
+        },
+        "open_discovery": {
+          "title": "歸併資源證據",
+          "summary": "透過發現工作台歸併監控、身分和遙測證據。",
+          "action": "開啟發現工作台"
+        },
+        "inspect_logs": {
+          "title": "查看日誌線索",
+          "summary": "使用可用的資源篩選條件排查關聯日誌。",
+          "action": "查看日誌"
+        },
+        "review_relations": {
+          "title": "查看關鍵關係",
+          "summary": "檢查重要的上游和下游依賴邊界。",
+          "action": "查看關係"
+        }
+      }
     },
     "values": {
       "type": {

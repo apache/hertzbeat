@@ -1,7 +1,14 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Space, Spin, Typography } from 'antd';
+import { Alert, Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import type { EntityDetailEvidence, EntityMonitorViewState, EntityNoiseControlType } from '../model/entity-view-model';
 import { entityExploreSignals, type EntityExploreSignal } from '../model/entity-operational-navigation';
@@ -11,7 +18,6 @@ import { EntityDetailMetadata } from './entity-detail-metadata';
 import { EntityEvidenceLists } from './entity-evidence-lists';
 import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
 import { EntityOperationalGuidance } from './entity-operational-guidance';
-import styles from './entity-view.module.css';
 
 type EntityDetailViewActions = {
   refresh: () => void;
@@ -44,17 +50,20 @@ export function EntityDetailView({
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
-  if (evidence.kind === 'loading')
+  if (evidence.kind !== 'ready') {
+    const stateCopy = {
+      loading: { kind: 'loading', title: t('entity.loading') },
+      missing: { kind: 'empty', title: t('common.notFound.description') },
+      permission: { kind: 'permission', title: t('common.permission.roleRequiredDescription') },
+      unavailable: { kind: 'unavailable', title: t('common.unavailable') },
+      error: { kind: 'error', title: t('common.routeError.description') }
+    } as const;
     return (
-      <div role="status">
-        <Spin />
-      </div>
+      <OperationalPage>
+        <OperationalStatePanel {...stateCopy[evidence.kind]} />
+      </OperationalPage>
     );
-  if (evidence.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
-  if (evidence.kind === 'permission')
-    return <Alert showIcon type="warning" message={t('common.permission.roleRequiredDescription')} />;
-  if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
+  }
   return <ReadyEntityDetail detail={evidence.detail} state={state} actions={actions} />;
 }
 
@@ -76,7 +85,7 @@ function ReadyEntityDetail({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.page}>
+    <OperationalPage>
       <EntityDetailHeader detail={detail} state={state} actions={actions} />
       {state.deleteFailure ? (
         <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
@@ -87,7 +96,7 @@ function ReadyEntityDetail({
         <EntityNoiseControlEvidence summary={detail.noiseControls} manage={actions.manageNoiseControls} />
       ) : null}
       <EntityEvidenceLists detail={detail} monitors={state.monitors} actions={actions} />
-    </div>
+    </OperationalPage>
   );
 }
 
@@ -101,36 +110,50 @@ function EntityDetailHeader({
   actions: EntityDetailViewActions;
 }) {
   const { t } = useTranslation();
+  const exploreSignals = entityExploreSignals(detail);
+  const hasCommands = state.canWrite || state.canDelete || exploreSignals.length > 0;
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{detail.entity.displayName || detail.entity.name}</Typography.Title>
-        <Typography.Text type="secondary">{localizeEntityCode(t, 'type', detail.entity.type)}</Typography.Text>
-      </div>
-      <Space>
-        {state.canWrite && (
-          <>
-            <Button type="primary" onClick={actions.edit}>
-              {t('common.edit')}
+    <>
+      <OperationalPageHeader
+        title={detail.entity.displayName || detail.entity.name}
+        description={localizeEntityCode(t, 'type', detail.entity.type)}
+        actions={
+          <Space wrap>
+            <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refresh}>
+              {t('common.refresh')}
             </Button>
-            <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
-          </>
-        )}
-        {state.canDelete && (
-          <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
-            {t('entity.delete.action')}
-          </Button>
-        )}
-        {entityExploreSignals(detail).map(signal => (
-          <Button key={signal} onClick={() => actions.explore(signal)}>
-            {t(`entity.explore.${signal}`)}
-          </Button>
-        ))}
-        <Button disabled={state.refreshing} loading={state.refreshing} onClick={actions.refresh}>
-          {t('common.refresh')}
-        </Button>
-        <Button onClick={actions.back}>{t('common.back')}</Button>
-      </Space>
-    </header>
+            <Button onClick={actions.back}>{t('common.back')}</Button>
+          </Space>
+        }
+      />
+      {hasCommands ? (
+        <OperationalCommandBar
+          primary={
+            <Space wrap>
+              {state.canWrite ? (
+                <>
+                  <Button type="primary" onClick={actions.edit}>
+                    {t('common.edit')}
+                  </Button>
+                  <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
+                </>
+              ) : null}
+              {exploreSignals.map(signal => (
+                <Button key={signal} onClick={() => actions.explore(signal)}>
+                  {t(`entity.explore.${signal}`)}
+                </Button>
+              ))}
+            </Space>
+          }
+          secondary={
+            state.canDelete ? (
+              <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
+                {t('entity.delete.action')}
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : null}
+    </>
   );
 }

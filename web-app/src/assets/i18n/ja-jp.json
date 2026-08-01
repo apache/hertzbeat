@@ -194,6 +194,7 @@
       "tags": "タグ"
     },
     "sections": {
+      "details": "リソース詳細",
       "evidence": "運用証拠",
       "identities": "識別根拠",
       "monitors": "モニター関連付け",
@@ -207,6 +208,7 @@
     },
     "monitors": {
       "app": "監視タイプで絞り込む",
+      "loading": "モニター関連付けを読み込んでいます…",
       "reset": "監視フィルターをリセット",
       "range": "{{start}}–{{end}}/{{total}}"
     },
@@ -229,7 +231,44 @@
     },
     "operations": {
       "title": "推奨操作",
-      "readiness": "運用準備度 {{score}}%"
+      "readiness": "運用準備度 {{score}}%",
+      "actions": {
+        "review_alerts": {
+          "title": "アクティブなアラートを確認",
+          "summary": "影響範囲と現在の状態を確認してから、詳しい調査を進めます。",
+          "action": "アラートを表示"
+        },
+        "complete_owner": {
+          "title": "担当者を設定",
+          "summary": "トラブルシューティングと管理作業の責任者を明確にします。",
+          "action": "担当者を設定"
+        },
+        "complete_runbook": {
+          "title": "ランブックを追加",
+          "summary": "アラートから復旧へ直接進める対応手順を追加します。",
+          "action": "ランブックを追加"
+        },
+        "bind_monitor": {
+          "title": "モニターを関連付け",
+          "summary": "モニタータスクを関連付け、運用エビデンスに基づく状態を表示します。",
+          "action": "モニターを関連付け"
+        },
+        "open_discovery": {
+          "title": "リソースエビデンスを統合",
+          "summary": "検出ワークベンチでモニター、識別情報、テレメトリーを統合します。",
+          "action": "検出を開く"
+        },
+        "inspect_logs": {
+          "title": "ログの手掛かりを確認",
+          "summary": "利用可能なリソースフィルターで関連ログを調査します。",
+          "action": "ログを表示"
+        },
+        "review_relations": {
+          "title": "主要な関係を確認",
+          "summary": "重要な上流・下流の依存境界を確認します。",
+          "action": "関係を表示"
+        }
+      }
     },
     "values": {
       "type": {

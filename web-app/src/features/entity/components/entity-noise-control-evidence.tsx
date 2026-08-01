@@ -8,9 +8,10 @@
 import { Alert, Button, List, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalSection } from '@/shared/operational-page';
+
 import type { EntityNoiseControlRule, EntityNoiseControlSummary } from '../model/entity-contract';
 import type { EntityNoiseControlType } from '../model/entity-view-model';
-import styles from './entity-view.module.css';
 
 export function EntityNoiseControlEvidence({
   summary,
@@ -22,9 +23,13 @@ export function EntityNoiseControlEvidence({
   const { t } = useTranslation();
   const rules = [...summary.activeSilences, ...summary.matchingInhibits];
   return (
-    <section className={styles.section} aria-label={t('entity.noiseControls.title')}>
-      <div className={styles.sectionHeading}>
-        <Typography.Title level={4}>{t('entity.noiseControls.title')}</Typography.Title>
+    <OperationalSection
+      title={t('entity.noiseControls.title')}
+      description={t('entity.noiseControls.summary', {
+        silenceCount: summary.activeSilenceCount,
+        inhibitCount: summary.matchingInhibitCount
+      })}
+      actions={
         <Space>
           <Button size="small" onClick={() => manage('silence')}>
             {t('entity.noiseControls.manageSilences')}
@@ -33,13 +38,8 @@ export function EntityNoiseControlEvidence({
             {t('entity.noiseControls.manageInhibits')}
           </Button>
         </Space>
-      </div>
-      <Typography.Paragraph type="secondary">
-        {t('entity.noiseControls.summary', {
-          silenceCount: summary.activeSilenceCount,
-          inhibitCount: summary.matchingInhibitCount
-        })}
-      </Typography.Paragraph>
+      }
+    >
       {summary.possibleAlertSuppression ? (
         <Alert showIcon type="warning" message={t('entity.noiseControls.possibleSuppression')} />
       ) : null}
@@ -48,7 +48,7 @@ export function EntityNoiseControlEvidence({
       ) : (
         <Typography.Text type="secondary">{t('entity.noiseControls.none')}</Typography.Text>
       )}
-    </section>
+    </OperationalSection>
   );
 }
 

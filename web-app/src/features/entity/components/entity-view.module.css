@@ -1,8 +1,3 @@
-.page {
-  display: grid;
-  gap: 16px;
-}
-
 .editorPage {
   max-width: 760px;
   display: grid;
@@ -16,14 +11,6 @@
 .disclosure {
   padding-inline: 0;
   margin-bottom: 16px;
-}
-.heading {
-  align-items: flex-start;
-  display: flex;
-  justify-content: space-between;
-}
-.heading h2 {
-  margin: 0;
 }
 .filterStack {
   display: grid;
@@ -47,21 +34,14 @@
 .definitionEditor {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.section {
-  border-top: 1px solid var(--ant-color-border-secondary);
-  padding-top: 12px;
+.metadataGrid :global(.ant-descriptions-item-label),
+.evidenceGrid :global(.ant-descriptions-item-label) {
+  color: var(--hb-text-secondary);
 }
-.section h4 {
-  margin: 0 0 8px;
-}
-.sectionHeading {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.sectionHeading h4 {
-  margin: 0;
+
+.metadataGrid :global(.ant-descriptions-row:not(:last-child) > td),
+.evidenceGrid :global(.ant-descriptions-row:not(:last-child) > td) {
+  padding-bottom: var(--hb-space-3);
 }
 @media (max-width: 1100px) {
   .filters,

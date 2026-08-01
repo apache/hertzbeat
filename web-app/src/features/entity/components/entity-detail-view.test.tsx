@@ -29,6 +29,8 @@ describe('EntityDetailView', () => {
     kind => {
       renderView({ kind });
       expect(screen.queryByRole('heading', { name: 'checkout' })).not.toBeInTheDocument();
+      expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
+      expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
     }
   );
 
@@ -103,9 +105,9 @@ describe('EntityDetailView', () => {
           nextActions: [
             {
               actionType: 'complete_runbook',
-              title: 'Add a runbook',
-              summary: 'Responders need a documented procedure.',
-              actionLabel: 'Edit ownership',
+              title: 'Server-localized runbook title',
+              summary: 'Server-localized runbook summary',
+              actionLabel: 'Server-localized runbook action',
               priority: 80
             }
           ],
@@ -117,9 +119,12 @@ describe('EntityDetailView', () => {
     );
 
     const region = screen.getByRole('region', { name: i18n.t('entity.operations.title') });
-    expect(within(region).getByText('Add a runbook')).toBeInTheDocument();
-    expect(within(region).getByText('Responders need a documented procedure.')).toBeInTheDocument();
-    fireEvent.click(within(region).getByRole('button', { name: 'Edit ownership' }));
+    expect(within(region).getByText(i18n.t('entity.operations.actions.complete_runbook.title'))).toBeInTheDocument();
+    expect(within(region).getByText(i18n.t('entity.operations.actions.complete_runbook.summary'))).toBeInTheDocument();
+    expect(within(region).queryByText('Server-localized runbook title')).not.toBeInTheDocument();
+    fireEvent.click(
+      within(region).getByRole('button', { name: i18n.t('entity.operations.actions.complete_runbook.action') })
+    );
     expect(nextAction).toHaveBeenCalledWith('complete_runbook');
   });
 
@@ -153,8 +158,12 @@ describe('EntityDetailView', () => {
       { canWrite: false }
     );
 
-    expect(screen.queryByRole('button', { name: 'Edit ownership' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open logs' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: i18n.t('entity.operations.actions.complete_runbook.action') })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: i18n.t('entity.operations.actions.inspect_logs.action') })
+    ).toBeInTheDocument();
   });
 
   it('renders compact real evidence and metadata while preserving numeric zero', () => {
