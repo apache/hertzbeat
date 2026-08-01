@@ -11,6 +11,7 @@ import type { TopologyCanvasHandle, TopologyCanvasRuntimeState } from './topolog
 import { TopologyContextBand } from './topology-context-band';
 import { TopologyInspector } from './topology-detail-rail';
 import { TopologyGraphColumn } from './topology-graph-column';
+import { TopologyReadyEvidence } from './topology-ready-evidence';
 import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 import styles from './topology-page.module.css';
 
@@ -171,51 +172,5 @@ function ReadyTopology({
         />
       </div>
     </>
-  );
-}
-
-function TopologyReadyEvidence({
-  refreshFailure,
-  presentation,
-  runtimeState
-}: {
-  refreshFailure: TopologyPageViewProps['state']['refreshFailure'];
-  presentation: TopologyPresentation;
-  runtimeState: TopologyCanvasRuntimeState;
-}) {
-  const { t } = useTranslation();
-  return (
-    <>
-      {refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
-      {presentation.summary.partial ? (
-        <Alert
-          showIcon
-          type="warning"
-          message={t('topology.partial.title')}
-          description={
-            <ul>
-              {presentation.summary.partialReasons.map(reason => (
-                <li key={reason}>
-                  {t(reason === 'entity_seed_limit' ? 'topology.partial.entitySeedLimit' : 'topology.partial.edgePage')}
-                </li>
-              ))}
-            </ul>
-          }
-        />
-      ) : null}
-      <TopologyRuntimeEvidence state={runtimeState} />
-    </>
-  );
-}
-
-function TopologyRuntimeEvidence({ state }: { state: TopologyCanvasRuntimeState }) {
-  const { t } = useTranslation();
-  if (state.kind === 'ready') return null;
-  return (
-    <Alert
-      showIcon
-      type={state.kind === 'failure' ? 'error' : 'info'}
-      message={t(`topology.evidence.runtime${state.kind === 'failure' ? 'Failure' : 'Loading'}`)}
-    />
   );
 }
