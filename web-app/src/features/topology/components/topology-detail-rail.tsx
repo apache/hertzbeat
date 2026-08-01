@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Drawer, Empty, Typography } from 'antd';
+import { Drawer, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { TopologyPageActions } from '../model/topology-page-contract';
 import type { TopologyQuery } from '../model/topology-model';
@@ -38,7 +40,7 @@ export function TopologyInspector({ compact, interaction, presentation, query, a
       <div className={styles.inspectorHeading}>
         <Typography.Title level={5}>{title}</Typography.Title>
       </div>
-      {!selected ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('topology.detail.none')} /> : content}
+      {!selected ? <OperationalStatePanel kind="empty" title={t('topology.detail.none')} /> : content}
     </aside>
   );
 }

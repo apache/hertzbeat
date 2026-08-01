@@ -3,6 +3,8 @@
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPageHeader } from '@/shared/operational-page';
+
 import { formatTopologyWindow } from '../model/topology-display';
 import type { TopologyQuery } from '../model/topology-model';
 import type { TopologyPresentation } from '../model/topology-view-model';
@@ -17,20 +19,20 @@ export function TopologyContextBand({
 }) {
   const { i18n, t } = useTranslation();
   return (
-    <header className={styles.contextBand}>
-      <div className={styles.contextTitle}>
-        <Typography.Title level={3}>{t('topology.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('topology.context.subtitle')}</Typography.Text>
-      </div>
-      <div className={styles.contextFacts}>
-        <ContextFact label={t('topology.summary.displayedNodes')} value={String(presentation.summary.nodeCount)} />
-        <ContextFact label={t('topology.summary.displayedEdges')} value={String(presentation.summary.edgeCount)} />
-        <ContextFact
-          label={t('topology.summary.window')}
-          value={formatTopologyWindow(query?.window, i18n.resolvedLanguage || i18n.language)}
-        />
-      </div>
-    </header>
+    <OperationalPageHeader
+      title={t('topology.title')}
+      description={t('topology.context.subtitle')}
+      actions={
+        <div className={styles.contextFacts}>
+          <ContextFact label={t('topology.summary.displayedNodes')} value={String(presentation.summary.nodeCount)} />
+          <ContextFact label={t('topology.summary.displayedEdges')} value={String(presentation.summary.edgeCount)} />
+          <ContextFact
+            label={t('topology.summary.window')}
+            value={formatTopologyWindow(query?.window, i18n.resolvedLanguage || i18n.language)}
+          />
+        </div>
+      }
+    />
   );
 }
 

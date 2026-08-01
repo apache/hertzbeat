@@ -1,8 +1,10 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Space, Spin, Typography } from 'antd';
+import { Button, Space } from 'antd';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalPage, OperationalPageHeader, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
 import { entityRelationTopologySource } from '../model/topology-model';
@@ -47,13 +49,11 @@ export function TopologyPageView({
   const { t } = useTranslation();
   const evidence = state.evidence;
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="workspace">
       {evidence.kind === 'ready' ? (
         <TopologyContextBand presentation={evidence.presentation} query={state.query} />
       ) : (
-        <header className={styles.heading}>
-          <Typography.Title level={2}>{t('topology.title')}</Typography.Title>
-        </header>
+        <OperationalPageHeader title={t('topology.title')} description={t('topology.context.subtitle')} />
       )}
       <TopologyEvidence
         state={state}
@@ -69,7 +69,7 @@ export function TopologyPageView({
         onZoomIn={onZoomIn}
         onZoomOut={onZoomOut}
       />
-    </div>
+    </OperationalPage>
   );
 }
 
@@ -77,24 +77,17 @@ function TopologyEvidence(props: TopologyPageViewProps) {
   const { t } = useTranslation();
   const { state } = props;
   if (state.evidence.kind === 'loading') {
-    return (
-      <div className={styles.centerEvidence} role="status">
-        <Spin />
-        <Typography.Text>{t('topology.evidence.loading')}</Typography.Text>
-      </div>
-    );
+    return <OperationalStatePanel kind="loading" title={t('topology.evidence.loading')} />;
   }
   if (state.evidence.kind === 'empty') {
-    return <Empty description={t('topology.evidence.empty')} />;
+    return <OperationalStatePanel kind="empty" title={t('topology.evidence.empty')} />;
   }
   if (state.evidence.kind !== 'ready') {
-    const type = state.evidence.kind === 'permission' || state.evidence.kind === 'unavailable' ? 'warning' : 'error';
     const recoverable = state.evidence.kind === 'unavailable' || state.evidence.kind === 'error';
     return (
-      <Alert
-        showIcon
-        type={type}
-        message={t(`topology.evidence.${state.evidence.kind}`)}
+      <OperationalStatePanel
+        kind={topologyEvidenceKind(state.evidence.kind)}
+        title={t(`topology.evidence.${state.evidence.kind}`)}
         action={
           recoverable ? (
             <Space>
@@ -117,6 +110,11 @@ function TopologyEvidence(props: TopologyPageViewProps) {
     );
   }
   return <ReadyTopology {...props} presentation={state.evidence.presentation} />;
+}
+
+function topologyEvidenceKind(kind: 'permission' | 'unavailable' | 'contract' | 'error') {
+  if (kind === 'permission' || kind === 'unavailable') return kind;
+  return 'error';
 }
 
 function ReadyTopology({

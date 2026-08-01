@@ -19,7 +19,7 @@ describe('topology G6 graph language', () => {
         halo: false,
         labelPlacement: 'bottom',
         lineWidth: 2.5,
-        size: 76
+        size: 64
       },
       state: {
         dimmed: { labelOpacity: 0.3, opacity: 0.2 },
@@ -35,8 +35,8 @@ describe('topology G6 graph language', () => {
       }
     });
     expect(topologyG6Options(value, interaction(), palette).layout).toMatchObject({
-      linkDistance: 150,
-      nodeStrength: -180
+      linkDistance: 180,
+      nodeStrength: -260
     });
     expect(data.nodes?.[0]).toMatchObject({
       type: 'hexagon',
@@ -47,11 +47,11 @@ describe('topology G6 graph language', () => {
         iconSource: 'entity-type-catalog'
       },
       style: {
-        iconHeight: 28,
+        iconHeight: 24,
         iconSrc: expect.stringContaining('data:image/svg+xml,'),
-        iconWidth: 28,
-        labelText: 'checkout\nservice',
-        size: 76,
+        iconWidth: 24,
+        labelText: 'checkout',
+        size: 64,
         stroke: palette.success
       }
     });
@@ -67,12 +67,31 @@ describe('topology G6 graph language', () => {
         iconSrc: expect.stringContaining('data:image/svg+xml,'),
         labelText: 'payments.example',
         lineDash: [4, 3],
-        size: 70,
+        size: 60,
         stroke: palette.neutral
       }
     });
     expect(decodeURIComponent(iconSrc(data.nodes?.[0]?.style?.iconSrc))).toContain(`fill="${palette.selected}"`);
     expect(nodeStateStroke(topologyG6ElementOptions(palette), 'selected', data.nodes?.[0])).toBe(palette.success);
+  });
+
+  it('keeps long entity labels distinguishable without letting them dominate the graph', () => {
+    const value = presentation('long-label');
+    value.graph.nodes[0]!.entityName = 'hb-mix-1780329856-svc-11-151';
+
+    const label = topologyG6Data(value, interaction(), palette).nodes?.[0]?.style?.labelText;
+
+    expect(label).toBe('hb-mix-17803…vc-11-151');
+  });
+
+  it('reveals only useful labels by default when the graph is dense', () => {
+    const value = densePresentation();
+    const data = topologyG6Data(value, interaction(), palette);
+
+    expect(data.nodes?.find(node => node.id === 'node-a')?.style?.labelOpacity).toBe(1);
+    expect(data.nodes?.find(node => node.id === 'node-1')?.style?.labelOpacity).toBe(0);
+    expect(topologyG6ElementOptions(palette).node.state?.hover).toMatchObject({ labelOpacity: 1 });
+    expect(topologyG6ElementOptions(palette).node.state?.selected).toMatchObject({ labelOpacity: 1 });
   });
 
   it('regenerates generic node assets from the active entity color without changing health semantics', () => {
@@ -156,6 +175,39 @@ describe('topology G6 graph language', () => {
     expect(decodeURIComponent(iconSrc(unknown?.style?.iconSrc))).toContain(`fill="${palette.neutral}"`);
   });
 });
+
+function densePresentation() {
+  const value = presentation('dense-graph');
+  const hub = value.graph.nodes[0]!;
+  const satellites = Array.from({ length: 12 }, (_, index) => ({
+    ...hub,
+    id: `node-${index + 1}`,
+    entityId: index + 2,
+    entityName: `hb-mix-1780329856-svc-11-${index + 140}`,
+    focus: false
+  }));
+  value.graph.nodes = [hub, ...satellites];
+  value.graph.edges = satellites.map((node, index) => ({
+    id: `edge-${index + 1}`,
+    relationId: null,
+    sourceNodeId: hub.id,
+    targetNodeId: node.id,
+    sourceEntityId: hub.entityId,
+    targetEntityId: node.entityId,
+    targetRef: null,
+    sampleTraceId: null,
+    sampleSpanId: null,
+    firstSeen: null,
+    lastSeen: null,
+    relationType: 'calls',
+    relationSource: 'trace' as const,
+    status: 'active' as const,
+    score: null,
+    evidenceBadges: [],
+    redMetrics: hub.redMetrics
+  }));
+  return value;
+}
 
 describe('topology G6 external targets', () => {
   it('renders a stable collision-safe target and directed edge for external topology evidence', () => {

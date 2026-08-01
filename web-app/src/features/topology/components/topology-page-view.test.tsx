@@ -57,7 +57,10 @@ describe('TopologyPageView evidence', () => {
     'renders %s as distinct non-ready evidence',
     kind => {
       renderView({ evidence: kind === 'empty' ? { kind, presentation } : { kind } });
-      expect(screen.getByText(i18n.t(`topology.evidence.${kind}`))).toBeInTheDocument();
+      expect(screen.getByText(i18n.t(`topology.evidence.${kind}`)).closest('[data-state]')).toHaveAttribute(
+        'data-state',
+        expectedTopologyState(kind)
+      );
       expect(screen.queryByTestId('topology-canvas')).not.toBeInTheDocument();
     }
   );
@@ -192,6 +195,7 @@ describe('TopologyPageView evidence', () => {
     renderLinkedView();
     const contextBand = screen.getByRole('banner');
 
+    expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
     expect(within(contextBand).getByText(i18n.t('topology.summary.displayedNodes'))).toBeInTheDocument();
     expect(within(contextBand).getByText(i18n.t('topology.summary.displayedEdges'))).toBeInTheDocument();
     expect(within(contextBand).getByText(i18n.t('topology.summary.window'))).toBeInTheDocument();
@@ -218,8 +222,9 @@ describe('TopologyPageView evidence', () => {
 
     expect(screen.getByText(i18n.t('topology.summary.displayedNodes'))).toBeInTheDocument();
     expect(screen.getByText(i18n.t('topology.summary.displayedEdges'))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('topology.partial.entitySeedLimit'))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('topology.partial.edgePage'))).toBeInTheDocument();
+    const partialEvidence = screen.getByRole('alert');
+    expect(partialEvidence).toHaveTextContent(i18n.t('topology.partial.entitySeedLimit'));
+    expect(partialEvidence).toHaveTextContent(i18n.t('topology.partial.edgePage'));
   });
 
   it('keeps the evidence table interactive after collapsing and reopening its lower section', () => {
@@ -473,6 +478,11 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 });
+
+function expectedTopologyState(kind: 'loading' | 'empty' | 'permission' | 'unavailable' | 'contract' | 'error') {
+  if (kind === 'permission' || kind === 'unavailable' || kind === 'loading' || kind === 'empty') return kind;
+  return 'error';
+}
 
 const presentation = buildTopologyPresentation(topologyGraph());
 

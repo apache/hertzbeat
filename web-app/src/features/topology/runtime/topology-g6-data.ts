@@ -24,10 +24,15 @@ export function topologyG6Data(
   const externalTargets = topologyG6ExternalTargets(presentation).targets;
   const externalTargetByEdge = new Map(externalTargets.map(target => [target.edgeId, target]));
   const emphasis = topologyEmphasis(presentation, interaction, externalTargetByEdge);
+  const visibleLabelIds = topologyVisibleLabelIds(presentation, interaction, externalTargets);
   return {
     nodes: [
-      ...presentation.graph.nodes.map(node => topologyG6Node(node, interaction, emphasis, palette)),
-      ...externalTargets.map(target => topologyG6ExternalNode(target, interaction, emphasis, palette))
+      ...presentation.graph.nodes.map(node =>
+        topologyG6Node(node, interaction, emphasis, visibleLabelIds.has(node.id), palette)
+      ),
+      ...externalTargets.map(target =>
+        topologyG6ExternalNode(target, interaction, emphasis, visibleLabelIds.has(target.nodeId), palette)
+      )
     ],
     edges: presentation.graph.edges.flatMap(edge => {
       const target = edge.targetNodeId ?? externalTargetByEdge.get(edge.id)?.nodeId;
@@ -52,6 +57,7 @@ function topologyG6Node(
   node: TopologyNode,
   interaction: TopologyInteraction,
   emphasis: Emphasis,
+  labelVisible: boolean,
   palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'selected' | 'success' | 'warning'>
 ) {
   const candidateIcon = resolveTopologyNodeIcon(node.entityType, palette.selected);
@@ -74,7 +80,8 @@ function topologyG6Node(
       iconHeight: topologyG6VisualGeometry.iconSize,
       iconSrc: icon.iconSrc,
       iconWidth: topologyG6VisualGeometry.iconSize,
-      labelText: `${node.entityName}\n${node.entityType}`,
+      labelOpacity: labelVisible ? 1 : 0,
+      labelText: compactTopologyLabel(node.entityName),
       size: topologyG6VisualGeometry.nodeSize,
       stroke: healthStroke(node.health, palette)
     }
@@ -85,6 +92,7 @@ function topologyG6ExternalNode(
   target: ExternalTarget,
   interaction: TopologyInteraction,
   emphasis: Emphasis,
+  labelVisible: boolean,
   palette: Pick<TopologyG6Palette, 'neutral'>
 ) {
   const icon = resolveTopologyExternalIcon(palette.neutral);
@@ -104,12 +112,68 @@ function topologyG6ExternalNode(
       iconHeight: topologyG6VisualGeometry.iconSize,
       iconSrc: icon.iconSrc,
       iconWidth: topologyG6VisualGeometry.iconSize,
-      labelText: target.label,
+      labelOpacity: labelVisible ? 1 : 0,
+      labelText: compactTopologyLabel(target.label),
       lineDash: [4, 3],
       size: topologyG6VisualGeometry.externalNodeSize,
       stroke: palette.neutral
     }
   };
+}
+
+function compactTopologyLabel(value: string) {
+  const characters = Array.from(value.trim());
+  if (characters.length <= 24) return characters.join('');
+  return `${characters.slice(0, 12).join('')}…${characters.slice(-9).join('')}`;
+}
+
+function topologyVisibleLabelIds(
+  presentation: TopologyPresentation,
+  interaction: TopologyInteraction,
+  externalTargets: ExternalTarget[]
+) {
+  const allIds = [...presentation.graph.nodes.map(node => node.id), ...externalTargets.map(target => target.nodeId)];
+  if (allIds.length <= 12) return new Set(allIds);
+  const degree = topologyNodeDegree(presentation, externalTargets);
+  const visible = new Set(
+    presentation.graph.nodes
+      .filter(node => node.focus || (degree.get(node.id) ?? 0) > 1)
+      .sort((left, right) => (degree.get(right.id) ?? 0) - (degree.get(left.id) ?? 0))
+      .slice(0, 6)
+      .map(node => node.id)
+  );
+  if (visible.size === 0 && presentation.graph.nodes[0]) visible.add(presentation.graph.nodes[0].id);
+  addInteractionLabelIds(visible, presentation, interaction, externalTargets);
+  return visible;
+}
+
+function topologyNodeDegree(presentation: TopologyPresentation, externalTargets: ExternalTarget[]) {
+  const externalByEdge = new Map(externalTargets.map(target => [target.edgeId, target.nodeId]));
+  const degree = new Map<string, number>();
+  for (const edge of presentation.graph.edges) {
+    degree.set(edge.sourceNodeId, (degree.get(edge.sourceNodeId) ?? 0) + 1);
+    const targetId = edge.targetNodeId ?? externalByEdge.get(edge.id);
+    if (targetId) degree.set(targetId, (degree.get(targetId) ?? 0) + 1);
+  }
+  return degree;
+}
+
+function addInteractionLabelIds(
+  visible: Set<string>,
+  presentation: TopologyPresentation,
+  interaction: TopologyInteraction,
+  externalTargets: ExternalTarget[]
+) {
+  for (const target of [interaction.selected, interaction.hover]) {
+    if (target.kind === 'node') visible.add(target.nodeId);
+    if (target.kind !== 'edge') continue;
+    const edge = presentation.graph.edges.find(candidate => candidate.id === target.edgeId);
+    if (!edge) continue;
+    visible.add(edge.sourceNodeId);
+    const externalTarget = externalTargets.find(candidate => candidate.edgeId === edge.id);
+    const targetId = edge.targetNodeId ?? externalTarget?.nodeId;
+    if (targetId) visible.add(targetId);
+  }
 }
 
 export function topologyG6ExternalEdgeId(presentation: TopologyPresentation, nodeId: string) {

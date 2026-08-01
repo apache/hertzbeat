@@ -16,10 +16,10 @@ export type TopologyG6Palette = {
 };
 
 export const topologyG6VisualGeometry = {
-  externalNodeSize: 70,
-  iconSize: 28,
-  linkDistance: 150,
-  nodeSize: 76
+  externalNodeSize: 60,
+  iconSize: 24,
+  linkDistance: 180,
+  nodeSize: 64
 } as const;
 
 type ElementOptions = {
@@ -67,9 +67,9 @@ function topologyG6NodeOptions(palette: TopologyG6Palette): ElementOptions['node
       cursor: 'pointer',
       fill: palette.nodeFill,
       labelFill: palette.text,
-      labelFontSize: 11,
-      labelLineHeight: 14,
-      labelMaxWidth: 132,
+      labelFontSize: 10,
+      labelLineHeight: 13,
+      labelMaxWidth: 112,
       labelPlacement: 'bottom',
       halo: false,
       lineWidth: 2.5,
@@ -82,6 +82,10 @@ function topologyG6NodeOptions(palette: TopologyG6Palette): ElementOptions['node
         haloLineWidth: 8,
         haloStroke: palette.hover,
         haloStrokeOpacity: 0.16,
+        labelBackground: true,
+        labelBackgroundFill: palette.nodeFill,
+        labelOpacity: 1,
+        labelPadding: [2, 4],
         lineWidth: 2.5,
         stroke: preserveHealthStroke
       },
@@ -90,6 +94,10 @@ function topologyG6NodeOptions(palette: TopologyG6Palette): ElementOptions['node
         haloLineWidth: 12,
         haloStroke: palette.selected,
         haloStrokeOpacity: 0.22,
+        labelBackground: true,
+        labelBackgroundFill: palette.nodeFill,
+        labelOpacity: 1,
+        labelPadding: [2, 4],
         lineWidth: 2.5,
         stroke: preserveHealthStroke
       },

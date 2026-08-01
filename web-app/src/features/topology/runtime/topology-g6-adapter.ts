@@ -22,7 +22,7 @@ export function topologyG6Options(
       type: 'd3-force',
       animation: false,
       linkDistance: topologyG6VisualGeometry.linkDistance,
-      nodeStrength: -180
+      nodeStrength: -260
     },
     zoomRange: [0.35, 2]
   };

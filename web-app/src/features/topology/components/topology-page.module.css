@@ -1,46 +1,6 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 42px;
-}
-
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-
-.contextBand {
-  display: flex;
-  min-height: 72px;
-  overflow: hidden;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius);
-  background: var(--ant-color-bg-container);
-}
-
-.contextTitle {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 160px;
-  padding: 12px 16px;
-}
-
-.contextTitle :global(.ant-typography) {
-  margin: 0;
-}
-
 .contextFacts {
   display: flex;
-  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .contextFact {
@@ -48,7 +8,7 @@
   flex-direction: column;
   justify-content: center;
   min-width: 96px;
-  padding: 10px 14px;
+  padding-inline: 14px;
   border-left: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -112,7 +72,7 @@
 
 .canvasFrame {
   position: relative;
-  height: 620px;
+  height: clamp(560px, calc(100vh - 240px), 760px);
   overflow: hidden;
   background: var(--ant-color-bg-container);
 }
@@ -166,14 +126,6 @@
   border-top: 1px solid var(--ant-color-border-secondary);
 }
 
-.centerEvidence {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 320px;
-}
-
 .topologyRowActive > td {
   background: var(--ant-control-item-bg-active) !important;
 }
@@ -186,12 +138,8 @@
 }
 
 @media (max-width: 720px) {
-  .contextBand {
-    flex-direction: column;
-  }
-
   .contextFacts {
-    border-top: 1px solid var(--ant-color-border-secondary);
+    width: 100%;
   }
 
   .contextFact {
@@ -204,13 +152,10 @@
     border-right: 0;
   }
 
-  .contextFacts {
-    flex-wrap: wrap;
-  }
-
   .contextFact,
   .contextFact:last-child {
-    min-width: 50%;
+    min-width: 0;
+    flex: 1;
   }
 
   .canvasFilterFields {
