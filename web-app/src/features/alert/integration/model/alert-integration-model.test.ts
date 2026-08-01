@@ -26,6 +26,7 @@ import zhTW from '@/assets/i18n/zh-tw.json';
 import {
   alertIntegrationIconPath,
   buildAlertIngressContract,
+  buildAlertIntegrationTokenSettingsPath,
   type AlertIntegrationGuide
 } from './alert-integration-model';
 
@@ -41,6 +42,15 @@ describe('alert integration presentation model', () => {
       endpoint: 'https://hertzbeat.example:9443/api/alerts/report',
       authorizationHeader: 'Authorization: Bearer {token}'
     });
+  });
+
+  it('hands token generation the API writer scope and exact integration return context', () => {
+    const path = buildAlertIntegrationTokenSettingsPath('alertmanager');
+    const url = new URL(path, 'https://hertzbeat.local');
+
+    expect(url.pathname).toBe('/settings/tokens');
+    expect(url.searchParams.get('scope')).toBe('api-admin');
+    expect(url.searchParams.get('returnTo')).toBe('/alerts/integrations/alertmanager');
   });
 
   it('resolves every backend display, step, acknowledgement, and limitation key in all five locales', () => {

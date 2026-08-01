@@ -18,7 +18,7 @@
 import { App } from 'antd';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
@@ -105,6 +105,24 @@ describe('TokenPage', () => {
     expect(controller.openGenerator).toHaveBeenCalledTimes(1);
   });
 
+  it('returns to the exact alert integration only when the handoff is safe', () => {
+    renderTokenPage('/settings/tokens?scope=api-admin&returnTo=%2Falerts%2Fintegrations%2Falertmanager');
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.back') }));
+
+    expect(screen.getByTestId('token-test-location')).toHaveTextContent('/alerts/integrations/alertmanager');
+  });
+
+  it.each([
+    '/settings/tokens',
+    '/settings/tokens?returnTo=https%3A%2F%2Fevil.example%2Falerts%2Fintegrations%2Fwebhook',
+    '/settings/tokens?returnTo=%2Falerts%2Fintegrations%2Fwebhook%3Ftoken%3Dprivate'
+  ])('does not offer a return action for a direct or unsafe handoff: %s', path => {
+    renderTokenPage(path);
+
+    expect(screen.queryByRole('button', { name: i18n.t('common.back') })).not.toBeInTheDocument();
+  });
+
   it.each([
     ['unavailable', 'Token data is unavailable.'],
     ['invalid', 'The token response is invalid.'],
@@ -162,12 +180,13 @@ describe('TokenPage', () => {
       })
     );
 
-    renderTokenPage();
+    renderTokenPage('/settings/tokens?returnTo=%2Falerts%2Fintegrations%2Fwebhook');
 
     const headerActions = document.querySelector('[data-hb-operational-page-actions]');
     if (!(headerActions instanceof HTMLElement)) throw new Error('Token header actions were not rendered.');
     const headerGenerate = within(headerActions).getByRole('button', { name: i18n.t('token.generate') });
     expect(headerGenerate).toHaveClass('ant-btn-loading');
+    expect(screen.getByRole('button', { name: i18n.t('common.back') })).toBeDisabled();
     const nameInput = screen.getByPlaceholderText('For example, production Collector');
     const generator = nameInput.closest('[role="dialog"]');
     if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
@@ -187,12 +206,13 @@ describe('TokenPage', () => {
       })
     );
 
-    renderTokenPage();
+    renderTokenPage('/settings/tokens?returnTo=%2Falerts%2Fintegrations%2Fwebhook');
 
     const headerActions = document.querySelector('[data-hb-operational-page-actions]');
     if (!(headerActions instanceof HTMLElement)) throw new Error('Token header actions were not rendered.');
     const headerGenerate = within(headerActions).getByRole('button', { name: i18n.t('token.generate') });
     expect(headerGenerate).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('common.back') })).toBeDisabled();
     expect(screen.getByText('Token data is unavailable.')).toBeInTheDocument();
     expect(screen.queryByText('Token generated')).not.toBeInTheDocument();
     const generator = screen.getByPlaceholderText('For example, production Collector').closest('[role="dialog"]');
@@ -263,16 +283,22 @@ function buildController(state: Record<string, unknown> = {}) {
   };
 }
 
-function renderTokenPage() {
+function renderTokenPage(path = '/settings/tokens?scope=otlp-ingest') {
   render(
     <I18nextProvider i18n={i18n}>
-      <MemoryRouter initialEntries={['/settings/tokens?scope=otlp-ingest']}>
+      <MemoryRouter initialEntries={[path]}>
         <App>
           <TokenPage />
+          <LocationProbe />
         </App>
       </MemoryRouter>
     </I18nextProvider>
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="token-test-location">{`${location.pathname}${location.search}`}</output>;
 }
 
 class ResizeObserverStub {

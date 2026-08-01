@@ -118,7 +118,7 @@ function controller(kind: AlertIntegrationState['kind'], guide = readyGuide) {
     selectedSource: guide.source,
     contract: kind === 'ready' ? contractFor(guide) : undefined,
     copyState: null,
-    tokenSettingsPath: '/settings/tokens',
+    tokenSettingsPath: '/settings/tokens?scope=api-admin&returnTo=%2Falerts%2Fintegrations%2Fwebhook',
     actions
   };
 }

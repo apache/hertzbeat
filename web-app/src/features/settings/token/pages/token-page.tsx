@@ -23,10 +23,16 @@ import { OperationalPage, OperationalPageHeader } from '@/shared/operational-pag
 import { TokenList } from '../components/token-list';
 import { GeneratedTokenModal, TokenGeneratorModal } from '../components/token-modals';
 import { useTokenResourceController } from '../controller/token-resource-controller';
+import { useTokenReturnNavigation } from '../controller/use-token-return-navigation';
 
 export function TokenPage() {
   const { t } = useTranslation();
   const controller = useTokenResourceController();
+  const navigation = useTokenReturnNavigation(
+    controller.state.generating ||
+      controller.state.generationRecovery !== null ||
+      controller.state.generatedToken !== null
+  );
 
   return (
     <OperationalPage>
@@ -34,15 +40,22 @@ export function TokenPage() {
         title={t('token.title')}
         description={t('token.description')}
         actions={
-          <Button
-            type="primary"
-            aria-label={t('token.generate')}
-            disabled={controller.state.generationRecovery !== null}
-            loading={controller.state.generating}
-            onClick={controller.openGenerator}
-          >
-            {t('token.generate')}
-          </Button>
+          <>
+            {navigation.returnTo && (
+              <Button disabled={navigation.blocked} onClick={navigation.back}>
+                {t('common.back')}
+              </Button>
+            )}
+            <Button
+              type="primary"
+              aria-label={t('token.generate')}
+              disabled={controller.state.generationRecovery !== null}
+              loading={controller.state.generating}
+              onClick={controller.openGenerator}
+            >
+              {t('token.generate')}
+            </Button>
+          </>
         }
       />
       <TokenList

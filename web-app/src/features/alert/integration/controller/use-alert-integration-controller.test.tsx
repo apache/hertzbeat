@@ -55,6 +55,9 @@ describe('useAlertIntegrationController', () => {
     expect(api.loadAlertIntegrationGuide).toHaveBeenCalledWith('webhook', expect.any(AbortSignal));
     expect(client.getQueryState(alertIntegrationQueryKeys.catalog())).toBeDefined();
     expect(client.getQueryState(alertIntegrationQueryKeys.detail('webhook'))).toBeDefined();
+    const tokenPath = new URL(view.result.current.tokenSettingsPath, 'https://hertzbeat.local');
+    expect(tokenPath.searchParams.get('scope')).toBe('api-admin');
+    expect(tokenPath.searchParams.get('returnTo')).toBe('/alerts/integrations/webhook');
   });
 
   it('treats an unknown deep link as local not-found without a detail request', async () => {

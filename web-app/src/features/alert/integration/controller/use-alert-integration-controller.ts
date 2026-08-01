@@ -20,12 +20,12 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
-import { settingsPaths } from '@/shared/settings/settings-routes';
 
 import { loadAlertIntegrationCatalog, loadAlertIntegrationGuide } from '../api/alert-integration-api';
 import {
   alertIntegrationFailureKind,
   buildAlertIngressContract,
+  buildAlertIntegrationTokenSettingsPath,
   type AlertIntegrationCopyState,
   type AlertIntegrationState
 } from '../model/alert-integration-model';
@@ -51,6 +51,7 @@ export function useAlertIntegrationController() {
   const state = resolveState(catalogQuery, detailQuery, catalogItem !== undefined);
   const guide = state.kind === 'ready' ? state.guide : undefined;
   const contract = guide ? buildAlertIngressContract(window.location.origin, guide) : undefined;
+  const tokenSettingsPath = buildAlertIntegrationTokenSettingsPath(selectedSource);
   const copy = async (target: 'endpoint' | 'authorization', value?: string) => {
     if (!guide || guide.readiness === 'guide_blocked' || !value) return;
     try {
@@ -65,14 +66,14 @@ export function useAlertIntegrationController() {
     selectedSource,
     contract,
     copyState,
-    tokenSettingsPath: settingsPaths.tokens,
+    tokenSettingsPath,
     actions: {
       selectSource: (source: string) => {
         setCopyEvidence(null);
         void navigate(buildAlertIntegrationPath(source));
       },
       retry: () => retryFailedState(state, catalogQuery, detailQuery, catalogItem !== undefined),
-      openTokenSettings: () => navigate(settingsPaths.tokens),
+      openTokenSettings: () => navigate(tokenSettingsPath),
       copyEndpoint: () => copy('endpoint', contract?.endpoint),
       copyAuthorizationHeader: () => copy('authorization', contract?.authorizationHeader)
     }

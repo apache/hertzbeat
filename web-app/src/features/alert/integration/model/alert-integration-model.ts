@@ -15,6 +15,12 @@
  * limitations under the License.
  */
 
+import type { AccessTokenScope } from '@/shared/access-token/access-token-generation-model';
+import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
+import { settingsPaths } from '@/shared/settings/settings-routes';
+
+const alertIntegrationWriterScope: AccessTokenScope = 'api-admin';
+
 type AlertIntegrationReadiness = 'ready' | 'configuration_required' | 'guide_blocked';
 export type AlertIntegrationIconKey =
   | 'hertzbeat'
@@ -92,6 +98,18 @@ export function buildAlertIngressContract(origin: string, guide: AlertIntegratio
     endpoint: new URL(guide.ingressPath, `${trustedOrigin}/`).toString(),
     authorizationHeader: `Authorization: ${guide.requiredHeaders.Authorization}`
   };
+}
+
+/**
+ * Carries only the writer scope and the canonical source route into Token settings.
+ * The generated secret remains modal memory and never participates in this URL handoff.
+ */
+export function buildAlertIntegrationTokenSettingsPath(source: string) {
+  const params = new URLSearchParams({
+    scope: alertIntegrationWriterScope,
+    returnTo: buildAlertIntegrationPath(source)
+  });
+  return `${settingsPaths.tokens}?${params.toString()}`;
 }
 
 export function alertIntegrationFailureKind(error: unknown): AlertIntegrationFailureKind {
