@@ -53,6 +53,7 @@ describe('entity Explore handoff', () => {
       evidence: { logHintCount: 1 },
       responseHandoffs: {
         traces: {
+          search: 'trace-1',
           traceId: 'trace-1',
           spanId: 'span-1',
           serviceName: 'checkout',
@@ -67,6 +68,15 @@ describe('entity Explore handoff', () => {
     expect(buildEntityExplorePath(service, 'traces')).toBe(
       '/explore?signal=traces&timeRange=last-30m&traceId=trace-1&spanId=span-1&start=100&end=200&serviceName=checkout&environment=prod'
     );
+    expect(
+      buildEntityExplorePath(
+        {
+          ...service,
+          responseHandoffs: { traces: { ...service.responseHandoffs.traces, search: 'checkout-operation' } }
+        },
+        'traces'
+      )
+    ).toContain('query=checkout-operation');
   });
 
   it('does not infer a unique non-service instance from an incomplete preview', () => {

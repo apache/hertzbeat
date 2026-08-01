@@ -111,7 +111,9 @@ function buildTraceHandoffPath(handoff?: EntityResponseHandoff) {
     serviceName: handoff.serviceName,
     serviceNamespace: handoff.serviceNamespace,
     environment: handoff.environment,
-    query: handoff.search,
+    // The backend uses the latest trace ID as its fallback search token. Do not
+    // also submit that value as an operation-name filter or the exact trace is excluded.
+    query: handoff.search === handoff.traceId ? undefined : handoff.search,
     start: validHandoffWindow(handoff) ? handoff.start : undefined,
     end: validHandoffWindow(handoff) ? handoff.end : undefined
   });
