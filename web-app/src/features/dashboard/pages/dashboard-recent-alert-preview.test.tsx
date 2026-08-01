@@ -73,8 +73,10 @@ describe('Dashboard recent firing-alert preview', () => {
 
     const preview = screen.getByLabelText(i18n.t('dashboard.recentAlerts.title'));
     expect(preview).toHaveTextContent(i18n.t(messageKey));
-    if (kind === 'empty') expect(preview.querySelector('.ant-empty')).toBeInTheDocument();
-    else {
+    if (kind === 'empty') {
+      expect(preview.querySelector('[data-state="empty"]')).toBeInTheDocument();
+      expect(preview.querySelector('.ant-empty')).not.toBeInTheDocument();
+    } else {
       expect(preview.querySelector('.ant-empty')).not.toBeInTheDocument();
       expect(
         preview.querySelector(kind === 'error' ? '.ant-typography-danger' : '.ant-typography-secondary')
