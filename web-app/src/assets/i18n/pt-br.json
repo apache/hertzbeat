@@ -1646,6 +1646,9 @@
   "objectStore": {
     "title": "Armazenamento de objetos",
     "description": "Escolha onde o HertzBeat armazena arquivos e objetos binários.",
+    "loading": "Carregando a configuração de armazenamento de objetos…",
+    "recoveryProof": "Não foi possível confirmar a configuração salva. Tente novamente para verificar a configuração atual do servidor.",
+    "recoveryUncertain": "O resultado do salvamento é incerto. Verifique a configuração do servidor mais tarde antes de fazer novas alterações.",
     "unavailable": "A configuração de armazenamento está indisponível.",
     "missing": "O armazenamento de objetos ainda não foi configurado.",
     "invalid": "A resposta do armazenamento de objetos é inválida.",

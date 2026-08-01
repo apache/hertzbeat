@@ -1642,6 +1642,9 @@
   "objectStore": {
     "title": "Object storage",
     "description": "Choose where HertzBeat stores generated files and binary objects.",
+    "loading": "Loading object storage configuration…",
+    "recoveryProof": "The saved configuration could not be confirmed. Retry to verify the current server configuration.",
+    "recoveryUncertain": "The save result is uncertain. Verify the server configuration later before making more changes.",
     "unavailable": "Object storage configuration is unavailable.",
     "missing": "Object storage has not been configured.",
     "invalid": "The object storage response is invalid.",

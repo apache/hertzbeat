@@ -15,10 +15,16 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import {
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalStatePanel,
+  type OperationalStateKind
+} from '@/shared/operational-page';
 
 import { ObjectStoreEditor } from '../components/object-store-editor';
 import { useObjectStoreResourceController } from '../controller/object-store-resource-controller';
@@ -31,52 +37,63 @@ export function ObjectStorePage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('objectStore.title')} description={t('objectStore.description')} />
-      {(state.kind === 'missing' ||
-        state.kind === 'permission' ||
-        state.kind === 'invalid' ||
-        state.kind === 'unavailable' ||
-        state.kind === 'error') && (
-        <Alert
-          type="error"
-          showIcon
-          message={t(objectStoreFailureMessageKey(state.kind))}
-          action={<RetryButton onRetry={controller.retry} />}
-        />
-      )}
-      {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 6 }} />}
-      {state.kind === 'ready' && (
-        <>
-          {state.unconfigured && <Alert type="info" showIcon message={t('objectStore.missing')} />}
-          {!controller.canWrite && <Alert type="info" showIcon message={t('objectStore.readOnly')} />}
-          {state.recovery && (
-            <Alert
-              type="warning"
-              showIcon
-              message={t('objectStore.unavailable')}
-              action={
-                state.recovery.phase === 'proof' ? (
-                  <RetryButton loading={state.proving} onRetry={controller.retry} />
-                ) : undefined
-              }
-            />
-          )}
-          <ObjectStoreEditor
-            current={state.current}
-            canSubmit={state.canSubmit}
-            missingFields={state.missingFields}
-            dirty={state.dirty}
-            locked={state.locked}
-            showValidation={state.showValidation}
-            saving={state.saving}
-            canWrite={controller.canWrite}
-            onUpdate={controller.updateDraft}
-            onSubmit={controller.submit}
-            onDiscard={controller.discard}
+      <OperationalResultRegion>
+        {(state.kind === 'missing' ||
+          state.kind === 'permission' ||
+          state.kind === 'invalid' ||
+          state.kind === 'unavailable' ||
+          state.kind === 'error') && (
+          <OperationalStatePanel
+            kind={objectStoreFailureStateKind(state.kind)}
+            title={t(objectStoreFailureMessageKey(state.kind))}
+            action={<RetryButton onRetry={controller.retry} />}
           />
-        </>
-      )}
+        )}
+        {state.kind === 'loading' && <OperationalStatePanel kind="loading" title={t('objectStore.loading')} />}
+        {state.kind === 'ready' && (
+          <>
+            {state.unconfigured && <OperationalStatePanel kind="empty" title={t('objectStore.missing')} />}
+            {!controller.canWrite && <OperationalStatePanel kind="permission" title={t('objectStore.readOnly')} />}
+            {state.recovery && (
+              <OperationalStatePanel
+                kind="unavailable"
+                title={t(
+                  state.recovery.phase === 'proof' ? 'objectStore.recoveryProof' : 'objectStore.recoveryUncertain'
+                )}
+                action={
+                  state.recovery.phase === 'proof' ? (
+                    <RetryButton loading={state.proving} onRetry={controller.retry} />
+                  ) : undefined
+                }
+              />
+            )}
+            <ObjectStoreEditor
+              current={state.current}
+              canSubmit={state.canSubmit}
+              missingFields={state.missingFields}
+              dirty={state.dirty}
+              locked={state.locked}
+              showValidation={state.showValidation}
+              saving={state.saving}
+              canWrite={controller.canWrite}
+              onUpdate={controller.updateDraft}
+              onSubmit={controller.submit}
+              onDiscard={controller.discard}
+            />
+          </>
+        )}
+      </OperationalResultRegion>
     </OperationalPage>
   );
+}
+
+function objectStoreFailureStateKind(
+  kind: 'missing' | 'permission' | 'invalid' | 'unavailable' | 'error'
+): OperationalStateKind {
+  if (kind === 'missing') return 'empty';
+  if (kind === 'permission') return 'permission';
+  if (kind === 'unavailable') return 'unavailable';
+  return 'error';
 }
 
 function objectStoreFailureMessageKey(kind: 'missing' | 'permission' | 'invalid' | 'unavailable' | 'error') {

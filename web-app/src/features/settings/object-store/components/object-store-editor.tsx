@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Input, Select, Typography } from 'antd';
+import { Button, Input, Select, Typography } from 'antd';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalFormActions, OperationalStatePanel } from '@/shared/operational-page';
 
 import {
   changeObjectStoreType,
@@ -80,10 +82,9 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
   return (
     <>
       {props.showValidation && (
-        <Alert
-          type="warning"
-          showIcon
-          message={t('objectStore.validation')}
+        <OperationalStatePanel
+          kind="error"
+          title={t('objectStore.validation')}
           description={props.missingFields.map(field => t(`objectStore.obs.${field}`)).join(', ')}
         />
       )}
@@ -101,7 +102,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           ))}
       </div>
       {props.canWrite && (
-        <div className={styles.actions}>
+        <OperationalFormActions>
           <Button
             type="primary"
             loading={props.saving}
@@ -114,7 +115,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
             {t('objectStore.discard')}
           </Button>
           {!props.dirty && <Typography.Text type="secondary">{t('objectStore.noChanges')}</Typography.Text>}
-        </div>
+        </OperationalFormActions>
       )}
     </>
   );

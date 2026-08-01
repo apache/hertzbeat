@@ -1632,6 +1632,9 @@
   "objectStore": {
     "title": "物件儲存",
     "description": "選擇 HertzBeat 產生檔案與二進位物件的儲存位置。",
+    "loading": "正在載入物件儲存設定…",
+    "recoveryProof": "無法確認已儲存的設定，請重試以核對伺服器目前設定。",
+    "recoveryUncertain": "儲存結果尚不確定，請稍後核對伺服器設定後再繼續修改。",
     "unavailable": "物件儲存設定暫時不可用。",
     "missing": "尚未設定物件儲存。",
     "invalid": "物件儲存回應無效。",

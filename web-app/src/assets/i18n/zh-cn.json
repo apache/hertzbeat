@@ -1632,6 +1632,9 @@
   "objectStore": {
     "title": "对象存储",
     "description": "选择 HertzBeat 生成文件和二进制对象的存储位置。",
+    "loading": "正在加载对象存储配置…",
+    "recoveryProof": "无法确认已保存的配置，请重试以核对服务器当前配置。",
+    "recoveryUncertain": "保存结果尚不确定，请稍后核对服务器配置后再继续修改。",
     "unavailable": "对象存储配置暂不可用。",
     "missing": "尚未配置对象存储。",
     "invalid": "对象存储响应无效。",
