@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Space, Tag, Typography } from 'antd';
+import { Button, Space, Tag, Typography } from 'antd';
 import type { CSSProperties } from 'react';
 
 import { defaultStatusAccent } from '@/features/status/shared/status-constants';
+import { OperationalStatePanel } from '@/shared/operational-page';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -106,12 +107,12 @@ function StatusBody({
   onRefreshIncidents: () => unknown;
 }) {
   const { t } = useTranslation();
-  if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
-  if (state === 'unconfigured') return <Alert type="info" showIcon message={t('status.notConfigured')} />;
-  if (state === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (state === 'invalid') return <Alert type="error" showIcon message={t('status.invalid')} />;
-  if (state === 'permission') return <Alert type="error" showIcon message={t('status.permission')} />;
-  if (state === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  if (loading) return <OperationalStatePanel kind="loading" title={t('status.loading')} />;
+  if (state === 'unconfigured') return <OperationalStatePanel kind="empty" title={t('status.notConfigured')} />;
+  if (state === 'unavailable') return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (state === 'invalid') return <OperationalStatePanel kind="error" title={t('status.invalid')} />;
+  if (state === 'permission') return <OperationalStatePanel kind="permission" title={t('status.permission')} />;
+  if (state === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   return (
     <>
       <PublicStatusComponents components={components} />

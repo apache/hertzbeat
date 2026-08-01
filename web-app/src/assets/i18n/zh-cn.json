@@ -2646,6 +2646,8 @@
   "status": {
     "title": "服务状态",
     "description": "公开的组件健康状态与故障记录。",
+    "loading": "正在加载公开状态…",
+    "loadingIncidents": "正在加载故障记录…",
     "operational": "所有系统运行正常",
     "degraded": "服务降级",
     "components": "组件",

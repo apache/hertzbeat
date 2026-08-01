@@ -2661,6 +2661,8 @@
   "status": {
     "title": "Service status",
     "description": "Public component health and incident history.",
+    "loading": "Loading public status…",
+    "loadingIncidents": "Loading incident history…",
     "operational": "All systems operational",
     "degraded": "Service degradation",
     "components": "Components",

@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Table, Tag, Typography } from 'antd';
+import { Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type {
   PublicStatusComponent,
@@ -37,6 +39,7 @@ export function PublicStatusComponents({ components }: { components: PublicStatu
           pagination={false}
           size="small"
           dataSource={components}
+          scroll={{ x: 720 }}
           expandable={{
             defaultExpandAllRows: true,
             expandedRowRender: component => <History history={component.history} />
@@ -54,7 +57,7 @@ export function PublicStatusComponents({ components }: { components: PublicStatu
           ]}
         />
       ) : (
-        <Empty description={t('status.noComponents')} />
+        <OperationalStatePanel kind="empty" title={t('status.noComponents')} />
       )}
     </section>
   );
@@ -62,14 +65,15 @@ export function PublicStatusComponents({ components }: { components: PublicStatu
 
 function History({ history }: { history: PublicStatusHistory[] | null }) {
   const { t } = useTranslation();
-  if (history === null) return <Alert type="warning" showIcon message={t('status.historyUnavailable')} />;
-  if (!history.length) return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('status.noHistory')} />;
+  if (history === null) return <OperationalStatePanel kind="unavailable" title={t('status.historyUnavailable')} />;
+  if (!history.length) return <OperationalStatePanel kind="empty" title={t('status.noHistory')} />;
   return (
     <Table<PublicStatusHistory>
       rowKey="timestamp"
       pagination={false}
       size="small"
       dataSource={history}
+      scroll={{ x: 880 }}
       columns={[
         {
           title: t('status.historyTime'),

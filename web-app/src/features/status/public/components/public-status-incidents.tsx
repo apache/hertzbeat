@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, InputNumber, Skeleton, Space, Table, Tag, Timeline, Typography } from 'antd';
+import { Button, InputNumber, Space, Table, Tag, Timeline, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { PublicStatusIncident, PublicStatusIncidentState } from '../model/public-status-contract';
 import {
@@ -56,13 +58,14 @@ export function PublicStatusIncidents({
         />
       </div>
       {loading ? (
-        <Skeleton active paragraph={{ rows: 3 }} />
+        <OperationalStatePanel kind="loading" title={t('status.loadingIncidents')} />
       ) : incidents.length ? (
         <Table<PublicStatusIncident>
           rowKey="id"
           pagination={false}
           size="small"
           dataSource={incidents}
+          scroll={{ x: 720 }}
           expandable={{
             defaultExpandAllRows: true,
             expandedRowRender: incident => <IncidentEvidence incident={incident} />
@@ -82,7 +85,7 @@ export function PublicStatusIncidents({
           ]}
         />
       ) : (
-        <Empty description={t('status.noIncidents')} />
+        <OperationalStatePanel kind="empty" title={t('status.noIncidents')} />
       )}
     </section>
   );
@@ -123,7 +126,7 @@ function IncidentYearToolbar({
 function IncidentEvidence({ incident }: { incident: PublicStatusIncident }) {
   const { t } = useTranslation();
   if (incident.components === null || incident.contents === null) {
-    return <Alert type="warning" showIcon message={t('status.incidentDetailsUnavailable')} />;
+    return <OperationalStatePanel kind="unavailable" title={t('status.incidentDetailsUnavailable')} />;
   }
   return (
     <Space direction="vertical" className={styles.incidentEvidence ?? ''}>
@@ -149,7 +152,7 @@ function IncidentEvidence({ incident }: { incident: PublicStatusIncident }) {
           }))}
         />
       ) : (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('status.noIncidentUpdates')} />
+        <OperationalStatePanel kind="empty" title={t('status.noIncidentUpdates')} />
       )}
     </Space>
   );

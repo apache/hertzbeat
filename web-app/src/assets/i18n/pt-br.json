@@ -2660,6 +2660,8 @@
   "status": {
     "title": "Status do serviço",
     "description": "Saúde pública dos componentes e histórico de incidentes.",
+    "loading": "Carregando o status público…",
+    "loadingIncidents": "Carregando o histórico de incidentes…",
     "operational": "Todos os sistemas operacionais",
     "degraded": "Serviço degradado",
     "components": "Componentes",

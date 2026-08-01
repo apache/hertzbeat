@@ -44,13 +44,23 @@ describe('PublicStatusPage failure states', () => {
     vi.clearAllMocks();
   });
 
+  it('uses compact loading evidence without a large skeleton', () => {
+    apiMessageGet.mockReturnValue(new Promise(() => undefined));
+    renderPage();
+
+    expect(screen.getByText('Loading public status…').closest('[data-state]')).toHaveAttribute('data-state', 'loading');
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
+  });
+
   it('shows unconfigured only for the exact backend organization response', async () => {
     mockStatusQueries({
       orgError: new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 })
     });
     renderPage();
 
-    expect(await screen.findByText('The public status page has not been configured yet.')).toBeInTheDocument();
+    expect(
+      (await screen.findByText('The public status page has not been configured yet.')).closest('[data-state]')
+    ).toHaveAttribute('data-state', 'empty');
     expect(
       screen.queryByText('The service is unavailable. Check the backend connection and try again.')
     ).not.toBeInTheDocument();
@@ -66,8 +76,10 @@ describe('PublicStatusPage failure states', () => {
     renderPage();
 
     expect(
-      await screen.findByText('The service is unavailable. Check the backend connection and try again.')
-    ).toBeInTheDocument();
+      (await screen.findByText('The service is unavailable. Check the backend connection and try again.')).closest(
+        '[data-state]'
+      )
+    ).toHaveAttribute('data-state', 'unavailable');
     expect(screen.queryByText('The public status page has not been configured yet.')).not.toBeInTheDocument();
   });
 

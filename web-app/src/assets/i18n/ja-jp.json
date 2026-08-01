@@ -2658,6 +2658,8 @@
   "status": {
     "title": "サービスステータス",
     "description": "公開コンポーネントの状態と障害履歴。",
+    "loading": "公開ステータスを読み込んでいます…",
+    "loadingIncidents": "障害履歴を読み込んでいます…",
     "operational": "すべて正常",
     "degraded": "サービス低下",
     "components": "コンポーネント",
