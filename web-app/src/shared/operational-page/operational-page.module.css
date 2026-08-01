@@ -87,12 +87,16 @@
 }
 
 .formActions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
   display: flex;
   min-height: 48px;
   align-items: center;
   gap: var(--hb-space-2);
-  padding-top: var(--hb-space-3);
+  padding-block: var(--hb-space-3);
   border-top: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-canvas);
 }
 
 .section {

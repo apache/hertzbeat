@@ -51,6 +51,7 @@ describe('MonitorEditorPage access', () => {
 
     expect(editor.useMonitorEditorController).toHaveBeenCalledWith(mode);
     expect(screen.getByTestId('monitor-editor-workspace')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
   });
 });
 

@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Select, Spin } from 'antd';
+import { Button, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalFormActions, OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 
 import { monitorAppOptions } from '../model/monitor-model';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
@@ -32,13 +34,13 @@ export function MonitorEditorFormView({
 }) {
   const { t } = useTranslation();
   const { evidence, draft, apps } = controller.state;
-  if (evidence.kind === 'loading') return <Spin />;
+  if (evidence.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('monitor.loading')} />;
   if (evidence.kind !== 'ready') {
+    const kind = evidence.kind === 'missing' || evidence.kind === 'invalid' ? 'empty' : evidence.kind;
     return (
-      <Alert
-        type="error"
-        showIcon
-        message={t(evidenceMessageKey(evidence.kind))}
+      <OperationalStatePanel
+        kind={kind}
+        title={t(evidenceMessageKey(evidence.kind))}
         action={
           evidence.kind === 'missing' || evidence.kind === 'invalid' ? (
             <Button onClick={controller.actions.cancel}>{t('common.back')}</Button>
@@ -52,27 +54,28 @@ export function MonitorEditorFormView({
   if (!draft) {
     if (apps.length === 0)
       return (
-        <Alert
-          type="warning"
-          showIcon
-          message={t('monitor.editor.appEmpty')}
+        <OperationalStatePanel
+          kind="empty"
+          title={t('monitor.editor.appEmpty')}
           action={<Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>}
         />
       );
     return (
-      <div className={styles.form}>
-        <label>
-          {t('monitor.application')}
-          <Select<string>
-            showSearch
-            options={monitorAppOptions(apps)}
-            onChange={app => controller.actions.changeSource({ app, scrape: 'static' })}
-          />
-        </label>
-        <div className={styles.actions}>
-          <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
+      <OperationalSection title={t('monitor.application')}>
+        <div className={styles.form}>
+          <label>
+            {t('monitor.application')}
+            <Select<string>
+              showSearch
+              options={monitorAppOptions(apps)}
+              onChange={app => controller.actions.changeSource({ app, scrape: 'static' })}
+            />
+          </label>
         </div>
-      </div>
+        <OperationalFormActions>
+          <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
+        </OperationalFormActions>
+      </OperationalSection>
     );
   }
   // Structured fields retain invalid rows locally, so a new canonical source

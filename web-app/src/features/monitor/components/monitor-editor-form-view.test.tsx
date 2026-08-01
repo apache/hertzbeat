@@ -57,6 +57,7 @@ describe('MonitorEditorFormView validation evidence', () => {
 
     expect(screen.getByRole('button', { name: 'common.back' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-state="empty"]')).toBeInTheDocument();
   });
 
   it('allows generic create to cancel while choosing an application', () => {
@@ -83,6 +84,17 @@ describe('MonitorEditorFormView validation evidence', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
     expect(controller.actions.cancel).toHaveBeenCalledOnce();
+  });
+
+  it('keeps optional metadata progressive for a new empty monitor', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.queryByRole('group', { name: 'monitor.editor.labels' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'monitor.editor.showMetadata' }));
+    expect(screen.getByRole('group', { name: 'monitor.editor.labels' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'monitor.editor.hideMetadata' })).toBeInTheDocument();
   });
 
   it('shows concrete field errors and removes them when controller issues converge', () => {
@@ -159,6 +171,7 @@ describe('MonitorEditorFormView validation evidence', () => {
 
   it('disables editable fields while a command owns the draft snapshot', () => {
     const controller = editorController([]);
+    controller.state.draft.monitor.labels = { env: 'prod' };
     controller.state.busy = true;
     controller.state.command = 'detecting';
     render(<MonitorEditorFormView mode="new" controller={controller} />);
@@ -170,6 +183,7 @@ describe('MonitorEditorFormView validation evidence', () => {
       })
     ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).not.toBeDisabled();
+    expect(document.querySelector('[data-hb-operational-form-actions]')).toBeInTheDocument();
   });
 
   it('imports a Grafana dashboard template from an in-memory JSON file', async () => {
