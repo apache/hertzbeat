@@ -84,6 +84,7 @@
       "unavailable": "Topology evidence is temporarily unavailable.",
       "contract": "The topology query or response contract is invalid.",
       "error": "Topology evidence could not be loaded.",
+      "useEntityRelations": "Use catalog relationships",
       "refreshFailure": "The refresh failed. The last confirmed topology remains visible.",
       "runtimeLoading": "Starting graph renderer…",
       "runtimeFailure": "The graph renderer is unavailable. Table evidence remains accessible."

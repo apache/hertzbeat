@@ -84,6 +84,7 @@
       "unavailable": "As evidências de topologia estão temporariamente indisponíveis.",
       "contract": "O contrato da consulta ou resposta de topologia é inválido.",
       "error": "Não foi possível carregar as evidências de topologia.",
+      "useEntityRelations": "Usar relações do catálogo",
       "refreshFailure": "A atualização falhou. A última topologia confirmada permanece visível.",
       "runtimeLoading": "Iniciando o renderizador do grafo…",
       "runtimeFailure": "O renderizador do grafo está indisponível. A tabela continua acessível."

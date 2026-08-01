@@ -84,6 +84,7 @@
       "unavailable": "拓扑证据暂不可用。",
       "contract": "拓扑查询或响应契约无效。",
       "error": "拓扑证据加载失败。",
+      "useEntityRelations": "使用资源关系",
       "refreshFailure": "刷新失败，继续显示上一次确认的拓扑。",
       "runtimeLoading": "正在启动图形渲染器…",
       "runtimeFailure": "图形渲染器不可用，表格证据仍可查看。"

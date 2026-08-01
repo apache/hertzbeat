@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { TopologyGraph } from '../model/topology-contract';
+import { entityRelationTopologySource } from '../model/topology-model';
 import type { TopologyCanvasProps, TopologyCanvasRuntimeState } from './topology-canvas';
 import {
   buildTopologyPresentation,
@@ -60,6 +61,24 @@ describe('TopologyPageView evidence', () => {
       expect(screen.queryByTestId('topology-canvas')).not.toBeInTheDocument();
     }
   );
+
+  it('keeps an unavailable trace source recoverable through retry or catalog relations', () => {
+    const changeScope = vi.fn();
+    const onRefresh = vi.fn();
+    render(
+      renderContent({
+        state: { ...baseState, query: { ...baseState.query! }, evidence: { kind: 'unavailable' } },
+        actions: { ...baseActions, changeScope },
+        onRefresh
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.evidence.useEntityRelations') }));
+
+    expect(onRefresh).toHaveBeenCalledOnce();
+    expect(changeScope).toHaveBeenCalledWith({ sourceKind: entityRelationTopologySource });
+  });
 
   it('keeps canvas node selection linked to detail evidence in memory', () => {
     renderLinkedView();

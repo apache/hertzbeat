@@ -84,6 +84,7 @@
       "unavailable": "拓撲證據暫時無法使用。",
       "contract": "拓撲查詢或回應契約無效。",
       "error": "拓撲證據載入失敗。",
+      "useEntityRelations": "使用資源關係",
       "refreshFailure": "重新整理失敗，繼續顯示上一次確認的拓撲。",
       "runtimeLoading": "正在啟動圖形呈現器…",
       "runtimeFailure": "圖形呈現器無法使用，表格證據仍可查看。"

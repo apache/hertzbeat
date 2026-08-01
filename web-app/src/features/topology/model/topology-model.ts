@@ -28,6 +28,7 @@ export type TopologyScopePatch = {
 const JAVA_INTEGER_MAX = 2_147_483_647;
 export const topologyDepthValues = [1, 2] as const;
 export const topologyPageSizes = [25, 50, 100] as const;
+export const entityRelationTopologySource = 'entity-relation';
 const topologyDefaultPageSize = topologyPageSizes[0];
 
 export function parseTopologyQuery(params: URLSearchParams): TopologyQuery {

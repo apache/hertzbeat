@@ -1,10 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Empty, Spin, Typography } from 'antd';
+import { Alert, Button, Empty, Space, Spin, Typography } from 'antd';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
+import { entityRelationTopologySource } from '../model/topology-model';
 import type { TopologyPresentation } from '../model/topology-view-model';
 import type { TopologyCanvasHandle, TopologyCanvasRuntimeState } from './topology-canvas';
 import { TopologyContextBand } from './topology-context-band';
@@ -87,7 +88,32 @@ function TopologyEvidence(props: TopologyPageViewProps) {
   }
   if (state.evidence.kind !== 'ready') {
     const type = state.evidence.kind === 'permission' || state.evidence.kind === 'unavailable' ? 'warning' : 'error';
-    return <Alert showIcon type={type} message={t(`topology.evidence.${state.evidence.kind}`)} />;
+    const recoverable = state.evidence.kind === 'unavailable' || state.evidence.kind === 'error';
+    return (
+      <Alert
+        showIcon
+        type={type}
+        message={t(`topology.evidence.${state.evidence.kind}`)}
+        action={
+          recoverable ? (
+            <Space>
+              <Button size="small" onClick={props.onRefresh}>
+                {t('common.retry')}
+              </Button>
+              {state.evidence.kind === 'unavailable' && state.query?.sourceKind !== entityRelationTopologySource ? (
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => props.actions.changeScope({ sourceKind: entityRelationTopologySource })}
+                >
+                  {t('topology.evidence.useEntityRelations')}
+                </Button>
+              ) : null}
+            </Space>
+          ) : undefined
+        }
+      />
+    );
   }
   return <ReadyTopology {...props} presentation={state.evidence.presentation} />;
 }
