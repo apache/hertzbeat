@@ -529,10 +529,9 @@ describe('monitor detail API contracts', () => {
     await detectMonitor(payload, signal);
     await saveMonitor('new', payload, signal);
     await saveMonitor('edit', payload, signal);
-    expect(http.apiMessagePost).toHaveBeenCalledWith('/api/monitor/detect', payload, {
-      signal: expect.any(AbortSignal)
-    });
+    expect(http.apiMessagePost).toHaveBeenCalledWith('/api/monitor/detect', payload, { signal });
     const detectSignal = http.apiMessagePost.mock.calls[0]?.[2]?.signal as AbortSignal;
+    expect(detectSignal).toBe(signal);
     expect(detectSignal.aborted).toBe(false);
     controller.abort();
     expect(detectSignal.aborted).toBe(true);

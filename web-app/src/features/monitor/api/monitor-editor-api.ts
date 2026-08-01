@@ -60,9 +60,11 @@ function requireUniqueMonitorCollectors(collectors: MonitorCollector[]) {
 }
 
 export function detectMonitor(payload: unknown, signal?: AbortSignal) {
-  return apiMessagePost('/api/monitor/detect', payload, {
-    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000)
-  });
+  // The backend owns the collection and query deadlines because monitor
+  // definitions can legitimately allow longer timeouts. Keep only the
+  // caller's lifecycle signal here so a cold JDBC/Arrow initialization is not
+  // reported as a connection failure while navigation can still cancel work.
+  return apiMessagePost('/api/monitor/detect', payload, signal ? { signal } : undefined);
 }
 
 export function saveMonitor(mode: 'new' | 'edit', payload: unknown, signal?: AbortSignal) {
