@@ -2058,6 +2058,8 @@
   "messageServer": {
     "title": "通知渠道服务",
     "description": "配置邮件和短信接收人发送通知时使用的服务端凭据。",
+    "loading": "正在加载渠道配置…",
+    "readOnly": "只读",
     "configure": "配置",
     "enabled": "启用",
     "notConfigured": "尚未配置",

@@ -2070,6 +2070,8 @@
   "messageServer": {
     "title": "通知チャネルサービス",
     "description": "メールと SMS の通知先が使用するサーバー認証情報を設定します。",
+    "loading": "チャネル設定を読み込んでいます…",
+    "readOnly": "読み取り専用",
     "configure": "設定",
     "enabled": "有効",
     "notConfigured": "未設定",

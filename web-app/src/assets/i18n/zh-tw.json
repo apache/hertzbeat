@@ -2058,6 +2058,8 @@
   "messageServer": {
     "title": "通知渠道服務",
     "description": "設定郵件和簡訊接收人傳送通知時使用的服務端憑證。",
+    "loading": "正在載入渠道設定…",
+    "readOnly": "唯讀",
     "configure": "設定",
     "enabled": "啟用",
     "notConfigured": "尚未設定",

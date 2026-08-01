@@ -2072,6 +2072,8 @@
   "messageServer": {
     "title": "Serviços de canal de notificação",
     "description": "Configure as credenciais usadas pelos destinatários de e-mail e SMS.",
+    "loading": "Carregando configuração do canal…",
+    "readOnly": "Somente leitura",
     "configure": "Configurar",
     "enabled": "Ativado",
     "notConfigured": "Não configurado",

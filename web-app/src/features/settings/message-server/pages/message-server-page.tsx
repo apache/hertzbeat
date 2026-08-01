@@ -17,7 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
 
 import { EmailServerEditor, SmsServerEditor } from '../components/message-server-editors';
 import { createMessageServerEditorRecovery } from '../components/message-server-editor-recovery';
@@ -31,10 +31,12 @@ export function MessageServerPage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('messageServer.title')} description={t('messageServer.description')} />
-      <div className={styles.channels}>
-        <EmailServerChannelRow controller={controller} />
-        <SmsServerChannelRow controller={controller} />
-      </div>
+      <OperationalResultRegion>
+        <div className={styles.channels}>
+          <EmailServerChannelRow controller={controller} />
+          <SmsServerChannelRow controller={controller} />
+        </div>
+      </OperationalResultRegion>
       {controller.capabilities.canConfigure && controller.emailDraft && (
         <EmailServerEditor
           draft={controller.emailDraft}

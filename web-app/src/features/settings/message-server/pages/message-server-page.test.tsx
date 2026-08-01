@@ -42,13 +42,22 @@ describe('MessageServerPage', () => {
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'messageServer.title' }));
     expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+  });
+
+  it('uses compact channel loading evidence instead of skeleton rows', () => {
+    controller.value = state({ kind: 'loading' }, { kind: 'loading' });
+    render(<MessageServerPage />);
+
+    expect(document.querySelectorAll('[data-state="loading"]')).toHaveLength(2);
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
   });
 
   it('keeps invalid email evidence distinct while the missing SMS channel remains usable', () => {
     controller.value = state({ kind: 'invalid' }, { kind: 'missing' });
     render(<MessageServerPage />);
 
-    expect(screen.getByText('messageServer.read.invalid')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="error"]')).toHaveTextContent('messageServer.read.invalid');
     expect(screen.queryByText('messageServer.read.unavailable')).not.toBeInTheDocument();
     expect(screen.getByText('messageServer.notConfigured')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'messageServer.configure' })).toBeEnabled();
@@ -122,8 +131,12 @@ describe('MessageServerPage', () => {
     render(<MessageServerPage />);
 
     expect(screen.getByText('smtp.example.test:587 · ops@example.test')).toBeInTheDocument();
+    expect(screen.getByTitle('smtp.example.test:587 · ops@example.test')).toHaveTextContent(
+      'smtp.example.test:587 · ops@example.test'
+    );
     expect(screen.getAllByText('messageServer.read.unavailable').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'messageServer.configure' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('messageServer.readOnly')).toHaveLength(1);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(current.actions.retrySms).toHaveBeenCalledOnce();

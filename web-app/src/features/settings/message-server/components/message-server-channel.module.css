@@ -34,8 +34,15 @@
   gap: 10px;
   min-width: 0;
 }
-.channelError {
+.summaryText {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.readOnly {
+  justify-self: end;
+  white-space: nowrap;
 }
 @media (max-width: 800px) {
   .channelRow {
@@ -43,6 +50,9 @@
     gap: 12px;
   }
   .channelRow > :global(.ant-btn) {
+    justify-self: start;
+  }
+  .readOnly {
     justify-self: start;
   }
 }

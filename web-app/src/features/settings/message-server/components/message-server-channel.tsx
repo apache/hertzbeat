@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Tag, Typography } from 'antd';
+import { Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import styles from './message-server-channel.module.css';
 
@@ -24,11 +26,8 @@ type FailureKind = 'permission' | 'unavailable' | 'error' | 'invalid';
 type ChannelStatus = 'enabled' | 'disabled' | 'unconfigured';
 
 export function MessageServerChannelLoading({ title }: { title: string }) {
-  return (
-    <section className={styles.channelRow} aria-label={title}>
-      <Skeleton active paragraph={{ rows: 1 }} />
-    </section>
-  );
+  const { t } = useTranslation();
+  return <OperationalStatePanel kind="loading" title={title} description={t('messageServer.loading')} />;
 }
 
 export function MessageServerChannelFailure({
@@ -42,13 +41,12 @@ export function MessageServerChannelFailure({
 }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.channelRow}>
-      <Typography.Title level={4}>{title}</Typography.Title>
-      <div className={styles.channelError}>
-        <Alert type="error" showIcon message={t(`messageServer.read.${kind}`)} />
-      </div>
-      <Button onClick={retry}>{t('common.retry')}</Button>
-    </section>
+    <OperationalStatePanel
+      kind={channelFailureState(kind)}
+      title={title}
+      description={t(`messageServer.read.${kind}`)}
+      action={<Button onClick={retry}>{t('common.retry')}</Button>}
+    />
   );
 }
 
@@ -78,15 +76,27 @@ export function MessageServerChannelRow({
       </div>
       <div className={styles.summary}>
         <Tag color={statusColor(status)}>{t(`messageServer.status.${status}`)}</Tag>
-        <Typography.Text>{summary}</Typography.Text>
+        <Typography.Text className={styles.summaryText ?? ''} title={summary}>
+          {summary}
+        </Typography.Text>
       </div>
-      {canConfigure && (
+      {canConfigure ? (
         <Button disabled={disabled} onClick={action}>
           {t('messageServer.configure')}
         </Button>
+      ) : (
+        <Typography.Text className={styles.readOnly ?? ''} type="secondary">
+          {t('messageServer.readOnly')}
+        </Typography.Text>
       )}
     </section>
   );
+}
+
+function channelFailureState(kind: FailureKind) {
+  if (kind === 'permission') return 'permission';
+  if (kind === 'unavailable') return 'unavailable';
+  return 'error';
 }
 
 function statusColor(status: ChannelStatus) {

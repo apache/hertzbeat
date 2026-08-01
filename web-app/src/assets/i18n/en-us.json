@@ -2068,6 +2068,8 @@
   "messageServer": {
     "title": "Notification channel services",
     "description": "Configure the server credentials used by email and SMS receivers.",
+    "loading": "Loading channel configuration…",
+    "readOnly": "Read only",
     "configure": "Configure",
     "enabled": "Enabled",
     "notConfigured": "Not configured",
