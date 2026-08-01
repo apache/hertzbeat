@@ -92,6 +92,11 @@ export function alertIntegrationIconPath(iconKey: AlertIntegrationIconKey) {
   return iconPaths[iconKey];
 }
 
+/** Token creation is an administrative operation even though guides are readable by every supported role. */
+export function canManageAlertIntegrationTokens(roles: readonly string[]) {
+  return roles.includes('ADMIN');
+}
+
 export function buildAlertIngressContract(origin: string, guide: AlertIntegrationGuide) {
   const trustedOrigin = new URL(origin).origin;
   return {

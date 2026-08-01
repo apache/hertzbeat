@@ -49,6 +49,7 @@ export function AlertIntegrationPage() {
           authorizationHeader={controller.contract.authorizationHeader}
           copyState={controller.copyState}
           tokenSettingsPath={controller.tokenSettingsPath}
+          canManageTokens={controller.canManageTokens}
           t={t}
           onCopyEndpoint={() => void controller.actions.copyEndpoint()}
           onCopyAuthorization={() => void controller.actions.copyAuthorizationHeader()}

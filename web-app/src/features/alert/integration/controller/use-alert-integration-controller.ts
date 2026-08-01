@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { useSession } from '@/core/auth/session-context';
 import { buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
 
 import { loadAlertIntegrationCatalog, loadAlertIntegrationGuide } from '../api/alert-integration-api';
@@ -26,6 +27,7 @@ import {
   alertIntegrationFailureKind,
   buildAlertIngressContract,
   buildAlertIntegrationTokenSettingsPath,
+  canManageAlertIntegrationTokens,
   type AlertIntegrationCopyState,
   type AlertIntegrationState
 } from '../model/alert-integration-model';
@@ -33,6 +35,8 @@ import { alertIntegrationQueryKeys } from './alert-integration-query-keys';
 
 export function useAlertIntegrationController() {
   const navigate = useNavigate();
+  const { session } = useSession();
+  const canManageTokens = canManageAlertIntegrationTokens(session?.roles ?? []);
   const selectedSource = useParams<{ source: string }>().source ?? '';
   const catalogQuery = useQuery({
     queryKey: alertIntegrationQueryKeys.catalog(),
@@ -67,13 +71,16 @@ export function useAlertIntegrationController() {
     contract,
     copyState,
     tokenSettingsPath,
+    canManageTokens,
     actions: {
       selectSource: (source: string) => {
         setCopyEvidence(null);
         void navigate(buildAlertIntegrationPath(source));
       },
       retry: () => retryFailedState(state, catalogQuery, detailQuery, catalogItem !== undefined),
-      openTokenSettings: () => navigate(tokenSettingsPath),
+      openTokenSettings: () => {
+        if (canManageTokens) navigate(tokenSettingsPath);
+      },
       copyEndpoint: () => copy('endpoint', contract?.endpoint),
       copyAuthorizationHeader: () => copy('authorization', contract?.authorizationHeader)
     }

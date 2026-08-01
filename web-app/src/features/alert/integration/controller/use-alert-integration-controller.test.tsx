@@ -27,7 +27,11 @@ const api = vi.hoisted(() => ({
   loadAlertIntegrationCatalog: vi.fn(),
   loadAlertIntegrationGuide: vi.fn()
 }));
+const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/alert-integration-api', () => api);
+vi.mock('@/core/auth/session-context', () => ({
+  useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
+}));
 
 import { AlertIntegrationRequestFailure } from '../model/alert-integration-model';
 import { alertIntegrationQueryKeys } from './alert-integration-query-keys';
@@ -36,10 +40,20 @@ import { useAlertIntegrationController } from './use-alert-integration-controlle
 describe('useAlertIntegrationController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    auth.roles = ['ADMIN'];
     api.loadAlertIntegrationCatalog.mockResolvedValue(catalog);
     api.loadAlertIntegrationGuide.mockImplementation((source: string) =>
       Promise.resolve({ ...guide, source, displayNameKey: `alert.integration.source.${source}` })
     );
+  });
+
+  it('fails closed for token management when the guide remains readable to a guest', async () => {
+    auth.roles = ['GUEST'];
+    const view = renderController('/alerts/integrations/webhook');
+
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    expect(view.result.current.canManageTokens).toBe(false);
   });
 
   it('preserves backend catalog order and loads detail only for a catalog hit', async () => {

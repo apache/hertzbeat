@@ -30,6 +30,7 @@ type GuideProps = {
   authorizationHeader: string;
   copyState: AlertIntegrationCopyState;
   tokenSettingsPath: string;
+  canManageTokens: boolean;
   t: TFunction;
   onCopyEndpoint: () => void;
   onCopyAuthorization: () => void;
@@ -99,15 +100,17 @@ function RunnableContract(props: GuideProps) {
         t={props.t}
         onCopy={props.onCopyAuthorization}
       />
-      <a
-        href={props.tokenSettingsPath}
-        onClick={event => {
-          event.preventDefault();
-          props.onOpenTokenSettings();
-        }}
-      >
-        {props.t('alertIntegrations.manageTokens')}
-      </a>
+      {props.canManageTokens && (
+        <a
+          href={props.tokenSettingsPath}
+          onClick={event => {
+            event.preventDefault();
+            props.onOpenTokenSettings();
+          }}
+        >
+          {props.t('alertIntegrations.manageTokens')}
+        </a>
+      )}
     </section>
   );
 }

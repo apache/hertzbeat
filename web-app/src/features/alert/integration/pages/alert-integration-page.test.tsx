@@ -62,6 +62,13 @@ describe('AlertIntegrationPage backend guide states', () => {
     expect(actions.openTokenSettings).toHaveBeenCalled();
   });
 
+  it('does not expose token management to a read-only session', () => {
+    mocks.controller.mockReturnValue({ ...controller('ready', readyGuide), canManageTokens: false });
+    render(<AlertIntegrationPage />);
+
+    expect(screen.queryByRole('link', { name: 'alertIntegrations.manageTokens' })).not.toBeInTheDocument();
+  });
+
   it('makes configuration-required explicit without inventing readiness', () => {
     mocks.controller.mockReturnValue(controller('ready', { ...readyGuide, readiness: 'configuration_required' }));
     render(<AlertIntegrationPage />);
@@ -119,6 +126,7 @@ function controller(kind: AlertIntegrationState['kind'], guide = readyGuide) {
     contract: kind === 'ready' ? contractFor(guide) : undefined,
     copyState: null,
     tokenSettingsPath: '/settings/tokens?scope=api-admin&returnTo=%2Falerts%2Fintegrations%2Fwebhook',
+    canManageTokens: true,
     actions
   };
 }

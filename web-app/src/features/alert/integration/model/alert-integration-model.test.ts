@@ -27,6 +27,7 @@ import {
   alertIntegrationIconPath,
   buildAlertIngressContract,
   buildAlertIntegrationTokenSettingsPath,
+  canManageAlertIntegrationTokens,
   type AlertIntegrationGuide
 } from './alert-integration-model';
 
@@ -51,6 +52,13 @@ describe('alert integration presentation model', () => {
     expect(url.pathname).toBe('/settings/tokens');
     expect(url.searchParams.get('scope')).toBe('api-admin');
     expect(url.searchParams.get('returnTo')).toBe('/alerts/integrations/alertmanager');
+  });
+
+  it('keeps token management administrative while every role may read a guide', () => {
+    expect(canManageAlertIntegrationTokens(['ADMIN'])).toBe(true);
+    expect(canManageAlertIntegrationTokens(['USER'])).toBe(false);
+    expect(canManageAlertIntegrationTokens(['GUEST'])).toBe(false);
+    expect(canManageAlertIntegrationTokens([])).toBe(false);
   });
 
   it('resolves every backend display, step, acknowledgement, and limitation key in all five locales', () => {
