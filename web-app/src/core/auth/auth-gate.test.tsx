@@ -23,10 +23,25 @@ import { SessionContext } from './session-context';
 import { sessionLockStorageKey } from './session-lock-storage';
 import { AuthGate } from './auth-gate';
 
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 describe('AuthGate', () => {
   afterEach(() => {
     cleanup();
     window.sessionStorage.clear();
+  });
+
+  it('renders session checking as an honest full-page loading state', () => {
+    render(
+      <MemoryRouter>
+        <SessionContext.Provider value={{ loading: true, retry: vi.fn(), session: undefined }}>
+          <AuthGate />
+        </SessionContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('common.loading').closest('[data-state]')).toHaveAttribute('data-state', 'loading');
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
   });
 
   it('lets the user retry a failed session request after the backend recovers', () => {
@@ -59,7 +74,10 @@ describe('AuthGate', () => {
     );
 
     expect(screen.getByText(message)).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveAttribute('data-session-failure', failure);
+    expect(screen.getByRole('alert')).toHaveAttribute(
+      'data-state',
+      failure === 'unavailable' ? 'unavailable' : 'error'
+    );
     expect(screen.getByTestId('location')).toHaveTextContent('/dashboard?view=operations');
     fireEvent.click(screen.getByRole('button'));
     expect(retry).toHaveBeenCalledOnce();

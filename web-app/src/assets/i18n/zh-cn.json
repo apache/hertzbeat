@@ -4,6 +4,7 @@
       "title": "页面不存在",
       "description": "请求的 HertzBeat 页面不存在。"
     },
+    "loading": "正在加载页面…",
     "routeError": {
       "title": "页面暂不可用",
       "description": "页面加载失败，请重试或稍后返回。"

@@ -15,20 +15,18 @@
  * limitations under the License.
  */
 
-import { Result } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { RouteStateFrame } from '@/shared/route-state/route-state';
 
 export function NotFoundPage() {
   const { t } = useTranslation();
   return (
-    <Result
-      status="404"
-      title={
-        <span role="heading" aria-level={1}>
-          {t('common.notFound.title')}
-        </span>
-      }
-      subTitle={t('common.notFound.description')}
+    <RouteStateFrame
+      kind="empty"
+      headingLevel={1}
+      title={t('common.notFound.title')}
+      description={t('common.notFound.description')}
     />
   );
 }

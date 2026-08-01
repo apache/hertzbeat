@@ -4,6 +4,7 @@
       "title": "ページが見つかりません",
       "description": "要求された HertzBeat ページは存在しません。"
     },
+    "loading": "ページを読み込んでいます…",
     "routeError": {
       "title": "ページを利用できません",
       "description": "ページを読み込めませんでした。再試行するか、後でもう一度開いてください。"

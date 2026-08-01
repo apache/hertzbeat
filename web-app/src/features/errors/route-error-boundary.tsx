@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import { Button, Result } from 'antd';
+import { Button } from 'antd';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isRouteErrorResponse, useMatches, useRouteError } from 'react-router-dom';
+
+import { RouteStateFrame } from '@/shared/route-state/route-state';
 
 const SAFE_ROUTE_ID = /^[a-z0-9-]{1,64}$/;
 
@@ -43,11 +45,13 @@ export function RouteErrorBoundary() {
   }, [error, routeId]);
 
   return (
-    <Result
-      status="500"
+    <RouteStateFrame
+      kind="error"
+      placement="viewport"
+      headingLevel={1}
       title={t('common.routeError.title')}
-      subTitle={t('common.routeError.description')}
-      extra={<Button onClick={() => window.location.reload()}>{t('common.retry')}</Button>}
+      description={t('common.routeError.description')}
+      action={<Button onClick={() => window.location.reload()}>{t('common.retry')}</Button>}
     />
   );
 }

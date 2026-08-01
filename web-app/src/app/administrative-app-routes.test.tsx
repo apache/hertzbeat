@@ -84,7 +84,11 @@ describe('actual administrative app routes', () => {
   ])('does not mount the feature loader or API at %s for %s', async (path, role) => {
     renderAppRoute(path, role);
 
-    expect(await screen.findByText('Administrator access required')).toBeInTheDocument();
+    expect((await screen.findByText('Administrator access required')).closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'permission'
+    );
+    expect(document.querySelector('.ant-alert')).not.toBeInTheDocument();
     expect(probes.tokenLoader).not.toHaveBeenCalled();
     expect(probes.tokenApi).not.toHaveBeenCalled();
     expect(probes.pluginLoader).not.toHaveBeenCalled();

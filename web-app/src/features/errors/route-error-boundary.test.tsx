@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isRouteErrorResponse } from 'react-router-dom';
 
@@ -59,6 +59,8 @@ describe('RouteErrorBoundary', () => {
     });
     expect(report.mock.calls[0]).not.toContain(error);
     expect(report.mock.calls.flat()).not.toContain(sensitiveMessage);
+    expect(screen.getByRole('alert')).toHaveAttribute('data-state', 'error');
+    expect(document.querySelector('.ant-result')).not.toBeInTheDocument();
     unmount();
     expect(report).toHaveBeenCalledTimes(1);
   });

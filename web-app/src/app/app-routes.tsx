@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { Skeleton } from 'antd';
 import { Navigate, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
 import { BasicLayout } from '@/layout/basic/basic-layout';
+import { RouteLoadingState } from '@/shared/route-state/route-state';
 
 import { AdministrativePluginRoutePage, AdministrativeTokenRoutePage } from './administrative-route-pages';
 import { RefineRuntime } from './refine/refine-runtime';
@@ -35,7 +35,7 @@ export const appRoutes: RouteObject[] = [
     path: applicationRootPath,
     element: <RefineRuntime />,
     errorElement: <RouteErrorBoundary />,
-    hydrateFallbackElement: <Skeleton active paragraph={{ rows: 6 }} />,
+    hydrateFallbackElement: <RouteLoadingState placement="viewport" />,
     children: [
       { index: true, element: <Navigate replace to={getAppRoute('dashboard').path} /> },
       {

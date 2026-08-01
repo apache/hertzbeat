@@ -4,6 +4,7 @@
       "title": "Page not found",
       "description": "The requested HertzBeat page does not exist."
     },
+    "loading": "Loading page…",
     "routeError": {
       "title": "Page unavailable",
       "description": "This page could not be loaded. Retry or return to it later."

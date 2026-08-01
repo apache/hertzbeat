@@ -5,10 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Skeleton } from 'antd';
 import { lazy, Suspense } from 'react';
 
 import { loadTokenPageRoute } from '@/features/settings/token';
+import { RouteLoadingState } from '@/shared/route-state/route-state';
 
 const TokenRoutePage = lazy(async () => {
   const route = await loadTokenPageRoute();
@@ -22,7 +22,7 @@ const PluginRoutePage = lazy(async () => {
 
 export function AdministrativeTokenRoutePage() {
   return (
-    <Suspense fallback={<Skeleton active paragraph={{ rows: 4 }} />}>
+    <Suspense fallback={<RouteLoadingState />}>
       <TokenRoutePage />
     </Suspense>
   );
@@ -30,7 +30,7 @@ export function AdministrativeTokenRoutePage() {
 
 export function AdministrativePluginRoutePage() {
   return (
-    <Suspense fallback={<Skeleton active paragraph={{ rows: 4 }} />}>
+    <Suspense fallback={<RouteLoadingState />}>
       <PluginRoutePage />
     </Suspense>
   );

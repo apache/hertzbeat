@@ -37,5 +37,7 @@ describe('NotFoundPage', () => {
     );
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(screen.getByText('The requested HertzBeat page does not exist.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveAttribute('data-state', 'empty');
+    expect(document.querySelector('.ant-result')).not.toBeInTheDocument();
   });
 });

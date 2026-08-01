@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton } from 'antd';
+import { Button } from 'antd';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+
+import { RouteLoadingState, RouteStateFrame } from '@/shared/route-state/route-state';
 
 import { loginHref, sessionLockPath } from './navigation';
 import { useSession } from './session-context';
@@ -29,14 +31,13 @@ export function AuthGate() {
   const location = useLocation();
   const { failure, loading, retry, session } = useSession();
 
-  if (loading) return <Skeleton active paragraph={{ rows: 4 }} />;
+  if (loading) return <RouteLoadingState placement="viewport" />;
   if (failure) {
     return (
-      <Alert
-        data-session-failure={failure}
-        type="error"
-        showIcon
-        message={t(sessionFailureMessageKey(failure))}
+      <RouteStateFrame
+        placement="viewport"
+        kind={failure === 'unavailable' ? 'unavailable' : 'error'}
+        title={t(sessionFailureMessageKey(failure))}
         action={<Button onClick={retry}>{t('common.retry')}</Button>}
       />
     );

@@ -1,0 +1,35 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.frame {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+}
+
+.frame[data-placement='viewport'] {
+  min-height: 100vh;
+  place-items: center;
+  padding: 32px;
+  background: var(--hb-bg-canvas);
+}
+
+.frame[data-placement='viewport'] > [data-state] {
+  width: min(680px, 100%);
+}
+
+@media (max-width: 520px) {
+  .frame[data-placement='viewport'] {
+    align-items: start;
+    padding: 20px;
+  }
+
+  .frame[data-placement='viewport'] > [data-state] {
+    margin-top: 8vh;
+  }
+}
