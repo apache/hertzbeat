@@ -1566,6 +1566,7 @@
     "filter": "标签，例如 env:prod",
     "new": "新建标签",
     "edit": "编辑标签",
+    "loading": "正在加载标签…",
     "empty": "当前条件下没有标签。",
     "permission": "当前会话无权读取标签。",
     "unavailable": "标签数据暂不可用。",

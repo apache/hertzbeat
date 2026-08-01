@@ -1580,6 +1580,7 @@
     "filter": "Rótulos, por exemplo env:prod",
     "new": "Novo rótulo",
     "edit": "Editar rótulo",
+    "loading": "Carregando rótulos…",
     "empty": "Nenhum rótulo corresponde à consulta.",
     "permission": "A sessão atual não tem permissão para ler rótulos.",
     "unavailable": "Os dados dos rótulos estão indisponíveis.",

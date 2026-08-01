@@ -1566,6 +1566,7 @@
     "filter": "標籤，例如 env:prod",
     "new": "新增標籤",
     "edit": "編輯標籤",
+    "loading": "正在載入標籤…",
     "empty": "目前條件下沒有標籤。",
     "permission": "目前工作階段無權讀取標籤。",
     "unavailable": "標籤資料暫時不可用。",

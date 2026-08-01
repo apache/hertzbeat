@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Popconfirm, Space, Spin, Table, Tag } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import { buildLabelDisplayName, labelTypeKey, type LabelListState, type LabelRecord } from '../model/label-model';
 import { isLabelPageSize, labelPageSizes, type LabelPageSize } from '../model/label-query-model';
@@ -44,11 +46,14 @@ type LabelResultsProps = LabelResultActions & {
 
 export function LabelResults(props: LabelResultsProps) {
   const { t } = useTranslation();
-  if (props.state.kind === 'loading') return <Spin data-testid="label-loading" />;
-  if (props.state.kind === 'permission') return <Alert type="error" showIcon message={t('labels.permission')} />;
-  if (props.state.kind === 'unavailable') return <Alert type="error" showIcon message={t('labels.unavailable')} />;
-  if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  if (props.state.kind === 'empty') return <Empty description={t('labels.empty')} />;
+  if (props.state.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('labels.loading')} />;
+  if (props.state.kind === 'permission')
+    return <OperationalStatePanel kind="permission" title={t('labels.permission')} />;
+  if (props.state.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('labels.unavailable')} />;
+  if (props.state.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
+  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('labels.empty')} />;
 
   return (
     <Table<LabelRecord>
@@ -56,6 +61,7 @@ export function LabelResults(props: LabelResultsProps) {
       size="small"
       columns={createLabelColumns(t, props)}
       dataSource={props.state.records}
+      scroll={{ x: 980 }}
       pagination={{
         disabled: props.busy,
         current: props.pageIndex + 1,
@@ -75,6 +81,7 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
   return [
     {
       title: t('labels.label'),
+      width: 200,
       render: (_value, row) => (
         <Button type="link" className={styles.labelLink ?? ''} onClick={() => actions.onInspect(row)}>
           <Tag>{buildLabelDisplayName(row)}</Tag>
@@ -84,6 +91,7 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
     {
       title: t('labels.descriptionLabel'),
       dataIndex: 'description',
+      width: 260,
       render: (value: string | undefined) => value || '—'
     },
     {
@@ -100,6 +108,7 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
     },
     {
       title: t('common.actions'),
+      fixed: 'right',
       width: 220,
       render: (_value, row) => (
         <Space size={2}>

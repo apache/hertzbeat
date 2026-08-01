@@ -1576,6 +1576,7 @@
     "filter": "Labels, for example env:prod",
     "new": "New label",
     "edit": "Edit label",
+    "loading": "Loading labels…",
     "empty": "No labels match the current query.",
     "permission": "Your session does not have permission to read labels.",
     "unavailable": "Label data is unavailable.",

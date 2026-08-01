@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Input } from 'antd';
+import { Alert, Button, Input, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalCommandBar, OperationalResultRegion } from '@/shared/operational-page';
 
 import { LabelResults } from '../components/label-results';
 import styles from '../components/label.module.css';
@@ -83,20 +85,22 @@ export function LabelWorkspace({
         onSearchChange={onSearchChange}
         onSubmitSearch={onSubmitSearch}
       />
-      <LabelResults
-        busy={resource.isSaving}
-        canDelete={capabilities.canDelete}
-        canUpdate={capabilities.canUpdate}
-        writeLocked={writeLocked}
-        state={resource.listState}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        onPageChange={queryController.setPage}
-        onCopy={label => void resource.copyLabel(label)}
-        onEdit={editor.actions.edit}
-        onRemove={resource.deleteLabel}
-        onInspect={resource.inspectLabel}
-      />
+      <OperationalResultRegion>
+        <LabelResults
+          busy={resource.isSaving}
+          canDelete={capabilities.canDelete}
+          canUpdate={capabilities.canUpdate}
+          writeLocked={writeLocked}
+          state={resource.listState}
+          pageIndex={query.pageIndex}
+          pageSize={query.pageSize}
+          onPageChange={queryController.setPage}
+          onCopy={label => void resource.copyLabel(label)}
+          onEdit={editor.actions.edit}
+          onRemove={resource.deleteLabel}
+          onInspect={resource.inspectLabel}
+        />
+      </OperationalResultRegion>
     </>
   );
 }
@@ -140,22 +144,29 @@ type LabelToolbarProps = {
 function LabelToolbar(props: LabelToolbarProps) {
   const { t } = useTranslation();
   return (
-    <div role="search" className={styles.commandBand}>
-      <Input
-        className={styles.searchInput}
-        allowClear
-        disabled={props.saving}
-        value={props.draftSearch}
-        placeholder={t('labels.search')}
-        onChange={event => props.onSearchChange(event.target.value)}
-        onPressEnter={props.onSubmitSearch}
-      />
-      <Button type="primary" disabled={props.saving} onClick={props.onSubmitSearch}>
-        {t('common.query')}
-      </Button>
-      <Button disabled={props.saving} loading={props.refreshing} onClick={props.onRefresh}>
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('labels.search')}
+      primary={
+        <Space.Compact className={styles.searchInput}>
+          <Input
+            allowClear
+            disabled={props.saving}
+            value={props.draftSearch}
+            placeholder={t('labels.search')}
+            onChange={event => props.onSearchChange(event.target.value)}
+            onPressEnter={props.onSubmitSearch}
+          />
+          <Button type="primary" disabled={props.saving} onClick={props.onSubmitSearch}>
+            {t('common.query')}
+          </Button>
+        </Space.Compact>
+      }
+      secondary={
+        <Button disabled={props.saving} loading={props.refreshing} onClick={props.onRefresh}>
+          {t('common.refresh')}
+        </Button>
+      }
+    />
   );
 }

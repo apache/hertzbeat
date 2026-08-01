@@ -14,15 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.commandBand {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 820px;
-}
 .searchInput {
-  flex: 1 1 240px;
-  min-width: min(240px, 100%);
+  width: min(460px, 100%);
 }
 .labelLink {
   height: auto;

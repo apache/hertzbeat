@@ -107,6 +107,16 @@ describe('LabelPage', () => {
     expect(commandBand).not.toContainElement(create);
   });
 
+  it('uses the shared command and result frame with a compact empty state', () => {
+    resource.listState = { kind: 'empty' };
+    renderLabelPage();
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'No labels match the current query.' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['USER', false, false, true],
     ['GUEST', true, true, true]
@@ -314,7 +324,7 @@ describe('LabelPage', () => {
   });
 
   it.each([
-    [{ kind: 'loading' }, 'label-loading'],
+    [{ kind: 'loading' }, 'Loading labels…'],
     [{ kind: 'empty' }, 'No labels match the current query.'],
     [{ kind: 'unavailable' }, 'Label data is unavailable.'],
     [{ kind: 'error' }, 'This page could not be loaded. Retry or return to it later.']
@@ -322,8 +332,7 @@ describe('LabelPage', () => {
     resource.listState = state;
     renderLabelPage();
 
-    if (evidence === 'label-loading') expect(screen.getByTestId(evidence)).toBeInTheDocument();
-    else expect(await screen.findByText(evidence)).toBeInTheDocument();
+    expect(await screen.findByText(evidence)).toBeInTheDocument();
     expect(screen.queryByText('env:prod')).not.toBeInTheDocument();
   });
 

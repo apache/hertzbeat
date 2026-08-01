@@ -137,6 +137,13 @@ describe('LabelResults', () => {
     expect(screen.getByText('labels.permission')).toBeInTheDocument();
     expect(screen.queryByText('labels.unavailable')).not.toBeInTheDocument();
   });
+
+  it('keeps the actions column fixed inside the table viewport', () => {
+    renderResults();
+
+    expect(table.props?.scroll).toEqual({ x: 980 });
+    expect(table.props?.columns?.find(column => column.title === 'common.actions')).toMatchObject({ fixed: 'right' });
+  });
 });
 
 function renderResults() {
