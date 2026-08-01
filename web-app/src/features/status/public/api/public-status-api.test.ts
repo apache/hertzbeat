@@ -155,6 +155,20 @@ describe('public status API', () => {
     });
   });
 
+  it('treats the backend empty optional feedback value as unconfigured', async () => {
+    apiMessageGet.mockResolvedValueOnce({
+      ...orgResponse(0),
+      feedback: '',
+      color: '#5b6fd8'
+    });
+
+    await expect(loadPublicStatusOrg()).resolves.toEqual({
+      ...orgResponse(0),
+      state: 'healthy',
+      color: '#5b6fd8'
+    });
+  });
+
   it('maps every backend state domain into stable public status values', async () => {
     apiMessageGet
       .mockResolvedValueOnce(orgResponse(0))

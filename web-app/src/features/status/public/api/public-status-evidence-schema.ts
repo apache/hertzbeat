@@ -21,10 +21,14 @@ export const publicStatusPositiveInteger = publicStatusSafeInteger.refine(value 
 export const publicStatusNonNegativeInteger = publicStatusSafeInteger.refine(value => value >= 0);
 export const requiredPublicStatusText = z.string().refine(value => value.trim().length > 0);
 export const safePublicStatusUrl = requiredPublicStatusText.refine(isSafePublicUrl);
-export const safePublicStatusFeedback = z
-  .union([z.string().email(), requiredPublicStatusText.refine(isSafeHttpUrl)])
-  .nullable()
-  .optional();
+export const safePublicStatusFeedback = z.preprocess(
+  // The established backend serializes an unset optional feedback address as an empty string.
+  value => (typeof value === 'string' && value.trim().length === 0 ? null : value),
+  z
+    .union([z.string().email(), requiredPublicStatusText.refine(isSafeHttpUrl)])
+    .nullable()
+    .optional()
+);
 
 export const publicStatusComponentInfoSchema = z
   .object({
