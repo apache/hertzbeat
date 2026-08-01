@@ -23,13 +23,34 @@ describe('HertzBeat semantic theme', () => {
       fontSize: 13
     });
     expect(theme.components?.Menu).toMatchObject({
-      itemBorderRadius: 6,
+      itemBorderRadius: 4,
       itemHeight: 32,
       itemSelectedBg: '#211a26'
     });
-    expect(theme.components?.Button).toBeUndefined();
-    expect(theme.components?.Input).toBeUndefined();
-    expect(theme.components?.Select).toBeUndefined();
+    expect(theme.components?.Button).toMatchObject({
+      borderRadius: 5,
+      controlHeight: 32,
+      defaultShadow: 'none',
+      fontWeight: 600,
+      primaryShadow: 'none'
+    });
+    expect(theme.components?.Input).toMatchObject({
+      activeBorderColor: '#a96abd',
+      activeShadow: '0 0 0 2px rgba(155, 91, 179, 0.16)',
+      hoverBorderColor: '#7a8190'
+    });
+    expect(theme.components?.Select).toMatchObject({
+      activeBorderColor: '#a96abd',
+      activeOutlineColor: 'rgba(155, 91, 179, 0.16)',
+      optionHeight: 32,
+      optionSelectedBg: '#211a26'
+    });
+    expect(theme.components?.Tabs).toMatchObject({
+      horizontalItemGutter: 24,
+      inkBarColor: '#9b5bb3',
+      itemSelectedColor: '#eceef3'
+    });
+    expect(theme.components?.Pagination).toMatchObject({ itemSize: 28 });
     expect(theme.components?.Layout).toMatchObject({
       bodyBg: '#0d0f14',
       headerBg: '#101218',
@@ -48,7 +69,11 @@ describe('HertzBeat semantic theme', () => {
     });
     expect(createHertzBeatTheme('default')).toMatchObject({
       token: { colorBgElevated: '#ffffff' },
-      components: { Menu: { itemSelectedBg: '#f7f0f8' } }
+      components: {
+        Input: { hoverBorderColor: '#89919e' },
+        Menu: { itemSelectedBg: '#f7f0f8' },
+        Select: { optionSelectedBg: '#f7f0f8' }
+      }
     });
   });
 

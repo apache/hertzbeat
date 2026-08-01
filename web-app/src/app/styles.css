@@ -105,3 +105,19 @@ body {
   min-width: 1024px;
   font-size: 13px;
 }
+
+:where(a, button, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
