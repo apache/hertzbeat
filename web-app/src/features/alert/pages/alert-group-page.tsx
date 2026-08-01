@@ -85,31 +85,56 @@ export function AlertGroupPage() {
           />
         }
       />
-      <OperationalResultRegion>
-        <AlertGroupRecovery
-          canRetry={canRetryRecovery}
-          recovery={routeRecovery}
-          retrying={state.command !== 'recovering'}
-          retry={controller.retry}
-        />
-        {controller.capabilities.canWrite && (
-          <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
-        )}
-        <AlertGroupResults
-          state={state.list}
-          columns={columns}
-          pageIndex={state.query.pageIndex}
-          pageSize={state.query.pageSize}
-          busy={busy}
-          canDelete={controller.capabilities.canDelete}
-          selectedIds={state.selectedIds}
-          selectIds={controller.selectIds}
-          changePage={controller.changePage}
-          retry={controller.refresh}
-        />
-      </OperationalResultRegion>
+      <AlertGroupPolicyResults
+        controller={controller}
+        busy={busy}
+        columns={columns}
+        canRetryRecovery={canRetryRecovery}
+        routeRecovery={routeRecovery}
+      />
       {renderAlertGroupEditor(controller, busy, canRetryRecovery, saveRecovery)}
     </OperationalPage>
+  );
+}
+
+function AlertGroupPolicyResults({
+  controller,
+  busy,
+  columns,
+  canRetryRecovery,
+  routeRecovery
+}: {
+  controller: ReturnType<typeof useAlertGroupController>;
+  busy: boolean;
+  columns: ReturnType<typeof useAlertGroupPageColumns>;
+  canRetryRecovery: boolean;
+  routeRecovery: ReturnType<typeof useAlertGroupController>['state']['recovery'];
+}) {
+  const state = controller.state;
+  return (
+    <OperationalResultRegion>
+      <AlertGroupRecovery
+        canRetry={canRetryRecovery}
+        recovery={routeRecovery}
+        retrying={state.command !== 'recovering'}
+        retry={controller.retry}
+      />
+      {controller.capabilities.canWrite && (
+        <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
+      )}
+      <AlertGroupResults
+        state={state.list}
+        columns={columns}
+        pageIndex={state.query.pageIndex}
+        pageSize={state.query.pageSize}
+        busy={busy}
+        canDelete={controller.capabilities.canDelete}
+        selectedIds={state.selectedIds}
+        selectIds={controller.selectIds}
+        changePage={controller.changePage}
+        retry={controller.refresh}
+      />
+    </OperationalResultRegion>
   );
 }
 

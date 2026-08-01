@@ -37,8 +37,7 @@ import { useAlertRuleListController } from '../controller/use-alert-rule-list-co
 export function AlertRuleListPage() {
   const { t } = useTranslation();
   const controller = useAlertRuleListController();
-  const { capabilities, command, exporting, importState, list, query, refreshing, search, selectedIds } =
-    controller.state;
+  const { capabilities, command, exporting, importState, refreshing, search, selectedIds } = controller.state;
   const commandBusy = command !== 'idle';
   const interactionLocked = commandBusy || exporting || importState.busy;
   const recovering = command === 'recovering';
@@ -77,27 +76,47 @@ export function AlertRuleListPage() {
           />
         }
       />
-      <OperationalResultRegion>
-        <AlertRuleListRecovery visible={recovering} retry={controller.refresh} />
-        <AlertRuleListResults
-          state={list}
-          columns={buildAlertRuleListColumns(t, {
-            ...capabilities,
-            busy: interactionLocked,
-            edit: controller.edit,
-            toggle: controller.toggle,
-            remove: controller.remove
-          })}
-          pageIndex={query.pageIndex}
-          pageSize={query.pageSize}
-          busy={interactionLocked}
-          selectedIds={selectedIds}
-          selectIds={controller.selectIds}
-          retryDisabled={interactionLocked && !recovering}
-          changePage={controller.changePage}
-          retry={controller.refresh}
-        />
-      </OperationalResultRegion>
+      <AlertRuleListResultRegion
+        controller={controller}
+        interactionLocked={interactionLocked}
+        recovering={recovering}
+      />
     </OperationalPage>
+  );
+}
+
+function AlertRuleListResultRegion({
+  controller,
+  interactionLocked,
+  recovering
+}: {
+  controller: ReturnType<typeof useAlertRuleListController>;
+  interactionLocked: boolean;
+  recovering: boolean;
+}) {
+  const { t } = useTranslation();
+  const { capabilities, list, query, selectedIds } = controller.state;
+  return (
+    <OperationalResultRegion>
+      <AlertRuleListRecovery visible={recovering} retry={controller.refresh} />
+      <AlertRuleListResults
+        state={list}
+        columns={buildAlertRuleListColumns(t, {
+          ...capabilities,
+          busy: interactionLocked,
+          edit: controller.edit,
+          toggle: controller.toggle,
+          remove: controller.remove
+        })}
+        pageIndex={query.pageIndex}
+        pageSize={query.pageSize}
+        busy={interactionLocked}
+        selectedIds={selectedIds}
+        selectIds={controller.selectIds}
+        retryDisabled={interactionLocked && !recovering}
+        changePage={controller.changePage}
+        retry={controller.refresh}
+      />
+    </OperationalResultRegion>
   );
 }

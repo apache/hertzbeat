@@ -1,26 +1,17 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Popconfirm, Space, Switch, Table, Tag } from 'antd';
+import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import styles from '../../shared/alert-policy-page.module.css';
-import {
-  noticeRuleDraftFromDetail,
-  noticeRulePageSizes,
-  type NoticeRule,
-  type NoticeRuleListState
-} from '../model/notice-rule-model';
+import { noticeRulePageSizes, type NoticeRule, type NoticeRuleListState } from '../model/notice-rule-model';
 import type { NoticeRuleActionCapabilities } from '../model/notice-rule-action-capability';
+import { buildNoticeRuleTableColumns, type NoticeRuleTableColumnActions } from './notice-rule-table-columns';
 
-type NoticeRuleTableActions = {
+type NoticeRuleTableActions = NoticeRuleTableColumnActions & {
   changePage: (page: number, pageSize: number) => void;
-  edit: (id: number) => void;
-  remove: (rule: NoticeRule) => void;
-  toggle: (rule: NoticeRule, enable: boolean) => void;
 };
 
 type NoticeRuleTableProps = {
@@ -34,19 +25,12 @@ type NoticeRuleTableProps = {
   togglingRuleId: number | null;
 };
 
-type ColumnContext = Pick<
-  NoticeRuleTableProps,
-  'actions' | 'busy' | 'capabilities' | 'dependenciesReady' | 'togglingRuleId'
-> & {
-  t: TFunction;
-};
-
 export function NoticeRuleTable(props: NoticeRuleTableProps) {
   const { t } = useTranslation();
   return (
     <NoticeRuleResults
       {...props}
-      columns={noticeRuleColumns({
+      columns={buildNoticeRuleTableColumns({
         actions: props.actions,
         busy: props.busy,
         capabilities: props.capabilities,
@@ -56,105 +40,6 @@ export function NoticeRuleTable(props: NoticeRuleTableProps) {
       })}
     />
   );
-}
-
-function noticeRuleColumns(context: ColumnContext): ColumnsType<NoticeRule> {
-  return [
-    { title: context.t('noticeRules.name'), dataIndex: 'name', width: 210 },
-    receiverColumn(context.t),
-    templateColumn(context.t),
-    scopeColumn(context.t),
-    { title: context.t('noticeRules.schedule'), width: 210, render: (_value, rule) => scheduleText(context.t, rule) },
-    { title: context.t('noticeRules.updated'), width: 190, render: (_value, rule) => formatRuleTime(rule) },
-    enabledColumn(context),
-    ...(context.capabilities.canEdit || context.capabilities.canDelete ? [actionColumn(context)] : [])
-  ];
-}
-
-function receiverColumn(t: TFunction): ColumnsType<NoticeRule>[number] {
-  return {
-    title: t('noticeRules.receivers'),
-    width: 260,
-    render: (_value, rule) => (
-      <div className={styles.labels}>
-        {rule.receiverName.map((name, index) => (
-          <Tag key={`${rule.receiverId[index] ?? index}-${name}`}>{name}</Tag>
-        ))}
-      </div>
-    )
-  };
-}
-
-function templateColumn(t: TFunction): ColumnsType<NoticeRule>[number] {
-  return {
-    title: t('noticeRules.template'),
-    width: 180,
-    render: (_value, rule) =>
-      rule.templateId == null ? <Tag>{t('noticeRules.defaultTemplate')}</Tag> : rule.templateName || '—'
-  };
-}
-
-function scopeColumn(t: TFunction): ColumnsType<NoticeRule>[number] {
-  return {
-    title: t('noticeRules.scope'),
-    width: 150,
-    render: (_value, rule) => (
-      <Tag color={rule.filterAll ? 'processing' : 'default'}>
-        {t(rule.filterAll ? 'noticeRules.allAlerts' : 'noticeRules.filtered')}
-      </Tag>
-    )
-  };
-}
-
-function enabledColumn(context: ColumnContext): ColumnsType<NoticeRule>[number] {
-  return {
-    title: context.t('noticeRules.enabled'),
-    key: 'enabled',
-    width: 100,
-    fixed: 'right',
-    render: (_value, rule) =>
-      context.capabilities.canToggle ? (
-        <Switch
-          checked={rule.enable}
-          disabled={context.busy || !context.dependenciesReady}
-          loading={context.togglingRuleId === rule.id}
-          onClick={enable => context.actions.toggle(rule, enable)}
-        />
-      ) : (
-        <Tag color={rule.enable ? 'success' : 'default'}>
-          {context.t(rule.enable ? 'noticeRules.enabled' : 'noticeRules.disabled')}
-        </Tag>
-      )
-  };
-}
-
-function actionColumn(context: ColumnContext): ColumnsType<NoticeRule>[number] {
-  return {
-    title: context.t('common.actions'),
-    key: 'actions',
-    width: 160,
-    fixed: 'right',
-    render: (_value, rule) => (
-      <Space>
-        {context.capabilities.canEdit ? (
-          <Button
-            type="link"
-            disabled={context.busy || !context.dependenciesReady}
-            onClick={() => context.actions.edit(rule.id)}
-          >
-            {context.t('common.edit')}
-          </Button>
-        ) : null}
-        {context.capabilities.canDelete ? (
-          <Popconfirm title={context.t('noticeRules.deleteConfirm')} onConfirm={() => context.actions.remove(rule)}>
-            <Button type="link" danger disabled={context.busy}>
-              {context.t('noticeRules.delete')}
-            </Button>
-          </Popconfirm>
-        ) : null}
-      </Space>
-    )
-  };
 }
 
 function NoticeRuleResults({
@@ -197,23 +82,4 @@ function NoticeRuleResults({
       }}
     />
   );
-}
-
-function formatRuleTime(rule: NoticeRule) {
-  const value = rule.gmtUpdate ?? rule.gmtCreate;
-  if (value == null) return '—';
-  const timestamp = typeof value === 'number' ? value : Date.parse(value);
-  return Number.isFinite(timestamp)
-    ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp)
-    : '—';
-}
-
-function scheduleText(t: TFunction, rule: NoticeRule) {
-  const days =
-    rule.days?.length && rule.days.length < 7
-      ? t('noticeRules.selectedDays', { count: rule.days.length })
-      : t('noticeRules.everyDay');
-  if (!rule.periodStart || !rule.periodEnd) return days;
-  const draft = noticeRuleDraftFromDetail(rule);
-  return `${days} · ${draft.periodStart}-${draft.periodEnd}`;
 }

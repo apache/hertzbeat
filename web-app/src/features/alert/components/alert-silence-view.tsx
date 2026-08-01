@@ -45,7 +45,6 @@ export function AlertSilenceView({
   state: AlertSilenceViewState;
   actions: AlertSilenceViewActions;
 }) {
-  const { t } = useTranslation();
   const draft = alertSilenceDetailDraft(state.detail);
   const editorRecovery = draft && isSaveRecovery(state.recovery) ? state.recovery : null;
   const pageRecovery = editorRecovery ? null : state.recovery;
@@ -55,6 +54,36 @@ export function AlertSilenceView({
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertSilenceManagement state={state} actions={actions} />
+      <AlertSilencePolicyResults state={state} actions={actions} pageRecovery={pageRecovery} />
+      {state.capabilities.canWrite && draft && (
+        <AlertSilenceEditor
+          draft={draft}
+          recovery={editorRecovery}
+          saving={state.busy}
+          writeLocked={state.writeLocked}
+          update={actions.updateDraft}
+          replace={actions.replaceDraft}
+          close={actions.cancel}
+          retry={actions.refresh}
+          submit={() => void actions.save()}
+        />
+      )}
+    </OperationalPage>
+  );
+}
+
+function AlertSilencePolicyResults({
+  state,
+  actions,
+  pageRecovery
+}: {
+  state: AlertSilenceViewState;
+  actions: AlertSilenceViewActions;
+  pageRecovery: AlertSilenceViewState['recovery'];
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
       <OperationalCommandBar
         role="search"
         ariaLabel={t('alertSilences.search')}
@@ -85,20 +114,7 @@ export function AlertSilenceView({
           actions={actions}
         />
       </OperationalResultRegion>
-      {state.capabilities.canWrite && draft && (
-        <AlertSilenceEditor
-          draft={draft}
-          recovery={editorRecovery}
-          saving={state.busy}
-          writeLocked={state.writeLocked}
-          update={actions.updateDraft}
-          replace={actions.replaceDraft}
-          close={actions.cancel}
-          retry={actions.refresh}
-          submit={() => void actions.save()}
-        />
-      )}
-    </OperationalPage>
+    </>
   );
 }
 

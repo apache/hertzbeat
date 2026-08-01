@@ -37,8 +37,7 @@ export function AlertInhibitPage() {
   const { t } = useTranslation();
   const controller = useAlertInhibitController();
   const { capabilities } = controller;
-  const { command, detail, draft, list, management, query, recovery, refreshing, search, selectedIds } =
-    controller.state;
+  const { command, draft, management, recovery, refreshing, search, selectedIds } = controller.state;
   const routeRecovery = alertInhibitRouteRecovery(recovery, capabilities, draft !== null);
   const busy = command !== 'idle';
   const removeSelected = () => {
@@ -70,32 +69,46 @@ export function AlertInhibitPage() {
           />
         }
       />
-      <OperationalResultRegion>
-        <AlertInhibitRecovery
-          recovery={routeRecovery.recovery}
-          retrying={command !== 'recovering' || !routeRecovery.canRetry}
-          retry={controller.retry}
-        />
-        {capabilities.canWrite && (
-          <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />
-        )}
-        <AlertInhibitResults
-          capabilities={capabilities}
-          state={list}
-          busy={busy}
-          pageIndex={query.pageIndex}
-          pageSize={query.pageSize}
-          selectedIds={selectedIds}
-          selectIds={controller.selectIds}
-          edit={controller.edit}
-          toggle={controller.toggle}
-          remove={controller.remove}
-          changePage={controller.changePage}
-          retry={controller.refresh}
-        />
-      </OperationalResultRegion>
+      <AlertInhibitPolicyResults controller={controller} busy={busy} routeRecovery={routeRecovery} />
       {capabilities.canWrite && <AlertInhibitDraftEditor controller={controller} />}
     </OperationalPage>
+  );
+}
+
+function AlertInhibitPolicyResults({
+  controller,
+  busy,
+  routeRecovery
+}: {
+  controller: ReturnType<typeof useAlertInhibitController>;
+  busy: boolean;
+  routeRecovery: ReturnType<typeof alertInhibitRouteRecovery>;
+}) {
+  const { capabilities } = controller;
+  const { command, detail, list, query, selectedIds } = controller.state;
+  return (
+    <OperationalResultRegion>
+      <AlertInhibitRecovery
+        recovery={routeRecovery.recovery}
+        retrying={command !== 'recovering' || !routeRecovery.canRetry}
+        retry={controller.retry}
+      />
+      {capabilities.canWrite && <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />}
+      <AlertInhibitResults
+        capabilities={capabilities}
+        state={list}
+        busy={busy}
+        pageIndex={query.pageIndex}
+        pageSize={query.pageSize}
+        selectedIds={selectedIds}
+        selectIds={controller.selectIds}
+        edit={controller.edit}
+        toggle={controller.toggle}
+        remove={controller.remove}
+        changePage={controller.changePage}
+        retry={controller.refresh}
+      />
+    </OperationalResultRegion>
   );
 }
 
