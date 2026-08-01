@@ -121,6 +121,74 @@ export type EntityNoiseControlSummary = {
   possibleAlertSuppression: boolean;
 };
 
+export const entityNextActionTypes = [
+  'review_alerts',
+  'complete_owner',
+  'complete_runbook',
+  'bind_monitor',
+  'open_discovery',
+  'inspect_logs',
+  'review_relations'
+] as const;
+export type EntityNextActionType = (typeof entityNextActionTypes)[number];
+
+export type EntityOpsSummary = {
+  ownerReady: boolean;
+  runbookReady: boolean;
+  relationReady: boolean;
+  telemetryReady: boolean;
+  statusReady: boolean;
+  readinessScore: number;
+  relationCount: number;
+};
+
+export type EntityNextAction = {
+  actionType: EntityNextActionType;
+  title: string;
+  summary: string;
+  actionLabel: string;
+  priority: number;
+};
+
+export type EntityTriageRecommendation = {
+  mode?: string;
+  recommendedFocus?: string;
+  headline?: string;
+  summary?: string;
+  whyNow?: string;
+  actionLabel?: string;
+  generatedAt?: number;
+};
+
+/** Safe query context for a known HertzBeat route, never an arbitrary URL. */
+export type EntityResponseHandoff = {
+  search?: string;
+  status?: string;
+  severity?: string;
+  app?: string;
+  content?: string;
+  entityId?: number;
+  entityType?: string;
+  entityName?: string;
+  traceId?: string;
+  spanId?: string;
+  serviceName?: string;
+  serviceNamespace?: string;
+  severityText?: string;
+  query?: string;
+  owner?: string;
+  system?: string;
+  environment?: string;
+  start?: number;
+  end?: number;
+  source?: string;
+  focus?: string;
+};
+
+export type EntityResponseHandoffs = Partial<
+  Record<'alerts' | 'monitors' | 'logs' | 'traces' | 'discovery' | 'editor', EntityResponseHandoff>
+>;
+
 export type EntityDetail = {
   entity: EntityRecord;
   identities: EntityIdentity[];
@@ -135,7 +203,10 @@ export type EntityDetail = {
   logEvidence?: Record<string, unknown>[];
   traceEvidence?: Record<string, unknown>[];
   unifiedEvidenceSummary?: Record<string, unknown>;
-  triageRecommendation?: Record<string, unknown>;
+  triageRecommendation?: EntityTriageRecommendation;
+  opsSummary?: EntityOpsSummary;
+  nextActions?: EntityNextAction[];
+  responseHandoffs?: EntityResponseHandoffs;
   relations: EntityRelation[];
 };
 

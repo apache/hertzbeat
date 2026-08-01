@@ -220,6 +220,10 @@
       "manageInhibits": "管理抑制策略",
       "types": { "silence": "靜默", "inhibit": "抑制" }
     },
+    "operations": {
+      "title": "建議操作",
+      "readiness": "運維就緒度 {{score}}%"
+    },
     "values": {
       "type": {
         "service": "服務",
@@ -252,7 +256,7 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "查詢指標", "logs": "查詢日誌" },
+    "explore": { "metrics": "查詢指標", "logs": "查詢日誌", "traces": "查詢鏈路" },
     "discovery": {
       "action": "探索資源",
       "title": "探索資源",

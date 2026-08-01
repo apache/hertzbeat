@@ -84,6 +84,7 @@ describe('useEntityDetailController deletion', () => {
 
     act(() => routed.current().actions.edit());
     act(() => routed.current().actions.definition());
+    act(() => routed.current().actions.nextAction('complete_runbook'));
 
     expect(routed.router.state.location.pathname).toBe('/entities/7');
   });
@@ -128,6 +129,30 @@ describe('useEntityDetailController deletion', () => {
         '&hideInternal=true&pageIndex=3&pageSize=50'
     );
     expect(routed.router.state.location.search).not.toContain('private');
+  });
+
+  it('navigates a recommended action through the allowlisted handoff adapter', async () => {
+    api.loadEntityDetail.mockResolvedValueOnce({
+      ...detail,
+      responseHandoffs: {
+        alerts: {
+          search: 'checkout',
+          status: 'firing',
+          severity: 'critical',
+          serviceName: 'checkout',
+          environment: 'prod'
+        }
+      }
+    });
+    const routed = renderController('/entities/7?returnTo=%2Fentities%3Fsearch%3Dcheckout');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.nextAction('review_alerts'));
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/alerts'));
+    expect(routed.router.state.location.search).toBe(
+      '?pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical&serviceName=checkout&environment=prod'
+    );
   });
 
   it('loads page zero from the operational endpoint and owns next, previous, and normalized filters', async () => {
@@ -321,6 +346,7 @@ function renderController(entry: string) {
       },
       { path: '/entities', element: null },
       { path: '/topology', element: null },
+      { path: '/alerts', element: null },
       { path: '/alerts/silences', element: null }
     ],
     { initialEntries: [entry] }

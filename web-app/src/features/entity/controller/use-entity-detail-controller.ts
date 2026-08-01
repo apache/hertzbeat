@@ -12,15 +12,19 @@ import {
   deleteEntity,
   loadEntityDetail
 } from '../api/entity-api';
-import type { EntityRecord } from '../model/entity-contract';
+import type { EntityNextActionType, EntityRecord } from '../model/entity-contract';
+import {
+  buildEntityExplorePath,
+  buildEntityNextActionPath,
+  entityNextActionRequiresWrite,
+  type EntityExploreSignal
+} from '../model/entity-operational-navigation';
 import {
   buildEntityEditRoute,
   buildEntityDefinitionRoute,
-  buildEntityExplorePath,
   buildEntityNoiseControlPath,
   safeEntityReturnTo,
   type EntityDetailEvidence,
-  type EntityExploreSignal,
   type EntityNoiseControlType
 } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
@@ -75,6 +79,12 @@ export function useEntityDetailController() {
       },
       manageNoiseControls: (ruleType: EntityNoiseControlType) => {
         if (evidence.kind === 'ready') void navigate(buildEntityNoiseControlPath(evidence.detail, ruleType));
+      },
+      nextAction: (actionType: EntityNextActionType) => {
+        if (evidence.kind !== 'ready') return;
+        if (entityNextActionRequiresWrite(actionType) && !capabilities.canWrite) return;
+        const target = buildEntityNextActionPath(evidence.detail, actionType, params.get('returnTo'));
+        if (target) void navigate(target);
       },
       ...monitors.actions,
       remove: deletion.remove

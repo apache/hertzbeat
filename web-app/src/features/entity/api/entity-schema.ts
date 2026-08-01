@@ -17,6 +17,7 @@ import {
   type EntityStatus,
   type EntitySummary
 } from '../model/entity-contract';
+import { entityOperationalSchema, mapEntityOperationalDetail } from './entity-operational-schema';
 
 const positiveId = z.number().int().positive().safe();
 const count = z.number().int().nonnegative().safe();
@@ -129,27 +130,28 @@ const noiseControlSummarySchema = z
   .refine(value => value.matchingInhibitCount >= value.matchingInhibits.length);
 const richEvidenceSchema = z.record(z.string(), z.unknown());
 const monitorSummarySchema = richEvidenceSchema.and(z.object({ totalBoundMonitors: count }));
-const detailSchema = z.object({
-  entity: z.object({
-    entity: entitySchema,
-    identities: z.array(identitySchema).nullish(),
-    monitorBinds: z.array(z.unknown()).nullish(),
-    relations: z.array(z.unknown()).nullish()
-  }),
-  status: statusSchema.nullish(),
-  evidenceSummary: evidenceSchema.nullish(),
-  noiseControlSummary: noiseControlSummarySchema.nullish(),
-  monitorSummary: monitorSummarySchema.nullish(),
-  logSummary: richEvidenceSchema.nullish(),
-  traceSummary: richEvidenceSchema.nullish(),
-  metricEvidence: z.array(richEvidenceSchema).nullish(),
-  logEvidence: z.array(richEvidenceSchema).nullish(),
-  traceEvidence: z.array(richEvidenceSchema).nullish(),
-  unifiedEvidenceSummary: richEvidenceSchema.nullish(),
-  triageRecommendation: richEvidenceSchema.nullish(),
-  boundMonitors: z.array(monitorSchema).nullish(),
-  topologyNeighbors: z.array(relationSchema).nullish()
-});
+const detailSchema = z
+  .object({
+    entity: z.object({
+      entity: entitySchema,
+      identities: z.array(identitySchema).nullish(),
+      monitorBinds: z.array(z.unknown()).nullish(),
+      relations: z.array(z.unknown()).nullish()
+    }),
+    status: statusSchema.nullish(),
+    evidenceSummary: evidenceSchema.nullish(),
+    noiseControlSummary: noiseControlSummarySchema.nullish(),
+    monitorSummary: monitorSummarySchema.nullish(),
+    logSummary: richEvidenceSchema.nullish(),
+    traceSummary: richEvidenceSchema.nullish(),
+    metricEvidence: z.array(richEvidenceSchema).nullish(),
+    logEvidence: z.array(richEvidenceSchema).nullish(),
+    traceEvidence: z.array(richEvidenceSchema).nullish(),
+    unifiedEvidenceSummary: richEvidenceSchema.nullish(),
+    boundMonitors: z.array(monitorSchema).nullish(),
+    topologyNeighbors: z.array(relationSchema).nullish()
+  })
+  .merge(entityOperationalSchema);
 
 export function parseEntityPage(value: unknown): EntityPage {
   const parsed = entityPageResponseSchema.safeParse(value);
@@ -197,7 +199,7 @@ export function parseEntityMonitorPage(value: unknown): EntityMonitorPage {
   return { ...parsed.data, content: parsed.data.content.map(item => clean(item) as EntityMonitor) };
 }
 
-function copyRichDetail(wire: z.output<typeof detailSchema>) {
+function copyRichDetail(wire: z.output<typeof detailSchema>): Partial<EntityDetail> {
   return {
     ...(wire.monitorSummary ? { monitorSummary: wire.monitorSummary } : {}),
     ...(wire.logSummary ? { logSummary: wire.logSummary } : {}),
@@ -206,7 +208,7 @@ function copyRichDetail(wire: z.output<typeof detailSchema>) {
     ...(wire.logEvidence ? { logEvidence: wire.logEvidence } : {}),
     ...(wire.traceEvidence ? { traceEvidence: wire.traceEvidence } : {}),
     ...(wire.unifiedEvidenceSummary ? { unifiedEvidenceSummary: wire.unifiedEvidenceSummary } : {}),
-    ...(wire.triageRecommendation ? { triageRecommendation: wire.triageRecommendation } : {})
+    ...mapEntityOperationalDetail(wire)
   };
 }
 

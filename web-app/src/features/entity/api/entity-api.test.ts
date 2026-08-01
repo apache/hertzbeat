@@ -174,7 +174,68 @@ describe('entity API', () => {
       logEvidence: [{ message: 'failed' }],
       traceEvidence: [{ traceId: 'trace-1' }],
       unifiedEvidenceSummary: { metricsActive: true },
-      triageRecommendation: { priority: 'high' },
+      triageRecommendation: {
+        mode: 'evidence',
+        recommendedFocus: 'logs',
+        headline: 'Inspect correlated logs',
+        summary: 'A log query hint is available',
+        whyNow: 'One monitor is down',
+        actionLabel: 'Open logs',
+        generatedAt: 123
+      },
+      opsSummary: {
+        ownerReady: true,
+        runbookReady: false,
+        relationReady: true,
+        telemetryReady: true,
+        statusReady: true,
+        readinessScore: 80,
+        relationCount: 1
+      },
+      nextActions: [
+        {
+          actionType: 'review_alerts',
+          title: 'Review alerts',
+          summary: 'One alert is firing',
+          actionLabel: 'Open alerts',
+          priority: 100
+        },
+        {
+          actionType: 'future_action',
+          title: 'Future action',
+          summary: 'A newer backend can add an action safely',
+          actionLabel: 'Open future action',
+          priority: 10
+        }
+      ],
+      responseHandoffs: {
+        alerts: {
+          search: 'checkout',
+          status: 'firing',
+          severity: 'critical',
+          serviceName: 'checkout',
+          environment: 'prod',
+          returnTo: '/entities/7'
+        },
+        logs: {
+          search: 'trace-1',
+          traceId: 'trace-1',
+          serviceName: 'checkout',
+          environment: 'prod',
+          start: 100,
+          end: 200,
+          returnTo: '/entities/7'
+        },
+        traces: {
+          traceId: 'trace-1',
+          spanId: 'span-1',
+          serviceName: 'checkout',
+          environment: 'prod',
+          start: 100,
+          end: 200,
+          returnTo: '/entities/7'
+        }
+      },
       boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website', instance: 'checkout', status: 2 }],
       topologyNeighbors: [
         {
@@ -208,7 +269,14 @@ describe('entity API', () => {
       logEvidence: [{ message: 'failed' }],
       traceEvidence: [{ traceId: 'trace-1' }],
       unifiedEvidenceSummary: { metricsActive: true },
-      triageRecommendation: { priority: 'high' },
+      triageRecommendation: { mode: 'evidence', recommendedFocus: 'logs' },
+      opsSummary: { readinessScore: 80, runbookReady: false },
+      nextActions: [{ actionType: 'review_alerts', priority: 100 }],
+      responseHandoffs: {
+        alerts: { search: 'checkout', status: 'firing', severity: 'critical' },
+        logs: { traceId: 'trace-1', serviceName: 'checkout', start: 100, end: 200 },
+        traces: { traceId: 'trace-1', spanId: 'span-1', serviceName: 'checkout', start: 100, end: 200 }
+      },
       relations: [{ entityId: 8 }]
     });
   });

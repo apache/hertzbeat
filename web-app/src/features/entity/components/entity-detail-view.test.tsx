@@ -82,6 +82,81 @@ describe('EntityDetailView', () => {
     expect(screen.queryByRole('button', { name: i18n.t('entity.explore.metrics') })).not.toBeInTheDocument();
   });
 
+  it('renders backend-recommended operations and delegates only their stable action code', () => {
+    const nextAction = vi.fn();
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          monitorPreview: { items: [], total: 0, complete: true },
+          opsSummary: {
+            ownerReady: true,
+            runbookReady: false,
+            relationReady: true,
+            telemetryReady: true,
+            statusReady: true,
+            readinessScore: 80,
+            relationCount: 1
+          },
+          nextActions: [
+            {
+              actionType: 'complete_runbook',
+              title: 'Add a runbook',
+              summary: 'Responders need a documented procedure.',
+              actionLabel: 'Edit ownership',
+              priority: 80
+            }
+          ],
+          responseHandoffs: { editor: { focus: 'ownership' } },
+          relations: []
+        }
+      },
+      { nextAction }
+    );
+
+    const region = screen.getByRole('region', { name: i18n.t('entity.operations.title') });
+    expect(within(region).getByText('Add a runbook')).toBeInTheDocument();
+    expect(within(region).getByText('Responders need a documented procedure.')).toBeInTheDocument();
+    fireEvent.click(within(region).getByRole('button', { name: 'Edit ownership' }));
+    expect(nextAction).toHaveBeenCalledWith('complete_runbook');
+  });
+
+  it('keeps write recommendations out of a read-only session without hiding read guidance', () => {
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          monitorPreview: { items: [], total: 0, complete: true },
+          nextActions: [
+            {
+              actionType: 'complete_runbook',
+              title: 'Add a runbook',
+              summary: 'Responders need a documented procedure.',
+              actionLabel: 'Edit ownership',
+              priority: 80
+            },
+            {
+              actionType: 'inspect_logs',
+              title: 'Inspect logs',
+              summary: 'A safe log handoff is available.',
+              actionLabel: 'Open logs',
+              priority: 60
+            }
+          ],
+          relations: []
+        }
+      },
+      { canWrite: false }
+    );
+
+    expect(screen.queryByRole('button', { name: 'Edit ownership' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open logs' })).toBeInTheDocument();
+  });
+
   it('renders compact real evidence and metadata while preserving numeric zero', () => {
     renderView({
       kind: 'ready',
@@ -312,6 +387,7 @@ type RenderViewOptions = {
   canWrite?: boolean;
   monitors?: Parameters<typeof EntityDetailView>[0]['state']['monitors'];
   changeMonitorPage?: Parameters<typeof EntityDetailView>[0]['actions']['changeMonitorPage'];
+  nextAction?: Parameters<typeof EntityDetailView>[0]['actions']['nextAction'];
 };
 
 function renderView(
@@ -328,7 +404,8 @@ function renderView(
     refresh: options.refresh ?? (() => undefined),
     canWrite: options.canWrite ?? true,
     monitors: options.monitors,
-    changeMonitorPage: options.changeMonitorPage ?? (() => undefined)
+    changeMonitorPage: options.changeMonitorPage ?? (() => undefined),
+    nextAction: options.nextAction ?? (() => undefined)
   });
 }
 
@@ -344,7 +421,8 @@ function renderResolvedView(
     refresh,
     canWrite,
     monitors,
-    changeMonitorPage
+    changeMonitorPage,
+    nextAction
   }: {
     explore: NonNullable<RenderViewOptions['explore']>;
     remove: NonNullable<RenderViewOptions['remove']>;
@@ -356,6 +434,7 @@ function renderResolvedView(
     canWrite: boolean;
     monitors: RenderViewOptions['monitors'];
     changeMonitorPage: NonNullable<RenderViewOptions['changeMonitorPage']>;
+    nextAction: NonNullable<RenderViewOptions['nextAction']>;
   }
 ) {
   const records = evidence.kind === 'ready' ? evidence.detail.monitorPreview.items : [];
@@ -388,7 +467,8 @@ function renderResolvedView(
           manageNoiseControls,
           changeMonitorPage,
           changeMonitorFilters: () => undefined,
-          refreshMonitors: () => undefined
+          refreshMonitors: () => undefined,
+          nextAction
         }}
       />
     </I18nextProvider>

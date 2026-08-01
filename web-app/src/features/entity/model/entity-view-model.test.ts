@@ -4,12 +4,15 @@ import { describe, expect, it } from 'vitest';
 
 import type { EntityDetail } from './entity-contract';
 import {
+  buildEntityNextActionPath,
+  buildEntityExplorePath,
+  entityExploreSignals
+} from './entity-operational-navigation';
+import {
   buildEntityCreatePath,
   buildEntityDiscoveryRoute,
   buildEntityEditRoute,
-  buildEntityExplorePath,
   buildEntityNoiseControlPath,
-  entityExploreSignals,
   safeEntityReturnTo,
   safeEntityEditorReturnTo
 } from './entity-view-model';
@@ -47,10 +50,23 @@ describe('entity Explore handoff', () => {
     const service = {
       ...queue,
       entity: { ...queue.entity, type: 'service', name: 'checkout' },
-      evidence: { logHintCount: 1 }
+      evidence: { logHintCount: 1 },
+      responseHandoffs: {
+        traces: {
+          traceId: 'trace-1',
+          spanId: 'span-1',
+          serviceName: 'checkout',
+          environment: 'prod',
+          start: 100,
+          end: 200
+        }
+      }
     };
-    expect(entityExploreSignals(service)).toEqual(['metrics', 'logs']);
+    expect(entityExploreSignals(service)).toEqual(['metrics', 'logs', 'traces']);
     expect(buildEntityExplorePath(service, 'logs')).toContain('serviceName=checkout');
+    expect(buildEntityExplorePath(service, 'traces')).toBe(
+      '/explore?signal=traces&timeRange=last-30m&traceId=trace-1&spanId=span-1&start=100&end=200&serviceName=checkout&environment=prod'
+    );
   });
 
   it('does not infer a unique non-service instance from an incomplete preview', () => {
@@ -74,6 +90,55 @@ describe('entity Explore handoff', () => {
         '/topology?focusEntityId=7&depth=2&environment=prod&pageIndex=3&pageSize=50&token=private&unknown=value'
       )
     ).toBe('/topology?focusEntityId=7&depth=2&environment=prod&pageIndex=3&pageSize=50');
+  });
+});
+
+describe('entity operational next-action handoff', () => {
+  const detail: EntityDetail = {
+    entity: { id: 7, type: 'service', name: 'checkout', environment: 'prod' },
+    identities: [],
+    monitorPreview: { items: [], total: 0, complete: true },
+    nextActions: [
+      {
+        actionType: 'review_alerts',
+        title: 'Review alerts',
+        summary: 'One alert is firing',
+        actionLabel: 'Open alerts',
+        priority: 100
+      }
+    ],
+    responseHandoffs: {
+      alerts: {
+        search: 'checkout',
+        status: 'firing',
+        severity: 'critical',
+        serviceName: 'checkout',
+        environment: 'prod'
+      },
+      logs: {
+        traceId: 'trace-1',
+        serviceName: 'checkout',
+        environment: 'prod',
+        start: 100,
+        end: 200
+      }
+    },
+    relations: []
+  };
+
+  it('maps backend action codes to canonical feature routes', () => {
+    expect(buildEntityNextActionPath(detail, 'review_alerts')).toBe(
+      '/alerts?pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical&serviceName=checkout&environment=prod'
+    );
+    expect(buildEntityNextActionPath(detail, 'inspect_logs')).toBe(
+      '/explore?signal=logs&timeRange=last-30m&traceId=trace-1&start=100&end=200&serviceName=checkout&environment=prod'
+    );
+    expect(buildEntityNextActionPath(detail, 'complete_runbook')).toContain('focus=ownership');
+    expect(buildEntityNextActionPath(detail, 'review_relations')).toContain('focus=relations');
+  });
+
+  it('does not turn an unknown backend action into navigation', () => {
+    expect(buildEntityNextActionPath(detail, 'future_action')).toBeUndefined();
   });
 });
 

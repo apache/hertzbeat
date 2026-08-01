@@ -225,6 +225,10 @@
       "manageInhibits": "抑制を管理",
       "types": { "silence": "サイレンス", "inhibit": "抑制" }
     },
+    "operations": {
+      "title": "推奨操作",
+      "readiness": "運用準備度 {{score}}%"
+    },
     "values": {
       "type": {
         "service": "サービス",
@@ -257,7 +261,7 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" },
+    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索", "traces": "トレースを検索" },
     "discovery": {
       "action": "リソースを検出",
       "title": "リソースを検出",

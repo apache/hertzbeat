@@ -60,7 +60,6 @@ export type EntityMonitorViewState = {
   evidence: EntityMonitorEvidence;
   refreshing: boolean;
 };
-export type EntityExploreSignal = 'metrics' | 'logs';
 export type EntityNoiseControlType = 'silence' | 'inhibit';
 
 export type EntityListViewState = {
@@ -142,25 +141,6 @@ export function buildEntitySavedDetailPath(id: number, listReturnTo: string) {
   return withReturnTo(entityRoutePaths.detail.replace(':entityId', String(id)), safeEntityReturnTo(listReturnTo));
 }
 
-export function entityExploreSignals(detail: EntityDetail): EntityExploreSignal[] {
-  const hasContext = detail.entity.type === 'service' || uniqueMonitorInstance(detail) !== undefined;
-  return [
-    ...(hasContext && detail.monitorPreview.items.length > 0 ? (['metrics'] as const) : []),
-    ...(hasContext && (detail.evidence?.logHintCount ?? 0) > 0 ? (['logs'] as const) : [])
-  ];
-}
-
-export function buildEntityExplorePath(detail: EntityDetail, signal: EntityExploreSignal) {
-  const params = new URLSearchParams({ signal, timeRange: 'last-30m' });
-  if (detail.entity.type === 'service') params.set('serviceName', detail.entity.name);
-  else {
-    const instance = uniqueMonitorInstance(detail);
-    if (instance) params.set('instance', instance);
-  }
-  if (detail.entity.environment) params.set('environment', detail.entity.environment);
-  return `${applicationRoutePaths.explore}?${params.toString()}`;
-}
-
 export function buildEntityNoiseControlPath(detail: EntityDetail, ruleType: EntityNoiseControlType) {
   const params = new URLSearchParams({
     pageIndex: '0',
@@ -178,16 +158,6 @@ export function buildEntityNoiseControlPath(detail: EntityDetail, ruleType: Enti
   if (ids.length > 0) params.set('matchingRuleIds', ids.join(','));
   const path = ruleType === 'silence' ? alertRoutePaths.silences : alertRoutePaths.inhibits;
   return `${path}?${params.toString()}`;
-}
-
-function uniqueMonitorInstance(detail: EntityDetail) {
-  if (!detail.monitorPreview.complete) return undefined;
-  const instances = [
-    ...new Set(
-      detail.monitorPreview.items.map(monitor => monitor.instance).filter((value): value is string => Boolean(value))
-    )
-  ];
-  return instances.length === 1 ? instances[0] : undefined;
 }
 
 function entityListPath(query: EntityQuery) {

@@ -225,6 +225,10 @@
       "manageInhibits": "Gerenciar inibições",
       "types": { "silence": "Silêncio", "inhibit": "Inibição" }
     },
+    "operations": {
+      "title": "Operações recomendadas",
+      "readiness": "Prontidão operacional {{score}}%"
+    },
     "values": {
       "type": {
         "service": "Serviço",
@@ -263,7 +267,7 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" },
+    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs", "traces": "Explorar traces" },
     "discovery": {
       "action": "Descobrir recursos",
       "title": "Descobrir recursos",

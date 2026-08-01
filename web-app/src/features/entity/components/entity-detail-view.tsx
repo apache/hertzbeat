@@ -3,18 +3,14 @@
 import { Alert, Button, Empty, Space, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type {
-  EntityDetailEvidence,
-  EntityExploreSignal,
-  EntityMonitorViewState,
-  EntityNoiseControlType
-} from '../model/entity-view-model';
-import { entityExploreSignals } from '../model/entity-view-model';
-import type { EntityMonitorQuery } from '../model/entity-contract';
+import type { EntityDetailEvidence, EntityMonitorViewState, EntityNoiseControlType } from '../model/entity-view-model';
+import { entityExploreSignals, type EntityExploreSignal } from '../model/entity-operational-navigation';
+import type { EntityMonitorQuery, EntityNextActionType } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
 import { EntityDetailMetadata } from './entity-detail-metadata';
 import { EntityEvidenceLists } from './entity-evidence-lists';
 import { EntityNoiseControlEvidence } from './entity-noise-control-evidence';
+import { EntityOperationalGuidance } from './entity-operational-guidance';
 import styles from './entity-view.module.css';
 
 type EntityDetailViewActions = {
@@ -27,6 +23,7 @@ type EntityDetailViewActions = {
   changeMonitorPage: (pageIndex: number) => void;
   changeMonitorFilters: (filters: Pick<EntityMonitorQuery, 'status' | 'app'>) => void;
   refreshMonitors: () => void;
+  nextAction: (action: EntityNextActionType) => void;
   remove: () => void;
 };
 
@@ -85,6 +82,7 @@ function ReadyEntityDetail({
         <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
       ) : null}
       <EntityDetailMetadata detail={detail} />
+      <EntityOperationalGuidance detail={detail} canWrite={state.canWrite} act={actions.nextAction} />
       {detail.noiseControls ? (
         <EntityNoiseControlEvidence summary={detail.noiseControls} manage={actions.manageNoiseControls} />
       ) : null}

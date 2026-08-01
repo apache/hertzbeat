@@ -16,3 +16,4 @@
  */
 
 export { ExplorePage } from './pages/explore-page';
+export { buildExplorePath } from './model/explore-url-model';

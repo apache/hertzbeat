@@ -220,6 +220,10 @@
       "manageInhibits": "管理抑制策略",
       "types": { "silence": "静默", "inhibit": "抑制" }
     },
+    "operations": {
+      "title": "建议操作",
+      "readiness": "运维就绪度 {{score}}%"
+    },
     "values": {
       "type": {
         "service": "服务",
@@ -252,7 +256,7 @@
         "otlp": "OpenTelemetry"
       }
     },
-    "explore": { "metrics": "查询指标", "logs": "查询日志" },
+    "explore": { "metrics": "查询指标", "logs": "查询日志", "traces": "查询链路" },
     "discovery": {
       "action": "发现资源",
       "title": "发现资源",
