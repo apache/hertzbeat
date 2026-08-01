@@ -65,8 +65,8 @@ export function useEntityDiscoveryController(): EntityDiscoveryViewModel {
       changePage: (page, pageSize) => setQuery({ pageIndex: page - 1, pageSize }),
       refresh: () => void client.invalidateQueries({ queryKey: entityQueryKeys.discovery(source) }),
       back: () => void navigate(catalogReturnTo),
-      create: () => {
-        if (canWrite) void navigate(buildEntityDiscoveryCreatePath(query, catalogReturnTo));
+      create: monitor => {
+        if (canWrite) void navigate(buildEntityDiscoveryCreatePath(query, catalogReturnTo, monitor));
       },
       openCandidate: resourceId => {
         if (location.pathname === entityRoutePaths.discovery)

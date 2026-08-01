@@ -8,6 +8,7 @@ import { monitorStatusColor, monitorStatusKey } from '@/features/monitor';
 import { localizeEntityCode } from '../model/entity-display';
 import type {
   EntityDiscoveryCandidate,
+  EntityDiscoveryMonitor,
   EntityDiscoveryRow,
   EntityDiscoveryViewModel
 } from '../model/entity-discovery-model';
@@ -78,7 +79,7 @@ function DiscoveryResults({ state, actions }: EntityDiscoveryViewModel) {
 function discoveryColumns(
   t: (key: string) => string,
   openCandidate: (resourceId: number) => void,
-  create: () => void,
+  create: (monitor: EntityDiscoveryMonitor) => void,
   canWrite: boolean
 ): ColumnsType<EntityDiscoveryRow> {
   return [
@@ -97,7 +98,13 @@ function discoveryColumns(
     {
       title: t('entity.discovery.fields.candidates'),
       render: (_value, row) => (
-        <CandidateList candidates={row.candidates} t={t} open={openCandidate} create={create} canWrite={canWrite} />
+        <CandidateList
+          candidates={row.candidates}
+          t={t}
+          open={openCandidate}
+          create={() => create(row.monitor)}
+          canWrite={canWrite}
+        />
       )
     }
   ];

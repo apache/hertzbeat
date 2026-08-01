@@ -55,8 +55,12 @@ describe('useEntityDiscoveryController', () => {
 
     const create = renderController('/entities/discovery?search=mysql&pageIndex=0&pageSize=8');
     await waitFor(() => expect(create.current().state.evidence.kind).toBe('ready'));
-    act(() => create.current().actions.create());
-    expect(create.location()).toContain('/entities/new?returnTo=');
+    act(() => create.current().actions.create(page.content[0]!.monitor));
+    const createUrl = new URL(create.location(), 'http://localhost');
+    expect(createUrl.pathname).toBe('/entities/new');
+    expect(createUrl.searchParams.get('returnTo')).toContain('/entities/discovery?');
+    expect(createUrl.searchParams.get('sourceMonitorId')).toBe('3');
+    expect(createUrl.searchParams.get('sourceMonitorName')).toBe('mysql');
 
     const back = renderController(
       '/entities/discovery?returnTo=%2Fentities%3Fsearch%3Dmysql%26type%3Ddatabase%26token%3Dprivate'
@@ -81,7 +85,7 @@ describe('useEntityDiscoveryController', () => {
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
     expect(api.loadEntityDiscovery).toHaveBeenCalled();
     expect(routed.current().state.canWrite).toBe(false);
-    act(() => routed.current().actions.create());
+    act(() => routed.current().actions.create(page.content[0]!.monitor));
     expect(routed.location()).toContain('/entities/discovery');
   });
 

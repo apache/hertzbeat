@@ -72,7 +72,7 @@ describe('EntityDiscoveryView', () => {
     );
     expect(screen.getByText('No resource candidates found.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Add resource' }));
-    expect(create).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledWith(rows[0]!.monitor);
   });
 
   it('keeps GUEST discovery results readable without exposing the create action', () => {

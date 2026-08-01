@@ -102,6 +102,27 @@ describe('useEntityEditorController', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['entities', 'editor', 41], refetchType: 'none' });
   });
 
+  it('prefills a discovery monitor name and saves its binding without adding form complexity', async () => {
+    const routed = renderController(
+      'new',
+      '/entities/new?sourceMonitorId=3&sourceMonitorName=primary-db&returnTo=%2Fentities%2Fdiscovery'
+    );
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(routed.current().state.draft.name).toBe('primary-db');
+    expect(routed.current().state.dirty).toBe(false);
+
+    act(() => routed.current().actions.change('type', 'database'));
+    act(() => routed.current().actions.submit());
+
+    await waitFor(() => expect(api.saveEditableEntity).toHaveBeenCalledOnce());
+    expect(api.saveEditableEntity).toHaveBeenCalledWith(
+      'new',
+      expect.objectContaining({
+        monitorBinds: [{ monitorId: 3, bindType: 'manual', bindSource: 'manual', status: 'active', score: 100 }]
+      })
+    );
+  });
+
   it('keeps the submitted draft authoritative until the write settles', async () => {
     let resolveSave: ((id: number) => void) | undefined;
     api.saveEditableEntity.mockReturnValueOnce(new Promise<number>(resolve => (resolveSave = resolve)));

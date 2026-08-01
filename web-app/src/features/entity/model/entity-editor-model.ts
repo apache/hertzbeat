@@ -64,10 +64,15 @@ export function validateEntityEditorDraft(draft: EntityEditorDraft): EntityEdito
   return errors;
 }
 
-export function buildEntityCreatePayload(draft: EntityEditorDraft): EditableEntityDto {
+export function buildEntityCreatePayload(draft: EntityEditorDraft, sourceMonitorId?: number): EditableEntityDto {
   const entity = writeEditedFields({ type: draft.type.trim(), name: draft.name.trim() }, draft, false);
-  // Empty evidence arrays intentionally ask the server to derive the default identity.
-  return { entity, identities: [], monitorBinds: [], relations: [] };
+  // Ordinary creation delegates identity derivation to the server. Discovery
+  // adds only its verified source monitor; expert evidence stays out of the form.
+  const monitorBinds =
+    Number.isSafeInteger(sourceMonitorId) && Number(sourceMonitorId) > 0
+      ? [{ monitorId: sourceMonitorId, bindType: 'manual', bindSource: 'manual', status: 'active', score: 100 }]
+      : [];
+  return { entity, identities: [], monitorBinds, relations: [] };
 }
 
 export function buildEntityUpdatePayload(original: EditableEntityDto, draft: EntityEditorDraft): EditableEntityDto {

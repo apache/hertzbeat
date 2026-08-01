@@ -14,7 +14,8 @@ export class EntityDiscoveryContractError extends Error {
 }
 
 export type EntityDiscoveryQuery = { search: string; pageIndex: number; pageSize: number };
-type EntityDiscoveryMonitor = Pick<Monitor, 'id' | 'name' | 'app' | 'instance' | 'status'>;
+export type EntityDiscoveryMonitor = Pick<Monitor, 'id' | 'name' | 'app' | 'instance' | 'status'>;
+export type EntityDiscoveryCreateSource = { monitorId: number; monitorName: string };
 type EntityDiscoveryMatch = 'already_bound' | 'direct' | 'suggested';
 export type EntityDiscoveryCandidate = {
   resourceId: number;
@@ -51,7 +52,7 @@ export type EntityDiscoveryViewModel = {
     changePage: (page: number, pageSize: number) => void;
     refresh: () => void;
     back: () => void;
-    create: () => void;
+    create: (monitor: EntityDiscoveryMonitor) => void;
     openCandidate: (resourceId: number) => void;
   };
 };
@@ -109,8 +110,31 @@ export function buildEntityDiscoveryDetailPath(
   );
 }
 
-export function buildEntityDiscoveryCreatePath(query: EntityDiscoveryQuery, catalogReturnTo?: string | null) {
-  return withReturnTo(entityRoutePaths.create, buildEntityDiscoveryPath(query, catalogReturnTo));
+export function buildEntityDiscoveryCreatePath(
+  query: EntityDiscoveryQuery,
+  catalogReturnTo: string | null | undefined,
+  monitor: EntityDiscoveryMonitor
+) {
+  const params = new URLSearchParams({
+    sourceMonitorId: String(monitor.id),
+    sourceMonitorName: monitor.name.trim(),
+    returnTo: buildEntityDiscoveryPath(query, catalogReturnTo)
+  });
+  return `${entityRoutePaths.create}?${params.toString()}`;
+}
+
+export function readEntityDiscoveryCreateSource(params: URLSearchParams): EntityDiscoveryCreateSource | undefined {
+  const monitorId = parsePositiveId(params.get('sourceMonitorId'));
+  const monitorName = params.get('sourceMonitorName')?.trim();
+  if (
+    monitorId === undefined ||
+    !monitorName ||
+    monitorName.length > 200 ||
+    /[\u0000-\u001f\u007f]/.test(monitorName)
+  ) {
+    return undefined;
+  }
+  return { monitorId, monitorName };
 }
 
 function normalizeDiscoverySearch(value?: string | null) {
@@ -127,6 +151,12 @@ function validPageSize(value: string | null) {
   if (!value || !/^\d+$/.test(value)) return 8;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 1 && parsed <= 50 ? parsed : 8;
+}
+
+function parsePositiveId(value: string | null) {
+  if (!value || !/^[1-9]\d*$/.test(value)) return undefined;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
 function withReturnTo(path: string, returnTo: string) {

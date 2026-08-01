@@ -3,7 +3,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildEntityDiscoveryCreatePath,
   defaultEntityDiscoveryQuery,
+  readEntityDiscoveryCreateSource,
   readEntityDiscoveryQuery,
   safeEntityDiscoveryPath,
   writeEntityDiscoveryQuery
@@ -28,5 +30,24 @@ describe('entity discovery query', () => {
       '/entities/discovery?pageIndex=2&pageSize=25&search=mysql'
     );
     expect(safeEntityDiscoveryPath('https://evil.example/entities/discovery')).toBe('/entities/discovery');
+  });
+
+  it('carries only a bounded monitor identity into the low-friction create handoff', () => {
+    const path = buildEntityDiscoveryCreatePath(
+      { search: 'mysql', pageIndex: 0, pageSize: 8 },
+      '/entities?type=database',
+      { id: 3, name: '  primary database  ', app: 'mysql', instance: 'db:3306', status: 1 }
+    );
+    const url = new URL(path, 'https://hertzbeat.local');
+
+    expect(readEntityDiscoveryCreateSource(url.searchParams)).toEqual({
+      monitorId: 3,
+      monitorName: 'primary database'
+    });
+    expect(path).not.toContain('db%3A3306');
+    expect(url.searchParams.has('sourceMonitorApp')).toBe(false);
+    expect(
+      readEntityDiscoveryCreateSource(new URLSearchParams('sourceMonitorId=0&sourceMonitorName=private'))
+    ).toBeUndefined();
   });
 });

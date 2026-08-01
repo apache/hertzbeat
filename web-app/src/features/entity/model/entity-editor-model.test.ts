@@ -20,6 +20,18 @@ describe('entity editor payload boundary', () => {
     });
   });
 
+  it('creates one explicit manual binding when discovery owns the source monitor', () => {
+    expect(
+      buildEntityCreatePayload({ ...emptyEntityEditorDraft, type: 'database', name: 'primary-db' }, 3)
+    ).toMatchObject({
+      entity: { type: 'database', name: 'primary-db' },
+      monitorBinds: [{ monitorId: 3, bindType: 'manual', bindSource: 'manual', status: 'active', score: 100 }]
+    });
+    expect(
+      buildEntityCreatePayload({ ...emptyEntityEditorDraft, type: 'database', name: 'primary-db' }, -1)
+    ).toMatchObject({ monitorBinds: [] });
+  });
+
   it('preserves every hidden DTO branch and unedited entity field during basic edits', () => {
     const original: EditableEntityDto = {
       entity: {

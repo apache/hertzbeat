@@ -2,7 +2,7 @@
 
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -17,11 +17,10 @@ import type { EditableEntityDto, EntityEditorDraft, EntityEditorField } from '..
 import {
   buildEntityCreatePayload,
   buildEntityUpdatePayload,
-  emptyEntityEditorDraft,
-  entityEditorDraftFrom,
   isEntityEditorDirty,
   validateEntityEditorDraft
 } from '../model/entity-editor-model';
+import { readEntityDiscoveryCreateSource } from '../model/entity-discovery-model';
 import {
   buildEntitySavedDetailPath,
   entityEditorListReturnTo,
@@ -29,6 +28,7 @@ import {
 } from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
 import { useEntityCapabilities, useEntityWriteBoundary } from './use-entity-capabilities';
+import { useEntityEditorDraft } from './use-entity-editor-draft';
 
 export function useEntityEditorController(mode: 'new' | 'edit') {
   const { t } = useTranslation();
@@ -38,9 +38,10 @@ export function useEntityEditorController(mode: 'new' | 'edit') {
   const { entityId } = useParams();
   const [params] = useSearchParams();
   const id = mode === 'edit' ? parseEntityId(entityId) : undefined;
+  const createSource = mode === 'new' ? readEntityDiscoveryCreateSource(params) : undefined;
   const { canWrite } = useEntityCapabilities();
   const { detail, suggestions } = useEditorResources(mode, id, canWrite);
-  const { initial, draft, setDraft, clearDraft, hydrated } = useEditorDraft(detail.data);
+  const { initial, draft, setDraft, clearDraft, hydrated } = useEntityEditorDraft(detail.data, createSource);
   const [errors, setErrors] = useState<ReturnType<typeof validateEntityEditorDraft>>({});
   const cancelTarget = safeEntityEditorReturnTo(params.get('returnTo'), id);
   const listReturnTo = entityEditorListReturnTo(cancelTarget);
@@ -61,7 +62,8 @@ export function useEntityEditorController(mode: 'new' | 'edit') {
     const nextErrors = validateEntityEditorDraft(draft);
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean) || save.isPending) return;
-    const payload = mode === 'new' ? buildEntityCreatePayload(draft) : buildEditPayload(detail.data, draft);
+    const payload =
+      mode === 'new' ? buildEntityCreatePayload(draft, createSource?.monitorId) : buildEditPayload(detail.data, draft);
     if (payload && write.current(owner)) save.mutate({ payload, owner });
   };
   const cancel = () => {
@@ -129,17 +131,6 @@ function useEditorResources(mode: 'new' | 'edit', id: number | undefined, canWri
     retry: false
   });
   return { detail, suggestions };
-}
-
-function useEditorDraft(detail: EditableEntityDto | undefined) {
-  const initial = useMemo(() => (detail ? entityEditorDraftFrom(detail.entity) : emptyEntityEditorDraft), [detail]);
-  const source = detail?.entity.id ?? 'new';
-  const [edited, setEdited] = useState<{ source: number | 'new'; draft: EntityEditorDraft }>();
-  const draft = edited?.source === source ? edited.draft : initial;
-  const setDraft = (update: (current: EntityEditorDraft) => EntityEditorDraft) => {
-    setEdited(current => ({ source, draft: update(current?.source === source ? current.draft : initial) }));
-  };
-  return { initial, draft, setDraft, clearDraft: () => setEdited(undefined), hydrated: detail !== undefined };
 }
 
 function withoutEditorError(errors: ReturnType<typeof validateEntityEditorDraft>, field: EntityEditorField) {
