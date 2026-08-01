@@ -46,6 +46,15 @@ describe('PluginPage', () => {
     expect(commandBand).not.toContainElement(screen.getByRole('button', { name: 'plugins.upload' }));
   });
 
+  it('uses the shared command and result frame with a compact empty state', () => {
+    render(<PluginPage />);
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'plugins.empty' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['loading', 'plugins.loading'],
     ['empty', 'plugins.empty'],

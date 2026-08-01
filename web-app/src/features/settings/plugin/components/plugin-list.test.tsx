@@ -61,4 +61,25 @@ describe('PluginList', () => {
     fireEvent.click(screen.getByRole('button', { name: 'plugins.configureParams' }));
     expect(onConfigure).toHaveBeenCalledWith(expect.objectContaining({ id: 11 }));
   });
+
+  it('keeps actions reachable inside a horizontally scrollable table', () => {
+    render(
+      <PluginList
+        records={[{ id: 11, name: 'audit', enableStatus: true, paramCount: 2 }]}
+        total={1}
+        query={{ search: '', pageIndex: 0, pageSize: 8 }}
+        pageSizes={[8]}
+        selectedIds={[]}
+        canWrite
+        busy={false}
+        onSelected={vi.fn()}
+        onPage={vi.fn()}
+        onToggle={vi.fn()}
+        onDelete={vi.fn()}
+        onConfigure={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
+  });
 });

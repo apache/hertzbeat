@@ -5,10 +5,17 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Input, Skeleton, Space, Typography } from 'antd';
+import { Alert, Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalStatePanel,
+  type OperationalStateKind
+} from '@/shared/operational-page';
 
 import { PluginDeleteDialog, PluginUploadDialog } from '../components/plugin-dialogs';
 import { PluginList } from '../components/plugin-list';
@@ -40,7 +47,9 @@ export function PluginPage() {
       )}
       {controller.notice && <Alert type="success" showIcon message={t(`plugins.notice.${controller.notice}`)} />}
       <PluginToolbar controller={controller} />
-      <PluginResults controller={controller} />
+      <OperationalResultRegion>
+        <PluginResults controller={controller} />
+      </OperationalResultRegion>
       <PluginUploadDialog
         upload={controller.upload}
         invalid={controller.uploadInvalid}
@@ -67,39 +76,44 @@ export function PluginPage() {
 function PluginToolbar({ controller }: { controller: ReturnType<typeof usePluginController> }) {
   const { t } = useTranslation();
   return (
-    <div role="search" className={styles.commandBand}>
-      <Input.Search
-        className={styles.search}
-        allowClear
-        disabled={!controller.canWrite}
-        value={controller.searchDraft}
-        placeholder={t('plugins.search')}
-        onChange={event => controller.actions.setSearchDraft(event.target.value)}
-        onSearch={controller.actions.submitSearch}
-      />
-      <Button disabled={!controller.canWrite} onClick={controller.actions.refresh}>
-        {t('common.refresh')}
-      </Button>
-      <Button
-        danger
-        disabled={!controller.canWrite || controller.busy || controller.selectedIds.length === 0}
-        onClick={controller.actions.requestDeleteSelected}
-      >
-        {t('plugins.deleteSelected')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('plugins.search')}
+      primary={
+        <Input.Search
+          className={styles.search}
+          allowClear
+          disabled={!controller.canWrite}
+          value={controller.searchDraft}
+          placeholder={t('plugins.search')}
+          onChange={event => controller.actions.setSearchDraft(event.target.value)}
+          onSearch={controller.actions.submitSearch}
+        />
+      }
+      secondary={
+        <>
+          <Button disabled={!controller.canWrite} onClick={controller.actions.refresh}>
+            {t('common.refresh')}
+          </Button>
+          <Button
+            danger
+            disabled={!controller.canWrite || controller.busy || controller.selectedIds.length === 0}
+            onClick={controller.actions.requestDeleteSelected}
+          >
+            {t('plugins.deleteSelected')}
+          </Button>
+        </>
+      }
+    />
   );
 }
 
 function PluginResults({ controller }: { controller: ReturnType<typeof usePluginController> }) {
   const { t } = useTranslation();
-  if (controller.listState.kind === 'loading') return <State text={t('plugins.loading')} loading />;
-  if (controller.listState.kind === 'empty') return <Empty description={t('plugins.empty')} />;
-  if (controller.listState.kind === 'search-empty') return <Empty description={t('plugins.searchEmpty')} />;
-  if (controller.listState.kind === 'invalid') return <Empty description={t('plugins.failure.invalid')} />;
-  if (controller.listState.kind === 'permission') return <Empty description={t('plugins.failure.permission')} />;
-  if (controller.listState.kind === 'unavailable') return <Empty description={t('plugins.failure.unavailable')} />;
-  if (controller.listState.kind === 'error') return <Empty description={t('plugins.failure.error')} />;
+  if (controller.listState.kind !== 'ready') {
+    const presentation = pluginListStatePresentation(controller.listState.kind);
+    return <OperationalStatePanel kind={presentation.kind} title={t(presentation.titleKey)} />;
+  }
   return (
     <PluginList
       records={controller.listState.records}
@@ -118,11 +132,17 @@ function PluginResults({ controller }: { controller: ReturnType<typeof usePlugin
   );
 }
 
-function State({ text, loading = false }: { text: string; loading?: boolean }) {
-  return (
-    <Space direction="vertical">
-      <Typography.Text>{text}</Typography.Text>
-      {loading && <Skeleton active />}
-    </Space>
-  );
+function pluginListStatePresentation(
+  kind: Exclude<ReturnType<typeof usePluginController>['listState']['kind'], 'ready'>
+) {
+  const presentations = {
+    loading: { kind: 'loading', titleKey: 'plugins.loading' },
+    empty: { kind: 'empty', titleKey: 'plugins.empty' },
+    'search-empty': { kind: 'no-match', titleKey: 'plugins.searchEmpty' },
+    invalid: { kind: 'error', titleKey: 'plugins.failure.invalid' },
+    permission: { kind: 'permission', titleKey: 'plugins.failure.permission' },
+    unavailable: { kind: 'unavailable', titleKey: 'plugins.failure.unavailable' },
+    error: { kind: 'error', titleKey: 'plugins.failure.error' }
+  } satisfies Record<typeof kind, { kind: OperationalStateKind; titleKey: string }>;
+  return presentations[kind];
 }

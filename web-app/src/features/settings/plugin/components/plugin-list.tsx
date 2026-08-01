@@ -39,6 +39,7 @@ export function PluginList(props: {
           onChange: keys => props.onSelected(keys.map(Number)),
           getCheckboxProps: () => ({ disabled: !props.canWrite || props.busy })
         }}
+        scroll={{ x: 1100 }}
       />
       <Pagination
         current={props.query.pageIndex + 1}
@@ -54,10 +55,11 @@ export function PluginList(props: {
 
 function columns(props: Parameters<typeof PluginList>[0], t: TFunction): ColumnsType<PluginRecord> {
   return [
-    { title: t('plugins.name'), dataIndex: 'name', key: 'name' },
+    { title: t('plugins.name'), dataIndex: 'name', key: 'name', width: 220 },
     {
       title: t('plugins.status'),
       key: 'status',
+      width: 190,
       render: (_, plugin) => (
         <Space>
           <Switch
@@ -76,23 +78,28 @@ function columns(props: Parameters<typeof PluginList>[0], t: TFunction): Columns
       title: t('plugins.creator'),
       dataIndex: 'creator',
       key: 'creator',
+      width: 140,
       render: (value: string | undefined) => value || '—'
     },
     {
       title: t('plugins.created'),
       dataIndex: 'gmtCreate',
       key: 'gmtCreate',
+      width: 190,
       render: (value: string | undefined) => value || '—'
     },
     {
       title: t('plugins.paramCount'),
       dataIndex: 'paramCount',
       key: 'paramCount',
+      width: 110,
       render: (value: number | undefined) => value ?? t('plugins.unknown')
     },
     {
       title: t('common.actions'),
       key: 'actions',
+      fixed: 'right',
+      width: 250,
       render: (_, plugin) => (
         <Space>
           {plugin.paramCount !== undefined && plugin.paramCount > 0 && (
