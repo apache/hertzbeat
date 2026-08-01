@@ -2613,6 +2613,9 @@
   "statusManagement": {
     "title": "Página de status",
     "description": "Publique a saúde dos componentes e comunique incidentes do serviço.",
+    "loadingOrganization": "Carregando a identidade da página…",
+    "loadingComponents": "Carregando componentes de status…",
+    "loadingIncidents": "Carregando incidentes…",
     "openPublicPage": "Abrir página pública",
     "organization": "Identidade da página",
     "organizationDescription": "Defina o nome público, a descrição e os links.",

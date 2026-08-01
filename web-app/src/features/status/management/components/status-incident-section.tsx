@@ -5,8 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input } from 'antd';
+import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusIncident } from '../model/status-management-contract';
 import type { StatusIncidentCollectionState } from '../model/status-management-model';
@@ -80,15 +82,18 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
         <StatusDeleteRecoveryAlert pending={props.deleteRecoveryPending} onRetry={() => void props.onRefresh()} />
       )}
       {props.detailState && (
-        <Alert
-          type={props.detailState === 'missing' ? 'info' : 'error'}
-          showIcon
-          message={t(detailStateKey(props.detailState))}
-        />
+        <OperationalStatePanel kind={detailStateKind(props.detailState)} title={t(detailStateKey(props.detailState))} />
       )}
       <IncidentResults {...props} />
     </section>
   );
+}
+
+function detailStateKind(state: 'missing' | 'permission' | 'unavailable' | 'error') {
+  if (state === 'missing') return 'empty';
+  if (state === 'permission') return 'permission';
+  if (state === 'unavailable') return 'unavailable';
+  return 'error';
 }
 
 function detailStateKey(state: 'missing' | 'permission' | 'unavailable' | 'error') {

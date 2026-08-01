@@ -5,9 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusComponent } from '../model/status-management-contract';
 import {
@@ -28,11 +30,16 @@ type ComponentResultsProps = {
 
 export function ComponentResults(props: ComponentResultsProps) {
   const { t } = useTranslation();
-  if (props.state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (props.state.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('statusManagement.loadingComponents')} />;
+  }
+  if (props.state.kind === 'unavailable') {
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  }
   if (props.state.kind === 'permission')
-    return <Alert type="warning" showIcon message={t('common.permission.roleRequiredDescription')} />;
-  if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
-  if (props.state.kind === 'empty') return <Empty description={t('status.noComponents')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+  if (props.state.kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.title')} />;
+  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('status.noComponents')} />;
 
   const columns: ColumnsType<StatusComponent> = [
     { title: t('status.component'), dataIndex: 'name' },
@@ -58,14 +65,7 @@ export function ComponentResults(props: ComponentResultsProps) {
   ];
   const records = props.state.kind === 'ready' ? props.state.records : [];
   return (
-    <Table
-      rowKey="id"
-      size="small"
-      loading={props.state.kind === 'loading'}
-      pagination={false}
-      columns={columns}
-      dataSource={records}
-    />
+    <Table rowKey="id" size="small" pagination={false} scroll={{ x: 760 }} columns={columns} dataSource={records} />
   );
 }
 
@@ -77,6 +77,7 @@ function componentActionColumns(
   return [
     {
       title: t('common.actions'),
+      fixed: 'right',
       width: 170,
       render: (_value, row) => (
         <Space size={2}>

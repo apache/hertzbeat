@@ -5,9 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Pagination, Popconfirm, Space, Table, Tag } from 'antd';
+import { Button, Pagination, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusIncident } from '../model/status-management-contract';
 import { statusIncidentPageSizes } from '../model/status-incident-query';
@@ -34,11 +36,16 @@ export type IncidentResultsProps = {
 
 export function IncidentResults(props: IncidentResultsProps) {
   const { t } = useTranslation();
-  if (props.state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (props.state.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('statusManagement.loadingIncidents')} />;
+  }
+  if (props.state.kind === 'unavailable') {
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  }
   if (props.state.kind === 'permission')
-    return <Alert type="warning" showIcon message={t('common.permission.roleRequiredDescription')} />;
-  if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
-  if (props.state.kind === 'empty') return <Empty description={t('status.noIncidents')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+  if (props.state.kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.title')} />;
+  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('status.noIncidents')} />;
 
   const pagination = incidentPagination(props);
   return (
@@ -46,12 +53,13 @@ export function IncidentResults(props: IncidentResultsProps) {
       <Table
         rowKey="id"
         size="small"
-        loading={props.state.kind === 'loading' || props.detailLoading}
+        loading={props.detailLoading}
         columns={incidentColumns(props, t)}
         dataSource={props.records}
         pagination={props.records.length === 0 ? false : pagination}
+        scroll={{ x: 900 }}
       />
-      {props.state.kind === 'ready' && props.records.length === 0 && props.total > 0 && <Pagination {...pagination} />}
+      {props.records.length === 0 && props.total > 0 && <Pagination {...pagination} />}
     </>
   );
 }
@@ -79,6 +87,7 @@ function incidentActionColumns(props: IncidentResultsProps, t: (key: string) => 
   return [
     {
       title: t('common.actions'),
+      fixed: 'right',
       width: 180,
       render: (_value, row) => (
         <Space size={2}>

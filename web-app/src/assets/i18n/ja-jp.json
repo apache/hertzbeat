@@ -2611,6 +2611,9 @@
   "statusManagement": {
     "title": "ステータスページ",
     "description": "コンポーネントの状態を公開し、サービス障害を通知します。",
+    "loadingOrganization": "ページ情報を読み込んでいます…",
+    "loadingComponents": "ステータスコンポーネントを読み込んでいます…",
+    "loadingIncidents": "インシデントを読み込んでいます…",
     "openPublicPage": "公開ページを開く",
     "organization": "ページ情報",
     "organizationDescription": "公開名、説明、リンクを設定します。",

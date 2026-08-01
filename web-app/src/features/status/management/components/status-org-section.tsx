@@ -5,8 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 import type { StatusRecordState } from '../model/status-management-model';
@@ -33,15 +34,19 @@ export function StatusOrgSection(props: StatusOrgSectionProps) {
         title={t('statusManagement.organization')}
         description={t('statusManagement.organizationDescription')}
       />
-      {props.state.kind === 'loading' && <Skeleton active paragraph={{ rows: 3 }} />}
-      {props.state.kind === 'unavailable' && <Alert type="error" showIcon message={t('common.unavailable')} />}
-      {props.state.kind === 'permission' && (
-        <Alert type="warning" showIcon message={t('common.permission.roleRequiredDescription')} />
+      {props.state.kind === 'loading' && (
+        <OperationalStatePanel kind="loading" title={t('statusManagement.loadingOrganization')} />
       )}
-      {props.state.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.title')} />}
+      {props.state.kind === 'unavailable' && (
+        <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />
+      )}
+      {props.state.kind === 'permission' && (
+        <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />
+      )}
+      {props.state.kind === 'error' && <OperationalStatePanel kind="error" title={t('common.routeError.title')} />}
       {props.state.kind === 'missing' && (
         <>
-          <Alert type="info" showIcon message={t('statusManagement.notConfigured')} />
+          <OperationalStatePanel kind="empty" title={t('statusManagement.notConfigured')} />
           {(props.canCreate || props.writeRecovery) && (
             <StatusOrgForm
               key={props.canCreate ? 'write' : 'read'}

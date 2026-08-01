@@ -24,6 +24,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
+import { requireDomElement } from '@/test/dom-element';
 
 import { statusManagementQueryKeys } from '../controller/status-management-query-keys';
 import { StatusManagementMissingError, type StatusIncident, type StatusOrg } from '../model/status-management-contract';
@@ -108,6 +109,17 @@ describe('StatusManagementPage', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: i18n.t('statusManagement.title') })).toBeInTheDocument();
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const results = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
+    expect(page).toContainElement(header);
+    expect(page).toContainElement(results);
     expect(screen.getByText(i18n.t('statusManagement.description'))).toBeInTheDocument();
     const publicStatusLink = screen.getByRole('link', { name: i18n.t('statusManagement.openPublicPage') });
     expect(publicStatusLink).toHaveAttribute('href', '/status');

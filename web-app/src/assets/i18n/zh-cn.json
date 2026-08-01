@@ -2599,6 +2599,9 @@
   "statusManagement": {
     "title": "状态页",
     "description": "发布组件健康状态，并向用户同步服务事件。",
+    "loadingOrganization": "正在加载页面信息…",
+    "loadingComponents": "正在加载状态组件…",
+    "loadingIncidents": "正在加载事件…",
     "openPublicPage": "打开公开页面",
     "organization": "页面信息",
     "organizationDescription": "设置公开名称、说明和相关链接。",

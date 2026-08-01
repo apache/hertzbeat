@@ -2599,6 +2599,9 @@
   "statusManagement": {
     "title": "狀態頁",
     "description": "發佈元件健康狀態，並向使用者同步服務事件。",
+    "loadingOrganization": "正在載入頁面資訊…",
+    "loadingComponents": "正在載入狀態元件…",
+    "loadingIncidents": "正在載入事件…",
     "openPublicPage": "開啟公開頁面",
     "organization": "頁面資訊",
     "organizationDescription": "設定公開名稱、說明和相關連結。",

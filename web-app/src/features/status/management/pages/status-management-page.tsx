@@ -22,7 +22,7 @@ import { StatusComponentSection } from '../components/status-component-section';
 import { StatusIncidentSection } from '../components/status-incident-section';
 import { StatusOrgSection } from '../components/status-org-section';
 import { publicStatusPath } from '@/features/status/shared/status-constants';
-import styles from '../components/status-management.module.css';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
 import { useStatusManagementController } from '../controller/use-status-management-controller';
 
 export function StatusManagementPage() {
@@ -30,36 +30,42 @@ export function StatusManagementPage() {
   const statusOrg = controller.org.kind === 'ready' ? controller.org.record : undefined;
   const statusComponents = controller.components.kind === 'ready' ? controller.components.records : [];
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="workspace">
       <StatusManagementHeader publicStatusHref={publicStatusPath} />
-      <StatusOrgSection
-        canCreate={controller.capabilities.canCreate}
-        canUpdate={controller.capabilities.canUpdate}
-        state={controller.org}
-        saving={controller.orgSaving}
-        commandLocked={controller.commandLocked}
-        writeRecovery={controller.orgWriteRecovery}
-        onRetryWrite={controller.retryOrgWrite}
-        onSave={controller.saveOrg}
-      />
-      <StatusComponentSection
-        canCreate={controller.capabilities.canCreate}
-        canUpdate={controller.capabilities.canUpdate}
-        canDelete={controller.capabilities.canDelete}
-        orgId={statusOrg?.id}
-        state={controller.components}
-        commandLocked={controller.commandLocked}
-        deleteRecovery={controller.componentDeleteRecovery}
-        deleteRecoveryPending={controller.componentDeleteRecoveryPending}
-        onNew={controller.openNewComponent}
-        onRefresh={controller.refreshComponents}
-        onEdit={controller.editComponent}
-        onDelete={controller.deleteComponent}
-      />
-      <StatusIncidentWorkspace controller={controller} orgId={statusOrg?.id} componentCount={statusComponents.length} />
+      <OperationalResultRegion>
+        <StatusOrgSection
+          canCreate={controller.capabilities.canCreate}
+          canUpdate={controller.capabilities.canUpdate}
+          state={controller.org}
+          saving={controller.orgSaving}
+          commandLocked={controller.commandLocked}
+          writeRecovery={controller.orgWriteRecovery}
+          onRetryWrite={controller.retryOrgWrite}
+          onSave={controller.saveOrg}
+        />
+        <StatusComponentSection
+          canCreate={controller.capabilities.canCreate}
+          canUpdate={controller.capabilities.canUpdate}
+          canDelete={controller.capabilities.canDelete}
+          orgId={statusOrg?.id}
+          state={controller.components}
+          commandLocked={controller.commandLocked}
+          deleteRecovery={controller.componentDeleteRecovery}
+          deleteRecoveryPending={controller.componentDeleteRecoveryPending}
+          onNew={controller.openNewComponent}
+          onRefresh={controller.refreshComponents}
+          onEdit={controller.editComponent}
+          onDelete={controller.deleteComponent}
+        />
+        <StatusIncidentWorkspace
+          controller={controller}
+          orgId={statusOrg?.id}
+          componentCount={statusComponents.length}
+        />
+      </OperationalResultRegion>
 
       <StatusEditorLayer controller={controller} components={statusComponents} />
-    </div>
+    </OperationalPage>
   );
 }
 

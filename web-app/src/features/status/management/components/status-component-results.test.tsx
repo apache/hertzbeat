@@ -26,6 +26,25 @@ const component: StatusComponent = {
 describe('Status management results', () => {
   afterEach(cleanup);
 
+  it('uses compact loading evidence without exposing an empty table', () => {
+    render(
+      <ComponentResults
+        canUpdate
+        canDelete
+        state={{ kind: 'loading' }}
+        commandLocked={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('statusManagement.loadingComponents').closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+    expect(document.querySelector('.ant-table')).not.toBeInTheDocument();
+  });
+
   it('disables row actions and an already-open delete confirmation while a command runs', () => {
     const onDelete = vi.fn();
     const view = render(

@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from './status-management.module.css';
+import { OperationalPageHeader } from '@/shared/operational-page';
 
 interface StatusManagementHeaderProps {
   publicStatusHref: string;
@@ -29,14 +29,14 @@ export function StatusManagementHeader({ publicStatusHref }: StatusManagementHea
   const { t } = useTranslation();
 
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('statusManagement.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('statusManagement.description')}</Typography.Text>
-      </div>
-      <Button href={publicStatusHref} target="_blank" rel="noreferrer">
-        {t('statusManagement.openPublicPage')}
-      </Button>
-    </header>
+    <OperationalPageHeader
+      title={t('statusManagement.title')}
+      description={t('statusManagement.description')}
+      actions={
+        <Button href={publicStatusHref} target="_blank" rel="noreferrer">
+          {t('statusManagement.openPublicPage')}
+        </Button>
+      }
+    />
   );
 }

@@ -4,19 +4,12 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-.page {
-  display: grid;
-  min-width: 0;
-  gap: 20px;
-}
-.heading,
 .sectionHeading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
-.heading :global(.ant-typography),
 .sectionHeading :global(.ant-typography) {
   margin: 0;
 }
@@ -38,7 +31,6 @@
   max-width: 920px;
 }
 @media (max-width: 700px) {
-  .heading,
   .sectionHeading {
     flex-direction: column;
   }

@@ -2614,6 +2614,9 @@
   "statusManagement": {
     "title": "Status page",
     "description": "Publish component health and communicate service incidents.",
+    "loadingOrganization": "Loading page identity…",
+    "loadingComponents": "Loading status components…",
+    "loadingIncidents": "Loading incidents…",
     "openPublicPage": "Open public page",
     "organization": "Page identity",
     "organizationDescription": "Set the public name, description and links.",
