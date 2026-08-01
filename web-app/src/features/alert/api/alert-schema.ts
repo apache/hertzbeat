@@ -84,9 +84,8 @@ const alertGroupSchema = z.object({
 const alertGroupPageSchema = z.object({
   content: z.array(alertGroupSchema),
   totalElements: nonNegativeIntegerSchema,
-  totalPages: nonNegativeIntegerSchema,
-  number: nonNegativeIntegerSchema,
-  size: positiveIntegerSchema
+  pageIndex: nonNegativeIntegerSchema,
+  pageSize: positiveIntegerSchema
 });
 
 const alertScopeLabelKeys = {
@@ -115,7 +114,17 @@ export function parseAlertSummary(value: unknown): AlertSummary {
 }
 
 export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPage {
-  const page = parseSchema(alertGroupPageSchema, value, 'Alert group page');
+  const response = parseSchema(alertGroupPageSchema, value, 'Alert group page');
+  // The manager exposes its stable PageResponse envelope rather than Spring
+  // Data's Page shape. Translate it once here so controllers and pages share
+  // the common frontend pagination model.
+  const page = {
+    content: response.content,
+    totalElements: response.totalElements,
+    totalPages: Math.ceil(response.totalElements / response.pageSize),
+    number: response.pageIndex,
+    size: response.pageSize
+  };
   validatePageEnvelope(page, query);
   if (page.content.some(item => new Set(item.alerts.map(alert => alert.id)).size !== item.alerts.length)) {
     throw new AlertContractError('Duplicate child alert ids are not allowed');

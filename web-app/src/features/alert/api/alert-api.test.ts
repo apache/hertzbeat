@@ -112,9 +112,8 @@ describe('alert API', () => {
       .mockResolvedValueOnce({
         content: [],
         totalElements: 0,
-        totalPages: 0,
-        number: 0,
-        size: 8
+        pageIndex: 0,
+        pageSize: 8
       });
 
     await loadAlertSummary(signal);
@@ -128,9 +127,8 @@ describe('alert API', () => {
     apiMessageGet.mockResolvedValueOnce({
       content: [],
       totalElements: 0,
-      totalPages: 0,
-      number: 0,
-      size: 8
+      pageIndex: 0,
+      pageSize: 8
     });
     await expect(loadAlertGroups(query)).resolves.toEqual({
       content: [],

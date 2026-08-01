@@ -56,7 +56,28 @@ const firstPageQuery = {
   pageSize: 8
 } as const;
 
+function pageResponse<T>(
+  content: T[],
+  options: { totalElements?: number; pageIndex?: number; pageSize?: number } = {}
+) {
+  return {
+    content,
+    totalElements: options.totalElements ?? content.length,
+    pageIndex: options.pageIndex ?? 0,
+    pageSize: options.pageSize ?? 8
+  };
+}
+
 describe('alert center wire schemas', () => {
+  it('adapts the backend PageResponse envelope at the API boundary', () => {
+    expect(parseAlertGroupPage(pageResponse([group]), firstPageQuery)).toMatchObject({
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
+  });
+
   it('allowlists summary evidence and preserves the backend zero-total rate', () => {
     expect(
       parseAlertSummary({
@@ -135,11 +156,7 @@ describe('alert center wire schemas', () => {
     expect(
       parseAlertGroupPage(
         {
-          content: [group],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 8,
+          ...pageResponse([group]),
           pageable: { ignored: true }
         },
         firstPageQuery
@@ -176,24 +193,18 @@ describe('alert center wire schemas', () => {
     });
     expect(
       parseAlertGroupPage(
-        {
-          content: [
-            {
-              ...group,
-              status: 'pending',
-              groupLabels: null,
-              commonLabels: null,
-              commonAnnotations: null,
-              alertFingerprints: null,
-              alerts: [],
-              gmtUpdate: null
-            }
-          ],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 8
-        },
+        pageResponse([
+          {
+            ...group,
+            status: 'pending',
+            groupLabels: null,
+            commonLabels: null,
+            commonAnnotations: null,
+            alertFingerprints: null,
+            alerts: [],
+            gmtUpdate: null
+          }
+        ]),
         firstPageQuery
       ).content[0]
     ).toMatchObject({
@@ -214,30 +225,20 @@ describe('alert center wire schemas', () => {
       alerts: group.alerts.map(alert => ({ ...alert, status: 'acknowledged' }))
     };
 
-    expect(
-      parseAlertGroupPage(
-        { content: [acknowledged], totalElements: 1, totalPages: 1, number: 0, size: 8 },
-        firstPageQuery
-      ).content[0]
-    ).toMatchObject({
+    expect(parseAlertGroupPage(pageResponse([acknowledged]), firstPageQuery).content[0]).toMatchObject({
       status: 'acknowledged',
       alerts: [{ status: 'acknowledged' }]
     });
   });
 
   it('keeps a canonical empty page distinct from malformed page evidence', () => {
-    expect(
-      parseAlertGroupPage(
-        {
-          content: [],
-          totalElements: 0,
-          totalPages: 0,
-          number: 0,
-          size: 8
-        },
-        firstPageQuery
-      )
-    ).toEqual({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
+    expect(parseAlertGroupPage(pageResponse([]), firstPageQuery)).toEqual({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 8
+    });
     expect(() => parseAlertGroupPage(null, firstPageQuery)).toThrow(AlertContractError);
   });
 
@@ -252,114 +253,47 @@ describe('alert center wire schemas', () => {
     ['offset date-time', { ...group, gmtUpdate: '2026-07-17T10:20:30Z' }],
     ['invalid Java local date-time', { ...group, gmtUpdate: '2026-02-30 10:20:30' }]
   ])('rejects malformed row %s', (_label, row) => {
-    expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [row],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 8
-        },
-        firstPageQuery
-      )
-    ).toThrow(AlertContractError);
+    expect(() => parseAlertGroupPage(pageResponse([row]), firstPageQuery)).toThrow(AlertContractError);
   });
 
-  it('validates request identity, total pages, final-page capacity, and unique ids', () => {
+  it('validates request identity, final-page capacity, and unique ids', () => {
     const overflowQuery = { ...firstPageQuery, pageIndex: 2 };
-    expect(
-      parseAlertGroupPage(
-        {
-          content: [],
-          totalElements: 9,
-          totalPages: 2,
-          number: 2,
-          size: 8
-        },
-        overflowQuery
-      )
-    ).toMatchObject({ content: [], totalElements: 9, number: 2 });
+    expect(parseAlertGroupPage(pageResponse([], { totalElements: 9, pageIndex: 2 }), overflowQuery)).toMatchObject({
+      content: [],
+      totalElements: 9,
+      number: 2
+    });
+    expect(() => parseAlertGroupPage(pageResponse([group], { totalElements: 9, pageIndex: 2 }), overflowQuery)).toThrow(
+      AlertContractError
+    );
+    expect(() => parseAlertGroupPage(pageResponse([group, group]), firstPageQuery)).toThrow(AlertContractError);
     expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [group],
-          totalElements: 9,
-          totalPages: 2,
-          number: 2,
-          size: 8
-        },
-        overflowQuery
-      )
+      parseAlertGroupPage(pageResponse([{ ...group, alerts: [group.alerts[0], group.alerts[0]] }]), firstPageQuery)
     ).toThrow(AlertContractError);
-    expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [group],
-          totalElements: 9,
-          totalPages: 1,
-          number: 2,
-          size: 8
-        },
-        overflowQuery
-      )
-    ).toThrow(AlertContractError);
-    expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [group, group],
-          totalElements: 2,
-          totalPages: 1,
-          number: 0,
-          size: 8
-        },
-        firstPageQuery
-      )
-    ).toThrow(AlertContractError);
-    expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [{ ...group, alerts: [group.alerts[0], group.alerts[0]] }],
-          totalElements: 1,
-          totalPages: 1,
-          number: 0,
-          size: 8
-        },
-        firstPageQuery
-      )
-    ).toThrow(AlertContractError);
-    expect(() =>
-      parseAlertGroupPage(
-        {
-          content: [group],
-          totalElements: 1,
-          totalPages: 1,
-          number: 1,
-          size: 8
-        },
-        firstPageQuery
-      )
-    ).toThrow(AlertContractError);
+    expect(() => parseAlertGroupPage(pageResponse([group], { pageIndex: 1 }), firstPageQuery)).toThrow(
+      AlertContractError
+    );
   });
 
   it.each([
     [
       'a short non-last page',
       {
-        content: Array.from({ length: 7 }, (_, index) => ({ ...group, id: index + 1 })),
-        totalElements: 9,
-        totalPages: 2,
-        number: 0,
-        size: 8
+        ...pageResponse(
+          Array.from({ length: 7 }, (_, index) => ({ ...group, id: index + 1 })),
+          {
+            totalElements: 9
+          }
+        )
       },
       firstPageQuery
     ],
     [
       'a short last page',
-      { content: [group], totalElements: 10, totalPages: 2, number: 1, size: 8 },
+      pageResponse([group], { totalElements: 10, pageIndex: 1 }),
       { ...firstPageQuery, pageIndex: 1 }
     ]
-  ])('rejects %s under an authoritative Spring total', (_name, page, query) => {
+  ])('rejects %s under an authoritative backend total', (_name, page, query) => {
     expect(() => parseAlertGroupPage(page, query)).toThrow(AlertContractError);
   });
 
@@ -369,9 +303,7 @@ describe('alert center wire schemas', () => {
     ['service namespace', { ...firstPageQuery, serviceNamespace: 'payments' }],
     ['environment', { ...firstPageQuery, environment: 'prod' }]
   ])('rejects a row outside the requested %s scope', (_name, query) => {
-    expect(() =>
-      parseAlertGroupPage({ content: [group], totalElements: 1, totalPages: 1, number: 0, size: 8 }, query)
-    ).toThrow(AlertContractError);
+    expect(() => parseAlertGroupPage(pageResponse([group]), query)).toThrow(AlertContractError);
   });
 
   it('accepts rows whose backend-compatible labels satisfy the complete requested scope', () => {
@@ -391,9 +323,6 @@ describe('alert center wire schemas', () => {
       environment: 'prod'
     };
 
-    expect(
-      parseAlertGroupPage({ content: [scopedGroup], totalElements: 1, totalPages: 1, number: 0, size: 8 }, query)
-        .content
-    ).toHaveLength(1);
+    expect(parseAlertGroupPage(pageResponse([scopedGroup]), query).content).toHaveLength(1);
   });
 });

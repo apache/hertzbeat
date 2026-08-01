@@ -70,7 +70,9 @@ public class PrometheusExternAlertService implements ExternAlertService {
                 ExternalAlertIngressValidator.requireBusinessLabels(alert.getLabels());
         labels.put("__source__", "prometheus");
         String status = CommonConstants.ALERT_STATUS_FIRING;
-        if (alert.getEndsAt() != null && alert.getEndsAt().isBefore(Instant.now())) {
+        Instant endsAt = alert.getEndsAt();
+        // Prometheus uses its zero time (year 1) when an active alert has no end.
+        if (endsAt != null && endsAt.getEpochSecond() > 0 && endsAt.isBefore(Instant.now())) {
             status = CommonConstants.ALERT_STATUS_RESOLVED;
         }
         return ExternalAlertIngressValidator.normalize(SingleAlert.builder()
@@ -78,7 +80,7 @@ public class PrometheusExternAlertService implements ExternAlertService {
                 .status(status)
                 .activeAt(CommonConstants.ALERT_STATUS_FIRING.equals(status) ? Instant.now().toEpochMilli() : null)
                 .startAt(alert.getStartsAt() != null ? alert.getStartsAt().toEpochMilli() : Instant.now().toEpochMilli())
-                .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? alert.getEndsAt().toEpochMilli() : null)
+                .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? endsAt.toEpochMilli() : null)
                 .labels(labels)
                 .annotations(annotations)
                 .triggerTimes(1)
