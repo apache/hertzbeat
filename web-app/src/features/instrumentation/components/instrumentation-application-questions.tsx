@@ -18,7 +18,7 @@ import {
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
 import type { CatalogResponse, Recipe } from '../model/instrumentation-v2-contract';
-import styles from './instrumentation-shell.module.css';
+import styles from './instrumentation-question.module.css';
 import { InstrumentationChoiceIcon } from './instrumentation-source-icon';
 
 export function InstrumentationApplicationQuestions(props: {

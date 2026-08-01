@@ -26,6 +26,7 @@ import { InstrumentationGuideWorkspace } from './instrumentation-guide-workspace
 import { InstrumentationSourceStep } from './instrumentation-source-step';
 import configureCss from './instrumentation-configure.module.css?raw';
 import guideCss from './instrumentation-guide.module.css?raw';
+import questionCss from './instrumentation-question.module.css?raw';
 import shellCss from './instrumentation-shell.module.css?raw';
 
 afterEach(() => {
@@ -126,7 +127,7 @@ describe('instrumentation v2 interaction', () => {
     const framework = screen.getByRole('button', { name: 'spring_boot' });
     expect(screen.getByText('instrumentation.question.framework')).toBeVisible();
     expect(screen.queryByRole('combobox')).toBeNull();
-    expect(shellCss).toMatch(/\.questionGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill/);
+    expect(questionCss).toMatch(/\.questionGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill/);
     expect(framework).toBeEnabled();
     expect(scrollIntoView).toHaveBeenCalledOnce();
     fireEvent.click(framework);
