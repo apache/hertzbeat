@@ -79,7 +79,7 @@ export function useAlertIntegrationController() {
       },
       retry: () => retryFailedState(state, catalogQuery, detailQuery, catalogItem !== undefined),
       openTokenSettings: () => {
-        if (canManageTokens) navigate(tokenSettingsPath);
+        if (canManageTokens) void navigate(tokenSettingsPath);
       },
       copyEndpoint: () => copy('endpoint', contract?.endpoint),
       copyAuthorizationHeader: () => copy('authorization', contract?.authorizationHeader)
