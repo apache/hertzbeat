@@ -176,6 +176,12 @@ describe('MonitorDefinitionPage', () => {
     page.rerender(shell(<MonitorDefinitionPage />));
     expect(screen.getByText('Monitor definitions are unavailable. Try again.')).toBeInTheDocument();
 
+    owner.useController.mockReturnValue(
+      buildController({ listState: { kind: 'error', failure: 'forbidden' }, items: [] })
+    );
+    page.rerender(shell(<MonitorDefinitionPage />));
+    expect(screen.getByRole('status', { name: 'Administrator access is required for this operation.' })).toBeVisible();
+
     owner.useController.mockReturnValue(buildController({ canWrite: false, notice: 'removed' }));
     page.rerender(shell(<MonitorDefinitionPage />));
     expect(screen.getByText('Administrator access is required to change monitor definitions.')).toBeInTheDocument();
@@ -191,6 +197,16 @@ describe('MonitorDefinitionPage', () => {
 
     expect(screen.getByText('No definitions match the current search.')).toBeInTheDocument();
     expect(screen.queryByText('No monitor definitions are available.')).not.toBeInTheDocument();
+  });
+
+  it('uses the shared command and result frame with a compact empty state', () => {
+    owner.useController.mockReturnValue(buildController({ listState: { kind: 'empty' }, items: [] }));
+    renderPage();
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'No monitor definitions are available.' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
 });
 

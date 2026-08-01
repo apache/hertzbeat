@@ -23,11 +23,12 @@ export function MonitorDefinitionCatalog(props: {
       rowKey="app"
       dataSource={props.items}
       pagination={false}
-      locale={{ emptyText: t('monitorDefinitions.searchEmpty') }}
+      scroll={{ x: 850 }}
       columns={[
         {
           title: t('monitorDefinitions.app'),
           dataIndex: 'app',
+          width: 260,
           render: (app: string, item) => (
             <Space direction="vertical" size={0}>
               <Typography.Text strong>{item.label}</Typography.Text>
@@ -50,6 +51,7 @@ export function MonitorDefinitionCatalog(props: {
         {
           title: t('common.actions'),
           key: 'actions',
+          fixed: 'right',
           width: 260,
           render: (_, item) => <DefinitionActions item={item} {...props} />
         }

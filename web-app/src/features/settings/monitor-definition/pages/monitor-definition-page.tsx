@@ -5,15 +5,24 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Input, Modal, Skeleton, Space, Typography } from 'antd';
+import { Alert, Button, Input, Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import { MonitorDefinitionCatalog } from '../components/monitor-definition-catalog';
 import { MonitorDefinitionWorkspaceView } from '../components/monitor-definition-workspace';
 import { useMonitorDefinitionController } from '../controller/use-monitor-definition-controller';
-import { monitorDefinitionFailureMessageKey } from '../model/monitor-definition-model';
+import {
+  monitorDefinitionFailureMessageKey,
+  type MonitorDefinitionFailureKind
+} from '../model/monitor-definition-model';
 import styles from './monitor-definition-page.module.css';
 
 export function MonitorDefinitionPage() {
@@ -34,16 +43,23 @@ export function MonitorDefinitionPage() {
       {controller.notice && (
         <Alert showIcon type="success" message={t(`monitorDefinitions.disposition.${controller.notice}`)} />
       )}
-      <Space.Compact role="search" className={styles.commandBand}>
-        <Input
-          allowClear
-          value={controller.search}
-          placeholder={t('monitorDefinitions.search')}
-          onChange={event => controller.actions.setSearch(event.target.value)}
-        />
-        <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
-      </Space.Compact>
-      <CatalogState controller={controller} />
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('monitorDefinitions.search')}
+        primary={
+          <Input
+            className={styles.search}
+            allowClear
+            value={controller.search}
+            placeholder={t('monitorDefinitions.search')}
+            onChange={event => controller.actions.setSearch(event.target.value)}
+          />
+        }
+        secondary={<Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>}
+      />
+      <OperationalResultRegion>
+        <CatalogState controller={controller} />
+      </OperationalResultRegion>
       <MonitorDefinitionWorkspaceView
         workspace={controller.workspace}
         onCancel={controller.actions.closeWorkspace}
@@ -62,24 +78,22 @@ export function MonitorDefinitionPage() {
 function CatalogState({ controller }: { controller: ReturnType<typeof useMonitorDefinitionController> }) {
   const { t } = useTranslation();
   if (controller.listState.kind === 'loading') {
-    return (
-      <div aria-label={t('monitorDefinitions.loading')}>
-        <Skeleton active paragraph={{ rows: 8 }} />
-      </div>
-    );
+    return <OperationalStatePanel kind="loading" title={t('monitorDefinitions.loading')} />;
   }
   if (controller.listState.kind === 'error') {
     return (
-      <Alert
-        showIcon
-        type="error"
-        message={t(monitorDefinitionFailureMessageKey(controller.listState.failure))}
+      <OperationalStatePanel
+        kind={catalogFailureState(controller.listState.failure)}
+        title={t(monitorDefinitionFailureMessageKey(controller.listState.failure))}
         action={<Button onClick={controller.actions.refresh}>{t('common.retry')}</Button>}
       />
     );
   }
   if (controller.listState.kind === 'empty') {
-    return <Empty description={t('monitorDefinitions.empty')} />;
+    return <OperationalStatePanel kind="empty" title={t('monitorDefinitions.empty')} />;
+  }
+  if (controller.items.length === 0) {
+    return <OperationalStatePanel kind="no-match" title={t('monitorDefinitions.searchEmpty')} />;
   }
   return (
     <MonitorDefinitionCatalog
@@ -90,6 +104,12 @@ function CatalogState({ controller }: { controller: ReturnType<typeof useMonitor
       onView={app => void controller.actions.openView(app)}
     />
   );
+}
+
+function catalogFailureState(failure: MonitorDefinitionFailureKind) {
+  if (failure === 'forbidden') return 'permission';
+  if (failure === 'unavailable') return 'unavailable';
+  return 'error';
 }
 
 function DeleteDialog({ controller }: { controller: ReturnType<typeof useMonitorDefinitionController> }) {
