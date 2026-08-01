@@ -132,7 +132,7 @@ export const entityNextActionTypes = [
 ] as const;
 export type EntityNextActionType = (typeof entityNextActionTypes)[number];
 
-export type EntityOpsSummary = {
+type EntityOpsSummary = {
   ownerReady: boolean;
   runbookReady: boolean;
   relationReady: boolean;
