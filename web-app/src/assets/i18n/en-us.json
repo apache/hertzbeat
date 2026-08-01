@@ -1151,6 +1151,7 @@
   "monitorMetrics": {
     "title": "Metric inspection",
     "description": "Inspect current values and stored history without leaving the monitor.",
+    "loading": "Loading metric data…",
     "realtime": "Realtime",
     "history": "History",
     "historyUnsupported": "History is not available for this realtime-only metric group.",

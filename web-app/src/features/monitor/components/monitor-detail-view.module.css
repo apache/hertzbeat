@@ -15,19 +15,6 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-.heading :global(.ant-typography) {
-  margin: 0;
-}
 .metadataTags :global(.ant-tag) {
   display: inline-flex;
   gap: 6px;
@@ -38,15 +25,6 @@
 }
 .dashboard {
   display: grid;
-  gap: 12px;
-}
-.dashboard :global(.ant-typography) {
-  margin: 0;
-}
-.dashboardHeading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 12px;
 }
 .dashboardFrame {

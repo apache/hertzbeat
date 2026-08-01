@@ -15,9 +15,16 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Popconfirm, Space, Spin, Typography } from 'antd';
+import { Alert, Button, Popconfirm } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalSection,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import type {
   MonitorDetailEvidence,
@@ -39,39 +46,32 @@ export function MonitorDetailView({
   metricWorkbench?: ReactNode;
 }) {
   const { t } = useTranslation();
-  if (state.detail.kind === 'loading')
-    return (
-      <div role="status">
-        <Spin />
-      </div>
-    );
-  if (state.detail.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
-  if (state.detail.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
-  if (state.detail.kind === 'error')
-    return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  if (state.detail.kind !== 'ready') return <MonitorDetailState evidence={state.detail} onBack={actions.back} />;
   const { monitor } = state.detail.detail;
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{monitor.name}</Typography.Title>
-          <Typography.Text type="secondary">{monitor.instance}</Typography.Text>
-        </div>
-        <Space>
-          <MonitorHelpLink />
-          <Button onClick={actions.back}>{t('common.back')}</Button>
-          {state.canEdit ? (
-            <Button type="primary" onClick={actions.edit}>
-              {t('common.edit')}
-            </Button>
-          ) : null}
-        </Space>
-      </header>
-      <MonitorDetailMetadata
-        monitor={monitor}
-        collector={state.detail.detail.collector}
-        params={state.detail.detail.params}
+    <OperationalPage mode="workspace">
+      <OperationalPageHeader
+        title={monitor.name}
+        description={monitor.instance}
+        actions={
+          <>
+            <MonitorHelpLink />
+            <Button onClick={actions.back}>{t('common.back')}</Button>
+            {state.canEdit ? (
+              <Button type="primary" onClick={actions.edit}>
+                {t('common.edit')}
+              </Button>
+            ) : null}
+          </>
+        }
       />
+      <OperationalSection title={t('monitor.detail')}>
+        <MonitorDetailMetadata
+          monitor={monitor}
+          collector={state.detail.detail.collector}
+          params={state.detail.detail.params}
+        />
+      </OperationalSection>
       {metricWorkbench}
       <MonitorGrafanaDashboard
         dashboard={state.detail.detail.grafanaDashboard}
@@ -80,8 +80,43 @@ export function MonitorDetailView({
         canDelete={state.canDeleteGrafanaDashboard}
         onDelete={actions.deleteGrafanaDashboard}
       />
-    </div>
+    </OperationalPage>
   );
+}
+
+function MonitorDetailState({
+  evidence,
+  onBack
+}: {
+  evidence: Exclude<MonitorDetailEvidence, { kind: 'ready' }>;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <OperationalPage mode="workspace">
+      <OperationalPageHeader
+        title={t('monitor.detail')}
+        actions={<Button onClick={onBack}>{t('common.back')}</Button>}
+      />
+      <OperationalStatePanel
+        kind={evidence.kind === 'missing' ? 'empty' : evidence.kind}
+        title={t(monitorDetailStateMessage(evidence.kind))}
+      />
+    </OperationalPage>
+  );
+}
+
+function monitorDetailStateMessage(kind: Exclude<MonitorDetailEvidence, { kind: 'ready' }>['kind']) {
+  switch (kind) {
+    case 'loading':
+      return 'monitor.loading';
+    case 'missing':
+      return 'common.notFound.description';
+    case 'unavailable':
+      return 'common.unavailable';
+    case 'error':
+      return 'common.routeError.description';
+  }
 }
 
 function MonitorGrafanaDashboard({
@@ -101,10 +136,10 @@ function MonitorGrafanaDashboard({
   const url = safeMonitorGrafanaUrl(dashboard);
   if (!url) return null;
   return (
-    <section className={styles.dashboard}>
-      <div className={styles.dashboardHeading}>
-        <Typography.Title level={3}>{t('monitor.grafana.title')}</Typography.Title>
-        {canDelete ? (
+    <OperationalSection
+      title={t('monitor.grafana.title')}
+      actions={
+        canDelete ? (
           <Popconfirm
             title={t('monitor.grafana.deleteConfirm')}
             okText={t('common.delete')}
@@ -116,16 +151,19 @@ function MonitorGrafanaDashboard({
               {t('monitor.grafana.delete')}
             </Button>
           </Popconfirm>
-        ) : null}
+        ) : null
+      }
+    >
+      <div className={styles.dashboard}>
+        {deleteError ? <Alert type="error" showIcon message={t('monitor.grafana.deleteFailure')} /> : null}
+        <iframe
+          className={styles.dashboardFrame}
+          src={url}
+          title={t('monitor.grafana.title')}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
       </div>
-      {deleteError ? <Alert type="error" showIcon message={t('monitor.grafana.deleteFailure')} /> : null}
-      <iframe
-        className={styles.dashboardFrame}
-        src={url}
-        title={t('monitor.grafana.title')}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
-    </section>
+    </OperationalSection>
   );
 }

@@ -92,7 +92,14 @@ describe('MonitorMetricWorkbench', () => {
 
   it.each(catalogCases)('renders distinct catalog evidence %#', (catalog, key) => {
     renderWorkbench(controller({ catalog }));
-    expect(screen.getByText(i18n.t(key))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t(key)).closest('[data-state]')).toBeInTheDocument();
+  });
+
+  it('uses the shared command hierarchy for metric selection and actions', () => {
+    renderWorkbench(controller());
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: i18n.t('monitorMetrics.title') })).toBeInTheDocument();
   });
 
   it.each([

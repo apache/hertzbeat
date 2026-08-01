@@ -5,9 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Spin, Table, Tabs, Tag } from 'antd';
+import { Button, Table, Tabs, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type {
   MonitorMetricWorkbenchController,
@@ -38,10 +40,7 @@ export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchC
 function FavoriteCollection({ state, actions }: MonitorMetricWorkbenchController) {
   const { t } = useTranslation();
   const evidence = state.favoriteCollection;
-  if (evidence.kind === 'loading') return <Spin />;
-  if (evidence.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  if (evidence.kind === 'empty') return <Empty description={t('monitorMetrics.favoriteEmpty')} />;
+  if (evidence.kind !== 'ready') return <FavoriteCollectionState kind={evidence.kind} />;
   const selected = evidence.items.some(item => item.available && item.key === state.metricKey);
   return (
     <div className={styles.favoriteCollection}>
@@ -67,10 +66,24 @@ function FavoriteCollection({ state, actions }: MonitorMetricWorkbenchController
           ]}
         />
       ) : (
-        <Empty description={t('monitorMetrics.favoriteSelect')} />
+        <OperationalStatePanel kind="empty" title={t('monitorMetrics.favoriteSelect')} />
       )}
     </div>
   );
+}
+
+function FavoriteCollectionState({ kind }: { kind: 'loading' | 'empty' | 'unavailable' | 'error' }) {
+  const { t } = useTranslation();
+  switch (kind) {
+    case 'loading':
+      return <OperationalStatePanel kind="loading" title={t('monitorMetrics.loading')} />;
+    case 'empty':
+      return <OperationalStatePanel kind="empty" title={t('monitorMetrics.favoriteEmpty')} />;
+    case 'unavailable':
+      return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+    case 'error':
+      return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
+  }
 }
 
 function RealtimeResult({ state }: Pick<MonitorMetricWorkbenchController, 'state'>) {
@@ -97,10 +110,11 @@ function MetricState({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  if (kind === 'unsupported') return <Alert type="info" showIcon message={t('monitorMetrics.historyUnsupported')} />;
-  if (kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
-  if (kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  if (kind === 'empty') return <Empty description={t('monitorMetrics.empty')} />;
+  if (kind === 'unsupported')
+    return <OperationalStatePanel kind="empty" title={t('monitorMetrics.historyUnsupported')} />;
+  if (kind === 'unavailable') return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
+  if (kind === 'empty') return <OperationalStatePanel kind="empty" title={t('monitorMetrics.empty')} />;
   return children;
 }
 

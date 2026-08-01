@@ -15,8 +15,15 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Select, Spin, Typography } from 'antd';
+import { Alert, Button, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalCommandBar,
+  OperationalSection,
+  OperationalStatePanel,
+  type OperationalStateKind
+} from '@/shared/operational-page';
 
 import { monitorMetricHistoryRanges } from '../model/monitor-detail-model';
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
@@ -25,44 +32,47 @@ import { MonitorRefreshSelect } from './monitor-refresh-select';
 import styles from './monitor-metric-workbench.module.css';
 
 export function MonitorMetricWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
-  const { t } = useTranslation();
-
-  if (state.catalog.kind === 'loading')
-    return (
-      <div className={styles.workbench}>
-        <Spin />
-      </div>
-    );
-  if (state.catalog.kind === 'unavailable')
-    return (
-      <div className={styles.workbench}>
-        <Alert type="warning" showIcon message={t('common.unavailable')} />
-      </div>
-    );
-  if (state.catalog.kind === 'error')
-    return (
-      <div className={styles.workbench}>
-        <Alert type="error" showIcon message={t('common.routeError.description')} />
-      </div>
-    );
-  if (state.catalog.kind === 'fallback')
-    return (
-      <section className={styles.workbench}>
-        <Alert
-          type="warning"
-          showIcon
-          message={t('common.unavailable')}
-          description={state.catalog.references.join(', ')}
-        />
-      </section>
-    );
-  if (state.catalog.kind === 'empty')
-    return (
-      <div className={styles.workbench}>
-        <Empty description={t('monitorMetrics.noCatalog')} />
-      </div>
-    );
+  if (state.catalog.kind !== 'ready') return <MonitorMetricCatalogState catalog={state.catalog} />;
   return <MonitorMetricReadyWorkbench state={state} actions={actions} options={state.catalog.options} />;
+}
+
+function MonitorMetricCatalogState({
+  catalog
+}: {
+  catalog: Exclude<MonitorMetricWorkbenchController['state']['catalog'], { kind: 'ready' }>;
+}) {
+  const { t } = useTranslation();
+  const presentation = monitorMetricCatalogPresentation(catalog);
+  return (
+    <OperationalSection title={t('monitorMetrics.title')} description={t('monitorMetrics.description')}>
+      <OperationalStatePanel
+        kind={presentation.kind}
+        title={t(presentation.messageKey)}
+        description={presentation.description}
+      />
+    </OperationalSection>
+  );
+}
+
+function monitorMetricCatalogPresentation(
+  catalog: Exclude<MonitorMetricWorkbenchController['state']['catalog'], { kind: 'ready' }>
+): { kind: OperationalStateKind; messageKey: string; description?: string | undefined } {
+  switch (catalog.kind) {
+    case 'loading':
+      return { kind: 'loading', messageKey: 'monitorMetrics.loading' };
+    case 'empty':
+      return { kind: 'empty', messageKey: 'monitorMetrics.noCatalog' };
+    case 'fallback':
+      return {
+        kind: 'unavailable',
+        messageKey: 'common.unavailable',
+        description: catalog.references.join(', ')
+      };
+    case 'unavailable':
+      return { kind: 'unavailable', messageKey: 'common.unavailable' };
+    case 'error':
+      return { kind: 'error', messageKey: 'common.routeError.description' };
+  }
 }
 
 function MonitorMetricReadyWorkbench({
@@ -74,16 +84,16 @@ function MonitorMetricReadyWorkbench({
 }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.workbench}>
-      <header className={styles.heading}>
-        <Typography.Title level={4}>{t('monitorMetrics.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('monitorMetrics.description')}</Typography.Text>
-      </header>
-      <MonitorMetricToolbar state={state} actions={actions} options={options} />
-      {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
-      {state.favorite.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
-      <MonitorMetricResults state={state} actions={actions} />
-    </section>
+    <OperationalSection title={t('monitorMetrics.title')} description={t('monitorMetrics.description')}>
+      <div className={styles.workbench}>
+        <MonitorMetricToolbar state={state} actions={actions} options={options} />
+        {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
+        {state.favorite.kind === 'error' && (
+          <Alert type="error" showIcon message={t('common.routeError.description')} />
+        )}
+        <MonitorMetricResults state={state} actions={actions} />
+      </div>
+    </OperationalSection>
   );
 }
 
@@ -98,32 +108,43 @@ function MonitorMetricToolbar({
   const favoriteKey =
     state.favorite.kind === 'ready' && state.favorite.value ? 'monitorMetrics.unfavorite' : 'monitorMetrics.favorite';
   return (
-    <div className={styles.toolbar}>
-      <Select
-        showSearch
-        optionFilterProp="label"
-        value={state.metricKey}
-        onChange={actions.setMetric}
-        options={options.map(item => ({
-          value: item.key,
-          label: item.unit ? `${item.key} (${item.unit})` : item.key
-        }))}
-      />
-      <Select
-        value={state.history}
-        disabled={!state.historySupported}
-        onChange={actions.setHistory}
-        options={monitorMetricHistoryRanges.map(value => ({ value, label: value }))}
-      />
-      <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
-      <Button
-        disabled={state.favorite.kind !== 'ready' || state.favoriteBusy}
-        loading={state.favoriteBusy}
-        onClick={() => void actions.toggleFavorite()}
-      >
-        {t(favoriteKey)}
-      </Button>
-      <Button onClick={actions.refresh}>{t('common.refresh')}</Button>
-    </div>
+    <OperationalCommandBar
+      ariaLabel={t('monitorMetrics.title')}
+      primary={
+        <div className={styles.toolbarControls}>
+          <Select
+            className={styles.metricSelect!}
+            showSearch
+            optionFilterProp="label"
+            value={state.metricKey}
+            onChange={actions.setMetric}
+            options={options.map(item => ({
+              value: item.key,
+              label: item.unit ? `${item.key} (${item.unit})` : item.key
+            }))}
+          />
+          <Select
+            className={styles.historySelect!}
+            value={state.history}
+            disabled={!state.historySupported}
+            onChange={actions.setHistory}
+            options={monitorMetricHistoryRanges.map(value => ({ value, label: value }))}
+          />
+          <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
+        </div>
+      }
+      secondary={
+        <>
+          <Button
+            disabled={state.favorite.kind !== 'ready' || state.favoriteBusy}
+            loading={state.favoriteBusy}
+            onClick={() => void actions.toggleFavorite()}
+          >
+            {t(favoriteKey)}
+          </Button>
+          <Button onClick={actions.refresh}>{t('common.refresh')}</Button>
+        </>
+      }
+    />
   );
 }

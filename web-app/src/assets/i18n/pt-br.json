@@ -1156,6 +1156,7 @@
   "monitorMetrics": {
     "title": "Inspeção de métricas",
     "description": "Consulte valores atuais e históricos no detalhe do monitor.",
+    "loading": "Carregando dados de métricas…",
     "realtime": "Tempo real",
     "history": "Histórico",
     "historyUnsupported": "O histórico não está disponível para este grupo de métricas somente em tempo real.",

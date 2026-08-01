@@ -17,17 +17,20 @@
 
 .workbench {
   display: grid;
-  gap: 16px;
-  border-top: 1px solid var(--ant-color-border-secondary);
-  padding-top: 18px;
+  gap: var(--hb-space-3);
 }
-.heading :global(.ant-typography) {
-  margin: 0;
+.toolbarControls {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--hb-space-2);
 }
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) 160px auto auto;
-  gap: 8px;
+.metricSelect {
+  min-width: 240px;
+  flex: 1 1 320px;
+}
+.historySelect {
+  width: 120px;
 }
 .labels {
   display: flex;
@@ -49,7 +52,9 @@
   gap: 4px;
 }
 @media (max-width: 760px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
+  .metricSelect,
+  .historySelect {
+    width: 100%;
+    flex-basis: 100%;
   }
 }

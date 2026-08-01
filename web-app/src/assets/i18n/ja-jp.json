@@ -1148,6 +1148,7 @@
   "monitorMetrics": {
     "title": "メトリクス確認",
     "description": "監視詳細から現在値と履歴を確認します。",
+    "loading": "メトリクスデータを読み込んでいます…",
     "realtime": "リアルタイム",
     "history": "履歴",
     "historyUnsupported": "このリアルタイム専用メトリクスグループでは履歴を利用できません。",

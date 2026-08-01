@@ -43,7 +43,7 @@ describe('MonitorDetailView', () => {
 
   it('renders loading as status evidence', () => {
     renderView({ kind: 'loading' });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveAttribute('data-state', 'loading');
   });
 
   it.each([
@@ -52,12 +52,17 @@ describe('MonitorDetailView', () => {
     ['error', 'common.routeError.description']
   ] as const)('renders distinct %s evidence', (kind, key) => {
     renderView({ kind });
-    expect(screen.getByText(i18n.t(key))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t(key)).closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      kind === 'missing' ? 'empty' : kind
+    );
     expect(screen.queryByText('checkout')).not.toBeInTheDocument();
   });
 
   it('renders strict ready evidence and passes embedded metrics through', () => {
     renderView(ready);
+    expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: i18n.t('monitor.detail') })).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
     expect(screen.getByText(i18n.t('monitor.metadata.interval', { seconds: 0 }))).toBeInTheDocument();
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
