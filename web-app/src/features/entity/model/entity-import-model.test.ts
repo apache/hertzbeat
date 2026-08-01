@@ -7,6 +7,7 @@ import {
   changeEntityImportContent,
   changeEntityImportFormat,
   initialEntityImportDraft,
+  buildEntityImportDetailPath,
   previewedEntityImport,
   safeEntityImportReturnTo
 } from './entity-import-model';
@@ -27,5 +28,8 @@ describe('entity import model', () => {
     expect(safeEntityImportReturnTo('/entities?search=mysql&type=database&token=private')).toContain('search=mysql');
     expect(safeEntityImportReturnTo('/entities?search=mysql&type=database&token=private')).not.toContain('token');
     expect(safeEntityImportReturnTo('https://evil.example/entities?search=private')).toBe('/entities');
+    expect(buildEntityImportDetailPath(41, '/entities?search=mysql&token=private')).toBe(
+      '/entities/41?returnTo=%2Fentities%3Fsort%3DgmtUpdate%26order%3Ddesc%26pageIndex%3D0%26pageSize%3D10%26search%3Dmysql'
+    );
   });
 });

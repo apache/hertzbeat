@@ -78,3 +78,8 @@ export function safeEntityImportReturnTo(value?: string | null) {
 export function buildEntityImportPath(returnTo: string) {
   return `${entityRoutePaths.import}?returnTo=${encodeURIComponent(safeEntityImportReturnTo(returnTo))}`;
 }
+
+export function buildEntityImportDetailPath(id: number, returnTo: string) {
+  const detailPath = entityRoutePaths.detail.replace(':entityId', String(id));
+  return `${detailPath}?returnTo=${encodeURIComponent(safeEntityImportReturnTo(returnTo))}`;
+}

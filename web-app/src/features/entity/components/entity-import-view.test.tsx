@@ -44,8 +44,13 @@ describe('EntityImportView', () => {
     rerender(view({ failure: { kind: 'validation' } }));
     expect(screen.getByText('The definitions need changes before they can be imported.')).toBeInTheDocument();
     rerender(view({ createdIds: [41, 42], preview }));
-    const links = screen.getAllByRole('link').filter(link => /^\/entities\/\d+$/.test(link.getAttribute('href') ?? ''));
-    expect(links.map(link => link.getAttribute('href'))).toEqual(['/entities/41', '/entities/42']);
+    const links = screen
+      .getAllByRole('link')
+      .filter(link => /^\/entities\/\d+\?returnTo=/.test(link.getAttribute('href') ?? ''));
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
+      '/entities/41?returnTo=%2Fentities',
+      '/entities/42?returnTo=%2Fentities'
+    ]);
     expect(screen.getByRole('link', { name: 'checkout' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'orders-db' })).toBeInTheDocument();
   });

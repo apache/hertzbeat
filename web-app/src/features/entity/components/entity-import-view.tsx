@@ -5,9 +5,12 @@ import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
-import { entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { EditableEntityDto } from '../model/entity-editor-contract';
-import { entityImportFormats, type EntityImportViewModel } from '../model/entity-import-model';
+import {
+  buildEntityImportDetailPath,
+  entityImportFormats,
+  type EntityImportViewModel
+} from '../model/entity-import-model';
 import styles from './entity-view.module.css';
 import { EntityDefinitionSummary } from './entity-definition-summary';
 
@@ -104,7 +107,7 @@ function ImportSuccess({
       <Alert showIcon type="success" message={t('entity.import.success', { count: ids.length })} />
       <Space direction="vertical">
         {ids.map((id, index) => (
-          <Link key={`${id}:${index}`} to={entityRoutePaths.detail.replace(':entityId', String(id))}>
+          <Link key={`${id}:${index}`} to={buildEntityImportDetailPath(id, returnTo)}>
             {resources[index]?.entity.displayName || resources[index]?.entity.name}
           </Link>
         ))}
