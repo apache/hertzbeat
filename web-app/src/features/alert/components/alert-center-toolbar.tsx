@@ -18,6 +18,8 @@
 import { Button, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page/operational-page';
+
 import styles from '../shared/alert-center.module.css';
 import {
   alertSeverities,
@@ -53,39 +55,49 @@ export function AlertCenterToolbar({
 }: AlertCenterToolbarProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
-      <AlertScopeFilterFields disabled={disabled} draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
-      <Select<AlertStatusFilter>
-        disabled={disabled}
-        value={query.status}
-        onChange={onStatusChange}
-        options={['', ...alertStatusFilters].map(value => ({
-          value,
-          label: t(value ? `alert.status.${value}` : 'alert.status.all')
-        }))}
-      />
-      <Select<AlertSeverity>
-        disabled={disabled}
-        value={query.severity}
-        onChange={onSeverityChange}
-        options={['', ...alertSeverities].map(value => ({
-          value,
-          label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
-        }))}
-      />
-      <Button type="primary" disabled={disabled} onClick={onSubmit}>
-        {t('common.query')}
-      </Button>
-      <Button
-        loading={refreshing}
-        disabled={disabled}
-        onClick={() => {
-          void onRefresh();
-        }}
-      >
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('alert.search')}
+      primary={
+        <div className={styles.toolbarFilters}>
+          <AlertScopeFilterFields disabled={disabled} draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
+          <Select<AlertStatusFilter>
+            disabled={disabled}
+            value={query.status}
+            onChange={onStatusChange}
+            options={['', ...alertStatusFilters].map(value => ({
+              value,
+              label: t(value ? `alert.status.${value}` : 'alert.status.all')
+            }))}
+          />
+          <Select<AlertSeverity>
+            disabled={disabled}
+            value={query.severity}
+            onChange={onSeverityChange}
+            options={['', ...alertSeverities].map(value => ({
+              value,
+              label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
+            }))}
+          />
+        </div>
+      }
+      secondary={
+        <>
+          <Button type="primary" disabled={disabled} onClick={onSubmit}>
+            {t('common.query')}
+          </Button>
+          <Button
+            loading={refreshing}
+            disabled={disabled}
+            onClick={() => {
+              void onRefresh();
+            }}
+          >
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
   );
 }
 

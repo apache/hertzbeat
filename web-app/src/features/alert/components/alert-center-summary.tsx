@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { Alert, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import type { AlertSummary } from '../model/alert-model';
 import styles from '../shared/alert-center.module.css';
@@ -25,33 +26,30 @@ import { AlertCenterRetryButton } from './alert-center-retry-button';
 
 export function AlertCenterSummary({ state, retry }: { state: AlertSummaryState; retry: () => unknown }) {
   const { t } = useTranslation();
-  if (state.kind === 'loading') return <Skeleton active paragraph={false} />;
+  if (state.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('common.loading')} />;
   if (state.kind === 'unavailable') {
     return (
-      <Alert
-        type="warning"
-        showIcon
-        message={t('alert.summaryUnavailable')}
+      <OperationalStatePanel
+        kind="unavailable"
+        title={t('alert.summaryUnavailable')}
         action={<AlertCenterRetryButton onClick={retry} />}
       />
     );
   }
   if (state.kind === 'error') {
     return (
-      <Alert
-        type="error"
-        showIcon
-        message={t('alert.summaryLoadFailed')}
+      <OperationalStatePanel
+        kind="error"
+        title={t('alert.summaryLoadFailed')}
         action={<AlertCenterRetryButton onClick={retry} />}
       />
     );
   }
   if (state.kind === 'permission') {
     return (
-      <Alert
-        type="error"
-        showIcon
-        message={t('common.permission.roleRequiredDescription')}
+      <OperationalStatePanel
+        kind="permission"
+        title={t('common.permission.roleRequiredDescription')}
         action={<AlertCenterRetryButton onClick={retry} />}
       />
     );
@@ -70,8 +68,7 @@ function SummaryValues({ summary }: { summary: AlertSummary }) {
   ] as const;
 
   return (
-    <section aria-label={t('alert.summary.scope')}>
-      <Typography.Text type="secondary">{t('alert.summary.scope')}</Typography.Text>
+    <OperationalSection title={t('alert.summary.scope')}>
       <div className={styles.summary}>
         {items.map(([key, value]) => (
           <div className={styles.metric} key={key}>
@@ -80,6 +77,6 @@ function SummaryValues({ summary }: { summary: AlertSummary }) {
           </div>
         ))}
       </div>
-    </section>
+    </OperationalSection>
   );
 }

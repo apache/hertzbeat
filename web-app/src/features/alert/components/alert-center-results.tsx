@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Table, Tag } from 'antd';
+import { Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
+
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import styles from '../shared/alert-center.module.css';
 import { hasAlertCenterRowActions, type AlertCenterActionPolicy } from '../model/alert-capability-model';
@@ -117,13 +119,12 @@ export function AlertCenterResults({
 }
 
 function renderResultFallback(state: AlertListState, t: Translator, retry: () => unknown): ReactNode {
-  if (state.kind === 'empty') return <Empty description={t('alert.empty')} />;
+  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alert.empty')} />;
   if (state.kind !== 'permission' && state.kind !== 'unavailable' && state.kind !== 'error') return null;
   return (
-    <Alert
-      type={state.kind === 'unavailable' ? 'warning' : 'error'}
-      showIcon
-      message={t(alertListFailureMessageKey(state.kind))}
+    <OperationalStatePanel
+      kind={state.kind}
+      title={t(alertListFailureMessageKey(state.kind))}
       action={<AlertCenterRetryButton onClick={retry} />}
     />
   );

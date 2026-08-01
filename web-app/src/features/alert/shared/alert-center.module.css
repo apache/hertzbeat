@@ -15,22 +15,9 @@
  * limitations under the License.
  */
 
-.page {
+.toolbarFilters {
   display: grid;
-  gap: 20px;
-}
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) 180px 180px auto auto;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(2, minmax(150px, 1fr));
   gap: 8px;
 }
 .summary {
@@ -91,11 +78,17 @@
   gap: 8px;
 }
 @media (max-width: 900px) {
-  .toolbar {
+  .toolbarFilters {
     grid-template-columns: 1fr 1fr;
   }
   .alertRecordHeader,
   .alertRecordMap {
     display: grid;
+  }
+}
+
+@media (max-width: 600px) {
+  .toolbarFilters {
+    grid-template-columns: 1fr;
   }
 }

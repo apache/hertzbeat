@@ -131,6 +131,17 @@ describe('AlertCenterPage', () => {
     expect(screen.queryByPlaceholderText(/instrumentation\.field\./)).not.toBeInTheDocument();
   });
 
+  it('uses the shared operational frame and a compact empty result', () => {
+    controller.state = buildState({ list: { kind: 'empty' } });
+    render(<AlertCenterPage />);
+
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'alert.empty' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it('expands a group into the operator-facing child alert evidence from Angular', () => {
     render(<AlertCenterPage />);
 

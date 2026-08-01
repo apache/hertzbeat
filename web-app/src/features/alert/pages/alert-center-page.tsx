@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion
+} from '@/shared/operational-page/operational-page';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertCenterBulkActions } from '../components/alert-center-actions';
-import styles from '../shared/alert-center.module.css';
 import { AlertCenterResults } from '../components/alert-center-results';
 import { AlertCenterRecovery } from '../components/alert-center-recovery';
 import { AlertCenterSummary } from '../components/alert-center-summary';
@@ -34,7 +39,7 @@ export function AlertCenterPage() {
   const busy = command !== 'idle' || recovery !== null;
 
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="data">
       <AlertCenterHeading manageRules={controller.manageRules} />
       <AlertManagementNav />
       <AlertCenterToolbar
@@ -48,56 +53,56 @@ export function AlertCenterPage() {
         onSeverityChange={controller.changeSeverity}
         onRefresh={controller.refresh}
       />
-      <AlertCenterSummary state={summary} retry={controller.retrySummary} />
-      <AlertCenterBulkActions
-        actionPolicy={capabilities}
-        busy={busy}
-        selectedGroups={selectedAlertGroups(list, controller.state.selectedIds)}
-        actions={{
-          acknowledge: controller.acknowledgeSelected,
-          clear: controller.clearSelection,
-          remove: controller.removeSelected,
-          reopen: controller.reopenSelected,
-          resolve: controller.resolveSelected,
-          unacknowledge: controller.unacknowledgeSelected
-        }}
-      />
-      <AlertCenterRecovery
-        canRetry={canRetryAlertCenterRecovery(capabilities, recovery)}
-        recovery={recovery}
-        retrying={command === 'recovering'}
-        retry={controller.retryOperation}
-      />
-      <AlertCenterResults
-        actionPolicy={capabilities}
-        onAcknowledge={controller.acknowledge}
-        busy={busy}
-        state={list}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        selectedIds={controller.state.selectedIds}
-        onPageChange={controller.changePage}
-        onRemove={controller.remove}
-        onReopen={controller.reopen}
-        onResolve={controller.resolve}
-        onUnacknowledge={controller.unacknowledge}
-        onSelectIds={controller.selectIds}
-        retry={controller.retryList}
-      />
-    </div>
+      <OperationalResultRegion>
+        <AlertCenterSummary state={summary} retry={controller.retrySummary} />
+        <AlertCenterBulkActions
+          actionPolicy={capabilities}
+          busy={busy}
+          selectedGroups={selectedAlertGroups(list, controller.state.selectedIds)}
+          actions={{
+            acknowledge: controller.acknowledgeSelected,
+            clear: controller.clearSelection,
+            remove: controller.removeSelected,
+            reopen: controller.reopenSelected,
+            resolve: controller.resolveSelected,
+            unacknowledge: controller.unacknowledgeSelected
+          }}
+        />
+        <AlertCenterRecovery
+          canRetry={canRetryAlertCenterRecovery(capabilities, recovery)}
+          recovery={recovery}
+          retrying={command === 'recovering'}
+          retry={controller.retryOperation}
+        />
+        <AlertCenterResults
+          actionPolicy={capabilities}
+          onAcknowledge={controller.acknowledge}
+          busy={busy}
+          state={list}
+          pageIndex={query.pageIndex}
+          pageSize={query.pageSize}
+          selectedIds={controller.state.selectedIds}
+          onPageChange={controller.changePage}
+          onRemove={controller.remove}
+          onReopen={controller.reopen}
+          onResolve={controller.resolve}
+          onUnacknowledge={controller.unacknowledge}
+          onSelectIds={controller.selectIds}
+          retry={controller.retryList}
+        />
+      </OperationalResultRegion>
+    </OperationalPage>
   );
 }
 
 function AlertCenterHeading({ manageRules }: { manageRules: () => unknown }) {
   const { t } = useTranslation();
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('alert.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('alert.description')}</Typography.Text>
-      </div>
-      <Button onClick={() => void manageRules()}>{t('alertRules.manage')}</Button>
-    </header>
+    <OperationalPageHeader
+      title={t('alert.title')}
+      description={t('alert.description')}
+      actions={<Button onClick={() => void manageRules()}>{t('alertRules.manage')}</Button>}
+    />
   );
 }
 
