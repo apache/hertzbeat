@@ -26,11 +26,7 @@ export function useObjectStoreEditorController(
   const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
   const [showValidation, setShowValidation] = useState(false);
   const canonical = useAcceptedObjectStoreBaseline(record);
-  const current = draft ?? canonical.baseline;
-  const missingFields = validateObjectStoreDraft(current);
-  const dirty = draft !== null && isObjectStoreDirty(draft, canonical.baseline);
-  // A missing server record can submit the default DATABASE baseline without pretending the user edited it.
-  const canSubmit = !canonical.configured || dirty;
+  const draftState = deriveObjectStoreDraftState(draft, canonical.baseline, canonical.configured);
   const transaction = useObjectStoreSaveTransaction({
     accept: value => {
       canonical.accept(value);
@@ -58,26 +54,35 @@ export function useObjectStoreEditorController(
   };
   const submit = () => {
     if (!canWrite) return;
-    if (missingFields.length > 0) {
+    if (draftState.missingFields.length > 0) {
       setShowValidation(true);
       return;
     }
-    if (canSubmit) transaction.submit(current);
+    if (draftState.canSubmit) transaction.submit(draftState.current);
   };
   const state = {
-    canSubmit,
+    ...draftState,
     configured: canonical.configured,
-    current,
     canWrite,
-    dirty,
     locked: transaction.isLocked(),
-    missingFields,
     proving: transaction.proving,
     recovery: transaction.recovery,
     saving: transaction.saving,
     showValidation
   };
   return { discard, retry, state, submit, updateDraft };
+}
+
+function deriveObjectStoreDraftState(draft: ObjectStoreDraft | null, baseline: ObjectStoreDraft, configured: boolean) {
+  const current = draft ?? baseline;
+  const dirty = draft !== null && isObjectStoreDirty(draft, baseline);
+  return {
+    // A missing record can submit the default DATABASE baseline without pretending it was edited.
+    canSubmit: !configured || dirty,
+    current,
+    dirty,
+    missingFields: validateObjectStoreDraft(current)
+  };
 }
 
 function useAcceptedObjectStoreBaseline(record: ObjectStoreResourceRecord | undefined) {
