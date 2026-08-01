@@ -1676,6 +1676,7 @@
   "token": {
     "title": "API tokens",
     "description": "Create and revoke credentials used by integrations and telemetry clients.",
+    "loading": "Loading API tokens…",
     "generate": "Generate token",
     "generateTitle": "Generate API token",
     "generatedTitle": "Token generated",

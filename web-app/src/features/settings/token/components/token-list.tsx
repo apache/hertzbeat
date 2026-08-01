@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, App, Button, Empty, Space, Table, Tag, Typography } from 'antd';
+import { App, Button, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
 import {
   isTokenExpired,
@@ -41,13 +43,22 @@ export function TokenList(props: TokenListProps) {
   const { t } = useTranslation();
   const { modal } = App.useApp();
 
+  if (props.list.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('token.loading')} />;
+  }
+  if (props.list.kind === 'empty') {
+    return <OperationalStatePanel kind="empty" title={t('token.empty')} />;
+  }
   if (
     props.list.kind === 'unavailable' ||
     props.list.kind === 'invalid' ||
     props.list.kind === 'permission' ||
     props.list.kind === 'error'
   ) {
-    return <TokenListFailureAlert kind={props.list.kind} onRetry={props.onRetry} />;
+    return <TokenListFailureState kind={props.list.kind} onRetry={props.onRetry} />;
+  }
+  if (props.list.records.length === 0) {
+    return <OperationalStatePanel kind="empty" title={t('token.empty')} />;
   }
 
   const confirmRevoke = (token: TokenResourceRecord) => {
@@ -60,17 +71,16 @@ export function TokenList(props: TokenListProps) {
       onOk: () => props.onRevoke(token.id)
     });
   };
-  const records = props.list.kind === 'ready' ? props.list.records : [];
+  const records = props.list.records;
 
   return (
     <div className={styles.table}>
       <Table<TokenResourceRecord>
         rowKey="id"
         size="small"
-        loading={props.list.kind === 'loading' || props.refreshing}
+        loading={props.refreshing}
         dataSource={records}
         columns={tokenColumns(t, confirmRevoke, props.revokingId)}
-        locale={{ emptyText: <Empty description={t('token.empty')} /> }}
         pagination={false}
         scroll={{ x: 1380 }}
       />
@@ -78,13 +88,12 @@ export function TokenList(props: TokenListProps) {
   );
 }
 
-function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: TokenFailureKind }) {
+function TokenListFailureState(props: Pick<TokenListProps, 'onRetry'> & { kind: TokenFailureKind }) {
   const { t } = useTranslation();
   return (
-    <Alert
-      type="error"
-      showIcon
-      message={t(tokenFailureMessageKey(props.kind))}
+    <OperationalStatePanel
+      kind={tokenFailureStateKind(props.kind)}
+      title={t(tokenFailureMessageKey(props.kind))}
       action={
         <Button
           size="small"
@@ -97,6 +106,12 @@ function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: 
       }
     />
   );
+}
+
+function tokenFailureStateKind(kind: TokenFailureKind): OperationalStateKind {
+  if (kind === 'permission') return 'permission';
+  if (kind === 'unavailable') return 'unavailable';
+  return 'error';
 }
 
 function tokenFailureMessageKey(kind: TokenFailureKind) {

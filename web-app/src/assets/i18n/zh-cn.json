@@ -1666,6 +1666,7 @@
   "token": {
     "title": "API Token",
     "description": "创建和吊销集成及遥测客户端使用的访问凭据。",
+    "loading": "正在加载 API Token…",
     "generate": "生成 Token",
     "generateTitle": "生成 API Token",
     "generatedTitle": "Token 已生成",

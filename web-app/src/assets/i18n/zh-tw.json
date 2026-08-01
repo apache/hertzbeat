@@ -1666,6 +1666,7 @@
   "token": {
     "title": "API Token",
     "description": "建立和撤銷整合及遙測用戶端使用的存取憑證。",
+    "loading": "正在載入 API Token…",
     "generate": "產生 Token",
     "generateTitle": "產生 API Token",
     "generatedTitle": "Token 已產生",

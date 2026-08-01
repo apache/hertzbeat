@@ -18,7 +18,7 @@
 import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
 
 import { TokenList } from '../components/token-list';
 import { GeneratedTokenModal, TokenGeneratorModal } from '../components/token-modals';
@@ -58,13 +58,15 @@ export function TokenPage() {
           </>
         }
       />
-      <TokenList
-        list={controller.state.list}
-        refreshing={controller.state.refreshing}
-        revokingId={controller.state.revokingId}
-        onRetry={controller.retry}
-        onRevoke={controller.revoke}
-      />
+      <OperationalResultRegion>
+        <TokenList
+          list={controller.state.list}
+          refreshing={controller.state.refreshing}
+          revokingId={controller.state.revokingId}
+          onRetry={controller.retry}
+          onRevoke={controller.revoke}
+        />
+      </OperationalResultRegion>
       {controller.state.draft && (
         <TokenGeneratorModal
           draft={controller.state.draft}

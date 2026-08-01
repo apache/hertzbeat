@@ -124,18 +124,44 @@ describe('TokenPage', () => {
   });
 
   it.each([
-    ['unavailable', 'Token data is unavailable.'],
-    ['invalid', 'The token response is invalid.'],
-    ['permission', 'Your account does not have permission to open this page.'],
-    ['error', 'This page could not be loaded. Retry or return to it later.']
-  ] as const)('keeps the %s list state distinct and retryable', (kind, message) => {
+    ['unavailable', 'unavailable', 'Token data is unavailable.'],
+    ['invalid', 'error', 'The token response is invalid.'],
+    ['permission', 'permission', 'Your account does not have permission to open this page.'],
+    ['error', 'error', 'This page could not be loaded. Retry or return to it later.']
+  ] as const)('keeps the %s list state distinct and retryable', (kind, state, message) => {
     controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind } }));
 
     renderTokenPage();
 
-    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(document.querySelector(`[data-state="${state}"]`)).toHaveTextContent(message);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['loading', 'Loading API tokens…'],
+    ['empty', 'No API tokens have been generated.']
+  ] as const)('renders the %s collection state in the shared result frame', (kind, message) => {
+    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind } }));
+
+    renderTokenPage();
+
+    const result = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
+    expect(result.querySelector(`[data-state="${kind}"]`)).toHaveTextContent(message);
+    expect(result.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(result.querySelector('table')).not.toBeInTheDocument();
+  });
+
+  it('keeps an unexpectedly empty ready payload out of the table', () => {
+    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind: 'ready', records: [] } }));
+
+    renderTokenPage();
+
+    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('No API tokens have been generated.');
+    expect(document.querySelector('table')).not.toBeInTheDocument();
   });
 
   it('delegates draft, one-time copy, and close actions to the controller', () => {

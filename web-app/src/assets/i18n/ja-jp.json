@@ -1678,6 +1678,7 @@
   "token": {
     "title": "API トークン",
     "description": "連携とテレメトリクライアントが使用する認証情報を作成・失効します。",
+    "loading": "API トークンを読み込んでいます…",
     "generate": "トークンを生成",
     "generateTitle": "API トークンを生成",
     "generatedTitle": "トークンを生成しました",

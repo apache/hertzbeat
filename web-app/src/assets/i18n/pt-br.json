@@ -1680,6 +1680,7 @@
   "token": {
     "title": "Tokens de API",
     "description": "Crie e revogue credenciais usadas por integrações e clientes de telemetria.",
+    "loading": "Carregando tokens de API…",
     "generate": "Gerar token",
     "generateTitle": "Gerar token de API",
     "generatedTitle": "Token gerado",
