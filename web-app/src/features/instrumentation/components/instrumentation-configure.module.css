@@ -1,18 +1,62 @@
 .section {
+  width: min(100%, 1120px);
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 24px;
 }
 
-.section h4 {
+.section h3,
+.section h5 {
   margin: 0;
+}
+
+.configureIntro,
+.configurePrimary,
+.configureGroup,
+.destinationPanel {
+  display: grid;
+  align-content: start;
+}
+
+.configureIntro {
+  gap: 4px;
+}
+
+.configureIntro h3 {
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.configureWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  align-items: start;
+  gap: 32px;
+}
+
+.configurePrimary {
+  gap: 24px;
+}
+
+.configureGroup,
+.destinationPanel {
+  gap: 12px;
+}
+
+.destinationPanel {
+  border-left: 1px solid var(--hb-border);
+  padding-left: 24px;
 }
 
 .serviceNameField {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) minmax(240px, 460px);
+  grid-template-columns: minmax(140px, 180px) minmax(240px, 1fr);
   align-items: center;
   gap: 12px;
+}
+
+.serviceNameField > :nth-child(3) {
+  grid-column: 2;
 }
 
 .advancedIdentity {
@@ -33,7 +77,7 @@
 
 .destinationGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 8px;
 }
@@ -91,6 +135,8 @@ button.destinationCard:disabled,
   display: flex;
   align-items: center;
   gap: 10px;
+  border-top: 1px solid var(--hb-border);
+  padding-top: 16px;
 }
 
 .configureActions > :last-child {
@@ -108,8 +154,25 @@ button.destinationCard:disabled,
   margin-top: 12px;
 }
 
+@media (max-width: 920px) {
+  .configureWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .destinationPanel {
+    border-top: 1px solid var(--hb-border);
+    border-left: 0;
+    padding-top: 20px;
+    padding-left: 0;
+  }
+}
+
 @media (max-width: 760px) {
   .serviceNameField {
     grid-template-columns: 1fr;
+  }
+
+  .serviceNameField > :nth-child(3) {
+    grid-column: 1;
   }
 }

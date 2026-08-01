@@ -5,16 +5,17 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Tag, Typography } from 'antd';
+import { Alert, Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { AccessTokenGenerationDraft } from '@/shared/access-token/access-token-generation-model';
 
-import { intakeEndpointEntries, profileUsesPlaintext } from '../model/intake-profile';
+import { profileUsesPlaintext } from '../model/intake-profile';
 import type { IntakeProfilesResponse, ServiceIdentity } from '../model/instrumentation-v2-contract';
 import { InstrumentationAccessTokenModal } from './instrumentation-access-token-modal';
 import { InstrumentationPlatformField, InstrumentationTokenField } from './instrumentation-configuration-fields';
 import styles from './instrumentation-configure.module.css';
+import { InstrumentationDestinationCards } from './instrumentation-destination-cards';
 import { InstrumentationServiceIdentityFields } from './instrumentation-service-identity-fields';
 
 type ConfigureStepProps = {
@@ -47,9 +48,12 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
   const { t } = useTranslation();
   return (
     <section className={styles.section} aria-labelledby="instrumentation-configure-title">
-      <Typography.Title id="instrumentation-configure-title" level={4}>
-        {t('instrumentation.v2.configureTitle')}
-      </Typography.Title>
+      <div className={styles.configureIntro}>
+        <Typography.Title id="instrumentation-configure-title" level={3}>
+          {t('instrumentation.v2.configureTitle')}
+        </Typography.Title>
+        <Typography.Text type="secondary">{t('instrumentation.v2.configureDescription')}</Typography.Text>
+      </div>
       {props.profiles.status !== 'available' && (
         <Alert
           type={props.profiles.status === 'unavailable' ? 'error' : 'warning'}
@@ -57,14 +61,27 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
           message={t(`instrumentation.v2.profile.${props.profiles.status}`)}
         />
       )}
-      <InstrumentationServiceIdentityFields service={props.service} onService={props.onService} />
-      <InstrumentationPlatformField
-        platform={props.platform}
-        options={props.platformOptions}
-        onPlatform={props.onPlatform}
-      />
-      <DestinationCards profiles={props.profiles} profileId={props.profileId} onProfile={props.onProfile} />
-      <TokenConfiguration {...props} />
+      <div className={styles.configureWorkspace}>
+        <div className={styles.configurePrimary}>
+          <section className={styles.configureGroup} aria-labelledby="instrumentation-service-context-title">
+            <Typography.Title id="instrumentation-service-context-title" level={5}>
+              {t('instrumentation.v2.serviceContext')}
+            </Typography.Title>
+            <InstrumentationServiceIdentityFields service={props.service} onService={props.onService} />
+            <InstrumentationPlatformField
+              platform={props.platform}
+              options={props.platformOptions}
+              onPlatform={props.onPlatform}
+            />
+          </section>
+          <TokenConfiguration {...props} />
+        </div>
+        <InstrumentationDestinationCards
+          profiles={props.profiles}
+          profileId={props.profileId}
+          onProfile={props.onProfile}
+        />
+      </div>
       <div className={styles.configureActions}>
         <TokenActions {...props} />
         <Button type="primary" disabled={!props.canRender} loading={props.rendering} onClick={props.onRender}>
@@ -119,73 +136,7 @@ function TokenModal(props: ConfigureStepProps) {
   );
 }
 
-function DestinationCards(props: {
-  profiles: IntakeProfilesResponse;
-  profileId: string;
-  onProfile: (intakeProfileId: string) => void;
-}) {
-  const { t } = useTranslation();
-  const hasHybrid = props.profiles.profiles.some(profile => profile.kind === 'hertzbeat_collector');
-  return (
-    <div>
-      <Typography.Text strong>{t('instrumentation.v2.destination')}</Typography.Text>
-      <div className={styles.destinationGrid}>
-        {props.profiles.profiles.map(profile => {
-          const available = profile.availability === 'available';
-          return (
-            <button
-              key={profile.id}
-              type="button"
-              className={`${styles.destinationCard} ${
-                props.profileId === profile.id ? styles.destinationCardSelected : ''
-              }`}
-              disabled={!available}
-              aria-pressed={props.profileId === profile.id}
-              onClick={() => props.onProfile(profile.id)}
-            >
-              <span>{t(`instrumentation.v2.profileKind.${profile.kind}`)}</span>
-              <Tag color={available ? 'success' : 'default'}>
-                {t(`instrumentation.v2.profileAvailability.${profile.availability}`)}
-              </Tag>
-              {intakeEndpointEntries(profile).map(([transport, endpoint]) => (
-                <span key={transport} className={styles.endpointEvidence}>
-                  <span>{t(`instrumentation.v2.transport.${transport}`)}</span>
-                  <Tag color={endpoint.security === 'plaintext' ? 'error' : 'success'}>
-                    {t(`instrumentation.v2.security.${endpoint.security}`)}
-                  </Tag>
-                  <code>{endpoint.url}</code>
-                </span>
-              ))}
-              {!available && <small>{t(profileReasonKey(profile.errorCode))}</small>}
-            </button>
-          );
-        })}
-        {!hasHybrid && (
-          <div className={`${styles.destinationCard} ${styles.destinationCardUnavailable}`}>
-            <span>{t('instrumentation.v2.profileKind.hertzbeat_collector')}</span>
-            <Tag>{t('instrumentation.v2.profileAvailability.unavailable')}</Tag>
-            <small>{t('instrumentation.v2.hybridCollectorSetupHint')}</small>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function selectedProfileUsesPlaintext(profiles: IntakeProfilesResponse, profileId: string) {
   const profile = profiles.profiles.find(item => item.id === profileId);
   return profileUsesPlaintext(profile);
-}
-
-function profileReasonKey(errorCode?: string) {
-  if (errorCode === 'intake_profile_not_advertised') {
-    return 'instrumentation.v2.profileReason.notAdvertised';
-  }
-  if (errorCode === 'intake_profile_advertisement_invalid') {
-    return 'instrumentation.v2.profileReason.invalidAdvertisement';
-  }
-  if (errorCode === 'intake_profile_unavailable') {
-    return 'instrumentation.v2.profileReason.destinationUnavailable';
-  }
-  return 'instrumentation.v2.profileReason.unavailable';
 }

@@ -600,6 +600,8 @@
       "connectTitle": "何を接続しますか？",
       "contextTitle": "サービスと送信先",
       "configureTitle": "設定",
+      "configureDescription": "サービス名と送信先を設定し、正確な接続手順を生成します。",
+      "serviceContext": "サービスコンテキスト",
       "installTitle": "インストールと設定",
       "recipeLabel": "計装レシピ",
       "chooseRecipe": "バックエンドが対応するレシピを選択",

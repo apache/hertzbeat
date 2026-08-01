@@ -603,6 +603,8 @@
       "connectTitle": "What do you want to connect?",
       "contextTitle": "Service and destination",
       "configureTitle": "Configure",
+      "configureDescription": "Name the service, choose where telemetry is sent, then generate the exact instructions.",
+      "serviceContext": "Service context",
       "installTitle": "Install and configure",
       "recipeLabel": "Instrumentation recipe",
       "chooseRecipe": "Choose a backend-supported recipe",

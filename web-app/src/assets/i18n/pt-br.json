@@ -606,6 +606,8 @@
       "connectTitle": "O que você deseja conectar?",
       "contextTitle": "Serviço e destino",
       "configureTitle": "Configurar",
+      "configureDescription": "Nomeie o serviço, escolha o destino da telemetria e gere as instruções exatas.",
+      "serviceContext": "Contexto do serviço",
       "installTitle": "Instalar e configurar",
       "recipeLabel": "Receita de instrumentação",
       "chooseRecipe": "Escolha uma receita compatível com o backend",

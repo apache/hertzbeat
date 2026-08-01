@@ -597,6 +597,8 @@
       "connectTitle": "要連接什麼？",
       "contextTitle": "服務與目的地",
       "configureTitle": "設定",
+      "configureDescription": "命名服務、選擇遙測資料的目的地，然後產生準確的接入步驟。",
+      "serviceContext": "服務上下文",
       "installTitle": "安裝並設定",
       "recipeLabel": "插樁方案",
       "chooseRecipe": "選擇後端支援的方案",

@@ -24,6 +24,7 @@ import { InstrumentationConfigureStep } from './instrumentation-configure-step';
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
 import { InstrumentationGuideWorkspace } from './instrumentation-guide-workspace';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
+import configureCss from './instrumentation-configure.module.css?raw';
 import guideCss from './instrumentation-guide.module.css?raw';
 import shellCss from './instrumentation-shell.module.css?raw';
 
@@ -192,6 +193,13 @@ describe('instrumentation v2 interaction', () => {
         {...props}
       />
     );
+    expect(screen.getByRole('heading', { name: 'instrumentation.v2.configureTitle', level: 3 })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'instrumentation.v2.serviceContext' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'instrumentation.v2.destination' })).toBeVisible();
+    expect(configureCss).toMatch(
+      /\.configureWorkspace\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) minmax\(280px,\s*340px\)/
+    );
+    expect(configureCss).toMatch(/\.configureActions\s*\{[^}]*border-top:\s*1px solid var\(--hb-border\)/);
     const serviceName = screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' });
     const serviceEnvironment = screen.getByRole('textbox', {
       name: 'instrumentation.field.serviceEnvironment'
@@ -440,7 +448,8 @@ describe('instrumentation v2 interaction', () => {
     expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
     expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
     expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
-    expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*220px minmax\(0,\s*1fr\) 300px/);
+    expect(guideCss).toMatch(/\.workspace\s*\{[^}]*grid-template-columns:\s*1fr/);
+    expect(guideCss).toMatch(/\.workspaceBody\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) 320px/);
   });
 
   it('renders and copies backend no-auth guide blocks without token UI or substitution', async () => {
@@ -468,6 +477,8 @@ describe('instrumentation v2 interaction', () => {
 
     expect(screen.getByText('endpoint: http://otel.example.test:4318')).toBeVisible();
     expect(screen.queryByText('instrumentation.token.notGenerated')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'instrumentation.action.startDetection' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'instrumentation.action.retryDetection' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.copy' }));
     await waitFor(() => expect(onCopy).toHaveBeenCalledWith(noneGuide.blocks[0]));
   });

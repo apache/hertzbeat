@@ -6,12 +6,18 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  grid-template-columns: 1fr;
   align-items: start;
-  gap: 16px;
+  gap: 20px;
 }
 
-.summary,
+.workspaceBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 24px;
+}
+
 .statusRail {
   display: grid;
   gap: 12px;
@@ -21,9 +27,18 @@
   background: var(--hb-bg-raised);
 }
 
+.summary {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  border-block: 1px solid var(--hb-border);
+  padding-block: 14px;
+}
+
 .statusRail {
   position: sticky;
-  top: calc(var(--hb-shell-header-height) + 16px);
+  top: 16px;
 }
 
 .railHeading {
@@ -32,9 +47,14 @@
   justify-content: space-between;
 }
 
+.summary .railHeading {
+  min-width: 150px;
+}
+
 .summaryRow {
   display: grid;
   gap: 4px;
+  min-width: 120px;
 }
 
 .statusRail code {
@@ -115,7 +135,7 @@
 }
 
 @media (max-width: 1100px) {
-  .workspace {
+  .workspaceBody {
     grid-template-columns: 1fr;
   }
 

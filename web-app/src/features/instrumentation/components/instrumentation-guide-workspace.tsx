@@ -37,8 +37,10 @@ export function InstrumentationGuideWorkspace(props: {
   return (
     <div className={styles.workspace}>
       <SelectionSummary catalog={props.catalog} draft={props.draft} onEdit={props.onEdit} />
-      <InstrumentationGuideBlocks guide={props.guide} token={props.token} onCopy={props.onCopy} />
-      <DestinationRail {...props} />
+      <div className={styles.workspaceBody}>
+        <InstrumentationGuideBlocks guide={props.guide} token={props.token} onCopy={props.onCopy} />
+        <DestinationRail {...props} />
+      </div>
     </div>
   );
 }
@@ -102,9 +104,6 @@ function DestinationRail(props: Parameters<typeof InstrumentationGuideWorkspace>
           {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}
         </Typography.Text>
       )}
-      <Button type="primary" loading={props.detecting} onClick={props.onDetect}>
-        {t('instrumentation.action.startDetection')}
-      </Button>
       <InstrumentationDetectionPanel
         {...(props.detection ? { response: props.detection } : {})}
         detecting={props.detecting}

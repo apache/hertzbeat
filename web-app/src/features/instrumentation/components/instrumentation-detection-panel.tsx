@@ -36,7 +36,9 @@ export function InstrumentationDetectionPanel(props: {
         message={t(props.detecting ? 'instrumentation.detection.checking' : 'instrumentation.detection.notStarted')}
         action={
           !props.detecting ? (
-            <Button onClick={props.onRetry}>{t('instrumentation.action.retryDetection')}</Button>
+            <Button type="primary" onClick={props.onRetry}>
+              {t('instrumentation.action.startDetection')}
+            </Button>
           ) : undefined
         }
       />
