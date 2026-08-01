@@ -32,58 +32,66 @@ import { useObjectStoreResourceController } from '../controller/object-store-res
 export function ObjectStorePage() {
   const { t } = useTranslation();
   const controller = useObjectStoreResourceController();
-  const { state } = controller;
 
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('objectStore.title')} description={t('objectStore.description')} />
       <OperationalResultRegion>
-        {(state.kind === 'missing' ||
-          state.kind === 'permission' ||
-          state.kind === 'invalid' ||
-          state.kind === 'unavailable' ||
-          state.kind === 'error') && (
-          <OperationalStatePanel
-            kind={objectStoreFailureStateKind(state.kind)}
-            title={t(objectStoreFailureMessageKey(state.kind))}
-            action={<RetryButton onRetry={controller.retry} />}
-          />
-        )}
-        {state.kind === 'loading' && <OperationalStatePanel kind="loading" title={t('objectStore.loading')} />}
-        {state.kind === 'ready' && (
-          <>
-            {state.unconfigured && <OperationalStatePanel kind="empty" title={t('objectStore.missing')} />}
-            {!controller.canWrite && <OperationalStatePanel kind="permission" title={t('objectStore.readOnly')} />}
-            {state.recovery && (
-              <OperationalStatePanel
-                kind="unavailable"
-                title={t(
-                  state.recovery.phase === 'proof' ? 'objectStore.recoveryProof' : 'objectStore.recoveryUncertain'
-                )}
-                action={
-                  state.recovery.phase === 'proof' ? (
-                    <RetryButton loading={state.proving} onRetry={controller.retry} />
-                  ) : undefined
-                }
-              />
-            )}
-            <ObjectStoreEditor
-              current={state.current}
-              canSubmit={state.canSubmit}
-              missingFields={state.missingFields}
-              dirty={state.dirty}
-              locked={state.locked}
-              showValidation={state.showValidation}
-              saving={state.saving}
-              canWrite={controller.canWrite}
-              onUpdate={controller.updateDraft}
-              onSubmit={controller.submit}
-              onDiscard={controller.discard}
-            />
-          </>
-        )}
+        <ObjectStoreContent controller={controller} />
       </OperationalResultRegion>
     </OperationalPage>
+  );
+}
+
+type ObjectStoreController = ReturnType<typeof useObjectStoreResourceController>;
+
+function ObjectStoreContent({ controller }: { controller: ObjectStoreController }) {
+  const { t } = useTranslation();
+  const { state } = controller;
+  if (state.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('objectStore.loading')} />;
+  if (state.kind === 'ready') return <ObjectStoreReadyContent controller={controller} />;
+  return (
+    <OperationalStatePanel
+      kind={objectStoreFailureStateKind(state.kind)}
+      title={t(objectStoreFailureMessageKey(state.kind))}
+      action={<RetryButton onRetry={controller.retry} />}
+    />
+  );
+}
+
+function ObjectStoreReadyContent({ controller }: { controller: ObjectStoreController }) {
+  const { t } = useTranslation();
+  const { state } = controller;
+  if (state.kind !== 'ready') return null;
+  return (
+    <>
+      {state.unconfigured && <OperationalStatePanel kind="empty" title={t('objectStore.missing')} />}
+      {!controller.canWrite && <OperationalStatePanel kind="permission" title={t('objectStore.readOnly')} />}
+      {state.recovery && (
+        <OperationalStatePanel
+          kind="unavailable"
+          title={t(state.recovery.phase === 'proof' ? 'objectStore.recoveryProof' : 'objectStore.recoveryUncertain')}
+          action={
+            state.recovery.phase === 'proof' ? (
+              <RetryButton loading={state.proving} onRetry={controller.retry} />
+            ) : undefined
+          }
+        />
+      )}
+      <ObjectStoreEditor
+        current={state.current}
+        canSubmit={state.canSubmit}
+        missingFields={state.missingFields}
+        dirty={state.dirty}
+        locked={state.locked}
+        showValidation={state.showValidation}
+        saving={state.saving}
+        canWrite={controller.canWrite}
+        onUpdate={controller.updateDraft}
+        onSubmit={controller.submit}
+        onDiscard={controller.discard}
+      />
+    </>
   );
 }
 
