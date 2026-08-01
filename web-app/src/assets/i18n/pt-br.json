@@ -151,6 +151,7 @@
     "title": "Catálogo de recursos",
     "description": "Serviços, hosts, bancos de dados e outros recursos são unificados automaticamente, sem exigir modelagem abstrata manual.",
     "empty": "Nenhum recurso corresponde aos filtros atuais.",
+    "loading": "Carregando recursos…",
     "filters": {
       "search": "Pesquisar recursos",
       "type": "Tipo",

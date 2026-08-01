@@ -151,6 +151,7 @@
     "title": "Resource catalog",
     "description": "Services, hosts, databases, and other resources are automatically unified here—no abstract data modeling required.",
     "empty": "No resources match the current filters.",
+    "loading": "Loading resources…",
     "filters": {
       "search": "Search resources",
       "type": "Type",

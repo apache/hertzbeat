@@ -20,6 +20,9 @@ describe('EntityListView', () => {
     kind => {
       renderView({ evidence: { kind } });
       expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
+      expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+      expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
     }
   );
 
@@ -28,6 +31,7 @@ describe('EntityListView', () => {
     expect(screen.getByRole('heading', { name: 'Resource catalog' })).toBeInTheDocument();
     expect(screen.getByText(/automatically unified/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search resources')).toBeInTheDocument();
+    expect(screen.getByRole('search')).toBeInTheDocument();
     expect(screen.getByText('No resources match the current filters.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import definitions' })).toBeInTheDocument();

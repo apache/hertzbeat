@@ -1,9 +1,17 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Badge, Button, Empty, Input, Select, Space, Spin, Table, Tag, Typography } from 'antd';
+import { Badge, Button, Input, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import { entityPageSizes, entitySortFields, type EntitySummary } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
@@ -16,30 +24,32 @@ const advancedFilterKeys = ['owner', 'source', 'lifecycle', 'tier', 'system'] as
 export function EntityListView({ state, actions }: EntityListViewProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('entity.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('entity.description')}</Typography.Text>
-        </div>
-        <Space>
-          <Button type="primary" onClick={actions.discover}>
-            {t('entity.discovery.action')}
-          </Button>
-          {state.canWrite ? (
-            <>
-              <Button onClick={actions.importDefinitions}>{t('entity.import.action')}</Button>
-              <Button onClick={actions.create}>{t('entity.editor.addTitle')}</Button>
-            </>
-          ) : null}
-          <Button disabled={state.refreshing} onClick={actions.refresh}>
-            {t('common.refresh')}
-          </Button>
-        </Space>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('entity.title')}
+        description={t('entity.description')}
+        actions={
+          <Space wrap>
+            <Button type="primary" onClick={actions.discover}>
+              {t('entity.discovery.action')}
+            </Button>
+            {state.canWrite ? (
+              <>
+                <Button onClick={actions.importDefinitions}>{t('entity.import.action')}</Button>
+                <Button onClick={actions.create}>{t('entity.editor.addTitle')}</Button>
+              </>
+            ) : null}
+            <Button disabled={state.refreshing} onClick={actions.refresh}>
+              {t('common.refresh')}
+            </Button>
+          </Space>
+        }
+      />
       <EntityFilters state={state} actions={actions} />
-      <EntityResults state={state} actions={actions} />
-    </div>
+      <OperationalResultRegion>
+        <EntityResults state={state} actions={actions} />
+      </OperationalResultRegion>
+    </OperationalPage>
   );
 }
 
@@ -48,27 +58,34 @@ function EntityFilters({ state, actions }: EntityListViewProps) {
   const [advanced, setAdvanced] = useState(false);
   const advancedCount = advancedFilterKeys.filter(key => state.query[key].length > 0).length;
   return (
-    <div className={styles.filterStack}>
-      <div className={styles.filters}>
-        <Input.Search
-          allowClear
-          value={state.draft}
-          placeholder={t('entity.filters.search')}
-          onChange={event => actions.updateDraft(event.target.value)}
-          onSearch={actions.submit}
-        />
-        <FilterInput filter="type" state={state} actions={actions} />
-        <FilterInput filter="status" state={state} actions={actions} />
-        <FilterInput filter="environment" state={state} actions={actions} />
-        <SortFields state={state} actions={actions} />
+    <OperationalCommandBar
+      role="search"
+      primary={
+        <div className={styles.filterStack}>
+          <div className={styles.filters}>
+            <Input.Search
+              allowClear
+              value={state.draft}
+              placeholder={t('entity.filters.search')}
+              onChange={event => actions.updateDraft(event.target.value)}
+              onSearch={actions.submit}
+            />
+            <FilterInput filter="type" state={state} actions={actions} />
+            <FilterInput filter="status" state={state} actions={actions} />
+            <FilterInput filter="environment" state={state} actions={actions} />
+            <SortFields state={state} actions={actions} />
+          </div>
+          {advanced ? <AdvancedFilters state={state} actions={actions} /> : null}
+        </div>
+      }
+      secondary={
         <Badge count={advancedCount} size="small">
           <Button onClick={() => setAdvanced(value => !value)}>
             {t(advanced ? 'entity.filters.hideAdvanced' : 'entity.filters.showAdvanced')}
           </Button>
         </Badge>
-      </div>
-      {advanced ? <AdvancedFilters state={state} actions={actions} /> : null}
-    </div>
+      }
+    />
   );
 }
 
@@ -122,17 +139,14 @@ function SortFields({ state, actions }: EntityListViewProps) {
 function EntityResults({ state, actions }: EntityListViewProps) {
   const { t } = useTranslation();
   const evidence = state.evidence;
-  if (evidence.kind === 'loading')
-    return (
-      <div role="status">
-        <Spin />
-      </div>
-    );
-  if (evidence.kind === 'empty') return <Empty description={t('entity.empty')} />;
+  if (evidence.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('entity.loading')} />;
+  if (evidence.kind === 'empty') return <OperationalStatePanel kind="no-match" title={t('entity.empty')} />;
   if (evidence.kind === 'permission')
-    return <Alert showIcon type="warning" message={t('common.permission.roleRequiredDescription')} />;
-  if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
+  if (evidence.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (evidence.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   return (
     <Table<EntitySummary>
       rowKey="id"

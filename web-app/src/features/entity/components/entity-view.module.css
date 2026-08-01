@@ -32,7 +32,7 @@
 .filters {
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(130px, 1fr));
+  grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(130px, 1fr)) minmax(220px, auto);
 }
 .advancedFilters {
   display: grid;
@@ -67,5 +67,12 @@
   .filters,
   .advancedFilters {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .filters,
+  .advancedFilters {
+    grid-template-columns: 1fr;
   }
 }
