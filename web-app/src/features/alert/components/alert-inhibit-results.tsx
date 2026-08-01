@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Skeleton, Table } from 'antd';
+import { Button, Skeleton, Table } from 'antd';
 import type { Key } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import { alertInhibitPageSizes, type AlertInhibit } from '../model/alert-inhibit-model';
@@ -42,10 +44,12 @@ type ResultsProps = {
 export function AlertInhibitResults(props: ResultsProps) {
   const { t } = useTranslation();
   if (props.state.kind === 'unavailable')
-    return <RetryFailure busy={props.busy} message={t('common.unavailable')} retry={props.retry} />;
+    return <RetryFailure kind="unavailable" busy={props.busy} message={t('common.unavailable')} retry={props.retry} />;
   if (props.state.kind === 'error')
-    return <RetryFailure busy={props.busy} message={t('common.routeError.description')} retry={props.retry} />;
-  if (props.state.kind === 'empty') return <Empty description={t('alertInhibits.empty')} />;
+    return (
+      <RetryFailure kind="error" busy={props.busy} message={t('common.routeError.description')} retry={props.retry} />
+    );
+  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertInhibits.empty')} />;
   const records = props.state.kind === 'ready' ? props.state.records : [];
   const total = props.state.kind === 'ready' ? props.state.total : 0;
   return (
@@ -103,16 +107,32 @@ export function AlertInhibitDetailFailure({
     unavailable: t('common.unavailable'),
     error: t('alertInhibits.loadFailed')
   } satisfies Record<typeof state.kind, string>;
-  return <RetryFailure busy={busy} message={messageByKind[state.kind]} retry={retry} />;
+  return (
+    <RetryFailure
+      kind={state.kind === 'unavailable' ? 'unavailable' : 'error'}
+      busy={busy}
+      message={messageByKind[state.kind]}
+      retry={retry}
+    />
+  );
 }
 
-function RetryFailure({ busy, message, retry }: { busy: boolean; message: string; retry: () => unknown }) {
+function RetryFailure({
+  kind,
+  busy,
+  message,
+  retry
+}: {
+  kind: 'unavailable' | 'error';
+  busy: boolean;
+  message: string;
+  retry: () => unknown;
+}) {
   const { t } = useTranslation();
   return (
-    <Alert
-      type="error"
-      showIcon
-      message={message}
+    <OperationalStatePanel
+      kind={kind}
+      title={message}
       action={
         <Button
           size="small"

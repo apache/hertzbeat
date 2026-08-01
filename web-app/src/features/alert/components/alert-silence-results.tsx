@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Space, Spin, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import type { Key } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import type { AlertActionCapabilities } from '../model/alert-action-capability';
 import type { AlertSilenceListEvidence } from '../model/alert-silence-page-model';
@@ -45,15 +47,12 @@ type AlertSilenceResultsProps = {
 export function AlertSilenceResults(props: AlertSilenceResultsProps) {
   const { t } = useTranslation();
   const { evidence } = props;
-  if (evidence.kind === 'loading')
-    return (
-      <div role="status">
-        <Spin />
-      </div>
-    );
-  if (evidence.kind === 'empty') return <Empty description={t('alertSilences.empty')} />;
-  if (evidence.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  if (evidence.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('common.loading')} />;
+  if (evidence.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertSilences.empty')} />;
+  if (evidence.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (evidence.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   return <AlertSilenceReadyResults {...props} evidence={evidence} />;
 }
 

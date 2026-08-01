@@ -82,6 +82,17 @@ describe('AlertInhibitPage', () => {
     expect(screen.getByText(evidence)).toBeInTheDocument();
   });
 
+  it('uses the shared operational frame and a compact empty result', () => {
+    controller.state = buildState({ list: { kind: 'empty' } });
+    render(<AlertInhibitPage />);
+
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'alertInhibits.empty' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['missing', 'common.notFound.description'],
     ['unavailable', 'common.unavailable'],

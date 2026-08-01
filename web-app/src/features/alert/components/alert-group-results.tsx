@@ -5,10 +5,12 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Skeleton, Table } from 'antd';
+import { Button, Skeleton, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import { alertGroupPageSizes, type AlertGroupConverge } from '../model/alert-group-model';
 import type { AlertGroupDetailState, AlertGroupListState } from '../model/alert-group-state';
@@ -37,9 +39,11 @@ export function AlertGroupResults({
   retry: () => unknown;
 }) {
   const { t } = useTranslation();
-  if (state.kind === 'unavailable') return <Failure message={t('common.unavailable')} retry={retry} />;
-  if (state.kind === 'error') return <Failure message={t('common.routeError.description')} retry={retry} />;
-  if (state.kind === 'empty') return <Empty description={t('alertGroups.empty')} />;
+  if (state.kind === 'unavailable')
+    return <Failure kind="unavailable" message={t('common.unavailable')} retry={retry} />;
+  if (state.kind === 'error')
+    return <Failure kind="error" message={t('common.routeError.description')} retry={retry} />;
+  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertGroups.empty')} />;
   const records = state.kind === 'ready' ? state.records : [];
   const total = state.kind === 'ready' ? state.total : 0;
   const rowSelection: TableRowSelection<AlertGroupConverge> = {
@@ -75,16 +79,15 @@ export function AlertGroupDetailFailure({ state, retry }: { state: AlertGroupDet
   let message = t('alertGroups.loadFailed');
   if (state.kind === 'missing') message = t('common.notFound.description');
   if (state.kind === 'unavailable') message = t('common.unavailable');
-  return <Failure message={message} retry={retry} />;
+  return <Failure kind={state.kind === 'unavailable' ? 'unavailable' : 'error'} message={message} retry={retry} />;
 }
 
-function Failure({ message, retry }: { message: string; retry: () => unknown }) {
+function Failure({ kind, message, retry }: { kind: 'unavailable' | 'error'; message: string; retry: () => unknown }) {
   const { t } = useTranslation();
   return (
-    <Alert
-      type="error"
-      showIcon
-      message={message}
+    <OperationalStatePanel
+      kind={kind}
+      title={message}
       action={
         <Button size="small" onClick={() => void retry()}>
           {t('common.retry')}

@@ -159,6 +159,17 @@ describe('AlertSilencePage', () => {
     expect(await screen.findByText('No silence policies match the current query.')).toBeInTheDocument();
   });
 
+  it('uses the shared operational frame and a compact empty result', async () => {
+    api.loadAlertSilences.mockResolvedValueOnce({ content: [], totalElements: 0 });
+    renderPage();
+
+    expect(await screen.findByRole('status', { name: 'No silence policies match the current query.' })).toBeVisible();
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it('normalizes nonzero out-of-range content without presenting an empty result', async () => {
     api.loadAlertSilences.mockImplementation(query =>
       Promise.resolve(

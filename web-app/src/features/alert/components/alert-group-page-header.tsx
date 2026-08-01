@@ -5,10 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Popconfirm, Space, Typography } from 'antd';
+import { Button, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../shared/alert-policy-page.module.css';
+import { OperationalPageHeader } from '@/shared/operational-page/operational-page';
 
 export function AlertGroupPageHeader({
   busy,
@@ -27,31 +27,31 @@ export function AlertGroupPageHeader({
 }) {
   const { t } = useTranslation();
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('alertGroups.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('alertGroups.description')}</Typography.Text>
-      </div>
-      <Space>
-        {canDelete && selectedCount > 0 && (
-          <Popconfirm
-            title={t('alertGroups.deleteSelectedConfirm', { count: selectedCount })}
-            okText={t('common.delete')}
-            cancelText={t('common.cancel')}
-            okButtonProps={{ danger: true, disabled: busy }}
-            onConfirm={removeSelected}
-          >
-            <Button danger disabled={busy}>
-              {t('alertGroups.deleteSelected')}
+    <OperationalPageHeader
+      title={t('alertGroups.title')}
+      description={t('alertGroups.description')}
+      actions={
+        <Space>
+          {canDelete && selectedCount > 0 && (
+            <Popconfirm
+              title={t('alertGroups.deleteSelectedConfirm', { count: selectedCount })}
+              okText={t('common.delete')}
+              cancelText={t('common.cancel')}
+              okButtonProps={{ danger: true, disabled: busy }}
+              onConfirm={removeSelected}
+            >
+              <Button danger disabled={busy}>
+                {t('alertGroups.deleteSelected')}
+              </Button>
+            </Popconfirm>
+          )}
+          {canCreate && (
+            <Button type="primary" disabled={busy} onClick={create}>
+              {t('alertGroups.new')}
             </Button>
-          </Popconfirm>
-        )}
-        {canCreate && (
-          <Button type="primary" disabled={busy} onClick={create}>
-            {t('alertGroups.new')}
-          </Button>
-        )}
-      </Space>
-    </header>
+          )}
+        </Space>
+      }
+    />
   );
 }

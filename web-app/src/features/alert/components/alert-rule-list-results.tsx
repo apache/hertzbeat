@@ -5,9 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Empty, Table } from 'antd';
+import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import { alertRulePageSizes, type AlertRule, type AlertRuleListState } from '../model/alert-rule-model';
 
@@ -27,14 +29,26 @@ type AlertRuleListResultsProps = {
 export function AlertRuleListResults(props: AlertRuleListResultsProps) {
   const { t } = useTranslation();
   if (props.state.kind === 'unavailable') {
-    return <ListFailure message={t('common.unavailable')} retry={props.retry} disabled={props.retryDisabled} />;
+    return (
+      <ListFailure
+        kind="unavailable"
+        message={t('common.unavailable')}
+        retry={props.retry}
+        disabled={props.retryDisabled}
+      />
+    );
   }
   if (props.state.kind === 'error') {
     return (
-      <ListFailure message={t('common.routeError.description')} retry={props.retry} disabled={props.retryDisabled} />
+      <ListFailure
+        kind="error"
+        message={t('common.routeError.description')}
+        retry={props.retry}
+        disabled={props.retryDisabled}
+      />
     );
   }
-  if (props.state.kind === 'empty') return <Empty description={t('alertRules.empty')} />;
+  if (props.state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('alertRules.empty')} />;
   const records = props.state.kind === 'ready' ? props.state.records : [];
   const total = props.state.kind === 'ready' ? props.state.total : 0;
   return (
@@ -65,13 +79,22 @@ export function AlertRuleListResults(props: AlertRuleListResultsProps) {
   );
 }
 
-function ListFailure({ message, retry, disabled }: { message: string; retry: () => unknown; disabled: boolean }) {
+function ListFailure({
+  kind,
+  message,
+  retry,
+  disabled
+}: {
+  kind: 'unavailable' | 'error';
+  message: string;
+  retry: () => unknown;
+  disabled: boolean;
+}) {
   const { t } = useTranslation();
   return (
-    <Alert
-      type="error"
-      showIcon
-      message={message}
+    <OperationalStatePanel
+      kind={kind}
+      title={message}
       action={
         <Button size="small" disabled={disabled} onClick={() => void retry()}>
           {t('common.retry')}

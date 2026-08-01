@@ -17,6 +17,12 @@
 
 import { useTranslation } from 'react-i18next';
 
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalResultRegion
+} from '@/shared/operational-page/operational-page';
+
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertRuleImportDialog } from '../components/alert-rule-import-dialog';
 import { buildAlertRuleListColumns } from '../components/alert-rule-list-columns';
@@ -27,7 +33,6 @@ import {
 } from '../components/alert-rule-list-controls';
 import { AlertRuleListResults } from '../components/alert-rule-list-results';
 import { useAlertRuleListController } from '../controller/use-alert-rule-list-controller';
-import styles from '../shared/alert-rule-list.module.css';
 
 export function AlertRuleListPage() {
   const { t } = useTranslation();
@@ -38,7 +43,7 @@ export function AlertRuleListPage() {
   const interactionLocked = commandBusy || exporting || importState.busy;
   const recovering = command === 'recovering';
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="data">
       <AlertRuleListHeading
         {...capabilities}
         busy={interactionLocked}
@@ -57,34 +62,42 @@ export function AlertRuleListPage() {
         onSubmit={controller.importActions.submit}
       />
       <AlertManagementNav />
-      <AlertRuleListToolbar
-        search={search}
-        refreshing={refreshing}
-        busy={interactionLocked}
-        recovering={recovering}
-        setSearch={controller.setSearch}
-        submitSearch={controller.submitSearch}
-        refresh={controller.refresh}
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('alertRules.search')}
+        primary={
+          <AlertRuleListToolbar
+            search={search}
+            refreshing={refreshing}
+            busy={interactionLocked}
+            recovering={recovering}
+            setSearch={controller.setSearch}
+            submitSearch={controller.submitSearch}
+            refresh={controller.refresh}
+          />
+        }
       />
-      <AlertRuleListRecovery visible={recovering} retry={controller.refresh} />
-      <AlertRuleListResults
-        state={list}
-        columns={buildAlertRuleListColumns(t, {
-          ...capabilities,
-          busy: interactionLocked,
-          edit: controller.edit,
-          toggle: controller.toggle,
-          remove: controller.remove
-        })}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        busy={interactionLocked}
-        selectedIds={selectedIds}
-        selectIds={controller.selectIds}
-        retryDisabled={interactionLocked && !recovering}
-        changePage={controller.changePage}
-        retry={controller.refresh}
-      />
-    </div>
+      <OperationalResultRegion>
+        <AlertRuleListRecovery visible={recovering} retry={controller.refresh} />
+        <AlertRuleListResults
+          state={list}
+          columns={buildAlertRuleListColumns(t, {
+            ...capabilities,
+            busy: interactionLocked,
+            edit: controller.edit,
+            toggle: controller.toggle,
+            remove: controller.remove
+          })}
+          pageIndex={query.pageIndex}
+          pageSize={query.pageSize}
+          busy={interactionLocked}
+          selectedIds={selectedIds}
+          selectIds={controller.selectIds}
+          retryDisabled={interactionLocked && !recovering}
+          changePage={controller.changePage}
+          retry={controller.refresh}
+        />
+      </OperationalResultRegion>
+    </OperationalPage>
   );
 }

@@ -15,7 +15,14 @@
  * limitations under the License.
  */
 
+import { useTranslation } from 'react-i18next';
+
 import { AlertManagementNav } from '../components/alert-management-nav';
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalResultRegion
+} from '@/shared/operational-page/operational-page';
 import { AlertInhibitPageHeader } from '../components/alert-inhibit-page-header';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
@@ -25,9 +32,9 @@ import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
 import { useAlertInhibitController } from '../controller/use-alert-inhibit-controller';
 import { alertInhibitRouteRecovery } from '../model/alert-inhibit-recovery-capability';
 import { AlertInhibitDraftEditor } from './alert-inhibit-draft-editor';
-import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
+  const { t } = useTranslation();
   const controller = useAlertInhibitController();
   const { capabilities } = controller;
   const { command, detail, draft, list, management, query, recovery, refreshing, search, selectedIds } =
@@ -38,7 +45,7 @@ export function AlertInhibitPage() {
     if (!busy && selectedIds.length > 0) void controller.removeMany(selectedIds);
   };
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="data">
       <AlertInhibitPageHeader
         busy={busy}
         capabilities={capabilities}
@@ -49,36 +56,46 @@ export function AlertInhibitPage() {
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertInhibitManagement controller={controller} management={management} busy={busy} />
-      <AlertInhibitToolbar
-        busy={busy}
-        search={search}
-        refreshing={refreshing}
-        setSearch={controller.setSearch}
-        submitSearch={controller.submitSearch}
-        refresh={controller.refresh}
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('alertInhibits.search')}
+        primary={
+          <AlertInhibitToolbar
+            busy={busy}
+            search={search}
+            refreshing={refreshing}
+            setSearch={controller.setSearch}
+            submitSearch={controller.submitSearch}
+            refresh={controller.refresh}
+          />
+        }
       />
-      <AlertInhibitRecovery
-        recovery={routeRecovery.recovery}
-        retrying={command !== 'recovering' || !routeRecovery.canRetry}
-        retry={controller.retry}
-      />
-      {capabilities.canWrite && <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />}
-      <AlertInhibitResults
-        capabilities={capabilities}
-        state={list}
-        busy={busy}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        selectedIds={selectedIds}
-        selectIds={controller.selectIds}
-        edit={controller.edit}
-        toggle={controller.toggle}
-        remove={controller.remove}
-        changePage={controller.changePage}
-        retry={controller.refresh}
-      />
+      <OperationalResultRegion>
+        <AlertInhibitRecovery
+          recovery={routeRecovery.recovery}
+          retrying={command !== 'recovering' || !routeRecovery.canRetry}
+          retry={controller.retry}
+        />
+        {capabilities.canWrite && (
+          <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />
+        )}
+        <AlertInhibitResults
+          capabilities={capabilities}
+          state={list}
+          busy={busy}
+          pageIndex={query.pageIndex}
+          pageSize={query.pageSize}
+          selectedIds={selectedIds}
+          selectIds={controller.selectIds}
+          edit={controller.edit}
+          toggle={controller.toggle}
+          remove={controller.remove}
+          changePage={controller.changePage}
+          retry={controller.refresh}
+        />
+      </OperationalResultRegion>
       {capabilities.canWrite && <AlertInhibitDraftEditor controller={controller} />}
-    </div>
+    </OperationalPage>
   );
 }
 

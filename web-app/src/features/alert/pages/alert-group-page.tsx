@@ -17,6 +17,12 @@
 
 import { useTranslation } from 'react-i18next';
 
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalResultRegion
+} from '@/shared/operational-page/operational-page';
+
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { buildAlertGroupColumns } from '../components/alert-group-columns';
@@ -26,7 +32,6 @@ import { AlertGroupRecovery } from '../components/alert-group-recovery';
 import { AlertGroupDetailFailure, AlertGroupResults } from '../components/alert-group-results';
 import { AlertGroupToolbar } from '../components/alert-group-toolbar';
 import { useAlertGroupController } from '../controller/use-alert-group-controller';
-import styles from '../shared/alert-policy-page.module.css';
 
 function useAlertGroupPageColumns(controller: ReturnType<typeof useAlertGroupController>, busy: boolean) {
   const { t } = useTranslation();
@@ -41,6 +46,7 @@ function useAlertGroupPageColumns(controller: ReturnType<typeof useAlertGroupCon
 }
 
 export function AlertGroupPage() {
+  const { t } = useTranslation();
   const controller = useAlertGroupController();
   const state = controller.state;
   const busy = state.command !== 'idle';
@@ -55,7 +61,7 @@ export function AlertGroupPage() {
   const columns = useAlertGroupPageColumns(controller, busy);
 
   return (
-    <div className={styles.page}>
+    <OperationalPage mode="data">
       <AlertGroupPageHeader
         busy={busy}
         canCreate={controller.capabilities.canWrite}
@@ -66,36 +72,44 @@ export function AlertGroupPage() {
       />
       <AlertManagementNav />
       <AlertNoiseControlNav />
-      <AlertGroupToolbar
-        refreshing={state.refreshing}
-        search={state.search}
-        setSearch={controller.setSearch}
-        submitSearch={controller.submitSearch}
-        refresh={controller.refresh}
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('alertGroups.search')}
+        primary={
+          <AlertGroupToolbar
+            refreshing={state.refreshing}
+            search={state.search}
+            setSearch={controller.setSearch}
+            submitSearch={controller.submitSearch}
+            refresh={controller.refresh}
+          />
+        }
       />
-      <AlertGroupRecovery
-        canRetry={canRetryRecovery}
-        recovery={routeRecovery}
-        retrying={state.command !== 'recovering'}
-        retry={controller.retry}
-      />
-      {controller.capabilities.canWrite && (
-        <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
-      )}
-      <AlertGroupResults
-        state={state.list}
-        columns={columns}
-        pageIndex={state.query.pageIndex}
-        pageSize={state.query.pageSize}
-        busy={busy}
-        canDelete={controller.capabilities.canDelete}
-        selectedIds={state.selectedIds}
-        selectIds={controller.selectIds}
-        changePage={controller.changePage}
-        retry={controller.refresh}
-      />
+      <OperationalResultRegion>
+        <AlertGroupRecovery
+          canRetry={canRetryRecovery}
+          recovery={routeRecovery}
+          retrying={state.command !== 'recovering'}
+          retry={controller.retry}
+        />
+        {controller.capabilities.canWrite && (
+          <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
+        )}
+        <AlertGroupResults
+          state={state.list}
+          columns={columns}
+          pageIndex={state.query.pageIndex}
+          pageSize={state.query.pageSize}
+          busy={busy}
+          canDelete={controller.capabilities.canDelete}
+          selectedIds={state.selectedIds}
+          selectIds={controller.selectIds}
+          changePage={controller.changePage}
+          retry={controller.refresh}
+        />
+      </OperationalResultRegion>
       {renderAlertGroupEditor(controller, busy, canRetryRecovery, saveRecovery)}
-    </div>
+    </OperationalPage>
   );
 }
 

@@ -84,6 +84,17 @@ describe('AlertRuleListPage', () => {
     expect(screen.getByText(evidence)).toBeInTheDocument();
   });
 
+  it('uses the shared operational frame and a compact empty result', () => {
+    controller.state = buildState({ list: { kind: 'empty' } });
+    render(<AlertRuleListPage />);
+
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'alertRules.empty' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it('renders loading and out-of-range ready evidence as a table', () => {
     controller.state = buildState({ list: { kind: 'loading' } });
     const view = render(<AlertRuleListPage />);

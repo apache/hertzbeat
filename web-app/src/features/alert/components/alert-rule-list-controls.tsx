@@ -5,9 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Dropdown, Input, Popconfirm, Space, Typography } from 'antd';
+import { Alert, Button, Dropdown, Input, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalPageHeader } from '@/shared/operational-page/operational-page';
 import { alertRuleExportFormats, type AlertRuleExportFormat } from '../model/alert-rule-export-model';
 import styles from '../shared/alert-rule-list.module.css';
 
@@ -36,28 +37,28 @@ export function AlertRuleListHeading({
 }: AlertRuleListHeadingProps) {
   const { t } = useTranslation();
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('alertRules.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('alertRules.description')}</Typography.Text>
-      </div>
-      <Space>
-        <AlertRuleSelectedActions
-          busy={busy}
-          canDelete={canDelete}
-          exporting={exporting}
-          selectedCount={selectedCount}
-          removeSelected={removeSelected}
-          exportSelected={exportSelected}
-        />
-        <Button disabled={busy || !canWrite} onClick={importRules}>
-          {t('alertRules.import.open')}
-        </Button>
-        <Button type="primary" disabled={busy || !canWrite} onClick={create}>
-          {t('alertRules.new')}
-        </Button>
-      </Space>
-    </header>
+    <OperationalPageHeader
+      title={t('alertRules.title')}
+      description={t('alertRules.description')}
+      actions={
+        <Space>
+          <AlertRuleSelectedActions
+            busy={busy}
+            canDelete={canDelete}
+            exporting={exporting}
+            selectedCount={selectedCount}
+            removeSelected={removeSelected}
+            exportSelected={exportSelected}
+          />
+          <Button disabled={busy || !canWrite} onClick={importRules}>
+            {t('alertRules.import.open')}
+          </Button>
+          <Button type="primary" disabled={busy || !canWrite} onClick={create}>
+            {t('alertRules.new')}
+          </Button>
+        </Space>
+      }
+    />
   );
 }
 
