@@ -19,8 +19,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { RouteLoadingState, RouteStateFrame } from '@/shared/route-state/route-state';
+
 import { SessionContext } from './session-context';
 import { sessionLockStorageKey } from './session-lock-storage';
+import { sessionFailureMessageKey } from './session-model';
 import { AuthGate } from './auth-gate';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -35,7 +38,7 @@ describe('AuthGate', () => {
     render(
       <MemoryRouter>
         <SessionContext.Provider value={{ loading: true, retry: vi.fn(), session: undefined }}>
-          <AuthGate />
+          <TestAuthGate />
         </SessionContext.Provider>
       </MemoryRouter>
     );
@@ -49,7 +52,7 @@ describe('AuthGate', () => {
     render(
       <MemoryRouter>
         <SessionContext.Provider value={{ failure: 'unavailable', loading: false, retry, session: undefined }}>
-          <AuthGate />
+          <TestAuthGate />
         </SessionContext.Provider>
       </MemoryRouter>
     );
@@ -67,7 +70,7 @@ describe('AuthGate', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard?view=operations']}>
         <SessionContext.Provider value={{ failure, loading: false, retry, session: undefined }}>
-          <AuthGate />
+          <TestAuthGate />
           <LocationProbe />
         </SessionContext.Provider>
       </MemoryRouter>
@@ -90,7 +93,7 @@ describe('AuthGate', () => {
       >
         <SessionContext.Provider value={{ loading: false, retry: vi.fn(), session: undefined }}>
           <Routes>
-            <Route element={<AuthGate />}>
+            <Route element={<TestAuthGate />}>
               <Route path="/explore" element={<div>protected</div>} />
             </Route>
             <Route path="/passport/login" element={<LocationProbe />} />
@@ -128,7 +131,7 @@ describe('AuthGate', () => {
           }}
         >
           <Routes>
-            <Route element={<AuthGate />}>
+            <Route element={<TestAuthGate />}>
               <Route path="/explore" element={<div>protected content</div>} />
             </Route>
             <Route path="/passport/lock" element={<LocationProbe />} />
@@ -145,4 +148,19 @@ describe('AuthGate', () => {
 function LocationProbe() {
   const location = useLocation();
   return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
+}
+
+function TestAuthGate() {
+  return <AuthGate loadingState={<RouteLoadingState placement="viewport" />} failureState={TestFailureState} />;
+}
+
+function TestFailureState({ failure, retry }: { failure: 'contract' | 'error' | 'unavailable'; retry: () => void }) {
+  return (
+    <RouteStateFrame
+      placement="viewport"
+      kind={failure === 'unavailable' ? 'unavailable' : 'error'}
+      title={sessionFailureMessageKey(failure)}
+      action={<button onClick={retry}>retry</button>}
+    />
+  );
 }

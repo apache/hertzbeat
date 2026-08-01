@@ -15,33 +15,30 @@
  * limitations under the License.
  */
 
-import { Button } from 'antd';
+import type { ComponentType, ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-
-import { RouteLoadingState, RouteStateFrame } from '@/shared/route-state/route-state';
 
 import { loginHref, sessionLockPath } from './navigation';
-import { useSession } from './session-context';
+import { useSession, type SessionReadFailureKind } from './session-context';
 import { readSessionLockMarker } from './session-lock-storage';
-import { sessionFailureMessageKey } from './session-model';
 
-export function AuthGate() {
-  const { t } = useTranslation();
+type AuthFailureStateProps = {
+  failure: SessionReadFailureKind;
+  retry: () => void;
+};
+
+export function AuthGate({
+  failureState: FailureState,
+  loadingState
+}: {
+  failureState: ComponentType<AuthFailureStateProps>;
+  loadingState: ReactNode;
+}) {
   const location = useLocation();
   const { failure, loading, retry, session } = useSession();
 
-  if (loading) return <RouteLoadingState placement="viewport" />;
-  if (failure) {
-    return (
-      <RouteStateFrame
-        placement="viewport"
-        kind={failure === 'unavailable' ? 'unavailable' : 'error'}
-        title={t(sessionFailureMessageKey(failure))}
-        action={<Button onClick={retry}>{t('common.retry')}</Button>}
-      />
-    );
-  }
+  if (loading) return loadingState;
+  if (failure) return <FailureState failure={failure} retry={retry} />;
   if (!session?.authenticated) {
     return <Navigate replace to={loginHref(`${location.pathname}${location.search}${location.hash}`)} />;
   }

@@ -23,6 +23,7 @@ import { BasicLayout } from '@/layout/basic/basic-layout';
 import { RouteLoadingState } from '@/shared/route-state/route-state';
 
 import { AdministrativePluginRoutePage, AdministrativeTokenRoutePage } from './administrative-route-pages';
+import { AuthenticatedRouteFailure } from './authenticated-route-failure';
 import { RefineRuntime } from './refine/refine-runtime';
 import { AdministrativeRouteAccess } from './administrative-route-access';
 import { LegacyRouteRedirect } from './legacy-route-redirect';
@@ -61,7 +62,12 @@ export const appRoutes: RouteObject[] = [
       },
       {
         id: 'authenticated',
-        element: <AuthGate />,
+        element: (
+          <AuthGate
+            loadingState={<RouteLoadingState placement="viewport" />}
+            failureState={AuthenticatedRouteFailure}
+          />
+        ),
         children: [
           {
             ...getAppRouteIdentity('instrumentation'),

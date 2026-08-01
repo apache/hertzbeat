@@ -93,7 +93,7 @@ describe('ShellHeader logout', () => {
                 <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
                   <SessionProvider>
                     <Routes>
-                      <Route element={<AuthGate />}>
+                      <Route element={<AuthGate loadingState={null} failureState={() => null} />}>
                         <Route
                           path="/dashboard"
                           element={
