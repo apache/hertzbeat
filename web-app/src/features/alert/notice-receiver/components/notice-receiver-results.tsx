@@ -1,9 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { NoticeActionCapabilities } from '../../model/notice-action-capability-model';
 import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
@@ -18,6 +20,7 @@ export function NoticeReceiverResults({
   pageSize,
   edit,
   remove,
+  retry,
   onPageChange
 }: {
   actionPolicy: NoticeActionCapabilities;
@@ -27,22 +30,34 @@ export function NoticeReceiverResults({
   pageSize: number;
   edit: (id: number) => void;
   remove: (record: NoticeReceiver) => void;
+  retry: () => void;
   onPageChange: (page: number, pageSize: number) => void;
 }) {
   const { t } = useTranslation();
+  if (state.kind === 'loading') {
+    return <OperationalStatePanel kind="loading" title={t('noticeReceivers.loading')} />;
+  }
   if (state.kind === 'invalid' || state.kind === 'unavailable' || state.kind === 'error') {
-    return <Alert type="error" showIcon message={t(`noticeReceivers.read.${state.kind}`)} />;
+    return (
+      <OperationalStatePanel
+        kind={state.kind === 'unavailable' ? 'unavailable' : 'error'}
+        title={t(`noticeReceivers.read.${state.kind}`)}
+        action={
+          <Button size="small" disabled={busy} onClick={retry}>
+            {t('common.retry')}
+          </Button>
+        }
+      />
+    );
   }
-  if (state.kind === 'ready' && state.records.length === 0) {
-    return <Empty description={t('noticeReceivers.empty')} />;
+  if (state.records.length === 0) {
+    return <OperationalStatePanel kind="empty" title={t('noticeReceivers.empty')} />;
   }
-  const records = state.kind === 'ready' ? state.records : [];
   return (
     <Table<NoticeReceiver>
       rowKey="id"
       size="small"
-      loading={state.kind === 'loading'}
-      dataSource={records}
+      dataSource={state.records}
       columns={receiverColumns({ t, actionPolicy, busy, edit, remove })}
       scroll={{ x: 1060 }}
       pagination={{
@@ -51,7 +66,7 @@ export function NoticeReceiverResults({
         pageSizeOptions: [...noticeReceiverPageSizes],
         showSizeChanger: true,
         disabled: busy,
-        ...(state.kind === 'ready' ? { total: state.total } : {}),
+        total: state.total,
         onChange: onPageChange
       }}
     />
@@ -93,6 +108,7 @@ function receiverColumns({ t, actionPolicy, busy, edit, remove }: ReceiverColumn
     ...columns,
     {
       title: t('common.actions'),
+      fixed: 'right',
       width: 150,
       render: (_value, receiver) => (
         <Space>

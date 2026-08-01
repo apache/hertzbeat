@@ -30,7 +30,7 @@ describe('NoticeReceiverResults', () => {
     table.capture.mockClear();
   });
 
-  it('does not publish a fake zero total while the collection is loading', () => {
+  it('does not publish a table or fake total while the collection is loading', () => {
     render(
       <NoticeReceiverResults
         actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
@@ -40,24 +40,30 @@ describe('NoticeReceiverResults', () => {
         pageSize={8}
         edit={vi.fn()}
         remove={vi.fn()}
+        retry={vi.fn()}
         onPageChange={vi.fn()}
       />
     );
 
-    const props = table.capture.mock.lastCall?.[0] as { pagination: { total?: number } };
-    expect(props.pagination).not.toHaveProperty('total');
+    expect(table.capture).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeReceivers.loading');
   });
 
   it('locks pagination while a command or recovery owns the list', () => {
     render(
       <NoticeReceiverResults
         actionPolicy={{ canCreate: true, canEdit: true, canTest: true, canDelete: true }}
-        state={{ kind: 'loading' }}
+        state={{
+          kind: 'ready',
+          records: [{ id: 7, name: 'Pager', type: 2, typeKey: 'webhook', options: {}, configuredSecrets: [] }],
+          total: 9
+        }}
         busy
         pageIndex={0}
         pageSize={8}
         edit={vi.fn()}
         remove={vi.fn()}
+        retry={vi.fn()}
         onPageChange={vi.fn()}
       />
     );
@@ -84,6 +90,7 @@ describe('NoticeReceiverResults', () => {
         pageSize={8}
         edit={vi.fn()}
         remove={remove}
+        retry={vi.fn()}
         onPageChange={vi.fn()}
       />
     );
@@ -99,6 +106,7 @@ describe('NoticeReceiverResults', () => {
         pageSize={8}
         edit={vi.fn()}
         remove={remove}
+        retry={vi.fn()}
         onPageChange={vi.fn()}
       />
     );

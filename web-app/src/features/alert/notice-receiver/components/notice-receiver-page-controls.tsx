@@ -3,9 +3,7 @@
 import { Alert, Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPageHeader } from '@/shared/operational-page';
-
-import styles from '../../shared/alert-policy-page.module.css';
+import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
 import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../model/notice-receiver-operation-state';
 
 export function NoticeReceiverHeading({
@@ -54,26 +52,35 @@ export function NoticeReceiverToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
-      <Input
-        allowClear
-        value={name}
-        placeholder={t('noticeReceivers.search')}
-        disabled={busy}
-        onChange={event => setName(event.target.value)}
-        onPressEnter={() => void search()}
-      />
-      <Button type="primary" disabled={busy} onClick={search}>
-        {t('common.query')}
-      </Button>
-      <Button
-        loading={refreshing}
-        disabled={busy && (!recovering || !recoveryRetryable)}
-        onClick={() => void refresh()}
-      >
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('noticeReceivers.search')}
+      primary={
+        <Input
+          allowClear
+          aria-label={t('noticeReceivers.search')}
+          value={name}
+          placeholder={t('noticeReceivers.search')}
+          disabled={busy || refreshing}
+          onChange={event => setName(event.target.value)}
+          onPressEnter={() => void search()}
+        />
+      }
+      secondary={
+        <>
+          <Button type="primary" disabled={busy || refreshing} onClick={search}>
+            {t('common.query')}
+          </Button>
+          <Button
+            loading={refreshing}
+            disabled={busy && (!recovering || !recoveryRetryable)}
+            onClick={() => void refresh()}
+          >
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
   );
 }
 

@@ -1853,6 +1853,7 @@
   "noticeReceivers": {
     "title": "Notification receivers",
     "description": "Manage people and channel endpoints used by notification rules.",
+    "loading": "Loading notification receivers…",
     "new": "New receiver",
     "edit": "Edit receiver",
     "search": "Search receivers",

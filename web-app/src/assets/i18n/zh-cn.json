@@ -1843,6 +1843,7 @@
   "noticeReceivers": {
     "title": "通知接收人",
     "description": "管理通知规则使用的人员与渠道地址。",
+    "loading": "正在加载通知接收人…",
     "new": "新建接收人",
     "edit": "编辑接收人",
     "search": "搜索接收人",

@@ -31,6 +31,8 @@ describe('NoticeReceiverPage', () => {
     expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(
       screen.getByRole('button', { name: 'noticeReceivers.new' })
     );
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
   });
 
   it.each([
@@ -52,15 +54,52 @@ describe('NoticeReceiverPage', () => {
   });
 
   it('renders storage unavailability distinctly instead of a fake empty table', () => {
+    const current = view('unavailable');
+    controller.useNoticeReceiverController.mockReturnValue(current);
     render(<NoticeReceiverPage />);
-    expect(screen.getByText('noticeReceivers.read.unavailable')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="unavailable"]')).toHaveTextContent('noticeReceivers.read.unavailable');
     expect(screen.queryByText('noticeReceivers.empty')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.refresh).toHaveBeenCalledTimes(1);
   });
 
   it('renders an honest empty state only for a successful empty list', () => {
     controller.useNoticeReceiverController.mockReturnValue(view('ready'));
     render(<NoticeReceiverPage />);
-    expect(screen.getByText('noticeReceivers.empty')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeReceivers.empty');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
+  it('uses a compact loading state before authoritative rows exist', () => {
+    const current = view('ready');
+    current.state.list = { kind: 'loading' } as never;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeReceivers.loading');
+    expect(document.querySelector('table')).not.toBeInTheDocument();
+  });
+
+  it('keeps wide receiver actions fixed inside the table viewport', () => {
+    const current = view('ready', true);
+    current.state.command = 'idle';
+    current.state.busy = false;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
+    expect(document.querySelector('.ant-table-content')).toHaveStyle({ overflowX: 'auto' });
+  });
+
+  it('shows refresh progress and prevents overlapping commands', () => {
+    const current = view('ready');
+    current.state.refreshing = true;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeReceivers.new' })).toBeDisabled();
   });
 
   it('disables draft-context commands synchronously while an operation owns the gate', () => {

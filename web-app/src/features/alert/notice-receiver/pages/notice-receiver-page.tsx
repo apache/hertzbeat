@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { OperationalPage } from '@/shared/operational-page';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
 
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import {
@@ -15,9 +15,10 @@ import { canSubmitNoticeReceiver } from '../controller/notice-receiver-action-ad
 export function NoticeReceiverPage() {
   const { state, actions } = useNoticeReceiverController();
   const recovering = state.command === 'recovering';
+  const interactionBusy = state.busy || state.refreshing;
   return (
     <OperationalPage>
-      <NoticeReceiverHeading busy={state.busy} canCreate={state.capabilities.canCreate} create={actions.create} />
+      <NoticeReceiverHeading busy={interactionBusy} canCreate={state.capabilities.canCreate} create={actions.create} />
       <NoticeReceiverToolbar
         name={state.name}
         refreshing={state.refreshing}
@@ -28,22 +29,25 @@ export function NoticeReceiverPage() {
         search={actions.search}
         refresh={actions.refresh}
       />
-      <NoticeReceiverRecovery
-        canRetry={state.canRetryOperation}
-        recovery={state.recovery}
-        busy={!recovering}
-        retry={actions.retry}
-      />
-      <NoticeReceiverResults
-        actionPolicy={state.capabilities}
-        state={state.list}
-        busy={state.busy}
-        pageIndex={state.query.pageIndex}
-        pageSize={state.query.pageSize}
-        edit={id => void actions.edit(id)}
-        remove={record => void actions.remove(record)}
-        onPageChange={actions.changePage}
-      />
+      <OperationalResultRegion>
+        <NoticeReceiverRecovery
+          canRetry={state.canRetryOperation}
+          recovery={state.recovery}
+          busy={!recovering}
+          retry={actions.retry}
+        />
+        <NoticeReceiverResults
+          actionPolicy={state.capabilities}
+          state={state.list}
+          busy={interactionBusy}
+          pageIndex={state.query.pageIndex}
+          pageSize={state.query.pageSize}
+          edit={id => void actions.edit(id)}
+          remove={record => void actions.remove(record)}
+          retry={() => void actions.refresh()}
+          onPageChange={actions.changePage}
+        />
+      </OperationalResultRegion>
       {state.draft && canSubmitNoticeReceiver(state.capabilities, state.draft) ? (
         <NoticeReceiverEditor
           draft={state.draft}

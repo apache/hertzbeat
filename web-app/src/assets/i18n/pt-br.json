@@ -1857,6 +1857,7 @@
   "noticeReceivers": {
     "title": "Destinatários",
     "description": "Gerencie pessoas e destinos de canais usados pelas regras de notificação.",
+    "loading": "Carregando destinatários…",
     "new": "Novo destinatário",
     "edit": "Editar destinatário",
     "search": "Pesquisar destinatários",
