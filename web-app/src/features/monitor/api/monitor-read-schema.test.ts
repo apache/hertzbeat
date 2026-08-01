@@ -50,9 +50,8 @@ describe('Monitor primary read schemas', () => {
           }
         ],
         totalElements: 1,
-        totalPages: 1,
-        number: 0,
-        size: 10
+        pageIndex: 0,
+        pageSize: 10
       },
       query
     );
