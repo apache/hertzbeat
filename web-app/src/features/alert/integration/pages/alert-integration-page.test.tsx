@@ -35,16 +35,26 @@ import { AlertIntegrationPage } from './alert-integration-page';
 describe('AlertIntegrationPage backend guide states', () => {
   afterEach(cleanup);
 
-  it.each(['loading', 'permission', 'unavailable', 'contract', 'error', 'not-found'] as const)(
-    'renders %s separately',
-    kind => {
-      mocks.controller.mockReturnValue(controller(kind));
-      render(<AlertIntegrationPage />);
-      expect(screen.getByText(`alertIntegrations.states.${kind}`)).toBeInTheDocument();
-      const retry = screen.queryByRole('button', { name: 'common.retry' });
-      expect(Boolean(retry)).toBe(kind === 'unavailable' || kind === 'error');
-    }
-  );
+  it.each([
+    ['loading', 'loading', 'status'],
+    ['permission', 'permission', 'status'],
+    ['unavailable', 'unavailable', 'alert'],
+    ['contract', 'error', 'alert'],
+    ['error', 'error', 'alert'],
+    ['not-found', 'empty', 'status']
+  ] as const)('renders %s in the shared operational frame', (kind, panelKind, panelRole) => {
+    mocks.controller.mockReturnValue(controller(kind));
+    render(<AlertIntegrationPage />);
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(screen.getByRole('heading', { level: 2, name: 'alertIntegrations.menu' })).toBeVisible();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole(panelRole, { name: `alertIntegrations.states.${kind}` })).toHaveAttribute(
+      'data-state',
+      panelKind
+    );
+    const retry = screen.queryByRole('button', { name: 'common.retry' });
+    expect(Boolean(retry)).toBe(kind === 'unavailable' || kind === 'error');
+  });
 
   it('renders all backend ready guide evidence and keeps token handoff as navigation', () => {
     mocks.controller.mockReturnValue(controller('ready', readyGuide));
