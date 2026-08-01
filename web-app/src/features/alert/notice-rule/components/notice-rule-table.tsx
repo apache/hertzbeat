@@ -1,9 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Popconfirm, Space, Switch, Table, Tag } from 'antd';
+import { Button, Popconfirm, Space, Switch, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import styles from '../../shared/alert-policy-page.module.css';
 import {
@@ -160,30 +162,37 @@ function NoticeRuleResults({
   columns,
   pageIndex,
   pageSize,
-  actions
+  actions,
+  busy
 }: NoticeRuleTableProps & {
   columns: ColumnsType<NoticeRule>;
 }) {
   const { t } = useTranslation();
-  if (['invalid', 'unavailable', 'error'].includes(state.kind)) {
-    return <Alert type="error" showIcon message={t(`noticeRules.read.${state.kind}`)} />;
+  if (state.kind === 'loading') return <OperationalStatePanel kind="loading" title={t('noticeRules.loading')} />;
+  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('noticeRules.empty')} />;
+  if (state.kind === 'invalid' || state.kind === 'unavailable' || state.kind === 'error') {
+    return (
+      <OperationalStatePanel
+        kind={state.kind === 'unavailable' ? 'unavailable' : 'error'}
+        title={t(`noticeRules.read.${state.kind}`)}
+      />
+    );
   }
-  if (state.kind === 'empty') return <Empty description={t('noticeRules.empty')} />;
-  const records = state.kind === 'ready' ? state.records : [];
+  if (state.records.length === 0) return <OperationalStatePanel kind="empty" title={t('noticeRules.empty')} />;
   return (
     <Table<NoticeRule>
       rowKey="id"
       size="small"
-      loading={state.kind === 'loading'}
-      dataSource={records}
+      dataSource={state.records}
       columns={columns}
       scroll={{ x: 1460 }}
       pagination={{
+        disabled: busy,
         current: pageIndex + 1,
         pageSize,
         pageSizeOptions: [...noticeRulePageSizes],
         showSizeChanger: true,
-        total: state.kind === 'ready' ? state.total : 0,
+        total: state.total,
         onChange: actions.changePage
       }}
     />

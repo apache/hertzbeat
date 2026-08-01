@@ -29,11 +29,13 @@ describe('notice rule page', () => {
     expect(header.querySelector('[data-hb-operational-page-actions]')).toContainElement(
       screen.getByRole('button', { name: 'noticeRules.new' })
     );
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
   });
 
   it('renders invalid list evidence instead of a fake empty table', () => {
     render(<NoticeRulePage />);
-    expect(screen.getByText('noticeRules.read.invalid')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="error"]')).toHaveTextContent('noticeRules.read.invalid');
     expect(screen.queryByText('noticeRules.empty')).not.toBeInTheDocument();
   });
 
@@ -68,7 +70,7 @@ describe('notice rule page', () => {
   it('disables create and row commands while any write command is busy', () => {
     const busy = view('empty', 'ready');
     busy.state.command = 'deleting';
-    busy.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
+    busy.state.list = { kind: 'ready', records: [rule], total: 9 } as never;
     controller.useNoticeRuleController.mockReturnValue(busy);
     render(<NoticeRulePage />);
 
@@ -76,6 +78,36 @@ describe('notice rule page', () => {
     expect(screen.getByRole('switch')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(document.querySelector('.ant-pagination')).toHaveClass('ant-pagination-disabled');
+  });
+
+  it('uses compact shared states for initial loading and empty results', () => {
+    const loading = view('empty', 'ready');
+    loading.state.list = { kind: 'loading' } as never;
+    controller.useNoticeRuleController.mockReturnValue(loading);
+    const page = render(<NoticeRulePage />);
+
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(document.querySelector('table')).not.toBeInTheDocument();
+
+    loading.state.list = { kind: 'empty' } as never;
+    page.rerender(<NoticeRulePage />);
+    expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeRules.empty');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
+  it('shows refresh progress without allowing overlapping query commands', () => {
+    const refreshing = view('empty', 'ready');
+    refreshing.state.refreshing = true;
+    controller.useNoticeRuleController.mockReturnValue(refreshing);
+
+    render(<NoticeRulePage />);
+
+    expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
   });
 
   it('disables option-dependent row commands but keeps delete available when dependencies fail', () => {
@@ -96,7 +128,7 @@ describe('notice rule page', () => {
 
     render(<NoticeRulePage />);
 
-    expect(screen.getByTestId('notice-rule-detail-loading')).toBeInTheDocument();
+    expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
   });
 
   it.each(['missing', 'invalid', 'unavailable', 'error'] as const)(

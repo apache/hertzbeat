@@ -18,13 +18,13 @@
 import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPageHeader } from '@/shared/operational-page';
-
-import styles from '../../shared/alert-policy-page.module.css';
+import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
 
 type NoticeRuleToolbarProps = {
   name: string;
   canCreate: boolean;
+  busy: boolean;
+  refreshing: boolean;
   createDisabled: boolean;
   onNameChange: (value: string) => void;
   onQuery: () => void;
@@ -47,19 +47,31 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
           ) : undefined
         }
       />
-      <div className={styles.toolbar}>
-        <Input
-          allowClear
-          value={props.name}
-          placeholder={t('noticeRules.search')}
-          onChange={event => props.onNameChange(event.target.value)}
-          onPressEnter={props.onQuery}
-        />
-        <Button type="primary" onClick={props.onQuery}>
-          {t('common.query')}
-        </Button>
-        <Button onClick={props.onRefresh}>{t('common.refresh')}</Button>
-      </div>
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('noticeRules.search')}
+        primary={
+          <Input
+            allowClear
+            disabled={props.busy || props.refreshing}
+            value={props.name}
+            placeholder={t('noticeRules.search')}
+            aria-label={t('noticeRules.search')}
+            onChange={event => props.onNameChange(event.target.value)}
+            onPressEnter={props.onQuery}
+          />
+        }
+        secondary={
+          <>
+            <Button type="primary" disabled={props.busy || props.refreshing} onClick={props.onQuery}>
+              {t('common.query')}
+            </Button>
+            <Button disabled={props.busy} loading={props.refreshing} onClick={props.onRefresh}>
+              {t('common.refresh')}
+            </Button>
+          </>
+        }
+      />
     </>
   );
 }

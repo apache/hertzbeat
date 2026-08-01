@@ -1990,6 +1990,7 @@
   "noticeRules": {
     "title": "Notification delivery rules",
     "description": "Route matching alerts to receivers and message templates.",
+    "loading": "Loading delivery rules…",
     "new": "New delivery rule",
     "edit": "Edit delivery rule",
     "search": "Search delivery rules",

@@ -1994,6 +1994,7 @@
   "noticeRules": {
     "title": "Regras de envio de notificação",
     "description": "Encaminhe alertas correspondentes para destinatários e modelos de mensagem.",
+    "loading": "Carregando regras de envio…",
     "new": "Nova regra de envio",
     "edit": "Editar regra de envio",
     "search": "Buscar regras de envio",

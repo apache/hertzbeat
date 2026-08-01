@@ -3,7 +3,7 @@
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage } from '@/shared/operational-page';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
 
 import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
@@ -41,30 +41,34 @@ export function NoticeRulePage() {
       <NoticeRuleToolbar
         name={state.name}
         canCreate={state.capabilities.canCreate}
-        createDisabled={!dependenciesReady || busy}
+        busy={busy}
+        refreshing={state.refreshing}
+        createDisabled={!dependenciesReady || busy || state.refreshing}
         onNameChange={actions.setName}
         onQuery={actions.search}
         onRefresh={() => void actions.refresh()}
         onCreate={actions.create}
       />
-      {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
-      <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
-      <NoticeRuleRecovery
-        recovery={routeRecovery}
-        canRetry={state.canRetryOperation}
-        retryBusy={state.command !== 'recovering'}
-        retry={actions.retry}
-      />
-      <NoticeRuleTable
-        actions={tableActions}
-        busy={busy}
-        capabilities={state.capabilities}
-        dependenciesReady={dependenciesReady}
-        state={state.list}
-        pageIndex={state.query.pageIndex}
-        pageSize={state.query.pageSize}
-        togglingRuleId={state.togglingRuleId}
-      />
+      <OperationalResultRegion>
+        {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
+        <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
+        <NoticeRuleRecovery
+          recovery={routeRecovery}
+          canRetry={state.canRetryOperation}
+          retryBusy={state.command !== 'recovering'}
+          retry={actions.retry}
+        />
+        <NoticeRuleTable
+          actions={tableActions}
+          busy={busy || state.refreshing}
+          capabilities={state.capabilities}
+          dependenciesReady={dependenciesReady}
+          state={state.list}
+          pageIndex={state.query.pageIndex}
+          pageSize={state.query.pageSize}
+          togglingRuleId={state.togglingRuleId}
+        />
+      </OperationalResultRegion>
       <NoticeRuleEditorBoundary
         controller={controller}
         dependenciesReady={dependenciesReady}
