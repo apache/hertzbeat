@@ -46,12 +46,20 @@ const controller = vi.hoisted(() => ({
   state: {},
   updateDraft: vi.fn()
 }));
-vi.mock('../controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController: () => controller }));
+const actionCapabilities = vi.hoisted(() => ({ canWrite: true, canDelete: true }));
+const useAlertRuleEditorController = vi.hoisted(() => vi.fn(() => controller));
+
+vi.mock('../controller/use-alert-rule-action-capabilities', () => ({
+  useAlertRuleActionCapabilities: () => actionCapabilities
+}));
+vi.mock('../controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('AlertRuleEditorPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    actionCapabilities.canWrite = true;
+    actionCapabilities.canDelete = true;
     controller.state = buildState();
   });
   afterEach(cleanup);
@@ -171,12 +179,14 @@ describe('AlertRuleEditorPage', () => {
     expect(controller.cancel).toHaveBeenCalled();
   });
 
-  it('disables preview and save when the session cannot write alert rules', () => {
-    controller.state = buildState({ canSave: false });
-    render(<AlertRuleEditorPage mode="edit" />);
+  it('denies a read-only session before the editor controller can load protected dependencies', () => {
+    actionCapabilities.canWrite = false;
+    render(<AlertRuleEditorPage mode="new" />);
 
-    expect(screen.getByRole('button', { name: 'alertRules.preview' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByText('common.permission.roleRequiredTitle')).toBeInTheDocument();
+    expect(screen.getByText('common.permission.roleRequiredDescription')).toBeInTheDocument();
+    expect(useAlertRuleEditorController).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('alertRules.name')).toBeNull();
   });
 
   it('disables every mutable field while save owns the operation gate', () => {

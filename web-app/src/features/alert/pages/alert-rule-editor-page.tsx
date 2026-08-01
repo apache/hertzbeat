@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
+import { Alert, Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -26,11 +26,26 @@ import {
   AlertRuleSaveRecoveryEvidence
 } from '../components/alert-rule-editor-evidence';
 import { AlertRuleFields } from '../components/alert-rule-fields';
+import { useAlertRuleActionCapabilities } from '../controller/use-alert-rule-action-capabilities';
 import { useAlertRuleEditorController } from '../controller/use-alert-rule-editor-controller';
 import type { AlertRuleDraft } from '../model/alert-rule-model';
 import styles from '../shared/alert-rule-editor.module.css';
 
 export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
+  const { t } = useTranslation();
+  const capabilities = useAlertRuleActionCapabilities();
+  if (capabilities.canWrite) return <AlertRuleEditorWorkspacePage mode={mode} />;
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t('common.permission.roleRequiredTitle')}
+      description={t('common.permission.roleRequiredDescription')}
+    />
+  );
+}
+
+function AlertRuleEditorWorkspacePage({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
   const controller = useAlertRuleEditorController(mode);
   const { detail, draft } = controller.state;
