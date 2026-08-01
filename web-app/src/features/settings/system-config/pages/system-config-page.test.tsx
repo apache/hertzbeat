@@ -68,9 +68,23 @@ describe('SystemConfigPage', () => {
 
   it('renders the ready controller state without owning server queries', async () => {
     renderPage();
+    const results = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
     expect(await screen.findByText('UTC (UTC+00:00) UTC')).toBeInTheDocument();
+    expect(results).toContainElement(screen.getByText('UTC (UTC+00:00) UTC'));
     expect(screen.getByText('English')).toBeInTheDocument();
     expect(screen.getByText('Dark')).toBeInTheDocument();
+  });
+
+  it('uses the shared loading state instead of a page skeleton', () => {
+    controller.useSystemConfigResourceController.mockReturnValue(buildController({ kind: 'loading' }));
+    renderPage();
+
+    expect(screen.getByRole('status')).toHaveAttribute('data-state', 'loading');
+    expect(screen.getByText('Loading system settings…')).toBeInTheDocument();
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
   });
 
   it.each([
@@ -82,7 +96,15 @@ describe('SystemConfigPage', () => {
   ])('renders %s distinctly and delegates retry', async (kind, message) => {
     controller.useSystemConfigResourceController.mockReturnValue(buildController({ kind }));
     renderPage();
-    expect(await screen.findByText(message)).toBeInTheDocument();
+    const statePanel = (await screen.findByText(message)).closest('[data-state]');
+    const expectedState = new Map([
+      ['missing', 'empty'],
+      ['permission', 'permission'],
+      ['unavailable', 'unavailable'],
+      ['invalid', 'error'],
+      ['error', 'error']
+    ]).get(kind);
+    expect(statePanel).toHaveAttribute('data-state', expectedState);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retryRead).toHaveBeenCalledTimes(1);
   });
@@ -122,7 +144,11 @@ describe('SystemConfigPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByText('System settings are unavailable.')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'The saved settings could not be confirmed. Verify the current server settings before continuing.'
+      )
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retrySave).toHaveBeenCalledTimes(1);
     const selects = screen.getAllByRole('combobox');
@@ -154,6 +180,7 @@ describe('SystemConfigPage', () => {
     const selects = await screen.findAllByRole('combobox');
     expect(selects).toHaveLength(3);
     selects.forEach(select => expect(select).toBeDisabled());
+    expect(screen.getByText('Only administrators can change system settings.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Save$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
   });

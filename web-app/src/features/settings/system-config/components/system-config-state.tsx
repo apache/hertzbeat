@@ -15,36 +15,34 @@
  * limitations under the License.
  */
 
-.form {
-  display: grid;
-  max-width: 820px;
-  border-block: 1px solid var(--ant-color-border-secondary);
+import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
+
+export function SystemConfigReadFailure({
+  kind,
+  message,
+  onRetry
+}: {
+  kind: OperationalStateKind;
+  message: string;
+  onRetry: () => unknown;
+}) {
+  return <OperationalStatePanel kind={kind} title={message} action={<RetryButton onRetry={onRetry} />} />;
 }
-.field {
-  display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-  padding: 18px 4px;
-}
-.field + .field {
-  border-top: 1px solid var(--ant-color-border-secondary);
-}
-.label {
-  padding-top: 6px;
-  font-weight: 600;
-}
-.control {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-@media (max-width: 700px) {
-  .field {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .label {
-    padding-top: 0;
-  }
+
+export function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => unknown }) {
+  const { t } = useTranslation();
+  return (
+    <Button
+      size="small"
+      loading={loading}
+      onClick={() => {
+        void onRetry();
+      }}
+    >
+      {t('common.retry')}
+    </Button>
+  );
 }

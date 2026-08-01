@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Select, Typography } from 'antd';
+import { Button, Select, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalFormActions, OperationalStatePanel } from '@/shared/operational-page';
 
 import {
   systemLocales,
@@ -88,10 +90,9 @@ function TimezoneFailure(props: SystemConfigEditorProps) {
   const { t } = useTranslation();
   if (!props.timezonesFailed) return null;
   return (
-    <Alert
-      type="warning"
-      showIcon
-      message={t('systemConfig.timezonesUnavailable')}
+    <OperationalStatePanel
+      kind="unavailable"
+      title={t('systemConfig.timezonesUnavailable')}
       action={
         <Button size="small" disabled={props.locked} onClick={props.onTimezoneRetry}>
           {t('common.retry')}
@@ -105,7 +106,7 @@ function SystemConfigActions(props: SystemConfigEditorProps) {
   const { t } = useTranslation();
   if (!props.canConfigure) return null;
   return (
-    <div className={styles.actions}>
+    <OperationalFormActions>
       <Button
         type="primary"
         loading={props.saving}
@@ -118,7 +119,7 @@ function SystemConfigActions(props: SystemConfigEditorProps) {
         {t('systemConfig.discard')}
       </Button>
       {!props.dirty && <Typography.Text type="secondary">{t('systemConfig.noChanges')}</Typography.Text>}
-    </div>
+    </OperationalFormActions>
   );
 }
 

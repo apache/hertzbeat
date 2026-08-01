@@ -1605,6 +1605,9 @@
   "systemConfig": {
     "title": "System settings",
     "description": "Configure the shared language, time zone, and interface density.",
+    "loading": "Loading system settings…",
+    "readOnly": "Only administrators can change system settings.",
+    "recovery": "The saved settings could not be confirmed. Verify the current server settings before continuing.",
     "missing": "System settings have not been configured.",
     "permission": "Your account does not have permission to read system settings.",
     "invalid": "System settings returned an invalid response.",

@@ -1609,6 +1609,9 @@
   "systemConfig": {
     "title": "Configurações do sistema",
     "description": "Configure o idioma, fuso horário e densidade da interface.",
+    "loading": "Carregando configurações do sistema…",
+    "readOnly": "Somente administradores podem alterar as configurações do sistema.",
+    "recovery": "Não foi possível confirmar as configurações salvas. Verifique as configurações atuais do servidor antes de continuar.",
     "missing": "As configurações do sistema ainda não foram definidas.",
     "permission": "Sua conta não tem permissão para ler as configurações do sistema.",
     "invalid": "As configurações do sistema retornaram uma resposta inválida.",

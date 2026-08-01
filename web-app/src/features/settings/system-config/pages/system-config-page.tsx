@@ -15,12 +15,18 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Space } from 'antd';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import {
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import { SystemConfigEditor } from '../components/system-config-editor';
+import { RetryButton, SystemConfigReadFailure } from '../components/system-config-state';
 import { useSystemConfigResourceController } from '../controller/system-config-resource-controller';
 
 export function SystemConfigPage() {
@@ -31,53 +37,71 @@ export function SystemConfigPage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('systemConfig.title')} description={t('systemConfig.description')} />
-      {state.kind === 'missing' && <ReadFailure message={t('systemConfig.missing')} onRetry={controller.retryRead} />}
-      {state.kind === 'permission' && (
-        <ReadFailure message={t('systemConfig.permission')} onRetry={controller.retryRead} />
-      )}
-      {state.kind === 'unavailable' && (
-        <ReadFailure message={t('systemConfig.unavailable')} onRetry={controller.retryRead} />
-      )}
-      {state.kind === 'invalid' && <ReadFailure message={t('systemConfig.invalid')} onRetry={controller.retryRead} />}
-      {state.kind === 'error' && (
-        <ReadFailure message={t('common.routeError.description')} onRetry={controller.retryRead} />
-      )}
-      {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 4 }} />}
-      {state.kind === 'ready' && (
-        <>
-          {state.canConfigure && state.recovery && (
-            <Alert
-              type="warning"
-              showIcon
-              message={t('systemConfig.unavailable')}
-              action={
-                <ProofRecoveryActions
-                  accepting={state.accepting}
-                  canUseCurrentServerSettings={state.canUseCurrentServerSettings}
-                  proving={state.proving}
-                  onRetry={controller.retrySave}
-                  onUseCurrent={controller.useCurrentServerSettings}
-                />
-              }
-            />
-          )}
-          <SystemConfigEditor
-            current={state.current}
-            canConfigure={state.canConfigure}
-            timezoneOptions={state.timezoneOptions}
-            timezonesPending={state.timezonesPending}
-            timezonesFailed={state.timezonesFailed}
-            dirty={state.dirty}
-            locked={state.locked}
-            valid={state.valid}
-            saving={state.saving}
-            onTimezoneRetry={controller.retryTimezones}
-            onUpdate={controller.update}
-            onSave={controller.save}
-            onDiscard={controller.discard}
+      <OperationalResultRegion>
+        {state.kind === 'missing' && (
+          <SystemConfigReadFailure kind="empty" message={t('systemConfig.missing')} onRetry={controller.retryRead} />
+        )}
+        {state.kind === 'permission' && (
+          <SystemConfigReadFailure
+            kind="permission"
+            message={t('systemConfig.permission')}
+            onRetry={controller.retryRead}
           />
-        </>
-      )}
+        )}
+        {state.kind === 'unavailable' && (
+          <SystemConfigReadFailure
+            kind="unavailable"
+            message={t('systemConfig.unavailable')}
+            onRetry={controller.retryRead}
+          />
+        )}
+        {state.kind === 'invalid' && (
+          <SystemConfigReadFailure kind="error" message={t('systemConfig.invalid')} onRetry={controller.retryRead} />
+        )}
+        {state.kind === 'error' && (
+          <SystemConfigReadFailure
+            kind="error"
+            message={t('common.routeError.description')}
+            onRetry={controller.retryRead}
+          />
+        )}
+        {state.kind === 'loading' && <OperationalStatePanel kind="loading" title={t('systemConfig.loading')} />}
+        {state.kind === 'ready' && (
+          <>
+            {!state.canConfigure && <OperationalStatePanel kind="permission" title={t('systemConfig.readOnly')} />}
+            {state.canConfigure && state.recovery && (
+              <OperationalStatePanel
+                kind="unavailable"
+                title={t('systemConfig.recovery')}
+                action={
+                  <ProofRecoveryActions
+                    accepting={state.accepting}
+                    canUseCurrentServerSettings={state.canUseCurrentServerSettings}
+                    proving={state.proving}
+                    onRetry={controller.retrySave}
+                    onUseCurrent={controller.useCurrentServerSettings}
+                  />
+                }
+              />
+            )}
+            <SystemConfigEditor
+              current={state.current}
+              canConfigure={state.canConfigure}
+              timezoneOptions={state.timezoneOptions}
+              timezonesPending={state.timezonesPending}
+              timezonesFailed={state.timezonesFailed}
+              dirty={state.dirty}
+              locked={state.locked}
+              valid={state.valid}
+              saving={state.saving}
+              onTimezoneRetry={controller.retryTimezones}
+              onUpdate={controller.update}
+              onSave={controller.save}
+              onDiscard={controller.discard}
+            />
+          </>
+        )}
+      </OperationalResultRegion>
     </OperationalPage>
   );
 }
@@ -105,24 +129,5 @@ function ProofRecoveryActions({
         </Button>
       )}
     </Space>
-  );
-}
-
-function ReadFailure({ message, onRetry }: { message: string; onRetry: () => unknown }) {
-  return <Alert type="error" showIcon message={message} action={<RetryButton onRetry={onRetry} />} />;
-}
-
-function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => unknown }) {
-  const { t } = useTranslation();
-  return (
-    <Button
-      size="small"
-      loading={loading}
-      onClick={() => {
-        void onRetry();
-      }}
-    >
-      {t('common.retry')}
-    </Button>
   );
 }
