@@ -3,7 +3,12 @@
 import { ApiMessageError, apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
 import { z } from 'zod';
 
-import { EntityContractError, type EntityMonitorQuery, type EntityQuery } from '../model/entity-contract';
+import {
+  EntityContractError,
+  type EntityMonitorQuery,
+  type EntityPage,
+  type EntityQuery
+} from '../model/entity-contract';
 import { normalizeEntityMonitorQuery } from '../model/entity-monitor-query';
 import { writeEntityQuery } from '../model/entity-query';
 import { parseEntityDetail, parseEntityMonitorPage, parseEntityPage } from './entity-schema';
@@ -41,10 +46,22 @@ export function buildEntityListPath(query: EntityQuery) {
 export async function loadEntities(query: EntityQuery, signal?: AbortSignal) {
   const value = await apiMessageGet(buildEntityListPath(query), signal ? { signal } : undefined);
   const page = parseEntityPage(value);
-  if (page.number !== query.pageIndex || page.size !== query.pageSize) {
+  if (!validEntityListPage(page, query)) {
     throw new EntityContractError('Entity page does not match its request');
   }
   return page;
+}
+
+function validEntityListPage(page: EntityPage, query: EntityQuery) {
+  const expectedRows = Math.min(page.size, Math.max(0, page.totalElements - page.number * page.size));
+  const entityIds = new Set(page.content.map(item => item.id));
+  return (
+    page.number === query.pageIndex &&
+    page.size === query.pageSize &&
+    page.totalPages === Math.ceil(page.totalElements / page.size) &&
+    page.content.length === expectedRows &&
+    entityIds.size === page.content.length
+  );
 }
 
 export async function loadEntityDetail(id: number, signal?: AbortSignal) {

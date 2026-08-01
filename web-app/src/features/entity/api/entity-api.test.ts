@@ -58,27 +58,62 @@ const entity = {
 describe('entity API', () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it('owns the complete backend list query and parses Spring Page metadata', async () => {
+  it('owns the complete backend list query and maps the manager PageResponse metadata', async () => {
     const signal = new AbortController().signal;
     apiMessageGet.mockResolvedValue({
       content: [{ entity, identityCount: 2, monitorCount: 3, relationCount: 1, activeAlertCount: 0 }],
       totalElements: 1,
-      totalPages: 1,
-      number: 0,
-      size: 10,
-      first: true,
-      last: true,
-      empty: false,
-      numberOfElements: 1,
-      pageable: {},
-      sort: {}
+      pageIndex: 0,
+      pageSize: 10
     });
 
     await expect(loadEntities(query, signal)).resolves.toMatchObject({
       content: [{ id: 7, name: 'checkout', monitorCount: 3 }],
-      totalElements: 1
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 10
     });
     expect(apiMessageGet).toHaveBeenCalledWith(buildEntityListPath(query), { signal });
+  });
+
+  it.each([
+    {
+      caseName: 'page identity drift',
+      value: {
+        content: [],
+        totalElements: 0,
+        pageIndex: 1,
+        pageSize: 10
+      }
+    },
+    {
+      caseName: 'impossible row count',
+      value: {
+        content: [
+          { entity, identityCount: 2, monitorCount: 3, relationCount: 1, activeAlertCount: 0 },
+          { entity: { ...entity, id: 8 }, identityCount: 0, monitorCount: 0, relationCount: 0, activeAlertCount: 0 }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 10
+      }
+    },
+    {
+      caseName: 'duplicate entity ids',
+      value: {
+        content: [
+          { entity, identityCount: 2, monitorCount: 3, relationCount: 1, activeAlertCount: 0 },
+          { entity, identityCount: 2, monitorCount: 3, relationCount: 1, activeAlertCount: 0 }
+        ],
+        totalElements: 2,
+        pageIndex: 0,
+        pageSize: 10
+      }
+    }
+  ])('rejects $caseName in entity list evidence', async ({ value }) => {
+    apiMessageGet.mockResolvedValue(value);
+    await expect(loadEntities(query)).rejects.toBeInstanceOf(EntityContractError);
   });
 
   it('maps detail identity, operational evidence, monitors, and relations without fake defaults', async () => {

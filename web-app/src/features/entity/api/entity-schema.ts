@@ -64,6 +64,15 @@ const summarySchema = z.object({
   lastEvidenceAt: count.nullish()
 });
 
+const entityPageResponseSchema = z
+  .object({
+    content: z.array(summarySchema),
+    totalElements: count,
+    pageIndex: count,
+    pageSize: z.number().int().positive().safe()
+  })
+  .strict();
+
 const identitySchema = z.object({
   id: positiveId.nullish(),
   identityType: text,
@@ -143,9 +152,18 @@ const detailSchema = z.object({
 });
 
 export function parseEntityPage(value: unknown): EntityPage {
-  const parsed = createSpringPageSchema(summarySchema).safeParse(value);
+  const parsed = entityPageResponseSchema.safeParse(value);
   if (!parsed.success) throw new EntityContractError();
-  return { ...parsed.data, content: parsed.data.content.map(mapSummary) };
+  const page = parsed.data;
+  // EntityController publishes the manager's stable PageResponse contract.
+  // Translate wire names here so the rest of the feature uses one pagination model.
+  return {
+    content: page.content.map(mapSummary),
+    totalElements: page.totalElements,
+    totalPages: Math.ceil(page.totalElements / page.pageSize),
+    number: page.pageIndex,
+    size: page.pageSize
+  };
 }
 
 export function parseEntityDetail(value: unknown): EntityDetail {
