@@ -5,28 +5,27 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Empty, Skeleton, Space, Typography } from 'antd';
+import { Skeleton, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 import type { DashboardLabelState } from '../model/dashboard-model';
-import styles from './dashboard.module.css';
 
 export function DashboardLabelResults({ state }: { state: DashboardLabelState }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.section} aria-label={t('dashboard.labels.title')}>
-      <Typography.Title level={4}>{t('dashboard.labels.title')}</Typography.Title>
+    <OperationalSection title={t('dashboard.labels.title')}>
       <DashboardLabelEvidence state={state} />
-    </section>
+    </OperationalSection>
   );
 }
 
 function DashboardLabelEvidence({ state }: { state: DashboardLabelState }) {
   const { t } = useTranslation();
   if (state.kind === 'loading') return <Skeleton active paragraph={{ rows: 2 }} />;
-  if (state.kind === 'empty') return <Empty description={t('dashboard.labels.empty')} />;
+  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('dashboard.labels.empty')} />;
   if (state.kind !== 'ready') {
     return <Typography.Text type="secondary">{t(`dashboard.labels.states.${state.kind}`)}</Typography.Text>;
   }

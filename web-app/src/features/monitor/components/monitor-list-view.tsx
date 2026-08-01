@@ -17,7 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
 
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
@@ -55,26 +55,28 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         refreshing={state.refreshing}
         actions={actions}
       />
-      <MonitorBulkActions
-        selectedIds={state.selectedIds}
-        run={actions.runBulk}
-        exportSelected={actions.exportSelected}
-        canWrite={state.capabilities.canWrite}
-        canDelete={state.capabilities.canDelete}
-        canExport={state.canExport}
-        clearSelection={actions.clearSelection}
-        disabled={state.operating}
-      />
-      <MonitorListResults
-        evidence={state.monitors}
-        query={state.query}
-        selectedIds={state.selectedIds}
-        operating={state.operating}
-        canWrite={state.capabilities.canWrite}
-        canDelete={state.capabilities.canDelete}
-        canSelect={state.capabilities.canSelect}
-        actions={actions}
-      />
+      <OperationalResultRegion>
+        <MonitorBulkActions
+          selectedIds={state.selectedIds}
+          run={actions.runBulk}
+          exportSelected={actions.exportSelected}
+          canWrite={state.capabilities.canWrite}
+          canDelete={state.capabilities.canDelete}
+          canExport={state.canExport}
+          clearSelection={actions.clearSelection}
+          disabled={state.operating}
+        />
+        <MonitorListResults
+          evidence={state.monitors}
+          query={state.query}
+          selectedIds={state.selectedIds}
+          operating={state.operating}
+          canWrite={state.capabilities.canWrite}
+          canDelete={state.capabilities.canDelete}
+          canSelect={state.capabilities.canSelect}
+          actions={actions}
+        />
+      </OperationalResultRegion>
       <MonitorImportDialog
         state={state.monitorImport}
         onCancel={actions.cancelImport}

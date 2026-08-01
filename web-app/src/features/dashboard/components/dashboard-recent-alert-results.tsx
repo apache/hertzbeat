@@ -2,11 +2,12 @@
  * Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0.
  */
 
-import { Empty, Skeleton, Tag, Typography } from 'antd';
+import { Skeleton, Tag, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { AlertRecord } from '@/features/alert';
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 import { isDashboardFailureState, type DashboardRecentAlertState } from '../model/dashboard-model';
 import styles from './dashboard.module.css';
 
@@ -15,16 +16,15 @@ const previewLimit = 10;
 export function DashboardRecentAlertResults({ state }: { state: DashboardRecentAlertState }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.recentAlertSection} aria-label={t('dashboard.recentAlerts.title')}>
-      <Typography.Title level={4}>{t('dashboard.recentAlerts.title')}</Typography.Title>
+    <OperationalSection title={t('dashboard.recentAlerts.title')}>
       <RecentAlertContent state={state} t={t} />
-    </section>
+    </OperationalSection>
   );
 }
 
 function RecentAlertContent({ state, t }: { state: DashboardRecentAlertState; t: TFunction }) {
   if (state.kind === 'loading') return <Skeleton active />;
-  if (state.kind === 'empty') return <Empty description={t('dashboard.recentAlerts.empty')} />;
+  if (state.kind === 'empty') return <OperationalStatePanel kind="empty" title={t('dashboard.recentAlerts.empty')} />;
   if (isDashboardFailureState(state)) {
     return (
       <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>

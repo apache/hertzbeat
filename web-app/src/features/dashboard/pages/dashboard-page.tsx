@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 import { DashboardAlertSummary } from '../components/dashboard-alert-results';
 import { DashboardCollectorResults } from '../components/dashboard-collector-results';
 import { DashboardMonitorDistribution, DashboardMonitorSummary } from '../components/dashboard-monitor-results';
@@ -31,25 +32,21 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const dashboard = useDashboardController();
   return (
-    <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('dashboard.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('dashboard.description')}</Typography.Text>
-        </div>
-        <Button
-          onClick={() => {
-            void dashboard.refresh();
-          }}
-        >
-          {t('common.refresh')}
-        </Button>
-      </header>
+    <OperationalPage>
+      <OperationalPageHeader
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
+        actions={
+          <Button
+            onClick={() => {
+              void dashboard.refresh();
+            }}
+          >
+            {t('common.refresh')}
+          </Button>
+        }
+      />
       <section className={styles.summaryBoard} aria-label={t('dashboard.operationsSummary')}>
-        <header className={styles.summaryBoardHeader}>
-          <Typography.Title level={4}>{t('dashboard.operationsSummary')}</Typography.Title>
-          <Typography.Text type="secondary">{t('dashboard.operationsDescription')}</Typography.Text>
-        </header>
         <section className={styles.summaryRow} aria-label={t('dashboard.monitorSummary')}>
           <div className={styles.summaryIdentity}>
             <Typography.Text strong>{t('dashboard.monitorSummary')}</Typography.Text>
@@ -69,6 +66,6 @@ export function DashboardPage() {
       <DashboardLabelResults state={dashboard.labelState} />
       <DashboardMonitorDistribution state={dashboard.monitorState} />
       <DashboardCollectorResults state={dashboard.collectorState} />
-    </div>
+    </OperationalPage>
   );
 }

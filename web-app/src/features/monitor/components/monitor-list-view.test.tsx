@@ -136,6 +136,8 @@ describe('MonitorListView evidence states', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     if (role) expect(screen.getByRole(role)).toBeInTheDocument();
     if (messageKey) expect(screen.getByText(i18n.t(messageKey))).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
 
   it('shows application loading failure instead of an authoritative empty option set', () => {

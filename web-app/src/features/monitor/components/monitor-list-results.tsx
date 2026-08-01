@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import { Alert, Empty, Spin, Table, Tag, type TableProps } from 'antd';
+import { Table, Tag, type TableProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { SortOrder, TableRowSelection } from 'antd/es/table/interface';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import { isMonitorSortField, monitorStatusCodes, type MonitorAction } from '../model/monitor-contract';
 import type { MonitorListEvidence } from '../model/monitor-list-model';
@@ -69,14 +71,13 @@ export function MonitorListResults({
 }) {
   const { t } = useTranslation();
   if (evidence.kind === 'loading')
-    return (
-      <div role="status">
-        <Spin />
-      </div>
-    );
-  if (evidence.kind === 'empty') return <Empty description={t('monitor.empty')} />;
-  if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
-  if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
+    return <OperationalStatePanel kind="loading" title={t('monitor.loading')} description={t('monitor.description')} />;
+  if (evidence.kind === 'empty')
+    return <OperationalStatePanel kind="no-match" title={t('monitor.empty')} description={t('monitor.description')} />;
+  if (evidence.kind === 'unavailable')
+    return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
+  if (evidence.kind === 'error')
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   const rowSelection: TableRowSelection<MonitorListRow> = {
     selectedRowKeys: selectedIds,
     preserveSelectedRowKeys: true,

@@ -2274,6 +2274,7 @@
       "custom": "Custom Monitor"
     },
     "empty": "No monitors match the current query.",
+    "loading": "Loading monitors…",
     "name": "Monitor",
     "updated": "Updated",
     "detail": "Monitor detail",

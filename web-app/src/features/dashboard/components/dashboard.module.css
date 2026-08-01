@@ -15,49 +15,25 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 16px;
-}
-
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-
 .summaryBoard {
-  border: 1px solid var(--hb-border-subtle);
-  border-radius: var(--hb-radius-control);
-  background: var(--hb-bg-raised);
-}
-
-.summaryBoardHeader {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--hb-border-subtle);
-}
-
-.summaryBoardHeader :global(.ant-typography) {
-  display: block;
-  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  border-block: 1px solid var(--hb-border-subtle);
 }
 
 .summaryRow {
   display: grid;
-  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 24px;
-  min-height: 86px;
-  padding: 14px 16px;
+  grid-template-columns: minmax(130px, 0.32fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--hb-space-4);
+  min-height: 104px;
+  padding: var(--hb-space-4) 0;
 }
 
 .summaryRow + .summaryRow {
-  border-top: 1px solid var(--hb-border-subtle);
+  margin-left: var(--hb-space-5);
+  padding-left: var(--hb-space-5);
+  border-left: 1px solid var(--hb-border-subtle);
 }
 
 .summaryIdentity {
@@ -67,8 +43,10 @@
 }
 
 .monitorEvidence {
-  display: flex;
-  gap: 48px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  gap: var(--hb-space-4);
+  width: 100%;
   margin: 0;
 }
 
@@ -83,7 +61,7 @@
 
 .metricValue {
   color: var(--hb-text-primary);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -99,18 +77,6 @@
 .summaryLoading,
 .summaryStatus {
   min-width: 240px;
-}
-
-.section {
-  min-height: 300px;
-}
-
-.recentAlertSection {
-  min-height: 180px;
-}
-
-.recentAlertSection :global(.ant-typography) {
-  margin-top: 0;
 }
 
 .recentAlertList {
@@ -144,9 +110,20 @@
 }
 
 @media (max-width: 720px) {
+  .summaryBoard {
+    grid-template-columns: 1fr;
+  }
+
   .summaryRow {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .summaryRow + .summaryRow {
+    margin-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--hb-border-subtle);
+    border-left: 0;
   }
 
   .monitorEvidence {

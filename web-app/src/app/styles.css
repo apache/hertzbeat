@@ -40,6 +40,16 @@
   --hb-status-unknown: #7d8593;
   --hb-radius-control: 6px;
   --hb-radius-surface: 8px;
+  --hb-space-1: 4px;
+  --hb-space-2: 8px;
+  --hb-space-3: 12px;
+  --hb-space-4: 16px;
+  --hb-space-5: 20px;
+  --hb-space-6: 24px;
+  --hb-space-7: 32px;
+  --hb-page-title-size: 24px;
+  --hb-page-title-line-height: 1.25;
+  --hb-section-title-size: 14px;
   --hb-page-bg: var(--hb-bg-canvas);
   --hb-content-bg: var(--hb-bg-canvas);
   --hb-chrome-bg: var(--hb-bg-chrome);

@@ -5,23 +5,22 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Empty, Skeleton, Table, Tag, Typography } from 'antd';
+import { Skeleton, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import type { CollectorListState, CollectorRecord } from '@/features/settings';
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 import { settingsPaths } from '@/shared/settings/settings-routes';
-import styles from './dashboard.module.css';
 
 export function DashboardCollectorResults({ state }: { state: CollectorListState }) {
   const { t } = useTranslation();
   return (
-    <section className={styles.section} aria-label={t('collectors.title')}>
-      <Typography.Title level={4}>{t('collectors.title')}</Typography.Title>
+    <OperationalSection title={t('collectors.title')}>
       <CollectorContent state={state} t={t} />
-    </section>
+    </OperationalSection>
   );
 }
 
@@ -30,16 +29,16 @@ function CollectorContent({ state, t }: { state: CollectorListState; t: TFunctio
     return <Skeleton active />;
   }
   if (state.kind === 'empty') {
-    return <Empty description={t('collectors.empty')} />;
+    return <OperationalStatePanel kind="empty" title={t('collectors.empty')} />;
   }
   if (state.kind === 'permission') {
-    return <Empty description={t('common.permission.roleRequiredDescription')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
   }
   if (state.kind === 'unavailable') {
-    return <Empty description={t('collectors.unavailable')} />;
+    return <OperationalStatePanel kind="unavailable" title={t('collectors.unavailable')} />;
   }
   if (state.kind === 'error') {
-    return <Empty description={t('common.routeError.description')} />;
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   }
   return (
     <>

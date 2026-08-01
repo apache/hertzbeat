@@ -29,7 +29,10 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
       colorText: palette.text,
       colorTextSecondary: palette.muted,
       controlHeight: 32,
-      fontSize: 13
+      fontSize: 13,
+      fontSizeHeading2: 24,
+      fontSizeHeading4: 14,
+      lineHeightHeading2: 1.25
     },
     components: {
       Layout: {
@@ -43,7 +46,13 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
         itemSelectedBg: palette.selected,
         itemSelectedColor: palette.selectedText
       },
-      Table: { cellPaddingBlock: 8, cellPaddingInline: 10 }
+      Table: {
+        cellPaddingBlock: 8,
+        cellPaddingInline: 10,
+        headerBg: palette.chrome,
+        headerColor: palette.muted,
+        rowHoverBg: palette.hover
+      }
     }
   };
 }
@@ -53,6 +62,7 @@ const darkPalette = {
   canvas: '#0d0f14',
   chrome: '#101218',
   muted: '#929aaa',
+  hover: '#181b22',
   raised: '#14171e',
   selected: '#211a26',
   selectedText: '#f4edf6',
@@ -64,6 +74,7 @@ const lightPalette = {
   canvas: '#f5f6f8',
   chrome: '#ffffff',
   muted: '#697180',
+  hover: '#f1f2f5',
   raised: '#ffffff',
   selected: '#f7f0f8',
   selectedText: '#71357f',

@@ -8,11 +8,20 @@
 .page {
   display: grid;
   min-width: 0;
-  gap: 20px;
+  width: 100%;
+  gap: var(--hb-space-5);
 }
 
 .page > * {
   min-width: 0;
+}
+
+.page[data-mode='workspace'] {
+  gap: var(--hb-space-3);
+}
+
+.page[data-mode='form'] {
+  max-width: 840px;
 }
 
 .header {
@@ -29,11 +38,17 @@
 .copy {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: var(--hb-space-1);
 }
 
 .copy :global(.ant-typography) {
   margin: 0;
+}
+
+.copy :global(h2.ant-typography) {
+  font-size: var(--hb-page-title-size);
+  line-height: var(--hb-page-title-line-height);
+  letter-spacing: -0.018em;
 }
 
 .actions {
@@ -41,15 +56,132 @@
   min-height: 32px;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--hb-space-2);
+}
+
+.commandBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: var(--hb-space-2);
+  padding-block: var(--hb-space-3);
+  border-block: 1px solid var(--hb-border-subtle);
+}
+
+.commandPrimary,
+.commandSecondary {
+  min-width: 0;
+}
+
+.commandSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-2);
+}
+
+.resultRegion {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-4);
+}
+
+.section {
+  min-width: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 36px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hb-space-4);
+  padding-bottom: var(--hb-space-2);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.sectionCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sectionCopy :global(.ant-typography) {
+  margin: 0;
+}
+
+.sectionCopy :global(h4.ant-typography) {
+  font-size: var(--hb-section-title-size);
+  line-height: 1.4;
+}
+
+.sectionActions {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.sectionBody {
+  min-width: 0;
+  padding-top: var(--hb-space-3);
+}
+
+.statePanel {
+  --state-accent: var(--hb-status-unknown);
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: var(--hb-space-3);
+  min-height: 76px;
+  padding: var(--hb-space-4);
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-raised);
+}
+
+.statePanel::before {
+  align-self: stretch;
+  background: var(--state-accent);
+  content: '';
+}
+
+.statePanel[data-state='loading'] {
+  --state-accent: var(--hb-status-loading);
+}
+
+.statePanel[data-state='unavailable'],
+.statePanel[data-state='permission'] {
+  --state-accent: var(--hb-status-degraded);
+}
+
+.statePanel[data-state='error'] {
+  --state-accent: var(--hb-status-unavailable);
+}
+
+.stateCopy {
+  display: grid;
+  min-width: 0;
+  gap: var(--hb-space-1);
+}
+
+.stateAction {
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 700px) {
-  .withActions {
+  .withActions,
+  .commandBar,
+  .statePanel {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .actions {
+  .actions,
+  .commandSecondary {
     justify-content: flex-start;
+  }
+
+  .statePanel::before {
+    display: none;
   }
 }

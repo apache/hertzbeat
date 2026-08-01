@@ -2415,6 +2415,7 @@
       "custom": "Monitoramento personalizado"
     },
     "empty": "Nenhum monitor corresponde à consulta.",
+    "loading": "Carregando monitores…",
     "name": "Monitor",
     "updated": "Atualizado",
     "detail": "Detalhes do monitor",

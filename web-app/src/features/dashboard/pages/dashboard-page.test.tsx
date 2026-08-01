@@ -166,6 +166,22 @@ describe('DashboardPage', () => {
     expectMetric(alerts, i18n.t('alert.summary.emergency'), '0');
   });
 
+  it('uses the shared operational frame and compact state panels for sparse dashboard evidence', () => {
+    controller.useDashboardController.mockReturnValue(
+      withCollector({
+        monitorState: { kind: 'empty', apps: [] },
+        alertState: { kind: 'empty', summary: alert(0) },
+        refresh: vi.fn()
+      })
+    );
+
+    renderPage();
+
+    expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-state="empty"]')).toHaveLength(3);
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+  });
+
   it('presents every authoritative summary counter and preserves the backend percentage format', () => {
     controller.useDashboardController.mockReturnValue(
       withCollector({

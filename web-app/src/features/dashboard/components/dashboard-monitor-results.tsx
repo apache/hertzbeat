@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
+import { OperationalSection } from '@/shared/operational-page';
 import {
   isDashboardFailureState,
   monitorTotals,
@@ -49,8 +50,7 @@ export function DashboardMonitorDistribution({ state }: { state: DashboardMonito
   const { t } = useTranslation();
   if (state.kind !== 'ready') return null;
   return (
-    <section className={styles.section}>
-      <Typography.Title level={4}>{t('dashboard.distribution')}</Typography.Title>
+    <OperationalSection title={t('dashboard.distribution')}>
       <Table<AppCount>
         rowKey={row => `${row.category}-${row.app}`}
         pagination={false}
@@ -58,7 +58,7 @@ export function DashboardMonitorDistribution({ state }: { state: DashboardMonito
         dataSource={state.apps}
         columns={monitorColumns(t)}
       />
-    </section>
+    </OperationalSection>
   );
 }
 

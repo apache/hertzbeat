@@ -8,7 +8,14 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { OperationalPage, OperationalPageHeader } from './operational-page';
+import {
+  OperationalCommandBar,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalResultRegion,
+  OperationalSection,
+  OperationalStatePanel
+} from './operational-page';
 
 describe('OperationalPage', () => {
   afterEach(cleanup);
@@ -45,5 +52,49 @@ describe('OperationalPage', () => {
     );
 
     expect(document.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
+  });
+
+  it('owns the command, result, and section regions used by data-heavy pages', () => {
+    render(
+      <OperationalPage mode="data">
+        <OperationalCommandBar primary={<input aria-label="Search" />} secondary={<button>Refresh</button>} />
+        <OperationalResultRegion>
+          <OperationalSection title="Recent alerts" description="Newest first" actions={<button>View all</button>}>
+            <div>Alert evidence</div>
+          </OperationalSection>
+        </OperationalResultRegion>
+      </OperationalPage>
+    );
+
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toContainElement(
+      screen.getByRole('textbox', { name: 'Search' })
+    );
+    expect(document.querySelector('[data-hb-operational-result-region]')).toContainElement(
+      screen.getByText('Alert evidence')
+    );
+    const section = screen.getByRole('region', { name: 'Recent alerts' });
+    expect(section).toHaveTextContent('Newest first');
+    expect(section).toContainElement(screen.getByRole('button', { name: 'View all' }));
+  });
+
+  it('renders compact semantic states without a decorative empty illustration', () => {
+    const view = render(
+      <OperationalStatePanel
+        kind="no-match"
+        title="No monitors match"
+        description="Change or clear the filters."
+        action={<button>Clear filters</button>}
+      />
+    );
+
+    const state = screen.getByRole('status', { name: 'No monitors match' });
+    expect(state).toHaveAttribute('data-state', 'no-match');
+    expect(state).toHaveTextContent('Change or clear the filters.');
+    expect(state).toContainElement(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+
+    view.rerender(<OperationalStatePanel kind="error" title="Monitor query failed" />);
+    expect(screen.getByRole('alert', { name: 'Monitor query failed' })).toHaveAttribute('data-state', 'error');
   });
 });

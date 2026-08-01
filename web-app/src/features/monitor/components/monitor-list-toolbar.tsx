@@ -18,6 +18,8 @@
 import { Alert, Button, Input, Select, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page';
+
 import { monitorStatusFilters, type MonitorQuery } from '../model/monitor-contract';
 import type { MonitorAppsEvidence } from '../model/monitor-list-model';
 
@@ -45,12 +47,15 @@ type MonitorListToolbarProps = {
 export function MonitorListToolbar(props: MonitorListToolbarProps) {
   const { query, draft, apps, disabled, refreshing, actions } = props;
   return (
-    <div className={styles.filterBand} role="search" data-monitor-filter-band="">
-      <div className={styles.filterFields}>
-        <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
-      </div>
-      <MonitorFilterActions disabled={disabled} refreshing={refreshing} actions={actions} />
-    </div>
+    <OperationalCommandBar
+      role="search"
+      primary={
+        <div className={styles.filterFields}>
+          <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
+        </div>
+      }
+      secondary={<MonitorFilterActions disabled={disabled} refreshing={refreshing} actions={actions} />}
+    />
   );
 }
 
