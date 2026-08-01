@@ -1349,6 +1349,7 @@
     "description": "Inspecione os coletores registrados e gerencie a disponibilidade de despacho.",
     "search": "Pesquisar coletores",
     "searchAction": "Pesquisar",
+    "loading": "Carregando coletores…",
     "empty": "Nenhum coletor corresponde à consulta atual.",
     "unavailable": "Os dados dos coletores não estão disponíveis.",
     "name": "Coletor",

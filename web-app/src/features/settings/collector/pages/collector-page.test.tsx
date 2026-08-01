@@ -644,7 +644,7 @@ describe('CollectorPage', () => {
   });
 
   it.each([
-    ['loading', 'collector-loading'],
+    ['loading', 'Loading Collectors…'],
     ['empty', 'No collectors match the current query.'],
     ['unavailable', 'Collector data is unavailable.'],
     ['error', 'This page could not be loaded. Retry or return to it later.']
@@ -652,9 +652,18 @@ describe('CollectorPage', () => {
     resource.useCollectorController.mockReturnValue(buildController({ listState: { kind } }));
     renderPage();
 
-    if (evidence === 'collector-loading') expect(screen.getByTestId(evidence)).toBeInTheDocument();
-    else expect(screen.getByText(evidence)).toBeInTheDocument();
+    expect(screen.getByText(evidence)).toBeInTheDocument();
     expect(screen.queryByText('10.0.0.7')).not.toBeInTheDocument();
+  });
+
+  it('uses the shared command and result frame with a compact empty state', () => {
+    resource.useCollectorController.mockReturnValue(buildController({ listState: { kind: 'empty' } }));
+    renderPage();
+
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'No collectors match the current query.' })).toBeVisible();
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
 
   it.each([

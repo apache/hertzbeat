@@ -8,7 +8,7 @@
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
 
 import { CollectorActionDialog } from '../components/collector-action-dialog';
 import { CollectorDeployDialog } from '../components/collector-deploy-dialog';
@@ -20,7 +20,6 @@ import { CollectorToolbar } from '../components/collector-toolbar';
 import { useCollectorController } from '../controller/use-collector-controller';
 import { useCollectorDeployController } from '../controller/use-collector-deploy-controller';
 import type { CollectorMutationFailure } from '../model/collector-model';
-import styles from './collector-page.module.css';
 
 export function CollectorPage() {
   const { t } = useTranslation();
@@ -35,35 +34,35 @@ export function CollectorPage() {
         <MutationFailure failure={controller.mutationFailure} />
       )}
       <CollectorRuntimeApplicationAlert state={controller.runtimeApplication} />
-      <div className={styles.commandBand}>
-        <CollectorToolbar
-          canWrite={controller.capabilities.canWrite}
-          canDelete={controller.capabilities.canDelete}
-          name={controller.nameDraft}
-          selected={selected}
-          mutating={controller.mutating}
-          refreshing={controller.refreshing}
-          onName={controller.actions.setNameDraft}
-          onSearch={submitSearch}
-          onRefresh={controller.actions.refresh}
-          onDeploy={deploy.open}
-          onAction={controller.actions.requestAction}
-        />
-      </div>
-      <CollectorList
+      <CollectorToolbar
         canWrite={controller.capabilities.canWrite}
         canDelete={controller.capabilities.canDelete}
-        state={controller.listState}
-        query={controller.query}
+        name={controller.nameDraft}
         selected={selected}
-        busy={controller.mutating}
-        onPage={controller.actions.setPage}
-        onSelect={controller.actions.toggleSelection}
-        onSelectAll={controller.actions.toggleAll}
+        mutating={controller.mutating}
+        refreshing={controller.refreshing}
+        onName={controller.actions.setNameDraft}
+        onSearch={submitSearch}
+        onRefresh={controller.actions.refresh}
+        onDeploy={deploy.open}
         onAction={controller.actions.requestAction}
-        onIntake={controller.actions.openIntake}
-        onRuntime={name => void controller.actions.openRuntimeConfig(name)}
       />
+      <OperationalResultRegion>
+        <CollectorList
+          canWrite={controller.capabilities.canWrite}
+          canDelete={controller.capabilities.canDelete}
+          state={controller.listState}
+          query={controller.query}
+          selected={selected}
+          busy={controller.mutating}
+          onPage={controller.actions.setPage}
+          onSelect={controller.actions.toggleSelection}
+          onSelectAll={controller.actions.toggleAll}
+          onAction={controller.actions.requestAction}
+          onIntake={controller.actions.openIntake}
+          onRuntime={name => void controller.actions.openRuntimeConfig(name)}
+        />
+      </OperationalResultRegion>
       <CollectorDialogs controller={controller} />
       <CollectorDeployDialog
         state={deploy.state}

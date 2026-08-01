@@ -1345,6 +1345,7 @@
     "description": "Inspect registered Collectors and manage their dispatch availability.",
     "search": "Search collectors",
     "searchAction": "Search",
+    "loading": "Loading Collectors…",
     "empty": "No collectors match the current query.",
     "unavailable": "Collector data is unavailable.",
     "name": "Collector",

@@ -5,10 +5,12 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Checkbox, Empty, Pagination, Skeleton, Table, Tag } from 'antd';
+import { Checkbox, Pagination, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { CollectorListState, CollectorMutationAction, CollectorRecord } from '../model/collector-model';
 import { collectorPageSizes, type CollectorPageSize, type CollectorQuery } from '../model/collector-query-model';
@@ -34,23 +36,19 @@ type Props = {
 export function CollectorList(props: Props) {
   const { t } = useTranslation();
   if (props.state.kind === 'loading') {
-    return (
-      <div data-testid="collector-loading">
-        <Skeleton active />
-      </div>
-    );
+    return <OperationalStatePanel kind="loading" title={t('collectors.loading')} />;
   }
   if (props.state.kind === 'empty') {
-    return <Empty description={t('collectors.empty')} />;
+    return <OperationalStatePanel kind="empty" title={t('collectors.empty')} />;
   }
   if (props.state.kind === 'unavailable') {
-    return <StateMessage title={t('collectors.unavailable')} />;
+    return <OperationalStatePanel kind="unavailable" title={t('collectors.unavailable')} />;
   }
   if (props.state.kind === 'permission') {
-    return <StateMessage title={t('common.permission.roleRequiredDescription')} />;
+    return <OperationalStatePanel kind="permission" title={t('common.permission.roleRequiredDescription')} />;
   }
   if (props.state.kind === 'error') {
-    return <StateMessage title={t('common.routeError.description')} />;
+    return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   }
   const columns = collectorColumns(props, t);
   return (
@@ -61,7 +59,7 @@ export function CollectorList(props: Props) {
         dataSource={props.state.records}
         loading={props.busy}
         pagination={false}
-        scroll={{ x: 1440 }}
+        scroll={{ x: 1760 }}
       />
       <Pagination
         current={props.query.pageIndex + 1}
@@ -116,10 +114,11 @@ function selectionColumns(props: Props, t: TFunction): ColumnsType<CollectorReco
 
 function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
   return [
-    { title: t('collectors.name'), dataIndex: 'name', key: 'name' },
+    { title: t('collectors.name'), dataIndex: 'name', key: 'name', width: 180, ellipsis: true },
     {
       title: t('collectors.status'),
       key: 'status',
+      width: 100,
       render: (_, record) => (
         <Tag color={record.online ? 'success' : 'error'}>
           {t(record.online ? 'collectors.online' : 'collectors.offline')}
@@ -130,15 +129,17 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
       title: t('collectors.mode'),
       dataIndex: 'mode',
       key: 'mode',
+      width: 100,
       render: (value: string | null) => value || '—'
     },
     {
       title: t('collectors.tasks'),
       key: 'tasks',
+      width: 80,
       render: (_, record) => record.pinMonitorNum + record.dispatchMonitorNum
     },
-    { title: t('collectors.pinned'), dataIndex: 'pinMonitorNum', key: 'pinned' },
-    { title: t('collectors.dispatched'), dataIndex: 'dispatchMonitorNum', key: 'dispatched' },
+    { title: t('collectors.pinned'), dataIndex: 'pinMonitorNum', key: 'pinned', width: 80 },
+    { title: t('collectors.dispatched'), dataIndex: 'dispatchMonitorNum', key: 'dispatched', width: 90 },
     {
       title: t('collectors.intake.column'),
       key: 'intake',
@@ -151,18 +152,15 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
       width: 240,
       render: (_, record) => <CollectorRuntimeReportFacts report={record.runtimeReport} />
     },
-    { title: t('collectors.address'), dataIndex: 'address', key: 'address' },
+    { title: t('collectors.address'), dataIndex: 'address', key: 'address', width: 180, ellipsis: true },
     {
       title: t('collectors.version'),
       dataIndex: 'version',
       key: 'version',
+      width: 120,
       render: (value: string | null) => value || '—'
     }
   ];
-}
-
-function StateMessage({ title }: { title: string }) {
-  return <Empty description={title} />;
 }
 
 function actionColumn(props: Props, t: TFunction): ColumnsType<CollectorRecord>[number] {
