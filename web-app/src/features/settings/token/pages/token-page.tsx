@@ -26,7 +26,6 @@ import { useTokenResourceController } from '../controller/token-resource-control
 import { useTokenReturnNavigation } from '../controller/use-token-return-navigation';
 
 export function TokenPage() {
-  const { t } = useTranslation();
   const controller = useTokenResourceController();
   const navigation = useTokenReturnNavigation(
     controller.state.generating ||
@@ -36,28 +35,7 @@ export function TokenPage() {
 
   return (
     <OperationalPage>
-      <OperationalPageHeader
-        title={t('token.title')}
-        description={t('token.description')}
-        actions={
-          <>
-            {navigation.returnTo && (
-              <Button disabled={navigation.blocked} onClick={navigation.back}>
-                {t('common.back')}
-              </Button>
-            )}
-            <Button
-              type="primary"
-              aria-label={t('token.generate')}
-              disabled={controller.state.generationRecovery !== null}
-              loading={controller.state.generating}
-              onClick={controller.openGenerator}
-            >
-              {t('token.generate')}
-            </Button>
-          </>
-        }
-      />
+      <TokenPageHeader controller={controller} navigation={navigation} />
       <OperationalResultRegion>
         <TokenList
           list={controller.state.list}
@@ -67,6 +45,45 @@ export function TokenPage() {
           onRevoke={controller.revoke}
         />
       </OperationalResultRegion>
+      <TokenPageModals controller={controller} />
+    </OperationalPage>
+  );
+}
+
+type TokenController = ReturnType<typeof useTokenResourceController>;
+type TokenNavigation = ReturnType<typeof useTokenReturnNavigation>;
+
+function TokenPageHeader({ controller, navigation }: { controller: TokenController; navigation: TokenNavigation }) {
+  const { t } = useTranslation();
+  return (
+    <OperationalPageHeader
+      title={t('token.title')}
+      description={t('token.description')}
+      actions={
+        <>
+          {navigation.returnTo && (
+            <Button disabled={navigation.blocked} onClick={navigation.back}>
+              {t('common.back')}
+            </Button>
+          )}
+          <Button
+            type="primary"
+            aria-label={t('token.generate')}
+            disabled={controller.state.generationRecovery !== null}
+            loading={controller.state.generating}
+            onClick={controller.openGenerator}
+          >
+            {t('token.generate')}
+          </Button>
+        </>
+      }
+    />
+  );
+}
+
+function TokenPageModals({ controller }: { controller: TokenController }) {
+  return (
+    <>
       {controller.state.draft && (
         <TokenGeneratorModal
           draft={controller.state.draft}
@@ -84,6 +101,6 @@ export function TokenPage() {
           onClose={controller.closeGeneratedToken}
         />
       )}
-    </OperationalPage>
+    </>
   );
 }

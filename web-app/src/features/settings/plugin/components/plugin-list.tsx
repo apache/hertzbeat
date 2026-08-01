@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PluginPageSize, PluginQuery, PluginRecord } from '../model/plugin-model';
 
-export function PluginList(props: {
+type PluginListProps = {
   records: PluginRecord[];
   total: number;
   query: PluginQuery;
@@ -25,7 +25,9 @@ export function PluginList(props: {
   onToggle: (plugin: PluginRecord) => void;
   onDelete: (plugin: PluginRecord) => void;
   onConfigure: (plugin: PluginRecord) => void;
-}) {
+};
+
+export function PluginList(props: PluginListProps) {
   const { t } = useTranslation();
   return (
     <div>
@@ -53,7 +55,11 @@ export function PluginList(props: {
   );
 }
 
-function columns(props: Parameters<typeof PluginList>[0], t: TFunction): ColumnsType<PluginRecord> {
+function columns(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord> {
+  return [...pluginIdentityColumns(props, t), pluginActionColumn(props, t)];
+}
+
+function pluginIdentityColumns(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord> {
   return [
     { title: t('plugins.name'), dataIndex: 'name', key: 'name', width: 220 },
     {
@@ -94,24 +100,27 @@ function columns(props: Parameters<typeof PluginList>[0], t: TFunction): Columns
       key: 'paramCount',
       width: 110,
       render: (value: number | undefined) => value ?? t('plugins.unknown')
-    },
-    {
-      title: t('common.actions'),
-      key: 'actions',
-      fixed: 'right',
-      width: 250,
-      render: (_, plugin) => (
-        <Space>
-          {plugin.paramCount !== undefined && plugin.paramCount > 0 && (
-            <Button disabled={!props.canWrite || props.busy} onClick={() => props.onConfigure(plugin)}>
-              {t('plugins.configureParams')}
-            </Button>
-          )}
-          <Button danger disabled={!props.canWrite || props.busy} onClick={() => props.onDelete(plugin)}>
-            {t('common.delete')}
-          </Button>
-        </Space>
-      )
     }
   ];
+}
+
+function pluginActionColumn(props: PluginListProps, t: TFunction): ColumnsType<PluginRecord>[number] {
+  return {
+    title: t('common.actions'),
+    key: 'actions',
+    fixed: 'right',
+    width: 250,
+    render: (_, plugin) => (
+      <Space>
+        {plugin.paramCount !== undefined && plugin.paramCount > 0 && (
+          <Button disabled={!props.canWrite || props.busy} onClick={() => props.onConfigure(plugin)}>
+            {t('plugins.configureParams')}
+          </Button>
+        )}
+        <Button danger disabled={!props.canWrite || props.busy} onClick={() => props.onDelete(plugin)}>
+          {t('common.delete')}
+        </Button>
+      </Space>
+    )
+  };
 }

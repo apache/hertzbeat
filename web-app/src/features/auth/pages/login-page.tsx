@@ -26,8 +26,14 @@ import { useLoginController } from '../controller/use-login-controller';
 import type { LoginCredentials } from '../model/login-model';
 
 export function LoginPage() {
-  const { t } = useTranslation();
   const controller = useLoginController();
+  return <LoginSessionContent controller={controller} />;
+}
+
+type LoginController = ReturnType<typeof useLoginController>;
+
+function LoginSessionContent({ controller }: { controller: LoginController }) {
+  const { t } = useTranslation();
 
   if (controller.sessionState === 'checking') {
     return (
@@ -54,6 +60,12 @@ export function LoginPage() {
     );
   }
   if (controller.sessionState === 'authenticated') return null;
+
+  return <LoginFormContent controller={controller} />;
+}
+
+function LoginFormContent({ controller }: { controller: LoginController }) {
+  const { t } = useTranslation();
 
   return (
     <main className={styles.page}>
