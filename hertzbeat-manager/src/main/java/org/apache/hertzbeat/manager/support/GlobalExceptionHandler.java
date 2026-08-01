@@ -27,6 +27,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -54,6 +55,20 @@ public class GlobalExceptionHandler {
 
     private static final String CONNECT_STR = "||";
     private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
+    private static final String TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE = "telemetry storage unavailable";
+
+    /**
+     * Preserve the difference between a valid empty telemetry query and an unavailable store.
+     *
+     * @return a stable response that does not expose SQL, credentials, telemetry, or exception details
+     */
+    @ExceptionHandler(TelemetryStorageUnavailableException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleTelemetryStorageUnavailable() {
+        log.warn("[telemetry storage unavailable]");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Message.fail(FAIL_CODE, TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE));
+    }
 
     /**
      * Processing probe failure

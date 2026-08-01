@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceRowQuery;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
@@ -84,7 +86,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryRecentTraceRowsUsesSqlExecutorWhenAvailable() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         List<Map<String, Object>> rows = repository.queryRecentTraceRows(20);
 
@@ -92,7 +94,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertEquals(1, rows.size());
         assertEquals("trace-1", rows.getFirst().get("trace_id"));
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor).executeStrict(sqlCaptor.capture());
         assertTraceSqlProjectsAttribution(sqlCaptor.getValue());
         assertTrue(sqlCaptor.getValue().endsWith("FROM hzb_traces ORDER BY timestamp DESC LIMIT 20"));
     }
@@ -100,14 +102,14 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryRecentTraceRowsPushesServiceAndInternalFiltersIntoNarrowSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         List<Map<String, Object>> rows = repository.queryRecentTraceRows(30, "recommendation", true);
 
         assertNotNull(rows);
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor).executeStrict(sqlCaptor.capture());
         assertTraceSqlProjectsAttribution(sqlCaptor.getValue());
         assertTrue(sqlCaptor.getValue().endsWith("FROM hzb_traces WHERE service_name = 'recommendation' "
                 + "AND LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat') ORDER BY timestamp DESC LIMIT 30"));
@@ -116,7 +118,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryRecentTraceRowsPushesTimeWindowIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         List<Map<String, Object>> rows = repository.queryRecentTraceRows(
                 50, 1710000000000L, 1710003600000L, "checkout", "prod", true);
@@ -124,7 +126,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertNotNull(rows);
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTraceSqlProjectsAttribution(sql);
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
@@ -139,7 +141,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryRecentTraceRowsPushesWorkspaceAndEntityScopeIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         List<Map<String, Object>> rows = repository.queryRecentTraceRows(
                 75,
@@ -162,7 +164,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertNotNull(rows);
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTraceSqlProjectsAttribution(sql);
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
@@ -182,7 +184,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceListRowsPushesGroupingPaginationAndTotalCountIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "trace_id", "trace-1",
                 "total_count", 42L)));
 
@@ -205,7 +207,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertNotNull(rows);
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.contains("COUNT(*) OVER () AS total_count"));
         assertTrue(sql.contains("FROM (SELECT trace_id"));
@@ -234,7 +236,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceListRowsScopesSpanFiltersToEntrypointSpans() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "trace_id", "trace-entry",
                 "total_count", 1L)));
 
@@ -257,7 +259,7 @@ class GreptimeTraceQueryRepositoryTest {
 
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.contains("span_name = 'POST /checkout'"));
         assertTrue(sql.contains("duration_nano >= 100000000"));
@@ -269,7 +271,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceOverviewRowsPushesAggregateFiltersIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "total_trace_count", 42L,
                 "error_trace_count", 7L,
                 "latest_observed_at", 1710003600000L)));
@@ -291,7 +293,7 @@ class GreptimeTraceQueryRepositoryTest {
 
         assertEquals(42L, overview.get("total_trace_count"));
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.startsWith("SELECT COUNT(*) AS total_trace_count"));
         assertTrue(sql.contains("SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count"));
@@ -323,7 +325,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceIdOverviewRowsPushesTraceIdAggregateFiltersIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "total_trace_count", 1L,
                 "error_trace_count", 1L,
                 "latest_observed_at", 1710003600000L)));
@@ -346,7 +348,7 @@ class GreptimeTraceQueryRepositoryTest {
 
         assertEquals(1L, overview.get("total_trace_count"));
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.startsWith("SELECT COUNT(*) AS total_trace_count"));
         assertTrue(sql.contains("SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count"));
@@ -376,7 +378,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceSummaryRowsPushesAggregateAndLatestTraceIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "total_trace_count", 7L,
                 "error_trace_count", 2L,
                 "latest_observed_at", 1710003600000L,
@@ -394,7 +396,7 @@ class GreptimeTraceQueryRepositoryTest {
 
         assertEquals("trace-latest", summary.get("latest_trace_id"));
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.startsWith("SELECT summary.total_trace_count"));
         assertTrue(sql.contains("summary.error_trace_count"));
@@ -423,7 +425,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceGroupByRowsAggregatesByTraceBeforeGroupingFieldValues() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "group_value", "1.2.3",
                 "trace_count", 12L,
                 "error_trace_count", 2L,
@@ -451,7 +453,7 @@ class GreptimeTraceQueryRepositoryTest {
 
         assertEquals("1.2.3", rows.getFirst().get("group_value"));
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.startsWith("SELECT group_value, COUNT(*) AS trace_count"));
         assertTrue(sql.contains("SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count"));
@@ -490,7 +492,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceServiceGraphRowsPushesServiceGraphRedAggregationIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of(
                 "source_service_name", "checkout-api",
                 "target_service_name", "payment-api",
                 "request_count", 2L)));
@@ -501,7 +503,7 @@ class GreptimeTraceQueryRepositoryTest {
         assertNotNull(rows);
         assertEquals(1, rows.size());
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTrue(sql.startsWith("SELECT parent.service_name AS source_service_name, "
                 + "child.service_name AS target_service_name"));
@@ -541,7 +543,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceServiceGraphRowsUsesFlattenedResourceAttributeColumnsWhenGreptimeSchemaHasNoJsonColumn() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenAnswer(invocation -> {
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0);
             if (sql.startsWith("DESC hzb_traces")) {
                 return List.of(
@@ -560,7 +562,7 @@ class GreptimeTraceQueryRepositoryTest {
         repository.queryTraceServiceGraphRows(100, 1710000000000L, 1710003600000L, "prod", true);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getAllValues().get(1);
         assertTrue(sql.contains("child.\"resource_attributes.deployment.environment.name\" = 'prod'"));
         assertTrue(sql.contains("LOWER(child.service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
@@ -601,14 +603,50 @@ class GreptimeTraceQueryRepositoryTest {
     }
 
     @Test
+    void queryTraceRowsReportsUnavailableWhenGreptimeHttpRejectsTheQuery() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(null);
+        when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
+        when(greptimeProperties.database()).thenReturn("public");
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(ResponseEntity.<GreptimeSqlQueryContent>status(HttpStatus.SERVICE_UNAVAILABLE).build());
+
+        assertThrows(
+                TelemetryStorageUnavailableException.class,
+                () -> repository.queryTraceRows("trace-1", 5));
+    }
+
+    @Test
+    void queryTraceRowsReportsUnavailableWhenGreptimeHttpReturnsAnErrorCode() {
+        GreptimeSqlQueryContent rejectedResponse = sqlResponse();
+        rejectedResponse.setCode(1);
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(null);
+        when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
+        when(greptimeProperties.database()).thenReturn("public");
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(ResponseEntity.ok(rejectedResponse));
+
+        assertThrows(
+                TelemetryStorageUnavailableException.class,
+                () -> repository.queryTraceRows("trace-1", 5));
+    }
+
+    @Test
     void queryTraceRowsSelectsFlattenedOtlpColumnsForEntityAttribution() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         repository.queryTraceRows("trace-1", 5);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTraceSqlProjectsAttribution(sql);
     }
@@ -616,7 +654,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceRowsPushesRouteFiltersIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         repository.queryTraceRows(
                 "trace-'1",
@@ -635,7 +673,7 @@ class GreptimeTraceQueryRepositoryTest {
         );
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getAllValues().get(1);
         assertTraceSqlProjectsAttribution(sql);
         assertTrue(sql.contains("trace_id = 'trace-''1'"));
@@ -660,7 +698,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryTraceRowsPushesTypedSpanAndAttributeContextIntoGreptimeSql() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         repository.queryTraceRows(new TraceRowQuery(
                 "trace-'1",
@@ -682,7 +720,7 @@ class GreptimeTraceQueryRepositoryTest {
                 25);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getAllValues().get(1);
         assertTrue(sql.contains("trace_id = 'trace-''1'"));
         assertTrue(sql.contains("span_id = 'span-''1'"));
@@ -700,7 +738,7 @@ class GreptimeTraceQueryRepositoryTest {
     @Test
     void queryRecentTraceRowsPushesListAttributeContextBeforeApplyingLimit() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+        when(greptimeSqlQueryExecutor.executeStrict(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
 
         repository.queryRecentTraceRows(new TraceRowQuery(
                 null,
@@ -720,7 +758,7 @@ class GreptimeTraceQueryRepositoryTest {
                 1500);
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        verify(greptimeSqlQueryExecutor, times(2)).executeStrict(sqlCaptor.capture());
         String sql = sqlCaptor.getAllValues().get(1);
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') "
                 + "= 'checkout-7d9'"));
@@ -732,14 +770,16 @@ class GreptimeTraceQueryRepositoryTest {
     void queryFailureLogsOnlyStableCategoryWithoutSqlOrThrowableBody() {
         String secretSentinel = "Bearer secret-token";
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
-        when(greptimeSqlQueryExecutor.execute(anyString()))
+        when(greptimeSqlQueryExecutor.executeStrict(anyString()))
                 .thenThrow(new IllegalStateException(secretSentinel));
         Logger logger = (Logger) LoggerFactory.getLogger(GreptimeTraceQueryRepository.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
         try {
-            assertTrue(repository.queryTraceRows("trace-1", 5).isEmpty());
+            assertThrows(
+                    TelemetryStorageUnavailableException.class,
+                    () -> repository.queryTraceRows("trace-1", 5));
         } finally {
             logger.detachAppender(appender);
             appender.stop();

@@ -7,6 +7,8 @@
 
 package org.apache.hertzbeat.manager.support;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
@@ -18,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -125,6 +128,14 @@ class GlobalExceptionHandlerTest {
         }
     }
 
+    @Test
+    void telemetryStorageFailureIsAnExplicitSafeUnavailableResponse() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/telemetry-storage-unavailable"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(content().string(containsString("telemetry storage unavailable")))
+                .andExpect(content().string(not(containsString(PRIVATE_SERIALIZATION_DETAIL))));
+    }
+
     @RestController
     private static final class DisconnectController {
 
@@ -147,6 +158,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/serialization-failure")
         SerializationFailureDto serializationFailure() {
             return new SerializationFailureDto();
+        }
+
+        @GetMapping("/telemetry-storage-unavailable")
+        void telemetryStorageUnavailable() {
+            throw new TelemetryStorageUnavailableException();
         }
 
         private HttpMessageNotWritableException wrappedDisconnectFailure() {

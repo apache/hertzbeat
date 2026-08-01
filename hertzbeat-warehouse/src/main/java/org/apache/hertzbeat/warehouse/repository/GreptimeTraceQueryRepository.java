@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
@@ -889,14 +890,14 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         GreptimeSqlQueryExecutor executor = greptimeSqlQueryExecutorProvider.getIfAvailable();
         if (executor != null) {
             try {
-                return executor.execute(sql);
+                return executor.executeStrict(sql);
             } catch (Exception ex) {
                 log.warn("Trace query failed");
-                return Collections.emptyList();
+                throw new TelemetryStorageUnavailableException();
             }
         }
         if (greptimeProperties == null || !StringUtils.hasText(greptimeProperties.httpEndpoint())) {
-            return Collections.emptyList();
+            throw new TelemetryStorageUnavailableException();
         }
         return queryRowsByGreptimeHttp(sql);
     }
@@ -928,8 +929,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                     url, HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class
             );
             if (!responseEntity.getStatusCode().is2xxSuccessful() || responseEntity.getBody() == null
+                    || (responseEntity.getBody().getCode() != null && responseEntity.getBody().getCode() != 0)
                     || CollectionUtils.isEmpty(responseEntity.getBody().getOutput())) {
-                return Collections.emptyList();
+                throw new TelemetryStorageUnavailableException();
             }
             List<Map<String, Object>> results = new LinkedList<>();
             for (GreptimeSqlQueryContent.Output output : responseEntity.getBody().getOutput()) {
@@ -958,7 +960,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             return results;
         } catch (Exception ex) {
             log.warn("Trace query fallback failed");
-            return Collections.emptyList();
+            throw new TelemetryStorageUnavailableException();
         }
     }
 
