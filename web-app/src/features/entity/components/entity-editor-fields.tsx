@@ -11,6 +11,7 @@ import {
   type EntityEditorErrors,
   type EntityEditorField
 } from '../model/entity-editor-contract';
+import styles from './entity-view.module.css';
 
 type FieldProps = {
   draft: EntityEditorDraft;
@@ -106,7 +107,12 @@ function EditorInput({
       props.change(field, event.target.value)
   };
   return (
-    <Form.Item required={required ?? false} label={label} {...errorProps(field, props.errors, t)}>
+    <Form.Item
+      className={multiline ? styles.wideField : undefined}
+      required={required ?? false}
+      label={label}
+      {...errorProps(field, props.errors, t)}
+    >
       {multiline ? (
         <Input.TextArea rows={field === 'description' ? 3 : 2} {...controlProps} />
       ) : (

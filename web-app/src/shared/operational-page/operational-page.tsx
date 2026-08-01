@@ -88,6 +88,14 @@ export function OperationalResultRegion({ children }: PropsWithChildren) {
   );
 }
 
+export function OperationalFormActions({ children }: PropsWithChildren) {
+  return (
+    <footer className={styles.formActions} data-hb-operational-form-actions="">
+      {children}
+    </footer>
+  );
+}
+
 export function OperationalSection({
   title,
   description,

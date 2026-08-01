@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   OperationalCommandBar,
+  OperationalFormActions,
   OperationalPage,
   OperationalPageHeader,
   OperationalResultRegion,
@@ -96,5 +97,21 @@ describe('OperationalPage', () => {
 
     view.rerender(<OperationalStatePanel kind="error" title="Monitor query failed" />);
     expect(screen.getByRole('alert', { name: 'Monitor query failed' })).toHaveAttribute('data-state', 'error');
+  });
+
+  it('keeps form actions in a stable shared footer', () => {
+    render(
+      <OperationalPage mode="form">
+        <OperationalFormActions>
+          <button type="submit">Save</button>
+          <button type="button">Cancel</button>
+        </OperationalFormActions>
+      </OperationalPage>
+    );
+
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'form');
+    const actions = document.querySelector('[data-hb-operational-form-actions]');
+    expect(actions).toContainElement(screen.getByRole('button', { name: 'Save' }));
+    expect(actions).toContainElement(screen.getByRole('button', { name: 'Cancel' }));
   });
 });

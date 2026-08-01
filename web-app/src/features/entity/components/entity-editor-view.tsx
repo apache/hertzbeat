@@ -1,8 +1,16 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Form, Space, Spin, Typography } from 'antd';
+import { Alert, Button, Form } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  OperationalFormActions,
+  OperationalPage,
+  OperationalPageHeader,
+  OperationalSection,
+  OperationalStatePanel
+} from '@/shared/operational-page';
 
 import type {
   EntityCatalogSuggestions,
@@ -38,17 +46,24 @@ export type EntityEditorViewProps = {
 
 export function EntityEditorView({ state, actions }: EntityEditorViewProps) {
   const { t } = useTranslation();
-  if (state.evidence.kind === 'loading')
+  if (state.evidence.kind !== 'ready') {
+    const stateCopy = {
+      loading: { kind: 'loading', title: t('entity.loading') },
+      missing: { kind: 'empty', title: t('common.notFound.description') },
+      permission: { kind: 'permission', title: t('entity.editor.saveFailure.permission') },
+      unavailable: { kind: 'unavailable', title: t('common.unavailable') },
+      error: { kind: 'error', title: t('common.routeError.description') }
+    } as const;
     return (
-      <div role="status">
-        <Spin />
-      </div>
+      <OperationalPage mode="form">
+        <OperationalPageHeader
+          title={t(state.mode === 'new' ? 'entity.editor.addTitle' : 'entity.editor.editTitle')}
+          description={t('entity.editor.identityHint')}
+        />
+        <OperationalStatePanel {...stateCopy[state.evidence.kind]} />
+      </OperationalPage>
     );
-  if (state.evidence.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
-  if (state.evidence.kind === 'permission')
-    return <Alert showIcon type="error" message={t('entity.editor.saveFailure.permission')} />;
-  if (state.evidence.kind === 'unavailable') return <Alert type="warning" message={t('common.unavailable')} />;
-  if (state.evidence.kind === 'error') return <Alert type="error" message={t('common.routeError.description')} />;
+  }
   return <ReadyEditor state={state} actions={actions} />;
 }
 
@@ -58,34 +73,44 @@ function ReadyEditor({ state, actions }: EntityEditorViewProps) {
   const suggestions = state.suggestions.kind === 'ready' ? state.suggestions.value : undefined;
   const fields = { draft: state.draft, errors: state.errors, suggestions, change: actions.change };
   return (
-    <div className={styles.editorPage ?? ''}>
-      <header>
-        <Typography.Title level={2}>
-          {t(state.mode === 'new' ? 'entity.editor.addTitle' : 'entity.editor.editTitle')}
-        </Typography.Title>
-        <Typography.Text type="secondary">{t('entity.editor.identityHint')}</Typography.Text>
-      </header>
+    <OperationalPage mode="form">
+      <OperationalPageHeader
+        title={t(state.mode === 'new' ? 'entity.editor.addTitle' : 'entity.editor.editTitle')}
+        description={t('entity.editor.identityHint')}
+      />
       {state.suggestions.kind === 'unavailable' ? (
         <Alert showIcon type="info" message={t('entity.editor.suggestionsUnavailable')} />
       ) : null}
       {state.saveFailure ? (
         <Alert showIcon type="error" message={t(`entity.editor.saveFailure.${state.saveFailure}`)} />
       ) : null}
-      <Form disabled={state.saving} layout="vertical" onFinish={actions.submit} className={styles.editorForm ?? ''}>
-        <EntityEditorCoreFields {...fields} />
-        <Button type="link" className={styles.disclosure ?? ''} onClick={() => setAdvanced(value => !value)}>
-          {t(advanced ? 'entity.editor.hideAdvanced' : 'entity.editor.showAdvanced')}
-        </Button>
-        {advanced ? <EntityEditorAdvancedFields {...fields} /> : null}
-        <Space>
+      <Form disabled={state.saving} layout="vertical" onFinish={actions.submit} className={styles.editorForm}>
+        <OperationalSection title={t('entity.sections.details')}>
+          <div className={styles.editorFields}>
+            <EntityEditorCoreFields {...fields} />
+          </div>
+        </OperationalSection>
+        <div className={styles.disclosureRow}>
+          <Button type="text" onClick={() => setAdvanced(value => !value)}>
+            {t(advanced ? 'entity.editor.hideAdvanced' : 'entity.editor.showAdvanced')}
+          </Button>
+        </div>
+        {advanced ? (
+          <OperationalSection title={t('entity.editor.showAdvanced')}>
+            <div className={styles.editorFields}>
+              <EntityEditorAdvancedFields {...fields} />
+            </div>
+          </OperationalSection>
+        ) : null}
+        <OperationalFormActions>
           <Button type="primary" htmlType="submit" loading={state.saving}>
             {t('common.save')}
           </Button>
           <Button disabled={state.saving} onClick={() => actions.cancel()}>
             {t('common.cancel')}
           </Button>
-        </Space>
+        </OperationalFormActions>
       </Form>
-    </div>
+    </OperationalPage>
   );
 }

@@ -1,16 +1,30 @@
-.editorPage {
-  max-width: 760px;
-  display: grid;
-  gap: 16px;
-}
-
 .editorForm {
-  max-width: 640px;
+  display: grid;
+  gap: var(--hb-space-4);
 }
 
-.disclosure {
+.editorFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--hb-space-4);
+}
+
+.editorFields :global(.ant-form-item) {
+  margin-bottom: var(--hb-space-4);
+}
+
+.wideField {
+  grid-column: 1 / -1;
+}
+
+.disclosureRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: calc(var(--hb-space-2) * -1);
+}
+
+.disclosureRow :global(.ant-btn) {
   padding-inline: 0;
-  margin-bottom: 16px;
 }
 .filterStack {
   display: grid;
@@ -51,6 +65,7 @@
 }
 
 @media (max-width: 760px) {
+  .editorFields,
   .filters,
   .advancedFilters {
     grid-template-columns: 1fr;

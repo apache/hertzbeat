@@ -18,6 +18,8 @@ describe('EntityEditorView', () => {
   it.each(['loading', 'missing', 'unavailable', 'error'] as const)('keeps %s distinct from the editable form', kind => {
     renderView({ evidence: { kind } });
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'form');
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
 
   it('keeps the first viewport focused and explains server-derived identity', () => {
@@ -26,6 +28,7 @@ describe('EntityEditorView', () => {
     expect(screen.getByText(/automatically recognizes and links/i)).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Resource type' })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-form-actions]')).toBeInTheDocument();
     expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Advanced details' }));
     expect(screen.getByRole('combobox', { name: 'Owner' })).toBeInTheDocument();
