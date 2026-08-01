@@ -5,11 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Form, Input, Skeleton, Space, Typography } from 'antd';
+import { Button, Form, Input, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page/operational-page';
+import type { SessionLockFailure } from '@/core/auth/session-lock-model';
 
 import { useSessionLockController } from '../controller/use-session-lock-controller';
 import styles from './login-page.module.css';
+import { PassportBrand } from './passport-brand';
 
 export function SessionLockPage() {
   const { t } = useTranslation();
@@ -18,7 +22,8 @@ export function SessionLockPage() {
     return (
       <main className={styles.page}>
         <section className={styles.panel} aria-label={t('auth.checkingSession')}>
-          <Skeleton active paragraph={{ rows: 4 }} />
+          <PassportBrand />
+          <OperationalStatePanel kind="loading" title={t('auth.checkingSession')} />
         </section>
       </main>
     );
@@ -34,6 +39,7 @@ function SessionLockPanel({ controller }: { controller: ReturnType<typeof useSes
   const { t } = useTranslation();
   return (
     <section className={styles.panel} aria-labelledby="session-lock-title">
+      <PassportBrand />
       <Typography.Title id="session-lock-title" level={2}>
         {t('auth.lock.title')}
       </Typography.Title>
@@ -46,10 +52,9 @@ function SessionLockPanel({ controller }: { controller: ReturnType<typeof useSes
         </Typography.Paragraph>
       )}
       {controller.failureKey && (
-        <Alert
-          type="error"
-          showIcon
-          message={t(controller.failureKey)}
+        <OperationalStatePanel
+          kind={sessionLockFailureState(controller.failure)}
+          title={t(controller.failureKey)}
           action={
             controller.retryableSessionFailure ? (
               <Button onClick={controller.retrySession}>{t('common.retry')}</Button>
@@ -60,6 +65,10 @@ function SessionLockPanel({ controller }: { controller: ReturnType<typeof useSes
       <SessionUnlockForm controller={controller} />
     </section>
   );
+}
+
+function sessionLockFailureState(failure: SessionLockFailure | null): OperationalStateKind {
+  return failure === 'unavailable' ? 'unavailable' : 'error';
 }
 
 function SessionUnlockForm({ controller }: { controller: ReturnType<typeof useSessionLockController> }) {

@@ -62,6 +62,7 @@ export function useLoginController() {
 
   return {
     errorKey: login.failure ? loginErrorMessageKey(login.failure) : undefined,
+    failureKind: login.failure,
     pending: login.pending,
     retrySession: retry,
     sessionFailureKey: loginSessionFailureMessageKey(sessionState),

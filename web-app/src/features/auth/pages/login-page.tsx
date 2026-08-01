@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Form, Input, Skeleton, Typography } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
+
 import styles from './login-page.module.css';
+import { PassportBrand } from './passport-brand';
 import { useLoginController } from '../controller/use-login-controller';
 import type { LoginCredentials } from '../model/login-model';
 
@@ -30,7 +33,8 @@ export function LoginPage() {
     return (
       <main className={styles.page}>
         <section className={styles.panel} aria-label={t('auth.checkingSession')}>
-          <Skeleton active paragraph={{ rows: 4 }} />
+          <PassportBrand />
+          <OperationalStatePanel kind="loading" title={t('auth.checkingSession')} />
         </section>
       </main>
     );
@@ -39,11 +43,10 @@ export function LoginPage() {
     return (
       <main className={styles.page}>
         <section className={styles.panel}>
-          <Alert
-            data-session-failure={controller.sessionState}
-            type="error"
-            showIcon
-            message={t(controller.sessionFailureKey)}
+          <PassportBrand />
+          <OperationalStatePanel
+            kind={controller.sessionState === 'unavailable' ? 'unavailable' : 'error'}
+            title={t(controller.sessionFailureKey)}
             action={<Button onClick={controller.retrySession}>{t('common.retry')}</Button>}
           />
         </section>
@@ -55,11 +58,17 @@ export function LoginPage() {
   return (
     <main className={styles.page}>
       <section className={styles.panel} aria-labelledby="login-title">
+        <PassportBrand />
         <Typography.Title id="login-title" level={2}>
           {t('auth.title')}
         </Typography.Title>
         <Typography.Paragraph type="secondary">{t('auth.description')}</Typography.Paragraph>
-        {controller.errorKey && <Alert type="error" showIcon message={t(controller.errorKey)} />}
+        {controller.errorKey && (
+          <OperationalStatePanel
+            kind={controller.failureKind === 'unavailable' ? 'unavailable' : 'error'}
+            title={t(controller.errorKey)}
+          />
+        )}
         <Form<LoginCredentials>
           layout="vertical"
           onFinish={values => {

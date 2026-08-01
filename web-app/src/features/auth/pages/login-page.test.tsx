@@ -85,6 +85,7 @@ describe('LoginPage', () => {
     const username = screen.getByLabelText('Username');
     const password = screen.getByLabelText('Password');
 
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/logo.svg');
     expect(username).toHaveValue('');
     expect(password).toHaveValue('');
 
@@ -152,6 +153,10 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByText(message).closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      failure instanceof SessionRequestError && failure.kind === 'unavailable' ? 'unavailable' : 'error'
+    );
     expect(screen.queryByText(/internal authentication detail/i)).not.toBeInTheDocument();
   });
 
@@ -162,7 +167,11 @@ describe('LoginPage', () => {
       retry: vi.fn()
     });
 
-    expect(screen.getByLabelText('Checking the current session')).toBeInTheDocument();
+    expect(screen.getByText('Checking the current session').closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
   });
@@ -180,7 +189,10 @@ describe('LoginPage', () => {
       retry
     });
 
-    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(screen.getByText(message).closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      failure === 'unavailable' ? 'unavailable' : 'error'
+    );
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));

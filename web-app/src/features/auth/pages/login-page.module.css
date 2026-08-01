@@ -25,17 +25,56 @@
 
 .panel {
   width: min(400px, 100%);
-  padding: 32px;
+  padding: 30px;
   border: 1px solid var(--hb-border-subtle);
   border-radius: var(--hb-radius-surface);
   background: var(--hb-bg-raised);
 }
 
-.panel :global(.ant-alert) {
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.brandLogo {
+  display: block;
+  width: 32px;
+  height: 31px;
+}
+
+.brandName {
+  color: var(--hb-text-primary);
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.panel > [data-state] {
   margin-bottom: 20px;
+}
+
+.panel > :global(h2.ant-typography) {
+  margin-bottom: 4px;
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -0.018em;
 }
 
 .actions,
 .actions > :global(.ant-space-item) {
   width: 100%;
+}
+
+@media (max-width: 520px) {
+  .page {
+    align-items: start;
+    padding: 20px;
+  }
+
+  .panel {
+    margin-top: 8vh;
+    padding: 24px;
+  }
 }

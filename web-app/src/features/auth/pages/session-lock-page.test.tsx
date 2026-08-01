@@ -38,6 +38,22 @@ describe('SessionLockPage', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    controller.loading = false;
+  });
+
+  it('renders an honest loading state without exposing the unlock form', () => {
+    controller.loading = true;
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByText('Checking the current session').closest('[data-state]')).toHaveAttribute(
+      'data-state',
+      'loading'
+    );
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
   });
 
   it('renders a passport-layout re-auth surface without username or redirect inputs', () => {
@@ -48,6 +64,7 @@ describe('SessionLockPage', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Session locked' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/logo.svg');
     expect(screen.getByText('Enter your password to continue this session.')).toBeInTheDocument();
     expect(screen.getByText('operator')).toBeInTheDocument();
     expect(screen.getByText('Workspace: workspace-a')).toBeInTheDocument();
