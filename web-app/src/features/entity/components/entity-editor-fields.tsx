@@ -108,7 +108,7 @@ function EditorInput({
   };
   return (
     <Form.Item
-      className={multiline ? styles.wideField : undefined}
+      {...(multiline ? { className: styles.wideField! } : {})}
       required={required ?? false}
       label={label}
       {...errorProps(field, props.errors, t)}

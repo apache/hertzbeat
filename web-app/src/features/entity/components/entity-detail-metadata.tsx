@@ -14,12 +14,12 @@ export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
   return (
     <>
       <OperationalSection title={t('entity.sections.details')}>
-        <Descriptions className={styles.metadataGrid} size="small" column={2} items={baseItems(t, detail)} />
+        <Descriptions className={styles.metadataGrid!} size="small" column={2} items={baseItems(t, detail)} />
       </OperationalSection>
       <OperationalSection title={t('entity.sections.evidence')}>
         {detail.evidence ? (
           <Descriptions
-            className={styles.evidenceGrid}
+            className={styles.evidenceGrid!}
             size="small"
             column={5}
             items={evidenceItems(t, detail.evidence)}
