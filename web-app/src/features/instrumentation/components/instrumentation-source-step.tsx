@@ -40,8 +40,10 @@ export function InstrumentationSourceStep(props: {
     <section className={styles.section} aria-label={t('instrumentation.v2.connectTitle')}>
       {!draft && (
         <>
-          <Typography.Title level={3}>{t('instrumentation.v2.connectTitle')}</Typography.Title>
-          <Typography.Text type="secondary">{t('instrumentation.v2.description')}</Typography.Text>
+          <div className={styles.sourceIntro}>
+            <Typography.Title level={3}>{t('instrumentation.v2.connectTitle')}</Typography.Title>
+            <Typography.Text type="secondary">{t('instrumentation.v2.description')}</Typography.Text>
+          </div>
           <SourceDirectory {...props} />
         </>
       )}
@@ -69,6 +71,7 @@ function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0])
   return (
     <>
       <Input.Search
+        className={styles.sourceSearch}
         value={query}
         onChange={event => setQuery(event.target.value)}
         placeholder={t('instrumentation.v2.directory.search')}

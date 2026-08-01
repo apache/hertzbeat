@@ -40,7 +40,9 @@ describe('instrumentation v2 interaction', () => {
       <InstrumentationSourceStep catalog={catalog} onSource={onSource} onApplicationAnswer={onApplicationAnswer} />
     );
     expect(screen.getByRole('searchbox')).toBeVisible();
-    expect(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ })).toBeVisible();
+    const allSources = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ });
+    expect(allSources).toBeVisible();
+    expect(allSources).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
     const javaSource = screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ });
     expect(javaSource).toBeVisible();
@@ -49,19 +51,19 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
     expect(shellCss).toMatch(/\.sourceGrid\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
     expect(shellCss).toMatch(
-      /\.sourceTile\s*\{[^}]*min-width:\s*150px[^}]*min-height:\s*var\(--ant-control-height-lg\)[^}]*flex:\s*0\s+0\s+auto/
+      /\.sourceTile\s*\{[^}]*min-width:\s*max-content[^}]*min-height:\s*44px[^}]*flex:\s*0\s+0\s+auto/
     );
     expect(shellCss).toMatch(
-      /\.sourceTile\s*\{[^}]*border:\s*var\(--ant-line-width\) solid transparent[^}]*background:\s*var\(--ant-color-fill-quaternary\)/
+      /\.sourceTile\s*\{[^}]*border:\s*var\(--ant-line-width\) solid var\(--hb-border\)[^}]*background:\s*var\(--hb-bg-raised\)/
     );
     expect(shellCss).toMatch(
-      /\.sourceTile:hover:not\(:disabled\),\s*\.sourceTile:focus-visible\s*\{[^}]*border-color:\s*var\(--ant-color-border\)[^}]*background:\s*var\(--ant-color-fill-tertiary\)/
+      /\.sourceTile:hover:not\(:disabled\),\s*\.sourceTile:focus-visible\s*\{[^}]*border-color:\s*var\(--ant-color-border-secondary\)[^}]*background:\s*var\(--hb-bg-hover\)/
     );
     expect(shellCss).toMatch(/\.sourceTile:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--hb-focus-ring\)/);
     expect(shellCss).toMatch(
       /\.sourceTileSelected,\s*\.sourceTileSelected:hover:not\(:disabled\),\s*\.sourceTileSelected:focus-visible\s*\{[^}]*border-color:\s*var\(--hb-brand-accent\)/
     );
-    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*font-weight:\s*normal[^}]*white-space:\s*nowrap/);
+    expect(shellCss).toMatch(/\.sourceName\s*\{[^}]*font-weight:\s*600[^}]*white-space:\s*nowrap/);
     expect(shellCss).toMatch(
       /\.sourceIcon\s*\{[^}]*width:\s*var\(--ant-font-size-lg\)[^}]*height:\s*var\(--ant-font-size-lg\)/
     );
@@ -75,7 +77,10 @@ describe('instrumentation v2 interaction', () => {
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
     ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ }));
+    const logsCategory = screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ });
+    fireEvent.click(logsCategory);
+    expect(logsCategory).toHaveAttribute('aria-current', 'true');
+    expect(allSources).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.fluent_bit/ })).toBeDisabled();
     expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeNull();

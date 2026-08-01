@@ -20,13 +20,20 @@ export function InstrumentationSourceCategoryRail(props: {
   const { t } = useTranslation();
   return (
     <nav className={styles.categoryRail} aria-label={t('instrumentation.v2.directory.categories')}>
-      <Button type={props.groupId ? 'text' : 'primary'} onClick={() => props.onGroup(undefined)}>
+      <Button
+        className={`${styles.categoryAction} ${props.groupId ? '' : styles.categoryActionSelected}`}
+        type="text"
+        aria-current={props.groupId ? undefined : 'true'}
+        onClick={() => props.onGroup(undefined)}
+      >
         {t('instrumentation.v2.directory.all')} <span>{props.catalog.sources.length}</span>
       </Button>
       {props.catalog.groups.map(group => (
         <Button
           key={group.id}
-          type={props.groupId === group.id ? 'primary' : 'text'}
+          className={`${styles.categoryAction} ${props.groupId === group.id ? styles.categoryActionSelected : ''}`}
+          type="text"
+          aria-current={props.groupId === group.id ? 'true' : undefined}
           onClick={() => props.onGroup(group.id)}
         >
           {translateBackend(t, group.labelKey)}{' '}
