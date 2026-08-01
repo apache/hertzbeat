@@ -49,5 +49,10 @@ describe('entity discovery query', () => {
     expect(
       readEntityDiscoveryCreateSource(new URLSearchParams('sourceMonitorId=0&sourceMonitorName=private'))
     ).toBeUndefined();
+    expect(
+      readEntityDiscoveryCreateSource(
+        new URLSearchParams({ sourceMonitorId: '3', sourceMonitorName: 'control\u0001name' })
+      )
+    ).toBeUndefined();
   });
 });

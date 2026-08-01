@@ -126,15 +126,19 @@ export function buildEntityDiscoveryCreatePath(
 export function readEntityDiscoveryCreateSource(params: URLSearchParams): EntityDiscoveryCreateSource | undefined {
   const monitorId = parsePositiveId(params.get('sourceMonitorId'));
   const monitorName = params.get('sourceMonitorName')?.trim();
-  if (
-    monitorId === undefined ||
-    !monitorName ||
-    monitorName.length > 200 ||
-    /[\u0000-\u001f\u007f]/.test(monitorName)
-  ) {
+  if (monitorId === undefined || !monitorName || monitorName.length > 200 || containsControlCharacter(monitorName)) {
     return undefined;
   }
   return { monitorId, monitorName };
+}
+
+function containsControlCharacter(value: string) {
+  for (const character of value) {
+    const codePoint = character.charCodeAt(0);
+    // C0 controls and DEL must not cross the monitor-to-resource URL handoff.
+    if (codePoint <= 0x1f || codePoint === 0x7f) return true;
+  }
+  return false;
 }
 
 function normalizeDiscoverySearch(value?: string | null) {
