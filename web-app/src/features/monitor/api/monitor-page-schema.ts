@@ -44,12 +44,13 @@ const monitorListItemSchema = z.object({
   gmtUpdate: timestampSchema.nullish()
 });
 
+// MonitorsController returns PageResponse rather than Spring Data's Page shape;
+// the parser maps these wire names into the shared frontend pagination model.
 const monitorPageSchema = z.object({
   content: z.array(monitorListItemSchema),
   totalElements: nonNegativeIntegerSchema,
-  totalPages: nonNegativeIntegerSchema,
-  number: nonNegativeIntegerSchema,
-  size: positiveIntegerSchema
+  pageIndex: nonNegativeIntegerSchema,
+  pageSize: positiveIntegerSchema
 });
 
 type MonitorListItemWire = z.output<typeof monitorListItemSchema>;
@@ -71,17 +72,17 @@ export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPa
   if (!result.success) throw new MonitorContractError();
 
   const page = result.data;
-  const remainingRows = Math.max(0, page.totalElements - page.number * page.size);
-  const expectedContentSize = Math.min(page.size, remainingRows);
+  const totalPages = Math.ceil(page.totalElements / page.pageSize);
+  const remainingRows = Math.max(0, page.totalElements - page.pageIndex * page.pageSize);
+  const expectedContentSize = Math.min(page.pageSize, remainingRows);
   const monitorIds = new Set(page.content.map(item => item.id));
   // App and active status are backend equality predicates; search and label expressions intentionally are not.
   const crossesAppFilter = query.app.length > 0 && page.content.some(item => item.app !== query.app);
   const crossesStatusFilter =
     query.status !== monitorStatusFilters.all && page.content.some(item => String(item.status) !== query.status);
   if (
-    page.number !== query.pageIndex ||
-    page.size !== query.pageSize ||
-    page.totalPages !== Math.ceil(page.totalElements / page.size) ||
+    page.pageIndex !== query.pageIndex ||
+    page.pageSize !== query.pageSize ||
     page.content.length !== expectedContentSize ||
     monitorIds.size !== page.content.length ||
     crossesAppFilter ||
@@ -92,9 +93,9 @@ export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPa
   return {
     content: page.content.map(mapMonitorListItem),
     totalElements: page.totalElements,
-    totalPages: page.totalPages,
-    number: page.number,
-    size: page.size
+    totalPages,
+    number: page.pageIndex,
+    size: page.pageSize
   };
 }
 

@@ -87,6 +87,7 @@ const detailRow = {
   modifier: 'bob',
   gmtCreate: null
 };
+const pageWire = { content: [row], totalElements: 1, pageIndex: 0, pageSize: 10 };
 const page = { content: [row], totalElements: 1, totalPages: 1, number: 0, size: 10 };
 
 describe('monitor list API contracts', () => {
@@ -94,7 +95,7 @@ describe('monitor list API contracts', () => {
 
   it('forwards AbortSignal and strips unknown monitor fields', async () => {
     const signal = new AbortController().signal;
-    http.apiMessageGet.mockResolvedValue(page);
+    http.apiMessageGet.mockResolvedValue(pageWire);
     await expect(loadMonitors(query, signal)).resolves.toEqual({
       ...page,
       content: [
@@ -111,9 +112,30 @@ describe('monitor list API contracts', () => {
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/monitors?pageIndex=0&pageSize=10', { signal });
   });
 
+  it('maps the backend monitor page into the shared pagination contract', async () => {
+    http.apiMessageGet.mockResolvedValue(pageWire);
+
+    await expect(loadMonitors(query)).resolves.toEqual({
+      content: [
+        {
+          id: 7,
+          name: 'checkout',
+          app: 'website',
+          instance: 'prod',
+          status: 1,
+          gmtUpdate: 0
+        }
+      ],
+      number: 0,
+      size: 10,
+      totalElements: 1,
+      totalPages: 1
+    });
+  });
+
   it('forwards the canonical label drilldown to the Monitor list endpoint', async () => {
     const signal = new AbortController().signal;
-    http.apiMessageGet.mockResolvedValue(page);
+    http.apiMessageGet.mockResolvedValue(pageWire);
 
     await loadMonitors({ ...query, labels: 'region:west/east & prod' }, signal);
 
@@ -126,16 +148,15 @@ describe('monitor list API contracts', () => {
   it.each([
     null,
     {},
-    { ...page, content: null },
-    { ...page, totalElements: -1 },
-    { ...page, number: 1 },
-    { ...page, size: 20 },
-    { ...page, totalPages: 2 },
-    { ...page, content: [{ ...row, id: 1.5 }] },
-    { ...page, content: [{ ...row, name: '' }] },
-    { ...page, content: [{ ...row, status: '1' }] },
-    { ...page, content: [{ ...row, status: 5 }] },
-    { ...page, content: [{ ...row, gmtUpdate: {} }] }
+    { ...pageWire, content: null },
+    { ...pageWire, totalElements: -1 },
+    { ...pageWire, pageIndex: 1 },
+    { ...pageWire, pageSize: 20 },
+    { ...pageWire, content: [{ ...row, id: 1.5 }] },
+    { ...pageWire, content: [{ ...row, name: '' }] },
+    { ...pageWire, content: [{ ...row, status: '1' }] },
+    { ...pageWire, content: [{ ...row, status: 5 }] },
+    { ...pageWire, content: [{ ...row, gmtUpdate: {} }] }
   ])('rejects malformed page evidence %#', async value => {
     http.apiMessageGet.mockResolvedValue(value);
     await expect(loadMonitors(query)).rejects.toBeInstanceOf(MonitorContractError);
@@ -148,40 +169,39 @@ describe('monitor list API contracts', () => {
       value: {
         content: [row, { ...row, id: 8 }],
         totalElements: 11,
-        totalPages: 2,
-        number: 1,
-        size: 10
+        pageIndex: 1,
+        pageSize: 10
       }
     },
     {
       caseName: 'duplicate monitor ids',
       request: query,
-      value: { content: [row, row], totalElements: 2, totalPages: 1, number: 0, size: 10 }
+      value: { content: [row, row], totalElements: 2, pageIndex: 0, pageSize: 10 }
     },
     {
       caseName: 'content on an out-of-range page',
       request: { ...query, pageIndex: 2 },
-      value: { content: [row], totalElements: 10, totalPages: 1, number: 2, size: 10 }
+      value: { content: [row], totalElements: 10, pageIndex: 2, pageSize: 10 }
     },
     {
       caseName: 'short content on a non-last page',
       request: query,
-      value: { content: [row], totalElements: 11, totalPages: 2, number: 0, size: 10 }
+      value: { content: [row], totalElements: 11, pageIndex: 0, pageSize: 10 }
     },
     {
       caseName: 'short content on the last page',
       request: { ...query, pageIndex: 1 },
-      value: { content: [], totalElements: 11, totalPages: 2, number: 1, size: 10 }
+      value: { content: [], totalElements: 11, pageIndex: 1, pageSize: 10 }
     },
     {
       caseName: 'monitor app outside the requested app filter',
       request: { ...query, app: 'website' },
-      value: { ...page, content: [{ ...row, app: 'mysql' }] }
+      value: { ...pageWire, content: [{ ...row, app: 'mysql' }] }
     },
     {
       caseName: 'monitor status outside the requested status filter',
       request: { ...query, status: '1' },
-      value: { ...page, content: [{ ...row, status: 2 }] }
+      value: { ...pageWire, content: [{ ...row, status: 2 }] }
     }
   ])('rejects $caseName', async ({ request, value }) => {
     http.apiMessageGet.mockResolvedValue(value);
@@ -189,12 +209,11 @@ describe('monitor list API contracts', () => {
   });
 
   it('accepts exact app/status evidence and an empty out-of-range page', async () => {
-    http.apiMessageGet.mockResolvedValueOnce(page).mockResolvedValueOnce({
+    http.apiMessageGet.mockResolvedValueOnce(pageWire).mockResolvedValueOnce({
       content: [],
       totalElements: 10,
-      totalPages: 1,
-      number: 2,
-      size: 10
+      pageIndex: 2,
+      pageSize: 10
     });
 
     await expect(loadMonitors({ ...query, app: 'website', status: '1' })).resolves.toMatchObject({
@@ -792,9 +811,8 @@ describe('monitor editor API contracts', () => {
       .mockResolvedValueOnce({
         content: [row, { ...row, id: 8, name: 'checkout-copy' }],
         totalElements: 2,
-        totalPages: 1,
-        number: 0,
-        size: 50
+        pageIndex: 0,
+        pageSize: 50
       })
       .mockResolvedValueOnce({ monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: [] });
     await expect(loadNewMonitorEvidence(' checkout ', 'website', signal)).resolves.toMatchObject({
@@ -815,13 +833,12 @@ describe('monitor editor API contracts', () => {
       name: index === 0 ? 'checkout' : `other-${index + 1}`
     }));
     http.apiMessageGet
-      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, totalPages: 2, number: 0, size: 50 })
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, pageIndex: 0, pageSize: 50 })
       .mockResolvedValueOnce({
         content: [{ ...row, id: 51, name: 'other-51' }],
         totalElements: 51,
-        totalPages: 2,
-        number: 1,
-        size: 50
+        pageIndex: 1,
+        pageSize: 50
       })
       .mockResolvedValueOnce({
         monitor: { ...detailRow, id: 1 },
@@ -849,14 +866,13 @@ describe('monitor editor API contracts', () => {
           { ...row, id: 52, name: 'other-52' }
         ],
         totalElements: 52,
-        totalPages: 2,
-        number: 1,
-        size: 50
+        pageIndex: 1,
+        pageSize: 50
       }
     },
     {
-      caseName: 'totalPages drift',
-      nextPage: { content: [], totalElements: 50, totalPages: 1, number: 1, size: 50 }
+      caseName: 'pageSize drift',
+      nextPage: { content: [], totalElements: 51, pageIndex: 1, pageSize: 25 }
     }
   ])('rejects later-page $caseName as contract evidence', async ({ nextPage }) => {
     const firstPage = Array.from({ length: 50 }, (_, index) => ({
@@ -865,7 +881,7 @@ describe('monitor editor API contracts', () => {
       name: index === 0 ? 'checkout' : `other-${index + 1}`
     }));
     http.apiMessageGet
-      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, totalPages: 2, number: 0, size: 50 })
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, pageIndex: 0, pageSize: 50 })
       .mockResolvedValueOnce(nextPage)
       .mockResolvedValueOnce({
         monitor: { ...detailRow, id: 1 },
@@ -893,13 +909,12 @@ describe('monitor editor API contracts', () => {
       name: index === 0 ? 'checkout' : `other-${index + 1}`
     }));
     http.apiMessageGet
-      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, totalPages: 2, number: 0, size: 50 })
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 51, pageIndex: 0, pageSize: 50 })
       .mockResolvedValueOnce({
         content: [{ ...row, id: 2, name: 'other-duplicate' }],
         totalElements: 51,
-        totalPages: 2,
-        number: 1,
-        size: 50
+        pageIndex: 1,
+        pageSize: 50
       })
       .mockResolvedValueOnce({
         monitor: { ...detailRow, id: 1 },
@@ -919,9 +934,8 @@ describe('monitor editor API contracts', () => {
       http.apiMessageGet.mockResolvedValue({
         content,
         totalElements: content.length,
-        totalPages: content.length ? 1 : 0,
-        number: 0,
-        size: 50
+        pageIndex: 0,
+        pageSize: 50
       });
       await expect(loadNewMonitorEvidence('checkout', 'website')).rejects.toBeInstanceOf(MonitorContractError);
       expect(http.apiMessageGet).toHaveBeenCalledTimes(1);
@@ -929,7 +943,7 @@ describe('monitor editor API contracts', () => {
   });
 
   it('fails fast when new-save evidence exceeds the explicit page safety bound', async () => {
-    http.apiMessageGet.mockResolvedValue({ content: [], totalElements: 1_001, totalPages: 21, number: 0, size: 50 });
+    http.apiMessageGet.mockResolvedValue({ content: [], totalElements: 1_001, pageIndex: 0, pageSize: 50 });
     await expect(loadNewMonitorEvidence('checkout', 'website')).rejects.toBeInstanceOf(MonitorContractError);
     expect(http.apiMessageGet).toHaveBeenCalledTimes(1);
   });
