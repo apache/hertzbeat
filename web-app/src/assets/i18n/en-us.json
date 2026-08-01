@@ -1967,6 +1967,7 @@
   "noticeTemplates": {
     "title": "Notification templates",
     "description": "Review built-in content and maintain custom notification messages.",
+    "loading": "Loading notification templates…",
     "new": "New template",
     "edit": "Edit template",
     "search": "Search templates",

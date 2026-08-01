@@ -18,7 +18,7 @@
 import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
 
 import { NoticeTemplateOverlays } from '../components/notice-template-overlays';
 import { NoticeTemplateRecoveryAlert } from '../components/notice-template-recovery-alert';
@@ -37,6 +37,7 @@ export function NoticeTemplatePage() {
     state.canRetainActiveOperation &&
     (state.command === 'saving' || state.command === 'deleting' || state.command === 'recovering');
   const busy = commandBusy || state.canRetainRecovery;
+  const interactionBusy = busy || state.refreshing;
 
   return (
     <OperationalPage>
@@ -46,13 +47,18 @@ export function NoticeTemplatePage() {
         description={t('noticeTemplates.description')}
         actions={
           state.capabilities.canCreate ? (
-            <Button type="primary" disabled={busy} onClick={controller.create}>
+            <Button type="primary" disabled={interactionBusy} onClick={controller.create}>
               {t('noticeTemplates.new')}
             </Button>
           ) : undefined
         }
       />
-      <NoticeTemplateWorkspace controller={controller} busy={busy} commandBusy={commandBusy} />
+      <NoticeTemplateWorkspace
+        controller={controller}
+        busy={interactionBusy}
+        commandBusy={commandBusy}
+        refreshing={state.refreshing}
+      />
       <NoticeTemplateOverlays
         busy={busy}
         canShowDraft={state.canSubmitDraft}
@@ -72,17 +78,20 @@ type NoticeTemplateController = ReturnType<typeof useNoticeTemplateController>;
 function NoticeTemplateWorkspace({
   controller,
   busy,
-  commandBusy
+  commandBusy,
+  refreshing
 }: {
   controller: NoticeTemplateController;
   busy: boolean;
   commandBusy: boolean;
+  refreshing: boolean;
 }) {
   const { state } = controller;
   return (
     <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
       <NoticeTemplateToolbar
         busy={busy}
+        refreshing={refreshing}
         name={state.name}
         preset={state.query.preset}
         onNameChange={controller.setName}
@@ -96,7 +105,7 @@ function NoticeTemplateWorkspace({
         retryBusy={state.command === 'recovering'}
         retry={() => void controller.retryRecovery()}
       />
-      <div className={pageStyles.results}>
+      <OperationalResultRegion>
         <NoticeTemplateResults
           busy={busy}
           capabilities={state.capabilities}
@@ -113,7 +122,7 @@ function NoticeTemplateWorkspace({
           onEdit={controller.edit}
           onRemove={controller.remove}
         />
-      </div>
+      </OperationalResultRegion>
     </section>
   );
 }

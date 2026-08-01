@@ -1971,6 +1971,7 @@
   "noticeTemplates": {
     "title": "Modelos de notificação",
     "description": "Revise o conteúdo interno e mantenha mensagens de notificação personalizadas.",
+    "loading": "Carregando modelos de notificação…",
     "new": "Novo modelo",
     "edit": "Editar modelo",
     "search": "Pesquisar modelos",

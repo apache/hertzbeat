@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Popconfirm, Skeleton, Space, Table, Tag } from 'antd';
+import { Button, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalStatePanel } from '@/shared/operational-page';
+
 import type { NoticeTemplateActionCapabilities } from '../model/notice-template-action-capability';
 import { noticeTemplateTime, noticeTemplateTypeLabelKey } from '../model/notice-template-view-model';
-import pageStyles from '../shared/notice-template-page.module.css';
 import {
   isNoticeTemplateReadOnly,
   noticeTemplatePageSizes,
@@ -60,19 +61,26 @@ export function NoticeTemplateResults({
   const { t } = useTranslation();
 
   if (state.kind === 'loading') {
-    return (
-      <div className={pageStyles.loading} data-testid="notice-template-loading">
-        <Skeleton active paragraph={{ rows: 6 }} />
-      </div>
-    );
+    return <OperationalStatePanel kind="loading" title={t('noticeTemplates.loading')} />;
   }
   if (state.kind === 'unavailable') {
-    return <FailureState disabled={retryDisabled} message={t('common.unavailable')} onRetry={onRetry} />;
+    return (
+      <FailureState kind="unavailable" disabled={retryDisabled} message={t('common.unavailable')} onRetry={onRetry} />
+    );
   }
   if (state.kind === 'error') {
-    return <FailureState disabled={retryDisabled} message={t('common.routeError.description')} onRetry={onRetry} />;
+    return (
+      <FailureState
+        kind="error"
+        disabled={retryDisabled}
+        message={t('common.routeError.description')}
+        onRetry={onRetry}
+      />
+    );
   }
-  if (state.kind === 'empty') return <Empty description={t('noticeTemplates.empty')} />;
+  if (state.kind === 'empty' || state.records.length === 0) {
+    return <OperationalStatePanel kind="empty" title={t('noticeTemplates.empty')} />;
+  }
 
   return (
     <Table<NoticeTemplateResourceRecord>
@@ -81,6 +89,7 @@ export function NoticeTemplateResults({
       tableLayout="fixed"
       dataSource={state.records}
       columns={templateColumns(t, busy, capabilities, onView, onEdit, onRemove)}
+      scroll={{ x: 790 }}
       pagination={{
         current: pageIndex + 1,
         disabled: busy,
@@ -94,13 +103,22 @@ export function NoticeTemplateResults({
   );
 }
 
-function FailureState({ disabled, message, onRetry }: { disabled: boolean; message: string; onRetry: () => void }) {
+function FailureState({
+  kind,
+  disabled,
+  message,
+  onRetry
+}: {
+  kind: 'unavailable' | 'error';
+  disabled: boolean;
+  message: string;
+  onRetry: () => void;
+}) {
   const { t } = useTranslation();
   return (
-    <Alert
-      type="error"
-      showIcon
-      message={message}
+    <OperationalStatePanel
+      kind={kind}
+      title={message}
       action={
         <Button size="small" disabled={disabled} onClick={onRetry}>
           {t('common.retry')}
@@ -171,6 +189,7 @@ function templateActionColumn(
 ): ColumnsType<NoticeTemplateResourceRecord>[number] {
   return {
     title: t('common.actions'),
+    fixed: 'right',
     width: 140,
     render: (_value, template) => {
       if (isNoticeTemplateReadOnly(template) || (!capabilities.canEdit && !capabilities.canDelete)) {

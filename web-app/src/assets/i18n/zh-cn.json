@@ -1957,6 +1957,7 @@
   "noticeTemplates": {
     "title": "通知模板",
     "description": "查看内置内容并维护自定义通知消息。",
+    "loading": "正在加载通知模板…",
     "new": "新建模板",
     "edit": "编辑模板",
     "search": "搜索模板",

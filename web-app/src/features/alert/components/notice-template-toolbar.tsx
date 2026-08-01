@@ -18,10 +18,13 @@
 import { Button, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page';
+
 import pageStyles from '../shared/notice-template-page.module.css';
 
 type NoticeTemplateToolbarProps = {
   busy: boolean;
+  refreshing: boolean;
   name: string;
   preset: boolean;
   onNameChange: (value: string) => void;
@@ -32,6 +35,7 @@ type NoticeTemplateToolbarProps = {
 
 export function NoticeTemplateToolbar({
   busy,
+  refreshing,
   name,
   preset,
   onNameChange,
@@ -42,31 +46,42 @@ export function NoticeTemplateToolbar({
   const { t } = useTranslation();
 
   return (
-    <div className={pageStyles.toolbar}>
-      <Select
-        aria-label={t('noticeTemplates.source')}
-        disabled={busy}
-        value={preset ? 'preset' : 'custom'}
-        options={[
-          { value: 'preset', label: t('noticeTemplates.preset') },
-          { value: 'custom', label: t('noticeTemplates.custom') }
-        ]}
-        onChange={value => onPresetChange(value === 'preset')}
-      />
-      <Input
-        allowClear
-        disabled={busy}
-        value={name}
-        placeholder={t('noticeTemplates.search')}
-        onChange={event => onNameChange(event.target.value)}
-        onPressEnter={onQuery}
-      />
-      <Button type="primary" disabled={busy} onClick={onQuery}>
-        {t('common.query')}
-      </Button>
-      <Button disabled={busy} onClick={onRefresh}>
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('noticeTemplates.search')}
+      primary={
+        <div className={pageStyles.filters}>
+          <Select
+            aria-label={t('noticeTemplates.source')}
+            disabled={busy}
+            value={preset ? 'preset' : 'custom'}
+            options={[
+              { value: 'preset', label: t('noticeTemplates.preset') },
+              { value: 'custom', label: t('noticeTemplates.custom') }
+            ]}
+            onChange={value => onPresetChange(value === 'preset')}
+          />
+          <Input
+            allowClear
+            aria-label={t('noticeTemplates.search')}
+            disabled={busy}
+            value={name}
+            placeholder={t('noticeTemplates.search')}
+            onChange={event => onNameChange(event.target.value)}
+            onPressEnter={onQuery}
+          />
+        </div>
+      }
+      secondary={
+        <>
+          <Button type="primary" disabled={busy} onClick={onQuery}>
+            {t('common.query')}
+          </Button>
+          <Button disabled={busy} loading={refreshing} onClick={onRefresh}>
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
   );
 }

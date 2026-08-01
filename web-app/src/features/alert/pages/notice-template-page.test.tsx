@@ -86,6 +86,8 @@ describe('NoticeTemplatePage', () => {
       screen.getByRole('button', { name: 'noticeTemplates.new' })
     );
     expect(screen.getByRole('region', { name: 'noticeTemplates.title' })).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
   });
 
   it('delegates toolbar, row, and pagination interactions to the controller', async () => {
@@ -110,17 +112,34 @@ describe('NoticeTemplatePage', () => {
   });
 
   it.each([
-    [{ kind: 'loading' }, 'notice-template-loading'],
-    [{ kind: 'empty' }, 'noticeTemplates.empty'],
-    [{ kind: 'unavailable' }, 'common.unavailable'],
-    [{ kind: 'error' }, 'common.routeError.description']
-  ])('renders the distinct list state %#', async (list, evidence) => {
+    [{ kind: 'loading' }, 'loading', 'noticeTemplates.loading'],
+    [{ kind: 'empty' }, 'empty', 'noticeTemplates.empty'],
+    [{ kind: 'unavailable' }, 'unavailable', 'common.unavailable'],
+    [{ kind: 'error' }, 'error', 'common.routeError.description']
+  ])('renders the distinct list state %#', (list, state, evidence) => {
     controller.state = buildState(list);
     renderPage();
 
-    if (evidence === 'notice-template-loading') expect(screen.getByTestId(evidence)).toBeInTheDocument();
-    else expect(await screen.findByText(evidence)).toBeInTheDocument();
+    expect(document.querySelector(`[data-state="${state}"]`)).toHaveTextContent(evidence);
+    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
+    expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
     expect(screen.queryByText('Custom')).not.toBeInTheDocument();
+  });
+
+  it('contains wide result evidence in the table and keeps actions fixed', () => {
+    renderPage();
+
+    expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
+    expect(document.querySelector('.ant-table-content')).toHaveStyle({ overflowX: 'auto' });
+  });
+
+  it('shows refresh progress and locks overlapping commands', () => {
+    controller.state = { ...buildState({ kind: 'ready', records: [custom], total: 1 }), refreshing: true };
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeTemplates.new' })).toBeDisabled();
   });
 
   it('keeps source visible in both the query scope and result evidence', () => {
