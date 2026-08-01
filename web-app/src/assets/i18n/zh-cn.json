@@ -1036,6 +1036,7 @@
   },
   "bulletin": {
     "title": "监控看板",
+    "loading": "正在加载监控看板…",
     "autoRefresh": {
       "label": "自动刷新",
       "seconds": "每 {{count}} 秒",
@@ -1112,6 +1113,7 @@
     },
     "metrics": {
       "title": "实时指标",
+      "loading": "正在加载看板指标…",
       "select": "选择看板以检查指标。",
       "empty": "所选看板当前没有指标行。",
       "missing": "看板已不存在。",

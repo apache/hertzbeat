@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input, Popconfirm, Space, Typography } from 'antd';
+import { Button, Input, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
 
 import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
 import type { BulletinRefreshChoice, BulletinRefreshSeconds } from '../model/bulletin-refresh-model';
@@ -39,32 +41,32 @@ export function BulletinPageControls({
   const { t } = useTranslation();
   return (
     <>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('bulletin.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('bulletin.description')}</Typography.Text>
-        </div>
-        <Space>
-          {capabilities.canDelete && selectedIds.length > 0 && (
-            <Popconfirm
-              title={t('bulletin.deleteSelectedConfirm', { count: selectedIds.length })}
-              okText={t('common.delete')}
-              cancelText={t('common.cancel')}
-              okButtonProps={{ danger: true }}
-              onConfirm={() => actions.removeMany(selectedIds)}
-            >
-              <Button danger disabled={writeLocked}>
-                {t('bulletin.deleteSelected')}
+      <OperationalPageHeader
+        title={t('bulletin.title')}
+        description={t('bulletin.description')}
+        actions={
+          <Space wrap>
+            {capabilities.canDelete && selectedIds.length > 0 && (
+              <Popconfirm
+                title={t('bulletin.deleteSelectedConfirm', { count: selectedIds.length })}
+                okText={t('common.delete')}
+                cancelText={t('common.cancel')}
+                okButtonProps={{ danger: true }}
+                onConfirm={() => actions.removeMany(selectedIds)}
+              >
+                <Button danger disabled={writeLocked}>
+                  {t('bulletin.deleteSelected')}
+                </Button>
+              </Popconfirm>
+            )}
+            {capabilities.canWrite && (
+              <Button type="primary" disabled={writeLocked} onClick={actions.create}>
+                {t('bulletin.create')}
               </Button>
-            </Popconfirm>
-          )}
-          {capabilities.canWrite && (
-            <Button type="primary" disabled={writeLocked} onClick={actions.create}>
-              {t('bulletin.create')}
-            </Button>
-          )}
-        </Space>
-      </header>
+            )}
+          </Space>
+        }
+      />
       <BulletinToolbar
         actions={actions}
         commandActive={commandActive}
@@ -85,21 +87,30 @@ function BulletinToolbar({
 }: Pick<BulletinPageControlsProps, 'actions' | 'commandActive' | 'refreshing' | 'refreshSeconds' | 'search'>) {
   const { t } = useTranslation();
   return (
-    <Space.Compact className={styles.toolbar}>
-      <Input
-        value={search}
-        placeholder={t('bulletin.search')}
-        disabled={commandActive}
-        onChange={event => actions.setSearch(event.target.value)}
-        onPressEnter={actions.submitSearch}
-      />
-      <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
-        {t('common.query')}
-      </Button>
-      <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
-        {t('common.refresh')}
-      </Button>
-      <BulletinRefreshSelect value={refreshSeconds} disabled={commandActive} onChange={actions.setRefreshSeconds} />
-    </Space.Compact>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('bulletin.search')}
+      primary={
+        <Input
+          className={styles.searchInput}
+          value={search}
+          placeholder={t('bulletin.search')}
+          disabled={commandActive}
+          onChange={event => actions.setSearch(event.target.value)}
+          onPressEnter={actions.submitSearch}
+        />
+      }
+      secondary={
+        <Space wrap>
+          <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
+            {t('common.query')}
+          </Button>
+          <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
+            {t('common.refresh')}
+          </Button>
+          <BulletinRefreshSelect value={refreshSeconds} disabled={commandActive} onChange={actions.setRefreshSeconds} />
+        </Space>
+      }
+    />
   );
 }

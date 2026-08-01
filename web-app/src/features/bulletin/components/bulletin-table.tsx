@@ -31,12 +31,12 @@ type BulletinTableProps = {
 
 export function BulletinTable(props: BulletinTableProps) {
   const { t } = useTranslation();
-  if (props.listKind !== 'loading' && props.listKind !== 'correcting' && props.listKind !== 'ready') return null;
+  if (props.listKind !== 'ready') return null;
   return (
     <Table<Bulletin>
       rowKey="id"
-      loading={props.listKind === 'loading' || props.listKind === 'correcting'}
       dataSource={props.records}
+      scroll={{ x: 920 }}
       rowClassName={record => (record.id === props.selectedId ? (styles.selectedRow ?? '') : '')}
       onRow={record => (props.readLocked ? {} : { onClick: () => props.actions.select(record.id) })}
       {...createBulletinRowSelectionProps(props)}
@@ -79,14 +79,19 @@ function createBulletinColumns(
   t: TFunction
 ): NonNullable<TableProps<Bulletin>['columns']> {
   return [
-    { title: t('bulletin.name'), dataIndex: 'name' },
-    { title: t('bulletin.application'), dataIndex: 'app', render: value => <Tag>{value}</Tag> },
-    { title: t('bulletin.monitors'), dataIndex: 'monitorIds', render: (value: number[]) => value.length },
-    { title: t('bulletin.creator'), dataIndex: 'creator' },
-    { title: t('bulletin.updated'), render: (_, record) => formatBulletinTime(record.gmtUpdate ?? record.gmtCreate) },
+    { title: t('bulletin.name'), dataIndex: 'name', width: 180 },
+    { title: t('bulletin.application'), dataIndex: 'app', width: 150, render: value => <Tag>{value}</Tag> },
+    { title: t('bulletin.monitors'), dataIndex: 'monitorIds', width: 110, render: (value: number[]) => value.length },
+    { title: t('bulletin.creator'), dataIndex: 'creator', width: 140 },
+    {
+      title: t('bulletin.updated'),
+      width: 180,
+      render: (_, record) => formatBulletinTime(record.gmtUpdate ?? record.gmtCreate)
+    },
     {
       title: t('common.actions'),
       fixed: 'right',
+      width: 260,
       render: (_, record) => (
         <Space onClick={event => event.stopPropagation()}>
           <Button type="link" disabled={readLocked} onClick={() => actions.select(record.id)}>

@@ -1042,6 +1042,7 @@
   },
   "bulletin": {
     "title": "Bulletin",
+    "loading": "Loading bulletins…",
     "description": "Review grouped monitor views configured by operators.",
     "autoRefresh": {
       "label": "Auto refresh",
@@ -1118,6 +1119,7 @@
     },
     "metrics": {
       "title": "Realtime metrics",
+      "loading": "Loading bulletin metrics…",
       "select": "Select a bulletin to inspect its metrics.",
       "empty": "The selected bulletin has no current metric rows.",
       "missing": "The bulletin no longer exists.",

@@ -15,32 +15,10 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
-
-.heading :global(.ant-typography) {
-  margin: 0;
-}
-
-.heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.toolbar {
-  width: min(560px, 100%);
+.searchInput {
+  min-width: min(420px, 100%);
 }
 
 .selectedRow td {
   background: var(--ant-color-primary-bg) !important;
-}
-
-.metrics {
-  min-height: 240px;
-  border-top: 1px solid var(--ant-color-border-secondary);
-  padding-top: 16px;
 }

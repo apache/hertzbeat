@@ -1047,6 +1047,7 @@
   },
   "bulletin": {
     "title": "Quadros",
+    "loading": "Carregando quadros…",
     "autoRefresh": {
       "label": "Atualização automática",
       "seconds": "A cada {{count}} segundos",
@@ -1123,6 +1124,7 @@
     },
     "metrics": {
       "title": "Métricas em tempo real",
+      "loading": "Carregando métricas do quadro…",
       "select": "Selecione um quadro para inspecionar métricas.",
       "empty": "O quadro não possui linhas de métricas atuais.",
       "missing": "O quadro não existe mais.",

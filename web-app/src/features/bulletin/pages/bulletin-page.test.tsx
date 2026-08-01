@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { requireDomElement } from '@/test/dom-element';
+
 const controller = vi.hoisted(() => ({ useBulletinController: vi.fn() }));
 vi.mock('../controller/bulletin-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -11,6 +13,41 @@ import { formatBulletinTime } from '../model/bulletin-model';
 
 describe('bulletin page', () => {
   afterEach(cleanup);
+
+  it('uses the shared operational page, command, and result hierarchy', () => {
+    const current = pageController();
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
+    const header = requireDomElement(
+      document.querySelector('[data-hb-operational-page-header]'),
+      'Operational page header'
+    );
+    const commands = requireDomElement(
+      document.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    const results = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
+    expect(page).toContainElement(header);
+    expect(page).toContainElement(commands);
+    expect(page).toContainElement(results);
+    expect(results).toContainElement(screen.getByText('Ops'));
+  });
+
+  it('uses compact shared loading evidence without exposing an empty table', () => {
+    const current = pageController({ list: { kind: 'loading' } });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByText('bulletin.loading').closest('[data-state]')).toHaveAttribute('data-state', 'loading');
+    expect(document.querySelector('.ant-table')).not.toBeInTheDocument();
+  });
   it('handles the asynchronous refresh action at an explicit event boundary', () => {
     const current = pageController();
     controller.useBulletinController.mockReturnValue(current.value);
@@ -257,6 +294,7 @@ function pageController({
   draft = null,
   notice = null,
   recovery = null,
+  list = { kind: 'ready', records: [record], total: 1 },
   selectedId = null,
   selectedIds = []
 }: {
@@ -276,6 +314,7 @@ function pageController({
     draft: typeof record;
     failure: 'unavailable';
   };
+  list?: { kind: 'loading' } | { kind: 'empty' } | { kind: 'ready'; records: (typeof record)[]; total: number };
   selectedId?: number | null;
   selectedIds?: number[];
 } = {}) {
@@ -314,7 +353,7 @@ function pageController({
           monitors: []
         },
         draft,
-        list: { kind: 'ready', records: [record], total: 1 },
+        list,
         metrics: { kind: 'idle' },
         notice,
         query: { search: '', pageIndex: 0, pageSize: 8 },

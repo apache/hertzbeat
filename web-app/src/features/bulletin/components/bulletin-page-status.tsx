@@ -1,7 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
+
+import { OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
 import type { BulletinCommand, BulletinOutcomeNotice, BulletinRecovery } from '../model/bulletin-operation-state';
 import { BulletinOutcomeNoticeAlert, BulletinRecoveryAlert } from './bulletin-recovery-alert';
@@ -27,12 +28,18 @@ export function BulletinPageStatus({
   onStopVerification: () => void;
 }) {
   const { t } = useTranslation();
-  const listFailed =
-    list.kind === 'invalid' || list.kind === 'permission' || list.kind === 'unavailable' || list.kind === 'error';
   return (
     <>
-      {listFailed && <Alert type="error" showIcon message={t(`bulletin.list.${list.kind}`)} />}
-      {list.kind === 'empty' && <Empty description={t('bulletin.empty')} />}
+      {(list.kind === 'loading' || list.kind === 'correcting') && (
+        <OperationalStatePanel kind="loading" title={t('bulletin.loading')} />
+      )}
+      {list.kind === 'empty' && <OperationalStatePanel kind="empty" title={t('bulletin.empty')} />}
+      {(list.kind === 'invalid' ||
+        list.kind === 'permission' ||
+        list.kind === 'unavailable' ||
+        list.kind === 'error') && (
+        <OperationalStatePanel kind={failureStateKind(list.kind)} title={t(`bulletin.list.${list.kind}`)} />
+      )}
       <BulletinRecoveryAlert
         recovery={recovery}
         recovering={command === 'recovering'}
@@ -42,4 +49,10 @@ export function BulletinPageStatus({
       <BulletinOutcomeNoticeAlert notice={notice} onDismiss={onDismissNotice} />
     </>
   );
+}
+
+function failureStateKind(kind: 'invalid' | 'permission' | 'unavailable' | 'error'): OperationalStateKind {
+  if (kind === 'permission') return 'permission';
+  if (kind === 'unavailable') return 'unavailable';
+  return 'error';
 }

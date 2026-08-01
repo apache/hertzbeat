@@ -1036,6 +1036,7 @@
   },
   "bulletin": {
     "title": "監控看板",
+    "loading": "正在載入監控看板…",
     "autoRefresh": {
       "label": "自動重新整理",
       "seconds": "每 {{count}} 秒",
@@ -1112,6 +1113,7 @@
     },
     "metrics": {
       "title": "即時指標",
+      "loading": "正在載入看板指標…",
       "select": "選擇看板以檢查指標。",
       "empty": "所選看板目前沒有指標列。",
       "missing": "看板已不存在。",
