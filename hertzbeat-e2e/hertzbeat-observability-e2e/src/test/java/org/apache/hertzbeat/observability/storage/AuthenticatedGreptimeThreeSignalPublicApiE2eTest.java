@@ -22,6 +22,7 @@ import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -30,6 +31,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Collector;
@@ -85,6 +87,9 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
 
         assertUnauthenticatedRequestsAreRejected(detectionBody);
         String adminToken = login();
+        long entityId = createEntity(adminToken, SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID);
+        long mismatchedEntityId = createEntity(
+                adminToken, "other-service", SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID);
 
         postSignal("metrics", metrics(signalTimeNanos).toByteArray(), adminToken);
         postSignal("logs", logs(signalTimeNanos).toByteArray(), adminToken);
@@ -98,7 +103,11 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         postSignal("traces", traces(signalTimeNanos).toByteArray(), collectorIntakeToken);
 
         JsonNode queryContext = awaitReceivedDetection(detectionBody, adminToken);
+        assertMismatchedDetectionScopesNotReceived(detectionBody, signalTimeNanos / 1_000_000L, adminToken);
         awaitPublicQueries(queryContext, adminToken);
+        assertMismatchedPublicQueriesEmpty(queryContext, adminToken);
+        awaitEntityEvidence(entityId, adminToken);
+        awaitEntityEvidenceEmpty(mismatchedEntityId, adminToken);
     }
 
     private void assertUnauthenticatedRequestsAreRejected(byte[] detectionBody) throws Exception {
@@ -206,6 +215,43 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         });
     }
 
+    private void awaitEntityEvidence(long entityId, String token) {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+            JsonNode data = authenticatedGet("/api/entities/" + entityId + "/detail", Map.of(), token);
+            assertThat(data.path("metricEvidence").findValuesAsText("metricName")).contains(METRIC_NAME);
+            assertThat(data.path("logEvidence").findValuesAsText("body")).contains(LOG_BODY);
+            assertThat(data.path("traceEvidence").findValuesAsText("traceId")).contains(TRACE_ID);
+        });
+    }
+
+    private void awaitEntityEvidenceEmpty(long entityId, String token) {
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+            JsonNode data = authenticatedGet("/api/entities/" + entityId + "/detail", Map.of(), token);
+            for (String field : List.of("metricEvidence", "logEvidence", "traceEvidence")) {
+                assertThat(data.path(field).isArray()).isTrue();
+                assertThat(data.path(field).isEmpty()).isTrue();
+            }
+        });
+    }
+
+    private void assertMismatchedPublicQueriesEmpty(JsonNode context, String token) throws Exception {
+        Map<String, String> parameters = commonQueryParameters(context);
+        parameters.put("serviceName", "other-service");
+
+        Map<String, String> metricParameters = new LinkedHashMap<>(parameters);
+        metricParameters.put("query", METRIC_QUERY);
+        metricParameters.put("step", "1s");
+        metricParameters.put("limit", "20");
+        JsonNode metrics = authenticatedGet("/api/ingestion/otlp/metrics/console", metricParameters, token);
+        assertThat(metrics.path("stats").path("nonEmptySeries").asInt()).isZero();
+
+        Map<String, String> pageParameters = new LinkedHashMap<>(parameters);
+        pageParameters.put("pageIndex", "0");
+        pageParameters.put("pageSize", "20");
+        assertThat(authenticatedGet("/api/logs/list", pageParameters, token).path("content").isEmpty()).isTrue();
+        assertThat(authenticatedGet("/api/traces/list", pageParameters, token).path("content").isEmpty()).isTrue();
+    }
+
     private void assertMetricsQuery(JsonNode context, String token) throws Exception {
         Map<String, String> parameters = commonQueryParameters(context);
         parameters.put("query", METRIC_QUERY);
@@ -300,6 +346,64 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         return OBJECT_MAPPER.writeValueAsBytes(request);
     }
 
+    private void assertMismatchedDetectionScopesNotReceived(byte[] detectionBody, long signalTime, String token)
+            throws Exception {
+        ObjectNode base = (ObjectNode) OBJECT_MAPPER.readTree(detectionBody);
+        assertCollectorMismatchRejected(base.deepCopy().put("intakeProfileId", "collector:other"), token);
+        List<ObjectNode> mismatches = List.of(
+                withServiceField(base, "name", "other-service"),
+                withServiceField(base, "namespace", "other-namespace"),
+                withServiceField(base, "environment", "other-environment"),
+                withServiceField(base, "serviceInstanceId", "other-instance"),
+                withServiceField(base, "endpoint", "/other-endpoint"),
+                base.deepCopy().put("startedAt", signalTime + 1));
+        for (ObjectNode mismatch : mismatches) {
+            assertScopedDetectionNotReceived(OBJECT_MAPPER.writeValueAsBytes(mismatch), token);
+        }
+    }
+
+    private void assertCollectorMismatchRejected(ObjectNode mismatch, String token) throws Exception {
+        HttpResponse<byte[]> response = send(postJson(
+                "/api/instrumentation/detect", OBJECT_MAPPER.writeValueAsBytes(mismatch), token));
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(OBJECT_MAPPER.readTree(response.body()).path("code").asInt()).isNotZero();
+    }
+
+    private ObjectNode withServiceField(ObjectNode base, String field, String value) {
+        ObjectNode mismatch = base.deepCopy();
+        ((ObjectNode) mismatch.path("service")).put(field, value);
+        return mismatch;
+    }
+
+    private long createEntity(String token, String name, String namespace, String environment, String instance)
+            throws Exception {
+        List<Map<String, Object>> identities = List.of(
+                identity("service.name", name, true),
+                identity("service.namespace", namespace, false),
+                identity("deployment.environment.name", environment, false),
+                identity("service.instance.id", instance, false));
+        byte[] body = OBJECT_MAPPER.writeValueAsBytes(Map.of(
+                "entity", Map.of(
+                        "type", "service",
+                        "name", name,
+                        "namespace", namespace,
+                        "environment", environment),
+                "identities", identities));
+        HttpResponse<byte[]> response = send(postJson("/api/entities", body, token));
+        assertThat(response.statusCode()).isEqualTo(200);
+        JsonNode envelope = OBJECT_MAPPER.readTree(response.body());
+        assertThat(envelope.path("code").asInt()).isZero();
+        return envelope.path("data").asLong();
+    }
+
+    private Map<String, Object> identity(String key, String value, boolean primary) {
+        return Map.of(
+                "identityType", "manual",
+                "identityKey", key,
+                "identityValue", value,
+                "primaryIdentity", primary);
+    }
+
     /**
      * Collector persistence is deterministic test setup only. All behavior under proof starts at the public HTTP
      * boundary; no ingestion, detection, or query service is invoked directly.
@@ -309,7 +413,7 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
                 new CollectorIntakeAdvertisementRequest(
                         1,
                         Gateway.COLLECTOR,
-                        java.util.List.of(Capability.OTLP_HTTP_PROTOBUF),
+                        List.of(Capability.OTLP_HTTP_PROTOBUF),
                         "http://127.0.0.1:4318",
                         null));
         collectorDao.save(Collector.builder()
