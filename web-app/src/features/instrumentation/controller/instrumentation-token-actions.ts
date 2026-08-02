@@ -14,13 +14,19 @@ import {
   type AccessTokenGenerationDraft
 } from '@/shared/access-token/access-token-generation-model';
 
+import { generateCollectorIntakeAccessToken } from '../api/instrumentation-token-api';
+import type { IntakeProfilesResponse } from '../model/instrumentation-v2-contract';
 import type { InstrumentationControllerState } from './instrumentation-controller-state';
+
+type IntakeProfile = IntakeProfilesResponse['profiles'][number];
 
 export function useInstrumentationTokenActions(
   state: InstrumentationControllerState,
   generationRef: RefObject<number>,
   canGenerateToken: boolean,
-  requiresToken: boolean
+  requiresToken: boolean,
+  selectedProfile: IntakeProfile | undefined,
+  workspaceId: string | undefined
 ) {
   const tokenGenerationRef = useRef(0);
   const tokenCommandsEnabled = canGenerateToken && requiresToken;
@@ -60,7 +66,14 @@ export function useInstrumentationTokenActions(
     state.setTokenGenerating(true);
     state.setTokenError(false);
     try {
-      const receipt = await generateAccessToken({ ...draft, scope: 'otlp-ingest' });
+      const receipt =
+        selectedProfile?.kind === 'hertzbeat_collector'
+          ? await generateCollectorIntakeAccessToken({
+              collectorId: selectedProfile.collectorId ?? '',
+              workspaceId: workspaceId ?? '',
+              expireSeconds: draft.expireSeconds
+            })
+          : await generateAccessToken({ ...draft, scope: 'otlp-ingest' });
       if (!generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) return;
       state.setToken(receipt.token);
       state.setTokenDraft(undefined);
@@ -73,7 +86,7 @@ export function useInstrumentationTokenActions(
         state.setTokenGenerating(false);
       }
     }
-  }, [generationRef, state, tokenCommandsEnabledRef, tokenGenerationRef]);
+  }, [generationRef, selectedProfile, state, tokenCommandsEnabledRef, tokenGenerationRef, workspaceId]);
   return { setToken, openTokenGenerator, closeTokenGenerator, updateTokenDraft, generateToken };
 }
 

@@ -36,7 +36,8 @@ const keys = {
 
 export function useInstrumentationPageController() {
   const navigate = useNavigate();
-  const tokenCapability = instrumentationTokenCapability(useSession().session?.roles ?? []);
+  const session = useSession().session;
+  const tokenCapability = instrumentationTokenCapability(session?.roles ?? []);
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const state = useInstrumentationControllerState();
   const startedAtRef = useRef<number | undefined>(undefined);
@@ -62,7 +63,9 @@ export function useInstrumentationPageController() {
     state,
     generationRef,
     tokenCapability.canGenerateToken,
-    requiresToken
+    requiresToken,
+    selectedProfile,
+    session?.workspaceId ?? undefined
   );
   const detect = useDetection(
     state.draft,

@@ -21,9 +21,11 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/instrumentation-api', () => api);
 const tokenApi = vi.hoisted(() => ({ generateAccessToken: vi.fn() }));
 vi.mock('@/shared/access-token/access-token-generation-api', () => tokenApi);
-const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
+const collectorTokenApi = vi.hoisted(() => ({ generateCollectorIntakeAccessToken: vi.fn() }));
+vi.mock('../api/instrumentation-token-api', () => collectorTokenApi);
+const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[], workspaceId: 'default' }));
 vi.mock('@/core/auth/session-context', () => ({
-  useSession: () => ({ session: { authenticated: true, roles: auth.roles } })
+  useSession: () => ({ session: { authenticated: true, roles: auth.roles, workspaceId: auth.workspaceId } })
 }));
 
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
@@ -276,11 +278,21 @@ describe('useInstrumentationPageController', () => {
       defaultProfileId: 'server-default',
       profiles: [
         serverProfile,
-        { ...serverProfile, id: 'collector-edge', kind: 'hertzbeat_collector', gateway: 'collector' }
+        {
+          ...serverProfile,
+          id: 'collector-edge',
+          kind: 'hertzbeat_collector',
+          gateway: 'collector',
+          collectorId: 'edge-west'
+        }
       ]
     });
     api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
     tokenApi.generateAccessToken.mockResolvedValue({ id: 'generated', token: 'hb_generated_once' });
+    collectorTokenApi.generateCollectorIntakeAccessToken.mockResolvedValue({
+      id: 'generated',
+      token: 'hb_collector_once'
+    });
     const { result, unmount } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.catalogState).toBe('ready'));
 
@@ -321,6 +333,13 @@ describe('useInstrumentationPageController', () => {
     act(() => result.current.openTokenGenerator());
     act(() => result.current.updateTokenDraft({ name: 'Collector ingest', expireSeconds: -1, scope: 'otlp-ingest' }));
     await act(async () => result.current.generateToken());
+    expect(tokenApi.generateAccessToken).toHaveBeenCalledTimes(2);
+    expect(collectorTokenApi.generateCollectorIntakeAccessToken).toHaveBeenCalledWith({
+      collectorId: 'edge-west',
+      workspaceId: 'default',
+      expireSeconds: -1
+    });
+    expect(result.current.token).toBe('hb_collector_once');
     act(() => result.current.goBack());
     expect(result.current.stage).toBe('source');
     expect(result.current.token).toBe('');
