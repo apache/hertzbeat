@@ -184,7 +184,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         List<TelemetryIdentitySnapshot> identitySnapshots =
                 observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(externalLogs, externalTraces, List.of());
         List<TelemetryIdentitySnapshot> otlpMetricSnapshots = identitySnapshots.stream()
-                .filter(snapshot -> "metrics".equals(snapshot.getSignal()) && "otlp".equals(snapshot.getSource()))
+                .filter(this::isOtlpSnapshot)
+                .filter(snapshot -> "metrics".equals(snapshot.getSignal()))
                 .toList();
         long otlpMetricCount = otlpMetricSnapshots.size();
 
@@ -614,7 +615,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                         recentLogs.stream().filter(this::isExternalLog).toList(),
                         recentTraces.stream().filter(this::isExternalTrace).toList(),
                         List.of()).stream()
-                        .filter(snapshot -> "otlp".equals(snapshot.getSource()))
+                        .filter(this::isOtlpSnapshot)
                         .toList();
 
         List<OtlpEntityBindingSummaryDto.CanonicalIdentitySample> samples = new ArrayList<>();
@@ -1426,6 +1427,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return 1;
         }
         return 2;
+    }
+
+    private boolean isOtlpSnapshot(TelemetryIdentitySnapshot snapshot) {
+        return snapshot != null && TelemetryIdentitySnapshot.SOURCE_OTLP.equals(snapshot.getSource());
     }
 
     private long safeLogCount(long start, long end) {

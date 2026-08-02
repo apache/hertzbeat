@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.observability.shared.service.impl;
 
+import static org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot.SOURCE_MONITOR;
+import static org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot.SOURCE_OTLP;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -74,8 +77,6 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
     private static final String SIGNAL_METRICS = "metrics";
     private static final String SIGNAL_LOGS = "logs";
     private static final String SIGNAL_TRACES = "traces";
-    private static final String SOURCE_MONITOR = "monitor";
-    private static final String SOURCE_OTLP = "otlp";
     private static final String FOCUS_METRICS = "metrics";
     private static final String FOCUS_LOGS = "logs";
     private static final String FOCUS_TRACES = "traces";
