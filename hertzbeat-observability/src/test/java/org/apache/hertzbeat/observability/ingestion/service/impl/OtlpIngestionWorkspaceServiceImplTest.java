@@ -481,6 +481,74 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void bindingSummaryDoesNotTreatOrdinaryMonitorAsOtlpResourceCandidate() {
+        Monitor ordinaryMonitor = Monitor.builder()
+                .id(1L)
+                .name("checkout-api")
+                .app("api")
+                .instance("checkout:8080")
+                .labels(Map.of(
+                        "service.name", "ordinary-checkout",
+                        "service.namespace", "commerce"))
+                .gmtUpdate(LocalDateTime.now())
+                .build();
+
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(0),
+                org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        lenient().when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.of(ordinaryMonitor));
+
+        OtlpEntityBindingSummaryDto summary = otlpIngestionWorkspaceService.getBindingSummary();
+
+        verify(workspaceQueryGateway, never()).findLatestMonitor();
+        assertTrue(summary.getRecentServices().isEmpty());
+        assertTrue(summary.getRecentIdentitySamples().isEmpty());
+        assertTrue(summary.getRecentUnboundCandidates().isEmpty());
+    }
+
+    @Test
+    void bindingSummaryIncludesRealOtlpMetricContextWithoutLogsOrTraces() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"),
+                System.currentTimeMillis(),
+                "checkout_request_latency",
+                "gauge",
+                "ms",
+                42.5,
+                Map.of());
+
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(0),
+                org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                org.mockito.ArgumentMatchers.anySet(), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(List.of());
+
+        OtlpEntityBindingSummaryDto summary = otlpIngestionWorkspaceService.getBindingSummary();
+
+        assertEquals(List.of("checkout"), summary.getRecentServices());
+        assertTrue(summary.getRecentIdentitySamples().stream().anyMatch(sample ->
+                "service.name".equals(sample.getKey())
+                        && "checkout".equals(sample.getValue())
+                        && "metrics".equals(sample.getSignal())));
+        assertEquals(1, summary.getRecentUnboundCandidates().size());
+        assertEquals(List.of("metrics"), summary.getRecentUnboundCandidates().getFirst().getSignals());
+    }
+
+    @Test
     void overviewMarksMetricsActiveWhenRecentOtlpMetricWasRecorded() {
         long now = System.currentTimeMillis();
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
@@ -766,7 +834,6 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
                 .thenReturn(new PageImpl<>(List.of(seededTrace), PageRequest.of(0, 20), 1));
-        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.empty());
         when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
                 argThat(keys -> keys.contains("service.name")
                         && keys.contains("service.namespace")

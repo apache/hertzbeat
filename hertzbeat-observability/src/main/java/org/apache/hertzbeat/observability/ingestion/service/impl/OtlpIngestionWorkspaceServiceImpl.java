@@ -39,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
@@ -610,12 +609,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         List<TraceListItemDto> recentTraces = entityTraceQueryService
                 .queryTraceList(null, start, now, null, false, null, null, null, 0, SAMPLE_LIMIT)
                 .getContent();
-        List<Monitor> recentMetricSources = workspaceQueryGateway.findLatestMonitor().map(List::of).orElseGet(List::of);
         List<TelemetryIdentitySnapshot> identitySnapshots =
                 observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
                         recentLogs.stream().filter(this::isExternalLog).toList(),
                         recentTraces.stream().filter(this::isExternalTrace).toList(),
-                        recentMetricSources);
+                        List.of()).stream()
+                        .filter(snapshot -> "otlp".equals(snapshot.getSource()))
+                        .toList();
 
         List<OtlpEntityBindingSummaryDto.CanonicalIdentitySample> samples = new ArrayList<>();
         appendIdentitySamples(samples, identitySnapshots);
