@@ -35,12 +35,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.Comparator;
+import java.util.EnumMap;
 import org.apache.hertzbeat.common.entity.observability.TelemetryIntakeSignalEvent;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.observability.dto.binding.TelemetryBindingResult;
 import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot;
+import org.apache.hertzbeat.common.observability.dto.binding.TelemetrySource;
+import org.apache.hertzbeat.common.observability.dto.entity.EntityEvidenceSourceSummary;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityEvidenceSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
@@ -913,8 +916,67 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 logEvidence == null ? 0 : logEvidence.size(),
                 traceSummary == null ? 0 : traceSummary.getRecentTraceCount(),
                 latestObservedAt,
-                activeSignals
+                activeSignals,
+                buildEvidenceSourceSummaries(metricEvidence, logEvidence, traceEvidence)
         );
+    }
+
+    private List<EntityEvidenceSourceSummary> buildEvidenceSourceSummaries(
+            List<MetricEvidence> metricEvidence,
+            List<LogEvidence> logEvidence,
+            List<TraceEvidence> traceEvidence) {
+        Map<TelemetrySource, EvidenceSourceAccumulator> accumulators = new EnumMap<>(TelemetrySource.class);
+        accumulateMetricEvidenceSources(accumulators, metricEvidence);
+        accumulateLogEvidenceSources(accumulators, logEvidence);
+        accumulateTraceEvidenceSources(accumulators, traceEvidence);
+        return accumulators.entrySet().stream()
+                .map(entry -> entry.getValue().toSummary(entry.getKey()))
+                .toList();
+    }
+
+    private void accumulateMetricEvidenceSources(Map<TelemetrySource, EvidenceSourceAccumulator> accumulators,
+                                                 List<MetricEvidence> evidence) {
+        if (CollectionUtils.isEmpty(evidence)) {
+            return;
+        }
+        for (MetricEvidence item : evidence) {
+            if (item != null) {
+                accumulateEvidenceSource(accumulators, item.getSource(), SIGNAL_METRICS, item.getObservedAt());
+            }
+        }
+    }
+
+    private void accumulateLogEvidenceSources(Map<TelemetrySource, EvidenceSourceAccumulator> accumulators,
+                                              List<LogEvidence> evidence) {
+        if (CollectionUtils.isEmpty(evidence)) {
+            return;
+        }
+        for (LogEvidence item : evidence) {
+            if (item != null) {
+                accumulateEvidenceSource(accumulators, item.getSource(), SIGNAL_LOGS, item.getObservedAt());
+            }
+        }
+    }
+
+    private void accumulateTraceEvidenceSources(Map<TelemetrySource, EvidenceSourceAccumulator> accumulators,
+                                                List<TraceEvidence> evidence) {
+        if (CollectionUtils.isEmpty(evidence)) {
+            return;
+        }
+        for (TraceEvidence item : evidence) {
+            if (item != null) {
+                accumulateEvidenceSource(accumulators, item.getSource(), SIGNAL_TRACES, item.getObservedAt());
+            }
+        }
+    }
+
+    private void accumulateEvidenceSource(Map<TelemetrySource, EvidenceSourceAccumulator> accumulators,
+                                          String source, String signal, Long observedAt) {
+        TelemetrySource telemetrySource = TelemetrySource.fromValueOrNull(source);
+        if (telemetrySource != null) {
+            accumulators.computeIfAbsent(telemetrySource, ignored -> new EvidenceSourceAccumulator())
+                    .add(signal, observedAt);
+        }
     }
 
     @Override
@@ -1820,6 +1882,32 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 }
             }
             return max;
+        }
+    }
+
+    private static final class EvidenceSourceAccumulator {
+
+        private long metricEvidenceCount;
+        private long logEvidenceCount;
+        private long traceEvidenceCount;
+        private Long latestObservedAt;
+
+        private void add(String signal, Long observedAt) {
+            if (SIGNAL_METRICS.equals(signal)) {
+                metricEvidenceCount++;
+            } else if (SIGNAL_LOGS.equals(signal)) {
+                logEvidenceCount++;
+            } else if (SIGNAL_TRACES.equals(signal)) {
+                traceEvidenceCount++;
+            }
+            if (observedAt != null && (latestObservedAt == null || observedAt > latestObservedAt)) {
+                latestObservedAt = observedAt;
+            }
+        }
+
+        private EntityEvidenceSourceSummary toSummary(TelemetrySource source) {
+            return new EntityEvidenceSourceSummary(
+                    source, metricEvidenceCount, logEvidenceCount, traceEvidenceCount, latestObservedAt);
         }
     }
 
