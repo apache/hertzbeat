@@ -190,7 +190,8 @@ class InstrumentationCatalogServiceTest {
 
     @Test
     void documentedCompleteCatalogMatchesWireSerialization() throws IOException {
-        String document = Files.readString(findRepositoryFile("docs/instrumentation-api-v1.md"));
+        String document = Files.readString(findRepositoryFile(
+                "hertzbeat-observability/src/test/resources/instrumentation-api-v1-compatibility.md"));
         int heading = document.indexOf("## Complete catalog example");
         int jsonStart = document.indexOf("```json", heading) + "```json".length();
         int jsonEnd = document.indexOf("```", jsonStart);

@@ -1,8 +1,8 @@
 # Observability Query Context v1
 
 This document freezes the optional query context shared by the Metrics, Logs, and Traces operator
-APIs. It is separate from the application instrumentation v1 catalog, render, and detection
-contract; that contract remains unchanged.
+APIs. It is separate from the application instrumentation catalog, render, and detection contract;
+that contract remains unchanged.
 
 ## Context hierarchy
 

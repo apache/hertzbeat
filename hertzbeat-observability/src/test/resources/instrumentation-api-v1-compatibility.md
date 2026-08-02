@@ -1,15 +1,18 @@
-# Application Instrumentation API v1
+# Internal Instrumentation Compatibility Fixture
 
-This document freezes the backend contract consumed by the React onboarding flow. All endpoints use
-the ordinary HertzBeat `Message<T>` envelope; the examples below show the `data` value only.
+This file preserves examples for tests of the internal legacy adapter. It is
+not a public API document and its versioned paths are not Spring routes.
 
-## Endpoints
+The remaining sections are serialization fixtures for the internal adapter.
+They are deliberately isolated from the public instrumentation documentation.
 
-| Method | Path | Purpose |
+## Legacy adapter operations
+
+| Method | Operation | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/instrumentation/v1/catalog` | Languages, frameworks, methods, component disclosure, and signal maturity |
-| `POST` | `/api/instrumentation/v1/render` | Structured install, configure, start, container, and disable steps |
-| `POST` | `/api/instrumentation/v1/detect` | Context-scoped Metrics, Logs, and Traces reception state |
+| `GET` | `catalog` | Languages, frameworks, methods, component disclosure, and signal maturity |
+| `POST` | `render` | Structured install, configure, start, container, and disable steps |
+| `POST` | `detect` | Context-scoped Metrics, Logs, and Traces reception state |
 
 No endpoint accepts a token in a URL. The render request has no token field. The server returns a
 structured `authorizationToken` placeholder whose marker is `${HERTZBEAT_TOKEN}`, whose
@@ -22,8 +25,8 @@ contract.
 
 ## Compatibility rules
 
-- The path version and numeric `schemaVersion` must both be `1`.
-- A breaking field, enum, validation, or semantic change requires `/v2` and `schemaVersion: 2`.
+- The internal compatibility fixture retains numeric `schemaVersion: 1`.
+- A breaking field, enum, validation, or semantic change requires an explicit compatibility review.
 - New catalog entries and new optional response fields are additive. Consumers must ignore unknown
   fields and treat unknown enum values as unavailable until upgraded.
 - A concrete component uses `versionPolicy: "pinned"` and an exact upstream version. The generic SDK

@@ -309,7 +309,8 @@ class InstrumentationDetectionServiceTest {
     }
 
     private List<String> documentedJsonBlocks(String heading) throws IOException {
-        String document = Files.readString(findRepositoryFile("docs/instrumentation-api-v1.md"));
+        String document = Files.readString(findRepositoryFile(
+                "hertzbeat-observability/src/test/resources/instrumentation-api-v1-compatibility.md"));
         String section = document.substring(document.indexOf(heading));
         List<String> blocks = new ArrayList<>();
         int cursor = 0;
