@@ -70,6 +70,14 @@ describe('alert integration presentation model', () => {
       });
     });
   });
+
+  it('keeps the Chinese alert integration workflow localized instead of falling back to English', () => {
+    [...alertIntegrationUiKeys, ...zhCnInstructionKeys].forEach(key => {
+      const value = readLocaleKey(zhCN, key);
+      expect(value, key).toEqual(expect.any(String));
+      expect(value, key).toMatch(/\p{Script=Han}/u);
+    });
+  });
 });
 
 const guide: AlertIntegrationGuide = {
@@ -118,6 +126,25 @@ const backendLocaleKeys = [
   'alert.integration.alertmanager.step.verify_alert',
   'alert.integration.zabbix.step.correct_guide_required'
 ];
+
+const alertIntegrationUiKeys = [
+  'alertIntegrations.states.loading',
+  'alertIntegrations.states.permission',
+  'alertIntegrations.states.unavailable',
+  'alertIntegrations.states.contract',
+  'alertIntegrations.states.error',
+  'alertIntegrations.states.not-found',
+  'alertIntegrations.readiness.ready',
+  'alertIntegrations.readiness.configuration_required',
+  'alertIntegrations.readiness.guide_blocked',
+  'alertIntegrations.payloadShape',
+  'alertIntegrations.requiredFields',
+  'alertIntegrations.steps',
+  'alertIntegrations.snippets',
+  'alertIntegrations.limitations'
+];
+
+const zhCnInstructionKeys = backendLocaleKeys.filter(key => !key.startsWith('alert.integration.source.'));
 
 function readLocaleKey(locale: object, key: string): unknown {
   return key

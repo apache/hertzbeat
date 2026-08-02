@@ -1252,23 +1252,23 @@
   },
   "alertIntegrations": {
     "states": {
-      "loading": "Loading integration catalog…",
-      "permission": "You do not have permission to view alert integrations.",
-      "unavailable": "Alert integration guides are temporarily unavailable.",
-      "contract": "The server returned an invalid alert integration guide.",
-      "error": "Alert integration guides could not be loaded.",
-      "not-found": "This alert integration is not in the server catalog."
+      "loading": "正在加载告警接入目录…",
+      "permission": "你没有权限查看告警接入配置。",
+      "unavailable": "告警接入指南暂时不可用。",
+      "contract": "服务器返回了无效的告警接入指南。",
+      "error": "无法加载告警接入指南。",
+      "not-found": "服务器目录中不存在此告警接入来源。"
     },
     "readiness": {
-      "ready": "This backend guide is ready to configure.",
-      "configuration_required": "This source requires sender or gateway configuration before it can run.",
-      "guide_blocked": "This backend guide is blocked and must not be used as a runnable configuration."
+      "ready": "后端接入指南已就绪，可以开始配置。",
+      "configuration_required": "此来源需要先配置发送方或网关才能使用。",
+      "guide_blocked": "后端接入指南当前不可用，请勿按此配置接入。"
     },
-    "payloadShape": "Payload shape",
-    "requiredFields": "Required fields",
-    "steps": "Configuration steps",
-    "snippets": "Payload examples",
-    "limitations": "Known limitations",
+    "payloadShape": "请求载荷格式",
+    "requiredFields": "必填字段",
+    "steps": "配置步骤",
+    "snippets": "载荷示例",
+    "limitations": "已知限制",
     "menu": "外部告警集成",
     "title": "{{source}} 集成",
     "description": "配置外部发送方，通过 HertzBeat 的认证入口上报告警。",
@@ -2475,43 +2475,43 @@
         "volcengine": "Volcengine"
       },
       "ack": {
-        "accepted_for_processing": "A successful response means the alert was accepted for processing; it does not prove delivery health."
+        "accepted_for_processing": "成功响应仅表示告警已被接收并进入处理流程，不代表通知投递链路健康。"
       },
       "limit": {
-        "bearer_configuration_required": "The sender must support the required bearer header or use an administrator-managed trusted gateway.",
+        "bearer_configuration_required": "发送方必须支持必需的 Bearer 请求头，或通过管理员维护的可信网关接入。",
         "zabbix": {
-          "authorization_missing": "The registered Zabbix ingress does not yet enforce the documented bearer authorization.",
-          "response_contract_mismatch": "The current Zabbix response contract does not match a normal authenticated ingress response.",
-          "recovery_time_semantics": "Zabbix recovery-time semantics are not yet reliable enough for a runnable guide."
+          "authorization_missing": "当前注册的 Zabbix 接入端点尚未强制执行文档规定的 Bearer 认证。",
+          "response_contract_mismatch": "当前 Zabbix 响应契约与标准的认证接入响应不一致。",
+          "recovery_time_semantics": "Zabbix 恢复时间语义尚不够可靠，暂不能提供可执行指南。"
         }
       },
       "step": {
-        "configure_bearer_capable_callback": "Configure a callback or trusted gateway that can send the required bearer header."
+        "configure_bearer_capable_callback": "配置能够发送必需 Bearer 请求头的回调地址或可信网关。"
       },
       "webhook": {
         "step": {
-          "create_token": "Create an API token in Settings.",
-          "configure_request": "Configure the sender to POST the required alert JSON and bearer header.",
-          "verify_alert": "Send a controlled alert and verify it appears in Alert Center."
+          "create_token": "在设置中创建 API 令牌。",
+          "configure_request": "配置发送方，通过 POST 请求提交规定的告警 JSON 和 Bearer 请求头。",
+          "verify_alert": "发送一条受控告警，并确认它出现在告警中心。"
         }
       },
       "prometheus": {
         "step": {
-          "create_token": "Create an API token in Settings.",
-          "configure_alertmanager_target": "Configure the Prometheus Alertmanager target and bearer authorization.",
-          "verify_alert": "Send a controlled Prometheus alert and verify it appears in Alert Center."
+          "create_token": "在设置中创建 API 令牌。",
+          "configure_alertmanager_target": "配置 Prometheus Alertmanager 目标地址和 Bearer 认证。",
+          "verify_alert": "发送一条受控 Prometheus 告警，并确认它出现在告警中心。"
         }
       },
       "alertmanager": {
         "step": {
-          "create_token": "Create an API token in Settings.",
-          "configure_webhook": "Configure the Alertmanager webhook receiver and bearer authorization.",
-          "verify_alert": "Send a controlled Alertmanager alert and verify it appears in Alert Center."
+          "create_token": "在设置中创建 API 令牌。",
+          "configure_webhook": "配置 Alertmanager Webhook 接收器和 Bearer 认证。",
+          "verify_alert": "发送一条受控 Alertmanager 告警，并确认它出现在告警中心。"
         }
       },
       "zabbix": {
         "step": {
-          "correct_guide_required": "Wait for the backend ingress contract to be corrected before configuring Zabbix."
+          "correct_guide_required": "等待后端接入契约修正后，再配置 Zabbix。"
         }
       }
     },
