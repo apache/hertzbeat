@@ -20,7 +20,7 @@ import { isValidElement } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { AuthGate } from '@/core/auth/auth-gate';
-import { AdministrativeRouteAccess } from './administrative-route-access';
+import { ResourceRouteAccess } from './resource-route-access';
 import { applicationRootPath, getAppRoute, legacyRouteCatalog, routeRegistry, type AppRouteId } from './route-registry';
 import { appRoutes } from './app-routes';
 
@@ -105,6 +105,7 @@ describe('application data router', () => {
       id: getAppRoute('instrumentation').id,
       path: getAppRoute('instrumentation').path
     });
+    expectResourceBoundary(authenticatedCanonicalRoutes[0], 'instrumentation');
     expect((basicRoute?.children ?? []).some(route => route.id === 'instrumentation')).toBe(false);
   });
 
@@ -123,7 +124,7 @@ describe('application data router', () => {
 
     for (const route of basicCanonicalRoutes) {
       const definition = getAppRoute(route.id as AppRouteId);
-      const hasPageLoader = Boolean(route.lazy) || isAdministrativeRoute(route);
+      const hasPageLoader = Boolean(route.lazy) || isResourceRoute(route);
       expect(hasPageLoader).toBe(definition.kind === 'page');
       if (definition.kind === 'redirect') expect(route.element).toBeDefined();
     }
@@ -134,16 +135,20 @@ describe('application data router', () => {
     expect(appRoutes[0]?.errorElement).toBeDefined();
   });
 
-  it.each(['tokens', 'plugins'])('places the %s page behind the administrative boundary', routeId => {
+  it.each(['tokens', 'plugins'])('places the %s page behind the resource boundary', routeId => {
     const route = flattenRoutes(appRoutes).find(candidate => candidate.id === routeId);
-    expect(isValidElement(route?.element)).toBe(true);
-    if (!isValidElement(route?.element)) throw new Error(`The ${routeId} access boundary is missing.`);
-    expect(route.element.type).toBe(AdministrativeRouteAccess);
+    expectResourceBoundary(route, routeId);
   });
 });
 
-function isAdministrativeRoute(route: RouteObject) {
-  return isValidElement(route.element) && route.element.type === AdministrativeRouteAccess;
+function expectResourceBoundary(route: RouteObject | undefined, routeId: string) {
+  expect(isValidElement(route?.element)).toBe(true);
+  if (!isValidElement(route?.element)) throw new Error(`The ${routeId} resource access boundary is missing.`);
+  expect(route.element.type).toBe(ResourceRouteAccess);
+}
+
+function isResourceRoute(route: RouteObject) {
+  return isValidElement(route.element) && route.element.type === ResourceRouteAccess;
 }
 
 function compareRouteId(left: { id: string | undefined }, right: { id: string | undefined }) {

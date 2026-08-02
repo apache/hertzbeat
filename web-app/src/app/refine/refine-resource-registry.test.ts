@@ -147,7 +147,13 @@ describe('Refine shell resource registry', () => {
     ).resolves.toEqual({ can: true });
   });
 
-  it('propagates real Token and Plugin route roles and denies non-administrative sessions', async () => {
+  it('propagates real route roles and applies them consistently', async () => {
+    const instrumentation = refineResources.find(candidate => candidate.name === 'instrumentation');
+    expect(readShellResourceMeta(instrumentation?.meta?.shell)).toMatchObject({ requiredRoles: ['ADMIN', 'USER'] });
+    await expect(canAccess(instrumentation, ['ADMIN'])).resolves.toEqual({ can: true });
+    await expect(canAccess(instrumentation, ['USER'])).resolves.toEqual({ can: true });
+    await expect(canAccess(instrumentation, ['GUEST'])).resolves.toEqual({ can: false, reason: 'ROLE_REQUIRED' });
+
     for (const name of ['tokens', 'plugins']) {
       const resource = refineResources.find(candidate => candidate.name === name);
       expect(readShellResourceMeta(resource?.meta?.shell)).toMatchObject({ requiredRoles: ['ADMIN'] });

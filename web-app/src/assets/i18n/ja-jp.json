@@ -10,6 +10,7 @@
       "description": "ページを読み込めませんでした。再試行するか、後でもう一度開いてください。"
     },
     "permission": {
+      "additionalRequiredTitle": "追加の権限が必要です",
       "roleRequiredTitle": "管理者権限が必要です",
       "roleRequiredDescription": "このアカウントには、このページを開く権限がありません。"
     },

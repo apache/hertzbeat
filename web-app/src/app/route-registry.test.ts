@@ -321,11 +321,13 @@ describe('route registry', () => {
     );
   });
 
-  it('owns backend read roles for restricted settings resources', () => {
+  it('owns backend read roles for restricted resource routes', () => {
+    expect(getAppRoute('instrumentation').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER'] });
     expect(getAppRoute('tokens').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('plugins').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('labels').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER', 'GUEST'] });
     expect(routeRegistry.flatMap(route => (route.resource?.requiredRoles ? [route.id] : []))).toEqual([
+      'instrumentation',
       'tokens',
       'plugins',
       'labels'

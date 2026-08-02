@@ -70,7 +70,7 @@ export const appRouteCatalog = {
   }),
   instrumentation: pageRoute('instrumentation', applicationRoutePaths.instrumentation, {
     layout: 'blank',
-    resource: { labelKey: 'instrumentation.menu' }
+    resource: { labelKey: 'instrumentation.menu', requiredRoles: ['ADMIN', 'USER'] }
   }),
   alerts: pageRoute('alerts', alertRoutePaths.center, {
     resource: { labelKey: 'menu.alerts' }

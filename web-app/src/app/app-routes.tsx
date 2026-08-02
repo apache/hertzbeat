@@ -25,7 +25,7 @@ import { RouteLoadingState } from '@/shared/route-state/route-state';
 import { AdministrativePluginRoutePage, AdministrativeTokenRoutePage } from './administrative-route-pages';
 import { AuthenticatedRouteFailure } from './authenticated-route-failure';
 import { RefineRuntime } from './refine/refine-runtime';
-import { AdministrativeRouteAccess } from './administrative-route-access';
+import { ResourceRouteAccess } from './resource-route-access';
 import { LegacyRouteRedirect } from './legacy-route-redirect';
 import { applicationRootPath, getAppRoute, getAppRouteIdentity, legacyRouteCatalog } from './route-registry';
 
@@ -71,10 +71,16 @@ export const appRoutes: RouteObject[] = [
         children: [
           {
             ...getAppRouteIdentity('instrumentation'),
-            lazy: async () => {
-              const { InstrumentationPage } = await import('@/features/instrumentation');
-              return { Component: InstrumentationPage };
-            }
+            element: <ResourceRouteAccess routeId="instrumentation" />,
+            children: [
+              {
+                index: true,
+                lazy: async () => {
+                  const { InstrumentationPage } = await import('@/features/instrumentation');
+                  return { Component: InstrumentationPage };
+                }
+              }
+            ]
           },
           ...legacyRedirectRoutes('blank'),
           {
@@ -266,9 +272,9 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('tokens'),
                 element: (
-                  <AdministrativeRouteAccess routeId="tokens">
+                  <ResourceRouteAccess routeId="tokens">
                     <AdministrativeTokenRoutePage />
-                  </AdministrativeRouteAccess>
+                  </ResourceRouteAccess>
                 )
               },
               {
@@ -281,9 +287,9 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('plugins'),
                 element: (
-                  <AdministrativeRouteAccess routeId="plugins">
+                  <ResourceRouteAccess routeId="plugins">
                     <AdministrativePluginRoutePage />
-                  </AdministrativeRouteAccess>
+                  </ResourceRouteAccess>
                 )
               },
               {

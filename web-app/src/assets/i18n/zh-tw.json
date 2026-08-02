@@ -10,6 +10,7 @@
       "description": "頁面載入失敗，請重試或稍後返回。"
     },
     "permission": {
+      "additionalRequiredTitle": "需要更高權限",
       "roleRequiredTitle": "需要管理員權限",
       "roleRequiredDescription": "目前帳號無權開啟此頁面。"
     },
