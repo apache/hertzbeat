@@ -544,7 +544,8 @@ class InstrumentationGuideRendererTest {
     }
 
     private List<String> documentedJsonBlocks(String heading, String nextHeading) throws IOException {
-        String document = Files.readString(findRepositoryFile("docs/instrumentation-api-v1.md"));
+        String document = Files.readString(findRepositoryFile(
+                "hertzbeat-observability/src/test/resources/instrumentation-api-v1-compatibility.md"));
         int sectionStart = document.indexOf(heading);
         int sectionEnd = document.indexOf(nextHeading, sectionStart);
         String section = document.substring(sectionStart, sectionEnd);

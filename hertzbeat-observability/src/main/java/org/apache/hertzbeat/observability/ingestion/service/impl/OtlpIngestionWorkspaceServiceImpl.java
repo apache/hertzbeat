@@ -39,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
@@ -182,15 +181,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 externalTraces.stream().map(TraceListItemDto::getStartTime).filter(Objects::nonNull).max(Long::compareTo).orElse(null),
                 externalTraces.stream().anyMatch(item -> item.getStartTime() != null && item.getStartTime() >= now - LOOKBACK_MILLIS)
         );
-        List<Monitor> recentMetricSources = workspaceQueryGateway.findLatestMonitor().map(List::of).orElseGet(List::of);
         List<TelemetryIdentitySnapshot> identitySnapshots =
-                observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(externalLogs, externalTraces, recentMetricSources);
-        List<TelemetryIdentitySnapshot> metricSnapshots = identitySnapshots.stream()
+                observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(externalLogs, externalTraces, List.of());
+        List<TelemetryIdentitySnapshot> otlpMetricSnapshots = identitySnapshots.stream()
+                .filter(this::isOtlpSnapshot)
                 .filter(snapshot -> "metrics".equals(snapshot.getSignal()))
                 .toList();
-        long otlpMetricCount = metricSnapshots.stream()
-                .filter(snapshot -> "otlp".equals(snapshot.getSource()))
-                .count();
+        long otlpMetricCount = otlpMetricSnapshots.size();
 
         Set<String> services = new LinkedHashSet<>();
         identitySnapshots.stream()
@@ -199,19 +196,11 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 .forEach(services::add);
 
         long logTotalCount = externalLogs.size();
-        long monitorTotalCount = workspaceQueryGateway.countMonitors();
-        Optional<Monitor> latestMonitor = workspaceQueryGateway.findLatestMonitor();
-        Long latestMonitorObservedAt = latestMonitor.map(Monitor::getGmtUpdate).map(this::toEpochMillis).orElse(null);
-        TelemetryIdentitySnapshot latestMetricSnapshot = metricSnapshots.stream()
+        TelemetryIdentitySnapshot latestMetricSnapshot = otlpMetricSnapshots.stream()
                 .filter(snapshot -> snapshot.getObservedAt() != null)
                 .max(Comparator.comparing(TelemetryIdentitySnapshot::getObservedAt))
                 .orElse(null);
-        Long metricsLatestObservedAt = java.util.stream.Stream.of(
-                        latestMonitorObservedAt,
-                        latestMetricSnapshot == null ? null : latestMetricSnapshot.getObservedAt())
-                .filter(Objects::nonNull)
-                .max(Long::compareTo)
-                .orElse(null);
+        Long metricsLatestObservedAt = latestMetricSnapshot == null ? null : latestMetricSnapshot.getObservedAt();
         Long logsLatestObservedAt = externalLogs.stream()
                 .map(LogEntry::getTimeUnixNano)
                 .filter(Objects::nonNull)
@@ -241,9 +230,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     latestLog.getTimeUnixNano() == null ? null : latestLog.getTimeUnixNano() / 1_000_000L
             ));
         }
-        if (latestMetricSnapshot != null && (latestMonitorObservedAt == null
-                || latestMetricSnapshot.getObservedAt() == null
-                || latestMetricSnapshot.getObservedAt() >= latestMonitorObservedAt)) {
+        if (latestMetricSnapshot != null) {
             recentEvents.add(new OtlpIngestionOverviewDto.RecentSignalEvent(
                     "metrics",
                     defaultText(latestMetricSnapshot.getServiceName(),
@@ -251,13 +238,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     defaultText(latestMetricSnapshot.getServiceNamespace(),
                             message("observability.otlp.overview.event.metrics.copy")),
                     latestMetricSnapshot.getObservedAt()
-            ));
-        } else if (latestMonitor.isPresent()) {
-            recentEvents.add(new OtlpIngestionOverviewDto.RecentSignalEvent(
-                    "metrics",
-                    defaultText(latestMonitor.get().getName(), latestMonitor.get().getApp()),
-                    defaultText(latestMonitor.get().getInstance(), latestMonitor.get().getApp()),
-                    metricsLatestObservedAt
             ));
         }
         int activeSignalCount = 0;
@@ -280,9 +260,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 new OtlpIngestionOverviewDto.SignalOverview(
                         "metrics",
                         metricsActive,
-                        monitorTotalCount + otlpMetricCount,
+                        otlpMetricCount,
                         metricsLatestObservedAt,
-                        metricsIntakeMode(monitorTotalCount, otlpMetricCount),
+                        "OTLP",
                         metricsActive
                                 ? message("observability.otlp.overview.metrics.active")
                                 : message("observability.otlp.overview.metrics.inactive")
@@ -630,12 +610,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         List<TraceListItemDto> recentTraces = entityTraceQueryService
                 .queryTraceList(null, start, now, null, false, null, null, null, 0, SAMPLE_LIMIT)
                 .getContent();
-        List<Monitor> recentMetricSources = workspaceQueryGateway.findLatestMonitor().map(List::of).orElseGet(List::of);
         List<TelemetryIdentitySnapshot> identitySnapshots =
                 observabilitySignalIntakeGateway.collectRecentExternalIdentitySnapshots(
                         recentLogs.stream().filter(this::isExternalLog).toList(),
                         recentTraces.stream().filter(this::isExternalTrace).toList(),
-                        recentMetricSources);
+                        List.of()).stream()
+                        .filter(this::isOtlpSnapshot)
+                        .toList();
 
         List<OtlpEntityBindingSummaryDto.CanonicalIdentitySample> samples = new ArrayList<>();
         appendIdentitySamples(samples, identitySnapshots);
@@ -1448,6 +1429,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return 2;
     }
 
+    private boolean isOtlpSnapshot(TelemetryIdentitySnapshot snapshot) {
+        return snapshot != null && TelemetryIdentitySnapshot.SOURCE_OTLP.equals(snapshot.getSource());
+    }
+
     private long safeLogCount(long start, long end) {
         return logQueryRepository.countRecentLogs(start, end);
     }
@@ -1852,16 +1837,6 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             }
         }
         return null;
-    }
-
-    private String metricsIntakeMode(long monitorTotalCount, long otlpMetricCount) {
-        if (monitorTotalCount > 0 && otlpMetricCount > 0) {
-            return message("observability.otlp.overview.metrics.mode.mixed");
-        }
-        if (otlpMetricCount > 0) {
-            return "OTLP";
-        }
-        return message("observability.otlp.overview.metrics.mode.monitor");
     }
 
     private static String message(String key) {

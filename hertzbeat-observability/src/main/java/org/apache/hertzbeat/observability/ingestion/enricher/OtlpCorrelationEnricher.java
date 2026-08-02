@@ -124,12 +124,6 @@ public class OtlpCorrelationEnricher {
         ExportMetricsServiceRequest source =
                 request == null ? ExportMetricsServiceRequest.getDefaultInstance() : request;
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
-        if (StringUtils.isBlank(resolvedContext.entityId())
-                && StringUtils.isBlank(resolvedContext.entityType())
-                && StringUtils.isBlank(resolvedContext.workspaceId())
-                && StringUtils.isBlank(resolvedContext.collectorId())) {
-            return source;
-        }
         ExportMetricsServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceMetrics();
         for (ResourceMetrics resourceMetrics : source.getResourceMetricsList()) {
             ResourceMetrics.Builder resourceBuilder = resourceMetrics.toBuilder();
@@ -167,12 +161,6 @@ public class OtlpCorrelationEnricher {
     public ExportTraceServiceRequest enrichTraces(ExportTraceServiceRequest request, OtlpCorrelationContext context) {
         ExportTraceServiceRequest source = request == null ? ExportTraceServiceRequest.getDefaultInstance() : request;
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
-        if (StringUtils.isBlank(resolvedContext.entityId())
-                && StringUtils.isBlank(resolvedContext.entityType())
-                && StringUtils.isBlank(resolvedContext.workspaceId())
-                && StringUtils.isBlank(resolvedContext.collectorId())) {
-            return source;
-        }
         ExportTraceServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceSpans();
         for (ResourceSpans resourceSpans : source.getResourceSpansList()) {
             ResourceSpans.Builder resourceBuilder = resourceSpans.toBuilder();
@@ -183,18 +171,11 @@ public class OtlpCorrelationEnricher {
     }
 
     private Resource enrichResource(Resource resource, OtlpCorrelationContext context) {
-        if (StringUtils.isBlank(context.entityId())
-                && StringUtils.isBlank(context.entityType())
-                && StringUtils.isBlank(context.workspaceId())
-                && StringUtils.isBlank(context.collectorId())) {
-            return resource;
-        }
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
+        replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -206,8 +187,7 @@ public class OtlpCorrelationEnricher {
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
+        replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -219,8 +199,7 @@ public class OtlpCorrelationEnricher {
         addStringAttributeIfMissing(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         addStringAttributeIfMissing(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
-        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
+        replaceCollectorIdentity(attributes, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -307,6 +286,15 @@ public class OtlpCorrelationEnricher {
             return;
         }
         upsertStringAttribute(attributes, key, value);
+    }
+
+    private void replaceCollectorIdentity(List<KeyValue> attributes, String collectorId) {
+        attributes.removeIf(attribute ->
+                OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID_KEYS.contains(attribute.getKey()));
+        if (StringUtils.isNotBlank(collectorId)) {
+            attributes.add(stringAttribute(COLLECTOR_ID_ATTRIBUTE, collectorId));
+            attributes.add(stringAttribute(COLLECTOR_ATTRIBUTE, collectorId));
+        }
     }
 
     private void addStringAttributeIfMissing(List<KeyValue> attributes, String key, String value) {

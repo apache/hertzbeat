@@ -103,7 +103,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
                     }
                     touchTokenLastUsedTime(token);
                 } catch (RuntimeException e) {
-                    log.warn("Managed token validation failed", e);
+                    log.warn("Managed token validation failed");
                     return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
                 }
             }
@@ -146,7 +146,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         try {
             accountService.touchTokenLastUsedTime(token);
         } catch (RuntimeException e) {
-            log.debug("Failed to update token last used time", e);
+            log.debug("Failed to update token last used time");
         }
     }
 

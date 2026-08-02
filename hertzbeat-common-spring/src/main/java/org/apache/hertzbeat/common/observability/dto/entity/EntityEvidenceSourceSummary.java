@@ -17,43 +17,26 @@
 
 package org.apache.hertzbeat.common.observability.dto.entity;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.observability.dto.binding.TelemetrySource;
 
 /**
- * Unified evidence summary shown on the entity workspace.
+ * Evidence counts and recency for one telemetry provenance source.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EntityUnifiedEvidenceSummary {
+public class EntityEvidenceSourceSummary {
 
-    private int activeSignalCount;
-
-    private boolean metricsActive;
-
-    private boolean logsActive;
-
-    private boolean tracesActive;
+    private TelemetrySource source;
 
     private long metricEvidenceCount;
 
-    private int logEvidenceCount;
+    private long logEvidenceCount;
 
-    private int traceEvidenceCount;
+    private long traceEvidenceCount;
 
     private Long latestObservedAt;
-
-    private List<String> activeSignals;
-
-    private List<EntityEvidenceSourceSummary> evidenceSources = List.of();
-
-    public EntityUnifiedEvidenceSummary(int activeSignalCount, boolean metricsActive, boolean logsActive,
-                                        boolean tracesActive, long metricEvidenceCount, int logEvidenceCount,
-                                        int traceEvidenceCount, Long latestObservedAt, List<String> activeSignals) {
-        this(activeSignalCount, metricsActive, logsActive, tracesActive, metricEvidenceCount, logEvidenceCount,
-                traceEvidenceCount, latestObservedAt, activeSignals, List.of());
-    }
 }

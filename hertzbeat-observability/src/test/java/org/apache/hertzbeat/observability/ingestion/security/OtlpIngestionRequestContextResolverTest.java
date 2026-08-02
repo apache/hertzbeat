@@ -66,7 +66,8 @@ class OtlpIngestionRequestContextResolverTest {
         Map<String, String> source = new LinkedHashMap<>();
         source.put("service.name", "checkout");
         source.put(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE, "spoofed");
-        source.put(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE, "spoofed");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE, "spoofed-collector");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE, "spoofed-collector-alias");
 
         Map<String, String> resolved = resolver.withWorkspaceResourceAttributes(source);
 
@@ -75,6 +76,24 @@ class OtlpIngestionRequestContextResolverTest {
         assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
         assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE));
         assertEquals("spoofed", source.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
+        assertEquals("spoofed-collector", source.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+        assertEquals("spoofed-collector-alias", source.get(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE));
+    }
+
+    @Test
+    void shouldRemoveUnauthenticatedCollectorIdentityFromResourceAttributes() {
+        Map<String, String> source = new LinkedHashMap<>();
+        source.put("service.name", "checkout");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE, "registered-collector");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE, "registered-collector-alias");
+
+        Map<String, String> resolved = resolver.withWorkspaceResourceAttributes(source);
+
+        assertEquals("checkout", resolved.get("service.name"));
+        assertFalse(resolved.containsKey(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+        assertFalse(resolved.containsKey(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE));
+        assertEquals("registered-collector", source.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+        assertEquals("registered-collector-alias", source.get(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE));
     }
 
     @Test

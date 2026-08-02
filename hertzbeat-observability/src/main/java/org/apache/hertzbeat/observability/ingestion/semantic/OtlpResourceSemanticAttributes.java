@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.ingestion.semantic;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * OTLP resource keys HertzBeat treats as stable ingestion and entity-correlation semantics.
@@ -48,6 +49,15 @@ public final class OtlpResourceSemanticAttributes {
      * Authenticated ingestion always overwrites both keys with the same trusted identity.</p>
      */
     public static final String HERTZBEAT_COLLECTOR = "hertzbeat.collector";
+
+    public static final Set<String> HERTZBEAT_COLLECTOR_ID_KEYS = Set.of(
+            HERTZBEAT_COLLECTOR_ID,
+            "hertzbeat_collector_id",
+            "hertzbeat.collector",
+            "hertzbeat_collector",
+            "collector.id",
+            "collector_id"
+    );
 
     public static final List<String> PRIMARY_OTEL_IDENTITY_KEYS = List.of(
             SERVICE_NAME,

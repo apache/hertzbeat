@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedactionService;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -72,10 +73,6 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
     private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
             "hertzbeat.workspace_id", "hertzbeat_workspace_id", "workspace.id", "workspace_id");
-    private static final Set<String> COLLECTOR_RESOURCE_KEYS = Set.of(
-            "hertzbeat.collector.id", "hertzbeat_collector_id",
-            "hertzbeat.collector", "hertzbeat_collector",
-            "collector.id", "collector_id");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CommonDataQueue commonDataQueue;
@@ -238,7 +235,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
         WORKSPACE_RESOURCE_KEYS.forEach(resourceAttributes::remove);
         resourceAttributes.put("hertzbeat_workspace_id",
                 AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId()));
-        COLLECTOR_RESOURCE_KEYS.forEach(resourceAttributes::remove);
+        OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID_KEYS.forEach(resourceAttributes::remove);
         String collectorId = AuthTokenRequestContext.currentCollectorId();
         if (collectorId != null && !collectorId.isBlank()) {
             resourceAttributes.put("hertzbeat_collector_id", collectorId.trim());

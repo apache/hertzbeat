@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -32,8 +33,10 @@ import org.junit.jupiter.api.function.Executable;
 class InstrumentationV2RouteAuthorizationConfigTest {
 
     private static final List<String> REQUIRED_RESOURCE_RULES = List.of(
-            "  - /api/instrumentation/**===get===[admin,user,guest]",
-            "  - /api/instrumentation/**===post===[admin,user]",
+            "  - /api/instrumentation/catalog===get===[admin,user,guest]",
+            "  - /api/instrumentation/intake-profiles===get===[admin,user,guest]",
+            "  - /api/instrumentation/render===post===[admin,user]",
+            "  - /api/instrumentation/detect===post===[admin,user]",
             "  - /api/ui/runtime-status===get===[admin,user,guest]");
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
@@ -60,6 +63,10 @@ class InstrumentationV2RouteAuthorizationConfigTest {
         for (String rule : REQUIRED_RESOURCE_RULES) {
             assertTrue(lines.contains(rule), () -> config + " must contain " + rule.trim());
         }
+        assertFalse(lines.stream().anyMatch(line -> line.contains("/api/instrumentation/**")),
+                () -> config + " must not authorize an open-ended instrumentation route family");
+        assertFalse(lines.stream().anyMatch(line -> line.matches(".*?/api/instrumentation/v[0-9]+(?:/.*)?.*")),
+                () -> config + " must not authorize a versioned instrumentation route");
     }
 
     private static Path repoRoot() {

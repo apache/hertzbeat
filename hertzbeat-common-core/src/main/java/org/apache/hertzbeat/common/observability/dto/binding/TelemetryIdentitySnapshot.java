@@ -30,6 +30,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TelemetryIdentitySnapshot {
 
+    public static final String SOURCE_MONITOR = TelemetrySource.MONITOR.value();
+    public static final String SOURCE_OTLP = TelemetrySource.OTLP.value();
+
     private String source;
 
     private String signal;

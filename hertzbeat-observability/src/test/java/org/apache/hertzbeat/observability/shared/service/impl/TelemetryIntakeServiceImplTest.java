@@ -26,14 +26,17 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityEvidenceSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -379,6 +382,52 @@ class TelemetryIntakeServiceImplTest {
         assertFalse(summary.isLogsActive());
         assertEquals(0, summary.getActiveSignalCount());
         assertEquals(0, summary.getLogEvidenceCount());
+        assertTrue(JsonUtil.toJson(summary).contains("\"evidenceSources\":[]"));
+    }
+
+    @Test
+    void unifiedEvidenceApiKeepsMonitorAndOtlpMetricSourcesDistinct() {
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(88L).type("service").name("checkout").build(),
+                List.of(EntityIdentity.builder()
+                        .entityId(88L)
+                        .identityKey("service.name")
+                        .identityValue("checkout")
+                        .build()));
+        Monitor monitor = Monitor.builder()
+                .id(1L)
+                .name("checkout-api")
+                .app("api")
+                .status((byte) 1)
+                .gmtUpdate(LocalDateTime.now())
+                .build();
+        telemetryIntakeService.recordOtlpMetricIntake(
+                Map.of("service.name", "checkout"),
+                System.currentTimeMillis(),
+                "http.server.request.duration",
+                "gauge",
+                "ms",
+                42.0,
+                Map.of());
+
+        List<MetricEvidence> metricEvidence = telemetryIntakeService.buildMetricEvidence(
+                entityContext, null, List.of(monitor));
+
+        assertEquals(Set.of(TelemetryIdentitySnapshot.SOURCE_MONITOR, TelemetryIdentitySnapshot.SOURCE_OTLP),
+                metricEvidence.stream().map(MetricEvidence::getSource).collect(java.util.stream.Collectors.toSet()));
+        assertTrue(metricEvidence.stream().allMatch(evidence -> evidence.getSource().equals(
+                evidence.getIdentitySnapshot().getSource())));
+        assertTrue(metricEvidence.stream().allMatch(evidence -> evidence.getSource().equals(
+                evidence.getBindingResult().getSource())));
+
+        EntityUnifiedEvidenceSummary summary = telemetryIntakeService.buildUnifiedEvidenceSummary(
+                null, null, null, null, metricEvidence, List.of(), List.of());
+        String json = JsonUtil.toJson(summary);
+
+        assertEquals(2, summary.getEvidenceSources().size());
+        assertTrue(json.contains("\"evidenceSources\""));
+        assertTrue(json.contains("\"source\":\"monitor\""));
+        assertTrue(json.contains("\"source\":\"otlp\""));
     }
 
     @Test

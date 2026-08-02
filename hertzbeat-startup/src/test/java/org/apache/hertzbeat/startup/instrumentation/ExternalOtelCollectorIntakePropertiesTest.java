@@ -37,18 +37,20 @@ class ExternalOtelCollectorIntakePropertiesTest {
                         "hertzbeat.instrumentation.external-otel-collector.otlp-http-endpoint="
                                 + "http://otel.example.test:4318",
                         "hertzbeat.instrumentation.external-otel-collector.otlp-grpc-endpoint="
-                                + "https://otel.example.test:4317")
+                                + "https://otel.example.test:4317",
+                        "hertzbeat.instrumentation.external-otel-collector.authentication=bearer_token")
                 .run(context -> {
                     ExternalOtelCollectorIntakeProperties properties =
                             context.getBean(ExternalOtelCollectorIntakeProperties.class);
                     assertEquals("external-west", properties.profileId());
                     assertEquals("http://otel.example.test:4318", properties.otlpHttpEndpoint());
                     assertEquals("https://otel.example.test:4317", properties.otlpGrpcEndpoint());
+                    assertEquals("bearer_token", properties.authentication());
                 });
 
         assertThat(Arrays.stream(ExternalOtelCollectorIntakeProperties.class.getRecordComponents())
                         .map(component -> component.getName()))
-                .containsExactly("profileId", "otlpHttpEndpoint", "otlpGrpcEndpoint");
+                .containsExactly("profileId", "otlpHttpEndpoint", "otlpGrpcEndpoint", "authentication");
     }
 
     @Test
