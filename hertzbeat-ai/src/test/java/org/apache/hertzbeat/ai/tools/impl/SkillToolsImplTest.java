@@ -37,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * 验证技能参数错误和报告执行失败时能够返回真实、可识别的结果。
+ * Verifies that skill parameter errors and report execution failures return accurate, identifiable results.
  */
 @ExtendWith(MockitoExtension.class)
 class SkillToolsImplTest {
