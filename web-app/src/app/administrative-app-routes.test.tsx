@@ -84,10 +84,9 @@ describe('actual administrative app routes', () => {
   ])('does not mount the feature loader or API at %s for %s', async (path, role) => {
     renderAppRoute(path, role);
 
-    expect((await screen.findByText('Administrator access required')).closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'permission'
-    );
+    expect(
+      (await screen.findByText(i18n.t('common.permission.additionalRequiredTitle'))).closest('[data-state]')
+    ).toHaveAttribute('data-state', 'permission');
     expect(document.querySelector('.ant-alert')).not.toBeInTheDocument();
     expect(probes.tokenLoader).not.toHaveBeenCalled();
     expect(probes.tokenApi).not.toHaveBeenCalled();
@@ -114,7 +113,7 @@ describe('actual administrative app routes', () => {
   it('converges the legacy Plugin path on the guarded canonical route', async () => {
     renderAppRoute('/setting/plugin', 'USER');
 
-    expect(await screen.findByText('Administrator access required')).toBeInTheDocument();
+    expect(await screen.findByText(i18n.t('common.permission.additionalRequiredTitle'))).toBeInTheDocument();
     expect(probes.pluginLoader).not.toHaveBeenCalled();
     expect(probes.pluginApi).not.toHaveBeenCalled();
   });
