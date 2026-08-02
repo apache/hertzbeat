@@ -29,7 +29,7 @@
     "operatorConsole": "維運控制台",
     "workspace": "工作區",
     "primary": "主導覽",
-    "dashboard": "儀表板",
+    "dashboard": "開始",
     "monitors": "監控中心",
     "entities": "資源目錄",
     "topology": "拓撲",
@@ -590,7 +590,7 @@
   },
   "instrumentation": {
     "title": "為應用程式設定插樁",
-    "menu": "應用程式插樁",
+    "menu": "遙測接入",
     "description": "設定官方 OpenTelemetry，驗證指定範圍內的訊號接收情況，然後在 Explore 中進行調查。",
     "v2": {
       "title": "連接遙測資料",
@@ -981,6 +981,34 @@
   "dashboard": {
     "title": "儀表板",
     "description": "查看監控可用性與目前告警狀態。",
+    "start": {
+      "title": "資料從哪裡來？",
+      "description": "選擇 HertzBeat 取得資料的方式；兩種方式可以單獨使用，也可以同時接入。",
+      "outcomeTitle": "你會得到",
+      "decision": "關注目標是否健康，使用主動監控；關注請求為什麼慢，使用遙測。",
+      "convergence": "同一服務可以同時使用兩種方式，HertzBeat 會在資源檢視中合併它們的證據。",
+      "active": {
+        "title": "HertzBeat 去採集",
+        "summary": "HertzBeat 依排程主動連線目標並採集。",
+        "flowLabel": "HertzBeat 主動連線一組目標類型",
+        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "outcomeAvailability": "可用性與連線檢測",
+        "outcomeMetrics": "CPU、記憶體、磁碟、連線數和回應時間",
+        "suitability": "適合資料庫、伺服器、中介軟體、網路裝置和介面",
+        "action": "建立主動監控",
+        "readOnly": "唯讀帳號不能建立監控。"
+      },
+      "telemetry": {
+        "title": "應用程式來上報",
+        "summary": "應用程式和 OpenTelemetry Collector 主動向 HertzBeat 上報資料。",
+        "flowLabel": "一組應用程式和 OpenTelemetry Collector 向 HertzBeat 上報",
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "outcomeSignals": "Metrics、Logs 和 Traces",
+        "outcomeDiagnosis": "請求路徑、慢點和錯誤鏈路",
+        "suitability": "適合排查慢請求、程式碼錯誤以及日誌與鏈路關聯",
+        "action": "設定遙測接入"
+      }
+    },
     "operationsSummary": "維運摘要",
     "operationsDescription": "分別呈現監控可用性與告警狀態，不混淆兩個資料來源。",
     "monitorSummary": "監控摘要",

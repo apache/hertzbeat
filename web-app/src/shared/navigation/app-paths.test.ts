@@ -23,6 +23,7 @@ import {
   buildEntityEditPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
+  buildMonitorCreatePath,
   buildMonitorListPath,
   applicationRoutePaths,
   entityRoutePaths,
@@ -68,5 +69,12 @@ describe('application path builders', () => {
 
   it('owns the topology page path centrally', () => {
     expect(applicationRoutePaths.topology).toBe('/topology');
+  });
+
+  it('owns both Dashboard start destinations and safely encodes the monitor return path', () => {
+    expect(applicationRoutePaths.instrumentation).toBe('/observability/integration');
+    expect(buildMonitorCreatePath({ returnTo: applicationRoutePaths.dashboard })).toBe(
+      '/monitors/new?returnTo=%2Fdashboard'
+    );
   });
 });

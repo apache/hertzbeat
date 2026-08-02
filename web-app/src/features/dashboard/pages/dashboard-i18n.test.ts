@@ -23,6 +23,16 @@ describe('Dashboard locale contract', () => {
     expect(expected).toContain('alertStates.error');
     expect(expected).toContain('recentAlerts.states.contract');
   });
+
+  it('localizes the Start navigation and telemetry terminology in every locale', () => {
+    expect(en.menu.dashboard).toBe('Start');
+    expect(en.instrumentation.menu).toBe('Telemetry setup');
+    for (const locale of [ja, pt, zhCn, zhTw]) {
+      expect(locale.menu.dashboard).not.toBe(locale.dashboard.title);
+      expect(locale.menu.dashboard.trim()).not.toBe('');
+      expect(locale.instrumentation.menu.trim()).not.toBe('');
+    }
+  });
 });
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {

@@ -2,27 +2,20 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { cleanup, render, screen, within } from '@testing-library/react';
+
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { alertRoutePaths, buildMonitorListPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
-import { settingsPaths } from '@/shared/settings/settings-routes';
-const controller = vi.hoisted(() => ({ useDashboardController: vi.fn() }));
-vi.mock('../controller/use-dashboard-controller', () => controller);
+import { applicationRoutePaths, buildMonitorCreatePath, monitorRoutePaths } from '@/shared/navigation/app-paths';
+
+const start = vi.hoisted(() => ({ useDashboardStartController: vi.fn() }));
+vi.mock('../controller/use-dashboard-start-controller', () => start);
+
 import { DashboardPage } from './dashboard-page';
 
 describe('DashboardPage', () => {
@@ -30,327 +23,78 @@ describe('DashboardPage', () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
+
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
-  it('keeps authoritative alert evidence visible when monitor summary is unavailable', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'unavailable' },
-        alertState: { kind: 'ready', summary: alert(7) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.getByText(i18n.t('dashboard.monitorStates.unavailable'))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('7');
-  });
 
-  it('presents unavailable monitors and an authoritative zero alert result as independent rows with registered actions', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'unavailable' },
-        alertState: { kind: 'empty', summary: alert(0) },
-        refresh: vi.fn()
-      })
-    );
+  it('presents exactly the active-monitoring and telemetry entry paths without invented status', () => {
+    start.useDashboardStartController.mockReturnValue(startController(true));
     renderPage();
 
-    const board = screen.getByLabelText(i18n.t('dashboard.operationsSummary'));
-    const monitor = within(board).getByLabelText(i18n.t('dashboard.monitorSummary'));
-    const alerts = within(board).getByLabelText(i18n.t('dashboard.alertSummary'));
-    expect(monitor).toHaveTextContent(i18n.t('dashboard.monitorStates.unavailable'));
-    expect(within(monitor).queryByText(/^0$/)).not.toBeInTheDocument();
-    expect(alerts).toHaveTextContent('0');
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: i18n.t('dashboard.openMonitors') })).toHaveAttribute(
-      'href',
-      monitorRoutePaths.list
-    );
-    expect(screen.getByRole('link', { name: i18n.t('dashboard.openAlerts') })).toHaveAttribute(
-      'href',
-      alertRoutePaths.center
-    );
-  });
-
-  it('keeps authoritative alert evidence visible while monitor summary loads', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'loading' },
-        alertState: { kind: 'ready', summary: alert(4) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('4');
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).not.toHaveTextContent(/^0$/);
-  });
-
-  it('keeps authoritative monitor evidence visible when alert summary fails', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'ready', apps: [app] },
-        alertState: { kind: 'error' },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
-    expect(screen.getByText(i18n.t('dashboard.alertStates.error'))).toBeInTheDocument();
-  });
-
-  it.each([
-    ['permission', 'permission'],
-    ['contract', 'contract']
-  ] as const)('renders monitor %s independently from ready alerts', (kind, messageKey) => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind },
-        alertState: { kind: 'ready', summary: alert(2) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.getByText(i18n.t(`dashboard.monitorStates.${messageKey}`))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('2');
-  });
-
-  it.each([
-    ['permission', 'permission'],
-    ['contract', 'contract']
-  ] as const)('renders alert %s independently from ready monitors', (kind, messageKey) => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'ready', apps: [app] },
-        alertState: { kind },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.getByText(i18n.t(`dashboard.alertStates.${messageKey}`))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
-  });
-
-  it('never manufactures zero for pending or failed sections', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'loading' },
-        alertState: { kind: 'unavailable' },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('dashboard-entry')).toHaveLength(2);
+    const active = screen.getByTestId('active-monitoring-entry').closest('section') as HTMLElement;
+    const telemetry = screen.getByTestId('telemetry-entry');
+    expect(active).toHaveTextContent('MySQL');
+    expect(active).toHaveTextContent('Linux');
+    expect(active).toHaveTextContent('Redis');
+    expect(active).toHaveTextContent('HTTP');
+    expect(telemetry).toHaveTextContent('Java');
+    expect(telemetry).toHaveTextContent('.NET');
+    expect(telemetry).toHaveTextContent('Node.js');
+    expect(telemetry).toHaveTextContent('OpenTelemetry Collector');
+    expect(screen.getAllByTestId('flow-direction')).toHaveLength(2);
     expect(screen.queryByText(/\d+(?:\.\d+)?%/)).not.toBeInTheDocument();
   });
 
-  it('renders zero only from each authoritative empty response', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'empty', apps: [] },
-        alertState: { kind: 'empty', summary: alert(0) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-    const monitor = screen.getByLabelText(i18n.t('dashboard.monitorSummary'));
-    expect(monitor).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('0');
-    expect(within(monitor).getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
-    expect(screen.queryByText(i18n.t('dashboard.distribution'))).not.toBeInTheDocument();
-    const alerts = screen.getByLabelText(i18n.t('dashboard.alertSummary'));
-    expectMetric(alerts, i18n.t('alert.summary.nonFiring'), '0 (100%)');
-    expectMetric(alerts, i18n.t('alert.summary.warning'), '0');
-    expectMetric(alerts, i18n.t('alert.summary.critical'), '0');
-    expectMetric(alerts, i18n.t('alert.summary.emergency'), '0');
-  });
-
-  it('uses the shared operational frame and compact state panels for sparse dashboard evidence', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'empty', apps: [] },
-        alertState: { kind: 'empty', summary: alert(0) },
-        refresh: vi.fn()
-      })
-    );
-
+  it('routes both primary actions through canonical shared paths', () => {
+    const controller = startController(true);
+    start.useDashboardStartController.mockReturnValue(controller);
     renderPage();
 
-    expect(document.querySelector('[data-hb-operational-page]')).toBeInTheDocument();
-    expect(document.querySelectorAll('[data-state="empty"]')).toHaveLength(3);
-    expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
-  });
-
-  it('presents every authoritative summary counter and preserves the backend percentage format', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: {
-          kind: 'ready',
-          apps: [{ ...app, size: 4, availableSize: 2, unAvailableSize: 1, unManageSize: 1 }]
-        },
-        alertState: {
-          kind: 'ready',
-          summary: {
-            total: 7,
-            dealNum: 2,
-            rate: 28.57,
-            priorityWarningNum: 2,
-            priorityCriticalNum: 2,
-            priorityEmergencyNum: 1
-          }
-        },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-
-    const monitors = screen.getByLabelText(i18n.t('dashboard.monitorSummary'));
-    expectMetric(monitors, i18n.t('monitor.status.paused'), '1');
-    const distribution = screen.getByRole('heading', { name: i18n.t('dashboard.distribution') }).closest('section');
-    expect(
-      within(distribution as HTMLElement).getByRole('columnheader', { name: i18n.t('monitor.status.paused') })
-    ).toBeInTheDocument();
-    const alerts = screen.getByLabelText(i18n.t('dashboard.alertSummary'));
-    expectMetric(alerts, i18n.t('alert.summary.total'), '7');
-    expectMetric(alerts, i18n.t('alert.summary.nonFiring'), '2 (28.57%)');
-    expectMetric(alerts, i18n.t('alert.summary.warning'), '2');
-    expectMetric(alerts, i18n.t('alert.summary.critical'), '2');
-    expectMetric(alerts, i18n.t('alert.summary.emergency'), '1');
-    expect(screen.getByLabelText(i18n.t('collectors.title'))).toHaveTextContent(i18n.t('collectors.empty'));
-  });
-
-  it('uses the central monitor-list builder for an accurately encoded application drilldown', () => {
-    const appName = 'mysql/db & cache';
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        monitorState: { kind: 'ready', apps: [{ ...app, app: appName }] },
-        alertState: { kind: 'ready', summary: alert(1) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-
-    const expectedTarget = buildMonitorListPath({ app: appName });
-    expect(expectedTarget).toBe('/monitors?app=mysql%2Fdb+%26+cache');
-    expect(screen.getByRole('link', { name: appName })).toHaveAttribute('href', expectedTarget);
-  });
-
-  it('uses the central monitor-list builder for exact label drilldowns', () => {
-    const label = 'region:west/east & prod';
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        labelState: { kind: 'ready', labels: [label] },
-        monitorState: { kind: 'ready', apps: [app] },
-        alertState: { kind: 'ready', summary: alert(1) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-
-    const expectedTarget = buildMonitorListPath({ labels: label });
-    expect(expectedTarget).toBe('/monitors?labels=region%3Awest%2Feast+%26+prod');
-    expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', expectedTarget);
-  });
-
-  it.each([
-    ['empty', 'dashboard.labels.empty'],
-    ['permission', 'dashboard.labels.states.permission'],
-    ['unavailable', 'dashboard.labels.states.unavailable'],
-    ['contract', 'dashboard.labels.states.contract'],
-    ['error', 'dashboard.labels.states.error']
-  ] as const)('renders label %s independently from ready summaries', (kind, messageKey) => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector({
-        labelState: { kind },
-        monitorState: { kind: 'ready', apps: [app] },
-        alertState: { kind: 'ready', summary: alert(2) },
-        refresh: vi.fn()
-      })
-    );
-    renderPage();
-
-    expect(screen.getByLabelText(i18n.t('dashboard.labels.title'))).toHaveTextContent(i18n.t(messageKey));
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('2');
-  });
-
-  it('renders read-only collector status without hiding ready monitor and alert evidence', () => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector(
-        {
-          monitorState: { kind: 'ready', apps: [app] },
-          alertState: { kind: 'ready', summary: alert(3) },
-          refresh: vi.fn()
-        },
-        { kind: 'ready', records: [collector], total: 1 }
-      )
-    );
-    renderPage();
-
-    const collectorEvidence = screen.getByLabelText(i18n.t('collectors.title'));
-    expect(within(collectorEvidence).getByText('edge-a')).toBeInTheDocument();
-    expect(within(collectorEvidence).getByText(i18n.t('collectors.online'))).toBeInTheDocument();
-    expect(within(collectorEvidence).getByText('5')).toBeInTheDocument();
-    expect(within(collectorEvidence).getByText('1 / 1')).toBeInTheDocument();
-    expect(within(collectorEvidence).queryByRole('link')).not.toBeInTheDocument();
-    expect(within(collectorEvidence).queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('3');
-  });
-
-  it('labels a truncated collector preview and links to the management route', () => {
-    const records = Array.from({ length: 8 }, (_, index) => ({
-      ...collector,
-      name: `edge-${index + 1}`
-    }));
-    controller.useDashboardController.mockReturnValue(
-      withCollector(
-        {
-          monitorState: { kind: 'ready', apps: [app] },
-          alertState: { kind: 'ready', summary: alert(3) },
-          refresh: vi.fn()
-        },
-        { kind: 'ready', records, total: 9 }
-      )
-    );
-    renderPage();
-
-    const collectorEvidence = screen.getByLabelText(i18n.t('collectors.title'));
-    expect(within(collectorEvidence).getByText('8 / 9')).toBeInTheDocument();
-    expect(within(collectorEvidence).getAllByRole('row')).toHaveLength(9);
-    expect(within(collectorEvidence).getByRole('link', { name: i18n.t('common.view') })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.start.active.action') })).toHaveAttribute(
       'href',
-      settingsPaths.collectors
+      buildMonitorCreatePath({ returnTo: applicationRoutePaths.dashboard })
     );
-    expect(within(collectorEvidence).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.start.telemetry.action') })).toHaveAttribute(
+      'href',
+      applicationRoutePaths.instrumentation
+    );
+    fireEvent.click(screen.getByRole('link', { name: i18n.t('dashboard.start.active.action') }));
+    fireEvent.click(screen.getByRole('link', { name: i18n.t('dashboard.start.telemetry.action') }));
+    expect(controller.openCreateMonitor).toHaveBeenCalledOnce();
+    expect(controller.openTelemetry).toHaveBeenCalledOnce();
   });
 
-  it.each([
-    ['loading', null],
-    ['empty', 'collectors.empty'],
-    ['permission', 'common.permission.roleRequiredDescription'],
-    ['unavailable', 'collectors.unavailable'],
-    ['error', 'common.routeError.description']
-  ] as const)('renders collector %s independently from ready summaries', (kind, messageKey) => {
-    controller.useDashboardController.mockReturnValue(
-      withCollector(
-        {
-          monitorState: { kind: 'ready', apps: [app] },
-          alertState: { kind: 'ready', summary: alert(2) },
-          refresh: vi.fn()
-        },
-        { kind }
-      )
-    );
+  it('keeps the monitor creation action out of the GUEST read-only entry while retaining telemetry', () => {
+    const controller = startController(false);
+    start.useDashboardStartController.mockReturnValue(controller);
     renderPage();
 
-    const collectorEvidence = screen.getByLabelText(i18n.t('collectors.title'));
-    if (messageKey) expect(collectorEvidence).toHaveTextContent(i18n.t(messageKey));
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
-    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('2');
+    const active = screen.getByTestId('active-monitoring-entry').closest('section') as HTMLElement;
+    expect(
+      within(active).queryByRole('link', { name: i18n.t('dashboard.start.active.action') })
+    ).not.toBeInTheDocument();
+    expect(within(active).getByText(i18n.t('dashboard.start.active.readOnly'))).toBeInTheDocument();
+    const readOnlyEntry = within(active).getByRole('link', { name: i18n.t('dashboard.openMonitors') });
+    expect(readOnlyEntry).toHaveAttribute('href', monitorRoutePaths.list);
+    fireEvent.click(readOnlyEntry);
+    expect(controller.openMonitors).toHaveBeenCalledOnce();
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.start.telemetry.action') })).toHaveAttribute(
+      'href',
+      applicationRoutePaths.instrumentation
+    );
+  });
+
+  it('states that both collection modes converge in the resource view', () => {
+    start.useDashboardStartController.mockReturnValue(startController(true));
+    renderPage();
+
+    expect(screen.getByText(i18n.t('dashboard.start.convergence'))).toBeInTheDocument();
   });
 });
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -361,35 +105,14 @@ function renderPage() {
   );
 }
 
-const app = { app: 'mysql', category: 'db', size: 3, availableSize: 2, unAvailableSize: 1, unManageSize: 0 };
-const collector = {
-  name: 'edge-a',
-  address: '10.0.0.8',
-  version: '2.0.0',
-  mode: 'public',
-  online: true,
-  immutable: false,
-  pinMonitorNum: 2,
-  dispatchMonitorNum: 3,
-  updatedAt: '2026-07-29T10:00:00Z',
-  runtimeReport: null,
-  instrumentationIntake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
-};
-function withCollector<T extends object>(value: T, collectorState: object = { kind: 'empty' }) {
-  return { labelState: { kind: 'empty' }, recentAlertState: { kind: 'empty' }, ...value, collectorState };
-}
-function alert(total: number) {
+function startController(canCreateMonitor: boolean) {
   return {
-    total,
-    dealNum: 0,
-    rate: total === 0 ? 100 : 0,
-    priorityWarningNum: 0,
-    priorityCriticalNum: 0,
-    priorityEmergencyNum: 0
+    canCreateMonitor,
+    createMonitorTarget: buildMonitorCreatePath({ returnTo: applicationRoutePaths.dashboard }),
+    monitorListTarget: monitorRoutePaths.list,
+    telemetryTarget: applicationRoutePaths.instrumentation,
+    openCreateMonitor: vi.fn(),
+    openMonitors: vi.fn(),
+    openTelemetry: vi.fn()
   };
-}
-
-function expectMetric(scope: HTMLElement, label: string, value: string) {
-  const metric = within(scope).getByText(label).closest('div');
-  expect(metric).toHaveTextContent(value);
 }

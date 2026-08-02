@@ -1,0 +1,159 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.startSurface {
+  display: grid;
+  gap: var(--hb-space-5);
+}
+
+.entry {
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-surface);
+  background: var(--hb-bg-raised);
+}
+
+.entryMain {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(440px, 1.65fr) minmax(240px, 1fr);
+  min-height: 180px;
+}
+
+.entryIdentity,
+.flow,
+.outcome {
+  padding: var(--hb-space-6);
+}
+
+.entryIdentity,
+.flow {
+  border-right: 1px solid var(--hb-border-subtle);
+}
+
+.entryIdentity {
+  display: grid;
+  align-content: center;
+}
+
+.entryIdentity :global(.ant-typography),
+.outcome :global(.ant-typography) {
+  margin-block: 0 var(--hb-space-2);
+}
+
+.entryIdentity :global(h2.ant-typography) {
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.outcome :global(h3.ant-typography) {
+  font-size: 15px;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: auto 24px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--hb-space-4);
+}
+
+.nodeGroup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(72px, 1fr));
+  align-items: start;
+  gap: var(--hb-space-3);
+}
+
+.technologyNode {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--hb-space-2);
+  min-width: 72px;
+  text-align: center;
+}
+
+.technologyIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  color: var(--hb-text-secondary);
+  font-size: 36px;
+}
+
+.technologyIcon :global(.anticon) {
+  font-size: 36px;
+}
+
+.direction {
+  color: var(--hb-text-muted);
+  font-size: 18px;
+}
+
+.outcome {
+  display: grid;
+  align-content: center;
+}
+
+.entryFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-5);
+  min-height: 58px;
+  padding: var(--hb-space-3) var(--hb-space-6);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.entryFooter :global(.ant-btn-link) {
+  flex: none;
+  padding-inline: var(--hb-space-2);
+}
+
+.readOnlyAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hb-space-3);
+}
+
+.decision,
+.convergence {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-3);
+  color: var(--hb-text-secondary);
+}
+
+.decision {
+  justify-content: center;
+}
+
+.convergence {
+  padding: var(--hb-space-4) var(--hb-space-5);
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+}
+
+.decision :global(.anticon),
+.convergence :global(.anticon) {
+  color: var(--hb-focus-ring);
+  font-size: 20px;
+}
+
+@media (max-width: 1180px) {
+  .entryMain {
+    grid-template-columns: minmax(160px, 0.65fr) minmax(430px, 1.7fr);
+  }
+
+  .outcome {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--hb-border-subtle);
+  }
+}

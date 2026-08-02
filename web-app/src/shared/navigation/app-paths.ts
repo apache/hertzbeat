@@ -25,6 +25,7 @@ const entityListPath = '/entities';
 
 export const applicationRoutePaths = {
   dashboard: defaultAuthenticatedPath,
+  instrumentation: '/observability/integration',
   topology: '/topology',
   explore: '/explore',
   status: '/status',
@@ -73,6 +74,18 @@ export type MonitorListRouteContext = {
   app?: string;
   labels?: string;
 };
+
+export type MonitorCreateRouteContext = {
+  returnTo?: string;
+};
+
+/** Builds the Monitor creation target from its canonical route and safe return path. */
+export function buildMonitorCreatePath(context: MonitorCreateRouteContext = {}) {
+  const params = new URLSearchParams();
+  if (context.returnTo !== undefined) params.set('returnTo', context.returnTo);
+  const search = params.toString();
+  return search ? `${monitorRoutePaths.create}?${search}` : monitorRoutePaths.create;
+}
 
 /** Builds only the public Monitor filters that are safe to carry in a URL. */
 export function buildMonitorListPath(context: MonitorListRouteContext = {}) {

@@ -29,7 +29,7 @@
     "operatorConsole": "Console operacional",
     "workspace": "Área de trabalho",
     "primary": "Navegação principal",
-    "dashboard": "Painel",
+    "dashboard": "Começar",
     "monitors": "Monitores",
     "entities": "Recursos",
     "topology": "Topologia",
@@ -599,7 +599,7 @@
   },
   "instrumentation": {
     "title": "Instrumentar uma aplicação",
-    "menu": "Instrumentação",
+    "menu": "Entrada de telemetria",
     "description": "Configure o OpenTelemetry oficial, verifique o recebimento de sinais no escopo e investigue no Explore.",
     "v2": {
       "title": "Conectar telemetria",
@@ -992,6 +992,34 @@
   "dashboard": {
     "title": "Painel",
     "description": "Veja a disponibilidade dos monitores e os alertas atuais.",
+    "start": {
+      "title": "De onde vêm seus dados?",
+      "description": "Escolha como o HertzBeat coleta evidências. Use um dos caminhos ou conecte os dois.",
+      "outcomeTitle": "O que você obtém",
+      "decision": "Use monitoramento ativo para a saúde do alvo e telemetria para o comportamento das requisições.",
+      "convergence": "Você pode usar os dois métodos no mesmo serviço. O HertzBeat conecta as evidências na visão de recursos.",
+      "active": {
+        "title": "HertzBeat coleta",
+        "summary": "O HertzBeat se conecta aos alvos conforme uma programação.",
+        "flowLabel": "O HertzBeat se conecta ativamente a um grupo de tipos de alvo",
+        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "outcomeAvailability": "Verificações de disponibilidade e conexão",
+        "outcomeMetrics": "CPU, memória, disco, conexões e tempo de resposta",
+        "suitability": "Para bancos de dados, servidores, middleware, dispositivos de rede e endpoints",
+        "action": "Criar monitor ativo",
+        "readOnly": "Contas somente leitura não podem criar monitores."
+      },
+      "telemetry": {
+        "title": "Aplicações enviam",
+        "summary": "Aplicações e OpenTelemetry Collectors enviam dados ao HertzBeat.",
+        "flowLabel": "Um grupo de aplicações e um OpenTelemetry Collector enviam dados ao HertzBeat",
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "outcomeSignals": "Metrics, Logs e Traces",
+        "outcomeDiagnosis": "Caminhos de requisição, pontos lentos e traces de erro",
+        "suitability": "Para investigar requisições lentas, erros de código e relações entre logs e traces",
+        "action": "Configurar telemetria"
+      }
+    },
     "operationsSummary": "Resumo operacional",
     "operationsDescription": "Disponibilidade dos monitores e situação dos alertas, informadas de forma independente.",
     "monitorSummary": "Resumo de monitores",

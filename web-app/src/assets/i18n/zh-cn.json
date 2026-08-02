@@ -29,7 +29,7 @@
     "operatorConsole": "运维控制台",
     "workspace": "工作区",
     "primary": "主导航",
-    "dashboard": "仪表盘",
+    "dashboard": "开始",
     "monitors": "监控中心",
     "entities": "资源目录",
     "topology": "拓扑",
@@ -590,7 +590,7 @@
   },
   "instrumentation": {
     "title": "为应用配置插桩",
-    "menu": "应用插桩",
+    "menu": "遥测接入",
     "description": "配置官方 OpenTelemetry，验证指定范围内的信号接收情况，然后在 Explore 中排查。",
     "v2": {
       "title": "接入遥测数据",
@@ -981,6 +981,34 @@
   "dashboard": {
     "title": "仪表盘",
     "description": "查看监控可用性与当前告警态势。",
+    "start": {
+      "title": "数据从哪里来？",
+      "description": "选择 HertzBeat 获取数据的方式；两种方式可以单独使用，也可以同时接入。",
+      "outcomeTitle": "你会得到",
+      "decision": "关注目标是否健康，使用主动监控；关注请求为什么慢，使用遥测。",
+      "convergence": "同一服务可以同时使用两种方式，HertzBeat 会在资源视图中合并它们的证据。",
+      "active": {
+        "title": "HertzBeat 去采集",
+        "summary": "HertzBeat 按计划主动连接目标并采集。",
+        "flowLabel": "HertzBeat 主动连接一组目标类型",
+        "targets": { "mysql": "MySQL", "linux": "Linux", "redis": "Redis", "http": "HTTP" },
+        "outcomeAvailability": "可用性与连接检测",
+        "outcomeMetrics": "CPU、内存、磁盘、连接数和响应时间",
+        "suitability": "适合数据库、服务器、中间件、网络设备和接口",
+        "action": "创建主动监控",
+        "readOnly": "只读账号不能创建监控。"
+      },
+      "telemetry": {
+        "title": "应用来上报",
+        "summary": "应用和 OpenTelemetry Collector 主动向 HertzBeat 上报数据。",
+        "flowLabel": "一组应用和 OpenTelemetry Collector 向 HertzBeat 上报",
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "outcomeSignals": "Metrics、Logs 和 Traces",
+        "outcomeDiagnosis": "请求路径、慢点和错误链路",
+        "suitability": "适合排查慢请求、代码错误以及日志与链路关联",
+        "action": "配置遥测接入"
+      }
+    },
     "operationsSummary": "运维摘要",
     "operationsDescription": "分别呈现监控可用性与告警态势，不混淆两个数据源。",
     "monitorSummary": "监控概览",
