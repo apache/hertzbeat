@@ -1005,7 +1005,7 @@
         "title": "アプリケーションが送信",
         "summary": "アプリケーションと OpenTelemetry Collector が HertzBeat にデータを送信します。",
         "flowLabel": "アプリケーション群と OpenTelemetry Collector が HertzBeat に送信",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
         "outcomeSignals": "Metrics、Logs、Traces",
         "outcomeDiagnosis": "リクエスト経路、遅い箇所、エラートレース",
         "suitability": "遅いリクエスト、コードエラー、ログとトレースの関連調査向け",

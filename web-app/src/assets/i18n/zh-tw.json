@@ -1002,7 +1002,7 @@
         "title": "應用程式來上報",
         "summary": "應用程式和 OpenTelemetry Collector 主動向 HertzBeat 上報資料。",
         "flowLabel": "一組應用程式和 OpenTelemetry Collector 向 HertzBeat 上報",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
         "outcomeSignals": "Metrics、Logs 和 Traces",
         "outcomeDiagnosis": "請求路徑、慢點和錯誤鏈路",
         "suitability": "適合排查慢請求、程式碼錯誤以及日誌與鏈路關聯",

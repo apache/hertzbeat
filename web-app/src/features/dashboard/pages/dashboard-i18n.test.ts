@@ -33,6 +33,12 @@ describe('Dashboard locale contract', () => {
       expect(locale.instrumentation.menu.trim()).not.toBe('');
     }
   });
+
+  it('keeps the compact Collector node label stable across locales', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.dashboard.start.telemetry.sources.collector).toBe('OTel Collector');
+    }
+  });
 });
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {

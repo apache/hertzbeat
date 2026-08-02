@@ -43,8 +43,16 @@ describe('DashboardPage', () => {
     expect(telemetry).toHaveTextContent('Java');
     expect(telemetry).toHaveTextContent('.NET');
     expect(telemetry).toHaveTextContent('Node.js');
-    expect(telemetry).toHaveTextContent('OpenTelemetry Collector');
+    expect(telemetry).toHaveTextContent(i18n.t('dashboard.start.telemetry.sources.collector'));
     expect(screen.getAllByTestId('flow-direction')).toHaveLength(2);
+    expect(screen.getByLabelText(i18n.t('dashboard.start.active.flowLabel'))).toHaveAttribute(
+      'data-direction',
+      'forward'
+    );
+    expect(screen.getByLabelText(i18n.t('dashboard.start.telemetry.flowLabel'))).toHaveAttribute(
+      'data-direction',
+      'reverse'
+    );
     expect(screen.queryByText(/\d+(?:\.\d+)?%/)).not.toBeInTheDocument();
   });
 

@@ -6,7 +6,7 @@
  */
 
 import { ApiOutlined, ArrowRightOutlined, GlobalOutlined, LinkOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Typography } from 'antd';
 import dotnetIcon from 'devicon/icons/dotnetcore/dotnetcore-original.svg';
 import javaIcon from 'devicon/icons/java/java-original.svg';
 import linuxIcon from 'devicon/icons/linux/linux-original.svg';
@@ -17,6 +17,7 @@ import redisIcon from 'devicon/icons/redis/redis-original.svg';
 import { useTranslation } from 'react-i18next';
 
 import styles from './dashboard-start.module.css';
+import { DashboardStartLink } from './dashboard-start-link';
 
 type DashboardStartProps = {
   canCreateMonitor: boolean;
@@ -54,7 +55,7 @@ export function DashboardStart(props: DashboardStartProps) {
         suitability={t('dashboard.start.active.suitability')}
         action={
           props.canCreateMonitor ? (
-            <DashboardLinkButton
+            <DashboardStartLink
               label={t('dashboard.start.active.action')}
               target={props.createMonitorTarget}
               onNavigate={props.openCreateMonitor}
@@ -62,7 +63,7 @@ export function DashboardStart(props: DashboardStartProps) {
           ) : (
             <div className={styles.readOnlyAction}>
               <Typography.Text type="secondary">{t('dashboard.start.active.readOnly')}</Typography.Text>
-              <DashboardLinkButton
+              <DashboardStartLink
                 label={t('dashboard.openMonitors')}
                 target={props.monitorListTarget}
                 onNavigate={props.openMonitors}
@@ -84,7 +85,7 @@ export function DashboardStart(props: DashboardStartProps) {
         outcomes={[t('dashboard.start.telemetry.outcomeSignals'), t('dashboard.start.telemetry.outcomeDiagnosis')]}
         suitability={t('dashboard.start.telemetry.suitability')}
         action={
-          <DashboardLinkButton
+          <DashboardStartLink
             label={t('dashboard.start.telemetry.action')}
             target={props.telemetryTarget}
             onNavigate={props.openTelemetry}
@@ -96,24 +97,6 @@ export function DashboardStart(props: DashboardStartProps) {
         <Typography.Text>{t('dashboard.start.convergence')}</Typography.Text>
       </div>
     </div>
-  );
-}
-
-function DashboardLinkButton({ label, onNavigate, target }: { label: string; onNavigate: () => void; target: string }) {
-  return (
-    <Button
-      type="link"
-      href={target}
-      aria-label={label}
-      icon={<ArrowRightOutlined />}
-      iconPosition="end"
-      onClick={event => {
-        event.preventDefault();
-        onNavigate();
-      }}
-    >
-      {label}
-    </Button>
   );
 }
 
@@ -153,7 +136,7 @@ function DashboardEntry(props: {
 function ActiveMonitoringFlow() {
   const { t } = useTranslation();
   return (
-    <div className={styles.flow} aria-label={t('dashboard.start.active.flowLabel')}>
+    <div className={styles.flow} data-direction="forward" aria-label={t('dashboard.start.active.flowLabel')}>
       <ProductNode />
       <ArrowRightOutlined className={styles.direction} data-testid="flow-direction" aria-hidden="true" />
       <div className={styles.nodeGroup}>
@@ -169,7 +152,7 @@ function ActiveMonitoringFlow() {
 function TelemetryFlow() {
   const { t } = useTranslation();
   return (
-    <div className={styles.flow} aria-label={t('dashboard.start.telemetry.flowLabel')}>
+    <div className={styles.flow} data-direction="reverse" aria-label={t('dashboard.start.telemetry.flowLabel')}>
       <div className={styles.nodeGroup}>
         {telemetrySources.map(([key, icon]) => (
           <TechnologyNode key={key} icon={icon} label={t(`dashboard.start.telemetry.sources.${key}`)} />

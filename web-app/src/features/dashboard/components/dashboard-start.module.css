@@ -23,6 +23,10 @@
   min-height: 180px;
 }
 
+.entryMain > * {
+  min-width: 0;
+}
+
 .entryIdentity,
 .flow,
 .outcome {
@@ -47,6 +51,8 @@
 .entryIdentity :global(h2.ant-typography) {
   font-size: 20px;
   line-height: 1.35;
+  word-break: keep-all;
+  text-wrap: balance;
 }
 
 .outcome :global(h3.ant-typography) {
@@ -60,11 +66,16 @@
   gap: var(--hb-space-4);
 }
 
+.flow[data-direction='reverse'] {
+  grid-template-columns: minmax(0, 1fr) 24px auto;
+}
+
 .nodeGroup {
   display: grid;
   grid-template-columns: repeat(4, minmax(72px, 1fr));
   align-items: start;
   gap: var(--hb-space-3);
+  min-width: 0;
 }
 
 .technologyNode {
@@ -72,8 +83,13 @@
   justify-items: center;
   align-content: start;
   gap: var(--hb-space-2);
-  min-width: 72px;
+  min-width: 0;
   text-align: center;
+}
+
+.technologyNode :global(.ant-typography) {
+  line-height: 1.25;
+  text-wrap: balance;
 }
 
 .technologyIcon {
@@ -113,6 +129,11 @@
 .entryFooter :global(.ant-btn-link) {
   flex: none;
   padding-inline: var(--hb-space-2);
+  color: var(--hb-brand-accent);
+}
+
+.entryFooter :global(.ant-btn-link:hover) {
+  color: var(--hb-focus-ring);
 }
 
 .readOnlyAction {

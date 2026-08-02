@@ -1013,7 +1013,7 @@
         "title": "Aplicações enviam",
         "summary": "Aplicações e OpenTelemetry Collectors enviam dados ao HertzBeat.",
         "flowLabel": "Um grupo de aplicações e um OpenTelemetry Collector enviam dados ao HertzBeat",
-        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OpenTelemetry Collector" },
+        "sources": { "java": "Java", "dotnet": ".NET", "node": "Node.js", "collector": "OTel Collector" },
         "outcomeSignals": "Metrics, Logs e Traces",
         "outcomeDiagnosis": "Caminhos de requisição, pontos lentos e traces de erro",
         "suitability": "Para investigar requisições lentas, erros de código e relações entre logs e traces",
