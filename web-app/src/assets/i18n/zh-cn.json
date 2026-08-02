@@ -1455,7 +1455,8 @@
         "revisions": "期望 {{desiredRevision}} · 活跃 {{activeRevision}}",
         "reportedAt": "上报于 {{time}}",
         "failure": "故障 {{failureCode}}",
-        "sourceSummary": "来源：{{count}} · 活跃 {{active}} · 期望 {{desired}} · 已拒绝 {{rejected}}",
+        "sourceSummary": "来源：{{count}} · 已应用 {{active}} · 待应用 {{desired}} · 已拒绝 {{rejected}}",
+        "sourceStateNote": "“已应用”仅表示来源修订版已激活，不代表已经收到遥测数据。",
         "viewSources": "查看 {{count}} 个来源",
         "sourceListLabel": "运行时来源",
         "source": "{{type}}：{{name}} · {{state}} · 修订版 {{revision}}",
@@ -1465,8 +1466,8 @@
           "FILE_LOG": "文件日志"
         },
         "sourceState": {
-          "DESIRED": "期望",
-          "ACTIVE": "活跃",
+          "DESIRED": "待应用",
+          "ACTIVE": "已应用",
           "REJECTED": "已拒绝"
         },
         "state": {

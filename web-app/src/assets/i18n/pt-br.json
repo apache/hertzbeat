@@ -1469,7 +1469,8 @@
         "revisions": "Desejada {{desiredRevision}} · Ativa {{activeRevision}}",
         "reportedAt": "Reportado em {{time}}",
         "failure": "Falha {{failureCode}}",
-        "sourceSummary": "Fontes: {{count}} · Ativas {{active}} · Desejadas {{desired}} · Rejeitadas {{rejected}}",
+        "sourceSummary": "Fontes: {{count}} · Aplicadas {{active}} · Pendentes de aplicação {{desired}} · Rejeitadas {{rejected}}",
+        "sourceStateNote": "Aplicada significa que a revisão da fonte está ativa; não comprova o recebimento de telemetria.",
         "viewSources": "Ver {{count}} fontes",
         "sourceListLabel": "Fontes do runtime",
         "source": "{{type}}: {{name}} · {{state}} · Revisão {{revision}}",
@@ -1479,9 +1480,9 @@
           "FILE_LOG": "Log de arquivo"
         },
         "sourceState": {
-          "DESIRED": "DESEJADA",
-          "ACTIVE": "ATIVA",
-          "REJECTED": "REJEITADA"
+          "DESIRED": "Pendente de aplicação",
+          "ACTIVE": "Aplicada",
+          "REJECTED": "Rejeitada"
         },
         "state": {
           "STOPPED": "PARADO",

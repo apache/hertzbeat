@@ -1461,7 +1461,8 @@
         "revisions": "希望 {{desiredRevision}} · 稼働中 {{activeRevision}}",
         "reportedAt": "報告日時 {{time}}",
         "failure": "障害 {{failureCode}}",
-        "sourceSummary": "ソース: {{count}} · 稼働中 {{active}} · 希望 {{desired}} · 拒否 {{rejected}}",
+        "sourceSummary": "ソース: {{count}} · 適用済み {{active}} · 適用待ち {{desired}} · 拒否 {{rejected}}",
+        "sourceStateNote": "「適用済み」はソースリビジョンが有効であることのみを示し、テレメトリー受信の証明ではありません。",
         "viewSources": "{{count}} 件のソースを表示",
         "sourceListLabel": "ランタイムソース",
         "source": "{{type}}: {{name}} · {{state}} · リビジョン {{revision}}",
@@ -1471,8 +1472,8 @@
           "FILE_LOG": "ファイルログ"
         },
         "sourceState": {
-          "DESIRED": "希望",
-          "ACTIVE": "稼働中",
+          "DESIRED": "適用待ち",
+          "ACTIVE": "適用済み",
           "REJECTED": "拒否"
         },
         "state": {

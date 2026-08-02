@@ -1455,7 +1455,8 @@
         "revisions": "期望 {{desiredRevision}} · 使用中 {{activeRevision}}",
         "reportedAt": "回報於 {{time}}",
         "failure": "故障 {{failureCode}}",
-        "sourceSummary": "來源：{{count}} · 使用中 {{active}} · 期望 {{desired}} · 已拒絕 {{rejected}}",
+        "sourceSummary": "來源：{{count}} · 已套用 {{active}} · 待套用 {{desired}} · 已拒絕 {{rejected}}",
+        "sourceStateNote": "「已套用」僅表示來源修訂版已啟用，不代表已收到遙測資料。",
         "viewSources": "檢視 {{count}} 個來源",
         "sourceListLabel": "執行階段來源",
         "source": "{{type}}：{{name}} · {{state}} · 修訂版 {{revision}}",
@@ -1465,8 +1466,8 @@
           "FILE_LOG": "檔案日誌"
         },
         "sourceState": {
-          "DESIRED": "期望",
-          "ACTIVE": "使用中",
+          "DESIRED": "待套用",
+          "ACTIVE": "已套用",
           "REJECTED": "已拒絕"
         },
         "state": {

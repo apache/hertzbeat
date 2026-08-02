@@ -80,8 +80,11 @@ describe('CollectorRuntimeReportFacts', () => {
       sources
     });
 
-    expect(screen.getByText('Sources: 49 · Active 1 · Desired 16 · Rejected 32')).toBeInTheDocument();
-    expect(screen.getByText('Prometheus: prometheus-1 · REJECTED · Revision 8')).not.toBeVisible();
+    expect(screen.getByText('Sources: 49 · Applied 1 · Pending application 16 · Rejected 32')).toBeInTheDocument();
+    expect(
+      screen.getByText('Applied means the source revision is active; it does not prove telemetry was received.')
+    ).toBeVisible();
+    expect(screen.getByText('Prometheus: prometheus-1 · Rejected · Revision 8')).not.toBeVisible();
     const list = screen.getByRole('list', { name: 'Runtime sources' });
     const summary = screen.getByText('View 49 sources');
     const disclosure = summary.closest('details');
@@ -93,9 +96,9 @@ describe('CollectorRuntimeReportFacts', () => {
     expect(disclosure).toHaveAttribute('open');
     expect(list).toBeVisible();
     expect(within(list).getAllByRole('listitem')).toHaveLength(49);
-    expect(within(list).getByText('Host Metrics: host · ACTIVE · Revision 8')).toBeInTheDocument();
-    expect(within(list).getByText('Prometheus: prometheus-32 · REJECTED · Revision 8')).toBeInTheDocument();
-    expect(within(list).getByText('File Log: file-log-16 · DESIRED · Revision 9')).toBeInTheDocument();
+    expect(within(list).getByText('Host Metrics: host · Applied · Revision 8')).toBeInTheDocument();
+    expect(within(list).getByText('Prometheus: prometheus-32 · Rejected · Revision 8')).toBeInTheDocument();
+    expect(within(list).getByText('File Log: file-log-16 · Pending application · Revision 9')).toBeInTheDocument();
 
     fireEvent.click(summary);
     expect(disclosure).not.toHaveAttribute('open');

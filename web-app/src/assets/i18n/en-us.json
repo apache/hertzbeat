@@ -1465,7 +1465,8 @@
         "revisions": "Desired {{desiredRevision}} · Active {{activeRevision}}",
         "reportedAt": "Reported {{time}}",
         "failure": "Failure {{failureCode}}",
-        "sourceSummary": "Sources: {{count}} · Active {{active}} · Desired {{desired}} · Rejected {{rejected}}",
+        "sourceSummary": "Sources: {{count}} · Applied {{active}} · Pending application {{desired}} · Rejected {{rejected}}",
+        "sourceStateNote": "Applied means the source revision is active; it does not prove telemetry was received.",
         "viewSources": "View {{count}} sources",
         "sourceListLabel": "Runtime sources",
         "source": "{{type}}: {{name}} · {{state}} · Revision {{revision}}",
@@ -1475,9 +1476,9 @@
           "FILE_LOG": "File Log"
         },
         "sourceState": {
-          "DESIRED": "DESIRED",
-          "ACTIVE": "ACTIVE",
-          "REJECTED": "REJECTED"
+          "DESIRED": "Pending application",
+          "ACTIVE": "Applied",
+          "REJECTED": "Rejected"
         },
         "state": {
           "STOPPED": "STOPPED",

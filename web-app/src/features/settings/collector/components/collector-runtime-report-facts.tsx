@@ -44,6 +44,7 @@ export function CollectorRuntimeReportFacts({ report }: { report: CollectorRunti
               rejected: sourceCounts.REJECTED
             })}
           </Typography.Text>
+          <Typography.Text type="secondary">{t('collectors.runtime.report.sourceStateNote')}</Typography.Text>
           <details className={styles.sourceDisclosure}>
             <summary>{t('collectors.runtime.report.viewSources', { count: report.sources.length })}</summary>
             <div className={styles.sourceList} role="list" aria-label={t('collectors.runtime.report.sourceListLabel')}>
