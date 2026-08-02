@@ -57,6 +57,16 @@
 .evidenceGrid :global(.ant-descriptions-row:not(:last-child) > td) {
   padding-bottom: var(--hb-space-3);
 }
+.evidenceSourceTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.evidenceSourceTable th,
+.evidenceSourceTable td {
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+  text-align: left;
+}
 @media (max-width: 1100px) {
   .filters,
   .advancedFilters {

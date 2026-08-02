@@ -173,7 +173,26 @@ describe('entity API', () => {
       metricEvidence: [{ metric: 'latency' }],
       logEvidence: [{ message: 'failed' }],
       traceEvidence: [{ traceId: 'trace-1' }],
-      unifiedEvidenceSummary: { metricsActive: true },
+      unifiedEvidenceSummary: {
+        activeSignalCount: 1,
+        metricsActive: true,
+        logsActive: false,
+        tracesActive: false,
+        metricEvidenceCount: 1,
+        logEvidenceCount: 0,
+        traceEvidenceCount: 0,
+        latestObservedAt: 123,
+        activeSignals: ['metrics'],
+        evidenceSources: [
+          {
+            source: 'monitor',
+            metricEvidenceCount: 1,
+            logEvidenceCount: 0,
+            traceEvidenceCount: 0,
+            latestObservedAt: 123
+          }
+        ]
+      },
       triageRecommendation: {
         mode: 'evidence',
         recommendedFocus: 'logs',
@@ -268,7 +287,11 @@ describe('entity API', () => {
       metricEvidence: [{ metric: 'latency' }],
       logEvidence: [{ message: 'failed' }],
       traceEvidence: [{ traceId: 'trace-1' }],
-      unifiedEvidenceSummary: { metricsActive: true },
+      unifiedEvidence: {
+        active: { metrics: true, logs: false, traces: false },
+        totals: { metrics: 1, logs: 0, traces: 0 },
+        sources: [{ source: 'monitor', metrics: 1, logs: 0, traces: 0 }]
+      },
       triageRecommendation: { mode: 'evidence', recommendedFocus: 'logs' },
       opsSummary: { readinessScore: 80, runbookReady: false },
       nextActions: [{ actionType: 'review_alerts', priority: 100 }],

@@ -218,7 +218,19 @@
       "downMonitors": "異常監控",
       "healthyMonitors": "正常監控",
       "identities": "識別依據數",
-      "logHints": "日誌查詢線索"
+      "logHints": "日誌查詢線索",
+      "sources": {
+        "title": "證據來源",
+        "monitor": "主動監控",
+        "otlp": "應用遙測",
+        "metrics": "指標",
+        "logs": "日誌",
+        "traces": "鏈路",
+        "latest": "最近觀測時間",
+        "notObserved": "尚未觀測",
+        "unavailable": "來源層級證據不可用。",
+        "empty": "尚未觀測到來源層級證據。"
+      }
     },
     "noiseControls": {
       "title": "告警降噪",

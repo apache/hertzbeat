@@ -7,6 +7,7 @@ import { OperationalSection, OperationalStatePanel } from '@/shared/operational-
 
 import type { EntityDetail } from '../model/entity-contract';
 import { localizeEntityCode } from '../model/entity-display';
+import { EntityEvidenceSources } from './entity-evidence-sources';
 import styles from './entity-view.module.css';
 
 export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
@@ -27,6 +28,7 @@ export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
         ) : (
           <OperationalStatePanel kind="empty" title={t('entity.missing.evidence')} />
         )}
+        <EntityEvidenceSources summary={detail.unifiedEvidence} />
       </OperationalSection>
     </>
   );

@@ -218,7 +218,19 @@
       "downMonitors": "異常モニター",
       "healthyMonitors": "正常モニター",
       "identities": "識別根拠数",
-      "logHints": "ログ検索の手掛かり"
+      "logHints": "ログ検索の手掛かり",
+      "sources": {
+        "title": "証拠ソース",
+        "monitor": "アクティブ監視",
+        "otlp": "アプリケーションテレメトリ",
+        "metrics": "メトリクス",
+        "logs": "ログ",
+        "traces": "トレース",
+        "latest": "最新の観測",
+        "notObserved": "未観測",
+        "unavailable": "ソース別の証拠は利用できません。",
+        "empty": "ソース別の証拠はまだ観測されていません。"
+      }
     },
     "noiseControls": {
       "title": "アラートノイズ制御",

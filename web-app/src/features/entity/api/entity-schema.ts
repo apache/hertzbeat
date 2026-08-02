@@ -130,6 +130,27 @@ const noiseControlSummarySchema = z
   .refine(value => value.matchingInhibitCount >= value.matchingInhibits.length);
 const richEvidenceSchema = z.record(z.string(), z.unknown());
 const monitorSummarySchema = richEvidenceSchema.and(z.object({ totalBoundMonitors: count }));
+const evidenceSourceSchema = z.object({
+  source: z.enum(['monitor', 'otlp']),
+  metricEvidenceCount: count,
+  logEvidenceCount: count,
+  traceEvidenceCount: count,
+  latestObservedAt: count.nullish()
+});
+const unifiedEvidenceSchema = z
+  .object({
+    activeSignalCount: count,
+    metricsActive: z.boolean(),
+    logsActive: z.boolean(),
+    tracesActive: z.boolean(),
+    metricEvidenceCount: count,
+    logEvidenceCount: count,
+    traceEvidenceCount: count,
+    latestObservedAt: count.nullish(),
+    activeSignals: z.array(text),
+    evidenceSources: z.array(evidenceSourceSchema)
+  })
+  .refine(value => new Set(value.evidenceSources.map(source => source.source)).size === value.evidenceSources.length);
 const detailSchema = z
   .object({
     entity: z.object({
@@ -147,7 +168,7 @@ const detailSchema = z
     metricEvidence: z.array(richEvidenceSchema).nullish(),
     logEvidence: z.array(richEvidenceSchema).nullish(),
     traceEvidence: z.array(richEvidenceSchema).nullish(),
-    unifiedEvidenceSummary: richEvidenceSchema.nullish(),
+    unifiedEvidenceSummary: unifiedEvidenceSchema.nullish(),
     boundMonitors: z.array(monitorSchema).nullish(),
     topologyNeighbors: z.array(relationSchema).nullish()
   })
@@ -207,8 +228,29 @@ function copyRichDetail(wire: z.output<typeof detailSchema>): Partial<EntityDeta
     ...(wire.metricEvidence ? { metricEvidence: wire.metricEvidence } : {}),
     ...(wire.logEvidence ? { logEvidence: wire.logEvidence } : {}),
     ...(wire.traceEvidence ? { traceEvidence: wire.traceEvidence } : {}),
-    ...(wire.unifiedEvidenceSummary ? { unifiedEvidenceSummary: wire.unifiedEvidenceSummary } : {}),
+    ...(wire.unifiedEvidenceSummary ? { unifiedEvidence: mapUnifiedEvidence(wire.unifiedEvidenceSummary) } : {}),
     ...mapEntityOperationalDetail(wire)
+  };
+}
+
+function mapUnifiedEvidence(value: z.output<typeof unifiedEvidenceSchema>) {
+  return {
+    activeSignalCount: value.activeSignalCount,
+    activeSignals: [...value.activeSignals],
+    active: { metrics: value.metricsActive, logs: value.logsActive, traces: value.tracesActive },
+    totals: {
+      metrics: value.metricEvidenceCount,
+      logs: value.logEvidenceCount,
+      traces: value.traceEvidenceCount
+    },
+    ...(value.latestObservedAt == null ? {} : { lastObservedAt: value.latestObservedAt }),
+    sources: value.evidenceSources.map(source => ({
+      source: source.source,
+      metrics: source.metricEvidenceCount,
+      logs: source.logEvidenceCount,
+      traces: source.traceEvidenceCount,
+      ...(source.latestObservedAt == null ? {} : { lastObservedAt: source.latestObservedAt })
+    }))
   };
 }
 

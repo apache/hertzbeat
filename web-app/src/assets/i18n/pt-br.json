@@ -218,7 +218,19 @@
       "downMonitors": "Monitores inativos",
       "healthyMonitors": "Monitores saudáveis",
       "identities": "Quantidade de evidências de identificação",
-      "logHints": "Indícios para consulta de logs"
+      "logHints": "Indícios para consulta de logs",
+      "sources": {
+        "title": "Fontes de evidência",
+        "monitor": "Monitoramento ativo",
+        "otlp": "Telemetria da aplicação",
+        "metrics": "Métricas",
+        "logs": "Logs",
+        "traces": "Traces",
+        "latest": "Observação mais recente",
+        "notObserved": "Não observado",
+        "unavailable": "A evidência por fonte está indisponível.",
+        "empty": "Nenhuma evidência por fonte foi observada."
+      }
     },
     "noiseControls": {
       "title": "Controles de ruído de alertas",

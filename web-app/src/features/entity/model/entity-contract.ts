@@ -104,6 +104,23 @@ export type EntityEvidenceSummary = {
   lastEvidenceAt?: number;
 };
 
+export type EntityEvidenceSource = {
+  source: 'monitor' | 'otlp';
+  metrics: number;
+  logs: number;
+  traces: number;
+  lastObservedAt?: number;
+};
+
+export type EntityUnifiedEvidence = {
+  activeSignalCount: number;
+  activeSignals: string[];
+  active: { metrics: boolean; logs: boolean; traces: boolean };
+  totals: { metrics: number; logs: number; traces: number };
+  lastObservedAt?: number;
+  sources: EntityEvidenceSource[];
+};
+
 export type EntityNoiseControlRule = {
   id: number;
   name: string;
@@ -202,7 +219,7 @@ export type EntityDetail = {
   metricEvidence?: Record<string, unknown>[];
   logEvidence?: Record<string, unknown>[];
   traceEvidence?: Record<string, unknown>[];
-  unifiedEvidenceSummary?: Record<string, unknown>;
+  unifiedEvidence?: EntityUnifiedEvidence;
   triageRecommendation?: EntityTriageRecommendation;
   opsSummary?: EntityOpsSummary;
   nextActions?: EntityNextAction[];

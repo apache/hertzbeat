@@ -202,6 +202,69 @@ describe('EntityDetailView', () => {
     expect(within(evidence).queryByText('0')).not.toBeInTheDocument();
   });
 
+  it('keeps active-monitoring and application-telemetry evidence visibly separate', () => {
+    renderView({
+      kind: 'ready',
+      detail: {
+        entity,
+        identities: [],
+        monitorPreview: { items: [], total: 0, complete: true },
+        unifiedEvidence: {
+          activeSignalCount: 3,
+          activeSignals: ['metrics', 'logs', 'traces'],
+          active: { metrics: true, logs: true, traces: true },
+          totals: { metrics: 8, logs: 4, traces: 2 },
+          lastObservedAt: 2_000,
+          sources: [
+            { source: 'otlp', metrics: 2, logs: 4, traces: 2, lastObservedAt: 2_000 },
+            { source: 'monitor', metrics: 6, logs: 0, traces: 0, lastObservedAt: 1_000 }
+          ]
+        },
+        relations: []
+      }
+    });
+
+    const sources = screen.getByRole('table', { name: i18n.t('entity.evidence.sources.title') });
+    const rows = within(sources).getAllByRole('row');
+    expect(within(rows[1]!).getByText(i18n.t('entity.evidence.sources.monitor'))).toBeInTheDocument();
+    expect(within(rows[1]!).getByText('6')).toBeInTheDocument();
+    expect(within(rows[2]!).getByText(i18n.t('entity.evidence.sources.otlp'))).toBeInTheDocument();
+    expect(within(rows[2]!).getByText('4')).toBeInTheDocument();
+    expect(within(sources).getByText(formatEvidenceTime(1_000))).toBeInTheDocument();
+    expect(within(sources).getByText(formatEvidenceTime(2_000))).toBeInTheDocument();
+  });
+
+  it('does not turn unavailable or empty source provenance into zero-count rows', () => {
+    const view = renderView({
+      kind: 'ready',
+      detail: { entity, identities: [], monitorPreview: { items: [], total: 0, complete: true }, relations: [] }
+    });
+    expect(screen.getByText(i18n.t('entity.evidence.sources.unavailable'))).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: i18n.t('entity.evidence.sources.title') })).queryByRole('table')
+    ).not.toBeInTheDocument();
+
+    view.unmount();
+    renderView({
+      kind: 'ready',
+      detail: {
+        entity,
+        identities: [],
+        monitorPreview: { items: [], total: 0, complete: true },
+        unifiedEvidence: {
+          activeSignalCount: 0,
+          activeSignals: [],
+          active: { metrics: false, logs: false, traces: false },
+          totals: { metrics: 0, logs: 0, traces: 0 },
+          sources: []
+        },
+        relations: []
+      }
+    });
+    expect(screen.getByText(i18n.t('entity.evidence.sources.empty'))).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
   it('renders matching silence and inhibit evidence without inventing rules', () => {
     const manageNoiseControls = vi.fn();
     renderView(
@@ -384,6 +447,10 @@ describe('EntityDetailView', () => {
     }
   );
 });
+
+function formatEvidenceTime(value: number) {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
+}
 
 type RenderViewOptions = {
   explore?: Parameters<typeof EntityDetailView>[0]['actions']['explore'];

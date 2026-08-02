@@ -218,7 +218,19 @@
       "downMonitors": "Down monitors",
       "healthyMonitors": "Healthy monitors",
       "identities": "Recognition evidence count",
-      "logHints": "Log query hints"
+      "logHints": "Log query hints",
+      "sources": {
+        "title": "Evidence sources",
+        "monitor": "Active monitoring",
+        "otlp": "Application telemetry",
+        "metrics": "Metrics",
+        "logs": "Logs",
+        "traces": "Traces",
+        "latest": "Latest observation",
+        "notObserved": "Not observed",
+        "unavailable": "Source-level evidence is unavailable.",
+        "empty": "No source-level evidence has been observed."
+      }
     },
     "noiseControls": {
       "title": "Alert noise controls",
