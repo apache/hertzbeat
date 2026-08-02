@@ -17,6 +17,7 @@ import {
   OperationalSection,
   OperationalStatePanel
 } from './operational-page';
+import operationalPageStyles from './operational-page.module.css?raw';
 
 describe('OperationalPage', () => {
   afterEach(cleanup);
@@ -113,5 +114,9 @@ describe('OperationalPage', () => {
     const actions = document.querySelector('[data-hb-operational-form-actions]');
     expect(actions).toContainElement(screen.getByRole('button', { name: 'Save' }));
     expect(actions).toContainElement(screen.getByRole('button', { name: 'Cancel' }));
+  });
+
+  it('lets wide result children shrink so their own table scroller and fixed columns stay in the viewport', () => {
+    expect(operationalPageStyles).toMatch(/\.resultRegion\s*>\s*\*\s*\{[^}]*min-width:\s*0;/s);
   });
 });

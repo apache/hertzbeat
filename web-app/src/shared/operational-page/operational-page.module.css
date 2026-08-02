@@ -86,6 +86,10 @@
   gap: var(--hb-space-4);
 }
 
+.resultRegion > * {
+  min-width: 0;
+}
+
 .formActions {
   position: sticky;
   z-index: 2;
