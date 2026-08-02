@@ -248,8 +248,11 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         Map<String, String> pageParameters = new LinkedHashMap<>(parameters);
         pageParameters.put("pageIndex", "0");
         pageParameters.put("pageSize", "20");
-        assertThat(authenticatedGet("/api/logs/list", pageParameters, token).path("content").isEmpty()).isTrue();
-        assertThat(authenticatedGet("/api/traces/list", pageParameters, token).path("content").isEmpty()).isTrue();
+        for (String path : List.of("/api/logs/list", "/api/traces/list")) {
+            JsonNode content = authenticatedGet(path, pageParameters, token).path("content");
+            assertThat(content.isArray()).isTrue();
+            assertThat(content.isEmpty()).isTrue();
+        }
     }
 
     private void assertMetricsQuery(JsonNode context, String token) throws Exception {
