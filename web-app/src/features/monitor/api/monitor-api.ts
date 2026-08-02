@@ -137,7 +137,26 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   return parseMonitorDetail(value, requestedId);
 }
 
-export async function loadNewMonitorEvidence(name: string, app: string, signal?: AbortSignal) {
+export async function loadNewMonitorIdentitySnapshot(name: string, app: string, signal?: AbortSignal) {
+  const matches = await loadExactMonitorIdentities(name, app, signal);
+  return new Set(matches.map(monitor => monitor.id));
+}
+
+export async function loadNewMonitorEvidence(
+  name: string,
+  app: string,
+  signal?: AbortSignal,
+  preWriteIds: ReadonlySet<number> = new Set()
+) {
+  const matches = (await loadExactMonitorIdentities(name, app, signal)).filter(monitor => !preWriteIds.has(monitor.id));
+  const [match] = matches;
+  if (matches.length !== 1 || !match) {
+    throw new MonitorContractError(`Expected one exact saved monitor, received ${matches.length}`);
+  }
+  return loadMonitorDetail(match.id, signal);
+}
+
+async function loadExactMonitorIdentities(name: string, app: string, signal?: AbortSignal) {
   const normalizedName = name.trim();
   const normalizedApp = app.trim();
   if (!normalizedName || !normalizedApp) throw new MonitorContractError('New monitor identity is incomplete');
@@ -182,11 +201,7 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
   if (seenIds.size !== snapshot.totalElements) {
     throw new MonitorContractError('New monitor evidence does not contain the complete page snapshot');
   }
-  const [match] = matches;
-  if (matches.length !== 1 || !match) {
-    throw new MonitorContractError(`Expected one exact saved monitor, received ${matches.length}`);
-  }
-  return loadMonitorDetail(match.id, signal);
+  return matches;
 }
 
 function collectNewMonitorEvidence(

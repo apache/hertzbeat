@@ -15,7 +15,16 @@
  * limitations under the License.
  */
 
-import { classifyMonitorReadError, loadMonitorDetail, loadNewMonitorEvidence, saveMonitor } from '../api/monitor-api';
+import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
+
+import {
+  classifyMonitorReadError,
+  loadMonitorDetail,
+  loadNewMonitorEvidence,
+  loadNewMonitorIdentitySnapshot,
+  saveMonitor
+} from '../api/monitor-api';
 import type { MonitorDetail } from '../model/monitor-contract';
 import { monitorWritableConverged } from '../model/monitor-editor-convergence';
 import type { buildMonitorPayload } from '../model/monitor-editor-payload';
@@ -36,15 +45,35 @@ export async function saveAndVerifyMonitor(
 ) {
   const editId = input.mode === 'edit' ? input.id : undefined;
   if (input.mode === 'edit' && editId === undefined) return invalidMonitorWriteEvidence<MonitorDetail>();
-  await saveMonitor(input.mode, payload, signal);
+  // A read-back after an uncertain create can only prove this write when the
+  // matching id did not already exist before dispatch.
+  const preWriteIds =
+    input.mode === 'new'
+      ? await captureNewMonitorIdentitySnapshot(payload.monitor.name ?? '', payload.monitor.app ?? '', signal)
+      : undefined;
+  try {
+    await saveMonitor(input.mode, payload, signal);
+  } catch (error) {
+    return reconcileUncertainMonitorCreate(input, payload, error, signal, ownsOperation, preWriteIds);
+  }
   // A successful write remains authoritative even if proof is later cancelled or unavailable.
   markAcknowledgedMonitorSave(input);
   if (!ownsOperation() || signal.aborted) return undefined;
+  return readMonitorWriteVerification(input, payload, editId, signal, preWriteIds);
+}
+
+async function readMonitorWriteVerification(
+  input: MonitorEditorCommandInput,
+  payload: ReturnType<typeof buildMonitorPayload>,
+  editId: number | undefined,
+  signal: AbortSignal,
+  preWriteIds?: ReadonlySet<number>
+) {
   let proof: MonitorDetail;
   try {
     proof =
       editId === undefined
-        ? await loadNewMonitorEvidence(payload.monitor.name ?? '', payload.monitor.app ?? '', signal)
+        ? await loadNewMonitorEvidence(payload.monitor.name ?? '', payload.monitor.app ?? '', signal, preWriteIds)
         : await loadMonitorDetail(editId, signal);
   } catch (error) {
     return classifyMonitorReadError(error) === 'unavailable'
@@ -54,4 +83,32 @@ export async function saveAndVerifyMonitor(
   return monitorWritableConverged(input.mode, payload, proof, input.defines, input.before)
     ? verifiedMonitorWrite(proof)
     : invalidMonitorWriteEvidence(proof);
+}
+
+function shouldReconcileUncertainMonitorCreate(mode: 'new' | 'edit', error: unknown) {
+  return mode === 'new' && error instanceof ApiMessageError && apiMessageWriteOutcome(error) === 'uncertain';
+}
+
+async function reconcileUncertainMonitorCreate(
+  input: MonitorEditorCommandInput,
+  payload: ReturnType<typeof buildMonitorPayload>,
+  error: unknown,
+  signal: AbortSignal,
+  ownsOperation: () => boolean,
+  preWriteIds: ReadonlySet<number> | undefined
+) {
+  if (!preWriteIds || !shouldReconcileUncertainMonitorCreate(input.mode, error)) throw error;
+  if (!ownsOperation() || signal.aborted) return undefined;
+  const verification = await readMonitorWriteVerification(input, payload, undefined, signal, preWriteIds);
+  if (verification.kind !== 'verified') throw error;
+  markAcknowledgedMonitorSave(input);
+  return verification;
+}
+
+async function captureNewMonitorIdentitySnapshot(name: string, app: string, signal: AbortSignal) {
+  try {
+    return await loadNewMonitorIdentitySnapshot(name, app, signal);
+  } catch {
+    return undefined;
+  }
 }

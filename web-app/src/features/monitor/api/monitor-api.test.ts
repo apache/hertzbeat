@@ -51,6 +51,7 @@ import {
   loadMonitorParamDefines,
   loadMonitors,
   loadNewMonitorEvidence,
+  loadNewMonitorIdentitySnapshot,
   loadRealtimeMetric,
   deleteMonitorGrafanaDashboard,
   deleteMonitorGrafanaDashboards,
@@ -824,6 +825,31 @@ describe('monitor editor API contracts', () => {
       { signal }
     );
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/monitor/7', { signal });
+  });
+
+  it('does not accept an exact identity that was present before create dispatch', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      content: [row],
+      totalElements: 1,
+      pageIndex: 0,
+      pageSize: 50
+    });
+
+    await expect(loadNewMonitorEvidence('checkout', 'website', undefined, new Set([7]))).rejects.toBeInstanceOf(
+      MonitorContractError
+    );
+    expect(http.apiMessageGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('captures only exact name/app identities before create dispatch', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      content: [row, { ...row, id: 8, name: 'checkout-copy' }],
+      totalElements: 2,
+      pageIndex: 0,
+      pageSize: 50
+    });
+
+    await expect(loadNewMonitorIdentitySnapshot(' checkout ', 'website')).resolves.toEqual(new Set([7]));
   });
 
   it('proves a new save across a stable complete multi-page snapshot', async () => {
