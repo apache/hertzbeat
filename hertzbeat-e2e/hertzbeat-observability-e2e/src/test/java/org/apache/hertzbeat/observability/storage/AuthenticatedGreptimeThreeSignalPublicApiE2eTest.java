@@ -84,14 +84,21 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
         byte[] detectionBody = detectionBody(startedAt);
 
         assertUnauthenticatedRequestsAreRejected(detectionBody);
-        String token = login();
+        String adminToken = login();
 
-        postSignal("metrics", metrics(signalTimeNanos).toByteArray(), token);
-        postSignal("logs", logs(signalTimeNanos).toByteArray(), token);
-        postSignal("traces", traces(signalTimeNanos).toByteArray(), token);
+        postSignal("metrics", metrics(signalTimeNanos).toByteArray(), adminToken);
+        postSignal("logs", logs(signalTimeNanos).toByteArray(), adminToken);
+        postSignal("traces", traces(signalTimeNanos).toByteArray(), adminToken);
+        awaitUnscopedAdminIngest(startedAt, adminToken);
+        assertScopedDetectionNotReceived(detectionBody, adminToken);
 
-        JsonNode queryContext = awaitReceivedDetection(detectionBody, token);
-        awaitPublicQueries(queryContext, token);
+        String collectorIntakeToken = generateCollectorIntakeToken(adminToken);
+        postSignal("metrics", metrics(signalTimeNanos).toByteArray(), collectorIntakeToken);
+        postSignal("logs", logs(signalTimeNanos).toByteArray(), collectorIntakeToken);
+        postSignal("traces", traces(signalTimeNanos).toByteArray(), collectorIntakeToken);
+
+        JsonNode queryContext = awaitReceivedDetection(detectionBody, adminToken);
+        awaitPublicQueries(queryContext, adminToken);
     }
 
     private void assertUnauthenticatedRequestsAreRejected(byte[] detectionBody) throws Exception {
@@ -123,6 +130,53 @@ class AuthenticatedGreptimeThreeSignalPublicApiE2eTest extends GreptimeThreeSign
     private void postSignal(String signal, byte[] payload, String token) throws Exception {
         HttpResponse<byte[]> response = send(postProtobuf("/api/otlp/v1/" + signal, payload, token));
         assertThat(response.statusCode()).isBetween(200, 299);
+    }
+
+    private String generateCollectorIntakeToken(String adminToken) throws Exception {
+        Map<String, String> parameters = Map.of(
+                "collectorId", COLLECTOR_ID,
+                "workspaceId", "default",
+                "expireSeconds", "3600");
+        HttpResponse<byte[]> response = send(authorize(request(
+                "/api/account/token/collector-intake/generate" + queryString(parameters))
+                .header("Accept", "application/json")
+                .POST(HttpRequest.BodyPublishers.noBody()), adminToken).build());
+        assertThat(response.statusCode()).isEqualTo(200);
+        JsonNode envelope = OBJECT_MAPPER.readTree(response.body());
+        assertThat(envelope.path("code").asInt()).isZero();
+        String token = envelope.path("data").path("token").asText();
+        assertThat(token).isNotBlank();
+        return token;
+    }
+
+    private void awaitUnscopedAdminIngest(long startedAt, String adminToken) {
+        Map<String, String> parameters = new LinkedHashMap<>();
+        parameters.put("start", Long.toString(startedAt));
+        parameters.put("end", Long.toString(System.currentTimeMillis() + 60_000));
+        parameters.put("serviceName", SERVICE_NAME);
+        parameters.put("serviceNamespace", SERVICE_NAMESPACE);
+        parameters.put("environment", ENVIRONMENT);
+        parameters.put("traceId", TRACE_ID);
+        parameters.put("pageIndex", "0");
+        parameters.put("pageSize", "20");
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+            JsonNode content = authenticatedGet("/api/logs/list", parameters, adminToken).path("content");
+            assertThat(content.isArray()).isTrue();
+            assertThat(content.size()).isPositive();
+            assertThat(content.get(0).path("resource").has("hertzbeat.collector.id")).isFalse();
+        });
+    }
+
+    private void assertScopedDetectionNotReceived(byte[] detectionBody, String adminToken) throws Exception {
+        HttpResponse<byte[]> response = send(postJson("/api/instrumentation/detect", detectionBody, adminToken));
+        assertThat(response.statusCode()).isEqualTo(200);
+        JsonNode envelope = OBJECT_MAPPER.readTree(response.body());
+        assertThat(envelope.path("code").asInt()).isZero();
+        JsonNode data = envelope.path("data");
+        assertThat(data.path("signals").path("metrics").path("status").asText()).isNotEqualTo("received");
+        assertThat(data.path("signals").path("logs").path("status").asText()).isNotEqualTo("received");
+        assertThat(data.path("signals").path("traces").path("status").asText()).isNotEqualTo("received");
+        assertThat(data.path("queryJumps").findValuesAsText("enabled")).containsOnly("false");
     }
 
     private JsonNode awaitReceivedDetection(byte[] detectionBody, String token) {

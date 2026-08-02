@@ -3457,7 +3457,7 @@ class OtlpGrpcIngestionServiceImplTest {
     }
 
     @Test
-    void shouldApplyAuthenticatedWorkspaceToRuntimeInternalMetricIntakeResourceAttributes() {
+    void shouldApplyAuthenticatedWorkspaceAndRemoveUntrustedCollectorFromRuntimeMetricIntake() {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
         try {
             ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
@@ -3507,7 +3507,7 @@ class OtlpGrpcIngestionServiceImplTest {
             verify(observabilitySignalIntakeGateway).recordOtlpMetricIntake(
                     org.mockito.ArgumentMatchers.argThat(attributes ->
                             "hertzbeat-otel-runtime".equals(attributes.get("service.name"))
-                                    && "collector-a".equals(attributes.get("hertzbeat.collector.id"))
+                                    && !attributes.containsKey("hertzbeat.collector.id")
                                     && "prod-west".equals(attributes.get("hertzbeat.workspace_id"))),
                     eq(1_710_000_000_000L),
                     eq("otelcol_process_uptime"),

@@ -66,6 +66,7 @@ class OtlpIngestionRequestContextResolverTest {
         Map<String, String> source = new LinkedHashMap<>();
         source.put("service.name", "checkout");
         source.put(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE, "spoofed");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE, "spoofed-collector");
 
         Map<String, String> resolved = resolver.withWorkspaceResourceAttributes(source);
 
@@ -73,6 +74,20 @@ class OtlpIngestionRequestContextResolverTest {
         assertEquals("prod-west", resolved.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
         assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
         assertEquals("spoofed", source.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
+        assertEquals("spoofed-collector", source.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+    }
+
+    @Test
+    void shouldRemoveUnauthenticatedCollectorIdentityFromResourceAttributes() {
+        Map<String, String> source = new LinkedHashMap<>();
+        source.put("service.name", "checkout");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE, "registered-collector");
+
+        Map<String, String> resolved = resolver.withWorkspaceResourceAttributes(source);
+
+        assertEquals("checkout", resolved.get("service.name"));
+        assertFalse(resolved.containsKey(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+        assertEquals("registered-collector", source.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
     }
 
     @Test

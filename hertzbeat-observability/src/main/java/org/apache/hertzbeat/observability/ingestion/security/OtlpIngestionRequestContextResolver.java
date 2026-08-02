@@ -45,6 +45,7 @@ public class OtlpIngestionRequestContextResolver {
         if (resourceAttributes != null) {
             resolved.putAll(resourceAttributes);
         }
+        OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID_KEYS.forEach(resolved::remove);
         String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
         if (StringUtils.isNotBlank(workspaceId)) {
             resolved.put(OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID, workspaceId);

@@ -326,6 +326,24 @@ class OtlpCorrelationEnricherTest {
     }
 
     @Test
+    void removesUnauthenticatedCollectorIdentityAcrossSignals() {
+        ExportLogsServiceRequest logs = enricher.enrichLogs(
+                logsRequest(List.of(logRecord("body-one")),
+                        stringAttribute("hertzbeat.collector.id", "registered-collector")),
+                OtlpCorrelationContext.empty());
+        ExportMetricsServiceRequest metrics = enricher.enrichMetrics(
+                metricsRequest(stringAttribute("hertzbeat.collector.id", "registered-collector")),
+                OtlpCorrelationContext.empty());
+        ExportTraceServiceRequest traces = enricher.enrichTraces(
+                traceRequest(stringAttribute("hertzbeat.collector.id", "registered-collector")),
+                OtlpCorrelationContext.empty());
+
+        assertFalse(resourceAttributes(logs).containsKey("hertzbeat.collector.id"));
+        assertFalse(metricResourceAttributes(metrics).containsKey("hertzbeat.collector.id"));
+        assertFalse(traceResourceAttributes(traces).containsKey("hertzbeat.collector.id"));
+    }
+
+    @Test
     void leavesTraceResourceAttributesUnchangedWhenCorrelationContextIsEmpty() {
         ExportTraceServiceRequest request = traceRequest(stringAttribute("service.name", "checkout"));
 

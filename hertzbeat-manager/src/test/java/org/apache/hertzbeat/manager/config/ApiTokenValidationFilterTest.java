@@ -203,6 +203,7 @@ class ApiTokenValidationFilterTest {
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
             verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST);
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentCollectorId());
         }
     }
 
