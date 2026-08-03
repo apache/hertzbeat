@@ -10,6 +10,23 @@ import { describe, expect, it } from 'vitest';
 import styles from './dashboard-start.module.css?raw';
 
 describe('Dashboard start layout contract', () => {
+  it('uses a ruled data-path ledger instead of rounded card surfaces', () => {
+    const entryRule = styles.match(/\.entry\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(entryRule).toMatch(/border-block-start:\s*1px solid var\(--hb-border-subtle\)/);
+    expect(entryRule).not.toMatch(/border-radius:/);
+    expect(entryRule).not.toMatch(/background:/);
+    expect(styles).toMatch(/\.startSurface\s*\{[^}]*--dashboard-entry-identity-min:\s*170px/);
+    expect(styles).toMatch(/\.entryMain\s*\{[^}]*column-gap:\s*var\(--dashboard-entry-column-gap\)/);
+    expect(styles).toMatch(/\.entryMain\s*\{[^}]*minmax\(var\(--dashboard-entry-outcome-min\),\s*1fr\)/);
+    expect(styles).toMatch(/\.outcome\s*\{[^}]*border-inline-start:\s*1px solid var\(--hb-border-subtle\)/);
+    expect(styles).toMatch(/\.outcome\s+:global\(p\.ant-typography\)\s*\{[^}]*text-wrap:\s*balance/);
+    expect(styles).toMatch(/\.convergence\s*\{[^}]*border-block-start:\s*1px solid var\(--hb-border-subtle\)/);
+    expect(styles).toMatch(
+      /padding-inline-start:\s*calc\(var\(--dashboard-entry-identity-min\)\s*\+\s*var\(--dashboard-entry-column-gap\)\)/
+    );
+  });
+
   it('gives the reversed telemetry flow a shrink-safe track before its arrow and product node', () => {
     expect(styles).toMatch(
       /\.flow\[data-direction='reverse'\]\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+24px\s+auto/
