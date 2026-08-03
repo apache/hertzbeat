@@ -7,17 +7,16 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Monitor, MonitorDetailMetric } from '../model/monitor-contract';
 import {
-  monitorRealtimeGroups,
   monitorRealtimeRows,
   type MonitorDetailRefreshControl,
   type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
 import { metricEvidence, realtimeGroupFavoriteEvidence } from './monitor-metric-query-evidence';
+import { buildHistoryChartEvidence, buildSelectedHistoryChart } from './monitor-history-workbench-evidence';
 import { monitorMetricWorkbenchEvidence } from './monitor-metric-workbench-evidence';
 import {
   useMonitorFavoriteMutation,
@@ -25,15 +24,13 @@ import {
 } from './use-monitor-favorite-mutation';
 import { buildMonitorMetricWorkbenchResult } from './monitor-metric-workbench-result';
 import { useMonitorMetricData } from './use-monitor-metric-data';
-import { useMonitorMetricSelection } from './use-monitor-metric-selection';
+import { useMonitorMetricSources } from './use-monitor-metric-sources';
 
 type MonitorMetricWorkbenchOptions = {
   notifications?: Notifications;
   refreshDetail: () => void;
   refreshControl: MonitorDetailRefreshControl;
 };
-
-const realtimeGroupPageSize = 10;
 
 export function useMonitorMetricWorkbenchController(
   monitor: Monitor | undefined,
@@ -43,16 +40,8 @@ export function useMonitorMetricWorkbenchController(
   const { t } = useTranslation();
   const { message: appMessage } = App.useApp();
   const queryClient = useQueryClient();
-  const { catalog, definitions, history, metric, metricKey, urlActions } = useMonitorMetricSelection(monitor, embedded);
-  const realtimeSelection = useRealtimeGroupSelection(monitor?.id, definitions);
-  const queries = useMonitorMetricData({
-    monitor,
-    metric,
-    realtimeGroups: realtimeSelection.visible,
-    metricKey,
-    history,
-    refreshSeconds: options.refreshControl.refreshSeconds
-  });
+  const { catalog, history, metric, metricKey, urlActions, realtimeSelection, historySelection, queries } =
+    useMonitorMetricSources({ monitor, embedded, refreshSeconds: options.refreshControl.refreshSeconds });
   const { favorite, favoriteCollection, historical, historySupported, realtime } = monitorMetricWorkbenchEvidence(
     queries,
     metric,
@@ -66,6 +55,8 @@ export function useMonitorMetricWorkbenchController(
     t
   });
   const realtimeGroups = buildRealtimeGroupEvidence(queries, queries.favorites, favoriteMutation.busyMetricKey);
+  const historyCharts = buildHistoryChartEvidence(historySelection, queries);
+  const selectedHistoryChart = buildSelectedHistoryChart(metric, historySelection, queries);
   const actions = buildWorkbenchActions({
     monitor,
     metric,
@@ -74,7 +65,7 @@ export function useMonitorMetricWorkbenchController(
     queries,
     favoriteMutation,
     realtimeSelection,
-    historySupported,
+    historySelection,
     refreshDetail: options.refreshDetail
   });
   return buildMonitorMetricWorkbenchResult({
@@ -87,6 +78,10 @@ export function useMonitorMetricWorkbenchController(
     favoriteBusy: favoriteMutation.busyMetricKey === (metric?.historySupported === false ? metric.group : metricKey),
     realtimeGroups,
     hasMoreRealtimeGroups: realtimeSelection.hasMore,
+    historyAvailability: historySelection.availability,
+    historyCharts,
+    selectedHistoryChart,
+    hasMoreHistoryCharts: historySelection.hasMore,
     realtime,
     historical,
     refreshControl: options.refreshControl,
@@ -115,8 +110,8 @@ function buildWorkbenchActions(input: {
   realtimeGroups: MonitorMetricWorkbenchController['state']['realtimeGroups'];
   queries: ReturnType<typeof useMonitorMetricData>;
   favoriteMutation: ReturnType<typeof useMonitorFavoriteMutation>;
-  realtimeSelection: ReturnType<typeof useRealtimeGroupSelection>;
-  historySupported: boolean;
+  realtimeSelection: ReturnType<typeof useMonitorMetricSources>['realtimeSelection'];
+  historySelection: ReturnType<typeof useMonitorMetricSources>['historySelection'];
   refreshDetail: () => void;
 }) {
   const selectedToken = input.metric?.historySupported === false ? input.metric.group : (input.metric?.key ?? '');
@@ -127,26 +122,39 @@ function buildWorkbenchActions(input: {
       return current ? input.favoriteMutation.toggle(group, current.favorite) : Promise.resolve();
     },
     loadMoreRealtimeGroups: input.realtimeSelection.loadMore,
+    activateHistoryChart: input.historySelection.activate,
+    setHistoryChartRange: input.historySelection.setRange,
+    refreshHistoryChart: (metricKey: string) => {
+      const chart = input.queries.historyCharts.find(item => item.metric.key === metricKey);
+      if (chart) void chart.query.refetch();
+      else input.historySelection.activate(metricKey);
+    },
+    loadMoreHistoryCharts: input.historySelection.loadMore,
     refresh: () => {
       input.refreshDetail();
       refreshMonitorMetricQueries(
         input.queries,
         Boolean(input.monitor && (input.metric || input.realtimeGroups.length > 0)),
-        input.metric?.group,
-        input.historySupported
+        input.metric?.group
       );
     }
   } satisfies Pick<
     MonitorMetricWorkbenchController['actions'],
-    'toggleFavorite' | 'toggleRealtimeFavorite' | 'loadMoreRealtimeGroups' | 'refresh'
+    | 'toggleFavorite'
+    | 'toggleRealtimeFavorite'
+    | 'loadMoreRealtimeGroups'
+    | 'activateHistoryChart'
+    | 'setHistoryChartRange'
+    | 'refreshHistoryChart'
+    | 'loadMoreHistoryCharts'
+    | 'refresh'
   >;
 }
 
 function refreshMonitorMetricQueries(
   queries: ReturnType<typeof useMonitorMetricData>,
   canRefresh: boolean,
-  selectedGroup: string | undefined,
-  historySupported: boolean
+  selectedGroup: string | undefined
 ) {
   // Refresh is one operator action, so do not issue a partial request set under incomplete context.
   if (!canRefresh) return;
@@ -155,16 +163,5 @@ function refreshMonitorMetricQueries(
     void queries.realtime.refetch();
   }
   for (const group of queries.realtimeGroups) void group.query.refetch();
-  if (selectedGroup && historySupported) void queries.historical.refetch();
-}
-
-function useRealtimeGroupSelection(monitorId: number | undefined, definitions: MonitorDetailMetric[]) {
-  const [visibleCount, setVisibleCount] = useState(realtimeGroupPageSize);
-  const groups = monitorRealtimeGroups(definitions);
-  useEffect(() => setVisibleCount(realtimeGroupPageSize), [monitorId]);
-  return {
-    visible: groups.slice(0, visibleCount),
-    hasMore: visibleCount < groups.length,
-    loadMore: () => setVisibleCount(count => Math.min(count + realtimeGroupPageSize, groups.length))
-  };
+  for (const chart of queries.historyCharts) void chart.query.refetch();
 }

@@ -17,11 +17,14 @@
 
 import { describe, expect, it } from 'vitest';
 
+import type { MonitorMetricValue } from './monitor-contract';
 import {
   defaultMonitorDetailRefreshSeconds,
   monitorDetailRefreshChoices,
   monitorDetailRefreshInterval,
+  monitorHistoryMetrics,
   monitorHistoryRows,
+  monitorHistorySeries,
   monitorMetricHistoryRanges,
   monitorMetricHistoryUsesInterval,
   monitorMetricOptions,
@@ -63,6 +66,67 @@ describe('monitor detail model', () => {
         { name: 'hidden', visible: false, fields: [{ field: 'value', type: 0 }] }
       ])
     ).toEqual([{ key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' }]);
+  });
+
+  it('keeps only visible numeric fields in history definition order', () => {
+    expect(
+      monitorHistoryMetrics([
+        {
+          name: 'summary',
+          fields: [
+            { field: 'responseTime', type: 0, unit: 'ms' },
+            { field: 'host', type: 1 },
+            { field: 'code', type: 0, label: true }
+          ]
+        },
+        { name: 'hidden', visible: false, fields: [{ field: 'value', type: 0 }] },
+        { name: 'availability', fields: [{ field: 'success', type: 0 }] }
+      ])
+    ).toEqual([
+      { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' },
+      { key: 'availability.success', group: 'availability', field: 'success' }
+    ]);
+  });
+
+  it('builds raw and interval chart series without inventing numeric points', () => {
+    const emptyValue: MonitorMetricValue = {
+      origin: null,
+      mean: null,
+      median: null,
+      min: null,
+      max: null,
+      time: null
+    };
+    const value = (overrides: Partial<typeof emptyValue> = {}) => ({ ...emptyValue, ...overrides });
+    const history = {
+      values: {
+        'host=a': [
+          value({ origin: '12.5', time: 1000 }),
+          value({ origin: 'not-a-number', time: 2000 }),
+          value({ origin: '13', time: null })
+        ]
+      }
+    };
+
+    expect(monitorHistorySeries(history, false)).toEqual([{ name: 'host=a', points: [[1000, 12.5]] }]);
+    expect(
+      monitorHistorySeries(
+        {
+          values: {
+            aggregate: [
+              value({ mean: '10', min: '8', max: '12', time: 1000 }),
+              value({ mean: null, min: null, max: null, time: 2000 })
+            ]
+          }
+        },
+        true
+      )
+    ).toEqual([
+      { name: 'Max', points: [[1000, 12]] },
+      { name: 'Min', points: [[1000, 8]] },
+      { name: 'Mean', points: [[1000, 10]] }
+    ]);
+    expect(monitorHistorySeries({ values: { aggregate: [value({ time: 2000 })] } }, true)).toEqual([]);
   });
 
   it('adds one realtime-only representative only when a visible group has no numeric field', () => {

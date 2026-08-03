@@ -49,6 +49,11 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitorMetrics.autoRefresh.seconds).toBeTruthy();
       expect(locale.monitorMetrics.autoRefresh.off).toBeTruthy();
       expect(locale.monitorMetrics.loadMore).toBeTruthy();
+      expect(locale.monitorMetrics.loadMoreHistory).toBeTruthy();
+      expect(locale.monitorMetrics.historyRange).toBeTruthy();
+      expect(locale.monitorMetrics.storageDegraded).toBeTruthy();
+      expect(locale.monitorMetrics.storageUnknown).toBeTruthy();
+      expect(locale.monitorMetrics.saveImage).toBeTruthy();
       expect(locale.monitorMetrics.favorites).toBeTruthy();
       expect(locale.monitorMetrics.historyUnsupported).toBeTruthy();
       expect(locale.monitorMetrics.favoriteEmpty).toBeTruthy();

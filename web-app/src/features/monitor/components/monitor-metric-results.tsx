@@ -5,17 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Table, Tabs, Tag } from 'antd';
-import type { ReactNode } from 'react';
+import { Button, Tabs, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import type { MonitorMetricWorkbenchController, monitorHistoryRows } from '../model/monitor-detail-model';
+import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { MonitorHistoryResult, MonitorSelectedHistoryResult } from './monitor-history-results';
 import { MonitorRealtimeResult, SelectedRealtimeResult } from './monitor-realtime-results';
 import styles from './monitor-metric-workbench.module.css';
-
-const historyTablePageSize = 20;
 
 export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchController) {
   const { t } = useTranslation();
@@ -27,7 +25,11 @@ export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchC
           label: t('monitorMetrics.realtime'),
           children: <MonitorRealtimeResult state={state} actions={actions} />
         },
-        { key: 'history', label: t('monitorMetrics.history'), children: <HistoryResult state={state} /> },
+        {
+          key: 'history',
+          label: t('monitorMetrics.history'),
+          children: <MonitorHistoryResult state={state} actions={actions} />
+        },
         {
           key: 'favorites',
           label: t('monitorMetrics.favorites'),
@@ -67,7 +69,11 @@ function FavoriteCollection({ state, actions }: MonitorMetricWorkbenchController
               label: t('monitorMetrics.realtime'),
               children: <SelectedRealtimeResult state={state} />
             },
-            { key: 'history', label: t('monitorMetrics.history'), children: <HistoryResult state={state} /> }
+            {
+              key: 'history',
+              label: t('monitorMetrics.history'),
+              children: <MonitorSelectedHistoryResult state={state} actions={actions} />
+            }
           ]}
         />
       ) : (
@@ -89,53 +95,4 @@ function FavoriteCollectionState({ kind }: { kind: 'loading' | 'empty' | 'unavai
     case 'error':
       return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   }
-}
-
-function HistoryResult({ state }: Pick<MonitorMetricWorkbenchController, 'state'>) {
-  return (
-    <MetricState kind={state.historical.kind}>
-      <HistoryTable rows={state.historical.rows} pending={state.historical.kind === 'loading'} />
-    </MetricState>
-  );
-}
-
-function MetricState({
-  kind,
-  children
-}: {
-  kind: 'loading' | 'empty' | 'unsupported' | 'unavailable' | 'error' | 'ready';
-  children: ReactNode;
-}) {
-  const { t } = useTranslation();
-  if (kind === 'unsupported')
-    return <OperationalStatePanel kind="empty" title={t('monitorMetrics.historyUnsupported')} />;
-  if (kind === 'unavailable') return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
-  if (kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
-  if (kind === 'empty') return <OperationalStatePanel kind="empty" title={t('monitorMetrics.empty')} />;
-  return children;
-}
-
-function HistoryTable({ rows, pending }: { rows: ReturnType<typeof monitorHistoryRows>; pending: boolean }) {
-  const { t } = useTranslation();
-  const columns = [
-    { title: t('monitorMetrics.series'), dataIndex: 'series', render: (value: string) => value || '—' },
-    { title: t('monitorMetrics.time'), dataIndex: 'time', render: formatMetricTime },
-    { title: t('monitorMetrics.value'), dataIndex: 'value' }
-  ];
-  return (
-    <Table
-      rowKey="key"
-      size="small"
-      loading={pending}
-      dataSource={rows}
-      columns={columns}
-      pagination={{ pageSize: historyTablePageSize }}
-    />
-  );
-}
-
-function formatMetricTime(value?: number | null) {
-  return value == null
-    ? '—'
-    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
 }

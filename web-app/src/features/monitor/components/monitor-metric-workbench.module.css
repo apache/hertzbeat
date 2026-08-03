@@ -25,13 +25,6 @@
   flex-wrap: wrap;
   gap: var(--hb-space-2);
 }
-.metricSelect {
-  min-width: 240px;
-  flex: 1 1 320px;
-}
-.historySelect {
-  width: 120px;
-}
 .labels {
   display: flex;
   flex-wrap: wrap;
@@ -84,13 +77,67 @@
   grid-column: 1 / -1;
   justify-self: center;
 }
+.historyResult {
+  display: grid;
+  gap: var(--hb-space-3);
+}
+.historyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hb-space-3);
+}
+.historyChart {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-surface);
+  background: var(--hb-bg-raised);
+}
+.historyChartHeader {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.historyChartTitle {
+  min-width: 0;
+}
+.historyChartTitle h5 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.historyChartTitle span {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.historyChartActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.historyChartCanvas,
+.historyChartState {
+  width: 100%;
+  height: 360px;
+}
+.historyChartState {
+  display: grid;
+  place-items: center;
+}
 @media (max-width: 760px) {
-  .metricSelect,
-  .historySelect {
-    width: 100%;
-    flex-basis: 100%;
-  }
   .realtimeGrid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .historyChartHeader {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

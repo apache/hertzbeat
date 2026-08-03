@@ -7,13 +7,13 @@
 
 import { StarFilled, StarOutlined } from '@ant-design/icons';
 import { Button, Table, Tag } from 'antd';
-import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { MonitorMetricWorkbenchController, monitorRealtimeRows } from '../model/monitor-detail-model';
 import styles from './monitor-metric-workbench.module.css';
+import { useActivateWhenVisible } from './use-activate-when-visible';
 
 export function MonitorRealtimeResult({ state, actions }: Pick<MonitorMetricWorkbenchController, 'state' | 'actions'>) {
   if (state.realtimeGroups.length > 0) return <RealtimeGroupGrid state={state} actions={actions} />;
@@ -26,7 +26,10 @@ export function SelectedRealtimeResult({ state }: Pick<MonitorMetricWorkbenchCon
 
 function RealtimeGroupGrid({ state, actions }: Pick<MonitorMetricWorkbenchController, 'state' | 'actions'>) {
   const { t } = useTranslation();
-  const loadMoreRef = useLoadMoreWhenVisible(state.hasMoreRealtimeGroups, actions.loadMoreRealtimeGroups);
+  const loadMoreRef = useActivateWhenVisible<HTMLButtonElement>(
+    state.hasMoreRealtimeGroups,
+    actions.loadMoreRealtimeGroups
+  );
   return (
     <div className={styles.realtimeGrid}>
       {state.realtimeGroups.map(group => (
@@ -68,24 +71,6 @@ function RealtimeFavoriteButton({
       data-realtime-favorite-group={group.group}
     />
   );
-}
-
-function useLoadMoreWhenVisible(hasMore: boolean, loadMore: () => void) {
-  const target = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!hasMore || !target.current || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      entries => {
-        if (!entries.some(entry => entry.isIntersecting)) return;
-        observer.disconnect();
-        loadMore();
-      },
-      { rootMargin: '200px 0px' }
-    );
-    observer.observe(target.current);
-    return () => observer.disconnect();
-  }, [hasMore, loadMore]);
-  return target;
 }
 
 function RealtimeEvidence({ evidence }: { evidence: MonitorMetricWorkbenchController['state']['realtime'] }) {

@@ -23,6 +23,10 @@ export function buildMonitorMetricWorkbenchResult(input: {
   favoriteBusy: boolean;
   realtimeGroups: MonitorMetricWorkbenchController['state']['realtimeGroups'];
   hasMoreRealtimeGroups: boolean;
+  historyAvailability: MonitorMetricWorkbenchController['state']['historyAvailability'];
+  historyCharts: MonitorMetricWorkbenchController['state']['historyCharts'];
+  selectedHistoryChart?: MonitorMetricWorkbenchController['state']['selectedHistoryChart'];
+  hasMoreHistoryCharts: boolean;
   realtime: MonitorMetricWorkbenchController['state']['realtime'];
   historical: MonitorMetricWorkbenchController['state']['historical'];
   refreshControl: MonitorDetailRefreshControl;
@@ -30,6 +34,10 @@ export function buildMonitorMetricWorkbenchResult(input: {
   toggleFavorite: MonitorMetricWorkbenchController['actions']['toggleFavorite'];
   toggleRealtimeFavorite: MonitorMetricWorkbenchController['actions']['toggleRealtimeFavorite'];
   loadMoreRealtimeGroups: MonitorMetricWorkbenchController['actions']['loadMoreRealtimeGroups'];
+  activateHistoryChart: MonitorMetricWorkbenchController['actions']['activateHistoryChart'];
+  setHistoryChartRange: MonitorMetricWorkbenchController['actions']['setHistoryChartRange'];
+  refreshHistoryChart: MonitorMetricWorkbenchController['actions']['refreshHistoryChart'];
+  loadMoreHistoryCharts: MonitorMetricWorkbenchController['actions']['loadMoreHistoryCharts'];
   refresh: () => void;
 }): MonitorMetricWorkbenchController {
   return {
@@ -44,6 +52,10 @@ export function buildMonitorMetricWorkbenchResult(input: {
       favoriteBusy: input.favoriteBusy,
       realtimeGroups: input.realtimeGroups,
       hasMoreRealtimeGroups: input.hasMoreRealtimeGroups,
+      historyAvailability: input.historyAvailability,
+      historyCharts: input.historyCharts,
+      selectedHistoryChart: input.selectedHistoryChart,
+      hasMoreHistoryCharts: input.hasMoreHistoryCharts,
       realtime: input.realtime,
       historical: input.historical
     },
@@ -53,6 +65,10 @@ export function buildMonitorMetricWorkbenchResult(input: {
       toggleFavorite: input.toggleFavorite,
       toggleRealtimeFavorite: input.toggleRealtimeFavorite,
       loadMoreRealtimeGroups: input.loadMoreRealtimeGroups,
+      activateHistoryChart: input.activateHistoryChart,
+      setHistoryChartRange: input.setHistoryChartRange,
+      refreshHistoryChart: input.refreshHistoryChart,
+      loadMoreHistoryCharts: input.loadMoreHistoryCharts,
       refresh: input.refresh
     }
   };

@@ -24,8 +24,9 @@ export function monitorMetricWorkbenchEvidence(
   const favorite = favoriteEvidence(queries.favorites, metric);
   const favoriteCollection = favoriteCollectionEvidence(queries.favorites, catalog.options);
   const realtime = metricEvidence(queries.realtime, data => (metric ? monitorRealtimeRows(data) : []));
-  const historical: MonitorMetricWorkbenchController['state']['historical'] = historySupported
-    ? metricEvidence(queries.historical, monitorHistoryRows)
-    : { kind: 'unsupported', rows: [] };
+  let historical: MonitorMetricWorkbenchController['state']['historical'];
+  if (!historySupported) historical = { kind: 'unsupported', rows: [] };
+  else if (queries.historical) historical = metricEvidence(queries.historical, monitorHistoryRows);
+  else historical = { kind: 'loading', rows: [] };
   return { favorite, favoriteCollection, historical, historySupported, realtime };
 }

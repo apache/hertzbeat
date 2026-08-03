@@ -15,13 +15,12 @@ export function useMonitorMetricData(input: {
   monitor: Monitor | undefined;
   metric: MonitorMetricOption | undefined;
   realtimeGroups: Array<{ group: string }>;
+  historyRequests: Array<{ metric: MonitorMetricOption; history: MonitorMetricHistory }>;
   metricKey: string;
-  history: MonitorMetricHistory;
   refreshSeconds: MonitorDetailRefreshSeconds;
 }) {
-  const { monitor, metric, realtimeGroups, metricKey, history, refreshSeconds } = input;
+  const { monitor, metric, realtimeGroups, historyRequests, metricKey, refreshSeconds } = input;
   const refetchInterval = monitorDetailRefreshInterval(refreshSeconds);
-  const historySupported = metric?.historySupported !== false;
   // Monitor metric endpoints accept the route-local history range, not the shell's exact time window.
   // Keeping query keys aligned with those request inputs avoids refetching an identical request.
   // `enabled: false` still permits manual refetch; skipToken removes the unsafe query function entirely.
@@ -32,14 +31,18 @@ export function useMonitorMetricData(input: {
       realtimeMetricQueryOptions(monitor, realtimeGroupMetric(group.group), refetchInterval)
     )
   });
-  const historical = useQuery(
-    historyMetricQueryOptions(monitor, metric, metricKey, history, historySupported, refetchInterval)
-  );
+  const historyQueries = useQueries({
+    queries: historyRequests.map(request =>
+      historyMetricQueryOptions(monitor, request.metric, request.metric.key, request.history, refetchInterval)
+    )
+  });
+  const historyCharts = historyRequests.map((request, index) => ({ ...request, query: historyQueries[index]! }));
   return {
     favorites,
     realtime,
     realtimeGroups: realtimeGroups.map((group, index) => ({ group: group.group, query: realtimeGroupQueries[index]! })),
-    historical
+    historyCharts,
+    historical: historyCharts.find(item => item.metric.key === metricKey)?.query
   };
 }
 
@@ -75,16 +78,15 @@ function historyMetricQueryOptions(
   metric: MonitorMetricOption | undefined,
   metricKey: string,
   history: MonitorMetricHistory,
-  historySupported: boolean,
   refetchInterval: number | false
 ) {
   return {
     queryKey: monitorQueryKeys.history(monitor, metricKey, history),
     queryFn:
-      monitor && metric && historySupported
+      monitor && metric
         ? ({ signal }: QueryFunctionContext) => loadHistoryMetric(monitor, metric, history, signal)
         : skipToken,
-    refetchInterval: activeRefreshInterval(Boolean(monitor && metric && historySupported), refetchInterval)
+    refetchInterval: activeRefreshInterval(Boolean(monitor && metric), refetchInterval)
   } as const;
 }
 

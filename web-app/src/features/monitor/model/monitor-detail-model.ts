@@ -26,6 +26,10 @@ import type {
   MonitorRealtimeMetric,
   MonitorGrafanaDashboard
 } from './monitor-contract';
+import type { MonitorHistorySeries } from './monitor-history-model';
+
+export { monitorHistoryMetrics, monitorHistorySeries } from './monitor-history-model';
+export type { MonitorHistorySeries } from './monitor-history-model';
 
 export type MonitorDetailEvidence = RemotePayloadState<{ detail: MonitorDetail }, 'missing' | 'unavailable' | 'error'>;
 
@@ -121,6 +125,15 @@ export type MonitorRealtimeGroup = {
   favoriteBusy: boolean;
   result: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
 };
+export type MonitorHistoryAvailability = {
+  kind: 'loading' | 'available' | 'degraded' | 'unavailable' | 'unknown' | 'error';
+  errorCode?: string | null;
+};
+export type MonitorHistoryChart = {
+  metric: MonitorMetricOption;
+  history: MonitorMetricHistory;
+  result: MonitorMetricRowsEvidence<MonitorHistorySeries>;
+};
 export type MonitorMetricWorkbenchController = {
   state: {
     catalog: MonitorMetricCatalogEvidence;
@@ -133,6 +146,10 @@ export type MonitorMetricWorkbenchController = {
     favoriteBusy: boolean;
     realtimeGroups: MonitorRealtimeGroup[];
     hasMoreRealtimeGroups: boolean;
+    historyAvailability: MonitorHistoryAvailability;
+    historyCharts: MonitorHistoryChart[];
+    selectedHistoryChart?: MonitorHistoryChart | undefined;
+    hasMoreHistoryCharts: boolean;
     realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
     historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;
   };
@@ -143,6 +160,10 @@ export type MonitorMetricWorkbenchController = {
     toggleFavorite: () => Promise<void>;
     toggleRealtimeFavorite: (group: string) => Promise<void>;
     loadMoreRealtimeGroups: () => void;
+    activateHistoryChart: (metricKey: string) => void;
+    setHistoryChartRange: (metricKey: string, value: MonitorMetricHistory) => void;
+    refreshHistoryChart: (metricKey: string) => void;
+    loadMoreHistoryCharts: () => void;
     refresh: () => void;
   };
 };

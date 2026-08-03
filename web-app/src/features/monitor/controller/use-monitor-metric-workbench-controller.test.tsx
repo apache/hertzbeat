@@ -34,10 +34,12 @@ const api = vi.hoisted(() => ({
   updateFavoriteMetric: vi.fn()
 }));
 const notifications = { success: vi.fn(), error: vi.fn() };
+const runtimeStatus = vi.hoisted(() => ({ useRuntimeStatusController: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
 }));
+vi.mock('@/features/runtime-status', () => runtimeStatus);
 
 import { useMonitorMetricWorkbenchController } from './use-monitor-metric-workbench-controller';
 
@@ -60,6 +62,7 @@ const routeConvergenceWait = { timeout: 10_000 } as const;
 describe('useMonitorMetricWorkbenchController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runtimeStatus.useRuntimeStatusController.mockReturnValue(runtimeStatusEvidence('available'));
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog());
     api.loadFavoriteMetrics.mockResolvedValue([]);
     api.loadRealtimeMetric.mockResolvedValue({ fields: [], valueRows: [] });
@@ -155,7 +158,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     const view = renderController(monitor(), [], '/monitors/7');
 
     await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(10));
-    expect(api.loadRealtimeMetric.mock.calls.map(call => call[1].group)).toEqual(
+    expect(api.loadRealtimeMetric.mock.calls.map(call => (call[1] as { group: string }).group)).toEqual(
       expect.arrayContaining(Array.from({ length: 10 }, (_, index) => `group-${index + 1}`))
     );
     expect(view.result.current.controller.state.hasMoreRealtimeGroups).toBe(true);
@@ -163,6 +166,76 @@ describe('useMonitorMetricWorkbenchController', () => {
     act(() => view.result.current.controller.actions.loadMoreRealtimeGroups());
     await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(12));
     expect(view.result.current.controller.state.hasMoreRealtimeGroups).toBe(false);
+  });
+
+  it('loads history charts in six-item pages only after each chart enters the viewport', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(8));
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+    expect(view.result.current.controller.state.historyAvailability.kind).toBe('available');
+    expect(view.result.current.controller.state.hasMoreHistoryCharts).toBe(true);
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
+
+    act(() => view.result.current.controller.actions.activateHistoryChart('group-1.value'));
+    await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
+    expect(api.loadHistoryMetric).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 7 }),
+      expect.objectContaining({ key: 'group-1.value' }),
+      '30m',
+      expect.any(AbortSignal)
+    );
+
+    act(() => view.result.current.controller.actions.setHistoryChartRange('group-1.value', '12W'));
+    await waitFor(() =>
+      expect(api.loadHistoryMetric).toHaveBeenLastCalledWith(
+        expect.objectContaining({ id: 7 }),
+        expect.objectContaining({ key: 'group-1.value' }),
+        '12W',
+        expect.any(AbortSignal)
+      )
+    );
+    expect(view.result.current.controller.state.historyCharts[0]?.history).toBe('12W');
+
+    act(() => view.result.current.controller.actions.loadMoreHistoryCharts());
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(8));
+    expect(view.result.current.controller.state.hasMoreHistoryCharts).toBe(false);
+  });
+
+  it('does not revive lazy windows or chart ranges after an A-B-A monitor change', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(12));
+    const view = renderController(monitor(7), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(10));
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+
+    act(() => {
+      view.result.current.controller.actions.loadMoreRealtimeGroups();
+      view.result.current.controller.actions.loadMoreHistoryCharts();
+      view.result.current.controller.actions.setHistoryChartRange('group-1.value', '12W');
+    });
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(12));
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(12));
+    expect(view.result.current.controller.state.historyCharts[0]?.history).toBe('12W');
+
+    view.rerender({ monitor: monitor(8), embedded: [] });
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(10));
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+
+    view.rerender({ monitor: monitor(7), embedded: [] });
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(10));
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+    expect(view.result.current.controller.state.historyCharts[0]?.history).toBe('30m');
+  });
+
+  it('does not request history while storage is unavailable', async () => {
+    runtimeStatus.useRuntimeStatusController.mockReturnValue(runtimeStatusEvidence('unavailable'));
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
+    expect(view.result.current.controller.state.historyAvailability.kind).toBe('unavailable');
+    expect(view.result.current.controller.state.historyCharts).toEqual([]);
+    act(() => view.result.current.controller.actions.activateHistoryChart('summary.value'));
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
   });
 
   it('writes a realtime favorite by its backend group token', async () => {
@@ -306,13 +379,14 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadHistoryMetric).not.toHaveBeenCalled();
   });
 
-  it('manually refreshes favorites, realtime, and long-range history even when auto-refresh is Off', async () => {
+  it('manually refreshes active realtime and long-range history even when auto-refresh is Off', async () => {
     const view = renderController(
       monitor(),
       [],
       '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&refresh=0&history=12W'
     );
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.activateHistoryChart('summary.value'));
     await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
     expect(api.loadHistoryMetric).toHaveBeenCalledWith(
       expect.objectContaining({ id: 7 }),
@@ -353,6 +427,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     api.loadHistoryMetric.mockRejectedValue(reason);
     const view = renderController(monitor(), [], '/monitors/7');
     await waitFor(() => expect(view.result.current.controller.state.realtime.kind).toBe(kind));
+    act(() => view.result.current.controller.actions.activateHistoryChart('summary.value'));
     await waitFor(() => expect(view.result.current.controller.state.historical.kind).toBe(kind));
   });
 
@@ -568,6 +643,39 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(notifications.error).not.toHaveBeenCalled();
   });
 });
+
+function numericCatalog(count: number) {
+  return {
+    metrics: Array.from({ length: count }, (_, index) => ({
+      name: `group-${index + 1}`,
+      visible: true,
+      fields: [{ type: 0, field: 'value', unit: null, label: false }]
+    }))
+  };
+}
+
+function runtimeStatusEvidence(storage: 'available' | 'unavailable') {
+  return {
+    state: 'ready',
+    snapshot: {
+      observedAt: '2026-08-03T00:00:00Z',
+      server: { status: 'available', errorCode: null },
+      storage: {
+        kind: 'greptime',
+        status: storage,
+        errorCode: storage === 'available' ? null : 'storage_unavailable'
+      },
+      collectors: {
+        status: 'available',
+        total: 1,
+        online: 1,
+        runtimeHealthy: 1,
+        lastReportedAt: '2026-08-03T00:00:00Z',
+        errorCode: null
+      }
+    }
+  };
+}
 
 function renderController(
   initialMonitor: Monitor | undefined,

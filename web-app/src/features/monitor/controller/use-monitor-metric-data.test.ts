@@ -48,16 +48,21 @@ describe('useMonitorMetricData refresh interval', () => {
         monitor: currentMonitor,
         metric: currentMetric,
         realtimeGroups: [],
+        historyRequests:
+          currentMetric && !('historySupported' in currentMetric && currentMetric.historySupported === false)
+            ? [{ metric: currentMetric, history: '30m' }]
+            : [],
         metricKey: currentMetric?.key ?? '',
-        history: '30m',
         refreshSeconds: 30
       });
 
-      expect(query.useQuery).toHaveBeenCalledTimes(3);
+      expect(query.useQuery).toHaveBeenCalledTimes(2);
       query.useQuery.mock.calls.forEach(([options], index) => {
         expect(options.queryFn === query.skipToken).toBe(!active[index]);
         expect(options.refetchInterval).toBe(active[index] ? 30_000 : false);
       });
+      const historyOptions = historyQueryOptions()[0];
+      expect(Boolean(historyOptions) && historyOptions?.queryFn !== query.skipToken).toBe(active[2]);
     }
   );
 
@@ -66,15 +71,15 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
+      historyRequests: [{ metric, history: '12W' }],
       metricKey: metric.key,
-      history: '12W',
       refreshSeconds: 30
     });
     const signal = new AbortController().signal;
 
     queryFunction(0)({ signal });
     queryFunction(1)({ signal });
-    queryFunction(2)({ signal });
+    historyQueryFunction(0)({ signal });
 
     expect(api.loadFavoriteMetrics).toHaveBeenCalledWith(7, signal);
     expect(api.loadRealtimeMetric).toHaveBeenCalledWith(7, metric, signal);
@@ -86,15 +91,16 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
+      historyRequests: [{ metric, history: '30m' }],
       metricKey: metric.key,
-      history: '30m',
       refreshSeconds: 30
     });
 
-    expect(query.useQuery).toHaveBeenCalledTimes(3);
+    expect(query.useQuery).toHaveBeenCalledTimes(2);
     for (const [options] of query.useQuery.mock.calls) {
       expect(options).toMatchObject({ refetchInterval: 30_000 });
     }
+    expect(historyQueryOptions()[0]).toMatchObject({ refetchInterval: 30_000 });
   });
 
   it('uses the disabled TanStack interval form for Off', () => {
@@ -102,15 +108,16 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
+      historyRequests: [{ metric, history: '30m' }],
       metricKey: metric.key,
-      history: '30m',
       refreshSeconds: 0
     });
 
-    expect(query.useQuery).toHaveBeenCalledTimes(3);
+    expect(query.useQuery).toHaveBeenCalledTimes(2);
     for (const [options] of query.useQuery.mock.calls) {
       expect(options).toMatchObject({ refetchInterval: false });
     }
+    expect(historyQueryOptions()[0]).toMatchObject({ refetchInterval: false });
   });
 
   it('keeps realtime active but skips history for a realtime-only representative', () => {
@@ -120,16 +127,15 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric: realtimeOnly,
       realtimeGroups: [],
+      historyRequests: [],
       metricKey: realtimeOnly.key,
-      history: '30m',
       refreshSeconds: 30
     });
 
     const realtime = query.useQuery.mock.calls[1]?.[0];
-    const historical = query.useQuery.mock.calls[2]?.[0];
     expect(realtime).toMatchObject({ refetchInterval: 30_000 });
     expect(realtime?.queryFn).not.toBe(query.skipToken);
-    expect(historical).toMatchObject({ queryFn: query.skipToken, refetchInterval: false });
+    expect(historyQueryOptions()).toEqual([]);
   });
 
   it('keeps the exact long range in the history query key', () => {
@@ -137,12 +143,12 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
+      historyRequests: [{ metric, history: '12W' }],
       metricKey: metric.key,
-      history: '12W',
       refreshSeconds: 30
     });
 
-    expect(query.useQuery.mock.calls[2]?.[0]?.queryKey).toEqual([
+    expect(historyQueryOptions()[0]?.queryKey).toEqual([
       'monitor',
       'metrics',
       'history',
@@ -160,5 +166,15 @@ describe('useMonitorMetricData refresh interval', () => {
 function queryFunction(index: number) {
   const queryFn = query.useQuery.mock.calls[index]?.[0]?.queryFn;
   if (typeof queryFn !== 'function') throw new Error(`expected query function at index ${index}`);
+  return queryFn as (context: { signal: AbortSignal }) => unknown;
+}
+
+function historyQueryOptions() {
+  return query.useQueries.mock.calls[1]?.[0]?.queries ?? [];
+}
+
+function historyQueryFunction(index: number) {
+  const queryFn = historyQueryOptions()[index]?.queryFn;
+  if (typeof queryFn !== 'function') throw new Error(`expected history query function at index ${index}`);
   return queryFn as (context: { signal: AbortSignal }) => unknown;
 }
