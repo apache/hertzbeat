@@ -183,6 +183,36 @@ describe('useMonitorEditorController', () => {
     await waitFor(() => expect(routed.current().state.command).toBe('idle'));
   });
 
+  it('keeps an honest detection result until the draft changes', async () => {
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.detect());
+
+    expect(routed.current().state.feedback).toBe('detect-success');
+    act(() => routed.current().actions.updateMonitor({ name: 'home-updated' }));
+    expect(routed.current().state.feedback).toBeNull();
+
+    api.detectMonitor.mockRejectedValueOnce(new ApiMessageError('connection rejected', { status: 400 }));
+    await act(async () => routed.current().actions.detect());
+    expect(routed.current().state.feedback).toBe('detect-failed');
+  });
+
+  it('retires idle command feedback when route navigation changes the source', async () => {
+    const routed = renderController('new', '/monitors/new?app=website&scrape=static');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+    await act(async () => routed.current().actions.detect());
+    expect(routed.current().state.feedback).toBe('detect-success');
+
+    await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=http_sd'));
+    await waitFor(() => expect(routed.current().state.feedback).toBeNull());
+    await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=static'));
+
+    expect(routed.current().state.feedback).toBeNull();
+  });
+
   it('allows cancel to abort a pending save and leave without late completion effects', async () => {
     const pending = deferred<void>();
     api.saveMonitor.mockReturnValue(pending.promise);
@@ -471,6 +501,7 @@ describe('useMonitorEditorController', () => {
     expect(notify.error).toHaveBeenCalledWith('monitor.editor.saveFailed');
     expect(notify.success).not.toHaveBeenCalledWith('monitor.editor.saveSuccess');
     expect(routed.router.state.location.pathname).toBe('/monitors/new');
+    expect(routed.current().state.feedback).toBe('save-failed');
   });
 
   it('blocks save while a structured row reports invalid state', async () => {

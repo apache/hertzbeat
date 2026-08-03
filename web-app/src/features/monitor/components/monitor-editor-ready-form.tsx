@@ -1,12 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button } from 'antd';
+import { Alert, Button } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalFormActions, OperationalSection } from '@/shared/operational-page';
 
-import type { MonitorEditorDraft } from '../model/monitor-editor-model';
+import type { MonitorEditorCommandFeedback, MonitorEditorDraft } from '../model/monitor-editor-model';
 import { MonitorEditorAppPicker } from './monitor-editor-app-picker';
 import {
   MonitorEditorCollectionFields,
@@ -90,6 +90,7 @@ export function ReadyMonitorEditorForm({
           </div>
         </OperationalSection>
       ) : null}
+      <MonitorEditorCommandResult feedback={controller.state.feedback} />
       <div className={styles.formActions}>
         <MonitorEditorActions controller={controller} />
       </div>
@@ -128,20 +129,44 @@ function MonitorEditorActions({ controller }: { controller: MonitorEditorFormCon
     <OperationalFormActions>
       <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
       <Button
+        aria-label={t('monitor.editor.detect')}
         loading={command === 'detecting'}
-        disabled={busy && command !== 'detecting'}
+        disabled={busy}
         onClick={() => void controller.actions.detect()}
       >
         {t('monitor.editor.detect')}
       </Button>
       <Button
+        aria-label={t('common.save')}
         type="primary"
         loading={command === 'saving'}
-        disabled={busy && command !== 'saving'}
+        disabled={busy}
         onClick={() => void controller.actions.save()}
       >
         {t('common.save')}
       </Button>
     </OperationalFormActions>
   );
+}
+
+function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorCommandFeedback | null }) {
+  const { t } = useTranslation();
+  if (!feedback) return null;
+  const successful = feedback === 'detect-success';
+  return (
+    <div className={styles.commandFeedback}>
+      <Alert
+        role={successful ? 'status' : 'alert'}
+        showIcon
+        type={successful ? 'success' : 'error'}
+        message={t(commandFeedbackMessageKey(feedback))}
+      />
+    </div>
+  );
+}
+
+function commandFeedbackMessageKey(feedback: MonitorEditorCommandFeedback) {
+  if (feedback === 'detect-success') return 'monitor.editor.detectSuccess';
+  if (feedback === 'detect-failed') return 'monitor.editor.detectFailed';
+  return 'monitor.editor.saveFailed';
 }

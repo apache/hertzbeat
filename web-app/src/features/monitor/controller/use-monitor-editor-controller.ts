@@ -57,7 +57,8 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     save: commands.save,
     cancel: commands.cancel,
     retry: resources.retry,
-    isLocked: commands.isLocked
+    isLocked: commands.isLocked,
+    clearFeedback: commands.clearFeedback
   });
   return {
     state: {
@@ -69,6 +70,7 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
       labelSuggestions: resources.labelSuggestions,
       busy: commands.command !== 'idle',
       command: commands.command,
+      feedback: commands.feedback,
       validationIssues: commands.validationIssues,
       scrapeValues: monitorScrapeValues,
       sourceKey: resources.source

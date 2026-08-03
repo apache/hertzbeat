@@ -3,7 +3,11 @@
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
 import type { MonitorApp, MonitorCollector, MonitorParamDefine } from '../model/monitor-contract';
-import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
+import type {
+  MonitorEditorCommandFeedback,
+  MonitorEditorDraft,
+  MonitorParamFormValue
+} from '../model/monitor-editor-model';
 
 export type MonitorEditorFormController = {
   state: {
@@ -15,6 +19,7 @@ export type MonitorEditorFormController = {
     labelSuggestions: LabelSuggestionCatalog | undefined;
     busy: boolean;
     command: 'idle' | 'detecting' | 'saving';
+    feedback: MonitorEditorCommandFeedback | null;
     validationIssues: string[];
     scrapeValues: readonly string[];
     sourceKey: string;

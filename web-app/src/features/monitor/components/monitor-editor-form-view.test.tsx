@@ -309,6 +309,8 @@ describe('MonitorEditorFormView validation evidence', () => {
     render(<MonitorEditorFormView mode="new" controller={controller} />);
 
     expect(screen.getByLabelText('monitor.name')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'monitor.editor.detect' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
     expect(
       within(screen.getByRole('group', { name: 'monitor.editor.labels' })).getByRole('button', {
         name: 'monitor.editor.map.add'
@@ -316,6 +318,18 @@ describe('MonitorEditorFormView validation evidence', () => {
     ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).not.toBeDisabled();
     expect(document.querySelector('[data-hb-operational-form-actions]')).toBeInTheDocument();
+  });
+
+  it('keeps the latest command result in the form instead of relying on a transient toast', () => {
+    const controller = editorController([]);
+    controller.state.feedback = 'detect-success';
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectSuccess');
+
+    controller.state.feedback = 'detect-failed';
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.detectFailed');
   });
 
   it('imports a Grafana dashboard template from an in-memory JSON file', async () => {
@@ -371,6 +385,7 @@ function editorController(validationIssues: string[]) {
       collectors: [],
       busy: false,
       command: 'idle' as 'idle' | 'detecting' | 'saving',
+      feedback: null as 'detect-success' | 'detect-failed' | 'save-failed' | null,
       validationIssues,
       returnTo: '/monitors',
       scrapeValues: ['static'] as const,

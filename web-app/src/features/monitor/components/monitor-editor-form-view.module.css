@@ -119,6 +119,12 @@
   margin-inline: auto;
 }
 
+.commandFeedback {
+  width: 100%;
+  max-width: 760px;
+  margin: 16px auto 0;
+}
+
 @media (max-width: 760px) {
   .applicationValue {
     align-items: flex-start;

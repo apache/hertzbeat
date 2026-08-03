@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from 'react';
 import { detectMonitor } from '../api/monitor-api';
 import type { MonitorDetail } from '../model/monitor-contract';
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
+import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
 import { verifiedMonitorWrite, type MonitorWriteVerification } from '../model/monitor-write-verification';
 import {
@@ -38,6 +39,7 @@ import { saveAndVerifyMonitor } from './monitor-editor-save-verification';
 type CommandState = {
   source: string;
   command: 'idle' | 'detecting' | 'saving';
+  feedback: MonitorEditorCommandFeedback | null;
   showValidation: boolean;
 };
 
@@ -54,8 +56,14 @@ export function useMonitorEditorCommands(request: MonitorEditorCommandRequest) {
   const [state, setState] = useState<CommandState>({
     source: input.source,
     command: 'idle',
+    feedback: null,
     showValidation: false
   });
+  if (state.source !== input.source) {
+    // Retire feedback during render so a browser A → B → A transition cannot
+    // reveal an earlier source snapshot while waiting for an effect.
+    setState({ source: input.source, command: 'idle', feedback: null, showValidation: false });
+  }
 
   useEffect(() => {
     const active = operation.current;
@@ -64,7 +72,6 @@ export function useMonitorEditorCommands(request: MonitorEditorCommandRequest) {
       // source can start so late completion cannot notify or navigate.
       active.controller.abort();
       operation.current = null;
-      setState({ source: input.source, command: 'idle', showValidation: false });
     }
   }, [input.source]);
 
@@ -81,7 +88,9 @@ export function useMonitorEditorCommands(request: MonitorEditorCommandRequest) {
 
   return {
     command: state.source === input.source ? state.command : 'idle',
+    feedback: state.source === input.source ? state.feedback : null,
     isLocked: () => operation.current !== null,
+    clearFeedback: () => clearMonitorCommandFeedback(input.source, setState),
     validationIssues:
       state.source === input.source && state.showValidation && input.draft
         ? validateMonitorEditorDraft(input.draft, input.defines)
@@ -112,9 +121,13 @@ async function executeMonitorCommand(
       isCurrentMonitorEditorOperation(operation.current, active)
     );
     if (!verification) return;
-    completeMonitorCommand(action, verification, input, operation.current, active);
+    if (completeMonitorCommand(action, verification, input, operation.current, active) && action === 'detect') {
+      publishMonitorCommandFeedback(input.source, 'detect-success', setState);
+    }
   } catch {
-    failMonitorCommand(action, input, operation.current, active);
+    if (failMonitorCommand(action, input, operation.current, active)) {
+      publishMonitorCommandFeedback(input.source, action === 'detect' ? 'detect-failed' : 'save-failed', setState);
+    }
   } finally {
     releaseMonitorCommand(input.source, operation, setState, active);
   }
@@ -128,7 +141,7 @@ function prepareMonitorCommand(
 ): PreparedCommand | undefined {
   if (!input.draft || operation.current) return undefined;
   if (validateMonitorEditorDraft(input.draft, input.defines).length > 0) {
-    setState({ source: input.source, command: 'idle', showValidation: true });
+    setState({ source: input.source, command: 'idle', feedback: null, showValidation: true });
     void input.message.warning(input.text.validation);
     return undefined;
   }
@@ -137,6 +150,7 @@ function prepareMonitorCommand(
   setState({
     source: input.source,
     command: action === 'detect' ? 'detecting' : 'saving',
+    feedback: null,
     showValidation: false
   });
   return {
@@ -172,12 +186,13 @@ function completeMonitorCommand(
   current: MonitorEditorActiveOperation | null,
   active: MonitorEditorActiveOperation
 ) {
-  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return;
+  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return false;
   if (action === 'detect') {
     void input.message.success(input.text.detectSuccess);
-    return;
+    return true;
   }
   completeCommittedMonitorSave(verification, input);
+  return true;
 }
 
 function failMonitorCommand(
@@ -186,8 +201,9 @@ function failMonitorCommand(
   current: MonitorEditorActiveOperation | null,
   active: MonitorEditorActiveOperation
 ) {
-  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return;
+  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return false;
   void input.message.error(action === 'detect' ? input.text.detectFailed : input.text.saveFailed);
+  return true;
 }
 
 function releaseMonitorCommand(
@@ -198,5 +214,19 @@ function releaseMonitorCommand(
 ) {
   if (operation.current?.token !== active.token) return;
   operation.current = null;
-  setState({ source, command: 'idle', showValidation: false });
+  setState(current => (current.source === source ? { ...current, command: 'idle', showValidation: false } : current));
+}
+
+function publishMonitorCommandFeedback(
+  source: string,
+  feedback: MonitorEditorCommandFeedback,
+  setState: React.Dispatch<React.SetStateAction<CommandState>>
+) {
+  setState(current => (current.source === source ? { ...current, feedback } : current));
+}
+
+function clearMonitorCommandFeedback(source: string, setState: React.Dispatch<React.SetStateAction<CommandState>>) {
+  setState(current =>
+    current.source === source && current.feedback !== null ? { ...current, feedback: null } : current
+  );
 }

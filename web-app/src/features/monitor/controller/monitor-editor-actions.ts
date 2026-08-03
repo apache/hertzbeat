@@ -38,11 +38,16 @@ type MonitorEditorActionsInput = {
   cancel: () => void;
   retry: () => Promise<void>;
   isLocked: () => boolean;
+  clearFeedback: () => void;
 };
 
 export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
   const updateDraft = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => {
-    if (!input.isLocked()) input.updateDraft(updater);
+    if (input.isLocked()) return;
+    // A command result describes the exact submitted snapshot and becomes
+    // stale as soon as any field changes.
+    input.clearFeedback();
+    input.updateDraft(updater);
   };
   return {
     updateMonitor: (patch: Partial<MonitorEditorDraft['monitor']>) =>
@@ -68,7 +73,9 @@ export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
           : [...new Set([...current.invalidParamFields, field])]
       })),
     changeSource: (next: { app?: string; scrape?: string }) => {
-      if (!input.isLocked()) changeMonitorEditorSource(input, next);
+      if (input.isLocked()) return;
+      input.clearFeedback();
+      changeMonitorEditorSource(input, next);
     },
     detect: input.detect,
     save: input.save,
