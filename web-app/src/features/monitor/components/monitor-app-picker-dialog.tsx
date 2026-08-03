@@ -24,15 +24,14 @@ import { Alert, Button, Empty, Input, Modal, Spin } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { MonitorAppsEvidence } from '../model/monitor-list-model';
-import { filterMonitorAppPickerGroups } from '../model/monitor-app-picker-model';
+import { filterMonitorAppPickerGroups, type MonitorAppPickerEvidence } from '../model/monitor-app-picker-model';
 
 import styles from './monitor-app-picker-dialog.module.css';
 
 type MonitorAppPickerDialogProps = {
   open: boolean;
   search: string;
-  evidence: MonitorAppsEvidence;
+  evidence: MonitorAppPickerEvidence;
   onSearch: (value: string) => void;
   onCancel: () => void;
   onSelect: (app: string) => void;

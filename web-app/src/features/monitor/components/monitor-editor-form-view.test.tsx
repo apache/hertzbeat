@@ -60,7 +60,7 @@ describe('MonitorEditorFormView validation evidence', () => {
     expect(document.querySelector('[data-state="empty"]')).toBeInTheDocument();
   });
 
-  it('allows generic create to cancel while choosing an application', () => {
+  it('reuses the catalog dialog instead of rendering the legacy inline application select', async () => {
     const controller = editorController([]);
     const pickerController = {
       ...controller,
@@ -69,11 +69,17 @@ describe('MonitorEditorFormView validation evidence', () => {
 
     render(<MonitorEditorFormView mode="new" controller={pickerController} />);
 
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.title');
+    expect(screen.getByRole('searchbox', { name: 'monitor.appPicker.search' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'monitor.application' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Website' }));
+    expect(controller.actions.changeSource).toHaveBeenCalledWith({ app: 'website', scrape: 'static' });
+
     fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
     expect(controller.actions.cancel).toHaveBeenCalledOnce();
   });
 
-  it('allows generic create to cancel when the application catalog is empty', () => {
+  it('keeps the catalog dialog cancellable when no monitor type is available', async () => {
     const controller = editorController([]);
     const emptyController = {
       ...controller,
@@ -82,6 +88,7 @@ describe('MonitorEditorFormView validation evidence', () => {
 
     render(<MonitorEditorFormView mode="new" controller={emptyController} />);
 
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.empty');
     fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
     expect(controller.actions.cancel).toHaveBeenCalledOnce();
   });
@@ -232,7 +239,7 @@ function editorController(validationIssues: string[]) {
       evidence: { kind: 'ready' as const },
       draft,
       defines: [headers],
-      apps: [{ value: 'website' }],
+      apps: [{ category: 'service', value: 'website', label: 'Website' }],
       collectors: [],
       busy: false,
       command: 'idle' as 'idle' | 'detecting' | 'saving',

@@ -15,7 +15,12 @@
  * limitations under the License.
  */
 
-import { buildMonitorDetailPath, buildMonitorEditPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import {
+  applicationRoutePaths,
+  buildMonitorDetailPath,
+  buildMonitorEditPath,
+  monitorRoutePaths
+} from '@/shared/navigation/app-paths';
 import { authoritativePageIndexCorrection } from '@/shared/pagination';
 
 import { monitorStatusCodes, type MonitorPage, type MonitorQuery, type MonitorScrape } from './monitor-contract';
@@ -118,6 +123,9 @@ export function parseMonitorTimestamp(value?: number | string | null) {
 
 export function safeMonitorReturnTo(value?: string | null) {
   if (!value) return monitorRoutePaths.list;
+  // Dashboard is the only non-list origin allowed to resume monitor creation.
+  // Exact matching prevents arbitrary query data from crossing this boundary.
+  if (value === applicationRoutePaths.dashboard) return applicationRoutePaths.dashboard;
 
   const withoutHash = value.split('#', 1)[0] ?? '';
   const querySeparator = withoutHash.indexOf('?');

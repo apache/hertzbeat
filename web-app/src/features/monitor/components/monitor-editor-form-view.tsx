@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-import { Button, Select } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalFormActions, OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
+import { OperationalStatePanel } from '@/shared/operational-page';
 
-import { monitorAppOptions } from '../model/monitor-model';
+import { MonitorEditorAppPicker } from './monitor-editor-app-picker';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
 import { ReadyMonitorEditorForm } from './monitor-editor-ready-form';
-import styles from './monitor-editor-form-view.module.css';
 
 export function MonitorEditorFormView({
   mode,
@@ -52,30 +51,12 @@ export function MonitorEditorFormView({
     );
   }
   if (!draft) {
-    if (apps.length === 0)
-      return (
-        <OperationalStatePanel
-          kind="empty"
-          title={t('monitor.editor.appEmpty')}
-          action={<Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>}
-        />
-      );
     return (
-      <OperationalSection title={t('monitor.application')}>
-        <div className={styles.form}>
-          <label>
-            {t('monitor.application')}
-            <Select<string>
-              showSearch
-              options={monitorAppOptions(apps)}
-              onChange={app => controller.actions.changeSource({ app, scrape: 'static' })}
-            />
-          </label>
-        </div>
-        <OperationalFormActions>
-          <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
-        </OperationalFormActions>
-      </OperationalSection>
+      <MonitorEditorAppPicker
+        apps={apps}
+        onCancel={controller.actions.cancel}
+        onSelect={app => controller.actions.changeSource({ app, scrape: 'static' })}
+      />
     );
   }
   // Structured fields retain invalid rows locally, so a new canonical source

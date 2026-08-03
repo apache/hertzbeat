@@ -5,6 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import type { RemotePayloadState } from '@/shared/remote-state';
+
 import type { MonitorApp } from './monitor-contract';
 
 export type MonitorAppPickerItem = {
@@ -16,6 +18,8 @@ export type MonitorAppPickerGroup = {
   category: string;
   apps: MonitorAppPickerItem[];
 };
+
+export type MonitorAppPickerEvidence = RemotePayloadState<{ groups: MonitorAppPickerGroup[] }, 'unavailable' | 'error'>;
 
 /**
  * Preserves the backend catalog order because maintainers curate that order for

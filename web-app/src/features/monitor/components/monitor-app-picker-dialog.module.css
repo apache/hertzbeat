@@ -68,7 +68,7 @@
   cursor: pointer;
   font: inherit;
   padding: 8px 10px;
-  text-align: start;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
