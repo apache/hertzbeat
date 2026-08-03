@@ -292,15 +292,19 @@ public class AlarmGroupReduce implements DisposableBean {
         // For firing alerts, check repeat interval
         if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            long repeatInterval = ruleConfig.getRepeatInterval() != null
+            long repeatInterval = ruleConfig != null && ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
+            boolean hasResolvedAlert = hasResolvedAlert(cache.getAlertFingerprints().values());
             
             // Skip if within repeat interval
-            if (cache.getLastRepeatTime() > 0 
+            if (!hasResolvedAlert
+                && cache.getLastRepeatTime() > 0
                 && now - cache.getLastRepeatTime() < repeatInterval) {
                 return;
             }
-            cache.setLastRepeatTime(now);
+            if (!hasResolvedAlert) {
+                cache.setLastRepeatTime(now);
+            }
         }
         
         GroupAlert groupAlert = GroupAlert.builder()
@@ -391,6 +395,11 @@ public class AlarmGroupReduce implements DisposableBean {
         return alerts.stream()
                 .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) 
                 ? CommonConstants.ALERT_STATUS_FIRING : CommonConstants.ALERT_STATUS_RESOLVED;
+    }
+
+    private boolean hasResolvedAlert(Collection<SingleAlert> alerts) {
+        return alerts.stream()
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
     }
     
     @Data
