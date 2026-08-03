@@ -17,7 +17,11 @@ import { monitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
 import { MonitorGrafanaFields } from './monitor-grafana-fields';
 import { MonitorEditorMetadataFields } from './monitor-editor-metadata-fields';
-import { MonitorEditorHostParam, MonitorEditorParamSections } from './monitor-editor-param-sections';
+import {
+  MonitorEditorApplicationParams,
+  MonitorEditorDiscoveryParams,
+  MonitorEditorHostParam
+} from './monitor-editor-param-sections';
 import { MonitorEditorValidationSummary } from './monitor-editor-validation-summary';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -58,8 +62,9 @@ export function ReadyMonitorEditorForm({
             onChangeApplication={() => setAppPickerOpen(true)}
           />
           <MonitorEditorHostParam context={context} />
+          <MonitorEditorDiscoveryParams context={context} />
           <MonitorEditorNameField controller={controller} draft={draft} />
-          <MonitorEditorParamSections context={context} />
+          <MonitorEditorApplicationParams context={context} />
           <MonitorEditorCollectionFields controller={controller} draft={draft} />
         </div>
       </OperationalSection>

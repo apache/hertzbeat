@@ -154,6 +154,56 @@ describe('MonitorEditorFormView validation evidence', () => {
     expect(screen.queryByLabelText('Host')).not.toBeInTheDocument();
   });
 
+  it('keeps service-discovery configuration before the monitor name and its credentials out of application advanced fields', () => {
+    const discoveryUrl: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_url__',
+      type: 'text',
+      name: { 'en-US': 'Discovery URL' }
+    };
+    const discoveryAuth: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_authType__',
+      type: 'radio',
+      name: { 'en-US': 'Discovery authentication' },
+      options: [{ label: 'Basic Auth', value: 'Basic Auth' }]
+    };
+    const discoveryUsername: MonitorParamDefine = {
+      ...headers,
+      app: 'http_sd',
+      field: '__sd_username__',
+      type: 'text',
+      name: { 'en-US': 'Discovery username' },
+      depend: { __sd_authType__: ['Basic Auth'] },
+      hide: true
+    };
+    const applicationAdvanced: MonitorParamDefine = {
+      ...headers,
+      field: 'timeout',
+      type: 'number',
+      name: { 'en-US': 'Application timeout' },
+      hide: true
+    };
+    const defines = [discoveryUrl, discoveryAuth, discoveryUsername, headers, applicationAdvanced];
+    const controller = editorController([]);
+    controller.state.defines = defines;
+    controller.state.sourceKey = 'new:website:http_sd';
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', defines);
+    controller.state.draft.params = controller.state.draft.params.map(param =>
+      param.field === '__sd_authType__' ? { ...param, paramValue: 'Basic Auth' } : param
+    );
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const discoveryInput = screen.getByLabelText('Discovery URL');
+    const nameInput = screen.getByLabelText('monitor.name');
+    expect(discoveryInput.compareDocumentPosition(nameInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByLabelText('Discovery username')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Application timeout')).not.toBeInTheDocument();
+  });
+
   it('renders dependent parameters only while their controlling value matches', () => {
     const auth: MonitorParamDefine = { ...headers, field: 'auth', type: 'text', name: { 'en-US': 'Auth' } };
     const token: MonitorParamDefine = {

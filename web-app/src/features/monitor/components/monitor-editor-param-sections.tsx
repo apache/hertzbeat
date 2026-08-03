@@ -21,8 +21,24 @@ type ParamContext = {
   invalidMessage: string;
 };
 
-export function MonitorEditorParamSections({ context }: { context: ParamContext }) {
-  const groups = groupMonitorParamDefines(context.controller.state.defines);
+/**
+ * Discovery parameters describe how targets are located, so they belong next
+ * to the discovery selector even when the backend marks credentials as hidden.
+ * For discovery definitions, `hide` is presentation metadata from the generic
+ * definition contract; dependency rules still decide whether a field is shown.
+ */
+export function MonitorEditorDiscoveryParams({ context }: { context: ParamContext }) {
+  const scrape = context.draft.monitor.scrape ?? 'static';
+  if (scrape === 'static') return null;
+  const defines = context.controller.state.defines.filter(define => belongsToSource(define, scrape));
+  return <>{defines.map(define => renderParamField(define, context))}</>;
+}
+
+export function MonitorEditorApplicationParams({ context }: { context: ParamContext }) {
+  const applicationDefines = context.controller.state.defines.filter(define =>
+    belongsToSource(define, context.draft.monitor.app)
+  );
+  const groups = groupMonitorParamDefines(applicationDefines);
   return (
     <>
       {groups.basic.filter(define => define.field !== 'host').map(define => renderParamField(define, context))}
@@ -89,4 +105,8 @@ function AdvancedFields({ defines, context }: { defines: MonitorParamDefine[]; c
       ]}
     />
   );
+}
+
+function belongsToSource(define: MonitorParamDefine, source: string) {
+  return define.app.toLowerCase() === source.toLowerCase();
 }
