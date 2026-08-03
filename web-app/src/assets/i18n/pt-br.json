@@ -2603,6 +2603,7 @@
       "all": "Todos os estados",
       "available": "Disponível",
       "unavailable": "Indisponível",
+      "pending": "Aguardando o primeiro resultado",
       "paused": "Pausado",
       "unknown": "Desconhecido"
     },

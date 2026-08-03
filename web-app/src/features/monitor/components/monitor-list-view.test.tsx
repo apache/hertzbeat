@@ -168,6 +168,20 @@ describe('MonitorListView evidence states', () => {
     expect(row).not.toHaveTextContent('—');
   });
 
+  it('renders a scheduled monitor as pending until availability evidence arrives', () => {
+    renderView({
+      monitors: {
+        kind: 'ready',
+        records: [{ id: 7, name: 'new-monitor', app: 'website', instance: 'pending', status: 3 }],
+        total: 1
+      }
+    });
+
+    const row = screen.getByText('new-monitor').closest('tr');
+    expect(row).toHaveTextContent(i18n.t('monitor.status.pending'));
+    expect(within(row!).getByRole('button', { name: i18n.t('monitorActions.pause') })).toBeEnabled();
+  });
+
   it('keeps monitor labels visible in the primary row metadata', () => {
     renderView({
       monitors: {

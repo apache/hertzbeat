@@ -102,12 +102,14 @@ export function monitorStatusKey(status: number) {
   if (status === monitorStatusCodes.paused) return 'monitor.status.paused';
   if (status === monitorStatusCodes.available) return 'monitor.status.available';
   if (status === monitorStatusCodes.unavailable) return 'monitor.status.unavailable';
+  if (status === monitorStatusCodes.pending) return 'monitor.status.pending';
   return 'monitor.status.unknown';
 }
 
 export function monitorStatusColor(status: number) {
   if (status === monitorStatusCodes.available) return 'green';
   if (status === monitorStatusCodes.unavailable) return 'red';
+  if (status === monitorStatusCodes.pending) return 'gold';
   return 'default';
 }
 

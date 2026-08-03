@@ -2601,6 +2601,7 @@
       "all": "すべての状態",
       "available": "利用可能",
       "unavailable": "利用不可",
+      "pending": "最初の結果を待機中",
       "paused": "一時停止",
       "unknown": "不明"
     },

@@ -2589,6 +2589,7 @@
       "all": "全部狀態",
       "available": "可用",
       "unavailable": "不可用",
+      "pending": "等待首次結果",
       "paused": "已暫停",
       "unknown": "未知"
     },

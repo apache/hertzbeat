@@ -2452,6 +2452,7 @@
       "all": "全部状态",
       "available": "可用",
       "unavailable": "不可用",
+      "pending": "等待首次结果",
       "paused": "已暂停",
       "unknown": "未知"
     },

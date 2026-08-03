@@ -96,7 +96,12 @@ describe('monitor list model', () => {
     expect(monitorStatusKey(0)).toBe('monitor.status.paused');
     expect(monitorStatusKey(1)).toBe('monitor.status.available');
     expect(monitorStatusKey(2)).toBe('monitor.status.unavailable');
+    expect(monitorStatusKey(3)).toBe('monitor.status.pending');
     expect(monitorStatusKey(8)).toBe('monitor.status.unknown');
+  });
+
+  it('accepts the backend pending status as an explicit filter', () => {
+    expect(readMonitorQuery(new URLSearchParams({ status: '3' })).status).toBe('3');
   });
 
   it('keeps hide=true apps available for creation while excluding system and invalid apps', () => {

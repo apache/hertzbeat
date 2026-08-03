@@ -81,6 +81,7 @@ function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<Mon
           { value: monitorStatusFilters.all, label: t('monitor.status.all') },
           { value: monitorStatusFilters.available, label: t('monitor.status.available') },
           { value: monitorStatusFilters.unavailable, label: t('monitor.status.unavailable') },
+          { value: monitorStatusFilters.pending, label: t('monitor.status.pending') },
           { value: monitorStatusFilters.paused, label: t('monitor.status.paused') }
         ]}
       />

@@ -2462,6 +2462,7 @@
       "all": "All statuses",
       "available": "Available",
       "unavailable": "Unavailable",
+      "pending": "Waiting for first result",
       "paused": "Paused",
       "unknown": "Unknown"
     },
