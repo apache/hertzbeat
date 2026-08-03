@@ -46,6 +46,7 @@ import org.apache.hertzbeat.common.entity.job.SshTunnel;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JdbcUrlSafetyUtil;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.postgresql.util.PSQLException;
@@ -605,28 +606,33 @@ public class JdbcCommonCollect extends AbstractCollect {
             return url;
         }
         assert jdbcProtocol.getPlatform() != null;
-        return switch (jdbcProtocol.getPlatform()) {
+        // the database name is concatenated into the url below, so it must not carry url syntax
+        String database = JdbcUrlSafetyUtil.requireSafeDatabaseName(jdbcProtocol.getDatabase());
+        String constructedUrl = switch (jdbcProtocol.getPlatform()) {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
+                    + "/" + database
                     + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
             case "xugu" -> "jdbc:xugu://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "postgresql" -> "jdbc:postgresql://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "clickhouse" -> "jdbc:clickhouse://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "sqlserver" -> "jdbc:sqlserver://" + host + ":" + port
-                    + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
+                    + ";" + (database.isEmpty() ? "" : "DatabaseName=" + database)
                     + ";trustServerCertificate=true;";
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "dm" -> "jdbc:dm://" + host + ":" + port;
             case "db2" -> "jdbc:db2://" + host + ":" + port
-                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                    + "/" + database;
             case "testcontainers" -> "jdbc:tc:" + host + ":" + port
-                    + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
+                    + ":///" + database + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
+        // fail closed if any concatenated value still smuggled a driver property through
+        JdbcUrlSafetyUtil.requireSafeJdbcUrl(constructedUrl);
+        return constructedUrl;
     }
 
     private static final class ResultSetJdbcQueryRowSet implements JdbcQueryRowSet {

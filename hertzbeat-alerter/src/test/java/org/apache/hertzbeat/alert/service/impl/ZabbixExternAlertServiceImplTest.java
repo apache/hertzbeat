@@ -17,37 +17,42 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verify;
+
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
-import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * zabbix external alarm service impl
+ * Test case for {@link ZabbixExternAlertServiceImpl}.
  */
-@Slf4j
-@Service
-public class ZabbixExternAlertServiceImpl implements ExternAlertService {
+@ExtendWith(MockitoExtension.class)
+class ZabbixExternAlertServiceImplTest {
 
-    @Autowired
+    @Mock
     private AlarmCommonReduce alarmCommonReduce;
 
-    @Override
-    public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
-        if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
-            return;
-        }
-        alert.setId(null);
-        alarmCommonReduce.reduceAndSendAlarm(alert);
-    }
+    @InjectMocks
+    private ZabbixExternAlertServiceImpl externAlertService;
 
-    @Override
-    public String supportSource() {
-        return "zabbix";
+    @Test
+    void ignoresExternalPersistenceIdentity() {
+        SingleAlert incoming = SingleAlert.builder()
+                .id(123L)
+                .fingerprint("zabbix-alert")
+                .build();
+
+        externAlertService.addExternAlert(JsonUtil.toJson(incoming));
+
+        ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(alarmCommonReduce).reduceAndSendAlarm(alertCaptor.capture());
+        assertNull(alertCaptor.getValue().getId());
     }
 }
