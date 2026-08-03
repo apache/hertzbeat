@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,7 +35,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
@@ -120,6 +124,19 @@ class DbAlertStoreHandlerImplTest {
         verify(singleAlertDao).save(any(SingleAlert.class));
         verify(groupAlertDao).save(groupAlert);
         assertEquals(1L, groupAlert.getId());
+    }
+
+    @Test
+    void usesBoundedLocksForExternalKeys() {
+        int stripeCount = DbAlertStoreHandlerImpl.LOCK_STRIPE_COUNT;
+        Object firstLock = DbAlertStoreHandlerImpl.lockFor("same-key");
+        assertSame(firstLock, DbAlertStoreHandlerImpl.lockFor("same-key"));
+
+        Set<Object> locks = new HashSet<>();
+        for (int index = 0; index < stripeCount * 4; index++) {
+            locks.add(DbAlertStoreHandlerImpl.lockFor("external-key-" + index));
+        }
+        assertTrue(locks.size() <= stripeCount);
     }
 
 }
