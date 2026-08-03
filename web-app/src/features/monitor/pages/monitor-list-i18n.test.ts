@@ -74,6 +74,7 @@ describe('Monitor list locale coverage', () => {
       expect(locale.monitor.permission.title).toBeTruthy();
       expect(locale.monitor.permission.description).toBeTruthy();
       expect(Object.keys(locale.monitor.categories).sort()).toEqual([
+        'auto',
         'bigdata',
         'cache',
         'cn',

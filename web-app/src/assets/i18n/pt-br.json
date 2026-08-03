@@ -2521,6 +2521,7 @@
       "title": "Escolher tipo de monitor",
       "description": "Selecione o sistema ou serviço que o HertzBeat deve monitorar.",
       "search": "Pesquisar tipos de monitor",
+      "change": "Alterar tipo",
       "loading": "Carregando tipos de monitor…",
       "empty": "Nenhum tipo de monitor corresponde à pesquisa."
     },
@@ -2655,6 +2656,7 @@
       "endpoint": "Endpoint",
       "detect": "Testar conexão",
       "validation": "Preencha os campos obrigatórios.",
+      "invalidField": "Revise este campo.",
       "detectSuccess": "Teste de conexão aprovado.",
       "detectFailed": "Falha no teste de conexão.",
       "saveSuccess": "Monitor salvo.",

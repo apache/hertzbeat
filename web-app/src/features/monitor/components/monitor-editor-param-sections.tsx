@@ -8,6 +8,7 @@ import { groupMonitorParamDefines, isMonitorParamVisible } from '../model/monito
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 import type { MonitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
+import { MonitorEditorFieldLabel } from './monitor-editor-field-label';
 import { MonitorParamField } from './monitor-param-field';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -17,16 +18,27 @@ type ParamContext = {
   validationIssues: string[];
   language: string;
   labels: MonitorEditorFieldLabels;
+  invalidMessage: string;
 };
 
 export function MonitorEditorParamSections({ context }: { context: ParamContext }) {
   const groups = groupMonitorParamDefines(context.controller.state.defines);
   return (
     <>
-      {groups.basic.map(define => renderParamField(define, context))}
-      <AdvancedFields defines={groups.advanced} context={context} />
+      {groups.basic.filter(define => define.field !== 'host').map(define => renderParamField(define, context))}
+      <AdvancedFields defines={groups.advanced.filter(define => define.field !== 'host')} context={context} />
     </>
   );
+}
+
+/**
+ * Static monitors keep their primary endpoint before the monitor name, matching
+ * the established authoring order. Discovery modes own their endpoint fields.
+ */
+export function MonitorEditorHostParam({ context }: { context: ParamContext }) {
+  if ((context.draft.monitor.scrape ?? 'static') !== 'static') return null;
+  const host = context.controller.state.defines.find(define => define.field === 'host');
+  return host ? renderParamField(host, context) : null;
 }
 
 function renderParamField(define: MonitorParamDefine, context: ParamContext) {
@@ -34,6 +46,7 @@ function renderParamField(define: MonitorParamDefine, context: ParamContext) {
   const param = context.draft.params.find(item => item.field === define.field);
   if (!param) return null;
   const invalid = context.validationIssues.includes(`param:${define.field}`);
+  const label = define.name[context.language] ?? define.name['en-US'] ?? define.field;
   return (
     <div
       key={`${context.controller.state.sourceKey}:${define.field}`}
@@ -43,13 +56,20 @@ function renderParamField(define: MonitorParamDefine, context: ParamContext) {
       <MonitorParamField
         define={define}
         value={param.paramValue}
-        label={define.name[context.language] ?? define.name['en-US'] ?? define.field}
+        label={<MonitorEditorFieldLabel required={define.required}>{label}</MonitorEditorFieldLabel>}
+        ariaLabel={label}
+        invalid={invalid}
         onChange={value => context.controller.actions.updateParam(define.field, value)}
         onValidityChange={valid => context.controller.actions.setParamValid(define.field, valid)}
         mapLabels={context.labels.map}
         metricsLabels={context.labels.metrics}
         disabled={context.controller.state.busy}
       />
+      {invalid ? (
+        <span className={styles.fieldMessage} role="alert">
+          {context.invalidMessage}
+        </span>
+      ) : null}
     </div>
   );
 }

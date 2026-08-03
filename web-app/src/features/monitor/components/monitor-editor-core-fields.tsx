@@ -1,53 +1,41 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Input, InputNumber, Select } from 'antd';
+import { Button, Input, InputNumber, Select } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorCollector } from '../model/monitor-contract';
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 import { monitorIntervalBounds } from '../model/monitor-editor-validation';
-import { monitorAppOptions } from '../model/monitor-model';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
+import { MonitorEditorFieldLabel } from './monitor-editor-field-label';
+import styles from './monitor-editor-form-view.module.css';
 
 type CoreFieldProps = {
   mode: 'new' | 'edit';
   controller: MonitorEditorFormController;
   draft: MonitorEditorDraft;
+  onChangeApplication: () => void;
 };
 
-export function MonitorEditorCoreFields(props: CoreFieldProps) {
-  return (
-    <>
-      <MonitorSourceFields {...props} />
-      <MonitorIdentityFields {...props} />
-      <ScheduleFields
-        draft={props.draft}
-        issues={props.controller.state.validationIssues}
-        disabled={props.controller.state.busy}
-        update={props.controller.actions.updateMonitor}
-      />
-    </>
-  );
-}
-
-function MonitorSourceFields({ mode, controller, draft }: CoreFieldProps) {
+export function MonitorEditorSourceFields({ mode, controller, draft, onChangeApplication }: CoreFieldProps) {
   const { t } = useTranslation();
+  const application = controller.state.apps.find(item => item.value === draft.monitor.app)?.label ?? draft.monitor.app;
   return (
     <>
+      <div className={styles.applicationField}>
+        <MonitorEditorFieldLabel required>{t('monitor.application')}</MonitorEditorFieldLabel>
+        <div className={styles.applicationValue}>
+          <strong>{application}</strong>
+          {mode === 'new' ? (
+            <Button type="link" disabled={controller.state.busy} onClick={onChangeApplication}>
+              {t('monitor.appPicker.change')}
+            </Button>
+          ) : null}
+        </div>
+      </div>
       <label>
-        {t('monitor.application')}
-        <Select
-          disabled={mode === 'edit' || controller.state.busy}
-          showSearch
-          optionFilterProp="label"
-          value={draft.monitor.app || null}
-          options={monitorAppOptions(controller.state.apps)}
-          onChange={app => controller.actions.changeSource({ app, scrape: 'static' })}
-        />
-      </label>
-      <label>
-        {t('monitor.editor.scrape')}
+        <MonitorEditorFieldLabel required>{t('monitor.editor.scrape')}</MonitorEditorFieldLabel>
         <Select
           disabled={controller.state.busy}
           value={draft.monitor.scrape ?? 'static'}
@@ -62,19 +50,31 @@ function MonitorSourceFields({ mode, controller, draft }: CoreFieldProps) {
   );
 }
 
-function MonitorIdentityFields({ controller, draft }: CoreFieldProps) {
+export function MonitorEditorNameField({ controller, draft }: Pick<CoreFieldProps, 'controller' | 'draft'>) {
+  const { t } = useTranslation();
+  return (
+    <label>
+      <MonitorEditorFieldLabel required>{t('monitor.name')}</MonitorEditorFieldLabel>
+      <Input
+        aria-label={t('monitor.name')}
+        disabled={controller.state.busy}
+        status={controller.state.validationIssues.includes('name') ? 'error' : ''}
+        value={draft.monitor.name}
+        onChange={event => controller.actions.updateMonitor({ name: event.target.value })}
+      />
+      {controller.state.validationIssues.includes('name') ? (
+        <span className={styles.fieldMessage} role="alert">
+          {t('monitor.editor.invalidField')}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
+export function MonitorEditorCollectionFields({ controller, draft }: Pick<CoreFieldProps, 'controller' | 'draft'>) {
   const { t } = useTranslation();
   return (
     <>
-      <label>
-        {t('monitor.name')}
-        <Input
-          disabled={controller.state.busy}
-          status={controller.state.validationIssues.includes('name') ? 'error' : ''}
-          value={draft.monitor.name}
-          onChange={event => controller.actions.updateMonitor({ name: event.target.value })}
-        />
-      </label>
       <label>
         {t('monitor.editor.collector')}
         <Select
@@ -84,6 +84,12 @@ function MonitorIdentityFields({ controller, draft }: CoreFieldProps) {
           onChange={controller.actions.updateCollector}
         />
       </label>
+      <ScheduleFields
+        draft={draft}
+        issues={controller.state.validationIssues}
+        disabled={controller.state.busy}
+        update={controller.actions.updateMonitor}
+      />
     </>
   );
 }
@@ -114,24 +120,36 @@ function ScheduleFields({
       </label>
       {scheduleType === 'cron' ? (
         <label>
-          {t('monitor.editor.cronExpression')}
+          <MonitorEditorFieldLabel required>{t('monitor.editor.cronExpression')}</MonitorEditorFieldLabel>
           <Input
+            aria-label={t('monitor.editor.cronExpression')}
             disabled={disabled}
             status={issues.includes('cronExpression') ? 'error' : ''}
             value={draft.monitor.cronExpression ?? ''}
             onChange={event => update({ cronExpression: event.target.value })}
           />
+          {issues.includes('cronExpression') ? (
+            <span className={styles.fieldMessage} role="alert">
+              {t('monitor.editor.invalidField')}
+            </span>
+          ) : null}
         </label>
       ) : (
         <label>
-          {t('monitor.editor.interval')}
+          <MonitorEditorFieldLabel required>{t('monitor.editor.interval')}</MonitorEditorFieldLabel>
           <InputNumber
+            aria-label={t('monitor.editor.interval')}
             disabled={disabled}
             status={issues.includes('intervals') ? 'error' : ''}
             {...monitorIntervalBounds(draft.monitor.app)}
             value={draft.monitor.intervals ?? 60}
             onChange={intervals => update({ intervals })}
           />
+          {issues.includes('intervals') ? (
+            <span className={styles.fieldMessage} role="alert">
+              {t('monitor.editor.invalidField')}
+            </span>
+          ) : null}
         </label>
       )}
     </>

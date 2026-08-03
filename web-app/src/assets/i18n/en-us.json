@@ -2380,6 +2380,7 @@
       "title": "Choose a monitor type",
       "description": "Select the system or service you want HertzBeat to monitor.",
       "search": "Search monitor types",
+      "change": "Change type",
       "loading": "Loading monitor types…",
       "empty": "No monitor types match your search."
     },
@@ -2519,6 +2520,7 @@
       "endpoint": "Endpoint",
       "detect": "Test connection",
       "validation": "Complete the required monitor fields.",
+      "invalidField": "Review this field.",
       "detectSuccess": "Connection test passed.",
       "detectFailed": "Connection test failed.",
       "saveSuccess": "Monitor saved.",

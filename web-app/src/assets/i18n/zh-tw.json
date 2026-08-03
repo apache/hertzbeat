@@ -2507,6 +2507,7 @@
       "title": "選擇監控類型",
       "description": "選擇要由 HertzBeat 監控的系統或服務。",
       "search": "搜尋監控類型",
+      "change": "更換類型",
       "loading": "正在載入監控類型…",
       "empty": "沒有符合的監控類型。"
     },
@@ -2641,6 +2642,7 @@
       "endpoint": "端點",
       "detect": "檢測連線",
       "validation": "請完成監控必填欄位。",
+      "invalidField": "請檢查此欄位。",
       "detectSuccess": "連線檢測通過。",
       "detectFailed": "連線檢測失敗。",
       "saveSuccess": "監控已儲存。",

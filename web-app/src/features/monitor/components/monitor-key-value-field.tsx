@@ -2,7 +2,7 @@
 
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { AutoComplete, Button, Input, Space, Typography } from 'antd';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
@@ -21,7 +21,7 @@ export type RowEditorLabels = {
 
 type MapRow = { id: number; key: string; value: string };
 type KeyValueFieldProps = {
-  label: string;
+  label: ReactNode;
   value: MonitorParamFormValue;
   onChange: (value: MonitorParamFormValue) => void;
   onValidityChange?: (valid: boolean) => void;

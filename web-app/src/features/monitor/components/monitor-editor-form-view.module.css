@@ -17,8 +17,10 @@
 
 .form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 760px;
 }
 
 .form > label {
@@ -39,7 +41,34 @@
 }
 
 .wide {
-  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.applicationField {
+  display: grid;
+  gap: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+
+.applicationValue {
+  display: flex;
+  min-height: var(--ant-control-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 11px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container-disabled);
+}
+
+.applicationValue strong {
+  overflow: hidden;
+  color: var(--ant-color-text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .metadataDisclosure {
@@ -69,12 +98,19 @@
   padding-left: 8px;
 }
 
-@media (max-width: 760px) {
-  .form {
-    grid-template-columns: 1fr;
-  }
+.requiredMarker {
+  margin-left: 4px;
+  color: var(--ant-color-error);
+}
 
-  .wide {
-    grid-column: auto;
+.fieldMessage {
+  color: var(--ant-color-error);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .applicationValue {
+    align-items: flex-start;
   }
 }

@@ -2519,6 +2519,7 @@
       "title": "監視タイプを選択",
       "description": "HertzBeat で監視するシステムまたはサービスを選択します。",
       "search": "監視タイプを検索",
+      "change": "タイプを変更",
       "loading": "監視タイプを読み込んでいます…",
       "empty": "検索条件に一致する監視タイプがありません。"
     },
@@ -2653,6 +2654,7 @@
       "endpoint": "エンドポイント",
       "detect": "接続テスト",
       "validation": "必須項目を入力してください。",
+      "invalidField": "このフィールドを確認してください。",
       "detectSuccess": "接続テストに成功しました。",
       "detectFailed": "接続テストに失敗しました。",
       "saveSuccess": "監視を保存しました。",

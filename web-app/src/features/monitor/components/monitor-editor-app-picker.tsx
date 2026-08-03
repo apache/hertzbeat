@@ -13,6 +13,7 @@ import { MonitorAppPickerDialog } from './monitor-app-picker-dialog';
 
 type MonitorEditorAppPickerProps = {
   apps: MonitorApp[];
+  open?: boolean;
   onCancel: () => void;
   onSelect: (app: string) => void;
 };
@@ -21,13 +22,13 @@ type MonitorEditorAppPickerProps = {
  * Keeps every untyped monitor entry point on the same searchable catalog.
  * The route remains open behind the dialog so Cancel can honor its returnTo.
  */
-export function MonitorEditorAppPicker({ apps, onCancel, onSelect }: MonitorEditorAppPickerProps) {
+export function MonitorEditorAppPicker({ apps, open = true, onCancel, onSelect }: MonitorEditorAppPickerProps) {
   const [search, setSearch] = useState('');
   const evidence = useMemo(() => ({ kind: 'ready' as const, groups: buildMonitorAppPickerGroups(apps) }), [apps]);
 
   return (
     <MonitorAppPickerDialog
-      open
+      open={open}
       search={search}
       evidence={evidence}
       onSearch={setSearch}

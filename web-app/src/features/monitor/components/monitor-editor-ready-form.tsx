@@ -7,12 +7,17 @@ import { useTranslation } from 'react-i18next';
 import { OperationalFormActions, OperationalSection } from '@/shared/operational-page';
 
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
-import { MonitorEditorCoreFields } from './monitor-editor-core-fields';
+import { MonitorEditorAppPicker } from './monitor-editor-app-picker';
+import {
+  MonitorEditorCollectionFields,
+  MonitorEditorNameField,
+  MonitorEditorSourceFields
+} from './monitor-editor-core-fields';
 import { monitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
 import { MonitorGrafanaFields } from './monitor-grafana-fields';
 import { MonitorEditorMetadataFields } from './monitor-editor-metadata-fields';
-import { MonitorEditorParamSections } from './monitor-editor-param-sections';
+import { MonitorEditorHostParam, MonitorEditorParamSections } from './monitor-editor-param-sections';
 import { MonitorEditorValidationSummary } from './monitor-editor-validation-summary';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -27,13 +32,15 @@ export function ReadyMonitorEditorForm({
 }) {
   const { t, i18n } = useTranslation();
   const [metadataVisible, setMetadataVisible] = useState(() => hasMonitorMetadata(draft));
+  const [appPickerOpen, setAppPickerOpen] = useState(false);
   const labels = monitorEditorFieldLabels(t);
   const context = {
     draft,
     controller,
     validationIssues: controller.state.validationIssues,
     language: i18n.language,
-    labels
+    labels,
+    invalidMessage: t('monitor.editor.invalidField')
   };
   return (
     <>
@@ -44,8 +51,16 @@ export function ReadyMonitorEditorForm({
       />
       <OperationalSection title={t('monitor.editor.connection')}>
         <div className={styles.form}>
-          <MonitorEditorCoreFields mode={mode} controller={controller} draft={draft} />
+          <MonitorEditorSourceFields
+            mode={mode}
+            controller={controller}
+            draft={draft}
+            onChangeApplication={() => setAppPickerOpen(true)}
+          />
+          <MonitorEditorHostParam context={context} />
+          <MonitorEditorNameField controller={controller} draft={draft} />
           <MonitorEditorParamSections context={context} />
+          <MonitorEditorCollectionFields controller={controller} draft={draft} />
         </div>
       </OperationalSection>
       <div className={styles.metadataDisclosure}>
@@ -71,6 +86,17 @@ export function ReadyMonitorEditorForm({
         </OperationalSection>
       ) : null}
       <MonitorEditorActions controller={controller} />
+      {mode === 'new' ? (
+        <MonitorEditorAppPicker
+          apps={controller.state.apps}
+          open={appPickerOpen}
+          onCancel={() => setAppPickerOpen(false)}
+          onSelect={app => {
+            setAppPickerOpen(false);
+            controller.actions.changeSource({ app, scrape: 'static' });
+          }}
+        />
+      ) : null}
     </>
   );
 }

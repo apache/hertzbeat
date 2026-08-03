@@ -104,11 +104,86 @@ describe('MonitorEditorFormView validation evidence', () => {
     expect(screen.getByRole('button', { name: 'monitor.editor.hideMetadata' })).toBeInTheDocument();
   });
 
+  it('reopens the catalog when a new monitor changes application type', async () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    expect(screen.queryByRole('combobox', { name: 'monitor.application' })).not.toBeInTheDocument();
+    expect(screen.getByText('Website')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'monitor.appPicker.change' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('monitor.appPicker.title');
+    fireEvent.click(screen.getByRole('button', { name: 'MySQL' }));
+    expect(controller.actions.changeSource).toHaveBeenCalledWith({ app: 'mysql', scrape: 'static' });
+  });
+
+  it('keeps the application type immutable while editing an existing monitor', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="edit" controller={controller} />);
+
+    expect(screen.getByText('Website')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'monitor.appPicker.change' })).not.toBeInTheDocument();
+  });
+
+  it('keeps dynamic parameters before collection and schedule controls', () => {
+    const controller = editorController([]);
+
+    render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const parameter = screen.getByRole('group', { name: 'Headers' });
+    const collector = screen.getByText('monitor.editor.collector');
+    const schedule = screen.getByText('monitor.editor.schedule');
+    expect(parameter.compareDocumentPosition(collector) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(collector.compareDocumentPosition(schedule) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('places a static host before the name and leaves discovery endpoints to their own definition', () => {
+    const host: MonitorParamDefine = { ...headers, field: 'host', type: 'host', name: { 'en-US': 'Host' } };
+    const controller = editorController([]);
+    controller.state.defines = [host, headers];
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'static', [host, headers]);
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+
+    const hostInput = screen.getByLabelText('Host');
+    const nameInput = screen.getByLabelText('monitor.name');
+    expect(hostInput.compareDocumentPosition(nameInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', [host, headers]);
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.queryByLabelText('Host')).not.toBeInTheDocument();
+  });
+
+  it('renders dependent parameters only while their controlling value matches', () => {
+    const auth: MonitorParamDefine = { ...headers, field: 'auth', type: 'text', name: { 'en-US': 'Auth' } };
+    const token: MonitorParamDefine = {
+      ...headers,
+      field: 'token',
+      type: 'password',
+      name: { 'en-US': 'Token' },
+      depend: { auth: ['basic'] }
+    };
+    const controller = editorController([]);
+    controller.state.defines = [auth, token];
+    controller.state.draft = createMonitorEditorDraft(undefined, 'website', 'static', [auth, token]);
+    const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
+
+    controller.state.draft.params = controller.state.draft.params.map(param =>
+      param.field === 'auth' ? { ...param, paramValue: 'basic' } : param
+    );
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByLabelText('Token')).toHaveAttribute('type', 'password');
+  });
+
   it('shows concrete field errors and removes them when controller issues converge', () => {
     const controller = editorController(['name', 'intervals', 'param:headers']);
     const rendered = render(<MonitorEditorFormView mode="new" controller={controller} />);
     expect(screen.getByText('monitor.editor.validation')).toBeInTheDocument();
-    expect(within(screen.getByRole('alert')).getByText('Headers')).toBeInTheDocument();
+    const summary = screen.getByText('monitor.editor.validation').closest<HTMLElement>('[role="alert"]');
+    expect(summary).not.toBeNull();
+    expect(within(summary!).getByText('Headers')).toBeInTheDocument();
+    expect(screen.getAllByText('monitor.editor.invalidField')).toHaveLength(3);
     expect(screen.getByLabelText('monitor.name')).toHaveClass('ant-input-status-error');
     expect(screen.getByRole('spinbutton')).toHaveClass('ant-input-number-input');
     expect(rendered.container.querySelector('[aria-invalid="true"]')).not.toBeNull();
@@ -239,7 +314,10 @@ function editorController(validationIssues: string[]) {
       evidence: { kind: 'ready' as const },
       draft,
       defines: [headers],
-      apps: [{ category: 'service', value: 'website', label: 'Website' }],
+      apps: [
+        { category: 'service', value: 'website', label: 'Website' },
+        { category: 'db', value: 'mysql', label: 'MySQL' }
+      ],
       collectors: [],
       busy: false,
       command: 'idle' as 'idle' | 'detecting' | 'saving',

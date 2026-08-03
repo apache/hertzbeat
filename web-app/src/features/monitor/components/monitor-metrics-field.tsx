@@ -2,7 +2,7 @@
 
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Space, Typography } from 'antd';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import type { MonitorMetricField, MonitorParamFormValue } from '../model/monitor-editor-model';
 import type { RowEditorLabels } from './monitor-key-value-field';
@@ -16,7 +16,7 @@ export type MetricsEditorLabels = RowEditorLabels & {
 };
 type MetricRow = Omit<MonitorMetricField, 'type'> & { id: number; type: 0 | 1 | null };
 type MetricsFieldProps = {
-  label: string;
+  label: ReactNode;
   value: MonitorParamFormValue;
   onChange: (value: MonitorParamFormValue) => void;
   onValidityChange?: (valid: boolean) => void;
