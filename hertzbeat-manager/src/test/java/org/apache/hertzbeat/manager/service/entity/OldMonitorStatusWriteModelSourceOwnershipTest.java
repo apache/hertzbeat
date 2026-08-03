@@ -71,7 +71,7 @@ class OldMonitorStatusWriteModelSourceOwnershipTest {
         assertTrue(normalizedSource.contains(
                 "oldMonitorStatusWriteModelService.findAndMarkManagedMonitorsPaused(allMonitorIds)"));
         assertTrue(normalizedSource.contains(
-                "oldMonitorStatusWriteModelService.findAndMarkPausedMonitorsUp(allMonitorIds)"));
+                "oldMonitorStatusWriteModelService.findAndMarkPausedMonitorsPending(allMonitorIds)"));
         assertTrue(normalizedSource.contains(
                 "oldMonitorStatusWriteModelService.saveMonitorStatusChanges(managedMonitors)"));
         assertTrue(normalizedSource.contains(
@@ -79,7 +79,7 @@ class OldMonitorStatusWriteModelSourceOwnershipTest {
 
         String writeModelSource = Files.readString(OLD_MONITOR_STATUS_WRITE_MODEL_SERVICE);
         assertTrue(writeModelSource.contains("public List<Monitor> findAndMarkManagedMonitorsPaused(Set<Long>"));
-        assertTrue(writeModelSource.contains("public List<Monitor> findAndMarkPausedMonitorsUp(Set<Long>"));
+        assertTrue(writeModelSource.contains("public List<Monitor> findAndMarkPausedMonitorsPending(Set<Long>"));
         assertTrue(writeModelSource.contains("public void saveMonitorStatusChanges(List<Monitor> monitors)"));
         assertTrue(writeModelSource.contains("monitorDao.findMonitorsByIdIn(monitorIds)"));
         assertTrue(writeModelSource.contains("monitorDao.saveAll(monitors)"));

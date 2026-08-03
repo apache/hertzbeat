@@ -159,10 +159,13 @@ public class DataStorageDispatch {
             long id = metricsData.getId();
             CollectRep.Code code = metricsData.getCode();
             try {
-                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status = ?";
-                int status = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_UP_CODE : CommonConstants.MONITOR_DOWN_CODE;
-                int preStatus = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_DOWN_CODE : CommonConstants.MONITOR_UP_CODE;
-                int matchedRows = jdbcTemplate.update(sql, status, id, preStatus);
+                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status <> ? AND status <> ?";
+                byte status = code == CollectRep.Code.SUCCESS
+                        ? CommonConstants.MONITOR_UP_CODE
+                        : CommonConstants.MONITOR_DOWN_CODE;
+                // Paused monitors must remain paused. Every other non-current
+                // state, including Pending, converges on the first priority-0 result.
+                int matchedRows = jdbcTemplate.update(sql, status, id, CommonConstants.MONITOR_PAUSED_CODE, status);
                 if (matchedRows > 0) {
                     entityManager.getEntityManagerFactory().getCache().evict(Monitor.class, id);
                 }

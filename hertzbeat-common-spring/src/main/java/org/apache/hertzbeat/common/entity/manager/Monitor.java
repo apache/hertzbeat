@@ -98,7 +98,7 @@ public class Monitor {
     @Size(max = 100)
     private String cronExpression;
 
-    @Schema(title = "Task status 0: Paused, 1: Up, 2: Down", accessMode = READ_WRITE)
+    @Schema(title = "Task status 0: Paused, 1: Up, 2: Down, 3: Pending", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;

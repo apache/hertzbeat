@@ -53,14 +53,14 @@ public class OldMonitorStatusWriteModelService {
                 .collect(Collectors.toList());
     }
 
-    public List<Monitor> findAndMarkPausedMonitorsUp(Set<Long> monitorIds) {
+    public List<Monitor> findAndMarkPausedMonitorsPending(Set<Long> monitorIds) {
         if (CollectionUtils.isEmpty(monitorIds)) {
             return List.of();
         }
         return monitorDao.findMonitorsByIdIn(monitorIds)
                 .stream()
                 .filter(monitor -> monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
+                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PENDING_CODE))
                 .collect(Collectors.toList());
     }
 

@@ -221,14 +221,12 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
+        // The cyclic job owns the first availability result. Persist a distinct
+        // pending state instead of blocking this write on a duplicate probe or
+        // presenting an unobserved target as healthy/down.
+        monitor.setStatus(CommonConstants.MONITOR_PENDING_CODE);
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null)
                 : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception e) {
-            log.warn("Monitor detection failed during addMonitor for monitor [{}]: {}",
-                    monitor.getName(), e.getMessage());
-        }
 
         try {
             oldMonitorCollectorBindWriteModelService.saveCollectorBind(monitorId, collector);
@@ -626,7 +624,7 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
         List<Monitor> unManagedMonitors = oldMonitorStatusWriteModelService
-                .findAndMarkPausedMonitorsUp(allMonitorIds);
+                .findAndMarkPausedMonitorsPending(allMonitorIds);
         if (unManagedMonitors.isEmpty()) {
             return;
         }
@@ -674,12 +672,6 @@ public class MonitorServiceImpl implements MonitorService {
             long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
             monitor.setJobId(newJobId);
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception e) {
-                log.warn("Monitor detection failed during reapplyMonitors for monitor [{}]: {}",
-                        monitor.getName(), e.getMessage());
-            }
         }
         oldMonitorStatusWriteModelService.saveMonitorStatusChanges(unManagedMonitors);
     }
@@ -696,6 +688,9 @@ public class MonitorServiceImpl implements MonitorService {
         for (AppCount item : appCounts) {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
+            // Preserve the total even for transitional or future statuses that
+            // do not belong to the three legacy availability counters.
+            appCount.setSize(appCount.getSize() + item.getSize());
             switch (item.getStatus()) {
                 case CommonConstants.MONITOR_UP_CODE ->
                     appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
@@ -711,7 +706,6 @@ public class MonitorServiceImpl implements MonitorService {
         // Traverse the map obtained by statistics and convert it into a List<App Count>
         // result set
         return appCountMap.values().stream().map(item -> {
-            item.setSize(item.getAvailableSize() + item.getUnManageSize() + item.getUnAvailableSize());
             try {
                 Job job = appService.getAppDefine(item.getApp());
                 item.setCategory(job.getCategory());

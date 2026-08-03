@@ -69,17 +69,17 @@ class OldMonitorStatusWriteModelServiceTest {
     }
 
     @Test
-    void findAndMarkPausedMonitorsUpFiltersActiveRows() {
+    void findAndMarkPausedMonitorsPendingFiltersActiveRows() {
         Set<Long> monitorIds = Set.of(1L, 2L, 3L);
         Monitor upMonitor = Monitor.builder().id(1L).status(CommonConstants.MONITOR_UP_CODE).build();
         Monitor pausedMonitor = Monitor.builder().id(2L).status(CommonConstants.MONITOR_PAUSED_CODE).build();
         Monitor downMonitor = Monitor.builder().id(3L).status(CommonConstants.MONITOR_DOWN_CODE).build();
         when(monitorDao.findMonitorsByIdIn(monitorIds)).thenReturn(List.of(upMonitor, pausedMonitor, downMonitor));
 
-        List<Monitor> monitors = oldMonitorStatusWriteModelService.findAndMarkPausedMonitorsUp(monitorIds);
+        List<Monitor> monitors = oldMonitorStatusWriteModelService.findAndMarkPausedMonitorsPending(monitorIds);
 
         assertEquals(List.of(pausedMonitor), monitors);
-        assertEquals(CommonConstants.MONITOR_UP_CODE, pausedMonitor.getStatus());
+        assertEquals(CommonConstants.MONITOR_PENDING_CODE, pausedMonitor.getStatus());
         assertEquals(CommonConstants.MONITOR_UP_CODE, upMonitor.getStatus());
         assertEquals(CommonConstants.MONITOR_DOWN_CODE, downMonitor.getStatus());
     }
