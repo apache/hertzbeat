@@ -15,29 +15,68 @@
  * limitations under the License.
  */
 
-.form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+.formRail {
+  --monitor-editor-label-width: 148px;
+  --monitor-editor-control-width: 360px;
+  --monitor-editor-column-gap: 24px;
+  --monitor-editor-control-offset: calc(var(--monitor-editor-label-width) + var(--monitor-editor-column-gap));
+  --monitor-editor-row-width: calc(var(--monitor-editor-control-offset) + var(--monitor-editor-control-width));
   width: 100%;
-  max-width: 760px;
+  max-width: 720px;
   margin-inline: auto;
 }
 
-.form > label {
+.form {
   display: grid;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: var(--monitor-editor-label-width) minmax(0, var(--monitor-editor-control-width));
+  column-gap: var(--monitor-editor-column-gap);
+  row-gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   align-content: start;
+  align-items: start;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
 
-.form > label :global(.ant-input-number),
-.form > label :global(.ant-select) {
+.formRow > :not(.fieldLabel):not([data-monitor-field-label]) {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.formRow > [data-monitor-field-label] {
+  grid-column: 1;
+  width: 100%;
+  padding: 0;
+}
+
+.fieldLabel {
+  display: flex;
+  grid-column: 1;
+  min-height: var(--ant-control-height);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  color: var(--ant-color-text-secondary);
+  line-height: 1.45;
+  text-align: right;
+}
+
+.formRow :global(.ant-input-number),
+.formRow :global(.ant-select) {
   width: 100%;
 }
 
-.form > label :global(.ant-switch) {
+.formRow :global(.ant-switch) {
   justify-self: start;
 }
 
@@ -46,8 +85,6 @@
 }
 
 .applicationField {
-  display: grid;
-  gap: 7px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
@@ -75,9 +112,7 @@
 .metadataDisclosure {
   display: flex;
   justify-content: flex-start;
-  width: 100%;
-  max-width: 760px;
-  margin-inline: auto;
+  padding-left: var(--monitor-editor-control-offset);
 }
 
 .metadataDisclosure :global(.ant-btn) {
@@ -89,43 +124,79 @@
   display: grid;
 }
 
-.field > label,
-.fieldError > label {
-  display: grid;
-  gap: 7px;
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
-}
-
 .fieldError {
-  border-left: 2px solid var(--ant-color-error);
-  padding-left: 8px;
+  position: relative;
 }
 
 .requiredMarker {
-  margin-left: 4px;
   color: var(--ant-color-error);
 }
 
 .fieldMessage {
+  margin-left: var(--monitor-editor-control-offset);
   color: var(--ant-color-error);
   font-size: 12px;
   line-height: 1.4;
 }
 
+.formRow > .fieldMessage {
+  margin-left: 0;
+}
+
+.compactField :global(.ant-input-number) {
+  width: 128px;
+}
+
 .formActions {
-  width: 100%;
-  max-width: 760px;
-  margin-inline: auto;
+  min-width: 0;
+}
+
+.formActions > :global([data-hb-operational-form-actions]) {
+  width: var(--monitor-editor-row-width);
+  justify-content: center;
+  padding-left: var(--monitor-editor-control-offset);
 }
 
 .commandFeedback {
-  width: 100%;
-  max-width: 760px;
   margin: 16px auto 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 700px) {
+  .formRail {
+    max-width: none;
+  }
+
+  .formRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .formRow > :not(.fieldLabel):not([data-monitor-field-label]),
+  .formRow > [data-monitor-field-label],
+  .fieldLabel {
+    grid-column: 1;
+  }
+
+  .fieldLabel {
+    min-height: auto;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .fieldMessage {
+    margin-left: 0;
+  }
+
+  .metadataDisclosure {
+    padding-left: 0;
+  }
+
+  .formActions > :global([data-hb-operational-form-actions]) {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 0;
+  }
+
   .applicationValue {
     align-items: flex-start;
   }

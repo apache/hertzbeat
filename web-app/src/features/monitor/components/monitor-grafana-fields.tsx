@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
+import { MonitorEditorFieldLabel } from './monitor-editor-field-label';
 import styles from './monitor-editor-form-view.module.css';
 
 type MonitorGrafanaFieldsProps = {
@@ -31,8 +32,8 @@ export function MonitorGrafanaFields({ draft, disabled, update }: MonitorGrafana
 
   return (
     <>
-      <label>
-        {t('monitor.editor.grafanaEnabled')}
+      <label className={styles.formRow}>
+        <MonitorEditorFieldLabel>{t('monitor.editor.grafanaEnabled')}</MonitorEditorFieldLabel>
         <Switch
           checked={draft.grafanaDashboard.enabled}
           disabled={disabled}
@@ -40,8 +41,8 @@ export function MonitorGrafanaFields({ draft, disabled, update }: MonitorGrafana
         />
       </label>
       {draft.grafanaDashboard.enabled && (
-        <label className={styles.wide}>
-          {t('monitor.editor.grafanaTemplate')}
+        <label className={`${styles.formRow} ${styles.wide}`}>
+          <MonitorEditorFieldLabel>{t('monitor.editor.grafanaTemplate')}</MonitorEditorFieldLabel>
           <Upload
             accept=".json,application/json"
             disabled={disabled}

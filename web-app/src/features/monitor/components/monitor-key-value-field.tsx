@@ -2,12 +2,12 @@
 
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { AutoComplete, Button, Input, Space, Typography } from 'antd';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
 import type { MonitorParamFormValue } from '../model/monitor-editor-model';
-import styles from './monitor-key-value-field.module.css';
+import styles from './monitor-structured-field.module.css';
 import { nextStructuredRowId } from './monitor-structured-field-model';
 
 export type RowEditorLabels = {
@@ -22,6 +22,7 @@ export type RowEditorLabels = {
 type MapRow = { id: number; key: string; value: string };
 type KeyValueFieldProps = {
   label: ReactNode;
+  className?: string | undefined;
   value: MonitorParamFormValue;
   onChange: (value: MonitorParamFormValue) => void;
   onValidityChange?: (valid: boolean) => void;
@@ -32,6 +33,7 @@ type KeyValueFieldProps = {
 
 export function KeyValueField({
   label,
+  className,
   value,
   onChange,
   onValidityChange,
@@ -39,17 +41,20 @@ export function KeyValueField({
   disabled,
   suggestions
 }: KeyValueFieldProps) {
+  const labelId = useId();
   const editor = useKeyValueRows(value, onChange, onValidityChange);
   const keyOptions = suggestionOptions(
     suggestions?.keys ?? [],
     editor.rows.map(row => row.key)
   );
   return (
-    <fieldset>
-      <legend>{label}</legend>
-      <Space direction="vertical" size="small">
+    <div className={className} role="group" aria-labelledby={labelId}>
+      <span id={labelId} data-monitor-field-label="">
+        {label}
+      </span>
+      <Space className={styles.stack ?? ''} direction="vertical" size="small">
         {editor.rows.map(row => (
-          <Space key={row.id}>
+          <Space className={styles.row ?? ''} key={row.id}>
             <MapRowInput
               aria-label={labels.key}
               disabled={disabled}
@@ -87,7 +92,7 @@ export function KeyValueField({
           </Typography.Text>
         )}
       </Space>
-    </fieldset>
+    </div>
   );
 }
 

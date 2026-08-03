@@ -23,7 +23,7 @@ export function MonitorEditorSourceFields({ mode, controller, draft, onChangeApp
   const application = controller.state.apps.find(item => item.value === draft.monitor.app)?.label ?? draft.monitor.app;
   return (
     <>
-      <div className={styles.applicationField}>
+      <div className={`${styles.applicationField} ${styles.formRow}`}>
         <MonitorEditorFieldLabel required>{t('monitor.application')}</MonitorEditorFieldLabel>
         <div className={styles.applicationValue}>
           <strong>{application}</strong>
@@ -34,7 +34,7 @@ export function MonitorEditorSourceFields({ mode, controller, draft, onChangeApp
           ) : null}
         </div>
       </div>
-      <label>
+      <label className={styles.formRow}>
         <MonitorEditorFieldLabel required>{t('monitor.editor.scrape')}</MonitorEditorFieldLabel>
         <Select
           disabled={controller.state.busy}
@@ -53,7 +53,7 @@ export function MonitorEditorSourceFields({ mode, controller, draft, onChangeApp
 export function MonitorEditorNameField({ controller, draft }: Pick<CoreFieldProps, 'controller' | 'draft'>) {
   const { t } = useTranslation();
   return (
-    <label>
+    <label className={styles.formRow}>
       <MonitorEditorFieldLabel required>{t('monitor.name')}</MonitorEditorFieldLabel>
       <Input
         aria-label={t('monitor.name')}
@@ -75,8 +75,8 @@ export function MonitorEditorCollectionFields({ controller, draft }: Pick<CoreFi
   const { t } = useTranslation();
   return (
     <>
-      <label>
-        {t('monitor.editor.collector')}
+      <label className={styles.formRow}>
+        <MonitorEditorFieldLabel>{t('monitor.editor.collector')}</MonitorEditorFieldLabel>
         <Select
           disabled={controller.state.busy}
           value={draft.collector}
@@ -109,8 +109,8 @@ function ScheduleFields({
   const scheduleType = draft.monitor.scheduleType ?? 'interval';
   return (
     <>
-      <label>
-        {t('monitor.editor.schedule')}
+      <label className={styles.formRow}>
+        <MonitorEditorFieldLabel>{t('monitor.editor.schedule')}</MonitorEditorFieldLabel>
         <Select
           disabled={disabled}
           value={scheduleType}
@@ -119,7 +119,7 @@ function ScheduleFields({
         />
       </label>
       {scheduleType === 'cron' ? (
-        <label>
+        <label className={styles.formRow}>
           <MonitorEditorFieldLabel required>{t('monitor.editor.cronExpression')}</MonitorEditorFieldLabel>
           <Input
             aria-label={t('monitor.editor.cronExpression')}
@@ -135,7 +135,7 @@ function ScheduleFields({
           ) : null}
         </label>
       ) : (
-        <label>
+        <label className={`${styles.formRow} ${styles.compactField}`}>
           <MonitorEditorFieldLabel required>{t('monitor.editor.interval')}</MonitorEditorFieldLabel>
           <InputNumber
             aria-label={t('monitor.editor.interval')}

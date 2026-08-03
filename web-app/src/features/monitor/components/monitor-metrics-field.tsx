@@ -2,10 +2,11 @@
 
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Space, Typography } from 'antd';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 
 import type { MonitorMetricField, MonitorParamFormValue } from '../model/monitor-editor-model';
 import type { RowEditorLabels } from './monitor-key-value-field';
+import styles from './monitor-structured-field.module.css';
 import { nextStructuredRowId } from './monitor-structured-field-model';
 
 export type MetricsEditorLabels = RowEditorLabels & {
@@ -17,6 +18,7 @@ export type MetricsEditorLabels = RowEditorLabels & {
 type MetricRow = Omit<MonitorMetricField, 'type'> & { id: number; type: 0 | 1 | null };
 type MetricsFieldProps = {
   label: ReactNode;
+  className?: string | undefined;
   value: MonitorParamFormValue;
   onChange: (value: MonitorParamFormValue) => void;
   onValidityChange?: (valid: boolean) => void;
@@ -27,6 +29,7 @@ type MetricsFieldProps = {
 
 export function MetricsField({
   label,
+  className,
   value,
   onChange,
   onValidityChange,
@@ -34,11 +37,14 @@ export function MetricsField({
   required,
   disabled
 }: MetricsFieldProps) {
+  const labelId = useId();
   const editor = useMetricRows(value, required, onChange, onValidityChange);
   return (
-    <fieldset>
-      <legend>{label}</legend>
-      <Space direction="vertical" size="small">
+    <div className={className} role="group" aria-labelledby={labelId}>
+      <span id={labelId} data-monitor-field-label="">
+        {label}
+      </span>
+      <Space className={styles.stack ?? ''} direction="vertical" size="small">
         {editor.rows.map(row => (
           <MetricRowEditor
             key={row.id}
@@ -64,7 +70,7 @@ export function MetricsField({
           </Typography.Text>
         )}
       </Space>
-    </fieldset>
+    </div>
   );
 }
 
@@ -84,7 +90,7 @@ function MetricRowEditor({
   remove: (id: number) => void;
 }) {
   return (
-    <Space>
+    <Space className={styles.metricRow ?? ''}>
       <Input
         aria-label={labels.key}
         disabled={disabled}

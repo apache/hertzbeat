@@ -54,7 +54,7 @@ export function ReadyMonitorEditorForm({
         language={i18n.language}
       />
       <OperationalSection title={t('monitor.editor.connection')}>
-        <div className={styles.form}>
+        <div className={`${styles.formRail} ${styles.form}`}>
           <MonitorEditorSourceFields
             mode={mode}
             controller={controller}
@@ -68,7 +68,7 @@ export function ReadyMonitorEditorForm({
           <MonitorEditorCollectionFields controller={controller} draft={draft} />
         </div>
       </OperationalSection>
-      <div className={styles.metadataDisclosure}>
+      <div className={`${styles.formRail} ${styles.metadataDisclosure}`}>
         <Button
           type="text"
           aria-expanded={metadataVisible}
@@ -80,7 +80,7 @@ export function ReadyMonitorEditorForm({
       </div>
       {metadataVisible ? (
         <OperationalSection title={t('monitor.editor.metadata')}>
-          <div className={styles.form}>
+          <div className={`${styles.formRail} ${styles.form}`}>
             <MonitorEditorMetadataFields controller={controller} draft={draft} labels={labels} />
             <MonitorGrafanaFields
               draft={draft}
@@ -91,7 +91,7 @@ export function ReadyMonitorEditorForm({
         </OperationalSection>
       ) : null}
       <MonitorEditorCommandResult feedback={controller.state.feedback} />
-      <div className={styles.formActions}>
+      <div className={`${styles.formRail} ${styles.formActions}`}>
         <MonitorEditorActions controller={controller} />
       </div>
       {mode === 'new' ? (
@@ -155,7 +155,7 @@ function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorComma
   const successful = feedback === 'detect-success';
   const uncertain = feedback === 'save-unknown';
   return (
-    <div className={styles.commandFeedback}>
+    <div className={`${styles.formRail} ${styles.commandFeedback}`}>
       <Alert
         role={successful || uncertain ? 'status' : 'alert'}
         showIcon

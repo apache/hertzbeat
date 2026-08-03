@@ -7,6 +7,7 @@ import type { MonitorParamDefine } from '../model/monitor-contract';
 import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
 import type { MonitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
+import { MonitorEditorFieldLabel } from './monitor-editor-field-label';
 import { MonitorParamField } from './monitor-param-field';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -36,8 +37,8 @@ export function MonitorEditorMetadataFields({
         controller={controller}
         labels={labels}
       />
-      <label className={styles.wide}>
-        {t('monitor.editor.descriptionLabel')}
+      <label className={`${styles.formRow} ${styles.wide}`}>
+        <MonitorEditorFieldLabel>{t('monitor.editor.descriptionLabel')}</MonitorEditorFieldLabel>
         <Input.TextArea
           rows={3}
           value={draft.monitor.description ?? ''}
@@ -67,7 +68,8 @@ function MapMetadataField({
     <div className={controller.state.validationIssues.includes(issue) ? styles.fieldError : styles.field}>
       <MonitorParamField
         define={mapDefine(field)}
-        label={label}
+        label={<MonitorEditorFieldLabel>{label}</MonitorEditorFieldLabel>}
+        className={styles.formRow}
         value={value}
         onChange={next => controller.actions.updateMonitor({ [field]: mapValue(next) })}
         onValidityChange={valid => controller.actions.setParamValid(`__${field}`, valid)}

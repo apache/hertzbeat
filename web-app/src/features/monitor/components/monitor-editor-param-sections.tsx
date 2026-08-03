@@ -71,6 +71,7 @@ function renderParamField(define: MonitorParamDefine, context: ParamContext) {
     >
       <MonitorParamField
         define={define}
+        className={styles.formRow}
         value={param.paramValue}
         label={<MonitorEditorFieldLabel required={define.required}>{label}</MonitorEditorFieldLabel>}
         ariaLabel={label}
@@ -100,7 +101,11 @@ function AdvancedFields({ defines, context }: { defines: MonitorParamDefine[]; c
         {
           key: 'advanced',
           label: t('monitor.editor.advanced'),
-          children: <div className={styles.form}>{defines.map(define => renderParamField(define, context))}</div>
+          children: (
+            <div className={`${styles.formRail} ${styles.form}`}>
+              {defines.map(define => renderParamField(define, context))}
+            </div>
+          )
         }
       ]}
     />

@@ -7,13 +7,13 @@ import styles from './monitor-editor-form-view.module.css';
 /** Keeps required evidence consistent across core and definition-driven fields. */
 export function MonitorEditorFieldLabel({ children, required = false }: { children: ReactNode; required?: boolean }) {
   return (
-    <span>
-      {children}
+    <span className={styles.fieldLabel}>
       {required ? (
         <span className={styles.requiredMarker} aria-hidden="true">
           *
         </span>
       ) : null}
+      {children}
     </span>
   );
 }

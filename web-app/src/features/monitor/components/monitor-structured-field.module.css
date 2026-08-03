@@ -1,0 +1,51 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+/* Structured rows share the editor's control rail instead of imposing fixed
+ * input widths that overflow or collapse when the form becomes narrower. */
+.stack {
+  width: 100%;
+}
+
+.stack > :global(.ant-space-item) {
+  width: 100%;
+}
+
+.row,
+.metricRow {
+  display: grid !important;
+  width: 100%;
+}
+
+.row {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) max-content;
+}
+
+.metricRow {
+  grid-template-columns: minmax(0, 1.2fr) minmax(64px, 0.7fr) minmax(88px, 0.8fr) max-content;
+}
+
+.row > :global(.ant-space-item),
+.metricRow > :global(.ant-space-item) {
+  min-width: 0;
+}
+
+.input,
+.row :global(.ant-input),
+.row :global(.ant-select),
+.metricRow :global(.ant-input),
+.metricRow :global(.ant-select) {
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .row,
+  .metricRow {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .row > :global(.ant-space-item):nth-child(2),
+  .metricRow > :global(.ant-space-item):nth-child(2),
+  .metricRow > :global(.ant-space-item):nth-child(3) {
+    grid-column: 1;
+  }
+}

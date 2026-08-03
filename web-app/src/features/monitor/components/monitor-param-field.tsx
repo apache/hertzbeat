@@ -16,7 +16,7 @@
  */
 
 import { Input, InputNumber, Radio, Switch } from 'antd';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 import type { LabelSuggestionCatalog } from '@/shared/labels/label-suggestion-model';
 
@@ -29,6 +29,7 @@ import { MetricsField, type MetricsEditorLabels } from './monitor-metrics-field'
 type MonitorParamFieldProps = {
   define: MonitorParamDefine;
   label: ReactNode;
+  className?: string | undefined;
   ariaLabel?: string;
   value: MonitorParamFormValue;
   onChange: (value: MonitorParamFormValue) => void;
@@ -43,6 +44,7 @@ type MonitorParamFieldProps = {
 export function MonitorParamField({
   define,
   label,
+  className,
   ariaLabel,
   value,
   onChange,
@@ -53,7 +55,7 @@ export function MonitorParamField({
   disabled = false,
   invalid = false
 }: MonitorParamFieldProps) {
-  const props = { define, label, value, onChange, disabled, invalid, ...(ariaLabel ? { ariaLabel } : {}) };
+  const props = { define, label, className, value, onChange, disabled, invalid, ...(ariaLabel ? { ariaLabel } : {}) };
   if (define.type === 'boolean') return <BooleanField {...props} />;
   if (define.type === 'number') return <NumberField {...props} />;
   if (define.type === 'radio') return <RadioField {...props} />;
@@ -61,6 +63,7 @@ export function MonitorParamField({
     return (
       <KeyValueField
         label={label}
+        className={className}
         value={value}
         onChange={onChange}
         {...(onValidityChange ? { onValidityChange } : {})}
@@ -74,6 +77,7 @@ export function MonitorParamField({
     return (
       <MetricsField
         label={label}
+        className={className}
         value={value}
         onChange={onChange}
         {...(onValidityChange ? { onValidityChange } : {})}
@@ -87,23 +91,24 @@ export function MonitorParamField({
 }
 
 type SimpleFieldProps = Pick<MonitorParamFieldProps, 'define' | 'label' | 'ariaLabel' | 'value' | 'onChange'> & {
+  className?: string | undefined;
   disabled: boolean;
   invalid: boolean;
 };
 
-function BooleanField({ label, ariaLabel, value, onChange, disabled }: SimpleFieldProps) {
+function BooleanField({ label, ariaLabel, className, value, onChange, disabled }: SimpleFieldProps) {
   return (
-    <label>
+    <label className={className}>
       {label}
       <Switch aria-label={ariaLabel} checked={value === true} disabled={disabled} onChange={onChange} />
     </label>
   );
 }
 
-function NumberField({ define, label, ariaLabel, value, onChange, disabled, invalid }: SimpleFieldProps) {
+function NumberField({ define, label, ariaLabel, className, value, onChange, disabled, invalid }: SimpleFieldProps) {
   const range = numberDefineRange(define);
   return (
-    <label>
+    <label className={className}>
       {label}
       <InputNumber<number>
         aria-label={ariaLabel}
@@ -117,10 +122,13 @@ function NumberField({ define, label, ariaLabel, value, onChange, disabled, inva
   );
 }
 
-function RadioField({ define, label, ariaLabel, value, onChange, disabled }: SimpleFieldProps) {
+function RadioField({ define, label, ariaLabel, className, value, onChange, disabled }: SimpleFieldProps) {
+  const labelId = useId();
   return (
-    <fieldset>
-      <legend>{label}</legend>
+    <div className={className} role="group" aria-labelledby={labelId}>
+      <span id={labelId} data-monitor-field-label="">
+        {label}
+      </span>
       <Radio.Group
         aria-label={ariaLabel}
         value={typeof value === 'string' ? value : null}
@@ -128,11 +136,11 @@ function RadioField({ define, label, ariaLabel, value, onChange, disabled }: Sim
         options={define.options ?? []}
         onChange={event => onChange(event.target.value as string)}
       />
-    </fieldset>
+    </div>
   );
 }
 
-function TextField({ define, label, ariaLabel, value, onChange, disabled, invalid }: SimpleFieldProps) {
+function TextField({ define, label, ariaLabel, className, value, onChange, disabled, invalid }: SimpleFieldProps) {
   const common = {
     value: typeof value === 'string' ? value : '',
     'aria-label': ariaLabel,
@@ -144,20 +152,20 @@ function TextField({ define, label, ariaLabel, value, onChange, disabled, invali
   };
   if (define.type === 'password')
     return (
-      <label>
+      <label className={className}>
         {label}
         <Input.Password {...common} />
       </label>
     );
   if (define.type === 'textarea')
     return (
-      <label>
+      <label className={className}>
         {label}
         <Input.TextArea {...common} />
       </label>
     );
   return (
-    <label>
+    <label className={className}>
       {label}
       <Input {...common} />
     </label>
