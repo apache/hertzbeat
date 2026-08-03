@@ -113,7 +113,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     );
   });
 
-  it('exposes explicit catalog fallback and favorite unknown evidence', async () => {
+  it('keeps embedded realtime groups available when the history catalog is unavailable', async () => {
     api.loadMonitorMetricCatalog.mockRejectedValue(new ApiMessageError('offline', { status: 503 }));
     api.loadFavoriteMetrics.mockRejectedValue(new ApiMessageError('offline', { status: 503 }));
     const embedded = [{ name: 'embedded', favorited: false }];
@@ -121,7 +121,12 @@ describe('useMonitorMetricWorkbenchController', () => {
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('fallback'));
     await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe('unavailable'));
     expect(view.result.current.controller.state.metricKey).toBe('');
-    expect(api.loadRealtimeMetric).not.toHaveBeenCalled();
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(1));
+    expect(api.loadRealtimeMetric).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({ group: 'embedded' }),
+      expect.any(AbortSignal)
+    );
   });
 
   it('exposes the canonical favorite collection without hiding retired metric tokens', async () => {
@@ -135,6 +140,49 @@ describe('useMonitorMetricWorkbenchController', () => {
           { key: 'retired.value', available: false },
           { key: 'summary.value', available: true }
         ]
+      })
+    );
+  });
+
+  it('loads realtime metric groups in bounded definition-order pages', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue({
+      metrics: Array.from({ length: 12 }, (_, index) => ({
+        name: `group-${index + 1}`,
+        visible: true,
+        fields: [{ type: 0, field: 'value', unit: null, label: false }]
+      }))
+    });
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(10));
+    expect(api.loadRealtimeMetric.mock.calls.map(call => call[1].group)).toEqual(
+      expect.arrayContaining(Array.from({ length: 10 }, (_, index) => `group-${index + 1}`))
+    );
+    expect(view.result.current.controller.state.hasMoreRealtimeGroups).toBe(true);
+
+    act(() => view.result.current.controller.actions.loadMoreRealtimeGroups());
+    await waitFor(() => expect(view.result.current.controller.state.realtimeGroups).toHaveLength(12));
+    expect(view.result.current.controller.state.hasMoreRealtimeGroups).toBe(false);
+  });
+
+  it('writes a realtime favorite by its backend group token', async () => {
+    api.loadFavoriteMetrics.mockResolvedValueOnce([]).mockResolvedValueOnce(['summary']);
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() =>
+      expect(view.result.current.controller.state.realtimeGroups[0]?.favorite).toEqual({
+        kind: 'ready',
+        value: false
+      })
+    );
+
+    await act(() => view.result.current.controller.actions.toggleRealtimeFavorite('summary'));
+
+    expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary', true);
+    await waitFor(() =>
+      expect(view.result.current.controller.state.realtimeGroups[0]?.favorite).toEqual({
+        kind: 'ready',
+        value: true,
+        token: 'summary'
       })
     );
   });

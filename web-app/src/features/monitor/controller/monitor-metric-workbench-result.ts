@@ -21,11 +21,15 @@ export function buildMonitorMetricWorkbenchResult(input: {
   favorite: MonitorMetricWorkbenchController['state']['favorite'];
   favoriteCollection: MonitorMetricWorkbenchController['state']['favoriteCollection'];
   favoriteBusy: boolean;
+  realtimeGroups: MonitorMetricWorkbenchController['state']['realtimeGroups'];
+  hasMoreRealtimeGroups: boolean;
   realtime: MonitorMetricWorkbenchController['state']['realtime'];
   historical: MonitorMetricWorkbenchController['state']['historical'];
   refreshControl: MonitorDetailRefreshControl;
   urlActions: MetricUrlActions;
   toggleFavorite: MonitorMetricWorkbenchController['actions']['toggleFavorite'];
+  toggleRealtimeFavorite: MonitorMetricWorkbenchController['actions']['toggleRealtimeFavorite'];
+  loadMoreRealtimeGroups: MonitorMetricWorkbenchController['actions']['loadMoreRealtimeGroups'];
   refresh: () => void;
 }): MonitorMetricWorkbenchController {
   return {
@@ -38,6 +42,8 @@ export function buildMonitorMetricWorkbenchResult(input: {
       favorite: input.favorite,
       favoriteCollection: input.favoriteCollection,
       favoriteBusy: input.favoriteBusy,
+      realtimeGroups: input.realtimeGroups,
+      hasMoreRealtimeGroups: input.hasMoreRealtimeGroups,
       realtime: input.realtime,
       historical: input.historical
     },
@@ -45,6 +51,8 @@ export function buildMonitorMetricWorkbenchResult(input: {
       ...input.urlActions,
       setRefreshSeconds: input.refreshControl.setRefreshSeconds,
       toggleFavorite: input.toggleFavorite,
+      toggleRealtimeFavorite: input.toggleRealtimeFavorite,
+      loadMoreRealtimeGroups: input.loadMoreRealtimeGroups,
       refresh: input.refresh
     }
   };

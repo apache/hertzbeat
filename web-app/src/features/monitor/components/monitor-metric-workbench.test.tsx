@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -34,7 +34,10 @@ describe('MonitorMetricWorkbench', () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it('renders all realtime group fields with units, honest nulls, and epoch zero', () => {
     renderWorkbench(
@@ -79,6 +82,69 @@ describe('MonitorMetricWorkbench', () => {
     ).toBeInTheDocument();
     expect(within(screen.getByText('status').closest('tr')!).getByText('UP')).toBeInTheDocument();
     expect(within(screen.getByText('message').closest('tr')!).getAllByText('—')).toHaveLength(3);
+  });
+
+  it('renders independent realtime groups instead of one selected metric result', () => {
+    const value = controller({
+      realtimeGroups: [
+        {
+          group: 'summary',
+          favorite: { kind: 'ready', value: true, token: 'summary' },
+          favoriteBusy: false,
+          result: { kind: 'ready', rows: [metricRow('responseTime', '12')] }
+        },
+        {
+          group: 'availability',
+          favorite: { kind: 'ready', value: false },
+          favoriteBusy: false,
+          result: { kind: 'ready', rows: [metricRow('status', 'UP')] }
+        }
+      ],
+      hasMoreRealtimeGroups: true
+    });
+    renderWorkbench(value);
+
+    expect(screen.getByRole('heading', { name: 'summary' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'availability' })).toBeInTheDocument();
+    expect(screen.getByText('responseTime')).toBeInTheDocument();
+    expect(screen.getByText('status')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.unfavorite') }));
+    expect(value.actions.toggleRealtimeFavorite).toHaveBeenCalledWith('summary');
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMore') }));
+    expect(value.actions.loadMoreRealtimeGroups).toHaveBeenCalledOnce();
+  });
+
+  it('loads the next realtime group batch when the fallback control enters the viewport', () => {
+    let notifyIntersection: IntersectionObserverCallback | undefined;
+    const observeMock = vi.fn();
+    const disconnectMock = vi.fn();
+    class MockIntersectionObserver {
+      constructor(callback: IntersectionObserverCallback) {
+        notifyIntersection = callback;
+      }
+
+      observe = observeMock;
+      disconnect = disconnectMock;
+      unobserve = vi.fn();
+      takeRecords = vi.fn();
+      root = null;
+      rootMargin = '';
+      thresholds: number[] = [];
+    }
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+    const value = controller({
+      realtimeGroups: [realtimeGroup('summary')],
+      hasMoreRealtimeGroups: true
+    });
+
+    renderWorkbench(value);
+    expect(observeMock).toHaveBeenCalledWith(screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMore') }));
+    act(() =>
+      notifyIntersection?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+    );
+
+    expect(disconnectMock).toHaveBeenCalled();
+    expect(value.actions.loadMoreRealtimeGroups).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -210,6 +276,8 @@ function controller(
       favorite: { kind: 'ready', value: false },
       favoriteCollection: { kind: 'empty', items: [] },
       favoriteBusy: false,
+      realtimeGroups: [],
+      hasMoreRealtimeGroups: false,
       realtime: { kind: 'empty', rows: [] },
       historical: { kind: 'empty', rows: [] },
       ...statePatch
@@ -219,8 +287,23 @@ function controller(
       setHistory: vi.fn(),
       setRefreshSeconds: vi.fn(),
       toggleFavorite: vi.fn(),
+      toggleRealtimeFavorite: vi.fn(),
+      loadMoreRealtimeGroups: vi.fn(),
       refresh: vi.fn()
     }
+  };
+}
+
+function metricRow(field: string, value: string) {
+  return { key: `0:${field}`, labels: {}, field, unit: null, value, time: null };
+}
+
+function realtimeGroup(group: string): MonitorMetricWorkbenchController['state']['realtimeGroups'][number] {
+  return {
+    group,
+    favorite: { kind: 'ready', value: false },
+    favoriteBusy: false,
+    result: { kind: 'ready', rows: [metricRow('value', '12')] }
   };
 }
 

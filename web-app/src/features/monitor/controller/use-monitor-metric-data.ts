@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { skipToken, useQuery, type QueryFunctionContext } from '@tanstack/react-query';
+import { skipToken, useQueries, useQuery, type QueryFunctionContext } from '@tanstack/react-query';
 
 import { loadFavoriteMetrics, loadHistoryMetric, loadRealtimeMetric } from '../api/monitor-api';
 import type { Monitor, MonitorMetricOption } from '../model/monitor-contract';
@@ -14,11 +14,12 @@ import { monitorQueryKeys } from './monitor-query-keys';
 export function useMonitorMetricData(input: {
   monitor: Monitor | undefined;
   metric: MonitorMetricOption | undefined;
+  realtimeGroups: Array<{ group: string }>;
   metricKey: string;
   history: MonitorMetricHistory;
   refreshSeconds: MonitorDetailRefreshSeconds;
 }) {
-  const { monitor, metric, metricKey, history, refreshSeconds } = input;
+  const { monitor, metric, realtimeGroups, metricKey, history, refreshSeconds } = input;
   const refetchInterval = monitorDetailRefreshInterval(refreshSeconds);
   const historySupported = metric?.historySupported !== false;
   // Monitor metric endpoints accept the route-local history range, not the shell's exact time window.
@@ -26,10 +27,24 @@ export function useMonitorMetricData(input: {
   // `enabled: false` still permits manual refetch; skipToken removes the unsafe query function entirely.
   const favorites = useQuery(favoriteMetricQueryOptions(monitor, refetchInterval));
   const realtime = useQuery(realtimeMetricQueryOptions(monitor, metric, refetchInterval));
+  const realtimeGroupQueries = useQueries({
+    queries: realtimeGroups.map(group =>
+      realtimeMetricQueryOptions(monitor, realtimeGroupMetric(group.group), refetchInterval)
+    )
+  });
   const historical = useQuery(
     historyMetricQueryOptions(monitor, metric, metricKey, history, historySupported, refetchInterval)
   );
-  return { favorites, realtime, historical };
+  return {
+    favorites,
+    realtime,
+    realtimeGroups: realtimeGroups.map((group, index) => ({ group: group.group, query: realtimeGroupQueries[index]! })),
+    historical
+  };
+}
+
+function realtimeGroupMetric(group: string): MonitorMetricOption {
+  return { key: group, group, field: group, historySupported: false };
 }
 
 function favoriteMetricQueryOptions(monitor: Monitor | undefined, refetchInterval: number | false) {
@@ -46,7 +61,7 @@ function realtimeMetricQueryOptions(
   refetchInterval: number | false
 ) {
   return {
-    queryKey: monitorQueryKeys.realtime(monitor?.id, metric?.group, metric?.field),
+    queryKey: monitorQueryKeys.realtime(monitor?.id, metric?.group),
     queryFn:
       monitor && metric
         ? ({ signal }: QueryFunctionContext) => loadRealtimeMetric(monitor.id, metric, signal)

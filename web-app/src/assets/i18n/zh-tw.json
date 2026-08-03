@@ -1192,6 +1192,7 @@
     "title": "指標檢查",
     "description": "無需離開監控詳情即可查看目前值與歷史資料。",
     "loading": "正在載入指標資料…",
+    "loadMore": "載入更多指標群組",
     "realtime": "即時",
     "history": "歷史",
     "historyUnsupported": "此僅即時指標群組不支援歷史資料。",

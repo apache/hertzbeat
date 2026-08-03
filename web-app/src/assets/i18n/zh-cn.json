@@ -1192,6 +1192,7 @@
     "title": "指标检查",
     "description": "无需离开监控详情即可查看当前值与历史数据。",
     "loading": "正在加载指标数据…",
+    "loadMore": "加载更多指标组",
     "realtime": "实时",
     "history": "历史",
     "historyUnsupported": "此仅实时指标组不支持历史数据。",

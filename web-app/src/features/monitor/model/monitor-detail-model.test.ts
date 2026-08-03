@@ -25,6 +25,7 @@ import {
   monitorMetricHistoryRanges,
   monitorMetricHistoryUsesInterval,
   monitorMetricOptions,
+  monitorRealtimeGroups,
   monitorRealtimeRows,
   parseMonitorDetailRefresh,
   parseMonitorMetricHistory,
@@ -93,6 +94,17 @@ describe('monitor detail model', () => {
         historySupported: false
       }
     ]);
+  });
+
+  it('keeps realtime groups in the backend definition order without collapsing them to one field', () => {
+    expect(
+      monitorRealtimeGroups([
+        { name: 'summary', visible: true, fields: [{ field: 'responseTime', type: 0 }] },
+        { name: 'identity', visible: true, fields: [{ field: 'host', type: 1, label: true }] },
+        { name: 'summary', visible: true, fields: [{ field: 'status', type: 1 }] },
+        { name: 'hidden', visible: false, fields: [{ field: 'value', type: 0 }] }
+      ])
+    ).toEqual([{ group: 'summary' }, { group: 'identity' }]);
   });
 
   it('preserves every non-label realtime field as inspectable group evidence', () => {

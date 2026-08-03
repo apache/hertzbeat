@@ -51,9 +51,7 @@ describe('Monitor Query Key factory', () => {
       monitorQueryKeys.metricCatalog(7, 'website', 'http')
     );
     expect(monitorQueryKeys.favorites(7)).toEqual(monitorQueryKeys.favorites(7));
-    expect(monitorQueryKeys.realtime(7, 'summary', 'responseTime')).toEqual(
-      monitorQueryKeys.realtime(7, 'summary', 'responseTime')
-    );
+    expect(monitorQueryKeys.realtime(7, 'summary')).toEqual(monitorQueryKeys.realtime(7, 'summary'));
     expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m')).toEqual(
       monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m')
     );
@@ -88,12 +86,8 @@ describe('Monitor Query Key factory', () => {
   });
 
   it('includes only metric inputs that the backend request actually consumes', () => {
-    const realtime = monitorQueryKeys.realtime(7, 'summary', 'responseTime');
-    for (const candidate of [
-      monitorQueryKeys.realtime(8, 'summary', 'responseTime'),
-      monitorQueryKeys.realtime(7, 'cpu', 'responseTime'),
-      monitorQueryKeys.realtime(7, 'summary', 'max')
-    ])
+    const realtime = monitorQueryKeys.realtime(7, 'summary');
+    for (const candidate of [monitorQueryKeys.realtime(8, 'summary'), monitorQueryKeys.realtime(7, 'cpu')])
       expect(candidate).not.toEqual(realtime);
 
     const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m');

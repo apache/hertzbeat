@@ -45,6 +45,17 @@ export function favoriteEvidence(
   return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
 }
 
+export function realtimeGroupFavoriteEvidence(
+  query: QueryEvidence<string[]>,
+  group: string
+): MonitorMetricFavoriteEvidence {
+  if (query.isPending) return { kind: 'loading' };
+  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
+  if (!query.data) return { kind: 'error' };
+  const token = query.data.find(candidate => candidate === group || candidate.startsWith(`${group}.`));
+  return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
+}
+
 export function favoriteCollectionEvidence(
   query: QueryEvidence<string[]>,
   options: MonitorMetricOption[]

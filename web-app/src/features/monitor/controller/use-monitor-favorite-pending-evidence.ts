@@ -28,8 +28,7 @@ export type FavoritePendingExpectation = {
 /** Keeps an acknowledged favorite write visibly locked until canonical evidence converges. */
 export function useMonitorFavoritePendingEvidence(
   currentSource: React.MutableRefObject<FavoriteSource>,
-  canonicalFavorites: string[] | undefined,
-  metricKey: string
+  canonicalFavorites: string[] | undefined
 ) {
   const reference = useRef<FavoritePendingExpectation | undefined>(undefined);
   const [pending, setPending] = useState<FavoritePendingExpectation | undefined>(undefined);
@@ -52,8 +51,7 @@ export function useMonitorFavoritePendingEvidence(
     }
   }, [canonicalFavorites, currentSource]);
 
-  const active = Boolean(
-    pending && pending.sourceToken === currentSource.current?.token && pending.metricKey === metricKey
-  );
-  return { active, reference, wait };
+  const activeMetricKey =
+    pending && pending.sourceToken === currentSource.current?.token ? pending.metricKey : undefined;
+  return { activeMetricKey, reference, wait };
 }

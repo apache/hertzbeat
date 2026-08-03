@@ -51,10 +51,46 @@
   align-items: center;
   gap: 4px;
 }
+.realtimeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-3);
+}
+.realtimeGroup {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-surface);
+  background: var(--hb-bg-raised);
+}
+.realtimeGroupHeader {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  padding: 0 var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.realtimeGroupHeader h5 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loadMore {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
 @media (max-width: 760px) {
   .metricSelect,
   .historySelect {
     width: 100%;
     flex-basis: 100%;
+  }
+  .realtimeGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

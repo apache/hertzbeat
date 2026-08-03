@@ -10,9 +10,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 type QueryOptions = { queryKey?: readonly unknown[]; queryFn?: unknown; refetchInterval?: number | false };
 const query = vi.hoisted(() => ({
   skipToken: Symbol('skipToken'),
-  useQuery: vi.fn((options: QueryOptions) => options)
+  useQuery: vi.fn((options: QueryOptions) => options),
+  useQueries: vi.fn(({ queries }: { queries: QueryOptions[] }) => queries)
 }));
-vi.mock('@tanstack/react-query', () => ({ skipToken: query.skipToken, useQuery: query.useQuery }));
+vi.mock('@tanstack/react-query', () => ({
+  skipToken: query.skipToken,
+  useQuery: query.useQuery,
+  useQueries: query.useQueries
+}));
 
 const api = vi.hoisted(() => ({
   loadFavoriteMetrics: vi.fn(),
@@ -42,6 +47,7 @@ describe('useMonitorMetricData refresh interval', () => {
       useMonitorMetricData({
         monitor: currentMonitor,
         metric: currentMetric,
+        realtimeGroups: [],
         metricKey: currentMetric?.key ?? '',
         history: '30m',
         refreshSeconds: 30
@@ -56,7 +62,14 @@ describe('useMonitorMetricData refresh interval', () => {
   );
 
   it('forwards each query AbortSignal without changing endpoint request inputs', () => {
-    useMonitorMetricData({ monitor, metric, metricKey: metric.key, history: '12W', refreshSeconds: 30 });
+    useMonitorMetricData({
+      monitor,
+      metric,
+      realtimeGroups: [],
+      metricKey: metric.key,
+      history: '12W',
+      refreshSeconds: 30
+    });
     const signal = new AbortController().signal;
 
     queryFunction(0)({ signal });
@@ -69,7 +82,14 @@ describe('useMonitorMetricData refresh interval', () => {
   });
 
   it('applies the selected interval to favorites, realtime, and history', () => {
-    useMonitorMetricData({ monitor, metric, metricKey: metric.key, history: '30m', refreshSeconds: 30 });
+    useMonitorMetricData({
+      monitor,
+      metric,
+      realtimeGroups: [],
+      metricKey: metric.key,
+      history: '30m',
+      refreshSeconds: 30
+    });
 
     expect(query.useQuery).toHaveBeenCalledTimes(3);
     for (const [options] of query.useQuery.mock.calls) {
@@ -78,7 +98,14 @@ describe('useMonitorMetricData refresh interval', () => {
   });
 
   it('uses the disabled TanStack interval form for Off', () => {
-    useMonitorMetricData({ monitor, metric, metricKey: metric.key, history: '30m', refreshSeconds: 0 });
+    useMonitorMetricData({
+      monitor,
+      metric,
+      realtimeGroups: [],
+      metricKey: metric.key,
+      history: '30m',
+      refreshSeconds: 0
+    });
 
     expect(query.useQuery).toHaveBeenCalledTimes(3);
     for (const [options] of query.useQuery.mock.calls) {
@@ -92,6 +119,7 @@ describe('useMonitorMetricData refresh interval', () => {
     useMonitorMetricData({
       monitor,
       metric: realtimeOnly,
+      realtimeGroups: [],
       metricKey: realtimeOnly.key,
       history: '30m',
       refreshSeconds: 30
@@ -105,7 +133,14 @@ describe('useMonitorMetricData refresh interval', () => {
   });
 
   it('keeps the exact long range in the history query key', () => {
-    useMonitorMetricData({ monitor, metric, metricKey: metric.key, history: '12W', refreshSeconds: 30 });
+    useMonitorMetricData({
+      monitor,
+      metric,
+      realtimeGroups: [],
+      metricKey: metric.key,
+      history: '12W',
+      refreshSeconds: 30
+    });
 
     expect(query.useQuery.mock.calls[2]?.[0]?.queryKey).toEqual([
       'monitor',

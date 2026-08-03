@@ -11,11 +11,8 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import type {
-  MonitorMetricWorkbenchController,
-  monitorHistoryRows,
-  monitorRealtimeRows
-} from '../model/monitor-detail-model';
+import type { MonitorMetricWorkbenchController, monitorHistoryRows } from '../model/monitor-detail-model';
+import { MonitorRealtimeResult, SelectedRealtimeResult } from './monitor-realtime-results';
 import styles from './monitor-metric-workbench.module.css';
 
 const historyTablePageSize = 20;
@@ -25,7 +22,11 @@ export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchC
   return (
     <Tabs
       items={[
-        { key: 'realtime', label: t('monitorMetrics.realtime'), children: <RealtimeResult state={state} /> },
+        {
+          key: 'realtime',
+          label: t('monitorMetrics.realtime'),
+          children: <MonitorRealtimeResult state={state} actions={actions} />
+        },
         { key: 'history', label: t('monitorMetrics.history'), children: <HistoryResult state={state} /> },
         {
           key: 'favorites',
@@ -61,7 +62,11 @@ function FavoriteCollection({ state, actions }: MonitorMetricWorkbenchController
       {selected ? (
         <Tabs
           items={[
-            { key: 'realtime', label: t('monitorMetrics.realtime'), children: <RealtimeResult state={state} /> },
+            {
+              key: 'realtime',
+              label: t('monitorMetrics.realtime'),
+              children: <SelectedRealtimeResult state={state} />
+            },
             { key: 'history', label: t('monitorMetrics.history'), children: <HistoryResult state={state} /> }
           ]}
         />
@@ -86,14 +91,6 @@ function FavoriteCollectionState({ kind }: { kind: 'loading' | 'empty' | 'unavai
   }
 }
 
-function RealtimeResult({ state }: Pick<MonitorMetricWorkbenchController, 'state'>) {
-  return (
-    <MetricState kind={state.realtime.kind}>
-      <RealtimeTable rows={state.realtime.rows} pending={state.realtime.kind === 'loading'} />
-    </MetricState>
-  );
-}
-
 function HistoryResult({ state }: Pick<MonitorMetricWorkbenchController, 'state'>) {
   return (
     <MetricState kind={state.historical.kind}>
@@ -116,30 +113,6 @@ function MetricState({
   if (kind === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   if (kind === 'empty') return <OperationalStatePanel kind="empty" title={t('monitorMetrics.empty')} />;
   return children;
-}
-
-function RealtimeTable({ rows, pending }: { rows: ReturnType<typeof monitorRealtimeRows>; pending: boolean }) {
-  const { t } = useTranslation();
-  const columns = [
-    {
-      title: t('monitorMetrics.labels'),
-      dataIndex: 'labels',
-      render: (labels: Record<string, string>) => (
-        <div className={styles.labels}>
-          {Object.entries(labels).map(([key, value]) => (
-            <Tag key={key}>
-              {key}={value}
-            </Tag>
-          ))}
-        </div>
-      )
-    },
-    { title: t('monitorMetrics.field'), dataIndex: 'field' },
-    { title: t('monitorMetrics.unit'), dataIndex: 'unit', render: (value: string | null) => value ?? '—' },
-    { title: t('monitorMetrics.time'), dataIndex: 'time', render: formatMetricTime },
-    { title: t('monitorMetrics.value'), dataIndex: 'value' }
-  ];
-  return <Table rowKey="key" size="small" loading={pending} dataSource={rows} columns={columns} pagination={false} />;
 }
 
 function HistoryTable({ rows, pending }: { rows: ReturnType<typeof monitorHistoryRows>; pending: boolean }) {

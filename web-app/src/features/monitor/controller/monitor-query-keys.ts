@@ -48,8 +48,8 @@ export const monitorQueryKeys = {
   metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>
     [...rootKey, 'metrics', 'catalog', id, app, scrape] as const,
   favorites: (id: number | undefined) => [...rootKey, 'metrics', 'favorites', id] as const,
-  realtime: (id: number | undefined, group: string | undefined, field: string | undefined) =>
-    [...rootKey, 'metrics', 'realtime', id, group, field] as const,
+  realtime: (id: number | undefined, group: string | undefined) =>
+    [...rootKey, 'metrics', 'realtime', id, group] as const,
   history: (source: MonitorHistorySource, metricKey: string, history: string) =>
     [
       ...rootKey,

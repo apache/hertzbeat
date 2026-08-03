@@ -115,6 +115,12 @@ export type MonitorMetricRowsEvidence<T> =
   | { kind: 'unavailable'; rows: T[] }
   | { kind: 'error'; rows: T[] }
   | { kind: 'ready'; rows: T[] };
+export type MonitorRealtimeGroup = {
+  group: string;
+  favorite: MonitorMetricFavoriteEvidence;
+  favoriteBusy: boolean;
+  result: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
+};
 export type MonitorMetricWorkbenchController = {
   state: {
     catalog: MonitorMetricCatalogEvidence;
@@ -125,6 +131,8 @@ export type MonitorMetricWorkbenchController = {
     favorite: MonitorMetricFavoriteEvidence;
     favoriteCollection: MonitorMetricFavoriteCollectionEvidence;
     favoriteBusy: boolean;
+    realtimeGroups: MonitorRealtimeGroup[];
+    hasMoreRealtimeGroups: boolean;
     realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
     historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;
   };
@@ -133,6 +141,8 @@ export type MonitorMetricWorkbenchController = {
     setHistory: (value: MonitorMetricHistory) => void;
     setRefreshSeconds: (value: MonitorDetailRefreshChoice) => void;
     toggleFavorite: () => Promise<void>;
+    toggleRealtimeFavorite: (group: string) => Promise<void>;
+    loadMoreRealtimeGroups: () => void;
     refresh: () => void;
   };
 };
@@ -171,6 +181,16 @@ export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
         ]
       : [];
   });
+}
+
+/** Realtime values are requested by metric group, so fields must not create duplicate reads. */
+export function monitorRealtimeGroups(metrics: MonitorDetailMetric[]) {
+  const groups = new Set<string>();
+  for (const metric of metrics) {
+    if (metric.visible === false || !metric.name || groups.has(metric.name)) continue;
+    groups.add(metric.name);
+  }
+  return [...groups].map(group => ({ group }));
 }
 
 function displayMetricValue(value: MonitorMetricValue) {

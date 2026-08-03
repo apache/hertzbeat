@@ -20,82 +20,110 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import type { MonitorMetricFavoriteEvidence } from '../model/monitor-detail-model';
 import {
-  attemptFavoriteWrite,
-  favoriteVerificationMessage,
-  verifyFavoriteWrite
-} from './monitor-favorite-write-workflow';
-import { monitorQueryKeys } from './monitor-query-keys';
+  executeFavoriteMutation,
+  ownsFavoriteSource,
+  type FavoriteOperation,
+  type FavoriteSource,
+  type MonitorMetricNotifications
+} from './monitor-favorite-mutation-execution';
 import {
   useMonitorFavoritePendingEvidence,
   type FavoritePendingExpectation
 } from './use-monitor-favorite-pending-evidence';
 
-export type MonitorMetricNotifications = {
-  success: (text: string) => unknown;
-  error: (text: string) => unknown;
-};
-
-type FavoriteSource = { monitorId: number | undefined; token: number };
-type FavoriteOperation = { monitorId: number; sourceToken: number; token: number };
+export type { MonitorMetricNotifications } from './monitor-favorite-mutation-execution';
 
 export function useMonitorFavoriteMutation(input: {
   monitorId: number | undefined;
-  metricKey: string;
-  favorite: MonitorMetricFavoriteEvidence;
   canonicalFavorites: string[] | undefined;
   message: MonitorMetricNotifications;
   queryClient: QueryClient;
   t: (key: string) => string;
 }) {
-  const { monitorId, metricKey, favorite, canonicalFavorites, message, queryClient, t } = input;
+  const { monitorId, canonicalFavorites, message, queryClient, t } = input;
   const [busyOperation, setBusyOperation] = useState<FavoriteOperation | undefined>(undefined);
   const lockedOperation = useRef<FavoriteOperation | undefined>(undefined);
   const operationCounter = useRef(0);
   const reread = useRef<AbortController | undefined>(undefined);
   const currentSource = useFavoriteSource(monitorId, reread, setBusyOperation);
-  const pendingEvidence = useMonitorFavoritePendingEvidence(currentSource, canonicalFavorites, metricKey);
-  const toggle = useCallback(async () => {
-    const source = currentSource.current;
-    const command = prepareFavoriteMutation(
-      source,
-      monitorId,
-      metricKey,
-      favorite,
-      pendingEvidence.reference,
-      lockedOperation
-    );
-    if (!command) return;
-    const operation = {
-      monitorId: command.source.monitorId,
-      sourceToken: command.source.token,
-      token: ++operationCounter.current
-    };
-    lockedOperation.current = operation;
-    setBusyOperation(operation);
-    try {
-      await executeFavoriteMutation({
-        operation,
-        desired: command.desired,
+  const pendingEvidence = useMonitorFavoritePendingEvidence(currentSource, canonicalFavorites);
+  const toggle = useCallback(
+    (metricKey: string, favorite: MonitorMetricFavoriteEvidence) =>
+      runFavoriteToggle(
+        {
+          monitorId,
+          currentSource,
+          pendingEvidence,
+          lockedOperation,
+          operationCounter,
+          reread,
+          setBusyOperation,
+          message,
+          queryClient,
+          t
+        },
         metricKey,
-        canonicalToken: command.canonicalToken,
-        currentSource,
-        reread,
-        pendingEvidence,
-        message,
-        queryClient,
-        t
-      });
-    } finally {
-      if (lockedOperation.current?.token === operation.token) {
-        lockedOperation.current = undefined;
-        reread.current = undefined;
-      }
-      if (ownsFavoriteSource(currentSource.current, operation)) {
-        setBusyOperation(current => (current?.token === operation.token ? undefined : current));
-      }
+        favorite
+      ),
+    [currentSource, message, monitorId, pendingEvidence, queryClient, reread, t]
+  );
+  const busyMetricKey =
+    busyOperation && busyOperation.sourceToken === currentSource.current?.token
+      ? busyOperation.metricKey
+      : pendingEvidence.activeMetricKey;
+  return { busyMetricKey, toggle };
+}
+
+async function runFavoriteToggle(
+  input: {
+    monitorId: number | undefined;
+    currentSource: React.MutableRefObject<FavoriteSource | undefined>;
+    pendingEvidence: ReturnType<typeof useMonitorFavoritePendingEvidence>;
+    lockedOperation: React.MutableRefObject<FavoriteOperation | undefined>;
+    operationCounter: React.MutableRefObject<number>;
+    reread: React.MutableRefObject<AbortController | undefined>;
+    setBusyOperation: React.Dispatch<React.SetStateAction<FavoriteOperation | undefined>>;
+    message: MonitorMetricNotifications;
+    queryClient: QueryClient;
+    t: (key: string) => string;
+  },
+  metricKey: string,
+  favorite: MonitorMetricFavoriteEvidence
+) {
+  const command = prepareFavoriteMutation(
+    input.currentSource.current,
+    input.monitorId,
+    metricKey,
+    favorite,
+    input.pendingEvidence.reference,
+    input.lockedOperation
+  );
+  if (!command) return;
+  const operation = {
+    monitorId: command.source.monitorId,
+    metricKey,
+    sourceToken: command.source.token,
+    token: ++input.operationCounter.current
+  };
+  input.lockedOperation.current = operation;
+  input.setBusyOperation(operation);
+  try {
+    await executeFavoriteMutation({
+      ...input,
+      operation,
+      metricKey,
+      desired: command.desired,
+      canonicalToken: command.canonicalToken
+    });
+  } finally {
+    if (input.lockedOperation.current?.token === operation.token) {
+      input.lockedOperation.current = undefined;
+      input.reread.current = undefined;
     }
-  }, [currentSource, favorite, message, metricKey, monitorId, pendingEvidence, queryClient, reread, t]);
-  return { busy: busyOperation?.sourceToken === currentSource.current?.token || pendingEvidence.active, toggle };
+    if (ownsFavoriteSource(input.currentSource.current, operation)) {
+      input.setBusyOperation(current => (current?.token === operation.token ? undefined : current));
+    }
+  }
 }
 
 function useFavoriteSource(
@@ -146,55 +174,6 @@ function prepareFavoriteMutation(
 function favoriteWriteToken(favorite: MonitorMetricFavoriteEvidence, metricKey: string, desired: boolean) {
   if (desired || favorite.kind !== 'ready') return metricKey;
   return favorite.token ?? metricKey;
-}
-
-async function executeFavoriteMutation(input: {
-  operation: FavoriteOperation;
-  desired: boolean;
-  metricKey: string;
-  canonicalToken: string;
-  currentSource: React.MutableRefObject<FavoriteSource | undefined>;
-  reread: React.MutableRefObject<AbortController | undefined>;
-  pendingEvidence: {
-    wait: (expectation: FavoritePendingExpectation) => void;
-  };
-  message: MonitorMetricNotifications;
-  queryClient: QueryClient;
-  t: (key: string) => string;
-}) {
-  const {
-    operation,
-    desired,
-    metricKey,
-    canonicalToken,
-    currentSource,
-    reread,
-    pendingEvidence,
-    message,
-    queryClient,
-    t
-  } = input;
-  const write = await attemptFavoriteWrite(operation.monitorId, canonicalToken, desired);
-  if (!ownsFavoriteSource(currentSource.current, operation)) return;
-  if (write.kind === 'rejected') {
-    void message.error(t('monitorMetrics.favoriteFailed'));
-    return;
-  }
-  void message.success(t('monitorMetrics.favoriteSaved'));
-  reread.current = new AbortController();
-  const verification = await verifyFavoriteWrite(operation.monitorId, canonicalToken, desired, reread.current.signal);
-  if (!ownsFavoriteSource(currentSource.current, operation)) return;
-  if (verification.kind === 'verified') {
-    queryClient.setQueryData(monitorQueryKeys.favorites(operation.monitorId), verification.evidence);
-    return;
-  }
-  pendingEvidence.wait({ sourceToken: operation.sourceToken, metricKey, canonicalToken, desired });
-  void message.error(t(favoriteVerificationMessage(verification)));
-  void queryClient.resetQueries({ queryKey: monitorQueryKeys.favorites(operation.monitorId), exact: true });
-}
-
-function ownsFavoriteSource(source: FavoriteSource | undefined, operation: FavoriteOperation) {
-  return source?.token === operation.sourceToken && source.monitorId === operation.monitorId;
 }
 
 function abortFavoriteReread(reread: React.MutableRefObject<AbortController | undefined>) {

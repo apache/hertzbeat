@@ -32,7 +32,9 @@ import { MonitorRefreshSelect } from './monitor-refresh-select';
 import styles from './monitor-metric-workbench.module.css';
 
 export function MonitorMetricWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
-  if (state.catalog.kind !== 'ready') return <MonitorMetricCatalogState catalog={state.catalog} />;
+  if (state.catalog.kind !== 'ready' && state.realtimeGroups.length === 0) {
+    return <MonitorMetricCatalogState catalog={state.catalog} />;
+  }
   return <MonitorMetricReadyWorkbench state={state} actions={actions} options={state.catalog.options} />;
 }
 

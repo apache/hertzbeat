@@ -5,31 +5,27 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
 
-import { loadMonitorMetricCatalog } from '../api/monitor-api';
 import type { Monitor, MonitorDetailMetric } from '../model/monitor-contract';
 import {
-  monitorMetricHistoryRanges,
-  parseMonitorMetricHistory,
+  monitorRealtimeGroups,
+  monitorRealtimeRows,
   type MonitorDetailRefreshControl,
-  type MonitorMetricCatalogEvidence,
-  type MonitorMetricHistory,
   type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
-import { catalogEvidence } from './monitor-metric-query-evidence';
+import { metricEvidence, realtimeGroupFavoriteEvidence } from './monitor-metric-query-evidence';
 import { monitorMetricWorkbenchEvidence } from './monitor-metric-workbench-evidence';
-import { monitorQueryKeys } from './monitor-query-keys';
 import {
   useMonitorFavoriteMutation,
   type MonitorMetricNotifications as Notifications
 } from './use-monitor-favorite-mutation';
 import { buildMonitorMetricWorkbenchResult } from './monitor-metric-workbench-result';
 import { useMonitorMetricData } from './use-monitor-metric-data';
+import { useMonitorMetricSelection } from './use-monitor-metric-selection';
 
 type MonitorMetricWorkbenchOptions = {
   notifications?: Notifications;
@@ -37,45 +33,50 @@ type MonitorMetricWorkbenchOptions = {
   refreshControl: MonitorDetailRefreshControl;
 };
 
+const realtimeGroupPageSize = 10;
+
 export function useMonitorMetricWorkbenchController(
   monitor: Monitor | undefined,
   embedded: MonitorDetailMetric[],
   options: MonitorMetricWorkbenchOptions
 ): MonitorMetricWorkbenchController {
-  const { refreshControl } = options;
   const { t } = useTranslation();
   const { message: appMessage } = App.useApp();
-  const message = options.notifications ?? appMessage;
   const queryClient = useQueryClient();
-  const source = monitorSource(monitor);
-  const { catalog, history, metric, metricKey, params, setParams } = useMonitorMetricSelection(
-    monitor,
-    embedded,
-    source
-  );
+  const { catalog, definitions, history, metric, metricKey, urlActions } = useMonitorMetricSelection(monitor, embedded);
+  const realtimeSelection = useRealtimeGroupSelection(monitor?.id, definitions);
   const queries = useMonitorMetricData({
     monitor,
     metric,
+    realtimeGroups: realtimeSelection.visible,
     metricKey,
     history,
-    refreshSeconds: refreshControl.refreshSeconds
+    refreshSeconds: options.refreshControl.refreshSeconds
   });
   const { favorite, favoriteCollection, historical, historySupported, realtime } = monitorMetricWorkbenchEvidence(
     queries,
     metric,
     catalog
   );
-  const favoritesQuery = queries.favorites;
   const favoriteMutation = useMonitorFavoriteMutation({
-    monitorId: source.id,
-    metricKey: metric?.historySupported === false ? metric.group : metricKey,
-    favorite,
-    canonicalFavorites: favoritesQuery.data,
-    message,
+    monitorId: monitor?.id,
+    canonicalFavorites: queries.favorites.data,
+    message: options.notifications ?? appMessage,
     queryClient,
     t
   });
-  const urlActions = useMetricUrlActions({ catalog, history, metricKey, params, setParams });
+  const realtimeGroups = buildRealtimeGroupEvidence(queries, queries.favorites, favoriteMutation.busyMetricKey);
+  const actions = buildWorkbenchActions({
+    monitor,
+    metric,
+    favorite,
+    realtimeGroups,
+    queries,
+    favoriteMutation,
+    realtimeSelection,
+    historySupported,
+    refreshDetail: options.refreshDetail
+  });
   return buildMonitorMetricWorkbenchResult({
     catalog,
     metricKey,
@@ -83,127 +84,87 @@ export function useMonitorMetricWorkbenchController(
     historySupported,
     favorite,
     favoriteCollection,
-    favoriteBusy: favoriteMutation.busy,
+    favoriteBusy: favoriteMutation.busyMetricKey === (metric?.historySupported === false ? metric.group : metricKey),
+    realtimeGroups,
+    hasMoreRealtimeGroups: realtimeSelection.hasMore,
     realtime,
     historical,
-    refreshControl,
+    refreshControl: options.refreshControl,
     urlActions,
-    toggleFavorite: favoriteMutation.toggle,
-    refresh: () => {
-      options.refreshDetail();
-      refreshMonitorMetricQueries(queries, Boolean(monitor && metric), historySupported);
-    }
+    ...actions
   });
+}
+
+function buildRealtimeGroupEvidence(
+  queries: ReturnType<typeof useMonitorMetricData>,
+  favorites: ReturnType<typeof useMonitorMetricData>['favorites'],
+  busyMetricKey: string | undefined
+) {
+  return queries.realtimeGroups.map(({ group, query }) => ({
+    group,
+    favorite: realtimeGroupFavoriteEvidence(favorites, group),
+    favoriteBusy: busyMetricKey === group,
+    result: metricEvidence(query, data => monitorRealtimeRows(data))
+  }));
+}
+
+function buildWorkbenchActions(input: {
+  monitor: Monitor | undefined;
+  metric: Parameters<typeof useMonitorMetricData>[0]['metric'];
+  favorite: MonitorMetricWorkbenchController['state']['favorite'];
+  realtimeGroups: MonitorMetricWorkbenchController['state']['realtimeGroups'];
+  queries: ReturnType<typeof useMonitorMetricData>;
+  favoriteMutation: ReturnType<typeof useMonitorFavoriteMutation>;
+  realtimeSelection: ReturnType<typeof useRealtimeGroupSelection>;
+  historySupported: boolean;
+  refreshDetail: () => void;
+}) {
+  const selectedToken = input.metric?.historySupported === false ? input.metric.group : (input.metric?.key ?? '');
+  return {
+    toggleFavorite: () => input.favoriteMutation.toggle(selectedToken, input.favorite),
+    toggleRealtimeFavorite: (group: string) => {
+      const current = input.realtimeGroups.find(item => item.group === group);
+      return current ? input.favoriteMutation.toggle(group, current.favorite) : Promise.resolve();
+    },
+    loadMoreRealtimeGroups: input.realtimeSelection.loadMore,
+    refresh: () => {
+      input.refreshDetail();
+      refreshMonitorMetricQueries(
+        input.queries,
+        Boolean(input.monitor && (input.metric || input.realtimeGroups.length > 0)),
+        input.metric?.group,
+        input.historySupported
+      );
+    }
+  } satisfies Pick<
+    MonitorMetricWorkbenchController['actions'],
+    'toggleFavorite' | 'toggleRealtimeFavorite' | 'loadMoreRealtimeGroups' | 'refresh'
+  >;
 }
 
 function refreshMonitorMetricQueries(
   queries: ReturnType<typeof useMonitorMetricData>,
   canRefresh: boolean,
+  selectedGroup: string | undefined,
   historySupported: boolean
 ) {
   // Refresh is one operator action, so do not issue a partial request set under incomplete context.
   if (!canRefresh) return;
   void queries.favorites.refetch();
-  void queries.realtime.refetch();
-  if (historySupported) void queries.historical.refetch();
+  if (selectedGroup && !queries.realtimeGroups.some(item => item.group === selectedGroup)) {
+    void queries.realtime.refetch();
+  }
+  for (const group of queries.realtimeGroups) void group.query.refetch();
+  if (selectedGroup && historySupported) void queries.historical.refetch();
 }
 
-function useMonitorMetricCatalog(
-  monitor: Monitor | undefined,
-  embedded: MonitorDetailMetric[],
-  source: ReturnType<typeof monitorSource>
-) {
-  const query = useQuery({
-    queryKey: monitorQueryKeys.metricCatalog(source.id, source.app, source.scrape),
-    queryFn: monitor ? ({ signal }) => loadMonitorMetricCatalog(monitor, signal) : skipToken
-  });
-  return catalogEvidence(query, embedded);
-}
-
-function monitorSource(monitor: Monitor | undefined) {
-  return monitor ? { id: monitor.id, app: monitor.app, scrape: monitor.scrape } : {};
-}
-
-function selectedMetricKey(catalog: MonitorMetricCatalogEvidence, requested: string) {
-  if (catalog.options.some(option => option.key === requested)) return requested;
-  return catalog.options[0]?.key ?? '';
-}
-
-function useMonitorMetricSelection(
-  monitor: Monitor | undefined,
-  embedded: MonitorDetailMetric[],
-  source: ReturnType<typeof monitorSource>
-) {
-  const [params, setParams] = useSearchParams();
-  const catalog = useMonitorMetricCatalog(monitor, embedded, source);
-  const requestedMetric = params.get('metric') ?? '';
-  const requestedHistory = params.get('history');
-  const history = parseMonitorMetricHistory(requestedHistory);
-  const metricKey = selectedMetricKey(catalog, requestedMetric);
-  const metric = catalog.options.find(option => option.key === metricKey);
-  useCanonicalMetricParams({
-    monitor,
-    catalog,
-    requestedHistory,
-    requestedMetric,
-    metricKey,
-    history,
-    params,
-    setParams
-  });
-  return { catalog, history, metric, metricKey, params, setParams };
-}
-
-function useCanonicalMetricParams(input: {
-  monitor: Monitor | undefined;
-  catalog: MonitorMetricCatalogEvidence;
-  requestedHistory: string | null;
-  requestedMetric: string;
-  metricKey: string;
-  history: MonitorMetricHistory;
-  params: URLSearchParams;
-  setParams: ReturnType<typeof useSearchParams>[1];
-}) {
-  const { monitor, catalog, requestedHistory, requestedMetric, metricKey, history, params, setParams } = input;
-  useEffect(() => {
-    const unavailable = ['loading', 'fallback', 'unavailable', 'error'].includes(catalog.kind);
-    if (!monitor || unavailable) return;
-    const validHistory = monitorMetricHistoryRanges.includes(requestedHistory as MonitorMetricHistory);
-    if (requestedMetric === metricKey && validHistory) return;
-    const next = new URLSearchParams(params);
-    if (metricKey) next.set('metric', metricKey);
-    else next.delete('metric');
-    next.set('history', history);
-    setParams(next, { replace: true });
-  }, [catalog.kind, history, metricKey, monitor, params, requestedHistory, requestedMetric, setParams]);
-}
-
-function useMetricUrlActions(input: {
-  catalog: MonitorMetricCatalogEvidence;
-  history: MonitorMetricHistory;
-  metricKey: string;
-  params: URLSearchParams;
-  setParams: ReturnType<typeof useSearchParams>[1];
-}) {
-  const { catalog, history, metricKey, params, setParams } = input;
-  const setMetric = useCallback(
-    (value: string) => {
-      if (!catalog.options.some(option => option.key === value)) return;
-      const next = new URLSearchParams(params);
-      next.set('metric', value);
-      next.set('history', history);
-      setParams(next);
-    },
-    [catalog.options, history, params, setParams]
-  );
-  const setHistory = useCallback(
-    (value: MonitorMetricHistory) => {
-      const next = new URLSearchParams(params);
-      next.set('history', value);
-      if (metricKey) next.set('metric', metricKey);
-      setParams(next);
-    },
-    [metricKey, params, setParams]
-  );
-  return { setMetric, setHistory };
+function useRealtimeGroupSelection(monitorId: number | undefined, definitions: MonitorDetailMetric[]) {
+  const [visibleCount, setVisibleCount] = useState(realtimeGroupPageSize);
+  const groups = monitorRealtimeGroups(definitions);
+  useEffect(() => setVisibleCount(realtimeGroupPageSize), [monitorId]);
+  return {
+    visible: groups.slice(0, visibleCount),
+    hasMore: visibleCount < groups.length,
+    loadMore: () => setVisibleCount(count => Math.min(count + realtimeGroupPageSize, groups.length))
+  };
 }
