@@ -73,6 +73,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.realtimeGroup :global(.ant-table-thead > tr > th:not(:last-child)),
+.realtimeGroup :global(.ant-table-tbody > tr > td:not(:last-child)) {
+  border-inline-end: 1px solid var(--hb-border-subtle);
+}
+.realtimeGroup :global(.ant-table-thead > tr > th::before) {
+  display: none;
+}
 .loadMore {
   grid-column: 1 / -1;
   justify-self: center;
@@ -83,7 +90,7 @@
 }
 .historyGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--hb-space-3);
 }
 .historyChart {
@@ -133,7 +140,8 @@
   place-items: center;
 }
 @media (max-width: 760px) {
-  .realtimeGrid {
+  .realtimeGrid,
+  .historyGrid {
     grid-template-columns: minmax(0, 1fr);
   }
   .historyChartHeader {
