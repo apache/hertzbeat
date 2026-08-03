@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -62,7 +62,7 @@ describe('MonitorDetailView', () => {
   it('renders strict ready evidence and passes embedded metrics through', () => {
     renderView(ready);
     expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: i18n.t('monitor.detail') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'checkout' })).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
     expect(screen.getByText(i18n.t('monitor.metadata.interval', { seconds: 0 }))).toBeInTheDocument();
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
@@ -85,17 +85,22 @@ describe('MonitorDetailView', () => {
       }
     });
 
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.metadata.viewConfiguration') }));
+
     expect(screen.getByText(i18n.t('monitor.metadata.id'))).toBeInTheDocument();
-    expect(screen.getByText('0 */5 * * * *')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('dialog', { name: i18n.t('monitor.metadata.configuration') })).getByText('0 */5 * * * *')
+    ).toBeInTheDocument();
     expect(screen.getByText('environment')).toBeInTheDocument();
     expect(screen.getByText('production')).toBeInTheDocument();
     expect(screen.getByText('owner')).toBeInTheDocument();
     expect(screen.getByText('platform')).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('monitor.metadata.created'))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('monitor.metadata.updated'))).toBeInTheDocument();
+    const configuration = screen.getByRole('dialog', { name: i18n.t('monitor.metadata.configuration') });
+    expect(within(configuration).getByText(i18n.t('monitor.metadata.created'))).toBeInTheDocument();
+    expect(within(configuration).getByText(i18n.t('monitor.metadata.updated'))).toBeInTheDocument();
   });
 
-  it('renders the canonical non-empty parameter evidence without exposing encrypted password values', () => {
+  it('keeps metrics in the default workspace and moves verbose configuration into an on-demand drawer', () => {
     renderView({
       ...ready,
       detail: {
@@ -114,11 +119,56 @@ describe('MonitorDetailView', () => {
       }
     });
 
+    expect(screen.getByTestId('metrics')).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('monitor.metadata.parameters'))).not.toBeInTheDocument();
+    expect(screen.queryByText('host')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.metadata.viewConfiguration') }));
+
+    expect(screen.getByRole('dialog', { name: i18n.t('monitor.metadata.configuration') })).toBeInTheDocument();
     expect(screen.getByText(i18n.t('monitor.metadata.parameters'))).toBeInTheDocument();
-    expect(parameterRow('host = 127.0.0.1')).toBeInTheDocument();
-    expect(parameterRow('timeout = 6000')).toBeInTheDocument();
-    expect(parameterRow('password = ••••••••')).toBeInTheDocument();
+    expect(screen.getByText('host')).toBeInTheDocument();
+    expect(screen.getByText('127.0.0.1')).toBeInTheDocument();
+    expect(screen.getByText('timeout')).toBeInTheDocument();
+    expect(screen.getByText('6000')).toBeInTheDocument();
+    expect(screen.getByText('password')).toBeInTheDocument();
+    expect(screen.getByText('••••••••')).toBeInTheDocument();
+    expect(screen.queryByText('host = 127.0.0.1')).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('private-encrypted-wire-value');
+  });
+
+  it('uses the monitor identity as the only page heading and keeps a compact operational summary', () => {
+    renderView({
+      ...ready,
+      detail: {
+        ...ready.detail,
+        collector: 'collector-a',
+        monitor: { ...ready.detail.monitor, gmtUpdate: '2026-07-25T10:30:00Z' }
+      }
+    });
+
+    expect(screen.getByRole('heading', { level: 2, name: 'checkout' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: i18n.t('monitor.detail') })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: i18n.t('monitor.metadata.summary') })).toHaveTextContent('collector-a');
+  });
+
+  it('closes configuration when the route resolves to a different monitor', () => {
+    const rendered = renderView(ready);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.metadata.viewConfiguration') }));
+    expect(screen.getByRole('dialog', { name: i18n.t('monitor.metadata.configuration') })).toBeInTheDocument();
+
+    rendered.rerender(
+      monitorDetailViewNode({
+        ...ready,
+        detail: {
+          ...ready.detail,
+          monitor: { ...ready.detail.monitor, id: 8, name: 'payments' }
+        }
+      })
+    );
+
+    expect(screen.queryByRole('dialog', { name: i18n.t('monitor.metadata.configuration') })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'payments' })).toBeInTheDocument();
   });
 
   it('keeps the monitor help guide available from detail', () => {
@@ -195,12 +245,6 @@ describe('MonitorDetailView', () => {
   });
 });
 
-function parameterRow(value: string) {
-  return screen.getByText(
-    (_content, element) => element?.matches('span.ant-typography') === true && element.textContent === value
-  );
-}
-
 function grafana(enabled: boolean, url: string | null) {
   return {
     monitorId: 7,
@@ -224,7 +268,19 @@ function renderView(
     grafanaDeleteError?: boolean;
   } = {}
 ) {
-  return render(
+  return render(monitorDetailViewNode(detail, overrides));
+}
+
+function monitorDetailViewNode(
+  detail: Parameters<typeof MonitorDetailView>[0]['state']['detail'],
+  overrides: {
+    canEdit?: boolean;
+    canDeleteGrafanaDashboard?: boolean;
+    deleteGrafanaDashboard?: () => Promise<void>;
+    grafanaDeleteError?: boolean;
+  } = {}
+) {
+  return (
     <I18nextProvider i18n={i18n}>
       <MonitorDetailView
         state={{

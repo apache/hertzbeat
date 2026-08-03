@@ -2394,7 +2394,10 @@
       "updated": "更新时间",
       "labels": "标签",
       "annotations": "注解",
-      "parameters": "参数"
+      "parameters": "参数",
+      "summary": "监控摘要",
+      "configuration": "监控配置",
+      "viewConfiguration": "查看配置"
     },
     "grafana": {
       "title": "Grafana 仪表盘",

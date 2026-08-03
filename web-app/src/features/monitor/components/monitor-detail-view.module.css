@@ -15,6 +15,79 @@
  * limitations under the License.
  */
 
+.identityContext {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.summaryStrip {
+  padding-block: var(--hb-space-3);
+  border-block: 1px solid var(--hb-border-subtle);
+}
+.summaryFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+.summaryFact {
+  min-width: 0;
+  padding-inline: var(--hb-space-4);
+  border-inline-start: 1px solid var(--hb-border-subtle);
+}
+.summaryFact:first-child {
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+.summaryFact dt {
+  margin-bottom: 3px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+.summaryFact dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.configurationBody {
+  display: grid;
+  gap: var(--hb-space-5);
+}
+.parameterSection {
+  display: grid;
+  gap: var(--hb-space-3);
+}
+.parameterSection :global(.ant-typography) {
+  margin: 0;
+}
+.parameterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+}
+.parameterEntry {
+  min-width: 0;
+  padding: var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.parameterEntry:nth-child(odd) {
+  border-inline-end: 1px solid var(--hb-border-subtle);
+}
+.parameterEntry dt {
+  margin-bottom: 3px;
+  color: var(--hb-text-secondary);
+  font-family: var(--ant-font-family-code);
+  font-size: 12px;
+}
+.parameterEntry dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 .metadataTags :global(.ant-tag) {
   display: inline-flex;
   gap: 6px;
@@ -32,4 +105,21 @@
   height: min(1200px, 75vh);
   min-height: 480px;
   border: 0;
+}
+@media (max-width: 760px) {
+  .summaryFacts,
+  .parameterGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .summaryFact,
+  .summaryFact:first-child {
+    padding: var(--hb-space-2) 0;
+    border-inline-start: 0;
+  }
+  .summaryFact + .summaryFact {
+    border-top: 1px solid var(--hb-border-subtle);
+  }
+  .parameterEntry:nth-child(odd) {
+    border-inline-end: 0;
+  }
 }

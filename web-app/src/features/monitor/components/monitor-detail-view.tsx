@@ -16,6 +16,7 @@
  */
 
 import { Alert, Button, Popconfirm } from 'antd';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,7 +33,7 @@ import type {
   MonitorDetailViewState
 } from '../model/monitor-detail-model';
 import { safeMonitorGrafanaUrl } from '../model/monitor-detail-model';
-import { MonitorDetailMetadata } from './monitor-detail-metadata';
+import { MonitorDetailConfigurationDrawer, MonitorDetailSummary } from './monitor-detail-metadata';
 import { MonitorHelpLink } from './monitor-help-link';
 import styles from './monitor-detail-view.module.css';
 
@@ -45,18 +46,48 @@ export function MonitorDetailView({
   actions: MonitorDetailViewActions;
   metricWorkbench?: ReactNode;
 }) {
-  const { t } = useTranslation();
   if (state.detail.kind !== 'ready') return <MonitorDetailState evidence={state.detail} onBack={actions.back} />;
-  const { monitor } = state.detail.detail;
+  return (
+    <MonitorReadyDetailView
+      key={state.detail.detail.monitor.id}
+      detail={state.detail.detail}
+      state={state}
+      actions={actions}
+      metricWorkbench={metricWorkbench}
+    />
+  );
+}
+
+function MonitorReadyDetailView({
+  detail,
+  state,
+  actions,
+  metricWorkbench
+}: {
+  detail: Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail'];
+  state: MonitorDetailViewState;
+  actions: MonitorDetailViewActions;
+  metricWorkbench?: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const [configurationOpen, setConfigurationOpen] = useState(false);
+  const { monitor } = detail;
   return (
     <OperationalPage mode="workspace">
       <OperationalPageHeader
         title={monitor.name}
-        description={monitor.instance}
+        description={
+          <span className={styles.identityContext}>
+            <span>{monitor.app}</span>
+            <span aria-hidden="true">·</span>
+            <span>{monitor.instance}</span>
+          </span>
+        }
         actions={
           <>
             <MonitorHelpLink />
             <Button onClick={actions.back}>{t('common.back')}</Button>
+            <Button onClick={() => setConfigurationOpen(true)}>{t('monitor.metadata.viewConfiguration')}</Button>
             {state.canEdit ? (
               <Button type="primary" onClick={actions.edit}>
                 {t('common.edit')}
@@ -65,16 +96,17 @@ export function MonitorDetailView({
           </>
         }
       />
-      <OperationalSection title={t('monitor.detail')}>
-        <MonitorDetailMetadata
-          monitor={monitor}
-          collector={state.detail.detail.collector}
-          params={state.detail.detail.params}
-        />
-      </OperationalSection>
+      <MonitorDetailSummary monitor={monitor} collector={detail.collector} />
       {metricWorkbench}
+      <MonitorDetailConfigurationDrawer
+        open={configurationOpen}
+        onClose={() => setConfigurationOpen(false)}
+        monitor={monitor}
+        collector={detail.collector}
+        params={detail.params}
+      />
       <MonitorGrafanaDashboard
-        dashboard={state.detail.detail.grafanaDashboard}
+        dashboard={detail.grafanaDashboard}
         deleting={state.grafanaDeleting}
         deleteError={state.grafanaDeleteError}
         canDelete={state.canDeleteGrafanaDashboard}

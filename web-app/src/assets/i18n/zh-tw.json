@@ -2531,7 +2531,10 @@
       "updated": "更新時間",
       "labels": "標籤",
       "annotations": "註解",
-      "parameters": "參數"
+      "parameters": "參數",
+      "summary": "監控摘要",
+      "configuration": "監控設定",
+      "viewConfiguration": "查看設定"
     },
     "grafana": {
       "title": "Grafana 儀表板",

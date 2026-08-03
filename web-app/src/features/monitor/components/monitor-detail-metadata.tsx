@@ -5,8 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Descriptions, Space, Tag, Typography, type DescriptionsProps } from 'antd';
+import { Descriptions, Drawer, Space, Tag, Typography, type DescriptionsProps } from 'antd';
 import type { TFunction } from 'i18next';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { monitorParamTypes, type Monitor, type MonitorParam } from '../model/monitor-contract';
@@ -19,24 +20,84 @@ import styles from './monitor-detail-view.module.css';
  * These fields were present in the Angular detail and already belong to the
  * canonical monitor response, so hiding them would force operators into edit.
  */
-export function MonitorDetailMetadata({
+export function MonitorDetailSummary({
+  monitor,
+  collector
+}: {
+  monitor: Monitor;
+  collector: string | null | undefined;
+}) {
+  const { t } = useTranslation();
+  const facts = [
+    {
+      key: 'status',
+      label: t('monitor.status.label'),
+      value: <Tag color={monitorStatusColor(monitor.status)}>{t(monitorStatusKey(monitor.status))}</Tag>
+    },
+    { key: 'schedule', label: t('monitor.metadata.schedule'), value: monitorSchedule(t, monitor) },
+    { key: 'collector', label: t('monitor.metadata.collector'), value: collector || '—' },
+    { key: 'updated', label: t('monitor.metadata.updated'), value: monitorTime(monitor.gmtUpdate) }
+  ];
+
+  return (
+    <section className={styles.summaryStrip} aria-label={t('monitor.metadata.summary')}>
+      <dl className={styles.summaryFacts}>
+        {facts.map(fact => (
+          <div className={styles.summaryFact} key={fact.key}>
+            <dt>{fact.label}</dt>
+            <dd>{fact.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/**
+ * Full configuration stays available without competing with the metric workbench.
+ * A drawer preserves Angular's data-first detail flow while keeping audit fields
+ * and encrypted parameter evidence one explicit action away.
+ */
+export function MonitorDetailConfigurationDrawer({
+  open,
+  onClose,
   monitor,
   collector,
   params
 }: {
+  open: boolean;
+  onClose: () => void;
   monitor: Monitor;
   collector: string | null | undefined;
   params: MonitorParam[] | undefined;
 }) {
   const { t } = useTranslation();
-  return <Descriptions size="small" column={2} items={monitorMetadataItems(t, monitor, collector, params)} />;
+  const parameterHeadingId = useId();
+  return (
+    <Drawer
+      title={t('monitor.metadata.configuration')}
+      open={open}
+      onClose={onClose}
+      width="min(560px, 100vw)"
+      destroyOnHidden
+    >
+      <div className={styles.configurationBody}>
+        <Descriptions size="small" column={1} items={monitorMetadataItems(t, monitor, collector)} />
+        <section className={styles.parameterSection} aria-labelledby={parameterHeadingId}>
+          <Typography.Title id={parameterHeadingId} level={5}>
+            {t('monitor.metadata.parameters')}
+          </Typography.Title>
+          <MonitorParameters params={params} />
+        </section>
+      </div>
+    </Drawer>
+  );
 }
 
 function monitorMetadataItems(
   t: TFunction,
   monitor: Monitor,
-  collector: string | null | undefined,
-  params: MonitorParam[] | undefined
+  collector: string | null | undefined
 ): NonNullable<DescriptionsProps['items']> {
   return [
     {
@@ -54,26 +115,17 @@ function monitorMetadataItems(
     {
       key: 'description',
       label: t('monitor.editor.descriptionLabel'),
-      children: monitor.description || '—',
-      span: 2
+      children: monitor.description || '—'
     },
     {
       key: 'labels',
       label: t('monitor.metadata.labels'),
-      children: <MetadataEntries entries={monitor.labels} />,
-      span: 2
+      children: <MetadataEntries entries={monitor.labels} />
     },
     {
       key: 'annotations',
       label: t('monitor.metadata.annotations'),
-      children: <MetadataEntries entries={monitor.annotations} />,
-      span: 2
-    },
-    {
-      key: 'params',
-      label: t('monitor.metadata.parameters'),
-      children: <MonitorParameters params={params} />,
-      span: 2
+      children: <MetadataEntries entries={monitor.annotations} />
     }
   ];
 }
@@ -109,15 +161,14 @@ function MetadataEntries({ entries }: { entries: Record<string, string> | null |
 function MonitorParameters({ params }: { params: MonitorParam[] | undefined }) {
   if (!params || params.length === 0) return <>—</>;
   return (
-    <Space direction="vertical" size={2}>
+    <dl className={styles.parameterGrid}>
       {params.map((param, index) => (
-        <Typography.Text key={param.id ?? `${param.field}:${index}`}>
-          <Typography.Text code>{param.field}</Typography.Text>
-          {' = '}
-          {monitorParameterValue(param)}
-        </Typography.Text>
+        <div className={styles.parameterEntry} key={param.id ?? `${param.field}:${index}`}>
+          <dt>{param.field}</dt>
+          <dd>{monitorParameterValue(param)}</dd>
+        </div>
       ))}
-    </Space>
+    </dl>
   );
 }
 

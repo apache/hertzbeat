@@ -2404,7 +2404,10 @@
       "updated": "Updated",
       "labels": "Labels",
       "annotations": "Annotations",
-      "parameters": "Parameters"
+      "parameters": "Parameters",
+      "summary": "Monitor summary",
+      "configuration": "Monitor configuration",
+      "viewConfiguration": "View configuration"
     },
     "grafana": {
       "title": "Grafana dashboard",

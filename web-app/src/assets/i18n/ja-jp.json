@@ -2543,7 +2543,10 @@
       "updated": "更新日時",
       "labels": "ラベル",
       "annotations": "注釈",
-      "parameters": "パラメータ"
+      "parameters": "パラメータ",
+      "summary": "監視サマリー",
+      "configuration": "監視設定",
+      "viewConfiguration": "設定を表示"
     },
     "grafana": {
       "title": "Grafana ダッシュボード",

@@ -2545,7 +2545,10 @@
       "updated": "Atualizado",
       "labels": "Rótulos",
       "annotations": "Anotações",
-      "parameters": "Parâmetros"
+      "parameters": "Parâmetros",
+      "summary": "Resumo do monitoramento",
+      "configuration": "Configuração do monitoramento",
+      "viewConfiguration": "Ver configuração"
     },
     "grafana": {
       "title": "Painel do Grafana",
