@@ -2646,7 +2646,8 @@
       "detectSuccess": "連線檢測通過。",
       "detectFailed": "連線檢測失敗。",
       "saveSuccess": "監控已儲存。",
-      "saveFailed": "監控儲存失敗。"
+      "saveFailed": "監控儲存失敗。",
+      "saveUnknown": "無法確認儲存結果，請先檢查監控清單再重試。"
     }
   },
   "statusManagement": {

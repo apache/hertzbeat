@@ -17,14 +17,7 @@
 
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import type { SupportedLocale } from '@/core/i18n/i18n';
-import {
-  MonitorContractError,
-  monitorStatusFilters,
-  type Monitor,
-  type MonitorAction,
-  type MonitorPage,
-  type MonitorQuery
-} from '../model/monitor-contract';
+import { MonitorContractError, type MonitorAction, type MonitorQuery } from '../model/monitor-contract';
 import { writeMonitorQuery } from '../model/monitor-query';
 import { parseMonitorApps } from './monitor-apps-schema';
 import { parseMonitorDetail } from './monitor-detail-schema';
@@ -135,91 +128,6 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
   if (value === null || value === undefined) throw new MonitorMissingError();
   return parseMonitorDetail(value, requestedId);
-}
-
-export async function loadNewMonitorIdentitySnapshot(name: string, app: string, signal?: AbortSignal) {
-  const matches = await loadExactMonitorIdentities(name, app, signal);
-  return new Set(matches.map(monitor => monitor.id));
-}
-
-export async function loadNewMonitorEvidence(
-  name: string,
-  app: string,
-  signal?: AbortSignal,
-  preWriteIds: ReadonlySet<number> = new Set()
-) {
-  const matches = (await loadExactMonitorIdentities(name, app, signal)).filter(monitor => !preWriteIds.has(monitor.id));
-  const [match] = matches;
-  if (matches.length !== 1 || !match) {
-    throw new MonitorContractError(`Expected one exact saved monitor, received ${matches.length}`);
-  }
-  return loadMonitorDetail(match.id, signal);
-}
-
-async function loadExactMonitorIdentities(name: string, app: string, signal?: AbortSignal) {
-  const normalizedName = name.trim();
-  const normalizedApp = app.trim();
-  if (!normalizedName || !normalizedApp) throw new MonitorContractError('New monitor identity is incomplete');
-  const matches: Monitor[] = [];
-  const seenIds = new Set<number>();
-  const firstPage = await loadMonitors(
-    {
-      search: normalizedName,
-      app: normalizedApp,
-      status: monitorStatusFilters.all,
-      labels: '',
-      sort: null,
-      order: null,
-      pageIndex: 0,
-      pageSize: 50
-    },
-    signal
-  );
-  if (firstPage.totalPages > 20) {
-    throw new MonitorContractError('New monitor evidence exceeds the supported safety bound');
-  }
-  // Freeze the first response before following pages so later totals cannot shorten or extend save evidence.
-  const snapshot = { totalElements: firstPage.totalElements, totalPages: firstPage.totalPages };
-  collectNewMonitorEvidence(firstPage, snapshot, seenIds, matches, normalizedName, normalizedApp);
-
-  for (let pageIndex = 1; pageIndex < snapshot.totalPages; pageIndex += 1) {
-    const page = await loadMonitors(
-      {
-        search: normalizedName,
-        app: normalizedApp,
-        status: monitorStatusFilters.all,
-        labels: '',
-        sort: null,
-        order: null,
-        pageIndex,
-        pageSize: 50
-      },
-      signal
-    );
-    collectNewMonitorEvidence(page, snapshot, seenIds, matches, normalizedName, normalizedApp);
-  }
-  if (seenIds.size !== snapshot.totalElements) {
-    throw new MonitorContractError('New monitor evidence does not contain the complete page snapshot');
-  }
-  return matches;
-}
-
-function collectNewMonitorEvidence(
-  page: MonitorPage,
-  snapshot: { totalElements: number; totalPages: number },
-  seenIds: Set<number>,
-  matches: Monitor[],
-  normalizedName: string,
-  normalizedApp: string
-) {
-  if (page.totalElements !== snapshot.totalElements || page.totalPages !== snapshot.totalPages) {
-    throw new MonitorContractError('New monitor evidence changed while scanning pages');
-  }
-  for (const monitor of page.content) {
-    if (seenIds.has(monitor.id)) throw new MonitorContractError('New monitor evidence contains duplicate monitor ids');
-    seenIds.add(monitor.id);
-    if (monitor.name === normalizedName && monitor.app === normalizedApp) matches.push(monitor);
-  }
 }
 
 export function mutateMonitors(action: MonitorAction, ids: number[], signal?: AbortSignal) {

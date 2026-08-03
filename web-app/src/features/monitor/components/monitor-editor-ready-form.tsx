@@ -153,12 +153,13 @@ function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorComma
   const { t } = useTranslation();
   if (!feedback) return null;
   const successful = feedback === 'detect-success';
+  const uncertain = feedback === 'save-unknown';
   return (
     <div className={styles.commandFeedback}>
       <Alert
-        role={successful ? 'status' : 'alert'}
+        role={successful || uncertain ? 'status' : 'alert'}
         showIcon
-        type={successful ? 'success' : 'error'}
+        type={commandFeedbackType(feedback)}
         message={t(commandFeedbackMessageKey(feedback))}
       />
     </div>
@@ -168,5 +169,12 @@ function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorComma
 function commandFeedbackMessageKey(feedback: MonitorEditorCommandFeedback) {
   if (feedback === 'detect-success') return 'monitor.editor.detectSuccess';
   if (feedback === 'detect-failed') return 'monitor.editor.detectFailed';
+  if (feedback === 'save-unknown') return 'monitor.editor.saveUnknown';
   return 'monitor.editor.saveFailed';
+}
+
+function commandFeedbackType(feedback: MonitorEditorCommandFeedback) {
+  if (feedback === 'detect-success') return 'success' as const;
+  if (feedback === 'save-unknown') return 'warning' as const;
+  return 'error' as const;
 }

@@ -7,8 +7,6 @@
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 
-import type { MonitorDetail } from '../model/monitor-contract';
-import type { MonitorWriteVerification } from '../model/monitor-write-verification';
 import type { MonitorEditorCommandInput } from './monitor-editor-command-model';
 import { monitorQueryKeys } from './monitor-query-keys';
 
@@ -24,16 +22,9 @@ export function markAcknowledgedMonitorSave(input: MonitorEditorCommandInput) {
   }
 }
 
-/** Publishes the acknowledged write separately from its read-back evidence. */
-export function completeCommittedMonitorSave(
-  verification: MonitorWriteVerification<MonitorDetail | undefined>,
-  input: MonitorEditorCommandInput
-) {
+/** Reports and navigates after the write endpoint has acknowledged the save. */
+export function completeAcknowledgedMonitorSave(input: MonitorEditorCommandInput) {
   void input.message.success(input.text.saveSuccess);
-  const proof = 'evidence' in verification ? verification.evidence : undefined;
-  if (proof) input.queryClient.setQueryData(monitorQueryKeys.detail(proof.monitor.id), proof);
-  if (verification.kind === 'unavailable') void input.message.warning(input.text.verificationUnavailable);
-  if (verification.kind === 'error') void input.message.error(input.text.verificationError);
   if (!input.draft) return;
   const target = input.mode === 'edit' ? input.returnTo : buildMonitorListPath({ app: input.draft.monitor.app });
   void input.navigate(target);

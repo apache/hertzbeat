@@ -29,8 +29,6 @@ const api = vi.hoisted(() => ({
   loadMonitorCollectors: vi.fn(),
   loadMonitorDetail: vi.fn(),
   loadMonitorParamDefines: vi.fn(),
-  loadNewMonitorEvidence: vi.fn(),
-  loadNewMonitorIdentitySnapshot: vi.fn(),
   saveMonitor: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), info: vi.fn(), success: vi.fn(), warning: vi.fn() }));
@@ -96,7 +94,7 @@ const headersDefine = {
 
 describe('useMonitorEditorController', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     runtime.locale = 'en';
     api.loadMonitorApps.mockResolvedValue([{ value: 'website', label: 'Website' }]);
     api.loadMonitorCollectors.mockResolvedValue([{ name: 'collector-a', online: true }]);
@@ -104,10 +102,6 @@ describe('useMonitorEditorController', () => {
     api.loadMonitorParamDefines.mockResolvedValue([]);
     api.detectMonitor.mockResolvedValue(undefined);
     api.saveMonitor.mockResolvedValue(undefined);
-    api.loadNewMonitorIdentitySnapshot.mockResolvedValue(new Set());
-    api.loadNewMonitorEvidence.mockImplementation(() =>
-      Promise.resolve({ ...detail, monitor: { ...detail.monitor, id: 8, jobId: 10 } })
-    );
   });
   afterEach(cleanup);
 
@@ -233,7 +227,6 @@ describe('useMonitorEditorController', () => {
     expect(routed.router.state.location.pathname).toBe('/monitors');
     pending.resolve();
     await expect(save).resolves.toBeUndefined();
-    expect(api.loadNewMonitorEvidence).not.toHaveBeenCalled();
     expect(invalidate).toHaveBeenCalledWith({ queryKey: monitorQueryKeys.lists(), refetchType: 'none' });
     expect(notify.success).not.toHaveBeenCalled();
     expect(notify.error).not.toHaveBeenCalled();
@@ -365,7 +358,7 @@ describe('useMonitorEditorController', () => {
     expect(explicit.current().state.sourceKey).toContain('http_sd');
   });
 
-  it('requires exact-id reread convergence before edit navigation', async () => {
+  it('navigates after an acknowledged edit without blocking on a second detail read', async () => {
     const hostDefine = { ...headersDefine, field: 'host', type: 'host', name: { 'en-US': 'Host' } };
     const portDefine = { ...headersDefine, field: 'port', type: 'number', name: { 'en-US': 'Port' } };
     const exactDetail = {
@@ -386,14 +379,12 @@ describe('useMonitorEditorController', () => {
       expect.objectContaining({ monitor: expect.objectContaining({ instance: '127.0.0.1' }) }),
       expect.any(AbortSignal)
     );
-    expect(api.loadMonitorDetail).toHaveBeenLastCalledWith(7, expect.any(AbortSignal));
-    expect(routed.client.getQueryData(monitorQueryKeys.detail(7))).toEqual(exactDetail);
+    expect(api.loadMonitorDetail).toHaveBeenCalledTimes(1);
     expect(routed.router.state.location.pathname).toBe('/monitors');
     expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
   });
 
-  it('reports a committed new monitor honestly when verification is unavailable', async () => {
-    api.loadNewMonitorEvidence.mockRejectedValue(new ApiMessageError('offline', { status: 503 }));
+  it('navigates after an acknowledged create without issuing identity read-back requests', async () => {
     const routed = renderController('new', '/monitors/new?app=website');
     await waitFor(() => expect(routed.current().state.draft).toBeDefined());
     act(() => routed.current().actions.updateMonitor({ name: 'home' }));
@@ -402,17 +393,12 @@ describe('useMonitorEditorController', () => {
 
     expect(api.saveMonitor).toHaveBeenCalledTimes(1);
     expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
-    expect(notify.warning).toHaveBeenCalledWith('common.unavailable');
-    expect(notify.error).not.toHaveBeenCalledWith('monitor.editor.saveFailed');
+    expect(api.loadMonitorDetail).not.toHaveBeenCalled();
     expect(routed.router.state.location.pathname).toBe('/monitors');
   });
 
-  it('reconciles an uncertain create response by canonical identity without submitting again', async () => {
+  it('reports an uncertain create response without issuing an identity scan', async () => {
     api.saveMonitor.mockRejectedValue(new ApiMessageError('ambiguous create response', { code: 1, status: 200 }));
-    api.loadNewMonitorEvidence.mockResolvedValue({
-      ...detail,
-      monitor: { ...detail.monitor, id: 8, jobId: 10, instance: '', labels: {}, annotations: {} }
-    });
     const routed = renderController('new', '/monitors/new?app=website');
     await waitFor(() => expect(routed.current().state.draft).toBeDefined());
     act(() => routed.current().actions.updateMonitor({ name: 'home' }));
@@ -420,34 +406,14 @@ describe('useMonitorEditorController', () => {
     await act(async () => routed.current().actions.save());
 
     expect(api.saveMonitor).toHaveBeenCalledTimes(1);
-    expect(api.loadNewMonitorEvidence).toHaveBeenCalledWith('home', 'website', expect.any(AbortSignal), new Set());
-    expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
-    expect(notify.error).not.toHaveBeenCalledWith('monitor.editor.saveFailed');
-    expect(routed.router.state.location.pathname).toBe('/monitors');
-    expect(routed.router.state.location.search).toBe('?app=website');
-  });
-
-  it('does not mistake a pre-existing exact identity for an uncertain create', async () => {
-    api.loadNewMonitorIdentitySnapshot.mockResolvedValue(new Set([8]));
-    api.saveMonitor.mockRejectedValue(new ApiMessageError('create rejected', { code: 1, status: 200 }));
-    api.loadNewMonitorEvidence.mockRejectedValue(new MonitorContractError('No post-write identity'));
-    const routed = renderController('new', '/monitors/new?app=website');
-    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
-    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
-
-    await act(async () => routed.current().actions.save());
-
-    expect(api.saveMonitor).toHaveBeenCalledTimes(1);
-    expect(api.loadNewMonitorEvidence).toHaveBeenCalledWith('home', 'website', expect.any(AbortSignal), new Set([8]));
     expect(notify.success).not.toHaveBeenCalledWith('monitor.editor.saveSuccess');
-    expect(notify.error).toHaveBeenCalledWith('monitor.editor.saveFailed');
+    expect(notify.warning).toHaveBeenCalledWith('monitor.editor.saveUnknown');
+    expect(notify.error).not.toHaveBeenCalled();
     expect(routed.router.state.location.pathname).toBe('/monitors/new');
+    expect(routed.current().state.feedback).toBe('save-unknown');
   });
 
   it('marks the edited detail stale as soon as the write is acknowledged', async () => {
-    api.loadMonitorDetail
-      .mockResolvedValueOnce(detail)
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
     const routed = renderController('edit', '/monitors/7/edit?returnTo=%2Fmonitors');
     const invalidate = vi.spyOn(routed.client, 'invalidateQueries');
     await waitFor(() => expect(routed.current().state.draft?.monitor.id).toBe(7));
@@ -459,7 +425,8 @@ describe('useMonitorEditorController', () => {
       exact: true,
       refetchType: 'none'
     });
-    expect(notify.warning).toHaveBeenCalledWith('common.unavailable');
+    expect(api.loadMonitorDetail).toHaveBeenCalledTimes(1);
+    expect(notify.warning).not.toHaveBeenCalled();
   });
 
   it('classifies an unsafe canonical parameter definition as non-retryable', async () => {
@@ -468,23 +435,6 @@ describe('useMonitorEditorController', () => {
 
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('invalid'));
     expect(routed.current().state.draft).toBeUndefined();
-  });
-
-  it('distinguishes committed non-convergence from a rejected save', async () => {
-    api.loadNewMonitorEvidence.mockResolvedValue({
-      ...detail,
-      monitor: { ...detail.monitor, id: 8, jobId: 10, name: 'different' }
-    });
-    const routed = renderController('new', '/monitors/new?app=website');
-    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
-    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
-
-    await act(async () => routed.current().actions.save());
-
-    expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
-    expect(notify.error).toHaveBeenCalledWith('common.routeError.description');
-    expect(notify.error).not.toHaveBeenCalledWith('monitor.editor.saveFailed');
-    expect(routed.router.state.location.pathname).toBe('/monitors');
   });
 
   it('reports save failure only when the write itself is definitely rejected', async () => {
@@ -496,7 +446,6 @@ describe('useMonitorEditorController', () => {
 
     await act(async () => routed.current().actions.save());
 
-    expect(api.loadNewMonitorEvidence).not.toHaveBeenCalled();
     expect(invalidate).not.toHaveBeenCalled();
     expect(notify.error).toHaveBeenCalledWith('monitor.editor.saveFailed');
     expect(notify.success).not.toHaveBeenCalledWith('monitor.editor.saveSuccess');

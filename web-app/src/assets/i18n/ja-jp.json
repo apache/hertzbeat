@@ -2658,7 +2658,8 @@
       "detectSuccess": "接続テストに成功しました。",
       "detectFailed": "接続テストに失敗しました。",
       "saveSuccess": "監視を保存しました。",
-      "saveFailed": "監視を保存できませんでした。"
+      "saveFailed": "監視を保存できませんでした。",
+      "saveUnknown": "保存結果を確認できません。再試行する前に監視一覧を確認してください。"
     }
   },
   "statusManagement": {

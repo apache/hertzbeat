@@ -8,7 +8,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { NavigateFunction } from 'react-router-dom';
 
-import type { MonitorDetail, MonitorEditorMode, MonitorParamDefine } from '../model/monitor-contract';
+import type { MonitorEditorMode, MonitorParamDefine } from '../model/monitor-contract';
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 
 export type MonitorEditorCommandText = {
@@ -17,8 +17,7 @@ export type MonitorEditorCommandText = {
   detectFailed: string;
   saveSuccess: string;
   saveFailed: string;
-  verificationUnavailable: string;
-  verificationError: string;
+  saveUnknown: string;
 };
 
 export type MonitorEditorCommandInput = {
@@ -26,7 +25,6 @@ export type MonitorEditorCommandInput = {
   id: number | undefined;
   source: string;
   draft: MonitorEditorDraft | undefined;
-  before: MonitorDetail | undefined;
   defines: MonitorParamDefine[];
   returnTo: string;
   navigate: NavigateFunction;

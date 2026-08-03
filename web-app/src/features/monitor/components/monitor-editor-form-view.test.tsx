@@ -330,6 +330,10 @@ describe('MonitorEditorFormView validation evidence', () => {
     controller.state.feedback = 'detect-failed';
     rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
     expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.detectFailed');
+
+    controller.state.feedback = 'save-unknown';
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.saveUnknown');
   });
 
   it('imports a Grafana dashboard template from an in-memory JSON file', async () => {
@@ -385,7 +389,7 @@ function editorController(validationIssues: string[]) {
       collectors: [],
       busy: false,
       command: 'idle' as 'idle' | 'detecting' | 'saving',
-      feedback: null as 'detect-success' | 'detect-failed' | 'save-failed' | null,
+      feedback: null as 'detect-success' | 'detect-failed' | 'save-failed' | 'save-unknown' | null,
       validationIssues,
       returnTo: '/monitors',
       scrapeValues: ['static'] as const,

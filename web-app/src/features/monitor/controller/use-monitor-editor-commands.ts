@@ -18,12 +18,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
+import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
+
 import { detectMonitor } from '../api/monitor-api';
-import type { MonitorDetail } from '../model/monitor-contract';
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
 import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
-import { verifiedMonitorWrite, type MonitorWriteVerification } from '../model/monitor-write-verification';
 import {
   createMonitorEditorOperation,
   isCurrentMonitorEditorOperation,
@@ -33,8 +34,8 @@ import type {
   MonitorEditorCommandInput as CommandInput,
   MonitorEditorCommandRequest
 } from './monitor-editor-command-model';
-import { completeCommittedMonitorSave } from './monitor-editor-save-completion';
-import { saveAndVerifyMonitor } from './monitor-editor-save-verification';
+import { completeAcknowledgedMonitorSave } from './monitor-editor-save-completion';
+import { saveAcknowledgedMonitor } from './monitor-editor-save';
 
 type CommandState = {
   source: string;
@@ -117,17 +118,13 @@ async function executeMonitorCommand(
   const { active, payload } = prepared;
 
   try {
-    const verification = await runMonitorCommand(action, input, payload, active.controller.signal, () =>
-      isCurrentMonitorEditorOperation(operation.current, active)
-    );
-    if (!verification) return;
-    if (completeMonitorCommand(action, verification, input, operation.current, active) && action === 'detect') {
+    await runMonitorCommand(action, input, payload, active.controller.signal);
+    if (completeMonitorCommand(action, input, operation.current, active) && action === 'detect') {
       publishMonitorCommandFeedback(input.source, 'detect-success', setState);
     }
-  } catch {
-    if (failMonitorCommand(action, input, operation.current, active)) {
-      publishMonitorCommandFeedback(input.source, action === 'detect' ? 'detect-failed' : 'save-failed', setState);
-    }
+  } catch (error) {
+    const feedback = failMonitorCommand(action, error, input, operation.current, active);
+    if (feedback) publishMonitorCommandFeedback(input.source, feedback, setState);
   } finally {
     releaseMonitorCommand(input.source, operation, setState, active);
   }
@@ -169,19 +166,17 @@ async function runMonitorCommand(
   action: CommandAction,
   input: CommandInput,
   payload: ReturnType<typeof buildMonitorPayload>,
-  signal: AbortSignal,
-  ownsOperation: () => boolean
+  signal: AbortSignal
 ) {
   if (action === 'detect') {
     await detectMonitor(payload, signal);
-    return verifiedMonitorWrite(undefined);
+    return;
   }
-  return saveAndVerifyMonitor(input, payload, signal, ownsOperation);
+  await saveAcknowledgedMonitor(input, payload, signal);
 }
 
 function completeMonitorCommand(
   action: CommandAction,
-  verification: MonitorWriteVerification<MonitorDetail | undefined>,
   input: CommandInput,
   current: MonitorEditorActiveOperation | null,
   active: MonitorEditorActiveOperation
@@ -191,19 +186,28 @@ function completeMonitorCommand(
     void input.message.success(input.text.detectSuccess);
     return true;
   }
-  completeCommittedMonitorSave(verification, input);
+  completeAcknowledgedMonitorSave(input);
   return true;
 }
 
 function failMonitorCommand(
   action: CommandAction,
+  error: unknown,
   input: CommandInput,
   current: MonitorEditorActiveOperation | null,
   active: MonitorEditorActiveOperation
 ) {
-  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return false;
+  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return null;
+  if (action === 'save' && isUncertainMonitorSave(error)) {
+    void input.message.warning(input.text.saveUnknown);
+    return 'save-unknown' as const;
+  }
   void input.message.error(action === 'detect' ? input.text.detectFailed : input.text.saveFailed);
-  return true;
+  return action === 'detect' ? ('detect-failed' as const) : ('save-failed' as const);
+}
+
+function isUncertainMonitorSave(error: unknown) {
+  return error instanceof ApiMessageError && apiMessageWriteOutcome(error) === 'uncertain';
 }
 
 function releaseMonitorCommand(

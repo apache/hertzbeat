@@ -2660,7 +2660,8 @@
       "detectSuccess": "Teste de conexão aprovado.",
       "detectFailed": "Falha no teste de conexão.",
       "saveSuccess": "Monitor salvo.",
-      "saveFailed": "Não foi possível salvar o monitor."
+      "saveFailed": "Não foi possível salvar o monitor.",
+      "saveUnknown": "Não foi possível confirmar o resultado. Verifique a lista de monitores antes de tentar novamente."
     }
   },
   "statusManagement": {

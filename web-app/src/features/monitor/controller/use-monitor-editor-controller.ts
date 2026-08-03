@@ -36,7 +36,6 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     id: route.id,
     source: resources.source,
     draft: draftState.draft,
-    before: resources.detail,
     defines: resources.defines,
     returnTo: route.returnTo,
     navigate: route.navigate,
@@ -118,7 +117,6 @@ function monitorEditorCommandText(t: TFunction): MonitorEditorCommandText {
     detectFailed: t('monitor.editor.detectFailed'),
     saveSuccess: t('monitor.editor.saveSuccess'),
     saveFailed: t('monitor.editor.saveFailed'),
-    verificationUnavailable: t('common.unavailable'),
-    verificationError: t('common.routeError.description')
+    saveUnknown: t('monitor.editor.saveUnknown')
   };
 }

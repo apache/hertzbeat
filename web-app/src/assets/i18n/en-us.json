@@ -2524,7 +2524,8 @@
       "detectSuccess": "Connection test passed.",
       "detectFailed": "Connection test failed.",
       "saveSuccess": "Monitor saved.",
-      "saveFailed": "Monitor could not be saved."
+      "saveFailed": "Monitor could not be saved.",
+      "saveUnknown": "The save result is unknown. Check the monitor list before trying again."
     }
   },
   "alert": {

@@ -16,27 +16,30 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
 
-const api = vi.hoisted(() => ({ loadMonitorDetail: vi.fn(), saveMonitor: vi.fn() }));
+const api = vi.hoisted(() => ({ saveMonitor: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/monitor-api')>()),
   ...api
 }));
 
 import type { MonitorEditorCommandInput } from './monitor-editor-command-model';
-import { saveAndVerifyMonitor } from './monitor-editor-save-verification';
+import { saveAcknowledgedMonitor } from './monitor-editor-save';
 
-describe('saveAndVerifyMonitor', () => {
-  it('rejects an edit command without a monitor id before writing', async () => {
+describe('saveAcknowledgedMonitor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('finishes an acknowledged create without blocking on identity read-back', async () => {
     const input: MonitorEditorCommandInput = {
-      mode: 'edit',
+      mode: 'new',
       id: undefined,
-      source: 'edit:missing',
+      source: 'new:mysql',
       draft: undefined,
-      before: undefined,
       defines: [],
       returnTo: '/monitors',
       navigate: vi.fn(),
@@ -48,20 +51,43 @@ describe('saveAndVerifyMonitor', () => {
         detectFailed: 'detectFailed',
         saveSuccess: 'saveSuccess',
         saveFailed: 'saveFailed',
-        verificationUnavailable: 'verificationUnavailable',
-        verificationError: 'verificationError'
+        saveUnknown: 'saveUnknown'
       }
     };
 
-    const result = await saveAndVerifyMonitor(
+    await saveAcknowledgedMonitor(
       input,
-      buildMonitorPayload({}, '', []),
-      new AbortController().signal,
-      () => true
+      buildMonitorPayload({ name: 'database', app: 'mysql' }, '', []),
+      new AbortController().signal
     );
 
-    expect(result).toEqual({ kind: 'error' });
+    expect(api.saveMonitor).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an edit command without a monitor id before writing', async () => {
+    const input: MonitorEditorCommandInput = {
+      mode: 'edit',
+      id: undefined,
+      source: 'edit:missing',
+      draft: undefined,
+      defines: [],
+      returnTo: '/monitors',
+      navigate: vi.fn(),
+      queryClient: new QueryClient(),
+      message: { warning: vi.fn(), success: vi.fn(), error: vi.fn() },
+      text: {
+        validation: 'validation',
+        detectSuccess: 'detectSuccess',
+        detectFailed: 'detectFailed',
+        saveSuccess: 'saveSuccess',
+        saveFailed: 'saveFailed',
+        saveUnknown: 'saveUnknown'
+      }
+    };
+
+    await expect(
+      saveAcknowledgedMonitor(input, buildMonitorPayload({}, '', []), new AbortController().signal)
+    ).rejects.toThrow('A monitor id is required when editing');
     expect(api.saveMonitor).not.toHaveBeenCalled();
-    expect(api.loadMonitorDetail).not.toHaveBeenCalled();
   });
 });
