@@ -15,9 +15,10 @@ export function useMonitorListNavigation(query: MonitorQuery, capabilities: Pick
   const location = useLocation();
   const returnTarget = `${location.pathname}${location.search}`;
   return {
-    create: () => {
-      if (!capabilities.canWrite) return;
-      void navigate(buildMonitorCreatePath(query.app, returnTarget));
+    create: (app: string) => {
+      const selectedApp = app.trim();
+      if (!capabilities.canWrite || !selectedApp) return;
+      void navigate(buildMonitorCreatePath(selectedApp, returnTarget));
     },
     open: (id: number, mode: 'view' | 'edit') => {
       if (mode === 'edit' && !capabilities.canWrite) return;

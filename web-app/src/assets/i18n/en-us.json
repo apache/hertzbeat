@@ -2373,7 +2373,15 @@
       "network": "Network Monitor",
       "server": "Server Monitor",
       "llm": "AI LLM",
-      "custom": "Custom Monitor"
+      "custom": "Custom Monitor",
+      "auto": "Auto Task"
+    },
+    "appPicker": {
+      "title": "Choose a monitor type",
+      "description": "Select the system or service you want HertzBeat to monitor.",
+      "search": "Search monitor types",
+      "loading": "Loading monitor types…",
+      "empty": "No monitor types match your search."
     },
     "empty": "No monitors match the current query.",
     "loading": "Loading monitors…",

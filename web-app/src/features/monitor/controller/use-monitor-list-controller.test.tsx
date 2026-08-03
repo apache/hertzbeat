@@ -137,17 +137,22 @@ describe('useMonitorListController URL evidence', () => {
     await waitFor(() => expect(view.result.current.controller.state.draft.search).toBe('alpha'));
   });
 
-  it('carries the current application and safe list return target into monitor creation', async () => {
+  it('opens the type picker before carrying an explicit app and safe list return target into creation', async () => {
     const view = renderHook(() => ({ controller: useMonitorListController(), location: useLocation() }), {
       wrapper: wrapper(['/monitors?app=website&token=must-not-follow'], 0)
     });
     await waitFor(() => expect(view.result.current.controller.state.monitors.kind).toBe('ready'));
 
-    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.openCreatePicker());
+    expect(view.result.current.controller.state.createPicker.open).toBe(true);
+    expect(view.result.current.location.pathname).toBe('/monitors');
+
+    act(() => view.result.current.controller.actions.create('mysql'));
 
     await waitFor(() => expect(view.result.current.location.pathname).toBe('/monitors/new'));
-    expect(view.result.current.location.search).toBe('?app=website&returnTo=%2Fmonitors%3Fapp%3Dwebsite');
+    expect(view.result.current.location.search).toBe('?app=mysql&returnTo=%2Fmonitors%3Fapp%3Dwebsite');
     expect(view.result.current.location.search).not.toContain('must-not-follow');
+    expect(view.result.current.controller.state.createPicker).toEqual({ open: false, search: '' });
   });
 
   it.each([

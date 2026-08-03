@@ -2363,7 +2363,15 @@
       "network": "网络监控",
       "server": "服务器监控",
       "llm": "AI 大模型",
-      "custom": "自定义监控"
+      "custom": "自定义监控",
+      "auto": "自动任务"
+    },
+    "appPicker": {
+      "title": "选择监控类型",
+      "description": "选择要由 HertzBeat 监控的系统或服务。",
+      "search": "搜索监控类型",
+      "loading": "正在加载监控类型…",
+      "empty": "没有匹配的监控类型。"
     },
     "empty": "当前条件下没有监控。",
     "loading": "正在加载监控…",

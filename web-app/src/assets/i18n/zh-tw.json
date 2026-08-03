@@ -2500,7 +2500,15 @@
       "network": "網絡監控",
       "server": "服務器監控",
       "llm": "AI 大模型",
-      "custom": "自定義監控"
+      "custom": "自定義監控",
+      "auto": "自動任務"
+    },
+    "appPicker": {
+      "title": "選擇監控類型",
+      "description": "選擇要由 HertzBeat 監控的系統或服務。",
+      "search": "搜尋監控類型",
+      "loading": "正在載入監控類型…",
+      "empty": "沒有符合的監控類型。"
     },
     "empty": "目前條件下沒有監控。",
     "loading": "正在載入監控…",

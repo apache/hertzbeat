@@ -2514,7 +2514,15 @@
       "network": "Monitoramento de rede",
       "server": "Monitoramento de servidor",
       "llm": "Modelo de IA",
-      "custom": "Monitoramento personalizado"
+      "custom": "Monitoramento personalizado",
+      "auto": "Tarefa automática"
+    },
+    "appPicker": {
+      "title": "Escolher tipo de monitor",
+      "description": "Selecione o sistema ou serviço que o HertzBeat deve monitorar.",
+      "search": "Pesquisar tipos de monitor",
+      "loading": "Carregando tipos de monitor…",
+      "empty": "Nenhum tipo de monitor corresponde à pesquisa."
     },
     "empty": "Nenhum monitor corresponde à consulta.",
     "loading": "Carregando monitores…",

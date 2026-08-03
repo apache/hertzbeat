@@ -1,0 +1,125 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+/* Hallmark · pre-emit critique: P5 H4 E4 S5 R5 V4 */
+/* Hallmark · modern-minimal · operational/dense · existing HertzBeat violet · Angular catalog dialog */
+
+.description {
+  margin: 0 0 16px;
+  color: var(--ant-color-text-secondary);
+}
+
+.catalog {
+  max-height: min(56vh, 560px);
+  margin-top: 16px;
+  overflow: auto;
+  padding-inline-end: 4px;
+}
+
+.category + .category {
+  margin-top: 20px;
+}
+
+.categoryHeader {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.categoryHeader strong {
+  color: var(--ant-color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.categoryIcon {
+  display: inline-flex;
+  color: var(--ant-color-primary);
+}
+
+.categoryCount {
+  color: var(--ant-color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.appGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.appButton {
+  min-width: 0;
+  min-height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  background: transparent;
+  color: var(--ant-color-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 10px;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appButton:hover {
+  border-color: var(--ant-color-primary-border-hover);
+  background: var(--ant-color-fill-tertiary);
+}
+
+.appButton:active {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-fill-secondary);
+}
+
+.appButton:disabled {
+  background: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.appButton:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
+.feedback {
+  margin-top: 16px;
+}
+
+div.feedback {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ant-color-text-secondary);
+}
+
+.empty {
+  margin-block: 40px 24px;
+}
+
+@media (max-width: 760px) {
+  .appGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .appGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

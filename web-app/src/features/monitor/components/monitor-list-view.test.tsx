@@ -32,7 +32,7 @@ describe('MonitorListView evidence states', () => {
   afterEach(cleanup);
 
   it('owns management actions in the header and keeps query actions in one filter band', () => {
-    const create = vi.fn();
+    const openCreatePicker = vi.fn();
     const openImport = vi.fn();
     renderView(
       {
@@ -48,7 +48,7 @@ describe('MonitorListView evidence states', () => {
         },
         monitors: { kind: 'empty' }
       },
-      { create, openImport }
+      { openCreatePicker, openImport }
     );
 
     const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
@@ -75,7 +75,7 @@ describe('MonitorListView evidence states', () => {
 
     fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
     fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.import.action') }));
-    expect(create).toHaveBeenCalledOnce();
+    expect(openCreatePicker).toHaveBeenCalledOnce();
     expect(openImport).toHaveBeenCalledOnce();
   });
 
@@ -424,8 +424,9 @@ function renderView(
       busy: false,
       task: { kind: 'idle' }
     },
-    apps: { kind: 'ready', options: [] },
+    apps: { kind: 'ready', options: [], groups: [] },
     monitors: { kind: 'loading' },
+    createPicker: { open: false, search: '' },
     ...patch
   };
   const actions: MonitorListViewProps['actions'] = {
@@ -438,6 +439,9 @@ function renderView(
     changeSort: () => undefined,
     changePage: () => undefined,
     refresh: () => Promise.resolve(true),
+    openCreatePicker: () => undefined,
+    cancelCreatePicker: () => undefined,
+    searchCreateApps: () => undefined,
     create: () => undefined,
     open: () => undefined,
     run: () => undefined,

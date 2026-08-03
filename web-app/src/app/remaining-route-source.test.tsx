@@ -145,8 +145,10 @@ describe('remaining route ownership', () => {
   it('uses the canonical Monitor create target in the controller', async () => {
     const monitor = renderController(canonical.monitor.list, useMonitorListController);
     await waitFor(() => expect(monitor.result.current.state.monitors.kind).toBe('empty'));
-    act(() => monitor.result.current.actions.create());
-    expect(navigate).toHaveBeenLastCalledWith(buildMonitorCreatePath('', canonical.monitor.list));
+    act(() => monitor.result.current.actions.openCreatePicker());
+    expect(navigate).not.toHaveBeenCalled();
+    act(() => monitor.result.current.actions.create('website'));
+    expect(navigate).toHaveBeenLastCalledWith(buildMonitorCreatePath('website', canonical.monitor.list));
   });
 
   it('canonicalizes the label query only on the shared label route and drops sensitive parameters', async () => {

@@ -22,6 +22,7 @@ import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from 
 import type { MonitorListViewActions, MonitorListViewState } from '../model/monitor-list-model';
 
 import { MonitorBulkActions } from './monitor-list-actions';
+import { MonitorAppPickerDialog } from './monitor-app-picker-dialog';
 import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListManagementActions } from './monitor-list-management-actions';
 import { MonitorListResults } from './monitor-list-results';
@@ -41,7 +42,7 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
             disabled={state.operating}
             canWrite={state.capabilities.canWrite}
             canExport={state.canExport}
-            create={actions.create}
+            create={actions.openCreatePicker}
             openImport={actions.openImport}
             exportAll={actions.exportAll}
           />
@@ -82,6 +83,14 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         onCancel={actions.cancelImport}
         onFile={actions.selectImportFile}
         onSubmit={actions.submitImport}
+      />
+      <MonitorAppPickerDialog
+        open={state.createPicker.open}
+        search={state.createPicker.search}
+        evidence={state.apps}
+        onSearch={actions.searchCreateApps}
+        onCancel={actions.cancelCreatePicker}
+        onSelect={actions.create}
       />
     </OperationalPage>
   );

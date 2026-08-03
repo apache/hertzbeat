@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useQueryDraft } from '@/shared/query-context';
@@ -29,6 +29,7 @@ import {
   type MonitorQuery
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
+import { buildMonitorAppPickerGroups } from '../model/monitor-app-picker-model';
 import { useMonitorExport } from './use-monitor-export';
 import { useMonitorCapabilities } from './use-monitor-capabilities';
 import { useMonitorImport } from './use-monitor-import';
@@ -42,6 +43,7 @@ import { useMonitorSelection } from './use-monitor-selection';
 export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor-list-resources';
 
 export function useMonitorListController() {
+  const [createPicker, setCreatePicker] = useState({ open: false, search: '' });
   const capabilities = useMonitorCapabilities();
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
@@ -70,7 +72,8 @@ export function useMonitorListController() {
       refreshing: monitors.isFetching,
       capabilities,
       canExport: monitorExport.canExport,
-      monitorImport: monitorImport.state
+      monitorImport: monitorImport.state,
+      createPicker
     },
     actions: {
       setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
@@ -84,7 +87,15 @@ export function useMonitorListController() {
         updateQuery({ sort, order, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: commands.refresh,
-      create: navigation.create,
+      openCreatePicker: () => {
+        if (capabilities.canWrite) setCreatePicker({ open: true, search: '' });
+      },
+      cancelCreatePicker: () => setCreatePicker({ open: false, search: '' }),
+      searchCreateApps: (search: string) => setCreatePicker(current => ({ ...current, search })),
+      create: (app: string) => {
+        setCreatePicker({ open: false, search: '' });
+        navigation.create(app);
+      },
       open: navigation.open,
       run: commands.run,
       runBulk: commands.runBulk,
@@ -132,5 +143,5 @@ function resolveAppsEvidence(
   if (pending) return { kind: 'loading' };
   if (error) return { kind: classifyMonitorReadError(error) };
   if (!apps) return { kind: 'error' };
-  return { kind: 'ready', options: monitorAppOptions(apps) };
+  return { kind: 'ready', options: monitorAppOptions(apps), groups: buildMonitorAppPickerGroups(apps) };
 }

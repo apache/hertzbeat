@@ -21,12 +21,13 @@ import type { MonitorAction, MonitorQuery } from './monitor-contract';
 import type { MonitorCapabilities } from './monitor-capability-model';
 import type { MonitorExportFormat } from './monitor-export-model';
 import type { MonitorImportState } from './monitor-import-model';
+import type { MonitorAppPickerGroup } from './monitor-app-picker-model';
 import type { MonitorListRow } from './monitor-list-snapshot';
 
 export type MonitorListEvidence = RemotePageState<MonitorListRow, 'unavailable' | 'error'>;
 
 export type MonitorAppsEvidence = RemotePayloadState<
-  { options: Array<{ value: string; label: string }> },
+  { options: Array<{ value: string; label: string }>; groups: MonitorAppPickerGroup[] },
   'unavailable' | 'error'
 >;
 
@@ -41,6 +42,7 @@ export type MonitorListViewState = {
   capabilities: MonitorCapabilities;
   canExport: boolean;
   monitorImport: MonitorImportState;
+  createPicker: { open: boolean; search: string };
 };
 
 export type MonitorListViewActions = {
@@ -53,7 +55,10 @@ export type MonitorListViewActions = {
   changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) => void;
   changePage: (page: number, pageSize: number) => void;
   refresh: () => Promise<boolean>;
-  create: () => void;
+  openCreatePicker: () => void;
+  cancelCreatePicker: () => void;
+  searchCreateApps: (value: string) => void;
+  create: (app: string) => void;
   open: (id: number, mode: 'view' | 'edit') => void;
   run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
   runBulk: (action: MonitorAction) => void | Promise<void>;
