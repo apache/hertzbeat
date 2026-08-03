@@ -21,6 +21,7 @@
   gap: 16px;
   width: 100%;
   max-width: 760px;
+  margin-inline: auto;
 }
 
 .form > label {
@@ -74,6 +75,9 @@
 .metadataDisclosure {
   display: flex;
   justify-content: flex-start;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
 }
 
 .metadataDisclosure :global(.ant-btn) {
@@ -107,6 +111,12 @@
   color: var(--ant-color-error);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.formActions {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
 }
 
 @media (max-width: 760px) {

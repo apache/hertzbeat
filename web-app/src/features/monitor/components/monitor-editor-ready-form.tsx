@@ -85,7 +85,9 @@ export function ReadyMonitorEditorForm({
           </div>
         </OperationalSection>
       ) : null}
-      <MonitorEditorActions controller={controller} />
+      <div className={styles.formActions}>
+        <MonitorEditorActions controller={controller} />
+      </div>
       {mode === 'new' ? (
         <MonitorEditorAppPicker
           apps={controller.state.apps}
