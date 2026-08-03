@@ -185,6 +185,29 @@ class JdbcCommonCollectTest {
         assertEquals("Not support database platform: invalid", exception.getMessage());
     }
 
+    /**
+     * The url blacklist only guards a user supplied url. Driver properties smuggled through the
+     * database name reach the very same connection, so they have to be rejected too.
+     */
+    @Test
+    void testConstructDatabaseUrlRejectsDriverPropertiesInDatabaseName() {
+        String[] payloads = {
+            "test?allowLoadLocalInfile=true&z=",
+            "test?autoDeserialize=true&queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&z=",
+            "test&useSSL=false",
+        };
+        for (String payload : payloads) {
+            JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                    .platform("mysql")
+                    .database(payload)
+                    .build();
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"),
+                    "database name should be rejected: " + payload);
+        }
+    }
+
     @Test
     void testCloseConnectionWhenCreateStatementFails() throws Exception {
         String url = "jdbc:postgresql://localhost:5432/hertzbeat";
