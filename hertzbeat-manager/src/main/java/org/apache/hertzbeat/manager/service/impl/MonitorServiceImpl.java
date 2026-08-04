@@ -311,7 +311,10 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setCollector(null);
         }
         // Parameter definition structure verification
-        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(monitor.getApp());
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                || !StringUtils.hasText(monitor.getScrape());
+        String parameterDefinitionApp = isStatic ? monitor.getApp() : monitor.getScrape();
+        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(parameterDefinitionApp);
         boolean restoresMaskedCredential = Boolean.TRUE.equals(isModify)
                 && !CollectionUtils.isEmpty(paramDefines)
                 && paramDefines.stream()
@@ -325,8 +328,6 @@ public class MonitorServiceImpl implements MonitorService {
                     .collect(Collectors.toMap(Param::getField, param -> param))
                 : Map.of();
         if (!CollectionUtils.isEmpty(paramDefines)) {
-            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                    || !StringUtils.hasText(monitor.getScrape());
             for (ParamDefineInfo paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 MonitorParam param = paramMap.get(field);
@@ -363,7 +364,7 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        checkJobFields(monitorDto.getMonitor().getApp());
+        checkJobFields(parameterDefinitionApp);
     }
 
     private void validateCredentialDestination(
@@ -558,6 +559,16 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(readOnly = true)
     public MonitorDto getMonitorDto(long id) throws RuntimeException {
+        return getMonitorDto(id, true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MonitorDto getMonitorDtoForExport(long id) throws RuntimeException {
+        return getMonitorDto(id, false);
+    }
+
+    private MonitorDto getMonitorDto(long id, boolean maskCredentials) throws RuntimeException {
         Optional<Monitor> monitorOptional = monitorDao.findById(id);
         if (monitorOptional.isPresent()) {
             // Get current user ID for favorite status
@@ -573,7 +584,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             MonitorDto monitorDto = new MonitorDto();
             List<Param> params = paramDao.findParamsByMonitorId(id);
-            monitorDto.setParams(params);
+            monitorDto.setParams(params, maskCredentials);
             List<MetricsInfo> metricsInfos;
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())
                     || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {

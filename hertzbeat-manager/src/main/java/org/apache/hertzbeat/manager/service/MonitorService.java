@@ -103,6 +103,16 @@ public interface MonitorService {
     MonitorDto getMonitorDto(long id) throws RuntimeException;
 
     /**
+     * Get monitoring information for a portable configuration export. Password
+     * values remain encrypted so the exported configuration can be imported by
+     * an installation configured with the same common secret.
+     *
+     * @param id Monitor ID
+     * @return monitor information with encrypted parameter values
+     */
+    MonitorDto getMonitorDtoForExport(long id) throws RuntimeException;
+
+    /**
      * Dynamic conditional query
      *
      * @param monitorIds Monitor ID List

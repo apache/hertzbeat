@@ -61,6 +61,12 @@ class ServiceCredentialMigrationTest {
                     type TINYINT
                 )
                 """);
+        jdbcTemplate.execute("""
+                CREATE TABLE hzb_config (
+                    type VARCHAR(100) PRIMARY KEY,
+                    content VARCHAR(8192)
+                )
+                """);
     }
 
     @AfterEach
@@ -113,5 +119,27 @@ class ServiceCredentialMigrationTest {
         assertEquals(0, migration.migrateStoredCredentials());
         assertEquals(ollamaCiphertext, jdbcTemplate.queryForObject(
                 "SELECT param_value FROM hzb_param WHERE id = 11", String.class));
+    }
+
+    @Test
+    void startupMigrationRunsOnlyOnceAndDoesNotRewriteLaterCredentials() {
+        jdbcTemplate.update("INSERT INTO hzb_monitor(id, app, scrape) VALUES (?, ?, ?)",
+                1L, "ollama", "static");
+        jdbcTemplate.update("INSERT INTO hzb_param VALUES (?, ?, ?, ?, ?)",
+                11L, 1L, "apiKey", "legacy-ollama-key", CommonConstants.PARAM_TYPE_STRING);
+        ServiceCredentialMigration migration = new ServiceCredentialMigration(jdbcTemplate);
+
+        migration.run();
+        jdbcTemplate.update("INSERT INTO hzb_param VALUES (?, ?, ?, ?, ?)",
+                12L, 1L, "apiKey", "later-operator-value", CommonConstants.PARAM_TYPE_STRING);
+        migration.run();
+
+        assertTrue(AesUtil.isCiphertext(jdbcTemplate.queryForObject(
+                "SELECT param_value FROM hzb_param WHERE id = 11", String.class)));
+        assertEquals("later-operator-value", jdbcTemplate.queryForObject(
+                "SELECT param_value FROM hzb_param WHERE id = 12", String.class));
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
+                Integer.class));
     }
 }

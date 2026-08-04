@@ -56,6 +56,10 @@ public class MonitorParam {
     private LocalDateTime gmtUpdate;
 
     public static MonitorParam fromEntity(Param param) {
+        return fromEntity(param, true);
+    }
+
+    public static MonitorParam fromEntity(Param param, boolean maskCredential) {
         if (param == null) {
             return null;
         }
@@ -64,7 +68,10 @@ public class MonitorParam {
         monitorParam.setMonitorId(param.getMonitorId());
         monitorParam.setField(param.getField());
         String value = param.getParamValue();
-        if (param.getType() == CommonConstants.PARAM_TYPE_PASSWORD && value != null && !value.isEmpty()) {
+        if (maskCredential
+                && param.getType() == CommonConstants.PARAM_TYPE_PASSWORD
+                && value != null
+                && !value.isEmpty()) {
             value = SECRET_MASK;
         }
         monitorParam.setParamValue(value);

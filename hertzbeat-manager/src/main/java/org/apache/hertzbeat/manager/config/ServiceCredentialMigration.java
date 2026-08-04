@@ -38,6 +38,8 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class ServiceCredentialMigration implements CommandLineRunner {
 
+    private static final String MIGRATION_MARKER = "migration.service-credentials.v1";
+
     private static final String FIND_CREDENTIALS_SQL = """
             SELECT p.id, p.param_value, p.type
             FROM hzb_param p
@@ -58,10 +60,23 @@ public class ServiceCredentialMigration implements CommandLineRunner {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void run(String... args) {
+        if (isMigrationComplete()) {
+            return;
+        }
         int migrated = migrateStoredCredentials();
+        jdbcTemplate.update("INSERT INTO hzb_config(type, content) VALUES (?, ?)",
+                MIGRATION_MARKER, "complete");
         if (migrated > 0) {
             log.info("Migrated {} stored service credential parameters", migrated);
         }
+    }
+
+    private boolean isMigrationComplete() {
+        Integer markerCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hzb_config WHERE type = ?",
+                Integer.class,
+                MIGRATION_MARKER);
+        return markerCount != null && markerCount > 0;
     }
 
     int migrateStoredCredentials() {
