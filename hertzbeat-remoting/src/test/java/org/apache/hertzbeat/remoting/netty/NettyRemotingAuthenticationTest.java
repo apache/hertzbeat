@@ -27,8 +27,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.util.AttributeKey;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.InetSocketAddress;
@@ -116,6 +119,28 @@ class NettyRemotingAuthenticationTest {
         verify(context, never()).close();
     }
 
+    @Test
+    void shouldRejectRepeatedChallengeAndKeepChannelNonce() {
+        TestRemoting remoting = new TestRemoting(
+                NettyRemotingAbstract.EndpointRole.CLIENT,
+                ClusterMessageAuthConfig.Mode.REQUIRED);
+        EmbeddedChannel channel = new EmbeddedChannel();
+        ChannelHandlerContext context = mock(ChannelHandlerContext.class);
+        when(context.channel()).thenReturn(channel);
+        ByteString firstNonce = ByteString.copyFrom(new byte[32]);
+        byte[] replacementBytes = new byte[32];
+        java.util.Arrays.fill(replacementBytes, (byte) 1);
+        ByteString replacementNonce = ByteString.copyFrom(replacementBytes);
+
+        remoting.receive(context, challenge(firstNonce));
+        remoting.receive(context, challenge(replacementNonce));
+
+        AttributeKey<ByteString> nonceKey =
+                AttributeKey.valueOf(NettyRemotingAbstract.class, "authChannelNonce");
+        assertEquals(firstNonce, channel.attr(nonceKey).get());
+        verify(context).close();
+    }
+
     private ChannelHandlerContext context() {
         Channel channel = mock(Channel.class);
         when(channel.remoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 1158));
@@ -132,10 +157,23 @@ class NettyRemotingAuthenticationTest {
                 .build();
     }
 
+    private ClusterMsg.Message challenge(ByteString nonce) {
+        return ClusterMsg.Message.newBuilder()
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.AUTH_CHALLENGE)
+                .setAuthVersion(ClusterMessageAuthenticator.AUTH_VERSION)
+                .setMsg(nonce)
+                .build();
+    }
+
     private static class TestRemoting extends NettyRemotingAbstract {
 
         TestRemoting(ClusterMessageAuthConfig.Mode mode) {
-            super(null, EndpointRole.SERVER, mode == null ? null : config(mode), () -> null);
+            this(EndpointRole.SERVER, mode);
+        }
+
+        TestRemoting(EndpointRole endpointRole, ClusterMessageAuthConfig.Mode mode) {
+            super(null, endpointRole, mode == null ? null : config(mode), () -> null);
         }
 
         void receive(ChannelHandlerContext context, ClusterMsg.Message message) {

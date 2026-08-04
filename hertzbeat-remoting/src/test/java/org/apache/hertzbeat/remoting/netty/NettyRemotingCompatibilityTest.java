@@ -48,7 +48,7 @@ class NettyRemotingCompatibilityTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("compatibleVersionPairs")
-    void shouldExchangeMessagesAcrossRollingUpgradePairs(
+    void shouldExchangeTransportMessagesAcrossRollingUpgradePairs(
             String description,
             ClusterMessageAuthConfig.Mode serverMode,
             ClusterMessageAuthConfig.Mode clientMode) throws Exception {
@@ -140,7 +140,7 @@ class NettyRemotingCompatibilityTest {
                 arguments("old manager and old collector", null, null),
                 arguments("old manager and new optional collector", null,
                         ClusterMessageAuthConfig.Mode.OPTIONAL),
-                arguments("new optional manager and old collector",
+                arguments("new optional manager and old collector (transport only)",
                         ClusterMessageAuthConfig.Mode.OPTIONAL, null),
                 arguments("new optional manager and new optional collector",
                         ClusterMessageAuthConfig.Mode.OPTIONAL,

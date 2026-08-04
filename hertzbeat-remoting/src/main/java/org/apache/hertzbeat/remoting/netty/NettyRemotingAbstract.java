@@ -215,7 +215,12 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         }
         if (endpointRole == EndpointRole.SERVER) {
             ByteString channelNonce = messageAuthenticator.newChannelNonce();
-            setChannelNonce(ctx.channel(), channelNonce);
+            if (!establishChannelNonce(ctx.channel(), channelNonce)) {
+                log.warn("Cluster channel nonce was already established for {}",
+                        ctx.channel().remoteAddress());
+                ctx.close();
+                return;
+            }
             ClusterMsg.Message challenge = ClusterMsg.Message.newBuilder()
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setType(ClusterMsg.MessageType.AUTH_CHALLENGE)
@@ -253,7 +258,15 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             ctx.close();
             return;
         }
-        setChannelNonce(ctx.channel(), challenge.getMsg());
+        if (!establishChannelNonce(ctx.channel(), challenge.getMsg())) {
+            ClusterMessageAuthMetrics.recordVerification(
+                    ClusterMessageAuthenticator.VerificationResult.REPLAY,
+                    endpointRole);
+            log.warn("Reject repeated cluster authentication challenge from {}",
+                    ctx.channel().remoteAddress());
+            ctx.close();
+            return;
+        }
         notifyApplicationChannelActive(ctx.channel());
     }
 
@@ -306,11 +319,9 @@ public abstract class NettyRemotingAbstract implements RemotingService {
                 : attribute.get();
     }
 
-    private void setChannelNonce(Channel channel, ByteString channelNonce) {
+    private boolean establishChannelNonce(Channel channel, ByteString channelNonce) {
         Attribute<ByteString> attribute = channel.attr(AUTH_CHANNEL_NONCE);
-        if (attribute != null) {
-            attribute.set(channelNonce);
-        }
+        return attribute != null && attribute.compareAndSet(null, channelNonce);
     }
 
     protected void channelIdle(ChannelHandlerContext ctx, Object evt) throws Exception {

@@ -151,6 +151,10 @@ Use this order to avoid interrupting collection:
 Do not upgrade Manager before its old Collectors have the new secret and
 optional mode configured. The preceding local-key change intentionally stops
 Manager from sending encryption key material over unauthenticated Netty.
+Although an old Collector can complete a heartbeat exchange with a new Manager
+in optional mode, that pair is not functionally compatible: the old Collector
+cannot obtain the AES key and therefore cannot decrypt credentialed jobs. This
+is why Collector-first order is mandatory rather than a recommendation.
 
 ### Key Rotation
 
@@ -171,8 +175,12 @@ Manager sends a fresh random challenge for every Netty connection. The
 challenge is covered by every subsequent signature, so a message captured from
 one connection cannot be replayed through another Manager instance or after a
 reconnect. A bounded local cache rejects duplicate signatures on the active
-connection. This connection-level binding supports multi-Manager deployments
-without a shared replay database.
+connection. The cache holds at most 65,536 signatures. If one process accepts
+more unique messages than that within the configured replay window, capacity
+eviction can allow an older duplicate to pass until its timestamp leaves the
+clock-skew window. The per-connection challenge still prevents that message
+from being replayed on another connection. This connection-level binding
+supports multi-Manager deployments without a shared replay database.
 
 Authentication timestamps use the configured `max-clock-skew`. Keep Manager
 and Collector clocks synchronized. Stale, future, replayed, unknown-key,

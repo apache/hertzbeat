@@ -76,6 +76,12 @@ Collector messages:
    remove the optional override. The shipped `required` mode then rejects
    unsigned messages.
 
+The order in step 6 is mandatory. Optional mode lets a new Manager and old
+Collector exchange heartbeat messages, but the old Collector no longer
+receives the AES key from the Manager and cannot decrypt credentialed jobs.
+Do not start any Manager upgrade until every Collector runs the new binary with
+the shared `COMMON_SECRET` already provisioned.
+
 Fresh Docker Compose installations must create the documented `.env` before
 `docker compose up`; Compose fails interpolation with an actionable message
 when either secret is absent. Existing Compose installations must preserve the

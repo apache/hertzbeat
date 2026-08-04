@@ -19,7 +19,10 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import org.apache.hertzbeat.collector.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.timer.TimerDispatcher;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
@@ -33,6 +36,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * Test for GoOnlineProcessor
@@ -102,6 +106,37 @@ class GoOnlineProcessorTest {
             goOnlineProcessor.handle(null, response);
 
             assertEquals(localSecret, AesUtil.getDefaultSecretKey());
+        } finally {
+            AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
+        }
+    }
+
+    @Test
+    void legacyCollectorCannotUseCredentialJobAfterManagerFirstUpgrade() {
+        String managerSecret = "manager-key-1234";
+        String plaintext = "database-password";
+        String ciphertext = AesUtil.aesEncode(plaintext, managerSecret);
+        AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
+        try {
+            ClusterMsg.Message response = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.GO_ONLINE)
+                    .setDirection(ClusterMsg.Direction.RESPONSE)
+                    .build();
+            goOnlineProcessor.handle(null, response);
+            Job credentialedJob = Job.builder()
+                    .app("test")
+                    .configmap(Lists.newArrayList(Configmap.builder()
+                            .key("password")
+                            .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                            .value(ciphertext)
+                            .build()))
+                    .metrics(Lists.newArrayList(Metrics.builder().interval(60L).build()))
+                    .build();
+
+            new WheelTimerTask(credentialedJob, timeout -> { });
+
+            assertEquals(ciphertext, credentialedJob.getConfigmap().get(0).getValue());
+            assertNotEquals(plaintext, credentialedJob.getConfigmap().get(0).getValue());
         } finally {
             AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
         }
