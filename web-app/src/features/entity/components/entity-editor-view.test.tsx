@@ -5,8 +5,10 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import operationalPageStyles from '@/shared/operational-page/operational-page.module.css?raw';
 import { emptyEntityEditorDraft } from '../model/entity-editor-model';
 import { EntityEditorView, type EntityEditorViewProps } from './entity-editor-view';
+import entityViewStyles from './entity-view.module.css?raw';
 
 describe('EntityEditorView', () => {
   beforeAll(async () => {
@@ -32,6 +34,21 @@ describe('EntityEditorView', () => {
     expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Advanced details' }));
     expect(screen.getByRole('combobox', { name: 'Owner' })).toBeInTheDocument();
+  });
+
+  it('uses the same compact authoring rail as the monitor editor', () => {
+    renderView();
+
+    expect(document.querySelector('[data-entity-editor-form-rail]')).toBeInTheDocument();
+    expect(entityViewStyles).not.toMatch(/grid-template-columns:\s*repeat\(2/);
+    expect(operationalPageStyles).toMatch(/--hb-form-label-width:\s*148px/);
+    expect(operationalPageStyles).toMatch(/--hb-form-control-width:\s*360px/);
+    expect(entityViewStyles).toMatch(/\.editorFields\s*{[^}]*max-width:\s*var\(--hb-form-rail-width\)/s);
+    expect(entityViewStyles).toMatch(
+      /\.editorFields\s+:global\(\.ant-form-item-row\)\s*{[^}]*width:\s*var\(--hb-form-row-width\)/s
+    );
+    expect(entityViewStyles).toMatch(/\.editorFields\s+:global\(\.ant-form-item-label\)\s*{[^}]*text-align:\s*right/s);
+    expect(entityViewStyles).toMatch(/@media\s*\(max-width:\s*700px\)[\s\S]*flex-direction:\s*column/);
   });
 
   it('uses backend suggestions without blocking the form when they are unavailable', () => {

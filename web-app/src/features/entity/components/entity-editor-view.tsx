@@ -84,7 +84,14 @@ function ReadyEditor({ state, actions }: EntityEditorViewProps) {
       {state.saveFailure ? (
         <Alert showIcon type="error" message={t(`entity.editor.saveFailure.${state.saveFailure}`)} />
       ) : null}
-      <Form disabled={state.saving} layout="vertical" onFinish={actions.submit} className={styles.editorForm}>
+      <Form
+        disabled={state.saving}
+        layout="horizontal"
+        colon={false}
+        onFinish={actions.submit}
+        className={styles.editorForm}
+        data-entity-editor-form-rail=""
+      >
         <OperationalSection title={t('entity.sections.details')}>
           <div className={styles.editorFields}>
             <EntityEditorCoreFields {...fields} />
@@ -103,11 +110,11 @@ function ReadyEditor({ state, actions }: EntityEditorViewProps) {
           </OperationalSection>
         ) : null}
         <OperationalFormActions>
-          <Button type="primary" htmlType="submit" loading={state.saving}>
-            {t('common.save')}
-          </Button>
           <Button disabled={state.saving} onClick={() => actions.cancel()}>
             {t('common.cancel')}
+          </Button>
+          <Button type="primary" htmlType="submit" loading={state.saving}>
+            {t('common.save')}
           </Button>
         </OperationalFormActions>
       </Form>

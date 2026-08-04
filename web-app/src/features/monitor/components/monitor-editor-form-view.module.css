@@ -16,13 +16,8 @@
  */
 
 .formRail {
-  --monitor-editor-label-width: 148px;
-  --monitor-editor-control-width: 360px;
-  --monitor-editor-column-gap: 24px;
-  --monitor-editor-control-offset: calc(var(--monitor-editor-label-width) + var(--monitor-editor-column-gap));
-  --monitor-editor-row-width: calc(var(--monitor-editor-control-offset) + var(--monitor-editor-control-width));
   width: 100%;
-  max-width: 720px;
+  max-width: var(--hb-form-rail-width);
   margin-inline: auto;
 }
 
@@ -34,8 +29,8 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: var(--monitor-editor-label-width) minmax(0, var(--monitor-editor-control-width));
-  column-gap: var(--monitor-editor-column-gap);
+  grid-template-columns: var(--hb-form-label-width) minmax(0, var(--hb-form-control-width));
+  column-gap: var(--hb-form-column-gap);
   row-gap: 6px;
   width: 100%;
   min-width: 0;
@@ -112,7 +107,7 @@
 .metadataDisclosure {
   display: flex;
   justify-content: flex-start;
-  padding-left: var(--monitor-editor-control-offset);
+  padding-left: var(--hb-form-control-offset);
 }
 
 .metadataDisclosure :global(.ant-btn) {
@@ -133,7 +128,7 @@
 }
 
 .fieldMessage {
-  margin-left: var(--monitor-editor-control-offset);
+  margin-left: var(--hb-form-control-offset);
   color: var(--ant-color-error);
   font-size: 12px;
   line-height: 1.4;
@@ -152,9 +147,9 @@
 }
 
 .formActions > :global([data-hb-operational-form-actions]) {
-  width: var(--monitor-editor-row-width);
+  width: var(--hb-form-row-width);
   justify-content: center;
-  padding-left: var(--monitor-editor-control-offset);
+  padding-left: var(--hb-form-control-offset);
 }
 
 .commandFeedback {

@@ -21,6 +21,12 @@
 }
 
 .page[data-mode='form'] {
+  --hb-form-label-width: 148px;
+  --hb-form-control-width: 360px;
+  --hb-form-column-gap: 24px;
+  --hb-form-control-offset: calc(var(--hb-form-label-width) + var(--hb-form-column-gap));
+  --hb-form-row-width: calc(var(--hb-form-control-offset) + var(--hb-form-control-width));
+  --hb-form-rail-width: 720px;
   max-width: 840px;
 }
 

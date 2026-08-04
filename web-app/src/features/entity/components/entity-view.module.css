@@ -4,27 +4,64 @@
 }
 
 .editorFields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 var(--hb-space-4);
+  width: 100%;
+  max-width: var(--hb-form-rail-width);
+  margin-inline: auto;
 }
 
 .editorFields :global(.ant-form-item) {
-  margin-bottom: var(--hb-space-4);
+  margin-bottom: 14px;
 }
 
-.wideField {
-  grid-column: 1 / -1;
+.editorFields :global(.ant-form-item-row) {
+  width: var(--hb-form-row-width);
+  flex-wrap: nowrap;
+}
+
+.editorFields :global(.ant-form-item-label) {
+  flex: 0 0 var(--hb-form-control-offset);
+  max-width: var(--hb-form-control-offset);
+  padding: 0 var(--hb-form-column-gap) 0 0;
+  text-align: right;
+}
+
+.editorFields :global(.ant-form-item-label > label) {
+  width: 100%;
+  min-height: var(--ant-control-height);
+  justify-content: flex-end;
+}
+
+.editorFields :global(.ant-form-item-control) {
+  flex: 0 0 var(--hb-form-control-width);
+  max-width: var(--hb-form-control-width);
+  min-width: 0;
+}
+
+.editorFields :global(.ant-input),
+.editorFields :global(.ant-select),
+.editorFields :global(.ant-select-selector) {
+  width: 100%;
 }
 
 .disclosureRow {
   display: flex;
   justify-content: flex-start;
+  width: 100%;
+  max-width: var(--hb-form-rail-width);
   margin-top: calc(var(--hb-space-2) * -1);
+  margin-inline: auto;
+  padding-left: var(--hb-form-control-offset);
 }
 
 .disclosureRow :global(.ant-btn) {
   padding-inline: 0;
+}
+
+.editorForm > :global([data-hb-operational-form-actions]) {
+  width: var(--hb-form-row-width);
+  margin-inline: auto;
+  padding-left: var(--hb-form-control-offset);
+  justify-content: center;
 }
 .filterStack {
   display: grid;
@@ -75,9 +112,44 @@
 }
 
 @media (max-width: 760px) {
-  .editorFields,
   .filters,
   .advancedFilters {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .editorFields,
+  .disclosureRow {
+    max-width: none;
+  }
+
+  .editorFields :global(.ant-form-item-row) {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .editorFields :global(.ant-form-item-label),
+  .editorFields :global(.ant-form-item-control) {
+    flex: 0 0 auto;
+    max-width: none;
+    width: 100%;
+  }
+
+  .editorFields :global(.ant-form-item-label) {
+    padding: 0 0 7px;
+    text-align: left;
+  }
+
+  .editorFields :global(.ant-form-item-label > label) {
+    min-height: auto;
+    justify-content: flex-start;
+  }
+
+  .disclosureRow,
+  .editorForm > :global([data-hb-operational-form-actions]) {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 0;
   }
 }
