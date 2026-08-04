@@ -49,7 +49,9 @@ public class ManagerSseManager {
      *
      * <p>`Long.MAX_VALUE` meant a subscription never expired on its own, so a client that
      * went away without closing cleanly held its request thread until the container noticed.
-     * A finite timeout bounds that; browsers reconnect on timeout, and the ui re-subscribes.
+     * A finite timeout bounds that. The timeout is only safe because the ui reconnects when
+     * the stream ends: `AuthorizedSseService` reads through `fetch` rather than
+     * `EventSource`, so it has to reconnect itself, and it does.
      */
     private static final long EMITTER_TIMEOUT_MILLIS = 30 * 60 * 1000L;
 
