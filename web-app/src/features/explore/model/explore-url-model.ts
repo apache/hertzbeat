@@ -22,7 +22,7 @@ import { parseExploreFilterParams } from './explore-field-contract';
 import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } from './explore-parity-filter-model';
 import type { ExploreQuery, ExploreQueryPatch, ExploreSignal, ExploreTimeRange } from './explore-query';
 
-const DEFAULT_SIGNAL: ExploreSignal = 'traces';
+const DEFAULT_SIGNAL: ExploreSignal = 'metrics';
 const DEFAULT_TIME_RANGE: ExploreTimeRange = 'last-30m';
 export const EXPLORE_TIME_RANGES: ExploreTimeRange[] = ['last-15m', 'last-30m', 'last-1h', 'last-6h', 'last-24h'];
 const AUTO_REFRESH_VALUES = [30_000, 60_000] as const;

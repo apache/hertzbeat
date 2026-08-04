@@ -179,7 +179,7 @@ describe('explore query state', () => {
     );
 
     expect(query).toMatchObject({
-      signal: 'traces',
+      signal: 'metrics',
       timeRange: 'last-1h',
       serviceNamespace: 'commerce',
       instance: 'checkout-7d9',
@@ -189,7 +189,7 @@ describe('explore query state', () => {
       end: undefined
     });
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=traces&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
+      '/explore?signal=metrics&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
         '&instance=checkout-7d9&endpoint=%2Fcheckout'
     );
   });
