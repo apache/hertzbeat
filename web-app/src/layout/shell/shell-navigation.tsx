@@ -138,6 +138,21 @@ function NavigationBranch(props: NavigationBranchProps) {
       />
     );
   }
+  if (!collapsed && depth === 0 && !item.route && hasChildren) {
+    const labelId = `navigation-section-${item.name}`;
+    return (
+      <section className={styles.navigationSection} aria-labelledby={labelId}>
+        <div id={labelId} className={styles.navigationSectionLabel} data-navigation-section-label>
+          {label}
+        </div>
+        <div className={styles.navigationSectionItems}>
+          {item.children.map(child => (
+            <NavigationBranch key={child.name} {...props} item={child} depth={depth + 1} />
+          ))}
+        </div>
+      </section>
+    );
+  }
   return (
     <div className={styles.navigationBranch} data-depth={depth}>
       <NavigationBranchControl {...props} active={active} hasChildren={hasChildren} isOpen={isOpen} label={label} />

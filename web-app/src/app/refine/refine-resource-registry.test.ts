@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { routeRegistry } from '@/app/route-registry';
 import { uiSessionSchema } from '@/core/auth/session-contract';
-import { readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
+import { buildShellNavigation, readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
 import { buildRefineResources, refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
@@ -27,11 +27,11 @@ describe('Refine shell resource registry', () => {
     expect(actualResources).toEqual(canonicalResources);
   });
 
-  it('declares a time policy and capability for every visible resource', () => {
+  it('declares shell policy metadata for every registered resource', () => {
     refineResources.forEach(resource => {
       expect(resource.meta?.shell).toMatchObject({
         capability: expect.stringMatching(/^(supported|unknown|unsupported)$/),
-        navigation: true,
+        navigation: expect.any(Boolean),
         timePolicy: expect.stringMatching(/^(global|route_owned|none|unknown)$/)
       });
     });
@@ -59,18 +59,51 @@ describe('Refine shell resource registry', () => {
     });
   });
 
-  it('places topology between Entities and Explore in the workspace navigation', () => {
-    const workspace = refineResources
-      .filter(resource => resource.meta?.parent === 'shell-workspace')
-      .sort((left, right) => Number(left.meta?.shell?.order) - Number(right.meta?.shell?.order))
-      .map(resource => resource.name);
+  it('exposes only the accepted stable product groups in global navigation', () => {
+    const tree = buildShellNavigation(refineResources, ['ADMIN']);
 
-    expect(workspace).toEqual(expect.arrayContaining(['entities', 'topology', 'explore']));
-    expect(workspace.indexOf('entities')).toBeLessThan(workspace.indexOf('topology'));
-    expect(workspace.indexOf('topology')).toBeLessThan(workspace.indexOf('explore'));
+    expect(tree.map(item => item.name)).toEqual([
+      'dashboard',
+      'shell-basic-monitoring',
+      'shell-application-observability',
+      'shell-resources',
+      'shell-alerting',
+      'shell-administration'
+    ]);
+    expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin']);
+    expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['explore', 'instrumentation']);
+    expect(navigationChildren(tree, 'shell-resources')).toEqual(['entities', 'topology']);
+    expect(navigationChildren(tree, 'shell-alerting')).toEqual(['alerts']);
+    expect(navigationChildren(tree, 'shell-administration')).toEqual(['settings']);
   });
 
-  it('restores visible backend monitor applications as stable nested navigation resources', () => {
+  it('keeps contextual routes out of the global sidebar', () => {
+    const names = flattenNavigationNames(buildShellNavigation(refineResources, ['ADMIN']));
+
+    expect(names).not.toEqual(
+      expect.arrayContaining([
+        'alert-rules',
+        'alert-groups',
+        'alert-inhibits',
+        'alert-silences',
+        'alert-integrations',
+        'notice-receivers',
+        'notice-rules',
+        'notice-templates',
+        'message-server',
+        'tokens',
+        'collectors',
+        'plugins',
+        'monitor-definitions',
+        'system-settings',
+        'labels',
+        'object-store',
+        'status-management'
+      ])
+    );
+  });
+
+  it('registers monitor application filters without growing global navigation', () => {
     const resources = buildRefineResources([
       { category: 'db', value: 'postgresql', label: 'PostgreSQL', hide: false },
       { category: 'db', value: 'mysql', label: 'MySQL', hide: false },
@@ -85,25 +118,29 @@ describe('Refine shell resource registry', () => {
       label: undefined,
       labelKey: 'monitor.categories.db',
       parent: 'monitors',
-      list: undefined
+      list: undefined,
+      navigation: false
     });
     expect(resourceIdentity(resources, 'monitor-app:mysql')).toEqual({
       label: 'MySQL',
       labelKey: 'monitor.apps.mysql',
       parent: 'monitor-category:db',
-      list: '/monitors?app=mysql'
+      list: '/monitors?app=mysql',
+      navigation: false
     });
     expect(resourceIdentity(resources, 'monitor-app:postgresql')).toEqual({
       label: 'PostgreSQL',
       labelKey: 'monitor.apps.postgresql',
       parent: 'monitor-category:db',
-      list: '/monitors?app=postgresql'
+      list: '/monitors?app=postgresql',
+      navigation: false
     });
     expect(resourceIdentity(resources, 'monitor-app:website')).toEqual({
       label: 'Website',
       labelKey: 'monitor.apps.website',
       parent: 'monitors',
-      list: '/monitors?app=website'
+      list: '/monitors?app=website',
+      navigation: false
     });
     expect(resourceIdentity(resources, 'monitor-category:extension')).toMatchObject({
       label: 'extension',
@@ -112,6 +149,14 @@ describe('Refine shell resource registry', () => {
     expect(resources.filter(resource => resource.name === 'monitor-app:mysql')).toHaveLength(1);
     expect(resources.find(resource => resource.name === 'monitor-app:private')).toBeUndefined();
     expect(resources.find(resource => resource.name === 'monitor-app:internal')).toBeUndefined();
+    expect(flattenNavigationNames(buildShellNavigation(resources, ['ADMIN']))).not.toEqual(
+      expect.arrayContaining([
+        'monitor-category:db',
+        'monitor-app:mysql',
+        'monitor-app:postgresql',
+        'monitor-app:website'
+      ])
+    );
   });
 
   it('admits a normalized lowercase session role to an ADMIN resource', async () => {
@@ -177,9 +222,18 @@ function resourceIdentity(resources: ReturnType<typeof buildRefineResources>, na
   return {
     label: resource?.meta?.shell?.label,
     labelKey: resource?.meta?.shell?.labelKey,
+    navigation: resource?.meta?.shell?.navigation,
     parent: resource?.meta?.parent,
     list: resource?.list
   };
+}
+
+function navigationChildren(tree: ReturnType<typeof buildShellNavigation>, name: string) {
+  return tree.find(item => item.name === name)?.children.map(item => item.name);
+}
+
+function flattenNavigationNames(tree: ReturnType<typeof buildShellNavigation>): string[] {
+  return tree.flatMap(item => [item.name, ...flattenNavigationNames(item.children)]);
 }
 
 function canAccess(resource: (typeof refineResources)[number] | undefined, roles: string[]) {

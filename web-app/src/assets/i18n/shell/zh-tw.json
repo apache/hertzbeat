@@ -1,8 +1,10 @@
 {
   "shell": {
     "navigation": {
-      "workspace": "工作區",
-      "operations": "維運",
+      "basicMonitoring": "基礎監控",
+      "applicationObservability": "應用可觀測",
+      "resources": "資源",
+      "alerting": "告警",
       "administration": "管理",
       "collapse": "收合導覽",
       "expand": "展開導覽",

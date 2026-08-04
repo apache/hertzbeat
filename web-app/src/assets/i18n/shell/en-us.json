@@ -1,8 +1,10 @@
 {
   "shell": {
     "navigation": {
-      "workspace": "Workspace",
-      "operations": "Operations",
+      "basicMonitoring": "Basic monitoring",
+      "applicationObservability": "Application observability",
+      "resources": "Resources",
+      "alerting": "Alerting",
       "administration": "Administration",
       "collapse": "Collapse navigation",
       "expand": "Expand navigation",

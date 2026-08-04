@@ -53,6 +53,7 @@ type NavigationResource = {
   label?: string;
   icon: ReactNode;
   parent?: string;
+  navigation?: boolean;
   order: number;
   capability?: ShellCapability;
   dataProviderName?: string;
@@ -67,22 +68,34 @@ type RoutedNavigationResource = Omit<NavigationResource, 'name' | 'list' | 'labe
 
 const groupResources = [
   navigationResource({
-    name: 'shell-workspace',
-    labelKey: 'shell.navigation.workspace',
-    icon: <AppstoreOutlined />,
+    name: 'shell-basic-monitoring',
+    labelKey: 'shell.navigation.basicMonitoring',
+    icon: <MonitorOutlined />,
     order: 10
   }),
   navigationResource({
-    name: 'shell-operations',
-    labelKey: 'shell.navigation.operations',
-    icon: <ToolOutlined />,
+    name: 'shell-application-observability',
+    labelKey: 'shell.navigation.applicationObservability',
+    icon: <FundProjectionScreenOutlined />,
     order: 20
+  }),
+  navigationResource({
+    name: 'shell-resources',
+    labelKey: 'shell.navigation.resources',
+    icon: <DeploymentUnitOutlined />,
+    order: 30
+  }),
+  navigationResource({
+    name: 'shell-alerting',
+    labelKey: 'shell.navigation.alerting',
+    icon: <AlertOutlined />,
+    order: 40
   }),
   navigationResource({
     name: 'shell-administration',
     labelKey: 'shell.navigation.administration',
     icon: <SettingOutlined />,
-    order: 30
+    order: 50
   })
 ];
 
@@ -107,65 +120,67 @@ const monitorApplicationOrderStart = 1_000;
 const staticRefineResources: ResourceProps[] = [
   ...groupResources,
   routedNavigationResource('dashboard', {
-    parent: 'shell-workspace',
     icon: <DashboardOutlined />,
-    order: 10,
+    order: 5,
     timePolicy: 'none'
   }),
   routedNavigationResource('monitors', {
-    parent: 'shell-workspace',
+    parent: 'shell-basic-monitoring',
     icon: <MonitorOutlined />,
-    order: 20,
+    order: 10,
     create: getAppRoute('monitor-new').path,
     edit: getAppRoute('monitor-edit').path,
     show: getAppRoute('monitor-detail').path,
     timePolicy: 'none'
   }),
   routedNavigationResource('entities', {
-    parent: 'shell-workspace',
+    parent: 'shell-resources',
     icon: <DeploymentUnitOutlined />,
-    order: 25,
+    order: 10,
     show: getAppRoute('entity-detail').path,
     timePolicy: 'none'
   }),
   routedNavigationResource('topology', {
-    parent: 'shell-workspace',
+    parent: 'shell-resources',
     icon: <ApartmentOutlined />,
-    order: 27,
+    order: 20,
     timePolicy: 'global'
   }),
   routedNavigationResource('explore', {
-    parent: 'shell-workspace',
+    parent: 'shell-application-observability',
     icon: <FundProjectionScreenOutlined />,
-    order: 30,
+    order: 10,
     timePolicy: 'route_owned'
   }),
   routedNavigationResource('instrumentation', {
-    parent: 'shell-workspace',
+    parent: 'shell-application-observability',
     icon: <ApiOutlined />,
-    order: 40,
+    order: 20,
     timePolicy: 'none'
   }),
   routedNavigationResource('alerts', {
-    parent: 'shell-operations',
+    parent: 'shell-alerting',
     icon: <AlertOutlined />,
     order: 10,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-rules', {
     parent: 'alerts',
+    navigation: false,
     icon: <ToolOutlined />,
     order: 10,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-groups', {
     parent: 'alerts',
+    navigation: false,
     icon: <TeamOutlined />,
     order: 20,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-inhibits', {
     parent: 'alerts',
+    navigation: false,
     icon: <ToolOutlined />,
     order: 30,
     timePolicy: 'none'
@@ -173,6 +188,7 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('alert-silences', {
     name: alertSilenceResourceName,
     parent: 'alerts',
+    navigation: false,
     icon: <ToolOutlined />,
     order: 40,
     dataProviderName: alertSilenceResourceName,
@@ -180,12 +196,13 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('alert-integrations', {
     parent: 'alerts',
+    navigation: false,
     icon: <ApiOutlined />,
     order: 50,
     timePolicy: 'none'
   }),
   routedNavigationResource('bulletin', {
-    parent: 'shell-operations',
+    parent: 'shell-basic-monitoring',
     icon: <ReadOutlined />,
     order: 20,
     timePolicy: 'none'
@@ -199,51 +216,60 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('notice-receivers', {
     name: noticeReceiverResourceName,
     parent: 'settings',
+    navigation: false,
     icon: <BellOutlined />,
     order: 10,
     dataProviderName: noticeReceiverResourceName
   }),
   routedNavigationResource(noticeRuleResourceName, {
     parent: 'settings',
+    navigation: false,
     icon: <ToolOutlined />,
     order: 20,
     dataProviderName: noticeRuleResourceName
   }),
   routedNavigationResource(noticeTemplateResourceName, {
     parent: 'settings',
+    navigation: false,
     icon: <ReadOutlined />,
     order: 30,
     dataProviderName: noticeTemplateResourceName
   }),
   routedNavigationResource('message-server', {
     parent: 'settings',
+    navigation: false,
     icon: <ApiOutlined />,
     order: 40
   }),
   routedNavigationResource('tokens', {
     parent: 'settings',
+    navigation: false,
     icon: <ApiOutlined />,
     order: 50,
     dataProviderName: 'tokens'
   }),
   routedNavigationResource('collectors', {
     parent: 'settings',
+    navigation: false,
     icon: <ApiOutlined />,
     order: 55
   }),
   routedNavigationResource('plugins', {
     parent: 'settings',
+    navigation: false,
     icon: <AppstoreOutlined />,
     order: 57
   }),
   routedNavigationResource('monitor-definitions', {
     parent: 'settings',
+    navigation: false,
     icon: <ReadOutlined />,
     order: 58
   }),
   routedNavigationResource('system-settings', {
     name: systemConfigResourceName,
     parent: 'settings',
+    navigation: false,
     icon: <SettingOutlined />,
     order: 60,
     dataProviderName: systemConfigResourceName
@@ -251,18 +277,21 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('labels', {
     name: labelResourceName,
     parent: 'settings',
+    navigation: false,
     icon: <TagsOutlined />,
     order: 70,
     dataProviderName: labelResourceName
   }),
   routedNavigationResource('object-store', {
     parent: 'settings',
+    navigation: false,
     icon: <DatabaseOutlined />,
     order: 80,
     dataProviderName: 'object-store'
   }),
   routedNavigationResource('status-management', {
     parent: 'settings',
+    navigation: false,
     icon: <FundProjectionScreenOutlined />,
     order: 90
   })
@@ -283,7 +312,7 @@ function navigationResource(resource: NavigationResource): ResourceProps {
     capability: resource.capability ?? 'supported',
     ...optionalResourceLabel(resource.label),
     labelKey: resource.labelKey,
-    navigation: true,
+    navigation: resource.navigation ?? true,
     order: resource.order,
     timePolicy: resource.timePolicy ?? (resource.parent === 'settings' || !resource.list ? 'none' : 'unknown'),
     ...(resource.requiredRoles ? { requiredRoles: resource.requiredRoles } : {}),
@@ -328,6 +357,7 @@ function buildMonitorNavigationResources(apps: readonly MonitorApp[]) {
       labelKey: `monitor.categories.${category}`,
       icon: <AppstoreOutlined />,
       parent: 'monitors',
+      navigation: false,
       order: monitorCategoryOrderStart + index
     })
   );
@@ -339,6 +369,7 @@ function buildMonitorNavigationResources(apps: readonly MonitorApp[]) {
       list: buildMonitorListPath({ app: app.value }),
       icon: <MonitorOutlined />,
       parent: app.category ? monitorCategoryResourceName(app.category) : 'monitors',
+      navigation: false,
       order: monitorApplicationOrderStart + index,
       timePolicy: 'none'
     })

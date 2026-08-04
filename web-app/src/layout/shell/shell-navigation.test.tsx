@@ -54,31 +54,29 @@ describe('collapsed ShellNavigation', () => {
   it('opens every route-less root with the shared permitted descendant tree and navigates by mouse', async () => {
     renderNavigation();
 
-    const workspace = groupButton('shell.navigation.workspace');
-    const operations = groupButton('shell.navigation.operations');
+    const basicMonitoring = groupButton('shell.navigation.basicMonitoring');
+    const alerting = groupButton('shell.navigation.alerting');
     const administration = groupButton('shell.navigation.administration');
-    [workspace, operations, administration].forEach(button => {
+    [basicMonitoring, alerting, administration].forEach(button => {
       expect(button).not.toHaveAttribute('aria-haspopup');
       expect(button).toHaveAttribute('aria-controls');
       expect(button).toHaveAttribute('aria-expanded', 'false');
     });
 
-    fireEvent.mouseEnter(workspace);
+    fireEvent.mouseEnter(basicMonitoring);
     await new Promise(resolve => setTimeout(resolve, 150));
-    expect(workspace).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(workspace);
-    let flyout = await screen.findByRole('navigation', { name: 'shell.navigation.workspace' });
+    expect(basicMonitoring).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(basicMonitoring);
+    let flyout = await screen.findByRole('navigation', { name: 'shell.navigation.basicMonitoring' });
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
     fireEvent.pointerDown(document.body);
     await waitFor(() => expect(flyout).not.toBeInTheDocument());
 
-    fireEvent.click(workspace);
-    flyout = await screen.findByRole('navigation', { name: 'shell.navigation.workspace' });
-    const dashboard = within(flyout).getByRole('link', { name: 'menu.dashboard' });
+    fireEvent.click(basicMonitoring);
+    flyout = await screen.findByRole('navigation', { name: 'shell.navigation.basicMonitoring' });
     const monitors = within(flyout).getByRole('link', { name: 'menu.monitors' });
     const restricted = within(flyout).getByRole('link', { name: 'menu.restricted' });
     const preview = within(flyout).getByRole('link', { name: 'menu.preview' });
-    expect(dashboard).toHaveAttribute('aria-current', 'page');
     expect(restricted).toHaveAttribute('aria-disabled', 'true');
     expect(preview).toHaveAttribute('aria-disabled', 'true');
 
@@ -89,33 +87,33 @@ describe('collapsed ShellNavigation', () => {
     expect(refine.go).not.toHaveBeenCalled();
     fireEvent.click(monitors);
     expect(refine.go).toHaveBeenCalledWith({ to: '/monitors', type: 'push' });
-    expect(workspace).toHaveAttribute('aria-expanded', 'false');
-    expect(workspace).toHaveFocus();
+    expect(basicMonitoring).toHaveAttribute('aria-expanded', 'false');
+    expect(basicMonitoring).toHaveFocus();
     await waitFor(() => {
-      expect(screen.queryByRole('navigation', { name: 'shell.navigation.workspace' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'shell.navigation.basicMonitoring' })).not.toBeInTheDocument();
     });
   });
 
   it('opens by keyboard, focuses the first route, switches groups, and closes with Escape', async () => {
     renderNavigation();
-    const operations = groupButton('shell.navigation.operations');
+    const alerting = groupButton('shell.navigation.alerting');
     const administration = groupButton('shell.navigation.administration');
 
-    operations.focus();
-    fireEvent.keyDown(operations, { key: 'ArrowRight' });
-    const operationsFlyout = screen.getByRole('navigation', { name: 'shell.navigation.operations' });
-    const alerts = within(operationsFlyout).getByRole('link', { name: 'menu.alerts' });
+    alerting.focus();
+    fireEvent.keyDown(alerting, { key: 'ArrowRight' });
+    const alertingFlyout = screen.getByRole('navigation', { name: 'shell.navigation.alerting' });
+    const alerts = within(alertingFlyout).getByRole('link', { name: 'menu.alerts' });
     await waitFor(() => expect(alerts).toHaveFocus());
-    expect(within(operationsFlyout).getByRole('link', { name: 'alertRules.title' })).toBeInTheDocument();
+    expect(within(alertingFlyout).queryByRole('link', { name: 'alertRules.title' })).not.toBeInTheDocument();
     fireEvent.click(alerts, { detail: 0 });
     expect(refine.go).toHaveBeenCalledWith({ to: '/alerts', type: 'push' });
-    expect(operations).toHaveAttribute('aria-expanded', 'false');
-    expect(operations).toHaveFocus();
+    expect(alerting).toHaveAttribute('aria-expanded', 'false');
+    expect(alerting).toHaveFocus();
 
-    fireEvent.keyDown(operations, { key: 'ArrowRight' });
+    fireEvent.keyDown(alerting, { key: 'ArrowRight' });
     fireEvent.click(administration);
     await waitFor(() => {
-      expect(screen.queryByRole('navigation', { name: 'shell.navigation.operations' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'shell.navigation.alerting' })).not.toBeInTheDocument();
     });
     const administrationFlyout = await screen.findByRole('navigation', {
       name: 'shell.navigation.administration'
@@ -131,12 +129,47 @@ describe('collapsed ShellNavigation', () => {
   it('removes an ADMIN-only route when the active session loses that role', async () => {
     const view = renderNavigation();
     fireEvent.click(groupButton('shell.navigation.administration'));
-    expect(await screen.findByRole('link', { name: 'menu.tokens' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'menu.admin-proof' })).toBeInTheDocument();
 
     refine.roles = ['USER'];
     view.rerender(navigationElement());
 
-    await waitFor(() => expect(screen.queryByRole('link', { name: 'menu.tokens' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'menu.admin-proof' })).not.toBeInTheDocument());
+  });
+});
+
+describe('expanded ShellNavigation', () => {
+  beforeEach(() => {
+    refine.go.mockReset();
+    refine.denied = new Set();
+    refine.roles = ['ADMIN'];
+    refine.resources = navigationResources();
+  });
+  afterEach(cleanup);
+
+  it('renders stable product sections as labels and direct destinations without contextual children', () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <ShellNavigation collapsed={false} onCollapsedChange={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'menu.dashboard' })).toHaveAttribute('aria-current', 'page');
+    for (const label of [
+      'shell.navigation.basicMonitoring',
+      'shell.navigation.applicationObservability',
+      'shell.navigation.resources',
+      'shell.navigation.alerting',
+      'shell.navigation.administration'
+    ]) {
+      expect(screen.getByText(label)).toHaveAttribute('data-navigation-section-label');
+      expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
+    }
+    expect(screen.getByRole('link', { name: 'menu.monitors' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'menu.alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'menu.settings' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'alertRules.title' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'menu.tokens' })).not.toBeInTheDocument();
   });
 });
 
@@ -158,18 +191,32 @@ function navigationElement() {
 
 function navigationResources() {
   return [
-    resource('shell-workspace', undefined, undefined, 10),
-    resource('shell-operations', undefined, undefined, 20),
-    resource('shell-administration', undefined, undefined, 30),
-    resource('dashboard', '/dashboard', 'shell-workspace', 10),
-    resource('monitors', '/monitors', 'shell-workspace', 20),
-    resource('restricted', '/restricted', 'shell-workspace', 30),
-    resource('preview', '/preview', 'shell-workspace', 40, 'unknown'),
-    resource('alerts', '/alerts', 'shell-operations', 10),
-    resource('alert-rules', '/alerts/rules', 'alerts', 10),
+    resource('dashboard', '/dashboard', undefined, 5),
+    resource('shell-basic-monitoring', undefined, undefined, 10),
+    resource('shell-application-observability', undefined, undefined, 20),
+    resource('shell-resources', undefined, undefined, 30),
+    resource('shell-alerting', undefined, undefined, 40),
+    resource('shell-administration', undefined, undefined, 50),
+    resource('monitors', '/monitors', 'shell-basic-monitoring', 10),
+    resource('bulletin', '/bulletin', 'shell-basic-monitoring', 20),
+    resource('restricted', '/restricted', 'shell-basic-monitoring', 30),
+    resource('preview', '/preview', 'shell-basic-monitoring', 40, 'unknown'),
+    resource('explore', '/explore', 'shell-application-observability', 10),
+    resource('instrumentation', '/observability/integration', 'shell-application-observability', 20),
+    resource('entities', '/entities', 'shell-resources', 10),
+    resource('topology', '/topology', 'shell-resources', 20),
+    resource('alerts', '/alerts', 'shell-alerting', 10),
+    hiddenResource('alert-rules', '/alerts/rules', 'alerts'),
     resource('settings', '/settings', 'shell-administration', 10),
-    resource('tokens', '/settings/tokens', 'shell-administration', 20, 'supported', ['ADMIN'])
+    resource('admin-proof', '/admin-proof', 'shell-administration', 20, 'supported', ['ADMIN']),
+    hiddenResource('tokens', '/settings/tokens', 'settings', ['ADMIN'])
   ];
+}
+
+function hiddenResource(name: string, list: string, parent: string, requiredRoles?: string[]) {
+  const value = resource(name, list, parent, 10, 'supported', requiredRoles);
+  value.meta.shell.navigation = false;
+  return value;
 }
 
 function resource(
@@ -186,7 +233,7 @@ function resource(
       icon: <span>{name}</span>,
       shell: {
         capability,
-        labelKey: name.startsWith('shell-') ? `shell.navigation.${name.slice(6)}` : labelKey(name),
+        labelKey: labelKey(name),
         navigation: true,
         order,
         timePolicy: list ? ('unknown' as const) : ('none' as const),
@@ -200,5 +247,8 @@ function resource(
 
 function labelKey(name: string) {
   if (name === 'alert-rules') return 'alertRules.title';
+  if (name === 'shell-basic-monitoring') return 'shell.navigation.basicMonitoring';
+  if (name === 'shell-application-observability') return 'shell.navigation.applicationObservability';
+  if (name.startsWith('shell-')) return `shell.navigation.${name.slice(6)}`;
   return `menu.${name}`;
 }

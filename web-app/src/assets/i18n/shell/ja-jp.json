@@ -1,8 +1,10 @@
 {
   "shell": {
     "navigation": {
-      "workspace": "ワークスペース",
-      "operations": "運用",
+      "basicMonitoring": "基本監視",
+      "applicationObservability": "アプリケーション可観測性",
+      "resources": "リソース",
+      "alerting": "アラート",
       "administration": "管理",
       "collapse": "ナビゲーションを折りたたむ",
       "expand": "ナビゲーションを展開",

@@ -93,6 +93,18 @@ describe('shell navigation model', () => {
     expect(item).toMatchObject({ label: 'MySQL', labelKey: 'monitor.apps.mysql' });
   });
 
+  it('omits registered contextual resources from the global tree', () => {
+    const tree = buildShellNavigation([
+      resource('alerts', '/alerts'),
+      hiddenResource('alert-rules', '/alerts/rules', 'alerts'),
+      hiddenResource('monitor-app:mysql', '/monitors?app=mysql')
+    ]);
+
+    expect(tree.map(item => item.name)).toEqual(['alerts']);
+    expect(activeNavigationTrail(tree, '/alerts/rules')).toEqual(['alerts']);
+    expect(activeNavigationTrail(tree, '/monitors?app=mysql')).toEqual([]);
+  });
+
   it('uses typed action overrides and falls back to the resource policy for every other action', () => {
     const shell = {
       capability: 'supported' as const,
@@ -179,4 +191,10 @@ function resource(
     },
     ...(list ? { list } : {})
   };
+}
+
+function hiddenResource(name: string, list: string, parent?: string) {
+  const value = resource(name, list, parent);
+  value.meta.shell.navigation = false;
+  return value;
 }

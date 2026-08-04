@@ -1,8 +1,10 @@
 {
   "shell": {
     "navigation": {
-      "workspace": "Espaço de trabalho",
-      "operations": "Operações",
+      "basicMonitoring": "Monitoramento básico",
+      "applicationObservability": "Observabilidade de aplicações",
+      "resources": "Recursos",
+      "alerting": "Alertas",
       "administration": "Administração",
       "collapse": "Recolher navegação",
       "expand": "Expandir navegação",
