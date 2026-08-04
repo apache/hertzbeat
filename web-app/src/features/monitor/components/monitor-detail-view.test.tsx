@@ -59,6 +59,21 @@ describe('MonitorDetailView', () => {
     expect(screen.queryByText('checkout')).not.toBeInTheDocument();
   });
 
+  it.each(['unavailable', 'error'] as const)('lets the operator retry a transient %s detail failure', kind => {
+    const refresh = vi.fn();
+    renderView({ kind }, { refresh });
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
+
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it.each(['loading', 'missing'] as const)('does not offer retry for the non-failure %s state', kind => {
+    renderView({ kind });
+
+    expect(screen.queryByRole('button', { name: i18n.t('common.retry') })).not.toBeInTheDocument();
+  });
+
   it('renders strict ready evidence and passes embedded metrics through', () => {
     renderView(ready);
     expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
@@ -266,6 +281,7 @@ function renderView(
     canDeleteGrafanaDashboard?: boolean;
     deleteGrafanaDashboard?: () => Promise<void>;
     grafanaDeleteError?: boolean;
+    refresh?: () => void;
   } = {}
 ) {
   return render(monitorDetailViewNode(detail, overrides));
@@ -278,6 +294,7 @@ function monitorDetailViewNode(
     canDeleteGrafanaDashboard?: boolean;
     deleteGrafanaDashboard?: () => Promise<void>;
     grafanaDeleteError?: boolean;
+    refresh?: () => void;
   } = {}
 ) {
   return (
@@ -294,6 +311,7 @@ function monitorDetailViewNode(
         actions={{
           back: vi.fn(),
           edit: vi.fn(),
+          refresh: overrides.refresh ?? vi.fn(),
           deleteGrafanaDashboard: overrides.deleteGrafanaDashboard ?? vi.fn()
         }}
         metricWorkbench={

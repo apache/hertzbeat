@@ -51,6 +51,7 @@ export type MonitorDetailViewState = {
 export type MonitorDetailViewActions = {
   back: () => void;
   edit: () => void;
+  refresh: () => void;
   deleteGrafanaDashboard: () => Promise<void>;
 };
 export type MonitorDetailRefreshControl = {

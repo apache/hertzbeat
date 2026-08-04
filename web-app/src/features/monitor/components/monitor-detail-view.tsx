@@ -46,7 +46,9 @@ export function MonitorDetailView({
   actions: MonitorDetailViewActions;
   metricWorkbench?: ReactNode;
 }) {
-  if (state.detail.kind !== 'ready') return <MonitorDetailState evidence={state.detail} onBack={actions.back} />;
+  if (state.detail.kind !== 'ready') {
+    return <MonitorDetailState evidence={state.detail} onBack={actions.back} onRetry={actions.refresh} />;
+  }
   return (
     <MonitorReadyDetailView
       key={state.detail.detail.monitor.id}
@@ -118,12 +120,17 @@ function MonitorReadyDetailView({
 
 function MonitorDetailState({
   evidence,
-  onBack
+  onBack,
+  onRetry
 }: {
   evidence: Exclude<MonitorDetailEvidence, { kind: 'ready' }>;
   onBack: () => void;
+  onRetry: () => void;
 }) {
   const { t } = useTranslation();
+  // Loading and missing are conclusive presentation states. Only transport or
+  // server failures need an operator-controlled recovery action.
+  const retryable = evidence.kind === 'unavailable' || evidence.kind === 'error';
   return (
     <OperationalPage mode="workspace">
       <OperationalPageHeader
@@ -133,6 +140,7 @@ function MonitorDetailState({
       <OperationalStatePanel
         kind={evidence.kind === 'missing' ? 'empty' : evidence.kind}
         title={t(monitorDetailStateMessage(evidence.kind))}
+        action={retryable ? <Button onClick={onRetry}>{t('common.retry')}</Button> : undefined}
       />
     </OperationalPage>
   );
