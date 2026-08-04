@@ -65,7 +65,7 @@ public class BulletinServiceImpl implements BulletinService {
      * validate Bulletin
      */
     @Override
-    public void validate(Bulletin bulletin) throws IllegalArgumentException {
+    public void validate(Bulletin bulletin, boolean isModify) throws IllegalArgumentException {
         if (bulletin == null) {
             throw new IllegalArgumentException("Bulletin cannot be null");
         }
@@ -78,8 +78,11 @@ public class BulletinServiceImpl implements BulletinService {
         if (bulletin.getMonitorIds() == null || bulletin.getMonitorIds().isEmpty()) {
             throw new IllegalArgumentException("Bulletin monitorIds cannot be null or empty");
         }
+        if (isModify && bulletin.getId() == null) {
+            throw new IllegalArgumentException("Bulletin id cannot be null when editing");
+        }
         Bulletin existBulletin = bulletinDao.findByName(bulletin.getName());
-        if (existBulletin != null && !existBulletin.getId().equals(bulletin.getId())) {
+        if (existBulletin != null && (!isModify || !existBulletin.getId().equals(bulletin.getId()))) {
             throw new IllegalArgumentException("Bulletin name duplicated");
         }
     }

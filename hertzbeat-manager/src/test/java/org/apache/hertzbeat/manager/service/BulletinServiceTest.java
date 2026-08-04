@@ -73,17 +73,17 @@ public class BulletinServiceTest {
     @Test
     public void testValidate() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            bulletinService.validate(null);
+            bulletinService.validate(null, false);
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
-            bulletinService.validate(new Bulletin());
+            bulletinService.validate(new Bulletin(), false);
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
             Bulletin obj = new Bulletin();
             obj.setApp("app");
-            bulletinService.validate(obj);
+            bulletinService.validate(obj, false);
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -93,7 +93,7 @@ public class BulletinServiceTest {
             Bulletin obj = new Bulletin();
             obj.setApp("app");
             obj.setFields(fields);
-            bulletinService.validate(obj);
+            bulletinService.validate(obj, false);
         });
 
         assertDoesNotThrow(() -> {
@@ -107,7 +107,7 @@ public class BulletinServiceTest {
             obj.setApp("app");
             obj.setFields(fields);
             obj.setMonitorIds(ids);
-            bulletinService.validate(obj);
+            bulletinService.validate(obj, false);
         });
     }
 
@@ -123,6 +123,21 @@ public class BulletinServiceTest {
         assertDoesNotThrow(() -> {
             bulletinService.addBulletin(bulletinDto);
         });
+    }
+
+    @Test
+    void validateCreateRejectsDuplicateNameEvenWhenClientSubmitsExistingId() {
+        Bulletin stored = Bulletin.builder().id(7L).name("duplicate-name").build();
+        Bulletin submitted = Bulletin.builder()
+                .id(7L)
+                .name("duplicate-name")
+                .app("app")
+                .fields(Map.of("metric", List.of("field")))
+                .monitorIds(List.of(1L))
+                .build();
+        when(bulletinDao.findByName("duplicate-name")).thenReturn(stored);
+
+        assertThrows(IllegalArgumentException.class, () -> bulletinService.validate(submitted, false));
     }
 
     @Test
