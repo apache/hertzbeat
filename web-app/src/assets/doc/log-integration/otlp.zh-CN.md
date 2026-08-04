@@ -1,8 +1,10 @@
 > HertzBeat 支持 OpenTelemetry Logs Protocol (OTLP) 协议，外部系统可以通过 OTLP 方式将日志数据推送到 HertzBeat 日志平台。
 
+HertzBeat 1.9.0 的指标、日志和链路统一使用 `/api/otlp/v1/{signal}` 接收协议。该过渡版本不包含 Entity：接收遥测数据不会创建或绑定 Entity，外部 OTLP 数据也与 HertzBeat 自身遥测数据分开存储。
+
 ### 接口端点
 
-`POST /api/logs/otlp/v1/logs`
+`POST /api/otlp/v1/logs`
 
 ### 请求头
 
@@ -71,7 +73,7 @@
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:

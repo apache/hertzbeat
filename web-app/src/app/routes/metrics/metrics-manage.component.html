@@ -15,45 +15,60 @@
   limitations under the License.
 -->
 <app-signal-storage-guide *ngIf="!storageSupported"></app-signal-storage-guide>
-<section class="signal-page" *ngIf="storageSupported">
-  <header class="page-heading">
-    <div>
-      <h1>{{ 'observability.metrics.title' | i18n }}</h1>
-      <p>{{ 'observability.metrics.subtitle' | i18n }}</p>
-    </div>
-    <div class="heading-actions">
-      <app-signal-navigation active="metrics" [context]="navigationContext()"></app-signal-navigation>
-      <span class="result-count">{{ series.length }} {{ 'observability.metrics.series' | i18n }}</span>
-    </div>
-  </header>
+<app-signal-workspace
+  *ngIf="storageSupported"
+  [title]="'observability.metrics.title' | i18n"
+  [subtitle]="'observability.metrics.subtitle' | i18n"
+  [queryLabel]="'observability.time.toolbar' | i18n"
+>
+  <div workspace-actions>
+    <app-signal-navigation active="metrics" [context]="navigationContext()"></app-signal-navigation>
+  </div>
 
-  <div class="query-toolbar">
-    <app-signal-time-range
-      [(value)]="timeRange"
-      [(refreshSeconds)]="refreshSeconds"
-      (apply)="search()"
-      (refresh)="refreshToNow()"
-    ></app-signal-time-range>
-    <input
-      nz-input
-      class="promql-input mono"
-      [(ngModel)]="query"
-      [nzAutocomplete]="metricAuto"
-      [placeholder]="'observability.metrics.promql' | i18n"
-      (keyup.enter)="search()"
-    />
-    <nz-autocomplete #metricAuto>
-      <nz-auto-option *ngFor="let name of metricNames" [nzValue]="name">{{ name }}</nz-auto-option>
-    </nz-autocomplete>
-    <input nz-input type="number" min="1" max="3600" [(ngModel)]="step" [placeholder]="'observability.metrics.step' | i18n" />
-    <button nz-button nzType="primary" [nzLoading]="loading" (click)="search()">
+  <app-signal-time-range
+    workspace-time
+    [(value)]="timeRange"
+    [(refreshSeconds)]="refreshSeconds"
+    (apply)="search()"
+    (refresh)="refreshToNow()"
+  ></app-signal-time-range>
+
+  <div workspace-filters class="query-fields metrics-query-fields">
+    <label class="query-field query-field--wide">
+      <span class="query-field-label">{{ 'observability.metrics.query' | i18n }}</span>
+      <input
+        nz-input
+        class="promql-input mono"
+        [(ngModel)]="query"
+        [nzAutocomplete]="metricAuto"
+        [placeholder]="'observability.metrics.promql' | i18n"
+        [attr.aria-label]="'observability.metrics.query' | i18n"
+        (keyup.enter)="search()"
+      />
+      <nz-autocomplete #metricAuto>
+        <nz-auto-option *ngFor="let name of metricNames" [nzValue]="name">{{ name }}</nz-auto-option>
+      </nz-autocomplete>
+    </label>
+    <label class="query-field">
+      <span class="query-field-label">{{ 'observability.metrics.step' | i18n }}</span>
+      <input
+        nz-input
+        type="number"
+        min="1"
+        max="3600"
+        [(ngModel)]="step"
+        [placeholder]="'observability.metrics.step' | i18n"
+        [attr.aria-label]="'observability.metrics.step' | i18n"
+      />
+    </label>
+    <button class="query-submit" nz-button nzType="primary" [nzLoading]="loading" (click)="search()">
       <span nz-icon nzType="search"></span>{{ 'common.button.query' | i18n }}
     </button>
   </div>
 
-  <nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert>
+  <div workspace-alert><nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert></div>
 
-  <div class="overview-strip">
+  <div workspace-summary class="overview-strip metrics-overview">
     <div
       ><span>{{ 'observability.metrics.total-series' | i18n }}</span
       ><strong>{{ series.length }}</strong></div
@@ -72,57 +87,65 @@
     >
   </div>
 
-  <div class="section-title">
-    <h2>{{ 'observability.metrics.trend' | i18n }}</h2
-    ><span>{{ series.length }}</span>
-  </div>
+  <div workspace-results class="evidence-stack">
+    <section class="evidence-section">
+      <header class="evidence-heading">
+        <div class="evidence-heading-title">
+          <h2>{{ 'observability.metrics.trend' | i18n }}</h2>
+          <span>{{ series.length }} {{ 'observability.metrics.series' | i18n }}</span>
+        </div>
+      </header>
+      <div class="chart-region" [class.loading-region]="loading">
+        <div *ngIf="series.length; else emptyChart" echarts [options]="chartOption" class="metric-chart"></div>
+        <ng-template #emptyChart><nz-empty [nzNotFoundContent]="'observability.empty.metrics' | i18n"></nz-empty></ng-template>
+      </div>
+      <div class="series-strip" *ngIf="series.length">
+        <button nz-button nzType="text" *ngFor="let item of series" (click)="showSeries(item)">
+          {{ labelText(item.labels) || query }}
+        </button>
+      </div>
+    </section>
 
-  <section class="chart-region" [class.loading-region]="loading">
-    <div *ngIf="series.length; else emptyChart" echarts [options]="chartOption" class="metric-chart"></div>
-    <ng-template #emptyChart><nz-empty [nzNotFoundContent]="'observability.empty.metrics' | i18n"></nz-empty></ng-template>
-  </section>
-
-  <div class="series-strip" *ngIf="series.length">
-    <button nz-button nzType="text" *ngFor="let item of series" (click)="showSeries(item)">
-      {{ labelText(item.labels) || query }}
-    </button>
-  </div>
-
-  <div class="section-title">
-    <h2>{{ 'observability.metrics.samples' | i18n }}</h2>
-    <span>{{ rows.length }}</span>
-  </div>
-  <nz-table #metricTable [nzData]="rows" nzSize="small" [nzPageSize]="20" [nzLoading]="loading">
-    <thead
-      ><tr
-        ><th>{{ 'observability.column.time' | i18n }}</th
-        ><th>{{ 'observability.column.value' | i18n }}</th
-        ><th>{{ 'observability.column.labels' | i18n }}</th></tr
-      ></thead
-    >
-    <tbody>
-      <tr *ngFor="let row of metricTable.data" (click)="showSeries({ labels: row.labels, points: [] })">
-        <td>{{ row.timestamp | date : 'yyyy-MM-dd HH:mm:ss' }}</td
-        ><td>{{ row.value }}</td
-        ><td class="mono">{{ labelText(row.labels) }}</td>
-      </tr>
-    </tbody>
-  </nz-table>
-
-  <nz-drawer
-    [nzVisible]="detailVisible"
-    nzPlacement="right"
-    [nzWidth]="480"
-    [nzTitle]="'observability.metrics.series-detail' | i18n"
-    (nzOnClose)="detailVisible = false"
-  >
-    <ng-container *nzDrawerContent>
-      <dl *ngIf="selectedSeries" class="detail-list">
-        <ng-container *ngFor="let label of selectedSeries.labels | keyvalue"
-          ><dt>{{ label.key }}</dt
-          ><dd>{{ label.value }}</dd></ng-container
+    <section class="evidence-section">
+      <header class="evidence-heading">
+        <div class="evidence-heading-title">
+          <h2>{{ 'observability.metrics.samples' | i18n }}</h2>
+          <span>{{ rows.length }}</span>
+        </div>
+      </header>
+      <nz-table #metricTable [nzData]="rows" nzSize="small" [nzPageSize]="20" [nzLoading]="loading">
+        <thead
+          ><tr
+            ><th>{{ 'observability.column.time' | i18n }}</th
+            ><th>{{ 'observability.column.value' | i18n }}</th
+            ><th>{{ 'observability.column.labels' | i18n }}</th></tr
+          ></thead
         >
-      </dl>
-    </ng-container>
-  </nz-drawer>
-</section>
+        <tbody>
+          <tr *ngFor="let row of metricTable.data" (click)="showSeries({ labels: row.labels, points: [] })">
+            <td>{{ row.timestamp | date : 'yyyy-MM-dd HH:mm:ss' }}</td
+            ><td>{{ row.value }}</td
+            ><td class="mono">{{ labelText(row.labels) }}</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </section>
+
+    <nz-drawer
+      [nzVisible]="detailVisible"
+      nzPlacement="right"
+      [nzWidth]="480"
+      [nzTitle]="'observability.metrics.series-detail' | i18n"
+      (nzOnClose)="detailVisible = false"
+    >
+      <ng-container *nzDrawerContent>
+        <dl *ngIf="selectedSeries" class="detail-list">
+          <ng-container *ngFor="let label of selectedSeries.labels | keyvalue"
+            ><dt>{{ label.key }}</dt
+            ><dd>{{ label.value }}</dd></ng-container
+          >
+        </dl>
+      </ng-container>
+    </nz-drawer>
+  </div>
+</app-signal-workspace>

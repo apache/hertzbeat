@@ -84,12 +84,9 @@ resourceRole:
   - /api/ai/**===post===[admin]
   - /api/ai/**===put===[admin]
   - /api/ai/**===delete===[admin]
-  - /api/logs/sse/**===get===[admin,user,guest]
-  - /api/logs/ingest/**===post===[admin,user]
-  - /api/otlp/**===post===[admin,user]
-  - /api/ingestion/otlp/**===get===[admin,user,guest]
-  - /api/logs/**===get===[admin,user,guest]
-  - /api/traces/**===get===[admin,user,guest]
+  - /api/otlp/v1/**===post===[admin,user]
+  - /api/observability/logs===delete===[admin]
+  - /api/observability/**===get===[admin,user,guest]
   - /api/account/token===get===[admin]
   - /api/account/token/**===post===[admin]
   - /api/account/token/**===delete===[admin]
@@ -102,7 +99,6 @@ excludedResource:
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
-  - /api/observability/capability===get
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*

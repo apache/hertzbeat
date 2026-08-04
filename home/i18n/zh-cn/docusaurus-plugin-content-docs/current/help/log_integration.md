@@ -11,6 +11,10 @@ keywords: [开源监控, 日志集成, 日志管理, 多源日志]
 日志集成功能目前处于 Beta（实验性）阶段，可能存在潜在缺陷和局限性。该功能正在积极开发和迭代中。
 :::
 
+:::info HertzBeat 1.9.0 过渡版本
+指标、日志和链路统一通过 `/api/otlp/v1/{signal}` 接收，并通过 `/api/observability/**` 查询。该版本不会根据遥测数据创建或绑定 Entity；外部 OTLP 三信号表也与 HertzBeat 自身遥测表分开存储。
+:::
+
 ## 核心能力
 
 - **多源日志接入**：支持从 OpenTelemetry、Filebeat、Vector、Loki 等主流平台接收日志数据
@@ -36,7 +40,7 @@ HertzBeat 当前已支持以下协议进行日志数据接入：
 HertzBeat 提供以下接口用于接收 OTLP 日志数据：
 
 ```text
-POST /api/logs/otlp/v1/logs
+POST /api/otlp/v1/logs
 ```
 
 ### 请求配置
@@ -112,7 +116,7 @@ POST /api/logs/otlp/v1/logs
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:

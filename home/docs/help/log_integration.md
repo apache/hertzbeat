@@ -11,6 +11,10 @@ keywords: [open source monitoring, log integration, log management, multi-source
 The log integration feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
 :::
 
+:::info HertzBeat 1.9.0 transition
+Metrics, logs, and traces share `/api/otlp/v1/{signal}` for ingestion and `/api/observability/**` for queries. This release intentionally does not create or bind Entity records from telemetry. External OTLP signal tables are also separate from HertzBeat's internal self-telemetry tables.
+:::
+
 ## Core Capabilities
 
 - **Multi-source Log Integration**: Support receiving log data from mainstream platforms such as OpenTelemetry, Filebeat, Vector, Loki
@@ -36,7 +40,7 @@ You can view specific integration methods and configuration examples through Her
 HertzBeat provides the following interface for receiving OTLP log data:
 
 ```text
-POST /api/logs/otlp/v1/logs
+POST /api/otlp/v1/logs
 ```
 
 ### Request Configuration
@@ -112,7 +116,7 @@ Add HertzBeat as a log export target in the OpenTelemetry Collector configuratio
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
+    logs_endpoint: http://{hertzbeat_host}:1157/api/otlp/v1/logs
     compression: none
     encoding: json
     headers:
