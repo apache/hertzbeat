@@ -119,4 +119,8 @@ describe('OperationalPage', () => {
   it('lets wide result children shrink so their own table scroller and fixed columns stay in the viewport', () => {
     expect(operationalPageStyles).toMatch(/\.resultRegion\s*>\s*\*\s*\{[^}]*min-width:\s*0;/s);
   });
+
+  it('uses one separator when a command bar is nested inside a section', () => {
+    expect(operationalPageStyles).toMatch(/\.sectionBody\s+\.commandBar\s*\{[^}]*border-top:\s*0;/s);
+  });
 });

@@ -150,6 +150,12 @@
   padding-top: var(--hb-space-3);
 }
 
+/* The section header already separates its content from the title. Nested
+ * command bars keep their lower edge but must not draw a second adjacent line. */
+.sectionBody .commandBar {
+  border-top: 0;
+}
+
 .statePanel {
   --state-accent: var(--hb-status-unknown);
   display: grid;
