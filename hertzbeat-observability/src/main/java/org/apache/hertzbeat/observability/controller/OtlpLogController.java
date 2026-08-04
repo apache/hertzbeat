@@ -20,10 +20,9 @@ package org.apache.hertzbeat.observability.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.charset.StandardCharsets;
-import org.apache.hertzbeat.observability.service.OtlpSignalForwarder;
+import org.apache.hertzbeat.observability.service.OtlpLogIngestionService;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard.Workload;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,36 +33,25 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Standard OTLP/HTTP gateway for all three signals. */
+/** Canonical OTLP/HTTP log endpoint backed by the HertzBeat log fan-out. */
 @RestController
-@ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @RequestMapping("/api/otlp/v1")
-@Tag(name = "OTLP Signal Controller")
-public class OtlpSignalController {
+@Tag(name = "OTLP Log Controller")
+public class OtlpLogController {
 
-    private final OtlpSignalForwarder signalForwarder;
+    private final OtlpLogIngestionService logIngestionService;
     private final SignalWorkloadGuard workloadGuard;
 
-    public OtlpSignalController(OtlpSignalForwarder signalForwarder, SignalWorkloadGuard workloadGuard) {
-        this.signalForwarder = signalForwarder;
+    public OtlpLogController(OtlpLogIngestionService logIngestionService, SignalWorkloadGuard workloadGuard) {
+        this.logIngestionService = logIngestionService;
         this.workloadGuard = workloadGuard;
     }
 
-    @PostMapping("/metrics")
-    @Operation(summary = "Ingest OTLP metrics")
-    public ResponseEntity<byte[]> metrics(@RequestBody byte[] content, @RequestHeader HttpHeaders headers) {
-        return forward("metrics", content, headers);
-    }
-
-    @PostMapping("/traces")
-    @Operation(summary = "Ingest OTLP traces")
-    public ResponseEntity<byte[]> traces(@RequestBody byte[] content, @RequestHeader HttpHeaders headers) {
-        return forward("traces", content, headers);
-    }
-
-    private ResponseEntity<byte[]> forward(String signal, byte[] content, HttpHeaders headers) {
+    @PostMapping("/logs")
+    @Operation(summary = "Ingest OTLP logs")
+    public ResponseEntity<byte[]> logs(@RequestBody byte[] content, @RequestHeader HttpHeaders headers) {
         return workloadGuard.execute(Workload.OTLP_WRITE,
-                () -> signalForwarder.forwardHttp(signal, content, headers));
+                () -> logIngestionService.ingestHttp(content, headers));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

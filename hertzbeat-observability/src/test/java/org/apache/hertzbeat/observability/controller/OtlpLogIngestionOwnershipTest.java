@@ -29,7 +29,7 @@ class OtlpLogIngestionOwnershipTest {
     @Test
     void httpAndGrpcLogsShouldUseTheLogFanOutInsteadOfTheRawGreptimeForwarder() throws Exception {
         String httpController = Files.readString(Path.of(
-                "src/main/java/org/apache/hertzbeat/observability/controller/OtlpSignalController.java"));
+                "src/main/java/org/apache/hertzbeat/observability/controller/OtlpLogController.java"));
         String grpcConfig = Files.readString(Path.of(
                 "src/main/java/org/apache/hertzbeat/observability/config/OtlpGrpcServerConfig.java"));
 

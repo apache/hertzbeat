@@ -18,14 +18,12 @@
 package org.apache.hertzbeat.observability.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.apache.hertzbeat.observability.service.OtlpSignalForwarder;
+import org.apache.hertzbeat.observability.service.OtlpLogIngestionService;
 import org.apache.hertzbeat.observability.service.SignalWorkloadGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,46 +37,43 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-/** OTLP/HTTP route contract tests. */
+/** OTLP/HTTP log route contract tests. */
 @ExtendWith(MockitoExtension.class)
-class OtlpSignalControllerTest {
+class OtlpLogControllerTest {
 
     @Mock
-    private OtlpSignalForwarder signalForwarder;
+    private OtlpLogIngestionService logIngestionService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(
-                new OtlpSignalController(signalForwarder, new SignalWorkloadGuard())).build();
+                new OtlpLogController(logIngestionService, new SignalWorkloadGuard())).build();
     }
 
     @Test
-    void shouldRouteGreptimeSignals() throws Exception {
-        when(signalForwarder.forwardHttp(any(), any(), any()))
+    void shouldRouteLogsToTheLogFanOut() throws Exception {
+        when(logIngestionService.ingestHttp(any(), any()))
                 .thenReturn(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{}".getBytes()));
 
-        for (String signal : new String[] {"metrics", "traces"}) {
-            mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/" + signal)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{}"))
-                    .andExpect(status().isOk());
-            verify(signalForwarder).forwardHttp(eq(signal), any(), any(HttpHeaders.class));
-        }
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/logs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
 
-        verifyNoMoreInteractions(signalForwarder);
+        verify(logIngestionService).ingestHttp(any(), any(HttpHeaders.class));
     }
 
     @Test
     void shouldReturnBadRequestForMalformedOtlpPayload() throws Exception {
-        when(signalForwarder.forwardHttp(eq("metrics"), any(), any()))
-                .thenThrow(new IllegalArgumentException("Malformed OTLP metrics JSON payload"));
+        when(logIngestionService.ingestHttp(any(), any()))
+                .thenThrow(new IllegalArgumentException("Malformed OTLP logs JSON payload"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/metrics")
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/otlp/v1/logs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Malformed OTLP metrics JSON payload"));
+                .andExpect(content().string("Malformed OTLP logs JSON payload"));
     }
 }
