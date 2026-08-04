@@ -38,11 +38,21 @@ const tree = [
 describe('Bulletin editor metric Tree', () => {
   afterEach(cleanup);
 
+  it('renders the editor as the centered Angular-style modal form', () => {
+    renderEditor();
+
+    expect(screen.getByRole('dialog', { name: 'bulletin.edit' })).toBeInTheDocument();
+    expect(document.querySelector('.ant-drawer')).not.toBeInTheDocument();
+    expect(document.querySelector('form')).toHaveClass('ant-form-horizontal');
+    expect(document.querySelector('.ant-form-item-label')).toHaveClass('ant-col-7');
+    expect(document.querySelector('.ant-form-item-control')).toHaveClass('ant-col-12');
+  });
+
   it('keeps large application hierarchies inside a bounded scrolling field', () => {
     renderEditor();
 
-    const tree = screen.getByRole('tree');
-    const field = tree.closest(`.${metricTreeStyles.metricTree}`);
+    const metricTree = screen.getByRole('tree');
+    const field = metricTree.closest(`.${metricTreeStyles.metricTree}`);
     if (!(field instanceof HTMLElement)) throw new Error('Bulletin metric tree field was not rendered.');
     const style = getComputedStyle(field);
     expect(style.maxHeight).toBe('260px');

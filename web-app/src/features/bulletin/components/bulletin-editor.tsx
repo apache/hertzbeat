@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Drawer, Form, Input, Select, Space, Spin, Typography } from 'antd';
+import { Alert, Form, Input, Modal, Select, Space, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof';
 import { bulletinMonitorMatchesSearch, type BulletinDraft } from '../model/bulletin-model';
@@ -29,28 +29,24 @@ export function BulletinEditor(props: BulletinEditorProps) {
     dependencies.monitorSelection === 'valid' &&
     dependencies.fieldSelection === 'valid';
   return (
-    <Drawer
+    <Modal
       open={draft != null}
-      width={640}
+      width="70%"
       title={t(draft?.id == null ? 'bulletin.create' : 'bulletin.edit')}
-      onClose={onClose}
+      onCancel={onClose}
+      onOk={onSave}
       destroyOnHidden
       closable={!writeLocked}
       keyboard={!writeLocked}
       maskClosable={false}
-      footer={
-        <Space>
-          <Button disabled={writeLocked} onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="primary" loading={saving} disabled={writeLocked || !canSave} onClick={onSave}>
-            {t('common.save')}
-          </Button>
-        </Space>
-      }
+      confirmLoading={saving}
+      cancelText={t('common.cancel')}
+      okText={t('common.save')}
+      cancelButtonProps={{ disabled: writeLocked }}
+      okButtonProps={{ disabled: writeLocked || !canSave }}
     >
       {draft && <BulletinEditorForm {...props} draft={draft} t={t} />}
-    </Drawer>
+    </Modal>
   );
 }
 
@@ -65,7 +61,7 @@ function BulletinEditorForm({
   t: (key: string) => string;
 }) {
   return (
-    <Form layout="vertical">
+    <Form labelCol={{ span: 7 }} wrapperCol={{ span: 12 }}>
       <Form.Item label={t('bulletin.name')} required>
         <Input disabled={writeLocked} value={draft.name} onChange={event => onChange({ name: event.target.value })} />
       </Form.Item>
