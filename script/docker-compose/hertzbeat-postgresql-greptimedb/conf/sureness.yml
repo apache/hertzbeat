@@ -54,6 +54,16 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  # the secret config holds the jwt signing key and the aes key protecting stored
+  # credentials, so it stays admin only and is additionally refused by the controller
+  - /api/config/secret===get===[admin]
+  - /api/config/secret===post===[admin]
+  # the mute toggle sits in the notification widget every signed in user sees
+  - /api/config/mute===post===[admin,user,guest]
+  - /api/config/**===get===[admin,user,guest]
+  - /api/config/**===post===[admin]
+  - /api/config/**===put===[admin]
+  - /api/config/**===delete===[admin]
   # queue depth of the hertzbeat process itself, operational data
   - /api/metrics===get===[admin]
   # per account metric favourites rendered on the monitor pages
@@ -87,6 +97,10 @@ resourceRole:
   - /api/mcp/**===post===[admin]
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin]
+  - /api/ai/**===get===[admin]
+  - /api/ai/**===post===[admin]
+  - /api/ai/**===put===[admin]
+  - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
   - /api/otlp/**===post===[admin,user]
