@@ -27,6 +27,9 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.timer.TimerTask;
@@ -145,6 +148,38 @@ class VictoriaMetricsClusterDataStorageTest {
 
         assertThat(successfulBodies).hasSize(1);
         assertThat(lineCount(successfulBodies.get(0))).isEqualTo(1);
+    }
+
+    @Test
+    void persistentWriteFailureDoesNotBlockTheWarehouseProducerIndefinitely() throws Exception {
+        mockHealthCheck();
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenAnswer(invocation -> {
+                    writes.incrementAndGet();
+                    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+                });
+        VictoriaMetricsClusterDataStorage storage = createStorage(1, 3600);
+        ExecutorService producer = Executors.newSingleThreadExecutor();
+        Future<?> pendingWrite = null;
+
+        try {
+            Thread.sleep(1200);
+            saveOneMetric(storage);
+            await().atMost(3, TimeUnit.SECONDS).until(() -> writes.get() > 0);
+            saveOneMetric(storage);
+
+            pendingWrite = producer.submit(() -> saveOneMetric(storage));
+
+            pendingWrite.get(3, TimeUnit.SECONDS);
+            assertThat(storage.getDroppedMetricCount()).isGreaterThanOrEqualTo(1);
+        } finally {
+            if (pendingWrite != null) {
+                pendingWrite.cancel(true);
+            }
+            storage.destroy();
+            producer.shutdownNow();
+        }
     }
 
     private void mockHealthCheck() {
