@@ -108,9 +108,9 @@ params:
     required: true
   - field: hostKeyFingerprint
     name:
-      zh-CN: SFTP主机密钥指纹（必填，可填写多个）
-      en-US: SFTP Host Key Fingerprints (Required, Multiple Allowed)
-      ja-JP: SFTPホストキーフィンガープリント（必須、複数可）
+      zh-CN: SFTP主机密钥指纹（未跳过验证时必填，可填写多个）
+      en-US: SFTP Host Key Fingerprints (Required Unless Verification Is Skipped)
+      ja-JP: SFTPホストキーフィンガープリント（検証をスキップしない場合は必須）
     type: textarea
     limit: 2048
     placeholder: 'SHA256:... (one per line; verify through a trusted channel)'

@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.keyverifier.ServerKeyVerifier;
 import org.apache.sshd.common.config.keys.KeyUtils;
+import org.apache.sshd.common.digest.BuiltinDigests;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -160,9 +161,9 @@ class FtpCollectImplTest {
         FtpProtocol ftpProtocol = FtpProtocol.builder()
                 .host("sftp.example.com")
                 .port("22")
-                .hostKeyFingerprint(KeyUtils.getFingerPrint(currentKey)
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.sha256, currentKey)
                         + System.lineSeparator()
-                        + KeyUtils.getFingerPrint(nextKey))
+                        + KeyUtils.getFingerPrint(BuiltinDigests.sha256, nextKey))
                 .build();
 
         ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
@@ -170,6 +171,25 @@ class FtpCollectImplTest {
         assertTrue(verifier.verifyServerKey(null, null, currentKey));
         assertTrue(verifier.verifyServerKey(null, null, nextKey));
         assertFalse(verifier.verifyServerKey(null, null, unrelatedKey));
+    }
+
+    @Test
+    void serverKeyVerifierAlwaysUsesSha256() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        var serverKey = keyPairGenerator.generateKeyPair().getPublic();
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.sha256, serverKey))
+                .build();
+        var previousFactory = KeyUtils.getDefaultFingerPrintFactory();
+
+        try {
+            KeyUtils.setDefaultFingerPrintFactory(BuiltinDigests.md5);
+            ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
+            assertTrue(verifier.verifyServerKey(null, null, serverKey));
+        } finally {
+            KeyUtils.setDefaultFingerPrintFactory(previousFactory);
+        }
     }
 
     @Test

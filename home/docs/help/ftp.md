@@ -21,8 +21,8 @@ keywords: [ open source monitoring tool, open source ftp server monitoring tool,
 | Username            | Username for connecting to the FTP server, optional.                                                                     |
 | Password            | Password for connecting to the FTP server, optional.                                                                     |
 | SFTP                 | Use SFTP instead of FTP. SFTP requires a username and password.                                                           |
-| Host key fingerprints | Trusted SFTP server SHA-256 fingerprints, one per line or separated by commas. Required unless temporary unsafe compatibility is enabled. |
-| Skip host key verification | **Dangerous temporary option.** It keeps compatibility but does not authenticate the SFTP server.                         |
+| Host key fingerprints | Trusted SFTP server SHA-256 fingerprints, one per line or separated by commas. Required unless verification is explicitly skipped. |
+| Skip host key verification | **Dangerous option.** Use only for a controlled diagnostic; it does not authenticate the SFTP server.                         |
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds. |
 | Bind Tags           | Used to classify and manage monitoring resources.                                                                        |
 | Description remarks | For more information about identifying and describing this monitoring, users can note information here.                  |
@@ -46,22 +46,9 @@ For a planned host-key rotation, verify the new key first, add both the current
 and new fingerprints, rotate the server key, and remove the old fingerprint
 only after all HertzBeat collectors use the new key.
 
-### Upgrade from an earlier release
-
-At the first startup after this change, existing SFTP monitors that have no
-host-key setting are explicitly migrated to the temporary
-`insecureSkipVerify` compatibility option so collection does not stop. HertzBeat
-logs a warning for the migration and whenever such a monitor connects.
-
-For every migrated monitor:
-
-1. Verify the server fingerprint through a trusted channel.
-2. Add it to **SFTP Host Key Fingerprints**.
-3. Turn off **DANGER: Temporarily Skip SFTP Host Key Verification**.
-4. Run detection and confirm collection succeeds.
-
-New SFTP monitors and imported configurations must pin at least one fingerprint
-unless the operator explicitly selects the dangerous temporary option.
+SFTP monitors and imported configurations must pin at least one fingerprint
+unless the operator explicitly selects the dangerous skip-verification option.
+HertzBeat does not enable that option automatically.
 
 ### Collection Metrics
 
