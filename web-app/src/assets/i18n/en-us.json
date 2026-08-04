@@ -1238,12 +1238,6 @@
     "silences": "Silences"
   },
   "settingsNavigation": {
-    "ariaLabel": "Settings navigation",
-    "groups": {
-      "notifications": "Notifications",
-      "collection": "Collection",
-      "platform": "Platform and security"
-    },
     "receivers": "Receivers",
     "rules": "Delivery rules",
     "templates": "Templates",

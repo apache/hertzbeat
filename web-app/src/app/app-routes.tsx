@@ -242,103 +242,94 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
-                id: 'settings-layout',
+                ...getAppRouteIdentity('notice-receivers'),
                 lazy: async () => {
-                  const { SettingsRouteLayout } = await import('@/features/settings/navigation/settings-route-layout');
-                  return { Component: SettingsRouteLayout };
-                },
-                children: [
-                  {
-                    ...getAppRouteIdentity('notice-receivers'),
-                    lazy: async () => {
-                      const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver');
-                      return { Component: NoticeReceiverPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('notice-templates'),
-                    lazy: async () => {
-                      const { NoticeTemplatePage } = await import('@/features/alert/pages/notice-template-page');
-                      return { Component: NoticeTemplatePage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('notice-rules'),
-                    lazy: async () => {
-                      const { NoticeRulePage } = await import('@/features/alert/notice-rule');
-                      return { Component: NoticeRulePage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('message-server'),
-                    lazy: async () => {
-                      const { MessageServerPage } = await import('@/features/settings/message-server');
-                      return { Component: MessageServerPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('tokens'),
-                    element: (
-                      <ResourceRouteAccess routeId="tokens">
-                        <AdministrativeTokenRoutePage />
-                      </ResourceRouteAccess>
-                    )
-                  },
-                  {
-                    ...getAppRouteIdentity('collectors'),
-                    lazy: async () => {
-                      const { CollectorPage } = await import('@/features/settings/collector');
-                      return { Component: CollectorPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('plugins'),
-                    element: (
-                      <ResourceRouteAccess routeId="plugins">
-                        <AdministrativePluginRoutePage />
-                      </ResourceRouteAccess>
-                    )
-                  },
-                  {
-                    ...getAppRouteIdentity('monitor-definitions'),
-                    lazy: async () => {
-                      const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');
-                      return { Component: MonitorDefinitionPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('system-settings'),
-                    lazy: async () => {
-                      const { SystemConfigPage } = await import('@/features/settings/system-config');
-                      return { Component: SystemConfigPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('labels'),
-                    lazy: async () => {
-                      const { LabelPage } = await import('@/features/settings/label');
-                      return { Component: LabelPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('object-store'),
-                    lazy: async () => {
-                      const { ObjectStorePage } = await import('@/features/settings/object-store');
-                      return { Component: ObjectStorePage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('status-management'),
-                    lazy: async () => {
-                      const { StatusManagementPage } = await import('@/features/status');
-                      return { Component: StatusManagementPage };
-                    }
-                  },
-                  {
-                    ...getAppRouteIdentity('settings'),
-                    element: <Navigate replace to={getAppRoute('notice-receivers').path} />
-                  }
-                ]
+                  const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver');
+                  return { Component: NoticeReceiverPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('notice-templates'),
+                lazy: async () => {
+                  const { NoticeTemplatePage } = await import('@/features/alert/pages/notice-template-page');
+                  return { Component: NoticeTemplatePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('notice-rules'),
+                lazy: async () => {
+                  const { NoticeRulePage } = await import('@/features/alert/notice-rule');
+                  return { Component: NoticeRulePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('message-server'),
+                lazy: async () => {
+                  const { MessageServerPage } = await import('@/features/settings/message-server');
+                  return { Component: MessageServerPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('tokens'),
+                element: (
+                  <ResourceRouteAccess routeId="tokens">
+                    <AdministrativeTokenRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('collectors'),
+                lazy: async () => {
+                  const { CollectorPage } = await import('@/features/settings/collector');
+                  return { Component: CollectorPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('plugins'),
+                element: (
+                  <ResourceRouteAccess routeId="plugins">
+                    <AdministrativePluginRoutePage />
+                  </ResourceRouteAccess>
+                )
+              },
+              {
+                ...getAppRouteIdentity('monitor-definitions'),
+                lazy: async () => {
+                  const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');
+                  return { Component: MonitorDefinitionPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('system-settings'),
+                lazy: async () => {
+                  const { SystemConfigPage } = await import('@/features/settings/system-config');
+                  return { Component: SystemConfigPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('labels'),
+                lazy: async () => {
+                  const { LabelPage } = await import('@/features/settings/label');
+                  return { Component: LabelPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('object-store'),
+                lazy: async () => {
+                  const { ObjectStorePage } = await import('@/features/settings/object-store');
+                  return { Component: ObjectStorePage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('status-management'),
+                lazy: async () => {
+                  const { StatusManagementPage } = await import('@/features/status');
+                  return { Component: StatusManagementPage };
+                }
+              },
+              {
+                ...getAppRouteIdentity('settings'),
+                element: <Navigate replace to={getAppRoute('system-settings').path} />
               },
               ...legacyRedirectRoutes('basic'),
               {

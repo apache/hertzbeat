@@ -35,7 +35,8 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
     () => activeNavigationTrail(tree, `${location.pathname}${location.search}`),
     [location.pathname, location.search, tree]
   );
-  const [open, setOpen] = useState<Set<string>>(() => new Set(tree.map(item => item.name)));
+  // Keep the current product area open without expanding unrelated domains into a long, noisy rail.
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
   const visibleOpen = useMemo(() => new Set([...open, ...trail.slice(0, -1)]), [open, trail]);
 
   const toggle = (name: string) => {
@@ -136,21 +137,6 @@ function NavigationBranch(props: NavigationBranchProps) {
         open={props.flyout === item.name}
         onOpenChange={next => props.onFlyoutChange(next ? item.name : undefined)}
       />
-    );
-  }
-  if (!collapsed && depth === 0 && !item.route && hasChildren) {
-    const labelId = `navigation-section-${item.name}`;
-    return (
-      <section className={styles.navigationSection} aria-labelledby={labelId}>
-        <div id={labelId} className={styles.navigationSectionLabel} data-navigation-section-label>
-          {label}
-        </div>
-        <div className={styles.navigationSectionItems}>
-          {item.children.map(child => (
-            <NavigationBranch key={child.name} {...props} item={child} depth={depth + 1} />
-          ))}
-        </div>
-      </section>
     );
   }
   return (

@@ -104,7 +104,7 @@ describe('collapsed ShellNavigation', () => {
     const alertingFlyout = screen.getByRole('navigation', { name: 'shell.navigation.alerting' });
     const alerts = within(alertingFlyout).getByRole('link', { name: 'menu.alerts' });
     await waitFor(() => expect(alerts).toHaveFocus());
-    expect(within(alertingFlyout).queryByRole('link', { name: 'alertRules.title' })).not.toBeInTheDocument();
+    expect(within(alertingFlyout).getByRole('link', { name: 'alertRules.title' })).toBeInTheDocument();
     fireEvent.click(alerts, { detail: 0 });
     expect(refine.go).toHaveBeenCalledWith({ to: '/alerts', type: 'push' });
     expect(alerting).toHaveAttribute('aria-expanded', 'false');
@@ -118,8 +118,8 @@ describe('collapsed ShellNavigation', () => {
     const administrationFlyout = await screen.findByRole('navigation', {
       name: 'shell.navigation.administration'
     });
-    const settings = within(administrationFlyout).getByRole('link', { name: 'menu.settings' });
-    fireEvent.keyDown(settings, { key: 'Escape' });
+    const tokens = within(administrationFlyout).getByRole('link', { name: 'menu.tokens' });
+    fireEvent.keyDown(tokens, { key: 'Escape' });
     await waitFor(() => {
       expect(screen.queryByRole('navigation', { name: 'shell.navigation.administration' })).not.toBeInTheDocument();
     });
@@ -147,7 +147,7 @@ describe('expanded ShellNavigation', () => {
   });
   afterEach(cleanup);
 
-  it('renders stable product sections as labels and direct destinations without contextual children', () => {
+  it('renders first-level product areas as expandable controls with second-level destinations', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <ShellNavigation collapsed={false} onCollapsedChange={vi.fn()} />
@@ -162,14 +162,23 @@ describe('expanded ShellNavigation', () => {
       'shell.navigation.alerting',
       'shell.navigation.administration'
     ]) {
-      expect(screen.getByText(label)).toHaveAttribute('data-navigation-section-label');
-      expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
     }
+    const groupToggles = screen.getAllByRole('button', { name: 'shell.navigation.toggleGroup' });
+    expect(groupToggles).toHaveLength(5);
+    groupToggles.forEach(toggle => expect(toggle).toHaveAttribute('aria-expanded', 'false'));
+
+    expect(screen.queryByRole('link', { name: 'menu.monitors' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.basicMonitoring' }));
     expect(screen.getByRole('link', { name: 'menu.monitors' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.alerting' }));
     expect(screen.getByRole('link', { name: 'menu.alerts' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'menu.settings' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'alertRules.title' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'menu.tokens' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'alertRules.title' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.administration' }));
+    expect(screen.getByRole('link', { name: 'menu.tokens' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'menu.settings' })).not.toBeInTheDocument();
   });
 });
 
@@ -206,10 +215,10 @@ function navigationResources() {
     resource('entities', '/entities', 'shell-resources', 10),
     resource('topology', '/topology', 'shell-resources', 20),
     resource('alerts', '/alerts', 'shell-alerting', 10),
-    hiddenResource('alert-rules', '/alerts/rules', 'alerts'),
-    resource('settings', '/settings', 'shell-administration', 10),
+    resource('alert-rules', '/alerts/rules', 'shell-alerting', 20),
+    resource('tokens', '/settings/tokens', 'shell-administration', 10),
     resource('admin-proof', '/admin-proof', 'shell-administration', 20, 'supported', ['ADMIN']),
-    hiddenResource('tokens', '/settings/tokens', 'settings', ['ADMIN'])
+    hiddenResource('settings', '/settings', 'shell-administration')
   ];
 }
 

@@ -351,23 +351,6 @@ button.timePolicy:hover {
   min-width: 0;
 }
 
-.navigationSection {
-  margin-top: 12px;
-}
-
-.navigationSectionLabel {
-  padding: 4px 9px 3px;
-  color: var(--hb-text-muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-.navigationSectionItems {
-  display: grid;
-  gap: 1px;
-}
-
 .navigationRow {
   position: relative;
   display: flex;
@@ -488,6 +471,12 @@ button.timePolicy:hover {
   padding-left: 18px;
 }
 
+.navigationBranch[data-depth='0'] + .navigationBranch[data-depth='0'] {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
 .collapseButton {
   display: flex;
   align-items: center;
@@ -515,12 +504,6 @@ button.timePolicy:hover {
 
 .shellCollapsed .navigationScroll {
   padding-inline: 7px;
-}
-
-.shellCollapsed .navigationBranch[data-depth='0'] + .navigationBranch[data-depth='0'] {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--hb-border-subtle);
 }
 
 .shellCollapsed .navigationLink {

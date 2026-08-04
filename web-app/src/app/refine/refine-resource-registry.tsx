@@ -165,40 +165,35 @@ const staticRefineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-rules', {
-    parent: 'alerts',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ToolOutlined />,
-    order: 10,
-    timePolicy: 'none'
-  }),
-  routedNavigationResource('alert-groups', {
-    parent: 'alerts',
-    navigation: false,
-    icon: <TeamOutlined />,
     order: 20,
     timePolicy: 'none'
   }),
-  routedNavigationResource('alert-inhibits', {
-    parent: 'alerts',
-    navigation: false,
-    icon: <ToolOutlined />,
+  routedNavigationResource('alert-groups', {
+    parent: 'shell-alerting',
+    icon: <TeamOutlined />,
     order: 30,
+    timePolicy: 'none'
+  }),
+  routedNavigationResource('alert-inhibits', {
+    parent: 'shell-alerting',
+    icon: <ToolOutlined />,
+    order: 40,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-silences', {
     name: alertSilenceResourceName,
-    parent: 'alerts',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ToolOutlined />,
-    order: 40,
+    order: 50,
     dataProviderName: alertSilenceResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-integrations', {
-    parent: 'alerts',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ApiOutlined />,
-    order: 50,
+    order: 60,
     timePolicy: 'none'
   }),
   routedNavigationResource('bulletin', {
@@ -208,92 +203,92 @@ const staticRefineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('settings', {
-    parent: 'shell-administration',
+    navigation: false,
     icon: <SettingOutlined />,
-    order: 10,
+    order: 0,
     timePolicy: 'none'
   }),
   routedNavigationResource('notice-receivers', {
     name: noticeReceiverResourceName,
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <BellOutlined />,
-    order: 10,
-    dataProviderName: noticeReceiverResourceName
+    order: 70,
+    dataProviderName: noticeReceiverResourceName,
+    timePolicy: 'none'
   }),
   routedNavigationResource(noticeRuleResourceName, {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ToolOutlined />,
-    order: 20,
-    dataProviderName: noticeRuleResourceName
+    order: 80,
+    dataProviderName: noticeRuleResourceName,
+    timePolicy: 'none'
   }),
   routedNavigationResource(noticeTemplateResourceName, {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ReadOutlined />,
-    order: 30,
-    dataProviderName: noticeTemplateResourceName
+    order: 90,
+    dataProviderName: noticeTemplateResourceName,
+    timePolicy: 'none'
   }),
   routedNavigationResource('message-server', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-alerting',
     icon: <ApiOutlined />,
-    order: 40
+    order: 100,
+    timePolicy: 'none'
   }),
   routedNavigationResource('tokens', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-administration',
     icon: <ApiOutlined />,
-    order: 50,
-    dataProviderName: 'tokens'
+    order: 20,
+    dataProviderName: 'tokens',
+    timePolicy: 'none'
   }),
   routedNavigationResource('collectors', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-basic-monitoring',
     icon: <ApiOutlined />,
-    order: 55
+    order: 30,
+    timePolicy: 'none'
   }),
   routedNavigationResource('plugins', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-basic-monitoring',
     icon: <AppstoreOutlined />,
-    order: 57
+    order: 50,
+    timePolicy: 'none'
   }),
   routedNavigationResource('monitor-definitions', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-basic-monitoring',
     icon: <ReadOutlined />,
-    order: 58
+    order: 40,
+    timePolicy: 'none'
   }),
   routedNavigationResource('system-settings', {
     name: systemConfigResourceName,
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-administration',
     icon: <SettingOutlined />,
-    order: 60,
-    dataProviderName: systemConfigResourceName
+    order: 10,
+    dataProviderName: systemConfigResourceName,
+    timePolicy: 'none'
   }),
   routedNavigationResource('labels', {
     name: labelResourceName,
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-administration',
     icon: <TagsOutlined />,
-    order: 70,
-    dataProviderName: labelResourceName
+    order: 30,
+    dataProviderName: labelResourceName,
+    timePolicy: 'none'
   }),
   routedNavigationResource('object-store', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-administration',
     icon: <DatabaseOutlined />,
-    order: 80,
-    dataProviderName: 'object-store'
+    order: 40,
+    dataProviderName: 'object-store',
+    timePolicy: 'none'
   }),
   routedNavigationResource('status-management', {
-    parent: 'settings',
-    navigation: false,
+    parent: 'shell-administration',
     icon: <FundProjectionScreenOutlined />,
-    order: 90
+    order: 50,
+    timePolicy: 'none'
   })
 ];
 

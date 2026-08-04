@@ -59,7 +59,7 @@ describe('Refine shell resource registry', () => {
     });
   });
 
-  it('exposes only the accepted stable product groups in global navigation', () => {
+  it('keeps the two-level product navigation while assigning each feature to its operating domain', () => {
     const tree = buildShellNavigation(refineResources, ['ADMIN']);
 
     expect(tree.map(item => item.name)).toEqual([
@@ -70,37 +70,42 @@ describe('Refine shell resource registry', () => {
       'shell-alerting',
       'shell-administration'
     ]);
-    expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin']);
+    expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual([
+      'monitors',
+      'bulletin',
+      'collectors',
+      'monitor-definitions',
+      'plugins'
+    ]);
     expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['explore', 'instrumentation']);
     expect(navigationChildren(tree, 'shell-resources')).toEqual(['entities', 'topology']);
-    expect(navigationChildren(tree, 'shell-alerting')).toEqual(['alerts']);
-    expect(navigationChildren(tree, 'shell-administration')).toEqual(['settings']);
+    expect(navigationChildren(tree, 'shell-alerting')).toEqual([
+      'alerts',
+      'alert-rules',
+      'alert-groups',
+      'alert-inhibits',
+      'alert-silences',
+      'alert-integrations',
+      'notice-receivers',
+      'notice-rules',
+      'notice-templates',
+      'message-server'
+    ]);
+    expect(navigationChildren(tree, 'shell-administration')).toEqual([
+      'system-config',
+      'tokens',
+      'labels',
+      'object-store',
+      'status-management'
+    ]);
   });
 
-  it('keeps contextual routes out of the global sidebar', () => {
+  it('keeps implementation-only parents and monitor filters out of the global sidebar', () => {
     const names = flattenNavigationNames(buildShellNavigation(refineResources, ['ADMIN']));
 
-    expect(names).not.toEqual(
-      expect.arrayContaining([
-        'alert-rules',
-        'alert-groups',
-        'alert-inhibits',
-        'alert-silences',
-        'alert-integrations',
-        'notice-receivers',
-        'notice-rules',
-        'notice-templates',
-        'message-server',
-        'tokens',
-        'collectors',
-        'plugins',
-        'monitor-definitions',
-        'system-settings',
-        'labels',
-        'object-store',
-        'status-management'
-      ])
-    );
+    expect(names).not.toContain('settings');
+    expect(names.some(name => name.startsWith('monitor-category:'))).toBe(false);
+    expect(names.some(name => name.startsWith('monitor-app:'))).toBe(false);
   });
 
   it('registers monitor application filters without growing global navigation', () => {
@@ -219,12 +224,13 @@ function compareResourceRoute(left: { list: string }, right: { list: string }) {
 
 function resourceIdentity(resources: ReturnType<typeof buildRefineResources>, name: string) {
   const resource = resources.find(candidate => candidate.name === name);
+  if (!resource?.meta?.shell) throw new Error(`Missing shell resource: ${name}`);
   return {
-    label: resource?.meta?.shell?.label,
-    labelKey: resource?.meta?.shell?.labelKey,
-    navigation: resource?.meta?.shell?.navigation,
-    parent: resource?.meta?.parent,
-    list: resource?.list
+    label: resource.meta.shell.label,
+    labelKey: resource.meta.shell.labelKey,
+    navigation: resource.meta.shell.navigation,
+    parent: resource.meta.parent,
+    list: resource.list
   };
 }
 

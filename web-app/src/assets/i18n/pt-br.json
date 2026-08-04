@@ -1243,12 +1243,6 @@
     "silences": "Silêncios"
   },
   "settingsNavigation": {
-    "ariaLabel": "Navegação de configurações",
-    "groups": {
-      "notifications": "Notificações",
-      "collection": "Coleta",
-      "platform": "Plataforma e segurança"
-    },
     "receivers": "Destinatários",
     "rules": "Regras de envio",
     "templates": "Modelos",

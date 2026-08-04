@@ -1232,12 +1232,6 @@
     "silences": "警報靜默"
   },
   "settingsNavigation": {
-    "ariaLabel": "設定導覽",
-    "groups": {
-      "notifications": "通知",
-      "collection": "採集",
-      "platform": "平台與安全"
-    },
     "receivers": "接收人",
     "rules": "傳送規則",
     "templates": "範本",
