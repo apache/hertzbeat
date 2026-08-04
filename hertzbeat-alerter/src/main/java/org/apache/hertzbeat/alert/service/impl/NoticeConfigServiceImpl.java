@@ -246,11 +246,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             CacheFactory.setNoticeCache(rules);
         }
 
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // TODO: This matches an already-grouped alert against notice rules (group-then-route). It cannot fully
-        //  separate alerts that were grouped together but should reach different receivers, so a rule matched by
-        //  one alert still notifies the whole group. The ideal design is route-then-group (like Alertmanager):
-        //  route each single alert by its labels first, then group per receiver. Tracked as a follow-up to #3852.
+        // Match grouped alerts here; dispatch scopes each notification to the single alerts matching its rule.
         return rules.stream()
             .filter(rule -> {
                 if (!rule.isFilterAll()) {
