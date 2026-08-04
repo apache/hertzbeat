@@ -231,6 +231,7 @@ class VictoriaMetricsDataStorageTest {
         victoriaMetricsDataStorage.saveData(metricsData);
 
         assertThat(postForEntityCount.get()).isZero();
+        assertThat(victoriaMetricsDataStorage.getRejectedLabelCollisionCount()).isEqualTo(1);
         assertThat(output.getAll())
                 .contains("__name__")
                 .contains("__monitor_id__")

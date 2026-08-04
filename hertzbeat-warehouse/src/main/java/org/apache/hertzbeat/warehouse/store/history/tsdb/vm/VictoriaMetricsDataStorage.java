@@ -38,6 +38,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 
 import com.google.common.collect.Maps;
@@ -111,6 +112,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+    private final AtomicLong rejectedLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
@@ -179,8 +181,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         Set<String> managedLabelCollisions = findManagedLabelCollisions(metricsData.getLabels());
         if (!managedLabelCollisions.isEmpty()) {
+            long rejectedCount = rejectedLabelCollisionCount.incrementAndGet();
             log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
-                    + "HertzBeat-managed keys {}.", metricsData.getId(), managedLabelCollisions);
+                    + "HertzBeat-managed keys {}; cumulative rejected batches: {}.",
+                    metricsData.getId(), managedLabelCollisions, rejectedCount);
             return;
         }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
@@ -269,12 +273,11 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         if (ObjectUtils.isEmpty(customizedLabels)) {
             return;
         }
-        Set<String> managedLabelCollisions = findManagedLabelCollisions(customizedLabels);
-        if (!managedLabelCollisions.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Custom labels contain HertzBeat-managed keys " + managedLabelCollisions);
-        }
         labels.putAll(customizedLabels);
+    }
+
+    long getRejectedLabelCollisionCount() {
+        return rejectedLabelCollisionCount.get();
     }
 
     static Set<String> findManagedLabelCollisions(Map<String, String> customizedLabels) {
