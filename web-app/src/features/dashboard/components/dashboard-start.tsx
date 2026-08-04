@@ -50,7 +50,7 @@ export function DashboardStart(props: DashboardStartProps) {
         title={t('dashboard.start.active.title')}
         summary={t('dashboard.start.active.summary')}
         flow={<ActiveMonitoringFlow />}
-        outcomeTitle={t('dashboard.start.outcomeTitle')}
+        outcomeTitle={t('dashboard.start.active.outcomeTitle')}
         outcomes={[t('dashboard.start.active.outcomeAvailability'), t('dashboard.start.active.outcomeMetrics')]}
         suitability={t('dashboard.start.active.suitability')}
         action={
@@ -81,7 +81,7 @@ export function DashboardStart(props: DashboardStartProps) {
         title={t('dashboard.start.telemetry.title')}
         summary={t('dashboard.start.telemetry.summary')}
         flow={<TelemetryFlow />}
-        outcomeTitle={t('dashboard.start.outcomeTitle')}
+        outcomeTitle={t('dashboard.start.telemetry.outcomeTitle')}
         outcomes={[t('dashboard.start.telemetry.outcomeSignals'), t('dashboard.start.telemetry.outcomeDiagnosis')]}
         suitability={t('dashboard.start.telemetry.suitability')}
         action={

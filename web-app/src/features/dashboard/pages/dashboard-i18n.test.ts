@@ -39,6 +39,19 @@ describe('Dashboard locale contract', () => {
       expect(locale.dashboard.start.telemetry.sources.collector).toBe('OTel Collector');
     }
   });
+
+  it('uses operational labels instead of promotional onboarding copy', () => {
+    expect(en.dashboard.start).toMatchObject({
+      title: 'Choose a data collection method',
+      active: { title: 'Active monitoring', outcomeTitle: 'Collected data' },
+      telemetry: { title: 'Telemetry ingestion', outcomeTitle: 'Telemetry signals' }
+    });
+    for (const locale of [ja, pt, zhCn, zhTw]) {
+      expect(locale.dashboard.start.title).not.toMatch(/[?？]$/);
+      expect(locale.dashboard.start.active.outcomeTitle.trim()).not.toBe('');
+      expect(locale.dashboard.start.telemetry.outcomeTitle.trim()).not.toBe('');
+    }
+  });
 });
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
