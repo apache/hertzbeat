@@ -17,11 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import {
-  OperationalCommandBar,
-  OperationalPage,
-  OperationalResultRegion
-} from '@/shared/operational-page/operational-page';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertRuleImportDialog } from '../components/alert-rule-import-dialog';
@@ -35,7 +31,6 @@ import { AlertRuleListResults } from '../components/alert-rule-list-results';
 import { useAlertRuleListController } from '../controller/use-alert-rule-list-controller';
 
 export function AlertRuleListPage() {
-  const { t } = useTranslation();
   const controller = useAlertRuleListController();
   const { capabilities, command, exporting, importState, refreshing, search, selectedIds } = controller.state;
   const commandBusy = command !== 'idle';
@@ -61,20 +56,14 @@ export function AlertRuleListPage() {
         onSubmit={controller.importActions.submit}
       />
       <AlertManagementNav />
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('alertRules.search')}
-        primary={
-          <AlertRuleListToolbar
-            search={search}
-            refreshing={refreshing}
-            busy={interactionLocked}
-            recovering={recovering}
-            setSearch={controller.setSearch}
-            submitSearch={controller.submitSearch}
-            refresh={controller.refresh}
-          />
-        }
+      <AlertRuleListToolbar
+        search={search}
+        refreshing={refreshing}
+        busy={interactionLocked}
+        recovering={recovering}
+        setSearch={controller.setSearch}
+        submitSearch={controller.submitSearch}
+        refresh={controller.refresh}
       />
       <AlertRuleListResultRegion
         controller={controller}

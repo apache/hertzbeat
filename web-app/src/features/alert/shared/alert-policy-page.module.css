@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto auto;
-  gap: 8px;
+.searchInput {
+  max-width: 480px;
 }
 .managementContext {
   display: flex;

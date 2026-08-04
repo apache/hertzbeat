@@ -15,14 +15,8 @@
  * limitations under the License.
  */
 
-import { useTranslation } from 'react-i18next';
-
 import { AlertManagementNav } from '../components/alert-management-nav';
-import {
-  OperationalCommandBar,
-  OperationalPage,
-  OperationalResultRegion
-} from '@/shared/operational-page/operational-page';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 import { AlertInhibitPageHeader } from '../components/alert-inhibit-page-header';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
 import { AlertNoiseControlManagementContextBar } from '../components/alert-noise-control-management-context';
@@ -34,7 +28,6 @@ import { alertInhibitRouteRecovery } from '../model/alert-inhibit-recovery-capab
 import { AlertInhibitDraftEditor } from './alert-inhibit-draft-editor';
 
 export function AlertInhibitPage() {
-  const { t } = useTranslation();
   const controller = useAlertInhibitController();
   const { capabilities } = controller;
   const { command, draft, management, recovery, refreshing, search, selectedIds } = controller.state;
@@ -55,19 +48,13 @@ export function AlertInhibitPage() {
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertInhibitManagement controller={controller} management={management} busy={busy} />
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('alertInhibits.search')}
-        primary={
-          <AlertInhibitToolbar
-            busy={busy}
-            search={search}
-            refreshing={refreshing}
-            setSearch={controller.setSearch}
-            submitSearch={controller.submitSearch}
-            refresh={controller.refresh}
-          />
-        }
+      <AlertInhibitToolbar
+        busy={busy}
+        search={search}
+        refreshing={refreshing}
+        setSearch={controller.setSearch}
+        submitSearch={controller.submitSearch}
+        refresh={controller.refresh}
       />
       <AlertInhibitPolicyResults controller={controller} busy={busy} routeRecovery={routeRecovery} />
       {capabilities.canWrite && <AlertInhibitDraftEditor controller={controller} />}

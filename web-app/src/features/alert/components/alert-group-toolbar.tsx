@@ -18,6 +18,7 @@
 import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page';
 import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertGroupToolbar({
@@ -35,20 +36,30 @@ export function AlertGroupToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
-      <Input
-        allowClear
-        value={search}
-        placeholder={t('alertGroups.search')}
-        onChange={event => setSearch(event.target.value)}
-        onPressEnter={submitSearch}
-      />
-      <Button type="primary" onClick={submitSearch}>
-        {t('common.query')}
-      </Button>
-      <Button loading={refreshing} onClick={() => void refresh()}>
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('alertGroups.search')}
+      primary={
+        <Input
+          className={styles.searchInput}
+          aria-label={t('alertGroups.search')}
+          allowClear
+          value={search}
+          placeholder={t('alertGroups.search')}
+          onChange={event => setSearch(event.target.value)}
+          onPressEnter={submitSearch}
+        />
+      }
+      secondary={
+        <>
+          <Button type="primary" onClick={submitSearch}>
+            {t('common.query')}
+          </Button>
+          <Button loading={refreshing} onClick={() => void refresh()}>
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
   );
 }

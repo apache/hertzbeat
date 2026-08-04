@@ -19,7 +19,6 @@ import { Button, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
-  OperationalCommandBar,
   OperationalPage,
   OperationalPageHeader,
   OperationalResultRegion
@@ -81,21 +80,14 @@ function AlertSilencePolicyResults({
   actions: AlertSilenceViewActions;
   pageRecovery: AlertSilenceViewState['recovery'];
 }) {
-  const { t } = useTranslation();
   return (
     <>
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('alertSilences.search')}
-        primary={
-          <AlertSilenceToolbar
-            search={state.search}
-            refreshing={state.refreshing}
-            setSearch={actions.setSearch}
-            submit={actions.submitSearch}
-            refresh={actions.refresh}
-          />
-        }
+      <AlertSilenceToolbar
+        search={state.search}
+        refreshing={state.refreshing}
+        setSearch={actions.setSearch}
+        submit={actions.submitSearch}
+        refresh={actions.refresh}
       />
       <OperationalResultRegion>
         <AlertSilenceRecovery

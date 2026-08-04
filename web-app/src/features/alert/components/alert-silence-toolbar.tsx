@@ -18,6 +18,7 @@
 import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { OperationalCommandBar } from '@/shared/operational-page';
 import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertSilenceToolbar({
@@ -35,20 +36,30 @@ export function AlertSilenceToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.toolbar}>
-      <Input
-        allowClear
-        value={search}
-        placeholder={t('alertSilences.search')}
-        onChange={event => setSearch(event.target.value)}
-        onPressEnter={submit}
-      />
-      <Button type="primary" onClick={submit}>
-        {t('common.query')}
-      </Button>
-      <Button disabled={refreshing} onClick={refresh}>
-        {t('common.refresh')}
-      </Button>
-    </div>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('alertSilences.search')}
+      primary={
+        <Input
+          className={styles.searchInput}
+          aria-label={t('alertSilences.search')}
+          allowClear
+          value={search}
+          placeholder={t('alertSilences.search')}
+          onChange={event => setSearch(event.target.value)}
+          onPressEnter={submit}
+        />
+      }
+      secondary={
+        <>
+          <Button type="primary" onClick={submit}>
+            {t('common.query')}
+          </Button>
+          <Button disabled={refreshing} onClick={refresh}>
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
   );
 }

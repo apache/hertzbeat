@@ -19,10 +19,8 @@
   padding-top: 20px;
   border-top: 1px solid var(--ant-color-border-secondary);
 }
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(240px, 480px) auto auto;
-  gap: 8px;
+.searchInput {
+  max-width: 480px;
 }
 :global(.status-org-grid) {
   display: grid;
@@ -34,7 +32,6 @@
   .sectionHeading {
     flex-direction: column;
   }
-  .toolbar,
   :global(.status-org-grid) {
     grid-template-columns: 1fr;
   }

@@ -24,7 +24,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
-import { requireDomElement } from '@/test/dom-element';
+import { requireDomElement, requireHtmlElement } from '@/test/dom-element';
 
 import { statusManagementQueryKeys } from '../controller/status-management-query-keys';
 import { StatusManagementMissingError, type StatusIncident, type StatusOrg } from '../model/status-management-contract';
@@ -132,6 +132,25 @@ describe('StatusManagementPage', () => {
     expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
     expect(screen.getByText('No public components are configured.')).toBeInTheDocument();
     expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
+  });
+
+  it('keeps incident filters flexible while query actions stay in the compact action rail', async () => {
+    const { container } = renderPage();
+
+    await screen.findByRole('textbox', { name: i18n.t('statusManagement.searchIncidents') });
+    const commandBar = requireHtmlElement(
+      container.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    const primary = requireHtmlElement(commandBar.querySelector('[data-hb-operational-command-primary]'), 'Filters');
+    const secondary = requireHtmlElement(
+      commandBar.querySelector('[data-hb-operational-command-secondary]'),
+      'Query actions'
+    );
+
+    expect(within(primary).getByRole('textbox')).toBeInTheDocument();
+    expect(within(secondary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(secondary).getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
   });
 
   it('keeps an out-of-range empty incident page ready with pagination evidence', async () => {

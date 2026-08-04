@@ -8,7 +8,7 @@
 import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalStatePanel } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusIncident } from '../model/status-management-contract';
 import type { StatusIncidentCollectionState } from '../model/status-management-model';
@@ -62,22 +62,32 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
           ) : undefined
         }
       />
-      <div className={styles.toolbar}>
-        <Input
-          allowClear
-          disabled={props.commandLocked}
-          value={props.draftSearch}
-          placeholder={t('statusManagement.searchIncidents')}
-          onChange={event => props.onDraftSearch(event.target.value)}
-          onPressEnter={props.onQuery}
-        />
-        <Button type="primary" disabled={props.commandLocked} onClick={props.onQuery}>
-          {t('common.query')}
-        </Button>
-        <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
-          {t('common.refresh')}
-        </Button>
-      </div>
+      <OperationalCommandBar
+        role="search"
+        ariaLabel={t('statusManagement.searchIncidents')}
+        primary={
+          <Input
+            className={styles.searchInput}
+            aria-label={t('statusManagement.searchIncidents')}
+            allowClear
+            disabled={props.commandLocked}
+            value={props.draftSearch}
+            placeholder={t('statusManagement.searchIncidents')}
+            onChange={event => props.onDraftSearch(event.target.value)}
+            onPressEnter={props.onQuery}
+          />
+        }
+        secondary={
+          <>
+            <Button type="primary" disabled={props.commandLocked} onClick={props.onQuery}>
+              {t('common.query')}
+            </Button>
+            <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
+              {t('common.refresh')}
+            </Button>
+          </>
+        }
+      />
       {props.deleteRecovery && (
         <StatusDeleteRecoveryAlert pending={props.deleteRecoveryPending} onRetry={() => void props.onRefresh()} />
       )}

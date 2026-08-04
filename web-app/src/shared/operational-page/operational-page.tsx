@@ -74,8 +74,14 @@ export function OperationalCommandBar({
       {...(role === undefined ? {} : { role })}
       {...(ariaLabel === undefined ? {} : { 'aria-label': ariaLabel })}
     >
-      <div className={styles.commandPrimary}>{primary}</div>
-      {secondary == null ? null : <div className={styles.commandSecondary}>{secondary}</div>}
+      <div className={styles.commandPrimary} data-hb-operational-command-primary="">
+        {primary}
+      </div>
+      {secondary == null ? null : (
+        <div className={styles.commandSecondary} data-hb-operational-command-secondary="">
+          {secondary}
+        </div>
+      )}
     </div>
   );
 }

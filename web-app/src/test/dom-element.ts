@@ -11,3 +11,8 @@ export function requireDomElement(element: Element | null | undefined, descripti
   if (element instanceof HTMLElement || element instanceof SVGElement) return element;
   throw new Error(`${description} was not rendered.`);
 }
+
+export function requireHtmlElement(element: Element | null | undefined, description: string): HTMLElement {
+  if (element instanceof HTMLElement) return element;
+  throw new Error(`${description} was not rendered as an HTML element.`);
+}

@@ -17,11 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import {
-  OperationalCommandBar,
-  OperationalPage,
-  OperationalResultRegion
-} from '@/shared/operational-page/operational-page';
+import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page/operational-page';
 
 import { AlertManagementNav } from '../components/alert-management-nav';
 import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
@@ -46,7 +42,6 @@ function useAlertGroupPageColumns(controller: ReturnType<typeof useAlertGroupCon
 }
 
 export function AlertGroupPage() {
-  const { t } = useTranslation();
   const controller = useAlertGroupController();
   const state = controller.state;
   const busy = state.command !== 'idle';
@@ -72,18 +67,12 @@ export function AlertGroupPage() {
       />
       <AlertManagementNav />
       <AlertNoiseControlNav />
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('alertGroups.search')}
-        primary={
-          <AlertGroupToolbar
-            refreshing={state.refreshing}
-            search={state.search}
-            setSearch={controller.setSearch}
-            submitSearch={controller.submitSearch}
-            refresh={controller.refresh}
-          />
-        }
+      <AlertGroupToolbar
+        refreshing={state.refreshing}
+        search={state.search}
+        setSearch={controller.setSearch}
+        submitSearch={controller.submitSearch}
+        refresh={controller.refresh}
       />
       <AlertGroupPolicyResults
         controller={controller}
