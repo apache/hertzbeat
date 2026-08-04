@@ -239,7 +239,7 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('tokens', {
     parent: 'shell-administration',
     icon: <ApiOutlined />,
-    order: 20,
+    order: 30,
     dataProviderName: 'tokens',
     timePolicy: 'none'
   }),
@@ -250,9 +250,9 @@ const staticRefineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('plugins', {
-    parent: 'shell-basic-monitoring',
+    parent: 'shell-administration',
     icon: <AppstoreOutlined />,
-    order: 50,
+    order: 20,
     timePolicy: 'none'
   }),
   routedNavigationResource('monitor-definitions', {
@@ -273,21 +273,21 @@ const staticRefineResources: ResourceProps[] = [
     name: labelResourceName,
     parent: 'shell-administration',
     icon: <TagsOutlined />,
-    order: 30,
+    order: 40,
     dataProviderName: labelResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource('object-store', {
     parent: 'shell-administration',
     icon: <DatabaseOutlined />,
-    order: 40,
+    order: 50,
     dataProviderName: 'object-store',
     timePolicy: 'none'
   }),
   routedNavigationResource('status-management', {
     parent: 'shell-administration',
     icon: <FundProjectionScreenOutlined />,
-    order: 50,
+    order: 60,
     timePolicy: 'none'
   })
 ];
