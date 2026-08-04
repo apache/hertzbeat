@@ -95,11 +95,11 @@ describe('DashboardPage', () => {
     );
   });
 
-  it('states that both collection modes converge in the resource view', () => {
+  it('omits redundant decision and convergence explanations between the two entry paths', () => {
     start.useDashboardStartController.mockReturnValue(startController(true));
     renderPage();
 
-    expect(screen.getByText(i18n.t('dashboard.start.convergence'))).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-start').children).toHaveLength(2);
   });
 });
 

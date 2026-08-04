@@ -1008,8 +1008,6 @@
     "start": {
       "title": "Escolha um método de coleta de dados",
       "description": "Use monitoramento ativo, ingestão de telemetria ou ambos no mesmo serviço.",
-      "decision": "O monitoramento ativo verifica a saúde do alvo. A telemetria analisa desempenho e erros das requisições.",
-      "convergence": "A visão de recursos correlaciona monitoramento ativo e telemetria do mesmo serviço.",
       "active": {
         "title": "Monitoramento ativo",
         "summary": "O HertzBeat se conecta aos alvos conforme uma programação e coleta métricas.",

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { ApiOutlined, ArrowRightOutlined, GlobalOutlined, LinkOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import dotnetIcon from 'devicon/icons/dotnetcore/dotnetcore-original.svg';
 import javaIcon from 'devicon/icons/java/java-original.svg';
@@ -44,7 +44,7 @@ const telemetrySources = [
 export function DashboardStart(props: DashboardStartProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.startSurface}>
+    <div className={styles.startSurface} data-testid="dashboard-start">
       <DashboardEntry
         kind="active-monitoring"
         title={t('dashboard.start.active.title')}
@@ -72,10 +72,6 @@ export function DashboardStart(props: DashboardStartProps) {
           )
         }
       />
-      <div className={styles.decision}>
-        <ApiOutlined aria-hidden="true" />
-        <Typography.Text>{t('dashboard.start.decision')}</Typography.Text>
-      </div>
       <DashboardEntry
         kind="telemetry"
         title={t('dashboard.start.telemetry.title')}
@@ -92,10 +88,6 @@ export function DashboardStart(props: DashboardStartProps) {
           />
         }
       />
-      <div className={styles.convergence}>
-        <LinkOutlined aria-hidden="true" />
-        <Typography.Text>{t('dashboard.start.convergence')}</Typography.Text>
-      </div>
     </div>
   );
 }

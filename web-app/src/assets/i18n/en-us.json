@@ -1003,8 +1003,6 @@
     "start": {
       "title": "Choose a data collection method",
       "description": "Use active monitoring, telemetry ingestion, or both for the same service.",
-      "decision": "Active monitoring checks target health. Telemetry explains request performance and errors.",
-      "convergence": "The resource view correlates active-monitoring and telemetry data for the same service.",
       "active": {
         "title": "Active monitoring",
         "summary": "HertzBeat connects to targets on a schedule and collects metrics.",

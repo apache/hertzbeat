@@ -21,10 +21,7 @@ describe('Dashboard start layout contract', () => {
     expect(styles).toMatch(/\.entryMain\s*\{[^}]*minmax\(var\(--dashboard-entry-outcome-min\),\s*1fr\)/);
     expect(styles).toMatch(/\.outcome\s*\{[^}]*border-inline-start:\s*1px solid var\(--hb-border-subtle\)/);
     expect(styles).toMatch(/\.outcome\s+:global\(p\.ant-typography\)\s*\{[^}]*text-wrap:\s*balance/);
-    expect(styles).toMatch(/\.convergence\s*\{[^}]*border-block-start:\s*1px solid var\(--hb-border-subtle\)/);
-    expect(styles).toMatch(
-      /padding-inline-start:\s*calc\(var\(--dashboard-entry-identity-min\)\s*\+\s*var\(--dashboard-entry-column-gap\)\)/
-    );
+    expect(styles).not.toMatch(/\.(decision|convergence)\s*\{/);
   });
 
   it('gives the reversed telemetry flow a shrink-safe track before its arrow and product node', () => {

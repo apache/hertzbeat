@@ -176,30 +176,6 @@
   gap: var(--hb-space-3);
 }
 
-.decision,
-.convergence {
-  display: flex;
-  align-items: center;
-  gap: var(--hb-space-3);
-  padding-inline-start: calc(var(--dashboard-entry-identity-min) + var(--dashboard-entry-column-gap));
-  color: var(--hb-text-secondary);
-}
-
-.decision {
-  padding-block: var(--hb-space-3);
-}
-
-.convergence {
-  padding-block: var(--hb-space-4) 0;
-  border-block-start: 1px solid var(--hb-border-subtle);
-}
-
-.decision :global(.anticon),
-.convergence :global(.anticon) {
-  color: var(--hb-focus-ring);
-  font-size: 20px;
-}
-
 @media (max-width: 1180px) {
   .startSurface {
     --dashboard-entry-identity-min: 160px;
