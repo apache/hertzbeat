@@ -1235,6 +1235,12 @@
     "silences": "サイレンス"
   },
   "settingsNavigation": {
+    "ariaLabel": "設定ナビゲーション",
+    "groups": {
+      "notifications": "通知",
+      "collection": "収集",
+      "platform": "プラットフォームとセキュリティ"
+    },
     "receivers": "通知先",
     "rules": "配信ルール",
     "templates": "テンプレート",

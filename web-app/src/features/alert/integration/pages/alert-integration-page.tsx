@@ -26,6 +26,7 @@ import {
   type OperationalStateKind
 } from '@/shared/operational-page';
 
+import { AlertManagementNav } from '../../components/alert-management-nav';
 import { IntegrationGuide } from '../components/integration-guide';
 import { IntegrationSourceRail } from '../components/integration-source-rail';
 import styles from '../components/integration.module.css';
@@ -43,6 +44,7 @@ export function AlertIntegrationPage() {
   return (
     <OperationalPage mode="data">
       <OperationalPageHeader title={title} description={t('alertIntegrations.description')} />
+      <AlertManagementNav />
       <OperationalResultRegion>
         <IntegrationContent controller={controller} />
       </OperationalResultRegion>

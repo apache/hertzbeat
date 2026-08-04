@@ -26,6 +26,9 @@ const mocks = vi.hoisted(() => ({ controller: vi.fn() }));
 vi.mock('../controller/use-alert-integration-controller', () => ({
   useAlertIntegrationController: mocks.controller
 }));
+vi.mock('../../components/alert-management-nav', () => ({
+  AlertManagementNav: () => <nav data-testid="alert-management-nav" />
+}));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key })
 }));
@@ -48,6 +51,7 @@ describe('AlertIntegrationPage backend guide states', () => {
     expect(document.querySelector('[data-hb-operational-page]')).toHaveAttribute('data-mode', 'data');
     expect(screen.getByRole('heading', { level: 2, name: 'alertIntegrations.menu' })).toBeVisible();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    expect(screen.getByTestId('alert-management-nav')).toBeInTheDocument();
     expect(screen.getByRole(panelRole, { name: `alertIntegrations.states.${kind}` })).toHaveAttribute(
       'data-state',
       panelKind

@@ -1,0 +1,97 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.layout {
+  display: grid;
+  grid-template-columns: 184px minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  width: 100%;
+  min-width: 0;
+}
+
+.navigation {
+  position: sticky;
+  top: calc(var(--hb-shell-header-height) + 22px);
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding-right: 18px;
+  border-right: 1px solid var(--hb-border-subtle);
+}
+
+.group {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.groupLabel {
+  padding: 0 9px 4px;
+  color: var(--hb-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.links {
+  display: grid;
+  gap: 1px;
+}
+
+.link {
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  overflow: hidden;
+  border-left: 2px solid transparent;
+  color: var(--hb-nav-text);
+  font-size: 12px;
+  line-height: 30px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link:hover {
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-hover);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+.active {
+  border-left-color: var(--hb-brand-accent);
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-selected);
+  font-weight: 600;
+}
+
+.content {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .navigation {
+    position: static;
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    gap: 12px;
+    padding-right: 0;
+    padding-bottom: 14px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--hb-border-subtle);
+  }
+}

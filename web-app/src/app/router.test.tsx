@@ -112,8 +112,11 @@ describe('application data router', () => {
   it('keeps basic canonical routes and redirect ownership inside the shell', () => {
     const authenticatedRoute = appRoutes[0]?.children?.find(route => route.id === 'authenticated');
     const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
-    const basicCanonicalRoutes = (basicRoute?.children ?? []).filter(
-      route => route.id && !route.id.startsWith('legacy-')
+    const canonicalIds = new Set<string>(
+      routeRegistry.filter(route => route.layout === 'basic').map(route => route.id)
+    );
+    const basicCanonicalRoutes = flattenRoutes(basicRoute?.children ?? []).filter(
+      route => route.id && canonicalIds.has(route.id)
     );
     expect(basicCanonicalRoutes.map(route => route.id).sort()).toEqual(
       routeRegistry

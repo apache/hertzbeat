@@ -17,17 +17,21 @@
 
 import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
-import { alertRoutePaths } from '@/shared/navigation/app-paths';
+import { alertRoutePaths, buildAlertIntegrationPath } from '@/shared/navigation/app-paths';
+
+const defaultAlertIntegrationPath = buildAlertIntegrationPath('webhook');
 
 const alertManagementRoutes = [
   { key: alertRoutePaths.center, labelKey: 'alertNavigation.events' },
   { key: alertRoutePaths.rules, labelKey: 'alertNavigation.rules' },
-  { key: alertRoutePaths.groups, labelKey: 'alertNavigation.noiseControl' }
+  { key: alertRoutePaths.groups, labelKey: 'alertNavigation.noiseControl' },
+  { key: defaultAlertIntegrationPath, labelKey: 'alertIntegrations.menu' }
 ] as const;
 
 function activeAlertRoute(pathname: string) {
+  if (matchPath(alertRoutePaths.integrations, pathname)) return defaultAlertIntegrationPath;
   if (pathname.startsWith(alertRoutePaths.rules)) return alertRoutePaths.rules;
   if (
     pathname.startsWith(alertRoutePaths.groups) ||

@@ -37,8 +37,10 @@ const canonical = vi.hoisted(() => ({
     ruleEdit: '/canonical-alerts/rules/:ruleId/edit',
     groups: '/canonical-alerts/groups',
     inhibits: '/canonical-alerts/inhibits',
-    silences: '/canonical-alerts/silences'
+    silences: '/canonical-alerts/silences',
+    integrations: '/canonical-alerts/integrations/:source'
   },
+  integrationPath: vi.fn((source: string) => `/canonical-alerts/integrations/${source}`),
   ruleEditPath: vi.fn((ruleId: number) => `/canonical-alerts/rules/${ruleId}/edit`)
 }));
 const navigate = vi.hoisted(() => vi.fn());
@@ -75,6 +77,7 @@ const metricTargetController = vi.hoisted(() => ({
 vi.mock('@/shared/navigation/app-paths', async importOriginal => ({
   ...(await importOriginal<typeof import('@/shared/navigation/app-paths')>()),
   alertRoutePaths: canonical.paths,
+  buildAlertIntegrationPath: canonical.integrationPath,
   buildAlertRuleEditPath: canonical.ruleEditPath
 }));
 vi.mock('@/features/alert/api/alert-api', () => alertApi);
@@ -140,10 +143,13 @@ describe('Alert route ownership', () => {
     expect(getAppRoute('alert-groups').path).toBe(canonical.paths.groups);
     expect(getAppRoute('alert-inhibits').path).toBe(canonical.paths.inhibits);
     expect(getAppRoute('alert-silences').path).toBe(canonical.paths.silences);
+    expect(getAppRoute('alert-integrations').path).toBe(canonical.paths.integrations);
 
     renderNavigation(<AlertManagementNav />, canonical.paths.center);
     fireEvent.click(screen.getByRole('tab', { name: 'alertNavigation.rules' }));
     expect(navigate).toHaveBeenLastCalledWith(canonical.paths.rules);
+    fireEvent.click(screen.getByRole('tab', { name: 'alertIntegrations.menu' }));
+    expect(navigate).toHaveBeenLastCalledWith('/canonical-alerts/integrations/webhook');
 
     renderNavigation(<AlertNoiseControlNav />, canonical.paths.groups);
     fireEvent.click(screen.getByText('alertNavigation.inhibits'));
