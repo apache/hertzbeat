@@ -628,6 +628,7 @@
       "recipeLabel": "計装レシピ",
       "chooseRecipe": "バックエンドが対応するレシピを選択",
       "destination": "送信先",
+      "destinationDescription": "アプリケーションがテレメトリーを送信する場所を選びます。3 つの経路はいずれも HertzBeat に到達し、受信と転送の担当が異なります。",
       "advancedDestination": "詳細設定：別の Collector または外部送信先を使用",
       "component": "コンポーネント",
       "version": "バージョン",
@@ -657,8 +658,23 @@
       },
       "profileKind": {
         "server": "HertzBeat Server",
-        "hertzbeat_collector": "HertzBeat Collector",
+        "hertzbeat_collector": "HertzBeat Hybrid Collector",
         "external_otel_collector": "外部 OpenTelemetry Collector"
+      },
+      "profileRoute": {
+        "server": "アプリケーション → HertzBeat Server",
+        "hertzbeat_collector": "アプリケーション → Hybrid Collector → HertzBeat Server",
+        "external_otel_collector": "アプリケーション → OpenTelemetry Collector → HertzBeat Server"
+      },
+      "profilePurpose": {
+        "server": "構成要素が最も少なく、クイックスタートや集中受信に適しています。",
+        "hertzbeat_collector": "エッジまたは内部ネットワークで受信・処理してから HertzBeat Server に転送します。",
+        "external_otel_collector": "既存の OpenTelemetry パイプラインとデプロイを再利用します。"
+      },
+      "profileOwnership": {
+        "server": "HertzBeat Server 管理者が接続先を設定",
+        "hertzbeat_collector": "対象 Hybrid Collector の管理者が接続先を公開",
+        "external_otel_collector": "プラットフォーム管理者が接続先を登録"
       },
       "profileAvailability": {
         "available": "利用可能",
@@ -672,7 +688,9 @@
         "invalidAdvertisement": "公開された取り込み設定が無効です。",
         "destinationUnavailable": "この送信先は一時的に利用できません。"
       },
-      "hybridCollectorSetupHint": "HertzBeat Hybrid Collector を設定すると、この送信先を利用できます。",
+      "serverSetupHint": "HertzBeat Server の OTLP 接続先がまだ設定されていません。",
+      "hybridCollectorSetupHint": "Hybrid Collector の OTLP ゲートウェイを有効化し、接続先を公開すると選択できます。",
+      "externalCollectorSetupHint": "既存の OpenTelemetry Collector の公開接続先を登録すると選択できます。",
       "stage": {
         "source": "ソース",
         "configure": "設定",

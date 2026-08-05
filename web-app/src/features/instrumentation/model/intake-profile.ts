@@ -5,9 +5,14 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { IntakeProfilesResponse } from './instrumentation-v2-contract';
+import type { IntakeProfile, IntakeProfilesResponse } from './instrumentation-v2-contract';
 
-type Profile = IntakeProfilesResponse['profiles'][number];
+// Keep the operator's shortest-to-most-managed route order independent of backend response order.
+export const INTAKE_PROFILE_KINDS = ['server', 'hertzbeat_collector', 'external_otel_collector'] as const;
+
+export type IntakeProfileKind = (typeof INTAKE_PROFILE_KINDS)[number];
+
+type Profile = IntakeProfile;
 type Transport = keyof Profile['endpoints'];
 type Endpoint = NonNullable<Profile['endpoints'][Transport]>;
 
@@ -30,4 +35,8 @@ export function profileCanRender(profile: Profile | undefined, token: string) {
   if (profile?.availability !== 'available') return false;
   if (profile.authentication === 'none') return true;
   return profile.authentication === 'bearer_token' && Boolean(token.trim());
+}
+
+export function profilesForKind(profiles: IntakeProfilesResponse, kind: IntakeProfileKind) {
+  return profiles.profiles.filter(profile => profile.kind === kind);
 }

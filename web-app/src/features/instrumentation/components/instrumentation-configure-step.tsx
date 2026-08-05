@@ -15,7 +15,7 @@ import type { IntakeProfilesResponse, ServiceIdentity } from '../model/instrumen
 import { InstrumentationAccessTokenModal } from './instrumentation-access-token-modal';
 import { InstrumentationPlatformField, InstrumentationTokenField } from './instrumentation-configuration-fields';
 import styles from './instrumentation-configure.module.css';
-import { InstrumentationDestinationCards } from './instrumentation-destination-cards';
+import { InstrumentationDestinationSelector } from './instrumentation-destination-selector';
 import { InstrumentationServiceIdentityFields } from './instrumentation-service-identity-fields';
 
 type ConfigureStepProps = {
@@ -62,6 +62,11 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
         />
       )}
       <div className={styles.configureWorkspace}>
+        <InstrumentationDestinationSelector
+          profiles={props.profiles}
+          profileId={props.profileId}
+          onProfile={props.onProfile}
+        />
         <div className={styles.configurePrimary}>
           <section className={styles.configureGroup} aria-labelledby="instrumentation-service-context-title">
             <Typography.Title id="instrumentation-service-context-title" level={5}>
@@ -76,11 +81,6 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
           </section>
           <TokenConfiguration {...props} />
         </div>
-        <InstrumentationDestinationCards
-          profiles={props.profiles}
-          profileId={props.profileId}
-          onProfile={props.onProfile}
-        />
       </div>
       <div className={styles.configureActions}>
         <TokenActions {...props} />

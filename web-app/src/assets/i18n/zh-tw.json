@@ -625,6 +625,7 @@
       "recipeLabel": "插樁方案",
       "chooseRecipe": "選擇後端支援的方案",
       "destination": "目的地",
+      "destinationDescription": "選擇應用程式將遙測資料傳送到哪裡。三種路徑都會進入 HertzBeat，差別在於由誰接收和轉送。",
       "advancedDestination": "進階：使用其他 Collector 或外部目的地",
       "component": "元件",
       "version": "版本",
@@ -654,8 +655,23 @@
       },
       "profileKind": {
         "server": "HertzBeat Server",
-        "hertzbeat_collector": "HertzBeat Collector",
+        "hertzbeat_collector": "HertzBeat Hybrid Collector",
         "external_otel_collector": "外部 OpenTelemetry Collector"
+      },
+      "profileRoute": {
+        "server": "應用程式 → HertzBeat Server",
+        "hertzbeat_collector": "應用程式 → Hybrid Collector → HertzBeat Server",
+        "external_otel_collector": "應用程式 → OpenTelemetry Collector → HertzBeat Server"
+      },
+      "profilePurpose": {
+        "server": "元件最少，適合快速開始或由中心服務統一接收。",
+        "hertzbeat_collector": "在邊緣或內網先接收、處理，再轉送到 HertzBeat Server。",
+        "external_otel_collector": "沿用現有 OpenTelemetry 管線與部署方式。"
+      },
+      "profileOwnership": {
+        "server": "接入位址由 HertzBeat Server 管理員設定",
+        "hertzbeat_collector": "接入位址由對應 Hybrid Collector 管理員發佈",
+        "external_otel_collector": "接入位址由平台管理員登記"
       },
       "profileAvailability": {
         "available": "可用",
@@ -669,7 +685,9 @@
         "invalidAdvertisement": "已發佈的接入設定無效。",
         "destinationUnavailable": "此目的地暫時無法使用。"
       },
-      "hybridCollectorSetupHint": "設定 HertzBeat Hybrid Collector 後即可使用此目的地。",
+      "serverSetupHint": "管理員尚未設定 HertzBeat Server 的 OTLP 接入位址。",
+      "hybridCollectorSetupHint": "啟用 Hybrid Collector 的 OTLP 閘道並發佈接入位址後即可選取。",
+      "externalCollectorSetupHint": "登記現有 OpenTelemetry Collector 的公開接入位址後即可選取。",
       "stage": {
         "source": "來源",
         "configure": "設定",

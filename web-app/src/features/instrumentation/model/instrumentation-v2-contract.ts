@@ -111,7 +111,7 @@ export type SourceEntry = {
   documentationUrl?: string | undefined;
 };
 
-type IntakeProfile = {
+export type IntakeProfile = {
   id: string;
   kind: 'server' | 'hertzbeat_collector' | 'external_otel_collector';
   availability: 'available' | 'unavailable';

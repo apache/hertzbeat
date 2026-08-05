@@ -13,7 +13,8 @@
 .configureIntro,
 .configurePrimary,
 .configureGroup,
-.destinationPanel {
+.destinationPanel,
+.destinationHeading {
   display: grid;
   align-content: start;
 }
@@ -29,9 +30,8 @@
 
 .configureWorkspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   align-items: start;
-  gap: 32px;
+  gap: 28px;
 }
 
 .configurePrimary {
@@ -39,13 +39,13 @@
 }
 
 .configureGroup,
-.destinationPanel {
+.destinationPanel,
+.destinationHeading {
   gap: 12px;
 }
 
-.destinationPanel {
-  border-left: 1px solid var(--hb-border);
-  padding-left: 24px;
+.destinationHeading {
+  gap: 4px;
 }
 
 .serviceNameField {
@@ -75,53 +75,89 @@
   margin-top: 10px;
 }
 
-.destinationGrid {
+.destinationList {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
-  margin-top: 8px;
+  border-top: 1px solid var(--hb-border);
 }
 
-.destinationCard {
-  min-height: 84px;
+.destinationOption {
+  min-height: 96px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px;
-  border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-surface);
-  padding: 12px;
-  background: var(--hb-bg-raised);
+  grid-template-columns: minmax(230px, 0.85fr) minmax(260px, 1.15fr) minmax(250px, 1fr);
+  align-items: center;
+  gap: 20px;
+  border: 0;
+  border-bottom: 1px solid var(--hb-border);
+  padding: 14px 12px;
+  background: transparent;
   color: inherit;
   text-align: left;
 }
 
-button.destinationCard {
+.destinationOption:not(:disabled) {
   cursor: pointer;
 }
 
-button.destinationCard:disabled,
-.destinationCardUnavailable {
+.destinationOption:disabled {
   cursor: not-allowed;
-  opacity: 0.68;
+  color: var(--hb-text-secondary);
 }
 
-.destinationCardSelected {
-  border-color: var(--hb-brand-accent);
+.destinationOption:hover:not(:disabled),
+.destinationOption:focus-visible {
+  background: var(--hb-bg-hover);
+}
+
+.destinationOption:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: -2px;
+}
+
+.destinationOptionSelected {
+  box-shadow: inset 2px 0 0 var(--hb-brand-accent);
   background: var(--hb-bg-selected);
 }
 
-.destinationCard small {
+.destinationIdentity,
+.destinationExplanation,
+.destinationEndpointList {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.destinationIdentity {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.destinationRoute {
   grid-column: 1 / -1;
   color: var(--hb-text-secondary);
 }
 
+.destinationAvailability {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.destinationExplanation small,
+.destinationEndpointList small,
+.destinationSetupHint {
+  color: var(--hb-text-secondary);
+}
+
 .endpointEvidence {
-  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
+}
+
+.destinationSetupHint {
+  align-self: center;
 }
 
 .endpointEvidence code {
@@ -155,15 +191,13 @@ button.destinationCard:disabled,
 }
 
 @media (max-width: 920px) {
-  .configureWorkspace {
-    grid-template-columns: 1fr;
+  .destinationOption {
+    grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.2fr);
   }
 
-  .destinationPanel {
-    border-top: 1px solid var(--hb-border);
-    border-left: 0;
-    padding-top: 20px;
-    padding-left: 0;
+  .destinationEndpointList,
+  .destinationSetupHint {
+    grid-column: 1 / -1;
   }
 }
 
@@ -173,6 +207,16 @@ button.destinationCard:disabled,
   }
 
   .serviceNameField > :nth-child(3) {
+    grid-column: 1;
+  }
+
+  .destinationOption {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .destinationEndpointList,
+  .destinationSetupHint {
     grid-column: 1;
   }
 }

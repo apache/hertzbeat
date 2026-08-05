@@ -634,6 +634,7 @@
       "recipeLabel": "Receita de instrumentação",
       "chooseRecipe": "Escolha uma receita compatível com o backend",
       "destination": "Destino",
+      "destinationDescription": "Escolha para onde a aplicação envia a telemetria. As três rotas chegam ao HertzBeat; elas diferem em quem recebe e encaminha os dados.",
       "advancedDestination": "Avançado: usar outro Collector ou destino externo",
       "component": "Componente",
       "version": "Versão",
@@ -663,8 +664,23 @@
       },
       "profileKind": {
         "server": "HertzBeat Server",
-        "hertzbeat_collector": "HertzBeat Collector",
+        "hertzbeat_collector": "HertzBeat Hybrid Collector",
         "external_otel_collector": "OpenTelemetry Collector externo"
+      },
+      "profileRoute": {
+        "server": "Aplicação → HertzBeat Server",
+        "hertzbeat_collector": "Aplicação → Hybrid Collector → HertzBeat Server",
+        "external_otel_collector": "Aplicação → OpenTelemetry Collector → HertzBeat Server"
+      },
+      "profilePurpose": {
+        "server": "Menos componentes, ideal para início rápido ou ingestão centralizada.",
+        "hertzbeat_collector": "Receba e processe a telemetria na borda ou na rede privada antes de encaminhá-la.",
+        "external_otel_collector": "Reutilize um pipeline e uma implantação OpenTelemetry existentes."
+      },
+      "profileOwnership": {
+        "server": "Configurado pelo administrador do HertzBeat Server",
+        "hertzbeat_collector": "Publicado pelo administrador do Hybrid Collector selecionado",
+        "external_otel_collector": "Registrado pelo administrador da plataforma"
       },
       "profileAvailability": {
         "available": "Disponível",
@@ -678,7 +694,9 @@
         "invalidAdvertisement": "A configuração de ingestão publicada é inválida.",
         "destinationUnavailable": "Este destino está temporariamente indisponível."
       },
-      "hybridCollectorSetupHint": "Configure um HertzBeat Hybrid Collector para disponibilizar este destino.",
+      "serverSetupHint": "Um administrador ainda não configurou um endereço de ingestão OTLP para o HertzBeat Server.",
+      "hybridCollectorSetupHint": "Ative o gateway OTLP do Hybrid Collector e publique seu endereço de ingestão para selecioná-lo.",
+      "externalCollectorSetupHint": "Registre o endereço público de ingestão de um OpenTelemetry Collector existente para selecioná-lo.",
       "stage": {
         "source": "Origem",
         "configure": "Configurar",

@@ -142,7 +142,7 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText(/java · spring_boot · zero_code/)).toBeVisible();
   });
 
-  it('keeps every destination visible and explains a missing Hybrid Collector without inventing an endpoint', () => {
+  it('explains all three telemetry routes and keeps missing destinations visible without inventing endpoints', () => {
     const props = {
       profileId: '',
       service: {
@@ -197,8 +197,16 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByRole('heading', { name: 'instrumentation.v2.configureTitle', level: 3 })).toBeVisible();
     expect(screen.getByRole('region', { name: 'instrumentation.v2.serviceContext' })).toBeVisible();
     expect(screen.getByRole('region', { name: 'instrumentation.v2.destination' })).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.destinationDescription')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.server')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.hertzbeat_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileRoute.external_otel_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.server')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.hertzbeat_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profilePurpose.external_otel_collector')).toBeVisible();
+    expect(configureCss).toMatch(/\.destinationList\s*\{[^}]*display:\s*grid/);
     expect(configureCss).toMatch(
-      /\.configureWorkspace\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) minmax\(280px,\s*340px\)/
+      /\.destinationAvailability\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*1[^}]*justify-self:\s*end/
     );
     expect(configureCss).toMatch(/\.configureActions\s*\{[^}]*border-top:\s*1px solid var\(--hb-border\)/);
     const serviceName = screen.getByRole('textbox', { name: 'instrumentation.field.serviceName' });
@@ -230,13 +238,22 @@ describe('instrumentation v2 interaction', () => {
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.hertzbeat_collector/ })
     ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /instrumentation\.v2\.profileKind\.external_otel_collector/ })
+    ).toBeDisabled();
+    for (const destination of screen.getAllByRole('button', { name: /instrumentation\.v2\.profileKind\./ })) {
+      expect(destination.querySelector('div')).toBeNull();
+    }
     expect(screen.getByText('instrumentation.v2.profileReason.destinationUnavailable')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.externalCollectorSetupHint')).toBeVisible();
 
     view.rerender(
       <InstrumentationConfigureStep profiles={{ schemaVersion: 2, status: 'unconfigured', profiles: [] }} {...props} />
     );
     expect(screen.getByText('instrumentation.v2.profile.unconfigured')).toBeInTheDocument();
     expect(screen.getByText('instrumentation.v2.hybridCollectorSetupHint')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.serverSetupHint')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.v2.externalCollectorSetupHint')).toBeInTheDocument();
     expect(screen.queryByText(/https?:\/\//)).toBeNull();
     view.rerender(
       <InstrumentationConfigureStep
