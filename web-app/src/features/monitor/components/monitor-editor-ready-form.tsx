@@ -4,24 +4,13 @@ import { Alert, Button } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalFormActions, OperationalSection } from '@/shared/operational-page';
+import { OperationalFormActions } from '@/shared/operational-page';
 
 import type { MonitorEditorCommandFeedback, MonitorEditorDraft } from '../model/monitor-editor-model';
 import { MonitorEditorAppPicker } from './monitor-editor-app-picker';
-import {
-  MonitorEditorCollectionFields,
-  MonitorEditorNameField,
-  MonitorEditorSourceFields
-} from './monitor-editor-core-fields';
 import { monitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
-import { MonitorGrafanaFields } from './monitor-grafana-fields';
-import { MonitorEditorMetadataFields } from './monitor-editor-metadata-fields';
-import {
-  MonitorEditorApplicationParams,
-  MonitorEditorDiscoveryParams,
-  MonitorEditorHostParam
-} from './monitor-editor-param-sections';
+import { MonitorEditorConnectionSection, MonitorEditorMetadataSection } from './monitor-editor-ready-sections';
 import { MonitorEditorValidationSummary } from './monitor-editor-validation-summary';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -53,43 +42,20 @@ export function ReadyMonitorEditorForm({
         defines={controller.state.defines}
         language={i18n.language}
       />
-      <OperationalSection title={t('monitor.editor.connection')}>
-        <div className={`${styles.formRail} ${styles.form}`}>
-          <MonitorEditorSourceFields
-            mode={mode}
-            controller={controller}
-            draft={draft}
-            onChangeApplication={() => setAppPickerOpen(true)}
-          />
-          <MonitorEditorHostParam context={context} />
-          <MonitorEditorDiscoveryParams context={context} />
-          <MonitorEditorNameField controller={controller} draft={draft} />
-          <MonitorEditorApplicationParams context={context} />
-          <MonitorEditorCollectionFields controller={controller} draft={draft} />
-        </div>
-      </OperationalSection>
-      <div className={`${styles.formRail} ${styles.metadataDisclosure}`}>
-        <Button
-          type="text"
-          aria-expanded={metadataVisible}
-          disabled={controller.state.busy}
-          onClick={() => setMetadataVisible(value => !value)}
-        >
-          {t(metadataVisible ? 'monitor.editor.hideMetadata' : 'monitor.editor.showMetadata')}
-        </Button>
-      </div>
-      {metadataVisible ? (
-        <OperationalSection title={t('monitor.editor.metadata')}>
-          <div className={`${styles.formRail} ${styles.form}`}>
-            <MonitorEditorMetadataFields controller={controller} draft={draft} labels={labels} />
-            <MonitorGrafanaFields
-              draft={draft}
-              update={controller.actions.updateGrafana}
-              disabled={controller.state.busy}
-            />
-          </div>
-        </OperationalSection>
-      ) : null}
+      <MonitorEditorConnectionSection
+        mode={mode}
+        controller={controller}
+        draft={draft}
+        context={context}
+        onChangeApplication={() => setAppPickerOpen(true)}
+      />
+      <MonitorEditorMetadataSection
+        controller={controller}
+        draft={draft}
+        labels={labels}
+        visible={metadataVisible}
+        toggle={() => setMetadataVisible(value => !value)}
+      />
       <MonitorEditorCommandResult feedback={controller.state.feedback} />
       <div className={`${styles.formRail} ${styles.formActions}`}>
         <MonitorEditorActions controller={controller} />

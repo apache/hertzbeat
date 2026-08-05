@@ -119,40 +119,64 @@ function ScheduleFields({
         />
       </label>
       {scheduleType === 'cron' ? (
-        <label className={styles.formRow}>
-          <MonitorEditorFieldLabel required>{t('monitor.editor.cronExpression')}</MonitorEditorFieldLabel>
-          <Input
-            aria-label={t('monitor.editor.cronExpression')}
-            disabled={disabled}
-            status={issues.includes('cronExpression') ? 'error' : ''}
-            value={draft.monitor.cronExpression ?? ''}
-            onChange={event => update({ cronExpression: event.target.value })}
-          />
-          {issues.includes('cronExpression') ? (
-            <span className={styles.fieldMessage} role="alert">
-              {t('monitor.editor.invalidField')}
-            </span>
-          ) : null}
-        </label>
+        <CronScheduleField draft={draft} issues={issues} disabled={disabled} update={update} />
       ) : (
-        <label className={`${styles.formRow} ${styles.compactField}`}>
-          <MonitorEditorFieldLabel required>{t('monitor.editor.interval')}</MonitorEditorFieldLabel>
-          <InputNumber
-            aria-label={t('monitor.editor.interval')}
-            disabled={disabled}
-            status={issues.includes('intervals') ? 'error' : ''}
-            {...monitorIntervalBounds(draft.monitor.app)}
-            value={draft.monitor.intervals ?? 60}
-            onChange={intervals => update({ intervals })}
-          />
-          {issues.includes('intervals') ? (
-            <span className={styles.fieldMessage} role="alert">
-              {t('monitor.editor.invalidField')}
-            </span>
-          ) : null}
-        </label>
+        <IntervalScheduleField draft={draft} issues={issues} disabled={disabled} update={update} />
       )}
     </>
+  );
+}
+
+type ScheduleValueProps = {
+  draft: MonitorEditorDraft;
+  issues: string[];
+  disabled: boolean;
+  update: MonitorEditorFormController['actions']['updateMonitor'];
+};
+
+function CronScheduleField({ draft, issues, disabled, update }: ScheduleValueProps) {
+  const { t } = useTranslation();
+  const invalid = issues.includes('cronExpression');
+  return (
+    <label className={styles.formRow}>
+      <MonitorEditorFieldLabel required>{t('monitor.editor.cronExpression')}</MonitorEditorFieldLabel>
+      <Input
+        aria-label={t('monitor.editor.cronExpression')}
+        disabled={disabled}
+        status={invalid ? 'error' : ''}
+        value={draft.monitor.cronExpression ?? ''}
+        onChange={event => update({ cronExpression: event.target.value })}
+      />
+      {invalid ? <ScheduleFieldError /> : null}
+    </label>
+  );
+}
+
+function IntervalScheduleField({ draft, issues, disabled, update }: ScheduleValueProps) {
+  const { t } = useTranslation();
+  const invalid = issues.includes('intervals');
+  return (
+    <label className={`${styles.formRow} ${styles.compactField}`}>
+      <MonitorEditorFieldLabel required>{t('monitor.editor.interval')}</MonitorEditorFieldLabel>
+      <InputNumber
+        aria-label={t('monitor.editor.interval')}
+        disabled={disabled}
+        status={invalid ? 'error' : ''}
+        {...monitorIntervalBounds(draft.monitor.app)}
+        value={draft.monitor.intervals ?? 60}
+        onChange={intervals => update({ intervals })}
+      />
+      {invalid ? <ScheduleFieldError /> : null}
+    </label>
+  );
+}
+
+function ScheduleFieldError() {
+  const { t } = useTranslation();
+  return (
+    <span className={styles.fieldMessage} role="alert">
+      {t('monitor.editor.invalidField')}
+    </span>
   );
 }
 

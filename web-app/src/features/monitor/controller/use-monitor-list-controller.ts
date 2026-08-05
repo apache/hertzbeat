@@ -45,13 +45,10 @@ export { monitorListAutoRefreshMs, monitorListQueryOptions } from './use-monitor
 export function useMonitorListController() {
   const [createPicker, setCreatePicker] = useState({ open: false, search: '' });
   const capabilities = useMonitorCapabilities();
-  const [params, setParams] = useSearchParams();
-  const query = readMonitorQuery(params);
-  const source = writeMonitorQuery(query).toString();
-  const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
-  const draft = useQueryDraft(source, canonicalDraft);
+  const queryState = useMonitorListQueryState();
+  const { query, source } = queryState;
   const { monitors, apps, readMode, reread } = useMonitorListResources(query);
-  useMonitorPageCorrection(query, monitors.data, setParams);
+  useMonitorPageCorrection(query, monitors.data, queryState.setParams);
   const displayPage = useMonitorListSnapshot(source, monitors.data, readMode, monitors.dataUpdatedAt);
   const records = displayPage?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), source, records);
@@ -60,11 +57,10 @@ export function useMonitorListController() {
   const monitorExport = useMonitorExport(selection.selectedIds, capabilities);
   const monitorImport = useMonitorImport(reread, capabilities, () => selection.selectIds([]));
   const selectionActions = monitorSelectionActions(capabilities.canSelect, selection.selectIds);
-  const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     state: {
       query,
-      draft: draft.value,
+      draft: queryState.draft,
       operating: commands.operating || monitorExport.exporting || monitorImport.state.busy,
       selectedIds: selection.selectedIds,
       monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, displayPage),
@@ -76,16 +72,7 @@ export function useMonitorListController() {
       createPicker
     },
     actions: {
-      setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
-      setLabels: (labels: string) => draft.setValue({ ...draft.value, labels }),
-      submitSearch: () => updateQuery({ search: draft.value.search.trim(), pageIndex: 0 }),
-      submitFilters: () =>
-        updateQuery({ search: draft.value.search.trim(), labels: draft.value.labels.trim(), pageIndex: 0 }),
-      changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
-      changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
-      changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) =>
-        updateQuery({ sort, order, pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
+      ...queryState.actions,
       refresh: commands.refresh,
       openCreatePicker: () => {
         if (capabilities.canWrite) setCreatePicker({ open: true, search: '' });
@@ -108,6 +95,33 @@ export function useMonitorListController() {
       submitImport: monitorImport.actions.submit,
       selectIds: selectionActions.selectIds,
       clearSelection: selectionActions.clearSelection
+    }
+  };
+}
+
+function useMonitorListQueryState() {
+  const [params, setParams] = useSearchParams();
+  const query = readMonitorQuery(params);
+  const source = writeMonitorQuery(query).toString();
+  const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
+  const draft = useQueryDraft(source, canonicalDraft);
+  const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
+  return {
+    query,
+    source,
+    draft: draft.value,
+    setParams,
+    actions: {
+      setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
+      setLabels: (labels: string) => draft.setValue({ ...draft.value, labels }),
+      submitSearch: () => updateQuery({ search: draft.value.search.trim(), pageIndex: 0 }),
+      submitFilters: () =>
+        updateQuery({ search: draft.value.search.trim(), labels: draft.value.labels.trim(), pageIndex: 0 }),
+      changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
+      changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
+      changeSort: (sort: MonitorQuery['sort'], order: MonitorQuery['order']) =>
+        updateQuery({ sort, order, pageIndex: 0 }),
+      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize })
     }
   };
 }

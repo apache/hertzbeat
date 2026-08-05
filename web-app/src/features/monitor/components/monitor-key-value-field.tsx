@@ -53,31 +53,13 @@ export function KeyValueField({
         {label}
       </span>
       <Space className={styles.stack ?? ''} direction="vertical" size="small">
-        {editor.rows.map(row => (
-          <Space className={styles.row ?? ''} key={row.id}>
-            <MapRowInput
-              aria-label={labels.key}
-              disabled={disabled}
-              status={!row.key.trim() || editor.duplicateKeys.has(row.key.trim()) ? 'error' : ''}
-              value={row.key}
-              {...(suggestions ? { options: keyOptions } : {})}
-              onChange={next => editor.changeKey(row.id, next, Boolean(suggestions))}
-            />
-            <MapRowInput
-              aria-label={labels.value}
-              disabled={disabled}
-              value={row.value}
-              {...(suggestions ? { options: valueOptions(row, editor.rows, suggestions) } : {})}
-              onChange={next => editor.changeValue(row.id, next)}
-            />
-            <Button
-              aria-label={labels.remove}
-              disabled={disabled}
-              icon={<DeleteOutlined />}
-              onClick={() => editor.remove(row.id)}
-            />
-          </Space>
-        ))}
+        <KeyValueRows
+          editor={editor}
+          labels={labels}
+          disabled={disabled}
+          keyOptions={keyOptions}
+          {...(suggestions ? { suggestions } : {})}
+        />
         <Button aria-label={labels.add} disabled={disabled} icon={<PlusOutlined />} onClick={editor.add}>
           {labels.add}
         </Button>
@@ -94,6 +76,43 @@ export function KeyValueField({
       </Space>
     </div>
   );
+}
+
+function KeyValueRows({
+  editor,
+  labels,
+  disabled,
+  suggestions,
+  keyOptions
+}: Pick<KeyValueFieldProps, 'labels' | 'disabled' | 'suggestions'> & {
+  editor: ReturnType<typeof useKeyValueRows>;
+  keyOptions: string[];
+}) {
+  return editor.rows.map(row => (
+    <Space className={styles.row ?? ''} key={row.id}>
+      <MapRowInput
+        aria-label={labels.key}
+        disabled={disabled}
+        status={!row.key.trim() || editor.duplicateKeys.has(row.key.trim()) ? 'error' : ''}
+        value={row.key}
+        {...(suggestions ? { options: keyOptions } : {})}
+        onChange={next => editor.changeKey(row.id, next, Boolean(suggestions))}
+      />
+      <MapRowInput
+        aria-label={labels.value}
+        disabled={disabled}
+        value={row.value}
+        {...(suggestions ? { options: valueOptions(row, editor.rows, suggestions) } : {})}
+        onChange={next => editor.changeValue(row.id, next)}
+      />
+      <Button
+        aria-label={labels.remove}
+        disabled={disabled}
+        icon={<DeleteOutlined />}
+        onClick={() => editor.remove(row.id)}
+      />
+    </Space>
+  ));
 }
 
 function MapRowInput({

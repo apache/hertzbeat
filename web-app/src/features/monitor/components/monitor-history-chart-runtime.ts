@@ -17,6 +17,7 @@ import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 
 import type { MonitorHistorySeries } from '../model/monitor-detail-model';
+import { historyLineSeries, historySeriesColors } from './monitor-history-chart-series';
 
 echarts.use([
   LineChart,
@@ -78,7 +79,7 @@ export function buildMonitorHistoryChartOption(
   input: MonitorHistoryChartRenderInput,
   colors: MonitorHistoryChartColors
 ): echarts.EChartsCoreOption {
-  const seriesColors = input.series.map((series, index) => historySeriesColor(series.name, index));
+  const seriesColors = historySeriesColors(input.series);
   const showLegend = input.series.length > 1;
   return {
     animationDuration: 220,
@@ -172,38 +173,6 @@ function historyValueAxis(unit: string | undefined, colors: MonitorHistoryChartC
   };
 }
 
-function historyLineSeries(series: MonitorHistorySeries[], colors: string[]) {
-  return series.map((item, index) => ({
-    name: item.name,
-    type: 'line',
-    data: item.points,
-    showSymbol: false,
-    smooth: true,
-    sampling: 'lttb',
-    emphasis: { focus: 'series' },
-    lineStyle: { width: isPrimarySeries(item.name) ? 2.4 : 1.8, color: colors[index] },
-    itemStyle: { color: colors[index] },
-    areaStyle: isPrimarySeries(item.name) ? primaryAreaStyle(colors[index]!) : undefined
-  }));
-}
-
-function primaryAreaStyle(color: string) {
-  return {
-    opacity: 0.2,
-    color: {
-      type: 'linear',
-      x: 0,
-      y: 0,
-      x2: 0,
-      y2: 1,
-      colorStops: [
-        { offset: 0, color: `${color}66` },
-        { offset: 1, color: `${color}05` }
-      ]
-    }
-  };
-}
-
 /** Formats dense time axes exactly like the reviewed Next.js monitor chart. */
 export function formatMonitorHistoryAxisTickLabel(value: number, rangeMs: number) {
   const date = new Date(value);
@@ -215,27 +184,6 @@ export function formatMonitorHistoryAxisTickLabel(value: number, rangeMs: number
 
 function padDatePart(value: number) {
   return String(value).padStart(2, '0');
-}
-
-const fallbackSeriesColors = ['#60a5fa', '#a78bfa', '#22d3ee', '#fb7185', '#f97316', '#84cc16'];
-
-function historySeriesColor(name: string, index: number) {
-  switch (name.toLowerCase()) {
-    case 'origin':
-    case 'mean':
-      return '#60a5fa';
-    case 'min':
-      return '#34d399';
-    case 'max':
-      return '#fbbf24';
-    default:
-      return fallbackSeriesColors[index % fallbackSeriesColors.length]!;
-  }
-}
-
-function isPrimarySeries(name: string) {
-  const normalized = name.toLowerCase();
-  return normalized === 'origin' || normalized === 'mean';
 }
 
 function chartColors(element: HTMLElement) {

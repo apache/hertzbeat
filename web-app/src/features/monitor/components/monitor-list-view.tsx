@@ -78,6 +78,14 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
           actions={actions}
         />
       </OperationalResultRegion>
+      <MonitorListDialogs state={state} actions={actions} />
+    </OperationalPage>
+  );
+}
+
+function MonitorListDialogs({ state, actions }: MonitorListViewProps) {
+  return (
+    <>
       <MonitorImportDialog
         state={state.monitorImport}
         onCancel={actions.cancelImport}
@@ -92,6 +100,6 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         onCancel={actions.cancelCreatePicker}
         onSelect={actions.create}
       />
-    </OperationalPage>
+    </>
   );
 }
