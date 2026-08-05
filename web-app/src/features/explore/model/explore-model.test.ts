@@ -34,6 +34,10 @@ import {
 } from './explore-model';
 
 describe('explore query state', () => {
+  it('defaults a bare Explore route to metrics', () => {
+    expect(parseExploreQuery(new URLSearchParams())).toMatchObject({ signal: 'metrics', timeRange: 'last-30m' });
+  });
+
   it('keeps only supported values and trims empty context', () => {
     const query = parseExploreQuery(
       new URLSearchParams('signal=logs&timeRange=last-1h&serviceName=%20checkout%20&query=timeout&errorOnly=true')
@@ -170,7 +174,7 @@ describe('explore query state', () => {
     expect(canonical).not.toContain('live=true');
   });
 
-  it('normalizes supported context aliases and drops invalid or unknown URL values', () => {
+  it('normalizes legacy trace context aliases and drops invalid or unknown URL values', () => {
     const query = parseExploreQuery(
       new URLSearchParams(
         'signal=invalid&range=last-1h&namespace=commerce&serviceInstanceId=checkout-7d9' +
@@ -179,7 +183,7 @@ describe('explore query state', () => {
     );
 
     expect(query).toMatchObject({
-      signal: 'metrics',
+      signal: 'traces',
       timeRange: 'last-1h',
       serviceNamespace: 'commerce',
       instance: 'checkout-7d9',
@@ -189,7 +193,7 @@ describe('explore query state', () => {
       end: undefined
     });
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=metrics&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
+      '/explore?signal=traces&timeRange=last-1h&autoRefresh=30000&serviceNamespace=commerce' +
         '&instance=checkout-7d9&endpoint=%2Fcheckout'
     );
   });

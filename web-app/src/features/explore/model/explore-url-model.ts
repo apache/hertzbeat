@@ -23,6 +23,7 @@ import { enabledFilterValue, temporalAggregationValue, traceSpanScopeValue } fro
 import type { ExploreQuery, ExploreQueryPatch, ExploreSignal, ExploreTimeRange } from './explore-query';
 
 const DEFAULT_SIGNAL: ExploreSignal = 'metrics';
+const LEGACY_SIGNAL_FALLBACK: ExploreSignal = 'traces';
 const DEFAULT_TIME_RANGE: ExploreTimeRange = 'last-30m';
 export const EXPLORE_TIME_RANGES: ExploreTimeRange[] = ['last-15m', 'last-30m', 'last-1h', 'last-6h', 'last-24h'];
 const AUTO_REFRESH_VALUES = [30_000, 60_000] as const;
@@ -173,7 +174,9 @@ function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
 }
 
 function readSignal(value: string | null): ExploreSignal {
-  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : DEFAULT_SIGNAL;
+  if (value === null) return DEFAULT_SIGNAL;
+  // Explicit unsupported values come from legacy links, whose established fallback was traces.
+  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : LEGACY_SIGNAL_FALLBACK;
 }
 
 function readTimeRange(value: string | null): ExploreTimeRange {

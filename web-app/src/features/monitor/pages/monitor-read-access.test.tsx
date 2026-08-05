@@ -176,7 +176,7 @@ describe('monitor read page composition', () => {
     expect(screen.queryByText('late-list')).not.toBeInTheDocument();
   });
 
-  it('aborts detail and metric reads and hides detail/Grafana cache immediately on role loss', async () => {
+  it('aborts started detail and metric reads and hides detail/Grafana cache immediately on role loss', async () => {
     let detailRefreshSignal!: AbortSignal;
     let resolveDetailRefresh!: (value: typeof detail) => void;
     api.loadMonitorDetail.mockResolvedValueOnce(detail).mockImplementationOnce(
@@ -188,13 +188,12 @@ describe('monitor read page composition', () => {
     );
     const favorites = deferred<never[]>();
     const realtime = deferred<{ time: null; fields: never[]; valueRows: never[] }>();
-    const history = deferred<{ values: Record<string, never[]> }>();
     api.loadFavoriteMetrics.mockImplementation((_id, signal: AbortSignal) => favorites.run(signal));
     api.loadRealtimeMetric.mockImplementation((_id, _metric, signal: AbortSignal) => realtime.run(signal));
-    api.loadHistoryMetric.mockImplementation((_monitor, _metric, _range, signal: AbortSignal) => history.run(signal));
     const view = renderPage('detail', ['GUEST']);
     await waitFor(() => expect(screen.getByText('cached-checkout')).toBeInTheDocument());
     await waitFor(() => expect(api.loadRealtimeMetric).toHaveBeenCalledOnce());
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: i18n.t('common.refresh') }));
     await waitFor(() => expect(api.loadMonitorDetail).toHaveBeenCalledTimes(2));
@@ -203,7 +202,6 @@ describe('monitor read page composition', () => {
     expect(detailRefreshSignal.aborted).toBe(true);
     expect(favorites.signal.aborted).toBe(true);
     expect(realtime.signal.aborted).toBe(true);
-    expect(history.signal.aborted).toBe(true);
     expect(screen.getByText(i18n.t('monitor.permission.title'))).toBeInTheDocument();
     expect(screen.queryByText('cached-checkout')).not.toBeInTheDocument();
     expect(screen.queryByTitle(i18n.t('monitor.grafana.title'))).not.toBeInTheDocument();
@@ -212,7 +210,6 @@ describe('monitor read page composition', () => {
       resolveDetailRefresh({ ...detail, monitor: { ...monitor, name: 'late-detail' } });
       favorites.resolve([]);
       realtime.resolve({ time: null, fields: [], valueRows: [] });
-      history.resolve({ values: {} });
       await Promise.resolve();
     });
     expect(screen.queryByText('late-detail')).not.toBeInTheDocument();
