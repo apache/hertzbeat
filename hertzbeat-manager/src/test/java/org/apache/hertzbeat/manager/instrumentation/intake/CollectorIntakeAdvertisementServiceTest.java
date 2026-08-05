@@ -30,11 +30,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry.ReportedStatus;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.ErrorCode;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
@@ -57,10 +61,11 @@ class CollectorIntakeAdvertisementServiceTest {
                 .build();
         when(collectorDao.findCollectorByName("edge-west")).thenReturn(Optional.of(collector));
         CollectorIntakeAdvertisementRequest request = request(Gateway.COLLECTOR);
-        CollectorIntakeAdvertisementService writer = service(collectorDao);
+        CollectorRuntimeStatusRegistry runtimeStatuses = runtimeStatuses("edge-west", gatewayAvailable());
+        CollectorIntakeAdvertisementService writer = service(collectorDao, runtimeStatuses);
 
         CollectorInstrumentationIntake saved = writer.update("edge-west", request);
-        CollectorInstrumentationIntake reread = service(collectorDao).read(collector);
+        CollectorInstrumentationIntake reread = service(collectorDao, runtimeStatuses).read(collector);
 
         assertEquals(State.AVAILABLE, saved.state());
         assertEquals("Authorization", saved.authorizationHeader());
@@ -78,7 +83,7 @@ class CollectorIntakeAdvertisementServiceTest {
     @Test
     void rejectsServerOwnedEndpointsAtTheCollectorMutationBoundary() {
         CollectorDao collectorDao = mock(CollectorDao.class);
-        CollectorIntakeAdvertisementService service = service(collectorDao);
+        CollectorIntakeAdvertisementService service = service(collectorDao, mock(CollectorRuntimeStatusRegistry.class));
 
         assertThrows(IllegalArgumentException.class, () -> service.update("edge-west", request(Gateway.SERVER)));
         verify(collectorDao, never()).save(any());
@@ -87,7 +92,8 @@ class CollectorIntakeAdvertisementServiceTest {
     @Test
     void mapsNotAdvertisedInvalidOfflineAndAvailableWithoutExposingStoredText(CapturedOutput output) {
         CollectorDao collectorDao = mock(CollectorDao.class);
-        CollectorIntakeAdvertisementService service = service(collectorDao);
+        CollectorRuntimeStatusRegistry runtimeStatuses = mock(CollectorRuntimeStatusRegistry.class);
+        CollectorIntakeAdvertisementService service = service(collectorDao, runtimeStatuses);
         Collector collector = Collector.builder()
                 .name("edge-state")
                 .status(COLLECTOR_STATUS_ONLINE)
@@ -105,22 +111,76 @@ class CollectorIntakeAdvertisementServiceTest {
         assertEquals(ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE, service.read(collector).errorCode());
 
         collector.setStatus(COLLECTOR_STATUS_ONLINE);
+        assertEquals(ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE, service.read(collector).errorCode());
+
+        when(runtimeStatuses.current("edge-state"))
+                .thenReturn(Optional.of(new ReportedStatus(gatewayAvailable(), Instant.now())));
         CollectorInstrumentationIntake available = service.read(collector);
         assertEquals(State.AVAILABLE, available.state());
         assertEquals(Gateway.COLLECTOR, available.gateway());
         assertEquals("Authorization", available.authorizationHeader());
     }
 
-    private CollectorIntakeAdvertisementService service(CollectorDao collectorDao) {
-        return new CollectorIntakeAdvertisementService(collectorDao, new CollectorIntakeAdvertisementCodec());
+    @Test
+    void rejectsAnAdvertisedProtocolThatTheCurrentRuntimeDoesNotReport() {
+        Collector collector = Collector.builder()
+                .name("edge-protocol")
+                .status(COLLECTOR_STATUS_ONLINE)
+                .build();
+        collector.setInstrumentationIntake(new CollectorIntakeAdvertisementCodec().encode(
+                request(Gateway.COLLECTOR, Capability.OTLP_HTTP_PROTOBUF)));
+        CollectorIntakeAdvertisementService service = service(
+                mock(CollectorDao.class), runtimeStatuses("edge-protocol", gatewayAvailable()));
+
+        CollectorInstrumentationIntake intake = service.read(collector);
+
+        assertEquals(State.UNAVAILABLE, intake.state());
+        assertEquals(ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE, intake.errorCode());
+    }
+
+    private CollectorIntakeAdvertisementService service(
+            CollectorDao collectorDao, CollectorRuntimeStatusRegistry runtimeStatuses) {
+        return new CollectorIntakeAdvertisementService(
+                collectorDao, new CollectorIntakeAdvertisementCodec(), runtimeStatuses);
+    }
+
+    private CollectorRuntimeStatusRegistry runtimeStatuses(
+            String collectorId, ManagedOtelRuntimeStatus runtimeStatus) {
+        CollectorRuntimeStatusRegistry registry = mock(CollectorRuntimeStatusRegistry.class);
+        when(registry.current(collectorId))
+                .thenReturn(Optional.of(new ReportedStatus(runtimeStatus, Instant.now())));
+        return registry;
+    }
+
+    private ManagedOtelRuntimeStatus gatewayAvailable() {
+        return new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                1,
+                1,
+                -1,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.now(),
+                "",
+                ManagedOtelRuntimeStatus.FailureCode.NONE,
+                ManagedOtelRuntimeStatus.RuntimeTelemetry.unavailable(false),
+                List.of(),
+                ManagedOtelRuntimeStatus.OtlpGatewayStatus.available(
+                        List.of(ManagedOtelRuntimeStatus.OtlpGatewayTransport.GRPC)));
     }
 
     private CollectorIntakeAdvertisementRequest request(Gateway gateway) {
+        return request(gateway, Capability.OTLP_GRPC);
+    }
+
+    private CollectorIntakeAdvertisementRequest request(Gateway gateway, Capability capability) {
         return new CollectorIntakeAdvertisementRequest(
                 1,
                 gateway,
-                List.of(Capability.OTLP_GRPC),
-                null,
-                "https://collector.example.test:4317");
+                List.of(capability),
+                capability == Capability.OTLP_HTTP_PROTOBUF ? "https://collector.example.test:4318" : null,
+                capability == Capability.OTLP_GRPC ? "https://collector.example.test:4317" : null);
     }
 }

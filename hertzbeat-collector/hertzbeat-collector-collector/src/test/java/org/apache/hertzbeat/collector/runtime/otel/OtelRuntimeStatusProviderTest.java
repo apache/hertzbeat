@@ -41,6 +41,7 @@ class OtelRuntimeStatusProviderTest {
         properties.setEnabled(true);
         properties.setConfigRevision(12);
         properties.setToken("managed-intake-token");
+        properties.setOtlpGatewayEnabled(true);
         OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
         when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
                 OtelRuntimeState.RUNNING, 42, 2, Instant.parse("2026-07-15T06:00:00Z"), ""));
@@ -72,6 +73,12 @@ class OtelRuntimeStatusProviderTest {
                 status.intakeCredentialState());
         assertEquals(List.of(source), status.sources());
         assertEquals(telemetry, status.telemetry());
+        assertEquals(ManagedOtelRuntimeStatus.OtlpGatewayState.AVAILABLE,
+                status.otlpGateway().state());
+        assertEquals(List.of(
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.HTTP_PROTOBUF,
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.GRPC),
+                status.otlpGateway().supportedTransports());
     }
 
     @Test
@@ -93,6 +100,35 @@ class OtelRuntimeStatusProviderTest {
 
         assertEquals(ManagedOtelRuntimeStatus.IntakeCredentialState.NOT_REQUIRED,
                 status.intakeCredentialState());
+        assertEquals(ManagedOtelRuntimeStatus.OtlpGatewayState.DISABLED,
+                status.otlpGateway().state());
+    }
+
+    @Test
+    void enabledGatewayIsUnavailableUntilTheManagedRuntimeIsRunning() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        properties.setOtlpGatewayEnabled(true);
+        properties.setToken("managed-intake-token");
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                OtelRuntimeState.STARTING, -1, 0, Instant.parse("2026-07-15T06:00:00Z"), ""));
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.latestFailure(properties)).thenReturn(ManagedOtelRuntimeStatus.FailureCode.NONE);
+        when(diagnosticsReader.sanitize("", properties)).thenReturn("");
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                mock(OtelRuntimeTelemetryClient.class),
+                diagnosticsReader,
+                new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus status = provider.status();
+
+        assertEquals(ManagedOtelRuntimeStatus.OtlpGatewayState.UNAVAILABLE,
+                status.otlpGateway().state());
+        assertTrue(status.otlpGateway().supportedTransports().isEmpty());
     }
 
     @Test

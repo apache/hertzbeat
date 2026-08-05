@@ -22,6 +22,8 @@ import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.FailureCode;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.ObservedLong;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.OtlpGatewayStatus;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.OtlpGatewayTransport;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeTelemetry;
 
 /**
@@ -84,8 +86,22 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
                 diagnosticsReader.sanitize(snapshot.lastError(), properties),
                 failureCode,
                 telemetry,
-                sources
+                sources,
+                otlpGateway(snapshot)
         );
+    }
+
+    private OtlpGatewayStatus otlpGateway(OtelRuntimeSnapshot snapshot) {
+        if (!properties.isOtlpGatewayEnabled()) {
+            return OtlpGatewayStatus.disabled();
+        }
+        if (!properties.isEnabled() || snapshot.state() != OtelRuntimeState.RUNNING) {
+            return OtlpGatewayStatus.unavailable();
+        }
+        // Gateway mode renders both OTLP receivers into the same health-checked runtime.
+        return OtlpGatewayStatus.available(List.of(
+                OtlpGatewayTransport.HTTP_PROTOBUF,
+                OtlpGatewayTransport.GRPC));
     }
 
     private List<ManagedOtelRuntimeStatus.ManagedOtelSourceStatus> sanitize(

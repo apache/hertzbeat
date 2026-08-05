@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -34,10 +35,12 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
                                        IntakeCredentialState intakeCredentialState,
                                        int restartCount, Instant changedAt, String lastError,
                                        FailureCode failureCode, RuntimeTelemetry telemetry,
-                                       List<ManagedOtelSourceStatus> sources) {
+                                       List<ManagedOtelSourceStatus> sources,
+                                       OtlpGatewayStatus otlpGateway) {
 
-    public static final int CURRENT_SCHEMA_VERSION = 2;
+    public static final int CURRENT_SCHEMA_VERSION = 3;
     private static final int LEGACY_SCHEMA_VERSION = 1;
+    private static final int OTLP_GATEWAY_SCHEMA_VERSION = 3;
     private static final int MAXIMUM_DIAGNOSTIC_LENGTH = 512;
     // Active sources plus both sides of one pending/rejected replacement revision.
     private static final int MAXIMUM_SOURCE_STATUSES = 147;
@@ -49,7 +52,7 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
                                     int restartCount, Instant changedAt, String lastError) {
         this(schemaVersion, enabled, state, desiredRevision, activeRevision, -1,
                 intakeCredentialState, restartCount, changedAt, lastError, FailureCode.NONE,
-                RuntimeTelemetry.unavailable(false), List.of());
+                RuntimeTelemetry.unavailable(false), List.of(), OtlpGatewayStatus.notReported());
     }
 
     public ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
@@ -59,7 +62,20 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
                                     List<ManagedOtelSourceStatus> sources) {
         this(schemaVersion, enabled, state, desiredRevision, activeRevision, -1,
                 intakeCredentialState, restartCount, changedAt, lastError, FailureCode.NONE,
-                RuntimeTelemetry.unavailable(hasFileSource(sources)), sources);
+                RuntimeTelemetry.unavailable(hasFileSource(sources)), sources,
+                OtlpGatewayStatus.notReported());
+    }
+
+    /** Preserves the schema 1/2 constructor shape while gateway reporting rolls out. */
+    public ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
+                                    long desiredRevision, long activeRevision, long pid,
+                                    IntakeCredentialState intakeCredentialState,
+                                    int restartCount, Instant changedAt, String lastError,
+                                    FailureCode failureCode, RuntimeTelemetry telemetry,
+                                    List<ManagedOtelSourceStatus> sources) {
+        this(schemaVersion, enabled, state, desiredRevision, activeRevision, pid,
+                intakeCredentialState, restartCount, changedAt, lastError, failureCode,
+                telemetry, sources, OtlpGatewayStatus.notReported());
     }
 
     public ManagedOtelRuntimeStatus {
@@ -91,6 +107,11 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         }
         failureCode = Objects.requireNonNullElse(failureCode, FailureCode.NONE);
         telemetry = telemetry == null ? RuntimeTelemetry.unavailable(hasFileSource(sources)) : telemetry;
+        otlpGateway = otlpGateway == null ? OtlpGatewayStatus.notReported() : otlpGateway;
+        if (schemaVersion < OTLP_GATEWAY_SCHEMA_VERSION
+                && otlpGateway.state() != OtlpGatewayState.NOT_REPORTED) {
+            throw new IllegalArgumentException("OTLP Gateway status requires managed runtime status schema 3");
+        }
     }
 
     private static boolean hasFileSource(List<ManagedOtelSourceStatus> sources) {
@@ -132,6 +153,57 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         STORAGE_CORRUPTED,
         PROCESS_CRASH,
         UNKNOWN
+    }
+
+    /** Lifecycle of the explicitly enabled application-telemetry Gateway listener. */
+    public enum OtlpGatewayState {
+        NOT_REPORTED,
+        DISABLED,
+        UNAVAILABLE,
+        AVAILABLE
+    }
+
+    /** Payload-free OTLP protocols confirmed by the running managed runtime. */
+    public enum OtlpGatewayTransport {
+        HTTP_PROTOBUF,
+        GRPC
+    }
+
+    /** Bounded runtime proof used to validate separately advertised public endpoints. */
+    public record OtlpGatewayStatus(OtlpGatewayState state,
+                                    List<OtlpGatewayTransport> supportedTransports) {
+
+        public OtlpGatewayStatus {
+            state = Objects.requireNonNull(state, "state");
+            supportedTransports = supportedTransports == null
+                    ? List.of()
+                    : supportedTransports.stream()
+                            .distinct()
+                            .sorted(Comparator.comparingInt(OtlpGatewayTransport::ordinal))
+                            .toList();
+            if (state == OtlpGatewayState.AVAILABLE && supportedTransports.isEmpty()) {
+                throw new IllegalArgumentException("Available OTLP Gateway must report a transport");
+            }
+            if (state != OtlpGatewayState.AVAILABLE && !supportedTransports.isEmpty()) {
+                throw new IllegalArgumentException("Unavailable OTLP Gateway cannot report transports");
+            }
+        }
+
+        public static OtlpGatewayStatus notReported() {
+            return new OtlpGatewayStatus(OtlpGatewayState.NOT_REPORTED, List.of());
+        }
+
+        public static OtlpGatewayStatus disabled() {
+            return new OtlpGatewayStatus(OtlpGatewayState.DISABLED, List.of());
+        }
+
+        public static OtlpGatewayStatus unavailable() {
+            return new OtlpGatewayStatus(OtlpGatewayState.UNAVAILABLE, List.of());
+        }
+
+        public static OtlpGatewayStatus available(List<OtlpGatewayTransport> transports) {
+            return new OtlpGatewayStatus(OtlpGatewayState.AVAILABLE, transports);
+        }
     }
 
     /**
