@@ -636,6 +636,18 @@
       "questionPlaceholder": "Selecione uma opção",
       "startOver": "Recomeçar",
       "loadError": "A integração de instrumentação está indisponível.",
+      "initialization": {
+        "catalogLoading": "Carregando fontes de instrumentação…",
+        "catalogRetrying": "Tentando descobrir as fontes de instrumentação novamente…",
+        "catalogUnavailable": "As fontes de instrumentação estão indisponíveis.",
+        "catalogUnavailableDescription": "Tente descobrir as fontes novamente ou saia deste fluxo e retorne mais tarde.",
+        "profilesLoading": "Carregando destinos de telemetria. Você pode inspecionar as fontes enquanto isso termina.",
+        "profilesRetrying": "Tentando descobrir os destinos de telemetria novamente…",
+        "profilesUnavailable": "Os destinos de telemetria estão indisponíveis.",
+        "profilesUnavailableDescription": "Você pode inspecionar e selecionar uma fonte, mas a configuração permanece indisponível até a descoberta de destinos ser concluída.",
+        "stale": "Não foi possível atualizar alguns metadados de configuração.",
+        "staleDescription": "Os metadados verificados mantidos continuam disponíveis. Continue ou tente novamente a atualização que falhou."
+      },
       "renderError": "Não foi possível gerar o guia de instalação selecionado.",
       "profile": {
         "unconfigured": "Nenhum destino de telemetria está configurado.",

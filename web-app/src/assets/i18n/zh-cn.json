@@ -627,6 +627,18 @@
       "questionPlaceholder": "请选择一个选项",
       "startOver": "重新开始",
       "loadError": "插桩引导当前不可用。",
+      "initialization": {
+        "catalogLoading": "正在加载插桩源…",
+        "catalogRetrying": "正在重试发现插桩源…",
+        "catalogUnavailable": "插桩源当前不可用。",
+        "catalogUnavailableDescription": "请重试源发现，或退出此流程后稍后再试。",
+        "profilesLoading": "正在加载遥测目标。在完成前仍可查看插桩源。",
+        "profilesRetrying": "正在重试发现遥测目标…",
+        "profilesUnavailable": "遥测目标当前不可用。",
+        "profilesUnavailableDescription": "可以查看和选择插桩源，但只有目标发现成功后才能进入配置。",
+        "stale": "部分设置元数据刷新失败。",
+        "staleDescription": "已保留经过验证的元数据。可以继续流程，或重试失败的刷新。"
+      },
       "renderError": "无法生成所选安装指南。",
       "profile": {
         "unconfigured": "尚未配置遥测目标位置。",

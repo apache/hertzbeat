@@ -630,6 +630,18 @@
       "questionPlaceholder": "選択してください",
       "startOver": "最初からやり直す",
       "loadError": "計装オンボーディングを利用できません。",
+      "initialization": {
+        "catalogLoading": "計装ソースを読み込んでいます…",
+        "catalogRetrying": "計装ソースの検出を再試行しています…",
+        "catalogUnavailable": "計装ソースを利用できません。",
+        "catalogUnavailableDescription": "ソース検出を再試行するか、このフローを終了して後でもう一度お試しください。",
+        "profilesLoading": "テレメトリー送信先を読み込んでいます。完了するまでソースを確認できます。",
+        "profilesRetrying": "テレメトリー送信先の検出を再試行しています…",
+        "profilesUnavailable": "テレメトリー送信先を利用できません。",
+        "profilesUnavailableDescription": "ソースの確認と選択はできますが、送信先の検出が成功するまで設定には進めません。",
+        "stale": "一部の設定メタデータを更新できませんでした。",
+        "staleDescription": "保持されている検証済みメタデータを引き続き利用できます。続行するか、失敗した更新を再試行してください。"
+      },
       "renderError": "選択したインストールガイドを生成できませんでした。",
       "profile": {
         "unconfigured": "テレメトリ送信先が設定されていません。",

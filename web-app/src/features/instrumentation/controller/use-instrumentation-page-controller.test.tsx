@@ -647,6 +647,149 @@ describe('useInstrumentationPageController', () => {
     log.mockRestore();
   });
 
+  it('retries an initially failed catalog without refetching ready profiles', async () => {
+    api.loadInstrumentationCatalog.mockRejectedValueOnce(new Error('catalog metadata unavailable'));
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const catalogReceipt = deferred<typeof catalog>();
+    api.loadInstrumentationCatalog.mockReturnValueOnce(catalogReceipt.promise);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('error'));
+    await waitFor(() => expect(result.current.profilesState).toBe('ready'));
+
+    let retry: Promise<void> | undefined;
+    act(() => {
+      retry = result.current.retryInitialization();
+    });
+    await waitFor(() => expect(result.current.catalogState).toBe('retrying'));
+    expect(api.loadInstrumentationCatalog).toHaveBeenCalledTimes(2);
+    expect(api.loadIntakeProfiles).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      catalogReceipt.resolve(catalog);
+      await retry;
+    });
+    expect(result.current.catalogState).toBe('ready');
+    expect(result.current.profilesState).toBe('ready');
+  });
+
+  it('keeps the source directory usable but blocks Configure until failed profiles recover', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockRejectedValueOnce(new Error('profile metadata unavailable'));
+    const profilesReceipt = deferred<{
+      schemaVersion: 2;
+      status: 'available';
+      defaultProfileId: string;
+      profiles: (typeof serverProfile)[];
+    }>();
+    api.loadIntakeProfiles.mockReturnValueOnce(profilesReceipt.promise);
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    await waitFor(() => expect(result.current.profilesState).toBe('error'));
+
+    act(() => result.current.chooseSource('quick_start'));
+    expect(result.current.draft.recipeId).toBe('telemetrygen');
+    expect(result.current.canContinueSource).toBe(false);
+
+    let retry: Promise<void> | undefined;
+    act(() => {
+      retry = result.current.retryInitialization();
+    });
+    await waitFor(() => expect(result.current.profilesState).toBe('retrying'));
+    expect(result.current.initializationRetrying).toBe(true);
+    expect(api.loadInstrumentationCatalog).toHaveBeenCalledOnce();
+    expect(api.loadIntakeProfiles).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      profilesReceipt.resolve({
+        schemaVersion: 2,
+        status: 'available',
+        defaultProfileId: 'server-default',
+        profiles: [serverProfile]
+      });
+      await retry;
+    });
+    expect(result.current.profilesState).toBe('ready');
+    expect(result.current.canContinueSource).toBe(true);
+  });
+
+  it('retries only stale metadata once without retiring Configure state or in-memory secrets', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValueOnce({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    const harness = createHarness();
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: harness.wrapper });
+    await waitFor(() => expect(result.current.profilesState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.setStage('configure'));
+    act(() => result.current.patchService({ name: 'checkout' }));
+    act(() => result.current.setToken('valid-token-123'));
+    await act(async () => result.current.renderGuide());
+
+    api.loadIntakeProfiles.mockRejectedValueOnce(new Error('profile metadata unavailable'));
+    await act(async () => {
+      await harness.client.refetchQueries({ queryKey: ['instrumentation', 'intake-profiles'] });
+    });
+    await waitFor(() => expect(result.current.profilesState).toBe('stale'));
+    expect(result.current.canContinueSource).toBe(true);
+    const retained = {
+      draft: result.current.draft,
+      guide: result.current.guide,
+      stage: result.current.stage,
+      token: result.current.token
+    };
+
+    const profilesReceipt = deferred<{
+      schemaVersion: 2;
+      status: 'available';
+      defaultProfileId: string;
+      profiles: (typeof serverProfile)[];
+    }>();
+    api.loadIntakeProfiles.mockReturnValueOnce(profilesReceipt.promise);
+    let first: Promise<void> | undefined;
+    let second: Promise<void> | undefined;
+    act(() => {
+      first = result.current.retryInitialization();
+      second = result.current.retryInitialization();
+    });
+    await waitFor(() => expect(result.current.initializationRetrying).toBe(true));
+    expect(api.loadInstrumentationCatalog).toHaveBeenCalledOnce();
+    expect(api.loadIntakeProfiles).toHaveBeenCalledTimes(3);
+    expect({
+      draft: result.current.draft,
+      guide: result.current.guide,
+      stage: result.current.stage,
+      token: result.current.token
+    }).toEqual(retained);
+
+    await act(async () => {
+      profilesReceipt.resolve({
+        schemaVersion: 2,
+        status: 'available',
+        defaultProfileId: 'server-default',
+        profiles: [serverProfile]
+      });
+      await Promise.all([first, second]);
+    });
+    expect(result.current.profilesState).toBe('ready');
+    expect(result.current.initializationRetrying).toBe(false);
+    expect({
+      draft: result.current.draft,
+      guide: result.current.guide,
+      stage: result.current.stage,
+      token: result.current.token
+    }).toEqual(retained);
+  });
+
   it('discards an in-flight token after session-loss unmount without persistence or URL leakage', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({

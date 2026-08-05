@@ -633,6 +633,18 @@
       "questionPlaceholder": "Select an option",
       "startOver": "Start over",
       "loadError": "Instrumentation onboarding is unavailable.",
+      "initialization": {
+        "catalogLoading": "Loading instrumentation sources…",
+        "catalogRetrying": "Retrying instrumentation source discovery…",
+        "catalogUnavailable": "Instrumentation sources are unavailable.",
+        "catalogUnavailableDescription": "Retry source discovery or exit this workflow and return later.",
+        "profilesLoading": "Loading telemetry destinations. You can inspect sources while this completes.",
+        "profilesRetrying": "Retrying telemetry destination discovery…",
+        "profilesUnavailable": "Telemetry destinations are unavailable.",
+        "profilesUnavailableDescription": "You can inspect and select a source, but Configure remains unavailable until destination discovery succeeds.",
+        "stale": "Some setup metadata could not be refreshed.",
+        "staleDescription": "Retained verified metadata remains available. You may continue or retry the failed refresh."
+      },
       "renderError": "The selected installation guidance could not be rendered.",
       "profile": {
         "unconfigured": "No telemetry destination is configured.",

@@ -5,13 +5,14 @@
  */
 
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Alert, Button, Skeleton } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { InstrumentationConfigureStep } from '../components/instrumentation-configure-step';
 import { InstrumentationGuideWorkspace } from '../components/instrumentation-guide-workspace';
+import { InstrumentationInitializationEvidence } from '../components/instrumentation-initialization-evidence';
 import { InstrumentationProgress } from '../components/instrumentation-progress';
 import { InstrumentationSourceStep } from '../components/instrumentation-source-step';
 import styles from '../components/instrumentation-onboarding.module.css';
@@ -44,10 +45,12 @@ export function InstrumentationPage() {
         <InstrumentationProgress stage={page.stage} />
       </div>
       <main className={styles.onboardingContent}>
-        {(page.catalogState === 'loading' || page.profilesState === 'loading') && <Skeleton active />}
-        {(page.catalogState === 'error' || page.profilesState === 'error') && (
-          <Alert type="error" showIcon message={t('instrumentation.v2.loadError')} />
-        )}
+        <InstrumentationInitializationEvidence
+          catalogState={page.catalogState}
+          profilesState={page.profilesState}
+          retrying={page.initializationRetrying}
+          onRetry={() => void page.retryInitialization()}
+        />
         <InstrumentationStageContent page={page} />
       </main>
     </div>

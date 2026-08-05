@@ -627,6 +627,18 @@
       "questionPlaceholder": "請選擇一個選項",
       "startOver": "重新開始",
       "loadError": "插樁引導目前無法使用。",
+      "initialization": {
+        "catalogLoading": "正在載入插樁來源…",
+        "catalogRetrying": "正在重試探索插樁來源…",
+        "catalogUnavailable": "插樁來源目前無法使用。",
+        "catalogUnavailableDescription": "請重試來源探索，或退出此流程後稍後再試。",
+        "profilesLoading": "正在載入遙測目標。完成前仍可查看插樁來源。",
+        "profilesRetrying": "正在重試探索遙測目標…",
+        "profilesUnavailable": "遙測目標目前無法使用。",
+        "profilesUnavailableDescription": "可以查看和選擇插樁來源，但只有目標探索成功後才能進入設定。",
+        "stale": "部分設定中繼資料重新整理失敗。",
+        "staleDescription": "已保留經過驗證的中繼資料。可以繼續流程，或重試失敗的重新整理。"
+      },
       "renderError": "無法產生所選安裝指南。",
       "profile": {
         "unconfigured": "尚未設定遙測目的地。",

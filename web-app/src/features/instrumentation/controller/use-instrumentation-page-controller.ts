@@ -23,10 +23,12 @@ import {
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
 import { profileCanRender, profileRequiresToken } from '../model/intake-profile';
+import { metadataAllowsConfiguration } from '../model/instrumentation-initialization';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
+import { useInstrumentationInitialization } from './use-instrumentation-initialization';
 import { useInstrumentationTokenActions } from './instrumentation-token-actions';
 
 const keys = {
@@ -39,6 +41,7 @@ export function useInstrumentationPageController() {
   const session = useSession().session;
   const tokenCapability = instrumentationTokenCapability(session?.roles ?? []);
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
+  const initialization = useInstrumentationInitialization(catalogQuery, profilesQuery);
   const state = useInstrumentationControllerState();
   const startedAtRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<number | undefined>(undefined);
@@ -81,9 +84,11 @@ export function useInstrumentationPageController() {
   return {
     ...state,
     catalog: catalogQuery.data,
-    catalogState: queryState(catalogQuery),
+    catalogState: initialization.catalogState,
     profiles: profilesQuery.data,
-    profilesState: queryState(profilesQuery),
+    profilesState: initialization.profilesState,
+    initializationRetrying: initialization.initializationRetrying,
+    retryInitialization: initialization.retryInitialization,
     ...draftActions,
     ...guideActions,
     ...tokenActions,
@@ -92,7 +97,7 @@ export function useInstrumentationPageController() {
     detect,
     openQuery,
     hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),
-    canContinueSource: Boolean(state.draft.recipeId),
+    canContinueSource: Boolean(state.draft.recipeId) && metadataAllowsConfiguration(initialization.profilesState),
     platformOptions: catalogQuery.data ? selectedRecipePlatforms(catalogQuery.data, state.draft) : [],
     canRender: draftReady(state.draft) && profileCanRender(selectedProfile, state.token)
   };
@@ -184,10 +189,4 @@ function useDetection(
     },
     [draft, generationRef, setDetection, setDetecting, setDetectionError, startedAtRef, timerRef]
   );
-}
-
-function queryState(query: { isPending: boolean; error: unknown }) {
-  if (query.isPending) return 'loading' as const;
-  if (query.error) return 'error' as const;
-  return 'ready' as const;
 }
