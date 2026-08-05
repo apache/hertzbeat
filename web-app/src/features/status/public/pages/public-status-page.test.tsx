@@ -39,9 +39,11 @@ describe('PublicStatusPage failure states', () => {
     await loadLocale('en-US');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     cleanup();
     vi.clearAllMocks();
+    window.localStorage.clear();
+    await loadLocale('en-US');
   });
 
   it('uses compact loading evidence without a large skeleton', () => {
@@ -94,7 +96,7 @@ describe('PublicStatusPage failure states', () => {
   });
 
   it('shows invalid and permission failures separately from generic errors', async () => {
-    mockStatusQueries({ orgResponse: { ...orgResponse(0), logo: undefined } });
+    mockStatusQueries({ orgResponse: { ...orgResponse(0), description: undefined } });
     const invalid = renderPage();
     expect(
       await screen.findByText('The public status response is invalid and cannot be displayed.')
@@ -122,6 +124,59 @@ describe('PublicStatusPage failure states', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: 'HertzBeat' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Feedback' })).not.toBeInTheDocument();
+  });
+
+  it('renders the exact live organization without unsafe placeholder navigation or a false contract error', async () => {
+    mockStatusQueries({
+      orgResponse: {
+        id: 1,
+        name: '1',
+        description: '1',
+        home: '1',
+        logo: '1',
+        feedback: '',
+        color: '#5b6fd8',
+        state: 0,
+        creator: 'admin',
+        modifier: 'admin',
+        gmtCreate: '2026-08-04T22:18:54.155828',
+        gmtUpdate: '2026-08-05T17:54:25.902565'
+      }
+    });
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: '1' })).toBeInTheDocument();
+    expect(screen.getByText('All systems operational')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: '1' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('The public status response is invalid and cannot be displayed.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders authoritative empty component and incident evidence instead of a blank page', async () => {
+    mockStatusQueries({ componentResponse: [], incidentResponse: incidentPage() });
+    renderPage();
+
+    expect(await screen.findByText('No public components are configured.')).toBeInTheDocument();
+    expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
+    expect(screen.getByText('All systems operational')).toBeInTheDocument();
+    expect(screen.queryByText('The public status page has not been configured yet.')).not.toBeInTheDocument();
+  });
+
+  it('switches locale from the public header without authentication or non-public requests', async () => {
+    mockStatusQueries({});
+    renderPage();
+    const language = await screen.findByRole('combobox', { name: 'Switch language' });
+
+    fireEvent.mouseDown(language);
+    fireEvent.click(await screen.findByText('Portuguese (Brazil)'));
+
+    await waitFor(() => expect(i18n.resolvedLanguage).toBe('pt-BR'));
+    expect(window.localStorage.getItem('hertzbeat.locale')).toBe('pt-BR');
+    expect(apiMessageGet.mock.calls.every(([path]) => (path as string).startsWith('/api/status/page/public/'))).toBe(
+      true
+    );
+    expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
   });
 
   it('renders typed organization, component and incident states without numeric or false-health fallbacks', async () => {

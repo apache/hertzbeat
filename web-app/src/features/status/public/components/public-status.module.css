@@ -40,6 +40,10 @@
   object-fit: contain;
 }
 
+.languageSelect {
+  width: 160px;
+}
+
 .section {
   margin-top: 28px;
 }

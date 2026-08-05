@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { SupportedLocale } from '@/core/i18n/i18n';
 import type { PagedCollection } from '@/shared/pagination';
 
 import type { PublicStatusIncidentRange } from './public-status-incident-range';
@@ -22,8 +23,8 @@ import type { PublicStatusIncidentRange } from './public-status-incident-range';
 export type PublicStatusOrg = {
   name: string;
   description: string;
-  home: string;
-  logo: string;
+  home?: string;
+  logo?: string;
   feedback?: string;
   state: PublicStatusOrgState;
   color?: string;
@@ -79,7 +80,8 @@ export type PublicStatusIncidentState = 'investigating' | 'identified' | 'monito
 
 export type PublicStatusIncidentPage = PagedCollection<PublicStatusIncident>;
 
-export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable' | 'invalid' | 'permission' | 'error';
+export type PublicStatusState =
+  'loading' | 'ready' | 'empty' | 'unconfigured' | 'unavailable' | 'invalid' | 'permission' | 'error';
 
 export type PublicStatusViewModel = {
   org: PublicStatusOrg | undefined;
@@ -88,8 +90,9 @@ export type PublicStatusViewModel = {
   incidentLoading: boolean;
   incidentRange: PublicStatusIncidentRange;
   incidentRefreshing: boolean;
-  loading: boolean;
+  locale: SupportedLocale;
   refreshIncidents: () => unknown;
+  selectLocale: (locale: SupportedLocale) => unknown;
   selectIncidentYear: (year: number) => void;
   state: PublicStatusState;
 };

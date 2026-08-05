@@ -19,6 +19,7 @@ import { PublicStatusContractError } from '../model/public-status-contract';
 import {
   nullablePublicStatusText,
   nullablePublicStatusTime,
+  optionalSafePublicStatusUrl,
   publicComponentState,
   publicIncidentState,
   publicStatusComponentInfoSchema,
@@ -28,8 +29,7 @@ import {
   publicStatusPositiveInteger,
   publicStatusSafeInteger,
   requiredPublicStatusText,
-  safePublicStatusFeedback,
-  safePublicStatusUrl
+  safePublicStatusFeedback
 } from './public-status-evidence-schema';
 
 const publicStatusOrgWireSchema = z
@@ -37,8 +37,8 @@ const publicStatusOrgWireSchema = z
     id: publicStatusPositiveInteger.nullable().optional(),
     name: requiredPublicStatusText,
     description: requiredPublicStatusText,
-    home: safePublicStatusUrl,
-    logo: safePublicStatusUrl,
+    home: optionalSafePublicStatusUrl,
+    logo: optionalSafePublicStatusUrl,
     feedback: safePublicStatusFeedback,
     color: nullablePublicStatusText,
     state: publicStatusSafeInteger,
@@ -51,8 +51,8 @@ const publicStatusOrgWireSchema = z
   .transform((value): PublicStatusOrg => ({
     name: value.name,
     description: value.description,
-    home: value.home,
-    logo: value.logo,
+    ...(value.home === undefined ? {} : { home: value.home }),
+    ...(value.logo === undefined ? {} : { logo: value.logo }),
     ...(value.feedback == null ? {} : { feedback: value.feedback }),
     state: publicOrgState(value.state),
     ...(value.color == null ? {} : { color: value.color })

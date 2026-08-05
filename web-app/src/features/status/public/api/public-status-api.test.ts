@@ -169,6 +169,30 @@ describe('public status API', () => {
     });
   });
 
+  it('retains the exact live organization evidence while dropping legacy presentation placeholders', async () => {
+    apiMessageGet.mockResolvedValueOnce({
+      id: 1,
+      name: '1',
+      description: '1',
+      home: '1',
+      logo: '1',
+      feedback: '',
+      color: '#5b6fd8',
+      state: 0,
+      creator: 'admin',
+      modifier: 'admin',
+      gmtCreate: '2026-08-04T22:18:54.155828',
+      gmtUpdate: '2026-08-05T17:54:25.902565'
+    });
+
+    await expect(loadPublicStatusOrg()).resolves.toEqual({
+      name: '1',
+      description: '1',
+      color: '#5b6fd8',
+      state: 'healthy'
+    });
+  });
+
   it('maps every backend state domain into stable public status values', async () => {
     apiMessageGet
       .mockResolvedValueOnce(orgResponse(0))
@@ -311,10 +335,20 @@ describe('public status API', () => {
   it.each([
     ['home', 'javascript:alert(1)'],
     ['logo', 'data:image/svg+xml,unsafe'],
-    ['feedback', 'javascript:alert(1)'],
-    ['home', '//example.test/status']
-  ])('rejects an unsafe organization %s link', async (field, value) => {
+    ['home', '//example.test/status'],
+    ['home', '/\\example.test/status']
+  ])('drops an unsafe optional organization %s link', async (field, value) => {
     apiMessageGet.mockResolvedValueOnce({ ...orgResponse(0), [field]: value });
+
+    await expect(loadPublicStatusOrg()).resolves.toEqual({
+      ...orgResponse(0),
+      state: 'healthy',
+      [field]: undefined
+    });
+  });
+
+  it('rejects unsafe interactive feedback while keeping required operational evidence strict', async () => {
+    apiMessageGet.mockResolvedValueOnce({ ...orgResponse(0), feedback: 'javascript:alert(1)' });
 
     await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(PublicStatusContractError);
   });

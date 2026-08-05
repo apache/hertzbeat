@@ -20,7 +20,9 @@ export const publicStatusSafeInteger = z.number().refine(Number.isSafeInteger);
 export const publicStatusPositiveInteger = publicStatusSafeInteger.refine(value => value > 0);
 export const publicStatusNonNegativeInteger = publicStatusSafeInteger.refine(value => value >= 0);
 export const requiredPublicStatusText = z.string().refine(value => value.trim().length > 0);
-export const safePublicStatusUrl = requiredPublicStatusText.refine(isSafePublicUrl);
+export const optionalSafePublicStatusUrl = nullablePublicStatusText.transform(value =>
+  typeof value === 'string' && isSafePublicUrl(value) ? value : undefined
+);
 export const safePublicStatusFeedback = z.preprocess(
   // The established backend serializes an unset optional feedback address as an empty string.
   value => (typeof value === 'string' && value.trim().length === 0 ? null : value),
@@ -111,7 +113,7 @@ export function publicIncidentState(value: number): PublicStatusIncidentState {
 }
 
 function isSafePublicUrl(value: string) {
-  return (value.startsWith('/') && !value.startsWith('//')) || isSafeHttpUrl(value);
+  return (value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')) || isSafeHttpUrl(value);
 }
 
 function isSafeHttpUrl(value: string) {

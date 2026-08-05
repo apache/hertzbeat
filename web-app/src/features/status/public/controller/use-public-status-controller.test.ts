@@ -40,6 +40,8 @@ const reactQuery = vi.hoisted(() => ({
   useQuery: vi.fn<(options: QueryOptions) => QueryEvidence>()
 }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: reactQuery.useQuery }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { resolvedLanguage: 'en-US' } }) }));
+vi.mock('@/shared/i18n/use-locale-change-action', () => ({ useLocaleChangeAction: () => vi.fn() }));
 const api = vi.hoisted(() => ({
   loadPublicStatusComponents: vi.fn(),
   loadPublicStatusIncidents: vi.fn(),
@@ -84,7 +86,6 @@ describe('usePublicStatusController', () => {
       org,
       components,
       incidents: incidents.content,
-      loading: false,
       state: 'ready'
     });
     expect(reactQuery.useQuery.mock.calls.map(([options]) => options.queryKey)).toEqual([
@@ -120,8 +121,7 @@ describe('usePublicStatusController', () => {
       org: undefined,
       components: [],
       incidents: [],
-      loading: true,
-      state: 'ready'
+      state: 'loading'
     });
   });
 
@@ -134,7 +134,6 @@ describe('usePublicStatusController', () => {
       org,
       components,
       incidents: [],
-      loading: false,
       state: 'ready'
     });
   });
@@ -148,6 +147,17 @@ describe('usePublicStatusController', () => {
     expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('error');
   });
 
+  it('distinguishes an authoritative empty public page from ready evidence', () => {
+    setEvidence({ data: org }, { data: [] }, { data: { ...incidents, content: [], totalElements: 0, totalPages: 0 } });
+
+    expect(renderHook(() => usePublicStatusController()).result.current).toMatchObject({
+      org,
+      components: [],
+      incidents: [],
+      state: 'empty'
+    });
+  });
+
   it('preserves a confirmed organization header when a sibling query fails', () => {
     setEvidence({ data: org }, { error: new Error('components unavailable') }, { data: incidents });
 
@@ -156,7 +166,6 @@ describe('usePublicStatusController', () => {
       org,
       components: [],
       incidents: [],
-      loading: false,
       state: 'error'
     });
   });
@@ -173,7 +182,6 @@ describe('usePublicStatusController', () => {
     expect(renderHook(() => usePublicStatusController()).result.current).toMatchObject({
       components: [],
       incidents: [],
-      loading: false,
       state: 'error'
     });
   });
@@ -183,10 +191,9 @@ describe('usePublicStatusController', () => {
 
     expect(renderHook(() => usePublicStatusController()).result.current).toEqual({
       ...actions(createPublicStatusIncidentRange(new Date().getFullYear())),
-      org: undefined,
+      org,
       components: [],
       incidents: [],
-      loading: false,
       state: 'error'
     });
   });
@@ -249,7 +256,9 @@ function actions(range: ReturnType<typeof createPublicStatusIncidentRange>) {
     incidentLoading: false,
     incidentRange: range,
     incidentRefreshing: false,
+    locale: 'en-US',
     refreshIncidents: expect.any(Function),
-    selectIncidentYear: expect.any(Function)
+    selectIncidentYear: expect.any(Function),
+    selectLocale: expect.any(Function)
   };
 }

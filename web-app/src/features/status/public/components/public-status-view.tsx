@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { Button, Space, Tag, Typography } from 'antd';
+import { Button, Select, Space, Tag, Typography } from 'antd';
 import type { CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import { defaultStatusAccent } from '@/features/status/shared/status-constants';
 import { OperationalStatePanel } from '@/shared/operational-page';
-import { useTranslation } from 'react-i18next';
 
 import type {
   PublicStatusComponent,
@@ -42,12 +43,11 @@ export function PublicStatusView(props: PublicStatusViewModel) {
       className={styles.page}
       style={{ '--status-accent': props.org?.color ?? defaultStatusAccent } as CSSProperties}
     >
-      <StatusHeader org={props.org} />
+      <StatusHeader locale={props.locale} org={props.org} onLocaleChange={props.selectLocale} />
       <StatusBody
         incidentRange={props.incidentRange}
         incidentLoading={props.incidentLoading}
         incidentRefreshing={props.incidentRefreshing}
-        loading={props.loading}
         state={props.state}
         components={props.components}
         incidents={props.incidents}
@@ -58,22 +58,37 @@ export function PublicStatusView(props: PublicStatusViewModel) {
   );
 }
 
-function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
+function StatusHeader({
+  locale,
+  org,
+  onLocaleChange
+}: {
+  locale: SupportedLocale;
+  org: PublicStatusOrg | undefined;
+  onLocaleChange: (locale: SupportedLocale) => unknown;
+}) {
   const { t } = useTranslation();
   return (
     <header className={styles.header}>
       <Space align="start">
-        {org && (
-          <a href={org.home} target="_blank" rel="noreferrer">
-            <img className={styles.logo} src={org.logo} alt={org.name} />
-          </a>
-        )}
+        <StatusBrand org={org} />
         <div>
           <Typography.Title level={2}>{org?.name ?? t('status.title')}</Typography.Title>
           <Typography.Text type="secondary">{org?.description ?? t('status.description')}</Typography.Text>
         </div>
       </Space>
       <Space>
+        <Select<SupportedLocale>
+          aria-label={t('shell.actions.language')}
+          className={styles.languageSelect ?? ''}
+          options={supportedLocales.map(value => ({
+            value,
+            label: t(`systemConfig.locale.${value.replace('-', '_')}`)
+          }))}
+          size="small"
+          value={locale}
+          onChange={value => void onLocaleChange(value)}
+        />
         {org?.feedback && (
           <Button href={publicStatusFeedbackHref(org.feedback)} target="_blank" rel="noreferrer">
             {t('status.feedback')}
@@ -85,8 +100,18 @@ function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
   );
 }
 
+function StatusBrand({ org }: { org: PublicStatusOrg | undefined }) {
+  if (!org?.logo) return null;
+  const logo = <img className={styles.logo} src={org.logo} alt={org.name} />;
+  if (!org.home) return logo;
+  return (
+    <a href={org.home} target="_blank" rel="noreferrer">
+      {logo}
+    </a>
+  );
+}
+
 function StatusBody({
-  loading,
   state,
   components,
   incidents,
@@ -96,7 +121,6 @@ function StatusBody({
   onIncidentYearChange,
   onRefreshIncidents
 }: {
-  loading: boolean;
   state: PublicStatusState;
   components: PublicStatusComponent[];
   incidents: PublicStatusIncident[];
@@ -107,7 +131,7 @@ function StatusBody({
   onRefreshIncidents: () => unknown;
 }) {
   const { t } = useTranslation();
-  if (loading) return <OperationalStatePanel kind="loading" title={t('status.loading')} />;
+  if (state === 'loading') return <OperationalStatePanel kind="loading" title={t('status.loading')} />;
   if (state === 'unconfigured') return <OperationalStatePanel kind="empty" title={t('status.notConfigured')} />;
   if (state === 'unavailable') return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
   if (state === 'invalid') return <OperationalStatePanel kind="error" title={t('status.invalid')} />;

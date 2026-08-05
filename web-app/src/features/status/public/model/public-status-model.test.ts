@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
+import type { PublicStatusIncidentPage, PublicStatusOrg } from './public-status-contract';
 import { PublicStatusContractError } from './public-status-contract';
 import {
   isStatusOrgNotFound,
@@ -32,8 +33,14 @@ describe('public status state', () => {
   it('distinguishes missing configuration from backend failure', () => {
     const notFound = new StatusOrgNotFoundError();
     expect(isStatusOrgNotFound(notFound)).toBe(true);
-    expect(publicStatusState(notFound, null, null)).toBe('unconfigured');
-    expect(publicStatusState(null, null, null)).toBe('ready');
+    expect(
+      publicStatusState(evidence({ orgError: notFound, org: undefined, components: [], incidents: emptyPage }))
+    ).toBe('unconfigured');
+    expect(publicStatusState(evidence({ components: [], incidents: emptyPage }))).toBe('empty');
+    expect(publicStatusState(evidence({ components: [{ id: 1, name: 'API', state: 'healthy', history: [] }] }))).toBe(
+      'ready'
+    );
+    expect(publicStatusState(evidence({ orgPending: true }))).toBe('loading');
   });
 
   it('distinguishes transport unavailability from rejected or invalid reads', () => {
@@ -41,14 +48,20 @@ describe('public status state', () => {
     const networkFailure = new StatusRequestFailure('unavailable', 'uncertain');
     const genericEnvelopeFailure = new StatusRequestFailure('error', 'rejected');
 
-    expect(publicStatusState(serviceUnavailable, null, null)).toBe('unavailable');
-    expect(publicStatusState(networkFailure, null, null)).toBe('unavailable');
-    expect(publicStatusState(genericEnvelopeFailure, null, null)).toBe('error');
-    expect(publicStatusState(null, new Error('components failed'), null)).toBe('error');
-    expect(publicStatusState(null, null, new Error('incidents failed'))).toBe('error');
-    expect(publicStatusState(new StatusOrgNotFoundError(), new Error('components unavailable'), null)).toBe('error');
-    expect(publicStatusState(new StatusRequestFailure('permission', 'rejected'), null, null)).toBe('permission');
-    expect(publicStatusState(new PublicStatusContractError(), null, null)).toBe('invalid');
+    expect(publicStatusState(evidence({ orgError: serviceUnavailable }))).toBe('unavailable');
+    expect(publicStatusState(evidence({ orgError: networkFailure }))).toBe('unavailable');
+    expect(publicStatusState(evidence({ orgError: genericEnvelopeFailure }))).toBe('error');
+    expect(publicStatusState(evidence({ componentsError: new Error('components failed') }))).toBe('error');
+    expect(publicStatusState(evidence({ incidentsError: new Error('incidents failed') }))).toBe('error');
+    expect(
+      publicStatusState(
+        evidence({ orgError: new StatusOrgNotFoundError(), componentsError: new Error('components unavailable') })
+      )
+    ).toBe('error');
+    expect(publicStatusState(evidence({ orgError: new StatusRequestFailure('permission', 'rejected') }))).toBe(
+      'permission'
+    );
+    expect(publicStatusState(evidence({ orgError: new PublicStatusContractError() }))).toBe('invalid');
   });
 
   it('keeps typed health and incident states distinct from unknown evidence', () => {
@@ -68,3 +81,28 @@ describe('public status state', () => {
     expect(publicIncidentStateKey('unknown')).toBe('statusManagement.unknown');
   });
 });
+
+const org: PublicStatusOrg = { name: 'HertzBeat', description: 'Status', state: 'healthy' };
+const emptyPage: PublicStatusIncidentPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 };
+const readyPage: PublicStatusIncidentPage = {
+  content: [{ id: 1, name: 'Incident', state: 'resolved', components: [], contents: [] }],
+  totalElements: 1,
+  totalPages: 1,
+  number: 0,
+  size: 20
+};
+
+function evidence(overrides: Partial<Parameters<typeof publicStatusState>[0]> = {}) {
+  return {
+    org,
+    components: [],
+    incidents: readyPage,
+    orgError: null,
+    componentsError: null,
+    incidentsError: null,
+    orgPending: false,
+    componentsPending: false,
+    incidentsPending: false,
+    ...overrides
+  };
+}

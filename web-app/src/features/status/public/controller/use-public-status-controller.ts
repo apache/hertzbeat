@@ -17,14 +17,19 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { resolveLocale } from '@/core/i18n/i18n';
+import { useLocaleChangeAction } from '@/shared/i18n/use-locale-change-action';
 import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from '../api/public-status-api';
 import type { PublicStatusState, PublicStatusViewModel } from '../model/public-status-contract';
 import { createPublicStatusIncidentRange, isPublicStatusIncidentYear } from '../model/public-status-incident-range';
-import { isCompletePublicStatusIncidentPage, publicStatusState } from '../model/public-status-model';
+import { publicStatusState } from '../model/public-status-model';
 import { publicStatusQueryKeys } from './public-status-query-keys';
 
 export function usePublicStatusController(): PublicStatusViewModel {
+  const { i18n } = useTranslation();
+  const selectLocale = useLocaleChangeAction(i18n.resolvedLanguage);
   const [incidentYear, setIncidentYear] = useState(() => new Date().getFullYear());
   const incidentRange = useMemo(() => createPublicStatusIncidentRange(incidentYear), [incidentYear]);
   const org = useQuery({
@@ -39,46 +44,60 @@ export function usePublicStatusController(): PublicStatusViewModel {
     queryKey: publicStatusQueryKeys.incidents(incidentRange),
     queryFn: ({ signal }) => loadPublicStatusIncidents(incidentRange, { signal })
   });
-  const state = publicStatusState(org.error, components.error, incidents.error);
+  const state = publicStatusState({
+    org: org.data,
+    components: components.data,
+    incidents: incidents.data,
+    orgError: org.error,
+    componentsError: components.error,
+    incidentsError: incidents.error,
+    orgPending: org.isPending,
+    componentsPending: components.isPending,
+    incidentsPending: incidents.isPending
+  });
   const actions = {
     incidentLoading: incidents.isPending,
     incidentRange,
     incidentRefreshing: incidents.isFetching && !incidents.isPending,
+    locale: resolveLocale(i18n.resolvedLanguage),
     refreshIncidents: incidents.refetch,
+    selectLocale,
     selectIncidentYear: (year: number) => {
       if (isPublicStatusIncidentYear(year, new Date().getFullYear())) setIncidentYear(year);
     }
   };
 
   // Pending evidence wins over cached data so a partial first load cannot appear ready.
-  if (org.isPending || components.isPending) return emptyViewModel(state, true, actions);
-  if (state !== 'ready') {
-    return { ...emptyViewModel(state, false, actions), org: org.error ? undefined : org.data };
+  if (state === 'loading') return emptyViewModel(state, actions);
+  if (state !== 'ready' && state !== 'empty') {
+    return { ...emptyViewModel(state, actions), org: org.error ? undefined : org.data };
   }
-  if (org.data === undefined || components.data === undefined) return emptyViewModel('error', false, actions);
+  if (org.data === undefined || components.data === undefined) return emptyViewModel('error', actions);
   if (incidents.isPending) {
-    return { ...actions, org: org.data, components: components.data, incidents: [], loading: false, state: 'ready' };
+    return { ...actions, org: org.data, components: components.data, incidents: [], state: 'ready' };
   }
-  if (incidents.data === undefined || !isCompletePublicStatusIncidentPage(incidents.data)) {
-    return emptyViewModel('error', false, actions);
-  }
+  if (incidents.data === undefined) return emptyViewModel('error', actions);
   return {
     ...actions,
     org: org.data,
     components: components.data,
     incidents: incidents.data.content,
-    loading: false,
-    state: 'ready'
+    state
   };
 }
 
 function emptyViewModel(
   state: PublicStatusState,
-  loading: boolean,
   actions: Pick<
     PublicStatusViewModel,
-    'incidentLoading' | 'incidentRange' | 'incidentRefreshing' | 'refreshIncidents' | 'selectIncidentYear'
+    | 'incidentLoading'
+    | 'incidentRange'
+    | 'incidentRefreshing'
+    | 'locale'
+    | 'refreshIncidents'
+    | 'selectIncidentYear'
+    | 'selectLocale'
   >
 ): PublicStatusViewModel {
-  return { ...actions, org: undefined, components: [], incidents: [], loading, state };
+  return { ...actions, org: undefined, components: [], incidents: [], state };
 }

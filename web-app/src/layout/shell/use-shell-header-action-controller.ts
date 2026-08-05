@@ -15,10 +15,8 @@ import { anonymousSession, logoutSession } from '@/core/auth/session-api';
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
 import { buildSessionLockMarker } from '@/core/auth/session-lock-model';
 import { persistSessionLockMarker } from '@/core/auth/session-lock-storage';
-import { loadLocale, resolveLocale } from '@/core/i18n/i18n';
-import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
-import { persistSystemPreferences, readRuntimeLocale } from '@/core/runtime-preferences';
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
+import { useLocaleChangeAction } from '@/shared/i18n/use-locale-change-action';
 import { alertRoutePaths, applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 import { useSharedTime } from '@/shared/time';
@@ -41,7 +39,7 @@ export function useShellHeaderActionController() {
     void message.error(t('auth.logoutFailed'));
   }, [message, t]);
   const { loggingOut, logout } = useLogoutAction(completeLogout, reportLogoutFailure);
-  const changeLanguage = useLocaleChangeAction(theme, i18n.resolvedLanguage);
+  const changeLanguage = useLocaleChangeAction(i18n.resolvedLanguage, theme);
   const fullscreen = useShellFullscreenAction();
 
   const refresh = async () => {
@@ -84,44 +82,6 @@ export function useShellHeaderActionController() {
     lock,
     logout
   };
-}
-
-type LocaleChangeOwner = {
-  abort: AbortController;
-  locale: SupportedLocale;
-};
-
-function useLocaleChangeAction(theme: string, resolvedLanguage: string | undefined) {
-  const mounted = useRef(false);
-  const current = useRef<LocaleChangeOwner | undefined>(undefined);
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      current.current?.abort.abort();
-      current.current = undefined;
-    };
-  }, []);
-
-  return useCallback(async () => {
-    const base = current.current?.locale ?? readRuntimeLocale() ?? resolveLocale(resolvedLanguage);
-    const locale = supportedLocales[(supportedLocales.indexOf(base) + 1) % supportedLocales.length] ?? 'en-US';
-    current.current?.abort.abort();
-    const owner = { abort: new AbortController(), locale };
-    current.current = owner;
-    const owns = () => mounted.current && current.current === owner;
-    try {
-      const published = await loadLocale(locale, { signal: owner.abort.signal });
-      if (!published || !owns()) return false;
-      persistSystemPreferences({ locale, theme });
-      return true;
-    } catch {
-      return false;
-    } finally {
-      if (current.current === owner) current.current = undefined;
-    }
-  }, [resolvedLanguage, theme]);
 }
 
 function useLogoutAction(onSuccess: () => void, onFailure: () => void) {
