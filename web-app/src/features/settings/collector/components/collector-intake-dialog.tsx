@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Checkbox, Form, Input, Modal, Select } from 'antd';
+import { Alert, Button, Checkbox, Form, Input, Modal } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,9 +18,9 @@ import {
 } from '@/shared/collector';
 
 import type { CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
+import { CollectorServerIntakeNotice } from './collector-server-intake-notice';
 
 type FormValue = {
-  gateway: 'collector' | 'server';
   capabilities: CollectorIntakeCapability[];
   otlpHttpEndpoint: string;
   otlpGrpcEndpoint: string;
@@ -56,6 +56,20 @@ export function CollectorIntakeDialog(props: Props) {
 }
 
 function IntakeEditorModal(props: Props & { record: CollectorRecord; onRequestClear: () => void }) {
+  if (isServerOwnedIntake(props.record.instrumentationIntake)) {
+    return (
+      <CollectorServerIntakeNotice
+        record={props.record}
+        intake={props.record.instrumentationIntake}
+        saving={props.saving}
+        onCancel={props.onCancel}
+      />
+    );
+  }
+  return <CollectorGatewayEditorModal {...props} />;
+}
+
+function CollectorGatewayEditorModal(props: Props & { record: CollectorRecord; onRequestClear: () => void }) {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormValue>();
   const capabilities = Form.useWatch('capabilities', form) ?? [];
@@ -89,6 +103,7 @@ function IntakeEditorModal(props: Props & { record: CollectorRecord; onRequestCl
         message={t(`collectors.intake.state.${state}`)}
       />
       <Alert type="info" showIcon message={t('collectors.intake.endpointGuidance')} />
+      <Alert type="warning" showIcon message={t('collectors.intake.runtimeGuidance')} />
       <Form
         form={form}
         layout="vertical"
@@ -111,14 +126,6 @@ function IntakeFields({ capabilities }: { capabilities: CollectorIntakeCapabilit
   const { t } = useTranslation();
   return (
     <>
-      <Form.Item name="gateway" label={t('collectors.intake.gateway')}>
-        <Select
-          options={[
-            { value: 'collector', label: t('collectors.intake.gatewayCollector') },
-            { value: 'server', label: t('collectors.intake.gatewayServer') }
-          ]}
-        />
-      </Form.Item>
       <Form.Item name="capabilities" label={t('collectors.intake.capabilities')}>
         <Checkbox.Group>
           <Checkbox value="otlp_http_protobuf">{t('collectors.intake.httpCapability')}</Checkbox>
@@ -171,21 +178,26 @@ function initialFormValue(record: CollectorRecord): FormValue {
   const intake = record.instrumentationIntake;
   if (intake.status === 'available') {
     return {
-      gateway: intake.gateway,
       capabilities: [...intake.capabilities],
       otlpHttpEndpoint: intake.otlpHttpEndpoint ?? '',
       otlpGrpcEndpoint: intake.otlpGrpcEndpoint ?? ''
     };
   }
-  return { gateway: 'server', capabilities: ['otlp_http_protobuf'], otlpHttpEndpoint: '', otlpGrpcEndpoint: '' };
+  return { capabilities: ['otlp_http_protobuf'], otlpHttpEndpoint: '', otlpGrpcEndpoint: '' };
 }
 
 function toRequest(value: FormValue): unknown {
   return {
     schemaVersion: 1,
-    gateway: value.gateway,
+    gateway: 'collector',
     capabilities: value.capabilities,
     otlpHttpEndpoint: value.capabilities.includes('otlp_http_protobuf') ? value.otlpHttpEndpoint : null,
     otlpGrpcEndpoint: value.capabilities.includes('otlp_grpc') ? value.otlpGrpcEndpoint : null
   };
+}
+
+function isServerOwnedIntake(
+  intake: CollectorRecord['instrumentationIntake']
+): intake is Extract<CollectorRecord['instrumentationIntake'], { status: 'available' }> {
+  return intake.status === 'available' && intake.gateway === 'server';
 }

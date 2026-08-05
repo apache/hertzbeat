@@ -25,6 +25,8 @@ export function CollectorRowActions({
   t,
   ...props
 }: CollectorRowActionsProps & { record: CollectorRecord; t: TFunction }) {
+  const serverOwnedIntake =
+    record.instrumentationIntake.status === 'available' && record.instrumentationIntake.gateway === 'server';
   return (
     <div className={styles.actions}>
       {props.canWrite && (
@@ -32,10 +34,13 @@ export function CollectorRowActions({
           <Button
             size="small"
             disabled={props.busy}
-            aria-label={t('collectors.intake.configureNamed', { name: record.name })}
+            aria-label={t(
+              serverOwnedIntake ? 'collectors.intake.viewServerNamed' : 'collectors.intake.configureNamed',
+              { name: record.name }
+            )}
             onClick={() => props.onIntake(record.name)}
           >
-            {t('collectors.intake.configure')}
+            {t(serverOwnedIntake ? 'collectors.intake.viewServer' : 'collectors.intake.configure')}
           </Button>
           <Button
             size="small"

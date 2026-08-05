@@ -12,6 +12,9 @@ import { collectorIntakeState, type CollectorInstrumentationIntake } from '@/sha
 
 export function CollectorIntakeStateTag({ intake }: { intake: CollectorInstrumentationIntake }) {
   const { t } = useTranslation();
+  if (intake.status === 'available' && intake.gateway === 'server') {
+    return <Tag color="default">{t('collectors.intake.state.serverOwned')}</Tag>;
+  }
   const state = collectorIntakeState(intake);
   return <Tag color={intakeStateColor(state)}>{t(`collectors.intake.state.${state}`)}</Tag>;
 }

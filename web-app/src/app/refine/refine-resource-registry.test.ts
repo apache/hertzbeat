@@ -70,12 +70,7 @@ describe('Refine shell resource registry', () => {
       'shell-alerting',
       'shell-administration'
     ]);
-    expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual([
-      'monitors',
-      'bulletin',
-      'collectors',
-      'monitor-definitions'
-    ]);
+    expect(navigationChildren(tree, 'shell-basic-monitoring')).toEqual(['monitors', 'bulletin', 'monitor-definitions']);
     expect(navigationChildren(tree, 'shell-application-observability')).toEqual(['explore', 'instrumentation']);
     expect(navigationChildren(tree, 'shell-resources')).toEqual(['entities', 'topology']);
     expect(navigationChildren(tree, 'shell-alerting')).toEqual([
@@ -93,6 +88,7 @@ describe('Refine shell resource registry', () => {
     expect(navigationChildren(tree, 'shell-administration')).toEqual([
       'system-config',
       'plugins',
+      'collectors',
       'tokens',
       'labels',
       'object-store',

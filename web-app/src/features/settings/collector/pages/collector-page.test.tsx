@@ -192,14 +192,34 @@ describe('CollectorPage', () => {
     expect(screen.getByText('DEGRADED')).toBeInTheDocument();
   });
 
-  it('edits or clears only the explicit safe intake advertisement and exposes no Token field', async () => {
-    const controller = buildController({ intakeEditor: { record: collector('edge', false, intakeAvailable()) } });
+  it('keeps a Server-owned intake read-only because it is not a capability of this Collector', () => {
+    const controller = buildController({ intakeEditor: { record: collector('edge', false, serverIntake()) } });
     resource.useCollectorController.mockReturnValue(controller);
     renderPage();
 
-    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
-    expect(within(dialog).getByLabelText('Gateway')).toBeInTheDocument();
-    expect(within(dialog).getByText('Server')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'HertzBeat Server OTLP endpoint' });
+    expect(within(dialog).getByText('This endpoint belongs to HertzBeat Server, not to edge.')).toBeInTheDocument();
+    expect(within(dialog).getByText('https://telemetry.example.test:4317')).toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'Open telemetry intake' })).toHaveAttribute(
+      'href',
+      '/observability/integration'
+    );
+    expect(within(dialog).queryByLabelText('Gateway')).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('checkbox', { name: 'OTLP gRPC' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Save advertisement' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Clear advertisement' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText(/token/i)).not.toBeInTheDocument();
+    expect(controller.actions.saveIntake).not.toHaveBeenCalled();
+    expect(controller.actions.clearIntake).not.toHaveBeenCalled();
+  });
+
+  it('edits or clears only an explicit Collector gateway advertisement and exposes no Token field', async () => {
+    const controller = buildController({ intakeEditor: { record: collector('edge', false, collectorIntake()) } });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'OTLP gateway for edge' });
+    expect(within(dialog).queryByLabelText('Gateway')).not.toBeInTheDocument();
     expect(within(dialog).getByRole('checkbox', { name: 'OTLP gRPC' })).toBeChecked();
     expect(within(dialog).getByLabelText('OTLP gRPC HTTP(S) endpoint')).toHaveValue(
       'https://telemetry.example.test:4317'
@@ -210,7 +230,7 @@ describe('CollectorPage', () => {
     await waitFor(() =>
       expect(controller.actions.saveIntake).toHaveBeenCalledWith({
         schemaVersion: 1,
-        gateway: 'server',
+        gateway: 'collector',
         capabilities: ['otlp_grpc'],
         otlpHttpEndpoint: null,
         otlpGrpcEndpoint: 'https://telemetry.example.test:4317'
@@ -232,10 +252,10 @@ describe('CollectorPage', () => {
   });
 
   it('accepts safe HTTP intake while keeping unsafe URL feedback local', async () => {
-    const controller = buildController({ intakeEditor: { record: collector('edge', false, intakeAvailable()) } });
+    const controller = buildController({ intakeEditor: { record: collector('edge', false, collectorIntake()) } });
     resource.useCollectorController.mockReturnValue(controller);
     renderPage();
-    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
+    const dialog = screen.getByRole('dialog', { name: 'OTLP gateway for edge' });
 
     expect(
       within(dialog).getByText(
@@ -249,7 +269,7 @@ describe('CollectorPage', () => {
     await waitFor(() =>
       expect(controller.actions.saveIntake).toHaveBeenCalledWith({
         schemaVersion: 1,
-        gateway: 'server',
+        gateway: 'collector',
         capabilities: ['otlp_grpc'],
         otlpHttpEndpoint: null,
         otlpGrpcEndpoint: 'http://10.0.0.7:4317'
@@ -276,25 +296,28 @@ describe('CollectorPage', () => {
   });
 
   it('distinguishes every safe current intake state and allows persisted invalid state recovery', () => {
+    const invalidRecord = collector('invalid', false, intakeUnavailable('intake_advertisement_invalid'));
     const records = [
-      collector('available', false, { ...intakeAvailable(), collectorId: 'available' }),
+      collector('available', false, { ...collectorIntake(), collectorId: 'available' }),
+      collector('server', false, { ...serverIntake(), collectorId: 'server' }),
       collector('absent'),
-      collector('invalid', false, intakeUnavailable('intake_advertisement_invalid')),
+      invalidRecord,
       collector('unavailable', false, intakeUnavailable('intake_advertisement_unavailable'))
     ];
     resource.useCollectorController.mockReturnValue(
       buildController({
         listState: { kind: 'ready', records, total: records.length },
-        intakeEditor: { record: records[2] }
+        intakeEditor: { record: invalidRecord }
       })
     );
     renderPage();
 
-    expect(screen.getByText('Advertised')).toBeInTheDocument();
+    expect(screen.getByText('Advertised by Collector')).toBeInTheDocument();
+    expect(screen.getByText('Server endpoint — not Collector')).toBeInTheDocument();
     expect(screen.getByText('Not advertised')).toBeInTheDocument();
     expect(screen.getAllByText('Stored advertisement is invalid.').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Advertisement is currently unavailable.')).toBeInTheDocument();
-    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for invalid' });
+    const dialog = screen.getByRole('dialog', { name: 'OTLP gateway for invalid' });
     expect(within(dialog).getByRole('button', { name: 'Clear advertisement' })).toBeInTheDocument();
     expect(within(dialog).queryByLabelText('OTLP gRPC HTTP(S) endpoint')).not.toBeInTheDocument();
   });
@@ -604,7 +627,7 @@ describe('CollectorPage', () => {
     );
     renderPage();
 
-    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
+    const dialog = screen.getByRole('dialog', { name: 'OTLP gateway for edge' });
     expect(within(dialog).getByText(copy)).toBeInTheDocument();
   });
 
@@ -778,7 +801,7 @@ function collector(
   };
 }
 
-function intakeAvailable() {
+function serverIntake() {
   return {
     status: 'available' as const,
     schemaVersion: 1 as const,
@@ -789,6 +812,10 @@ function intakeAvailable() {
     otlpGrpcEndpoint: 'https://telemetry.example.test:4317',
     authorizationHeader: 'Authorization' as const
   };
+}
+
+function collectorIntake() {
+  return { ...serverIntake(), gateway: 'collector' as const };
 }
 
 function intakeUnavailable(

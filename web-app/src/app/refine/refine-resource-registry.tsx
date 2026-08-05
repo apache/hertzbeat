@@ -244,9 +244,9 @@ const staticRefineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('collectors', {
-    parent: 'shell-basic-monitoring',
+    parent: 'shell-administration',
     icon: <ApiOutlined />,
-    order: 30,
+    order: 25,
     timePolicy: 'none'
   }),
   routedNavigationResource('plugins', {
