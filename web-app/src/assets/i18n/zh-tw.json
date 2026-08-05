@@ -1089,6 +1089,9 @@
     "name": "名稱",
     "application": "應用程式",
     "monitors": "監控數",
+    "monitorType": "監控類型",
+    "monitorTaskName": "監控任務名稱",
+    "monitorMetrics": "監控指標",
     "creator": "建立者",
     "updated": "更新時間",
     "create": "新增看板",
@@ -1104,6 +1107,7 @@
     "deleteSuccess": "看板已刪除並驗證。",
     "deleteConfirm": "確定刪除此看板？",
     "deleteSelected": "刪除所選項目",
+    "deleteSelectedPlaceholder": "選擇要刪除的看板",
     "deleteSelectedConfirm": "確定刪除選取的 {{count}} 個看板？",
     "deleteSelectedSuccess": "所選看板已刪除並驗證。",
     "recovery": {

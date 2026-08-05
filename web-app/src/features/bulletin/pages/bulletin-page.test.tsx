@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { requireDomElement } from '@/test/dom-element';
@@ -9,7 +9,6 @@ const controller = vi.hoisted(() => ({ useBulletinController: vi.fn() }));
 vi.mock('../controller/bulletin-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 import { BulletinPage } from './bulletin-page';
-import { formatBulletinTime } from '../model/bulletin-model';
 
 describe('bulletin page', () => {
   afterEach(cleanup);
@@ -48,6 +47,26 @@ describe('bulletin page', () => {
     expect(screen.getByText('bulletin.loading').closest('[data-state]')).toHaveAttribute('data-state', 'loading');
     expect(document.querySelector('.ant-table')).not.toBeInTheDocument();
   });
+
+  it('presents bulletins as the original card tabs instead of a separate definition table', () => {
+    const current = pageController({ selectedId: 7 });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByRole('tab', { name: 'Ops' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByText('bulletin.creator')).not.toBeInTheDocument();
+    expect(screen.queryByText('bulletin.updated')).not.toBeInTheDocument();
+  });
+
+  it('loads metrics for the first authoritative tab on initial entry', () => {
+    const current = pageController();
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(current.actions.select).toHaveBeenCalledWith(7);
+  });
   it('handles the asynchronous refresh action at an explicit event boundary', () => {
     const current = pageController();
     controller.useBulletinController.mockReturnValue(current.value);
@@ -84,16 +103,14 @@ describe('bulletin page', () => {
     expect(current.actions.submitSearch).toHaveBeenCalledOnce();
   });
 
-  it('offers a visible keyboard-operable metrics action', () => {
-    const current = pageController();
+  it('selects metrics through keyboard-operable bulletin tabs', () => {
+    const current = pageController({ list: { kind: 'ready', records: [record, record2], total: 2 } });
     controller.useBulletinController.mockReturnValue(current.value);
     render(<BulletinPage />);
-    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'common.delete' })).not.toBeInTheDocument();
-    expect(screen.getByText(formatBulletinTime(record.gmtUpdate))).toBeInTheDocument();
-    expect(screen.queryByText(record.gmtUpdate)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'bulletin.viewMetrics' }));
-    expect(current.actions.select).toHaveBeenCalledWith(7);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Database' }));
+
+    expect(current.actions.select).toHaveBeenCalledWith(8);
   });
 
   it('selects the authoritative page and confirms one batch delete', async () => {
@@ -101,20 +118,41 @@ describe('bulletin page', () => {
     controller.useBulletinController.mockReturnValue(current.value);
     render(<BulletinPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'bulletin.deleteSelected' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'common.delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+    fireEvent.click(await screen.findByText('bulletin.deleteSelected'));
+    const dialog = await screen.findByRole('dialog', { name: 'bulletin.deleteSelected' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.delete' }));
 
     expect(current.actions.removeMany).toHaveBeenCalledWith([7]);
   });
 
-  it('delegates table checkbox selection to the authoritative page controller', () => {
-    const current = pageController();
+  it('keeps current edit and delete commands bound to the active Bulletin tab', async () => {
+    const current = pageController({ selectedId: 7 });
     controller.useBulletinController.mockReturnValue(current.value);
     render(<BulletinPage />);
 
-    fireEvent.click(screen.getAllByRole('checkbox')[1]!);
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+    fireEvent.click(await screen.findByText('common.edit'));
+    expect(current.actions.edit).toHaveBeenCalledWith(7);
 
-    expect(current.actions.selectIds).toHaveBeenCalledWith([7]);
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+    fireEvent.click(await screen.findByText('bulletin.delete'));
+    const dialog = await screen.findByRole('dialog', { name: 'bulletin.delete' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.delete' }));
+    expect(current.actions.remove).toHaveBeenCalledWith(record);
+  });
+
+  it('clears authoritative batch selection when its modal is cancelled', async () => {
+    const current = pageController({ selectedIds: [7] });
+    controller.useBulletinController.mockReturnValue(current.value);
+    render(<BulletinPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+    fireEvent.click(await screen.findByText('bulletin.deleteSelected'));
+    const dialog = await screen.findByRole('dialog', { name: 'bulletin.deleteSelected' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.cancel' }));
+
+    expect(current.actions.selectIds).toHaveBeenCalledWith([]);
   });
 
   it('does not admit selection or row commands while a write owns the editor', () => {
@@ -123,14 +161,12 @@ describe('bulletin page', () => {
 
     render(<BulletinPage />);
 
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.actions' })).toBeDisabled();
     expect(screen.getByPlaceholderText('bulletin.search')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
-    expect(screen.getAllByRole('checkbox').every(checkbox => checkbox.hasAttribute('disabled'))).toBe(true);
-    fireEvent.click(screen.getByText('Ops'));
+    expect(screen.getByRole('tab', { name: 'Ops' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Ops' }));
     expect(current.actions.select).not.toHaveBeenCalled();
   });
 
@@ -149,14 +185,13 @@ describe('bulletin page', () => {
 
     expect(screen.getByText('bulletin.save.unavailable')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.actions' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
     expect(screen.getByPlaceholderText('bulletin.search')).toBeEnabled();
     expect(screen.getByRole('button', { name: 'common.query' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeEnabled();
+    expect(screen.getByRole('tab', { name: 'Ops' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(current.actions.retry).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'bulletin.recovery.stop' }));
@@ -181,7 +216,7 @@ describe('bulletin page', () => {
 
     expect(screen.getByText('bulletin.recovery.deleteBatch')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'common.edit' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.actions' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
@@ -195,6 +230,7 @@ describe('bulletin page', () => {
     const current = pageController({
       capabilities: { canRead: true, canWrite: false, canDelete: false },
       draft: record,
+      list: { kind: 'ready', records: [record, record2], total: 2 },
       selectedId: 7,
       selectedIds: [7]
     });
@@ -205,19 +241,17 @@ describe('bulletin page', () => {
     expect(screen.getByPlaceholderText('bulletin.search')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.query' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Ops' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'bulletin.create' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.actions' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'common.save' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'bulletin.deleteSelected' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'bulletin.viewMetrics' }));
-    expect(current.actions.select).toHaveBeenCalledWith(7);
+    fireEvent.click(screen.getByRole('tab', { name: 'Database' }));
+    expect(current.actions.select).toHaveBeenCalledWith(8);
   });
 
-  it('renders USER authoring while hiding administrator-only deletion and selection', () => {
+  it('renders USER authoring while hiding administrator-only deletion', async () => {
     const current = pageController({
       capabilities: { canRead: true, canWrite: true, canDelete: false },
       draft: record,
@@ -229,20 +263,19 @@ describe('bulletin page', () => {
     render(<BulletinPage />);
 
     expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.save' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'bulletin.deleteSelected' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Ops' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions' }));
+    expect(await screen.findByText('common.edit')).toBeInTheDocument();
+    expect(screen.queryByText('bulletin.delete')).not.toBeInTheDocument();
+    expect(screen.queryByText('bulletin.deleteSelected')).not.toBeInTheDocument();
   });
 
   it('synchronously converges role presentation without removing legal metrics selection', () => {
     const admin = pageController({ selectedId: 7, selectedIds: [7] });
     controller.useBulletinController.mockReturnValue(admin.value);
     const page = render(<BulletinPage />);
-    expect(screen.getByRole('button', { name: 'bulletin.delete' })).toBeInTheDocument();
-    expect(screen.getAllByRole('checkbox')).not.toEqual([]);
+    expect(screen.getByRole('button', { name: 'common.actions' })).toBeInTheDocument();
 
     const user = pageController({
       capabilities: { canRead: true, canWrite: true, canDelete: false },
@@ -250,9 +283,8 @@ describe('bulletin page', () => {
     });
     controller.useBulletinController.mockReturnValue(user.value);
     page.rerender(<BulletinPage />);
-    expect(screen.queryByRole('button', { name: 'bulletin.delete' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.actions' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Ops' })).toBeInTheDocument();
 
     const guest = pageController({
       capabilities: { canRead: true, canWrite: false, canDelete: false },
@@ -260,8 +292,8 @@ describe('bulletin page', () => {
     });
     controller.useBulletinController.mockReturnValue(guest.value);
     page.rerender(<BulletinPage />);
-    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'bulletin.viewMetrics' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Ops' })).toBeInTheDocument();
   });
 
   it('renders only local permission keys for list, dependencies, and metrics failures', () => {
@@ -283,7 +315,7 @@ describe('bulletin page', () => {
 
     expect(screen.getByText('bulletin.list.permission')).toBeInTheDocument();
     expect(screen.getByText('bulletin.dependencies.permission')).toBeInTheDocument();
-    expect(screen.getByText('bulletin.metrics.permission')).toBeInTheDocument();
+    expect(screen.queryByText('bulletin.metrics.permission')).not.toBeInTheDocument();
     expect(screen.queryByText('private authorization detail')).not.toBeInTheDocument();
   });
 });
@@ -379,4 +411,11 @@ const record = {
   modifier: null,
   gmtCreate: null,
   gmtUpdate: '2026-07-17T16:41:46Z'
+};
+
+const record2 = {
+  ...record,
+  id: 8,
+  name: 'Database',
+  app: 'mysql'
 };

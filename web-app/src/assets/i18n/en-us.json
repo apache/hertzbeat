@@ -1095,6 +1095,9 @@
     "name": "Name",
     "application": "Application",
     "monitors": "Monitors",
+    "monitorType": "Monitor type",
+    "monitorTaskName": "Monitor task name",
+    "monitorMetrics": "Monitor metrics",
     "creator": "Creator",
     "updated": "Updated",
     "create": "Create bulletin",
@@ -1110,6 +1113,7 @@
     "deleteSuccess": "Bulletin deleted and verified.",
     "deleteConfirm": "Delete this bulletin?",
     "deleteSelected": "Delete selected",
+    "deleteSelectedPlaceholder": "Select bulletins to delete",
     "deleteSelectedConfirm": "Delete {{count}} selected bulletins?",
     "deleteSelectedSuccess": "Selected bulletins deleted and verified.",
     "recovery": {

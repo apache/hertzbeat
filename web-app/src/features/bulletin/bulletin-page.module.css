@@ -19,6 +19,19 @@
   min-width: min(420px, 100%);
 }
 
-.selectedRow td {
-  background: var(--ant-color-primary-bg) !important;
+.metricValues {
+  display: grid;
+  gap: 4px;
+}
+
+.metricValues > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workspacePagination {
+  margin-top: 16px;
+  justify-content: flex-end;
 }

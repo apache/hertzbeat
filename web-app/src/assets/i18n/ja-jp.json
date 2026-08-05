@@ -1092,6 +1092,9 @@
     "name": "名前",
     "application": "アプリケーション",
     "monitors": "監視数",
+    "monitorType": "監視タイプ",
+    "monitorTaskName": "監視タスク名",
+    "monitorMetrics": "監視メトリクス",
     "creator": "作成者",
     "updated": "更新日時",
     "create": "ボードを作成",
@@ -1107,6 +1110,7 @@
     "deleteSuccess": "ボードを削除して確認しました。",
     "deleteConfirm": "このボードを削除しますか？",
     "deleteSelected": "選択項目を削除",
+    "deleteSelectedPlaceholder": "削除するボードを選択",
     "deleteSelectedConfirm": "選択した {{count}} 件のボードを削除しますか？",
     "deleteSelectedSuccess": "選択したボードを削除して確認しました。",
     "recovery": {

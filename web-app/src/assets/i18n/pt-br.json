@@ -1100,6 +1100,9 @@
     "name": "Nome",
     "application": "Aplicação",
     "monitors": "Monitores",
+    "monitorType": "Tipo de monitor",
+    "monitorTaskName": "Nome da tarefa de monitoramento",
+    "monitorMetrics": "Métricas do monitor",
     "creator": "Criador",
     "updated": "Atualizado",
     "create": "Criar quadro",
@@ -1115,6 +1118,7 @@
     "deleteSuccess": "Quadro excluído e verificado.",
     "deleteConfirm": "Excluir este quadro?",
     "deleteSelected": "Excluir selecionados",
+    "deleteSelectedPlaceholder": "Selecione os quadros para excluir",
     "deleteSelectedConfirm": "Excluir {{count}} quadros selecionados?",
     "deleteSelectedSuccess": "Quadros selecionados excluídos e verificados.",
     "recovery": {

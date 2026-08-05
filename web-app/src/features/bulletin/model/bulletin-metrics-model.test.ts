@@ -3,10 +3,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BulletinMetrics } from './bulletin-model';
-import { createBulletinMetricCells, hasBulletinMetricFields } from './bulletin-metrics-model';
+import { createBulletinMetricPivot, hasBulletinMetricFields } from './bulletin-metrics-model';
 
 describe('Bulletin metrics model', () => {
-  it('keeps repeated fields from separate samples as distinct stable rows', () => {
+  it('keeps repeated samples in one monitor row under a two-level metric column', () => {
     const metrics: BulletinMetrics = {
       name: 'Ops',
       content: [
@@ -27,14 +27,56 @@ describe('Bulletin metrics model', () => {
       ]
     };
 
-    const cells = createBulletinMetricCells(metrics);
+    const pivot = createBulletinMetricPivot(metrics);
 
-    expect(cells).toHaveLength(2);
-    expect(new Set(cells.map(cell => cell.key))).toHaveProperty('size', 2);
-    expect(cells.map(cell => ({ field: cell.field, status: cell.status, value: cell.value }))).toEqual([
-      { field: 'duration', status: 'value', value: '12' },
-      { field: 'duration', status: 'no-data', value: null }
+    expect(pivot.groups).toEqual([
+      {
+        metric: 'responseTime',
+        fields: [{ key: 'duration', valueKey: '["responseTime","duration"]' }]
+      }
     ]);
+    expect(pivot.rows).toHaveLength(1);
+    expect(pivot.rows[0]).toMatchObject({ monitor: 'site', monitorId: 7, host: 'localhost' });
+    expect(pivot.rows[0]?.values['["responseTime","duration"]']).toEqual([
+      { key: 'duration', unit: 'ms', value: '12', status: 'value' },
+      { key: 'duration', unit: '', value: null, status: 'no-data' }
+    ]);
+  });
+
+  it('unions metric fields without inventing zeroes for missing monitor values', () => {
+    const metrics: BulletinMetrics = {
+      name: 'Database',
+      content: [
+        {
+          monitorName: 'primary',
+          monitorId: 1,
+          host: 'db-a',
+          metrics: [
+            {
+              name: 'basic',
+              fields: [[{ key: 'version', unit: '', value: '8.0', status: 'value' }]]
+            }
+          ]
+        },
+        {
+          monitorName: 'replica',
+          monitorId: 2,
+          host: 'db-b',
+          metrics: [
+            {
+              name: 'basic',
+              fields: [[{ key: 'port', unit: '', value: '3306', status: 'value' }]]
+            }
+          ]
+        }
+      ]
+    };
+
+    const pivot = createBulletinMetricPivot(metrics);
+
+    expect(pivot.groups[0]?.fields.map(field => field.key)).toEqual(['version', 'port']);
+    expect(pivot.rows[0]?.values['["basic","port"]']).toEqual([]);
+    expect(pivot.rows[1]?.values['["basic","version"]']).toEqual([]);
   });
 
   it('reports no rendered evidence when metric groups contain no fields', () => {
@@ -51,6 +93,6 @@ describe('Bulletin metrics model', () => {
     };
 
     expect(hasBulletinMetricFields(metrics)).toBe(false);
-    expect(createBulletinMetricCells(metrics)).toEqual([]);
+    expect(createBulletinMetricPivot(metrics)).toEqual({ groups: [], rows: [] });
   });
 });

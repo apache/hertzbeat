@@ -65,7 +65,7 @@ function BulletinEditorForm({
       <Form.Item label={t('bulletin.name')} required>
         <Input disabled={writeLocked} value={draft.name} onChange={event => onChange({ name: event.target.value })} />
       </Form.Item>
-      <Form.Item label={t('bulletin.application')} required>
+      <Form.Item label={t('bulletin.monitorType')} required>
         <Select
           value={draft.app || null}
           showSearch
@@ -80,7 +80,7 @@ function BulletinEditorForm({
       )}
       {dependencies.kind === 'ready' && draft.app && (
         <>
-          <Form.Item label={t('bulletin.monitors')} required>
+          <Form.Item label={t('bulletin.monitorTaskName')} required>
             <BulletinMonitorSelection
               dependencies={dependencies}
               draft={draft}
@@ -92,7 +92,7 @@ function BulletinEditorForm({
           {dependencies.monitorSelection === 'stale' && (
             <Alert type="warning" showIcon message={t('bulletin.validation')} />
           )}
-          <Form.Item label={t('bulletin.fields')} required>
+          <Form.Item label={t('bulletin.monitorMetrics')} required>
             <BulletinFieldSelection
               draft={draft}
               dependencies={dependencies}

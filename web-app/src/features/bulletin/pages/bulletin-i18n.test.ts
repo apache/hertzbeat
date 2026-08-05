@@ -56,4 +56,14 @@ describe('Bulletin locale coverage', () => {
       expect(locale.bulletin.autoRefresh.off).toBeTruthy();
     }
   });
+
+  it('keeps list counts separate from the original editor field names', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.bulletin.monitors).toBeTruthy();
+      expect(locale.bulletin.monitorType).toBeTruthy();
+      expect(locale.bulletin.monitorTaskName).toBeTruthy();
+      expect(locale.bulletin.monitorMetrics).toBeTruthy();
+      expect(locale.bulletin.deleteSelectedPlaceholder).toBeTruthy();
+    }
+  });
 });

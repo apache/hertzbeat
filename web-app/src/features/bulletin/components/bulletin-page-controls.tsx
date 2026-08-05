@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input, Popconfirm, Space } from 'antd';
+import { Button, Input, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
@@ -14,7 +14,6 @@ type BulletinPageControlsProps = {
   actions: {
     create: () => unknown;
     refresh: () => unknown;
-    removeMany: (ids: readonly number[]) => unknown;
     setRefreshSeconds: (value: BulletinRefreshChoice) => unknown;
     setSearch: (value: string) => unknown;
     submitSearch: () => unknown;
@@ -24,7 +23,6 @@ type BulletinPageControlsProps = {
   refreshing: boolean;
   refreshSeconds: BulletinRefreshSeconds;
   search: string;
-  selectedIds: number[];
   writeLocked: boolean;
 };
 
@@ -35,7 +33,6 @@ export function BulletinPageControls({
   refreshing,
   refreshSeconds,
   search,
-  selectedIds,
   writeLocked
 }: BulletinPageControlsProps) {
   const { t } = useTranslation();
@@ -46,19 +43,6 @@ export function BulletinPageControls({
         description={t('bulletin.description')}
         actions={
           <Space wrap>
-            {capabilities.canDelete && selectedIds.length > 0 && (
-              <Popconfirm
-                title={t('bulletin.deleteSelectedConfirm', { count: selectedIds.length })}
-                okText={t('common.delete')}
-                cancelText={t('common.cancel')}
-                okButtonProps={{ danger: true }}
-                onConfirm={() => actions.removeMany(selectedIds)}
-              >
-                <Button danger disabled={writeLocked}>
-                  {t('bulletin.deleteSelected')}
-                </Button>
-              </Popconfirm>
-            )}
             {capabilities.canWrite && (
               <Button type="primary" disabled={writeLocked} onClick={actions.create}>
                 {t('bulletin.create')}

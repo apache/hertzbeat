@@ -48,6 +48,15 @@ describe('Bulletin editor metric Tree', () => {
     expect(document.querySelector('.ant-form-item-control')).toHaveClass('ant-col-12');
   });
 
+  it('uses the original monitor type, task name, and metric labels instead of a list count label', () => {
+    renderEditor();
+
+    expect(screen.getByText('bulletin.monitorType')).toBeInTheDocument();
+    expect(screen.getByText('bulletin.monitorTaskName')).toBeInTheDocument();
+    expect(screen.getByText('bulletin.monitorMetrics')).toBeInTheDocument();
+    expect(screen.queryByText('bulletin.monitors')).not.toBeInTheDocument();
+  });
+
   it('keeps large application hierarchies inside a bounded scrolling field', () => {
     renderEditor();
 
