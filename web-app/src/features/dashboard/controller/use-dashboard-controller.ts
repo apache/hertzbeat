@@ -27,6 +27,7 @@ import {
 import { loadDashboardAlertSummary, loadDashboardRecentAlerts, loadDashboardSummary } from '../api/dashboard-api';
 import {
   dashboardFailureKind,
+  unresolvedAlertTotal,
   type DashboardAlertState,
   type DashboardLabelState,
   type DashboardMonitorState,
@@ -36,8 +37,10 @@ import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export const DASHBOARD_REFRESH_INTERVAL_MS = 30_000;
 const dashboardCollectorQuery: CollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
+type DashboardControllerScope = 'full' | 'summary';
 
-export function useDashboardController() {
+export function useDashboardController(scope: DashboardControllerScope = 'full') {
+  const includeDetails = scope === 'full';
   const monitorQuery = useQuery({
     queryKey: dashboardQueryKeys.monitorSummary(),
     queryFn: ({ signal }) => loadDashboardSummary(signal),
@@ -54,18 +57,21 @@ export function useDashboardController() {
     queryKey: dashboardQueryKeys.recentAlerts(),
     queryFn: ({ signal }) => loadDashboardRecentAlerts(signal),
     retry: false,
+    enabled: includeDetails,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
   const collectorQuery = useQuery({
     queryKey: collectorQueryKeys.page(dashboardCollectorQuery),
     queryFn: ({ signal }) => loadCollectorManagementPage(dashboardCollectorQuery, signal),
     retry: false,
+    enabled: includeDetails,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
   const labelQuery = useQuery({
     queryKey: dashboardQueryKeys.labels(),
     queryFn: ({ signal }) => loadLabelSuggestions(signal),
     retry: false,
+    enabled: includeDetails,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
   return {
@@ -78,9 +84,7 @@ export function useDashboardController() {
       await Promise.allSettled([
         monitorQuery.refetch(),
         alertQuery.refetch(),
-        recentAlertQuery.refetch(),
-        collectorQuery.refetch(),
-        labelQuery.refetch()
+        ...(includeDetails ? [recentAlertQuery.refetch(), collectorQuery.refetch(), labelQuery.refetch()] : [])
       ]);
     }
   };
@@ -130,5 +134,5 @@ function alertState(
   if (pending) return { kind: 'loading' };
   if (error) return { kind: dashboardFailureKind(error) };
   if (!result) return { kind: 'missing' };
-  return { kind: result.total === 0 ? 'empty' : 'ready', summary: result };
+  return { kind: unresolvedAlertTotal(result) === 0 ? 'empty' : 'ready', summary: result };
 }

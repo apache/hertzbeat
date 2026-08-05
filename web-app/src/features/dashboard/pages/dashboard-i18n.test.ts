@@ -22,6 +22,8 @@ describe('Dashboard locale contract', () => {
     expect(expected).toContain('monitorStates.unavailable');
     expect(expected).toContain('alertStates.error');
     expect(expected).toContain('recentAlerts.states.contract');
+    expect(expected).toContain('runtimeStates.permission');
+    expect(expected).toContain('unresolvedAlerts');
   });
 
   it('localizes the Start navigation and telemetry terminology in every locale', () => {

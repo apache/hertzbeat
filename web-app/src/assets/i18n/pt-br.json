@@ -1033,11 +1033,14 @@
       }
     },
     "operationsSummary": "Resumo operacional",
-    "operationsDescription": "Disponibilidade dos monitores e situação dos alertas, informadas de forma independente.",
+    "operationsDescription": "O runtime, as exceções do monitoramento ativo e os alertas não resolvidos são informados separadamente.",
+    "runtimeSummary": "Status do runtime",
     "monitorSummary": "Resumo de monitores",
     "alertSummary": "Resumo de alertas",
+    "openCollectors": "Abrir diagnóstico de Collectors",
     "openMonitors": "Abrir monitores",
     "openAlerts": "Abrir alertas",
+    "unresolvedAlerts": "Alertas não resolvidos",
     "total": "Total de monitores",
     "available": "Disponíveis",
     "unavailable": "Indisponíveis",
@@ -1048,6 +1051,23 @@
     "empty": "Nenhum monitor configurado.",
     "alertEmpty": "O resumo atual não informa alertas ativos.",
     "alertReady": "O resumo atual informa {{count}} alertas ativos.",
+    "runtime": {
+      "server": "Servidor",
+      "storage": "GreptimeDB",
+      "collectors": "Collectors",
+      "status": {
+        "available": "Disponível",
+        "degraded": "Degradado",
+        "unavailable": "Indisponível",
+        "unknown": "Desconhecido"
+      }
+    },
+    "runtimeStates": {
+      "permission": "Você não tem permissão para ler o status do runtime.",
+      "unavailable": "O status do runtime está indisponível.",
+      "contract": "O status do runtime não corresponde ao contrato esperado.",
+      "error": "Não foi possível carregar o status do runtime."
+    },
     "monitorStates": {
       "missing": "O resumo de monitores está ausente. Os contadores foram ocultados.",
       "permission": "Você não tem permissão para ler o resumo de monitores. Os contadores foram ocultados.",

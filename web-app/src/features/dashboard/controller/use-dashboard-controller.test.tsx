@@ -77,6 +77,18 @@ describe('dashboard controller', () => {
     );
   });
 
+  it('treats a fully handled alert history as no current work', async () => {
+    api.loadDashboardAlertSummary.mockResolvedValue(alert(4, 4));
+    const view = renderController();
+
+    await waitFor(() =>
+      expect(view.result.current.alertState).toMatchObject({
+        kind: 'empty',
+        summary: { total: 4, dealNum: 4 }
+      })
+    );
+  });
+
   it('publishes ready alert evidence while monitor evidence is still loading', async () => {
     const monitor = deferred<{ apps: (typeof app)[] }>();
     api.loadDashboardSummary.mockReturnValue(monitor.promise);
@@ -91,6 +103,20 @@ describe('dashboard controller', () => {
 
     act(() => monitor.resolve({ apps: [app] }));
     await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
+  });
+
+  it('does not start hidden detail streams for the compact operational scope', async () => {
+    const view = renderController(undefined, 'summary');
+
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'ready' },
+        alertState: { kind: 'ready' }
+      })
+    );
+    expect(api.loadDashboardRecentAlerts).not.toHaveBeenCalled();
+    expect(collectors.loadCollectorManagementPage).not.toHaveBeenCalled();
+    expect(labels.loadLabelSuggestions).not.toHaveBeenCalled();
   });
 
   it('owns a complete collector page query, AbortSignal, and independent ready state', async () => {
@@ -352,11 +378,14 @@ describe('dashboard controller', () => {
   });
 });
 
-function renderController(client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })) {
+function renderController(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
+  scope: 'full' | 'summary' = 'full'
+) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return renderHook(useDashboardController, { wrapper });
+  return renderHook(() => useDashboardController(scope), { wrapper });
 }
 const app = { app: 'mysql', category: 'db', size: 1, availableSize: 1, unAvailableSize: 0, unManageSize: 0 };
 const dashboardCollectorQuery = { name: '', pageIndex: 0, pageSize: 8 };
@@ -382,11 +411,11 @@ function collectorPage(content: (typeof collector)[]) {
     size: 8
   };
 }
-function alert(total: number) {
+function alert(total: number, dealNum = 0) {
   return {
     total,
-    dealNum: 0,
-    rate: total === 0 ? 100 : 0,
+    dealNum,
+    rate: total === 0 ? 100 : (dealNum / total) * 100,
     priorityWarningNum: 0,
     priorityCriticalNum: 0,
     priorityEmergencyNum: 0

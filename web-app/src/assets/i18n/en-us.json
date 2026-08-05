@@ -1028,11 +1028,14 @@
       }
     },
     "operationsSummary": "Operational summary",
-    "operationsDescription": "Monitor availability and alert posture, reported independently.",
+    "operationsDescription": "Runtime, active-monitoring exceptions, and unresolved alerts are reported independently.",
+    "runtimeSummary": "Runtime status",
     "monitorSummary": "Monitor summary",
     "alertSummary": "Alert summary",
+    "openCollectors": "Open Collector diagnostics",
     "openMonitors": "Open monitors",
     "openAlerts": "Open alerts",
+    "unresolvedAlerts": "Unresolved alerts",
     "total": "Total monitors",
     "available": "Available",
     "unavailable": "Unavailable",
@@ -1043,6 +1046,18 @@
     "empty": "No monitors are configured.",
     "alertEmpty": "No active alerts are reported by the current summary.",
     "alertReady": "{{count}} active alerts are reported by the current summary.",
+    "runtime": {
+      "server": "Server",
+      "storage": "GreptimeDB",
+      "collectors": "Collectors",
+      "status": { "available": "Available", "degraded": "Degraded", "unavailable": "Unavailable", "unknown": "Unknown" }
+    },
+    "runtimeStates": {
+      "permission": "You do not have permission to read runtime status.",
+      "unavailable": "Runtime status is unavailable.",
+      "contract": "Runtime status did not match the expected contract.",
+      "error": "Runtime status could not be loaded."
+    },
     "monitorStates": {
       "missing": "Monitor summary is missing. Counters are hidden.",
       "permission": "You do not have permission to read the monitor summary. Counters are hidden.",

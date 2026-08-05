@@ -17,22 +17,21 @@
 
 .summaryBoard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-block: 1px solid var(--hb-border-subtle);
 }
 
 .summaryRow {
   display: grid;
-  grid-template-columns: minmax(130px, 0.32fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: start;
   gap: var(--hb-space-4);
-  min-height: 104px;
+  min-height: 132px;
   padding: var(--hb-space-4) 0;
 }
 
 .summaryRow + .summaryRow {
-  margin-left: var(--hb-space-5);
-  padding-left: var(--hb-space-5);
+  padding-left: var(--hb-space-4);
   border-left: 1px solid var(--hb-border-subtle);
 }
 

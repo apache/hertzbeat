@@ -1022,11 +1022,14 @@
       }
     },
     "operationsSummary": "維運摘要",
-    "operationsDescription": "分別呈現監控可用性與告警狀態，不混淆兩個資料來源。",
+    "operationsDescription": "分別呈現執行狀態、主動監控異常與未處理警報。",
+    "runtimeSummary": "執行狀態",
     "monitorSummary": "監控摘要",
     "alertSummary": "警報摘要",
+    "openCollectors": "前往採集器診斷",
     "openMonitors": "前往監控中心",
     "openAlerts": "前往告警中心",
+    "unresolvedAlerts": "未處理警報",
     "total": "監控總數",
     "available": "可用",
     "unavailable": "不可用",
@@ -1037,6 +1040,18 @@
     "empty": "尚未設定監控。",
     "alertEmpty": "目前警報摘要未回報活動告警。",
     "alertReady": "目前警報摘要回報了 {{count}} 筆活動告警。",
+    "runtime": {
+      "server": "伺服器",
+      "storage": "GreptimeDB",
+      "collectors": "採集器",
+      "status": { "available": "可用", "degraded": "降級", "unavailable": "不可用", "unknown": "未知" }
+    },
+    "runtimeStates": {
+      "permission": "目前帳號無權讀取執行狀態。",
+      "unavailable": "執行狀態暫時無法使用。",
+      "contract": "執行狀態不符合預期契約。",
+      "error": "執行狀態載入失敗。"
+    },
     "monitorStates": {
       "missing": "缺少監控摘要，計數已隱藏。",
       "permission": "目前帳號無權讀取監控摘要，計數已隱藏。",

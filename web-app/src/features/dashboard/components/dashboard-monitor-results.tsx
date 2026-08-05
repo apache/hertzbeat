@@ -5,12 +5,12 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Skeleton, Table, Tag, Typography } from 'antd';
+import { Skeleton, Table, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
-import { OperationalSection } from '@/shared/operational-page';
+import { OperationalSection, OperationalStatePanel } from '@/shared/operational-page';
 import {
   isDashboardFailureState,
   monitorTotals,
@@ -27,23 +27,25 @@ export function DashboardMonitorSummary({ state }: { state: DashboardMonitorStat
   }
   if (isDashboardFailureState(state)) {
     return (
-      <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>
-        {t(`dashboard.monitorStates.${state.kind}`)}
-      </Typography.Text>
+      <OperationalStatePanel kind={summaryStateKind(state.kind)} title={t(`dashboard.monitorStates.${state.kind}`)} />
     );
   }
   if (state.kind === 'empty') {
-    return <Typography.Text type="secondary">{t('dashboard.empty')}</Typography.Text>;
+    return <OperationalStatePanel kind="empty" title={t('dashboard.empty')} />;
   }
   const totals = monitorTotals(state.apps);
   return (
     <dl className={styles.monitorEvidence}>
-      <DashboardSummaryMetric label={t('dashboard.total')} value={totals.total} />
-      <DashboardSummaryMetric label={t('dashboard.available')} value={totals.available} />
       <DashboardSummaryMetric label={t('dashboard.unavailable')} value={totals.unavailable} />
       <DashboardSummaryMetric label={t('monitor.status.paused')} value={totals.unmanaged} />
     </dl>
   );
+}
+
+function summaryStateKind(kind: 'missing' | 'permission' | 'unavailable' | 'contract' | 'error') {
+  if (kind === 'permission') return 'permission' as const;
+  if (kind === 'error') return 'error' as const;
+  return 'unavailable' as const;
 }
 
 export function DashboardMonitorDistribution({ state }: { state: DashboardMonitorState }) {

@@ -1022,11 +1022,14 @@
       }
     },
     "operationsSummary": "运维摘要",
-    "operationsDescription": "分别呈现监控可用性与告警态势，不混淆两个数据源。",
+    "operationsDescription": "分别呈现运行状态、主动监控异常与未处理告警。",
+    "runtimeSummary": "运行状态",
     "monitorSummary": "监控概览",
     "alertSummary": "告警概览",
+    "openCollectors": "进入采集器诊断",
     "openMonitors": "进入监控中心",
     "openAlerts": "进入告警中心",
+    "unresolvedAlerts": "未处理告警",
     "total": "监控总数",
     "available": "可用",
     "unavailable": "不可用",
@@ -1037,6 +1040,18 @@
     "empty": "尚未配置监控。",
     "alertEmpty": "当前告警概览未报告活动告警。",
     "alertReady": "当前告警概览报告了 {{count}} 条活动告警。",
+    "runtime": {
+      "server": "服务端",
+      "storage": "GreptimeDB",
+      "collectors": "采集器",
+      "status": { "available": "可用", "degraded": "降级", "unavailable": "不可用", "unknown": "未知" }
+    },
+    "runtimeStates": {
+      "permission": "当前账号无权读取运行状态。",
+      "unavailable": "运行状态暂不可用。",
+      "contract": "运行状态不符合预期契约。",
+      "error": "运行状态加载失败。"
+    },
     "monitorStates": {
       "missing": "缺少监控概览，计数已隐藏。",
       "permission": "当前账号无权读取监控概览，计数已隐藏。",

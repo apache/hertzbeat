@@ -118,3 +118,7 @@ export function monitorTotals(apps: AppCount[]) {
     { total: 0, available: 0, unavailable: 0, unmanaged: 0 }
   );
 }
+
+export function unresolvedAlertTotal(summary: DashboardAlertSummary) {
+  return Math.max(0, summary.total - summary.dealNum);
+}

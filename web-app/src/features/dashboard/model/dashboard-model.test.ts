@@ -14,7 +14,8 @@ import {
   DashboardContractError,
   DashboardRequestFailure,
   isDashboardFailureState,
-  monitorTotals
+  monitorTotals,
+  unresolvedAlertTotal
 } from './dashboard-model';
 
 describe('dashboard contracts', () => {
@@ -22,6 +23,11 @@ describe('dashboard contracts', () => {
     expect(
       monitorTotals([{ app: 'mysql', category: 'db', size: 5, availableSize: 3, unAvailableSize: 1, unManageSize: 1 }])
     ).toEqual({ total: 5, available: 3, unavailable: 1, unmanaged: 1 });
+  });
+
+  it('derives unresolved alerts from the backend total and handled evidence', () => {
+    expect(unresolvedAlertTotal(alertSummary(7, 2))).toBe(5);
+    expect(unresolvedAlertTotal(alertSummary(3, 3))).toBe(0);
   });
 
   it('classifies stable request and contract evidence without collapsing failures', () => {
@@ -40,10 +46,10 @@ describe('dashboard contracts', () => {
   });
 });
 
-function alertSummary(total: number) {
+function alertSummary(total: number, dealNum = 0) {
   return {
     total,
-    dealNum: 0,
+    dealNum,
     rate: 0,
     priorityWarningNum: 0,
     priorityCriticalNum: 0,
