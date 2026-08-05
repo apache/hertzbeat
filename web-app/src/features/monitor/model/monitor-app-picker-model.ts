@@ -9,7 +9,7 @@ import type { RemotePayloadState } from '@/shared/remote-state';
 
 import type { MonitorApp } from './monitor-contract';
 
-export type MonitorAppPickerItem = {
+type MonitorAppPickerItem = {
   value: string;
   label: string;
 };

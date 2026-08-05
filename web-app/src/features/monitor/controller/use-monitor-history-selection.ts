@@ -83,7 +83,7 @@ export function useMonitorHistorySelection(input: {
   };
 }
 
-export function historyAvailability(runtimeStatus: RuntimeStatusViewModel): MonitorHistoryAvailability {
+function historyAvailability(runtimeStatus: RuntimeStatusViewModel): MonitorHistoryAvailability {
   if (runtimeStatus.state === 'loading') return { kind: 'loading' };
   if (runtimeStatus.state === 'request-failed') {
     return { kind: runtimeStatus.failure === 'unavailable' ? 'unavailable' : 'error' };

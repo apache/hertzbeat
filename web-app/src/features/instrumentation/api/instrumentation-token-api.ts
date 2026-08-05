@@ -26,7 +26,7 @@ const collectorIntakeTokenRequestSchema = z
 
 export type CollectorIntakeTokenRequest = z.infer<typeof collectorIntakeTokenRequestSchema>;
 
-export const collectorIntakeTokenGenerateActionUrl = '/api/account/token/collector-intake/generate';
+const collectorIntakeTokenGenerateActionUrl = '/api/account/token/collector-intake/generate';
 
 /** Generates a managed intake token whose Collector identity is bound by the server. */
 export async function generateCollectorIntakeAccessToken(value: CollectorIntakeTokenRequest) {

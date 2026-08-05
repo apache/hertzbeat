@@ -2,4 +2,4 @@
 
 export { classifyLabelSuggestionFailure, loadLabelSuggestions } from './label';
 export { collectorQueryKeys, loadCollectorManagementPage, resolveCollectorListState } from './collector';
-export type { CollectorListState, CollectorQuery, CollectorRecord } from './collector';
+export type { CollectorQuery } from './collector';

@@ -57,8 +57,6 @@ export function buildMonitorPayload(
   };
 }
 
-export type MonitorMutationPayload = ReturnType<typeof buildMonitorPayload>;
-
 function serializeParamDraft(param: MonitorParamDraft, define: MonitorParamDefine | undefined): string | null {
   if (define) return serializeMonitorParamValue(define, param.paramValue);
   if (param.paramValue === null || typeof param.paramValue === 'string') return param.paramValue;

@@ -4,7 +4,5 @@ export { NotificationWorkspaceNavigation } from './notification-workspace-naviga
 export {
   notificationChannelStatus,
   notificationListStatus,
-  notificationWorkspacePath,
-  type NotificationWorkspaceStatus,
-  type NotificationWorkspaceStep
+  notificationWorkspacePath
 } from './notification-workspace-model';

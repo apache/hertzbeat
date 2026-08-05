@@ -120,7 +120,7 @@ export type MonitorMetricRowsEvidence<T> =
   | { kind: 'unavailable'; rows: T[] }
   | { kind: 'error'; rows: T[] }
   | { kind: 'ready'; rows: T[] };
-export type MonitorRealtimeGroup = {
+type MonitorRealtimeGroup = {
   group: string;
   favorite: MonitorMetricFavoriteEvidence;
   favoriteBusy: boolean;
