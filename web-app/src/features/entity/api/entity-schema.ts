@@ -10,13 +10,13 @@ import {
   type EntityIdentity,
   type EntityMonitor,
   type EntityMonitorPage,
-  type EntityNoiseControlSummary,
   type EntityPage,
   type EntityRecord,
   type EntityRelation,
   type EntityStatus,
   type EntitySummary
 } from '../model/entity-contract';
+import { mapEntityNoiseControlSummary, mapEntityUnifiedEvidence } from './entity-detail-evidence-mapper';
 import { entityOperationalSchema, mapEntityOperationalDetail } from './entity-operational-schema';
 
 const positiveId = z.number().int().positive().safe();
@@ -203,7 +203,7 @@ export function parseEntityDetail(value: unknown): EntityDetail {
     identities: (wire.entity.identities ?? []).map(value => clean(value) as EntityIdentity),
     ...(wire.status ? { status: clean(wire.status) as EntityStatus } : {}),
     ...(wire.evidenceSummary ? { evidence: clean(wire.evidenceSummary) as EntityEvidenceSummary } : {}),
-    ...(wire.noiseControlSummary ? { noiseControls: cleanNoiseControlSummary(wire.noiseControlSummary) } : {}),
+    ...(wire.noiseControlSummary ? { noiseControls: mapEntityNoiseControlSummary(wire.noiseControlSummary) } : {}),
     monitorPreview: {
       items: monitorItems,
       total: totalMonitors,
@@ -228,43 +228,9 @@ function copyRichDetail(wire: z.output<typeof detailSchema>): Partial<EntityDeta
     ...(wire.metricEvidence ? { metricEvidence: wire.metricEvidence } : {}),
     ...(wire.logEvidence ? { logEvidence: wire.logEvidence } : {}),
     ...(wire.traceEvidence ? { traceEvidence: wire.traceEvidence } : {}),
-    ...(wire.unifiedEvidenceSummary ? { unifiedEvidence: mapUnifiedEvidence(wire.unifiedEvidenceSummary) } : {}),
+    ...(wire.unifiedEvidenceSummary ? { unifiedEvidence: mapEntityUnifiedEvidence(wire.unifiedEvidenceSummary) } : {}),
     ...mapEntityOperationalDetail(wire)
   };
-}
-
-function mapUnifiedEvidence(value: z.output<typeof unifiedEvidenceSchema>) {
-  return {
-    activeSignalCount: value.activeSignalCount,
-    activeSignals: [...value.activeSignals],
-    active: { metrics: value.metricsActive, logs: value.logsActive, traces: value.tracesActive },
-    totals: {
-      metrics: value.metricEvidenceCount,
-      logs: value.logEvidenceCount,
-      traces: value.traceEvidenceCount
-    },
-    ...(value.latestObservedAt == null ? {} : { lastObservedAt: value.latestObservedAt }),
-    sources: value.evidenceSources.map(source => ({
-      source: source.source,
-      metrics: source.metricEvidenceCount,
-      logs: source.logEvidenceCount,
-      traces: source.traceEvidenceCount,
-      ...(source.latestObservedAt == null ? {} : { lastObservedAt: source.latestObservedAt })
-    }))
-  };
-}
-
-function cleanNoiseControlSummary(value: z.output<typeof noiseControlSummarySchema>): EntityNoiseControlSummary {
-  return {
-    ...value,
-    activeSilences: value.activeSilences.map(cleanNoiseControlRule),
-    matchingInhibits: value.matchingInhibits.map(cleanNoiseControlRule)
-  };
-}
-
-function cleanNoiseControlRule(rule: z.output<typeof noiseControlRuleSchema>) {
-  const { updatedAt, ...required } = rule;
-  return { ...required, ...(updatedAt == null ? {} : { updatedAt }) };
 }
 
 function mapSummary(wire: z.output<typeof summarySchema>): EntitySummary {
