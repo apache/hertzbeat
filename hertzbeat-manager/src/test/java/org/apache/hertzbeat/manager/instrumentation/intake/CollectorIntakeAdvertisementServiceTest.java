@@ -22,8 +22,11 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_ST
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +56,7 @@ class CollectorIntakeAdvertisementServiceTest {
                 .status(COLLECTOR_STATUS_ONLINE)
                 .build();
         when(collectorDao.findCollectorByName("edge-west")).thenReturn(Optional.of(collector));
-        CollectorIntakeAdvertisementRequest request = request(Gateway.SERVER);
+        CollectorIntakeAdvertisementRequest request = request(Gateway.COLLECTOR);
         CollectorIntakeAdvertisementService writer = service(collectorDao);
 
         CollectorInstrumentationIntake saved = writer.update("edge-west", request);
@@ -70,6 +73,15 @@ class CollectorIntakeAdvertisementServiceTest {
 
         assertNull(collector.getInstrumentationIntake());
         assertEquals(ErrorCode.INTAKE_NOT_ADVERTISED, cleared.errorCode());
+    }
+
+    @Test
+    void rejectsServerOwnedEndpointsAtTheCollectorMutationBoundary() {
+        CollectorDao collectorDao = mock(CollectorDao.class);
+        CollectorIntakeAdvertisementService service = service(collectorDao);
+
+        assertThrows(IllegalArgumentException.class, () -> service.update("edge-west", request(Gateway.SERVER)));
+        verify(collectorDao, never()).save(any());
     }
 
     @Test

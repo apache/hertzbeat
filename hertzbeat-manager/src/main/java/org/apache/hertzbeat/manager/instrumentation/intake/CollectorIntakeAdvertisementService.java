@@ -45,6 +45,9 @@ public class CollectorIntakeAdvertisementService implements CollectorIntakeAdver
 
     @Transactional(rollbackFor = Exception.class)
     public CollectorInstrumentationIntake update(String collectorName, CollectorIntakeAdvertisementRequest request) {
+        if (request.gateway() != Gateway.COLLECTOR) {
+            throw new IllegalArgumentException("Collector intake advertisement must be Collector-owned");
+        }
         Collector collector = requireCollector(collectorName);
         collector.setInstrumentationIntake(codec.encode(request));
         collectorDao.save(collector);

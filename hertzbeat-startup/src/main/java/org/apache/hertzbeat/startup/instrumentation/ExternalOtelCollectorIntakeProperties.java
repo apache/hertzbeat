@@ -31,16 +31,5 @@ public record ExternalOtelCollectorIntakeProperties(
         String profileId,
         String otlpHttpEndpoint,
         String otlpGrpcEndpoint,
-        String authentication) {
-
-    boolean configured() {
-        return hasText(profileId)
-                || hasText(otlpHttpEndpoint)
-                || hasText(otlpGrpcEndpoint)
-                || hasText(authentication);
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
-    }
+        String authentication) implements InstrumentationIntakeProperties {
 }

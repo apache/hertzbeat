@@ -44,6 +44,7 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeProfile;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.TransportSecurity;
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationApplicationGuideV2Adapter;
@@ -57,7 +58,7 @@ import org.springframework.data.domain.Pageable;
 class ManagerInstrumentationIntakeProfileStoreTest {
 
     @Test
-    void mapsOnlyExistingExplicitAdvertisementsWithoutInferringEndpoints() {
+    void mapsGlobalServerAndCollectorDestinationsWithoutUsingLegacyServerAdvertisements() {
         Collector server = collector("server-advertisement");
         Collector loopback = collector("loopback");
         Collector edge = collector("edge");
@@ -70,29 +71,69 @@ class ManagerInstrumentationIntakeProfileStoreTest {
                 "edge", CollectorInstrumentationIntake.ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE));
 
         var profiles = new ManagerInstrumentationIntakeProfileStore(
-                dao, reader, unconfiguredExternal()).profiles();
+                dao, reader, configuredServer(), unconfiguredExternal()).profiles();
 
         assertEquals(3, profiles.size());
-        assertEquals("server:server-advertisement", profiles.getFirst().id());
-        assertEquals(IntakeKind.SERVER, profiles.getFirst().kind());
-        assertEquals("https://otel.example.test/v1", profiles.getFirst()
+        IntakeProfile serverProfile = profile(profiles, "server-direct");
+        assertEquals(IntakeKind.SERVER, serverProfile.kind());
+        assertEquals("https://server.example.test/api/otlp", serverProfile
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
-        assertEquals(Authentication.BEARER_TOKEN, profiles.getFirst().authentication());
-        assertEquals("Authorization", profiles.getFirst().authorizationHeader());
-        assertEquals(TransportSecurity.TLS, profiles.getFirst()
+        assertEquals(Authentication.BEARER_TOKEN, serverProfile.authentication());
+        assertEquals("Authorization", serverProfile.authorizationHeader());
+        assertEquals(TransportSecurity.TLS, serverProfile
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
-        assertNull(profiles.getFirst().collectorId());
-        assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, profiles.get(1).kind());
-        assertEquals(Availability.AVAILABLE, profiles.get(1).availability());
-        assertEquals("loopback", profiles.get(1).collectorId());
-        assertEquals("http://127.0.0.1:4318", profiles.get(1)
+        assertNull(serverProfile.collectorId());
+
+        IntakeProfile collectorProfile = profile(profiles, "collector:loopback");
+        assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, collectorProfile.kind());
+        assertEquals(Availability.AVAILABLE, collectorProfile.availability());
+        assertEquals("loopback", collectorProfile.collectorId());
+        assertEquals("http://127.0.0.1:4318", collectorProfile
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).url());
-        assertEquals(TransportSecurity.PLAINTEXT, profiles.get(1)
+        assertEquals(TransportSecurity.PLAINTEXT, collectorProfile
                 .endpoints().get(OtlpTransport.HTTP_PROTOBUF).security());
-        assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, profiles.get(2).kind());
-        assertEquals(Availability.UNAVAILABLE, profiles.get(2).availability());
-        assertEquals("edge", profiles.get(2).collectorId());
-        assertEquals(true, profiles.get(2).endpoints().isEmpty());
+
+        IntakeProfile unavailableCollector = profile(profiles, "collector:edge");
+        assertEquals(IntakeKind.HERTZBEAT_COLLECTOR, unavailableCollector.kind());
+        assertEquals(Availability.UNAVAILABLE, unavailableCollector.availability());
+        assertEquals("edge", unavailableCollector.collectorId());
+        assertTrue(unavailableCollector.endpoints().isEmpty());
+        assertTrue(profiles.stream().noneMatch(profile -> profile.id().equals("server:server-advertisement")));
+    }
+
+    @Test
+    void legacyCollectorServerAdvertisementDoesNotCreateAnImplicitServerDestination() {
+        Collector server = collector("server-advertisement");
+        CollectorDao dao = mock(CollectorDao.class);
+        CollectorIntakeAdvertisementReader reader = mock(CollectorIntakeAdvertisementReader.class);
+        when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(server)));
+        when(reader.read(server)).thenReturn(availableServer());
+
+        var profiles = new ManagerInstrumentationIntakeProfileStore(
+                dao, reader, unconfiguredServer(), unconfiguredExternal()).profiles();
+
+        assertTrue(profiles.isEmpty());
+    }
+
+    @Test
+    void serverProfileIdCollisionCannotCreateAnAmbiguousCollectorDestination() {
+        Collector loopback = collector("loopback");
+        CollectorDao dao = mock(CollectorDao.class);
+        CollectorIntakeAdvertisementReader reader = mock(CollectorIntakeAdvertisementReader.class);
+        when(dao.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(loopback)));
+        when(reader.read(loopback)).thenReturn(availableLoopback());
+        ServerInstrumentationIntakeProperties collidingServer = new ServerInstrumentationIntakeProperties(
+                "collector:loopback", "https://server.example.test/api/otlp", null, "bearer_token");
+
+        var profiles = new ManagerInstrumentationIntakeProfileStore(
+                dao, reader, collidingServer, unconfiguredExternal()).profiles();
+
+        assertEquals(2, profiles.size());
+        IntakeProfile serverProfile = profile(profiles, "server:configured");
+        assertEquals(IntakeKind.SERVER, serverProfile.kind());
+        assertEquals(Availability.UNAVAILABLE, serverProfile.availability());
+        assertEquals(ErrorCode.ADVERTISEMENT_INVALID, serverProfile.errorCode());
+        assertEquals(Availability.AVAILABLE, profile(profiles, "collector:loopback").availability());
     }
 
     @Test
@@ -105,6 +146,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var store = new ManagerInstrumentationIntakeProfileStore(
                 dao,
                 reader,
+                configuredServer(),
                 new ExternalOtelCollectorIntakeProperties(
                         "external-west",
                         "http://otel.example.test:4318",
@@ -114,7 +156,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
 
         var discovery = profiles.profiles();
         assertEquals(2, discovery.profiles().size());
-        assertEquals("server:server-advertisement", discovery.defaultProfileId());
+        assertEquals("server-direct", discovery.defaultProfileId());
         var external = discovery.profiles().stream()
                 .filter(profile -> profile.id().equals("external-west"))
                 .findFirst()
@@ -171,6 +213,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
             var profile = new ManagerInstrumentationIntakeProfileStore(
                             emptyDao(),
                             mock(CollectorIntakeAdvertisementReader.class),
+                            unconfiguredServer(),
                             new ExternalOtelCollectorIntakeProperties(
                                     "external-west", endpoint, null, "bearer_token"))
                     .profiles()
@@ -194,6 +237,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var none = new ManagerInstrumentationIntakeProfileStore(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
+                        unconfiguredServer(),
                         new ExternalOtelCollectorIntakeProperties(
                                 "external-none",
                                 "http://otel.example.test:4318",
@@ -217,6 +261,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
             var invalid = new ManagerInstrumentationIntakeProfileStore(
                             emptyDao(),
                             mock(CollectorIntakeAdvertisementReader.class),
+                            unconfiguredServer(),
                             new ExternalOtelCollectorIntakeProperties(
                                     "external-invalid",
                                     "https://otel.example.test:4318",
@@ -365,13 +410,15 @@ class ManagerInstrumentationIntakeProfileStoreTest {
     @Test
     void absentConfigurationCreatesNoProfileWhileIncompleteOrUnsafeIdUsesSafeFailureId() {
         assertTrue(new ManagerInstrumentationIntakeProfileStore(
-                        emptyDao(), mock(CollectorIntakeAdvertisementReader.class), unconfiguredExternal())
+                        emptyDao(), mock(CollectorIntakeAdvertisementReader.class),
+                        unconfiguredServer(), unconfiguredExternal())
                 .profiles()
                 .isEmpty());
 
         var incomplete = new ManagerInstrumentationIntakeProfileStore(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
+                        unconfiguredServer(),
                         new ExternalOtelCollectorIntakeProperties(
                                 "external-west", null, null, "bearer_token"))
                 .profiles()
@@ -382,6 +429,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var unsafeId = new ManagerInstrumentationIntakeProfileStore(
                         emptyDao(),
                         mock(CollectorIntakeAdvertisementReader.class),
+                        unconfiguredServer(),
                         new ExternalOtelCollectorIntakeProperties(
                                 "external?token=secret-value",
                                 "https://otel.example.test:4318",
@@ -404,8 +452,9 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var store = new ManagerInstrumentationIntakeProfileStore(
                 dao,
                 reader,
+                configuredServer(),
                 new ExternalOtelCollectorIntakeProperties(
-                        "server:server-advertisement",
+                        "server-direct",
                         "https://otel.example.test:4318",
                         null,
                         "bearer_token"));
@@ -413,7 +462,7 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         var discovery = new InstrumentationIntakeProfileV2Service(store).profiles();
 
         assertEquals(2, discovery.profiles().size());
-        assertEquals("server:server-advertisement", discovery.defaultProfileId());
+        assertEquals("server-direct", discovery.defaultProfileId());
         assertEquals("external:configured", discovery.profiles().get(1).id());
         assertEquals(Availability.UNAVAILABLE, discovery.profiles().get(1).availability());
         assertEquals(ErrorCode.ADVERTISEMENT_INVALID, discovery.profiles().get(1).errorCode());
@@ -435,12 +484,28 @@ class ManagerInstrumentationIntakeProfileStoreTest {
         return new ExternalOtelCollectorIntakeProperties(null, null, null, null);
     }
 
+    private ServerInstrumentationIntakeProperties unconfiguredServer() {
+        return new ServerInstrumentationIntakeProperties(null, null, null, null);
+    }
+
+    private ServerInstrumentationIntakeProperties configuredServer() {
+        return new ServerInstrumentationIntakeProperties(
+                "server-direct", "https://server.example.test/api/otlp", null, "bearer_token");
+    }
+
+    private IntakeProfile profile(List<IntakeProfile> profiles, String profileId) {
+        return profiles.stream()
+                .filter(profile -> profile.id().equals(profileId))
+                .findFirst()
+                .orElseThrow();
+    }
+
     private InstrumentationGuideV2Renderer renderer(ExternalOtelCollectorIntakeProperties properties) {
         InstrumentationCatalogV2Service catalog =
                 new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
         InstrumentationIntakeProfileV2Service profiles = new InstrumentationIntakeProfileV2Service(
                 new ManagerInstrumentationIntakeProfileStore(
-                        emptyDao(), mock(CollectorIntakeAdvertisementReader.class), properties));
+                        emptyDao(), mock(CollectorIntakeAdvertisementReader.class), unconfiguredServer(), properties));
         return new InstrumentationGuideV2Renderer(
                 catalog,
                 profiles,
