@@ -15,10 +15,6 @@
  * limitations under the License.
  */
 
-.searchInput {
-  min-width: min(420px, 100%);
-}
-
 .metricValues {
   display: grid;
   gap: 4px;

@@ -31,6 +31,7 @@ export function EntityDiscoveryView({ state, actions }: EntityDiscoveryViewModel
         </Space>
       </header>
       <Input.Search
+        className={styles.discoverySearch}
         allowClear
         value={state.draft}
         placeholder={t('entity.discovery.search')}

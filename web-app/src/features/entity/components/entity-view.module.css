@@ -67,6 +67,9 @@
   display: grid;
   gap: 8px;
 }
+.discoverySearch {
+  width: min(480px, 100%);
+}
 .filters {
   display: grid;
   gap: 8px;

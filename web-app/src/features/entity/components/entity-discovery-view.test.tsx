@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { defaultEntityDiscoveryQuery, type EntityDiscoveryViewModel } from '../model/entity-discovery-model';
 import { EntityDiscoveryView } from './entity-discovery-view';
+import entityViewStyles from './entity-view.module.css?raw';
 
 const rows = [
   {
@@ -73,6 +74,10 @@ describe('EntityDiscoveryView', () => {
     expect(screen.getByText('No resource candidates found.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Add resource' }));
     expect(create).toHaveBeenCalledWith(rows[0]!.monitor);
+  });
+
+  it('keeps the single discovery search field at an operator-friendly width', () => {
+    expect(entityViewStyles).toMatch(/\.discoverySearch\s*\{[^}]*width:\s*min\(480px,\s*100%\);/s);
   });
 
   it('keeps GUEST discovery results readable without exposing the create action', () => {

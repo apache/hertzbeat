@@ -80,6 +80,14 @@
   min-width: 0;
 }
 
+/* A lone text search is a bounded operator control, not page content. Direct
+ * children keep this rule away from intentional multi-filter grids. */
+.commandBar[role='search'] .commandPrimary > :global(.ant-input),
+.commandBar[role='search'] .commandPrimary > :global(.ant-input-affix-wrapper),
+.commandBar[role='search'] .commandPrimary > :global(.ant-input-group-wrapper) {
+  width: min(480px, 100%);
+}
+
 .commandSecondary {
   display: flex;
   align-items: center;

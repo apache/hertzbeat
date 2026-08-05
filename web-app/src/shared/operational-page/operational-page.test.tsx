@@ -129,4 +129,10 @@ describe('OperationalPage', () => {
   it('uses one separator when a command bar is nested inside a section', () => {
     expect(operationalPageStyles).toMatch(/\.sectionBody\s+\.commandBar\s*\{[^}]*border-top:\s*0;/s);
   });
+
+  it('caps a single search field without constraining multi-filter toolbars', () => {
+    expect(operationalPageStyles).toMatch(
+      /\.commandBar\[role='search'\][\s\S]*?\.commandPrimary\s*>[\s\S]*?width:\s*min\(480px,\s*100%\);/
+    );
+  });
 });

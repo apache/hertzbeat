@@ -7,7 +7,6 @@ import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operation
 
 import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
 import type { BulletinRefreshChoice, BulletinRefreshSeconds } from '../model/bulletin-refresh-model';
-import styles from '../bulletin-page.module.css';
 import { BulletinRefreshSelect } from './bulletin-refresh-select';
 
 type BulletinPageControlsProps = {
@@ -76,7 +75,6 @@ function BulletinToolbar({
       ariaLabel={t('bulletin.search')}
       primary={
         <Input
-          className={styles.searchInput}
           value={search}
           placeholder={t('bulletin.search')}
           disabled={commandActive}
