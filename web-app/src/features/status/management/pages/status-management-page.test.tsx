@@ -134,7 +134,7 @@ describe('StatusManagementPage', () => {
     expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
   });
 
-  it('keeps incident filters flexible while query actions stay in the compact action rail', async () => {
+  it('keeps incident search and query together while refresh stays in the action rail', async () => {
     const { container } = renderPage();
 
     await screen.findByRole('textbox', { name: i18n.t('statusManagement.searchIncidents') });
@@ -149,7 +149,8 @@ describe('StatusManagementPage', () => {
     );
 
     expect(within(primary).getByRole('textbox')).toBeInTheDocument();
-    expect(within(secondary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(primary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(secondary).queryByRole('button', { name: i18n.t('common.query') })).not.toBeInTheDocument();
     expect(within(secondary).getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
   });
 

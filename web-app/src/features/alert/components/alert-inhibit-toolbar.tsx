@@ -1,10 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar } from '@/shared/operational-page';
-import styles from '../shared/alert-policy-page.module.css';
+import { OperationalCommandBar, OperationalSearchControl } from '@/shared/operational-page';
 
 type AlertInhibitToolbarProps = {
   busy: boolean;
@@ -29,26 +28,20 @@ export function AlertInhibitToolbar({
       role="search"
       ariaLabel={t('alertInhibits.search')}
       primary={
-        <Input
-          className={styles.searchInput}
-          aria-label={t('alertInhibits.search')}
-          allowClear
+        <OperationalSearchControl
+          ariaLabel={t('alertInhibits.search')}
           disabled={busy}
           value={search}
           placeholder={t('alertInhibits.search')}
-          onChange={event => setSearch(event.target.value)}
-          onPressEnter={submitSearch}
+          submitLabel={t('common.query')}
+          onChange={setSearch}
+          onSubmit={submitSearch}
         />
       }
       secondary={
-        <>
-          <Button type="primary" disabled={busy} onClick={submitSearch}>
-            {t('common.query')}
-          </Button>
-          <Button loading={refreshing} disabled={busy} onClick={() => void refresh()}>
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button loading={refreshing} disabled={busy} onClick={() => void refresh()}>
+          {t('common.refresh')}
+        </Button>
       }
     />
   );

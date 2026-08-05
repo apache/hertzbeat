@@ -6,3 +6,4 @@
  */
 
 export * from './operational-page';
+export * from './operational-search-control';

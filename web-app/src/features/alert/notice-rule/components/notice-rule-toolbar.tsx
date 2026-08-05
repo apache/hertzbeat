@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalPageHeader, OperationalSearchControl } from '@/shared/operational-page';
 
 type NoticeRuleToolbarProps = {
   name: string;
@@ -42,25 +42,20 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
       role="search"
       ariaLabel={t('noticeRules.search')}
       primary={
-        <Input
-          allowClear
+        <OperationalSearchControl
+          ariaLabel={t('noticeRules.search')}
           disabled={props.busy || props.refreshing}
           value={props.name}
           placeholder={t('noticeRules.search')}
-          aria-label={t('noticeRules.search')}
-          onChange={event => props.onNameChange(event.target.value)}
-          onPressEnter={props.onQuery}
+          submitLabel={t('common.query')}
+          onChange={props.onNameChange}
+          onSubmit={props.onQuery}
         />
       }
       secondary={
-        <>
-          <Button type="primary" disabled={props.busy || props.refreshing} onClick={props.onQuery}>
-            {t('common.query')}
-          </Button>
-          <Button disabled={props.busy} loading={props.refreshing} onClick={props.onRefresh}>
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button disabled={props.busy} loading={props.refreshing} onClick={props.onRefresh}>
+          {t('common.refresh')}
+        </Button>
       }
     />
   );

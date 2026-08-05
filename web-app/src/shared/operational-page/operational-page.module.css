@@ -88,6 +88,10 @@
   width: min(480px, 100%);
 }
 
+.searchControl {
+  width: min(480px, 100%);
+}
+
 .commandSecondary {
   display: flex;
   align-items: center;

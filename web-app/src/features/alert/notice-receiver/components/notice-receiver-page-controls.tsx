@@ -1,9 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Input } from 'antd';
+import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalPageHeader, OperationalSearchControl } from '@/shared/operational-page';
 import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../model/notice-receiver-operation-state';
 
 export function NoticeReceiverHeading({
@@ -56,29 +56,24 @@ export function NoticeReceiverToolbar({
       role="search"
       ariaLabel={t('noticeReceivers.search')}
       primary={
-        <Input
-          allowClear
-          aria-label={t('noticeReceivers.search')}
+        <OperationalSearchControl
+          ariaLabel={t('noticeReceivers.search')}
           value={name}
           placeholder={t('noticeReceivers.search')}
+          submitLabel={t('common.query')}
           disabled={busy || refreshing}
-          onChange={event => setName(event.target.value)}
-          onPressEnter={() => void search()}
+          onChange={setName}
+          onSubmit={search}
         />
       }
       secondary={
-        <>
-          <Button type="primary" disabled={busy || refreshing} onClick={search}>
-            {t('common.query')}
-          </Button>
-          <Button
-            loading={refreshing}
-            disabled={busy && (!recovering || !recoveryRetryable)}
-            onClick={() => void refresh()}
-          >
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button
+          loading={refreshing}
+          disabled={busy && (!recovering || !recoveryRetryable)}
+          onClick={() => void refresh()}
+        >
+          {t('common.refresh')}
+        </Button>
       }
     />
   );

@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar } from '@/shared/operational-page';
-import styles from '../shared/alert-policy-page.module.css';
+import { OperationalCommandBar, OperationalSearchControl } from '@/shared/operational-page';
 
 export function AlertGroupToolbar({
   refreshing,
@@ -40,25 +39,19 @@ export function AlertGroupToolbar({
       role="search"
       ariaLabel={t('alertGroups.search')}
       primary={
-        <Input
-          className={styles.searchInput}
-          aria-label={t('alertGroups.search')}
-          allowClear
+        <OperationalSearchControl
+          ariaLabel={t('alertGroups.search')}
           value={search}
           placeholder={t('alertGroups.search')}
-          onChange={event => setSearch(event.target.value)}
-          onPressEnter={submitSearch}
+          submitLabel={t('common.query')}
+          onChange={setSearch}
+          onSubmit={submitSearch}
         />
       }
       secondary={
-        <>
-          <Button type="primary" onClick={submitSearch}>
-            {t('common.query')}
-          </Button>
-          <Button loading={refreshing} onClick={() => void refresh()}>
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button loading={refreshing} onClick={() => void refresh()}>
+          {t('common.refresh')}
+        </Button>
       }
     />
   );

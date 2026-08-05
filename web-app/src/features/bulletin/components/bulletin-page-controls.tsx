@@ -1,9 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input, Space } from 'antd';
+import { Button, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalPageHeader, OperationalSearchControl } from '@/shared/operational-page';
 
 import type { BulletinActionCapabilities } from '../model/bulletin-action-capability';
 import type { BulletinRefreshChoice, BulletinRefreshSeconds } from '../model/bulletin-refresh-model';
@@ -74,19 +74,18 @@ function BulletinToolbar({
       role="search"
       ariaLabel={t('bulletin.search')}
       primary={
-        <Input
+        <OperationalSearchControl
+          ariaLabel={t('bulletin.search')}
           value={search}
           placeholder={t('bulletin.search')}
+          submitLabel={t('common.query')}
           disabled={commandActive}
-          onChange={event => actions.setSearch(event.target.value)}
-          onPressEnter={actions.submitSearch}
+          onChange={actions.setSearch}
+          onSubmit={actions.submitSearch}
         />
       }
       secondary={
         <Space wrap>
-          <Button type="primary" disabled={commandActive} onClick={actions.submitSearch}>
-            {t('common.query')}
-          </Button>
           <Button loading={refreshing} disabled={commandActive} onClick={() => void actions.refresh()}>
             {t('common.refresh')}
           </Button>

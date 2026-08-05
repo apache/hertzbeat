@@ -31,7 +31,7 @@ describe('alert query toolbars', () => {
     ['inhibitions', inhibitToolbar()],
     ['silences', silenceToolbar()],
     ['rules', ruleToolbar()]
-  ])('keeps %s filters flexible while query actions stay in the compact action rail', (_name, toolbar) => {
+  ])('keeps %s search and query together while refresh stays in the action rail', (_name, toolbar) => {
     const { container } = renderWithI18n(toolbar);
     const commandBar = requireHtmlElement(
       container.querySelector('[data-hb-operational-command-bar]'),
@@ -44,7 +44,8 @@ describe('alert query toolbars', () => {
     );
 
     expect(within(primary).getByRole('textbox')).toBeInTheDocument();
-    expect(within(secondary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(primary).getByRole('button', { name: i18n.t('common.query') })).toBeInTheDocument();
+    expect(within(secondary).queryByRole('button', { name: i18n.t('common.query') })).not.toBeInTheDocument();
     expect(within(secondary).getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
   });
 });

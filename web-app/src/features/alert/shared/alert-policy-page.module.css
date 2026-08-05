@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-.searchInput {
-  max-width: 480px;
-}
 .managementContext {
   display: flex;
   align-items: flex-start;

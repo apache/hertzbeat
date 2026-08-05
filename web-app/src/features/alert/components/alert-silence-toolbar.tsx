@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar } from '@/shared/operational-page';
-import styles from '../shared/alert-policy-page.module.css';
+import { OperationalCommandBar, OperationalSearchControl } from '@/shared/operational-page';
 
 export function AlertSilenceToolbar({
   search,
@@ -40,25 +39,19 @@ export function AlertSilenceToolbar({
       role="search"
       ariaLabel={t('alertSilences.search')}
       primary={
-        <Input
-          className={styles.searchInput}
-          aria-label={t('alertSilences.search')}
-          allowClear
+        <OperationalSearchControl
+          ariaLabel={t('alertSilences.search')}
           value={search}
           placeholder={t('alertSilences.search')}
-          onChange={event => setSearch(event.target.value)}
-          onPressEnter={submit}
+          submitLabel={t('common.query')}
+          onChange={setSearch}
+          onSubmit={submit}
         />
       }
       secondary={
-        <>
-          <Button type="primary" onClick={submit}>
-            {t('common.query')}
-          </Button>
-          <Button disabled={refreshing} onClick={refresh}>
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button disabled={refreshing} onClick={refresh}>
+          {t('common.refresh')}
+        </Button>
       }
     />
   );

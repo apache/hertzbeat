@@ -5,10 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalStatePanel } from '@/shared/operational-page';
+import { OperationalCommandBar, OperationalSearchControl, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { StatusIncident } from '../model/status-management-contract';
 import type { StatusIncidentCollectionState } from '../model/status-management-model';
@@ -66,26 +66,20 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
         role="search"
         ariaLabel={t('statusManagement.searchIncidents')}
         primary={
-          <Input
-            className={styles.searchInput}
-            aria-label={t('statusManagement.searchIncidents')}
-            allowClear
+          <OperationalSearchControl
+            ariaLabel={t('statusManagement.searchIncidents')}
             disabled={props.commandLocked}
             value={props.draftSearch}
             placeholder={t('statusManagement.searchIncidents')}
-            onChange={event => props.onDraftSearch(event.target.value)}
-            onPressEnter={props.onQuery}
+            submitLabel={t('common.query')}
+            onChange={props.onDraftSearch}
+            onSubmit={props.onQuery}
           />
         }
         secondary={
-          <>
-            <Button type="primary" disabled={props.commandLocked} onClick={props.onQuery}>
-              {t('common.query')}
-            </Button>
-            <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
-              {t('common.refresh')}
-            </Button>
-          </>
+          <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
+            {t('common.refresh')}
+          </Button>
         }
       />
       {props.deleteRecovery && (

@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-.searchInput {
-  max-width: 480px;
-}
 .name {
   display: grid;
   min-width: 0;

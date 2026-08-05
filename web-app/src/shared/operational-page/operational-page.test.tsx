@@ -5,8 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   OperationalCommandBar,
@@ -17,6 +17,7 @@ import {
   OperationalSection,
   OperationalStatePanel
 } from './operational-page';
+import { OperationalSearchControl } from './operational-search-control';
 import operationalPageStyles from './operational-page.module.css?raw';
 
 describe('OperationalPage', () => {
@@ -134,5 +135,29 @@ describe('OperationalPage', () => {
     expect(operationalPageStyles).toMatch(
       /\.commandBar\[role='search'\][\s\S]*?\.commandPrimary\s*>[\s\S]*?width:\s*min\(480px,\s*100%\);/
     );
+  });
+
+  it('keeps search input and its explicit submit action in one compact control', () => {
+    const change = vi.fn();
+    const submit = vi.fn();
+    render(
+      <OperationalSearchControl
+        ariaLabel="Search boards"
+        placeholder="Search boards"
+        submitLabel="Query"
+        value=""
+        onChange={change}
+        onSubmit={submit}
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Search boards' });
+    fireEvent.change(input, { target: { value: 'mysql' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+
+    expect(change).toHaveBeenCalledWith('mysql');
+    expect(submit).toHaveBeenCalledTimes(2);
+    expect(operationalPageStyles).toMatch(/\.searchControl\s*\{[^}]*width:\s*min\(480px,\s*100%\);/s);
   });
 });

@@ -5,12 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Dropdown, Input, Popconfirm, Space } from 'antd';
+import { Alert, Button, Dropdown, Popconfirm, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operational-page/operational-page';
+import { OperationalCommandBar, OperationalPageHeader, OperationalSearchControl } from '@/shared/operational-page';
 import { alertRuleExportFormats, type AlertRuleExportFormat } from '../model/alert-rule-export-model';
-import styles from '../shared/alert-rule-list.module.css';
 
 type AlertRuleListHeadingProps = {
   busy: boolean;
@@ -132,26 +131,20 @@ export function AlertRuleListToolbar({
       role="search"
       ariaLabel={t('alertRules.search')}
       primary={
-        <Input
-          className={styles.searchInput}
-          aria-label={t('alertRules.search')}
-          allowClear
+        <OperationalSearchControl
+          ariaLabel={t('alertRules.search')}
           value={search}
           placeholder={t('alertRules.search')}
+          submitLabel={t('common.query')}
           disabled={busy}
-          onChange={event => setSearch(event.target.value)}
-          onPressEnter={submitSearch}
+          onChange={setSearch}
+          onSubmit={submitSearch}
         />
       }
       secondary={
-        <>
-          <Button type="primary" disabled={busy} onClick={submitSearch}>
-            {t('common.query')}
-          </Button>
-          <Button loading={refreshing} disabled={busy && !recovering} onClick={() => void refresh()}>
-            {t('common.refresh')}
-          </Button>
-        </>
+        <Button loading={refreshing} disabled={busy && !recovering} onClick={() => void refresh()}>
+          {t('common.refresh')}
+        </Button>
       }
     />
   );
