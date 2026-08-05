@@ -6,6 +6,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { ExactTimeWindow } from '@/shared/query-context';
 import type { TopologyGraph } from '../model/topology-contract';
 import { TopologyContractError } from '../model/topology-model';
@@ -73,6 +74,30 @@ describe('topology page controller evidence and time scope', () => {
     api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1']));
     const ready = renderController('/topology');
     await waitFor(() => expect(ready.current().state.evidence.kind).toBe('ready'));
+  });
+
+  it('distinguishes global no-evidence from a constrained no-result scope', async () => {
+    api.loadTopologyGraph.mockResolvedValue(topologyGraph([]));
+    const global = renderController('/topology');
+    await waitFor(() => expect(global.current().state.evidence).toMatchObject({ kind: 'empty', scope: 'global' }));
+    global.unmount();
+
+    const constrained = renderController('/topology?focusEntityId=7&environment=prod&sourceKind=otel');
+    await waitFor(() =>
+      expect(constrained.current().state.evidence).toMatchObject({ kind: 'empty', scope: 'filtered' })
+    );
+  });
+
+  it('owns the central resource discovery and telemetry intake destinations', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+
+    act(() => view.current().actions.discoverResources());
+    await waitFor(() => expect(view.router.state.location.pathname).toBe(entityRoutePaths.discovery));
+    await act(() => view.router.navigate('/topology'));
+    act(() => view.current().actions.configureTelemetry());
+    await waitFor(() => expect(view.router.state.location.pathname).toBe(applicationRoutePaths.instrumentation));
+    view.unmount();
   });
 
   it('keeps an empty partial edge page ready so the operator can return to previous evidence', async () => {

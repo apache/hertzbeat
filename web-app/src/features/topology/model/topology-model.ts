@@ -87,6 +87,26 @@ export function changeTopologyScope(query: TopologyQuery, patch: TopologyScopePa
   };
 }
 
+export function hasTopologyScopeRestrictions(query: TopologyQuery) {
+  return (
+    query.focusEntityId !== undefined ||
+    query.environment !== undefined ||
+    query.sourceKind !== undefined ||
+    query.relationType !== undefined ||
+    query.hideInternal === true
+  );
+}
+
+export function clearTopologyScopePatch(): TopologyScopePatch {
+  return {
+    focusEntityId: undefined,
+    environment: undefined,
+    sourceKind: undefined,
+    relationType: undefined,
+    hideInternal: undefined
+  };
+}
+
 export function changeTopologyPage(query: TopologyQuery, pageIndex: number, pageSize: number): TopologyQuery {
   return { ...query, pageIndex, pageSize };
 }

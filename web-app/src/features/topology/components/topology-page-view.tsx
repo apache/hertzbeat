@@ -12,6 +12,7 @@ import type { TopologyPresentation } from '../model/topology-view-model';
 import type { TopologyCanvasHandle, TopologyCanvasRuntimeState } from './topology-canvas';
 import { TopologyContextBand } from './topology-context-band';
 import { TopologyInspector } from './topology-detail-rail';
+import { TopologyEmptyEvidence } from './topology-empty-evidence';
 import { TopologyGraphColumn } from './topology-graph-column';
 import { TopologyReadyEvidence } from './topology-ready-evidence';
 import { useCompactTopologyInspector } from './use-compact-topology-inspector';
@@ -80,7 +81,7 @@ function TopologyEvidence(props: TopologyPageViewProps) {
     return <OperationalStatePanel kind="loading" title={t('topology.evidence.loading')} />;
   }
   if (state.evidence.kind === 'empty') {
-    return <OperationalStatePanel kind="empty" title={t('topology.evidence.empty')} />;
+    return <TopologyEmptyEvidence {...props} scope={state.evidence.scope} />;
   }
   if (state.evidence.kind !== 'ready') {
     const recoverable = state.evidence.kind === 'unavailable' || state.evidence.kind === 'error';

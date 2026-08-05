@@ -82,6 +82,13 @@
     "evidence": {
       "loading": "Carregando evidências de topologia…",
       "empty": "Nenhuma evidência de topologia corresponde a este escopo.",
+      "emptyGlobal": "Nenhuma relação entre recursos foi encontrada.",
+      "emptyGlobalDescription": "Descubra recursos ou conecte dados de telemetria e depois atualize esta visualização.",
+      "emptyFiltered": "Nenhuma relação corresponde aos filtros atuais.",
+      "emptyFilteredDescription": "Limpe os filtros para ver todas as evidências de relacionamento disponíveis.",
+      "clearScope": "Limpar filtros e ver tudo",
+      "discoverResources": "Descobrir recursos",
+      "configureTelemetry": "Configurar ingestão de telemetria",
       "permission": "Você não tem permissão para ver as evidências de topologia.",
       "unavailable": "As evidências de topologia estão temporariamente indisponíveis.",
       "contract": "O contrato da consulta ou resposta de topologia é inválido.",

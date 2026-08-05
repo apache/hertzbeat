@@ -7,7 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { TopologyGraph } from '../model/topology-contract';
-import { entityRelationTopologySource } from '../model/topology-model';
+import { clearTopologyScopePatch, entityRelationTopologySource } from '../model/topology-model';
 import type { TopologyCanvasProps, TopologyCanvasRuntimeState } from './topology-canvas';
 import {
   buildTopologyPresentation,
@@ -56,14 +56,81 @@ describe('TopologyPageView evidence', () => {
   it.each(['loading', 'empty', 'permission', 'unavailable', 'contract', 'error'] as const)(
     'renders %s as distinct non-ready evidence',
     kind => {
-      renderView({ evidence: kind === 'empty' ? { kind, presentation } : { kind } });
-      expect(screen.getByText(i18n.t(`topology.evidence.${kind}`)).closest('[data-state]')).toHaveAttribute(
+      renderView({ evidence: kind === 'empty' ? { kind, scope: 'global', presentation } : { kind } });
+      const evidenceKey = kind === 'empty' ? 'emptyGlobal' : kind;
+      expect(screen.getByText(i18n.t(`topology.evidence.${evidenceKey}`)).closest('[data-state]')).toHaveAttribute(
         'data-state',
         expectedTopologyState(kind)
       );
       expect(screen.queryByTestId('topology-canvas')).not.toBeInTheDocument();
+      if (kind === 'permission') expect(screen.queryByRole('button')).not.toBeInTheDocument();
     }
   );
+
+  it('keeps global no-evidence actionable without presenting it as a fault', () => {
+    const onRefresh = vi.fn();
+    const discoverResources = vi.fn();
+    const configureTelemetry = vi.fn();
+    render(
+      renderContent({
+        state: {
+          ...baseState,
+          evidence: { kind: 'empty', scope: 'global', presentation: emptyPresentation }
+        },
+        actions: { ...baseActions, discoverResources, configureTelemetry },
+        onRefresh
+      })
+    );
+
+    const panel = screen.getByText(i18n.t('topology.evidence.emptyGlobal')).closest('[data-state]');
+    expect(panel).toHaveAttribute('data-state', 'empty');
+    const discover = screen.getByRole('button', { name: i18n.t('topology.evidence.discoverResources') });
+    const refresh = screen.getByRole('button', { name: i18n.t('common.refresh') });
+    const configure = screen.getByRole('button', { name: i18n.t('topology.evidence.configureTelemetry') });
+    expect(discover).toHaveClass('ant-btn-primary');
+    expect(refresh).toHaveClass('ant-btn-link');
+    expect(configure).toHaveClass('ant-btn-link');
+    fireEvent.click(refresh);
+    fireEvent.click(discover);
+    fireEvent.click(configure);
+    expect(onRefresh).toHaveBeenCalledOnce();
+    expect(discoverResources).toHaveBeenCalledOnce();
+    expect(configureTelemetry).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: i18n.t('topology.evidence.clearScope') })).not.toBeInTheDocument();
+  });
+
+  it('clears every invalidating filter from a constrained empty scope through changeScope', () => {
+    const changeScope = vi.fn();
+    render(
+      renderContent({
+        state: {
+          ...baseState,
+          query: {
+            depth: 2,
+            focusEntityId: 7,
+            environment: 'prod',
+            sourceKind: 'otel',
+            relationType: 'calls',
+            hideInternal: true,
+            pageIndex: 3,
+            pageSize: 25
+          },
+          evidence: { kind: 'empty', scope: 'filtered', presentation: emptyPresentation }
+        },
+        actions: { ...baseActions, changeScope }
+      })
+    );
+
+    expect(screen.getByText(i18n.t('topology.evidence.emptyFiltered'))).toBeInTheDocument();
+    const clearScope = screen.getByRole('button', { name: i18n.t('topology.evidence.clearScope') });
+    expect(clearScope).toHaveClass('ant-btn-primary');
+    expect(screen.getByRole('button', { name: i18n.t('common.refresh') })).toHaveClass('ant-btn-link');
+    expect(screen.getByRole('button', { name: i18n.t('topology.evidence.configureTelemetry') })).toHaveClass(
+      'ant-btn-link'
+    );
+    fireEvent.click(clearScope);
+    expect(changeScope).toHaveBeenCalledWith(clearTopologyScopePatch());
+  });
 
   it('keeps an unavailable trace source recoverable through retry or catalog relations', () => {
     const changeScope = vi.fn();
@@ -485,6 +552,15 @@ function expectedTopologyState(kind: 'loading' | 'empty' | 'permission' | 'unava
 }
 
 const presentation = buildTopologyPresentation(topologyGraph());
+const emptyPresentation = buildTopologyPresentation({
+  ...topologyGraph(),
+  focusEntityId: null,
+  sourceKinds: [],
+  nodes: [],
+  edges: [],
+  edgePage: { pageIndex: 0, pageSize: 25, totalElements: 0, hasNext: false },
+  impactTimeline: []
+});
 
 function renderLinkedView(patch: Partial<TopologyPageViewProps> = {}) {
   function Harness() {
@@ -581,6 +657,8 @@ const baseActions: TopologyPageViewProps['actions'] = {
   changePage: () => undefined,
   clearSelection: () => undefined,
   clearHover: () => undefined,
+  configureTelemetry: () => undefined,
+  discoverResources: () => undefined,
   drilldown: () => undefined,
   hoverEdge: () => undefined,
   hoverNode: () => undefined,

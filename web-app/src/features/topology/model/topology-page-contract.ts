@@ -8,7 +8,8 @@ import type { TopologyInteraction, TopologyMetricRow, TopologyPresentation } fro
 
 export type TopologyPageEvidence =
   | { kind: 'loading' | 'permission' | 'unavailable' | 'contract' | 'error' }
-  | { kind: 'empty' | 'ready'; presentation: TopologyPresentation };
+  | { kind: 'empty'; scope: 'global' | 'filtered'; presentation: TopologyPresentation }
+  | { kind: 'ready'; presentation: TopologyPresentation };
 
 export type TopologyPageState = {
   query?: TopologyQuery;
@@ -23,6 +24,8 @@ export type TopologyPageActions = {
   changePage: (pageIndex: number, pageSize: number) => void;
   clearHover: () => void;
   clearSelection: () => void;
+  configureTelemetry: () => void;
+  discoverResources: () => void;
   drilldown: (row: TopologyMetricRow) => void;
   hoverEdge: (edgeId: string) => void;
   hoverNode: (nodeId: string) => void;

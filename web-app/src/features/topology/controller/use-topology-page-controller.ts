@@ -4,12 +4,14 @@ import { skipToken, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { ExactTimeWindow } from '@/shared/query-context';
 
 import { classifyTopologyError, loadTopologyGraph } from '../api/topology-api';
 import {
   changeTopologyPage,
   changeTopologyScope,
+  hasTopologyScopeRestrictions,
   parseTopologyQuery,
   withTopologyPageDefaults,
   writeTopologyQuery,
@@ -51,6 +53,8 @@ export function useTopologyPageController(options: ControllerOptions = {}): Topo
     state: topologyPageState(request?.query, presentation, interaction.interaction, result.isFetching, failure),
     actions: {
       ...interaction.actions,
+      configureTelemetry: () => void navigate(applicationRoutePaths.instrumentation),
+      discoverResources: () => void navigate(entityRoutePaths.discovery),
       openEntity: entityId =>
         void navigate(buildTopologyEntityPath(entityId, `${location.pathname}${location.search}`)),
       querySignals: (node, window) => {
@@ -137,7 +141,7 @@ function topologyPageState(
 ): TopologyPageState {
   return {
     ...(query ? { query } : {}),
-    evidence: resolveTopologyEvidence(Boolean(query), failure, presentation),
+    evidence: resolveTopologyEvidence(query, failure, presentation),
     interaction,
     refreshing: fetching && presentation !== undefined,
     ...(failure && presentation ? { refreshFailure: failure } : {})
@@ -145,14 +149,17 @@ function topologyPageState(
 }
 
 function resolveTopologyEvidence(
-  valid: boolean,
+  query: TopologyQuery | undefined,
   failure: TopologyFailure | undefined,
   presentation: TopologyPresentation | undefined
 ): TopologyPageEvidence {
-  if (!valid) return { kind: 'contract' };
+  if (!query) return { kind: 'contract' };
   if (presentation) {
     const empty = presentation.graph.nodes.length === 0 && presentation.graph.edges.length === 0;
-    return { kind: empty && !presentation.summary.partial ? 'empty' : 'ready', presentation };
+    if (empty && !presentation.summary.partial) {
+      return { kind: 'empty', scope: hasTopologyScopeRestrictions(query) ? 'filtered' : 'global', presentation };
+    }
+    return { kind: 'ready', presentation };
   }
   if (failure) return { kind: failure.kind };
   return { kind: 'loading' };

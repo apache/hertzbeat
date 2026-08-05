@@ -82,6 +82,13 @@
     "evidence": {
       "loading": "正在加载拓扑证据…",
       "empty": "当前范围没有匹配的拓扑证据。",
+      "emptyGlobal": "尚未发现资源关系。",
+      "emptyGlobalDescription": "可先发现资源或接入遥测数据，然后刷新此视图。",
+      "emptyFiltered": "当前筛选条件下没有匹配的资源关系。",
+      "emptyFilteredDescription": "清除筛选后可查看全部可用关系证据。",
+      "clearScope": "清除筛选并查看全部",
+      "discoverResources": "发现资源",
+      "configureTelemetry": "配置遥测接入",
       "permission": "你没有查看拓扑证据的权限。",
       "unavailable": "拓扑证据暂不可用。",
       "contract": "拓扑查询或响应契约无效。",

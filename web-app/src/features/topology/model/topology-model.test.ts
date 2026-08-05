@@ -2,7 +2,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { changeTopologyScope, TopologyContractError, parseTopologyQuery, writeTopologyQuery } from './topology-model';
+import {
+  changeTopologyScope,
+  clearTopologyScopePatch,
+  hasTopologyScopeRestrictions,
+  TopologyContractError,
+  parseTopologyQuery,
+  withTopologyPageDefaults,
+  writeTopologyQuery
+} from './topology-model';
 
 describe('topology query model', () => {
   it('parses every explicit backend input and reuses an exact complete time window', () => {
@@ -33,6 +41,32 @@ describe('topology query model', () => {
     const query = parseTopologyQuery(new URLSearchParams('environment=%20&sourceKind=&relationType=%20'));
     expect(query).toEqual({ depth: 1 });
     expect(writeTopologyQuery(query).toString()).toBe('depth=1');
+  });
+
+  it('applies the bounded first edge page before every ordinary request', () => {
+    expect(withTopologyPageDefaults({ depth: 1 })).toEqual({ depth: 1, pageIndex: 0, pageSize: 25 });
+  });
+
+  it('distinguishes constrained empty scopes and clears every result-limiting field canonically', () => {
+    const constrained = {
+      depth: 2 as const,
+      focusEntityId: 7,
+      environment: 'prod',
+      sourceKind: 'otel',
+      relationType: 'calls',
+      hideInternal: true,
+      pageIndex: 4,
+      pageSize: 50
+    };
+
+    expect(hasTopologyScopeRestrictions({ depth: 1, pageIndex: 0, pageSize: 25 })).toBe(false);
+    expect(hasTopologyScopeRestrictions({ depth: 1, hideInternal: false, pageIndex: 0, pageSize: 25 })).toBe(false);
+    expect(hasTopologyScopeRestrictions(constrained)).toBe(true);
+    expect(changeTopologyScope(constrained, clearTopologyScopePatch())).toEqual({
+      depth: 2,
+      pageIndex: 0,
+      pageSize: 50
+    });
   });
 
   it('removes cleared optional scope fields instead of retaining undefined properties', () => {

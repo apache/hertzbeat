@@ -82,6 +82,13 @@
     "evidence": {
       "loading": "Loading topology evidence…",
       "empty": "No topology evidence matches this scope.",
+      "emptyGlobal": "No resource relationships were found.",
+      "emptyGlobalDescription": "Discover resources or connect telemetry data, then refresh this view.",
+      "emptyFiltered": "No relationships match the current filters.",
+      "emptyFilteredDescription": "Clear the filters to view all available relationship evidence.",
+      "clearScope": "Clear filters and view all",
+      "discoverResources": "Discover resources",
+      "configureTelemetry": "Configure telemetry intake",
       "permission": "You do not have permission to view topology evidence.",
       "unavailable": "Topology evidence is temporarily unavailable.",
       "contract": "The topology query or response contract is invalid.",

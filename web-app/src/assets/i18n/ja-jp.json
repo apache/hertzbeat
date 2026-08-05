@@ -82,6 +82,13 @@
     "evidence": {
       "loading": "トポロジー証拠を読み込んでいます…",
       "empty": "この範囲に一致するトポロジー証拠はありません。",
+      "emptyGlobal": "リソース関係が見つかりませんでした。",
+      "emptyGlobalDescription": "リソースを検出するかテレメトリデータを接続してから、この画面を更新してください。",
+      "emptyFiltered": "現在のフィルターに一致する関係はありません。",
+      "emptyFilteredDescription": "フィルターを解除すると、利用可能な関係の証拠をすべて確認できます。",
+      "clearScope": "フィルターを解除してすべて表示",
+      "discoverResources": "リソースを検出",
+      "configureTelemetry": "テレメトリ取り込みを設定",
       "permission": "トポロジー証拠を表示する権限がありません。",
       "unavailable": "トポロジー証拠は一時的に利用できません。",
       "contract": "トポロジーのクエリまたは応答契約が無効です。",

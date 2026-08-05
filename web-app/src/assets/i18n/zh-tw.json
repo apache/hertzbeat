@@ -82,6 +82,13 @@
     "evidence": {
       "loading": "正在載入拓撲證據…",
       "empty": "目前範圍沒有相符的拓撲證據。",
+      "emptyGlobal": "尚未發現資源關係。",
+      "emptyGlobalDescription": "可先探索資源或接入遙測資料，然後重新整理此檢視。",
+      "emptyFiltered": "目前篩選條件下沒有相符的資源關係。",
+      "emptyFilteredDescription": "清除篩選後可查看全部可用關係證據。",
+      "clearScope": "清除篩選並查看全部",
+      "discoverResources": "探索資源",
+      "configureTelemetry": "設定遙測接入",
       "permission": "你沒有查看拓撲證據的權限。",
       "unavailable": "拓撲證據暫時無法使用。",
       "contract": "拓撲查詢或回應契約無效。",
