@@ -28,6 +28,7 @@
   --hb-form-row-width: calc(var(--hb-form-control-offset) + var(--hb-form-control-width));
   --hb-form-rail-width: 720px;
   max-width: 840px;
+  margin-inline: auto;
 }
 
 .header {

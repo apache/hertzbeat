@@ -116,6 +116,12 @@ describe('OperationalPage', () => {
     expect(actions).toContainElement(screen.getByRole('button', { name: 'Cancel' }));
   });
 
+  it('centers the bounded form workspace inside the available content area', () => {
+    expect(operationalPageStyles).toMatch(
+      /\.page\[data-mode='form'\]\s*\{[^}]*max-width:\s*840px;[^}]*margin-inline:\s*auto;/s
+    );
+  });
+
   it('lets wide result children shrink so their own table scroller and fixed columns stay in the viewport', () => {
     expect(operationalPageStyles).toMatch(/\.resultRegion\s*>\s*\*\s*\{[^}]*min-width:\s*0;/s);
   });
