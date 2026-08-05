@@ -18,9 +18,29 @@ export function legacyRedirectTarget(
   const targetPath = getAppRoute(definition.targetRouteId).path;
   const sanitized = safeRedirectTarget(`${targetPath}${search}${hash}`) ?? targetPath;
   const { pathname, search: safeSearch, hash: safeHash } = splitLocalTarget(sanitized);
-  const resolvedPathname = resolveTargetPath(pathname, definition, routeParams);
-  const mergedSearch = mergeFixedSearch(safeSearch, definition.fixedSearch);
+  const compatibility = resolveCompatibilityTarget(definition, pathname, safeSearch);
+  const resolvedPathname = resolveTargetPath(compatibility.pathname, definition, routeParams);
+  const mergedSearch = mergeFixedSearch(compatibility.search, definition.fixedSearch);
   return `${resolvedPathname}${mergedSearch}${safeHash}`;
+}
+
+const noticeTabTargets = {
+  receiver: 'notice-receivers',
+  receivers: 'notice-receivers',
+  rule: 'notice-rules',
+  rules: 'notice-rules',
+  template: 'notice-templates',
+  templates: 'notice-templates'
+} as const;
+
+function resolveCompatibilityTarget(definition: LegacyRouteDefinition, pathname: string, search: string) {
+  if (definition.id !== 'legacy-alert-notice') return { pathname, search };
+  const params = new URLSearchParams(search);
+  const tab = params.get('tab')?.trim().toLowerCase() ?? '';
+  params.delete('tab');
+  const routeId = noticeTabTargets[tab as keyof typeof noticeTabTargets] ?? 'notice-receivers';
+  const value = params.toString();
+  return { pathname: getAppRoute(routeId).path, search: value ? `?${value}` : '' };
 }
 
 function resolveTargetPath(

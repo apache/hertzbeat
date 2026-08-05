@@ -2,29 +2,35 @@
 
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
+import {
+  NotificationWorkspaceNavigation,
+  notificationListStatus,
+  notificationWorkspacePath
+} from '@/shared/notification-workspace';
 
 import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
 import { NoticeRuleTable } from '../components/notice-rule-table';
-import { NoticeRuleToolbar } from '../components/notice-rule-toolbar';
+import { NoticeRuleHeading, NoticeRuleToolbar } from '../components/notice-rule-toolbar';
 import { NoticeRuleRecovery } from '../components/notice-rule-recovery';
 import { useNoticeRuleController } from '../controller/notice-rule-controller';
 
 type OptionKind = 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
 
-function optionAlert(kind: OptionKind) {
+function optionAlert(kind: OptionKind, missingPrerequisite: 'receivers' | null) {
   if (kind === 'ready' || kind === 'loading') return null;
   const type = kind === 'empty' ? 'info' : 'warning';
-  return { messageKey: `noticeRules.options.${kind}`, type } as const;
+  return { messageKey: `noticeRules.options.${kind}`, missingPrerequisite, type } as const;
 }
 
 export function NoticeRulePage() {
   const { t } = useTranslation();
   const controller = useNoticeRuleController();
   const { state, actions } = controller;
-  const alert = optionAlert(state.options.kind);
+  const alert = optionAlert(state.options.kind, state.options.missingPrerequisite);
   const busy = state.command !== 'idle';
   const dependenciesReady = state.options.kind === 'ready';
   const editorRecovery =
@@ -38,19 +44,35 @@ export function NoticeRulePage() {
   };
   return (
     <OperationalPage>
+      <NoticeRuleHeading
+        canCreate={state.capabilities.canCreate}
+        createDisabled={!dependenciesReady || busy || state.refreshing}
+        onCreate={actions.create}
+      />
+      <NotificationWorkspaceNavigation activeStep="rules" status={notificationListStatus(state.list)} />
       <NoticeRuleToolbar
         name={state.name}
-        canCreate={state.capabilities.canCreate}
         busy={busy}
         refreshing={state.refreshing}
-        createDisabled={!dependenciesReady || busy || state.refreshing}
         onNameChange={actions.setName}
         onQuery={actions.search}
         onRefresh={() => void actions.refresh()}
-        onCreate={actions.create}
       />
       <OperationalResultRegion>
-        {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
+        {alert ? (
+          <Alert
+            type={alert.type}
+            showIcon
+            message={t(alert.messageKey)}
+            action={
+              alert.missingPrerequisite ? (
+                <Link to={notificationWorkspacePath(alert.missingPrerequisite)}>
+                  {t(`noticeRules.options.action.${alert.missingPrerequisite}`)}
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : null}
         <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
         <NoticeRuleRecovery
           recovery={routeRecovery}

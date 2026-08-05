@@ -22,56 +22,63 @@ import { OperationalCommandBar, OperationalPageHeader } from '@/shared/operation
 
 type NoticeRuleToolbarProps = {
   name: string;
-  canCreate: boolean;
   busy: boolean;
   refreshing: boolean;
-  createDisabled: boolean;
   onNameChange: (value: string) => void;
   onQuery: () => void;
   onRefresh: () => void;
+};
+
+type NoticeRuleHeadingProps = {
+  canCreate: boolean;
+  createDisabled: boolean;
   onCreate: () => void;
 };
 
 export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
   const { t } = useTranslation();
   return (
-    <>
-      <OperationalPageHeader
-        title={t('noticeRules.title')}
-        description={t('noticeRules.description')}
-        actions={
-          props.canCreate ? (
-            <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
-              {t('noticeRules.new')}
-            </Button>
-          ) : undefined
-        }
-      />
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('noticeRules.search')}
-        primary={
-          <Input
-            allowClear
-            disabled={props.busy || props.refreshing}
-            value={props.name}
-            placeholder={t('noticeRules.search')}
-            aria-label={t('noticeRules.search')}
-            onChange={event => props.onNameChange(event.target.value)}
-            onPressEnter={props.onQuery}
-          />
-        }
-        secondary={
-          <>
-            <Button type="primary" disabled={props.busy || props.refreshing} onClick={props.onQuery}>
-              {t('common.query')}
-            </Button>
-            <Button disabled={props.busy} loading={props.refreshing} onClick={props.onRefresh}>
-              {t('common.refresh')}
-            </Button>
-          </>
-        }
-      />
-    </>
+    <OperationalCommandBar
+      role="search"
+      ariaLabel={t('noticeRules.search')}
+      primary={
+        <Input
+          allowClear
+          disabled={props.busy || props.refreshing}
+          value={props.name}
+          placeholder={t('noticeRules.search')}
+          aria-label={t('noticeRules.search')}
+          onChange={event => props.onNameChange(event.target.value)}
+          onPressEnter={props.onQuery}
+        />
+      }
+      secondary={
+        <>
+          <Button type="primary" disabled={props.busy || props.refreshing} onClick={props.onQuery}>
+            {t('common.query')}
+          </Button>
+          <Button disabled={props.busy} loading={props.refreshing} onClick={props.onRefresh}>
+            {t('common.refresh')}
+          </Button>
+        </>
+      }
+    />
+  );
+}
+
+export function NoticeRuleHeading({ canCreate, createDisabled, onCreate }: NoticeRuleHeadingProps) {
+  const { t } = useTranslation();
+  return (
+    <OperationalPageHeader
+      title={t('noticeRules.title')}
+      description={t('noticeRules.description')}
+      actions={
+        canCreate ? (
+          <Button type="primary" disabled={createDisabled} onClick={onCreate}>
+            {t('noticeRules.new')}
+          </Button>
+        ) : undefined
+      }
+    />
   );
 }

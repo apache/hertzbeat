@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { OperationalPage, OperationalResultRegion } from '@/shared/operational-page';
+import { NotificationWorkspaceNavigation, notificationListStatus } from '@/shared/notification-workspace';
 
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import {
@@ -19,6 +20,7 @@ export function NoticeReceiverPage() {
   return (
     <OperationalPage>
       <NoticeReceiverHeading busy={interactionBusy} canCreate={state.capabilities.canCreate} create={actions.create} />
+      <NotificationWorkspaceNavigation activeStep="receivers" status={notificationListStatus(state.list)} />
       <NoticeReceiverToolbar
         name={state.name}
         refreshing={state.refreshing}

@@ -35,6 +35,13 @@ describe('LegacyRouteRedirect', () => {
     ['/alert/center?status=pending', '/alerts?status=pending'],
     ['/alert/setting?search=latency', '/alerts/rules?search=latency'],
     ['/alert/notice?pageIndex=2', '/settings/notifications/receivers?pageIndex=2'],
+    ['/alert/notice?tab=receiver&pageIndex=2#notice', '/settings/notifications/receivers?pageIndex=2#notice'],
+    ['/alert/notice?tab=receivers&scope=team', '/settings/notifications/receivers?scope=team'],
+    ['/alert/notice?tab=rule&scope=team', '/settings/notifications/rules?scope=team'],
+    ['/alert/notice?tab=rules&scope=team', '/settings/notifications/rules?scope=team'],
+    ['/alert/notice?tab=template&scope=team', '/settings/notifications/templates?scope=team'],
+    ['/alert/notice?tab=templates&scope=team', '/settings/notifications/templates?scope=team'],
+    ['/alert/notice?tab=channels&scope=team', '/settings/notifications/receivers?scope=team'],
     ['/alert/silence?search=maintenance', '/alerts/silences?search=maintenance'],
     ['/alert/group?search=platform', '/alerts/groups?search=platform'],
     ['/alert/inhibit?search=dependency', '/alerts/inhibits?search=dependency'],
@@ -96,6 +103,16 @@ describe('LegacyRouteRedirect', () => {
     expect(
       JSON.stringify([...log.mock.calls, ...info.mock.calls, ...warn.mock.calls, ...error.mock.calls])
     ).not.toContain(secret);
+  });
+
+  it('sanitizes legacy notice secrets before applying its tab compatibility mapping', async () => {
+    renderLegacyRoutes('/alert/notice?tab=rules&scope=team&token=secret#?panel=list&authorization=secret');
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/settings/notifications/rules?scope=team#?panel=list')
+    );
+    expect(screen.getByTestId('location')).not.toHaveTextContent('secret');
+    expect(screen.getByTestId('location')).not.toHaveTextContent('tab=');
   });
 
   it('drops external redirect parameters while retaining sanitized local navigation context', async () => {

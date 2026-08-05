@@ -2079,6 +2079,26 @@
     "deleteSuccess": "Modelo excluído.",
     "deleteFailed": "Não foi possível excluir o modelo."
   },
+  "notificationWorkspace": {
+    "label": "Fluxo de configuração de notificações",
+    "title": "Configuração de notificações",
+    "description": "Configure as dependências de entrega em ordem e gerencie cada área separadamente.",
+    "steps": {
+      "channels": { "label": "Canais", "dependency": "Configure os serviços de entrega por e-mail e SMS." },
+      "receivers": { "label": "Destinatários", "dependency": "Adicione destinos que usam os canais configurados." },
+      "templates": { "label": "Modelos", "dependency": "Personalize opcionalmente as mensagens de um canal." },
+      "rules": { "label": "Regras", "dependency": "Direcione alertas para um ou mais destinatários." }
+    },
+    "status": {
+      "configured": "Configurado",
+      "empty": "Não configurado",
+      "loading": "Carregando",
+      "unavailable": "Indisponível",
+      "permission": "Restrito",
+      "unknown": "Status desconhecido",
+      "notLoaded": "Status não carregado"
+    }
+  },
   "noticeRules": {
     "title": "Regras de envio de notificação",
     "description": "Encaminhe alertas correspondentes para destinatários e modelos de mensagem.",
@@ -2120,7 +2140,8 @@
       "empty": "Crie um destinatário antes de criar uma regra de envio.",
       "invalid": "A resposta de destinatários ou modelos é inválida.",
       "unavailable": "Destinatários ou modelos estão temporariamente indisponíveis.",
-      "error": "Não foi possível carregar destinatários ou modelos."
+      "error": "Não foi possível carregar destinatários ou modelos.",
+      "action": { "receivers": "Configurar destinatários" }
     },
     "read": {
       "missing": "A regra de envio não existe mais.",

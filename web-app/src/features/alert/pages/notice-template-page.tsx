@@ -19,6 +19,7 @@ import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
+import { NotificationWorkspaceNavigation, notificationListStatus } from '@/shared/notification-workspace';
 
 import { NoticeTemplateOverlays } from '../components/notice-template-overlays';
 import { NoticeTemplateRecoveryAlert } from '../components/notice-template-recovery-alert';
@@ -53,6 +54,7 @@ export function NoticeTemplatePage() {
           ) : undefined
         }
       />
+      <NotificationWorkspaceNavigation activeStep="templates" status={notificationListStatus(state.list)} />
       <NoticeTemplateWorkspace
         controller={controller}
         busy={interactionBusy}

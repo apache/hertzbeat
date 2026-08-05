@@ -1,0 +1,97 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. */
+
+.workspace {
+  display: grid;
+  gap: 8px;
+  padding-block: 8px;
+  border-block: 1px solid var(--hb-border-subtle);
+}
+
+.introduction {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps a {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  height: 100%;
+  padding: 5px 8px;
+  border-left: 2px solid transparent;
+  color: var(--hb-text-primary);
+}
+
+.steps a:hover,
+.current a {
+  background: var(--hb-bg-canvas);
+}
+
+.current a {
+  border-left-color: var(--hb-brand-accent);
+}
+
+.index {
+  color: var(--hb-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.dependency {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.status {
+  margin: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 920px) {
+  .introduction {
+    display: grid;
+    gap: 2px;
+  }
+
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+}

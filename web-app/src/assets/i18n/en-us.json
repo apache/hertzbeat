@@ -2070,6 +2070,26 @@
     "deleteSuccess": "Template deleted.",
     "deleteFailed": "Template could not be deleted."
   },
+  "notificationWorkspace": {
+    "label": "Notification configuration workflow",
+    "title": "Notification setup",
+    "description": "Configure delivery dependencies in order, then maintain each area independently.",
+    "steps": {
+      "channels": { "label": "Channels", "dependency": "Provide email and SMS delivery services." },
+      "receivers": { "label": "Receivers", "dependency": "Add destinations that use configured channels." },
+      "templates": { "label": "Templates", "dependency": "Optionally customize messages for a channel." },
+      "rules": { "label": "Rules", "dependency": "Route alerts to one or more receivers." }
+    },
+    "status": {
+      "configured": "Configured",
+      "empty": "Not configured",
+      "loading": "Loading",
+      "unavailable": "Unavailable",
+      "permission": "Restricted",
+      "unknown": "Status unknown",
+      "notLoaded": "Status not loaded"
+    }
+  },
   "noticeRules": {
     "title": "Notification delivery rules",
     "description": "Route matching alerts to receivers and message templates.",
@@ -2111,7 +2131,8 @@
       "empty": "Create a receiver before authoring a delivery rule.",
       "invalid": "Receiver or template options returned an invalid response.",
       "unavailable": "Receiver or template options are temporarily unavailable.",
-      "error": "Receiver or template options could not be loaded."
+      "error": "Receiver or template options could not be loaded.",
+      "action": { "receivers": "Configure receivers" }
     },
     "read": {
       "missing": "The delivery rule no longer exists.",

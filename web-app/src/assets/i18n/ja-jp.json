@@ -2072,6 +2072,26 @@
     "deleteSuccess": "テンプレートを削除しました。",
     "deleteFailed": "テンプレートを削除できませんでした。"
   },
+  "notificationWorkspace": {
+    "label": "通知設定ワークフロー",
+    "title": "通知設定",
+    "description": "配信の依存関係を順番に設定し、各領域を個別に管理します。",
+    "steps": {
+      "channels": { "label": "チャネル", "dependency": "メールと SMS の配信サービスを設定します。" },
+      "receivers": { "label": "受信先", "dependency": "設定済みチャネルを使用する送信先を追加します。" },
+      "templates": { "label": "テンプレート", "dependency": "必要に応じてチャネルのメッセージを調整します。" },
+      "rules": { "label": "ルール", "dependency": "アラートを 1 つ以上の受信先へ配信します。" }
+    },
+    "status": {
+      "configured": "設定済み",
+      "empty": "未設定",
+      "loading": "読み込み中",
+      "unavailable": "利用不可",
+      "permission": "アクセス制限",
+      "unknown": "状態不明",
+      "notLoaded": "状態未読み込み"
+    }
+  },
   "noticeRules": {
     "title": "通知配信ルール",
     "description": "条件に一致するアラートを通知先とメッセージテンプレートに配信します。",
@@ -2113,7 +2133,8 @@
       "empty": "配信ルールを作成する前に通知先を作成してください。",
       "invalid": "通知先またはテンプレートの応答が不正です。",
       "unavailable": "通知先またはテンプレートを一時的に利用できません。",
-      "error": "通知先またはテンプレートを読み込めませんでした。"
+      "error": "通知先またはテンプレートを読み込めませんでした。",
+      "action": { "receivers": "通知先を設定" }
     },
     "read": {
       "missing": "配信ルールは存在しません。",

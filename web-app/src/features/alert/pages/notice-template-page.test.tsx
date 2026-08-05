@@ -88,6 +88,11 @@ describe('NoticeTemplatePage', () => {
     expect(screen.getByRole('region', { name: 'noticeTemplates.title' })).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspaceNavigation = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const templateWorkspace = screen.getByRole('region', { name: 'noticeTemplates.title' });
+    expect(workspaceNavigation).toHaveAttribute('data-active-step', 'templates');
+    expect(header.nextElementSibling).toBe(workspaceNavigation);
+    expect(workspaceNavigation.nextElementSibling).toBe(templateWorkspace);
   });
 
   it('delegates toolbar, row, and pagination interactions to the controller', async () => {

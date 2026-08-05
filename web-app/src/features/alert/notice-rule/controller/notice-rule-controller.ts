@@ -29,7 +29,7 @@ export function useNoticeRuleController() {
       draft: editor.draft,
       list: list.state,
       name: queryController.name,
-      options: { kind: options.kind },
+      options: { kind: options.kind, missingPrerequisite: options.missingPrerequisite },
       recovery: gate.recovery,
       query: queryController.query,
       receivers: options.receivers,

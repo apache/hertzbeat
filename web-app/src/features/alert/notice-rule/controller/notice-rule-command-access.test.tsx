@@ -190,6 +190,7 @@ function noticeRuleListFixture(): ReturnType<typeof useNoticeRuleList> {
 function noticeRuleOptionsFixture(): ReturnType<typeof useNoticeRuleOptions> {
   return {
     kind: 'ready',
+    missingPrerequisite: null,
     receivers: [receiver],
     templates: [template]
   };

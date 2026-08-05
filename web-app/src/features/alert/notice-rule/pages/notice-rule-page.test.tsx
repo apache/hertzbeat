@@ -1,9 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { requireDomElement } from '@/test/dom-element';
+import { settingsPaths } from '@/shared/settings/settings-routes';
 
 const controller = vi.hoisted(() => ({ useNoticeRuleController: vi.fn() }));
 vi.mock('../controller/notice-rule-controller', () => controller);
@@ -17,7 +19,7 @@ describe('notice rule page', () => {
   beforeEach(() => controller.useNoticeRuleController.mockReturnValue(view('invalid', 'ready')));
 
   it('uses the shared operational page header for title copy and create', () => {
-    render(<NoticeRulePage />);
+    renderPage();
 
     const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
     const header = requireDomElement(
@@ -31,36 +33,57 @@ describe('notice rule page', () => {
     );
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspace = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const command = requireDomElement(
+      document.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    expect(workspace).toHaveAttribute('data-active-step', 'rules');
+    expect(header.nextElementSibling).toBe(workspace);
+    expect(workspace.nextElementSibling).toBe(command);
   });
 
   it('renders invalid list evidence instead of a fake empty table', () => {
-    render(<NoticeRulePage />);
+    renderPage();
     expect(document.querySelector('[data-state="error"]')).toHaveTextContent('noticeRules.read.invalid');
     expect(screen.queryByText('noticeRules.empty')).not.toBeInTheDocument();
   });
 
   it('distinguishes a valid empty receiver dependency from storage failure', () => {
     controller.useNoticeRuleController.mockReturnValue(view('empty', 'empty'));
-    render(<NoticeRulePage />);
+    renderPage();
     expect(screen.getByText('noticeRules.options.empty')).toBeInTheDocument();
     expect(screen.getByText('noticeRules.empty')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'noticeRules.options.action.receivers' })).toHaveAttribute(
+      'href',
+      settingsPaths.receivers
+    );
   });
 
   it.each(['empty', 'invalid', 'unavailable', 'error'] as const)(
     'renders the %s option state distinctly and disables create',
     kind => {
       controller.useNoticeRuleController.mockReturnValue(view('empty', kind));
-      render(<NoticeRulePage />);
+      renderPage();
       expect(screen.getByText(`noticeRules.options.${kind}`)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeDisabled();
     }
   );
 
+  it('keeps invalid option evidence retry-oriented without inventing a missing prerequisite', () => {
+    const invalid = view('empty', 'invalid');
+    controller.useNoticeRuleController.mockReturnValue(invalid);
+    renderPage();
+
+    expect(screen.queryByRole('link', { name: 'noticeRules.options.action.receivers' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'noticeRules.options.action.templates' })).not.toBeInTheDocument();
+  });
+
   it('dispatches the next checked state from the list switch', () => {
     const ready = view('empty', 'ready');
     ready.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
     controller.useNoticeRuleController.mockReturnValue(ready);
-    render(<NoticeRulePage />);
+    renderPage();
     expect(screen.getByRole('columnheader', { name: 'noticeRules.enabled' })).toHaveClass('ant-table-cell-fix-right');
     expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
     fireEvent.click(screen.getByRole('switch'));
@@ -72,7 +95,7 @@ describe('notice rule page', () => {
     busy.state.command = 'deleting';
     busy.state.list = { kind: 'ready', records: [rule], total: 9 } as never;
     controller.useNoticeRuleController.mockReturnValue(busy);
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeDisabled();
     expect(screen.getByRole('switch')).toBeDisabled();
@@ -87,14 +110,14 @@ describe('notice rule page', () => {
     const loading = view('empty', 'ready');
     loading.state.list = { kind: 'loading' } as never;
     controller.useNoticeRuleController.mockReturnValue(loading);
-    const page = render(<NoticeRulePage />);
+    const page = renderPage();
 
     expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
     expect(document.querySelector('table')).not.toBeInTheDocument();
 
     loading.state.list = { kind: 'empty' } as never;
-    page.rerender(<NoticeRulePage />);
+    page.rerender(pageElement());
     expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeRules.empty');
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
@@ -104,7 +127,7 @@ describe('notice rule page', () => {
     refreshing.state.refreshing = true;
     controller.useNoticeRuleController.mockReturnValue(refreshing);
 
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
     expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
@@ -114,7 +137,7 @@ describe('notice rule page', () => {
     const unavailable = view('empty', 'unavailable');
     unavailable.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
     controller.useNoticeRuleController.mockReturnValue(unavailable);
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.getByText('noticeRules.options.unavailable')).toBeInTheDocument();
     expect(screen.getByRole('switch')).toBeDisabled();
@@ -126,7 +149,7 @@ describe('notice rule page', () => {
     const loading = view('empty', 'ready', { kind: 'loading', id: 31 });
     controller.useNoticeRuleController.mockReturnValue(loading);
 
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeRules.loading');
   });
@@ -137,7 +160,7 @@ describe('notice rule page', () => {
       const failed = view('empty', 'ready', { kind, id: 31 });
       controller.useNoticeRuleController.mockReturnValue(failed);
 
-      render(<NoticeRulePage />);
+      renderPage();
 
       expect(screen.getByText(`noticeRules.read.${kind}`)).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
@@ -176,7 +199,7 @@ function view(
       draft: null,
       list: { kind: list },
       name: '',
-      options: { kind: options },
+      options: { kind: options, missingPrerequisite: options === 'empty' ? ('receivers' as const) : null },
       recovery: undefined,
       query: { name: '', pageIndex: 0, pageSize: 8 },
       receivers: [],
@@ -201,4 +224,16 @@ function view(
       updateDraft: vi.fn()
     }
   };
+}
+
+function renderPage() {
+  return render(pageElement());
+}
+
+function pageElement() {
+  return (
+    <MemoryRouter>
+      <NoticeRulePage />
+    </MemoryRouter>
+  );
 }

@@ -16,9 +16,11 @@
  */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { requireDomElement } from '@/test/dom-element';
+import { settingsPaths } from '@/shared/settings/settings-routes';
 
 const controller = vi.hoisted<{ value: unknown }>(() => ({ value: undefined }));
 vi.mock('../controller/use-message-server-controller', () => ({ useMessageServerController: () => controller.value }));
@@ -32,7 +34,7 @@ describe('MessageServerPage', () => {
 
   it('owns title and description in a shared header without management actions', () => {
     controller.value = state({ kind: 'missing' }, { kind: 'missing' });
-    render(<MessageServerPage />);
+    renderPage();
 
     const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
     const header = requireDomElement(
@@ -43,11 +45,23 @@ describe('MessageServerPage', () => {
     expect(header).toContainElement(screen.getByRole('heading', { name: 'messageServer.title' }));
     expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspace = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const results = requireDomElement(
+      document.querySelector('[data-hb-operational-result-region]'),
+      'Operational result region'
+    );
+    expect(workspace).toHaveAttribute('data-active-step', 'channels');
+    expect(header.nextElementSibling).toBe(workspace);
+    expect(workspace.nextElementSibling).toBe(results);
+    expect(screen.getByRole('link', { name: /notificationWorkspace\.steps\.rules/ })).toHaveAttribute(
+      'href',
+      settingsPaths.rules
+    );
   });
 
   it('uses compact channel loading evidence instead of skeleton rows', () => {
     controller.value = state({ kind: 'loading' }, { kind: 'loading' });
-    render(<MessageServerPage />);
+    renderPage();
 
     expect(document.querySelectorAll('[data-state="loading"]')).toHaveLength(2);
     expect(document.querySelector('.ant-skeleton')).not.toBeInTheDocument();
@@ -55,7 +69,7 @@ describe('MessageServerPage', () => {
 
   it('keeps invalid email evidence distinct while the missing SMS channel remains usable', () => {
     controller.value = state({ kind: 'invalid' }, { kind: 'missing' });
-    render(<MessageServerPage />);
+    renderPage();
 
     expect(document.querySelector('[data-state="error"]')).toHaveTextContent('messageServer.read.invalid');
     expect(screen.queryByText('messageServer.read.unavailable')).not.toBeInTheDocument();
@@ -80,7 +94,7 @@ describe('MessageServerPage', () => {
       },
       { kind: 'missing' }
     );
-    render(<MessageServerPage />);
+    renderPage();
 
     expect(screen.getAllByText('messageServer.status.unconfigured')).toHaveLength(2);
     expect(screen.queryByText('messageServer.status.enabled')).not.toBeInTheDocument();
@@ -96,7 +110,7 @@ describe('MessageServerPage', () => {
       emailSaveRecoveryRetryable: true,
       provingEmail: true
     };
-    render(<MessageServerPage />);
+    renderPage();
 
     expect(screen.getByLabelText('messageServer.email.host')).toBeDisabled();
     expect(screen.getByRole('button', { name: /common\.retry/ })).toBeDisabled();
@@ -128,7 +142,7 @@ describe('MessageServerPage', () => {
       emailSaveRecovery: 'messageServer.read.unavailable',
       emailSaveRecoveryRetryable: true
     };
-    render(<MessageServerPage />);
+    renderPage();
 
     expect(screen.getByText('smtp.example.test:587 · ops@example.test')).toBeInTheDocument();
     expect(screen.getByTitle('smtp.example.test:587 · ops@example.test')).toHaveTextContent(
@@ -177,4 +191,12 @@ function state(email: unknown, sms: unknown) {
       submitSms: vi.fn()
     }
   };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <MessageServerPage />
+    </MemoryRouter>
+  );
 }

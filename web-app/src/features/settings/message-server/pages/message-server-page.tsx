@@ -18,6 +18,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { OperationalPage, OperationalPageHeader, OperationalResultRegion } from '@/shared/operational-page';
+import { NotificationWorkspaceNavigation, notificationChannelStatus } from '@/shared/notification-workspace';
 
 import { EmailServerEditor, SmsServerEditor } from '../components/message-server-editors';
 import { createMessageServerEditorRecovery } from '../components/message-server-editor-recovery';
@@ -31,6 +32,10 @@ export function MessageServerPage() {
   return (
     <OperationalPage>
       <OperationalPageHeader title={t('messageServer.title')} description={t('messageServer.description')} />
+      <NotificationWorkspaceNavigation
+        activeStep="channels"
+        status={notificationChannelStatus(controller.email.kind, controller.sms.kind)}
+      />
       <OperationalResultRegion>
         <div className={styles.channels}>
           <EmailServerChannelRow controller={controller} />

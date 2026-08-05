@@ -38,7 +38,8 @@ export function useNoticeRuleOptions() {
   });
   const failure = noticeRuleOptionFailure(receivers, templates);
   const kind = noticeRuleOptionKind(receivers.isPending, templates.isPending, receivers.data, failure);
-  return { kind, receivers: receivers.data ?? [], templates: templates.data ?? [] };
+  const missingPrerequisite: 'receivers' | null = kind === 'empty' ? 'receivers' : null;
+  return { kind, missingPrerequisite, receivers: receivers.data ?? [], templates: templates.data ?? [] };
 }
 
 function noticeRuleOptionFailure(

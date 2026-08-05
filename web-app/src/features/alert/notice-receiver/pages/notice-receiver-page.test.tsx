@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { requireDomElement } from '@/test/dom-element';
@@ -19,7 +20,7 @@ describe('NoticeReceiverPage', () => {
   afterEach(cleanup);
 
   it('uses the shared operational page header for title copy and create', () => {
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     const page = requireDomElement(document.querySelector('[data-hb-operational-page]'), 'Operational page');
     const header = requireDomElement(
@@ -33,6 +34,14 @@ describe('NoticeReceiverPage', () => {
     );
     expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
+    const workspace = screen.getByRole('navigation', { name: 'notificationWorkspace.label' });
+    const command = requireDomElement(
+      document.querySelector('[data-hb-operational-command-bar]'),
+      'Operational command bar'
+    );
+    expect(workspace).toHaveAttribute('data-active-step', 'receivers');
+    expect(header.nextElementSibling).toBe(workspace);
+    expect(workspace.nextElementSibling).toBe(command);
   });
 
   it.each([
@@ -43,7 +52,7 @@ describe('NoticeReceiverPage', () => {
     const current = view('ready', true);
     current.state.capabilities = capabilities;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.queryByRole('button', { name: 'noticeReceivers.new' }) !== null).toBe(showsEditorActions);
     expect(screen.queryByRole('button', { name: 'common.edit' }) !== null).toBe(showsEditorActions);
@@ -56,7 +65,7 @@ describe('NoticeReceiverPage', () => {
   it('renders storage unavailability distinctly instead of a fake empty table', () => {
     const current = view('unavailable');
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
     expect(document.querySelector('[data-state="unavailable"]')).toHaveTextContent('noticeReceivers.read.unavailable');
     expect(screen.queryByText('noticeReceivers.empty')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
@@ -65,7 +74,7 @@ describe('NoticeReceiverPage', () => {
 
   it('renders an honest empty state only for a successful empty list', () => {
     controller.useNoticeReceiverController.mockReturnValue(view('ready'));
-    render(<NoticeReceiverPage />);
+    renderPage();
     expect(document.querySelector('[data-state="empty"]')).toHaveTextContent('noticeReceivers.empty');
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
   });
@@ -74,7 +83,7 @@ describe('NoticeReceiverPage', () => {
     const current = view('ready');
     current.state.list = { kind: 'loading' } as never;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(document.querySelector('[data-state="loading"]')).toHaveTextContent('noticeReceivers.loading');
     expect(document.querySelector('table')).not.toBeInTheDocument();
@@ -85,7 +94,7 @@ describe('NoticeReceiverPage', () => {
     current.state.command = 'idle';
     current.state.busy = false;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByRole('columnheader', { name: 'common.actions' })).toHaveClass('ant-table-cell-fix-right');
     expect(document.querySelector('.ant-table-content')).toHaveStyle({ overflowX: 'auto' });
@@ -95,7 +104,7 @@ describe('NoticeReceiverPage', () => {
     const current = view('ready');
     current.state.refreshing = true;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: /common\.refresh/ })).toHaveClass('ant-btn-loading');
     expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
@@ -104,7 +113,7 @@ describe('NoticeReceiverPage', () => {
 
   it('disables draft-context commands synchronously while an operation owns the gate', () => {
     controller.useNoticeReceiverController.mockReturnValue(view('ready', true));
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: 'noticeReceivers.new' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
@@ -116,7 +125,7 @@ describe('NoticeReceiverPage', () => {
   it('keeps recovery persistent and exposes only refresh or retry while uncertain', () => {
     const current = view('ready', true, 'recovering');
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByText('noticeReceivers.save.unavailable')).toBeVisible();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
@@ -132,7 +141,7 @@ describe('NoticeReceiverPage', () => {
     const current = view('ready', true, 'saving');
     current.state.recovery = { kind: 'save', phase: 'projection', retryable: true };
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
@@ -142,7 +151,7 @@ describe('NoticeReceiverPage', () => {
     const current = view('ready', true, 'recovering');
     current.state.recovery = { kind: 'save', phase: 'commit-uncertain', retryable: false };
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByText('noticeReceivers.save.unavailable')).toBeVisible();
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
@@ -155,7 +164,7 @@ describe('NoticeReceiverPage', () => {
     current.state.recovery = { kind: 'delete', phase: 'projection', retryable: true };
     current.state.canRetryOperation = false;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByText('noticeReceivers.deleteError.unavailable')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
@@ -169,7 +178,7 @@ describe('NoticeReceiverPage', () => {
     current.state.testing = false;
     current.state.saving = false;
     controller.useNoticeReceiverController.mockReturnValue(current);
-    render(<NoticeReceiverPage />);
+    renderPage();
 
     expect(screen.getByText('noticeReceivers.testError.error')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
@@ -232,4 +241,12 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
       retry: vi.fn()
     }
   };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <NoticeReceiverPage />
+    </MemoryRouter>
+  );
 }

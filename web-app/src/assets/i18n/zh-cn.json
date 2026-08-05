@@ -2060,6 +2060,26 @@
     "deleteSuccess": "模板已删除。",
     "deleteFailed": "模板删除失败。"
   },
+  "notificationWorkspace": {
+    "label": "通知配置流程",
+    "title": "通知配置",
+    "description": "按顺序配置投递依赖，并分别维护各个配置区域。",
+    "steps": {
+      "channels": { "label": "通道", "dependency": "提供邮件和短信投递服务。" },
+      "receivers": { "label": "接收人", "dependency": "添加使用已配置通道的投递目标。" },
+      "templates": { "label": "模板", "dependency": "可选地为通道定制消息内容。" },
+      "rules": { "label": "规则", "dependency": "将告警路由到一个或多个接收人。" }
+    },
+    "status": {
+      "configured": "已配置",
+      "empty": "未配置",
+      "loading": "加载中",
+      "unavailable": "不可用",
+      "permission": "访问受限",
+      "unknown": "状态未知",
+      "notLoaded": "状态未加载"
+    }
+  },
   "noticeRules": {
     "title": "通知发送规则",
     "description": "将匹配的告警发送给接收人，并选择对应消息模板。",
@@ -2101,7 +2121,8 @@
       "empty": "请先创建接收人，再新建发送规则。",
       "invalid": "接收人或模板返回了无效数据。",
       "unavailable": "接收人或模板暂时不可用。",
-      "error": "接收人或模板加载失败。"
+      "error": "接收人或模板加载失败。",
+      "action": { "receivers": "配置接收人" }
     },
     "read": {
       "missing": "发送规则已不存在。",

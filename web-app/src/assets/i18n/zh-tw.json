@@ -2060,6 +2060,26 @@
     "deleteSuccess": "範本已刪除。",
     "deleteFailed": "範本刪除失敗。"
   },
+  "notificationWorkspace": {
+    "label": "通知設定流程",
+    "title": "通知設定",
+    "description": "依序設定投遞相依項目，並分別維護各個設定區域。",
+    "steps": {
+      "channels": { "label": "通道", "dependency": "提供郵件與簡訊投遞服務。" },
+      "receivers": { "label": "接收者", "dependency": "新增使用已設定通道的投遞目標。" },
+      "templates": { "label": "範本", "dependency": "可選擇為通道自訂訊息內容。" },
+      "rules": { "label": "規則", "dependency": "將警報路由至一個或多個接收者。" }
+    },
+    "status": {
+      "configured": "已設定",
+      "empty": "未設定",
+      "loading": "載入中",
+      "unavailable": "無法使用",
+      "permission": "存取受限",
+      "unknown": "狀態未知",
+      "notLoaded": "狀態尚未載入"
+    }
+  },
   "noticeRules": {
     "title": "通知傳送規則",
     "description": "將符合條件的警報傳送給接收人，並選擇訊息範本。",
@@ -2101,7 +2121,8 @@
       "empty": "請先建立接收人，再新增傳送規則。",
       "invalid": "接收人或範本傳回了無效資料。",
       "unavailable": "接收人或範本暫時無法使用。",
-      "error": "接收人或範本載入失敗。"
+      "error": "接收人或範本載入失敗。",
+      "action": { "receivers": "設定接收人" }
     },
     "read": {
       "missing": "傳送規則已不存在。",
