@@ -56,6 +56,41 @@ describe('LoginPage', () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(cleanup);
 
+  it('warns before the first exact default-password submit and logs in only after unchanged confirmation', async () => {
+    sessionApi.loginSession.mockResolvedValue(authenticated);
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hertzbeat' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByText(i18n.t('auth.defaultPassword'))).toBeInTheDocument();
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: i18n.t('auth.continue') })).toBeInTheDocument();
+    expect(screen.getByTestId('route')).not.toHaveTextContent('hertzbeat');
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('auth.continue') }));
+    await waitFor(() => expect(sessionApi.loginSession).toHaveBeenCalledWith('admin', 'hertzbeat'));
+    await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent('/dashboard'));
+  });
+
+  it('retires default-password confirmation when form identity changes', async () => {
+    renderLogin();
+    const username = screen.getByLabelText('Username');
+    fireEvent.change(username, { target: { value: 'admin' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hertzbeat' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(i18n.t('auth.defaultPassword'))).toBeInTheDocument();
+
+    fireEvent.change(username, { target: { value: 'operator' } });
+    expect(screen.queryByText(i18n.t('auth.defaultPassword'))).not.toBeInTheDocument();
+    fireEvent.change(username, { target: { value: 'admin' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByText(i18n.t('auth.defaultPassword'))).toBeInTheDocument();
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+  });
+
   it('locks duplicate submissions until the first login settles', async () => {
     let resolveLogin: (value: typeof authenticated) => void = () => undefined;
     sessionApi.loginSession.mockReturnValue(

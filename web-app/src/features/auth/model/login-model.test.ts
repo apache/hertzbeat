@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  requiresDefaultPasswordConfirmation,
   loginErrorMessageKey,
   loginSessionFailureMessageKey,
   resolveLoginSessionState,
@@ -25,6 +26,16 @@ import {
 } from './login-model';
 
 describe('login model', () => {
+  it('requires one exact default-password confirmation for one unchanged identifier', () => {
+    const credentials = { identifier: 'admin', credential: 'hertzbeat' };
+
+    expect(requiresDefaultPasswordConfirmation(credentials, null)).toBe(true);
+    expect(requiresDefaultPasswordConfirmation(credentials, 'admin')).toBe(false);
+    expect(requiresDefaultPasswordConfirmation({ ...credentials, identifier: 'operator' }, 'admin')).toBe(true);
+    expect(requiresDefaultPasswordConfirmation({ ...credentials, credential: 'HertzBeat' }, null)).toBe(false);
+    expect(requiresDefaultPasswordConfirmation({ ...credentials, credential: 'hertzbeat ' }, null)).toBe(false);
+  });
+
   it.each([
     ['checking', { loading: true, failure: undefined, authenticated: false }],
     ['checking', { loading: true, failure: 'unavailable', authenticated: true }],

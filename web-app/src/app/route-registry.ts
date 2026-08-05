@@ -137,7 +137,7 @@ export const appRouteCatalog = {
   status: pageRoute('status', applicationRoutePaths.status, { layout: 'blank' }),
   login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
   lock: pageRoute('lock', applicationRoutePaths.lock, { layout: 'passport' }),
-  'not-found': pageRoute('not-found', '*')
+  'not-found': pageRoute('not-found', '*', { layout: 'blank' })
 } as const satisfies Record<string, AppRouteDefinition>;
 
 export type AppRouteId = keyof typeof appRouteCatalog;

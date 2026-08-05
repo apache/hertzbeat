@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Form, Input, Typography } from 'antd';
+import { Alert, Button, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
@@ -81,8 +81,10 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
             title={t(controller.errorKey)}
           />
         )}
+        {controller.defaultPasswordWarning && <Alert showIcon type="warning" message={t('auth.defaultPassword')} />}
         <Form<LoginCredentials>
           layout="vertical"
+          onValuesChange={controller.resetDefaultPasswordConfirmation}
           onFinish={values => {
             void controller.submit(values);
           }}
@@ -95,7 +97,7 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
             <Input.Password autoComplete="current-password" />
           </Form.Item>
           <Button block type="primary" htmlType="submit" loading={controller.pending}>
-            {t('auth.submit')}
+            {t(controller.defaultPasswordWarning ? 'auth.continue' : 'auth.submit')}
           </Button>
         </Form>
       </section>

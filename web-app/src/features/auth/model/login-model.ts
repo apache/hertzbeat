@@ -26,11 +26,18 @@ export type LoginFailureKind = 'invalid-credentials' | 'unavailable' | 'error';
 
 export type LoginSessionState = 'checking' | 'authenticated' | 'anonymous' | SessionReadFailureKind;
 
+// The session API exposes no default-password flag, so preserve the legacy warning locally without persisting credentials.
+const legacyDefaultCredential = 'hertzbeat';
+
 type LoginSessionEvidence = {
   loading: boolean;
   failure?: SessionReadFailureKind | undefined;
   authenticated: boolean;
 };
+
+export function requiresDefaultPasswordConfirmation(credentials: LoginCredentials, confirmedIdentifier: string | null) {
+  return credentials.credential === legacyDefaultCredential && credentials.identifier !== confirmedIdentifier;
+}
 
 /** Gives session evidence a stable precedence before the page renders a state. */
 export function resolveLoginSessionState(evidence: LoginSessionEvidence): LoginSessionState {

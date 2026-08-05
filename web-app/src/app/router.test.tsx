@@ -76,9 +76,20 @@ describe('application data router', () => {
     }
   });
 
+  it('keeps the wildcard Not Found route above the authenticated boundary', () => {
+    const applicationChildren = appRoutes[0]?.children ?? [];
+    const authenticatedRoute = applicationChildren.find(route => route.id === 'authenticated');
+    const notFoundRoute = applicationChildren.find(route => route.id === 'not-found');
+
+    expect(notFoundRoute).toMatchObject({ path: getAppRoute('not-found').path });
+    expect(flattenRoutes(authenticatedRoute?.children ?? []).some(route => route.id === 'not-found')).toBe(false);
+  });
+
   it('keeps public canonical pages on their declared layouts', () => {
     const applicationChildren = appRoutes[0]?.children ?? [];
-    const directCanonicalRoutes = applicationChildren.filter(route => route.id && route.id !== 'authenticated');
+    const directCanonicalRoutes = applicationChildren.filter(
+      route => route.id && route.id !== 'authenticated' && route.id !== 'not-found'
+    );
     expect(
       directCanonicalRoutes
         .map(route => ({ id: route.id, layout: getAppRoute(route.id as AppRouteId).layout }))

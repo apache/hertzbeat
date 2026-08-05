@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { safeRedirectTarget } from '@/core/auth/navigation';
@@ -27,6 +27,7 @@ import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import {
   loginErrorMessageKey,
   loginSessionFailureMessageKey,
+  requiresDefaultPasswordConfirmation,
   resolveLoginSessionState,
   type LoginCredentials,
   type LoginFailureKind
@@ -38,6 +39,7 @@ export function useLoginController() {
   const [searchParams] = useSearchParams();
   const { failure: sessionFailure, loading, retry, session } = useSession();
   const login = useLoginCommand(replaceSessionIdentity);
+  const { resetDefaultPasswordConfirmation } = login;
   const navigatedTargetRef = useRef<string | null>(null);
   const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? applicationRoutePaths.dashboard;
 
@@ -60,11 +62,17 @@ export function useLoginController() {
     authenticated: Boolean(session?.authenticated)
   });
 
+  useEffect(() => {
+    if (sessionState !== 'anonymous') resetDefaultPasswordConfirmation();
+  }, [resetDefaultPasswordConfirmation, sessionState]);
+
   return {
     errorKey: login.failure ? loginErrorMessageKey(login.failure) : undefined,
+    defaultPasswordWarning: login.defaultPasswordWarning,
     failureKind: login.failure,
     pending: login.pending,
     retrySession: retry,
+    resetDefaultPasswordConfirmation,
     sessionFailureKey: loginSessionFailureMessageKey(sessionState),
     sessionState,
     submit: login.submit
@@ -78,6 +86,7 @@ function useLoginCommand(replaceSessionIdentity: ReplaceSessionIdentity) {
   const activeCommand = useRef<number | null>(null);
   const [failure, setFailure] = useState<LoginFailureKind | null>(null);
   const [pending, setPending] = useState(false);
+  const confirmation = useDefaultPasswordConfirmation();
 
   useEffect(() => {
     mounted.current = true;
@@ -90,6 +99,10 @@ function useLoginCommand(replaceSessionIdentity: ReplaceSessionIdentity) {
 
   const submit = async (values: LoginCredentials) => {
     if (submitting.current) return;
+    if (!confirmation.admit(values)) {
+      setFailure(null);
+      return;
+    }
     submitting.current = true;
     const command = ++nextCommand.current;
     activeCommand.current = command;
@@ -112,7 +125,35 @@ function useLoginCommand(replaceSessionIdentity: ReplaceSessionIdentity) {
       setPending(false);
     }
   };
-  return { failure, pending, submit };
+  return {
+    defaultPasswordWarning: confirmation.warning,
+    failure,
+    pending,
+    resetDefaultPasswordConfirmation: confirmation.reset,
+    submit
+  };
+}
+
+function useDefaultPasswordConfirmation() {
+  const confirmedIdentifier = useRef<string | null>(null);
+  const [warning, setWarning] = useState(false);
+  const reset = useCallback(() => {
+    confirmedIdentifier.current = null;
+    setWarning(false);
+  }, []);
+  const admit = useCallback(
+    (values: LoginCredentials) => {
+      if (requiresDefaultPasswordConfirmation(values, confirmedIdentifier.current)) {
+        confirmedIdentifier.current = values.identifier;
+        setWarning(true);
+        return false;
+      }
+      reset();
+      return true;
+    },
+    [reset]
+  );
+  return { admit, reset, warning };
 }
 
 function classifyLoginFailure(error: unknown): LoginFailureKind {

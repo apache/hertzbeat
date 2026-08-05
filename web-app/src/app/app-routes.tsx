@@ -61,6 +61,13 @@ export const appRoutes: RouteObject[] = [
         }
       },
       {
+        ...getAppRouteIdentity('not-found'),
+        lazy: async () => {
+          const { NotFoundPage } = await import('@/features/errors/not-found-page');
+          return { Component: NotFoundPage };
+        }
+      },
+      {
         id: 'authenticated',
         element: (
           <AuthGate
@@ -337,13 +344,6 @@ export const appRoutes: RouteObject[] = [
                 lazy: async () => {
                   const { BulletinPage } = await import('@/features/bulletin');
                   return { Component: BulletinPage };
-                }
-              },
-              {
-                ...getAppRouteIdentity('not-found'),
-                lazy: async () => {
-                  const { NotFoundPage } = await import('@/features/errors/not-found-page');
-                  return { Component: NotFoundPage };
                 }
               }
             ]

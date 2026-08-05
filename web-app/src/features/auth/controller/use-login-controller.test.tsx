@@ -65,6 +65,59 @@ describe('login controller navigation', () => {
     runtime.session.session.authenticated = true;
   });
 
+  it('warns once before submitting the exact default credential for one unchanged identifier', async () => {
+    runtime.session.session.authenticated = false;
+    sessionApi.loginSession.mockResolvedValue(authenticatedSession);
+    const hook = renderLoginController();
+    const credentials = { identifier: 'admin', credential: 'hertzbeat' };
+
+    await act(() => hook.result.current.submit(credentials));
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+    expect(hook.result.current.defaultPasswordWarning).toBe(true);
+    expect(hook.result.current.pending).toBe(false);
+
+    await act(() => hook.result.current.submit(credentials));
+    expect(sessionApi.loginSession).toHaveBeenCalledOnce();
+    expect(sessionApi.loginSession).toHaveBeenCalledWith('admin', 'hertzbeat');
+    expect(hook.result.current.defaultPasswordWarning).toBe(false);
+  });
+
+  it('does not reuse default-password confirmation after identifier or explicit state changes', async () => {
+    runtime.session.session.authenticated = false;
+    const hook = renderLoginController();
+
+    await act(() => hook.result.current.submit({ identifier: 'admin', credential: 'hertzbeat' }));
+    await act(() => hook.result.current.submit({ identifier: 'operator', credential: 'hertzbeat' }));
+    await act(() => hook.result.current.submit({ identifier: 'admin', credential: 'hertzbeat' }));
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+
+    act(() => hook.result.current.resetDefaultPasswordConfirmation());
+    expect(hook.result.current.defaultPasswordWarning).toBe(false);
+    await act(() => hook.result.current.submit({ identifier: 'admin', credential: 'hertzbeat' }));
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+    expect(hook.result.current.defaultPasswordWarning).toBe(true);
+
+    runtime.session.failure = 'unavailable';
+    hook.rerender();
+    expect(hook.result.current.defaultPasswordWarning).toBe(false);
+    runtime.session.failure = undefined;
+    hook.rerender();
+    await act(() => hook.result.current.submit({ identifier: 'admin', credential: 'hertzbeat' }));
+    expect(sessionApi.loginSession).not.toHaveBeenCalled();
+    expect(hook.result.current.defaultPasswordWarning).toBe(true);
+  });
+
+  it('submits a non-default credential immediately', async () => {
+    runtime.session.session.authenticated = false;
+    sessionApi.loginSession.mockResolvedValue(authenticatedSession);
+    const hook = renderLoginController();
+
+    await act(() => hook.result.current.submit({ identifier: 'admin', credential: 'changed-secret' }));
+
+    expect(sessionApi.loginSession).toHaveBeenCalledOnce();
+    expect(hook.result.current.defaultPasswordWarning).toBe(false);
+  });
+
   it('classifies a failed login, admits a retry, and never gives either credential to MutationCache', async () => {
     runtime.session.session.authenticated = false;
     sessionApi.loginSession
