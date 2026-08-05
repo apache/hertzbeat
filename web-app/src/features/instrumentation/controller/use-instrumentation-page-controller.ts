@@ -15,17 +15,11 @@ import {
   loadInstrumentationCatalog,
   loadIntakeProfiles
 } from '../api/instrumentation-api';
-import {
-  buildDetectionRequest,
-  buildQueryJump,
-  draftReady,
-  selectedRecipePlatforms,
-  type InstrumentationDraft
-} from '../model/instrumentation-flow';
-import { profileCanRender, profileRequiresToken } from '../model/intake-profile';
-import { metadataAllowsConfiguration } from '../model/instrumentation-initialization';
+import { buildDetectionRequest, buildQueryJump, type InstrumentationDraft } from '../model/instrumentation-flow';
+import { profileRequiresToken } from '../model/intake-profile';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
+import { buildFlowReadiness } from './instrumentation-flow-readiness';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 import { useInstrumentationInitialization } from './use-instrumentation-initialization';
@@ -77,6 +71,7 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const openQuery = useOpenQuery(state.detection, navigate);
+  const readiness = buildFlowReadiness(state, catalogQuery.data, initialization.profilesState, selectedProfile);
 
   return {
     ...state,
@@ -93,10 +88,7 @@ export function useInstrumentationPageController() {
     requiresToken,
     detect,
     openQuery,
-    hasFlowBack: state.stage !== 'source' || Boolean(state.draft.sourceId),
-    canContinueSource: Boolean(state.draft.recipeId) && metadataAllowsConfiguration(initialization.profilesState),
-    platformOptions: catalogQuery.data ? selectedRecipePlatforms(catalogQuery.data, state.draft) : [],
-    canRender: draftReady(state.draft) && profileCanRender(selectedProfile, state.token)
+    ...readiness
   };
 }
 

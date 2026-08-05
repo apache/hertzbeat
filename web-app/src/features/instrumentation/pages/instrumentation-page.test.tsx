@@ -15,7 +15,7 @@ const controller = vi.hoisted(() => ({
   catalogState: 'initial-loading',
   profilesState: 'initial-loading',
   catalog: undefined as object | undefined,
-  draft: {} as Record<string, string>,
+  draft: {},
   initializationRetrying: false,
   hasFlowBack: false,
   canContinueSource: false,
