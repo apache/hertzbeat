@@ -38,22 +38,7 @@ export function useInstrumentationTokenActions(
   }, [requiresToken, tokenCommandsEnabled]);
   useRetireTokenGeneration(tokenCommandsEnabled, requiresToken, state, tokenGenerationRef);
   const setToken = useTokenSetter(state, generationRef, requiresTokenRef);
-  const openTokenGenerator = useCallback(() => {
-    if (!tokenCommandsEnabledRef.current || state.tokenGenerating) return;
-    state.setTokenError(false);
-    state.setTokenDraft({ ...createAccessTokenGenerationDraft('otlp-ingest'), scope: 'otlp-ingest' });
-  }, [state, tokenCommandsEnabledRef]);
-  const closeTokenGenerator = useCallback(() => {
-    if (!state.tokenGenerating) state.setTokenDraft(undefined);
-  }, [state]);
-  const updateTokenDraft = useCallback(
-    (draft: AccessTokenGenerationDraft) => {
-      if (tokenCommandsEnabledRef.current && !state.tokenGenerating) {
-        state.setTokenDraft({ ...draft, scope: 'otlp-ingest' });
-      }
-    },
-    [state, tokenCommandsEnabledRef]
-  );
+  const draftActions = useTokenDraftActions(state, tokenCommandsEnabledRef);
   const generateToken = useCallback(async () => {
     if (!tokenCommandsEnabledRef.current) return;
     const draft = state.tokenDraft;
@@ -87,7 +72,27 @@ export function useInstrumentationTokenActions(
       }
     }
   }, [generationRef, selectedProfile, state, tokenCommandsEnabledRef, tokenGenerationRef, workspaceId]);
-  return { setToken, openTokenGenerator, closeTokenGenerator, updateTokenDraft, generateToken };
+  return { setToken, ...draftActions, generateToken };
+}
+
+function useTokenDraftActions(state: InstrumentationControllerState, tokenCommandsEnabledRef: RefObject<boolean>) {
+  const openTokenGenerator = useCallback(() => {
+    if (!tokenCommandsEnabledRef.current || state.tokenGenerating) return;
+    state.setTokenError(false);
+    state.setTokenDraft({ ...createAccessTokenGenerationDraft('otlp-ingest'), scope: 'otlp-ingest' });
+  }, [state, tokenCommandsEnabledRef]);
+  const closeTokenGenerator = useCallback(() => {
+    if (!state.tokenGenerating) state.setTokenDraft(undefined);
+  }, [state]);
+  const updateTokenDraft = useCallback(
+    (draft: AccessTokenGenerationDraft) => {
+      if (tokenCommandsEnabledRef.current && !state.tokenGenerating) {
+        state.setTokenDraft({ ...draft, scope: 'otlp-ingest' });
+      }
+    },
+    [state, tokenCommandsEnabledRef]
+  );
+  return { openTokenGenerator, closeTokenGenerator, updateTokenDraft };
 }
 
 function useTokenSetter(

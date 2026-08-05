@@ -43,12 +43,9 @@ export function useInstrumentationPageController() {
   const { catalogQuery, profilesQuery } = useInstrumentationQueries();
   const initialization = useInstrumentationInitialization(catalogQuery, profilesQuery);
   const state = useInstrumentationControllerState();
-  const startedAtRef = useRef<number | undefined>(undefined);
-  const timerRef = useRef<number | undefined>(undefined);
-  const generationRef = useRef(0);
+  const { generationRef, startedAtRef, timerRef } = useInstrumentationFlowLifetime();
 
   useDefaultProfile(profilesQuery.data?.defaultProfileId, state.setDraft);
-  useControllerLifetime(generationRef, timerRef);
 
   const draftActions = useDraftActions(
     state,
@@ -101,6 +98,14 @@ export function useInstrumentationPageController() {
     platformOptions: catalogQuery.data ? selectedRecipePlatforms(catalogQuery.data, state.draft) : [],
     canRender: draftReady(state.draft) && profileCanRender(selectedProfile, state.token)
   };
+}
+
+function useInstrumentationFlowLifetime() {
+  const startedAtRef = useRef<number | undefined>(undefined);
+  const timerRef = useRef<number | undefined>(undefined);
+  const generationRef = useRef(0);
+  useControllerLifetime(generationRef, timerRef);
+  return { generationRef, startedAtRef, timerRef };
 }
 
 function useControllerLifetime(generationRef: React.RefObject<number>, timerRef: React.RefObject<number | undefined>) {
