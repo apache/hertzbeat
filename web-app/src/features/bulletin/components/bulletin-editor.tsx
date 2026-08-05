@@ -31,7 +31,7 @@ export function BulletinEditor(props: BulletinEditorProps) {
   return (
     <Modal
       open={draft != null}
-      width="70%"
+      width={720}
       title={t(draft?.id == null ? 'bulletin.create' : 'bulletin.edit')}
       onCancel={onClose}
       onOk={onSave}
@@ -61,7 +61,7 @@ function BulletinEditorForm({
   t: (key: string) => string;
 }) {
   return (
-    <Form labelCol={{ span: 7 }} wrapperCol={{ span: 12 }}>
+    <Form labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
       <Form.Item label={t('bulletin.name')} required>
         <Input disabled={writeLocked} value={draft.name} onChange={event => onChange({ name: event.target.value })} />
       </Form.Item>

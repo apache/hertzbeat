@@ -38,14 +38,16 @@ const tree = [
 describe('Bulletin editor metric Tree', () => {
   afterEach(cleanup);
 
-  it('renders the editor as the centered Angular-style modal form', () => {
+  it('renders the editor as a bounded centered modal with a balanced form rail', () => {
     renderEditor();
 
-    expect(screen.getByRole('dialog', { name: 'bulletin.edit' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'bulletin.edit' });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.closest('.ant-modal')).toHaveStyle({ width: '720px' });
     expect(document.querySelector('.ant-drawer')).not.toBeInTheDocument();
     expect(document.querySelector('form')).toHaveClass('ant-form-horizontal');
-    expect(document.querySelector('.ant-form-item-label')).toHaveClass('ant-col-7');
-    expect(document.querySelector('.ant-form-item-control')).toHaveClass('ant-col-12');
+    expect(document.querySelector('.ant-form-item-label')).toHaveClass('ant-col-6');
+    expect(document.querySelector('.ant-form-item-control')).toHaveClass('ant-col-16');
   });
 
   it('uses the original monitor type, task name, and metric labels instead of a list count label', () => {
