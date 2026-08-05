@@ -73,6 +73,7 @@ describe('ObjectStorePage', () => {
       'Operational page header'
     );
     expect(page).toContainElement(header);
+    expect(page).toHaveAttribute('data-mode', 'form');
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Object storage' }));
     expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
   });

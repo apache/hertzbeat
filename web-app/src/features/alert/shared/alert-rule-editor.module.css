@@ -17,8 +17,10 @@
 
 .page {
   display: grid;
+  width: 100%;
   gap: 20px;
   max-width: 1040px;
+  margin-inline: auto;
 }
 .heading :global(.ant-typography) {
   margin: 0;

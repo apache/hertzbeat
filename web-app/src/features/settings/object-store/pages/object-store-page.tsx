@@ -34,7 +34,7 @@ export function ObjectStorePage() {
   const controller = useObjectStoreResourceController();
 
   return (
-    <OperationalPage>
+    <OperationalPage mode="form">
       <OperationalPageHeader title={t('objectStore.title')} description={t('objectStore.description')} />
       <OperationalResultRegion>
         <ObjectStoreContent controller={controller} />

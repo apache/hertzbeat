@@ -35,7 +35,7 @@ export function SystemConfigPage() {
   const controller = useSystemConfigResourceController();
 
   return (
-    <OperationalPage>
+    <OperationalPage mode="form">
       <OperationalPageHeader title={t('systemConfig.title')} description={t('systemConfig.description')} />
       <OperationalResultRegion>
         <SystemConfigContent controller={controller} />

@@ -19,6 +19,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAlertRuleDraft } from '../model/alert-rule-model';
+import editorStyles from '../shared/alert-rule-editor.module.css?raw';
 import { AlertRuleEditorPage } from './alert-rule-editor-page';
 
 const controller = vi.hoisted(() => ({
@@ -63,6 +64,10 @@ describe('AlertRuleEditorPage', () => {
     controller.state = buildState();
   });
   afterEach(cleanup);
+
+  it('centers its bounded editor workspace on wide screens', () => {
+    expect(editorStyles).toMatch(/\.page\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*1040px;[^}]*margin-inline:\s*auto;/s);
+  });
 
   it.each([
     ['loading', 'loading'],

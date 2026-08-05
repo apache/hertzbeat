@@ -17,7 +17,9 @@
 
 .form {
   display: grid;
+  width: 100%;
   max-width: 820px;
+  margin-inline: auto;
   border-block: 1px solid var(--ant-color-border-secondary);
 }
 .field {

@@ -62,6 +62,7 @@ describe('SystemConfigPage', () => {
       'Operational page header'
     );
     expect(page).toContainElement(header);
+    expect(page).toHaveAttribute('data-mode', 'form');
     expect(header).toContainElement(screen.getByRole('heading', { name: 'System settings' }));
     expect(header.querySelector('[data-hb-operational-page-actions]')).not.toBeInTheDocument();
   });
