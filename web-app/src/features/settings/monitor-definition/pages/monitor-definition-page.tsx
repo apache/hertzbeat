@@ -43,37 +43,7 @@ export function MonitorDefinitionPage() {
       {controller.notice && (
         <Alert showIcon type="success" message={t(`monitorDefinitions.disposition.${controller.notice}`)} />
       )}
-      <OperationalResultRegion>
-        <div className={styles.layout} data-monitor-definition-layout>
-          <nav className={styles.selector} aria-label={t('monitorDefinitions.title')}>
-            <Space.Compact block>
-              <Input
-                allowClear
-                value={controller.search}
-                placeholder={t('monitorDefinitions.search')}
-                onChange={event => controller.actions.setSearch(event.target.value)}
-              />
-              <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
-            </Space.Compact>
-            <CatalogState controller={controller} />
-          </nav>
-          <main className={styles.workspace}>
-            <MonitorDefinitionWorkspaceView
-              canWrite={controller.canWrite}
-              workspace={controller.workspace}
-              onCancel={controller.actions.cancelEdit}
-              onChange={controller.actions.setDefinition}
-              onDelete={controller.actions.requestDelete}
-              onEdit={app => void controller.actions.openEdit(app)}
-              onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
-              onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
-              onRetry={() => void controller.actions.retryWorkspace()}
-              onSave={() => void controller.actions.save()}
-              onValidate={() => void controller.actions.validate()}
-            />
-          </main>
-        </div>
-      </OperationalResultRegion>
+      <MonitorDefinitionWorkspaceRegion controller={controller} />
       <MonitorDefinitionDeleteDialog
         failure={controller.deleteFailure}
         pending={controller.deletePending}
@@ -84,6 +54,47 @@ export function MonitorDefinitionPage() {
         onRetryProof={() => void controller.actions.retryDeleteProof()}
       />
     </OperationalPage>
+  );
+}
+
+function MonitorDefinitionWorkspaceRegion({
+  controller
+}: {
+  controller: ReturnType<typeof useMonitorDefinitionController>;
+}) {
+  const { t } = useTranslation();
+  return (
+    <OperationalResultRegion>
+      <div className={styles.layout} data-monitor-definition-layout>
+        <nav className={styles.selector} aria-label={t('monitorDefinitions.title')}>
+          <Space.Compact block>
+            <Input
+              allowClear
+              value={controller.search}
+              placeholder={t('monitorDefinitions.search')}
+              onChange={event => controller.actions.setSearch(event.target.value)}
+            />
+            <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
+          </Space.Compact>
+          <CatalogState controller={controller} />
+        </nav>
+        <main className={styles.workspace}>
+          <MonitorDefinitionWorkspaceView
+            canWrite={controller.canWrite}
+            workspace={controller.workspace}
+            onCancel={controller.actions.cancelEdit}
+            onChange={controller.actions.setDefinition}
+            onDelete={controller.actions.requestDelete}
+            onEdit={app => void controller.actions.openEdit(app)}
+            onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
+            onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
+            onRetry={() => void controller.actions.retryWorkspace()}
+            onSave={() => void controller.actions.save()}
+            onValidate={() => void controller.actions.validate()}
+          />
+        </main>
+      </div>
+    </OperationalResultRegion>
   );
 }
 

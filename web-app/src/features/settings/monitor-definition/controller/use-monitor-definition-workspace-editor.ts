@@ -43,70 +43,91 @@ type WorkspaceProofContext = Pick<
 
 export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorContext) {
   const { owner, canWriteRef, actionEpoch, workspace, workspaceRef, setWorkspace, catalogProof, language } = context;
-  return useMemo(() => {
-    const run = (operation: 'validate' | 'save' | 'refresh') =>
-      runMonitorDefinitionEditorCommand(
-        operation,
-        workspace,
-        actionEpoch,
-        workspaceRef,
-        { canWriteRef, catalogProof, language },
+  return useMemo(
+    () =>
+      createWorkspaceEditorActions({
         owner,
-        setWorkspace
-      );
-    return {
-      closeWorkspace: () => {
-        if (
-          !owner.matches(actionEpoch) ||
-          workspaceRef.current !== workspace ||
-          owner.closeBlocked() ||
-          monitorDefinitionWorkspaceIsDirty(workspace) ||
-          (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
-        )
-          return false;
-        owner.retire();
-        setWorkspace(null);
-        return true;
-      },
-      cancelEdit: () => {
-        if (
-          !owner.matches(actionEpoch) ||
-          workspaceRef.current !== workspace ||
-          workspace?.kind !== 'edit' ||
-          owner.closeBlocked() ||
-          (workspace.pending && workspace.pending !== 'proof')
-        )
-          return false;
-        owner.retire();
-        setWorkspace(workspace.authority ? { kind: 'view', detail: workspace.authority } : null);
-        return true;
-      },
-      setDefinition: (definition: string) => {
-        if (
-          !canWriteRef.current ||
-          !owner.matches(actionEpoch) ||
-          workspaceRef.current !== workspace ||
-          workspace?.kind !== 'edit' ||
-          workspace.writeRecovery
-        )
-          return;
-        setWorkspace({ ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null });
-      },
-      validate: () => run('validate'),
-      save: () => (monitorDefinitionWorkspaceIsDirty(workspace) ? run('save') : Promise.resolve()),
-      refreshAuthoritativeDraft: () => run('refresh'),
-      retryWorkspaceProof: () =>
-        retryWorkspaceCatalogProof({
-          workspace,
-          workspaceRef,
-          canWriteRef,
-          actionEpoch,
-          owner,
-          catalogProof,
-          setWorkspace
-        })
-    };
-  }, [actionEpoch, canWriteRef, catalogProof, language, owner, setWorkspace, workspace, workspaceRef]);
+        canWriteRef,
+        actionEpoch,
+        workspace,
+        workspaceRef,
+        setWorkspace,
+        catalogProof,
+        language
+      }),
+    [actionEpoch, canWriteRef, catalogProof, language, owner, setWorkspace, workspace, workspaceRef]
+  );
+}
+
+function createWorkspaceEditorActions(context: WorkspaceEditorContext) {
+  return {
+    closeWorkspace: () => closeMonitorDefinitionWorkspace(context),
+    cancelEdit: () => cancelMonitorDefinitionEdit(context),
+    setDefinition: (definition: string) => setMonitorDefinitionDraft(context, definition),
+    validate: () => runWorkspaceEditorCommand(context, 'validate'),
+    save: () =>
+      monitorDefinitionWorkspaceIsDirty(context.workspace)
+        ? runWorkspaceEditorCommand(context, 'save')
+        : Promise.resolve(),
+    refreshAuthoritativeDraft: () => runWorkspaceEditorCommand(context, 'refresh'),
+    retryWorkspaceProof: () => retryWorkspaceCatalogProof(context)
+  };
+}
+
+function runWorkspaceEditorCommand(context: WorkspaceEditorContext, operation: 'validate' | 'save' | 'refresh') {
+  const { workspace, actionEpoch, workspaceRef, canWriteRef, catalogProof, language, owner, setWorkspace } = context;
+  return runMonitorDefinitionEditorCommand(
+    operation,
+    workspace,
+    actionEpoch,
+    workspaceRef,
+    { canWriteRef, catalogProof, language },
+    owner,
+    setWorkspace
+  );
+}
+
+function closeMonitorDefinitionWorkspace(context: WorkspaceEditorContext) {
+  const { workspace, workspaceRef, actionEpoch, owner, setWorkspace } = context;
+  if (
+    !owner.matches(actionEpoch) ||
+    workspaceRef.current !== workspace ||
+    owner.closeBlocked() ||
+    monitorDefinitionWorkspaceIsDirty(workspace) ||
+    (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
+  )
+    return false;
+  owner.retire();
+  setWorkspace(null);
+  return true;
+}
+
+function cancelMonitorDefinitionEdit(context: WorkspaceEditorContext) {
+  const { workspace, workspaceRef, actionEpoch, owner, setWorkspace } = context;
+  if (
+    !owner.matches(actionEpoch) ||
+    workspaceRef.current !== workspace ||
+    workspace?.kind !== 'edit' ||
+    owner.closeBlocked() ||
+    (workspace.pending && workspace.pending !== 'proof')
+  )
+    return false;
+  owner.retire();
+  setWorkspace(workspace.authority ? { kind: 'view', detail: workspace.authority } : null);
+  return true;
+}
+
+function setMonitorDefinitionDraft(context: WorkspaceEditorContext, definition: string) {
+  const { workspace, workspaceRef, canWriteRef, actionEpoch, owner, setWorkspace } = context;
+  if (
+    !canWriteRef.current ||
+    !owner.matches(actionEpoch) ||
+    workspaceRef.current !== workspace ||
+    workspace?.kind !== 'edit' ||
+    workspace.writeRecovery
+  )
+    return;
+  setWorkspace({ ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null });
 }
 
 async function retryWorkspaceCatalogProof(context: WorkspaceProofContext) {
