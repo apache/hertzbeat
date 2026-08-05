@@ -89,6 +89,40 @@ describe('useEntityDetailController deletion', () => {
     expect(routed.router.state.location.pathname).toBe('/entities/7');
   });
 
+  it('opens focused topology for a ready entity without write or delete permission', async () => {
+    capability.useEntityCapabilities.mockReturnValue({ canWrite: false, canDelete: false });
+    api.loadEntityDetail.mockResolvedValueOnce({
+      ...detail,
+      entity: { ...detail.entity, environment: 'prod' }
+    });
+    const routed = renderController('/entities/7?returnTo=%2Fentities%3Fsearch%3Dcheckout');
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.topology());
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/topology'));
+    expect(routed.router.state.location.search).toBe(
+      '?focusEntityId=7&depth=2&environment=prod&sourceKind=entity-relation'
+    );
+  });
+
+  it('round-trips through the exact sanitized topology return context', async () => {
+    const returnTo =
+      '/topology?focusEntityId=9&depth=1&environment=stage&sourceKind=otel&start=1000&end=2000' +
+      '&relationType=calls&hideInternal=true&pageIndex=3&pageSize=50';
+    const routed = renderController(`/entities/7?returnTo=${encodeURIComponent(returnTo)}`);
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+
+    act(() => routed.current().actions.topology());
+
+    await waitFor(() => expect(routed.router.state.location.pathname).toBe('/topology'));
+    expect(`${routed.router.state.location.pathname}${routed.router.state.location.search}`).toBe(returnTo);
+
+    await act(() => routed.router.navigate(-1));
+    expect(routed.router.state.location.pathname).toBe('/entities/7');
+    expect(new URLSearchParams(routed.router.state.location.search).get('returnTo')).toBe(returnTo);
+  });
+
   it('retires an open delete confirmation when the session loses permission', async () => {
     const routed = renderController('/entities/7');
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));

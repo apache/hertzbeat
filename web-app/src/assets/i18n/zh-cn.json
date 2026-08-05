@@ -317,6 +317,7 @@
       }
     },
     "explore": { "metrics": "查询指标", "logs": "查询日志", "traces": "查询链路" },
+    "topology": { "view": "查看拓扑" },
     "discovery": {
       "action": "发现资源",
       "title": "发现资源",

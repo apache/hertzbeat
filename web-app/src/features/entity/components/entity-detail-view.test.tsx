@@ -84,6 +84,26 @@ describe('EntityDetailView', () => {
     expect(screen.queryByRole('button', { name: i18n.t('entity.explore.metrics') })).not.toBeInTheDocument();
   });
 
+  it('offers topology inspection for every ready entity in a read-only session', () => {
+    const topology = vi.fn();
+    renderView(
+      {
+        kind: 'ready',
+        detail: {
+          entity,
+          identities: [],
+          monitorPreview: { items: [], total: 0, complete: true },
+          relations: []
+        }
+      },
+      { canWrite: false, canDelete: false, topology }
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.topology.view') }));
+    expect(topology).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: i18n.t('common.edit') })).not.toBeInTheDocument();
+  });
+
   it('renders backend-recommended operations and delegates only their stable action code', () => {
     const nextAction = vi.fn();
     renderView(
@@ -464,6 +484,7 @@ type RenderViewOptions = {
   monitors?: Parameters<typeof EntityDetailView>[0]['state']['monitors'];
   changeMonitorPage?: Parameters<typeof EntityDetailView>[0]['actions']['changeMonitorPage'];
   nextAction?: Parameters<typeof EntityDetailView>[0]['actions']['nextAction'];
+  topology?: Parameters<typeof EntityDetailView>[0]['actions']['topology'];
 };
 
 function renderView(
@@ -481,7 +502,8 @@ function renderView(
     canWrite: options.canWrite ?? true,
     monitors: options.monitors,
     changeMonitorPage: options.changeMonitorPage ?? (() => undefined),
-    nextAction: options.nextAction ?? (() => undefined)
+    nextAction: options.nextAction ?? (() => undefined),
+    topology: options.topology ?? (() => undefined)
   });
 }
 
@@ -498,7 +520,8 @@ function renderResolvedView(
     canWrite,
     monitors,
     changeMonitorPage,
-    nextAction
+    nextAction,
+    topology
   }: {
     explore: NonNullable<RenderViewOptions['explore']>;
     remove: NonNullable<RenderViewOptions['remove']>;
@@ -511,6 +534,7 @@ function renderResolvedView(
     monitors: RenderViewOptions['monitors'];
     changeMonitorPage: NonNullable<RenderViewOptions['changeMonitorPage']>;
     nextAction: NonNullable<RenderViewOptions['nextAction']>;
+    topology: NonNullable<RenderViewOptions['topology']>;
   }
 ) {
   const records = evidence.kind === 'ready' ? evidence.detail.monitorPreview.items : [];
@@ -544,7 +568,8 @@ function renderResolvedView(
           changeMonitorPage,
           changeMonitorFilters: () => undefined,
           refreshMonitors: () => undefined,
-          nextAction
+          nextAction,
+          topology
         }}
       />
     </I18nextProvider>

@@ -16,6 +16,7 @@ import type { EntityNextActionType, EntityRecord } from '../model/entity-contrac
 import {
   buildEntityExplorePath,
   buildEntityNextActionPath,
+  buildEntityTopologyPath,
   entityNextActionRequiresWrite,
   type EntityExploreSignal
 } from '../model/entity-operational-navigation';
@@ -49,6 +50,7 @@ export function useEntityDetailController() {
     params.get('returnTo'),
     capabilities.canDelete
   );
+  const inspectionActions = buildEntityInspectionActions(evidence, params.get('returnTo'), navigate);
   return {
     state: {
       evidence,
@@ -59,12 +61,8 @@ export function useEntityDetailController() {
       ...deletion.state
     },
     actions: {
-      refresh: () => {
-        void result.refetch();
-      },
-      back: () => {
-        void navigate(safeEntityReturnTo(params.get('returnTo')));
-      },
+      refresh: () => void result.refetch(),
+      back: () => void navigate(safeEntityReturnTo(params.get('returnTo'))),
       edit: () => {
         if (capabilities.canWrite && evidence.kind === 'ready')
           void navigate(buildEntityEditRoute(evidence.detail.entity.id, params.get('returnTo')));
@@ -74,9 +72,7 @@ export function useEntityDetailController() {
           void navigate(buildEntityDefinitionRoute(evidence.detail.entity.id, params.get('returnTo')));
         }
       },
-      explore: (signal: EntityExploreSignal) => {
-        if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));
-      },
+      ...inspectionActions,
       manageNoiseControls: (ruleType: EntityNoiseControlType) => {
         if (evidence.kind === 'ready') void navigate(buildEntityNoiseControlPath(evidence.detail, ruleType));
       },
@@ -88,6 +84,21 @@ export function useEntityDetailController() {
       },
       ...monitors.actions,
       remove: deletion.remove
+    }
+  };
+}
+
+function buildEntityInspectionActions(
+  evidence: EntityDetailEvidence,
+  returnTo: string | null,
+  navigate: ReturnType<typeof useNavigate>
+) {
+  return {
+    explore: (signal: EntityExploreSignal) => {
+      if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));
+    },
+    topology: () => {
+      if (evidence.kind === 'ready') void navigate(buildEntityTopologyPath(evidence.detail, returnTo));
     }
   };
 }

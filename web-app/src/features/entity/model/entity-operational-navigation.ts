@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { buildExplorePath } from '@/features/explore';
+import { buildTopologyFocusPath } from '@/features/topology';
 import { alertRoutePaths, applicationRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import type { EntityDetail, EntityNextActionType, EntityResponseHandoff } from './entity-contract';
 import { buildEntityDiscoveryPath, defaultEntityDiscoveryQuery } from './entity-discovery-model';
@@ -50,6 +51,14 @@ export function buildEntityExplorePath(detail: EntityDetail, signal: EntityExplo
   }
   if (detail.entity.environment) params.set('environment', detail.entity.environment);
   return `${applicationRoutePaths.explore}?${params.toString()}`;
+}
+
+export function buildEntityTopologyPath(detail: EntityDetail, returnTo: string | null) {
+  return buildTopologyFocusPath({
+    entityId: detail.entity.id,
+    ...(detail.entity.environment ? { environment: detail.entity.environment } : {}),
+    returnTo
+  });
 }
 
 /**

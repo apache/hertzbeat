@@ -323,6 +323,7 @@
       }
     },
     "explore": { "metrics": "Explore metrics", "logs": "Explore logs", "traces": "Explore traces" },
+    "topology": { "view": "View topology" },
     "discovery": {
       "action": "Discover resources",
       "title": "Discover resources",

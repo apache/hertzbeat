@@ -25,6 +25,7 @@ type EntityDetailViewActions = {
   edit: () => void;
   definition: () => void;
   explore: (signal: EntityExploreSignal) => void;
+  topology: () => void;
   manageNoiseControls: (ruleType: EntityNoiseControlType) => void;
   changeMonitorPage: (pageIndex: number) => void;
   changeMonitorFilters: (filters: Pick<EntityMonitorQuery, 'status' | 'app'>) => void;
@@ -111,7 +112,6 @@ function EntityDetailHeader({
 }) {
   const { t } = useTranslation();
   const exploreSignals = entityExploreSignals(detail);
-  const hasCommands = state.canWrite || state.canDelete || exploreSignals.length > 0;
   return (
     <>
       <OperationalPageHeader
@@ -126,34 +126,33 @@ function EntityDetailHeader({
           </Space>
         }
       />
-      {hasCommands ? (
-        <OperationalCommandBar
-          primary={
-            <Space wrap>
-              {state.canWrite ? (
-                <>
-                  <Button type="primary" onClick={actions.edit}>
-                    {t('common.edit')}
-                  </Button>
-                  <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
-                </>
-              ) : null}
-              {exploreSignals.map(signal => (
-                <Button key={signal} onClick={() => actions.explore(signal)}>
-                  {t(`entity.explore.${signal}`)}
+      <OperationalCommandBar
+        primary={
+          <Space wrap>
+            {state.canWrite ? (
+              <>
+                <Button type="primary" onClick={actions.edit}>
+                  {t('common.edit')}
                 </Button>
-              ))}
-            </Space>
-          }
-          secondary={
-            state.canDelete ? (
-              <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
-                {t('entity.delete.action')}
+                <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
+              </>
+            ) : null}
+            <Button onClick={actions.topology}>{t('entity.topology.view')}</Button>
+            {exploreSignals.map(signal => (
+              <Button key={signal} onClick={() => actions.explore(signal)}>
+                {t(`entity.explore.${signal}`)}
               </Button>
-            ) : undefined
-          }
-        />
-      ) : null}
+            ))}
+          </Space>
+        }
+        secondary={
+          state.canDelete ? (
+            <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
+              {t('entity.delete.action')}
+            </Button>
+          ) : undefined
+        }
+      />
     </>
   );
 }

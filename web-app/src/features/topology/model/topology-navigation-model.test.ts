@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { buildTopologyFocusPath } from '@/features/topology';
 import type { TopologyNode } from './topology-contract';
 import { buildTopologyEntityPath, buildTopologySignalPath, safeTopologyReturnTo } from './topology-navigation-model';
 
@@ -26,6 +27,34 @@ describe('topology inspector navigation', () => {
     expect(safeTopologyReturnTo('/topology?start=1000')).toBe('/topology');
     expect(safeTopologyReturnTo('/topology-evil?depth=2')).toBe('/topology');
     expect(safeTopologyReturnTo('https://evil.example/topology?depth=2')).toBe('/topology');
+  });
+
+  it('builds the canonical entity-relation focus without invented pagination', () => {
+    expect(buildTopologyFocusPath({ entityId: 42, environment: ' prod ' })).toBe(
+      '/topology?focusEntityId=42&depth=2&environment=prod&sourceKind=entity-relation'
+    );
+    expect(buildTopologyFocusPath({ entityId: 42 })).toBe(
+      '/topology?focusEntityId=42&depth=2&sourceKind=entity-relation'
+    );
+  });
+
+  it('reuses a complete safe topology return context and falls back when it is invalid', () => {
+    const returnTo =
+      '/topology?focusEntityId=7&depth=1&environment=prod&sourceKind=otel&start=1000&end=2000' +
+      '&relationType=calls&hideInternal=true&pageIndex=3&pageSize=50&token=private&unknown=value';
+    expect(buildTopologyFocusPath({ entityId: 42, environment: 'stage', returnTo })).toBe(
+      '/topology?focusEntityId=7&depth=1&environment=prod&sourceKind=otel&start=1000&end=2000' +
+        '&relationType=calls&hideInternal=true&pageIndex=3&pageSize=50'
+    );
+    expect(buildTopologyFocusPath({ entityId: 42, environment: 'stage', returnTo: '/topology?start=1000' })).toBe(
+      '/topology?focusEntityId=42&depth=2&environment=stage&sourceKind=entity-relation'
+    );
+    expect(buildTopologyFocusPath({ entityId: 42, returnTo: '/topology' })).toBe(
+      '/topology?focusEntityId=42&depth=2&sourceKind=entity-relation'
+    );
+    expect(buildTopologyFocusPath({ entityId: 42, returnTo: '/topology?token=private' })).toBe(
+      '/topology?focusEntityId=42&depth=2&sourceKind=entity-relation'
+    );
   });
 
   it('uses the central exact-window signal handoff for service nodes', () => {
