@@ -27,10 +27,8 @@ function optionAlert(kind: OptionKind, missingPrerequisite: 'receivers' | null) 
 }
 
 export function NoticeRulePage() {
-  const { t } = useTranslation();
   const controller = useNoticeRuleController();
   const { state, actions } = controller;
-  const alert = optionAlert(state.options.kind, state.options.missingPrerequisite);
   const busy = state.command !== 'idle';
   const dependenciesReady = state.options.kind === 'ready';
   const editorRecovery =
@@ -59,20 +57,7 @@ export function NoticeRulePage() {
         onRefresh={() => void actions.refresh()}
       />
       <OperationalResultRegion>
-        {alert ? (
-          <Alert
-            type={alert.type}
-            showIcon
-            message={t(alert.messageKey)}
-            action={
-              alert.missingPrerequisite ? (
-                <Link to={notificationWorkspacePath(alert.missingPrerequisite)}>
-                  {t(`noticeRules.options.action.${alert.missingPrerequisite}`)}
-                </Link>
-              ) : undefined
-            }
-          />
-        ) : null}
+        <NoticeRuleOptionsEvidence kind={state.options.kind} missingPrerequisite={state.options.missingPrerequisite} />
         <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
         <NoticeRuleRecovery
           recovery={routeRecovery}
@@ -98,6 +83,24 @@ export function NoticeRulePage() {
       />
     </OperationalPage>
   );
+}
+
+function NoticeRuleOptionsEvidence({
+  kind,
+  missingPrerequisite
+}: {
+  kind: OptionKind;
+  missingPrerequisite: 'receivers' | null;
+}) {
+  const { t } = useTranslation();
+  const alert = optionAlert(kind, missingPrerequisite);
+  if (!alert) return null;
+  const action = alert.missingPrerequisite ? (
+    <Link to={notificationWorkspacePath(alert.missingPrerequisite)}>
+      {t(`noticeRules.options.action.${alert.missingPrerequisite}`)}
+    </Link>
+  ) : undefined;
+  return <Alert type={alert.type} showIcon message={t(alert.messageKey)} action={action} />;
 }
 
 function NoticeRuleEditorBoundary({

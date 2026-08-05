@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const controller = vi.hoisted(() => ({ useNoticeRuleController: vi.fn() }));
@@ -18,7 +19,7 @@ describe('Notice rule page action admission', () => {
     const guest = view({ canCreate: false, canEdit: false, canToggle: false, canDelete: false });
     guest.state.list.records.push({ ...rule, id: 32, name: 'Paused', enable: false });
     controller.useNoticeRuleController.mockReturnValue(guest);
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.queryByRole('button', { name: 'noticeRules.new' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument();
@@ -36,7 +37,7 @@ describe('Notice rule page action admission', () => {
     controller.useNoticeRuleController.mockReturnValue(
       view({ canCreate: true, canEdit: true, canToggle: true, canDelete: false })
     );
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
@@ -55,7 +56,7 @@ describe('Notice rule page action admission', () => {
     administrator.state.canRetryOperation = true;
     administrator.state.command = 'recovering';
     controller.useNoticeRuleController.mockReturnValue(administrator);
-    const rendered = render(<NoticeRulePage />);
+    const rendered = renderPage();
 
     expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeInTheDocument();
@@ -66,14 +67,14 @@ describe('Notice rule page action admission', () => {
 
     administrator.state.command = 'deleting';
     controller.useNoticeRuleController.mockReturnValue(administrator);
-    rendered.rerender(<NoticeRulePage />);
+    rendered.rerender(pageElement());
     const busyRetry = screen.getByRole('button', { name: /common.retry/ });
     expect(busyRetry).toBeDisabled();
     expect(busyRetry).toHaveClass('ant-btn-loading');
 
     administrator.state.canRetryOperation = false;
     controller.useNoticeRuleController.mockReturnValue(administrator);
-    rendered.rerender(<NoticeRulePage />);
+    rendered.rerender(pageElement());
     expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
   });
 
@@ -83,11 +84,23 @@ describe('Notice rule page action admission', () => {
     guest.state.canSubmitDraft = false;
     controller.useNoticeRuleController.mockReturnValue(guest);
 
-    render(<NoticeRulePage />);
+    renderPage();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+function renderPage() {
+  return render(pageElement());
+}
+
+function pageElement() {
+  return (
+    <MemoryRouter>
+      <NoticeRulePage />
+    </MemoryRouter>
+  );
+}
 
 function view(capabilities: { canCreate: boolean; canEdit: boolean; canToggle: boolean; canDelete: boolean }) {
   return {

@@ -14,7 +14,8 @@ import { useNoticeReceiverController } from '../controller/notice-receiver-contr
 import { canSubmitNoticeReceiver } from '../controller/notice-receiver-action-admission';
 
 export function NoticeReceiverPage() {
-  const { state, actions } = useNoticeReceiverController();
+  const controller = useNoticeReceiverController();
+  const { state, actions } = controller;
   const recovering = state.command === 'recovering';
   const interactionBusy = state.busy || state.refreshing;
   return (
@@ -50,27 +51,34 @@ export function NoticeReceiverPage() {
           onPageChange={actions.changePage}
         />
       </OperationalResultRegion>
-      {state.draft && canSubmitNoticeReceiver(state.capabilities, state.draft) ? (
-        <NoticeReceiverEditor
-          draft={state.draft}
-          saving={state.saving}
-          testing={state.testing}
-          busy={state.busy}
-          canTest={state.capabilities.canTest}
-          update={actions.updateDraft}
-          selectType={actions.selectType}
-          setSecretCleared={actions.setSecretCleared}
-          close={actions.close}
-          submit={() => void actions.submit()}
-          {...(state.testRecovery
-            ? {
-                testRecovery: state.testRecovery,
-                retryTest: () => void actions.retryTest(),
-                dismissTestRecovery: () => void actions.dismissTestRecovery()
-              }
-            : { test: () => void actions.sendTest() })}
-        />
-      ) : null}
+      <NoticeReceiverEditorBoundary controller={controller} />
     </OperationalPage>
+  );
+}
+
+function NoticeReceiverEditorBoundary({ controller }: { controller: ReturnType<typeof useNoticeReceiverController> }) {
+  const { state, actions } = controller;
+  if (!state.draft || !canSubmitNoticeReceiver(state.capabilities, state.draft)) return null;
+  const testAction = state.testRecovery
+    ? {
+        testRecovery: state.testRecovery,
+        retryTest: () => void actions.retryTest(),
+        dismissTestRecovery: () => void actions.dismissTestRecovery()
+      }
+    : { test: () => void actions.sendTest() };
+  return (
+    <NoticeReceiverEditor
+      draft={state.draft}
+      saving={state.saving}
+      testing={state.testing}
+      busy={state.busy}
+      canTest={state.capabilities.canTest}
+      update={actions.updateDraft}
+      selectType={actions.selectType}
+      setSecretCleared={actions.setSecretCleared}
+      close={actions.close}
+      submit={() => void actions.submit()}
+      {...testAction}
+    />
   );
 }
