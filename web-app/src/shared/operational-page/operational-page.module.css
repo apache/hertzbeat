@@ -72,7 +72,7 @@
   align-items: start;
   gap: var(--hb-space-2);
   padding-block: var(--hb-space-3);
-  border-block: 1px solid var(--hb-border-subtle);
+  border-block: 0;
 }
 
 .commandPrimary,
@@ -161,12 +161,6 @@
 .sectionBody {
   min-width: 0;
   padding-top: var(--hb-space-3);
-}
-
-/* The section header already separates its content from the title. Nested
- * command bars keep their lower edge but must not draw a second adjacent line. */
-.sectionBody .commandBar {
-  border-top: 0;
 }
 
 .statePanel {

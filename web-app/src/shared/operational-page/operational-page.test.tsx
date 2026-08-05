@@ -127,8 +127,9 @@ describe('OperationalPage', () => {
     expect(operationalPageStyles).toMatch(/\.resultRegion\s*>\s*\*\s*\{[^}]*min-width:\s*0;/s);
   });
 
-  it('uses one separator when a command bar is nested inside a section', () => {
-    expect(operationalPageStyles).toMatch(/\.sectionBody\s+\.commandBar\s*\{[^}]*border-top:\s*0;/s);
+  it('does not surround command bars with decorative horizontal separators', () => {
+    expect(operationalPageStyles).toMatch(/\.commandBar\s*\{[^}]*border-block:\s*0;/s);
+    expect(operationalPageStyles).not.toMatch(/\.sectionBody\s+\.commandBar\s*\{/s);
   });
 
   it('caps a single search field without constraining multi-filter toolbars', () => {
