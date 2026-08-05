@@ -148,7 +148,7 @@ const unifiedEvidenceSchema = z
     traceEvidenceCount: count,
     latestObservedAt: count.nullish(),
     activeSignals: z.array(text),
-    evidenceSources: z.array(evidenceSourceSchema)
+    evidenceSources: z.array(evidenceSourceSchema).default([])
   })
   .refine(value => new Set(value.evidenceSources.map(source => source.source)).size === value.evidenceSources.length);
 const detailSchema = z

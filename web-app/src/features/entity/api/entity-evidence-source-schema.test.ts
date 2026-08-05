@@ -20,8 +20,25 @@ describe('entity evidence source schema', () => {
     });
   });
 
+  it('accepts the current backend summary without a source breakdown', () => {
+    const wire = detailWire();
+    delete (wire.unifiedEvidenceSummary as Partial<typeof wire.unifiedEvidenceSummary>).evidenceSources;
+
+    expect(parseEntityDetail(wire).unifiedEvidence).toEqual({
+      activeSignalCount: 3,
+      activeSignals: ['metrics', 'logs', 'traces'],
+      active: { metrics: true, logs: true, traces: true },
+      totals: { metrics: 8, logs: 4, traces: 2 },
+      lastObservedAt: 2_000,
+      sources: []
+    });
+  });
+
   it.each([
-    { caseName: 'missing sources', mutate: (summary: Record<string, unknown>) => delete summary.evidenceSources },
+    {
+      caseName: 'null source breakdown',
+      mutate: (summary: Record<string, unknown>) => (summary.evidenceSources = null)
+    },
     {
       caseName: 'missing source count',
       mutate: (summary: Record<string, unknown>) =>
