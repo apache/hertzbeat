@@ -16,7 +16,7 @@ export function MonitorEditorWorkspace({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
   const controller = useMonitorEditorController(mode);
   return (
-    <OperationalPage>
+    <OperationalPage mode="form">
       <OperationalPageHeader
         title={t(mode === 'new' ? 'monitor.editor.newTitle' : 'monitor.editor.editTitle')}
         description={t('monitor.editor.description')}
