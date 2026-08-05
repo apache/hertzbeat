@@ -118,6 +118,39 @@ describe('useMonitorDefinitionController', () => {
     );
   });
 
+  it('retains authoritative YAML, blocks dirty app switching, and cancels back to its view', async () => {
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    await act(() => view.result.current.actions.openEdit('mysql'));
+    expect(view.result.current.workspace).toMatchObject({ kind: 'edit', authority: detail });
+
+    act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
+    await act(() => view.result.current.actions.openView('jvm'));
+    expect(api.detail).toHaveBeenCalledTimes(1);
+    expect(view.result.current.workspace).toMatchObject({
+      kind: 'edit',
+      authority: detail,
+      draft: { definition: 'app: mysql\nname: local' },
+      failure: 'unsaved-changes'
+    });
+    expect(route.search).toBe('?app=mysql');
+
+    act(() => view.result.current.actions.cancelEdit());
+    expect(view.result.current.workspace).toEqual({ kind: 'view', detail });
+    expect(route.search).toBe('?app=mysql');
+  });
+
+  it('does not save an unchanged update draft', async () => {
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
+    await act(() => view.result.current.actions.openEdit('mysql'));
+
+    await act(() => view.result.current.actions.save());
+
+    expect(api.update).not.toHaveBeenCalled();
+    expect(view.result.current.workspace).toMatchObject({ kind: 'edit', authority: detail });
+  });
+
   it('rereads the canonical detail and catalog after a successful create', async () => {
     const mutationDetail = {
       ...detail,
@@ -141,7 +174,7 @@ describe('useMonitorDefinitionController', () => {
     api.catalog
       .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
       .mockResolvedValueOnce({ schemaVersion: 1, items: [item, canonicalItem] });
-    const { result } = renderController();
+    const { result } = renderControllerAt('/settings/monitor-definitions?scope=all');
     await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
     act(() => result.current.actions.openCreate());
     act(() => result.current.actions.setDefinition('app: custom'));
@@ -152,6 +185,7 @@ describe('useMonitorDefinitionController', () => {
     expect(api.catalog).toHaveBeenCalledTimes(2);
     expect(result.current.workspace).toEqual({ kind: 'view', detail: canonicalDetail });
     expect(result.current.items).toEqual([item, canonicalItem]);
+    await waitFor(() => expect(route.search).toBe('?scope=all&app=custom'));
   });
 
   it('rereads the canonical detail and catalog after a successful revisioned update', async () => {
@@ -923,7 +957,7 @@ describe('useMonitorDefinitionController', () => {
     expect(view.result.current.workspace).toBeNull();
   });
 
-  it('defers a changed route until an exclusive editor command settles', async () => {
+  it('restores a dirty editor route when navigation is attempted during an exclusive command', async () => {
     const validation = deferred<{ schemaVersion: 1; valid: true; app: string; origin: 'override' }>();
     const jvmDetail = { ...detail, app: 'jvm', label: 'JVM' };
     api.validate.mockReturnValueOnce(validation.promise);
@@ -946,11 +980,16 @@ describe('useMonitorDefinitionController', () => {
     validation.resolve({ schemaVersion: 1, valid: true, app: 'mysql', origin: 'override' });
     await act(async () => command);
 
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
-    expect(api.detail).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(route.search).toBe('?app=mysql'));
+    expect(view.result.current.workspace).toMatchObject({
+      kind: 'edit',
+      authority: detail,
+      draft: { definition: 'app: mysql\nname: local' }
+    });
+    expect(api.detail).toHaveBeenCalledTimes(2);
   });
 
-  it('holds an uncertain write recovery across route changes until explicit close', async () => {
+  it('holds an uncertain write recovery across route changes until explicit cancel', async () => {
     const jvmDetail = { ...detail, app: 'jvm', label: 'JVM' };
     api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     api.detail.mockImplementation((app: string) => Promise.resolve(app === 'jvm' ? jvmDetail : detail));
@@ -972,10 +1011,11 @@ describe('useMonitorDefinitionController', () => {
       writeRecovery: 'uncertain'
     });
     expect(api.detail).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(route.search).toBe('?app=mysql'));
 
-    act(() => view.result.current.actions.closeWorkspace());
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
-    expect(route.search).toBe('?app=jvm');
+    act(() => view.result.current.actions.cancelEdit());
+    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    expect(route.search).toBe('?app=mysql');
   });
 
   it('does not change route identity when an explicit open is rejected by a pending command', async () => {
@@ -999,7 +1039,7 @@ describe('useMonitorDefinitionController', () => {
 
     write.resolve(createdDetail);
     await act(async () => saving);
-    expect(route.search).toBe('?scope=all');
+    await waitFor(() => expect(route.search).toBe('?scope=all&app=custom'));
     expect(view.result.current.workspace).toEqual({ kind: 'view', detail: createdDetail });
   });
 

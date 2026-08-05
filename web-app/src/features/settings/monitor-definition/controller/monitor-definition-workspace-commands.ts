@@ -5,13 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import {
-  createMonitorDefinition,
-  loadMonitorDefinitionDetail,
-  MonitorDefinitionRequestError,
-  updateMonitorDefinition,
-  validateMonitorDefinition
-} from '../api/monitor-definition-api';
+import { loadMonitorDefinitionDetail, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
 import {
   buildUpdateDraft,
   monitorDefinitionDraftRequiredFailure,
@@ -26,7 +20,8 @@ import {
   proveOwnedMonitorDefinitionCatalog,
   type MonitorDefinitionCatalogProof
 } from './monitor-definition-catalog-proof';
-import type { MonitorDefinitionOperation, MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
+import { performMonitorDefinitionEditorCommand } from './monitor-definition-editor-command';
+import type { MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
 
 type Pending = 'load' | 'validate' | 'save' | 'refresh' | 'proof' | null;
 type EditorCommandOptions = {
@@ -59,7 +54,9 @@ export async function loadMonitorDefinitionWorkspace(
     if (mode === 'edit' && !detail.editable) {
       publish({ kind: 'error', mode, app: detail.app, failure: 'immutable' });
     } else {
-      publish(mode === 'view' ? { kind: 'view', detail } : editMonitorDefinitionWorkspace(buildUpdateDraft(detail)));
+      publish(
+        mode === 'view' ? { kind: 'view', detail } : editMonitorDefinitionWorkspace(buildUpdateDraft(detail), detail)
+      );
     }
   } catch (error) {
     if (!owner.owns(operation)) return;
@@ -84,7 +81,7 @@ export async function runMonitorDefinitionEditorCommand(
   const command = owner.begin('exclusive-command');
   publish({ ...workspace, pending: operation, failure: null });
   try {
-    const next = await performEditorCommand(
+    const next = await performMonitorDefinitionEditorCommand(
       operation,
       workspace.draft,
       options.language,
@@ -111,9 +108,10 @@ export async function runMonitorDefinitionEditorCommand(
 
 export function editMonitorDefinitionWorkspace(
   draft: MonitorDefinitionDraft,
+  authority: MonitorDefinitionDetail | null = null,
   failure: MonitorDefinitionFailureKind | null = null
 ): MonitorDefinitionWorkspace {
-  return { kind: 'edit', draft, failure, pending: null, validation: null, writeRecovery: null };
+  return { kind: 'edit', authority, draft, failure, pending: null, validation: null, writeRecovery: null };
 }
 
 export function monitorDefinitionWorkspaceRequiresWrite(workspace: MonitorDefinitionWorkspace | null) {
@@ -148,7 +146,10 @@ function publishEditorResult(
 ) {
   if ('schemaVersion' in next && 'definition' in next) publish({ kind: 'view', detail: next });
   else if ('schemaVersion' in next) publish({ ...workspace, pending: null, validation: next });
-  else publish(editMonitorDefinitionWorkspace(next));
+  else if (workspace.draft.mode === 'update' && next.mode === 'update') {
+    const authority = { ...workspace.authority!, definition: next.definition, revision: next.revision };
+    publish(editMonitorDefinitionWorkspace(next, authority));
+  } else publish(editMonitorDefinitionWorkspace(next));
 }
 
 function publishEditorCommandResult(
@@ -171,45 +172,6 @@ function isCanonicalEditorWrite(
   return 'kind' in next && next.kind === 'canonical-write';
 }
 
-async function performEditorCommand(
-  operation: 'validate' | 'save' | 'refresh',
-  draft: MonitorDefinitionDraft,
-  language: string,
-  catalogProof: MonitorDefinitionCatalogProof,
-  command: MonitorDefinitionOperation
-) {
-  if (operation === 'validate') {
-    return validateMonitorDefinition({
-      operation: draft.mode,
-      expectedApp: draft.expectedApp,
-      definition: draft.definition
-    });
-  }
-  if (operation === 'refresh' && draft.mode === 'update') {
-    return buildUpdateDraft(await loadMonitorDefinitionDetail(draft.expectedApp, language, command.abort.signal));
-  }
-  if (operation === 'refresh') return draft;
-  let committed = false;
-  try {
-    const receipt = await (draft.mode === 'create'
-      ? createMonitorDefinition(draft.definition, language, command.abort.signal)
-      : updateMonitorDefinition(draft.expectedApp, draft.definition, draft.revision, language, command.abort.signal));
-    committed = true;
-    const [detail, catalog] = await Promise.all([
-      loadMonitorDefinitionDetail(receipt.app, language, command.abort.signal),
-      catalogProof.load(command.abort.signal)
-    ]);
-    return { kind: 'canonical-write' as const, detail, catalog };
-  } catch (error) {
-    if (!committed) throw error;
-    throw committedWriteProofError(error);
-  }
-}
-
 function monitorDefinitionFailureKind(error: unknown): MonitorDefinitionFailureKind {
   return error instanceof MonitorDefinitionRequestError ? error.kind : 'error';
-}
-
-function committedWriteProofError(error: unknown) {
-  return new MonitorDefinitionRequestError(monitorDefinitionFailureKind(error), 'uncertain');
 }

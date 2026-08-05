@@ -10,9 +10,11 @@
 import { App } from 'antd';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import { requireDomElement } from '@/test/dom-element';
 
 const owner = vi.hoisted(() => ({ useController: vi.fn() }));
@@ -37,7 +39,7 @@ describe('MonitorDefinitionPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders searchable catalog actions and delegates view/create/edit/delete', () => {
+  it('renders a persistent searchable selector and delegates selection/create', () => {
     const controller = buildController();
     owner.useController.mockReturnValue(controller);
     renderPage();
@@ -51,32 +53,29 @@ describe('MonitorDefinitionPage', () => {
       header.querySelector('[data-hb-operational-page-actions]'),
       'Operational page actions'
     );
-    const commandBand = screen.getByRole('search');
+    const selector = screen.getByRole('navigation', { name: 'Monitor definitions' });
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Monitor definitions' }));
     expect(headerActions).toContainElement(screen.getByRole('button', { name: 'Create definition' }));
-    expect(header).not.toContainElement(screen.getByRole('button', { name: 'Refresh' }));
-    expect(commandBand).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
-    expect(commandBand).not.toContainElement(screen.getByRole('button', { name: 'Create definition' }));
+    expect(document.querySelector('.ant-drawer')).not.toBeInTheDocument();
+    expect(selector).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
     expect(screen.getByText('MySQL')).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Search definitions'), { target: { value: 'mysql' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));
-    fireEvent.click(screen.getByRole('button', { name: 'View MySQL' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit MySQL' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete MySQL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'MySQL mysql' }));
 
     expect(controller.actions.setSearch).toHaveBeenCalledWith('mysql');
     expect(controller.actions.openCreate).toHaveBeenCalledOnce();
     expect(controller.actions.openView).toHaveBeenCalledWith('mysql');
-    expect(controller.actions.openEdit).toHaveBeenCalledWith('mysql');
-    expect(controller.actions.requestDelete).toHaveBeenCalledWith(item);
+    expect(screen.getByText('Select a monitor definition to inspect its authoritative YAML.')).toBeInTheDocument();
   });
 
   it('renders editor validation, save, conflict refresh, and cancel actions', () => {
     const controller = buildController({
       workspace: {
         kind: 'edit',
-        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
+        authority: { schemaVersion: 1, ...item, definition: 'app: mysql' },
+        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql\nname: draft', revision },
         failure: 'revision-conflict',
         pending: null,
         validation: null,
@@ -86,7 +85,9 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    fireEvent.change(screen.getByLabelText('Definition YAML'), { target: { value: 'app: mysql\nname: changed' } });
+    expect(screen.getByLabelText('Authoritative YAML')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    fireEvent.change(screen.getByLabelText('Draft YAML'), { target: { value: 'app: mysql\nname: changed' } });
     fireEvent.click(screen.getByRole('button', { name: 'Validate' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh latest definition' }));
@@ -96,13 +97,26 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.validate).toHaveBeenCalledOnce();
     expect(controller.actions.save).toHaveBeenCalledOnce();
     expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
-    expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
+    expect(controller.actions.cancelEdit).toHaveBeenCalledOnce();
+  });
+
+  it('uses the shared canonical monitor-list path for the selected definition', () => {
+    owner.useController.mockReturnValue(
+      buildController({ workspace: { kind: 'view', detail: { schemaVersion: 1, ...item, definition: 'app: mysql' } } })
+    );
+    renderPage();
+
+    expect(screen.getByRole('link', { name: 'View monitors' })).toHaveAttribute(
+      'href',
+      buildMonitorListPath({ app: 'mysql' })
+    );
   });
 
   it('freezes an uncertain draft and offers only catalog evidence refresh or cancel', () => {
     const controller = buildController({
       workspace: {
         kind: 'edit',
+        authority: { schemaVersion: 1, ...item, definition: 'app: mysql' },
         draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
         failure: 'state-uncertain',
         pending: null,
@@ -113,7 +127,7 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    expect(screen.getByLabelText('Definition YAML')).toBeDisabled();
+    expect(screen.getByLabelText('Draft YAML')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Validate' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Refresh latest definition' })).not.toBeInTheDocument();
@@ -121,7 +135,26 @@ describe('MonitorDefinitionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(controller.actions.retryWorkspaceProof).toHaveBeenCalledOnce();
-    expect(controller.actions.closeWorkspace).toHaveBeenCalledOnce();
+    expect(controller.actions.cancelEdit).toHaveBeenCalledOnce();
+  });
+
+  it('disables save for an unchanged authoritative update draft', () => {
+    owner.useController.mockReturnValue(
+      buildController({
+        workspace: {
+          kind: 'edit',
+          authority: { schemaVersion: 1, ...item, definition: 'app: mysql' },
+          draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
+          failure: null,
+          pending: null,
+          validation: null,
+          writeRecovery: null
+        }
+      })
+    );
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
   it('freezes uncertain delete confirmation and offers only catalog evidence refresh or cancel', () => {
@@ -148,6 +181,7 @@ describe('MonitorDefinitionPage', () => {
       buildController({
         workspace: {
           kind: 'edit',
+          authority: null,
           draft: { mode: 'create', expectedApp: null, definition: '' },
           failure: 'definition-required',
           pending: null,
@@ -203,7 +237,7 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(buildController({ listState: { kind: 'empty' }, items: [] }));
     renderPage();
 
-    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Monitor definitions' })).toBeInTheDocument();
     expect(document.querySelector('[data-hb-operational-result-region]')).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'No monitor definitions are available.' })).toBeVisible();
     expect(document.querySelector('.ant-empty-image')).not.toBeInTheDocument();
@@ -214,6 +248,7 @@ function buildController(overrides: Record<string, unknown> = {}) {
   return {
     actions: {
       cancelDelete: vi.fn(),
+      cancelEdit: vi.fn(),
       closeWorkspace: vi.fn(),
       confirmDelete: vi.fn(),
       openCreate: vi.fn(),
@@ -250,9 +285,11 @@ function renderPage() {
 
 function shell(child: React.ReactNode) {
   return (
-    <I18nextProvider i18n={i18n}>
-      <App>{child}</App>
-    </I18nextProvider>
+    <MemoryRouter>
+      <I18nextProvider i18n={i18n}>
+        <App>{child}</App>
+      </I18nextProvider>
+    </MemoryRouter>
   );
 }
 

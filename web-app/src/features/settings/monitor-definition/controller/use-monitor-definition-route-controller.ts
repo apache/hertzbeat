@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import {
   monitorDefinitionWorkspaceApp,
+  monitorDefinitionWorkspaceIsDirty,
   normalizeMonitorDefinitionRouteApp,
   readMonitorDefinitionAppQuery,
   writeMonitorDefinitionAppQuery,
@@ -20,6 +21,7 @@ type WorkspaceOpenAttempt = { admitted: boolean; completion: Promise<void> };
 const unobserved = Symbol('unobserved');
 
 type RouteWorkspaceActions = {
+  cancelEdit: () => boolean;
   closeWorkspace: () => boolean;
   followRoute: (app: string | null) => boolean;
   openCreate: () => boolean;
@@ -42,6 +44,8 @@ export function useMonitorDefinitionRouteController(
   const query = readMonitorDefinitionAppQuery(params);
   const route = useMonitorDefinitionRouteState(query.app);
   useCanonicalMonitorDefinitionAppQuery(sourceSearch, query.canonicalSearch, setParams);
+  useDirtyMonitorDefinitionRouteGuard(query.app, workspace, params, setParams, route);
+  useSuccessfulCreateRouteSync(workspace, params, setParams, route);
   useMonitorDefinitionWorkspaceRoute(query.app, workspace, actions, route);
   const writeApp = (app: string | null, replace = false) => {
     const normalized = normalizeMonitorDefinitionRouteApp(app);
@@ -49,6 +53,42 @@ export function useMonitorDefinitionRouteController(
     setParams(writeMonitorDefinitionAppQuery(params, normalized), { replace });
   };
   return monitorDefinitionRouteActions(workspace, query.app, actions, route, writeApp);
+}
+
+function useSuccessfulCreateRouteSync(
+  workspace: MonitorDefinitionWorkspace | null,
+  params: URLSearchParams,
+  setParams: ReturnType<typeof useSearchParams>[1],
+  route: RouteState
+) {
+  const createActive = useRef(false);
+  useEffect(() => {
+    if (workspace?.kind === 'edit' && workspace.draft.mode === 'create') {
+      createActive.current = true;
+      return;
+    }
+    if (!createActive.current) return;
+    createActive.current = false;
+    if (workspace?.kind !== 'view') return;
+    route.interact(workspace.detail.app);
+    route.write(workspace.detail.app);
+    setParams(writeMonitorDefinitionAppQuery(params, workspace.detail.app), { replace: true });
+  }, [params, route, setParams, workspace]);
+}
+
+function useDirtyMonitorDefinitionRouteGuard(
+  queryApp: string | null,
+  workspace: MonitorDefinitionWorkspace | null,
+  params: URLSearchParams,
+  setParams: ReturnType<typeof useSearchParams>[1],
+  route: RouteState
+) {
+  useEffect(() => {
+    const ownedApp = monitorDefinitionWorkspaceApp(workspace);
+    if (!monitorDefinitionWorkspaceIsDirty(workspace) || queryApp === ownedApp) return;
+    route.write(ownedApp);
+    setParams(writeMonitorDefinitionAppQuery(params, ownedApp), { replace: true });
+  }, [params, queryApp, route, setParams, workspace]);
 }
 
 function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
@@ -140,6 +180,11 @@ function monitorDefinitionRouteActions(
       route.interact(normalized);
       writeApp(normalized);
       return opening.completion;
+    },
+    cancelEdit: () => {
+      const clearRoute = workspace?.kind === 'edit' && workspace.draft.mode === 'create';
+      const cancelled = actions.cancelEdit();
+      if (cancelled && clearRoute) writeApp(null, true);
     },
     closeWorkspace: () => {
       const ownedApp = monitorDefinitionWorkspaceApp(workspace);

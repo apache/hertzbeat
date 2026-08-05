@@ -1,0 +1,30 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 54px;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.origin {
+  flex: none;
+  margin: 0 0 0 8px;
+}

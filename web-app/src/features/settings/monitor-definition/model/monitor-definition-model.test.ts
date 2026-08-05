@@ -16,6 +16,7 @@ import {
   writeMonitorDefinitionAppQuery,
   monitorDefinitionDraftRequiredFailure,
   monitorDefinitionFailureMessageKey,
+  monitorDefinitionWorkspaceIsDirty,
   userCanWriteMonitorDefinitions
 } from './monitor-definition-model';
 
@@ -65,6 +66,32 @@ describe('monitor definition model', () => {
     expect(
       monitorDefinitionDraftRequiredFailure({ mode: 'create', expectedApp: null, definition: 'name:\n  en-US: Custom' })
     ).toBeNull();
+  });
+
+  it('compares update drafts with retained authoritative YAML', () => {
+    const authority = { ...item, schemaVersion: 1 as const, definition: 'app: mysql' };
+    expect(
+      monitorDefinitionWorkspaceIsDirty({
+        kind: 'edit',
+        authority,
+        draft: buildUpdateDraft(authority),
+        failure: null,
+        pending: null,
+        validation: null,
+        writeRecovery: null
+      })
+    ).toBe(false);
+    expect(
+      monitorDefinitionWorkspaceIsDirty({
+        kind: 'edit',
+        authority,
+        draft: { ...buildUpdateDraft(authority), definition: 'app: mysql\nname: changed' },
+        failure: null,
+        pending: null,
+        validation: null,
+        writeRecovery: null
+      })
+    ).toBe(true);
   });
 
   it('keeps writes ADMIN-only and maps stable failures to i18n keys', () => {

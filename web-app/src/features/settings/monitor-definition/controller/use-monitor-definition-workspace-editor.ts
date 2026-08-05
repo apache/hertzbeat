@@ -17,7 +17,7 @@
 
 import { useMemo } from 'react';
 
-import type { MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
+import { monitorDefinitionWorkspaceIsDirty, type MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
 import {
   proveOwnedMonitorDefinitionCatalog,
   type MonitorDefinitionCatalogProof
@@ -60,11 +60,25 @@ export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorCont
           !owner.matches(actionEpoch) ||
           workspaceRef.current !== workspace ||
           owner.closeBlocked() ||
+          monitorDefinitionWorkspaceIsDirty(workspace) ||
           (workspace?.kind === 'edit' && workspace.pending && workspace.pending !== 'proof')
         )
           return false;
         owner.retire();
         setWorkspace(null);
+        return true;
+      },
+      cancelEdit: () => {
+        if (
+          !owner.matches(actionEpoch) ||
+          workspaceRef.current !== workspace ||
+          workspace?.kind !== 'edit' ||
+          owner.closeBlocked() ||
+          (workspace.pending && workspace.pending !== 'proof')
+        )
+          return false;
+        owner.retire();
+        setWorkspace(workspace.authority ? { kind: 'view', detail: workspace.authority } : null);
         return true;
       },
       setDefinition: (definition: string) => {
@@ -79,7 +93,7 @@ export function useMonitorDefinitionWorkspaceEditor(context: WorkspaceEditorCont
         setWorkspace({ ...workspace, draft: { ...workspace.draft, definition }, failure: null, validation: null });
       },
       validate: () => run('validate'),
-      save: () => run('save'),
+      save: () => (monitorDefinitionWorkspaceIsDirty(workspace) ? run('save') : Promise.resolve()),
       refreshAuthoritativeDraft: () => run('refresh'),
       retryWorkspaceProof: () =>
         retryWorkspaceCatalogProof({

@@ -19,6 +19,8 @@ import { useMemo } from 'react';
 
 import {
   buildCreateDraft,
+  monitorDefinitionWorkspaceApp,
+  monitorDefinitionWorkspaceIsDirty,
   monitorDefinitionWorkspaceHasUncertainWrite,
   type MonitorDefinitionWorkspace
 } from '../model/monitor-definition-model';
@@ -43,16 +45,24 @@ export function useMonitorDefinitionWorkspaceOpen(context: WorkspaceOpenContext)
   return useMemo(
     () => ({
       openView: (app: string) => {
-        if (workspaceOpenBlocked(owner, workspaceRef.current)) return rejectedWorkspaceOpen();
+        if (workspaceOpenBlocked(owner, workspaceRef.current, app, setWorkspace)) return rejectedWorkspaceOpen();
         return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace));
       },
       openEdit: (app: string) => {
-        if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
+        if (
+          !canWriteRef.current ||
+          !owner.matches(actionEpoch) ||
+          workspaceOpenBlocked(owner, workspaceRef.current, app, setWorkspace)
+        )
           return rejectedWorkspaceOpen();
         return admittedWorkspaceOpen(loadMonitorDefinitionWorkspace('edit', app, language, owner, setWorkspace));
       },
       openCreate: () => {
-        if (!canWriteRef.current || !owner.matches(actionEpoch) || workspaceOpenBlocked(owner, workspaceRef.current))
+        if (
+          !canWriteRef.current ||
+          !owner.matches(actionEpoch) ||
+          workspaceOpenBlocked(owner, workspaceRef.current, null, setWorkspace)
+        )
           return false;
         owner.retire();
         setWorkspace(editMonitorDefinitionWorkspace(buildCreateDraft()));
@@ -71,7 +81,20 @@ export function useMonitorDefinitionWorkspaceOpen(context: WorkspaceOpenContext)
   );
 }
 
-function workspaceOpenBlocked(owner: MonitorDefinitionOperationOwner, workspace: MonitorDefinitionWorkspace | null) {
+function workspaceOpenBlocked(
+  owner: MonitorDefinitionOperationOwner,
+  workspace: MonitorDefinitionWorkspace | null,
+  nextApp: string | null,
+  publish: (value: MonitorDefinitionWorkspace) => void
+) {
+  if (
+    workspace?.kind === 'edit' &&
+    monitorDefinitionWorkspaceIsDirty(workspace) &&
+    monitorDefinitionWorkspaceApp(workspace) !== nextApp
+  ) {
+    publish({ ...workspace, failure: 'unsaved-changes' });
+    return true;
+  }
   return owner.busy() || monitorDefinitionWorkspaceHasUncertainWrite(workspace);
 }
 

@@ -4,10 +4,43 @@
   width: 100%;
 }
 
+.guidance {
+  display: grid;
+  min-height: 420px;
+  place-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h4,
+.workspace h4 {
+  margin: 0;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.editorPane {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
 .editor,
 .readOnly {
   width: 100%;
-  min-height: 360px;
+  height: clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px);
+  min-height: 0;
   margin: 0;
   padding: 12px;
   overflow: auto;
@@ -16,4 +49,10 @@
   color: var(--hb-text-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   white-space: pre;
+}
+
+@media (max-width: 960px) {
+  .editorGrid {
+    grid-template-columns: 1fr;
+  }
 }

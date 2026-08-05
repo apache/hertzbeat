@@ -20,6 +20,7 @@ import { useMemo } from 'react';
 import {
   monitorDefinitionWorkspaceApp,
   monitorDefinitionWorkspaceHasUncertainWrite,
+  monitorDefinitionWorkspaceIsDirty,
   type MonitorDefinitionWorkspace
 } from '../model/monitor-definition-model';
 import type { MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
@@ -40,7 +41,12 @@ export function useMonitorDefinitionWorkspaceRoute(context: WorkspaceRouteContex
         const current = workspaceRef.current;
         if (app && monitorDefinitionWorkspaceApp(current) === app) return true;
         // Route identity may retire reads and ordinary drafts, but never owns an exclusive or uncertain command.
-        if (owner.closeBlocked() || monitorDefinitionWorkspaceHasUncertainWrite(current)) return false;
+        if (
+          owner.closeBlocked() ||
+          monitorDefinitionWorkspaceHasUncertainWrite(current) ||
+          monitorDefinitionWorkspaceIsDirty(current)
+        )
+          return false;
         if (!app) {
           if (!current) return true;
           owner.retire();

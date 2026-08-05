@@ -5,11 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Modal, Typography } from 'antd';
+import { Alert, Button, Input, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
-  OperationalCommandBar,
   OperationalPage,
   OperationalPageHeader,
   OperationalResultRegion,
@@ -17,6 +16,7 @@ import {
 } from '@/shared/operational-page';
 
 import { MonitorDefinitionCatalog } from '../components/monitor-definition-catalog';
+import { MonitorDefinitionDeleteDialog } from '../components/monitor-definition-delete-dialog';
 import { MonitorDefinitionWorkspaceView } from '../components/monitor-definition-workspace';
 import { useMonitorDefinitionController } from '../controller/use-monitor-definition-controller';
 import {
@@ -43,34 +43,46 @@ export function MonitorDefinitionPage() {
       {controller.notice && (
         <Alert showIcon type="success" message={t(`monitorDefinitions.disposition.${controller.notice}`)} />
       )}
-      <OperationalCommandBar
-        role="search"
-        ariaLabel={t('monitorDefinitions.search')}
-        primary={
-          <Input
-            className={styles.search}
-            allowClear
-            value={controller.search}
-            placeholder={t('monitorDefinitions.search')}
-            onChange={event => controller.actions.setSearch(event.target.value)}
-          />
-        }
-        secondary={<Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>}
-      />
       <OperationalResultRegion>
-        <CatalogState controller={controller} />
+        <div className={styles.layout} data-monitor-definition-layout>
+          <nav className={styles.selector} aria-label={t('monitorDefinitions.title')}>
+            <Space.Compact block>
+              <Input
+                allowClear
+                value={controller.search}
+                placeholder={t('monitorDefinitions.search')}
+                onChange={event => controller.actions.setSearch(event.target.value)}
+              />
+              <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
+            </Space.Compact>
+            <CatalogState controller={controller} />
+          </nav>
+          <main className={styles.workspace}>
+            <MonitorDefinitionWorkspaceView
+              canWrite={controller.canWrite}
+              workspace={controller.workspace}
+              onCancel={controller.actions.cancelEdit}
+              onChange={controller.actions.setDefinition}
+              onDelete={controller.actions.requestDelete}
+              onEdit={app => void controller.actions.openEdit(app)}
+              onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
+              onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
+              onRetry={() => void controller.actions.retryWorkspace()}
+              onSave={() => void controller.actions.save()}
+              onValidate={() => void controller.actions.validate()}
+            />
+          </main>
+        </div>
       </OperationalResultRegion>
-      <MonitorDefinitionWorkspaceView
-        workspace={controller.workspace}
-        onCancel={controller.actions.closeWorkspace}
-        onChange={controller.actions.setDefinition}
-        onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
-        onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
-        onRetry={() => void controller.actions.retryWorkspace()}
-        onSave={() => void controller.actions.save()}
-        onValidate={() => void controller.actions.validate()}
+      <MonitorDefinitionDeleteDialog
+        failure={controller.deleteFailure}
+        pending={controller.deletePending}
+        target={controller.deleteTarget}
+        writeRecovery={controller.deleteWriteRecovery}
+        onCancel={controller.actions.cancelDelete}
+        onConfirm={() => void controller.actions.confirmDelete()}
+        onRetryProof={() => void controller.actions.retryDeleteProof()}
       />
-      <DeleteDialog controller={controller} />
     </OperationalPage>
   );
 }
@@ -97,11 +109,9 @@ function CatalogState({ controller }: { controller: ReturnType<typeof useMonitor
   }
   return (
     <MonitorDefinitionCatalog
-      canWrite={controller.canWrite}
       items={controller.items}
-      onDelete={controller.actions.requestDelete}
-      onEdit={app => void controller.actions.openEdit(app)}
-      onView={app => void controller.actions.openView(app)}
+      selectedApp={controller.selectedApp}
+      onSelect={app => void controller.actions.openView(app)}
     />
   );
 }
@@ -110,42 +120,4 @@ function catalogFailureState(failure: MonitorDefinitionFailureKind) {
   if (failure === 'forbidden') return 'permission';
   if (failure === 'unavailable') return 'unavailable';
   return 'error';
-}
-
-function DeleteDialog({ controller }: { controller: ReturnType<typeof useMonitorDefinitionController> }) {
-  const { t } = useTranslation();
-  return (
-    <Modal
-      open={controller.deleteTarget !== null}
-      title={t('monitorDefinitions.deleteTitle')}
-      okText={t('common.delete')}
-      cancelText={t('common.cancel')}
-      okButtonProps={{
-        danger: true,
-        loading: controller.deletePending && controller.deleteWriteRecovery === null,
-        disabled: controller.deleteWriteRecovery !== null
-      }}
-      cancelButtonProps={{ disabled: controller.deletePending && controller.deleteWriteRecovery === null }}
-      onCancel={controller.actions.cancelDelete}
-      onOk={() => void controller.actions.confirmDelete()}
-    >
-      <Typography.Paragraph>
-        {t('monitorDefinitions.deleteConfirm', { app: controller.deleteTarget?.label ?? '' })}
-      </Typography.Paragraph>
-      {controller.deleteFailure && (
-        <Alert
-          type="error"
-          showIcon
-          message={t(monitorDefinitionFailureMessageKey(controller.deleteFailure))}
-          action={
-            controller.deleteWriteRecovery === 'uncertain' ? (
-              <Button loading={controller.deletePending} onClick={() => void controller.actions.retryDeleteProof()}>
-                {t('common.refresh')}
-              </Button>
-            ) : undefined
-          }
-        />
-      )}
-    </Modal>
-  );
 }

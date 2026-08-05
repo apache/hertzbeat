@@ -5,86 +5,39 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Space, Table, Tag, Typography } from 'antd';
+import { Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorDefinitionCatalogItem } from '../model/monitor-definition-model';
+import styles from './monitor-definition-catalog.module.css';
 
 export function MonitorDefinitionCatalog(props: {
-  canWrite: boolean;
   items: MonitorDefinitionCatalogItem[];
-  onDelete: (item: MonitorDefinitionCatalogItem) => void;
-  onEdit: (app: string) => void;
-  onView: (app: string) => void;
+  selectedApp: string | null;
+  onSelect: (app: string) => void;
 }) {
   const { t } = useTranslation();
   return (
-    <Table
-      rowKey="app"
-      dataSource={props.items}
-      pagination={false}
-      scroll={{ x: 850 }}
-      columns={[
-        {
-          title: t('monitorDefinitions.app'),
-          dataIndex: 'app',
-          width: 260,
-          render: (app: string, item) => (
-            <Space direction="vertical" size={0}>
-              <Typography.Text strong>{item.label}</Typography.Text>
-              <Typography.Text type="secondary">{app}</Typography.Text>
-            </Space>
-          )
-        },
-        {
-          title: t('monitorDefinitions.origin'),
-          dataIndex: 'origin',
-          width: 150,
-          render: origin => <Tag>{t(`monitorDefinitions.originValue.${origin}`)}</Tag>
-        },
-        {
-          title: t('monitorDefinitions.revision'),
-          dataIndex: 'revision',
-          width: 180,
-          render: revision => <Typography.Text code>{String(revision).slice(0, 12)}</Typography.Text>
-        },
-        {
-          title: t('common.actions'),
-          key: 'actions',
-          fixed: 'right',
-          width: 260,
-          render: (_, item) => <DefinitionActions item={item} {...props} />
-        }
-      ]}
-    />
-  );
-}
-
-function DefinitionActions(
-  props: Parameters<typeof MonitorDefinitionCatalog>[0] & { item: MonitorDefinitionCatalogItem }
-) {
-  const { t } = useTranslation();
-  const { item } = props;
-  return (
-    <Space wrap>
-      <Button onClick={() => props.onView(item.app)} aria-label={t('monitorDefinitions.viewApp', { app: item.label })}>
-        {t('common.view')}
-      </Button>
-      <Button
-        disabled={!props.canWrite || !item.editable}
-        onClick={() => props.onEdit(item.app)}
-        aria-label={t('monitorDefinitions.editApp', { app: item.label })}
-      >
-        {t('common.edit')}
-      </Button>
-      <Button
-        danger
-        disabled={!props.canWrite || !item.deletable}
-        onClick={() => props.onDelete(item)}
-        aria-label={t('monitorDefinitions.deleteApp', { app: item.label })}
-      >
-        {t('common.delete')}
-      </Button>
-    </Space>
+    <div className={styles.list}>
+      {props.items.map(item => (
+        <Button
+          key={item.app}
+          type={props.selectedApp === item.app ? 'primary' : 'text'}
+          className={styles.item ?? ''}
+          aria-label={`${item.label} ${item.app}`}
+          onClick={() => props.onSelect(item.app)}
+        >
+          <span className={styles.copy}>
+            <Typography.Text strong ellipsis>
+              {item.label}
+            </Typography.Text>
+            <Typography.Text type="secondary" ellipsis>
+              {item.app}
+            </Typography.Text>
+          </span>
+          <Tag className={styles.origin ?? ''}>{t(`monitorDefinitions.originValue.${item.origin}`)}</Tag>
+        </Button>
+      ))}
+    </div>
   );
 }

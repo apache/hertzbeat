@@ -48,6 +48,7 @@ export type MonitorDefinitionWorkspace =
   | { kind: 'view'; detail: MonitorDefinitionDetail }
   | {
       kind: 'edit';
+      authority: MonitorDefinitionDetail | null;
       draft: MonitorDefinitionDraft;
       failure: MonitorDefinitionFailureKind | null;
       pending: 'load' | 'validate' | 'save' | 'refresh' | 'proof' | null;
@@ -60,6 +61,7 @@ export type MonitorDefinitionFailureKind =
   | 'app-invalid'
   | 'invalid'
   | 'definition-required'
+  | 'unsaved-changes'
   | 'create-conflict'
   | 'expected-app-required'
   | 'expected-app-unexpected'
@@ -143,6 +145,12 @@ export function monitorDefinitionWorkspaceHasUncertainWrite(workspace: MonitorDe
   return workspace?.kind === 'edit' && workspace.writeRecovery === 'uncertain';
 }
 
+export function monitorDefinitionWorkspaceIsDirty(workspace: MonitorDefinitionWorkspace | null) {
+  if (workspace?.kind !== 'edit') return false;
+  if (workspace.draft.mode === 'create') return workspace.draft.definition.length > 0;
+  return workspace.draft.definition !== workspace.authority?.definition;
+}
+
 export function monitorDefinitionCanRefreshAuthoritativeDraft(workspace: MonitorDefinitionWorkspace) {
   return (
     workspace.kind === 'edit' &&
@@ -157,6 +165,7 @@ const failureMessageKeys: Record<MonitorDefinitionFailureKind, string> = {
   'app-invalid': 'monitorDefinitions.failure.appInvalid',
   invalid: 'monitorDefinitions.failure.invalid',
   'definition-required': 'monitorDefinitions.failure.definitionRequired',
+  'unsaved-changes': 'monitorDefinitions.failure.unsavedChanges',
   'create-conflict': 'monitorDefinitions.failure.createConflict',
   'expected-app-required': 'monitorDefinitions.failure.expectedAppRequired',
   'expected-app-unexpected': 'monitorDefinitions.failure.expectedAppUnexpected',

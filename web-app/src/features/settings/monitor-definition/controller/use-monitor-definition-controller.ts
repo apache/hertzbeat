@@ -14,6 +14,7 @@ import { useSession } from '@/core/auth/session-context';
 import { loadMonitorDefinitionCatalog, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
 import {
   filterMonitorDefinitions,
+  monitorDefinitionWorkspaceApp,
   type MonitorDefinitionFailureKind,
   userCanWriteMonitorDefinitions
 } from '../model/monitor-definition-model';
@@ -61,6 +62,7 @@ export function useMonitorDefinitionController() {
     listState,
     notice: deletion.notice,
     search,
+    selectedApp: monitorDefinitionWorkspaceApp(workspace.workspace),
     workspace: workspace.workspace,
     actions: {
       ...workspace.actions,
