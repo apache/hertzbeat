@@ -152,6 +152,41 @@ describe('LogResult', () => {
     );
   });
 
+  it('renders non-empty hourly evidence as an accessible time-series chart instead of row-by-row history', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          data={{ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 }}
+          statistics={{
+            overview: {
+              kind: 'ready',
+              data: {
+                totalCount: 12,
+                traceCount: 0,
+                debugCount: 0,
+                infoCount: 12,
+                warnCount: 0,
+                errorCount: 0,
+                fatalCount: 0
+              }
+            },
+            trend: {
+              kind: 'ready',
+              data: { hourlyStats: { '2026-08-06 10:00': 4, '2026-08-06 11:00': 8 } }
+            }
+          }}
+          query={{ signal: 'logs', timeRange: 'last-30m' }}
+          t={i18n.t}
+          navigate={vi.fn()}
+        />
+      </I18nextProvider>
+    );
+
+    const trend = screen.getByRole('region', { name: i18n.t('exploreLog.trend') });
+    expect(within(trend).getByRole('img', { name: i18n.t('exploreLog.trend') })).toBeInTheDocument();
+    expect(within(trend).queryByRole('list')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['unavailable', 'common.unavailable'],
     ['error', 'exploreLog.streamFailed'],

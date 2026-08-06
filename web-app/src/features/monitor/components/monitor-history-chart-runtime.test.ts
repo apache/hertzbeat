@@ -15,6 +15,7 @@ import {
 
 type ChartOptionContract = {
   color: string[];
+  tooltip: { trigger: string; confine: boolean; axisPointer: { type: string } };
   legend: { show: boolean; top: number; right: number };
   series: Array<{
     smooth: boolean;
@@ -66,6 +67,7 @@ describe('monitor history chart runtime', () => {
     });
 
     expect(option.color[0]).toBe('#60a5fa');
+    expect(option.tooltip).toMatchObject({ trigger: 'axis', confine: true, axisPointer: { type: 'cross' } });
     expect(option.legend.show).toBe(false);
     expect(option.series[0]).toMatchObject({
       smooth: true,

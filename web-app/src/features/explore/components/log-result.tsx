@@ -20,6 +20,7 @@ import type { TFunction } from 'i18next';
 
 import type { ExplorePageResult, LogHistoryEvidence, LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
+import { TimeSeriesChart } from '@/shared/time-series-chart';
 import { LogRows } from './log-rows';
 import { LogStreamResult, type LiveLogView } from './log-stream-result';
 import styles from './log-result.module.css';
@@ -119,13 +120,16 @@ function renderTrendStatistics(kind: LogHistoryEvidence['trend']['kind'], rows: 
   if (kind === 'error') return <Alert type="warning" showIcon message={t('exploreLog.statisticsUnavailable')} />;
   if (rows.length === 0) return <p>{t('exploreLog.trendEmpty')}</p>;
   return (
-    <ol className={styles.trendRows}>
-      {rows.map(([bucket, count]) => (
-        <li key={bucket}>
-          <time>{bucket}</time>
-          <strong>{count.toLocaleString()}</strong>
-        </li>
-      ))}
-    </ol>
+    <TimeSeriesChart
+      title={t('exploreLog.trend')}
+      ariaLabel={t('exploreLog.trend')}
+      className={styles.trendChart}
+      series={[
+        {
+          name: t('explore.signals.logs'),
+          points: rows.map(([bucket, count]) => [new Date(bucket.replace(' ', 'T')).getTime(), count])
+        }
+      ]}
+    />
   );
 }

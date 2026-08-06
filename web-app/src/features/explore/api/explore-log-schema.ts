@@ -115,9 +115,11 @@ const logOverviewSchema: z.ZodType<LogOverview> = z.object({
   fatalCount: nonNegativeIntegerSchema
 });
 
-const logTrendSchema: z.ZodType<LogTrend> = z.object({
-  hourlyStats: z.record(z.string(), nonNegativeIntegerSchema)
-});
+const hourlyStatsSchema = z
+  .record(z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:00$/u), nonNegativeIntegerSchema)
+  .refine(stats => Object.keys(stats).every(bucket => Number.isFinite(new Date(bucket.replace(' ', 'T')).getTime())));
+
+const logTrendSchema: z.ZodType<LogTrend> = z.object({ hourlyStats: hourlyStatsSchema });
 
 export function parseLogOverview(value: unknown): LogOverview {
   const result = logOverviewSchema.safeParse(value);

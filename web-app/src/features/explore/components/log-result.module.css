@@ -87,18 +87,10 @@
   font-weight: 600;
 }
 
-.trendRows {
-  max-height: 132px;
-  padding: 0;
-  margin: 0;
-  overflow: auto;
-  list-style: none;
-}
-
-.trendRows li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+.trendChart {
+  width: 100%;
+  height: 220px;
+  min-width: 0;
 }
 
 @media (width <= 900px) {
