@@ -83,6 +83,16 @@ describe('useAlertIntegrationController', () => {
     expect(api.loadAlertIntegrationGuide).toHaveBeenCalledWith('prometheus', expect.any(AbortSignal));
   });
 
+  it('settles an empty successful catalog as a recoverable not-found state', async () => {
+    api.loadAlertIntegrationCatalog.mockResolvedValue({ items: [] });
+    const view = renderController('/alerts/integrations/unknown');
+
+    await waitFor(() => expect(view.result.current.state).toEqual({ kind: 'not-found', catalog: [] }));
+
+    expect(view.result.current.selectedSource).toBe('unknown');
+    expect(api.loadAlertIntegrationGuide).not.toHaveBeenCalled();
+  });
+
   it('does not request arbitrary detail while catalog ownership is unresolved', () => {
     api.loadAlertIntegrationCatalog.mockReturnValue(new Promise(() => undefined));
     const view = renderController('/alerts/integrations/webhook');

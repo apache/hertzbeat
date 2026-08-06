@@ -101,7 +101,7 @@ function resolveState(
   if (catalog.isPending) return { kind: 'loading' };
   if (catalog.error) return { kind: alertIntegrationFailureKind(catalog.error) };
   if (!catalog.data) return { kind: 'error' };
-  if (!catalogHit) return { kind: 'loading' };
+  if (!catalogHit) return { kind: 'not-found', catalog: catalog.data.items };
   if (detail.isPending) return { kind: 'loading' };
   if (detail.error) return { kind: alertIntegrationFailureKind(detail.error) };
   if (!detail.data) return { kind: 'error' };
