@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import yamlEditorStyles from '@/shared/yaml-editor/yaml-code-editor.module.css?raw';
 
 import catalogStyles from '../components/monitor-definition-catalog.module.css?raw';
+import editorSource from '../components/monitor-definition-editor.tsx?raw';
 import workspaceSource from '../components/monitor-definition-workspace.tsx?raw';
 import pageStyles from './monitor-definition-page.module.css?raw';
 
@@ -29,7 +30,7 @@ describe('monitor definition split layout contract', () => {
     expect(workspace).toMatch(/overflow:\s*auto/);
     expect(catalog).toMatch(/min-height:\s*0/);
     expect(catalog).toMatch(/overflow:\s*auto/);
-    expect(workspaceSource).toMatch(/minHeight="clamp\([^"]*100dvh/);
+    expect(`${workspaceSource}\n${editorSource}`).toMatch(/minHeight="clamp\([^"]*100dvh/);
     expect(yaml).toMatch(/overflow:\s*hidden/);
     expect(yamlEditorStyles).toMatch(/\.editor\s+:global\(\.cm-editor\)\s*\{[^}]*height:\s*100%/);
   });

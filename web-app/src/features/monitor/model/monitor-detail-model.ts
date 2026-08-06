@@ -29,7 +29,6 @@ import type {
 import type { MonitorHistorySeries } from './monitor-history-model';
 
 export { monitorHistoryMetrics, monitorHistorySeries } from './monitor-history-model';
-export type { MonitorHistorySeries } from './monitor-history-model';
 
 export type MonitorDetailEvidence = RemotePayloadState<{ detail: MonitorDetail }, 'missing' | 'unavailable' | 'error'>;
 

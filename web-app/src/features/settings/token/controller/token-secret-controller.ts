@@ -66,23 +66,7 @@ export function useTokenSecretActions(
     retire: generation.retire,
     t
   });
-  const reconcileGeneration = useCallback(async () => {
-    const admitted = generation.beginRecovery('generating');
-    if (!admitted) return;
-    try {
-      const failure = await refresh();
-      if (!generation.isOwnedBy(admitted.owner)) return;
-      if (failure) {
-        notifyError(notification, t, tokenListFailureMessage(failure));
-        return;
-      }
-      generation.clearRecovery(admitted.owner);
-      editor.complete();
-      notification.open?.({ message: t('token.generationReconciled'), type: 'progress' });
-    } finally {
-      generation.retire(admitted.owner);
-    }
-  }, [editor, generation, notification, refresh, t]);
+  const reconcileGeneration = useTokenGenerationReconciliation(generation, editor.complete, refresh, notification, t);
 
   return {
     actions: {
@@ -101,6 +85,32 @@ export function useTokenSecretActions(
       generationRecovery: generation.recovery
     }
   };
+}
+
+function useTokenGenerationReconciliation(
+  generation: ReturnType<typeof useExclusiveOperation<'generating', TokenGenerationRecovery>>,
+  complete: () => void,
+  refresh: RefreshAuthoritativeTokenList,
+  notification: Notification,
+  t: TFunction
+) {
+  return useCallback(async () => {
+    const admitted = generation.beginRecovery('generating');
+    if (!admitted) return;
+    try {
+      const failure = await refresh();
+      if (!generation.isOwnedBy(admitted.owner)) return;
+      if (failure) {
+        notifyError(notification, t, tokenListFailureMessage(failure));
+        return;
+      }
+      generation.clearRecovery(admitted.owner);
+      complete();
+      notification.open?.({ message: t('token.generationReconciled'), type: 'progress' });
+    } finally {
+      generation.retire(admitted.owner);
+    }
+  }, [complete, generation, notification, refresh, t]);
 }
 
 function useTokenDraftEditor(scope: string | null, isLocked: () => boolean) {

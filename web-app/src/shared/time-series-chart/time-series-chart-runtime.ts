@@ -72,23 +72,8 @@ export function buildTimeSeriesChartOption(
     animationDuration: 220,
     color: seriesColors,
     textStyle: { color: colors.text },
-    tooltip: {
-      trigger: 'axis',
-      confine: true,
-      axisPointer: { type: 'cross', lineStyle: { color: colors.border, type: 'dashed' } },
-      backgroundColor: colors.background,
-      borderColor: colors.border,
-      textStyle: { color: colors.text }
-    },
-    legend: {
-      show: showLegend,
-      type: 'scroll',
-      top: 8,
-      right: 12,
-      itemWidth: 18,
-      itemHeight: 3,
-      textStyle: { color: colors.muted, fontSize: 11 }
-    },
+    tooltip: chartTooltip(colors),
+    legend: chartLegend(showLegend, colors),
     toolbox: input.saveImageTitle
       ? {
           top: showLegend ? 32 : 6,
@@ -110,38 +95,69 @@ export function buildTimeSeriesChartOption(
       containLabel: true
     },
     xAxis: timeAxis(input.series, colors),
-    yAxis: {
-      type: 'value',
-      name: input.unit,
-      scale: true,
-      minInterval: 1,
-      nameTextStyle: { color: colors.muted },
-      axisLabel: { color: colors.muted },
-      splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } },
-      splitArea: { show: true, areaStyle: { color: ['transparent', colors.grid], opacity: 0.28 } }
-    },
+    yAxis: valueAxis(input.unit, colors),
     dataZoom: [
       { type: 'inside', zoomOnMouseWheel: true, moveOnMouseMove: false, moveOnMouseWheel: false },
       ...(input.saveImageTitle
         ? [{ type: 'slider' as const, height: 30, bottom: 18, borderColor: colors.border, showDetail: false }]
         : [])
     ],
-    series: input.series.map((item, index) => {
-      const primary = input.series.length === 1 || isPrimarySeries(item.name);
-      return {
-        name: item.name,
-        type: 'line',
-        data: item.points,
-        showSymbol: false,
-        smooth: true,
-        sampling: 'lttb',
-        emphasis: { focus: 'series' },
-        lineStyle: { width: primary ? 2.4 : 1.8, color: seriesColors[index] },
-        itemStyle: { color: seriesColors[index] },
-        areaStyle: primary ? primaryAreaStyle(seriesColors[index]!) : undefined
-      };
-    })
+    series: chartSeries(input.series, seriesColors)
   };
+}
+
+function chartTooltip(colors: ChartColors) {
+  return {
+    trigger: 'axis',
+    confine: true,
+    axisPointer: { type: 'cross', lineStyle: { color: colors.border, type: 'dashed' } },
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    textStyle: { color: colors.text }
+  };
+}
+
+function chartLegend(show: boolean, colors: ChartColors) {
+  return {
+    show,
+    type: 'scroll',
+    top: 8,
+    right: 12,
+    itemWidth: 18,
+    itemHeight: 3,
+    textStyle: { color: colors.muted, fontSize: 11 }
+  };
+}
+
+function valueAxis(unit: string | undefined, colors: ChartColors) {
+  return {
+    type: 'value',
+    name: unit,
+    scale: true,
+    minInterval: 1,
+    nameTextStyle: { color: colors.muted },
+    axisLabel: { color: colors.muted },
+    splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } },
+    splitArea: { show: true, areaStyle: { color: ['transparent', colors.grid], opacity: 0.28 } }
+  };
+}
+
+function chartSeries(series: TimeSeriesChartSeries[], colors: string[]) {
+  return series.map((item, index) => {
+    const primary = series.length === 1 || isPrimarySeries(item.name);
+    return {
+      name: item.name,
+      type: 'line',
+      data: item.points,
+      showSymbol: false,
+      smooth: true,
+      sampling: 'lttb',
+      emphasis: { focus: 'series' },
+      lineStyle: { width: primary ? 2.4 : 1.8, color: colors[index] },
+      itemStyle: { color: colors[index] },
+      areaStyle: primary ? primaryAreaStyle(colors[index]!) : undefined
+    };
+  });
 }
 
 function timeAxis(series: TimeSeriesChartSeries[], colors: ChartColors) {

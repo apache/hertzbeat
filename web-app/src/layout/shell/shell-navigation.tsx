@@ -162,37 +162,12 @@ function NavigationBranchControl(
   }
 ) {
   const { t } = useTranslation();
-  const { item, activeTrail, collapsed, onToggle, active, hasChildren, isOpen, label } = props;
+  const { item, activeTrail, collapsed, onToggle, hasChildren, isOpen, label } = props;
+  if (!item.route) return <NavigationGroupControl {...props} />;
   return (
     <div className={styles.navigationRow}>
-      {item.route ? (
-        <ShellNavigationLink
-          item={item}
-          active={activeTrail.at(-1) === item.name}
-          collapsed={collapsed}
-          label={label}
-        />
-      ) : (
-        <button
-          className={`${styles.navigationLink} ${styles.navigationGroupLink} ${
-            active ? styles.navigationParentActive : ''
-          } ${isOpen ? styles.navigationParentOpen : ''}`}
-          type="button"
-          aria-expanded={hasChildren ? isOpen : undefined}
-          onClick={() => onToggle(item.name)}
-        >
-          <span className={styles.navigationIcon} aria-hidden="true">
-            {item.icon}
-          </span>
-          {!collapsed && <span className={styles.navigationText}>{label}</span>}
-          {hasChildren && !collapsed && (
-            <span className={styles.navigationChevron} aria-hidden="true">
-              <UpOutlined className={isOpen ? '' : styles.navigationToggleClosed} />
-            </span>
-          )}
-        </button>
-      )}
-      {item.route && hasChildren && !collapsed && (
+      <ShellNavigationLink item={item} active={activeTrail.at(-1) === item.name} collapsed={collapsed} label={label} />
+      {hasChildren && !collapsed && (
         <button
           className={styles.navigationToggle}
           type="button"
@@ -203,6 +178,39 @@ function NavigationBranchControl(
           <UpOutlined className={isOpen ? '' : styles.navigationToggleClosed} />
         </button>
       )}
+    </div>
+  );
+}
+
+function NavigationGroupControl(
+  props: NavigationBranchProps & {
+    active: boolean;
+    hasChildren: boolean;
+    isOpen: boolean;
+    label: string;
+  }
+) {
+  const { item, collapsed, onToggle, active, hasChildren, isOpen, label } = props;
+  return (
+    <div className={styles.navigationRow}>
+      <button
+        className={`${styles.navigationLink} ${styles.navigationGroupLink} ${
+          active ? styles.navigationParentActive : ''
+        } ${isOpen ? styles.navigationParentOpen : ''}`}
+        type="button"
+        aria-expanded={hasChildren ? isOpen : undefined}
+        onClick={() => onToggle(item.name)}
+      >
+        <span className={styles.navigationIcon} aria-hidden="true">
+          {item.icon}
+        </span>
+        {!collapsed && <span className={styles.navigationText}>{label}</span>}
+        {hasChildren && !collapsed && (
+          <span className={styles.navigationChevron} aria-hidden="true">
+            <UpOutlined className={isOpen ? '' : styles.navigationToggleClosed} />
+          </span>
+        )}
+      </button>
     </div>
   );
 }

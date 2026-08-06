@@ -16,14 +16,13 @@ import {
   loadIntakeProfiles
 } from '../api/instrumentation-api';
 import { buildDetectionRequest, buildQueryJump, type InstrumentationDraft } from '../model/instrumentation-flow';
-import { profileRequiresToken } from '../model/intake-profile';
 import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { instrumentationTokenCapability } from '../model/instrumentation-token-capability';
 import { buildFlowReadiness } from './instrumentation-flow-readiness';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 import { useInstrumentationInitialization } from './use-instrumentation-initialization';
-import { useInstrumentationTokenActions } from './instrumentation-token-actions';
+import { useInstrumentationProfile } from './use-instrumentation-profile';
 
 const keys = {
   catalog: ['instrumentation', 'catalog'] as const,
@@ -50,16 +49,12 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const guideActions = useGuideActions(state, generationRef, startedAtRef);
-  const selectedProfile = profilesQuery.data?.profiles.find(profile => profile.id === state.draft.intakeProfileId);
-  const requiresToken = profileRequiresToken(selectedProfile);
-  const canGenerateToken = tokenCapability.canGenerateToken && requiresToken;
-  const tokenActions = useInstrumentationTokenActions(
+  const profile = useInstrumentationProfile(
     state,
     generationRef,
-    tokenCapability.canGenerateToken,
-    requiresToken,
-    selectedProfile,
-    session?.workspaceId ?? undefined
+    profilesQuery.data?.profiles,
+    session?.workspaceId ?? undefined,
+    tokenCapability.canGenerateToken
   );
   const detect = useDetection(
     state.draft,
@@ -71,7 +66,7 @@ export function useInstrumentationPageController() {
     generationRef
   );
   const openQuery = useOpenQuery(state.detection, navigate, state.tokenAcknowledgementRequiredRef);
-  const readiness = buildFlowReadiness(state, catalogQuery.data, initialization.profilesState, selectedProfile);
+  const readiness = buildFlowReadiness(state, catalogQuery.data, initialization.profilesState, profile.selected);
   useProtectUnacknowledgedToken(state.tokenAcknowledgementRequired);
 
   return {
@@ -84,13 +79,13 @@ export function useInstrumentationPageController() {
     retryInitialization: initialization.retryInitialization,
     ...draftActions,
     ...guideActions,
-    ...tokenActions,
+    ...profile.tokenActions,
     setStage: (stage: Parameters<typeof state.setStage>[0]) => {
       if (!state.tokenAcknowledgementRequiredRef.current) state.setStage(stage);
     },
     acknowledgeGeneratedToken: () => state.setTokenAcknowledgementRequired(false),
-    canGenerateToken,
-    requiresToken,
+    canGenerateToken: profile.canGenerateToken,
+    requiresToken: profile.requiresToken,
     detect,
     openQuery,
     ...readiness

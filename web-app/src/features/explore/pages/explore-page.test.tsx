@@ -38,7 +38,8 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/explore-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/explore-api')>()),
-  ...api
+  ...api,
+  loadLogHistoryEvidence: api.loadLogSignal
 }));
 
 import { ExplorePage } from './explore-page';
@@ -403,9 +404,9 @@ describe('ExplorePage instrumentation context boundary', () => {
   });
 
   it('labels retained log evidence during refresh and disables stale drilldowns until replacement succeeds', async () => {
-    const refresh = deferred(logPage('fresh evidence', 'trace-fresh'));
+    const refresh = deferred(logEvidence(logPage('fresh evidence', 'trace-fresh')));
     api.loadLogSignal
-      .mockResolvedValueOnce(logPage('cached evidence', 'trace-cached'))
+      .mockResolvedValueOnce(logEvidence(logPage('cached evidence', 'trace-cached')))
       .mockReturnValueOnce(refresh.promise);
     renderPage('/explore?signal=logs');
     expect(await screen.findByText('cached evidence')).toBeInTheDocument();
@@ -424,7 +425,7 @@ describe('ExplorePage instrumentation context boundary', () => {
 
   it('keeps refresh failure classification visible while retained evidence remains non-actionable', async () => {
     api.loadLogSignal
-      .mockResolvedValueOnce(logPage('cached evidence', 'trace-cached'))
+      .mockResolvedValueOnce(logEvidence(logPage('cached evidence', 'trace-cached')))
       .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
     renderPage('/explore?signal=logs');
     expect(await screen.findByText('cached evidence')).toBeInTheDocument();
@@ -460,6 +461,25 @@ function logPage(body: string, traceId: string) {
     totalPages: 1,
     number: 0,
     size: 20
+  };
+}
+
+function logEvidence(page: ReturnType<typeof logPage>) {
+  return {
+    page,
+    overview: {
+      kind: 'ready' as const,
+      data: {
+        totalCount: page.totalElements,
+        traceCount: 0,
+        debugCount: 0,
+        infoCount: page.totalElements,
+        warnCount: 0,
+        errorCount: 0,
+        fatalCount: 0
+      }
+    },
+    trend: { kind: 'ready' as const, data: { hourlyStats: {} } }
   };
 }
 

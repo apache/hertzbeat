@@ -72,8 +72,11 @@ describe('BasicLayout shell', () => {
     renderLayout('/monitors/7');
 
     expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Available');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Degraded');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Storage query failed');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Needs attention');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Storage query failed')
+    );
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Available');
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();

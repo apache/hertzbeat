@@ -8,7 +8,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-import { monitorNavigationQueryKeys } from '@/features/monitor/navigation';
+import { monitorNavigationQueryKeys } from '@/features/monitor';
 
 import { MonitorDefinitionRequestError, updateMonitorDefinitionVisibility } from '../api/monitor-definition-api';
 import type { MonitorDefinitionCatalogItem, MonitorDefinitionFailureKind } from '../model/monitor-definition-model';

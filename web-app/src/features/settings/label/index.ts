@@ -16,4 +16,4 @@
  */
 
 export { LabelPage } from './pages/label-page';
-export { classifyLabelSuggestionFailure, loadLabelSuggestions } from './api/label-api';
+export { loadLabelSuggestions } from './api/label-api';

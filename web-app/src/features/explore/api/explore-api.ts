@@ -158,7 +158,7 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   return `/api/traces/list?${params.toString()}`;
 }
 
-export function buildLogStatsApiPath(query: LogExploreQuery, kind: 'overview' | 'trend', now = Date.now()) {
+function buildLogStatsApiPath(query: LogExploreQuery, kind: 'overview' | 'trend', now = Date.now()) {
   requireQueryableScope(query);
   const params = sharedSignalParams(query, now);
   appendLogFilters(params, query);

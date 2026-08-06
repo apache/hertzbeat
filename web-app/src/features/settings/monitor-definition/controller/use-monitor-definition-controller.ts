@@ -31,19 +31,7 @@ export function useMonitorDefinitionController() {
   const canWrite = userCanWriteMonitorDefinitions(session?.roles ?? []);
   const [search, setSearch] = useState('');
   const queryClient = useQueryClient();
-  const catalogQueryKey = monitorDefinitionQueryKeys.catalog(language);
-  const catalog = useQuery({
-    queryKey: catalogQueryKey,
-    queryFn: ({ signal }) => loadMonitorDefinitionCatalog(language, signal)
-  });
-  const catalogProof = {
-    load: async (signal: AbortSignal) => {
-      await queryClient.cancelQueries({ queryKey: catalogQueryKey });
-      signal.throwIfAborted();
-      return loadMonitorDefinitionCatalog(language, signal);
-    },
-    publish: (value: NonNullable<typeof catalog.data>) => queryClient.setQueryData(catalogQueryKey, value)
-  };
+  const { catalog, catalogProof } = useMonitorDefinitionCatalog(language);
   const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language });
   const routeActions = useMonitorDefinitionRouteController(workspace.workspace, workspace.actions);
   const deletion = useMonitorDefinitionDelete(canWrite, catalogProof, async receipt => {
@@ -61,6 +49,52 @@ export function useMonitorDefinitionController() {
   if (catalog.isPending) listState = { kind: 'loading' };
   else if (catalog.isError) listState = { kind: 'error', failure };
   else if (records.length === 0) listState = { kind: 'empty' };
+  return buildMonitorDefinitionViewModel({
+    canWrite,
+    catalog,
+    deletion,
+    listState,
+    records,
+    routeActions,
+    search,
+    setSearch,
+    visibility,
+    workspace
+  });
+}
+
+function useMonitorDefinitionCatalog(language: string) {
+  const queryClient = useQueryClient();
+  const catalogQueryKey = monitorDefinitionQueryKeys.catalog(language);
+  const catalog = useQuery({
+    queryKey: catalogQueryKey,
+    queryFn: ({ signal }) => loadMonitorDefinitionCatalog(language, signal)
+  });
+  const catalogProof = {
+    load: async (signal: AbortSignal) => {
+      await queryClient.cancelQueries({ queryKey: catalogQueryKey });
+      signal.throwIfAborted();
+      return loadMonitorDefinitionCatalog(language, signal);
+    },
+    publish: (value: NonNullable<typeof catalog.data>) => queryClient.setQueryData(catalogQueryKey, value)
+  };
+  return { catalog, catalogProof };
+}
+
+function buildMonitorDefinitionViewModel(input: {
+  canWrite: boolean;
+  catalog: ReturnType<typeof useMonitorDefinitionCatalog>['catalog'];
+  deletion: ReturnType<typeof useMonitorDefinitionDelete>;
+  listState: ListState;
+  records: NonNullable<ReturnType<typeof useMonitorDefinitionCatalog>['catalog']['data']>['items'];
+  routeActions: ReturnType<typeof useMonitorDefinitionRouteController>;
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  visibility: ReturnType<typeof useMonitorDefinitionVisibility>;
+  workspace: ReturnType<typeof useMonitorDefinitionWorkspace>;
+}) {
+  const { canWrite, catalog, deletion, listState, records, routeActions, search, setSearch, visibility, workspace } =
+    input;
   return {
     canWrite,
     deleteFailure: deletion.deleteFailure,

@@ -31,16 +31,7 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
   const id = parseEntityDefinitionId(entityId);
   const { canWrite } = useEntityCapabilities();
   const [format, setFormat] = useState<EntityDefinitionFormat>('yaml');
-  const context = useQuery({
-    queryKey: entityQueryKeys.editor(id),
-    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEditableEntity(id, signal),
-    retry: false
-  });
-  const definition = useQuery({
-    queryKey: entityQueryKeys.definition(id, format),
-    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEntityDefinition(id, format, signal),
-    retry: false
-  });
+  const { context, definition } = useEntityDefinitionQueries(id, canWrite, format);
   const editing = useEntityDefinitionEditing(
     {
       id,
@@ -54,6 +45,47 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
     canWrite
   );
   const evidence = resolveDefinitionEvidence(canWrite, id, context, definition, editing.state.saved);
+  return definitionViewModel({
+    editing,
+    evidence,
+    format,
+    context,
+    definition,
+    id,
+    returnTo: params.get('returnTo'),
+    navigate,
+    modal,
+    t
+  });
+}
+
+function useEntityDefinitionQueries(id: number | undefined, canWrite: boolean, format: EntityDefinitionFormat) {
+  const context = useQuery({
+    queryKey: entityQueryKeys.editor(id),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEditableEntity(id, signal),
+    retry: false
+  });
+  const definition = useQuery({
+    queryKey: entityQueryKeys.definition(id, format),
+    queryFn: id === undefined || !canWrite ? skipToken : ({ signal }) => loadEntityDefinition(id, format, signal),
+    retry: false
+  });
+  return { context, definition };
+}
+
+function definitionViewModel(input: {
+  editing: ReturnType<typeof useEntityDefinitionEditing>;
+  evidence: EntityDefinitionViewModel['state']['evidence'];
+  format: EntityDefinitionFormat;
+  context: ReturnType<typeof useEntityDefinitionQueries>['context'];
+  definition: ReturnType<typeof useEntityDefinitionQueries>['definition'];
+  id: number | undefined;
+  returnTo: string | null;
+  navigate: ReturnType<typeof useNavigate>;
+  modal: ReturnType<typeof App.useApp>['modal'];
+  t: ReturnType<typeof useTranslation>['t'];
+}): EntityDefinitionViewModel {
+  const { editing, evidence, format, context, definition, id, returnTo, navigate, modal, t } = input;
   return {
     state: {
       evidence,
@@ -74,7 +106,7 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
       },
       back: () => {
         if (!editing.canLeave() || id === undefined) return;
-        const target = safeEntityDefinitionReturnTo(id, params.get('returnTo'));
+        const target = safeEntityDefinitionReturnTo(id, returnTo);
         if (!editing.state.dirty) return void navigate(target);
         confirmUnsavedNavigation(modal, t, () => {
           if (editing.canLeave()) void navigate(target);

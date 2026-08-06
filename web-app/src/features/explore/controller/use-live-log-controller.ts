@@ -48,6 +48,37 @@ export function useLiveLogController(query: LogExploreQuery) {
   const evidence = evidenceForScope(evidenceState, evidenceScope);
   const connectionStatus = valueForScope(connectionState, connectionScope, 'waiting');
   const status = liveLogStatus(connectionStatus, evidence.integrity, paused);
+  const controls = createLiveLogControls({
+    connectionScope,
+    evidence,
+    evidenceScope,
+    paused,
+    setConnectionState,
+    setEvidenceState,
+    setPaused,
+    setRetryRevision
+  });
+  return {
+    rows: evidence.rows,
+    status,
+    gapDroppedCount: evidence.gapDroppedCount,
+    locallyDroppedCount: evidence.locallyDroppedCount,
+    pauseDisconnectGap: evidence.pauseDisconnectGap,
+    ...controls
+  };
+}
+
+function createLiveLogControls(input: {
+  connectionScope: string;
+  evidence: ReturnType<typeof evidenceForScope>;
+  evidenceScope: string;
+  paused: boolean;
+  setConnectionState: ReturnType<typeof useScopedLiveLogState>['setConnectionState'];
+  setEvidenceState: ReturnType<typeof useScopedLiveLogState>['setEvidenceState'];
+  setPaused: React.Dispatch<React.SetStateAction<boolean>>;
+  setRetryRevision: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  const { connectionScope, evidence, evidenceScope, paused, setConnectionState, setEvidenceState } = input;
   const togglePaused = () => {
     const nextPaused = !paused;
     if (nextPaused)
@@ -64,14 +95,9 @@ export function useLiveLogController(query: LogExploreQuery) {
         };
       });
     if (!nextPaused) setConnectionState({ scope: connectionScope, value: 'waiting' });
-    setPaused(nextPaused);
+    input.setPaused(nextPaused);
   };
   return {
-    rows: evidence.rows,
-    status,
-    gapDroppedCount: evidence.gapDroppedCount,
-    locallyDroppedCount: evidence.locallyDroppedCount,
-    pauseDisconnectGap: evidence.pauseDisconnectGap,
     togglePaused,
     retry: () => {
       setEvidenceState({
@@ -84,7 +110,7 @@ export function useLiveLogController(query: LogExploreQuery) {
         pauseDisconnectGap: false
       });
       setConnectionState({ scope: connectionScope, value: 'waiting' });
-      setRetryRevision(current => current + 1);
+      input.setRetryRevision(current => current + 1);
     },
     clear: () => setEvidenceState({ scope: evidenceScope, ...evidence, rows: [] })
   };

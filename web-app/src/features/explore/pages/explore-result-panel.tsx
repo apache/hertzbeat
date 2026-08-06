@@ -26,6 +26,7 @@ import { ExploreLoadingResult, ExploreMessageResult, ExploreResultFrame } from '
 import { LogResult } from '../components/log-result';
 import { MetricResult } from '../components/metric-result';
 import { TraceResult } from '../components/trace-result';
+import { exploreFailureMessageKey, refreshFailureMessageKey } from './explore-result-messages';
 
 type ResultPanelProps = {
   query: ExploreQuery;
@@ -86,14 +87,8 @@ function FailureResult({
   retry: () => Promise<void>;
 }) {
   const { t } = useTranslation();
-  const messageKey = failureMessageKey(kind);
+  const messageKey = exploreFailureMessageKey(kind);
   return <ExploreMessageResult kind="error" message={t(messageKey)} retry={retry} retryLabel={t('common.retry')} />;
-}
-
-function failureMessageKey(kind: 'transport_error' | 'contract_error' | 'error') {
-  if (kind === 'transport_error') return 'explore.states.transportError';
-  if (kind === 'contract_error') return 'explore.states.contractError';
-  return 'explore.loadFailed';
 }
 
 function RetainedResult({
@@ -111,13 +106,6 @@ function RetainedResult({
       <HistoricalResult key={resultKey} {...props} evidenceCurrent={false} />
     </>
   );
-}
-
-function refreshFailureMessageKey(errorKind: Extract<ExplorePageResultState, { kind: 'stale_error' }>['errorKind']) {
-  if (errorKind === 'permission') return 'common.permission.roleRequiredDescription';
-  if (errorKind === 'transport_error') return 'explore.states.transportError';
-  if (errorKind === 'contract_error') return 'explore.states.contractError';
-  return 'explore.loadFailed';
 }
 
 function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (path: string) => void }) {

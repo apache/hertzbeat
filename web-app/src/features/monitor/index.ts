@@ -30,4 +30,5 @@ export { loadMonitorsByApp } from './api/monitor-app-list-api';
 export { MonitorContractError } from './model/monitor-contract';
 export { monitorNavigationApps, monitorStatusColor, monitorStatusKey } from './model/monitor-model';
 export { monitorCapabilities } from './model/monitor-capability-model';
+export { monitorNavigationQueryKeys } from './navigation';
 export type { Monitor, MonitorAppHierarchyNode } from './model/monitor-contract';

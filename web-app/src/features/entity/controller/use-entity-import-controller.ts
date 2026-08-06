@@ -33,6 +33,38 @@ export function useEntityImportController(): EntityImportViewModel {
   const { t } = useTranslation();
   const client = useQueryClient();
   const returnTo = useCanonicalEntityImportReturnTo();
+  const importState = useEntityImportState();
+  const { draft, runtime } = importState;
+  const { revision: revisionRef, confirmLock: confirmLockRef, setDraft, setFailure, setCreatedIds } = runtime;
+  const { canWrite } = useEntityCapabilities();
+  const write = useEntityWriteBoundary(canWrite, () => retireImport(runtime));
+
+  const invalidate = (next: typeof draft) => {
+    if (!canWrite || confirmLockRef.current !== undefined) return;
+    revisionRef.current += 1;
+    setDraft(next);
+    setFailure(undefined);
+    setCreatedIds(undefined);
+  };
+  const changeContent = (content: string) => invalidate(changeEntityImportContent(draft, content));
+  const changeFormat = (format: EntityImportFormat) => invalidate(changeEntityImportFormat(draft, format));
+  return useEntityImportViewModel({
+    canWrite,
+    changeContent,
+    changeFormat,
+    client,
+    draft,
+    modal,
+    navigate,
+    returnTo,
+    runtime,
+    state: importState,
+    t,
+    write
+  });
+}
+
+function useEntityImportState() {
   const [draft, setDraft] = useState(initialEntityImportDraft);
   const [previewing, setPreviewing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -42,7 +74,7 @@ export function useEntityImportController(): EntityImportViewModel {
   const revision = useRef(0);
   const previewLock = useRef<number | undefined>(undefined);
   const confirmLock = useRef<number | undefined>(undefined);
-  const runtime = {
+  const runtime: EntityImportRuntime = {
     revision,
     previewLock,
     confirmLock,
@@ -52,40 +84,46 @@ export function useEntityImportController(): EntityImportViewModel {
     setFailure,
     setCreatedIds
   };
-  const { canWrite } = useEntityCapabilities();
-  const write = useEntityWriteBoundary(canWrite, () => retireImport(runtime));
+  return { draft, previewing, confirming, failure, createdIds, runtime };
+}
 
-  const invalidate = (next: typeof draft) => {
-    if (!canWrite || confirmLock.current !== undefined) return;
-    revision.current += 1;
-    setDraft(next);
-    setFailure(undefined);
-    setCreatedIds(undefined);
-  };
-  const changeContent = (content: string) => invalidate(changeEntityImportContent(draft, content));
-  const changeFormat = (format: EntityImportFormat) => invalidate(changeEntityImportFormat(draft, format));
+function useEntityImportViewModel(input: {
+  canWrite: boolean;
+  changeContent: (content: string) => void;
+  changeFormat: (format: EntityImportFormat) => void;
+  client: ReturnType<typeof useQueryClient>;
+  draft: ReturnType<typeof useEntityImportState>['draft'];
+  modal: ReturnType<typeof App.useApp>['modal'];
+  navigate: ReturnType<typeof useNavigate>;
+  returnTo: string;
+  runtime: EntityImportRuntime;
+  state: ReturnType<typeof useEntityImportState>;
+  t: ReturnType<typeof useTranslation>['t'];
+  write: ReturnType<typeof useEntityWriteBoundary>;
+}): EntityImportViewModel {
+  const { canWrite, client, draft, modal, navigate, returnTo, runtime, state, t, write } = input;
   return {
     state: {
       draft,
       ...(draft.preview ? { preview: draft.preview } : {}),
-      previewing,
-      confirming,
-      confirmEnabled: canWrite && canConfirmEntityImport(draft) && !previewing && !confirming,
+      previewing: state.previewing,
+      confirming: state.confirming,
+      confirmEnabled: canWrite && canConfirmEntityImport(draft) && !state.previewing && !state.confirming,
       canWrite,
-      ...(failure ? { failure } : {}),
-      ...(createdIds ? { createdIds } : {}),
+      ...(state.failure ? { failure: state.failure } : {}),
+      ...(state.createdIds ? { createdIds: state.createdIds } : {}),
       returnTo
     },
     actions: {
-      changeContent,
-      changeFormat,
-      preview: () => void runEntityImportPreview(draft, confirming, runtime, write),
-      confirm: () => void runEntityImportConfirmation(draft, previewing, client, runtime, write),
+      changeContent: input.changeContent,
+      changeFormat: input.changeFormat,
+      preview: () => void runEntityImportPreview(draft, state.confirming, runtime, write),
+      confirm: () => void runEntityImportConfirmation(draft, state.previewing, client, runtime, write),
       cancel: () => {
-        if (confirmLock.current !== undefined) return;
+        if (runtime.confirmLock.current !== undefined) return;
         if (!isEntityImportDirty(draft)) return void navigate(returnTo);
         confirmUnsavedNavigation(modal, t, () => {
-          if (confirmLock.current === undefined) void navigate(returnTo);
+          if (runtime.confirmLock.current === undefined) void navigate(returnTo);
         });
       }
     }

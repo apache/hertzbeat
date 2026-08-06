@@ -64,41 +64,51 @@ export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
             }
           />
         )}
-        <label className={styles.field}>
-          <span className={`${styles.label} ${styles.required}`}>{t('token.name')}</span>
-          <Input
-            disabled={locked}
-            value={draft.name}
-            placeholder={t('token.namePlaceholder')}
-            onChange={event => props.onChange({ ...draft, name: event.target.value })}
-          />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>{t('token.scope.label')}</span>
-          <Select
-            disabled={locked}
-            value={draft.scope}
-            options={tokenScopeDefinitions.map(definition => ({
-              value: definition.value,
-              label: t(definition.labelKey)
-            }))}
-            onChange={scope => props.onChange({ ...draft, scope })}
-          />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>{t('token.expires')}</span>
-          <Select
-            disabled={locked}
-            value={draft.expireSeconds}
-            options={tokenExpirationDefinitions.map(definition => ({
-              value: definition.value,
-              label: t(definition.labelKey)
-            }))}
-            onChange={expireSeconds => props.onChange({ ...draft, expireSeconds })}
-          />
-        </label>
+        <TokenGeneratorFields draft={draft} locked={locked} onChange={props.onChange} />
       </div>
     </Modal>
+  );
+}
+
+function TokenGeneratorFields(props: { draft: TokenDraft; locked: boolean; onChange: (draft: TokenDraft) => void }) {
+  const { t } = useTranslation();
+  const { draft, locked } = props;
+  return (
+    <>
+      <label className={styles.field}>
+        <span className={`${styles.label} ${styles.required}`}>{t('token.name')}</span>
+        <Input
+          disabled={locked}
+          value={draft.name}
+          placeholder={t('token.namePlaceholder')}
+          onChange={event => props.onChange({ ...draft, name: event.target.value })}
+        />
+      </label>
+      <label className={styles.field}>
+        <span className={styles.label}>{t('token.scope.label')}</span>
+        <Select
+          disabled={locked}
+          value={draft.scope}
+          options={tokenScopeDefinitions.map(definition => ({
+            value: definition.value,
+            label: t(definition.labelKey)
+          }))}
+          onChange={scope => props.onChange({ ...draft, scope })}
+        />
+      </label>
+      <label className={styles.field}>
+        <span className={styles.label}>{t('token.expires')}</span>
+        <Select
+          disabled={locked}
+          value={draft.expireSeconds}
+          options={tokenExpirationDefinitions.map(definition => ({
+            value: definition.value,
+            label: t(definition.labelKey)
+          }))}
+          onChange={expireSeconds => props.onChange({ ...draft, expireSeconds })}
+        />
+      </label>
+    </>
   );
 }
 
