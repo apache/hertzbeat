@@ -6,7 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useBeforeUnload, useNavigate } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
 
@@ -70,8 +70,9 @@ export function useInstrumentationPageController() {
     timerRef,
     generationRef
   );
-  const openQuery = useOpenQuery(state.detection, navigate);
+  const openQuery = useOpenQuery(state.detection, navigate, state.tokenAcknowledgementRequiredRef);
   const readiness = buildFlowReadiness(state, catalogQuery.data, initialization.profilesState, selectedProfile);
+  useProtectUnacknowledgedToken(state.tokenAcknowledgementRequired);
 
   return {
     ...state,
@@ -84,12 +85,29 @@ export function useInstrumentationPageController() {
     ...draftActions,
     ...guideActions,
     ...tokenActions,
+    setStage: (stage: Parameters<typeof state.setStage>[0]) => {
+      if (!state.tokenAcknowledgementRequiredRef.current) state.setStage(stage);
+    },
+    acknowledgeGeneratedToken: () => state.setTokenAcknowledgementRequired(false),
     canGenerateToken,
     requiresToken,
     detect,
     openQuery,
     ...readiness
   };
+}
+
+function useProtectUnacknowledgedToken(required: boolean) {
+  useBeforeUnload(
+    useCallback(
+      event => {
+        if (!required) return;
+        event.preventDefault();
+        event.returnValue = '';
+      },
+      [required]
+    )
+  );
 }
 
 function useInstrumentationFlowLifetime() {
@@ -111,13 +129,18 @@ function useControllerLifetime(generationRef: React.RefObject<number>, timerRef:
   );
 }
 
-function useOpenQuery(detection: DetectionResponse | undefined, navigate: ReturnType<typeof useNavigate>) {
+function useOpenQuery(
+  detection: DetectionResponse | undefined,
+  navigate: ReturnType<typeof useNavigate>,
+  tokenAcknowledgementRequiredRef: React.RefObject<boolean>
+) {
   return useCallback(
     (signal: Signal) => {
+      if (tokenAcknowledgementRequiredRef.current) return;
       const jump = detection?.queryJumps.find(item => item.signal === signal);
       if (jump?.enabled) void navigate(buildQueryJump(jump.signal, jump.context));
     },
-    [detection, navigate]
+    [detection, navigate, tokenAcknowledgementRequiredRef]
   );
 }
 

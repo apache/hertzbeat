@@ -30,6 +30,7 @@ const controller = vi.hoisted(() => ({
   copyGeneratedToken: vi.fn(),
   generate: vi.fn(),
   openGenerator: vi.fn(),
+  reconcileGeneration: vi.fn(),
   retry: vi.fn(),
   revoke: vi.fn(),
   updateDraft: vi.fn(),
@@ -239,13 +240,17 @@ describe('TokenPage', () => {
     const headerGenerate = within(headerActions).getByRole('button', { name: i18n.t('token.generate') });
     expect(headerGenerate).toBeDisabled();
     expect(screen.getByRole('button', { name: i18n.t('common.back') })).toBeDisabled();
-    expect(screen.getByText('Token data is unavailable.')).toBeInTheDocument();
+    expect(
+      screen.getByText('The token creation result is uncertain. Refresh the current server token list before closing.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('Token generated')).not.toBeInTheDocument();
     const generator = screen.getByPlaceholderText('For example, production Collector').closest('[role="dialog"]');
     if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
     expect(within(generator).getByPlaceholderText('For example, production Collector')).toBeDisabled();
     expect(within(generator).getByRole('button', { name: 'Generate token' })).toBeDisabled();
     expect(within(generator).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    fireEvent.click(within(generator).getByRole('button', { name: 'Refresh token list' }));
+    expect(controller.reconcileGeneration).toHaveBeenCalledTimes(1);
   });
 
   it('requires UI confirmation before delegating revocation', () => {
@@ -293,6 +298,7 @@ function buildController(state: Record<string, unknown> = {}) {
     copyGeneratedToken: controller.copyGeneratedToken,
     generate: controller.generate,
     openGenerator: controller.openGenerator,
+    reconcileGeneration: controller.reconcileGeneration,
     retry: controller.retry,
     revoke: controller.revoke,
     state: {

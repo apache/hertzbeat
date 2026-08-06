@@ -91,6 +91,7 @@ function TokenPageModals({ controller }: { controller: TokenController }) {
           uncertain={controller.state.generationRecovery !== null}
           onChange={controller.updateDraft}
           onCancel={controller.closeGenerator}
+          onReconcile={() => void controller.reconcileGeneration()}
           onSubmit={() => void controller.generate()}
         />
       )}

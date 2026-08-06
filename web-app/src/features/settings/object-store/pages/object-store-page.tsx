@@ -72,9 +72,11 @@ function ObjectStoreReadyContent({ controller }: { controller: ObjectStoreContro
           kind="unavailable"
           title={t(state.recovery.phase === 'proof' ? 'objectStore.recoveryProof' : 'objectStore.recoveryUncertain')}
           action={
-            state.recovery.phase === 'proof' ? (
-              <RetryButton loading={state.proving} onRetry={controller.retry} />
-            ) : undefined
+            <RetryButton
+              labelKey={state.recovery.phase === 'proof' ? 'common.retry' : 'objectStore.reconcile'}
+              loading={state.proving}
+              onRetry={controller.retry}
+            />
           }
         />
       )}
@@ -112,7 +114,15 @@ function objectStoreFailureMessageKey(kind: 'missing' | 'permission' | 'invalid'
   return 'common.routeError.description';
 }
 
-function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => Promise<void> }) {
+function RetryButton({
+  labelKey = 'common.retry',
+  loading = false,
+  onRetry
+}: {
+  labelKey?: string;
+  loading?: boolean;
+  onRetry: () => Promise<void>;
+}) {
   const { t } = useTranslation();
   return (
     <Button
@@ -122,7 +132,7 @@ function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry:
         void onRetry();
       }}
     >
-      {t('common.retry')}
+      {t(labelKey)}
     </Button>
   );
 }

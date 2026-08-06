@@ -27,6 +27,7 @@ type TokenGeneratorModalProps = {
   uncertain: boolean;
   onChange: (draft: TokenDraft) => void;
   onCancel: () => void;
+  onReconcile: () => void;
   onSubmit: () => void;
 };
 
@@ -51,7 +52,18 @@ export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
     >
       <div className={styles.form}>
         {/* Commit-uncertain cannot claim failure or offer a retry that could create another token. */}
-        {props.uncertain && <Alert type="warning" showIcon message={t('token.unavailable')} />}
+        {props.uncertain && (
+          <Alert
+            type="warning"
+            showIcon
+            message={t('token.generationUncertain')}
+            action={
+              <Button size="small" loading={props.saving} onClick={props.onReconcile}>
+                {t('token.reconcileGeneration')}
+              </Button>
+            }
+          />
+        )}
         <label className={styles.field}>
           <span className={`${styles.label} ${styles.required}`}>{t('token.name')}</span>
           <Input

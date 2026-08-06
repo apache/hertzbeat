@@ -160,6 +160,7 @@ describe('instrumentation v2 interaction', () => {
       tokenDraft: undefined,
       tokenGenerating: false,
       tokenError: false,
+      tokenAcknowledgementRequired: false,
       requiresToken: true,
       canGenerateToken: true,
       onProfile: vi.fn(),
@@ -170,7 +171,8 @@ describe('instrumentation v2 interaction', () => {
       onOpenToken: vi.fn(),
       onCloseToken: vi.fn(),
       onTokenDraft: vi.fn(),
-      onGenerateToken: vi.fn()
+      onGenerateToken: vi.fn(),
+      onAcknowledgeToken: vi.fn()
     };
     const view = render(
       <InstrumentationConfigureStep
@@ -293,6 +295,7 @@ describe('instrumentation v2 interaction', () => {
         tokenDraft={{ name: 'Checkout ingest', expireSeconds: 2_592_000, scope: 'otlp-ingest' }}
         tokenGenerating={false}
         tokenError
+        tokenAcknowledgementRequired={false}
         requiresToken
         canGenerateToken
         onProfile={vi.fn()}
@@ -304,6 +307,7 @@ describe('instrumentation v2 interaction', () => {
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
         onGenerateToken={onGenerateToken}
+        onAcknowledgeToken={vi.fn()}
       />
     );
     const dialog = screen.getByRole('dialog');
@@ -336,6 +340,7 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        tokenAcknowledgementRequired={false}
         requiresToken
         canGenerateToken={false}
         onProfile={vi.fn()}
@@ -347,6 +352,7 @@ describe('instrumentation v2 interaction', () => {
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
         onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
       />
     );
 
@@ -381,6 +387,7 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        tokenAcknowledgementRequired={false}
         requiresToken
         canGenerateToken
         onProfile={vi.fn()}
@@ -392,6 +399,7 @@ describe('instrumentation v2 interaction', () => {
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
         onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
       />
     );
     expect(screen.getByText('instrumentation.v2.transport.http_protobuf')).toBeVisible();
@@ -417,6 +425,7 @@ describe('instrumentation v2 interaction', () => {
         token=""
         tokenGenerating={false}
         tokenError={false}
+        tokenAcknowledgementRequired={false}
         requiresToken={false}
         canGenerateToken={false}
         onProfile={vi.fn()}
@@ -428,6 +437,7 @@ describe('instrumentation v2 interaction', () => {
         onCloseToken={vi.fn()}
         onTokenDraft={vi.fn()}
         onGenerateToken={vi.fn()}
+        onAcknowledgeToken={vi.fn()}
       />
     );
 

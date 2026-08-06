@@ -61,6 +61,7 @@ export function useInstrumentationTokenActions(
           : await generateAccessToken({ ...draft, scope: 'otlp-ingest' });
       if (!generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) return;
       state.setToken(receipt.token);
+      state.setTokenAcknowledgementRequired(true);
       state.setTokenDraft(undefined);
     } catch {
       if (generationIsCurrent(generationRef, flowGeneration, tokenGenerationRef, tokenGeneration)) {
@@ -105,7 +106,12 @@ function useTokenSetter(
     (token: string) => {
       // A retained callback must not repopulate secret state after its flow
       // scope retires or the destination stops requiring Bearer auth.
-      if (requiresTokenRef.current && generationRef.current === flowGeneration) state.setToken(token);
+      if (
+        requiresTokenRef.current &&
+        generationRef.current === flowGeneration &&
+        !state.tokenAcknowledgementRequiredRef.current
+      )
+        state.setToken(token);
     },
     [flowGeneration, generationRef, requiresTokenRef, state]
   );
@@ -126,7 +132,7 @@ function useRetireTokenGeneration(
     previousCommandsEnabled.current = tokenCommandsEnabled;
     if (!tokenRetired && !generationRetired) return;
     tokenGenerationRef.current += 1;
-    if (tokenRetired) state.setToken('');
+    if (tokenRetired && !state.tokenAcknowledgementRequiredRef.current) state.setToken('');
     state.setTokenDraft(undefined);
     state.setTokenGenerating(false);
     state.setTokenError(false);

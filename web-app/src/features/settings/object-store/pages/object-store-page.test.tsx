@@ -222,7 +222,7 @@ describe('ObjectStorePage', () => {
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 
-  it('shows commit uncertainty without offering an unsafe retry', async () => {
+  it('offers canonical reconciliation for commit uncertainty without offering another save', async () => {
     controller.useObjectStoreResourceController.mockReturnValue(
       buildController({ locked: true, recovery: { phase: 'commit-uncertain' } })
     );
@@ -233,7 +233,8 @@ describe('ObjectStorePage', () => {
         'The save result is uncertain. Verify the server configuration later before making more changes.'
       )
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reload server configuration' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
     expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
   });
 });

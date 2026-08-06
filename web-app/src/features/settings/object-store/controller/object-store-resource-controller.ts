@@ -63,6 +63,7 @@ export function useObjectStoreResourceController() {
     update,
     {
       notifyFailure: () => notification.open?.({ message: t('objectStore.unavailable'), type: 'error' }),
+      notifyReconciled: () => notification.open?.({ message: t('objectStore.reconcileComplete'), type: 'progress' }),
       notifyRejected: () => notification.open?.({ message: t('objectStore.saveFailed'), type: 'error' }),
       notifySuccess: () => notification.open?.({ message: t('objectStore.saveSuccess'), type: 'success' })
     },

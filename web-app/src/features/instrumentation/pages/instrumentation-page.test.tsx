@@ -19,6 +19,7 @@ const controller = vi.hoisted(() => ({
   initializationRetrying: false,
   hasFlowBack: false,
   canContinueSource: false,
+  tokenAcknowledgementRequired: false,
   sourceDirectoryRevision: 0,
   reset: vi.fn(),
   goBack: vi.fn(),
@@ -47,6 +48,7 @@ afterEach(() => {
   controller.initializationRetrying = false;
   controller.hasFlowBack = false;
   controller.canContinueSource = false;
+  controller.tokenAcknowledgementRequired = false;
   vi.clearAllMocks();
 });
 
@@ -85,6 +87,19 @@ describe('InstrumentationPage immersive onboarding shell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
     expect(controller.goBack).toHaveBeenCalledOnce();
     expect(screen.queryByText('dashboard destination')).toBeNull();
+  });
+
+  it('blocks Back and Start Over while a generated token still needs acknowledgement', () => {
+    controller.hasFlowBack = true;
+    controller.tokenAcknowledgementRequired = true;
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'common.back' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'instrumentation.v2.startOver' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.v2.startOver' }));
+    expect(controller.goBack).not.toHaveBeenCalled();
+    expect(controller.reset).not.toHaveBeenCalled();
   });
 
   it('renders catalog failure as an operational recovery region while Exit remains available', () => {

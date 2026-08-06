@@ -33,7 +33,11 @@ export function InstrumentationPlatformField(props: {
   );
 }
 
-export function InstrumentationTokenField(props: { token: string; onToken: (token: string) => void }) {
+export function InstrumentationTokenField(props: {
+  token: string;
+  disabled?: boolean;
+  onToken: (token: string) => void;
+}) {
   const { t } = useTranslation();
   return (
     <label className={styles.serviceNameField}>
@@ -41,6 +45,7 @@ export function InstrumentationTokenField(props: { token: string; onToken: (toke
       <Input.Password
         aria-label={t('instrumentation.field.token')}
         autoComplete="off"
+        disabled={Boolean(props.disabled)}
         placeholder={t('instrumentation.field.tokenPlaceholder')}
         value={props.token}
         onChange={event => props.onToken(event.target.value)}

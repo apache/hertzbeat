@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { useState } from 'react';
+import { useRef, useState, type SetStateAction } from 'react';
 
 import type { AccessTokenGenerationDraft } from '@/shared/access-token/access-token-generation-model';
 import { emptyDraft, type InstrumentationDraft, type InstrumentationStage } from '../model/instrumentation-flow';
@@ -15,6 +15,13 @@ export function useInstrumentationControllerState() {
   const [draft, setDraft] = useState<InstrumentationDraft>(emptyDraft);
   const [guide, setGuide] = useState<RenderResponse>();
   const [token, setToken] = useState('');
+  const tokenAcknowledgementRequiredRef = useRef(false);
+  const [tokenAcknowledgementRequired, setTokenAcknowledgementRequiredState] = useState(false);
+  const setTokenAcknowledgementRequired = (value: SetStateAction<boolean>) => {
+    const next = typeof value === 'function' ? value(tokenAcknowledgementRequiredRef.current) : value;
+    tokenAcknowledgementRequiredRef.current = next;
+    setTokenAcknowledgementRequiredState(next);
+  };
   const [tokenDraft, setTokenDraft] = useState<AccessTokenGenerationDraft>();
   const [tokenGenerating, setTokenGenerating] = useState(false);
   const [tokenError, setTokenError] = useState(false);
@@ -33,6 +40,9 @@ export function useInstrumentationControllerState() {
     setGuide,
     token,
     setToken,
+    tokenAcknowledgementRequired,
+    tokenAcknowledgementRequiredRef,
+    setTokenAcknowledgementRequired,
     tokenDraft,
     setTokenDraft,
     tokenGenerating,

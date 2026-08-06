@@ -31,6 +31,7 @@ type ConfigureStepProps = {
   tokenDraft?: AccessTokenGenerationDraft | undefined;
   tokenGenerating: boolean;
   tokenError: boolean;
+  tokenAcknowledgementRequired: boolean;
   requiresToken: boolean;
   canGenerateToken: boolean;
   onProfile: (intakeProfileId: string) => void;
@@ -42,6 +43,7 @@ type ConfigureStepProps = {
   onCloseToken: () => void;
   onTokenDraft: (draft: AccessTokenGenerationDraft) => void;
   onGenerateToken: () => void;
+  onAcknowledgeToken: () => void;
 };
 
 export function InstrumentationConfigureStep(props: ConfigureStepProps) {
@@ -96,13 +98,31 @@ export function InstrumentationConfigureStep(props: ConfigureStepProps) {
 
 function TokenConfiguration(props: ConfigureStepProps) {
   const { t } = useTranslation();
-  if (!props.requiresToken) return null;
+  if (!props.requiresToken && !props.tokenAcknowledgementRequired) return null;
   return (
     <>
-      {selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
+      {props.tokenAcknowledgementRequired && (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('instrumentation.token.acknowledgementRequired')}
+          action={
+            <Button size="small" onClick={props.onAcknowledgeToken}>
+              {t('instrumentation.token.acknowledge')}
+            </Button>
+          }
+        />
+      )}
+      {props.requiresToken && selectedProfileUsesPlaintext(props.profiles, props.profileId) && (
         <Alert type="warning" showIcon message={t('instrumentation.token.plaintextBearerWarning')} />
       )}
-      <InstrumentationTokenField token={props.token} onToken={props.onToken} />
+      {props.requiresToken && (
+        <InstrumentationTokenField
+          token={props.token}
+          disabled={props.tokenAcknowledgementRequired}
+          onToken={props.onToken}
+        />
+      )}
     </>
   );
 }
@@ -113,7 +133,9 @@ function TokenActions(props: ConfigureStepProps) {
   return (
     <>
       {props.canGenerateToken && (
-        <Button onClick={props.onOpenToken}>{t('instrumentation.token.generateAccess')}</Button>
+        <Button disabled={props.tokenAcknowledgementRequired} onClick={props.onOpenToken}>
+          {t('instrumentation.token.generateAccess')}
+        </Button>
       )}
       <Typography.Text type={props.token ? 'success' : 'secondary'}>
         {t(props.token ? 'instrumentation.token.ready' : 'instrumentation.token.notGenerated')}

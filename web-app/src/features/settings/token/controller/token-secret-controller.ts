@@ -66,6 +66,23 @@ export function useTokenSecretActions(
     retire: generation.retire,
     t
   });
+  const reconcileGeneration = useCallback(async () => {
+    const admitted = generation.beginRecovery('generating');
+    if (!admitted) return;
+    try {
+      const failure = await refresh();
+      if (!generation.isOwnedBy(admitted.owner)) return;
+      if (failure) {
+        notifyError(notification, t, tokenListFailureMessage(failure));
+        return;
+      }
+      generation.clearRecovery(admitted.owner);
+      editor.complete();
+      notification.open?.({ message: t('token.generationReconciled'), type: 'progress' });
+    } finally {
+      generation.retire(admitted.owner);
+    }
+  }, [editor, generation, notification, refresh, t]);
 
   return {
     actions: {
@@ -73,6 +90,7 @@ export function useTokenSecretActions(
       closeGenerator: editor.close,
       copyGeneratedToken,
       generate,
+      reconcileGeneration,
       openGenerator: editor.open,
       updateDraft: editor.update
     },

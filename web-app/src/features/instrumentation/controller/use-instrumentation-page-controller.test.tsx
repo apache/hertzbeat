@@ -318,6 +318,7 @@ describe('useInstrumentationPageController', () => {
     await act(async () => result.current.renderGuide());
     expect(JSON.stringify(api.renderInstrumentationGuide.mock.calls)).not.toContain('hb_generated_once');
 
+    act(() => result.current.acknowledgeGeneratedToken());
     act(() => result.current.patchService({ name: 'cart' }));
     expect(result.current.token).toBe('');
     await act(async () => result.current.generateToken());
@@ -327,6 +328,7 @@ describe('useInstrumentationPageController', () => {
     act(() => result.current.updateTokenDraft({ name: 'Cart ingest', expireSeconds: -1, scope: 'otlp-ingest' }));
     await act(async () => result.current.generateToken());
     expect(result.current.token).toBe('hb_generated_once');
+    act(() => result.current.acknowledgeGeneratedToken());
     act(() => result.current.patchDraft({ intakeProfileId: 'collector-edge' }));
     expect(result.current.token).toBe('');
 
@@ -340,10 +342,44 @@ describe('useInstrumentationPageController', () => {
       expireSeconds: -1
     });
     expect(result.current.token).toBe('hb_collector_once');
+    act(() => result.current.acknowledgeGeneratedToken());
     act(() => result.current.goBack());
     expect(result.current.stage).toBe('source');
     expect(result.current.token).toBe('');
     unmount();
+  });
+
+  it('requires acknowledgement before a generated one-time token can be destroyed by flow navigation', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    tokenApi.generateAccessToken.mockResolvedValue({ id: 'generated', token: 'hb_generated_once' });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    act(() => result.current.setStage('configure'));
+    act(() => result.current.openTokenGenerator());
+    act(() => result.current.updateTokenDraft({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => result.current.generateToken());
+
+    expect(result.current.tokenAcknowledgementRequired).toBe(true);
+    act(() => {
+      result.current.reset();
+      result.current.goBack();
+      result.current.setStage('source');
+    });
+    expect(result.current.stage).toBe('configure');
+    expect(result.current.token).toBe('hb_generated_once');
+
+    act(() => result.current.acknowledgeGeneratedToken());
+    expect(result.current.tokenAcknowledgementRequired).toBe(false);
+    act(() => result.current.reset());
+    expect(result.current.stage).toBe('source');
+    expect(result.current.token).toBe('');
   });
 
   it('renders an unauthenticated destination without creating, accepting, or requiring a token', async () => {

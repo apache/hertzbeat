@@ -359,6 +359,26 @@ describe('Object Store resource controller', () => {
     }
   );
 
+  it('keeps a secret save locked when its canonical reconciliation reread is unavailable', async () => {
+    refine.providerUpdate.mockRejectedValueOnce(unavailableFailure());
+    refine.refetch.mockRejectedValueOnce(unavailableFailure());
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
+    };
+    act(() => result.current.updateDraft(submitted));
+    act(() => result.current.submit());
+    await waitFor(() => expect(result.current.state).toMatchObject({ recovery: { phase: 'commit-uncertain' } }));
+
+    await act(async () => result.current.retry());
+
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toMatchObject({ locked: true, recovery: { phase: 'commit-uncertain' } });
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
   it.each(definiteWriteRejections)(
     'unlocks an OBS secret draft after a definite %s rejection',
     async (_label, rejection) => {
@@ -436,7 +456,7 @@ describe('Object Store resource controller', () => {
   });
 
   it.each(ambiguousWriteFailures)(
-    'keeps an OBS secret save commit-uncertain after an ambiguous %s outcome',
+    'reconciles an OBS secret save after an ambiguous %s outcome without replaying or claiming success',
     async (_label, failure) => {
       const locationBeforeSave = window.location.href;
       const { result } = renderHook(() => useObjectStoreResourceController());
@@ -458,9 +478,11 @@ describe('Object Store resource controller', () => {
         })
       );
       await act(async () => result.current.retry());
-      act(() => result.current.submit());
-      expect(refine.refetch).not.toHaveBeenCalled();
+      expect(refine.refetch).toHaveBeenCalledTimes(1);
       expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+      expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null, dirty: false });
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.reconcileComplete', type: 'progress' });
+      expect(refine.notification).not.toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
       expect(window.location.href).toBe(locationBeforeSave);
       expectPrivateFailureNotPublished(result.current.state);
     }

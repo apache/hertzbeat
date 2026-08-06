@@ -33,7 +33,7 @@ export function useDraftActions(
   const chooseSource = useCallback(
     (sourceId: string) => {
       if (!catalog) return;
-      resetResults();
+      if (!resetResults()) return;
       state.setDraft(current => ({
         ...selectSource(catalog, sourceId, current.service),
         intakeProfileId: defaultProfileId ?? ''
@@ -44,27 +44,27 @@ export function useDraftActions(
   const answerApplication = useCallback(
     (field: ApplicationQuestion, value: string) => {
       if (!catalog) return;
-      resetResults();
+      if (!resetResults()) return;
       state.setDraft(current => answerApplicationQuestion(current, catalog, field, value));
     },
     [catalog, resetResults, state]
   );
   const patchDraft = useCallback(
     (patch: Partial<InstrumentationDraft>) => {
-      resetResults();
+      if (!resetResults()) return;
       state.setDraft(current => ({ ...current, ...patch }));
     },
     [resetResults, state]
   );
   const patchService = useCallback(
     (patch: Partial<ServiceIdentity>) => {
-      resetResults();
+      if (!resetResults()) return;
       state.setDraft(current => ({ ...current, service: { ...current.service, ...patch } }));
     },
     [resetResults, state]
   );
   const reset = useCallback(() => {
-    resetResults();
+    if (!resetResults()) return;
     state.setDraft({ ...emptyDraft(), intakeProfileId: defaultProfileId ?? '' });
     state.setStage('source');
     state.setSourceDirectoryRevision(current => current + 1);
@@ -80,6 +80,7 @@ function useResetInstrumentationResults(
   timerRef: RefObject<number | undefined>
 ) {
   return useCallback(() => {
+    if (state.tokenAcknowledgementRequiredRef.current) return false;
     generationRef.current += 1;
     state.setGuide(undefined);
     state.setDetection(undefined);
@@ -88,10 +89,12 @@ function useResetInstrumentationResults(
     state.setRendering(false);
     state.setDetectionError(false);
     state.setToken('');
+    state.setTokenAcknowledgementRequired(false);
     state.setTokenDraft(undefined);
     state.setTokenError(false);
     state.setTokenGenerating(false);
     clearDetectionWindow(timerRef, startedAtRef);
+    return true;
   }, [generationRef, startedAtRef, state, timerRef]);
 }
 
@@ -103,18 +106,18 @@ function clearDetectionWindow(timerRef: RefObject<number | undefined>, startedAt
 
 function useBackAction(
   state: InstrumentationControllerState,
-  resetResults: () => void,
+  resetResults: () => boolean,
   catalog: CatalogResponse | undefined
 ) {
   return useCallback(() => {
     if (state.stage === 'source') {
       if (!catalog || !state.draft.sourceId) return;
-      resetResults();
+      if (!resetResults()) return;
       state.setDraft(current => previousApplicationSelection(current, catalog));
       state.setSourceDirectoryRevision(current => current + 1);
       return;
     }
-    if (state.stage === 'configure') resetResults();
+    if (state.stage === 'configure' && !resetResults()) return;
     state.setStage(previousInstrumentationStage(state.stage));
   }, [catalog, resetResults, state]);
 }

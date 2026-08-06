@@ -29,6 +29,7 @@ export function InstrumentationPage() {
           className={styles.backAction!}
           type="text"
           icon={<ArrowLeftOutlined aria-hidden="true" />}
+          disabled={page.tokenAcknowledgementRequired}
           onClick={() => (page.hasFlowBack ? page.goBack() : void navigate(applicationRoutePaths.dashboard))}
         >
           {t(page.hasFlowBack ? 'common.back' : 'instrumentation.action.exit')}
@@ -37,7 +38,7 @@ export function InstrumentationPage() {
           <img src="/assets/logo.svg" alt="HertzBeat" width={24} height={23} />
           <strong>HertzBeat</strong>
         </div>
-        <Button className={styles.startOver!} onClick={page.reset}>
+        <Button className={styles.startOver!} disabled={page.tokenAcknowledgementRequired} onClick={page.reset}>
           {t('instrumentation.v2.startOver')}
         </Button>
       </header>
@@ -110,6 +111,7 @@ function ConfigureStage({ page }: { page: PageController }) {
         tokenDraft={page.tokenDraft}
         tokenGenerating={page.tokenGenerating}
         tokenError={page.tokenError}
+        tokenAcknowledgementRequired={page.tokenAcknowledgementRequired}
         requiresToken={page.requiresToken}
         canGenerateToken={page.canGenerateToken}
         onProfile={intakeProfileId => page.patchDraft({ intakeProfileId })}
@@ -121,6 +123,7 @@ function ConfigureStage({ page }: { page: PageController }) {
         onCloseToken={page.closeTokenGenerator}
         onTokenDraft={page.updateTokenDraft}
         onGenerateToken={() => void page.generateToken()}
+        onAcknowledgeToken={page.acknowledgeGeneratedToken}
       />
       {page.guide && (
         <InstrumentationGuideWorkspace

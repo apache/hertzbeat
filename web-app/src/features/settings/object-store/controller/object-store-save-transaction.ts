@@ -46,6 +46,7 @@ export type ObjectStoreCanonicalRead = () => Promise<{
 
 export type ObjectStoreSaveNotifications = {
   notifyFailure: () => void;
+  notifyReconciled: () => void;
   notifyRejected: () => void;
   notifySuccess: () => void;
 };
@@ -76,10 +77,11 @@ export function useObjectStoreSaveTransaction(options: SaveTransactionOptions) {
   const submit = (draft: ObjectStoreDraft) => submitObjectStoreSave(options, runtime, prove, draft);
   const retry = async () => {
     const receipt = runtime.receiptRef.current;
-    if (receipt?.recovery?.phase !== 'proof') return;
+    if (!receipt?.recovery) return;
     const owner = runtime.begin('proving', true);
     if (!owner) return;
-    await prove(owner, receipt);
+    if (receipt.recovery.phase === 'proof') await prove(owner, receipt);
+    else await reconcileUnprovableSave(options, runtime, owner, receipt);
     runtime.finish(owner);
   };
   return {
@@ -91,6 +93,24 @@ export function useObjectStoreSaveTransaction(options: SaveTransactionOptions) {
     saving: runtime.command === 'saving',
     submit
   };
+}
+
+async function reconcileUnprovableSave(
+  options: SaveTransactionOptions,
+  runtime: SaveRuntime,
+  owner: symbol,
+  receipt: SaveReceipt
+) {
+  const evidence = await options.reread();
+  if (!runtime.isCurrent(owner)) return;
+  if (evidence.error || !evidence.data) {
+    runtime.publish(owner, receipt);
+    options.notifyFailure();
+    return;
+  }
+  runtime.publish(owner, null);
+  options.accept(evidence.data);
+  options.notifyReconciled();
 }
 
 async function handleSaveFailure(

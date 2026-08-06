@@ -277,6 +277,42 @@ describe('Token resource controller', () => {
     }
   );
 
+  it('reconciles uncertain generation with an authoritative list refresh and dismisses without reissuing', async () => {
+    refine.custom.mockRejectedValueOnce(unavailableFailure());
+    const { result } = renderHook(() => useTokenResourceController());
+    const draft = { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const };
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft(draft));
+    await act(async () => result.current.generate());
+
+    await act(async () => result.current.reconcileGeneration());
+
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(result.current.state.generationRecovery).toBeNull();
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.generatedToken).toBeNull();
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.generationReconciled', type: 'progress' });
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
+  it('keeps uncertain generation locked when its authoritative list refresh is unavailable', async () => {
+    refine.custom.mockRejectedValueOnce(unavailableFailure());
+    refine.refetch.mockRejectedValueOnce(unavailableFailure());
+    const { result } = renderHook(() => useTokenResourceController());
+    const draft = { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const };
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft(draft));
+    await act(async () => result.current.generate());
+
+    await act(async () => result.current.reconcileGeneration());
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toMatchObject({ draft, generationRecovery: { phase: 'commit-uncertain', draft } });
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
   it.each(['deleted', 'missing', 'already-revoked'] as const)(
     'confirms a %s revocation result only after an authoritative list reread',
     async status => {
