@@ -674,6 +674,11 @@
         "hertzbeat_collector": "Receive and process telemetry at the edge or inside a private network before forwarding it.",
         "external_otel_collector": "Reuse an existing OpenTelemetry pipeline and deployment."
       },
+      "profileBoundary": {
+        "server": "This is the Server's independent OTLP receiver; it does not pass through the embedded Java Collector.",
+        "hertzbeat_collector": "This is an independently deployed Java Collector with its managed Go telemetry runtime enabled.",
+        "external_otel_collector": "This Collector is operated outside HertzBeat and forwards OTLP data to the Server."
+      },
       "profileOwnership": {
         "server": "Configured by the HertzBeat Server administrator",
         "hertzbeat_collector": "Published by the selected Hybrid Collector administrator",
@@ -1454,7 +1459,7 @@
   },
   "collectors": {
     "title": "Collector management",
-    "description": "Inspect registered Collectors and manage their dispatch availability.",
+    "description": "Manage registered standalone Collectors and view the read-only status of the embedded Java Collector. The HertzBeat Server OTLP receiver is not a Collector. OTLP and Go runtime controls appear only for a separately deployed Hybrid Collector.",
     "search": "Search collectors",
     "searchAction": "Search",
     "loading": "Loading Collectors…",
@@ -1463,6 +1468,13 @@
     "name": "Collector",
     "status": "Status",
     "mode": "Mode",
+    "kind": {
+      "column": "Collector type",
+      "embedded_java": "Embedded Java Collector",
+      "java": "Java Collector",
+      "hybrid": "Hybrid Collector",
+      "notApplicable": "Not applicable"
+    },
     "tasks": "Tasks",
     "pinned": "Pinned",
     "dispatched": "Dispatched",
@@ -1508,8 +1520,8 @@
       }
     },
     "intake": {
-      "configure": "Intake",
-      "configureNamed": "Configure {{name}} intake",
+      "configure": "OTLP address",
+      "configureNamed": "Configure {{name}} OTLP intake address",
       "viewServer": "Server endpoint",
       "viewServerNamed": "View the Server endpoint associated with {{name}}",
       "column": "Collector gateway",
@@ -1541,8 +1553,8 @@
       "success": "Collector intake advertisement refreshed."
     },
     "runtime": {
-      "configure": "Runtime",
-      "configureNamed": "Configure {{name}} managed runtime",
+      "configure": "Hybrid runtime",
+      "configureNamed": "Configure {{name}} Hybrid runtime",
       "title": "Managed runtime for {{name}}",
       "save": "Save runtime config",
       "success": "Management configuration saved.",

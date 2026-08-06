@@ -671,6 +671,11 @@
         "hertzbeat_collector": "エッジまたは内部ネットワークで受信・処理してから HertzBeat Server に転送します。",
         "external_otel_collector": "既存の OpenTelemetry パイプラインとデプロイを再利用します。"
       },
+      "profileBoundary": {
+        "server": "これは Server の独立した OTLP 受信機能です。Server 内蔵 Java Collector は経由しません。",
+        "hertzbeat_collector": "これは独立配置した Java Collector で、管理対象の Go テレメトリランタイムが有効です。",
+        "external_otel_collector": "この Collector は HertzBeat の管理外で運用され、OTLP データを Server へ転送します。"
+      },
       "profileOwnership": {
         "server": "HertzBeat Server 管理者が接続先を設定",
         "hertzbeat_collector": "対象 Hybrid Collector の管理者が接続先を公開",
@@ -1450,7 +1455,7 @@
   },
   "collectors": {
     "title": "コレクター管理",
-    "description": "登録済みコレクターと配信可用性を管理します。",
+    "description": "登録済みの独立 Collector を管理し、Server 内蔵 Java Collector の状態を読み取り専用で表示します。Server の OTLP 直接受信は Collector ではありません。OTLP と Go ランタイム設定は、別途配置した Hybrid Collector にだけ表示されます。",
     "search": "コレクターを検索",
     "searchAction": "検索",
     "loading": "コレクターを読み込んでいます…",
@@ -1459,6 +1464,13 @@
     "name": "コレクター",
     "status": "ステータス",
     "mode": "モード",
+    "kind": {
+      "column": "Collector 種別",
+      "embedded_java": "内蔵 Java Collector",
+      "java": "Java Collector",
+      "hybrid": "Hybrid Collector",
+      "notApplicable": "対象外"
+    },
     "tasks": "タスク",
     "pinned": "固定",
     "dispatched": "配信済み",
@@ -1504,8 +1516,8 @@
       }
     },
     "intake": {
-      "configure": "受信設定",
-      "configureNamed": "{{name}} の受信設定を構成",
+      "configure": "OTLP アドレス",
+      "configureNamed": "{{name}} の OTLP 受信アドレスを設定",
       "viewServer": "サーバーエンドポイント",
       "viewServerNamed": "{{name}} に関連付けられたサーバーエンドポイントを表示",
       "column": "Collector ゲートウェイ",
@@ -1537,8 +1549,8 @@
       "success": "コレクターの受信広告を更新しました。"
     },
     "runtime": {
-      "configure": "ランタイム",
-      "configureNamed": "{{name}} の管理ランタイムを設定",
+      "configure": "Hybrid ランタイム",
+      "configureNamed": "{{name}} の Hybrid ランタイムを設定",
       "title": "{{name}} の管理ランタイム",
       "save": "ランタイム設定を保存",
       "success": "管理側の設定を保存しました。",

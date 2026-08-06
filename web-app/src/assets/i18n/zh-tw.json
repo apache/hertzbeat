@@ -668,6 +668,11 @@
         "hertzbeat_collector": "在邊緣或內網先接收、處理，再轉送到 HertzBeat Server。",
         "external_otel_collector": "沿用現有 OpenTelemetry 管線與部署方式。"
       },
+      "profileBoundary": {
+        "server": "這是 Server 獨立的 OTLP 接收端；資料不會經過 Server 內建的 Java Collector。",
+        "hertzbeat_collector": "這是獨立部署的 Java Collector，並啟用了由其管理的 Go 遙測執行階段。",
+        "external_otel_collector": "此 Collector 不由 HertzBeat 管理，只負責將 OTLP 資料轉送到 Server。"
+      },
       "profileOwnership": {
         "server": "接入位址由 HertzBeat Server 管理員設定",
         "hertzbeat_collector": "接入位址由對應 Hybrid Collector 管理員發佈",
@@ -1444,7 +1449,7 @@
   },
   "collectors": {
     "title": "採集器管理",
-    "description": "檢視已註冊採集器並管理調度可用狀態。",
+    "description": "此處管理已註冊的獨立 Collector，並以唯讀方式顯示 Server 內建 Java Collector 的狀態。Server OTLP 直收端不屬於 Collector。只有獨立部署的 Hybrid Collector 才會顯示 OTLP 與 Go 執行階段設定。",
     "search": "搜尋採集器",
     "searchAction": "搜尋",
     "loading": "正在載入採集器…",
@@ -1453,6 +1458,13 @@
     "name": "採集器",
     "status": "狀態",
     "mode": "模式",
+    "kind": {
+      "column": "Collector 類型",
+      "embedded_java": "內建 Java Collector",
+      "java": "Java Collector",
+      "hybrid": "Hybrid Collector",
+      "notApplicable": "不適用"
+    },
     "tasks": "任務",
     "pinned": "固定",
     "dispatched": "已調度",
@@ -1498,8 +1510,8 @@
       }
     },
     "intake": {
-      "configure": "接收設定",
-      "configureNamed": "設定 {{name}} 接收端",
+      "configure": "OTLP 位址",
+      "configureNamed": "設定 {{name}} OTLP 接入位址",
       "viewServer": "服務端端點",
       "viewServerNamed": "檢視與 {{name}} 關聯的服務端端點",
       "column": "Collector 閘道",
@@ -1531,8 +1543,8 @@
       "success": "採集器接收宣告已重新整理。"
     },
     "runtime": {
-      "configure": "執行階段",
-      "configureNamed": "設定 {{name}} 受管執行階段",
+      "configure": "Hybrid 執行階段",
+      "configureNamed": "設定 {{name}} Hybrid 執行階段",
       "title": "{{name}} 的受管執行階段",
       "save": "儲存執行階段設定",
       "success": "管理端設定已儲存。",

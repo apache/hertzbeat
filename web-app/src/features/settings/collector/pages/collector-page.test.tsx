@@ -57,20 +57,24 @@ describe('CollectorPage', () => {
     );
     expect(page).toContainElement(header);
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Collector management' }));
+    expect(screen.getByText(/Manage registered standalone Collectors/)).toBeVisible();
+    expect(screen.getByText('Java Collector')).toBeVisible();
+    expect(screen.getByText('Embedded Java Collector')).toBeVisible();
+    expect(screen.getAllByText('Not applicable')).toHaveLength(2);
     expect(screen.getAllByText('10.0.0.7')).toHaveLength(2);
     fireEvent.change(screen.getByPlaceholderText('Search collectors'), { target: { value: ' west ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Configure edge intake' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Configure edge managed runtime' }));
+    expect(screen.queryByRole('button', { name: 'Configure edge OTLP intake address' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Configure edge Hybrid runtime' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Take edge offline' }));
     fireEvent.click(screen.getByTitle('Next Page'));
 
     expect(controller.actions.setNameDraft).toHaveBeenCalledWith(' west ');
     expect(controller.actions.submitName).toHaveBeenCalledTimes(1);
     expect(controller.actions.refresh).toHaveBeenCalledTimes(1);
-    expect(controller.actions.openIntake).toHaveBeenCalledWith('edge');
-    expect(controller.actions.openRuntimeConfig).toHaveBeenCalledWith('edge');
+    expect(controller.actions.openIntake).not.toHaveBeenCalled();
+    expect(controller.actions.openRuntimeConfig).not.toHaveBeenCalled();
     expect(controller.actions.requestAction).toHaveBeenCalledWith('offline', ['edge']);
     expect(controller.actions.setPage).toHaveBeenCalledWith(1, 8);
     expect(
@@ -87,8 +91,8 @@ describe('CollectorPage', () => {
     renderPage();
 
     expect(screen.getAllByText('edge').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button', { name: 'Configure edge intake' }) !== null).toBe(canWrite);
-    expect(screen.queryByRole('button', { name: 'Configure edge managed runtime' }) !== null).toBe(canWrite);
+    expect(screen.queryByRole('button', { name: 'Configure edge OTLP intake address' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Configure edge Hybrid runtime' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Take edge offline' }) !== null).toBe(canWrite);
     expect(screen.queryByRole('button', { name: 'Delete edge' }) !== null).toBe(canDelete);
     expect(screen.queryByRole('checkbox', { name: 'Select edge' }) !== null).toBe(canWrite || canDelete);
@@ -189,6 +193,9 @@ describe('CollectorPage', () => {
     renderPage();
 
     expect(screen.getByText('edge applied runtime revision 8; runtime state is RUNNING.')).toBeInTheDocument();
+    expect(screen.getByText('Hybrid Collector')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Configure edge OTLP intake address' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Configure edge Hybrid runtime' })).toBeVisible();
     expect(screen.getByText('DEGRADED')).toBeInTheDocument();
   });
 

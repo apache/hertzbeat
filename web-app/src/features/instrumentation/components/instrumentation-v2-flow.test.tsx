@@ -204,6 +204,9 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.v2.profilePurpose.server')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profilePurpose.hertzbeat_collector')).toBeVisible();
     expect(screen.getByText('instrumentation.v2.profilePurpose.external_otel_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileBoundary.server')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileBoundary.hertzbeat_collector')).toBeVisible();
+    expect(screen.getByText('instrumentation.v2.profileBoundary.external_otel_collector')).toBeVisible();
     expect(configureCss).toMatch(/\.destinationList\s*\{[^}]*display:\s*grid/);
     expect(configureCss).toMatch(
       /\.destinationAvailability\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*1[^}]*justify-self:\s*end/

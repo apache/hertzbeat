@@ -8,6 +8,7 @@
 import { Button, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { classifyCollectorKind } from '../model/collector-kind-model';
 import type { CollectorMutationAction, CollectorRecord } from '../model/collector-model';
 import styles from './collector-row-actions.module.css';
 
@@ -27,29 +28,34 @@ export function CollectorRowActions({
 }: CollectorRowActionsProps & { record: CollectorRecord; t: TFunction }) {
   const serverOwnedIntake =
     record.instrumentationIntake.status === 'available' && record.instrumentationIntake.gateway === 'server';
+  const hybrid = classifyCollectorKind(record) === 'hybrid';
   return (
     <div className={styles.actions}>
       {props.canWrite && (
         <>
-          <Button
-            size="small"
-            disabled={props.busy}
-            aria-label={t(
-              serverOwnedIntake ? 'collectors.intake.viewServerNamed' : 'collectors.intake.configureNamed',
-              { name: record.name }
-            )}
-            onClick={() => props.onIntake(record.name)}
-          >
-            {t(serverOwnedIntake ? 'collectors.intake.viewServer' : 'collectors.intake.configure')}
-          </Button>
-          <Button
-            size="small"
-            disabled={props.busy}
-            aria-label={t('collectors.runtime.configureNamed', { name: record.name })}
-            onClick={() => props.onRuntime(record.name)}
-          >
-            {t('collectors.runtime.configure')}
-          </Button>
+          {(hybrid || serverOwnedIntake) && (
+            <Button
+              size="small"
+              disabled={props.busy}
+              aria-label={t(
+                serverOwnedIntake ? 'collectors.intake.viewServerNamed' : 'collectors.intake.configureNamed',
+                { name: record.name }
+              )}
+              onClick={() => props.onIntake(record.name)}
+            >
+              {t(serverOwnedIntake ? 'collectors.intake.viewServer' : 'collectors.intake.configure')}
+            </Button>
+          )}
+          {hybrid && (
+            <Button
+              size="small"
+              disabled={props.busy}
+              aria-label={t('collectors.runtime.configureNamed', { name: record.name })}
+              onClick={() => props.onRuntime(record.name)}
+            >
+              {t('collectors.runtime.configure')}
+            </Button>
+          )}
         </>
       )}
       {record.immutable ? (

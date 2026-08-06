@@ -677,6 +677,11 @@
         "hertzbeat_collector": "Receba e processe a telemetria na borda ou na rede privada antes de encaminhá-la.",
         "external_otel_collector": "Reutilize um pipeline e uma implantação OpenTelemetry existentes."
       },
+      "profileBoundary": {
+        "server": "Este é o receptor OTLP independente do Server; os dados não passam pelo Java Collector incorporado.",
+        "hertzbeat_collector": "Este é um Java Collector implantado separadamente com o runtime de telemetria Go gerenciado ativado.",
+        "external_otel_collector": "Este Collector é operado fora do HertzBeat e encaminha dados OTLP para o Server."
+      },
       "profileOwnership": {
         "server": "Configurado pelo administrador do HertzBeat Server",
         "hertzbeat_collector": "Publicado pelo administrador do Hybrid Collector selecionado",
@@ -1463,7 +1468,7 @@
   },
   "collectors": {
     "title": "Gerenciamento de coletores",
-    "description": "Inspecione os coletores registrados e gerencie a disponibilidade de despacho.",
+    "description": "Gerencie Collectors independentes registrados e veja o estado somente leitura do Java Collector incorporado. O receptor OTLP do HertzBeat Server não é um Collector. Os controles de OTLP e runtime Go aparecem apenas em um Hybrid Collector implantado separadamente.",
     "search": "Pesquisar coletores",
     "searchAction": "Pesquisar",
     "loading": "Carregando coletores…",
@@ -1472,6 +1477,13 @@
     "name": "Coletor",
     "status": "Status",
     "mode": "Modo",
+    "kind": {
+      "column": "Tipo de Collector",
+      "embedded_java": "Java Collector incorporado",
+      "java": "Java Collector",
+      "hybrid": "Hybrid Collector",
+      "notApplicable": "Não aplicável"
+    },
     "tasks": "Tarefas",
     "pinned": "Fixadas",
     "dispatched": "Despachadas",
@@ -1517,8 +1529,8 @@
       }
     },
     "intake": {
-      "configure": "Entrada",
-      "configureNamed": "Configurar entrada de {{name}}",
+      "configure": "Endereço OTLP",
+      "configureNamed": "Configurar o endereço de entrada OTLP de {{name}}",
       "viewServer": "Endpoint do servidor",
       "viewServerNamed": "Ver o endpoint do servidor associado a {{name}}",
       "column": "Gateway do Collector",
@@ -1550,8 +1562,8 @@
       "success": "O anúncio de entrada do coletor foi atualizado."
     },
     "runtime": {
-      "configure": "Runtime",
-      "configureNamed": "Configurar runtime gerenciado de {{name}}",
+      "configure": "Runtime Hybrid",
+      "configureNamed": "Configurar o runtime Hybrid de {{name}}",
       "title": "Runtime gerenciado de {{name}}",
       "save": "Salvar configuração de runtime",
       "success": "Configuração de gerenciamento salva.",

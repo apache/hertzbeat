@@ -5,16 +5,18 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Checkbox, Pagination, Table, Tag } from 'antd';
+import { Checkbox, Pagination, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
+import { classifyCollectorKind } from '../model/collector-kind-model';
 import type { CollectorListState, CollectorMutationAction, CollectorRecord } from '../model/collector-model';
 import { collectorPageSizes, type CollectorPageSize, type CollectorQuery } from '../model/collector-query-model';
 import { CollectorIntakeStateTag } from './collector-intake-state-tag';
+import { CollectorKindTag } from './collector-kind-tag';
 import { CollectorRowActions } from './collector-row-actions';
 import { CollectorRuntimeReportFacts } from './collector-runtime-report-facts';
 
@@ -112,9 +114,29 @@ function selectionColumns(props: Props, t: TFunction): ColumnsType<CollectorReco
   ];
 }
 
+function renderIntake(record: CollectorRecord, t: TFunction) {
+  if (classifyCollectorKind(record) === 'embedded_java') {
+    return <Typography.Text type="secondary">{t('collectors.kind.notApplicable')}</Typography.Text>;
+  }
+  return <CollectorIntakeStateTag intake={record.instrumentationIntake} />;
+}
+
+function renderRuntime(record: CollectorRecord, t: TFunction) {
+  if (classifyCollectorKind(record) === 'embedded_java') {
+    return <Typography.Text type="secondary">{t('collectors.kind.notApplicable')}</Typography.Text>;
+  }
+  return <CollectorRuntimeReportFacts report={record.runtimeReport} />;
+}
+
 function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
   return [
     { title: t('collectors.name'), dataIndex: 'name', key: 'name', width: 180, ellipsis: true },
+    {
+      title: t('collectors.kind.column'),
+      key: 'kind',
+      width: 150,
+      render: (_, record) => <CollectorKindTag record={record} />
+    },
     {
       title: t('collectors.status'),
       key: 'status',
@@ -144,13 +166,13 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
       title: t('collectors.intake.column'),
       key: 'intake',
       width: 168,
-      render: (_, record) => <CollectorIntakeStateTag intake={record.instrumentationIntake} />
+      render: (_, record) => renderIntake(record, t)
     },
     {
       title: t('collectors.runtime.report.column'),
       key: 'runtime',
       width: 240,
-      render: (_, record) => <CollectorRuntimeReportFacts report={record.runtimeReport} />
+      render: (_, record) => renderRuntime(record, t)
     },
     { title: t('collectors.address'), dataIndex: 'address', key: 'address', width: 180, ellipsis: true },
     {

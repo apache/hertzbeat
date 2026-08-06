@@ -112,6 +112,7 @@ function DestinationExplanation({ kind }: { kind: IntakeProfileKind }) {
     <span className={styles.destinationExplanation}>
       <span>{t(`instrumentation.v2.profilePurpose.${kind}`)}</span>
       <small>{t(`instrumentation.v2.profileOwnership.${kind}`)}</small>
+      <small>{t(`instrumentation.v2.profileBoundary.${kind}`)}</small>
     </span>
   );
 }
