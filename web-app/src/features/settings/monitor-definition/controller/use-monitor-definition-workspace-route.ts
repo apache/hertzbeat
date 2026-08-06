@@ -28,13 +28,14 @@ import { loadMonitorDefinitionWorkspace } from './monitor-definition-workspace-c
 
 type WorkspaceRouteContext = {
   workspaceRef: { current: MonitorDefinitionWorkspace | null };
+  canWriteRef: { current: boolean };
   owner: MonitorDefinitionOperationOwner;
   setWorkspace: (value: MonitorDefinitionWorkspace | null) => void;
   language: string;
 };
 
 export function useMonitorDefinitionWorkspaceRoute(context: WorkspaceRouteContext) {
-  const { owner, workspaceRef, setWorkspace, language } = context;
+  const { owner, workspaceRef, canWriteRef, setWorkspace, language } = context;
   return useMemo(
     () => ({
       followRoute: (app: string | null) => {
@@ -53,10 +54,10 @@ export function useMonitorDefinitionWorkspaceRoute(context: WorkspaceRouteContex
           setWorkspace(null);
           return true;
         }
-        void loadMonitorDefinitionWorkspace('view', app, language, owner, setWorkspace);
+        void loadMonitorDefinitionWorkspace(canWriteRef.current ? 'edit' : 'view', app, language, owner, setWorkspace);
         return true;
       }
     }),
-    [language, owner, setWorkspace, workspaceRef]
+    [canWriteRef, language, owner, setWorkspace, workspaceRef]
   );
 }

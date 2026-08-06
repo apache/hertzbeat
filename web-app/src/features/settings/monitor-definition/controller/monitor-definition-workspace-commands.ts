@@ -144,8 +144,9 @@ function publishEditorResult(
   workspace: Extract<MonitorDefinitionWorkspace, { kind: 'edit' }>,
   publish: (value: MonitorDefinitionWorkspace) => void
 ) {
-  if ('schemaVersion' in next && 'definition' in next) publish({ kind: 'view', detail: next });
-  else if ('schemaVersion' in next) publish({ ...workspace, pending: null, validation: next });
+  if ('schemaVersion' in next && 'definition' in next) {
+    publish(editMonitorDefinitionWorkspace(buildUpdateDraft(next), next));
+  } else if ('schemaVersion' in next) publish({ ...workspace, pending: null, validation: next });
   else if (workspace.draft.mode === 'update' && next.mode === 'update') {
     const authority = { ...workspace.authority!, definition: next.definition, revision: next.revision };
     publish(editMonitorDefinitionWorkspace(next, authority));

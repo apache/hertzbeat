@@ -60,7 +60,7 @@ describe('MonitorDefinitionPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders a persistent searchable selector and delegates selection/create', () => {
+  it('renders a persistent searchable selector and delegates selection directly to editing', () => {
     const controller = buildController();
     owner.useController.mockReturnValue(controller);
     renderPage();
@@ -87,7 +87,8 @@ describe('MonitorDefinitionPage', () => {
 
     expect(controller.actions.setSearch).toHaveBeenCalledWith('mysql');
     expect(controller.actions.openCreate).toHaveBeenCalledOnce();
-    expect(controller.actions.openView).toHaveBeenCalledWith('mysql');
+    expect(controller.actions.openEdit).toHaveBeenCalledWith('mysql');
+    expect(controller.actions.openView).not.toHaveBeenCalled();
     expect(screen.getByText('Select a monitor definition to inspect its authoritative YAML.')).toBeInTheDocument();
   });
 
@@ -113,26 +114,52 @@ describe('MonitorDefinitionPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Validate' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh latest definition' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(controller.actions.setDefinition).toHaveBeenCalledWith('app: mysql\nname: changed');
     expect(controller.actions.validate).toHaveBeenCalledOnce();
     expect(controller.actions.save).toHaveBeenCalledOnce();
     expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
+    expect(controller.actions.requestDelete).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      ...item,
+      definition: 'app: mysql'
+    });
     expect(controller.actions.cancelEdit).toHaveBeenCalledOnce();
   });
 
-  it('allows an administrator to edit a built-in definition while keeping deletion disabled', () => {
+  it('keeps catalog selection read-only when write permission is unavailable', () => {
+    const controller = buildController({ canWrite: false });
+    owner.useController.mockReturnValue(controller);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'MySQL mysql' }));
+
+    expect(controller.actions.openView).toHaveBeenCalledWith('mysql');
+    expect(controller.actions.openEdit).not.toHaveBeenCalled();
+  });
+
+  it('opens a built-in definition in the comparison editor while keeping deletion disabled', () => {
     const builtin = { ...item, origin: 'builtin' as const, editable: true, deletable: false };
+    const builtinDetail = { schemaVersion: 1 as const, ...builtin, definition: 'app: mysql' };
     const controller = buildController({
       items: [builtin],
-      workspace: { kind: 'view', detail: { schemaVersion: 1, ...builtin, definition: 'app: mysql' } }
+      workspace: {
+        kind: 'edit',
+        authority: builtinDetail,
+        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
+        failure: null,
+        pending: null,
+        validation: null,
+        writeRecovery: null
+      }
     });
     owner.useController.mockReturnValue(controller);
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
-    expect(controller.actions.openEdit).toHaveBeenCalledWith('mysql');
+    expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
   });
 

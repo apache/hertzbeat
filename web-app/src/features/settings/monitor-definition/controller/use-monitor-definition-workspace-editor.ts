@@ -17,13 +17,20 @@
 
 import { useMemo } from 'react';
 
-import { monitorDefinitionWorkspaceIsDirty, type MonitorDefinitionWorkspace } from '../model/monitor-definition-model';
+import {
+  buildUpdateDraft,
+  monitorDefinitionWorkspaceIsDirty,
+  type MonitorDefinitionWorkspace
+} from '../model/monitor-definition-model';
 import {
   proveOwnedMonitorDefinitionCatalog,
   type MonitorDefinitionCatalogProof
 } from './monitor-definition-catalog-proof';
 import type { MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
-import { runMonitorDefinitionEditorCommand } from './monitor-definition-workspace-commands';
+import {
+  editMonitorDefinitionWorkspace,
+  runMonitorDefinitionEditorCommand
+} from './monitor-definition-workspace-commands';
 
 type WorkspaceEditorContext = {
   workspace: MonitorDefinitionWorkspace | null;
@@ -113,7 +120,11 @@ function cancelMonitorDefinitionEdit(context: WorkspaceEditorContext) {
   )
     return false;
   owner.retire();
-  setWorkspace(workspace.authority ? { kind: 'view', detail: workspace.authority } : null);
+  setWorkspace(
+    workspace.authority
+      ? editMonitorDefinitionWorkspace(buildUpdateDraft(workspace.authority), workspace.authority)
+      : null
+  );
   return true;
 }
 

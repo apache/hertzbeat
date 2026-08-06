@@ -32,7 +32,6 @@ type WorkspaceProps = {
   onCancel: () => void;
   onChange: (value: string) => void;
   onDelete: (item: MonitorDefinitionCatalogItem) => void;
-  onEdit: (app: string) => void;
   onRefreshAuthoritativeDraft: () => void;
   onRetryCatalogProof: () => void;
   onRetry: () => void;
@@ -74,9 +73,6 @@ function DefinitionReadView(
       />
       <Space wrap>
         <Link to={buildMonitorListPath({ app: detail.app })}>{t('monitorDefinitions.monitors')}</Link>
-        <Button disabled={!props.canWrite || !detail.editable} onClick={() => props.onEdit(detail.app)}>
-          {t('common.edit')}
-        </Button>
         <Button danger disabled={!props.canWrite || !detail.deletable} onClick={() => props.onDelete(detail)}>
           {t('common.delete')}
         </Button>
@@ -91,9 +87,28 @@ function DefinitionEditor(
 ) {
   const { t } = useTranslation();
   const { workspace } = props;
+  const authority = workspace.authority;
   return (
     <Space direction="vertical" size="middle" className={styles.workspace ?? ''}>
-      <Typography.Title level={4}>{editorTitle(workspace, t)}</Typography.Title>
+      {authority ? (
+        <>
+          <MonitorDefinitionWorkspaceHeader
+            title={authority.label}
+            app={authority.app}
+            origin={authority.origin}
+            revision={authority.revision}
+            className={styles.header ?? ''}
+          />
+          <Space wrap>
+            <Link to={buildMonitorListPath({ app: authority.app })}>{t('monitorDefinitions.monitors')}</Link>
+            <Button danger disabled={!props.canWrite || !authority.deletable} onClick={() => props.onDelete(authority)}>
+              {t('common.delete')}
+            </Button>
+          </Space>
+        </>
+      ) : (
+        <Typography.Title level={4}>{editorTitle(workspace, t)}</Typography.Title>
+      )}
       {workspace.failure && <EditorFailure {...props} workspace={workspace} />}
       {workspace.validation && (
         <Alert type="success" showIcon message={t('monitorDefinitions.validated', { app: workspace.validation.app })} />

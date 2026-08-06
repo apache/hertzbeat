@@ -118,7 +118,7 @@ describe('useMonitorDefinitionController', () => {
     );
   });
 
-  it('retains authoritative YAML, blocks dirty app switching, and cancels back to its view', async () => {
+  it('retains authoritative YAML, blocks dirty app switching, and cancels back to the authoritative draft', async () => {
     const view = renderController();
     await waitFor(() => expect(view.result.current.listState.kind).toBe('ready'));
     await act(() => view.result.current.actions.openEdit('mysql'));
@@ -136,7 +136,7 @@ describe('useMonitorDefinitionController', () => {
     expect(route.search).toBe('?app=mysql');
 
     act(() => view.result.current.actions.cancelEdit());
-    expect(view.result.current.workspace).toEqual({ kind: 'view', detail });
+    expect(view.result.current.workspace).toEqual(updateWorkspace(detail));
     expect(route.search).toBe('?app=mysql');
   });
 
@@ -183,7 +183,7 @@ describe('useMonitorDefinitionController', () => {
 
     expect(api.detail).toHaveBeenCalledWith('custom', 'en-US', expect.any(AbortSignal));
     expect(api.catalog).toHaveBeenCalledTimes(2);
-    expect(result.current.workspace).toEqual({ kind: 'view', detail: canonicalDetail });
+    expect(result.current.workspace).toEqual(updateWorkspace(canonicalDetail));
     expect(result.current.items).toEqual([item, canonicalItem]);
     await waitFor(() => expect(route.search).toBe('?scope=all&app=custom'));
   });
@@ -220,7 +220,7 @@ describe('useMonitorDefinitionController', () => {
     );
     expect(api.detail).toHaveBeenLastCalledWith('mysql', 'en-US', expect.any(AbortSignal));
     expect(api.catalog).toHaveBeenCalledTimes(2);
-    expect(result.current.workspace).toEqual({ kind: 'view', detail: canonicalDetail });
+    expect(result.current.workspace).toEqual(updateWorkspace(canonicalDetail));
     expect(result.current.items).toEqual([canonicalItem]);
   });
 
@@ -779,7 +779,7 @@ describe('useMonitorDefinitionController', () => {
     expect(view.result.current.workspace).toMatchObject({ kind: 'edit', pending: 'save' });
     write.resolve(detail);
     await act(async () => save);
-    expect(view.result.current.workspace).toEqual({ kind: 'view', detail });
+    expect(view.result.current.workspace).toEqual(updateWorkspace(detail));
   });
 
   it.each([
@@ -878,13 +878,17 @@ describe('useMonitorDefinitionController', () => {
   });
 
   it.each([['ADMIN'], ['USER']])(
-    'opens an initial app deep link as view without waiting for catalog for %s',
+    'opens an initial app deep link in the permission-appropriate workspace without waiting for catalog for %s',
     async role => {
       auth.roles = [role];
       api.catalog.mockReturnValue(new Promise(() => {}));
       const view = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql', true);
 
-      await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+      await waitFor(() =>
+        expect(view.result.current.workspace).toEqual(
+          role === 'ADMIN' ? updateWorkspace(detail) : { kind: 'view', detail }
+        )
+      );
 
       expect(api.detail).toHaveBeenCalledTimes(1);
       expect(route.search).toBe('?scope=all&app=mysql');
@@ -896,13 +900,13 @@ describe('useMonitorDefinitionController', () => {
     const view = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql');
 
     await waitFor(() =>
-      expect(view.result.current.workspace).toEqual({ kind: 'error', mode: 'view', app: 'mysql', failure })
+      expect(view.result.current.workspace).toEqual({ kind: 'error', mode: 'edit', app: 'mysql', failure })
     );
 
     expect(route.search).toBe('?scope=all&app=mysql');
     expect(api.detail).toHaveBeenCalledOnce();
     await act(() => view.result.current.actions.retryWorkspace());
-    expect(view.result.current.workspace).toEqual({ kind: 'view', detail });
+    expect(view.result.current.workspace).toEqual(updateWorkspace(detail));
     expect(route.search).toBe('?scope=all&app=mysql');
   });
 
@@ -915,24 +919,24 @@ describe('useMonitorDefinitionController', () => {
       return Promise.resolve(app === 'jvm' ? jvmDetail : detail);
     });
     const view = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'loading', mode: 'view', app: 'mysql' }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'loading', mode: 'edit', app: 'mysql' }));
 
     act(() => {
       void observedNavigate()('/settings/monitor-definitions?scope=all&app=jvm');
     });
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(jvmDetail)));
     mysql.resolve(detail);
     await act(async () => mysql.promise);
-    expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail });
+    expect(view.result.current.workspace).toEqual(updateWorkspace(jvmDetail));
 
     act(() => {
       void observedNavigate()(-1);
     });
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
     act(() => {
       void observedNavigate()(1);
     });
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail: jvmDetail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(jvmDetail)));
 
     act(() => {
       void observedNavigate()('/settings/monitor-definitions?scope=all');
@@ -963,7 +967,7 @@ describe('useMonitorDefinitionController', () => {
     api.validate.mockReturnValueOnce(validation.promise);
     api.detail.mockImplementation((app: string) => Promise.resolve(app === 'jvm' ? jvmDetail : detail));
     const view = renderControllerAt('/settings/monitor-definitions?app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
     await act(() => view.result.current.actions.openEdit('mysql'));
     act(() => view.result.current.actions.setDefinition('app: mysql\nname: local'));
     let command!: Promise<void>;
@@ -994,7 +998,7 @@ describe('useMonitorDefinitionController', () => {
     api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     api.detail.mockImplementation((app: string) => Promise.resolve(app === 'jvm' ? jvmDetail : detail));
     const view = renderControllerAt('/settings/monitor-definitions?app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
     await act(() => view.result.current.actions.openEdit('mysql'));
     act(() => view.result.current.actions.setDefinition('app: mysql\nname: uncertain'));
     await act(() => view.result.current.actions.save());
@@ -1014,7 +1018,7 @@ describe('useMonitorDefinitionController', () => {
     await waitFor(() => expect(route.search).toBe('?app=mysql'));
 
     act(() => view.result.current.actions.cancelEdit());
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
     expect(route.search).toBe('?app=mysql');
   });
 
@@ -1040,13 +1044,13 @@ describe('useMonitorDefinitionController', () => {
     write.resolve(createdDetail);
     await act(async () => saving);
     await waitFor(() => expect(route.search).toBe('?scope=all&app=custom'));
-    expect(view.result.current.workspace).toEqual({ kind: 'view', detail: createdDetail });
+    expect(view.result.current.workspace).toEqual(updateWorkspace(createdDetail));
   });
 
   it('does not replace uncertain write evidence through an explicit open action', async () => {
     api.update.mockRejectedValueOnce(new MonitorDefinitionRequestError('state-uncertain', 'uncertain'));
     const view = renderControllerAt('/settings/monitor-definitions?app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
     await act(() => view.result.current.actions.openEdit('mysql'));
     act(() => view.result.current.actions.setDefinition('app: mysql\nname: uncertain'));
     await act(() => view.result.current.actions.save());
@@ -1079,7 +1083,7 @@ describe('useMonitorDefinitionController', () => {
 
   it('replaces the current history entry when an explicit close removes app identity', async () => {
     const view = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
 
     act(() => view.result.current.actions.closeWorkspace());
     await waitFor(() => expect(route.search).toBe('?scope=all'));
@@ -1104,11 +1108,9 @@ describe('useMonitorDefinitionController', () => {
     invalid.unmount();
   });
 
-  it('restores only a view after ADMIN loss and never upgrades a USER view after ADMIN gain', async () => {
+  it('restores only a view after ADMIN loss and never resurrects retired edit state after ADMIN gain', async () => {
     const view = renderControllerAt('/settings/monitor-definitions?app=mysql');
-    await waitFor(() => expect(view.result.current.workspace).toEqual({ kind: 'view', detail }));
-    await act(() => view.result.current.actions.openEdit('mysql'));
-    expect(view.result.current.workspace).toMatchObject({ kind: 'edit' });
+    await waitFor(() => expect(view.result.current.workspace).toEqual(updateWorkspace(detail)));
 
     auth.roles = ['USER'];
     view.rerender();
@@ -1123,6 +1125,23 @@ describe('useMonitorDefinitionController', () => {
 type WriteOperation = 'create' | 'update' | 'delete';
 type WriteOutcome = 'uncertain' | 'rejected';
 type ControllerView = ReturnType<typeof renderController>;
+
+function updateWorkspace(value: typeof detail) {
+  return {
+    kind: 'edit' as const,
+    authority: value,
+    draft: {
+      mode: 'update' as const,
+      expectedApp: value.app,
+      definition: value.definition,
+      revision: value.revision
+    },
+    failure: null,
+    pending: null,
+    validation: null,
+    writeRecovery: null
+  };
+}
 
 function prepareCatalogProof(outcome: WriteOutcome, provedItem: typeof item) {
   api.catalog.mockResolvedValue({ schemaVersion: 1, items: [item] });

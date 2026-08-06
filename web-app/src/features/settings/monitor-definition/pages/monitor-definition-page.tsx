@@ -85,7 +85,6 @@ function MonitorDefinitionWorkspaceRegion({
             onCancel={controller.actions.cancelEdit}
             onChange={controller.actions.setDefinition}
             onDelete={controller.actions.requestDelete}
-            onEdit={app => void controller.actions.openEdit(app)}
             onRefreshAuthoritativeDraft={() => void controller.actions.refreshAuthoritativeDraft()}
             onRetryCatalogProof={() => void controller.actions.retryWorkspaceProof()}
             onRetry={() => void controller.actions.retryWorkspace()}
@@ -122,7 +121,7 @@ function CatalogState({ controller }: { controller: ReturnType<typeof useMonitor
     <MonitorDefinitionCatalog
       items={controller.items}
       selectedApp={controller.selectedApp}
-      onSelect={app => void controller.actions.openView(app)}
+      onSelect={app => void (controller.canWrite ? controller.actions.openEdit(app) : controller.actions.openView(app))}
     />
   );
 }

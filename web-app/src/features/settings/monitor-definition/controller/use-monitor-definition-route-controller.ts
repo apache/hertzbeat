@@ -69,10 +69,15 @@ function useSuccessfulCreateRouteSync(
     }
     if (!createActive.current) return;
     createActive.current = false;
-    if (workspace?.kind !== 'view') return;
-    route.interact(workspace.detail.app);
-    route.write(workspace.detail.app);
-    setParams(writeMonitorDefinitionAppQuery(params, workspace.detail.app), { replace: true });
+    let createdApp: string | null = null;
+    if (workspace?.kind === 'view') createdApp = workspace.detail.app;
+    else if (workspace?.kind === 'edit' && workspace.draft.mode === 'update') {
+      createdApp = workspace.draft.expectedApp;
+    }
+    if (!createdApp) return;
+    route.interact(createdApp);
+    route.write(createdApp);
+    setParams(writeMonitorDefinitionAppQuery(params, createdApp), { replace: true });
   }, [params, route, setParams, workspace]);
 }
 
@@ -120,7 +125,8 @@ function useMonitorDefinitionRouteState(queryApp: string | null): RouteState {
         observedApp.current = app;
         pendingRoute.current = { active: true, app };
       } else if (app && workspace === null && !pendingRoute.current.active) {
-        // Authority loss retires edit state; a still-owned route may only restore its read-only view.
+        // Permission changes retire the prior workspace; the route is then reloaded
+        // using the user's current read or write capability.
         pendingRoute.current = { active: true, app };
       }
       if (!pendingRoute.current.active) return;
