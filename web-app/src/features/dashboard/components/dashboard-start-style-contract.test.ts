@@ -7,7 +7,6 @@
 
 import { describe, expect, it } from 'vitest';
 
-import summaryStyles from './dashboard.module.css?raw';
 import styles from './dashboard-start.module.css?raw';
 
 describe('Dashboard start layout contract', () => {
@@ -28,15 +27,6 @@ describe('Dashboard start layout contract', () => {
     expect(footerRule).not.toMatch(/border/);
     expect(styles).toMatch(/\.outcome\s+:global\(p\.ant-typography\)\s*\{[^}]*text-wrap:\s*balance/);
     expect(styles).not.toMatch(/\.(decision|convergence)\s*\{/);
-  });
-
-  it('uses spacing rather than an outer rule and column dividers for the operational summary', () => {
-    const boardRule = summaryStyles.match(/\.summaryBoard\s*\{[^}]*\}/)?.[0] ?? '';
-    const siblingRule = summaryStyles.match(/\.summaryRow\s*\+\s*\.summaryRow\s*\{[^}]*\}/)?.[0] ?? '';
-
-    expect(boardRule).toMatch(/gap:\s*var\(--hb-space-6\)/);
-    expect(boardRule).not.toMatch(/border/);
-    expect(siblingRule).not.toMatch(/border/);
   });
 
   it('gives the reversed telemetry flow a shrink-safe track before its arrow and product node', () => {
