@@ -21,6 +21,27 @@ const owner = vi.hoisted(() => ({ useController: vi.fn() }));
 vi.mock('../controller/use-monitor-definition-controller', () => ({
   useMonitorDefinitionController: owner.useController
 }));
+vi.mock('@/shared/yaml-editor/yaml-code-editor', () => ({
+  YamlCodeEditor: ({
+    ariaLabel,
+    value,
+    readOnly,
+    onChange
+  }: {
+    ariaLabel: string;
+    value: string;
+    readOnly: boolean;
+    onChange?: (value: string) => void;
+  }) => (
+    <textarea
+      aria-label={ariaLabel}
+      data-hb-yaml-editor="codemirror"
+      disabled={readOnly}
+      value={value}
+      onChange={event => onChange?.(event.target.value)}
+    />
+  )
+}));
 
 import { MonitorDefinitionPage } from './monitor-definition-page';
 
@@ -85,6 +106,7 @@ describe('MonitorDefinitionPage', () => {
     owner.useController.mockReturnValue(controller);
     renderPage();
 
+    expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(2);
     expect(screen.getByLabelText('Authoritative YAML')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     fireEvent.change(screen.getByLabelText('Draft YAML'), { target: { value: 'app: mysql\nname: changed' } });
@@ -98,6 +120,20 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.save).toHaveBeenCalledOnce();
     expect(controller.actions.refreshAuthoritativeDraft).toHaveBeenCalledOnce();
     expect(controller.actions.cancelEdit).toHaveBeenCalledOnce();
+  });
+
+  it('allows an administrator to edit a built-in definition while keeping deletion disabled', () => {
+    const builtin = { ...item, origin: 'builtin' as const, editable: true, deletable: false };
+    const controller = buildController({
+      items: [builtin],
+      workspace: { kind: 'view', detail: { schemaVersion: 1, ...builtin, definition: 'app: mysql' } }
+    });
+    owner.useController.mockReturnValue(controller);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(controller.actions.openEdit).toHaveBeenCalledWith('mysql');
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
   });
 
   it('uses the shared canonical monitor-list path for the selected definition', () => {
@@ -193,6 +229,7 @@ describe('MonitorDefinitionPage', () => {
     renderPage();
 
     expect(screen.getByText('Definition YAML is required.')).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(1);
   });
 
   it('distinguishes loading, empty, error, read-only permission, and delete disposition states', () => {

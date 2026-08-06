@@ -7,8 +7,10 @@
 
 import { describe, expect, it } from 'vitest';
 
+import yamlEditorStyles from '@/shared/yaml-editor/yaml-code-editor.module.css?raw';
+
 import catalogStyles from '../components/monitor-definition-catalog.module.css?raw';
-import workspaceStyles from '../components/monitor-definition-workspace.module.css?raw';
+import workspaceSource from '../components/monitor-definition-workspace.tsx?raw';
 import pageStyles from './monitor-definition-page.module.css?raw';
 
 describe('monitor definition split layout contract', () => {
@@ -17,7 +19,7 @@ describe('monitor definition split layout contract', () => {
     const selector = cssRule(pageStyles, 'selector');
     const workspace = cssRule(pageStyles, 'workspace');
     const catalog = cssRule(catalogStyles, 'list');
-    const yaml = pageStylesForYaml(workspaceStyles);
+    const yaml = cssRule(yamlEditorStyles, 'editor');
 
     expect(layout).toMatch(/height:\s*clamp\([^;]*100dvh/);
     expect(layout).toMatch(/overflow:\s*hidden/);
@@ -27,8 +29,9 @@ describe('monitor definition split layout contract', () => {
     expect(workspace).toMatch(/overflow:\s*auto/);
     expect(catalog).toMatch(/min-height:\s*0/);
     expect(catalog).toMatch(/overflow:\s*auto/);
-    expect(yaml).toMatch(/height:\s*clamp\([^;]*100dvh/);
-    expect(yaml).toMatch(/overflow:\s*auto/);
+    expect(workspaceSource).toMatch(/minHeight="clamp\([^"]*100dvh/);
+    expect(yaml).toMatch(/overflow:\s*hidden/);
+    expect(yamlEditorStyles).toMatch(/\.editor\s+:global\(\.cm-editor\)\s*\{[^}]*height:\s*100%/);
   });
 
   it('returns to natural document flow when the split workspace stacks on narrow screens', () => {
@@ -41,8 +44,4 @@ describe('monitor definition split layout contract', () => {
 
 function cssRule(source: string, name: string) {
   return source.match(new RegExp(`\\.${name}\\s*\\{(?<body>[^}]*)\\}`))?.groups?.body;
-}
-
-function pageStylesForYaml(source: string) {
-  return source.match(/\.editor,\s*\.readOnly\s*\{(?<body>[^}]*)\}/)?.groups?.body;
 }

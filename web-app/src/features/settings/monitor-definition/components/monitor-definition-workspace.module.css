@@ -30,13 +30,22 @@
   gap: 12px;
 }
 
+.editorSingle {
+  width: 100%;
+}
+
 .editorPane {
   display: grid;
   gap: 6px;
   min-width: 0;
 }
 
-.editor,
+.editorLabel {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .readOnly {
   width: 100%;
   height: clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px);

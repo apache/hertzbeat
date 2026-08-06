@@ -5,12 +5,13 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Skeleton, Space, Typography } from 'antd';
+import { Alert, Button, Skeleton, Space, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
+import { YamlCodeEditor } from '@/shared/yaml-editor/yaml-code-editor';
 
 import {
   monitorDefinitionCanRefreshAuthoritativeDraft,
@@ -97,16 +98,14 @@ function DefinitionEditor(
       {workspace.validation && (
         <Alert type="success" showIcon message={t('monitorDefinitions.validated', { app: workspace.validation.app })} />
       )}
-      <div className={styles.editorGrid}>
-        <YamlField
-          label={t('monitorDefinitions.authoritative')}
-          value={workspace.authority?.definition ?? ''}
-          disabled
-        />
+      <div className={workspace.authority ? styles.editorGrid : styles.editorSingle}>
+        {workspace.authority && (
+          <YamlField label={t('monitorDefinitions.authoritative')} value={workspace.authority.definition} readOnly />
+        )}
         <YamlField
           label={t('monitorDefinitions.draft')}
           value={workspace.draft.definition}
-          disabled={workspace.pending !== null || workspace.writeRecovery !== null}
+          readOnly={workspace.pending !== null || workspace.writeRecovery !== null}
           onChange={props.onChange}
         />
       </div>
@@ -115,19 +114,16 @@ function DefinitionEditor(
   );
 }
 
-function YamlField(props: { label: string; value: string; disabled: boolean; onChange?: (value: string) => void }) {
-  const id = props.disabled ? 'monitor-definition-authority' : 'monitor-definition-draft';
+function YamlField(props: { label: string; value: string; readOnly: boolean; onChange?: (value: string) => void }) {
   return (
     <div className={styles.editorPane}>
-      <label htmlFor={id}>{props.label}</label>
-      <Input.TextArea
-        id={id}
-        className={styles.editor ?? ''}
+      <span className={styles.editorLabel}>{props.label}</span>
+      <YamlCodeEditor
+        ariaLabel={props.label}
         value={props.value}
-        disabled={props.disabled}
-        onChange={event => props.onChange?.(event.target.value)}
-        autoSize={false}
-        spellCheck={false}
+        readOnly={props.readOnly}
+        onChange={props.onChange}
+        minHeight="clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px)"
       />
     </div>
   );
