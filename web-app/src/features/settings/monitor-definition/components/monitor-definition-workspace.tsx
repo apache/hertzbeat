@@ -7,11 +7,16 @@
 
 import { Alert, Button, Skeleton, Space, Typography } from 'antd';
 import type { TFunction } from 'i18next';
+import { useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
-import { YamlCodeEditor } from '@/shared/yaml-editor/yaml-code-editor';
+import {
+  YamlCodeEditor,
+  type YamlCodeEditorHandle,
+  type YamlEditorScrollPosition
+} from '@/shared/yaml-editor/yaml-code-editor';
 
 import {
   monitorDefinitionCanRefreshAuthoritativeDraft,
@@ -68,7 +73,6 @@ function DefinitionReadView(
         title={detail.label}
         app={detail.app}
         origin={detail.origin}
-        revision={detail.revision}
         className={styles.header ?? ''}
       />
       <Space wrap>
@@ -88,6 +92,14 @@ function DefinitionEditor(
   const { t } = useTranslation();
   const { workspace } = props;
   const authority = workspace.authority;
+  // Comparison mode keeps both panes on the same YAML position. CodeMirror's
+  // scroll mechanics stay behind the shared editor handle rather than leaking
+  // DOM queries into this feature component.
+  const currentEditorRef = useRef<YamlCodeEditorHandle>(null);
+  const draftEditorRef = useRef<YamlCodeEditorHandle>(null);
+  const syncCurrentEditor = (position: YamlEditorScrollPosition) =>
+    currentEditorRef.current?.setScrollPosition(position);
+  const syncDraftEditor = (position: YamlEditorScrollPosition) => draftEditorRef.current?.setScrollPosition(position);
   return (
     <Space direction="vertical" size="middle" className={styles.workspace ?? ''}>
       {authority ? (
@@ -96,7 +108,6 @@ function DefinitionEditor(
             title={authority.label}
             app={authority.app}
             origin={authority.origin}
-            revision={authority.revision}
             className={styles.header ?? ''}
           />
           <Space wrap>
@@ -115,13 +126,21 @@ function DefinitionEditor(
       )}
       <div className={workspace.authority ? styles.editorGrid : styles.editorSingle}>
         {workspace.authority && (
-          <YamlField label={t('monitorDefinitions.authoritative')} value={workspace.authority.definition} readOnly />
+          <YamlField
+            editorRef={currentEditorRef}
+            label={t('monitorDefinitions.authoritative')}
+            value={workspace.authority.definition}
+            readOnly
+            onScrollPositionChange={syncDraftEditor}
+          />
         )}
         <YamlField
+          editorRef={draftEditorRef}
           label={t('monitorDefinitions.draft')}
           value={workspace.draft.definition}
           readOnly={workspace.pending !== null || workspace.writeRecovery !== null}
           onChange={props.onChange}
+          onScrollPositionChange={workspace.authority ? syncCurrentEditor : undefined}
         />
       </div>
       <EditorActions {...props} workspace={workspace} />
@@ -129,15 +148,24 @@ function DefinitionEditor(
   );
 }
 
-function YamlField(props: { label: string; value: string; readOnly: boolean; onChange?: (value: string) => void }) {
+function YamlField(props: {
+  editorRef: RefObject<YamlCodeEditorHandle | null>;
+  label: string;
+  value: string;
+  readOnly: boolean;
+  onChange?: (value: string) => void;
+  onScrollPositionChange?: (position: YamlEditorScrollPosition) => void;
+}) {
   return (
     <div className={styles.editorPane}>
       <span className={styles.editorLabel}>{props.label}</span>
       <YamlCodeEditor
+        ref={props.editorRef}
         ariaLabel={props.label}
         value={props.value}
         readOnly={props.readOnly}
         onChange={props.onChange}
+        onScrollPositionChange={props.onScrollPositionChange}
         minHeight="clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px)"
       />
     </div>

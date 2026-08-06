@@ -9,6 +9,7 @@
 
 import { App } from 'antd';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,28 +19,44 @@ import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import { requireDomElement } from '@/test/dom-element';
 
 const owner = vi.hoisted(() => ({ useController: vi.fn() }));
+const editor = vi.hoisted(() => ({ setScrollPosition: vi.fn() }));
 vi.mock('../controller/use-monitor-definition-controller', () => ({
   useMonitorDefinitionController: owner.useController
 }));
 vi.mock('@/shared/yaml-editor/yaml-code-editor', () => ({
-  YamlCodeEditor: ({
-    ariaLabel,
-    value,
-    readOnly,
-    onChange
-  }: {
-    ariaLabel: string;
-    value: string;
-    readOnly: boolean;
-    onChange?: (value: string) => void;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      data-hb-yaml-editor="codemirror"
-      disabled={readOnly}
-      value={value}
-      onChange={event => onChange?.(event.target.value)}
-    />
+  YamlCodeEditor: forwardRef(
+    (
+      {
+        ariaLabel,
+        value,
+        readOnly,
+        onChange,
+        onScrollPositionChange
+      }: {
+        ariaLabel: string;
+        value: string;
+        readOnly: boolean;
+        onChange?: (value: string) => void;
+        onScrollPositionChange?: (position: { top: number; left: number }) => void;
+      },
+      ref
+    ) => {
+      useImperativeHandle(ref, () => ({
+        setScrollPosition: (position: { top: number; left: number }) => editor.setScrollPosition(ariaLabel, position)
+      }));
+      return (
+        <>
+          <textarea
+            aria-label={ariaLabel}
+            data-hb-yaml-editor="codemirror"
+            disabled={readOnly}
+            value={value}
+            onChange={event => onChange?.(event.target.value)}
+          />
+          <button aria-label={`${ariaLabel} scroll`} onClick={() => onScrollPositionChange?.({ top: 72, left: 8 })} />
+        </>
+      );
+    }
   )
 }));
 
@@ -89,7 +106,7 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.openCreate).toHaveBeenCalledOnce();
     expect(controller.actions.openEdit).toHaveBeenCalledWith('mysql');
     expect(controller.actions.openView).not.toHaveBeenCalled();
-    expect(screen.getByText('Select a monitor definition to inspect its authoritative YAML.')).toBeInTheDocument();
+    expect(screen.getByText('Select a monitor definition to inspect its current version.')).toBeInTheDocument();
   });
 
   it('renders editor validation, save, conflict refresh, and cancel actions', () => {
@@ -108,7 +125,10 @@ describe('MonitorDefinitionPage', () => {
     renderPage();
 
     expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(2);
-    expect(screen.getByLabelText('Authoritative YAML')).toBeDisabled();
+    expect(screen.getByLabelText('Current version')).toBeDisabled();
+    expect(screen.queryByText(revision)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Current version scroll' }));
+    expect(editor.setScrollPosition).toHaveBeenCalledWith('Draft YAML', { top: 72, left: 8 });
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     fireEvent.change(screen.getByLabelText('Draft YAML'), { target: { value: 'app: mysql\nname: changed' } });
     fireEvent.click(screen.getByRole('button', { name: 'Validate' }));

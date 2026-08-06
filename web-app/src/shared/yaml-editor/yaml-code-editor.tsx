@@ -14,7 +14,7 @@ import {
 import { yaml } from '@codemirror/lang-yaml';
 import { EditorState } from '@codemirror/state';
 import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import type { RuntimeTheme } from '@/core/runtime-preferences';
@@ -27,7 +27,11 @@ type YamlCodeEditorProps = {
   minHeight?: string;
   readOnly?: boolean;
   onChange?: ((value: string) => void) | undefined;
+  onScrollPositionChange?: ((position: YamlEditorScrollPosition) => void) | undefined;
 };
+
+export type YamlEditorScrollPosition = { top: number; left: number };
+export type YamlCodeEditorHandle = { setScrollPosition: (position: YamlEditorScrollPosition) => void };
 
 /**
  * Shared YAML editor for operator-authored definitions.
@@ -36,15 +40,26 @@ type YamlCodeEditorProps = {
  * keyboard behavior. This adapter only synchronizes the controlled React value;
  * feature pages own the authoritative/draft workflow around it.
  */
-export function YamlCodeEditor({
-  ariaLabel,
-  value,
-  minHeight = '320px',
-  readOnly = false,
-  onChange
-}: YamlCodeEditorProps) {
+export const YamlCodeEditor = forwardRef<YamlCodeEditorHandle, YamlCodeEditorProps>(function YamlCodeEditor(
+  { ariaLabel, value, minHeight = '320px', readOnly = false, onChange, onScrollPositionChange },
+  ref
+) {
   const { theme } = useRuntimeTheme();
-  const hostRef = useYamlCodeMirror({ ariaLabel, onChange, readOnly, theme, value });
+  const { hostRef, viewRef } = useYamlCodeMirror({
+    ariaLabel,
+    onChange,
+    onScrollPositionChange,
+    readOnly,
+    theme,
+    value
+  });
+  useImperativeHandle(
+    ref,
+    () => ({
+      setScrollPosition: position => setEditorScrollPosition(viewRef.current, position)
+    }),
+    [viewRef]
+  );
 
   return (
     <div
@@ -57,21 +72,23 @@ export function YamlCodeEditor({
       style={{ height: minHeight }}
     />
   );
-}
+});
 
 function useYamlCodeMirror({
   ariaLabel,
   onChange,
+  onScrollPositionChange,
   readOnly,
   theme,
   value
 }: Required<Pick<YamlCodeEditorProps, 'ariaLabel' | 'readOnly' | 'value'>> &
-  Pick<YamlCodeEditorProps, 'onChange'> & { theme: RuntimeTheme }) {
+  Pick<YamlCodeEditorProps, 'onChange' | 'onScrollPositionChange'> & { theme: RuntimeTheme }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView>(null);
   const externalSyncRef = useRef(false);
   const valueRef = useLatestValue(value);
   const onChangeRef = useLatestValue(onChange);
+  const onScrollPositionChangeRef = useLatestValue(onScrollPositionChange);
 
   useEffect(() => {
     if (!hostRef.current) {
@@ -95,12 +112,17 @@ function useYamlCodeMirror({
       })
     });
     viewRef.current = view;
+    const reportScrollPosition = () => {
+      onScrollPositionChangeRef.current?.({ top: view.scrollDOM.scrollTop, left: view.scrollDOM.scrollLeft });
+    };
+    view.scrollDOM.addEventListener('scroll', reportScrollPosition, { passive: true });
 
     return () => {
+      view.scrollDOM.removeEventListener('scroll', reportScrollPosition);
       viewRef.current = null;
       view.destroy();
     };
-  }, [ariaLabel, onChangeRef, readOnly, theme, valueRef]);
+  }, [ariaLabel, onChangeRef, onScrollPositionChangeRef, readOnly, theme, valueRef]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -115,7 +137,13 @@ function useYamlCodeMirror({
     }
   }, [value]);
 
-  return hostRef;
+  return { hostRef, viewRef };
+}
+
+function setEditorScrollPosition(view: EditorView | null, position: YamlEditorScrollPosition) {
+  if (!view) return;
+  if (Math.abs(view.scrollDOM.scrollTop - position.top) > 0.5) view.scrollDOM.scrollTop = position.top;
+  if (Math.abs(view.scrollDOM.scrollLeft - position.left) > 0.5) view.scrollDOM.scrollLeft = position.left;
 }
 
 function useLatestValue<T>(value: T) {

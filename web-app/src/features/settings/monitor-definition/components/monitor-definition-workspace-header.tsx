@@ -5,14 +5,13 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Space, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 export function MonitorDefinitionWorkspaceHeader(props: {
   title: string;
   app: string;
   origin: string;
-  revision: string;
   className: string;
 }) {
   const { t } = useTranslation();
@@ -22,10 +21,7 @@ export function MonitorDefinitionWorkspaceHeader(props: {
         <Typography.Title level={4}>{props.title}</Typography.Title>
         <Typography.Text code>{props.app}</Typography.Text>
       </div>
-      <Space wrap>
-        <Tag>{t(`monitorDefinitions.originValue.${props.origin}`)}</Tag>
-        <Typography.Text code>{props.revision}</Typography.Text>
-      </Space>
+      <Tag>{t(`monitorDefinitions.originValue.${props.origin}`)}</Tag>
     </div>
   );
 }
