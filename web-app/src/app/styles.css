@@ -38,6 +38,8 @@
   --hb-status-degraded: var(--ant-color-warning);
   --hb-status-unavailable: var(--ant-color-error);
   --hb-status-unknown: #7d8593;
+  --hb-scrollbar-thumb: #3b414e;
+  --hb-scrollbar-thumb-hover: #596170;
   --hb-radius-control: 6px;
   --hb-radius-surface: 8px;
   --hb-space-1: 4px;
@@ -88,10 +90,36 @@
   --hb-nav-hover: #f1f2f5;
   --hb-focus-ring: #71357f;
   --hb-status-unknown: #7a8290;
+  --hb-scrollbar-thumb: #c7ccd4;
+  --hb-scrollbar-thumb-hover: #aeb5c0;
 }
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hb-scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--hb-scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--hb-scrollbar-thumb-hover);
+  background-clip: padding-box;
 }
 
 html,

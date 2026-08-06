@@ -22,4 +22,13 @@ describe('application interaction styles', () => {
     expect(reducedMotion).toMatch(/animation-duration:\s*0\.01ms !important/);
     expect(reducedMotion).toMatch(/transition-duration:\s*0\.01ms !important/);
   });
+
+  it('uses one theme-aware thin scrollbar contract for every scroll container', () => {
+    expect(appStyles).toMatch(/--hb-scrollbar-thumb:/);
+    expect(appStyles).toMatch(/--hb-scrollbar-thumb-hover:/);
+    expect(appStyles).toMatch(/scrollbar-width:\s*thin/);
+    expect(appStyles).toMatch(/scrollbar-color:\s*var\(--hb-scrollbar-thumb\) transparent/);
+    expect(appStyles).toMatch(/\*::-webkit-scrollbar\s*\{[^}]*width:\s*6px[^}]*height:\s*6px/s);
+    expect(appStyles).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*\{[^}]*var\(--hb-scrollbar-thumb-hover\)/s);
+  });
 });
