@@ -174,17 +174,25 @@ function NavigationBranchControl(
         />
       ) : (
         <button
-          className={`${styles.navigationLink} ${active ? styles.navigationParentActive : ''}`}
+          className={`${styles.navigationLink} ${styles.navigationGroupLink} ${
+            active ? styles.navigationParentActive : ''
+          } ${isOpen ? styles.navigationParentOpen : ''}`}
           type="button"
+          aria-expanded={hasChildren ? isOpen : undefined}
           onClick={() => onToggle(item.name)}
         >
           <span className={styles.navigationIcon} aria-hidden="true">
             {item.icon}
           </span>
           {!collapsed && <span className={styles.navigationText}>{label}</span>}
+          {hasChildren && !collapsed && (
+            <span className={styles.navigationChevron} aria-hidden="true">
+              <UpOutlined className={isOpen ? '' : styles.navigationToggleClosed} />
+            </span>
+          )}
         </button>
       )}
-      {hasChildren && !collapsed && (
+      {item.route && hasChildren && !collapsed && (
         <button
           className={styles.navigationToggle}
           type="button"

@@ -376,8 +376,19 @@ button.timePolicy:hover {
   font-weight: 600;
 }
 
+.navigationGroupLink {
+  height: 34px;
+  font-weight: 600;
+  line-height: 34px;
+}
+
 .navigationParentActive {
   color: var(--hb-text-primary);
+}
+
+.navigationParentOpen {
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-hover);
 }
 
 .navigationLink[aria-disabled='true'] {
@@ -399,6 +410,16 @@ button.timePolicy:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.navigationChevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--hb-text-muted);
+  font-size: 9px;
 }
 
 .navigationToggle {
@@ -429,7 +450,7 @@ button.timePolicy:hover {
 
 .navigationChildren {
   position: relative;
-  padding-left: 13px;
+  padding: 2px 0 4px 13px;
 }
 
 .navigationChildren::before {
@@ -451,9 +472,7 @@ button.timePolicy:hover {
 }
 
 .navigationBranch[data-depth='0'] + .navigationBranch[data-depth='0'] {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--hb-border-subtle);
+  margin-top: 5px;
 }
 
 .collapseButton {

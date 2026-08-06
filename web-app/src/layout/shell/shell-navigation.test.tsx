@@ -147,7 +147,7 @@ describe('expanded ShellNavigation', () => {
   });
   afterEach(cleanup);
 
-  it('renders first-level product areas as expandable controls with second-level destinations', () => {
+  it('uses each first-level product area as the single expandable control for its destinations', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <ShellNavigation collapsed={false} onCollapsedChange={vi.fn()} />
@@ -162,11 +162,9 @@ describe('expanded ShellNavigation', () => {
       'shell.navigation.alerting',
       'shell.navigation.administration'
     ]) {
-      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-expanded', 'false');
     }
-    const groupToggles = screen.getAllByRole('button', { name: 'shell.navigation.toggleGroup' });
-    expect(groupToggles).toHaveLength(5);
-    groupToggles.forEach(toggle => expect(toggle).toHaveAttribute('aria-expanded', 'false'));
+    expect(screen.queryByRole('button', { name: 'shell.navigation.toggleGroup' })).not.toBeInTheDocument();
 
     expect(screen.queryByRole('link', { name: 'menu.monitors' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'shell.navigation.basicMonitoring' }));
