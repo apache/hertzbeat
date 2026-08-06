@@ -44,6 +44,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
@@ -135,6 +136,26 @@ class MonitorDefinitionCommandPortTest {
         assertError(MonitorDefinitionErrorCode.IMMUTABLE,
                 () -> commandService.update("jvm", MonitorDefinitionRevision.from(builtin),
                         customDefinition("jvm", "x")));
+    }
+
+    @Test
+    void visibilityRemainsAuthoritativeAcrossDefinitionUpdate() {
+        MonitorDefinitionSource created = commandService.create(customDefinition("write-hidden", "one"));
+        appService.updateCustomTemplateConfig(TemplateConfig.builder()
+                .apps(java.util.Map.of("write-hidden", TemplateConfig.AppTemplate.builder().hide(true).build()))
+                .build());
+
+        MonitorDefinitionSource updated = commandService.update(
+                "write-hidden", MonitorDefinitionRevision.from(created), customDefinition("write-hidden", "two"));
+        MonitorDefinitionService readService = new MonitorDefinitionService(appService, commandService);
+
+        assertTrue(updated.job().isHide());
+        assertTrue(appService.getAllAppDefines().get("write-hidden").isHide());
+        assertTrue(readService.catalog("en-US").items().stream()
+                .filter(item -> item.app().equals("write-hidden"))
+                .findFirst()
+                .orElseThrow()
+                .hidden());
     }
 
     @Test

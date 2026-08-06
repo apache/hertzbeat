@@ -16,6 +16,7 @@ export type MonitorDefinitionCatalogItem = {
   origin: MonitorDefinitionOrigin;
   editable: boolean;
   deletable: boolean;
+  hidden: boolean;
   revision: string;
 };
 
@@ -73,6 +74,7 @@ export type MonitorDefinitionFailureKind =
   | 'in-use'
   | 'persistence-failed'
   | 'runtime-update-failed'
+  | 'visibility-update-failed'
   | 'state-uncertain'
   | 'forbidden'
   | 'unavailable'
@@ -177,6 +179,7 @@ const failureMessageKeys: Record<MonitorDefinitionFailureKind, string> = {
   'in-use': 'monitorDefinitions.failure.inUse',
   'persistence-failed': 'monitorDefinitions.failure.persistenceFailed',
   'runtime-update-failed': 'monitorDefinitions.failure.runtimeUpdateFailed',
+  'visibility-update-failed': 'monitorDefinitions.failure.visibilityUpdateFailed',
   'state-uncertain': 'monitorDefinitions.failure.stateUncertain',
   forbidden: 'monitorDefinitions.failure.forbidden',
   unavailable: 'monitorDefinitions.failure.unavailable',

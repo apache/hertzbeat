@@ -61,6 +61,8 @@ class MonitorDefinitionServiceTest {
         assertTrue(response.items().get(1).deletable());
         assertFalse(response.items().get(2).editable());
         assertFalse(response.items().get(2).deletable());
+        assertTrue(response.items().get(0).hidden());
+        assertFalse(response.items().get(1).hidden());
     }
 
     @Test
@@ -191,6 +193,7 @@ class MonitorDefinitionServiceTest {
         Job job = new Job();
         job.setApp(app);
         job.setName(Map.of("en-US", label, "zh-CN", label));
+        job.setHide(!"beta".equals(app));
         return job;
     }
 }

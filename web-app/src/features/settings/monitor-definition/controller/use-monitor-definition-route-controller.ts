@@ -164,6 +164,9 @@ function monitorDefinitionRouteActions(
   writeApp: (app: string | null, replace?: boolean) => void
 ) {
   return {
+    clearDeletedApp: (app: string) => {
+      if (queryApp === normalizeMonitorDefinitionRouteApp(app)) writeApp(null, true);
+    },
     openCreate: () => {
       if (!actions.openCreate()) return;
       route.interact(null);

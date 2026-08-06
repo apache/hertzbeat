@@ -24,5 +24,6 @@ public record MonitorDefinitionCatalogItem(
         MonitorDefinitionOrigin origin,
         boolean editable,
         boolean deletable,
+        boolean hidden,
         String revision) {
 }

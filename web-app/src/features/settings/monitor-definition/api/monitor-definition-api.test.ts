@@ -29,11 +29,20 @@ import {
   loadMonitorDefinitionCatalog,
   loadMonitorDefinitionDetail,
   updateMonitorDefinition,
+  updateMonitorDefinitionVisibility,
   validateMonitorDefinition
 } from './monitor-definition-api';
 
 const revision = 'a'.repeat(64);
-const item = { app: 'mysql', label: 'MySQL', origin: 'override', editable: true, deletable: true, revision };
+const item = {
+  app: 'mysql',
+  label: 'MySQL',
+  origin: 'override',
+  editable: true,
+  deletable: true,
+  hidden: false,
+  revision
+};
 const detail = { schemaVersion: 1, ...item, definition: 'app: mysql' };
 
 describe('monitor definition API', () => {
@@ -81,6 +90,14 @@ describe('monitor definition API', () => {
       headers: { 'If-Match': `"${revision}"` },
       signal
     });
+  });
+
+  it('updates template visibility through the established config boundary', async () => {
+    messageApi.put.mockResolvedValue(undefined);
+
+    await updateMonitorDefinitionVisibility('web/site', true);
+
+    expect(messageApi.put).toHaveBeenCalledWith('/api/config/template/web%2Fsite', { hide: true });
   });
 
   it('starts no write transport when the supplied signal is already aborted', async () => {

@@ -60,6 +60,7 @@ public class MonitorDefinitionService {
                 item.origin(),
                 item.editable(),
                 item.deletable(),
+                item.hidden(),
                 source.definition(),
                 item.revision());
     }
@@ -143,7 +144,8 @@ public class MonitorDefinitionService {
         String app = source.job().getApp();
         String label = CommonUtil.getLangMappingValueFromI18nMap(normalizeLang(lang), source.job().getName());
         return new MonitorDefinitionCatalogItem(
-                app, label == null ? app : label, origin, mutable, mutable, MonitorDefinitionRevision.from(source));
+                app, label == null ? app : label, origin, mutable, mutable, source.job().isHide(),
+                MonitorDefinitionRevision.from(source));
     }
 
     private static MonitorDefinitionDetailResponse detail(MonitorDefinitionSource source, String lang) {
@@ -155,6 +157,7 @@ public class MonitorDefinitionService {
                 item.origin(),
                 item.editable(),
                 item.deletable(),
+                item.hidden(),
                 source.definition(),
                 item.revision());
     }

@@ -32,7 +32,10 @@ vi.mock('@/core/auth/session-context', () => ({
   useSession: () => ({ ...runtime.session, retry: vi.fn() })
 }));
 vi.mock('@/features/monitor/navigation', () => ({
-  loadMonitorNavigationApps: runtime.load
+  loadMonitorNavigationApps: runtime.load,
+  monitorNavigationQueryKeys: {
+    locale: (locale: string) => ['shell', 'monitor-navigation', locale]
+  }
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { resolvedLanguage: runtime.locale } })

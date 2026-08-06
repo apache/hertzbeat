@@ -24,7 +24,8 @@ const api = vi.hoisted(() => ({
   detail: vi.fn(),
   remove: vi.fn(),
   update: vi.fn(),
-  validate: vi.fn()
+  validate: vi.fn(),
+  visibility: vi.fn()
 }));
 const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/monitor-definition-api', async () => ({
@@ -34,6 +35,7 @@ vi.mock('../api/monitor-definition-api', async () => ({
   loadMonitorDefinitionCatalog: api.catalog,
   loadMonitorDefinitionDetail: api.detail,
   updateMonitorDefinition: api.update,
+  updateMonitorDefinitionVisibility: api.visibility,
   validateMonitorDefinition: api.validate
 }));
 vi.mock('@/core/auth/session-context', () => ({
@@ -45,7 +47,15 @@ import { useMonitorDefinitionController } from './use-monitor-definition-control
 
 const revision = 'a'.repeat(64);
 const newerRevision = 'b'.repeat(64);
-const item = { app: 'mysql', label: 'MySQL', origin: 'override' as const, editable: true, deletable: true, revision };
+const item = {
+  app: 'mysql',
+  label: 'MySQL',
+  origin: 'override' as const,
+  editable: true,
+  deletable: true,
+  hidden: false,
+  revision
+};
 const detail = { schemaVersion: 1 as const, ...item, definition: 'app: mysql' };
 const route: { navigate: NavigateFunction | null; search: string } = {
   navigate: null,
@@ -63,6 +73,7 @@ describe('useMonitorDefinitionController', () => {
     api.validate.mockResolvedValue({ schemaVersion: 1, valid: true, app: 'mysql', origin: 'override' });
     api.create.mockResolvedValue(detail);
     api.update.mockResolvedValue({ ...detail, revision: newerRevision });
+    api.visibility.mockResolvedValue(undefined);
     api.remove.mockResolvedValue({ schemaVersion: 1, app: 'mysql', disposition: 'builtin_restored' });
   });
 
@@ -248,6 +259,102 @@ describe('useMonitorDefinitionController', () => {
     expect(result.current.items).toEqual([]);
     expect(result.current.deleteTarget).toBeNull();
     expect(result.current.notice).toBe('builtin_restored');
+  });
+
+  it('closes a removed selected custom definition and clears only its app query', async () => {
+    api.remove.mockResolvedValueOnce({ schemaVersion: 1, app: 'mysql', disposition: 'removed' });
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [] });
+    const { result } = renderControllerAt('/settings/monitor-definitions?scope=all&app=mysql');
+    await waitFor(() => expect(result.current.workspace).toEqual(updateWorkspace(detail)));
+    act(() => result.current.actions.requestDelete(item));
+
+    await act(() => result.current.actions.confirmDelete());
+
+    expect(result.current.workspace).toBeNull();
+    await waitFor(() => expect(route.search).toBe('?scope=all'));
+  });
+
+  it('reloads canonical built-in YAML after deleting a selected override', async () => {
+    const restored = {
+      ...detail,
+      origin: 'builtin' as const,
+      editable: false,
+      deletable: false,
+      definition: 'app: mysql\nname: builtin',
+      revision: newerRevision
+    };
+    api.detail.mockResolvedValueOnce(detail).mockResolvedValueOnce(restored);
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [{ ...restored }] });
+    const { result } = renderControllerAt('/settings/monitor-definitions?app=mysql');
+    await waitFor(() => expect(result.current.workspace).toEqual(updateWorkspace(detail)));
+    act(() => result.current.actions.requestDelete(item));
+
+    await act(() => result.current.actions.confirmDelete());
+
+    expect(api.detail).toHaveBeenCalledTimes(2);
+    expect(result.current.workspace).toEqual({ kind: 'view', detail: restored });
+    expect(route.search).toBe('?app=mysql');
+  });
+
+  it('publishes canonical visibility and refreshes dynamic navigation only after a successful write', async () => {
+    const hiddenItem = { ...item, hidden: true };
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [item] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [hiddenItem] });
+    const client = testClient();
+    const refetch = vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined);
+    const { result } = renderController(client);
+    await waitFor(() => expect(result.current.items).toEqual([item]));
+
+    await act(() => result.current.actions.updateVisibility(item));
+
+    expect(api.visibility).toHaveBeenCalledWith('mysql', true, expect.any(AbortSignal));
+    expect(result.current.items).toEqual([hiddenItem]);
+    expect(refetch).toHaveBeenCalledWith({ queryKey: ['shell', 'monitor-navigation'], type: 'active' });
+    expect(result.current.visibilityFailure).toBeNull();
+  });
+
+  it('preserves prior visibility and skips navigation refresh when the write fails', async () => {
+    api.visibility.mockRejectedValueOnce(new MonitorDefinitionRequestError('unavailable', 'uncertain'));
+    const client = testClient();
+    const refetch = vi.spyOn(client, 'refetchQueries');
+    const { result } = renderController(client);
+    await waitFor(() => expect(result.current.items).toEqual([item]));
+
+    await act(() => result.current.actions.updateVisibility(item));
+
+    expect(result.current.items).toEqual([item]);
+    expect(result.current.visibilityFailure).toBe('unavailable');
+    expect(refetch).not.toHaveBeenCalled();
+    expect(api.catalog).toHaveBeenCalledOnce();
+  });
+
+  it('retires an in-flight visibility write when ADMIN authority is lost', async () => {
+    const write = deferred<void>();
+    api.visibility.mockReturnValueOnce(write.promise);
+    const view = renderController();
+    await waitFor(() => expect(view.result.current.items).toEqual([item]));
+    let completion!: Promise<void>;
+    act(() => {
+      completion = view.result.current.actions.updateVisibility(item);
+    });
+    await waitFor(() => expect(api.visibility).toHaveBeenCalledOnce());
+    const signal = api.visibility.mock.calls[0]?.[2];
+
+    auth.roles = ['USER'];
+    view.rerender();
+    await waitFor(() => expect(view.result.current.visibilityPendingApp).toBeNull());
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal?.aborted).toBe(true);
+    write.resolve();
+    await act(async () => completion);
+
+    expect(api.catalog).toHaveBeenCalledOnce();
+    expect(view.result.current.visibilityFailure).toBeNull();
   });
 
   it('preserves an immutable detail as an explicit failed edit admission', async () => {

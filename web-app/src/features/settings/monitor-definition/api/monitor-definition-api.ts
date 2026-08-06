@@ -116,6 +116,15 @@ export function deleteMonitorDefinition(app: string, revision: string, signal?: 
   }, 'write');
 }
 
+export function updateMonitorDefinitionVisibility(app: string, hidden: boolean, signal?: AbortSignal) {
+  return request(async dispatch => {
+    signal?.throwIfAborted();
+    dispatch();
+    const path = `/api/config/template/${encodeURIComponent(app)}`;
+    await (signal ? apiMessagePut(path, { hide: hidden }, { signal }) : apiMessagePut(path, { hide: hidden }));
+  }, 'write');
+}
+
 const stableFailures = new Map<string, MonitorDefinitionFailureKind>([
   ['monitor_definition_not_found', 'not-found'],
   ['monitor_definition_app_invalid', 'app-invalid'],

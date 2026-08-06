@@ -583,7 +583,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public void updateCustomTemplateConfig(TemplateConfig config) {
+    public synchronized void updateCustomTemplateConfig(TemplateConfig config) {
         if (config == null) {
             return;
         }
@@ -602,6 +602,9 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
                 continue;
             }
             appDefine.setHide(appTemplate.isHide());
+            // The registry and runtime inventory are one logical authority. Keeping both
+            // synchronized prevents a later definition update from reviving stale visibility.
+            definitionSourceRegistry.updateHidden(app, appTemplate.isHide());
         }
     }
 

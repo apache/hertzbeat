@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Skeleton, Space, Typography } from 'antd';
+import { Alert, Button, Popconfirm, Skeleton, Space, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -140,7 +140,7 @@ function DefinitionEditor(
           value={workspace.draft.definition}
           readOnly={workspace.pending !== null || workspace.writeRecovery !== null}
           onChange={props.onChange}
-          onScrollPositionChange={workspace.authority ? syncCurrentEditor : undefined}
+          {...(workspace.authority ? { onScrollPositionChange: syncCurrentEditor } : {})}
         />
       </div>
       <EditorActions {...props} workspace={workspace} />
@@ -148,7 +148,14 @@ function DefinitionEditor(
   );
 }
 
-function YamlField(props: {
+function YamlField({
+  editorRef,
+  label,
+  value,
+  readOnly,
+  onChange,
+  onScrollPositionChange
+}: {
   editorRef: RefObject<YamlCodeEditorHandle | null>;
   label: string;
   value: string;
@@ -158,14 +165,14 @@ function YamlField(props: {
 }) {
   return (
     <div className={styles.editorPane}>
-      <span className={styles.editorLabel}>{props.label}</span>
+      <span className={styles.editorLabel}>{label}</span>
       <YamlCodeEditor
-        ref={props.editorRef}
-        ariaLabel={props.label}
-        value={props.value}
-        readOnly={props.readOnly}
-        onChange={props.onChange}
-        onScrollPositionChange={props.onScrollPositionChange}
+        ref={editorRef}
+        ariaLabel={label}
+        value={value}
+        readOnly={readOnly}
+        onChange={onChange}
+        onScrollPositionChange={onScrollPositionChange}
         minHeight="clamp(320px, calc(100dvh - var(--hb-shell-header-height, 46px) - 280px), 620px)"
       />
     </div>
@@ -215,16 +222,35 @@ function EditorActions(props: WorkspaceProps & { workspace: Extract<MonitorDefin
       <Button onClick={props.onValidate} loading={props.workspace.pending === 'validate'} disabled={locked}>
         {t('monitorDefinitions.validate')}
       </Button>
-      <Button
-        type="primary"
-        onClick={props.onSave}
-        loading={props.workspace.pending === 'save'}
-        disabled={
-          !props.workspace.draft.definition.trim() || !monitorDefinitionWorkspaceIsDirty(props.workspace) || locked
-        }
-      >
-        {t('common.save')}
-      </Button>
+      {props.workspace.draft.mode === 'update' ? (
+        <Popconfirm
+          title={t('monitorDefinitions.saveApplyConfirm', { app: props.workspace.draft.expectedApp })}
+          okText={t('common.save')}
+          cancelText={t('common.cancel')}
+          onConfirm={props.onSave}
+        >
+          <Button
+            type="primary"
+            loading={props.workspace.pending === 'save'}
+            disabled={
+              !props.workspace.draft.definition.trim() || !monitorDefinitionWorkspaceIsDirty(props.workspace) || locked
+            }
+          >
+            {t('common.save')}
+          </Button>
+        </Popconfirm>
+      ) : (
+        <Button
+          type="primary"
+          onClick={props.onSave}
+          loading={props.workspace.pending === 'save'}
+          disabled={
+            !props.workspace.draft.definition.trim() || !monitorDefinitionWorkspaceIsDirty(props.workspace) || locked
+          }
+        >
+          {t('common.save')}
+        </Button>
+      )}
     </Space>
   );
 }

@@ -24,6 +24,7 @@ import {
   monitorDefinitionWorkspaceHasUncertainWrite,
   type MonitorDefinitionWorkspace
 } from '../model/monitor-definition-model';
+import type { MonitorDefinitionDelete } from '../model/monitor-definition-model';
 import type { MonitorDefinitionOperationOwner } from './monitor-definition-operation-owner';
 import {
   editMonitorDefinitionWorkspace,
@@ -67,6 +68,17 @@ export function useMonitorDefinitionWorkspaceOpen(context: WorkspaceOpenContext)
         owner.retire();
         setWorkspace(editMonitorDefinitionWorkspace(buildCreateDraft()));
         return true;
+      },
+      applyDeleteDisposition: (receipt: MonitorDefinitionDelete) => {
+        if (monitorDefinitionWorkspaceApp(workspaceRef.current) !== receipt.app) return Promise.resolve();
+        // A committed delete supersedes even a dirty draft for the deleted authority.
+        // Retire its owner before replacing it so late editor completions cannot revive old YAML.
+        owner.retire();
+        if (receipt.disposition === 'removed') {
+          setWorkspace(null);
+          return Promise.resolve();
+        }
+        return loadMonitorDefinitionWorkspace('view', receipt.app, language, owner, setWorkspace);
       },
       retryWorkspace: () =>
         owner.matches(actionEpoch) &&

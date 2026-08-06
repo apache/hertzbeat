@@ -25,6 +25,7 @@ public record MonitorDefinitionDetailResponse(
         MonitorDefinitionOrigin origin,
         boolean editable,
         boolean deletable,
+        boolean hidden,
         String definition,
         String revision) {
 }

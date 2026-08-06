@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useSession } from '@/core/auth/session-context';
 import { resolveLocale } from '@/core/i18n/i18n';
-import { loadMonitorNavigationApps, type MonitorApp } from '@/features/monitor/navigation';
+import { loadMonitorNavigationApps, monitorNavigationQueryKeys, type MonitorApp } from '@/features/monitor/navigation';
 
 const emptyMonitorApps: readonly MonitorApp[] = [];
 
@@ -21,7 +21,7 @@ export function MonitorNavigationResourceLoader({ onChange }: { onChange: (apps:
   const locale = resolveLocale(i18n.resolvedLanguage);
   const enabled = !loading && Boolean(session?.authenticated);
   const query = useQuery({
-    queryKey: ['shell', 'monitor-navigation', locale],
+    queryKey: monitorNavigationQueryKeys.locale(locale),
     queryFn: ({ signal }) => loadMonitorNavigationApps(locale, signal),
     enabled
   });

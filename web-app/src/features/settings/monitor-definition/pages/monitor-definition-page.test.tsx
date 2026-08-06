@@ -8,7 +8,7 @@
 // @vitest-environment jsdom
 
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -42,7 +42,9 @@ vi.mock('@/shared/yaml-editor/yaml-code-editor', () => ({
       ref
     ) => {
       useImperativeHandle(ref, () => ({
-        setScrollPosition: (position: { top: number; left: number }) => editor.setScrollPosition(ariaLabel, position)
+        setScrollPosition: (position: { top: number; left: number }) => {
+          editor.setScrollPosition(ariaLabel, position);
+        }
       }));
       return (
         <>
@@ -63,7 +65,15 @@ vi.mock('@/shared/yaml-editor/yaml-code-editor', () => ({
 import { MonitorDefinitionPage } from './monitor-definition-page';
 
 const revision = 'a'.repeat(64);
-const item = { app: 'mysql', label: 'MySQL', origin: 'override', editable: true, deletable: true, revision };
+const item = {
+  app: 'mysql',
+  label: 'MySQL',
+  origin: 'override',
+  editable: true,
+  deletable: true,
+  hidden: false,
+  revision
+};
 
 describe('MonitorDefinitionPage', () => {
   beforeAll(async () => {
@@ -132,10 +142,22 @@ describe('MonitorDefinitionPage', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     fireEvent.change(screen.getByLabelText('Draft YAML'), { target: { value: 'app: mysql\nname: changed' } });
     fireEvent.click(screen.getByRole('button', { name: 'Validate' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]!);
+    expect(controller.actions.save).not.toHaveBeenCalled();
+    const confirmation = screen.getByText('Save and apply changes to mysql?').closest('.ant-popover');
+    expect(confirmation).not.toBeNull();
+    fireEvent.click(within(confirmation as HTMLElement).getByRole('button', { name: 'Cancel' }));
+    expect(controller.actions.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]!);
+    fireEvent.click(
+      within(screen.getByText('Save and apply changes to mysql?').closest('.ant-popover') as HTMLElement).getByRole(
+        'button',
+        { name: 'Save' }
+      )
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Refresh latest definition' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Cancel' })[0]!);
 
     expect(controller.actions.setDefinition).toHaveBeenCalledWith('app: mysql\nname: changed');
     expect(controller.actions.validate).toHaveBeenCalledOnce();
@@ -158,6 +180,27 @@ describe('MonitorDefinitionPage', () => {
 
     expect(controller.actions.openView).toHaveBeenCalledWith('mysql');
     expect(controller.actions.openEdit).not.toHaveBeenCalled();
+  });
+
+  it('shows authoritative visibility and confirms before changing it', () => {
+    const controller = buildController();
+    owner.useController.mockReturnValue(controller);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'mysql is currently visible' }));
+    const popover = screen
+      .getByText('mysql is currently visible. Change it to hidden?')
+      .closest('.ant-popover') as HTMLElement;
+    fireEvent.click(within(popover).getByRole('button', { name: 'Cancel' }));
+    expect(controller.actions.updateVisibility).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'mysql is currently visible' }));
+    fireEvent.click(
+      within(
+        screen.getByText('mysql is currently visible. Change it to hidden?').closest('.ant-popover') as HTMLElement
+      ).getByRole('button', { name: 'Apply' })
+    );
+
+    expect(controller.actions.updateVisibility).toHaveBeenCalledWith(item);
   });
 
   it('opens a built-in definition in the comparison editor while keeping deletion disabled', () => {
@@ -347,6 +390,7 @@ function buildController(overrides: Record<string, unknown> = {}) {
       save: vi.fn(),
       setDefinition: vi.fn(),
       setSearch: vi.fn(),
+      updateVisibility: vi.fn(),
       validate: vi.fn()
     },
     canWrite: true,
@@ -358,6 +402,8 @@ function buildController(overrides: Record<string, unknown> = {}) {
     listState: { kind: 'ready' },
     notice: null,
     search: '',
+    visibilityFailure: null,
+    visibilityPendingApp: null,
     workspace: null,
     ...overrides
   };

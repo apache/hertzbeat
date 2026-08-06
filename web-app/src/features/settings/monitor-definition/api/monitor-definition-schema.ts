@@ -38,6 +38,7 @@ const item = z
     origin,
     editable: z.boolean(),
     deletable: z.boolean(),
+    hidden: z.boolean(),
     revision
   })
   .strict();

@@ -26,6 +26,7 @@ const item = {
   origin: 'override' as const,
   editable: true,
   deletable: true,
+  hidden: false,
   revision: 'a'.repeat(64)
 };
 

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-export { loadMonitorNavigationApps } from '../api/monitor-api';
-export { monitorNavigationApps } from '../model/monitor-model';
-export { monitorNavigationQueryKeys } from './monitor-navigation-query-keys';
-export type { MonitorApp } from '../model/monitor-contract';
+export const monitorNavigationQueryKeys = {
+  all: ['shell', 'monitor-navigation'] as const,
+  locale: (locale: string) => ['shell', 'monitor-navigation', locale] as const
+};

@@ -50,7 +50,7 @@ class MonitorDefinitionControllerTest {
     void catalogReturnsOnlyTheFrozenVersionedShape() throws Exception {
         when(service.catalog("en-US")).thenReturn(new MonitorDefinitionCatalogResponse(1, List.of(
                 new MonitorDefinitionCatalogItem(
-                        "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, false, false, "a".repeat(64)))));
+                        "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, false, false, true, "a".repeat(64)))));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/catalog").param("lang", "en-US"))
                 .andExpect(status().isOk())
@@ -60,13 +60,14 @@ class MonitorDefinitionControllerTest {
                 .andExpect(jsonPath("$.data.items[0].app").value("jvm"))
                 .andExpect(jsonPath("$.data.items[0].origin").value("builtin"))
                 .andExpect(jsonPath("$.data.items[0].editable").value(false))
+                .andExpect(jsonPath("$.data.items[0].hidden").value(true))
                 .andExpect(jsonPath("$.data.observedAt").doesNotExist());
     }
 
     @Test
     void detailReturnsCanonicalIdentityAndRawDefinition() throws Exception {
         when(service.detail("mysql", "en-US")).thenReturn(new MonitorDefinitionDetailResponse(
-                1, "MySql", "MySQL", MonitorDefinitionOrigin.OVERRIDE, true, true,
+                1, "MySql", "MySQL", MonitorDefinitionOrigin.OVERRIDE, true, true, false,
                 "app: MySql", "b".repeat(64)));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/mysql").param("lang", "en-US"))
@@ -124,7 +125,7 @@ class MonitorDefinitionControllerTest {
     @Test
     void createAndUpdateReturnAuthoritativeRevision() throws Exception {
         MonitorDefinitionDetailResponse detail = new MonitorDefinitionDetailResponse(
-                1, "custom", "Custom", MonitorDefinitionOrigin.CUSTOM, true, true,
+                1, "custom", "Custom", MonitorDefinitionOrigin.CUSTOM, true, true, false,
                 "app: custom", "c".repeat(64));
         when(service.create(any(), org.mockito.ArgumentMatchers.eq("en-US"))).thenReturn(detail);
         when(service.update(org.mockito.ArgumentMatchers.eq("custom"),

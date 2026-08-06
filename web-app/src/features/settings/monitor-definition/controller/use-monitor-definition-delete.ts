@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useMemo, useState, type Dispatch, type SetS
 import { deleteMonitorDefinition, MonitorDefinitionRequestError } from '../api/monitor-definition-api';
 import {
   type MonitorDefinitionCatalogItem,
+  type MonitorDefinitionDelete,
   type MonitorDefinitionDeleteDisposition,
   type MonitorDefinitionFailureKind
 } from '../model/monitor-definition-model';
@@ -23,7 +24,11 @@ import {
   type MonitorDefinitionOperationOwner
 } from './monitor-definition-operation-owner';
 
-export function useMonitorDefinitionDelete(canWrite: boolean, catalogProof: MonitorDefinitionCatalogProof) {
+export function useMonitorDefinitionDelete(
+  canWrite: boolean,
+  catalogProof: MonitorDefinitionCatalogProof,
+  onCommitted: (receipt: MonitorDefinitionDelete) => Promise<void>
+) {
   const owner = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const authority = useMemo(() => createMonitorDefinitionOperationOwner(), []);
   const [state, setState] = useState<DeleteState>(() => emptyDeleteState(authority.snapshot()));
@@ -51,6 +56,7 @@ export function useMonitorDefinitionDelete(canWrite: boolean, catalogProof: Moni
     actionEpoch,
     owner,
     catalogProof,
+    onCommitted,
     setState,
     setNotice
   };
@@ -80,6 +86,7 @@ type DeleteActionContext = {
   actionEpoch: number;
   owner: MonitorDefinitionOperationOwner;
   catalogProof: MonitorDefinitionCatalogProof;
+  onCommitted: (receipt: MonitorDefinitionDelete) => Promise<void>;
   setState: Dispatch<SetStateAction<DeleteState>>;
   setNotice: (value: MonitorDefinitionDeleteDisposition) => void;
 };
@@ -133,6 +140,8 @@ async function confirmMonitorDefinitionDelete(context: DeleteActionContext) {
     const catalog = await context.catalogProof.load(operation.abort.signal);
     if (!owner.owns(operation)) return;
     context.catalogProof.publish(catalog);
+    await context.onCommitted(receipt);
+    if (!owner.owns(operation)) return;
     context.setNotice(receipt.disposition);
     context.setState(emptyDeleteState(context.authority.snapshot()));
   } catch (error) {

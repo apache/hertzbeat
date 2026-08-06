@@ -21,6 +21,7 @@ import {
 import { monitorDefinitionQueryKeys } from './monitor-definition-query-keys';
 import { useMonitorDefinitionDelete } from './use-monitor-definition-delete';
 import { useMonitorDefinitionRouteController } from './use-monitor-definition-route-controller';
+import { useMonitorDefinitionVisibility } from './use-monitor-definition-visibility';
 import { useMonitorDefinitionWorkspace } from './use-monitor-definition-workspace';
 
 export function useMonitorDefinitionController() {
@@ -45,7 +46,15 @@ export function useMonitorDefinitionController() {
   };
   const workspace = useMonitorDefinitionWorkspace({ canWrite, catalogProof, language });
   const routeActions = useMonitorDefinitionRouteController(workspace.workspace, workspace.actions);
-  const deletion = useMonitorDefinitionDelete(canWrite, catalogProof);
+  const deletion = useMonitorDefinitionDelete(canWrite, catalogProof, async receipt => {
+    if (receipt.disposition === 'removed') {
+      await workspace.actions.applyDeleteDisposition(receipt);
+      routeActions.clearDeletedApp(receipt.app);
+      return;
+    }
+    await workspace.actions.applyDeleteDisposition(receipt);
+  });
+  const visibility = useMonitorDefinitionVisibility({ canWrite, catalogProof, queryClient });
   const records = catalog.data?.items ?? [];
   const failure = catalog.error instanceof MonitorDefinitionRequestError ? catalog.error.kind : 'error';
   let listState: ListState = { kind: 'ready' };
@@ -61,6 +70,8 @@ export function useMonitorDefinitionController() {
     items: filterMonitorDefinitions(records, search),
     listState,
     notice: deletion.notice,
+    visibilityFailure: visibility.failure,
+    visibilityPendingApp: visibility.pendingApp,
     search,
     selectedApp: monitorDefinitionWorkspaceApp(workspace.workspace),
     workspace: workspace.workspace,
@@ -68,6 +79,7 @@ export function useMonitorDefinitionController() {
       ...workspace.actions,
       ...routeActions,
       ...deletion.actions,
+      updateVisibility: visibility.updateVisibility,
       refresh: () => void catalog.refetch(),
       setSearch
     }

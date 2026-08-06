@@ -79,6 +79,15 @@ public final class MonitorDefinitionSourceRegistry {
         }
     }
 
+    public void updateHidden(String app, boolean hidden) {
+        synchronized (lock) {
+            String identity = MonitorDefinitionIdentity.normalize(app);
+            updateHidden(builtin, identity, hidden);
+            updateHidden(active, identity, hidden);
+            publishOutsideRebuild();
+        }
+    }
+
     public List<MonitorDefinitionSource> readAll() {
         Snapshot current = snapshot;
         Set<String> identities = new HashSet<>(current.builtin().keySet());
@@ -113,6 +122,17 @@ public final class MonitorDefinitionSourceRegistry {
 
     private static StoredMonitorDefinition stored(Job job, String definition) {
         return new StoredMonitorDefinition(job.clone(), definition);
+    }
+
+    private static void updateHidden(
+            Map<String, StoredMonitorDefinition> definitions, String identity, boolean hidden) {
+        StoredMonitorDefinition current = definitions.get(identity);
+        if (current == null) {
+            return;
+        }
+        Job job = current.job().clone();
+        job.setHide(hidden);
+        definitions.put(identity, new StoredMonitorDefinition(job, current.definition()));
     }
 
     private record StoredMonitorDefinition(Job job, String definition) {

@@ -17,7 +17,15 @@ import {
 } from './monitor-definition-schema';
 
 const revision = 'a'.repeat(64);
-const catalogItem = { app: 'mysql', label: 'MySQL', origin: 'override', editable: true, deletable: true, revision };
+const catalogItem = {
+  app: 'mysql',
+  label: 'MySQL',
+  origin: 'override',
+  editable: true,
+  deletable: true,
+  hidden: false,
+  revision
+};
 
 describe('monitor definition frozen schemas', () => {
   it('accepts only the exact versioned catalog and detail shapes', () => {
@@ -37,6 +45,12 @@ describe('monitor definition frozen schemas', () => {
     ).toThrow();
     expect(() =>
       parseMonitorDefinitionCatalog({ schemaVersion: 1, items: [{ ...catalogItem, revision: 'weak' }] })
+    ).toThrow();
+    expect(() =>
+      parseMonitorDefinitionCatalog({
+        schemaVersion: 1,
+        items: [{ app: 'mysql', label: 'MySQL', origin: 'override', editable: true, deletable: true, revision }]
+      })
     ).toThrow();
   });
 

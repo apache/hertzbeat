@@ -43,6 +43,9 @@ export function MonitorDefinitionPage() {
       {controller.notice && (
         <Alert showIcon type="success" message={t(`monitorDefinitions.disposition.${controller.notice}`)} />
       )}
+      {controller.visibilityFailure && (
+        <Alert showIcon type="error" message={t(monitorDefinitionFailureMessageKey(controller.visibilityFailure))} />
+      )}
       <MonitorDefinitionWorkspaceRegion controller={controller} />
       <MonitorDefinitionDeleteDialog
         failure={controller.deleteFailure}
@@ -121,7 +124,10 @@ function CatalogState({ controller }: { controller: ReturnType<typeof useMonitor
     <MonitorDefinitionCatalog
       items={controller.items}
       selectedApp={controller.selectedApp}
+      canWrite={controller.canWrite}
+      pendingApp={controller.visibilityPendingApp}
       onSelect={app => void (controller.canWrite ? controller.actions.openEdit(app) : controller.actions.openView(app))}
+      onVisibilityChange={item => void controller.actions.updateVisibility(item)}
     />
   );
 }
