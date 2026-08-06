@@ -16,10 +16,20 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { Navigate, useLocation } from 'react-router-dom';
 
+import { safeRedirectTarget } from '@/core/auth/navigation';
 import { RouteStateFrame } from '@/shared/route-state/route-state';
 
 export function NotFoundPage() {
+  const location = useLocation();
+  const currentTarget = `${location.pathname}${location.search}${location.hash}`;
+  const sanitizedTarget = safeRedirectTarget(currentTarget) ?? location.pathname;
+  if (sanitizedTarget !== currentTarget) return <Navigate replace to={sanitizedTarget} />;
+  return <NotFoundState />;
+}
+
+function NotFoundState() {
   const { t } = useTranslation();
   return (
     <RouteStateFrame

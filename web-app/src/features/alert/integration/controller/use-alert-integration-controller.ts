@@ -16,7 +16,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
@@ -44,6 +44,10 @@ export function useAlertIntegrationController() {
     retry: false
   });
   const catalogItem = catalogQuery.data?.items.find(item => item.source === selectedSource);
+  const canonicalSource = catalogItem ? undefined : catalogQuery.data?.items[0]?.source;
+  useEffect(() => {
+    if (canonicalSource) void navigate(buildAlertIntegrationPath(canonicalSource), { replace: true });
+  }, [canonicalSource, navigate]);
   const detailQuery = useQuery({
     queryKey: alertIntegrationQueryKeys.detail(selectedSource),
     queryFn: ({ signal }) => loadAlertIntegrationGuide(selectedSource, signal),
@@ -97,7 +101,7 @@ function resolveState(
   if (catalog.isPending) return { kind: 'loading' };
   if (catalog.error) return { kind: alertIntegrationFailureKind(catalog.error) };
   if (!catalog.data) return { kind: 'error' };
-  if (!catalogHit) return { kind: 'not-found', catalog: catalog.data.items };
+  if (!catalogHit) return { kind: 'loading' };
   if (detail.isPending) return { kind: 'loading' };
   if (detail.error) return { kind: alertIntegrationFailureKind(detail.error) };
   if (!detail.data) return { kind: 'error' };

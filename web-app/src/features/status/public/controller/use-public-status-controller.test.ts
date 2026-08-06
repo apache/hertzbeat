@@ -86,7 +86,8 @@ describe('usePublicStatusController', () => {
       org,
       components,
       incidents: incidents.content,
-      state: 'ready'
+      componentState: 'ready',
+      incidentState: 'ready'
     });
     expect(reactQuery.useQuery.mock.calls.map(([options]) => options.queryKey)).toEqual([
       ['public-status-org'],
@@ -111,17 +112,18 @@ describe('usePublicStatusController', () => {
     );
   });
 
-  it('keeps pending evidence ahead of cached data', () => {
+  it('keeps a pending component region independent from ready incidents', () => {
     setEvidence({ data: org }, { data: components, isPending: true }, { data: incidents });
 
     const { result } = renderHook(() => usePublicStatusController());
 
     expect(result.current).toEqual({
       ...actions(createPublicStatusIncidentRange(new Date().getFullYear())),
-      org: undefined,
+      org,
       components: [],
-      incidents: [],
-      state: 'loading'
+      incidents: incidents.content,
+      componentState: 'loading',
+      incidentState: 'ready'
     });
   });
 
@@ -130,21 +132,21 @@ describe('usePublicStatusController', () => {
 
     expect(renderHook(() => usePublicStatusController()).result.current).toEqual({
       ...actions(createPublicStatusIncidentRange(new Date().getFullYear())),
-      incidentLoading: true,
       org,
       components,
       incidents: [],
-      state: 'ready'
+      componentState: 'ready',
+      incidentState: 'loading'
     });
   });
 
   it('uses unconfigured only for exact missing organization with successful sibling queries', () => {
     const missing = new StatusOrgNotFoundError();
     setEvidence({ error: missing }, { data: [] }, { data: { ...incidents, content: [], totalElements: 0 } });
-    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('unconfigured');
+    expect(renderHook(() => usePublicStatusController()).result.current.componentState).toBe('unconfigured');
 
     setEvidence({ error: missing }, { error: new Error('components unavailable') }, { data: incidents });
-    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('error');
+    expect(renderHook(() => usePublicStatusController()).result.current.componentState).toBe('error');
   });
 
   it('distinguishes an authoritative empty public page from ready evidence', () => {
@@ -154,7 +156,8 @@ describe('usePublicStatusController', () => {
       org,
       components: [],
       incidents: [],
-      state: 'empty'
+      componentState: 'empty',
+      incidentState: 'empty'
     });
   });
 
@@ -165,15 +168,16 @@ describe('usePublicStatusController', () => {
       ...actions(createPublicStatusIncidentRange(new Date().getFullYear())),
       org,
       components: [],
-      incidents: [],
-      state: 'error'
+      incidents: incidents.content,
+      componentState: 'error',
+      incidentState: 'ready'
     });
   });
 
   it('distinguishes rejected requests from unavailable transport', () => {
     setEvidence({ data: org }, { error: new Error('invalid contract') }, { data: incidents });
 
-    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('error');
+    expect(renderHook(() => usePublicStatusController()).result.current.componentState).toBe('error');
   });
 
   it('fails closed when a completed successful query has no authoritative data', () => {
@@ -181,8 +185,9 @@ describe('usePublicStatusController', () => {
 
     expect(renderHook(() => usePublicStatusController()).result.current).toMatchObject({
       components: [],
-      incidents: [],
-      state: 'error'
+      incidents: incidents.content,
+      componentState: 'error',
+      incidentState: 'ready'
     });
   });
 
@@ -192,9 +197,10 @@ describe('usePublicStatusController', () => {
     expect(renderHook(() => usePublicStatusController()).result.current).toEqual({
       ...actions(createPublicStatusIncidentRange(new Date().getFullYear())),
       org,
-      components: [],
+      components,
       incidents: [],
-      state: 'error'
+      componentState: 'ready',
+      incidentState: 'invalid'
     });
   });
 
@@ -223,17 +229,17 @@ describe('usePublicStatusController', () => {
     expect(result.current.incidentRange).toEqual(initialRange);
   });
 
-  it('refreshes only the currently selected incident query', () => {
+  it('refreshes every visible public-status evidence region', () => {
     const { result } = renderHook(() => usePublicStatusController());
     const orgEvidence = evidence.get('public-status-org');
     const componentEvidence = evidence.get('public-status-components');
     const incidentEvidence = evidence.get('public-status-incidents');
 
-    act(() => void result.current.refreshIncidents());
+    act(() => void result.current.refresh());
 
     expect(incidentEvidence?.refetch).toHaveBeenCalledOnce();
-    expect(orgEvidence?.refetch).not.toHaveBeenCalled();
-    expect(componentEvidence?.refetch).not.toHaveBeenCalled();
+    expect(orgEvidence?.refetch).toHaveBeenCalledOnce();
+    expect(componentEvidence?.refetch).toHaveBeenCalledOnce();
   });
 });
 
@@ -253,11 +259,10 @@ function queryEvidence(result: Partial<QueryEvidence>): QueryEvidence {
 
 function actions(range: ReturnType<typeof createPublicStatusIncidentRange>) {
   return {
-    incidentLoading: false,
     incidentRange: range,
-    incidentRefreshing: false,
     locale: 'en-US',
-    refreshIncidents: expect.any(Function),
+    refresh: expect.any(Function),
+    refreshing: false,
     selectIncidentYear: expect.any(Function),
     selectLocale: expect.any(Function)
   };

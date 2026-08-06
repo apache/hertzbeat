@@ -74,12 +74,13 @@ describe('useAlertIntegrationController', () => {
     expect(tokenPath.searchParams.get('returnTo')).toBe('/alerts/integrations/webhook');
   });
 
-  it('treats an unknown deep link as local not-found without a detail request', async () => {
+  it('replaces an unknown deep link with the first source owned by the backend catalog', async () => {
     const view = renderController('/alerts/integrations/unknown');
 
-    await waitFor(() => expect(view.result.current.state.kind).toBe('not-found'));
+    await waitFor(() => expect(view.result.current.selectedSource).toBe('prometheus'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
 
-    expect(api.loadAlertIntegrationGuide).not.toHaveBeenCalled();
+    expect(api.loadAlertIntegrationGuide).toHaveBeenCalledWith('prometheus', expect.any(AbortSignal));
   });
 
   it('does not request arbitrary detail while catalog ownership is unresolved', () => {
@@ -97,10 +98,11 @@ describe('useAlertIntegrationController', () => {
     api.loadAlertIntegrationCatalog.mockResolvedValue(catalog);
 
     await act(() => view.result.current.actions.retry());
-    await waitFor(() => expect(view.result.current.state.kind).toBe('not-found'));
+    await waitFor(() => expect(view.result.current.selectedSource).toBe('prometheus'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
 
     expect(api.loadAlertIntegrationCatalog).toHaveBeenCalledTimes(2);
-    expect(api.loadAlertIntegrationGuide).not.toHaveBeenCalled();
+    expect(api.loadAlertIntegrationGuide).toHaveBeenCalledWith('prometheus', expect.any(AbortSignal));
   });
 
   it('retries only the failed detail after the catalog has established source ownership', async () => {

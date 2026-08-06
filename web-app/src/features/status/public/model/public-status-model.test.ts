@@ -26,21 +26,22 @@ import {
   publicComponentStateKey,
   publicIncidentStateKey,
   publicOrgStateKey,
-  publicStatusState
+  publicStatusComponentState,
+  publicStatusIncidentState
 } from './public-status-model';
 
 describe('public status state', () => {
-  it('distinguishes missing configuration from backend failure', () => {
+  it('distinguishes component configuration, empty, ready and loading evidence', () => {
     const notFound = new StatusOrgNotFoundError();
     expect(isStatusOrgNotFound(notFound)).toBe(true);
+    expect(publicStatusComponentState(componentEvidence({ orgError: notFound, org: undefined }))).toBe('unconfigured');
+    expect(publicStatusComponentState(componentEvidence({ components: [] }))).toBe('empty');
     expect(
-      publicStatusState(evidence({ orgError: notFound, org: undefined, components: [], incidents: emptyPage }))
-    ).toBe('unconfigured');
-    expect(publicStatusState(evidence({ components: [], incidents: emptyPage }))).toBe('empty');
-    expect(publicStatusState(evidence({ components: [{ id: 1, name: 'API', state: 'healthy', history: [] }] }))).toBe(
-      'ready'
-    );
-    expect(publicStatusState(evidence({ orgPending: true }))).toBe('loading');
+      publicStatusComponentState(
+        componentEvidence({ components: [{ id: 1, name: 'API', state: 'healthy', history: [] }] })
+      )
+    ).toBe('ready');
+    expect(publicStatusComponentState(componentEvidence({ orgPending: true }))).toBe('loading');
   });
 
   it('distinguishes transport unavailability from rejected or invalid reads', () => {
@@ -48,20 +49,31 @@ describe('public status state', () => {
     const networkFailure = new StatusRequestFailure('unavailable', 'uncertain');
     const genericEnvelopeFailure = new StatusRequestFailure('error', 'rejected');
 
-    expect(publicStatusState(evidence({ orgError: serviceUnavailable }))).toBe('unavailable');
-    expect(publicStatusState(evidence({ orgError: networkFailure }))).toBe('unavailable');
-    expect(publicStatusState(evidence({ orgError: genericEnvelopeFailure }))).toBe('error');
-    expect(publicStatusState(evidence({ componentsError: new Error('components failed') }))).toBe('error');
-    expect(publicStatusState(evidence({ incidentsError: new Error('incidents failed') }))).toBe('error');
+    expect(publicStatusComponentState(componentEvidence({ orgError: serviceUnavailable }))).toBe('unavailable');
+    expect(publicStatusComponentState(componentEvidence({ orgError: networkFailure }))).toBe('unavailable');
+    expect(publicStatusComponentState(componentEvidence({ orgError: genericEnvelopeFailure }))).toBe('error');
+    expect(publicStatusComponentState(componentEvidence({ componentsError: new Error('components failed') }))).toBe(
+      'error'
+    );
     expect(
-      publicStatusState(
-        evidence({ orgError: new StatusOrgNotFoundError(), componentsError: new Error('components unavailable') })
+      publicStatusComponentState(
+        componentEvidence({
+          orgError: new StatusOrgNotFoundError(),
+          componentsError: new Error('components unavailable')
+        })
       )
     ).toBe('error');
-    expect(publicStatusState(evidence({ orgError: new StatusRequestFailure('permission', 'rejected') }))).toBe(
-      'permission'
+    expect(
+      publicStatusComponentState(componentEvidence({ orgError: new StatusRequestFailure('permission', 'rejected') }))
+    ).toBe('permission');
+    expect(publicStatusComponentState(componentEvidence({ orgError: new PublicStatusContractError() }))).toBe(
+      'invalid'
     );
-    expect(publicStatusState(evidence({ orgError: new PublicStatusContractError() }))).toBe('invalid');
+    expect(publicStatusIncidentState(incidentEvidence({ error: serviceUnavailable }))).toBe('unavailable');
+    expect(publicStatusIncidentState(incidentEvidence({ error: new Error('incidents failed') }))).toBe('error');
+    expect(publicStatusIncidentState(incidentEvidence({ incidents: emptyPage }))).toBe('empty');
+    expect(publicStatusIncidentState(incidentEvidence({ incidents: readyPage }))).toBe('ready');
+    expect(publicStatusIncidentState(incidentEvidence({ pending: true }))).toBe('loading');
   });
 
   it('keeps typed health and incident states distinct from unknown evidence', () => {
@@ -92,17 +104,18 @@ const readyPage: PublicStatusIncidentPage = {
   size: 20
 };
 
-function evidence(overrides: Partial<Parameters<typeof publicStatusState>[0]> = {}) {
+function componentEvidence(overrides: Partial<Parameters<typeof publicStatusComponentState>[0]> = {}) {
   return {
     org,
     components: [],
-    incidents: readyPage,
     orgError: null,
     componentsError: null,
-    incidentsError: null,
     orgPending: false,
     componentsPending: false,
-    incidentsPending: false,
     ...overrides
   };
+}
+
+function incidentEvidence(overrides: Partial<Parameters<typeof publicStatusIncidentState>[0]> = {}) {
+  return { incidents: readyPage, error: null, pending: false, ...overrides };
 }

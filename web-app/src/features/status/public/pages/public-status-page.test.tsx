@@ -85,6 +85,33 @@ describe('PublicStatusPage failure states', () => {
     expect(screen.queryByText('The public status page has not been configured yet.')).not.toBeInTheDocument();
   });
 
+  it('keeps component evidence visible when incidents fail', async () => {
+    mockStatusQueries({
+      componentResponse: [{ info: { id: 1, name: 'Public API', state: 0 }, history: [] }],
+      incidentError: new ApiMessageError('Incidents unavailable', { status: 503 })
+    });
+    renderPage();
+
+    expect(await screen.findByText('Public API')).toBeInTheDocument();
+    expect(screen.getByText('All systems operational')).toBeInTheDocument();
+    expect(
+      screen.getByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
+  });
+
+  it('keeps incident evidence visible when components fail', async () => {
+    mockStatusQueries({
+      componentError: new ApiMessageError('Components unavailable', { status: 503 }),
+      incidentResponse: incidentPage(incident(2, 'Gateway latency', 1))
+    });
+    renderPage();
+
+    expect(await screen.findByText('Gateway latency')).toBeInTheDocument();
+    expect(
+      screen.getByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
+  });
+
   it('shows a load error separately from transport unavailability', async () => {
     mockStatusQueries({ orgError: new ApiMessageError('Request rejected', { code: 4, status: 400 }) });
     renderPage();
@@ -327,7 +354,7 @@ describe('PublicStatusPage failure states', () => {
     await waitFor(() => expect(screen.queryByText('Late current incident')).not.toBeInTheDocument());
   });
 
-  it('explicitly refreshes only the currently selected incident year', async () => {
+  it('refreshes organization, components and the currently selected incident year together', async () => {
     mockStatusQueries({});
     renderPage();
     await screen.findByRole('spinbutton', { name: 'Incident year' });
@@ -338,8 +365,10 @@ describe('PublicStatusPage failure states', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
 
     await waitFor(() => expect(apiMessageGet.mock.calls.filter(([path]) => path === incidentPath)).toHaveLength(2));
-    expect(apiMessageGet.mock.calls.filter(([path]) => (path as string).endsWith('/org'))).toHaveLength(1);
-    expect(apiMessageGet.mock.calls.filter(([path]) => (path as string).endsWith('/component'))).toHaveLength(1);
+    await waitFor(() =>
+      expect(apiMessageGet.mock.calls.filter(([path]) => (path as string).endsWith('/org'))).toHaveLength(2)
+    );
+    expect(apiMessageGet.mock.calls.filter(([path]) => (path as string).endsWith('/component'))).toHaveLength(2);
   });
 });
 

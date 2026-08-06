@@ -21,17 +21,8 @@ import { useTranslation } from 'react-i18next';
 
 import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import { defaultStatusAccent } from '@/features/status/shared/status-constants';
-import { OperationalStatePanel } from '@/shared/operational-page';
 
-import type {
-  PublicStatusComponent,
-  PublicStatusIncident,
-  PublicStatusOrg,
-  PublicStatusOrgState,
-  PublicStatusState,
-  PublicStatusViewModel
-} from '../model/public-status-contract';
-import type { PublicStatusIncidentRange } from '../model/public-status-incident-range';
+import type { PublicStatusOrg, PublicStatusOrgState, PublicStatusViewModel } from '../model/public-status-contract';
 import { publicOrgStateKey } from '../model/public-status-model';
 import { PublicStatusComponents } from './public-status-components';
 import { PublicStatusIncidents } from './public-status-incidents';
@@ -46,13 +37,13 @@ export function PublicStatusView(props: PublicStatusViewModel) {
       <StatusHeader locale={props.locale} org={props.org} onLocaleChange={props.selectLocale} />
       <StatusBody
         incidentRange={props.incidentRange}
-        incidentLoading={props.incidentLoading}
-        incidentRefreshing={props.incidentRefreshing}
-        state={props.state}
+        componentState={props.componentState}
+        incidentState={props.incidentState}
+        refreshing={props.refreshing}
         components={props.components}
         incidents={props.incidents}
         onIncidentYearChange={props.selectIncidentYear}
-        onRefreshIncidents={props.refreshIncidents}
+        onRefresh={props.refresh}
       />
     </main>
   );
@@ -111,42 +102,25 @@ function StatusBrand({ org }: { org: PublicStatusOrg | undefined }) {
   );
 }
 
-function StatusBody({
-  state,
-  components,
-  incidents,
-  incidentRange,
-  incidentLoading,
-  incidentRefreshing,
-  onIncidentYearChange,
-  onRefreshIncidents
-}: {
-  state: PublicStatusState;
-  components: PublicStatusComponent[];
-  incidents: PublicStatusIncident[];
-  incidentRange: PublicStatusIncidentRange;
-  incidentLoading: boolean;
-  incidentRefreshing: boolean;
-  onIncidentYearChange: (year: number) => void;
-  onRefreshIncidents: () => unknown;
-}) {
-  const { t } = useTranslation();
-  if (state === 'loading') return <OperationalStatePanel kind="loading" title={t('status.loading')} />;
-  if (state === 'unconfigured') return <OperationalStatePanel kind="empty" title={t('status.notConfigured')} />;
-  if (state === 'unavailable') return <OperationalStatePanel kind="unavailable" title={t('common.unavailable')} />;
-  if (state === 'invalid') return <OperationalStatePanel kind="error" title={t('status.invalid')} />;
-  if (state === 'permission') return <OperationalStatePanel kind="permission" title={t('status.permission')} />;
-  if (state === 'error') return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
+type StatusBodyProps = Pick<
+  PublicStatusViewModel,
+  'componentState' | 'components' | 'incidentRange' | 'incidents' | 'incidentState' | 'refreshing'
+> & {
+  onIncidentYearChange: PublicStatusViewModel['selectIncidentYear'];
+  onRefresh: PublicStatusViewModel['refresh'];
+};
+
+function StatusBody(props: StatusBodyProps) {
   return (
     <>
-      <PublicStatusComponents components={components} />
+      <PublicStatusComponents components={props.components} state={props.componentState} />
       <PublicStatusIncidents
-        incidents={incidents}
-        loading={incidentLoading}
-        range={incidentRange}
-        refreshing={incidentRefreshing}
-        onYearChange={onIncidentYearChange}
-        onRefresh={onRefreshIncidents}
+        incidents={props.incidents}
+        range={props.incidentRange}
+        refreshing={props.refreshing}
+        state={props.incidentState}
+        onYearChange={props.onIncidentYearChange}
+        onRefresh={props.onRefresh}
       />
     </>
   );

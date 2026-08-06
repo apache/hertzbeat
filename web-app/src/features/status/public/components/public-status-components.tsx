@@ -23,17 +23,25 @@ import { OperationalStatePanel } from '@/shared/operational-page';
 import type {
   PublicStatusComponent,
   PublicStatusComponentState,
-  PublicStatusHistory
+  PublicStatusHistory,
+  PublicStatusState
 } from '../model/public-status-contract';
 import { publicComponentStateKey } from '../model/public-status-model';
 import styles from './public-status.module.css';
+import { PublicStatusRegionState } from './public-status-region-state';
 
-export function PublicStatusComponents({ components }: { components: PublicStatusComponent[] }) {
+export function PublicStatusComponents({
+  components,
+  state
+}: {
+  components: PublicStatusComponent[];
+  state: PublicStatusState;
+}) {
   const { t } = useTranslation();
   return (
     <section className={styles.section}>
       <Typography.Title level={4}>{t('status.components')}</Typography.Title>
-      {components.length ? (
+      {state === 'ready' ? (
         <Table<PublicStatusComponent>
           rowKey="id"
           pagination={false}
@@ -56,8 +64,10 @@ export function PublicStatusComponents({ components }: { components: PublicStatu
             }
           ]}
         />
-      ) : (
+      ) : state === 'empty' ? (
         <OperationalStatePanel kind="empty" title={t('status.noComponents')} />
+      ) : (
+        <PublicStatusRegionState state={state} loadingKey="status.loading" />
       )}
     </section>
   );

@@ -20,31 +20,29 @@ import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
 
-import type { PublicStatusIncident, PublicStatusIncidentState } from '../model/public-status-contract';
+import type {
+  PublicStatusIncident,
+  PublicStatusIncidentState,
+  PublicStatusState
+} from '../model/public-status-contract';
 import {
   earliestPublicStatusIncidentYear,
   type PublicStatusIncidentRange
 } from '../model/public-status-incident-range';
 import { publicIncidentStateKey } from '../model/public-status-model';
 import styles from './public-status.module.css';
+import { PublicStatusRegionState } from './public-status-region-state';
 
 type IncidentProps = {
   incidents: PublicStatusIncident[];
-  loading: boolean;
   range: PublicStatusIncidentRange;
   refreshing: boolean;
+  state: PublicStatusState;
   onYearChange: (year: number) => void;
   onRefresh: () => unknown;
 };
 
-export function PublicStatusIncidents({
-  incidents,
-  loading,
-  range,
-  refreshing,
-  onYearChange,
-  onRefresh
-}: IncidentProps) {
+export function PublicStatusIncidents({ incidents, range, refreshing, state, onYearChange, onRefresh }: IncidentProps) {
   const { t } = useTranslation();
   return (
     <section className={styles.section}>
@@ -57,9 +55,7 @@ export function PublicStatusIncidents({
           onRefresh={onRefresh}
         />
       </div>
-      {loading ? (
-        <OperationalStatePanel kind="loading" title={t('status.loadingIncidents')} />
-      ) : incidents.length ? (
+      {state === 'ready' ? (
         <Table<PublicStatusIncident>
           rowKey="id"
           pagination={false}
@@ -84,8 +80,10 @@ export function PublicStatusIncidents({
             }
           ]}
         />
-      ) : (
+      ) : state === 'empty' ? (
         <OperationalStatePanel kind="empty" title={t('status.noIncidents')} />
+      ) : (
+        <PublicStatusRegionState state={state} loadingKey="status.loadingIncidents" />
       )}
     </section>
   );

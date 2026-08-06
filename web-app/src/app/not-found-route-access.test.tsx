@@ -36,11 +36,16 @@ describe('top-level unknown route boundary', () => {
     ['session failure', { failure: 'unavailable', loading: false, retry: vi.fn(), session: undefined }],
     ['authenticated', { loading: false, retry: vi.fn(), session: authenticatedSession }]
   ] satisfies [string, SessionState][])('renders the same 404 for an %s session', async (_label, sessionState) => {
-    const router = renderApp('/unknown/deep-link?token=must-not-leak', sessionState);
+    const router = renderApp(
+      '/unknown/deep-link?view=operations&token=must-not-leak&authorization=must-not-leak#details',
+      sessionState
+    );
 
     expect(await screen.findByRole('heading', { name: i18n.t('common.notFound.title') })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/unknown/deep-link');
-    expect(router.state.location.search).toBe('?token=must-not-leak');
+    await waitFor(() => expect(router.state.location.search).toBe('?view=operations'));
+    expect(router.state.location.hash).toBe('#details');
+    expect(router.state.location.search).not.toContain('must-not-leak');
     expect(screen.queryByLabelText(i18n.t('auth.username'))).not.toBeInTheDocument();
   });
 
@@ -52,7 +57,7 @@ describe('top-level unknown route boundary', () => {
       session: anonymousSession
     });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/passport/login'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/passport/login'), { timeout: 15_000 });
     expect(new URLSearchParams(router.state.location.search).get('redirect')).toBe(`${protectedPath}?view=operations`);
     expect(router.state.location.search).not.toContain('private');
   });

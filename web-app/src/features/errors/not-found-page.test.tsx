@@ -17,6 +17,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
@@ -32,7 +33,9 @@ describe('NotFoundPage', () => {
   it('explains that the requested page is unavailable', () => {
     render(
       <I18nextProvider i18n={i18n}>
-        <NotFoundPage />
+        <MemoryRouter initialEntries={['/missing']}>
+          <NotFoundPage />
+        </MemoryRouter>
       </I18nextProvider>
     );
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();

@@ -87,14 +87,14 @@ export type PublicStatusViewModel = {
   org: PublicStatusOrg | undefined;
   components: PublicStatusComponent[];
   incidents: PublicStatusIncident[];
-  incidentLoading: boolean;
+  componentState: PublicStatusState;
   incidentRange: PublicStatusIncidentRange;
-  incidentRefreshing: boolean;
+  incidentState: PublicStatusState;
   locale: SupportedLocale;
-  refreshIncidents: () => unknown;
+  refresh: () => unknown;
+  refreshing: boolean;
   selectLocale: (locale: SupportedLocale) => unknown;
   selectIncidentYear: (year: number) => void;
-  state: PublicStatusState;
 };
 
 export class PublicStatusContractError extends Error {

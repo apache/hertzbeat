@@ -31,47 +31,46 @@ import { PublicStatusContractError as PublicStatusContractFailure } from './publ
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 export type { PublicStatusState } from './public-status-contract';
 
-type PublicStatusStateEvidence = {
+type PublicStatusComponentStateEvidence = {
   org: PublicStatusOrg | undefined;
   components: PublicStatusComponent[] | undefined;
-  incidents: PublicStatusIncidentPage | undefined;
   orgError: unknown;
   componentsError: unknown;
-  incidentsError: unknown;
   orgPending: boolean;
   componentsPending: boolean;
-  incidentsPending: boolean;
 };
 
-export function publicStatusState(evidence: PublicStatusStateEvidence): PublicStatusState {
-  if (isPublicStatusLoading(evidence)) return 'loading';
-  const failureState = publicStatusFailureState(evidence);
+type PublicStatusIncidentStateEvidence = {
+  incidents: PublicStatusIncidentPage | undefined;
+  error: unknown;
+  pending: boolean;
+};
+
+export function publicStatusComponentState(evidence: PublicStatusComponentStateEvidence): PublicStatusState {
+  if (evidence.orgPending || evidence.componentsPending) return 'loading';
+  if (isStatusOrgNotFound(evidence.orgError) && !evidence.componentsError) return 'unconfigured';
+  const failureState = publicStatusFailureState([evidence.orgError, evidence.componentsError]);
   if (failureState) return failureState;
-  return publicStatusSuccessState(evidence);
+  if (evidence.org === undefined || evidence.components === undefined) return 'error';
+  return evidence.components.length ? 'ready' : 'empty';
 }
 
-function isPublicStatusLoading(evidence: PublicStatusStateEvidence) {
-  if (evidence.orgPending || evidence.componentsPending) return true;
-  return evidence.incidentsPending && Boolean(evidence.orgError || evidence.componentsError);
+export function publicStatusIncidentState(evidence: PublicStatusIncidentStateEvidence): PublicStatusState {
+  if (evidence.pending) return 'loading';
+  const failureState = publicStatusFailureState([evidence.error]);
+  if (failureState) return failureState;
+  if (evidence.incidents === undefined) return 'error';
+  if (!isCompletePublicStatusIncidentPage(evidence.incidents)) return 'invalid';
+  return evidence.incidents.content.length ? 'ready' : 'empty';
 }
 
-function publicStatusFailureState(evidence: PublicStatusStateEvidence): PublicStatusState | undefined {
-  const { orgError, componentsError, incidentsError } = evidence;
-  if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
-  const errors = [orgError, componentsError, incidentsError].filter(Boolean);
+function publicStatusFailureState(failures: unknown[]): PublicStatusState | undefined {
+  const errors = failures.filter(Boolean);
   if (errors.some(error => statusRequestFailureKind(error) === 'permission')) return 'permission';
   if (errors.some(error => statusRequestFailureKind(error) === 'unavailable')) return 'unavailable';
   if (errors.some(error => error instanceof PublicStatusContractFailure)) return 'invalid';
   if (errors.length) return 'error';
   return undefined;
-}
-
-function publicStatusSuccessState(evidence: PublicStatusStateEvidence): PublicStatusState {
-  if (evidence.org === undefined || evidence.components === undefined) return 'error';
-  if (evidence.incidentsPending) return 'ready';
-  if (evidence.incidents === undefined || !isCompletePublicStatusIncidentPage(evidence.incidents)) return 'error';
-  if (evidence.components.length === 0 && evidence.incidents.content.length === 0) return 'empty';
-  return 'ready';
 }
 
 export function publicOrgStateKey(state: PublicStatusOrgState) {
