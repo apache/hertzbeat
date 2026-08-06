@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { uiSessionSchema } from '@/core/auth/session-contract';
 
 import { MonitorDefinitionRequestError } from '../api/monitor-definition-api';
+import type { MonitorDefinitionDetail } from '../model/monitor-definition-model';
 
 const api = vi.hoisted(() => ({
   catalog: vi.fn(),
@@ -1126,7 +1127,7 @@ type WriteOperation = 'create' | 'update' | 'delete';
 type WriteOutcome = 'uncertain' | 'rejected';
 type ControllerView = ReturnType<typeof renderController>;
 
-function updateWorkspace(value: typeof detail) {
+function updateWorkspace(value: MonitorDefinitionDetail) {
   return {
     kind: 'edit' as const,
     authority: value,
