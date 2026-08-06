@@ -27,7 +27,7 @@ const t = ((key: string, options?: Record<string, unknown>) =>
 describe('ShellStatusSpine', () => {
   afterEach(cleanup);
 
-  it('shows authoritative status, timestamps, counts, and section reason', () => {
+  it('keeps the current state visible and moves detailed evidence into the accessible description', () => {
     render(
       <ShellStatusSpine
         locale="en-US"
@@ -51,13 +51,18 @@ describe('ShellStatusSpine', () => {
       />
     );
 
-    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'available');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveAttribute('data-status', 'degraded');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('shell.status.reason.storage_query_failed');
-    expect(screen.getAllByText(/shell\.status\.snapshotObservedAt:/)).toHaveLength(3);
-    expect(screen.getByTestId('shell-status-server')).not.toHaveTextContent('shell.status.collectorLastReportedAt:');
-    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorLastReportedAt:');
-    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorCounts:3|3|1');
+    const server = screen.getByTestId('shell-status-server');
+    const greptime = screen.getByTestId('shell-status-greptime');
+    const collector = screen.getByTestId('shell-status-collector');
+    expect(server).toHaveAttribute('data-status', 'available');
+    expect(greptime).toHaveAttribute('data-status', 'degraded');
+    expect(greptime).toHaveTextContent('shell.status.state.degraded');
+    expect(greptime).not.toHaveTextContent('shell.status.reason.storage_query_failed');
+    expect(greptime).toHaveAttribute('aria-label', expect.stringContaining('shell.status.reason.storage_query_failed'));
+    expect(greptime).toHaveAttribute('title', expect.stringContaining('shell.status.snapshotObservedAt:'));
+    expect(server).not.toHaveAttribute('title', expect.stringContaining('shell.status.collectorLastReportedAt:'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorLastReportedAt:'));
+    expect(collector).toHaveAttribute('title', expect.stringContaining('shell.status.collectorCounts:3|3|1'));
   });
 
   it('shows a request failure without inventing backend evidence or counts', () => {
@@ -69,9 +74,13 @@ describe('ShellStatusSpine', () => {
       />
     );
 
-    expect(screen.getByTestId('shell-status-server')).toHaveTextContent('shell.status.request.permission');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('shell.status.request.permission');
-    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-server')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-greptime')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.request.permission');
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.request.permission')
+    );
     expect(screen.queryByText(/shell\.status\.reason\./)).not.toBeInTheDocument();
     expect(screen.getByTestId('shell-status-collector')).not.toHaveTextContent('shell.status.collectorNotReported');
     expect(screen.queryByText('0')).not.toBeInTheDocument();
@@ -135,6 +144,9 @@ describe('ShellStatusSpine', () => {
       />
     );
 
-    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorNotReported');
+    expect(screen.getByTestId('shell-status-collector')).toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.collectorNotReported')
+    );
   });
 });

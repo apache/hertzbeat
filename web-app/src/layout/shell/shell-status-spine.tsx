@@ -113,18 +113,18 @@ function StatusSlot(props: StatusSlotProps) {
   const state = statusSlotState(props);
   const stateLabel = props.t(`shell.status.state.${state}`);
   const context = statusContext(props);
+  const description = `${props.label}: ${stateLabel} · ${context}`;
   return (
     <div
       className={styles.statusSlot}
       data-status={state}
       data-testid={`shell-status-${props.id}`}
-      title={`${props.label}: ${stateLabel} · ${context}`}
+      aria-label={description}
+      title={description}
     >
       <span className={styles.statusDot} aria-hidden="true" />
       <span className={styles.statusLabel}>{props.label}</span>
-      <small className={styles.statusValue}>
-        {stateLabel} · {context}
-      </small>
+      <small className={styles.statusValue}>{stateLabel}</small>
     </div>
   );
 }

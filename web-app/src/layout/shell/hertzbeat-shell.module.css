@@ -76,10 +76,9 @@
 .statusSlot {
   display: flex;
   align-items: center;
-  flex: 0 0 118px;
+  flex: 0 0 auto;
   gap: 5px;
   height: 28px;
-  min-width: 0;
   padding: 0 8px;
   border: 1px solid var(--hb-border-subtle);
   border-radius: var(--hb-radius-control);
@@ -93,11 +92,9 @@
 }
 
 .statusValue {
-  min-width: 0;
-  overflow: hidden;
+  flex: none;
   color: var(--hb-text-muted);
   font-size: 11px;
-  text-overflow: ellipsis;
 }
 
 .statusDot {

@@ -30,4 +30,13 @@ describe('shell runtime status style contract', () => {
     expect(shellStyles).toMatch(/data-status='loading'[\s\S]*?border-style:\s*dashed/);
     expect(shellStyles).toMatch(/data-status='unknown'[\s\S]*?border-style:\s*solid/);
   });
+
+  it('sizes status slots to their concise visible state instead of clipping diagnostic text', () => {
+    const slotRule = shellStyles.match(/\.statusSlot\s*\{[^}]*\}/)?.[0] ?? '';
+    const valueRule = shellStyles.match(/\.statusValue\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(slotRule).toMatch(/flex:\s*0 0 auto/);
+    expect(valueRule).not.toMatch(/overflow:\s*hidden/);
+    expect(valueRule).not.toMatch(/text-overflow:\s*ellipsis/);
+  });
 });
