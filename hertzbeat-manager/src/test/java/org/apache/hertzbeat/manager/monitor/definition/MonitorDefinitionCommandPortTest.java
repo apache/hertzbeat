@@ -117,7 +117,7 @@ class MonitorDefinitionCommandPortTest {
     }
 
     @Test
-    void updateRequiresMutableExactIdentityAndCurrentRevision() {
+    void updateRequiresExactIdentityAndCurrentRevision() {
         MonitorDefinitionSource created = commandService.create(customDefinition("write-update", "one"));
         String revision = MonitorDefinitionRevision.from(created);
         String updatedDefinition = customDefinition("write-update", "two");
@@ -131,10 +131,24 @@ class MonitorDefinitionCommandPortTest {
         assertError(MonitorDefinitionErrorCode.UPDATE_TARGET_MISMATCH,
                 () -> commandService.update("write-update", MonitorDefinitionRevision.from(updated),
                         customDefinition("different-app", "three")));
+    }
+
+    @Test
+    void updatingBuiltinCreatesDeletableOverrideWithoutMutatingPackagedDefinition() {
         MonitorDefinitionSource builtin = source("jvm");
-        assertError(MonitorDefinitionErrorCode.IMMUTABLE,
-                () -> commandService.update("jvm", MonitorDefinitionRevision.from(builtin),
-                        customDefinition("jvm", "x")));
+        String builtinDefinition = builtin.definition();
+        String overrideDefinition = customDefinition("jvm", "override-from-editor");
+
+        MonitorDefinitionSource override = commandService.update(
+                "jvm", MonitorDefinitionRevision.from(builtin), overrideDefinition);
+
+        assertEquals(MonitorDefinitionOrigin.OVERRIDE, MonitorDefinitionRevision.origin(override));
+        assertEquals(overrideDefinition, override.definition());
+        assertEquals(MonitorDefinitionDeleteDisposition.BUILTIN_RESTORED,
+                commandService.delete("jvm", MonitorDefinitionRevision.from(override)).disposition());
+        MonitorDefinitionSource restored = source("jvm");
+        assertEquals(MonitorDefinitionOrigin.BUILTIN, MonitorDefinitionRevision.origin(restored));
+        assertEquals(builtinDefinition, restored.definition());
     }
 
     @Test
@@ -239,6 +253,24 @@ class MonitorDefinitionCommandPortTest {
 
         verify(monitorService, times(2)).updateAppCollectJob(any(Job.class));
         assertEquals(previous.definition(), source("write-update-rollback").definition());
+    }
+
+    @Test
+    void builtinOverrideRuntimeFailureRestoresPackagedDefinitionWithoutPersistedOverride() {
+        MonitorDefinitionSource builtin = source("jvm");
+        doThrow(new IllegalStateException("new runtime failed"))
+                .doNothing()
+                .when(monitorService).updateAppCollectJob(any(Job.class));
+
+        assertError(MonitorDefinitionErrorCode.RUNTIME_UPDATE_FAILED,
+                () -> commandService.update("jvm", MonitorDefinitionRevision.from(builtin),
+                        customDefinition("jvm", "override-runtime-failure")));
+
+        verify(defineDao).deleteById("jvm");
+        verify(monitorService, times(2)).updateAppCollectJob(any(Job.class));
+        MonitorDefinitionSource restored = source("jvm");
+        assertEquals(MonitorDefinitionOrigin.BUILTIN, MonitorDefinitionRevision.origin(restored));
+        assertEquals(builtin.definition(), restored.definition());
     }
 
     @Test

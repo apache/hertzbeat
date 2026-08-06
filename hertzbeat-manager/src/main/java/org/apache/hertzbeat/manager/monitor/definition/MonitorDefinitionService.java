@@ -105,10 +105,9 @@ public class MonitorDefinitionService {
             throw new MonitorDefinitionException(MonitorDefinitionErrorCode.UPDATE_TARGET_MISMATCH);
         }
         MonitorDefinitionOrigin origin = MonitorDefinitionRevision.origin(target);
-        if (origin == MonitorDefinitionOrigin.BUILTIN) {
-            throw new MonitorDefinitionException(MonitorDefinitionErrorCode.IMMUTABLE);
-        }
-        return validationResponse(canonicalApp, origin);
+        return validationResponse(
+                canonicalApp,
+                origin == MonitorDefinitionOrigin.BUILTIN ? MonitorDefinitionOrigin.OVERRIDE : origin);
     }
 
     private Job parseAndValidate(String definition) {
@@ -139,11 +138,15 @@ public class MonitorDefinitionService {
 
     private static MonitorDefinitionCatalogItem catalogItem(MonitorDefinitionSource source, String lang) {
         MonitorDefinitionOrigin origin = MonitorDefinitionRevision.origin(source);
-        boolean mutable = origin != MonitorDefinitionOrigin.BUILTIN;
         String app = source.job().getApp();
         String label = CommonUtil.getLangMappingValueFromI18nMap(normalizeLang(lang), source.job().getName());
         return new MonitorDefinitionCatalogItem(
-                app, label == null ? app : label, origin, mutable, mutable, MonitorDefinitionRevision.from(source));
+                app,
+                label == null ? app : label,
+                origin,
+                true,
+                origin != MonitorDefinitionOrigin.BUILTIN,
+                MonitorDefinitionRevision.from(source));
     }
 
     private static MonitorDefinitionDetailResponse detail(MonitorDefinitionSource source, String lang) {

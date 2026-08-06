@@ -48,9 +48,6 @@ public class MonitorDefinitionCommandService implements MonitorDefinitionCommand
         return executor.executeSerialized(state -> {
             MonitorDefinitionSource previous = require(app, state.readAll());
             Job parsed = parse(state, definition);
-            if (MonitorDefinitionRevision.origin(previous) == MonitorDefinitionOrigin.BUILTIN) {
-                throw failure(MonitorDefinitionErrorCode.IMMUTABLE);
-            }
             if (!previous.job().getApp().equals(app) || !previous.job().getApp().equals(parsed.getApp())) {
                 throw failure(MonitorDefinitionErrorCode.UPDATE_TARGET_MISMATCH);
             }
@@ -134,6 +131,12 @@ public class MonitorDefinitionCommandService implements MonitorDefinitionCommand
             if (previous == null) {
                 state.remove(parsed.getApp());
                 state.publishRemoval(parsed.getApp());
+            } else if (MonitorDefinitionRevision.origin(previous) == MonitorDefinitionOrigin.BUILTIN) {
+                // A built-in edit creates a persisted override. Rollback must remove that override
+                // so the packaged definition becomes effective again instead of persisting a copy.
+                state.remove(previous.job().getApp());
+                state.publishRemoval(previous.job().getApp());
+                state.updateRuntime(previous.job());
             } else {
                 state.save(previous.job().getApp(), previous.definition());
                 state.publish(previous.job(), previous.definition());

@@ -59,7 +59,7 @@ class MonitorDefinitionServiceTest {
                 response.items().stream().map(MonitorDefinitionCatalogItem::origin).toList());
         assertTrue(response.items().get(0).editable());
         assertTrue(response.items().get(1).deletable());
-        assertFalse(response.items().get(2).editable());
+        assertTrue(response.items().get(2).editable());
         assertFalse(response.items().get(2).deletable());
     }
 
@@ -139,7 +139,7 @@ class MonitorDefinitionServiceTest {
     }
 
     @Test
-    void updateValidationRejectsMismatchedMissingAndBuiltinTargets() {
+    void updateValidationRejectsMismatchedAndMissingTargetsButAllowsBuiltinOverride() {
         when(sourceReader.readAll()).thenReturn(List.of(
                 source("custom-app", "Custom", false, true),
                 source("jvm", "JVM", true, false)));
@@ -155,10 +155,8 @@ class MonitorDefinitionServiceTest {
                 assertThrows(MonitorDefinitionException.class,
                         () -> service.validate(request(MonitorDefinitionOperation.UPDATE, "missing", "app: missing")))
                         .errorCode());
-        assertEquals(MonitorDefinitionErrorCode.IMMUTABLE,
-                assertThrows(MonitorDefinitionException.class,
-                        () -> service.validate(request(MonitorDefinitionOperation.UPDATE, "jvm", "app: jvm")))
-                        .errorCode());
+        assertEquals(MonitorDefinitionOrigin.OVERRIDE,
+                service.validate(request(MonitorDefinitionOperation.UPDATE, "jvm", "app: jvm")).origin());
         assertEquals(MonitorDefinitionErrorCode.EXPECTED_APP_REQUIRED,
                 assertThrows(MonitorDefinitionException.class,
                         () -> service.validate(request(MonitorDefinitionOperation.UPDATE, " ", "app: jvm")))
