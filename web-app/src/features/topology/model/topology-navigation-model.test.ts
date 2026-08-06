@@ -10,13 +10,14 @@ describe('topology inspector navigation', () => {
   it('uses the central entity route builder with the complete safe topology return query', () => {
     const source =
       '/topology?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&start=1000&end=2000' +
-      '&relationType=calls&hideInternal=false&pageIndex=3&pageSize=50&token=private&unknown=value';
+      '&relationType=calls&hideInternal=false&pageIndex=3&pageSize=50&edgeId=calls%3Aorders' +
+      '&token=private&unknown=value';
     const path = buildTopologyEntityPath(42, source);
 
     expect(path).toContain('/entities/42?returnTo=');
     expect(new URL(path, 'https://hertzbeat.local').searchParams.get('returnTo')).toBe(
       '/topology?focusEntityId=7&depth=2&environment=prod&sourceKind=otel&start=1000&end=2000' +
-        '&relationType=calls&hideInternal=false&pageIndex=3&pageSize=50'
+        '&relationType=calls&hideInternal=false&pageIndex=3&pageSize=50&edgeId=calls%3Aorders'
     );
     expect(path).not.toContain('private');
     expect(path).not.toContain('unknown');

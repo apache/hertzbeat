@@ -145,17 +145,16 @@ describe('topology page refresh revision and failure', () => {
   });
 });
 
-describe('topology page in-memory drilldown', () => {
+describe('topology page route-owned inspector selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1', '2']));
   });
   afterEach(cleanup);
 
-  it('keeps row drilldown and node-edge-hover transitions in memory without changing URL', async () => {
+  it('writes row drilldown to the URL while keeping hover local', async () => {
     const view = renderController('/topology?depth=1');
     await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
-    const before = view.router.state.location.search;
     const evidence = view.current().state.evidence;
     if (evidence.kind !== 'ready') throw new Error('expected ready evidence');
     const nodeRow = evidence.presentation.metricRows.find(row => row.kind === 'node' && row.id === '1');
@@ -164,7 +163,46 @@ describe('topology page in-memory drilldown', () => {
     act(() => view.current().actions.hoverEdge('edge-missing'));
     expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '1' });
     expect(view.current().state.interaction.hover).toEqual({ kind: 'none' });
-    expect(view.router.state.location.search).toBe(before);
+    expect(view.router.state.location.search).toBe('?depth=1&nodeId=1');
+  });
+
+  it('restores node selection from a shared URL and clears it when the inspector closes', async () => {
+    const view = renderController('/topology?depth=1&nodeId=2');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    const requestCount = api.loadTopologyGraph.mock.calls.length;
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    expect(api.loadTopologyGraph).toHaveBeenLastCalledWith(
+      expect.objectContaining({ depth: 1 }),
+      expect.any(AbortSignal)
+    );
+    expect(api.loadTopologyGraph.mock.calls.at(-1)?.[0]).not.toHaveProperty('nodeId');
+
+    act(() => view.current().actions.clearSelection());
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+    expect(api.loadTopologyGraph).toHaveBeenCalledTimes(requestCount);
+  });
+
+  it('restores an edge selection without changing the graph query or viewport identity', async () => {
+    api.loadTopologyGraph.mockResolvedValue(topologyGraphWithEdge());
+    const view = renderController('/topology?depth=1&edgeId=edge-1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'edge', edgeId: 'edge-1' });
+    expect(api.loadTopologyGraph.mock.calls.at(-1)?.[0]).not.toHaveProperty('edgeId');
+  });
+
+  it('honestly removes a stale URL selection after graph evidence settles', async () => {
+    const view = renderController('/topology?depth=1&nodeId=missing');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+  });
+
+  it('removes an invalid mixed selection without failing the graph request', async () => {
+    const view = renderController('/topology?depth=1&nodeId=1&edgeId=edge-1');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1'));
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
   });
 });
 
@@ -228,6 +266,42 @@ function topologyGraph(nodeIds: string[]): TopologyGraph {
     })),
     edges: [],
     impactTimeline: []
+  };
+}
+
+function topologyGraphWithEdge(): TopologyGraph {
+  const graph = topologyGraph(['1', '2']);
+  return {
+    ...graph,
+    edgePage: { ...graph.edgePage, totalElements: 1 },
+    edges: [
+      {
+        id: 'edge-1',
+        relationId: 1,
+        sourceNodeId: '1',
+        targetNodeId: '2',
+        sourceEntityId: 1,
+        targetEntityId: 2,
+        targetRef: null,
+        sampleTraceId: null,
+        sampleSpanId: null,
+        firstSeen: null,
+        lastSeen: null,
+        relationType: 'calls',
+        relationSource: 'otel',
+        status: 'healthy',
+        score: null,
+        evidenceBadges: [],
+        redMetrics: {
+          requestRatePerSecond: null,
+          requestCount: null,
+          errorRate: null,
+          errorCount: null,
+          latencyP95Ms: null,
+          latencyAvgMs: null
+        }
+      }
+    ]
   };
 }
 

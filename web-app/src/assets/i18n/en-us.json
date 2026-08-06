@@ -2668,7 +2668,15 @@
       "detectFailed": "Connection test failed.",
       "saveSuccess": "Monitor saved.",
       "saveFailed": "Monitor could not be saved.",
-      "saveUnknown": "The save result is unknown. Check the monitor list before trying again."
+      "saveUnknown": "The save result is unknown. Check the monitor list before trying again.",
+      "failure": {
+        "permission": "Your session cannot perform this action. Ask an administrator for monitor write access.",
+        "validation": "The backend rejected the submitted configuration. Review the connection and required fields before retrying.",
+        "conflict": "The monitor changed after this editor loaded. Reload the editor and apply your changes to the latest version.",
+        "unavailable": "The backend or collector is temporarily unavailable. Keep this draft and retry when service is restored.",
+        "contract": "The backend response did not match the supported monitor contract. Refresh the editor; contact an administrator if it continues.",
+        "error": "The action failed without a safe diagnosis. Retry once, then contact an administrator if it continues."
+      }
     }
   },
   "alert": {

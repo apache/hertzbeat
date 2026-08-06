@@ -22,6 +22,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import { detectMonitor } from '../api/monitor-api';
+import { classifyMonitorEditorCommandFailure } from '../api/monitor-editor-api-failure';
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
 import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
@@ -203,7 +204,11 @@ function failMonitorCommand(
     return 'save-unknown' as const;
   }
   void input.message.error(action === 'detect' ? input.text.detectFailed : input.text.saveFailed);
-  return action === 'detect' ? ('detect-failed' as const) : ('save-failed' as const);
+  return {
+    kind: 'failure' as const,
+    action,
+    failure: classifyMonitorEditorCommandFailure(error)
+  };
 }
 
 function isUncertainMonitorSave(error: unknown) {

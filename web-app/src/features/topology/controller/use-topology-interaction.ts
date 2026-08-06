@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   clearTopologyHover,
@@ -16,32 +16,42 @@ import {
   type TopologyMetricRow,
   type TopologyPresentation
 } from '../model/topology-view-model';
+import type { TopologyRouteSelection } from '../model/topology-model';
 
-type ScopedInteraction = { scope: string; value: TopologyInteraction };
+type ScopedHover = { scope: string; value: TopologyInteraction['hover'] };
 
-export function useTopologyInteraction(scope: string, presentation: TopologyPresentation | undefined) {
-  const [stored, setStored] = useState<ScopedInteraction>(() => ({
+export function useTopologyInteraction(
+  scope: string,
+  presentation: TopologyPresentation | undefined,
+  routeSelection: TopologyRouteSelection,
+  onSelectionChange: (selection: TopologyRouteSelection) => void
+) {
+  const [stored, setStored] = useState<ScopedHover>(() => ({
     scope,
-    value: emptyTopologyInteraction()
+    value: emptyTopologyInteraction().hover
   }));
-  const interaction = visibleInteraction(stored, scope, presentation);
+  const selectionId = topologySelectionId(routeSelection);
+  const interaction = useMemo(
+    () => visibleInteraction(stored, scope, presentation, selectionFromIdentity(routeSelection.kind, selectionId)),
+    [presentation, routeSelection.kind, scope, selectionId, stored]
+  );
   useEffect(() => {
-    const value =
-      stored.scope === scope && presentation
-        ? reconcileTopologyInteraction(stored.value, presentation)
-        : emptyTopologyInteraction();
-    if (stored.scope === scope && sameTopologyInteraction(stored.value, value)) return;
-    // Scope and graph evidence permanently retire stale interaction IDs.
+    const value = interaction.hover;
+    if (stored.scope === scope && sameTopologyTarget(stored.value, value)) return;
+    // Scope and graph evidence permanently retire stale hover IDs.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStored({ scope, value });
-  }, [presentation, scope, stored.scope, stored.value]);
+  }, [interaction.hover, scope, stored.scope, stored.value]);
+  useEffect(() => {
+    if (!presentation || sameTopologyTarget(routeSelection, interaction.selected)) return;
+    onSelectionChange(interaction.selected);
+  }, [interaction.selected, onSelectionChange, presentation, routeSelection]);
 
   const update = (change: (current: TopologyInteraction) => TopologyInteraction) => {
     if (!presentation) return;
-    setStored(current => ({
-      scope,
-      value: reconcileTopologyInteraction(change(visibleInteraction(current, scope, presentation)), presentation)
-    }));
+    const next = reconcileTopologyInteraction(change(interaction), presentation);
+    setStored({ scope, value: next.hover });
+    if (!sameTopologyTarget(next.selected, interaction.selected)) onSelectionChange(next.selected);
   };
   return {
     interaction,
@@ -57,13 +67,26 @@ export function useTopologyInteraction(scope: string, presentation: TopologyPres
   };
 }
 
-function visibleInteraction(stored: ScopedInteraction, scope: string, presentation: TopologyPresentation | undefined) {
+function visibleInteraction(
+  stored: ScopedHover,
+  scope: string,
+  presentation: TopologyPresentation | undefined,
+  routeSelection: TopologyRouteSelection
+) {
   if (stored.scope !== scope || !presentation) return emptyTopologyInteraction();
-  return reconcileTopologyInteraction(stored.value, presentation);
+  return reconcileTopologyInteraction({ selected: routeSelection, hover: stored.value }, presentation);
 }
 
-function sameTopologyInteraction(left: TopologyInteraction, right: TopologyInteraction) {
-  return sameTopologyTarget(left.selected, right.selected) && sameTopologyTarget(left.hover, right.hover);
+function selectionFromIdentity(kind: TopologyRouteSelection['kind'], id: string): TopologyRouteSelection {
+  if (kind === 'node') return { kind, nodeId: id };
+  if (kind === 'edge') return { kind, edgeId: id };
+  return { kind: 'none' };
+}
+
+function topologySelectionId(selection: TopologyRouteSelection) {
+  if (selection.kind === 'node') return selection.nodeId;
+  if (selection.kind === 'edge') return selection.edgeId;
+  return '';
 }
 
 function sameTopologyTarget(

@@ -2809,7 +2809,15 @@
       "detectFailed": "Falha no teste de conexão.",
       "saveSuccess": "Monitor salvo.",
       "saveFailed": "Não foi possível salvar o monitor.",
-      "saveUnknown": "Não foi possível confirmar o resultado. Verifique a lista de monitores antes de tentar novamente."
+      "saveUnknown": "Não foi possível confirmar o resultado. Verifique a lista de monitores antes de tentar novamente.",
+      "failure": {
+        "permission": "Sua sessão não pode executar esta ação. Solicite a um administrador acesso de escrita a monitores.",
+        "validation": "O backend rejeitou a configuração enviada. Revise a conexão e os campos obrigatórios antes de tentar novamente.",
+        "conflict": "O monitor mudou depois que o editor foi aberto. Recarregue e aplique as alterações à versão mais recente.",
+        "unavailable": "O backend ou coletor está temporariamente indisponível. Mantenha o rascunho e tente novamente após a recuperação.",
+        "contract": "A resposta do backend não corresponde ao contrato de monitor compatível. Recarregue; se persistir, contate um administrador.",
+        "error": "A ação falhou sem um diagnóstico seguro. Tente novamente uma vez; se persistir, contate um administrador."
+      }
     }
   },
   "statusManagement": {

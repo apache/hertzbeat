@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { skipToken, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
@@ -13,8 +13,10 @@ import {
   changeTopologyScope,
   hasTopologyScopeRestrictions,
   parseTopologyQuery,
+  parseTopologySelection,
   withTopologyPageDefaults,
   writeTopologyQuery,
+  writeTopologySelection,
   type TopologyFailure,
   type TopologyQuery,
   type TopologyScopePatch
@@ -47,7 +49,23 @@ export function useTopologyPageController(options: ControllerOptions = {}): Topo
   });
   const fetched = useMemo(() => (result.data ? buildTopologyPresentation(result.data) : undefined), [result.data]);
   const presentation = useSettledTopologyGraph(semanticScope, fetched, result.isFetching, result.error);
-  const interaction = useTopologyInteraction(semanticScope, presentation);
+  const routeSelection = resolveTopologySelection(params);
+  const updateSelection = useCallback(
+    (selection: TopologyInteraction['selected']) => {
+      try {
+        const queryParams = writeTopologyQuery(parseTopologyQuery(params));
+        setParams(writeTopologySelection(queryParams, selection), { replace: true });
+      } catch {
+        // Invalid query evidence stays visible; selection cannot repair its request scope.
+      }
+    },
+    [params, setParams]
+  );
+  useEffect(() => {
+    if (routeSelection.valid) return;
+    updateSelection({ kind: 'none' });
+  }, [routeSelection.valid, updateSelection]);
+  const interaction = useTopologyInteraction(semanticScope, presentation, routeSelection.selection, updateSelection);
   const failure = result.error ? classifyTopologyError(result.error) : undefined;
   return {
     state: topologyPageState(request?.query, presentation, interaction.interaction, result.isFetching, failure),
@@ -65,7 +83,7 @@ export function useTopologyPageController(options: ControllerOptions = {}): Topo
         updateRouteQuery(params, setParams, query => changeTopologyScope(query, patch));
       },
       changePage: (pageIndex: number, pageSize: number) => {
-        updateRouteQuery(params, setParams, query => changeTopologyPage(query, pageIndex, pageSize));
+        updateRouteQuery(params, setParams, query => changeTopologyPage(query, pageIndex, pageSize), true);
       },
       refresh: () => {
         if (request) void result.refetch();
@@ -74,13 +92,24 @@ export function useTopologyPageController(options: ControllerOptions = {}): Topo
   };
 }
 
+function resolveTopologySelection(params: URLSearchParams) {
+  try {
+    return { valid: true, selection: parseTopologySelection(params) };
+  } catch {
+    return { valid: false, selection: { kind: 'none' as const } };
+  }
+}
+
 function updateRouteQuery(
   params: URLSearchParams,
   setParams: ReturnType<typeof useSearchParams>[1],
-  update: (query: TopologyQuery) => TopologyQuery
+  update: (query: TopologyQuery) => TopologyQuery,
+  preserveSelection = false
 ) {
   try {
-    setParams(writeTopologyQuery(update(parseTopologyQuery(params))));
+    const queryParams = writeTopologyQuery(update(parseTopologyQuery(params)));
+    const next = preserveSelection ? writeTopologySelection(queryParams, parseTopologySelection(params)) : queryParams;
+    setParams(next);
   } catch {
     // Invalid URL evidence stays visible until the operator corrects the address.
   }

@@ -29,7 +29,16 @@ export type MonitorMetricField = {
 };
 export type MonitorParamFormValue = string | number | boolean | Record<string, string> | MonitorMetricField[] | null;
 export type MonitorParamDraft = Omit<MonitorParam, 'paramValue'> & { paramValue: MonitorParamFormValue };
-export type MonitorEditorCommandFeedback = 'detect-success' | 'detect-failed' | 'save-failed' | 'save-unknown';
+export type MonitorEditorCommandFailureKind =
+  'permission' | 'validation' | 'conflict' | 'unavailable' | 'contract' | 'error';
+export type MonitorEditorCommandFeedback =
+  | 'detect-success'
+  | 'save-unknown'
+  | {
+      kind: 'failure';
+      action: 'detect' | 'save';
+      failure: MonitorEditorCommandFailureKind;
+    };
 export type MonitorEditorDraft = {
   monitor: Monitor;
   collector: string;

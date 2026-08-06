@@ -16,6 +16,8 @@ export type TopologyQuery = {
 };
 
 export type TopologyFailure = { kind: 'permission' | 'unavailable' | 'contract' | 'error' };
+export type TopologyRouteSelection =
+  { kind: 'none' } | { kind: 'node'; nodeId: string } | { kind: 'edge'; edgeId: string };
 export type TopologyScopePatch = {
   focusEntityId?: number | undefined;
   depth?: TopologyQuery['depth'];
@@ -30,6 +32,7 @@ export const topologyDepthValues = [1, 2] as const;
 export const topologyPageSizes = [25, 50, 100] as const;
 export const entityRelationTopologySource = 'entity-relation';
 const topologyDefaultPageSize = topologyPageSizes[0];
+const topologySelectionIdLimit = 512;
 
 export function parseTopologyQuery(params: URLSearchParams): TopologyQuery {
   const focusEntityId = readInteger(params, 'focusEntityId', 1, Number.MAX_SAFE_INTEGER);
@@ -69,6 +72,24 @@ export function writeTopologyQuery(query: TopologyQuery) {
   }
   writeInteger(next, 'pageIndex', query.pageIndex, 0, JAVA_INTEGER_MAX);
   writeInteger(next, 'pageSize', query.pageSize, 1, 200);
+  return next;
+}
+
+export function parseTopologySelection(params: URLSearchParams): TopologyRouteSelection {
+  const nodeId = readSelectionId(params, 'nodeId');
+  const edgeId = readSelectionId(params, 'edgeId');
+  if (nodeId && edgeId) throw new TopologyContractError();
+  if (nodeId) return { kind: 'node', nodeId };
+  if (edgeId) return { kind: 'edge', edgeId };
+  return { kind: 'none' };
+}
+
+export function writeTopologySelection(params: URLSearchParams, selection: TopologyRouteSelection) {
+  const next = new URLSearchParams(params);
+  next.delete('nodeId');
+  next.delete('edgeId');
+  if (selection.kind === 'node') next.set('nodeId', validSelectionId(selection.nodeId));
+  if (selection.kind === 'edge') next.set('edgeId', validSelectionId(selection.edgeId));
   return next;
 }
 
@@ -145,6 +166,26 @@ function readBoolean(params: URLSearchParams, field: string) {
 
 function readFilter(params: URLSearchParams, field: string) {
   return params.get(field)?.trim() || undefined;
+}
+
+function readSelectionId(params: URLSearchParams, field: string) {
+  const value = params.get(field);
+  return value === null ? undefined : validSelectionId(value);
+}
+
+function validSelectionId(value: string) {
+  const normalized = value.trim();
+  if (!normalized || normalized.length > topologySelectionIdLimit || hasControlCharacter(normalized)) {
+    throw new TopologyContractError();
+  }
+  return normalized;
+}
+
+function hasControlCharacter(value: string) {
+  return [...value].some(character => {
+    const code = character.codePointAt(0) ?? 0;
+    return code < 32 || code === 127;
+  });
 }
 
 function writeInteger(

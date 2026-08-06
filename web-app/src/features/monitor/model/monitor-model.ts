@@ -17,6 +17,7 @@
 
 import {
   applicationRoutePaths,
+  buildMonitorListPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
   monitorRoutePaths
@@ -148,6 +149,13 @@ export function safeMonitorReturnTo(value?: string | null) {
 
   const search = safe.toString();
   return search ? `${monitorRoutePaths.list}?${search}` : monitorRoutePaths.list;
+}
+
+/** Uses the loaded canonical app only when a direct editor URL has no explicit origin. */
+export function monitorEditorReturnTo(value: string | null, app?: string) {
+  if (value !== null) return safeMonitorReturnTo(value);
+  const normalizedApp = app?.trim();
+  return normalizedApp ? buildMonitorListPath({ app: normalizedApp }) : monitorRoutePaths.list;
 }
 
 export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', returnTo: string) {

@@ -21,6 +21,7 @@ import {
   buildMonitorCreatePath,
   buildMonitorRoutePath,
   monitorAppOptions,
+  monitorEditorReturnTo,
   monitorNavigationApps,
   monitorPageIndexCorrection,
   monitorSelectionScope,
@@ -160,6 +161,12 @@ describe('monitor list model', () => {
     expect(buildMonitorCreatePath('', '/monitors?status=2&pageIndex=3')).toBe(
       '/monitors/new?returnTo=%2Fmonitors%3Fstatus%3D2%26pageIndex%3D3'
     );
+  });
+
+  it('builds a direct editor fallback from the canonical monitor app only when returnTo is absent', () => {
+    expect(monitorEditorReturnTo(null, ' website ')).toBe('/monitors?app=website');
+    expect(monitorEditorReturnTo('/monitors?status=2', 'website')).toBe('/monitors?status=2');
+    expect(monitorEditorReturnTo('//evil.example', 'website')).toBe('/monitors');
   });
 
   it('keeps only normalized monitor filters in return paths', () => {

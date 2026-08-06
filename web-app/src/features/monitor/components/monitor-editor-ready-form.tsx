@@ -4,7 +4,7 @@ import { Alert, Button } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { OperationalFormActions } from '@/shared/operational-page';
+import { OperationalFormActions, OperationalStatePanel } from '@/shared/operational-page';
 
 import type { MonitorEditorCommandFeedback, MonitorEditorDraft } from '../model/monitor-editor-model';
 import { MonitorEditorAppPicker } from './monitor-editor-app-picker';
@@ -118,29 +118,36 @@ function MonitorEditorActions({ controller }: { controller: MonitorEditorFormCon
 function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorCommandFeedback | null }) {
   const { t } = useTranslation();
   if (!feedback) return null;
-  const successful = feedback === 'detect-success';
-  const uncertain = feedback === 'save-unknown';
+  if (typeof feedback !== 'string') {
+    return (
+      <div className={`${styles.formRail} ${styles.commandFeedback}`}>
+        <OperationalStatePanel
+          kind={commandFailureState(feedback.failure)}
+          title={t(feedback.action === 'detect' ? 'monitor.editor.detectFailed' : 'monitor.editor.saveFailed')}
+          description={t(`monitor.editor.failure.${feedback.failure}`)}
+        />
+      </div>
+    );
+  }
   return (
     <div className={`${styles.formRail} ${styles.commandFeedback}`}>
       <Alert
-        role={successful || uncertain ? 'status' : 'alert'}
+        role="status"
         showIcon
         type={commandFeedbackType(feedback)}
-        message={t(commandFeedbackMessageKey(feedback))}
+        message={t(feedback === 'detect-success' ? 'monitor.editor.detectSuccess' : 'monitor.editor.saveUnknown')}
       />
     </div>
   );
 }
 
-function commandFeedbackMessageKey(feedback: MonitorEditorCommandFeedback) {
-  if (feedback === 'detect-success') return 'monitor.editor.detectSuccess';
-  if (feedback === 'detect-failed') return 'monitor.editor.detectFailed';
-  if (feedback === 'save-unknown') return 'monitor.editor.saveUnknown';
-  return 'monitor.editor.saveFailed';
-}
-
 function commandFeedbackType(feedback: MonitorEditorCommandFeedback) {
   if (feedback === 'detect-success') return 'success' as const;
-  if (feedback === 'save-unknown') return 'warning' as const;
+  return 'warning' as const;
+}
+
+function commandFailureState(failure: Extract<MonitorEditorCommandFeedback, { kind: 'failure' }>['failure']) {
+  if (failure === 'permission') return 'permission' as const;
+  if (failure === 'unavailable') return 'unavailable' as const;
   return 'error' as const;
 }

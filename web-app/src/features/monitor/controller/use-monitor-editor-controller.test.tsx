@@ -190,7 +190,11 @@ describe('useMonitorEditorController', () => {
 
     api.detectMonitor.mockRejectedValueOnce(new ApiMessageError('connection rejected', { status: 400 }));
     await act(async () => routed.current().actions.detect());
-    expect(routed.current().state.feedback).toBe('detect-failed');
+    expect(routed.current().state.feedback).toEqual({
+      kind: 'failure',
+      action: 'detect',
+      failure: 'validation'
+    });
   });
 
   it('retires idle command feedback when route navigation changes the source', async () => {
@@ -384,6 +388,42 @@ describe('useMonitorEditorController', () => {
     expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
   });
 
+  it.each([
+    [new ApiMessageError('private permission', { status: 403 }), 'permission'],
+    [new ApiMessageError('private validation', { status: 422 }), 'validation'],
+    [new ApiMessageError('private conflict', { status: 409 }), 'conflict'],
+    [new ApiMessageError('private unavailable', { status: 503 }), 'unavailable'],
+    [new MonitorContractError('private contract'), 'contract'],
+    [new Error('private failure'), 'error']
+  ] as const)('keeps a redacted actionable detect failure class for %s', async (reason, failure) => {
+    api.detectMonitor.mockRejectedValueOnce(reason);
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.detect());
+
+    expect(routed.current().state.feedback).toEqual({ kind: 'failure', action: 'detect', failure });
+    expect(routed.current().state.feedback).not.toHaveProperty('message');
+  });
+
+  it('returns a direct edit save and cancel to the monitor application context', async () => {
+    const saved = renderController('edit', '/monitors/7/edit');
+    await waitFor(() => expect(saved.current().state.draft?.monitor.app).toBe('website'));
+
+    await act(async () => saved.current().actions.save());
+
+    expect(saved.router.state.location.pathname).toBe('/monitors');
+    expect(saved.router.state.location.search).toBe('?app=website');
+    cleanup();
+
+    const cancelled = renderController('edit', '/monitors/7/edit');
+    await waitFor(() => expect(cancelled.current().state.draft?.monitor.app).toBe('website'));
+    act(() => cancelled.current().actions.cancel());
+    expect(cancelled.router.state.location.pathname).toBe('/monitors');
+    expect(cancelled.router.state.location.search).toBe('?app=website');
+  });
+
   it('navigates after an acknowledged create without issuing identity read-back requests', async () => {
     const routed = renderController('new', '/monitors/new?app=website');
     await waitFor(() => expect(routed.current().state.draft).toBeDefined());
@@ -450,7 +490,11 @@ describe('useMonitorEditorController', () => {
     expect(notify.error).toHaveBeenCalledWith('monitor.editor.saveFailed');
     expect(notify.success).not.toHaveBeenCalledWith('monitor.editor.saveSuccess');
     expect(routed.router.state.location.pathname).toBe('/monitors/new');
-    expect(routed.current().state.feedback).toBe('save-failed');
+    expect(routed.current().state.feedback).toEqual({
+      kind: 'failure',
+      action: 'save',
+      failure: 'validation'
+    });
   });
 
   it('blocks save while a structured row reports invalid state', async () => {

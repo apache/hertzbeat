@@ -20,6 +20,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { monitorScrapeValues, type MonitorEditorMode } from '../model/monitor-contract';
+import { monitorEditorReturnTo } from '../model/monitor-model';
 import { createMonitorEditorActions } from './monitor-editor-actions';
 import type { MonitorEditorCommandText } from './monitor-editor-command-model';
 import { useMonitorEditorCommands } from './use-monitor-editor-commands';
@@ -37,7 +38,7 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     source: resources.source,
     draft: draftState.draft,
     defines: resources.defines,
-    returnTo: route.returnTo,
+    returnTo: monitorEditorReturnTo(route.returnTo, mode === 'edit' ? resources.app : undefined),
     navigate: route.navigate,
     message,
     text: monitorEditorCommandText(t)

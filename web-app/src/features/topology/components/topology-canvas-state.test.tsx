@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { interaction, presentation } from './topology-canvas-test-fixtures';
@@ -51,6 +52,7 @@ vi.mock('antd', () => ({ theme: { useToken: () => ({ token: antTheme.token }) } 
 
 import { TopologyCanvas } from './topology-canvas';
 import { useTopologyInteraction } from '../controller/use-topology-interaction';
+import type { TopologyRouteSelection } from '../model/topology-model';
 
 beforeEach(() => {
   runtime.instances.length = 0;
@@ -283,7 +285,13 @@ function eventCallbacks() {
 const stablePresentation = presentation('stable-structure');
 
 function InteractionRuntimeHarness({ runtimeReady }: { runtimeReady: boolean }) {
-  const { interaction: current, actions } = useTopologyInteraction('stable-scope', stablePresentation);
+  const [selection, setSelection] = useState<TopologyRouteSelection>({ kind: 'none' });
+  const { interaction: current, actions } = useTopologyInteraction(
+    'stable-scope',
+    stablePresentation,
+    selection,
+    setSelection
+  );
   return (
     <>
       <button type="button" onClick={() => actions.selectNode('node-a')}>

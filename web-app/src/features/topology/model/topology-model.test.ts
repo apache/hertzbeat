@@ -100,4 +100,26 @@ describe('topology query model', () => {
     const query = { depth: 1 as const, hideInternal: 'yes' as unknown as boolean };
     expect(() => writeTopologyQuery(query)).toThrow(TopologyContractError);
   });
+
+  it('parses and writes mutually exclusive node and edge inspector selection', async () => {
+    const model = await import('./topology-model');
+    expect(model.parseTopologySelection(new URLSearchParams('nodeId=service%3Acheckout'))).toEqual({
+      kind: 'node',
+      nodeId: 'service:checkout'
+    });
+    expect(model.parseTopologySelection(new URLSearchParams('edgeId=calls%3Aorders'))).toEqual({
+      kind: 'edge',
+      edgeId: 'calls:orders'
+    });
+    expect(() => model.parseTopologySelection(new URLSearchParams('nodeId=one&edgeId=two'))).toThrow(
+      TopologyContractError
+    );
+
+    const node = model.writeTopologySelection(new URLSearchParams('depth=2&edgeId=old'), {
+      kind: 'node',
+      nodeId: 'service:checkout'
+    });
+    expect(node.toString()).toBe('depth=2&nodeId=service%3Acheckout');
+    expect(model.writeTopologySelection(node, { kind: 'none' }).toString()).toBe('depth=2');
+  });
 });

@@ -25,7 +25,7 @@ import {
   type MonitorEditorMode
 } from '../model/monitor-contract';
 import { parseMonitorRouteId } from '../model/monitor-detail-model';
-import { isSelectableMonitorApp, safeMonitorReturnTo } from '../model/monitor-model';
+import { isSelectableMonitorApp } from '../model/monitor-model';
 
 export function useMonitorEditorRoute(mode: MonitorEditorMode) {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export function useMonitorEditorRoute(mode: MonitorEditorMode) {
     rawScrape,
     requestedApp: mode === 'new' ? (searchParams.get('app')?.trim() ?? '') : '',
     requestedScrape: normalizeMonitorScrape(rawScrape),
-    returnTo: safeMonitorReturnTo(searchParams.get('returnTo')),
+    returnTo: searchParams.get('returnTo'),
     searchParams,
     validRoute: mode === 'new' || id !== undefined
   };

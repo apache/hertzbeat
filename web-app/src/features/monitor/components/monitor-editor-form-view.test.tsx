@@ -21,6 +21,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { MonitorParamDefine } from '../model/monitor-contract';
 import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
+import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { MonitorEditorFormView } from './monitor-editor-form-view';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US' } }) }));
@@ -327,9 +328,11 @@ describe('MonitorEditorFormView validation evidence', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectSuccess');
 
-    controller.state.feedback = 'detect-failed';
+    controller.state.feedback = { kind: 'failure', action: 'detect', failure: 'permission' };
     rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
-    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.detectFailed');
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectFailed');
+    expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.failure.permission');
+    expect(screen.getByRole('status')).not.toHaveTextContent('private backend');
 
     controller.state.feedback = 'save-unknown';
     rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
@@ -389,7 +392,7 @@ function editorController(validationIssues: string[]) {
       collectors: [],
       busy: false,
       command: 'idle' as 'idle' | 'detecting' | 'saving',
-      feedback: null as 'detect-success' | 'detect-failed' | 'save-failed' | 'save-unknown' | null,
+      feedback: null as MonitorEditorCommandFeedback | null,
       validationIssues,
       returnTo: '/monitors',
       scrapeValues: ['static'] as const,

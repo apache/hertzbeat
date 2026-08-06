@@ -4,7 +4,13 @@ import { applicationRoutePaths, buildEntityDetailPath } from '@/shared/navigatio
 import { buildSignalHandoffPath, type ExactTimeWindow } from '@/shared/query-context';
 
 import type { TopologyNode } from './topology-contract';
-import { entityRelationTopologySource, parseTopologyQuery, writeTopologyQuery } from './topology-model';
+import {
+  entityRelationTopologySource,
+  parseTopologyQuery,
+  parseTopologySelection,
+  writeTopologyQuery,
+  writeTopologySelection
+} from './topology-model';
 
 export type TopologyFocusPathOptions = {
   entityId: number;
@@ -37,7 +43,10 @@ function safeTopologyContext(value?: string | null) {
   const url = new URL(value, 'https://hertzbeat.local');
   if (url.pathname !== applicationRoutePaths.topology) return undefined;
   try {
-    const normalized = writeTopologyQuery(parseTopologyQuery(url.searchParams));
+    const normalized = writeTopologySelection(
+      writeTopologyQuery(parseTopologyQuery(url.searchParams)),
+      parseTopologySelection(url.searchParams)
+    );
     const safe = new URLSearchParams();
     normalized.forEach((fieldValue, field) => {
       if (url.searchParams.has(field)) safe.set(field, fieldValue);
