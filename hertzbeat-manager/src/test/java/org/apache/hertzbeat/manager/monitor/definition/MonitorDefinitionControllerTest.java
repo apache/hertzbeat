@@ -50,7 +50,7 @@ class MonitorDefinitionControllerTest {
     void catalogReturnsOnlyTheFrozenVersionedShape() throws Exception {
         when(service.catalog("en-US")).thenReturn(new MonitorDefinitionCatalogResponse(1, List.of(
                 new MonitorDefinitionCatalogItem(
-                        "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, false, false, true, "a".repeat(64)))));
+                        "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, true, false, true, "a".repeat(64)))));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/catalog").param("lang", "en-US"))
                 .andExpect(status().isOk())
@@ -59,23 +59,25 @@ class MonitorDefinitionControllerTest {
                 .andExpect(jsonPath("$.data.items.length()").value(1))
                 .andExpect(jsonPath("$.data.items[0].app").value("jvm"))
                 .andExpect(jsonPath("$.data.items[0].origin").value("builtin"))
-                .andExpect(jsonPath("$.data.items[0].editable").value(false))
+                .andExpect(jsonPath("$.data.items[0].editable").value(true))
                 .andExpect(jsonPath("$.data.items[0].hidden").value(true))
                 .andExpect(jsonPath("$.data.observedAt").doesNotExist());
     }
 
     @Test
-    void detailReturnsCanonicalIdentityAndRawDefinition() throws Exception {
-        when(service.detail("mysql", "en-US")).thenReturn(new MonitorDefinitionDetailResponse(
-                1, "MySql", "MySQL", MonitorDefinitionOrigin.OVERRIDE, true, true, false,
-                "app: MySql", "b".repeat(64)));
+    void builtinDetailReturnsCanonicalEditableOverrideAuthority() throws Exception {
+        when(service.detail("jvm", "en-US")).thenReturn(new MonitorDefinitionDetailResponse(
+                1, "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, true, false, false,
+                "app: jvm", "b".repeat(64)));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/mysql").param("lang", "en-US"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/jvm").param("lang", "en-US"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.schemaVersion").value(1))
-                .andExpect(jsonPath("$.data.app").value("MySql"))
-                .andExpect(jsonPath("$.data.origin").value("override"))
-                .andExpect(jsonPath("$.data.definition").value("app: MySql"));
+                .andExpect(jsonPath("$.data.app").value("jvm"))
+                .andExpect(jsonPath("$.data.origin").value("builtin"))
+                .andExpect(jsonPath("$.data.editable").value(true))
+                .andExpect(jsonPath("$.data.deletable").value(false))
+                .andExpect(jsonPath("$.data.definition").value("app: jvm"));
     }
 
     @Test

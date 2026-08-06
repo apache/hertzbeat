@@ -203,15 +203,15 @@ describe('MonitorDefinitionPage', () => {
     expect(controller.actions.updateVisibility).toHaveBeenCalledWith(item);
   });
 
-  it('opens a built-in definition in the comparison editor while keeping deletion disabled', () => {
-    const builtin = { ...item, origin: 'builtin' as const, editable: true, deletable: false };
+  it('opens a real built-in definition in the editable comparison workspace while keeping deletion disabled', () => {
+    const builtin = { ...item, origin: 'builtin' as const, deletable: false };
     const builtinDetail = { schemaVersion: 1 as const, ...builtin, definition: 'app: mysql' };
     const controller = buildController({
       items: [builtin],
       workspace: {
         kind: 'edit',
         authority: builtinDetail,
-        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql', revision },
+        draft: { mode: 'update', expectedApp: 'mysql', definition: 'app: mysql\nname: override', revision },
         failure: null,
         pending: null,
         validation: null,
@@ -224,6 +224,7 @@ describe('MonitorDefinitionPage', () => {
     expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
   });
 
   it('uses the shared canonical monitor-list path for the selected definition', () => {

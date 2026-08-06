@@ -357,15 +357,36 @@ describe('useMonitorDefinitionController', () => {
     expect(view.result.current.visibilityFailure).toBeNull();
   });
 
-  it('preserves an immutable detail as an explicit failed edit admission', async () => {
-    api.detail.mockResolvedValueOnce({ ...detail, origin: 'builtin', editable: false, deletable: false });
-    const { result } = renderController();
-    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+  it('opens a real builtin deep link for editing and saves it as an active override', async () => {
+    const builtin = { ...detail, origin: 'builtin' as const, deletable: false };
+    const override = {
+      ...detail,
+      origin: 'override' as const,
+      editable: true,
+      deletable: true,
+      definition: 'app: mysql\nname: override',
+      revision: newerRevision
+    };
+    api.catalog
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [{ ...builtin }] })
+      .mockResolvedValueOnce({ schemaVersion: 1, items: [{ ...override }] });
+    api.detail.mockResolvedValueOnce(builtin).mockResolvedValueOnce(override);
+    api.update.mockResolvedValueOnce(override);
+    const { result } = renderControllerAt('/settings/monitor-definitions?app=mysql');
+    await waitFor(() => expect(result.current.workspace).toEqual(updateWorkspace(builtin)));
+    act(() => result.current.actions.setDefinition('app: mysql\nname: override'));
 
-    await act(() => result.current.actions.openEdit('mysql'));
+    await act(() => result.current.actions.save());
 
-    expect(result.current.workspace).toEqual({ kind: 'error', mode: 'edit', app: 'mysql', failure: 'immutable' });
-    expect(api.update).not.toHaveBeenCalled();
+    expect(api.update).toHaveBeenCalledWith(
+      'mysql',
+      'app: mysql\nname: override',
+      revision,
+      'en-US',
+      expect.any(AbortSignal)
+    );
+    expect(result.current.workspace).toEqual(updateWorkspace(override));
+    expect(result.current.items).toEqual([{ ...override }]);
   });
 
   it('reports required YAML locally and sends no validate or save request for a blank create draft', async () => {

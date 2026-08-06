@@ -48,9 +48,6 @@ public class MonitorDefinitionCommandService implements MonitorDefinitionCommand
         return executor.executeSerialized(state -> {
             MonitorDefinitionSource previous = require(app, state.readAll());
             Job parsed = parse(state, definition);
-            if (MonitorDefinitionRevision.origin(previous) == MonitorDefinitionOrigin.BUILTIN) {
-                throw failure(MonitorDefinitionErrorCode.IMMUTABLE);
-            }
             if (!previous.job().getApp().equals(app) || !previous.job().getApp().equals(parsed.getApp())) {
                 throw failure(MonitorDefinitionErrorCode.UPDATE_TARGET_MISMATCH);
             }
@@ -131,9 +128,14 @@ public class MonitorDefinitionCommandService implements MonitorDefinitionCommand
     private static void compensateRuntimeFailure(
             MonitorDefinitionCommandState state, Job parsed, MonitorDefinitionSource previous) {
         try {
-            if (previous == null) {
+            if (previous == null || MonitorDefinitionRevision.origin(previous) == MonitorDefinitionOrigin.BUILTIN) {
                 state.remove(parsed.getApp());
                 state.publishRemoval(parsed.getApp());
+                if (previous != null) {
+                    // A builtin update creates a new active override. Compensation must
+                    // remove that layer instead of persisting builtin YAML as an active copy.
+                    state.updateRuntime(previous.job());
+                }
             } else {
                 state.save(previous.job().getApp(), previous.definition());
                 state.publish(previous.job(), previous.definition());
