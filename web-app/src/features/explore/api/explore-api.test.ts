@@ -38,6 +38,7 @@ import {
   buildSignalApiPath,
   buildTraceDetailApiPath,
   classifyExploreSignalError,
+  loadLogHistoryEvidence,
   loadLogSignal,
   loadMetricSignal,
   loadTraceDetail,
@@ -308,13 +309,96 @@ describe('explore API paths', () => {
       })
       .mockResolvedValueOnce(stableLogPage([]))
       .mockResolvedValueOnce(springPage([traceRow('trace-1')]));
-    await loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal);
+    await loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m', query: 'up' }, signal);
     await loadLogSignal({ signal: 'logs', timeRange: 'last-15m', pageIndex: 0 }, signal);
     await loadTraceSignal({ signal: 'traces', timeRange: 'last-15m', pageIndex: 0 }, signal);
     expect(apiMessageGet).toHaveBeenCalledTimes(3);
     expect(
       apiMessageGet.mock.calls.every((call: unknown[]) => (call[1] as { signal: AbortSignal }).signal === signal)
     ).toBe(true);
+  });
+
+  it('resolves an empty metric query from source-backed inventory before querying the console', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce({
+        context: null,
+        source: 'greptime-inventory',
+        total: 1,
+        items: [
+          {
+            metricName: 'http_server_duration',
+            family: 'latency',
+            timeSeriesCount: 2,
+            latestObservedAt: 2_000,
+            labels: { service_name: 'checkout' }
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        context: null,
+        query: 'http_server_duration',
+        datasource: 'greptime',
+        queryMode: 'inventory',
+        results: null,
+        stats: null,
+        emptyStateReason: 'no-series',
+        errorMessage: null
+      });
+
+    await expect(loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal)).resolves.toMatchObject({
+      query: 'http_server_duration'
+    });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('/api/ingestion/otlp/metrics/inventory?'),
+      { signal }
+    );
+    expect(apiMessageGet).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/metrics\/console\?.*query=http_server_duration/u),
+      { signal }
+    );
+  });
+
+  it('keeps log overview and trend failures independent from a valid page', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce(stableLogPage([logRow('valid')]))
+      .mockRejectedValueOnce(new Error('overview unavailable'))
+      .mockResolvedValueOnce({ hourlyStats: { '2026-08-06 10:00': 4 } });
+
+    await expect(
+      loadLogHistoryEvidence({ signal: 'logs', timeRange: 'last-15m', query: 'timeout' }, signal)
+    ).resolves.toEqual({
+      page: expect.objectContaining({ totalElements: 1 }),
+      overview: { kind: 'error' },
+      trend: { kind: 'ready', data: { hourlyStats: { '2026-08-06 10:00': 4 } } }
+    });
+    expect(apiMessageGet.mock.calls.map(call => String(call[0]))).toEqual([
+      expect.stringContaining('/api/logs/list?'),
+      expect.stringContaining('/api/logs/stats/overview?'),
+      expect.stringContaining('/api/logs/stats/trend?')
+    ]);
+    expect(apiMessageGet.mock.calls.every(call => call[1]?.signal === signal)).toBe(true);
+  });
+
+  it('does not turn aborted log statistics into cacheable partial evidence', async () => {
+    const controller = new AbortController();
+    apiMessageGet.mockResolvedValueOnce(stableLogPage([logRow('valid')])).mockImplementation(
+      (_path: string, request: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          request.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {
+            once: true
+          });
+        })
+    );
+
+    const pending = loadLogHistoryEvidence({ signal: 'logs', timeRange: 'last-15m' }, controller.signal);
+    await vi.waitFor(() => expect(apiMessageGet).toHaveBeenCalledTimes(3));
+    controller.abort(new DOMException('Aborted', 'AbortError'));
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
   });
 
   it('keeps missing, transport, contract, and other failures distinct', () => {

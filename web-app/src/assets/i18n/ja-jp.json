@@ -525,8 +525,25 @@
     "streamGapCount": "フィルタリング前に少なくとも {{count}} 件のログが失われました。完全なストリームを開始するには再試行してください。",
     "pause": "一時停止",
     "resume": "再開",
+    "pauseDisconnect": "一時停止して切断",
+    "resumeNewStream": "新しいストリームで再開",
     "clear": "クリア",
-    "paused": "一時停止中"
+    "paused": "一時停止中",
+    "pauseDisconnectGap": "一時停止するとライブログストリームは切断されます。再開前に生成されたログは復元されず、欠落する可能性があります。",
+    "localRetention": "最新の {{retained}} 件を表示しています。古い {{dropped}} 件はローカルで破棄されました。",
+    "overview": "ログ概要",
+    "trend": "ログ傾向",
+    "trendEmpty": "このクエリでは傾向の時間区分が返されませんでした。",
+    "statisticsUnavailable": "この統計領域を読み込めませんでした。",
+    "statistics": {
+      "total": "合計",
+      "trace": "Trace",
+      "debug": "デバッグ",
+      "info": "情報",
+      "warn": "警告",
+      "error": "エラー",
+      "fatal": "致命的"
+    }
   },
   "exploreTrace": {
     "detail": "トレース詳細",

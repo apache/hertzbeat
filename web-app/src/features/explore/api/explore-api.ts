@@ -36,17 +36,39 @@ import {
   parseTraceDuration
 } from '../model/explore-field-contract';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
-import { parseLogPage, parseLogRow, parseLogStreamGap } from './explore-log-schema';
-import { parseMetricConsole } from './explore-metric-schema';
+import { parseLogOverview, parseLogPage, parseLogRow, parseLogStreamGap, parseLogTrend } from './explore-log-schema';
+import { parseMetricConsole, parseMetricInventory } from './explore-metric-schema';
 import { parseTraceDetail, parseTracePage, parseTraceSpans } from './explore-trace-schema';
 
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
-  return parseMetricConsole(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)));
+  const observedAt = Date.now();
+  const resolvedQuery = query.query?.trim() ? query : await resolveInventoryMetricQuery(query, observedAt, signal);
+  return parseMetricConsole(await apiMessageGet(buildSignalApiPath(resolvedQuery, observedAt), requestSignal(signal)));
 }
 
 export async function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
   const pageIndex = query.pageIndex ?? 0;
   return parseLogPage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
+}
+
+export async function loadLogHistoryEvidence(query: LogExploreQuery, signal?: AbortSignal) {
+  const observedAt = Date.now();
+  const page = parseLogPage(
+    await apiMessageGet(buildSignalApiPath(query, observedAt), requestSignal(signal)),
+    query.pageIndex ?? 0,
+    20
+  );
+  const [overview, trend] = await Promise.allSettled([
+    apiMessageGet(buildLogStatsApiPath(query, 'overview', observedAt), requestSignal(signal)).then(parseLogOverview),
+    apiMessageGet(buildLogStatsApiPath(query, 'trend', observedAt), requestSignal(signal)).then(parseLogTrend)
+  ]);
+  if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+  return {
+    page,
+    overview:
+      overview.status === 'fulfilled' ? { kind: 'ready' as const, data: overview.value } : { kind: 'error' as const },
+    trend: trend.status === 'fulfilled' ? { kind: 'ready' as const, data: trend.value } : { kind: 'error' as const }
+  };
 }
 
 export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
@@ -136,6 +158,13 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   return `/api/traces/list?${params.toString()}`;
 }
 
+export function buildLogStatsApiPath(query: LogExploreQuery, kind: 'overview' | 'trend', now = Date.now()) {
+  requireQueryableScope(query);
+  const params = sharedSignalParams(query, now);
+  appendLogFilters(params, query);
+  return `/api/logs/stats/${kind}?${params.toString()}`;
+}
+
 export function buildLogStreamPath(query: LogExploreQuery) {
   requireQueryableScope(query);
   const params = new URLSearchParams();
@@ -202,6 +231,35 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
   params.set('start', String(exact ? query.start : now - timeRangeMilliseconds(query.timeRange)));
   params.set('end', String(exact ? query.end : now));
   return params;
+}
+
+async function resolveInventoryMetricQuery(
+  query: MetricExploreQuery,
+  observedAt: number,
+  signal?: AbortSignal
+): Promise<MetricExploreQuery> {
+  const inventory = parseMetricInventory(
+    await apiMessageGet(buildMetricInventoryApiPath(query, observedAt), requestSignal(signal))
+  );
+  // A successfully empty inventory has no metric to select; `up` is the stable established fallback.
+  return { ...query, query: inventory.items[0]?.metricName ?? 'up' };
+}
+
+function buildMetricInventoryApiPath(query: MetricExploreQuery, now = Date.now()) {
+  const params = sharedSignalParams(query, now);
+  params.set('limit', '20');
+  return `/api/ingestion/otlp/metrics/inventory?${params.toString()}`;
+}
+
+function appendLogFilters(params: URLSearchParams, query: LogExploreQuery) {
+  setValue(params, 'search', query.query);
+  setValue(params, 'traceId', query.traceId);
+  setValue(params, 'spanId', query.spanId);
+  setValue(params, 'severityText', query.severityText);
+  setValue(params, 'resourceFilter', query.resourceFilter);
+  setValue(params, 'attributeFilter', query.attributeFilter);
+  setEnabled(params, 'hideInternal', query.hideInternal);
+  setEnabled(params, 'hideNoise', query.hideNoise);
 }
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {

@@ -146,7 +146,14 @@ function HistoricalResult({
   if (result.signal === 'logs' && query.signal === 'logs')
     return (
       <ExploreResultFrame>
-        <LogResult data={result.data} query={query} t={t} navigate={openPath} evidenceCurrent={evidenceCurrent} />
+        <LogResult
+          data={result.data}
+          statistics={result.statistics}
+          query={query}
+          t={t}
+          navigate={openPath}
+          evidenceCurrent={evidenceCurrent}
+        />
       </ExploreResultFrame>
     );
   if (result.signal === 'traces' && query.signal === 'traces')

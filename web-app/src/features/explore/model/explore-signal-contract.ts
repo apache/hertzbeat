@@ -18,6 +18,7 @@
 import type { PagedCollection } from '@/shared/pagination';
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+export const LIVE_LOG_RETENTION_LIMIT = 500;
 export type ExplorePageResult<T> = PagedCollection<T>;
 
 export type TraceRow = {
@@ -100,6 +101,22 @@ export type LogStreamGap = {
   observedAt: number;
   reason: 'queue_overflow';
   droppedCount: number;
+};
+export type LogOverview = {
+  totalCount: number;
+  traceCount: number;
+  debugCount: number;
+  infoCount: number;
+  warnCount: number;
+  errorCount: number;
+  fatalCount: number;
+};
+export type LogTrend = { hourlyStats: Record<string, number> };
+export type LogStatisticEvidence<T> = { kind: 'ready'; data: T } | { kind: 'error' };
+export type LogHistoryEvidence = {
+  page: ExplorePageResult<LogRow>;
+  overview: LogStatisticEvidence<LogOverview>;
+  trend: LogStatisticEvidence<LogTrend>;
 };
 
 export type MetricField = {

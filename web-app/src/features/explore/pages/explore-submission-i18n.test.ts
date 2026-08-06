@@ -54,6 +54,25 @@ describe('Explore submission locale contract', () => {
       }
     }
   });
+
+  it('localizes live retention honesty and historical log evidence regions', () => {
+    for (const locale of runtimeLocales) {
+      for (const value of [
+        locale.exploreLog.pauseDisconnectGap,
+        locale.exploreLog.pauseDisconnect,
+        locale.exploreLog.resumeNewStream,
+        locale.exploreLog.localRetention,
+        locale.exploreLog.overview,
+        locale.exploreLog.trend,
+        locale.exploreLog.trendEmpty,
+        locale.exploreLog.statisticsUnavailable,
+        ...Object.values(locale.exploreLog.statistics)
+      ]) {
+        expect(value).toEqual(expect.any(String));
+        expect(value).not.toBe('');
+      }
+    }
+  });
 });
 
 type LocaleRoot = {
@@ -64,7 +83,19 @@ type LocaleRoot = {
     temporalAggregationContext: string;
     temporalAggregationValues: Record<'raw' | 'rate' | 'increase' | 'delta', string>;
   };
-  exploreLog: { hideInternal: string; hideNoise: string };
+  exploreLog: {
+    hideInternal: string;
+    hideNoise: string;
+    pauseDisconnectGap: string;
+    pauseDisconnect: string;
+    resumeNewStream: string;
+    localRetention: string;
+    overview: string;
+    trend: string;
+    trendEmpty: string;
+    statisticsUnavailable: string;
+    statistics: Record<'total' | 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal', string>;
+  };
   exploreTrace: {
     spanScope: string;
     spanScopeContext: string;

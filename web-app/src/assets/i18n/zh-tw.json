@@ -522,8 +522,25 @@
     "streamGapCount": "篩選前至少遺失了 {{count}} 筆日誌。請重試以開始完整的新日誌流。",
     "pause": "暫停",
     "resume": "繼續",
+    "pauseDisconnect": "暫停並中斷連線",
+    "resumeNewStream": "恢復並建立新日誌流",
     "clear": "清除",
-    "paused": "已暫停"
+    "paused": "已暫停",
+    "pauseDisconnectGap": "暫停會中斷即時日誌流。恢復前產生的日誌不會補傳，因此可能存在缺口。",
+    "localRetention": "目前顯示最新 {{retained}} 筆日誌；已有 {{dropped}} 筆較早日誌在本機被捨棄。",
+    "overview": "日誌概覽",
+    "trend": "日誌趨勢",
+    "trendEmpty": "此查詢未傳回趨勢時間區段。",
+    "statisticsUnavailable": "此統計區域無法載入。",
+    "statistics": {
+      "total": "總計",
+      "trace": "Trace",
+      "debug": "除錯",
+      "info": "資訊",
+      "warn": "警告",
+      "error": "錯誤",
+      "fatal": "嚴重"
+    }
   },
   "exploreTrace": {
     "detail": "鏈路詳情",

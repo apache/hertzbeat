@@ -58,7 +58,9 @@ export function useLiveLogController(query: LogExploreQuery) {
           rows: currentEvidence.rows,
           integrity: 'degraded',
           gapDroppedCount: currentEvidence.gapDroppedCount,
-          gapCountOverflowed: currentEvidence.gapCountOverflowed
+          gapCountOverflowed: currentEvidence.gapCountOverflowed,
+          locallyDroppedCount: currentEvidence.locallyDroppedCount,
+          pauseDisconnectGap: true
         };
       });
     if (!nextPaused) setConnectionState({ scope: connectionScope, value: 'waiting' });
@@ -68,6 +70,8 @@ export function useLiveLogController(query: LogExploreQuery) {
     rows: evidence.rows,
     status,
     gapDroppedCount: evidence.gapDroppedCount,
+    locallyDroppedCount: evidence.locallyDroppedCount,
+    pauseDisconnectGap: evidence.pauseDisconnectGap,
     togglePaused,
     retry: () => {
       setEvidenceState({
@@ -75,7 +79,9 @@ export function useLiveLogController(query: LogExploreQuery) {
         rows: [],
         integrity: 'complete',
         gapDroppedCount: undefined,
-        gapCountOverflowed: false
+        gapCountOverflowed: false,
+        locallyDroppedCount: 0,
+        pauseDisconnectGap: false
       });
       setConnectionState({ scope: connectionScope, value: 'waiting' });
       setRetryRevision(current => current + 1);

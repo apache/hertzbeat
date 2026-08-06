@@ -531,8 +531,25 @@
     "streamGapCount": "Pelo menos {{count}} entradas de log foram perdidas antes da filtragem. Tente novamente para iniciar um fluxo completo.",
     "pause": "Pausar",
     "resume": "Retomar",
+    "pauseDisconnect": "Pausar e desconectar",
+    "resumeNewStream": "Retomar com um novo fluxo",
     "clear": "Limpar",
-    "paused": "Pausado"
+    "paused": "Pausado",
+    "pauseDisconnectGap": "Pausar desconecta o fluxo de logs ao vivo. Logs produzidos antes da retomada não são recuperados e podem ficar ausentes.",
+    "localRetention": "Exibindo as {{retained}} linhas mais recentes. {{dropped}} linhas antigas foram descartadas localmente.",
+    "overview": "Visão geral dos logs",
+    "trend": "Tendência dos logs",
+    "trendEmpty": "Nenhum intervalo de tendência foi retornado para esta consulta.",
+    "statisticsUnavailable": "Não foi possível carregar esta região de estatísticas.",
+    "statistics": {
+      "total": "Total",
+      "trace": "Trace",
+      "debug": "Debug",
+      "info": "Info",
+      "warn": "Aviso",
+      "error": "Erro",
+      "fatal": "Fatal"
+    }
   },
   "exploreTrace": {
     "detail": "Detalhes do trace",

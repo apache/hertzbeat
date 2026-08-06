@@ -17,10 +17,9 @@
 
 import { useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import type { LogRow } from '../model/explore-signal-contract';
+import { LIVE_LOG_RETENTION_LIMIT, type LogRow } from '../model/explore-signal-contract';
 import type { LiveLogStatus } from '../model/explore-signal-model';
 
-const MAXIMUM_RETAINED_LIVE_LOG_ROWS = 500;
 type ScopeState<T> = { scope: string; value: T };
 type LiveLogConnectionStatus = Exclude<LiveLogStatus, 'paused' | 'degraded'>;
 type EvidenceState = {
@@ -29,6 +28,8 @@ type EvidenceState = {
   integrity: 'complete' | 'degraded';
   gapDroppedCount: number | undefined;
   gapCountOverflowed: boolean;
+  locallyDroppedCount: number;
+  pauseDisconnectGap: boolean;
 };
 export type EvidenceSetter = Dispatch<SetStateAction<EvidenceState>>;
 export type ConnectionSetter = Dispatch<SetStateAction<ScopeState<LiveLogConnectionStatus>>>;
@@ -79,6 +80,8 @@ export function degradeEvidence(setEvidenceState: EvidenceSetter, scope: string,
       scope,
       rows: evidence.rows,
       integrity: 'degraded',
+      locallyDroppedCount: evidence.locallyDroppedCount,
+      pauseDisconnectGap: evidence.pauseDisconnectGap,
       ...accumulateGapCount(evidence, droppedCount)
     };
   });
@@ -89,10 +92,12 @@ export function appendLogEvidence(setEvidenceState: EvidenceSetter, scope: strin
     const evidence = evidenceForScope(current, scope);
     return {
       scope,
-      rows: [row, ...evidence.rows].slice(0, MAXIMUM_RETAINED_LIVE_LOG_ROWS),
+      rows: [row, ...evidence.rows].slice(0, LIVE_LOG_RETENTION_LIMIT),
       integrity: evidence.integrity,
       gapDroppedCount: evidence.gapDroppedCount,
-      gapCountOverflowed: evidence.gapCountOverflowed
+      gapCountOverflowed: evidence.gapCountOverflowed,
+      locallyDroppedCount: evidence.locallyDroppedCount + (evidence.rows.length >= LIVE_LOG_RETENTION_LIMIT ? 1 : 0),
+      pauseDisconnectGap: evidence.pauseDisconnectGap
     };
   });
 }
@@ -103,7 +108,9 @@ function emptyEvidence(scope: string): EvidenceState {
     rows: [],
     integrity: 'complete',
     gapDroppedCount: undefined,
-    gapCountOverflowed: false
+    gapCountOverflowed: false,
+    locallyDroppedCount: 0,
+    pauseDisconnectGap: false
   };
 }
 
@@ -112,7 +119,9 @@ function evidenceProjection(state: EvidenceState): Omit<EvidenceState, 'scope'> 
     rows: state.rows,
     integrity: state.integrity,
     gapDroppedCount: state.gapDroppedCount,
-    gapCountOverflowed: state.gapCountOverflowed
+    gapCountOverflowed: state.gapCountOverflowed,
+    locallyDroppedCount: state.locallyDroppedCount,
+    pauseDisconnectGap: state.pauseDisconnectGap
   };
 }
 

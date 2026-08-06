@@ -18,10 +18,11 @@
 import { Alert } from 'antd';
 import type { TFunction } from 'i18next';
 
-import type { ExplorePageResult, LogRow } from '../model/explore-signal-contract';
+import type { ExplorePageResult, LogHistoryEvidence, LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import { LogRows } from './log-rows';
 import { LogStreamResult, type LiveLogView } from './log-stream-result';
+import styles from './log-result.module.css';
 import { SignalEmptyState, SignalResultFrame } from './signal-result-frame';
 
 export type { LiveLogView } from './log-stream-result';
@@ -32,7 +33,8 @@ export function LogResult({
   t,
   navigate,
   evidenceCurrent = true,
-  live
+  live,
+  statistics
 }: {
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
@@ -40,26 +42,90 @@ export function LogResult({
   navigate: (path: string) => void;
   evidenceCurrent?: boolean | undefined;
   live?: LiveLogView | undefined;
+  statistics?: Pick<LogHistoryEvidence, 'overview' | 'trend'> | undefined;
 }) {
   if (query.live && live) return <LogStreamResult stream={live} query={query} t={t} navigate={navigate} />;
   if (query.live) return <Alert type="error" showIcon message={t('exploreLog.streamFailed')} />;
 
-  if (!data || data.totalElements === 0) {
-    return (
+  const result =
+    !data || data.totalElements === 0 ? (
       <SignalResultFrame title={t('explore.signals.logs')} count={0}>
         <SignalEmptyState title={t('explore.empty.logs')} hint={t('explore.description')} />
       </SignalResultFrame>
+    ) : (
+      <LogRows
+        rows={data.content}
+        data={data}
+        query={query}
+        t={t}
+        navigate={navigate}
+        evidenceCurrent={evidenceCurrent}
+      />
     );
-  }
-
   return (
-    <LogRows
-      rows={data.content}
-      data={data}
-      query={query}
-      t={t}
-      navigate={navigate}
-      evidenceCurrent={evidenceCurrent}
-    />
+    <>
+      {statistics && <LogStatistics statistics={statistics} t={t} />}
+      {result}
+    </>
+  );
+}
+
+function LogStatistics({
+  statistics,
+  t
+}: {
+  statistics: Pick<LogHistoryEvidence, 'overview' | 'trend'>;
+  t: TFunction;
+}) {
+  const overviewRows =
+    statistics.overview.kind === 'ready'
+      ? ([
+          ['total', statistics.overview.data.totalCount],
+          ['trace', statistics.overview.data.traceCount],
+          ['debug', statistics.overview.data.debugCount],
+          ['info', statistics.overview.data.infoCount],
+          ['warn', statistics.overview.data.warnCount],
+          ['error', statistics.overview.data.errorCount],
+          ['fatal', statistics.overview.data.fatalCount]
+        ] as const)
+      : [];
+  const trendRows = statistics.trend.kind === 'ready' ? Object.entries(statistics.trend.data.hourlyStats).sort() : [];
+  return (
+    <div className={styles.statistics}>
+      <section aria-label={t('exploreLog.overview')}>
+        <h3>{t('exploreLog.overview')}</h3>
+        {statistics.overview.kind === 'error' ? (
+          <Alert type="warning" showIcon message={t('exploreLog.statisticsUnavailable')} />
+        ) : (
+          <dl className={styles.overviewStats}>
+            {overviewRows.map(([key, value]) => (
+              <div key={key}>
+                <dt>{t(`exploreLog.statistics.${key}`)}</dt>
+                <dd>{value.toLocaleString()}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
+      <section aria-label={t('exploreLog.trend')}>
+        <h3>{t('exploreLog.trend')}</h3>
+        {renderTrendStatistics(statistics.trend.kind, trendRows, t)}
+      </section>
+    </div>
+  );
+}
+
+function renderTrendStatistics(kind: LogHistoryEvidence['trend']['kind'], rows: [string, number][], t: TFunction) {
+  if (kind === 'error') return <Alert type="warning" showIcon message={t('exploreLog.statisticsUnavailable')} />;
+  if (rows.length === 0) return <p>{t('exploreLog.trendEmpty')}</p>;
+  return (
+    <ol className={styles.trendRows}>
+      {rows.map(([bucket, count]) => (
+        <li key={bucket}>
+          <time>{bucket}</time>
+          <strong>{count.toLocaleString()}</strong>
+        </li>
+      ))}
+    </ol>
   );
 }

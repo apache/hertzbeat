@@ -191,9 +191,11 @@ describe('Live Log controller', () => {
     });
     expect(view.result.current.status).toBe('paused');
     expect(view.result.current.rows.map(row => row.body)).toEqual(['before-pause']);
+    expect(view.result.current.pauseDisconnectGap).toBe(true);
 
     act(() => view.result.current.togglePaused());
     expect(view.result.current.status).toBe('degraded');
+    expect(view.result.current.pauseDisconnectGap).toBe(true);
     const resumed = FakeSource.instances[1]!;
     act(() => resumed.event(logRow('after-resume')));
     expect(view.result.current.status).toBe('degraded');
@@ -426,6 +428,7 @@ describe('Live Log controller', () => {
     expect(view.result.current.rows).toHaveLength(500);
     expect(view.result.current.rows[0]?.body).toBe('500');
     expect(view.result.current.rows.at(-1)?.body).toBe('1');
+    expect(view.result.current.locallyDroppedCount).toBe(1);
   });
 });
 

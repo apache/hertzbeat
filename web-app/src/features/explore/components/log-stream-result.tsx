@@ -18,7 +18,7 @@
 import { Alert, Button } from 'antd';
 import type { TFunction } from 'i18next';
 
-import type { LogRow } from '../model/explore-signal-contract';
+import { LIVE_LOG_RETENTION_LIMIT, type LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import type { LiveLogStatus } from '../model/explore-signal-model';
 import { LogRows } from './log-rows';
@@ -29,6 +29,8 @@ export type LiveLogView = {
   rows: LogRow[];
   status: LiveLogStatus;
   gapDroppedCount?: number | undefined;
+  locallyDroppedCount?: number | undefined;
+  pauseDisconnectGap?: boolean | undefined;
   togglePaused: () => void;
   retry: () => void;
   clear: () => void;
@@ -59,6 +61,15 @@ export function LogStreamResult({
       {stream.status === 'error' && <Alert type="error" showIcon message={t('exploreLog.streamFailed')} />}
       {stream.status === 'contract' && <Alert type="error" showIcon message={t('explore.loadFailed')} />}
       {stream.status === 'degraded' && <Alert type="warning" showIcon message={gapMessage} />}
+      {stream.pauseDisconnectGap && <Alert type="warning" showIcon message={t('exploreLog.pauseDisconnectGap')} />}
+      {(stream.locallyDroppedCount ?? 0) > 0 && (
+        <p className={styles.retentionNotice} role="status">
+          {t('exploreLog.localRetention', {
+            retained: LIVE_LOG_RETENTION_LIMIT,
+            dropped: stream.locallyDroppedCount
+          })}
+        </p>
+      )}
       {stream.rows.length === 0 ? (
         <SignalResultFrame
           title={t('exploreLog.live')}
@@ -89,7 +100,7 @@ function LogStreamActions({ stream, t }: { stream: LiveLogView; t: TFunction }) 
   return (
     <div className={styles.streamActions}>
       <Button size="small" disabled={terminal} onClick={stream.togglePaused}>
-        {t(stream.status === 'paused' ? 'exploreLog.resume' : 'exploreLog.pause')}
+        {t(stream.status === 'paused' ? 'exploreLog.resumeNewStream' : 'exploreLog.pauseDisconnect')}
       </Button>
       {retryable && (
         <Button size="small" onClick={stream.retry}>

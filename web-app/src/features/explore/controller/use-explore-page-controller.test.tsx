@@ -32,14 +32,15 @@ import { useExplorePageController } from './use-explore-page-controller';
 const api = vi.hoisted(() => ({ loadLogSignal: vi.fn(), loadMetricSignal: vi.fn(), loadTraceSignal: vi.fn() }));
 vi.mock('../api/explore-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/explore-api')>()),
-  ...api
+  ...api,
+  loadLogHistoryEvidence: api.loadLogSignal
 }));
 
 describe('Explore page controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadMetricSignal.mockResolvedValue(metricConsole([]));
-    api.loadLogSignal.mockResolvedValue(page([]));
+    api.loadLogSignal.mockResolvedValue(logEvidence(page([])));
     api.loadTraceSignal.mockResolvedValue(page([]));
   });
 
@@ -284,7 +285,9 @@ describe('Explore page controller', () => {
           signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
         loader.mockImplementation((query: ExploreQuery) => {
           paths.push(buildSignalApiPath(query, Date.now()));
-          return Promise.resolve(signal === 'metrics' ? metricConsole([]) : page([]));
+          return Promise.resolve(
+            signal === 'metrics' ? metricConsole([]) : signal === 'logs' ? logEvidence(page([])) : page([])
+          );
         });
         const scope =
           'collectorId=east&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
@@ -431,7 +434,7 @@ describe('Explore page controller', () => {
       metricSignal = signal;
       return metric.promise;
     });
-    api.loadLogSignal.mockResolvedValue(page([logRow({ body: 'current' })]));
+    api.loadLogSignal.mockResolvedValue(logEvidence(page([logRow({ body: 'current' })])));
     const routed = renderController(['/explore?signal=metrics']);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalled());
     act(() => routed.current().updateQuery({ signal: 'logs', pageIndex: undefined }));
@@ -467,7 +470,7 @@ describe('Explore page controller', () => {
   });
 
   it('shares the feature-owned history identity with cached signal evidence', async () => {
-    const refresh = deferred<ReturnType<typeof page>>();
+    const refresh = deferred<ReturnType<typeof logEvidence>>();
     let refreshSignal: AbortSignal | undefined;
     api.loadLogSignal.mockImplementation((_query: ExploreQuery, signal: AbortSignal) => {
       refreshSignal = signal;
@@ -477,7 +480,7 @@ describe('Explore page controller', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
       signal: 'logs',
-      data: page([logRow({ body: 'cached' })])
+      data: logEvidence(page([logRow({ body: 'cached' })]))
     });
 
     const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
@@ -498,13 +501,13 @@ describe('Explore page controller', () => {
   });
 
   it('projects cached history as refreshing until a successful request atomically replaces it', async () => {
-    const refresh = deferred<ReturnType<typeof page>>();
+    const refresh = deferred<ReturnType<typeof logEvidence>>();
     api.loadLogSignal.mockReturnValue(refresh.promise);
     const query: ExploreQuery = { signal: 'logs', timeRange: 'last-30m', query: 'cached' };
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
       signal: 'logs',
-      data: page([logRow({ body: 'cached' })])
+      data: logEvidence(page([logRow({ body: 'cached' })]))
     });
 
     const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
@@ -515,7 +518,7 @@ describe('Explore page controller', () => {
         evidence: { kind: 'ready', signal: 'logs', data: { content: [{ body: 'cached' }] } }
       })
     );
-    act(() => refresh.resolve(page([logRow({ body: 'fresh' })])));
+    act(() => refresh.resolve(logEvidence(page([logRow({ body: 'fresh' })]))));
     await waitFor(() =>
       expect(routed.current().result).toMatchObject({
         kind: 'ready',
@@ -531,7 +534,7 @@ describe('Explore page controller', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
       signal: 'logs',
-      data: page([logRow({ body: 'cached' })])
+      data: logEvidence(page([logRow({ body: 'cached' })]))
     });
 
     const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
@@ -546,7 +549,7 @@ describe('Explore page controller', () => {
   });
 
   it('carries evidence only across refresh generations, never across query identity changes', async () => {
-    api.loadLogSignal.mockResolvedValueOnce(page([logRow({ body: 'generation-0' })]));
+    api.loadLogSignal.mockResolvedValueOnce(logEvidence(page([logRow({ body: 'generation-0' })])));
     const routed = renderController(['/explore?signal=logs&query=owned']);
     await waitFor(() =>
       expect(routed.current().result).toMatchObject({
@@ -556,7 +559,7 @@ describe('Explore page controller', () => {
       })
     );
 
-    const refresh = deferred<ReturnType<typeof page>>();
+    const refresh = deferred<ReturnType<typeof logEvidence>>();
     api.loadLogSignal.mockReturnValueOnce(refresh.promise);
     act(() => {
       void routed.current().refresh();
@@ -568,7 +571,7 @@ describe('Explore page controller', () => {
       })
     );
 
-    const nextIdentity = deferred<ReturnType<typeof page>>();
+    const nextIdentity = deferred<ReturnType<typeof logEvidence>>();
     api.loadLogSignal.mockReturnValueOnce(nextIdentity.promise);
     act(() => routed.current().updateQuery({ query: 'different' }));
     await waitFor(() => expect(routed.current().result).toEqual({ kind: 'loading' }));
@@ -580,7 +583,7 @@ describe('Explore page controller', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
       signal: 'logs',
-      data: page([logRow({ body: 'wrong signal' })])
+      data: logEvidence(page([logRow({ body: 'wrong signal' })]))
     });
 
     const routed = renderController(['/explore?signal=metrics'], 0, client);
@@ -657,6 +660,24 @@ function metricConsole(
 }
 function page(content: unknown[], totalElements = content.length, number = 0, totalPages = totalElements ? 1 : 0) {
   return { content, totalElements, totalPages, number, size: 20 };
+}
+function logEvidence(data: ReturnType<typeof page>) {
+  return {
+    page: data,
+    overview: {
+      kind: 'ready' as const,
+      data: {
+        totalCount: data.totalElements,
+        traceCount: 0,
+        debugCount: 0,
+        infoCount: 0,
+        warnCount: 0,
+        errorCount: 0,
+        fatalCount: 0
+      }
+    },
+    trend: { kind: 'ready' as const, data: { hourlyStats: {} } }
+  };
 }
 function logRow(
   override: Partial<import('../model/explore-signal-contract').LogRow> = {}

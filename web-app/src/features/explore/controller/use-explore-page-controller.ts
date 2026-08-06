@@ -145,8 +145,12 @@ function resolveDataResult(query: ExploreQuery, evidence: HistoricalEvidence): E
     return { kind: 'metric', state: metricResultState(evidence.data), data: evidence.data };
   }
   if (evidence.signal === 'logs') {
-    const page = evidence.data;
-    return { kind: page.totalElements === 0 ? 'empty' : 'ready', signal: 'logs', data: page };
+    return {
+      kind: evidence.data.page.totalElements === 0 ? 'empty' : 'ready',
+      signal: 'logs',
+      data: evidence.data.page,
+      statistics: { overview: evidence.data.overview, trend: evidence.data.trend }
+    };
   }
   const page = evidence.data;
   return { kind: page.totalElements === 0 ? 'empty' : 'ready', signal: 'traces', data: page };

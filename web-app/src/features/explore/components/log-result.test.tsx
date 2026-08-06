@@ -99,12 +99,13 @@ describe('LogResult', () => {
     );
     expect(screen.getByText('live payment timeout')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreLog.pauseDisconnect') }));
     expect(screen.getByText('Paused')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('exploreLog.pauseDisconnectGap'));
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(screen.queryByText('live payment timeout')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreLog.resumeNewStream') }));
     expect(screen.getByText('Connecting to log stream')).toBeInTheDocument();
   });
 
@@ -116,6 +117,39 @@ describe('LogResult', () => {
     );
     expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('exploreLog.streamFailed'));
     expect(screen.queryByText(i18n.t('explore.empty.logs'))).not.toBeInTheDocument();
+  });
+
+  it('renders overview and trend as independent backend evidence regions', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          data={{ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 }}
+          statistics={{
+            overview: {
+              kind: 'ready',
+              data: {
+                totalCount: 9,
+                traceCount: 1,
+                debugCount: 2,
+                infoCount: 3,
+                warnCount: 1,
+                errorCount: 2,
+                fatalCount: 0
+              }
+            },
+            trend: { kind: 'error' }
+          }}
+          query={{ signal: 'logs', timeRange: 'last-30m' }}
+          t={i18n.t}
+          navigate={vi.fn()}
+        />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByRole('region', { name: i18n.t('exploreLog.overview') })).toHaveTextContent('9');
+    expect(screen.getByRole('region', { name: i18n.t('exploreLog.trend') })).toHaveTextContent(
+      i18n.t('exploreLog.statisticsUnavailable')
+    );
   });
 
   it.each([
@@ -137,7 +171,7 @@ describe('LogResult', () => {
     expect(screen.getAllByText(i18n.t(messageKey)).length).toBeGreaterThan(0);
     expect(screen.queryByText(i18n.t('exploreLog.connecting'))).not.toBeInTheDocument();
     expect(screen.queryByText(i18n.t('exploreLog.waiting'))).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pause') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pauseDisconnect') })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
     expect(retry).toHaveBeenCalledOnce();
   });
@@ -164,9 +198,34 @@ describe('LogResult', () => {
 
     expect(screen.getAllByText(i18n.t('exploreLog.streamGapCount', { count: 37 })).length).toBeGreaterThan(0);
     expect(screen.getByText('live payment timeout')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pause') })).toBeEnabled();
+    expect(screen.getByRole('button', { name: i18n.t('exploreLog.pauseDisconnect') })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: i18n.t('common.retry') }));
     expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('discloses bounded local retention without treating it as a backend gap', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+          t={i18n.t}
+          navigate={vi.fn()}
+          live={{
+            rows: [liveLogRow],
+            status: 'connected',
+            locallyDroppedCount: 12,
+            togglePaused: vi.fn(),
+            retry: vi.fn(),
+            clear: vi.fn()
+          }}
+        />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      i18n.t('exploreLog.localRetention', { retained: 500, dropped: 12 })
+    );
+    expect(screen.queryByText(i18n.t('exploreLog.streamGapCount', { count: 12 }))).not.toBeInTheDocument();
   });
 });
 
@@ -225,6 +284,7 @@ function LiveSubject() {
       live={{
         rows,
         status: paused ? 'paused' : 'waiting',
+        pauseDisconnectGap: paused,
         togglePaused: () => setPaused(current => !current),
         retry: vi.fn(),
         clear: () => setRows([])

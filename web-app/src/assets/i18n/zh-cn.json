@@ -522,8 +522,25 @@
     "streamGapCount": "筛选前至少丢失了 {{count}} 条日志。请重试以开始完整的新日志流。",
     "pause": "暂停",
     "resume": "继续",
+    "pauseDisconnect": "暂停并断开连接",
+    "resumeNewStream": "恢复并新建日志流",
     "clear": "清空",
-    "paused": "已暂停"
+    "paused": "已暂停",
+    "pauseDisconnectGap": "暂停会断开实时日志流。恢复前产生的日志不会补传，因此可能存在缺口。",
+    "localRetention": "当前显示最新 {{retained}} 条日志；已有 {{dropped}} 条较早日志在本地被丢弃。",
+    "overview": "日志概览",
+    "trend": "日志趋势",
+    "trendEmpty": "此查询未返回趋势时间桶。",
+    "statisticsUnavailable": "此统计区域无法加载。",
+    "statistics": {
+      "total": "总计",
+      "trace": "Trace",
+      "debug": "调试",
+      "info": "信息",
+      "warn": "警告",
+      "error": "错误",
+      "fatal": "致命"
+    }
   },
   "exploreTrace": {
     "detail": "链路详情",

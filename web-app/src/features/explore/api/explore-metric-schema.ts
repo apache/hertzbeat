@@ -87,3 +87,26 @@ export function parseMetricConsole(value: unknown): MetricConsole {
   if (!result.success) throw new ExploreSignalContractError();
   return result.data;
 }
+
+const metricInventorySchema = z
+  .object({
+    context: metricContextSchema.nullable(),
+    source: z.string().min(1),
+    total: nonNegativeIntegerSchema,
+    items: z.array(
+      z.object({
+        metricName: z.string().min(1),
+        family: nullableStringSchema,
+        timeSeriesCount: nonNegativeIntegerSchema,
+        latestObservedAt: nullableNonNegativeIntegerSchema,
+        labels: nullableStringMapSchema
+      })
+    )
+  })
+  .refine(inventory => inventory.items.length <= inventory.total);
+
+export function parseMetricInventory(value: unknown) {
+  const result = metricInventorySchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}

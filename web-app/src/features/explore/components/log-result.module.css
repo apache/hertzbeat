@@ -41,6 +41,76 @@
   color: var(--ant-color-warning);
 }
 
+.retentionNotice {
+  margin: 8px 0;
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.statistics {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.statistics > section {
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+.statistics h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.overviewStats {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.overviewStats div {
+  min-width: 0;
+}
+
+.overviewStats dt,
+.trendRows time {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.overviewStats dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.trendRows {
+  max-height: 132px;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.trendRows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (width <= 900px) {
+  .statistics {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewStats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .clickableTable :global(.ant-table-row) {
   cursor: pointer;
 }

@@ -20,8 +20,10 @@ import { z } from 'zod';
 import {
   ExploreSignalContractError,
   type ExplorePageResult,
+  type LogOverview,
   type LogRow,
-  type LogStreamGap
+  type LogStreamGap,
+  type LogTrend
 } from '../model/explore-signal-contract';
 import {
   jsonValueSchema,
@@ -99,6 +101,32 @@ export function parseLogRow(value: unknown): LogRow {
 
 export function parseLogStreamGap(value: unknown): LogStreamGap {
   const result = logStreamGapSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+const logOverviewSchema: z.ZodType<LogOverview> = z.object({
+  totalCount: nonNegativeIntegerSchema,
+  traceCount: nonNegativeIntegerSchema,
+  debugCount: nonNegativeIntegerSchema,
+  infoCount: nonNegativeIntegerSchema,
+  warnCount: nonNegativeIntegerSchema,
+  errorCount: nonNegativeIntegerSchema,
+  fatalCount: nonNegativeIntegerSchema
+});
+
+const logTrendSchema: z.ZodType<LogTrend> = z.object({
+  hourlyStats: z.record(z.string(), nonNegativeIntegerSchema)
+});
+
+export function parseLogOverview(value: unknown): LogOverview {
+  const result = logOverviewSchema.safeParse(value);
+  if (!result.success) throw new ExploreSignalContractError();
+  return result.data;
+}
+
+export function parseLogTrend(value: unknown): LogTrend {
+  const result = logTrendSchema.safeParse(value);
   if (!result.success) throw new ExploreSignalContractError();
   return result.data;
 }

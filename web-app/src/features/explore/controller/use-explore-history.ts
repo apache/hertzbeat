@@ -18,7 +18,7 @@
 import { queryOptions, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
+import { loadLogHistoryEvidence, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
 import type { ExploreQuery } from '../model/explore-model';
 import type { HistoricalEvidence } from '../model/explore-result-model';
 import { exploreQueryKeys } from './explore-query-keys';
@@ -88,6 +88,6 @@ function historyRefreshRevisionFromKey(queryKey: readonly unknown[]) {
 
 async function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalEvidence> {
   if (query.signal === 'metrics') return { signal: 'metrics', data: await loadMetricSignal(query, signal) };
-  if (query.signal === 'logs') return { signal: 'logs', data: await loadLogSignal(query, signal) };
+  if (query.signal === 'logs') return { signal: 'logs', data: await loadLogHistoryEvidence(query, signal) };
   return { signal: 'traces', data: await loadTraceSignal(query, signal) };
 }

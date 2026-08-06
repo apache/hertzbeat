@@ -528,8 +528,25 @@
     "streamGapCount": "At least {{count}} log entries were dropped before filtering. Retry to start a complete stream boundary.",
     "pause": "Pause",
     "resume": "Resume",
+    "pauseDisconnect": "Pause and disconnect",
+    "resumeNewStream": "Resume with a new stream",
     "clear": "Clear",
-    "paused": "Paused"
+    "paused": "Paused",
+    "pauseDisconnectGap": "Pausing disconnects the live stream. Logs produced before you resume are not recovered and may be missing.",
+    "localRetention": "Showing the newest {{retained}} rows. {{dropped}} older rows were discarded locally.",
+    "overview": "Log overview",
+    "trend": "Log trend",
+    "trendEmpty": "No trend buckets were returned for this query.",
+    "statisticsUnavailable": "This statistics region could not be loaded.",
+    "statistics": {
+      "total": "Total",
+      "trace": "Trace",
+      "debug": "Debug",
+      "info": "Info",
+      "warn": "Warn",
+      "error": "Error",
+      "fatal": "Fatal"
+    }
   },
   "exploreTrace": {
     "detail": "Trace detail",
