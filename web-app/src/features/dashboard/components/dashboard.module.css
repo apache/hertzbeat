@@ -18,7 +18,7 @@
 .summaryBoard {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block: 1px solid var(--hb-border-subtle);
+  gap: var(--hb-space-6);
 }
 
 .summaryRow {
@@ -28,11 +28,6 @@
   gap: var(--hb-space-4);
   min-height: 132px;
   padding: var(--hb-space-4) 0;
-}
-
-.summaryRow + .summaryRow {
-  padding-left: var(--hb-space-4);
-  border-left: 1px solid var(--hb-border-subtle);
 }
 
 .summaryIdentity {
@@ -111,18 +106,12 @@
 @media (max-width: 720px) {
   .summaryBoard {
     grid-template-columns: 1fr;
+    gap: var(--hb-space-5);
   }
 
   .summaryRow {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-
-  .summaryRow + .summaryRow {
-    margin-left: 0;
-    padding-left: 0;
-    border-top: 1px solid var(--hb-border-subtle);
-    border-left: 0;
   }
 
   .monitorEvidence {

@@ -20,6 +20,10 @@
 }
 
 .entry {
+  min-width: 0;
+}
+
+.entry + .entry {
   border-block-start: 1px solid var(--hb-border-subtle);
 }
 
@@ -130,7 +134,6 @@
   display: grid;
   align-content: center;
   padding-inline-start: var(--hb-space-6);
-  border-inline-start: 1px solid var(--hb-border-subtle);
 }
 
 .outcome :global(p.ant-typography) {
@@ -146,7 +149,6 @@
   gap: var(--hb-space-5);
   min-height: 48px;
   padding-block: 0 var(--hb-space-4);
-  border-bottom: 1px solid var(--hb-border-subtle);
 }
 
 .entryFooter :global(.ant-btn-link) {
@@ -193,7 +195,5 @@
   .outcome {
     grid-column: 1 / -1;
     padding-inline-start: 0;
-    border-block-start: 1px solid var(--hb-border-subtle);
-    border-inline-start: 0;
   }
 }
