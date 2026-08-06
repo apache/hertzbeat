@@ -140,14 +140,29 @@ function statusContext(props: StatusSlotProps) {
   const observed = props.observedAt
     ? props.t('shell.status.snapshotObservedAt', { time: formatObservedAt(props.observedAt, props.locale) })
     : null;
-  const collectorReport = collectorReportContext(props.lastReportedAt, props.locale, props.t);
   const counts = collectorCountsContext(props.collectorCounts, props.t);
+  const collectorReport = collectorReportContext(props.lastReportedAt, props.collectorCounts, props.locale, props.t);
   const reason = props.status?.errorCode ? props.t(`shell.status.reason.${props.status.errorCode}`) : null;
   return [observed, collectorReport, counts, reason].filter(Boolean).join(' · ') || props.t('shell.status.notObserved');
 }
 
-function collectorReportContext(lastReportedAt: string | null | undefined, locale: string | undefined, t: TFunction) {
+function collectorReportContext(
+  lastReportedAt: string | null | undefined,
+  counts: RuntimeCollectorsStatus | undefined,
+  locale: string | undefined,
+  t: TFunction
+) {
   if (lastReportedAt === undefined) return null;
+  if (
+    lastReportedAt === null &&
+    counts &&
+    counts.total !== null &&
+    counts.total > 0 &&
+    counts.online === counts.total &&
+    counts.runtimeHealthy === counts.online
+  ) {
+    return null;
+  }
   if (lastReportedAt === null) return t('shell.status.collectorNotReported');
   return t('shell.status.collectorLastReportedAt', { time: formatObservedAt(lastReportedAt, locale) });
 }

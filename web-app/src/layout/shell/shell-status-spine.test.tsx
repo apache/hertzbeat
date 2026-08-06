@@ -149,4 +149,34 @@ describe('ShellStatusSpine', () => {
       expect.stringContaining('shell.status.collectorNotReported')
     );
   });
+
+  it('does not warn about a missing report when every observed Collector runtime is healthy', () => {
+    render(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'available', errorCode: null },
+            storage: { kind: 'greptime', status: 'available', errorCode: null },
+            collectors: {
+              status: 'available',
+              total: 1,
+              online: 1,
+              runtimeHealthy: 1,
+              lastReportedAt: null,
+              errorCode: null
+            }
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-collector')).not.toHaveAttribute(
+      'title',
+      expect.stringContaining('shell.status.collectorNotReported')
+    );
+  });
 });
