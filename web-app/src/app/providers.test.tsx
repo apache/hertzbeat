@@ -6,8 +6,8 @@
  */
 
 import { Button, theme } from 'antd';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import { initializeI18n } from '@/core/i18n/i18n';
@@ -36,6 +36,8 @@ function expectAntVariableScope() {
 }
 
 describe('AppProviders theme contract', () => {
+  afterEach(cleanup);
+
   beforeEach(async () => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
@@ -60,11 +62,27 @@ describe('AppProviders theme contract', () => {
     expect(screen.getByTestId('theme')).toHaveTextContent('default');
     expect(screen.getByTestId('background')).toHaveTextContent('#f5f6f8');
     expect(screen.getByTestId('control-height')).toHaveTextContent('32');
+    expect(document.documentElement.dataset.theme).toBe('default');
+    expect(localStorage.getItem('hertzbeat.theme')).toBe('default');
 
     fireEvent.click(screen.getByRole('button', { name: 'compact' }));
     expectAntVariableScope();
     expect(screen.getByTestId('theme')).toHaveTextContent('compact');
     expect(screen.getByTestId('background')).toHaveTextContent('#0d0f14');
     expect(screen.getByTestId('control-height')).toHaveTextContent('28');
+  });
+
+  it('restores a persisted light preference when providers mount again', async () => {
+    localStorage.setItem('hertzbeat.theme', 'default');
+
+    render(
+      <AppProviders>
+        <ThemeProbe />
+      </AppProviders>
+    );
+
+    await screen.findByTestId('probe');
+    expect(screen.getByTestId('theme')).toHaveTextContent('default');
+    expect(screen.getByTestId('background')).toHaveTextContent('#f5f6f8');
   });
 });

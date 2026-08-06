@@ -58,9 +58,10 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
           loggingOut={actions.loggingOut}
           showRefresh={actions.sharedTime.policy !== 'unknown'}
           t={t}
+          theme={actions.theme}
           onRefresh={() => void actions.refresh()}
           onOpenAlerts={actions.openAlerts}
-          onToggleTheme={actions.toggleTheme}
+          onThemeChange={actions.setDarkTheme}
           onToggleFullscreen={() => void actions.toggleFullscreen()}
           onChangeLanguage={() => void actions.changeLanguage()}
           onOpenSettings={actions.openSettings}

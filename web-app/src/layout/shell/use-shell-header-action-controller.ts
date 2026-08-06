@@ -51,7 +51,7 @@ export function useShellHeaderActionController() {
     }
     await queryClient.invalidateQueries({ type: 'active' });
   };
-  const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');
+  const setDarkTheme = (dark: boolean) => setTheme(dark ? 'dark' : 'default');
   const toggleFullscreen = async () => {
     const result = await fullscreen.toggle();
     if (result === 'error') void message.error(t('shell.actions.fullscreenFailed'));
@@ -71,11 +71,12 @@ export function useShellHeaderActionController() {
 
   return {
     sharedTime,
+    theme,
     fullscreen: fullscreen.state,
     loggingOut,
     refresh,
     changeLanguage,
-    toggleTheme,
+    setDarkTheme,
     toggleFullscreen,
     openAlerts,
     openSettings,

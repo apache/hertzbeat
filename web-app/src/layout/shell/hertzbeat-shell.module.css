@@ -180,6 +180,15 @@ button.timePolicy:hover {
   background: var(--hb-bg-hover) !important;
 }
 
+.themeSwitch {
+  flex: 0 0 auto;
+  margin: 0 3px;
+}
+
+.themeSwitch :global(.anticon) {
+  font-size: 10px;
+}
+
 .alertPopover {
   width: min(360px, calc(100vw - 32px));
 }

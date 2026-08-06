@@ -46,7 +46,8 @@ describe('ShellHeaderActions account menu', () => {
         onRefresh={vi.fn()}
         onOpenAlerts={vi.fn()}
         onOpenSettings={vi.fn()}
-        onToggleTheme={vi.fn()}
+        theme="dark"
+        onThemeChange={vi.fn()}
         onToggleFullscreen={vi.fn()}
         onChangeLanguage={vi.fn()}
         onLock={onLock}
@@ -83,7 +84,8 @@ describe('ShellHeaderActions account menu', () => {
       onRefresh: vi.fn(),
       onOpenAlerts: vi.fn(),
       onOpenSettings: vi.fn(),
-      onToggleTheme: vi.fn(),
+      theme: 'dark' as const,
+      onThemeChange: vi.fn(),
       onToggleFullscreen,
       onChangeLanguage: vi.fn(),
       onLock: vi.fn(),
@@ -99,4 +101,51 @@ describe('ShellHeaderActions account menu', () => {
     rerender(<ShellHeaderActions {...props} fullscreen={{ available: true, active: true, busy: false }} />);
     expect(screen.getByRole('button', { name: 'shell.actions.fullscreenExit' })).toBeInTheDocument();
   });
+
+  it('renders the runtime theme as an explicit light and dark switch', () => {
+    const onThemeChange = vi.fn();
+    const props = createProps({ onThemeChange });
+    const { rerender } = render(<ShellHeaderActions {...props} theme="compact" />);
+
+    const darkSwitch = screen.getByRole('switch', { name: 'shell.actions.useLightTheme' });
+    expect(darkSwitch).toBeChecked();
+    fireEvent.click(darkSwitch);
+    expect(onThemeChange).toHaveBeenCalledWith(false);
+
+    rerender(<ShellHeaderActions {...props} theme="default" />);
+    expect(screen.getByRole('switch', { name: 'shell.actions.useDarkTheme' })).not.toBeChecked();
+  });
 });
+
+function createProps(overrides: Partial<React.ComponentProps<typeof ShellHeaderActions>> = {}) {
+  return {
+    accountName: 'operator',
+    alertNotifications: {
+      count: { kind: 'ready', total: 0 } as const,
+      list: { kind: 'empty' } as const,
+      sound: {
+        kind: 'ready',
+        canToggle: true,
+        muted: true,
+        saving: false,
+        permission: 'default',
+        failure: null
+      } as const,
+      toggleSound: vi.fn()
+    },
+    fullscreen: { available: false, active: false, busy: false },
+    loggingOut: false,
+    showRefresh: false,
+    t,
+    theme: 'dark' as const,
+    onRefresh: vi.fn(),
+    onOpenAlerts: vi.fn(),
+    onOpenSettings: vi.fn(),
+    onThemeChange: vi.fn(),
+    onToggleFullscreen: vi.fn(),
+    onChangeLanguage: vi.fn(),
+    onLock: vi.fn(),
+    onLogout: vi.fn(),
+    ...overrides
+  };
+}

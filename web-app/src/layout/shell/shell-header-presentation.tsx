@@ -6,14 +6,17 @@
  */
 
 import {
-  BgColorsOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
   GlobalOutlined,
+  MoonOutlined,
+  SunOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
+import { Switch, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 
+import type { RuntimeTheme } from '@/core/runtime-preferences';
 import type { ShellAlertNotificationState } from '@/features/alert/shell';
 
 import styles from './hertzbeat-shell.module.css';
@@ -29,9 +32,10 @@ type ShellHeaderActionsProps = {
   loggingOut: boolean;
   showRefresh: boolean;
   t: TFunction;
+  theme: RuntimeTheme;
   onRefresh: () => void;
   onOpenAlerts: () => void;
-  onToggleTheme: () => void;
+  onThemeChange: (dark: boolean) => void;
   onToggleFullscreen: () => void;
   onChangeLanguage: () => void;
   onOpenSettings: () => void;
@@ -46,9 +50,10 @@ export function ShellHeaderActions({
   loggingOut,
   showRefresh,
   t,
+  theme,
   onRefresh,
   onOpenAlerts,
-  onToggleTheme,
+  onThemeChange,
   onToggleFullscreen,
   onChangeLanguage,
   onOpenSettings,
@@ -61,7 +66,7 @@ export function ShellHeaderActions({
         <ShellHeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={onRefresh} />
       )}
       <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
-      <ShellHeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={onToggleTheme} />
+      <ShellThemeSwitch theme={theme} t={t} onChange={onThemeChange} />
       {fullscreen.available ? (
         <ShellHeaderAction
           disabled={fullscreen.busy}
@@ -80,5 +85,31 @@ export function ShellHeaderActions({
         onLogout={onLogout}
       />
     </div>
+  );
+}
+
+function ShellThemeSwitch({
+  theme,
+  t,
+  onChange
+}: {
+  theme: RuntimeTheme;
+  t: TFunction;
+  onChange: (dark: boolean) => void;
+}) {
+  const dark = theme !== 'default';
+  const label = t(dark ? 'shell.actions.useLightTheme' : 'shell.actions.useDarkTheme');
+  return (
+    <Tooltip title={label}>
+      <Switch
+        aria-label={label}
+        checked={dark}
+        checkedChildren={<MoonOutlined aria-hidden="true" />}
+        className={styles.themeSwitch ?? ''}
+        size="small"
+        unCheckedChildren={<SunOutlined aria-hidden="true" />}
+        onChange={checked => onChange(checked)}
+      />
+    </Tooltip>
   );
 }

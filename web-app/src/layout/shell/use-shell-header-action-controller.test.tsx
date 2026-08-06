@@ -88,7 +88,7 @@ describe('useShellHeaderActionController', () => {
     const { result } = renderHook(() => useShellHeaderActionController());
 
     await act(() => result.current.refresh());
-    act(() => result.current.toggleTheme());
+    act(() => result.current.setDarkTheme(false));
     await act(() => result.current.changeLanguage());
     await act(() => result.current.openAlerts());
     await act(() => result.current.openSettings());
@@ -100,6 +100,16 @@ describe('useShellHeaderActionController', () => {
     expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-alerts', type: 'push' });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-settings', type: 'push' });
+  });
+
+  it('maps the explicit switch sides to stable runtime themes', () => {
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    act(() => result.current.setDarkTheme(true));
+    act(() => result.current.setDarkTheme(false));
+
+    expect(runtime.setTheme).toHaveBeenNthCalledWith(1, 'dark');
+    expect(runtime.setTheme).toHaveBeenNthCalledWith(2, 'default');
   });
 
   it('reports a safe localized failure when the browser rejects full screen', async () => {
