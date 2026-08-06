@@ -23,7 +23,7 @@
       "state": {
         "loading": "載入中",
         "available": "可用",
-        "degraded": "已降級",
+        "degraded": "需要關注",
         "unavailable": "無法使用",
         "unknown": "未知"
       },

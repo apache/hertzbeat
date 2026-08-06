@@ -23,7 +23,7 @@
       "state": {
         "loading": "読み込み中",
         "available": "利用可能",
-        "degraded": "性能低下",
+        "degraded": "要確認",
         "unavailable": "利用不可",
         "unknown": "不明"
       },

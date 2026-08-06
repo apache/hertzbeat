@@ -23,7 +23,7 @@
       "state": {
         "loading": "Loading",
         "available": "Available",
-        "degraded": "Degraded",
+        "degraded": "Needs attention",
         "unavailable": "Unavailable",
         "unknown": "Unknown"
       },
