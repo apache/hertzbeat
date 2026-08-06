@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { confirmUnsavedNavigation } from '@/shared/navigation/confirm-unsaved-navigation';
+
 import { classifyEntityDetailError } from '../api/entity-api';
 import {
   classifyEntityWriteError,
@@ -70,7 +72,7 @@ export function useEntityEditorController(mode: 'new' | 'edit') {
     const owner = write.admit();
     if (owner === undefined || save.isPending) return;
     if (!isEntityEditorDirty(initial, draft)) return void navigate(cancelTarget);
-    confirmDiscard(modal, t, () => {
+    confirmUnsavedNavigation(modal, t, () => {
       if (write.current(owner)) void navigate(cancelTarget);
     });
   };
@@ -145,19 +147,6 @@ function resolveSuggestions(
 ) {
   if (error) return { kind: 'unavailable' } as const;
   return data ? ({ kind: 'ready', value: data } as const) : ({ kind: 'loading' } as const);
-}
-
-function confirmDiscard(
-  modal: ReturnType<typeof App.useApp>['modal'],
-  t: (key: string) => string,
-  onOk: () => unknown
-) {
-  modal.confirm({
-    title: t('entity.editor.discardConfirm'),
-    okText: t('entity.editor.discardAction'),
-    cancelText: t('common.cancel'),
-    onOk
-  });
 }
 
 function buildEditPayload(original: EditableEntityDto | undefined, draft: EntityEditorDraft) {

@@ -44,6 +44,10 @@ export function changeEntityImportContent(draft: EntityImportDraft, content: str
   return { content, format: draft.format };
 }
 
+export function isEntityImportDirty(draft: EntityImportDraft) {
+  return draft.content !== initialEntityImportDraft.content || draft.format !== initialEntityImportDraft.format;
+}
+
 export function changeEntityImportFormat(draft: EntityImportDraft, format: EntityImportFormat): EntityImportDraft {
   return { content: draft.content, format };
 }

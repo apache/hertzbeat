@@ -20,6 +20,8 @@
     "view": "查看",
     "edit": "編輯",
     "cancel": "取消",
+    "unsavedChangesConfirm": "放棄尚未儲存的變更嗎？",
+    "discardChanges": "放棄變更",
     "save": "儲存",
     "delete": "刪除",
     "back": "返回",

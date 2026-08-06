@@ -13,6 +13,12 @@ const api = vi.hoisted(() => ({
   previewEntityDefinition: vi.fn(),
   saveEntityDefinition: vi.fn()
 }));
+const modal = vi.hoisted(() => ({ confirm: vi.fn() }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('antd', async importOriginal => ({
+  ...(await importOriginal<typeof import('antd')>()),
+  App: { useApp: () => ({ modal }) }
+}));
 vi.mock('../api/entity-editor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/entity-editor-api')>()),
   loadEditableEntity: api.loadEditableEntity
@@ -44,6 +50,26 @@ describe('useEntityDefinitionController', () => {
     api.saveEntityDefinition.mockResolvedValue(undefined);
   });
   afterEach(cleanup);
+
+  it('returns directly when clean and confirms before discarding a dirty definition', async () => {
+    const dirty = renderController('/entities/7/definition?returnTo=%2Fentities%2F7');
+    await waitFor(() => expect(dirty.current().state.evidence.kind).toBe('ready'));
+    act(() => dirty.current().actions.changeContent('kind: database'));
+    act(() => dirty.current().actions.back());
+    expect(dirty.location()).toContain('/entities/7/definition');
+    expect(modal.confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'common.unsavedChangesConfirm' }));
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk?: () => unknown } | undefined;
+    act(() => {
+      confirmation?.onOk?.();
+    });
+    await waitFor(() => expect(dirty.location()).toBe('/entities/7'));
+
+    const clean = renderController('/entities/7/definition?returnTo=%2Fentities%2F7');
+    await waitFor(() => expect(clean.current().state.evidence.kind).toBe('ready'));
+    act(() => clean.current().actions.back());
+    await waitFor(() => expect(clean.location()).toBe('/entities/7'));
+    expect(modal.confirm).toHaveBeenCalledTimes(1);
+  });
 
   it('guards dirty format changes/reset and invalidates a preview on edit', async () => {
     const routed = renderController('/entities/7/definition');

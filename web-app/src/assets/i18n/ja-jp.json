@@ -20,6 +20,8 @@
     "view": "表示",
     "edit": "編集",
     "cancel": "キャンセル",
+    "unsavedChangesConfirm": "保存していない変更を破棄しますか？",
+    "discardChanges": "変更を破棄",
     "save": "保存",
     "delete": "削除",
     "back": "戻る",

@@ -80,7 +80,6 @@ export function MonitorListResults({
     return <OperationalStatePanel kind="error" title={t('common.routeError.description')} />;
   const rowSelection: TableRowSelection<MonitorListRow> = {
     selectedRowKeys: selectedIds,
-    preserveSelectedRowKeys: true,
     getCheckboxProps: row => ({ disabled: operating || isMonitorRowDisappeared(row) }),
     onChange: keys => actions.selectIds(keys.flatMap(key => (typeof key === 'number' ? [key] : [])))
   };

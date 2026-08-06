@@ -20,6 +20,8 @@
     "view": "查看",
     "edit": "编辑",
     "cancel": "取消",
+    "unsavedChangesConfirm": "放弃尚未保存的更改吗？",
+    "discardChanges": "放弃更改",
     "save": "保存",
     "delete": "删除",
     "back": "返回",

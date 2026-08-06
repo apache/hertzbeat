@@ -22,7 +22,7 @@ import type { MonitorListRow } from '../model/monitor-list-snapshot';
 import { useMonitorSelection } from './use-monitor-selection';
 
 describe('useMonitorSelection', () => {
-  it('preserves selected ids across pages but clears them when the filter scope changes', () => {
+  it('clears selected ids when the canonical page identity changes', () => {
     const { result, rerender } = renderHook(({ scope, page, rows }) => useMonitorSelection(scope, page, rows), {
       initialProps: { scope: 'checkout', page: 'checkout-page-1', rows: [monitor(7), monitor(8)] }
     });
@@ -32,14 +32,21 @@ describe('useMonitorSelection', () => {
     expect(staleValidatedIds()).toEqual([7]);
 
     rerender({ scope: 'checkout', page: 'checkout-page-2', rows: [monitor(9)] });
-    expect(staleValidatedIds()).toEqual([7]);
-
-    act(() => result.current.selectIds([7, 9]));
-    expect(staleValidatedIds()).toEqual([7, 9]);
+    expect(result.current.selectedIds).toEqual([]);
+    expect(staleValidatedIds()).toEqual([]);
 
     rerender({ scope: 'orders', page: 'orders-page-1', rows: [monitor(10)] });
 
     expect(staleValidatedIds()).toEqual([]);
+  });
+
+  it('never returns an invisible id as a command target', () => {
+    const { result } = renderHook(() => useMonitorSelection('checkout', 'checkout-page-1', [monitor(7)]));
+
+    act(() => result.current.selectIds([7, 99]));
+
+    expect(result.current.selectedIds).toEqual([7]);
+    expect(result.current.validatedIds()).toEqual([7]);
   });
 
   it('does not revive a selected id after a same-page refresh removes it', () => {

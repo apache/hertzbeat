@@ -8,6 +8,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionContext } from '@/core/auth/session-context';
 
 const api = vi.hoisted(() => ({ previewEntityDefinitionBundle: vi.fn(), commitEntityDefinitionBundle: vi.fn() }));
+const modal = vi.hoisted(() => ({ confirm: vi.fn() }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('antd', async importOriginal => ({
+  ...(await importOriginal<typeof import('antd')>()),
+  App: { useApp: () => ({ modal }) }
+}));
 vi.mock('../api/entity-import-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/entity-import-api')>()),
   ...api
@@ -58,15 +64,31 @@ describe('useEntityImportController', () => {
     expect(api.commitEntityDefinitionBundle).toHaveBeenCalledWith({ content: 'kind: database', format: 'yaml' }, 1);
   });
 
-  it('keeps content out of the URL and cancels to the sanitized catalog target', () => {
+  it('keeps content out of the URL and cleanly cancels to the sanitized catalog target', () => {
     const routed = renderController('/entities/import?returnTo=%2Fentities%3Fsearch%3Dmysql%26token%3Dprivate');
-    act(() => routed.current().actions.changeContent('password: private'));
-    expect(routed.location()).not.toContain('password');
     expect(routed.location()).not.toContain('private');
     act(() => routed.current().actions.cancel());
     expect(routed.location()).toContain('/entities?');
     expect(routed.location()).toContain('search=mysql');
     expect(routed.location()).not.toContain('token');
+  });
+
+  it('confirms before cancelling entered or previewed import state', async () => {
+    const routed = renderController('/entities/import?returnTo=%2Fentities');
+    act(() => routed.current().actions.changeContent('kind: service'));
+    expect(routed.location()).not.toContain('kind');
+    act(() => routed.current().actions.preview());
+    await waitFor(() => expect(routed.current().state.preview).toBeDefined());
+
+    act(() => routed.current().actions.cancel());
+    expect(routed.location()).toContain('/entities/import');
+    expect(modal.confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'common.unsavedChangesConfirm' }));
+    const confirmation = modal.confirm.mock.calls[0]?.[0] as { onOk?: () => unknown } | undefined;
+    act(() => {
+      confirmation?.onOk?.();
+    });
+    await waitFor(() => expect(routed.location()).toBe('/entities'));
+    expect(api.commitEntityDefinitionBundle).not.toHaveBeenCalled();
   });
 
   it('locks editing and cancellation while the irreversible confirmation is in flight', async () => {

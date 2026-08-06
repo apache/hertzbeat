@@ -1,8 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { App } from 'antd';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
+import { confirmUnsavedNavigation } from '@/shared/navigation/confirm-unsaved-navigation';
 
 import { classifyEntityDefinitionError, loadEntityDefinition } from '../api/entity-definition-api';
 import { loadEditableEntity } from '../api/entity-editor-api';
@@ -19,6 +23,8 @@ import { useEntityCapabilities } from './use-entity-capabilities';
 
 export function useEntityDefinitionController(): EntityDefinitionViewModel {
   const navigate = useNavigate();
+  const { modal } = App.useApp();
+  const { t } = useTranslation();
   const client = useQueryClient();
   const { entityId } = useParams();
   const [params] = useSearchParams();
@@ -67,8 +73,12 @@ export function useEntityDefinitionController(): EntityDefinitionViewModel {
         void definition.refetch();
       },
       back: () => {
-        if (editing.canLeave() && id !== undefined)
-          void navigate(safeEntityDefinitionReturnTo(id, params.get('returnTo')));
+        if (!editing.canLeave() || id === undefined) return;
+        const target = safeEntityDefinitionReturnTo(id, params.get('returnTo'));
+        if (!editing.state.dirty) return void navigate(target);
+        confirmUnsavedNavigation(modal, t, () => {
+          if (editing.canLeave()) void navigate(target);
+        });
       }
     }
   };

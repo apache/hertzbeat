@@ -58,7 +58,7 @@ describe('useEntityEditorController', () => {
     act(() => routed.current().actions.change('name', 'checkout'));
     expect(routed.current().state.dirty).toBe(true);
     act(() => routed.current().actions.cancel());
-    expect(modal.confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'entity.editor.discardConfirm' }));
+    expect(modal.confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'common.unsavedChangesConfirm' }));
     expect(routed.router.state.location.pathname).toBe('/entities/new');
     expect(api.saveEditableEntity).not.toHaveBeenCalled();
 

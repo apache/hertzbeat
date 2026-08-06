@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { App } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
+import { confirmUnsavedNavigation } from '@/shared/navigation/confirm-unsaved-navigation';
 
 import {
   canConfirmEntityImport,
   changeEntityImportContent,
   changeEntityImportFormat,
   initialEntityImportDraft,
+  isEntityImportDirty,
   safeEntityImportReturnTo,
   type EntityImportFailure,
   type EntityImportFormat,
@@ -25,6 +29,8 @@ import { useEntityCapabilities, useEntityWriteBoundary } from './use-entity-capa
 
 export function useEntityImportController(): EntityImportViewModel {
   const navigate = useNavigate();
+  const { modal } = App.useApp();
+  const { t } = useTranslation();
   const client = useQueryClient();
   const returnTo = useCanonicalEntityImportReturnTo();
   const [draft, setDraft] = useState(initialEntityImportDraft);
@@ -76,7 +82,11 @@ export function useEntityImportController(): EntityImportViewModel {
       preview: () => void runEntityImportPreview(draft, confirming, runtime, write),
       confirm: () => void runEntityImportConfirmation(draft, previewing, client, runtime, write),
       cancel: () => {
-        if (confirmLock.current === undefined) void navigate(returnTo);
+        if (confirmLock.current !== undefined) return;
+        if (!isEntityImportDirty(draft)) return void navigate(returnTo);
+        confirmUnsavedNavigation(modal, t, () => {
+          if (confirmLock.current === undefined) void navigate(returnTo);
+        });
       }
     }
   };

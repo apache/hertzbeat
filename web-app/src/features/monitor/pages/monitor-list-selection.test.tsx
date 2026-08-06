@@ -78,20 +78,20 @@ describe('MonitorListPage scoped bulk selection', () => {
     expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
   });
 
-  it('preserves and can clear selection across pages in the same filter scope', async () => {
+  it('clears selection when pagination changes the visible result identity', async () => {
     loadMonitorRowsByScope();
     renderPage('/monitors?search=checkout&pageIndex=0&pageSize=10');
 
     fireEvent.click(await rowCheckbox('checkout-monitor'));
     fireEvent.click(screen.getByTestId('page-scope'));
     await screen.findByText('checkout-page-two');
-    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
 
     fireEvent.click(await rowCheckbox('checkout-page-two'));
-    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
-    expect(screen.queryByText('2 selected')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
     expect(mutateMonitors).not.toHaveBeenCalled();
   });
 

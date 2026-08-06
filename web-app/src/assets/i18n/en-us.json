@@ -20,6 +20,8 @@
     "view": "View",
     "edit": "Edit",
     "cancel": "Cancel",
+    "unsavedChangesConfirm": "Discard your unsaved changes?",
+    "discardChanges": "Discard changes",
     "save": "Save",
     "delete": "Delete",
     "back": "Back",
