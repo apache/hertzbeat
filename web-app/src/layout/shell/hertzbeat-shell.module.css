@@ -33,6 +33,7 @@
 .brandSlot {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex: 0 0 var(--hb-shell-sidebar-width);
   /* Keep the full project wordmark legible after the navigation is collapsed. */
   min-width: 132px;

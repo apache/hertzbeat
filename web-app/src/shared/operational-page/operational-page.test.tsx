@@ -115,6 +115,7 @@ describe('OperationalPage', () => {
     const actions = document.querySelector('[data-hb-operational-form-actions]');
     expect(actions).toContainElement(screen.getByRole('button', { name: 'Save' }));
     expect(actions).toContainElement(screen.getByRole('button', { name: 'Cancel' }));
+    expect(operationalPageStyles).toMatch(/\.formActions\s*\{[^}]*background:\s*var\(--hb-bg-navigation\);/s);
   });
 
   it('centers the bounded form workspace inside the available content area', () => {

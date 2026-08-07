@@ -49,6 +49,7 @@ describe('shell content layout contract', () => {
     expect(headerRule).toMatch(/display:\s*flex/);
     expect(headerRule).not.toMatch(/grid-template-columns/);
     expect(brandRule).toMatch(/flex:\s*0\s+0\s+var\(--hb-shell-sidebar-width\)/);
+    expect(brandRule).toMatch(/justify-content:\s*center/);
     expect(brandRule).not.toMatch(/border-right/);
   });
 });
