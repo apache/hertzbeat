@@ -22,9 +22,11 @@ import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.startup.HertzBeatApplication;
+import org.apache.hertzbeat.startup.config.ManagedConfigEnvironmentPostProcessor;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.StandardEnvironment;
 
 /** Spring implementation with explicit AOT-visible source classes. */
 public final class SpringStartupContextLauncher implements StartupContextLauncher {
@@ -38,11 +40,13 @@ public final class SpringStartupContextLauncher implements StartupContextLaunche
 
     ConfigurableApplicationContext launchSpringContext(
             StartupDecision decision, String[] args, SetupRuntimeTransition setupRuntimeTransition) {
+        StandardEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().addFirst(new MapPropertySource(
+                ManagedConfigEnvironmentPostProcessor.INTERNAL_RUNTIME_PROPERTY_SOURCE,
+                Map.of(RuntimeMode.PROPERTY_NAME, decision.mode().value())));
         return new SpringApplicationBuilder(sourceFor(decision.mode()))
+                .environment(environment)
                 .initializers(context -> {
-                    context.getEnvironment().getPropertySources().addFirst(
-                            new MapPropertySource("hertzbeatInternalRuntimeMode",
-                                    Map.of(RuntimeMode.PROPERTY_NAME, decision.mode().value())));
                     context.getBeanFactory().registerSingleton(
                             "setupRuntimeTransition", setupRuntimeTransition);
                 })

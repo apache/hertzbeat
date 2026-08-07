@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.setup.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -158,6 +159,22 @@ class SetupApiContractTest {
                 new PublicAccessConfiguration("http://localhost:1157", null, null), null));
         assertThrows(IllegalArgumentException.class, () -> new ValidateRequest(
                 ValidationSection.MAIL, metadata, null, null, null));
+    }
+
+    @Test
+    void greptimeCredentialsAreOptionalButMustBeSuppliedTogether() {
+        TelemetryStoreConfiguration anonymous = new TelemetryStoreConfiguration(
+                TelemetryStoreKind.GREPTIME, "greptime:4001", "http://greptime:4000", "public", null, null);
+
+        assertNull(anonymous.username());
+        TelemetryStoreConfiguration blank = new TelemetryStoreConfiguration(
+                TelemetryStoreKind.GREPTIME, "greptime:4001", "http://greptime:4000", "public", " ", "\t");
+        assertNull(blank.username());
+        assertNull(blank.password());
+        assertThrows(IllegalArgumentException.class, () -> new TelemetryStoreConfiguration(
+                TelemetryStoreKind.GREPTIME, "greptime:4001", "http://greptime:4000", "public", "user", null));
+        assertThrows(IllegalArgumentException.class, () -> new TelemetryStoreConfiguration(
+                TelemetryStoreKind.GREPTIME, "greptime:4001", "http://greptime:4000", "public", null, SECRET));
     }
 
     @Test

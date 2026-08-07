@@ -190,6 +190,7 @@
                     <include>define/**</include>
                     <include>db/**</include>
                     <include>templates/**</include>
+                    <include>META-INF/**</include>
                     <include>**/*.html</include>
                 </includes>
             </resource>

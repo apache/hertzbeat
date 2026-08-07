@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+org.apache.hertzbeat.startup.config.ManagedConfigEnvironmentPostProcessor

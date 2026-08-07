@@ -372,13 +372,22 @@ public final class SetupApiContract {
             @NotBlank String grpcEndpoints,
             @NotBlank String httpEndpoint,
             @NotBlank String database,
-            @NotBlank String username,
-            @NotBlank @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String password) {
+            String username,
+            @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String password) {
 
         public TelemetryStoreConfiguration {
             if (kind != TelemetryStoreKind.GREPTIME) {
                 throw new IllegalArgumentException("Only Greptime telemetry storage is supported");
             }
+            username = normalizeCredential(username);
+            password = normalizeCredential(password);
+            if (hasText(username) != hasText(password)) {
+                throw new IllegalArgumentException("Greptime username and password must be supplied together");
+            }
+        }
+
+        private static String normalizeCredential(String value) {
+            return value == null || value.isBlank() ? null : value;
         }
 
         @Override
@@ -592,5 +601,9 @@ public final class SetupApiContract {
         if (value != null && value <= 0) {
             throw new IllegalArgumentException("Retention days must be positive when supplied");
         }
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
