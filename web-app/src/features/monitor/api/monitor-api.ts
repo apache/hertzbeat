@@ -19,7 +19,7 @@ import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from
 import type { SupportedLocale } from '@/core/i18n/i18n';
 import { MonitorContractError, type MonitorAction, type MonitorQuery } from '../model/monitor-contract';
 import { writeMonitorQuery } from '../model/monitor-query';
-import { parseMonitorApps } from './monitor-apps-schema';
+import { parseMonitorApps, parseMonitorNavigationApps } from './monitor-apps-schema';
 import { parseMonitorDetail } from './monitor-detail-schema';
 import { parseMonitorPage } from './monitor-page-schema';
 
@@ -117,8 +117,8 @@ export async function loadMonitorNavigationApps(locale: string, signal?: AbortSi
   const normalizedLocale = locale.trim();
   if (!normalizedLocale) throw new MonitorContractError('Monitor navigation locale is required');
   const params = new URLSearchParams({ lang: normalizedLocale });
-  const value = await apiMessageGet(`/api/apps/hierarchy?${params.toString()}`, signal ? { signal } : undefined);
-  return parseMonitorApps(value);
+  const value = await apiMessageGet(`/api/apps/defines?${params.toString()}`, signal ? { signal } : undefined);
+  return parseMonitorNavigationApps(value);
 }
 
 export async function loadMonitorDetail(id: string | number, signal?: AbortSignal) {

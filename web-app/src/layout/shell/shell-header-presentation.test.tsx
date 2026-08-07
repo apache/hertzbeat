@@ -39,6 +39,8 @@ describe('ShellHeaderActions account menu', () => {
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
           sound: { kind: 'ready', canToggle: true, muted: true, saving: false, permission: 'default', failure: null },
+          previewOpen: false,
+          setPreviewOpen: vi.fn(),
           toggleSound: vi.fn()
         }}
         fullscreen={{ available: true, active: false, busy: false }}
@@ -77,6 +79,8 @@ describe('ShellHeaderActions account menu', () => {
           permission: 'default',
           failure: null
         } as const,
+        previewOpen: false,
+        setPreviewOpen: vi.fn(),
         toggleSound: vi.fn()
       },
       loggingOut: false,
@@ -153,6 +157,8 @@ function createProps(overrides: Partial<React.ComponentProps<typeof ShellHeaderA
         permission: 'default',
         failure: null
       } as const,
+      previewOpen: false,
+      setPreviewOpen: vi.fn(),
       toggleSound: vi.fn()
     },
     fullscreen: { available: false, active: false, busy: false },

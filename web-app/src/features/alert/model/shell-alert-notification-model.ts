@@ -51,7 +51,9 @@ export type ShellAlertSoundState =
 export type ShellAlertNotificationState = {
   count: ShellAlertCountState;
   list: ShellAlertListState;
+  previewOpen: boolean;
   sound: ShellAlertSoundState;
+  setPreviewOpen: (open: boolean) => void;
   toggleSound: () => Promise<void>;
 };
 

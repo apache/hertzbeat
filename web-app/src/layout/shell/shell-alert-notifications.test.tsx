@@ -7,7 +7,10 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { TFunction } from 'i18next';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { ShellAlertNotificationState } from '@/features/alert/model/shell-alert-notification-model';
 
 import { ShellAlertNotifications } from './shell-alert-notifications';
 import styles from './hertzbeat-shell.module.css';
@@ -24,7 +27,7 @@ describe('ShellAlertNotifications', () => {
   it('shows an authoritative count, recent evidence, and one Alert Center action', async () => {
     const open = vi.fn();
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 3 },
           list: {
@@ -57,7 +60,7 @@ describe('ShellAlertNotifications', () => {
 
   it('does not turn unavailable summary evidence into a fake zero badge', async () => {
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'unavailable' },
           list: { kind: 'unavailable' },
@@ -76,7 +79,7 @@ describe('ShellAlertNotifications', () => {
 
   it('renders an explicit empty state only after a successful read', async () => {
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
@@ -94,7 +97,7 @@ describe('ShellAlertNotifications', () => {
 
   it('keeps shell list and sound permission rejection distinct', async () => {
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'permission' },
           list: { kind: 'permission' },
@@ -114,7 +117,7 @@ describe('ShellAlertNotifications', () => {
   it('exposes one compact server-backed sound action with honest disabled evidence', () => {
     const toggleSound = vi.fn();
     const { rerender } = render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
@@ -133,7 +136,7 @@ describe('ShellAlertNotifications', () => {
     expect(toggleSound).toHaveBeenCalledOnce();
 
     rerender(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
@@ -149,7 +152,7 @@ describe('ShellAlertNotifications', () => {
 
   it('uses the matching sound icon at the same compact size when audio is enabled', () => {
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
@@ -170,7 +173,7 @@ describe('ShellAlertNotifications', () => {
   it('shows canonical mute evidence but disables the global action for a read-only role', () => {
     const toggleSound = vi.fn();
     render(
-      <ShellAlertNotifications
+      <ShellAlertNotificationsHarness
         state={{
           count: { kind: 'ready', total: 0 },
           list: { kind: 'empty' },
@@ -188,3 +191,21 @@ describe('ShellAlertNotifications', () => {
     expect(toggleSound).not.toHaveBeenCalled();
   });
 });
+
+type ShellAlertNotificationsHarnessProps = {
+  state: Omit<ShellAlertNotificationState, 'previewOpen' | 'setPreviewOpen'>;
+  t: TFunction;
+  onOpenAlerts: () => void;
+};
+
+function ShellAlertNotificationsHarness({ state, t: translate, onOpenAlerts }: ShellAlertNotificationsHarnessProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  return (
+    <ShellAlertNotifications
+      state={{ ...state, previewOpen, setPreviewOpen }}
+      t={translate}
+      onOpenAlerts={onOpenAlerts}
+    />
+  );
+}

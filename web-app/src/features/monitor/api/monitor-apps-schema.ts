@@ -28,6 +28,7 @@ const monitorAppSchema = z.object({
 });
 
 const monitorAppsSchema = z.array(monitorAppSchema);
+const monitorNavigationAppsSchema = z.record(nonEmptyStringSchema, nonEmptyStringSchema);
 
 export function parseMonitorApps(value: unknown): MonitorApp[] {
   const result = monitorAppsSchema.safeParse(value);
@@ -38,4 +39,15 @@ export function parseMonitorApps(value: unknown): MonitorApp[] {
     label: app.label,
     ...(app.hide === undefined ? {} : { hide: app.hide })
   }));
+}
+
+/**
+ * The authenticated shell needs only app identities and localized names.
+ * Parsing the compact `/defines` response here avoids downloading every metric
+ * and field solely to register contextual monitor routes.
+ */
+export function parseMonitorNavigationApps(value: unknown): MonitorApp[] {
+  const result = monitorNavigationAppsSchema.safeParse(value);
+  if (!result.success) throw new MonitorContractError();
+  return Object.entries(result.data).map(([app, label]) => ({ value: app, label }));
 }

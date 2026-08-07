@@ -29,7 +29,10 @@ export function useRuntimeStatusController(): RuntimeStatusViewModel {
   const query = useQuery({
     queryKey: runtimeStatusQueryKeys.current(),
     queryFn: ({ signal }) => loadRuntimeStatus({ signal }),
-    refetchInterval: RUNTIME_STATUS_REFRESH_INTERVAL_MS
+    refetchInterval: RUNTIME_STATUS_REFRESH_INTERVAL_MS,
+    // The shell already owns the 30-second refresh cadence. Keep newly mounted
+    // consumers on that shared snapshot instead of starting an extra read.
+    staleTime: RUNTIME_STATUS_REFRESH_INTERVAL_MS
   });
 
   const failure: RuntimeStatusRequestFailure | null = query.error

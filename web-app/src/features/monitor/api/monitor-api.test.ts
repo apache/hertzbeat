@@ -258,13 +258,19 @@ describe('monitor list API contracts', () => {
 
   it('requests localized application labels for shell navigation', async () => {
     const signal = new AbortController().signal;
-    http.apiMessageGet.mockResolvedValue([{ category: 'db', value: 'mysql', label: 'Database', hide: false }]);
+    http.apiMessageGet.mockResolvedValue({ mysql: 'Database', website: 'Website' });
 
     await expect(loadMonitorNavigationApps('pt-BR', signal)).resolves.toEqual([
-      { category: 'db', value: 'mysql', label: 'Database', hide: false }
+      { value: 'mysql', label: 'Database' },
+      { value: 'website', label: 'Website' }
     ]);
 
-    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy?lang=pt-BR', { signal });
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/defines?lang=pt-BR', { signal });
+
+    for (const malformed of [null, [], { '': 'Database' }, { mysql: '' }, { mysql: 7 }]) {
+      http.apiMessageGet.mockResolvedValueOnce(malformed);
+      await expect(loadMonitorNavigationApps('pt-BR')).rejects.toBeInstanceOf(MonitorContractError);
+    }
   });
 
   it('uses a non-replayable POST for enable while preserving the established mutation methods', async () => {

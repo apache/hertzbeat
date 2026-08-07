@@ -73,10 +73,14 @@ describe('shell alert notification controller', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it('loads an exact firing preview and forwards query cancellation', async () => {
+  it('loads an exact firing preview only after the bell popover opens', async () => {
     const { result } = renderController();
 
     await waitFor(() => expect(result.current.count).toEqual({ kind: 'ready', total: 3 }));
+    expect(api.loadAlertGroups).not.toHaveBeenCalled();
+
+    act(() => result.current.setPreviewOpen(true));
+    await waitFor(() => expect(result.current.list).toEqual({ kind: 'empty' }));
     expect(result.current.list).toEqual({ kind: 'empty' });
     expect(api.loadAlertGroups).toHaveBeenCalledWith(
       {
@@ -98,6 +102,7 @@ describe('shell alert notification controller', () => {
     api.loadAlertGroups.mockRejectedValue(new AlertRequestFailure('unavailable'));
     const { result } = renderController();
 
+    act(() => result.current.setPreviewOpen(true));
     await waitFor(() => expect(result.current.list).toEqual({ kind: 'unavailable' }));
     expect(result.current.count).toEqual({ kind: 'ready', total: 3 });
   });
@@ -358,7 +363,8 @@ describe('shell alert notification controller', () => {
       handlers = next;
       return { close: vi.fn() };
     });
-    renderController();
+    const { result } = renderController();
+    act(() => result.current.setPreviewOpen(true));
     await waitFor(() => expect(api.loadAlertGroups).toHaveBeenCalledTimes(1));
 
     act(() => handlers?.onAlert());

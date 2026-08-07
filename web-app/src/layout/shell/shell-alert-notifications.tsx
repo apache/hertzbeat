@@ -27,10 +27,12 @@ export function ShellAlertNotifications({
   return (
     <div className={styles.alertNotificationActions}>
       <Popover
+        open={state.previewOpen}
         placement="bottomRight"
         trigger="click"
         title={<strong>{t('shell.alerts.title')}</strong>}
         content={<AlertNotificationContent state={state} t={t} onOpenAlerts={onOpenAlerts} />}
+        onOpenChange={state.setPreviewOpen}
       >
         <Badge count={total} overflowCount={99} size="small">
           <Button className={styles.headerAction ?? ''} type="text" aria-label={label} icon={<BellOutlined />} />

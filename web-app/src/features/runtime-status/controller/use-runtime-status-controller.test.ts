@@ -25,6 +25,7 @@ type QueryOptions = {
   queryKey: readonly string[];
   queryFn: (context: { signal: AbortSignal }) => unknown;
   refetchInterval: number;
+  staleTime: number;
 };
 type QueryEvidence = { data?: unknown; error: unknown; isPending: boolean };
 
@@ -51,6 +52,7 @@ describe('useRuntimeStatusController', () => {
 
     expect(options.queryKey).toEqual(['ui-runtime-status']);
     expect(options.refetchInterval).toBe(RUNTIME_STATUS_REFRESH_INTERVAL_MS);
+    expect(options.staleTime).toBe(RUNTIME_STATUS_REFRESH_INTERVAL_MS);
     expect(api.loadRuntimeStatus).toHaveBeenCalledWith({ signal });
   });
 

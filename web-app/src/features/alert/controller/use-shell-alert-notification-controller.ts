@@ -6,7 +6,7 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   browserAlertNotificationRuntime,
@@ -49,6 +49,7 @@ export function useShellAlertNotificationController(
   options: ShellAlertNotificationOptions
 ): ShellAlertNotificationState {
   const client = useQueryClient();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const sound = useShellAlertSoundController({
     ...options,
     runtime: options.runtime ?? browserAlertNotificationRuntime
@@ -61,6 +62,7 @@ export function useShellAlertNotificationController(
   const listQuery = useQuery({
     queryKey: alertCenterQueryKeys.groups(shellAlertQuery),
     queryFn: ({ signal }) => loadAlertGroups(shellAlertQuery, signal),
+    enabled: previewOpen,
     retry: false
   });
   const refreshAlerts = useCallback(
@@ -72,7 +74,9 @@ export function useShellAlertNotificationController(
   return {
     count: readCountState(countQuery.isPending, countQuery.error, countQuery.data),
     list: readListState(listQuery.isPending, listQuery.error, listQuery.data?.content),
+    previewOpen,
     sound: sound.state,
+    setPreviewOpen,
     toggleSound: sound.toggleSound
   };
 }
