@@ -20,11 +20,9 @@ package org.apache.hertzbeat.startup.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.usthe.sureness.matcher.util.TirePathTree;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -119,8 +117,17 @@ class SurenessResourceRuleTest {
     /**
      * The deployment scripts ship their own copies of {@code sureness.yml}; a rule fixed only
      * in the packaged file would still leave every container deployment exposed.
+     *
+     * <p>Each section is checked against its own shape rather than against "either shape".
+     * The two sections are not interchangeable: {@code resourceRole} takes
+     * {@code api===method===roles} and {@code excludedResource} takes {@code api===method},
+     * and sureness consults the exclusion tree before it authenticates. A rule carrying
+     * roles that lands under {@code excludedResource} therefore matches nothing and quietly
+     * leaves its endpoint unruled, which a check accepting either shape anywhere would
+     * wave through.
      */
     @Test
+    @SuppressWarnings("unchecked")
     void deploymentCopiesCarryWellFormedRules() throws IOException {
         Path scriptDir = Path.of("..", "script");
         if (!Files.isDirectory(scriptDir)) {
@@ -134,15 +141,24 @@ class SurenessResourceRuleTest {
         }
         assertFalse(copies.isEmpty(), "expected the deployment scripts to ship sureness.yml copies");
         for (Path copy : copies) {
-            for (String line : Files.readAllLines(copy, StandardCharsets.UTF_8)) {
-                String rule = line.strip();
-                if (!rule.startsWith("- /") || !rule.contains(SEPARATOR)) {
-                    continue;
-                }
-                rule = rule.substring(1).strip();
-                int segments = rule.split(SEPARATOR, -1).length;
-                assertTrue(segments == RESOURCE_ROLE_SEGMENTS || segments == EXCLUDED_RESOURCE_SEGMENTS,
-                        "rule is silently dropped by sureness in " + copy + ": " + rule);
+            Map<String, Object> document;
+            try (InputStream in = Files.newInputStream(copy)) {
+                document = new Yaml().load(in);
+            }
+            List<String> copyResourceRole = (List<String>) document.get("resourceRole");
+            List<String> copyExcludedResource = (List<String>) document.get("excludedResource");
+            assertNotNull(copyResourceRole, "resourceRole must be present in " + copy);
+            assertNotNull(copyExcludedResource, "excludedResource must be present in " + copy);
+
+            for (String rule : copyResourceRole) {
+                assertEquals(RESOURCE_ROLE_SEGMENTS, rule.split(SEPARATOR, -1).length,
+                        "resourceRole rule is silently dropped by sureness in " + copy
+                                + ", it needs exactly two '" + SEPARATOR + "' separators: " + rule);
+            }
+            for (String rule : copyExcludedResource) {
+                assertEquals(EXCLUDED_RESOURCE_SEGMENTS, rule.split(SEPARATOR, -1).length,
+                        "excludedResource rule is silently dropped by sureness in " + copy
+                                + ", it needs exactly one '" + SEPARATOR + "' separator: " + rule);
             }
         }
     }
