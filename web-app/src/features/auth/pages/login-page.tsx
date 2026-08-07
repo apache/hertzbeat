@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { OperationalStatePanel } from '@/shared/operational-page/operational-page';
 
 import styles from './login-page.module.css';
-import { PassportBrand } from './passport-brand';
+import { PassportPageFrame } from './passport-page-frame';
 import { useLoginController } from '../controller/use-login-controller';
 import type { LoginCredentials } from '../model/login-model';
 
@@ -37,26 +37,24 @@ function LoginSessionContent({ controller }: { controller: LoginController }) {
 
   if (controller.sessionState === 'checking') {
     return (
-      <main className={styles.page}>
+      <PassportPageFrame>
         <section className={styles.panel} aria-label={t('auth.checkingSession')}>
-          <PassportBrand />
           <OperationalStatePanel kind="loading" title={t('auth.checkingSession')} />
         </section>
-      </main>
+      </PassportPageFrame>
     );
   }
   if (controller.sessionFailureKey) {
     return (
-      <main className={styles.page}>
+      <PassportPageFrame>
         <section className={styles.panel}>
-          <PassportBrand />
           <OperationalStatePanel
             kind={controller.sessionState === 'unavailable' ? 'unavailable' : 'error'}
             title={t(controller.sessionFailureKey)}
             action={<Button onClick={controller.retrySession}>{t('common.retry')}</Button>}
           />
         </section>
-      </main>
+      </PassportPageFrame>
     );
   }
   if (controller.sessionState === 'authenticated') return null;
@@ -68,9 +66,8 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
   const { t } = useTranslation();
 
   return (
-    <main className={styles.page}>
+    <PassportPageFrame>
       <section className={styles.panel} aria-labelledby="login-title">
-        <PassportBrand />
         <Typography.Title id="login-title" level={2}>
           {t('auth.title')}
         </Typography.Title>
@@ -101,6 +98,6 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
           </Button>
         </Form>
       </section>
-    </main>
+    </PassportPageFrame>
   );
 }

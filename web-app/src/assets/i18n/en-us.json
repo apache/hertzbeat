@@ -1041,6 +1041,18 @@
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",
+    "passport": {
+      "description": "Open-source monitoring and observability for infrastructure and applications.",
+      "headingLineOne": "Monitor infrastructure.",
+      "headingLineTwo": "Observe applications.",
+      "capabilityListLabel": "HertzBeat capabilities",
+      "capability1": "Agentless monitoring for databases, operating systems, middleware, networks, and APIs.",
+      "capability2": "Metrics, logs, and traces through OpenTelemetry.",
+      "capability3": "Custom collection protocols and reusable monitor definitions.",
+      "capability4": "Distributed collectors for isolated networks and larger environments.",
+      "capability5": "Alert rules, silences, notifications, and public status pages.",
+      "capability6": "Self-hosted operation within your own deployment and storage boundaries."
+    },
     "checkingSession": "Checking the current session",
     "username": "Username",
     "password": "Password",

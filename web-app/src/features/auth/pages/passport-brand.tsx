@@ -7,8 +7,22 @@
 
 import styles from './login-page.module.css';
 
-/** Keeps the product identity consistent across the standalone passport routes. */
-export function PassportBrand() {
+/** Keeps the product identity consistent across full passport pages and compact lock panels. */
+export function PassportBrand({ variant = 'compact' }: { variant?: 'full' | 'compact' }) {
+  if (variant === 'full') {
+    return (
+      <div className={styles.brandFull}>
+        <img
+          className={styles.brandLogoFull}
+          src="/assets/hertzbeat-brand.svg"
+          alt="HertzBeat"
+          width={220}
+          height={55}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.brand}>
       <img className={styles.brandLogo} src="/assets/logo.svg" alt="HertzBeat" width={32} height={31} />

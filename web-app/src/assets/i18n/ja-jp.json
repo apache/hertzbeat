@@ -1038,6 +1038,18 @@
   "auth": {
     "title": "HertzBeat にログイン",
     "description": "HertzBeat アカウントで続行します。",
+    "passport": {
+      "description": "インフラストラクチャとアプリケーションのためのオープンソース監視・可観測性プラットフォーム。",
+      "headingLineOne": "インフラを監視し、",
+      "headingLineTwo": "アプリを可視化。",
+      "capabilityListLabel": "HertzBeat の機能",
+      "capability1": "データベース、OS、ミドルウェア、ネットワーク、API をエージェントなしで監視。",
+      "capability2": "OpenTelemetry を通じてメトリクス、ログ、トレースを取り込み。",
+      "capability3": "収集プロトコルをカスタマイズし、監視定義を再利用。",
+      "capability4": "分散 Collector で分離ネットワークや大規模環境に対応。",
+      "capability5": "アラートルール、サイレンス、通知、公開ステータスページを管理。",
+      "capability6": "独自のデプロイとストレージ境界内でセルフホスト運用。"
+    },
     "checkingSession": "現在のセッションを確認しています",
     "username": "ユーザー名",
     "password": "パスワード",

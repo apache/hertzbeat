@@ -1035,6 +1035,18 @@
   "auth": {
     "title": "登入 HertzBeat",
     "description": "使用 HertzBeat 帳號繼續。",
+    "passport": {
+      "description": "面向基礎設施與應用程式的開源監控與可觀測平台。",
+      "headingLineOne": "監控基礎設施，",
+      "headingLineTwo": "觀察應用程式運作。",
+      "capabilityListLabel": "HertzBeat 功能",
+      "capability1": "無 Agent 監控資料庫、作業系統、中介軟體、網路設備與介面。",
+      "capability2": "透過 OpenTelemetry 接入指標、日誌與鏈路。",
+      "capability3": "自訂採集協定，並重複使用監控定義。",
+      "capability4": "使用分散式採集器涵蓋隔離網路與大型環境。",
+      "capability5": "設定告警規則、靜默、通知與公開狀態頁。",
+      "capability6": "在自己的部署與儲存邊界內自託管運作。"
+    },
     "checkingSession": "正在檢查目前工作階段",
     "username": "使用者名稱",
     "password": "密碼",

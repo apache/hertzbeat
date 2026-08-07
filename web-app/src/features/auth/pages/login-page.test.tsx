@@ -16,7 +16,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -120,7 +120,7 @@ describe('LoginPage', () => {
     const username = screen.getByLabelText('Username');
     const password = screen.getByLabelText('Password');
 
-    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/logo.svg');
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/hertzbeat-brand.svg');
     expect(username).toHaveValue('');
     expect(password).toHaveValue('');
 
@@ -133,6 +133,22 @@ describe('LoginPage', () => {
     );
     await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent('/dashboard'));
     expect(screen.getByTestId('route')).not.toHaveTextContent('typed-session-credential');
+  });
+
+  it('restores the product context around the secure login form', () => {
+    renderLogin();
+
+    const page = screen.getByRole('main');
+    const introduction = screen.getByTestId('passport-introduction');
+    const capabilityList = within(introduction).getByRole('list');
+
+    expect(page).toHaveAttribute('data-passport-page', 'true');
+    expect(page).toHaveAttribute('data-passport-background', 'legacy-artwork');
+    expect(introduction).toBeInTheDocument();
+    expect(within(capabilityList).getAllByRole('listitem')).toHaveLength(6);
+    expect(screen.getByTestId('passport-form-region')).toContainElement(
+      screen.getByRole('button', { name: 'Sign in' })
+    );
   });
 
   it('publishes a successful login through a new QueryClient generation', async () => {

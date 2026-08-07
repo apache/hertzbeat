@@ -2,33 +2,113 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
 .page {
-  display: grid;
   min-height: 100vh;
-  place-items: center;
-  padding: 32px;
+  min-height: 100svh;
+  padding: 40px clamp(24px, 5vw, 72px);
+  overflow-x: hidden;
   background: var(--hb-bg-canvas);
 }
 
+.shell {
+  display: flex;
+  width: min(1240px, 100%);
+  min-height: calc(100svh - 80px);
+  margin: 0 auto;
+  flex-direction: column;
+}
+
+.brandHeader {
+  display: flex;
+  width: min(520px, 100%);
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.brandDescription {
+  margin: 0;
+  color: var(--hb-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.brandFull {
+  position: relative;
+  width: 220px;
+  height: 55px;
+}
+
+.brandLogoFull {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 220px;
+  height: 55px;
+  filter: brightness(0) invert(1);
+}
+
+:global(:root[data-theme='default']) .brandLogoFull {
+  filter: none;
+}
+
+.content {
+  display: grid;
+  width: 100%;
+  flex: 1;
+  grid-template-columns: minmax(0, 10fr) minmax(368px, 12fr);
+  align-items: center;
+  gap: clamp(48px, 8vw, 112px);
+  padding: 56px 0 32px;
+}
+
+.introduction {
+  max-width: 540px;
+  color: var(--hb-text-primary);
+}
+
+.introduction h1 {
+  margin: 0 0 34px;
+  font-size: clamp(32px, 3.4vw, 48px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+}
+
+.introduction h1 span {
+  display: block;
+}
+
+.introduction ul {
+  display: grid;
+  margin: 0;
+  padding-left: 1.15em;
+  gap: 15px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.introduction li::marker {
+  color: var(--hb-color-primary);
+}
+
+.formRegion {
+  width: min(368px, 100%);
+  justify-self: center;
+}
+
 .panel {
-  width: min(400px, 100%);
+  width: 100%;
   padding: 30px;
   border: 1px solid var(--hb-border-subtle);
   border-radius: var(--hb-radius-surface);
   background: var(--hb-bg-raised);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 12%);
 }
 
 .brand {
@@ -67,14 +147,74 @@
   width: 100%;
 }
 
+@media (min-width: 960px) {
+  .page {
+    background-image: linear-gradient(rgb(13 15 20 / 86%), rgb(13 15 20 / 90%)), url('/assets/bg.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  :global(:root[data-theme='default']) .page {
+    background-image: url('/assets/bg.png');
+  }
+
+  :global(:root[data-theme='default']) .brandDescription,
+  :global(:root[data-theme='default']) .introduction {
+    color: #fff;
+    text-shadow: 0 1px 10px rgb(72 25 52 / 26%);
+  }
+
+  :global(:root[data-theme='default']) .panel {
+    background: color-mix(in srgb, var(--hb-bg-raised) 94%, transparent);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@media (max-width: 959px) {
+  .page {
+    display: grid;
+    place-items: center;
+  }
+
+  .shell {
+    min-height: auto;
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 40px;
+  }
+
+  .introduction {
+    display: none;
+  }
+
+  :global(body:has([data-passport-page='true'])) {
+    min-width: 0;
+    overflow-x: clip;
+  }
+}
+
 @media (max-width: 520px) {
   .page {
-    align-items: start;
-    padding: 20px;
+    padding: 24px 18px;
+  }
+
+  .brandHeader {
+    gap: 4px;
+  }
+
+  .brandDescription {
+    font-size: 13px;
+  }
+
+  .content {
+    padding-top: 28px;
   }
 
   .panel {
-    margin-top: 8vh;
     padding: 24px;
   }
 }

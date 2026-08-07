@@ -1046,6 +1046,18 @@
   "auth": {
     "title": "Entrar no HertzBeat",
     "description": "Use sua conta HertzBeat para continuar.",
+    "passport": {
+      "description": "Monitoramento e observabilidade de código aberto para infraestrutura e aplicações.",
+      "headingLineOne": "Monitore a infraestrutura.",
+      "headingLineTwo": "Observe as aplicações.",
+      "capabilityListLabel": "Recursos do HertzBeat",
+      "capability1": "Monitoramento sem agente para bancos de dados, sistemas, middleware, redes e APIs.",
+      "capability2": "Métricas, logs e traces por meio do OpenTelemetry.",
+      "capability3": "Protocolos de coleta personalizados e definições de monitor reutilizáveis.",
+      "capability4": "Coletores distribuídos para redes isoladas e ambientes maiores.",
+      "capability5": "Regras de alerta, silêncios, notificações e páginas públicas de status.",
+      "capability6": "Operação auto-hospedada dentro dos limites da sua implantação e armazenamento."
+    },
     "checkingSession": "Verificando a sessão atual",
     "username": "Usuário",
     "password": "Senha",
