@@ -11,7 +11,7 @@ import { App } from 'antd';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
@@ -143,7 +143,8 @@ describe('MonitorDefinitionPage', () => {
     );
     const workspaceHeaderQueries = within(workspaceHeader as HTMLElement);
     expect(workspaceHeaderQueries.queryByText('mysql', { selector: 'code' })).not.toBeInTheDocument();
-    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveClass('ant-btn');
+    fireEvent.click(workspaceHeaderQueries.getByRole('button', { name: 'View monitors' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent(buildMonitorListPath({ app: 'mysql' }));
     expect(workspaceHeaderQueries.getByRole('button', { name: 'Delete' })).toHaveClass(
       'ant-btn-primary',
       'ant-btn-dangerous'
@@ -251,11 +252,8 @@ describe('MonitorDefinitionPage', () => {
       'Monitor definition workspace header'
     );
     const workspaceHeaderQueries = within(workspaceHeader as HTMLElement);
-    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveAttribute(
-      'href',
-      buildMonitorListPath({ app: 'mysql' })
-    );
-    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveClass('ant-btn');
+    fireEvent.click(workspaceHeaderQueries.getByRole('button', { name: 'View monitors' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent(buildMonitorListPath({ app: 'mysql' }));
     expect(workspaceHeaderQueries.getByRole('button', { name: 'Delete' })).toBeEnabled();
   });
 
@@ -438,10 +436,16 @@ function shell(child: React.ReactNode) {
   return (
     <MemoryRouter>
       <I18nextProvider i18n={i18n}>
+        <LocationProbe />
         <App>{child}</App>
       </I18nextProvider>
     </MemoryRouter>
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="current-location">{`${location.pathname}${location.search}`}</output>;
 }
 
 class ResizeObserverStub {

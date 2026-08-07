@@ -40,7 +40,6 @@ export function MonitorDefinitionWorkspaceView(props: MonitorDefinitionWorkspace
 function DefinitionReadView(
   props: MonitorDefinitionWorkspaceProps & { workspace: Extract<MonitorDefinitionWorkspace, { kind: 'view' }> }
 ) {
-  const { t } = useTranslation();
   const { detail } = props.workspace;
   return (
     <Space direction="vertical" size="middle" className={styles.workspace ?? ''}>
@@ -48,19 +47,9 @@ function DefinitionReadView(
         title={detail.label}
         origin={detail.origin}
         className={styles.header ?? ''}
-        actions={
-          <>
-            <Button href={buildMonitorListPath({ app: detail.app })}>{t('monitorDefinitions.monitors')}</Button>
-            <Button
-              type="primary"
-              danger
-              disabled={!props.canWrite || !detail.deletable}
-              onClick={() => props.onDelete(detail)}
-            >
-              {t('common.delete')}
-            </Button>
-          </>
-        }
+        monitorListPath={buildMonitorListPath({ app: detail.app })}
+        deleteDisabled={!props.canWrite || !detail.deletable}
+        onDelete={() => props.onDelete(detail)}
       />
       <pre className={styles.readOnly}>{detail.definition}</pre>
     </Space>

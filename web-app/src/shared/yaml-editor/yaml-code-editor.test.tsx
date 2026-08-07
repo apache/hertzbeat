@@ -4,7 +4,9 @@
 
 // @vitest-environment jsdom
 
+import { HighlightStyle } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
+import { tags } from '@lezer/highlight';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -13,8 +15,8 @@ import appStyles from '@/app/styles.css?raw';
 import { RuntimeThemeContext } from '@/core/runtime-theme-context';
 import type { RuntimeTheme } from '@/core/runtime-preferences';
 
-import editorSource from './yaml-code-editor.tsx?raw';
 import { YamlCodeEditor, type YamlCodeEditorHandle } from './yaml-code-editor';
+import { yamlHighlightStyle } from './yaml-code-editor-highlight';
 
 describe('YamlCodeEditor', () => {
   afterEach(() => {
@@ -119,13 +121,18 @@ describe('YamlCodeEditor', () => {
   });
 
   it('uses semantic YAML syntax tokens supplied by both runtime palettes', () => {
-    expect(editorSource).toContain('HighlightStyle');
-    expect(editorSource).toContain('tags.propertyName');
-    expect(editorSource).toContain('tags.string');
-    expect(editorSource).toContain('tags.number');
-    expect(editorSource).toContain('tags.atom');
-    expect(editorSource).toContain('tags.punctuation');
-    expect(editorSource).toContain('tags.comment');
+    expect(yamlHighlightStyle).toBeInstanceOf(HighlightStyle);
+    expect(yamlHighlightStyle.specs).toEqual([
+      { tag: tags.propertyName, color: 'var(--hb-syntax-property)' },
+      { tag: tags.string, color: 'var(--hb-syntax-string)' },
+      { tag: tags.number, color: 'var(--hb-syntax-number)' },
+      { tag: [tags.atom, tags.bool, tags.null], color: 'var(--hb-syntax-atom)' },
+      { tag: tags.punctuation, color: 'var(--hb-syntax-punctuation)' },
+      { tag: tags.comment, color: 'var(--hb-syntax-comment)', fontStyle: 'italic' }
+    ]);
+    for (const tag of [tags.propertyName, tags.string, tags.number, tags.atom, tags.punctuation, tags.comment]) {
+      expect(yamlHighlightStyle.style([tag])).toEqual(expect.any(String));
+    }
     for (const token of ['property', 'string', 'number', 'atom', 'punctuation', 'comment']) {
       expect(appStyles).toMatch(new RegExp(`:root\\s*\\{[^}]*--hb-syntax-${token}:`, 's'));
       expect(appStyles).toMatch(new RegExp(`:root\\[data-theme='default'\\]\\s*\\{[^}]*--hb-syntax-${token}:`, 's'));

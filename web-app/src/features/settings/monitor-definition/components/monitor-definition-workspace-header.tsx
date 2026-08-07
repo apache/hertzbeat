@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Tag, Typography } from 'antd';
-import type { ReactNode } from 'react';
+import { Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import styles from './monitor-definition-workspace.module.css';
 
@@ -15,15 +15,21 @@ export function MonitorDefinitionWorkspaceHeader(props: {
   title: string;
   origin: string;
   className: string;
-  actions: ReactNode;
+  monitorListPath: string;
+  deleteDisabled: boolean;
+  onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   return (
     <div className={props.className} data-monitor-definition-workspace-header>
       <Typography.Title level={4}>{props.title}</Typography.Title>
       <div className={styles.headerActions}>
         <Tag>{t(`monitorDefinitions.originValue.${props.origin}`)}</Tag>
-        {props.actions}
+        <Button onClick={() => void navigate(props.monitorListPath)}>{t('monitorDefinitions.monitors')}</Button>
+        <Button type="primary" danger disabled={props.deleteDisabled} onClick={props.onDelete}>
+          {t('common.delete')}
+        </Button>
       </div>
     </div>
   );

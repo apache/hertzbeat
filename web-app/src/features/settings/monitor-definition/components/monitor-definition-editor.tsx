@@ -50,19 +50,9 @@ export function MonitorDefinitionEditor(props: EditorProps) {
             title={authority.label}
             origin={authority.origin}
             className={styles.header ?? ''}
-            actions={
-              <>
-                <Button href={buildMonitorListPath({ app: authority.app })}>{t('monitorDefinitions.monitors')}</Button>
-                <Button
-                  type="primary"
-                  danger
-                  disabled={!props.canWrite || !authority.deletable}
-                  onClick={() => props.onDelete(authority)}
-                >
-                  {t('common.delete')}
-                </Button>
-              </>
-            }
+            monitorListPath={buildMonitorListPath({ app: authority.app })}
+            deleteDisabled={!props.canWrite || !authority.deletable}
+            onDelete={() => props.onDelete(authority)}
           />
         </>
       ) : (

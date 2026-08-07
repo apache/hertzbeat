@@ -3,23 +3,16 @@
  */
 
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import {
-  bracketMatching,
-  foldGutter,
-  foldKeymap,
-  HighlightStyle,
-  indentOnInput,
-  syntaxHighlighting
-} from '@codemirror/language';
+import { bracketMatching, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { yaml } from '@codemirror/lang-yaml';
 import { EditorState } from '@codemirror/state';
 import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
-import { tags } from '@lezer/highlight';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import type { RuntimeTheme } from '@/core/runtime-preferences';
 
+import { yamlHighlightStyle } from './yaml-code-editor-highlight';
 import styles from './yaml-code-editor.module.css';
 
 type YamlCodeEditorProps = {
@@ -238,12 +231,3 @@ function editorExtensions({
     })
   ];
 }
-
-const yamlHighlightStyle = HighlightStyle.define([
-  { tag: tags.propertyName, color: 'var(--hb-syntax-property)' },
-  { tag: tags.string, color: 'var(--hb-syntax-string)' },
-  { tag: tags.number, color: 'var(--hb-syntax-number)' },
-  { tag: [tags.atom, tags.bool, tags.null], color: 'var(--hb-syntax-atom)' },
-  { tag: tags.punctuation, color: 'var(--hb-syntax-punctuation)' },
-  { tag: tags.comment, color: 'var(--hb-syntax-comment)', fontStyle: 'italic' }
-]);
