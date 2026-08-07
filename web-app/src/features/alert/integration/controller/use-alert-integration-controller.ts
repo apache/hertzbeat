@@ -58,7 +58,7 @@ export function useAlertIntegrationController() {
   const copyState = copyEvidence?.source === selectedSource ? copyEvidence : null;
   const state = resolveState(catalogQuery, detailQuery, catalogItem !== undefined);
   const guide = state.kind === 'ready' ? state.guide : undefined;
-  const contract = guide ? buildAlertIngressContract(window.location.origin, guide) : undefined;
+  const contract = guide ? buildAlertIngressContract(guide) : undefined;
   const tokenSettingsPath = buildAlertIntegrationTokenSettingsPath(selectedSource);
   const copy = async (target: 'endpoint' | 'authorization', value?: string) => {
     if (!guide || guide.readiness === 'guide_blocked' || !value) return;

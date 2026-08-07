@@ -38,9 +38,9 @@ describe('alert integration presentation model', () => {
     expect(alertIntegrationIconPath('zabbix')).toBe('/assets/img/integration/zabbix.svg');
   });
 
-  it('builds the runnable contract only from current origin and validated backend evidence', () => {
-    expect(buildAlertIngressContract('https://hertzbeat.example:9443/path', guide)).toEqual({
-      endpoint: 'https://hertzbeat.example:9443/api/alerts/report',
+  it('keeps the backend ingress path without guessing a public host from the browser', () => {
+    expect(buildAlertIngressContract(guide)).toEqual({
+      endpoint: '/api/alerts/report',
       authorizationHeader: 'Authorization: Bearer {token}'
     });
   });
@@ -138,6 +138,7 @@ const alertIntegrationUiKeys = [
   'alertIntegrations.readiness.configuration_required',
   'alertIntegrations.readiness.guide_blocked',
   'alertIntegrations.payloadShape',
+  'alertIntegrations.endpointHint',
   'alertIntegrations.requiredFields',
   'alertIntegrations.steps',
   'alertIntegrations.snippets',

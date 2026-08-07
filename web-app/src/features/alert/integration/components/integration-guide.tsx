@@ -89,6 +89,7 @@ function RunnableContract(props: GuideProps) {
       <ContractBlock
         label={props.t('alertIntegrations.endpoint')}
         value={props.endpoint}
+        description={props.t('alertIntegrations.endpointHint')}
         outcome={copyOutcome(props.copyState, props.guide.source, 'endpoint')}
         t={props.t}
         onCopy={props.onCopyEndpoint}
@@ -146,6 +147,7 @@ function Snippets({ snippets, t }: { snippets: string[]; t: TFunction }) {
 function ContractBlock(props: {
   label: string;
   value: string;
+  description?: string;
   outcome: 'copied' | 'failed' | null;
   t: TFunction;
   onCopy: () => void;
@@ -160,6 +162,7 @@ function ContractBlock(props: {
       <Button size="small" onClick={props.onCopy} aria-label={`${copyLabel}: ${props.label}`}>
         {copyLabel}
       </Button>
+      {props.description && <Typography.Text type="secondary">{props.description}</Typography.Text>}
     </div>
   );
 }

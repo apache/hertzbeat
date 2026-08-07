@@ -129,15 +129,17 @@ describe('useAlertIntegrationController', () => {
   });
 
   it('retires copy state when the selected source changes', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
-      value: { writeText: vi.fn().mockResolvedValue(undefined) }
+      value: { writeText }
     });
     const view = renderController('/alerts/integrations/webhook');
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
 
     await act(() => view.result.current.actions.copyEndpoint());
     expect(view.result.current.copyState).toMatchObject({ source: 'webhook', outcome: 'copied' });
+    expect(writeText).toHaveBeenCalledWith('/api/alerts/report');
 
     act(() => view.result.current.actions.selectSource('prometheus'));
     await waitFor(() => expect(view.result.current.selectedSource).toBe('prometheus'));

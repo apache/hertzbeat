@@ -70,7 +70,8 @@ describe('AlertIntegrationPage backend guide states', () => {
     expect(screen.getByText('alert.integration.webhook.step.create_token')).toBeInTheDocument();
     expect(screen.getByText('{"status":"firing"}')).toBeInTheDocument();
     expect(screen.getByText('alert.integration.ack.accepted_for_processing')).toBeInTheDocument();
-    expect(screen.getByText(`${window.location.origin}/api/alerts/report`)).toBeInTheDocument();
+    expect(screen.getByText('/api/alerts/report')).toBeInTheDocument();
+    expect(screen.getByText('alertIntegrations.endpointHint')).toBeInTheDocument();
     expect(screen.getByText('Authorization: Bearer {token}')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('link', { name: 'alertIntegrations.manageTokens' }));
     expect(actions.openTokenSettings).toHaveBeenCalled();
@@ -102,7 +103,7 @@ describe('AlertIntegrationPage backend guide states', () => {
 
     expect(screen.getByText('alertIntegrations.readiness.guide_blocked')).toBeInTheDocument();
     expect(screen.getByText('alert.integration.limit.zabbix.authorization_missing')).toBeInTheDocument();
-    expect(screen.queryByText(`${window.location.origin}/api/alerts/report`)).not.toBeInTheDocument();
+    expect(screen.queryByText('/api/alerts/report')).not.toBeInTheDocument();
     expect(screen.queryByText('Authorization: Bearer {token}')).not.toBeInTheDocument();
     expect(screen.queryByText('must-not-render')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument();
@@ -147,7 +148,7 @@ function controller(kind: AlertIntegrationState['kind'], guide = readyGuide) {
 
 function contractFor(guide: AlertIntegrationGuide) {
   return {
-    endpoint: `${window.location.origin}${guide.ingressPath}`,
+    endpoint: guide.ingressPath,
     authorizationHeader: `Authorization: ${guide.requiredHeaders.Authorization}`
   };
 }

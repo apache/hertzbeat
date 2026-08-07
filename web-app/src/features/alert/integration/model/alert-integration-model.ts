@@ -97,10 +97,9 @@ export function canManageAlertIntegrationTokens(roles: readonly string[]) {
   return roles.includes('ADMIN');
 }
 
-export function buildAlertIngressContract(origin: string, guide: AlertIntegrationGuide) {
-  const trustedOrigin = new URL(origin).origin;
+export function buildAlertIngressContract(guide: AlertIntegrationGuide) {
   return {
-    endpoint: new URL(guide.ingressPath, `${trustedOrigin}/`).toString(),
+    endpoint: guide.ingressPath,
     authorizationHeader: `Authorization: ${guide.requiredHeaders.Authorization}`
   };
 }
