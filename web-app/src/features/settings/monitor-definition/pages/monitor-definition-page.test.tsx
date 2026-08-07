@@ -150,6 +150,8 @@ describe('MonitorDefinitionPage', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Current version scroll' }));
     expect(editor.setScrollPosition).toHaveBeenCalledWith('Draft YAML', { top: 72, left: 8 });
+    fireEvent.click(screen.getByRole('button', { name: 'Draft YAML scroll' }));
+    expect(editor.setScrollPosition).toHaveBeenCalledWith('Current version', { top: 72, left: 8 });
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     fireEvent.change(screen.getByLabelText('Draft YAML'), { target: { value: 'app: mysql\nname: changed' } });
     fireEvent.click(screen.getByRole('button', { name: 'Validate' }));

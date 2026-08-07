@@ -40,6 +40,12 @@
   --hb-status-unknown: #7d8593;
   --hb-scrollbar-thumb: #3b414e;
   --hb-scrollbar-thumb-hover: #596170;
+  --hb-syntax-property: #82aaff;
+  --hb-syntax-string: #c3e88d;
+  --hb-syntax-number: #f78c6c;
+  --hb-syntax-atom: #c792ea;
+  --hb-syntax-punctuation: #b8bec9;
+  --hb-syntax-comment: #929aaa;
   --hb-radius-control: 6px;
   --hb-radius-surface: 8px;
   --hb-space-1: 4px;
@@ -92,6 +98,12 @@
   --hb-status-unknown: #7a8290;
   --hb-scrollbar-thumb: #c7ccd4;
   --hb-scrollbar-thumb-hover: #aeb5c0;
+  --hb-syntax-property: #315fbe;
+  --hb-syntax-string: #3d6f2a;
+  --hb-syntax-number: #9a4d00;
+  --hb-syntax-atom: #7a3e9d;
+  --hb-syntax-punctuation: #4d5563;
+  --hb-syntax-comment: #697180;
 }
 
 * {

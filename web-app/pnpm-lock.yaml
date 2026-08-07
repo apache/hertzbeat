@@ -32,6 +32,9 @@ importers:
       '@codemirror/view':
         specifier: 6.41.1
         version: 6.41.1
+      '@lezer/highlight':
+        specifier: 1.2.3
+        version: 1.2.3
       '@phosphor-icons/core':
         specifier: 2.1.1
         version: 2.1.1

@@ -5,16 +5,17 @@
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import {
   bracketMatching,
-  defaultHighlightStyle,
   foldGutter,
   foldKeymap,
+  HighlightStyle,
   indentOnInput,
   syntaxHighlighting
 } from '@codemirror/language';
 import { yaml } from '@codemirror/lang-yaml';
 import { EditorState } from '@codemirror/state';
 import { EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { tags } from '@lezer/highlight';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import type { RuntimeTheme } from '@/core/runtime-preferences';
@@ -33,19 +34,13 @@ type YamlCodeEditorProps = {
 export type YamlEditorScrollPosition = { top: number; left: number };
 export type YamlCodeEditorHandle = { setScrollPosition: (position: YamlEditorScrollPosition) => void };
 
-/**
- * Shared YAML editor for operator-authored definitions.
- *
- * CodeMirror owns text editing, selection, history, line numbers, folding and
- * keyboard behavior. This adapter only synchronizes the controlled React value;
- * feature pages own the authoritative/draft workflow around it.
- */
+/** Shared CodeMirror adapter; feature pages own the authoritative/draft workflow. */
 export const YamlCodeEditor = forwardRef<YamlCodeEditorHandle, YamlCodeEditorProps>(function YamlCodeEditor(
   { ariaLabel, value, minHeight = '320px', readOnly = false, onChange, onScrollPositionChange },
   ref
 ) {
   const { theme } = useRuntimeTheme();
-  const { hostRef, viewRef } = useYamlCodeMirror({
+  const { hostRef, setScrollPosition } = useYamlCodeMirror({
     ariaLabel,
     onChange,
     onScrollPositionChange,
@@ -56,9 +51,9 @@ export const YamlCodeEditor = forwardRef<YamlCodeEditorHandle, YamlCodeEditorPro
   useImperativeHandle(
     ref,
     () => ({
-      setScrollPosition: position => setEditorScrollPosition(viewRef.current, position)
+      setScrollPosition
     }),
-    [viewRef]
+    [setScrollPosition]
   );
 
   return (
@@ -89,6 +84,11 @@ function useYamlCodeMirror({
   const valueRef = useLatestValue(value);
   const onChangeRef = useLatestValue(onChange);
   const onScrollPositionChangeRef = useLatestValue(onScrollPositionChange);
+  const {
+    cancel: cancelPeerScroll,
+    report: reportPeerScroll,
+    schedule: schedulePeerScroll
+  } = usePeerScroll(viewRef, onScrollPositionChangeRef);
 
   useEffect(() => {
     if (!hostRef.current) {
@@ -112,17 +112,16 @@ function useYamlCodeMirror({
       })
     });
     viewRef.current = view;
-    const reportScrollPosition = () => {
-      onScrollPositionChangeRef.current?.({ top: view.scrollDOM.scrollTop, left: view.scrollDOM.scrollLeft });
-    };
+    const reportScrollPosition = () => reportPeerScroll(view);
     view.scrollDOM.addEventListener('scroll', reportScrollPosition, { passive: true });
 
     return () => {
       view.scrollDOM.removeEventListener('scroll', reportScrollPosition);
+      cancelPeerScroll();
       viewRef.current = null;
       view.destroy();
     };
-  }, [ariaLabel, onChangeRef, onScrollPositionChangeRef, readOnly, theme, valueRef]);
+  }, [ariaLabel, cancelPeerScroll, onChangeRef, readOnly, reportPeerScroll, theme, valueRef]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -137,13 +136,65 @@ function useYamlCodeMirror({
     }
   }, [value]);
 
-  return { hostRef, viewRef };
+  return { hostRef, setScrollPosition: schedulePeerScroll };
 }
 
-function setEditorScrollPosition(view: EditorView | null, position: YamlEditorScrollPosition) {
-  if (!view) return;
+function usePeerScroll(
+  viewRef: React.RefObject<EditorView | null>,
+  onScrollPositionChangeRef: React.RefObject<YamlCodeEditorProps['onScrollPositionChange']>
+) {
+  const frameRef = useRef<number | null>(null);
+  const pendingRef = useRef<YamlEditorScrollPosition | null>(null);
+  const programmaticRef = useRef<YamlEditorScrollPosition | null>(null);
+  // Comparison panes can have different scroll ranges. Coalescing drag updates
+  // and suppressing the clamped peer event prevents it from pulling the source back.
+  const schedule = useCallback(
+    (position: YamlEditorScrollPosition) => {
+      pendingRef.current = position;
+      if (frameRef.current !== null) return;
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = null;
+        const view = viewRef.current;
+        const pending = pendingRef.current;
+        pendingRef.current = null;
+        if (!view || !pending) return;
+        programmaticRef.current = applyEditorScrollPosition(view, pending);
+      });
+    },
+    [viewRef]
+  );
+  const report = useCallback(
+    (view: EditorView) => {
+      const position = readEditorScrollPosition(view);
+      if (sameScrollPosition(position, programmaticRef.current)) {
+        return;
+      }
+      programmaticRef.current = null;
+      onScrollPositionChangeRef.current?.(position);
+    },
+    [onScrollPositionChangeRef]
+  );
+  const cancel = useCallback(() => {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+    pendingRef.current = null;
+    programmaticRef.current = null;
+  }, []);
+  return { cancel, report, schedule };
+}
+
+function applyEditorScrollPosition(view: EditorView, position: YamlEditorScrollPosition) {
   if (Math.abs(view.scrollDOM.scrollTop - position.top) > 0.5) view.scrollDOM.scrollTop = position.top;
   if (Math.abs(view.scrollDOM.scrollLeft - position.left) > 0.5) view.scrollDOM.scrollLeft = position.left;
+  return readEditorScrollPosition(view);
+}
+
+function readEditorScrollPosition(view: EditorView): YamlEditorScrollPosition {
+  return { top: view.scrollDOM.scrollTop, left: view.scrollDOM.scrollLeft };
+}
+
+function sameScrollPosition(left: YamlEditorScrollPosition, right: YamlEditorScrollPosition | null) {
+  return Boolean(right && Math.abs(left.top - right.top) <= 0.5 && Math.abs(left.left - right.left) <= 0.5);
 }
 
 function useLatestValue<T>(value: T) {
@@ -172,7 +223,7 @@ function editorExtensions({
     history(),
     indentOnInput(),
     bracketMatching(),
-    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    syntaxHighlighting(yamlHighlightStyle, { fallback: true }),
     EditorView.lineWrapping,
     EditorState.readOnly.of(readOnly),
     EditorView.editable.of(!readOnly),
@@ -187,3 +238,12 @@ function editorExtensions({
     })
   ];
 }
+
+const yamlHighlightStyle = HighlightStyle.define([
+  { tag: tags.propertyName, color: 'var(--hb-syntax-property)' },
+  { tag: tags.string, color: 'var(--hb-syntax-string)' },
+  { tag: tags.number, color: 'var(--hb-syntax-number)' },
+  { tag: [tags.atom, tags.bool, tags.null], color: 'var(--hb-syntax-atom)' },
+  { tag: tags.punctuation, color: 'var(--hb-syntax-punctuation)' },
+  { tag: tags.comment, color: 'var(--hb-syntax-comment)', fontStyle: 'italic' }
+]);

@@ -37,6 +37,7 @@
     "@codemirror/language": "6.12.4",
     "@codemirror/state": "6.7.1",
     "@codemirror/view": "6.41.1",
+    "@lezer/highlight": "1.2.3",
     "@phosphor-icons/core": "2.1.1",
     "@refinedev/antd": "6.0.3",
     "@refinedev/core": "5.0.12",
