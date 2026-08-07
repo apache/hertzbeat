@@ -109,7 +109,6 @@
           "type": "category",
           "label": "notice",
           "items": [
-            "help/alert_notification_overview",
             "help/alert_email",
             "help/alert_sms",
             "help/alert_webhook",

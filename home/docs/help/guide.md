@@ -129,7 +129,6 @@ More details see&emsp;&#x1F449;&emsp;[Alarm grouping](alarm_group) <br />
 > Alarm notification provides different types of notification methods, such as email recipient, enterprise wechat robot notification, DingDing robot notification, and FeiShu robot notification.
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.
 
-&emsp;&#x1F449;&emsp;[Notification Overview](alert_notification_overview) <br />
 &emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
 &emsp;&#x1F449;&emsp;[Configure SMS Notification](alert_sms) <br />
 &emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br />
