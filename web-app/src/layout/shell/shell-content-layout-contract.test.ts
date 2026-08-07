@@ -15,7 +15,7 @@ describe('shell content layout contract', () => {
     const shellBodyRule = shellStyles.match(/\.shellBody\s*\{(?<body>[^}]*)\}/)?.groups?.body;
     const navigationRule = shellStyles.match(/\.navigation\s*\{(?<body>[^}]*)\}/)?.groups?.body;
 
-    expect(shellRule).toMatch(/--hb-shell-header-height:\s*46px/);
+    expect(shellRule).toMatch(/--hb-shell-header-height:\s*52px/);
     expect(shellRule).toMatch(/overflow-x:\s*clip/);
     expect(shellRule).not.toMatch(/overflow-x:\s*(auto|hidden)/);
     expect(shellBodyRule).toMatch(/overflow-x:\s*clip/);

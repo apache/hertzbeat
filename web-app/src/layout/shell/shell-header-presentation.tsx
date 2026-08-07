@@ -85,7 +85,7 @@ export function ShellHeaderActions({
 
 export function ShellBrand({ theme }: { theme: RuntimeTheme }) {
   const source = theme === 'default' ? '/assets/hertzbeat-brand.svg' : '/assets/hertzbeat-brand-white.svg';
-  return <img className={styles.brandLogo} src={source} alt="HertzBeat" width={112} height={28} />;
+  return <img className={styles.brandLogo} src={source} alt="HertzBeat" width={144} height={36} />;
 }
 
 function ShellLanguageMenu({

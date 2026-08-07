@@ -116,6 +116,7 @@
   display: flex;
   min-height: 48px;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--hb-space-2);
   padding-block: var(--hb-space-3);
   background: var(--hb-bg-navigation);

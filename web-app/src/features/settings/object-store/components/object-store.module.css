@@ -18,18 +18,18 @@
 .form {
   display: grid;
   width: 100%;
-  max-width: 820px;
-  margin-inline: auto;
+  max-width: 520px;
+  margin-inline: 0;
+  gap: 18px;
 }
 .field {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 24px;
-  padding: 18px 4px;
+  gap: 7px;
 }
 .label {
-  padding-top: 6px;
+  padding-top: 0;
   font-weight: 600;
 }
 .required::before {
@@ -41,13 +41,4 @@
   display: grid;
   gap: 6px;
   min-width: 0;
-}
-@media (max-width: 700px) {
-  .field {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .label {
-    padding-top: 0;
-  }
 }

@@ -6,7 +6,7 @@
  */
 
 .shell {
-  --hb-shell-header-height: 46px;
+  --hb-shell-header-height: 52px;
   --hb-shell-sidebar-width: 220px;
   width: 100%;
   max-width: 100vw;
@@ -36,7 +36,7 @@
   justify-content: center;
   flex: 0 0 var(--hb-shell-sidebar-width);
   /* Keep the full project wordmark legible after the navigation is collapsed. */
-  min-width: 132px;
+  min-width: 168px;
   padding: 0 12px;
   overflow: hidden;
   transition: flex-basis 160ms ease;
@@ -45,8 +45,8 @@
 .brandLogo {
   display: block;
   flex: none;
-  width: 112px;
-  height: 28px;
+  width: 144px;
+  height: 36px;
 }
 
 .headerSpine {

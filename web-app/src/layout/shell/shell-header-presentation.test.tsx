@@ -124,6 +124,8 @@ describe('ShellHeaderActions account menu', () => {
     const { rerender } = render(<ShellBrand theme="default" />);
 
     expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/hertzbeat-brand.svg');
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('width', '144');
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('height', '36');
 
     rerender(<ShellBrand theme="dark" />);
     expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/hertzbeat-brand-white.svg');
