@@ -52,6 +52,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.TimerTask;
@@ -78,6 +79,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Primary
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
 @Slf4j
 public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {

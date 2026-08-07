@@ -20,8 +20,10 @@ package org.apache.hertzbeat.alert.calculate.periodic;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,12 +66,13 @@ class PeriodicAlertRuleSchedulerTest {
     void setUp() {
         scheduler = new PeriodicAlertRuleScheduler(metricsCalculator, logCalculator, traceCalculator, alertDefineDao,
                 VirtualThreadProperties.defaults());
+        scheduler.start();
     }
 
     @AfterEach
     void tearDown() {
         if (scheduler != null) {
-            scheduler.destroy();
+            scheduler.stop();
         }
     }
 
@@ -151,9 +154,10 @@ class PeriodicAlertRuleSchedulerTest {
 
     @Test
     void updateScheduleHonorsConfiguredGlobalPeriodicConcurrencyLimit() throws InterruptedException {
-        scheduler.destroy();
+        scheduler.stop();
         scheduler = new PeriodicAlertRuleScheduler(metricsCalculator, logCalculator, traceCalculator, alertDefineDao,
                 periodicProperties(1));
+        scheduler.start();
 
         CountDownLatch firstStarted = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
@@ -191,7 +195,9 @@ class PeriodicAlertRuleSchedulerTest {
     }
 
     @Test
-    void runLoadsPeriodicTraceRulesAtStartup() throws Exception {
+    void startLoadsPeriodicTraceRulesAtStartup() {
+        scheduler.stop();
+        clearInvocations(alertDefineDao);
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC))
                 .thenReturn(java.util.List.of());
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(
@@ -200,7 +206,7 @@ class PeriodicAlertRuleSchedulerTest {
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
                 .thenReturn(java.util.List.of(traceRule(6L)));
 
-        scheduler.run();
+        scheduler.start();
 
         verify(alertDefineDao).findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
     }
@@ -216,6 +222,40 @@ class PeriodicAlertRuleSchedulerTest {
         scheduler.updateSchedule(traceRule(7L));
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void stopDuringPendingExecutionIsIdempotentAndDoesNotResubmit() throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch interrupted = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            int current = invocations.incrementAndGet();
+            if (current == 1) {
+                started.countDown();
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    interrupted.countDown();
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                secondStarted.countDown();
+            }
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+
+        scheduler.updateSchedule(metricRule(8L));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        Thread.sleep(1200L);
+
+        scheduler.stop();
+        scheduler.stop();
+
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+        assertFalse(secondStarted.await(1500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
     }
 
     private AlertDefine metricRule(Long id) {

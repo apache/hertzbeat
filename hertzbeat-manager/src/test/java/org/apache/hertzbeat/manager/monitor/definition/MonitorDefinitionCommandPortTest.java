@@ -99,7 +99,7 @@ class MonitorDefinitionCommandPortTest {
                 monitorServiceProvider,
                 objectStoreServiceProvider);
         commandService = new MonitorDefinitionCommandService(appService);
-        appService.afterPropertiesSet();
+        appService.initializeRuntimeDefinitions();
         clearInvocations(defineDao, monitorDao, monitorService);
     }
 

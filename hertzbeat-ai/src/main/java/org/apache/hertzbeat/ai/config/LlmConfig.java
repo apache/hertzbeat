@@ -19,7 +19,6 @@
 package org.apache.hertzbeat.ai.config;
 
 import com.openai.client.OpenAIClient;
-import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +57,7 @@ public class LlmConfig {
         this.applicationContext = applicationContext;
     }
 
-    @PostConstruct
-    public void registerInitialChatClient() {
+    void registerInitialChatClient() {
         registerChatClient();
     }
 

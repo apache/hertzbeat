@@ -30,6 +30,7 @@ import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
 import org.apache.hertzbeat.ai.utils.SopMessageUtil;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.ai.SopSchedule;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@ConditionalOnNormalBusinessRuntime
 @EnableScheduling
 public class SopScheduleExecutor {
 

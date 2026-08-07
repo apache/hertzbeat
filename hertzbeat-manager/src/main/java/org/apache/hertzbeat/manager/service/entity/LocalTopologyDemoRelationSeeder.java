@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
 import org.apache.hertzbeat.manager.dao.EntityRelationDao;
 import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Seeds local-only demo topology relations so fresh local H2 catalogs do not render node-only graphs.
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @Profile("local")
 @Slf4j
 public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -63,7 +64,50 @@ class CalculateStatusTest {
     @BeforeEach
     void setUp() {
         calculateStatus = new CalculateStatus(statusPageOrgDao, statusPageComponentDao, statusProperties(),
-                statusPageHistoryDao, monitorDao, new VirtualThreadProperties(), false);
+                statusPageHistoryDao, monitorDao, new VirtualThreadProperties());
+    }
+
+    @Test
+    void constructorIsPassive() {
+        assertFalse(calculateStatus.isStarted());
+        verifyNoInteractions(statusPageOrgDao, statusPageComponentDao, statusPageHistoryDao, monitorDao);
+    }
+
+    @Test
+    void lifecycleIsIdempotent() {
+        calculateStatus.start();
+        calculateStatus.start();
+
+        assertTrue(calculateStatus.isStarted());
+
+        calculateStatus.destroy();
+        calculateStatus.destroy();
+
+        assertFalse(calculateStatus.isStarted());
+        verifyNoInteractions(statusPageOrgDao, statusPageComponentDao, statusPageHistoryDao, monitorDao);
+    }
+
+    @Test
+    void disabledVirtualThreadsStillReachStartedState() {
+        calculateStatus.destroy();
+        calculateStatus = new CalculateStatus(statusPageOrgDao, statusPageComponentDao, statusProperties(),
+                statusPageHistoryDao, monitorDao,
+                new VirtualThreadProperties(false, null, null, null, null, null, null));
+
+        calculateStatus.start();
+
+        assertTrue(calculateStatus.isStarted());
+    }
+
+    @Test
+    void dispatchAfterDestroyIsSafeNoOp() {
+        calculateStatus.start();
+        calculateStatus.destroy();
+
+        calculateStatus.dispatchCalculate();
+        calculateStatus.dispatchCombineHistory();
+
+        verifyNoInteractions(statusPageOrgDao, statusPageComponentDao, statusPageHistoryDao, monitorDao);
     }
 
     @AfterEach
@@ -75,6 +119,7 @@ class CalculateStatusTest {
 
     @Test
     void dispatchCalculateRunsOnVirtualThread() throws Exception {
+        calculateStatus.start();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean virtualThread = new AtomicBoolean(false);
         org.mockito.Mockito.doAnswer(invocation -> {
@@ -91,6 +136,7 @@ class CalculateStatusTest {
 
     @Test
     void dispatchCombineHistoryRunsOnVirtualThread() throws Exception {
+        calculateStatus.start();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean virtualThread = new AtomicBoolean(false);
         org.mockito.Mockito.doAnswer(invocation -> {
@@ -107,6 +153,7 @@ class CalculateStatusTest {
 
     @Test
     void dispatchCalculateDoesNotRunConcurrently() throws Exception {
+        calculateStatus.start();
         CountDownLatch firstStarted = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         CountDownLatch secondStarted = new CountDownLatch(1);
@@ -136,6 +183,41 @@ class CalculateStatusTest {
         releaseFirst.countDown();
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
+    }
+
+    @Test
+    void destroyWhileCalculateIsRunningDropsPendingDispatch() throws Exception {
+        calculateStatus.start();
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch interrupted = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            int current = invocations.incrementAndGet();
+            if (current == 1) {
+                started.countDown();
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    interrupted.countDown();
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                secondStarted.countDown();
+            }
+            return Collections.emptyList();
+        }).when(statusPageOrgDao).findAll();
+
+        calculateStatus.dispatchCalculate();
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        calculateStatus.dispatchCalculate();
+
+        calculateStatus.destroy();
+        calculateStatus.dispatchCalculate();
+
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+        assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
     }
 
     private StatusProperties statusProperties() {

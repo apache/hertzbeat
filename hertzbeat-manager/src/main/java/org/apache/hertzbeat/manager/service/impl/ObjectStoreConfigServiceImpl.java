@@ -30,7 +30,6 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigMapper;
 import org.apache.hertzbeat.manager.service.ObjectStoreConfigService;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
@@ -50,7 +49,7 @@ import tools.jackson.core.type.TypeReference;
 @Service
 public class ObjectStoreConfigServiceImpl extends
         AbstractGeneralConfigServiceImpl<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>>
-        implements InitializingBean, ObjectStoreConfigService {
+        implements ObjectStoreConfigService {
 
     private static final String BEAN_NAME = "ObjectStoreService";
     @Resource
@@ -160,8 +159,8 @@ public class ObjectStoreConfigServiceImpl extends
         mapper.validateObsEndpoint(endpoint);
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    /** Applies the persisted object-store configuration when the normal business runtime opens. */
+    public void initializeRuntimeState() {
         applyRuntime(getConfig());
     }
 

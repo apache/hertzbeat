@@ -70,61 +70,81 @@ public class CalculateStatus implements DisposableBean {
     private final MonitorDao monitorDao;
 
     private final int intervals;
+    private final VirtualThreadProperties virtualThreadProperties;
 
-    private final ScheduledExecutorService calculateScheduler;
+    private ScheduledExecutorService calculateScheduler;
 
-    private final ScheduledExecutorService combineHistoryScheduler;
+    private ScheduledExecutorService combineHistoryScheduler;
 
-    private final ExecutorService calculateExecutor;
+    private ExecutorService calculateExecutor;
 
-    private final ExecutorService combineHistoryExecutor;
+    private ExecutorService combineHistoryExecutor;
 
-    private final ScheduledDispatchTask calculateTask;
+    private ScheduledDispatchTask calculateTask;
 
-    private final ScheduledDispatchTask combineHistoryTask;
+    private ScheduledDispatchTask combineHistoryTask;
+
+    private boolean started;
 
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
                            StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
                            MonitorDao monitorDao) {
         this(statusPageOrgDao, statusPageComponentDao, statusProperties, statusPageHistoryDao, monitorDao,
-                VirtualThreadProperties.defaults(), true);
+                VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
                            StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
                            MonitorDao monitorDao, VirtualThreadProperties virtualThreadProperties) {
-        this(statusPageOrgDao, statusPageComponentDao, statusProperties, statusPageHistoryDao, monitorDao,
-                virtualThreadProperties, true);
-    }
-
-    CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
-                    StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
-                    MonitorDao monitorDao, VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.statusPageOrgDao = statusPageOrgDao;
         this.monitorDao = monitorDao;
         this.statusPageComponentDao = statusPageComponentDao;
         this.statusPageHistoryDao = statusPageHistoryDao;
-        intervals = statusProperties.getCalculate() == null ? DEFAULT_CALCULATE_INTERVAL_TIME : statusProperties.getCalculate().getInterval();
-        this.calculateScheduler = createScheduler("status-page-calculate-%d", "Status calculate has uncaughtException.");
-        this.combineHistoryScheduler = createScheduler("status-page-history-%d", "History combine has uncaughtException.");
-        this.calculateExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-calculate-vt-",
-                "Status calculate worker has uncaughtException.");
-        this.combineHistoryExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-history-vt-",
-                "History combine worker has uncaughtException.");
-        this.calculateTask = new ScheduledDispatchTask(calculateExecutor, this::runCalculate);
-        this.combineHistoryTask = new ScheduledDispatchTask(combineHistoryExecutor, this::runCombineHistory);
-        if (autoStart) {
-            startCalculate();
-            startCombineHistory();
+        StatusProperties.CalculateProperties calculateProperties = statusProperties.getCalculate();
+        intervals = calculateProperties == null
+                ? DEFAULT_CALCULATE_INTERVAL_TIME : calculateProperties.getInterval();
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+    }
+
+    synchronized void start() {
+        if (started) {
+            return;
+        }
+        try {
+            calculateScheduler = createScheduler(
+                    "status-page-calculate-%d", "Status calculate has uncaughtException.");
+            combineHistoryScheduler = createScheduler(
+                    "status-page-history-%d", "History combine has uncaughtException.");
+            calculateExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-calculate-vt-",
+                    "Status calculate worker has uncaughtException.");
+            combineHistoryExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-history-vt-",
+                    "History combine worker has uncaughtException.");
+            ScheduledDispatchTask currentCalculateTask =
+                    new ScheduledDispatchTask(calculateExecutor, this::runCalculate);
+            ScheduledDispatchTask currentCombineHistoryTask =
+                    new ScheduledDispatchTask(combineHistoryExecutor, this::runCombineHistory);
+            calculateTask = currentCalculateTask;
+            combineHistoryTask = currentCombineHistoryTask;
+            startCalculate(currentCalculateTask);
+            startCombineHistory(currentCombineHistoryTask);
+            started = true;
+        } catch (RuntimeException | Error e) {
+            destroy();
+            throw e;
         }
     }
 
-    private void startCalculate() {
-        calculateScheduler.scheduleAtFixedRate(this::dispatchCalculate, 5, intervals, TimeUnit.SECONDS);
+    synchronized boolean isStarted() {
+        return started;
     }
 
-    private void startCombineHistory() {
+    private void startCalculate(ScheduledDispatchTask currentCalculateTask) {
+        calculateScheduler.scheduleAtFixedRate(currentCalculateTask::dispatch, 5, intervals, TimeUnit.SECONDS);
+    }
+
+    private void startCombineHistory(ScheduledDispatchTask currentCombineHistoryTask) {
         // combine history every day at 1:00 AM
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = now.withHour(1).withMinute(0).withSecond(0);
@@ -132,7 +152,7 @@ public class CalculateStatus implements DisposableBean {
             nextRun = nextRun.plusDays(1);
         }
         long delay = Duration.between(now, nextRun).toMillis();
-        combineHistoryScheduler.scheduleAtFixedRate(this::dispatchCombineHistory, delay,
+        combineHistoryScheduler.scheduleAtFixedRate(currentCombineHistoryTask::dispatch, delay,
                 TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
     }
 
@@ -144,24 +164,45 @@ public class CalculateStatus implements DisposableBean {
         return intervals;
     }
 
-    void dispatchCalculate() {
-        calculateTask.dispatch();
+    synchronized void dispatchCalculate() {
+        if (calculateTask != null) {
+            calculateTask.dispatch();
+        }
     }
 
-    void dispatchCombineHistory() {
-        combineHistoryTask.dispatch();
+    synchronized void dispatchCombineHistory() {
+        if (combineHistoryTask != null) {
+            combineHistoryTask.dispatch();
+        }
     }
 
     @Override
-    public void destroy() {
-        calculateScheduler.shutdownNow();
-        combineHistoryScheduler.shutdownNow();
+    public synchronized void destroy() {
+        started = false;
+        if (calculateTask != null) {
+            calculateTask.cancel();
+        }
+        if (combineHistoryTask != null) {
+            combineHistoryTask.cancel();
+        }
+        if (calculateScheduler != null) {
+            calculateScheduler.shutdownNow();
+            calculateScheduler = null;
+        }
+        if (combineHistoryScheduler != null) {
+            combineHistoryScheduler.shutdownNow();
+            combineHistoryScheduler = null;
+        }
         if (calculateExecutor != null) {
             calculateExecutor.shutdownNow();
+            calculateExecutor = null;
         }
         if (combineHistoryExecutor != null) {
             combineHistoryExecutor.shutdownNow();
+            combineHistoryExecutor = null;
         }
+        calculateTask = null;
+        combineHistoryTask = null;
     }
 
     private void runCalculate() {
@@ -327,6 +368,7 @@ public class CalculateStatus implements DisposableBean {
         private final Object lock = new Object();
         private boolean running;
         private int pendingRuns;
+        private boolean cancelled;
 
         private ScheduledDispatchTask(ExecutorService executorService, Runnable task) {
             this.executorService = executorService;
@@ -335,10 +377,18 @@ public class CalculateStatus implements DisposableBean {
 
         private void dispatch() {
             if (executorService == null) {
+                synchronized (lock) {
+                    if (cancelled) {
+                        return;
+                    }
+                }
                 task.run();
                 return;
             }
             synchronized (lock) {
+                if (cancelled) {
+                    return;
+                }
                 if (running) {
                     pendingRuns++;
                     return;
@@ -372,7 +422,11 @@ public class CalculateStatus implements DisposableBean {
         private void onComplete() {
             boolean shouldRunAgain;
             synchronized (lock) {
-                if (pendingRuns > 0) {
+                if (cancelled) {
+                    running = false;
+                    pendingRuns = 0;
+                    shouldRunAgain = false;
+                } else if (pendingRuns > 0) {
                     pendingRuns--;
                     shouldRunAgain = true;
                 } else {
@@ -382,6 +436,13 @@ public class CalculateStatus implements DisposableBean {
             }
             if (shouldRunAgain) {
                 submit();
+            }
+        }
+
+        private void cancel() {
+            synchronized (lock) {
+                cancelled = true;
+                pendingRuns = 0;
             }
         }
     }

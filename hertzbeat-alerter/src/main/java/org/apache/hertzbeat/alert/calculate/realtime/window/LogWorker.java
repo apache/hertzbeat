@@ -23,6 +23,7 @@ import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@ConditionalOnNormalBusinessRuntime
 public class LogWorker {
     
     private static final String LOG_PREFIX = "log";

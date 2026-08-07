@@ -18,12 +18,17 @@
 package org.apache.hertzbeat.startup;
 
 import jakarta.annotation.PostConstruct;
+import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.apache.hertzbeat.startup.runtime.HertzBeatStartupCoordinator;
+import org.apache.hertzbeat.startup.runtime.SpringStartupContextLauncher;
+import org.apache.hertzbeat.startup.runtime.StartupModePropertyProbe;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -34,11 +39,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * HertzBeat main application startup class.
  * This class replaces the original Manager class as the main entry point for HertzBeat application.
  */
-@SpringBootApplication
+@SpringBootConfiguration
+@EnableAutoConfiguration
 @EnableJpaAuditing
 @EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
 @EntityScan(basePackages = {"org.apache.hertzbeat"})
-@ComponentScan(basePackages = {"org.apache.hertzbeat"})
+@ComponentScan(basePackages = {"org.apache.hertzbeat"}, excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE, classes = SetupOnlyApplication.class))
 @ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync
@@ -46,7 +53,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class HertzBeatApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(HertzBeatApplication.class, args);
+        SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                new StartupModePropertyProbe(), launcher);
+        coordinator.start(args);
     }
 
     @PostConstruct

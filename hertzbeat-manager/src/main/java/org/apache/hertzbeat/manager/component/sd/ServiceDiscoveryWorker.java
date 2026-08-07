@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@ConditionalOnNormalBusinessRuntime
 public class ServiceDiscoveryWorker implements InitializingBean {
 
     private static final String FILED_HOST = "host";

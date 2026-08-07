@@ -20,8 +20,8 @@ package org.apache.hertzbeat.alert.calculate.periodic;
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,27 +37,26 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Periodic Alert Rule Scheduler
  */
 @Slf4j
 @Component
-public class PeriodicAlertRuleScheduler implements CommandLineRunner, DisposableBean {
+public class PeriodicAlertRuleScheduler {
 
     private final MetricsPeriodicAlertCalculator metricsCalculator;
     private final LogPeriodicAlertCalculator logCalculator;
     private final TracePeriodicAlertCalculator traceCalculator;
     private final AlertDefineDao alertDefineDao;
-    private final ScheduledExecutorService scheduledExecutor;
-    private final ExecutorService periodicExecutor;
-    private final Semaphore periodicPermits;
-    private final boolean virtualThreadsEnabled;
+    private ScheduledExecutorService scheduledExecutor;
+    private ExecutorService periodicExecutor;
+    private Semaphore periodicPermits;
+    private final VirtualThreadProperties virtualThreadProperties;
+    private boolean virtualThreadsEnabled;
     private final Map<Long, ScheduledTaskState> scheduledTasks;
 
     @Autowired
@@ -70,10 +69,15 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
         this.logCalculator = logCalculator;
         this.traceCalculator = traceCalculator;
         this.alertDefineDao = alertDefineDao;
-        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
-            log.error("Scheduled periodic alert threshold has uncaughtException.");
-            log.error(throwable.getMessage(), throwable);
-        };
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.scheduledTasks = new ConcurrentHashMap<>();
+    }
+
+    synchronized void start() {
+        if (scheduledExecutor != null) {
+            return;
+        }
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("Scheduled periodic alert threshold has uncaughtException.");
@@ -82,49 +86,18 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
                 .setDaemon(true)
                 .setNameFormat("periodic-alert-threshold-worker-%d")
                 .build();
-        this.scheduledExecutor = Executors.newScheduledThreadPool(10, threadFactory);
-        VirtualThreadProperties properties =
-                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        this.virtualThreadsEnabled = properties.enabled();
-        int maxConcurrentPeriodicTasks = Math.max(1, properties.alerter().periodicMaxConcurrentJobs());
+        scheduledExecutor = Executors.newScheduledThreadPool(10, threadFactory);
+        virtualThreadsEnabled = virtualThreadProperties.enabled();
+        int maxConcurrentPeriodicTasks = Math.max(
+                1, virtualThreadProperties.alerter().periodicMaxConcurrentJobs());
         this.periodicExecutor = virtualThreadsEnabled
                 ? Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
                 .name("periodic-alert-task-", 0)
-                .uncaughtExceptionHandler(handler)
+                .uncaughtExceptionHandler((thread, throwable) ->
+                        log.error("Periodic alert task failed", throwable))
                 .factory())
                 : null;
         this.periodicPermits = virtualThreadsEnabled ? new Semaphore(maxConcurrentPeriodicTasks) : null;
-        this.scheduledTasks = new ConcurrentHashMap<>();
-    }
-
-    public void cancelSchedule(Long ruleId) {
-        if (ruleId == null) {
-            return;
-        }
-        ScheduledTaskState state = scheduledTasks.remove(ruleId);
-        if (state != null) {
-            state.cancel();
-        }
-    }
-
-    public void updateSchedule(AlertDefine rule) {
-        if (rule == null || rule.getId() == null) {
-            log.error("Alert rule is null or rule id is null.");
-            return;
-        }
-        cancelSchedule(rule.getId());
-        if (isPeriodicRule(rule.getType())) {
-            ScheduledTaskState state = new ScheduledTaskState(rule);
-            ScheduledFuture<?> future = scheduledExecutor.scheduleAtFixedRate(
-                    virtualThreadsEnabled ? state::trigger : () -> executeRule(rule),
-                    0, rule.getPeriod(), TimeUnit.SECONDS);
-            state.setScheduledFuture(future);
-            scheduledTasks.put(rule.getId(), state);
-        }
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
         log.info("Starting periodic alert rule scheduler...");
         List<AlertDefine> metricsPeriodicRules = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC);
         List<AlertDefine> logPeriodicRules = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
@@ -139,13 +112,50 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
         }
     }
 
-    @Override
-    public void destroy() {
+    synchronized void stop() {
         scheduledTasks.values().forEach(ScheduledTaskState::cancel);
         scheduledTasks.clear();
-        scheduledExecutor.shutdownNow();
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
+            scheduledExecutor = null;
+        }
         if (periodicExecutor != null) {
             periodicExecutor.shutdownNow();
+            periodicExecutor = null;
+        }
+        periodicPermits = null;
+    }
+
+    public synchronized void cancelSchedule(Long ruleId) {
+        if (ruleId == null || scheduledExecutor == null) {
+            return;
+        }
+        ScheduledTaskState state = scheduledTasks.remove(ruleId);
+        if (state != null) {
+            state.cancel();
+        }
+    }
+
+    public synchronized void updateSchedule(AlertDefine rule) {
+        if (rule == null || rule.getId() == null) {
+            log.error("Alert rule is null or rule id is null.");
+            return;
+        }
+        if (scheduledExecutor == null) {
+            return;
+        }
+        cancelSchedule(rule.getId());
+        if (isPeriodicRule(rule.getType())) {
+            ScheduledExecutorService currentScheduledExecutor = scheduledExecutor;
+            ExecutorService currentPeriodicExecutor = periodicExecutor;
+            Semaphore currentPeriodicPermits = periodicPermits;
+            ScheduledTaskState state = new ScheduledTaskState(
+                    rule, currentPeriodicExecutor, currentPeriodicPermits);
+            ScheduledFuture<?> future = currentScheduledExecutor.scheduleAtFixedRate(
+                    virtualThreadsEnabled ? state::trigger : () -> executeRule(rule),
+                    0, rule.getPeriod(), TimeUnit.SECONDS);
+            state.setScheduledFuture(future);
+            scheduledTasks.put(rule.getId(), state);
         }
     }
 
@@ -168,14 +178,18 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
     private final class ScheduledTaskState {
 
         private final AlertDefine rule;
+        private final ExecutorService taskExecutor;
+        private final Semaphore taskPermits;
         private ScheduledFuture<?> scheduledFuture;
         private Future<?> runningFuture;
         private boolean running;
         private boolean pending;
         private boolean cancelled;
 
-        private ScheduledTaskState(AlertDefine rule) {
+        private ScheduledTaskState(AlertDefine rule, ExecutorService taskExecutor, Semaphore taskPermits) {
             this.rule = rule;
+            this.taskExecutor = taskExecutor;
+            this.taskPermits = taskPermits;
         }
 
         private synchronized void setScheduledFuture(ScheduledFuture<?> scheduledFuture) {
@@ -209,10 +223,10 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
 
         private void submitLocked() {
             try {
-                runningFuture = periodicExecutor.submit(() -> {
+                runningFuture = taskExecutor.submit(() -> {
                     boolean permitAcquired = false;
                     try {
-                        periodicPermits.acquire();
+                        taskPermits.acquire();
                         permitAcquired = true;
                         if (!Thread.currentThread().isInterrupted()) {
                             executeRule(rule);
@@ -223,7 +237,7 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
                         log.error("Periodic alert rule {} execution error: {}", rule.getName(), e.getMessage(), e);
                     } finally {
                         if (permitAcquired) {
-                            periodicPermits.release();
+                            taskPermits.release();
                         }
                         onComplete();
                     }

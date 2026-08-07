@@ -44,7 +44,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
@@ -69,6 +72,21 @@ import org.mockito.MockitoAnnotations;
  */
 class AlarmGroupReduceTest {
 
+    @Test
+    void constructorIsPassiveAndLifecycleIsIdempotent() {
+        clearInvocations(alertGroupConvergeDao);
+        AlarmGroupReduce inactive = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties());
+
+        verifyNoInteractions(alertGroupConvergeDao);
+
+        inactive.start();
+        inactive.start();
+        verify(alertGroupConvergeDao, times(1)).findAlertGroupConvergesByEnableIsTrue();
+        inactive.destroy();
+        inactive.destroy();
+    }
+
     @Mock
     private AlarmInhibitReduce alarmInhibitReduce;
 
@@ -83,7 +101,8 @@ class AlarmGroupReduceTest {
         when(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue())
             .thenReturn(Collections.emptyList());
         alarmGroupReduce = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
-                new VirtualThreadProperties(), false);
+                new VirtualThreadProperties());
+        alarmGroupReduce.start();
     }
 
     @AfterEach
@@ -136,11 +155,19 @@ class AlarmGroupReduceTest {
         alarmGroupReduce.destroy();
         alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
                 new VirtualThreadProperties(), latch, virtualThread, null, null, null, null, null);
+        alarmGroupReduce.start();
 
         alarmGroupReduce.dispatchCheckAndSendGroups();
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void dispatchAfterDestroyIsSafeNoOp() {
+        alarmGroupReduce.destroy();
+
+        alarmGroupReduce.dispatchCheckAndSendGroups();
     }
 
     @Test
@@ -153,6 +180,7 @@ class AlarmGroupReduceTest {
         alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
                 new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
                 maxConcurrent, new AtomicInteger());
+        alarmGroupReduce.start();
 
         alarmGroupReduce.dispatchCheckAndSendGroups();
         assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
@@ -163,6 +191,29 @@ class AlarmGroupReduceTest {
         releaseFirst.countDown();
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
+    }
+
+    @Test
+    void destroyWhileCheckIsRunningDropsPendingDispatch() throws Exception {
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        alarmGroupReduce.destroy();
+        alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
+                new AtomicInteger(), invocations);
+        alarmGroupReduce.start();
+
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        alarmGroupReduce.destroy();
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
     }
 
     private Map<String, String> createLabels(String... keyValues) {
@@ -196,7 +247,7 @@ class AlarmGroupReduceTest {
                                      AtomicBoolean virtualThread, CountDownLatch firstStarted,
                                      CountDownLatch releaseFirst, CountDownLatch secondStarted,
                                      AtomicInteger maxConcurrent, AtomicInteger invocations) {
-            super(alarmInhibitReduce, alertGroupConvergeDao, properties, false);
+            super(alarmInhibitReduce, alertGroupConvergeDao, properties);
             this.virtualThreadLatch = virtualThreadLatch;
             this.virtualThread = virtualThread;
             this.firstStarted = firstStarted;

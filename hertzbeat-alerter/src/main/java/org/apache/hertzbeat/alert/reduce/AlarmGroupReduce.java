@@ -93,57 +93,70 @@ public class AlarmGroupReduce implements DisposableBean {
      */
     private final Map<String, GroupAlertCache> groupCacheMap;
 
-    private final ScheduledExecutorService scheduledExecutor;
+    private final AlertGroupConvergeDao alertGroupConvergeDao;
+    private final VirtualThreadProperties virtualThreadProperties;
+    private ScheduledExecutorService scheduledExecutor;
 
-    private final ExecutorService workerExecutor;
+    private ExecutorService workerExecutor;
 
-    private final ScheduledDispatchTask checkTask;
+    private ScheduledDispatchTask checkTask;
 
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao) {
-        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults(), true);
+        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
                             VirtualThreadProperties virtualThreadProperties) {
-        this(alarmInhibitReduce, alertGroupConvergeDao, virtualThreadProperties, true);
-    }
-
-    AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
-                     VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.alarmInhibitReduce = alarmInhibitReduce;
         this.groupDefines = new ConcurrentHashMap<>(8);
         this.groupCacheMap = new ConcurrentHashMap<>(8);
-        VirtualThreadProperties properties =
-                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        this.scheduledExecutor = createScheduler();
-        this.workerExecutor = createVirtualExecutor(properties);
-        this.checkTask = new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
-        List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
-        refreshGroupDefines(groupConverges);
-        if (autoStart) {
-            startCheckAndSendGroups();
-        }
+        this.alertGroupConvergeDao = alertGroupConvergeDao;
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
     }
 
-    private void startCheckAndSendGroups() {
-        scheduledExecutor.scheduleAtFixedRate(this::dispatchCheckAndSendGroups, 10000, CHECK_INTERVAL,
+    synchronized void start() {
+        if (scheduledExecutor != null) {
+            return;
+        }
+        scheduledExecutor = createScheduler();
+        workerExecutor = createVirtualExecutor(virtualThreadProperties);
+        ScheduledDispatchTask currentCheckTask =
+                new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
+        checkTask = currentCheckTask;
+        refreshGroupDefines(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue());
+        startCheckAndSendGroups(currentCheckTask);
+    }
+
+    private void startCheckAndSendGroups(ScheduledDispatchTask currentCheckTask) {
+        scheduledExecutor.scheduleAtFixedRate(currentCheckTask::dispatch, 10000, CHECK_INTERVAL,
                 TimeUnit.MILLISECONDS);
     }
 
-    void dispatchCheckAndSendGroups() {
-        checkTask.dispatch();
+    synchronized void dispatchCheckAndSendGroups() {
+        if (checkTask != null) {
+            checkTask.dispatch();
+        }
     }
 
     void beforeCheckAndSendGroupsRun() {
     }
 
     @Override
-    public void destroy() {
-        scheduledExecutor.shutdownNow();
+    public synchronized void destroy() {
+        if (checkTask != null) {
+            checkTask.cancel();
+        }
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
+            scheduledExecutor = null;
+        }
         if (workerExecutor != null) {
             workerExecutor.shutdownNow();
+            workerExecutor = null;
         }
+        checkTask = null;
     }
 
     private ScheduledExecutorService createScheduler() {
@@ -414,6 +427,8 @@ public class AlarmGroupReduce implements DisposableBean {
 
         private int pendingRuns;
 
+        private boolean cancelled;
+
         private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
             this.executor = executor;
             this.task = task;
@@ -422,6 +437,9 @@ public class AlarmGroupReduce implements DisposableBean {
         private void dispatch() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    return;
+                }
                 pendingRuns++;
                 shouldSchedule = !running;
                 if (shouldSchedule) {
@@ -452,6 +470,11 @@ public class AlarmGroupReduce implements DisposableBean {
         private void scheduleNextIfNeeded() {
             boolean shouldSchedule;
             synchronized (this) {
+                if (cancelled) {
+                    pendingRuns = 0;
+                    running = false;
+                    return;
+                }
                 pendingRuns = Math.max(0, pendingRuns - 1);
                 shouldSchedule = pendingRuns > 0;
                 if (!shouldSchedule) {
@@ -460,6 +483,11 @@ public class AlarmGroupReduce implements DisposableBean {
                 }
             }
             scheduleRun();
+        }
+
+        private synchronized void cancel() {
+            cancelled = true;
+            pendingRuns = 0;
         }
     }
 }

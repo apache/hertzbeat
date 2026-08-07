@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -375,8 +374,7 @@ public class PluginServiceImpl implements PluginService {
     /**
      * Load all plugin enabled states into memory
      */
-    @PostConstruct
-    private void syncPluginStatus() {
+    void syncPluginStatus() {
         List<PluginMetadata> plugins = metadataDao.findAll();
         Map<String, Boolean> statusMap = new HashMap<>();
         Map<String, Long> itemToPluginMetadataIdMap = new HashMap<>();
@@ -405,8 +403,7 @@ public class PluginServiceImpl implements PluginService {
     /**
      * load jar to classloader
      */
-    @PostConstruct
-    private void loadJarToClassLoader() {
+    void loadJarToClassLoader() {
         pluginClassLoaderLock.writeLock().lock();
         try {
             try {

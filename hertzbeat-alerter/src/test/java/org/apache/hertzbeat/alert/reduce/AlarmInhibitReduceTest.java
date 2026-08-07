@@ -41,8 +41,11 @@ package org.apache.hertzbeat.alert.reduce;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,6 +76,21 @@ import org.mockito.MockitoAnnotations;
  */
 class AlarmInhibitReduceTest {
 
+    @Test
+    void constructorIsPassiveAndLifecycleIsIdempotent() {
+        clearInvocations(alertInhibitDao);
+        AlarmInhibitReduce inactive = new AlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
+                new VirtualThreadProperties());
+
+        verifyNoInteractions(alertInhibitDao);
+
+        inactive.start();
+        inactive.start();
+        verify(alertInhibitDao, times(1)).findAlertInhibitsByEnableIsTrue();
+        inactive.destroy();
+        inactive.destroy();
+    }
+
     @Mock
     private AlertInhibitDao alertInhibitDao;
 
@@ -96,7 +114,8 @@ class AlarmInhibitReduceTest {
         when(alerterProperties.getInhibit()).thenReturn(inhibitProperties);
 
         alarmInhibitReduce = new AlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
-                new VirtualThreadProperties(), false);
+                new VirtualThreadProperties());
+        alarmInhibitReduce.start();
     }
 
     @AfterEach
@@ -306,7 +325,8 @@ class AlarmInhibitReduceTest {
         when(alerterProperties.getInhibit()).thenReturn(inhibitProperties);
         alarmInhibitReduce.destroy();
         alarmInhibitReduce = new AlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
-                new VirtualThreadProperties(), false);
+                new VirtualThreadProperties());
+        alarmInhibitReduce.start();
 
         AlertInhibit rule = AlertInhibit.builder()
                 .id(1L)
@@ -347,11 +367,19 @@ class AlarmInhibitReduceTest {
         alarmInhibitReduce.destroy();
         alarmInhibitReduce = new TestAlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
                 new VirtualThreadProperties(), latch, virtualThread, null, null, null, null, null);
+        alarmInhibitReduce.start();
 
         alarmInhibitReduce.dispatchCleanupCache();
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void dispatchAfterDestroyIsSafeNoOp() {
+        alarmInhibitReduce.destroy();
+
+        alarmInhibitReduce.dispatchCleanupCache();
     }
 
     @Test
@@ -364,6 +392,7 @@ class AlarmInhibitReduceTest {
         alarmInhibitReduce = new TestAlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
                 new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
                 maxConcurrent, new AtomicInteger());
+        alarmInhibitReduce.start();
 
         alarmInhibitReduce.dispatchCleanupCache();
         assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
@@ -374,6 +403,29 @@ class AlarmInhibitReduceTest {
         releaseFirst.countDown();
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
+    }
+
+    @Test
+    void destroyWhileCleanupIsRunningDropsPendingDispatch() throws Exception {
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        alarmInhibitReduce.destroy();
+        alarmInhibitReduce = new TestAlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties,
+                new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, secondStarted,
+                new AtomicInteger(), invocations);
+        alarmInhibitReduce.start();
+
+        alarmInhibitReduce.dispatchCleanupCache();
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+        alarmInhibitReduce.dispatchCleanupCache();
+
+        alarmInhibitReduce.destroy();
+        alarmInhibitReduce.dispatchCleanupCache();
+
+        assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
     }
 
     private GroupAlert createGroupAlert(String status, Map<String, String> labels, List<SingleAlert> alerts) {
@@ -424,7 +476,7 @@ class AlarmInhibitReduceTest {
                                        CountDownLatch firstStarted, CountDownLatch releaseFirst,
                                        CountDownLatch secondStarted, AtomicInteger maxConcurrent,
                                        AtomicInteger invocations) {
-            super(alarmSilenceReduce, alertInhibitDao, alerterProperties, properties, false);
+            super(alarmSilenceReduce, alertInhibitDao, alerterProperties, properties);
             this.virtualThreadLatch = virtualThreadLatch;
             this.virtualThread = virtualThread;
             this.firstStarted = firstStarted;

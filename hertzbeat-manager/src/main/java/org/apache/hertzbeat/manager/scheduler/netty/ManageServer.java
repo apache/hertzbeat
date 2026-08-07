@@ -45,21 +45,14 @@ import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.apache.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
  * manage server
  */
 @Component
-@Order(value = Ordered.LOWEST_PRECEDENCE)
-@ConditionalOnProperty(prefix = "scheduler.server",
-        name = "enabled", havingValue = "true")
 @Slf4j
-public class ManageServer implements CommandLineRunner {
+public class ManageServer {
 
     private final CollectorJobScheduler collectorJobScheduler;
 
@@ -73,15 +66,18 @@ public class ManageServer implements CommandLineRunner {
 
     private ScheduledExecutorService channelSchedule;
 
-    private final ExecutorService channelCheckExecutor;
+    private ChannelCheckGeneration channelCheckGeneration;
 
-    private final Object channelCheckLock = new Object();
+    private final SchedulerProperties schedulerProperties;
 
-    private boolean channelCheckRunning;
+    private final BackgroundTaskExecutor threadPool;
 
-    private boolean channelCheckPending;
+    private final VirtualThreadProperties virtualThreadProperties;
 
-    private RemotingServer remotingServer;
+    private boolean channelChecksStopped;
+
+    // Lifecycle writes must be visible to command threads; an in-flight command may finish on its captured server.
+    private volatile RemotingServer remotingServer;
 
     private final Map<String, Channel> clientChannelTable = new ConcurrentHashMap<>(16);
 
@@ -130,8 +126,10 @@ public class ManageServer implements CommandLineRunner {
         this.commonDataQueue = commonDataQueue;
         this.runtimeStatusRegistry = runtimeStatusRegistry;
         this.runtimeConfigService = runtimeConfigService;
-        this.channelCheckExecutor = createChannelCheckExecutor(virtualThreadProperties);
-        this.init(schedulerProperties, threadPool);
+        this.schedulerProperties = schedulerProperties;
+        this.threadPool = threadPool;
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
     }
 
     private void init(final SchedulerProperties schedulerProperties, final BackgroundTaskExecutor threadPool) {
@@ -154,20 +152,42 @@ public class ManageServer implements CommandLineRunner {
         this.channelSchedule = Executors.newSingleThreadScheduledExecutor();
     }
 
-    public void start() {
-        this.remotingServer.start();
-
-        this.channelSchedule.scheduleAtFixedRate(this::dispatchChannelHealthCheck, 10, 3, TimeUnit.SECONDS);
+    public synchronized void start() {
+        if (remotingServer != null) {
+            return;
+        }
+        try {
+            init(schedulerProperties, threadPool);
+            channelChecksStopped = false;
+            this.remotingServer.start();
+            this.channelSchedule.scheduleAtFixedRate(this::dispatchChannelHealthCheck, 10, 3, TimeUnit.SECONDS);
+        } catch (RuntimeException | Error e) {
+            try {
+                shutdown();
+            } catch (RuntimeException | Error cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
+        }
     }
 
-    public void shutdown() {
-        this.remotingServer.shutdown();
-
-        if (this.channelSchedule != null) {
-            this.channelSchedule.shutdownNow();
-        }
-        if (this.channelCheckExecutor != null) {
-            this.channelCheckExecutor.shutdownNow();
+    public synchronized void shutdown() {
+        RemotingServer currentServer = this.remotingServer;
+        this.remotingServer = null;
+        try {
+            if (currentServer != null) {
+                currentServer.shutdown();
+            }
+        } finally {
+            if (this.channelSchedule != null) {
+                this.channelSchedule.shutdownNow();
+                this.channelSchedule = null;
+            }
+            channelChecksStopped = true;
+            if (this.channelCheckGeneration != null) {
+                this.channelCheckGeneration.stop();
+                this.channelCheckGeneration = null;
+            }
         }
     }
 
@@ -203,12 +223,16 @@ public class ManageServer implements CommandLineRunner {
     }
 
     public void closeChannel(final String identity) {
+        RemotingServer currentServer = this.remotingServer;
+        if (currentServer == null) {
+            return;
+        }
         this.runtimeStatusRegistry.remove(identity);
         Channel channel = this.getChannel(identity);
         if (channel != null) {
             this.collectorJobScheduler.collectorGoOffline(identity);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build();
-            this.remotingServer.sendMsg(channel, message);
+            currentServer.sendMsg(channel, message);
             this.clientChannelTable.remove(identity);
             log.info("close collect client success, identity: {}", identity);
         }
@@ -220,40 +244,43 @@ public class ManageServer implements CommandLineRunner {
     }
 
     public boolean sendMsg(final String identityId, final ClusterMsg.Message message) {
+        RemotingServer currentServer = this.remotingServer;
+        if (currentServer == null) {
+            return false;
+        }
         Channel channel = this.getChannel(identityId);
         if (channel != null) {
-            this.remotingServer.sendMsg(channel, message);
+            currentServer.sendMsg(channel, message);
             return true;
         }
         return false;
     }
 
     public ClusterMsg.Message sendMsgSync(final String identityId, final ClusterMsg.Message message) {
+        RemotingServer currentServer = this.remotingServer;
+        if (currentServer == null) {
+            return null;
+        }
         Channel channel = this.getChannel(identityId);
         if (channel != null) {
-            return this.remotingServer.sendMsgSync(channel, message, 3000);
+            return currentServer.sendMsgSync(channel, message, 3000);
         }
         return null;
     }
 
-    void dispatchChannelHealthCheck() {
-        if (channelCheckExecutor == null) {
+    synchronized void dispatchChannelHealthCheck() {
+        if (channelChecksStopped) {
+            return;
+        }
+        if (!virtualThreadProperties.enabled()) {
             runChannelHealthCheck();
             return;
         }
-        synchronized (channelCheckLock) {
-            if (channelCheckRunning) {
-                channelCheckPending = true;
-                return;
-            }
-            channelCheckRunning = true;
+        if (channelCheckGeneration == null) {
+            ExecutorService executor = createChannelCheckExecutor(virtualThreadProperties);
+            channelCheckGeneration = new ChannelCheckGeneration(executor);
         }
-        submitChannelHealthCheck();
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
-        this.start();
+        channelCheckGeneration.dispatch();
     }
 
     /**
@@ -292,40 +319,57 @@ public class ManageServer implements CommandLineRunner {
                 .factory());
     }
 
-    private void submitChannelHealthCheck() {
-        boolean submitted = false;
-        try {
-            channelCheckExecutor.execute(() -> {
+    private final class ChannelCheckGeneration {
+
+        private final ExecutorService executor;
+        private boolean running;
+        private boolean pending;
+        private boolean stopped;
+
+        private ChannelCheckGeneration(ExecutorService executor) {
+            this.executor = executor;
+        }
+
+        private synchronized void dispatch() {
+            if (stopped) {
+                return;
+            }
+            if (running) {
+                pending = true;
+                return;
+            }
+            running = true;
+            submitLocked();
+        }
+
+        private void submitLocked() {
+            executor.execute(() -> {
                 try {
                     runChannelHealthCheck();
                 } finally {
-                    onChannelHealthCheckComplete();
+                    onComplete();
                 }
             });
-            submitted = true;
-        } finally {
-            if (!submitted) {
-                synchronized (channelCheckLock) {
-                    channelCheckRunning = false;
-                    channelCheckPending = false;
-                }
-            }
         }
-    }
 
-    private void onChannelHealthCheckComplete() {
-        boolean shouldRunAgain;
-        synchronized (channelCheckLock) {
-            if (channelCheckPending) {
-                channelCheckPending = false;
-                shouldRunAgain = true;
-            } else {
-                channelCheckRunning = false;
-                shouldRunAgain = false;
+        private synchronized void onComplete() {
+            if (stopped) {
+                running = false;
+                pending = false;
+                return;
             }
+            if (pending) {
+                pending = false;
+                submitLocked();
+                return;
+            }
+            running = false;
         }
-        if (shouldRunAgain) {
-            submitChannelHealthCheck();
+
+        private synchronized void stop() {
+            stopped = true;
+            pending = false;
+            executor.shutdownNow();
         }
     }
 

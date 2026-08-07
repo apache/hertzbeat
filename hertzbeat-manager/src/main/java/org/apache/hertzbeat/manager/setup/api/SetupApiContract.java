@@ -233,6 +233,7 @@ public final class SetupApiContract {
         SETUP_CODE_INVALID("setup_code_invalid"),
         SETUP_CODE_EXPIRED("setup_code_expired"),
         SETUP_RATE_LIMITED("setup_rate_limited"),
+        SETUP_NOT_COMPLETE("setup_not_complete"),
         CONFIG_READ_ONLY("config_read_only"),
         CONFIG_WRITE_FAILED("config_write_failed"),
         CONFIG_RECOVERY_REQUIRED("config_recovery_required"),

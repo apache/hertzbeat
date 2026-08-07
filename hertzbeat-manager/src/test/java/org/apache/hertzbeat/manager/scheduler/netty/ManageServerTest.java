@@ -19,11 +19,14 @@ package org.apache.hertzbeat.manager.scheduler.netty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.netty.channel.Channel;
@@ -36,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
@@ -77,6 +81,35 @@ class ManageServerTest {
         manageServer = new ManageServer(schedulerProperties(), collectorJobScheduler, commonThreadPool,
                 collectorAlertHandler, commonDataQueue, new VirtualThreadProperties(), runtimeStatusRegistry);
         ReflectionTestUtils.setField(manageServer, "remotingServer", mock(RemotingServer.class));
+    }
+
+    @Test
+    void commandsBeforeStartFailSafely() {
+        ManageServer inactiveServer = new ManageServer(schedulerProperties(), collectorJobScheduler, commonThreadPool,
+                collectorAlertHandler, commonDataQueue, new VirtualThreadProperties(), runtimeStatusRegistry);
+        ClusterMsg.Message message = ClusterMsg.Message.getDefaultInstance();
+        clearInvocations(collectorJobScheduler, runtimeStatusRegistry);
+
+        assertFalse(inactiveServer.sendMsg("collector-1", message));
+        assertNull(inactiveServer.sendMsgSync("collector-1", message));
+        inactiveServer.closeChannel("collector-1");
+
+        verifyNoInteractions(collectorJobScheduler, runtimeStatusRegistry);
+    }
+
+    @Test
+    void commandsAfterShutdownFailSafely() {
+        Channel channel = mock(Channel.class);
+        clientChannelTable().put("collector-1", channel);
+        ClusterMsg.Message message = ClusterMsg.Message.getDefaultInstance();
+        clearInvocations(collectorJobScheduler, runtimeStatusRegistry);
+        manageServer.shutdown();
+
+        assertFalse(manageServer.sendMsg("collector-1", message));
+        assertNull(manageServer.sendMsgSync("collector-1", message));
+        manageServer.closeChannel("collector-1");
+
+        verifyNoInteractions(channel, collectorJobScheduler, runtimeStatusRegistry);
     }
 
     @AfterEach
@@ -142,6 +175,43 @@ class ManageServerTest {
         releaseFirst.countDown();
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
+    }
+
+    @Test
+    void shutdownWhileCheckIsRunningDropsPendingWorkAndIsIdempotent() throws Exception {
+        Channel channel = mock(Channel.class);
+        clientChannelTable().put("collector-1", channel);
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch interrupted = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            int current = invocations.incrementAndGet();
+            if (current == 1) {
+                started.countDown();
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    interrupted.countDown();
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                secondStarted.countDown();
+            }
+            return true;
+        }).when(channel).isActive();
+
+        manageServer.dispatchChannelHealthCheck();
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        manageServer.dispatchChannelHealthCheck();
+
+        manageServer.shutdown();
+        manageServer.shutdown();
+        manageServer.dispatchChannelHealthCheck();
+
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+        assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
     }
 
     @SuppressWarnings("unchecked")

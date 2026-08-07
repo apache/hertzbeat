@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,7 +70,6 @@ public class PluginParameterServiceImpl implements PluginParameterService {
 
     private final AfterCommitPublisher afterCommitPublisher;
 
-    @PostConstruct
     void loadStoredParameters() {
         try {
             Map<Long, List<PluginParam>> grouped = pluginParamDao.findAll().stream()

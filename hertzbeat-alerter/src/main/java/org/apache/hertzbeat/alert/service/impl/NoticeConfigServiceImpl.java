@@ -34,7 +34,6 @@ import org.apache.hertzbeat.alert.service.NoticeTemplateMutationException;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -69,7 +68,7 @@ import java.util.stream.Collectors;
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLineRunner {
+public class NoticeConfigServiceImpl implements NoticeConfigService {
     
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
     
@@ -372,8 +371,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         CacheFactory.clearNoticeCache();
     }
 
-    @Override
-    public void run(String... args) throws Exception {
+    void loadPresetTemplates() {
         try {
             log.info("load default notice template in internal jar");
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();

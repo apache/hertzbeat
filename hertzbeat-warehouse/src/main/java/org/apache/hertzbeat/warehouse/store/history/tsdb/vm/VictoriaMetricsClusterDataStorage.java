@@ -53,6 +53,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.TimerTask;
@@ -81,6 +82,7 @@ import static org.apache.hertzbeat.common.constants.ConfigConstants.FunctionModu
  */
 @Primary
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics.cluster", name = "enabled", havingValue = "true")
 @Slf4j
 public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorage {
