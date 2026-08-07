@@ -41,11 +41,14 @@ describe('shell content layout contract', () => {
   });
 
   it('treats the compact header as one continuous surface without a sidebar divider', () => {
+    const shellRule = shellStyles.match(/\.shell\s*\{(?<body>[^}]*)\}/)?.groups?.body;
     const headerRule = shellStyles.match(/\.header\s*\{(?<body>[^}]*)\}/)?.groups?.body;
     const brandRule = shellStyles.match(/\.brandSlot\s*\{(?<body>[^}]*)\}/)?.groups?.body;
 
+    expect(shellRule).toMatch(/--hb-shell-sidebar-width:\s*220px/);
     expect(headerRule).toMatch(/display:\s*flex/);
     expect(headerRule).not.toMatch(/grid-template-columns/);
+    expect(brandRule).toMatch(/flex:\s*0\s+0\s+var\(--hb-shell-sidebar-width\)/);
     expect(brandRule).not.toMatch(/border-right/);
   });
 });
