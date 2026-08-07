@@ -19,10 +19,14 @@ describe('shell runtime status style contract', () => {
     }
   );
 
-  it('defines semantic status tokens without adding raw colors to the shell component', () => {
-    for (const status of ['loading', 'available', 'degraded', 'unavailable']) {
-      expect(appStyles).toMatch(new RegExp(`--hb-status-${status}:\\s*var\\(--`));
+  it('defines globally resolvable status tokens without adding raw colors to the shell component', () => {
+    expect(appStyles).toMatch(/--hb-status-loading:\s*var\(--hb-status-unknown\)/);
+    const lightTheme = appStyles.match(/:root\[data-theme='default'\]\s*\{[^}]*\}/)?.[0] ?? '';
+    for (const status of ['available', 'degraded', 'unavailable']) {
+      expect(appStyles).toMatch(new RegExp(`--hb-status-${status}:\\s*#[\\da-f]{6}`, 'i'));
+      expect(lightTheme).toMatch(new RegExp(`--hb-status-${status}:\\s*#[\\da-f]{6}`, 'i'));
     }
+    expect(appStyles).not.toMatch(/--hb-status-(?:available|degraded|unavailable):\s*var\(--ant-/);
     expect(shellStyles).not.toMatch(/#[\da-f]{3,8}|rgb\(|hsl\(/i);
   });
 
