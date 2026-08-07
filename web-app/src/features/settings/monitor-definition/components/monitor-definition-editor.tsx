@@ -9,7 +9,6 @@ import { Alert, Button, Popconfirm, Space, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import {
@@ -49,16 +48,22 @@ export function MonitorDefinitionEditor(props: EditorProps) {
         <>
           <MonitorDefinitionWorkspaceHeader
             title={authority.label}
-            app={authority.app}
             origin={authority.origin}
             className={styles.header ?? ''}
+            actions={
+              <>
+                <Button href={buildMonitorListPath({ app: authority.app })}>{t('monitorDefinitions.monitors')}</Button>
+                <Button
+                  type="primary"
+                  danger
+                  disabled={!props.canWrite || !authority.deletable}
+                  onClick={() => props.onDelete(authority)}
+                >
+                  {t('common.delete')}
+                </Button>
+              </>
+            }
           />
-          <Space wrap>
-            <Link to={buildMonitorListPath({ app: authority.app })}>{t('monitorDefinitions.monitors')}</Link>
-            <Button danger disabled={!props.canWrite || !authority.deletable} onClick={() => props.onDelete(authority)}>
-              {t('common.delete')}
-            </Button>
-          </Space>
         </>
       ) : (
         <Typography.Title level={4}>{editorTitle(workspace, t)}</Typography.Title>

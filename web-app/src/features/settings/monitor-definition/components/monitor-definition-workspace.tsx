@@ -7,7 +7,6 @@
 
 import { Alert, Button, Skeleton, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 
@@ -47,16 +46,22 @@ function DefinitionReadView(
     <Space direction="vertical" size="middle" className={styles.workspace ?? ''}>
       <MonitorDefinitionWorkspaceHeader
         title={detail.label}
-        app={detail.app}
         origin={detail.origin}
         className={styles.header ?? ''}
+        actions={
+          <>
+            <Button href={buildMonitorListPath({ app: detail.app })}>{t('monitorDefinitions.monitors')}</Button>
+            <Button
+              type="primary"
+              danger
+              disabled={!props.canWrite || !detail.deletable}
+              onClick={() => props.onDelete(detail)}
+            >
+              {t('common.delete')}
+            </Button>
+          </>
+        }
       />
-      <Space wrap>
-        <Link to={buildMonitorListPath({ app: detail.app })}>{t('monitorDefinitions.monitors')}</Link>
-        <Button danger disabled={!props.canWrite || !detail.deletable} onClick={() => props.onDelete(detail)}>
-          {t('common.delete')}
-        </Button>
-      </Space>
       <pre className={styles.readOnly}>{detail.definition}</pre>
     </Space>
   );

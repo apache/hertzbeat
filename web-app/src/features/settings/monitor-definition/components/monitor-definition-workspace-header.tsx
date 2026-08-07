@@ -6,22 +6,25 @@
  */
 
 import { Tag, Typography } from 'antd';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import styles from './monitor-definition-workspace.module.css';
 
 export function MonitorDefinitionWorkspaceHeader(props: {
   title: string;
-  app: string;
   origin: string;
   className: string;
+  actions: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
-    <div className={props.className}>
-      <div>
-        <Typography.Title level={4}>{props.title}</Typography.Title>
-        <Typography.Text code>{props.app}</Typography.Text>
+    <div className={props.className} data-monitor-definition-workspace-header>
+      <Typography.Title level={4}>{props.title}</Typography.Title>
+      <div className={styles.headerActions}>
+        <Tag>{t(`monitorDefinitions.originValue.${props.origin}`)}</Tag>
+        {props.actions}
       </div>
-      <Tag>{t(`monitorDefinitions.originValue.${props.origin}`)}</Tag>
     </div>
   );
 }

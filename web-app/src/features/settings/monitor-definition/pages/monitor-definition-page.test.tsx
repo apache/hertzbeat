@@ -106,7 +106,7 @@ describe('MonitorDefinitionPage', () => {
     expect(header).toContainElement(screen.getByRole('heading', { name: 'Monitor definitions' }));
     expect(headerActions).toContainElement(screen.getByRole('button', { name: 'Create definition' }));
     expect(document.querySelector('.ant-drawer')).not.toBeInTheDocument();
-    expect(selector).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
+    expect(within(selector).queryByRole('button', { name: 'Refresh' })).not.toBeInTheDocument();
     expect(screen.getByText('MySQL')).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Search definitions'), { target: { value: 'mysql' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));
@@ -137,6 +137,17 @@ describe('MonitorDefinitionPage', () => {
     expect(document.querySelectorAll('[data-hb-yaml-editor="codemirror"]')).toHaveLength(2);
     expect(screen.getByLabelText('Current version')).toBeDisabled();
     expect(screen.queryByText(revision)).not.toBeInTheDocument();
+    const workspaceHeader = requireDomElement(
+      document.querySelector('[data-monitor-definition-workspace-header]'),
+      'Monitor definition workspace header'
+    );
+    const workspaceHeaderQueries = within(workspaceHeader as HTMLElement);
+    expect(workspaceHeaderQueries.queryByText('mysql', { selector: 'code' })).not.toBeInTheDocument();
+    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveClass('ant-btn');
+    expect(workspaceHeaderQueries.getByRole('button', { name: 'Delete' })).toHaveClass(
+      'ant-btn-primary',
+      'ant-btn-dangerous'
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Current version scroll' }));
     expect(editor.setScrollPosition).toHaveBeenCalledWith('Draft YAML', { top: 72, left: 8 });
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
@@ -233,10 +244,17 @@ describe('MonitorDefinitionPage', () => {
     );
     renderPage();
 
-    expect(screen.getByRole('link', { name: 'View monitors' })).toHaveAttribute(
+    const workspaceHeader = requireDomElement(
+      document.querySelector('[data-monitor-definition-workspace-header]'),
+      'Monitor definition workspace header'
+    );
+    const workspaceHeaderQueries = within(workspaceHeader as HTMLElement);
+    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveAttribute(
       'href',
       buildMonitorListPath({ app: 'mysql' })
     );
+    expect(workspaceHeaderQueries.getByRole('link', { name: 'View monitors' })).toHaveClass('ant-btn');
+    expect(workspaceHeaderQueries.getByRole('button', { name: 'Delete' })).toBeEnabled();
   });
 
   it('freezes an uncertain draft and offers only catalog evidence refresh or cancel', () => {
@@ -258,7 +276,7 @@ describe('MonitorDefinitionPage', () => {
     expect(screen.getByRole('button', { name: 'Validate' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Refresh latest definition' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Refresh' })[1]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(controller.actions.retryWorkspaceProof).toHaveBeenCalledOnce();
@@ -295,7 +313,7 @@ describe('MonitorDefinitionPage', () => {
 
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Refresh' })[1]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(controller.actions.retryDeleteProof).toHaveBeenCalledOnce();

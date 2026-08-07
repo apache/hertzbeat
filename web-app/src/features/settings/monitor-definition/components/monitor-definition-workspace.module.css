@@ -24,6 +24,18 @@
   margin: 0;
 }
 
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.headerActions :global(.ant-tag) {
+  margin: 0;
+}
+
 .editorGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Button, Input, Space } from 'antd';
+import { Alert, Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -70,15 +70,12 @@ function MonitorDefinitionWorkspaceRegion({
     <OperationalResultRegion>
       <div className={styles.layout} data-monitor-definition-layout>
         <nav className={styles.selector} aria-label={t('monitorDefinitions.title')}>
-          <Space.Compact block>
-            <Input
-              allowClear
-              value={controller.search}
-              placeholder={t('monitorDefinitions.search')}
-              onChange={event => controller.actions.setSearch(event.target.value)}
-            />
-            <Button onClick={controller.actions.refresh}>{t('common.refresh')}</Button>
-          </Space.Compact>
+          <Input
+            allowClear
+            value={controller.search}
+            placeholder={t('monitorDefinitions.search')}
+            onChange={event => controller.actions.setSearch(event.target.value)}
+          />
           <CatalogState controller={controller} />
         </nav>
         <main className={styles.workspace}>
