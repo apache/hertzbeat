@@ -16,5 +16,5 @@
  */
 
 .channels {
-  border-block: 1px solid var(--ant-color-border-secondary);
+  display: grid;
 }

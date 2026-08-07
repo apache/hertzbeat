@@ -118,7 +118,6 @@
   align-items: center;
   gap: var(--hb-space-2);
   padding-block: var(--hb-space-3);
-  border-top: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-navigation);
 }
 
@@ -133,7 +132,6 @@
   justify-content: space-between;
   gap: var(--hb-space-4);
   padding-bottom: var(--hb-space-2);
-  border-bottom: 1px solid var(--hb-border-subtle);
 }
 
 .sectionCopy {

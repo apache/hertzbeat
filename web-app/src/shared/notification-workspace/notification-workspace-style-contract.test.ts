@@ -20,4 +20,10 @@ describe('notification workspace layout contract', () => {
     expect(dependencyRule).not.toMatch(/text-overflow:\s*ellipsis/);
     expect(dependencyRule).not.toMatch(/overflow:\s*hidden/);
   });
+
+  it('uses semantic hover and selected surfaces instead of the page canvas', () => {
+    expect(styles).toMatch(/\.steps\s+a:hover\s*\{[^}]*background:\s*var\(--hb-bg-hover\)/s);
+    expect(styles).toMatch(/\.current\s+a\s*\{[^}]*background:\s*var\(--hb-nav-selected\)/s);
+    expect(styles).not.toMatch(/\.current\s+a\s*\{[^}]*background:\s*var\(--hb-bg-canvas\)/s);
+  });
 });

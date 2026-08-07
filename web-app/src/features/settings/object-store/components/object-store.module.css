@@ -20,7 +20,6 @@
   width: 100%;
   max-width: 820px;
   margin-inline: auto;
-  border-block: 1px solid var(--ant-color-border-secondary);
 }
 .field {
   display: grid;
@@ -28,9 +27,6 @@
   align-items: start;
   gap: 24px;
   padding: 18px 4px;
-}
-.field + .field {
-  border-top: 1px solid var(--ant-color-border-secondary);
 }
 .label {
   padding-top: 6px;

@@ -49,7 +49,6 @@
   align-items: center;
   justify-content: space-between;
   min-height: 40px;
-  border-block: 1px solid var(--ant-color-border-secondary);
   padding-block: 8px;
 }
 .name > span {

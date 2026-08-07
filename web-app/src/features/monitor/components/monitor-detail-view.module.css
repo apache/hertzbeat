@@ -23,7 +23,6 @@
 }
 .summaryStrip {
   padding-block: var(--hb-space-3);
-  border-block: 1px solid var(--hb-border-subtle);
 }
 .summaryFacts {
   display: grid;

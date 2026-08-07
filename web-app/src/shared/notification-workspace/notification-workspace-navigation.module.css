@@ -4,7 +4,6 @@
   display: grid;
   gap: 8px;
   padding-block: 8px;
-  border-block: 1px solid var(--hb-border-subtle);
 }
 
 .introduction {
@@ -36,13 +35,13 @@
   color: var(--hb-text-primary);
 }
 
-.steps a:hover,
-.current a {
-  background: var(--hb-bg-canvas);
+.steps a:hover {
+  background: var(--hb-bg-hover);
 }
 
 .current a {
   border-left-color: var(--hb-brand-accent);
+  background: var(--hb-nav-selected);
 }
 
 .index {

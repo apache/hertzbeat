@@ -17,7 +17,6 @@
 
 .table {
   min-width: 0;
-  border-block: 1px solid var(--ant-color-border-secondary);
 }
 .tokenMask {
   white-space: nowrap;

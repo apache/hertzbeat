@@ -44,9 +44,6 @@
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
-.advanced {
-  border-top: 1px solid var(--ant-color-border-secondary);
-}
 .advanced :global(.ant-collapse-header) {
   padding-inline: 0 !important;
 }

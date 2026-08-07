@@ -17,7 +17,6 @@
   display: grid;
   gap: 16px;
   padding-top: 20px;
-  border-top: 1px solid var(--ant-color-border-secondary);
 }
 :global(.status-org-grid) {
   display: grid;
