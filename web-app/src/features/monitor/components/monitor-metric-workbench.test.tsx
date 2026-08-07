@@ -335,6 +335,8 @@ describe('MonitorMetricWorkbench', () => {
     fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
     expect(screen.getByRole('button', { name: 'retired.value' })).toBeDisabled();
     expect(screen.getByText(i18n.t('monitorMetrics.favoriteUnavailable'))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'summary.value' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'summary.value' })).not.toHaveClass('ant-btn-primary');
     fireEvent.click(screen.getByRole('button', { name: 'summary.value' }));
 
     expect(value.actions.setMetric).toHaveBeenCalledWith('summary.value');

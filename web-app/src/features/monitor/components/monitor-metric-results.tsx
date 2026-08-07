@@ -52,7 +52,9 @@ function FavoriteCollection({ state, actions }: MonitorMetricWorkbenchController
           <span key={item.key} className={styles.favoriteItem}>
             <Button
               disabled={!item.available}
-              type={item.key === state.metricKey ? 'primary' : 'default'}
+              type="default"
+              aria-pressed={item.key === state.metricKey}
+              className={(item.key === state.metricKey ? styles.favoriteChoiceSelected : styles.favoriteChoice) ?? ''}
               onClick={() => actions.setMetric(item.key)}
             >
               {item.key}

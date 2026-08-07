@@ -26,6 +26,14 @@
   text-align: left;
 }
 
+.item.itemSelected,
+.item.itemSelected:hover {
+  border-radius: 0;
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-selected);
+  box-shadow: inset 2px 0 0 var(--hb-brand-accent);
+}
+
 .copy {
   display: grid;
   min-width: 0;

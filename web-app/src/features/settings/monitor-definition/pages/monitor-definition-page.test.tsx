@@ -94,7 +94,7 @@ describe('MonitorDefinitionPage', () => {
   });
 
   it('renders a persistent searchable selector and delegates selection directly to editing', () => {
-    const controller = buildController();
+    const controller = buildController({ selectedApp: 'mysql' });
     owner.useController.mockReturnValue(controller);
     renderPage();
 
@@ -114,6 +114,8 @@ describe('MonitorDefinitionPage', () => {
     expect(document.querySelector('.ant-drawer')).not.toBeInTheDocument();
     expect(within(selector).queryByRole('button', { name: 'Refresh' })).not.toBeInTheDocument();
     expect(screen.getByText('MySQL')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'MySQL mysql' })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: 'MySQL mysql' })).not.toHaveClass('ant-btn-primary');
     fireEvent.change(screen.getByPlaceholderText('Search definitions'), { target: { value: 'mysql' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));
     fireEvent.click(screen.getByRole('button', { name: 'MySQL mysql' }));

@@ -44,6 +44,18 @@
   align-items: center;
   gap: 4px;
 }
+.favoriteChoice,
+.favoriteChoiceSelected {
+  color: var(--hb-text-secondary);
+  background: transparent;
+}
+.favoriteChoiceSelected,
+.favoriteChoiceSelected:hover {
+  border-color: var(--hb-border-strong);
+  color: var(--hb-text-primary);
+  background: var(--hb-nav-selected);
+  box-shadow: inset 2px 0 0 var(--hb-brand-accent);
+}
 .realtimeGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

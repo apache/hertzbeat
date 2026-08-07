@@ -23,47 +23,51 @@ export function MonitorDefinitionCatalog(props: {
   const { t } = useTranslation();
   return (
     <div className={styles.list}>
-      {props.items.map(item => (
-        <div key={item.app} className={styles.itemRow}>
-          <Button
-            type={props.selectedApp === item.app ? 'primary' : 'text'}
-            className={styles.item ?? ''}
-            aria-label={`${item.label} ${item.app}`}
-            onClick={() => props.onSelect(item.app)}
-          >
-            <span className={styles.copy}>
-              <Typography.Text strong ellipsis>
-                {item.label}
-              </Typography.Text>
-              <Typography.Text type="secondary" ellipsis>
-                {item.app}
-              </Typography.Text>
-            </span>
-            <Tag className={styles.origin ?? ''}>{t(`monitorDefinitions.originValue.${item.origin}`)}</Tag>
-          </Button>
-          <Popconfirm
-            title={t('monitorDefinitions.visibilityConfirm', {
-              app: item.app,
-              state: t(`monitorDefinitions.visibilityState.${item.hidden ? 'hidden' : 'visible'}`),
-              nextState: t(`monitorDefinitions.visibilityState.${item.hidden ? 'visible' : 'hidden'}`)
-            })}
-            okText={t('monitorDefinitions.apply')}
-            cancelText={t('common.cancel')}
-            onConfirm={() => props.onVisibilityChange(item)}
-          >
+      {props.items.map(item => {
+        const selected = props.selectedApp === item.app;
+        return (
+          <div key={item.app} className={styles.itemRow}>
             <Button
               type="text"
-              icon={item.hidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-              aria-label={t('monitorDefinitions.visibilityAction', {
+              className={`${styles.item ?? ''} ${selected ? (styles.itemSelected ?? '') : ''}`}
+              aria-current={selected ? 'true' : undefined}
+              aria-label={`${item.label} ${item.app}`}
+              onClick={() => props.onSelect(item.app)}
+            >
+              <span className={styles.copy}>
+                <Typography.Text strong ellipsis>
+                  {item.label}
+                </Typography.Text>
+                <Typography.Text type="secondary" ellipsis>
+                  {item.app}
+                </Typography.Text>
+              </span>
+              <Tag className={styles.origin ?? ''}>{t(`monitorDefinitions.originValue.${item.origin}`)}</Tag>
+            </Button>
+            <Popconfirm
+              title={t('monitorDefinitions.visibilityConfirm', {
                 app: item.app,
-                state: t(`monitorDefinitions.visibilityState.${item.hidden ? 'hidden' : 'visible'}`)
+                state: t(`monitorDefinitions.visibilityState.${item.hidden ? 'hidden' : 'visible'}`),
+                nextState: t(`monitorDefinitions.visibilityState.${item.hidden ? 'visible' : 'hidden'}`)
               })}
-              disabled={!props.canWrite || props.pendingApp !== null}
-              loading={props.pendingApp === item.app}
-            />
-          </Popconfirm>
-        </div>
-      ))}
+              okText={t('monitorDefinitions.apply')}
+              cancelText={t('common.cancel')}
+              onConfirm={() => props.onVisibilityChange(item)}
+            >
+              <Button
+                type="text"
+                icon={item.hidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                aria-label={t('monitorDefinitions.visibilityAction', {
+                  app: item.app,
+                  state: t(`monitorDefinitions.visibilityState.${item.hidden ? 'hidden' : 'visible'}`)
+                })}
+                disabled={!props.canWrite || props.pendingApp !== null}
+                loading={props.pendingApp === item.app}
+              />
+            </Popconfirm>
+          </div>
+        );
+      })}
     </div>
   );
 }
