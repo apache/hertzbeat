@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -72,16 +73,19 @@ public class GroupAlert {
     @Schema(title = "Group Labels", example = "{\"alertname\": \"HighCPUUsage\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> groupLabels;
 
     @Schema(title = "Common Labels", example = "{\"alertname\": \"HighCPUUsage\", \"instance\": \"server1\", \"severity\": \"critical\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> commonLabels;
 
     @Schema(title = "Common Annotations", example = "{\"summary\": \"High CPU usage detected\", \"description\": \"CPU usage is back to normal for server1\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(columnDefinition = "TEXT")
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> commonAnnotations;
     
     @Schema(title = "Alert Fingerprints", example = "[\"dxsdfdsf\"]")

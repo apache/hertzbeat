@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -67,11 +68,13 @@ public class SingleAlert {
     @Schema(title = "Labels", example = "{\"alertname\": \"HighCPUUsage\", \"priority\": \"critical\", \"instance\": \"343483943\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> labels;
 
     @Schema(title = "Annotations", example = "{\"summary\": \"High CPU usage detected\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 4096)
+    @JsonInclude(content = JsonInclude.Include.NON_NULL)
     private Map<String, String> annotations;
 
     @Schema(title = "Content", example = "CPU usage is above 80% for the last 5 minutes on instance server1.example.com.")
