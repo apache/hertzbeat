@@ -6,7 +6,6 @@
  */
 
 import { useGo } from '@refinedev/core';
-import { useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +26,6 @@ export function useShellHeaderActionController() {
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
   const { theme, setTheme } = useRuntimeTheme();
-  const queryClient = useQueryClient();
   const replaceSessionIdentity = useSessionIdentityBoundary();
   const go = useGo();
   const sharedTime = useSharedTime();
@@ -42,15 +40,6 @@ export function useShellHeaderActionController() {
   const changeLanguage = useLocaleChangeAction(i18n.resolvedLanguage, theme);
   const fullscreen = useShellFullscreenAction();
 
-  const refresh = async () => {
-    // Time-owned queries observe refreshRevision/window. Invalidating them as
-    // well would start a second request for the same header action.
-    if (sharedTime.manualRefreshOwner === 'time_revision') {
-      sharedTime.requestRefresh();
-      return;
-    }
-    await queryClient.invalidateQueries({ type: 'active' });
-  };
   const setDarkTheme = (dark: boolean) => setTheme(dark ? 'dark' : 'default');
   const toggleFullscreen = async () => {
     const result = await fullscreen.toggle();
@@ -74,7 +63,6 @@ export function useShellHeaderActionController() {
     theme,
     fullscreen: fullscreen.state,
     loggingOut,
-    refresh,
     changeLanguage,
     setDarkTheme,
     toggleFullscreen,

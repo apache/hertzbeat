@@ -19,7 +19,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { TFunction } from 'i18next';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ShellHeaderActions } from './shell-header-presentation';
+import { supportedLocales } from '@/core/i18n/locale';
+
+import { ShellBrand, ShellHeaderActions } from './shell-header-presentation';
 
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
@@ -41,9 +43,8 @@ describe('ShellHeaderActions account menu', () => {
         }}
         fullscreen={{ available: true, active: false, busy: false }}
         loggingOut={false}
-        showRefresh={false}
+        activeLocale="en-US"
         t={t}
-        onRefresh={vi.fn()}
         onOpenAlerts={vi.fn()}
         onOpenSettings={vi.fn()}
         theme="dark"
@@ -79,9 +80,8 @@ describe('ShellHeaderActions account menu', () => {
         toggleSound: vi.fn()
       },
       loggingOut: false,
-      showRefresh: false,
+      activeLocale: 'en-US' as const,
       t,
-      onRefresh: vi.fn(),
       onOpenAlerts: vi.fn(),
       onOpenSettings: vi.fn(),
       theme: 'dark' as const,
@@ -115,6 +115,28 @@ describe('ShellHeaderActions account menu', () => {
     rerender(<ShellHeaderActions {...props} theme="default" />);
     expect(screen.getByRole('switch', { name: 'shell.actions.useDarkTheme' })).not.toBeChecked();
   });
+
+  it('uses the official full wordmark in both themes without collapsing the brand', () => {
+    const { rerender } = render(<ShellBrand theme="default" />);
+
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/hertzbeat-brand.svg');
+
+    rerender(<ShellBrand theme="dark" />);
+    expect(screen.getByRole('img', { name: 'HertzBeat' })).toHaveAttribute('src', '/assets/hertzbeat-brand-white.svg');
+  });
+
+  it('opens every supported locale and dispatches the selected locale explicitly', async () => {
+    const onChangeLanguage = vi.fn();
+    render(<ShellHeaderActions {...createProps({ activeLocale: 'en-US', onChangeLanguage })} />);
+
+    expect(screen.queryByRole('button', { name: 'shell.actions.refresh' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.language' }));
+    for (const locale of supportedLocales) {
+      expect(await screen.findByText(`systemConfig.locale.${locale.replace('-', '_')}`)).toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByText('systemConfig.locale.ja_JP'));
+    expect(onChangeLanguage).toHaveBeenCalledWith('ja-JP');
+  });
 });
 
 function createProps(overrides: Partial<React.ComponentProps<typeof ShellHeaderActions>> = {}) {
@@ -135,10 +157,9 @@ function createProps(overrides: Partial<React.ComponentProps<typeof ShellHeaderA
     },
     fullscreen: { available: false, active: false, busy: false },
     loggingOut: false,
-    showRefresh: false,
+    activeLocale: 'en-US' as const,
     t,
     theme: 'dark' as const,
-    onRefresh: vi.fn(),
     onOpenAlerts: vi.fn(),
     onOpenSettings: vi.fn(),
     onThemeChange: vi.fn(),

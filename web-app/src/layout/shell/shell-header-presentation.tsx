@@ -10,12 +10,12 @@ import {
   FullscreenOutlined,
   GlobalOutlined,
   MoonOutlined,
-  SunOutlined,
-  ReloadOutlined
+  SunOutlined
 } from '@ant-design/icons';
-import { Switch, Tooltip } from 'antd';
+import { Button, Dropdown, Switch, Tooltip, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import type { RuntimeTheme } from '@/core/runtime-preferences';
 import type { ShellAlertNotificationState } from '@/features/alert/shell';
 
@@ -28,16 +28,15 @@ import type { ShellFullscreenState } from './use-shell-fullscreen-action';
 type ShellHeaderActionsProps = {
   accountName: string;
   alertNotifications: ShellAlertNotificationState;
+  activeLocale: SupportedLocale;
   fullscreen: ShellFullscreenState;
   loggingOut: boolean;
-  showRefresh: boolean;
   t: TFunction;
   theme: RuntimeTheme;
-  onRefresh: () => void;
   onOpenAlerts: () => void;
   onThemeChange: (dark: boolean) => void;
   onToggleFullscreen: () => void;
-  onChangeLanguage: () => void;
+  onChangeLanguage: (locale: SupportedLocale) => void;
   onOpenSettings: () => void;
   onLock: () => void;
   onLogout: () => void;
@@ -46,12 +45,11 @@ type ShellHeaderActionsProps = {
 export function ShellHeaderActions({
   accountName,
   alertNotifications,
+  activeLocale,
   fullscreen,
   loggingOut,
-  showRefresh,
   t,
   theme,
-  onRefresh,
   onOpenAlerts,
   onThemeChange,
   onToggleFullscreen,
@@ -62,9 +60,6 @@ export function ShellHeaderActions({
 }: ShellHeaderActionsProps) {
   return (
     <div className={styles.headerActions}>
-      {showRefresh && (
-        <ShellHeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={onRefresh} />
-      )}
       <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
       <ShellThemeSwitch theme={theme} t={t} onChange={onThemeChange} />
       {fullscreen.available ? (
@@ -75,7 +70,7 @@ export function ShellHeaderActions({
           onClick={onToggleFullscreen}
         />
       ) : null}
-      <ShellHeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={onChangeLanguage} />
+      <ShellLanguageMenu activeLocale={activeLocale} t={t} onChange={onChangeLanguage} />
       <ShellAccountMenu
         accountName={accountName}
         loggingOut={loggingOut}
@@ -85,6 +80,37 @@ export function ShellHeaderActions({
         onLogout={onLogout}
       />
     </div>
+  );
+}
+
+export function ShellBrand({ theme }: { theme: RuntimeTheme }) {
+  const source = theme === 'default' ? '/assets/hertzbeat-brand.svg' : '/assets/hertzbeat-brand-white.svg';
+  return <img className={styles.brandLogo} src={source} alt="HertzBeat" width={112} height={28} />;
+}
+
+function ShellLanguageMenu({
+  activeLocale,
+  t,
+  onChange
+}: {
+  activeLocale: SupportedLocale;
+  t: TFunction;
+  onChange: (locale: SupportedLocale) => void;
+}) {
+  const items: NonNullable<MenuProps['items']> = supportedLocales.map(locale => ({
+    key: locale,
+    label: t(`systemConfig.locale.${locale.replace('-', '_')}`),
+    disabled: locale === activeLocale
+  }));
+  return (
+    <Dropdown menu={{ items, onClick: info => onChange(info.key as SupportedLocale) }} trigger={['click']}>
+      <Button
+        aria-label={t('shell.actions.language')}
+        className={styles.headerAction ?? ''}
+        icon={<GlobalOutlined />}
+        type="text"
+      />
+    </Dropdown>
   );
 }
 

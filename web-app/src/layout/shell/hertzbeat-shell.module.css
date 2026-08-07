@@ -24,45 +24,33 @@
   position: sticky;
   z-index: 20;
   top: 0;
-  display: grid;
-  grid-template-columns: var(--hb-shell-sidebar-width) minmax(0, 1fr);
+  display: flex;
   height: var(--hb-shell-header-height);
   border-bottom: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-chrome);
-  transition: grid-template-columns 160ms ease;
 }
 
 .brandSlot {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex: 0 0 132px;
   min-width: 0;
   padding: 0 12px;
-  border-right: 1px solid var(--hb-border-subtle);
   overflow: hidden;
 }
 
 .brandLogo {
   display: block;
   flex: none;
-  width: 24px;
-  height: 23px;
-}
-
-.brandName {
-  overflow: hidden;
-  color: var(--hb-text-primary);
-  font-size: 15px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-overflow: clip;
-  white-space: nowrap;
+  width: 112px;
+  height: 28px;
 }
 
 .headerSpine {
   display: flex;
   align-items: center;
   min-width: 0;
+  flex: 1 1 auto;
   padding: 0 10px;
 }
 
@@ -79,9 +67,7 @@
   flex: 0 0 auto;
   gap: 5px;
   height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--hb-border-subtle);
-  border-radius: var(--hb-radius-control);
+  margin-right: 10px;
   color: var(--hb-text-secondary);
   font-size: 12px;
   white-space: nowrap;
@@ -98,8 +84,8 @@
 }
 
 .statusDot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border: 1px solid var(--hb-status-unknown);
   border-radius: 50%;
   background: transparent;
@@ -131,7 +117,7 @@
 .statusSlot[data-status='unknown'] .statusDot {
   border-color: var(--hb-status-unknown);
   border-style: solid;
-  background: transparent;
+  background: var(--hb-status-unknown);
 }
 
 .timePolicy {
@@ -196,6 +182,10 @@ button.timePolicy:hover {
 .alertNotificationActions {
   display: flex;
   align-items: center;
+}
+
+.soundControlIcon {
+  font-size: 14px;
 }
 
 .alertPopover > button:last-child {
@@ -495,11 +485,6 @@ button.timePolicy:hover {
   background: var(--hb-bg-hover);
 }
 
-.shellCollapsed .brandSlot {
-  justify-content: center;
-  padding: 0;
-}
-
 .shellCollapsed .navigationScroll {
   padding-inline: 7px;
 }
@@ -567,7 +552,7 @@ button.timePolicy:hover {
   min-width: 0;
   min-height: calc(100vh - var(--hb-shell-header-height));
   padding: 22px 28px 40px;
-  background: var(--hb-bg-canvas);
+  background: var(--hb-bg-navigation);
   overflow-x: auto;
 }
 

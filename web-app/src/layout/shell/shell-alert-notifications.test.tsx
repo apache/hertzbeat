@@ -10,9 +10,13 @@ import type { TFunction } from 'i18next';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ShellAlertNotifications } from './shell-alert-notifications';
+import styles from './hertzbeat-shell.module.css';
+import shellStyles from './hertzbeat-shell.module.css?raw';
 
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
+const soundControlIconClass = styles.soundControlIcon;
+if (!soundControlIconClass) throw new Error('Missing sound control icon class.');
 
 describe('ShellAlertNotifications', () => {
   afterEach(cleanup);
@@ -122,7 +126,10 @@ describe('ShellAlertNotifications', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'shell.alerts.soundMuted' }));
+    const mutedControl = screen.getByRole('button', { name: 'shell.alerts.soundMuted' });
+    expect(mutedControl.querySelector('[data-icon="muted"]')).toBeInTheDocument();
+    expect(mutedControl.querySelector('[aria-label="muted"]')).toHaveClass(soundControlIconClass);
+    fireEvent.click(mutedControl);
     expect(toggleSound).toHaveBeenCalledOnce();
 
     rerender(
@@ -138,6 +145,26 @@ describe('ShellAlertNotifications', () => {
       />
     );
     expect(screen.getByRole('button', { name: 'shell.alerts.soundUnavailable' })).toBeDisabled();
+  });
+
+  it('uses the matching sound icon at the same compact size when audio is enabled', () => {
+    render(
+      <ShellAlertNotifications
+        state={{
+          count: { kind: 'ready', total: 0 },
+          list: { kind: 'empty' },
+          sound: { kind: 'ready', canToggle: true, muted: false, saving: false, permission: 'default', failure: null },
+          toggleSound: vi.fn()
+        }}
+        t={t}
+        onOpenAlerts={vi.fn()}
+      />
+    );
+
+    const control = screen.getByRole('button', { name: 'shell.alerts.soundEnabled' });
+    expect(control.querySelector('[data-icon="sound"]')).toBeInTheDocument();
+    expect(control.querySelector('[aria-label="sound"]')).toHaveClass(soundControlIconClass);
+    expect(shellStyles).toMatch(/\.soundControlIcon\s*\{[^}]*font-size:\s*14px/);
   });
 
   it('shows canonical mute evidence but disables the global action for a read-only role', () => {

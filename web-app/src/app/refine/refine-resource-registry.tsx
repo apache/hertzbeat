@@ -10,17 +10,32 @@ import {
   ApiOutlined,
   AppstoreOutlined,
   ApartmentOutlined,
-  BellOutlined,
+  AreaChartOutlined,
+  AuditOutlined,
+  CloudServerOutlined,
+  ClusterOutlined,
+  ContactsOutlined,
+  ControlOutlined,
   DashboardOutlined,
   DatabaseOutlined,
-  DeploymentUnitOutlined,
-  FundProjectionScreenOutlined,
+  FileTextOutlined,
+  HddOutlined,
+  HeartOutlined,
+  KeyOutlined,
+  LineChartOutlined,
+  LinkOutlined,
+  MailOutlined,
+  MessageOutlined,
   MonitorOutlined,
-  ReadOutlined,
+  MutedOutlined,
+  NotificationOutlined,
+  RadarChartOutlined,
+  ScheduleOutlined,
   SettingOutlined,
+  StopOutlined,
   TagsOutlined,
   TeamOutlined,
-  ToolOutlined
+  WarningOutlined
 } from '@ant-design/icons';
 import type { AccessControlProvider, ResourceProps } from '@refinedev/core';
 import type { ReactNode } from 'react';
@@ -76,13 +91,13 @@ const groupResources = [
   navigationResource({
     name: 'shell-application-observability',
     labelKey: 'shell.navigation.applicationObservability',
-    icon: <FundProjectionScreenOutlined />,
+    icon: <LineChartOutlined />,
     order: 20
   }),
   navigationResource({
     name: 'shell-resources',
     labelKey: 'shell.navigation.resources',
-    icon: <DeploymentUnitOutlined />,
+    icon: <ClusterOutlined />,
     order: 30
   }),
   navigationResource({
@@ -94,7 +109,7 @@ const groupResources = [
   navigationResource({
     name: 'shell-administration',
     labelKey: 'shell.navigation.administration',
-    icon: <SettingOutlined />,
+    icon: <ControlOutlined />,
     order: 50
   })
 ];
@@ -126,7 +141,7 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('monitors', {
     parent: 'shell-basic-monitoring',
-    icon: <MonitorOutlined />,
+    icon: <RadarChartOutlined />,
     order: 10,
     create: getAppRoute('monitor-new').path,
     edit: getAppRoute('monitor-edit').path,
@@ -135,7 +150,7 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('entities', {
     parent: 'shell-resources',
-    icon: <DeploymentUnitOutlined />,
+    icon: <DatabaseOutlined />,
     order: 10,
     show: getAppRoute('entity-detail').path,
     timePolicy: 'none'
@@ -148,7 +163,7 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('explore', {
     parent: 'shell-application-observability',
-    icon: <FundProjectionScreenOutlined />,
+    icon: <AreaChartOutlined />,
     order: 10,
     timePolicy: 'route_owned'
   }),
@@ -160,13 +175,13 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('alerts', {
     parent: 'shell-alerting',
-    icon: <AlertOutlined />,
+    icon: <WarningOutlined />,
     order: 10,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-rules', {
     parent: 'shell-alerting',
-    icon: <ToolOutlined />,
+    icon: <AuditOutlined />,
     order: 20,
     timePolicy: 'none'
   }),
@@ -178,27 +193,27 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('alert-inhibits', {
     parent: 'shell-alerting',
-    icon: <ToolOutlined />,
+    icon: <StopOutlined />,
     order: 40,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-silences', {
     name: alertSilenceResourceName,
     parent: 'shell-alerting',
-    icon: <ToolOutlined />,
+    icon: <MutedOutlined />,
     order: 50,
     dataProviderName: alertSilenceResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-integrations', {
     parent: 'shell-alerting',
-    icon: <ApiOutlined />,
+    icon: <LinkOutlined />,
     order: 60,
     timePolicy: 'none'
   }),
   routedNavigationResource('bulletin', {
     parent: 'shell-basic-monitoring',
-    icon: <ReadOutlined />,
+    icon: <NotificationOutlined />,
     order: 20,
     timePolicy: 'none'
   }),
@@ -211,41 +226,41 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('notice-receivers', {
     name: noticeReceiverResourceName,
     parent: 'shell-alerting',
-    icon: <BellOutlined />,
+    icon: <ContactsOutlined />,
     order: 70,
     dataProviderName: noticeReceiverResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource(noticeRuleResourceName, {
     parent: 'shell-alerting',
-    icon: <ToolOutlined />,
+    icon: <ScheduleOutlined />,
     order: 80,
     dataProviderName: noticeRuleResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource(noticeTemplateResourceName, {
     parent: 'shell-alerting',
-    icon: <ReadOutlined />,
+    icon: <MailOutlined />,
     order: 90,
     dataProviderName: noticeTemplateResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource('message-server', {
     parent: 'shell-alerting',
-    icon: <ApiOutlined />,
+    icon: <MessageOutlined />,
     order: 100,
     timePolicy: 'none'
   }),
   routedNavigationResource('tokens', {
     parent: 'shell-administration',
-    icon: <ApiOutlined />,
+    icon: <KeyOutlined />,
     order: 30,
     dataProviderName: 'tokens',
     timePolicy: 'none'
   }),
   routedNavigationResource('collectors', {
     parent: 'shell-administration',
-    icon: <ApiOutlined />,
+    icon: <CloudServerOutlined />,
     order: 25,
     timePolicy: 'none'
   }),
@@ -257,7 +272,7 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('monitor-definitions', {
     parent: 'shell-basic-monitoring',
-    icon: <ReadOutlined />,
+    icon: <FileTextOutlined />,
     order: 40,
     timePolicy: 'none'
   }),
@@ -279,14 +294,14 @@ const staticRefineResources: ResourceProps[] = [
   }),
   routedNavigationResource('object-store', {
     parent: 'shell-administration',
-    icon: <DatabaseOutlined />,
+    icon: <HddOutlined />,
     order: 50,
     dataProviderName: 'object-store',
     timePolicy: 'none'
   }),
   routedNavigationResource('status-management', {
     parent: 'shell-administration',
-    icon: <FundProjectionScreenOutlined />,
+    icon: <HeartOutlined />,
     order: 60,
     timePolicy: 'none'
   })

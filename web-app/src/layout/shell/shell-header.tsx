@@ -12,17 +12,18 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
+import { resolveLocale } from '@/core/i18n/i18n';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
-import { ShellHeaderActions } from './shell-header-presentation';
+import { ShellBrand, ShellHeaderActions } from './shell-header-presentation';
 import { ShellStatusSpine } from './shell-status-spine';
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
 
-export function ShellHeader({ collapsed }: { collapsed: boolean }) {
+export function ShellHeader() {
   const { t, i18n } = useTranslation();
   const { session } = useSession();
   const location = useLocation();
@@ -41,29 +42,23 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   return (
     <header className={styles.header}>
       <div className={styles.brandSlot}>
-        <img className={styles.brandLogo} src="/assets/logo.svg" alt="HertzBeat" width={24} height={23} />
-        {!collapsed && (
-          <strong className={styles.brandName} aria-hidden="true">
-            HertzBeat
-          </strong>
-        )}
+        <ShellBrand theme={actions.theme} />
       </div>
       <div className={styles.headerSpine}>
         <ShellStatusSpine locale={i18n.resolvedLanguage} runtime={runtimeStatus} t={t} />
         <ShellTimeControl time={actions.sharedTime} t={t} locale={i18n.resolvedLanguage} />
         <ShellHeaderActions
           accountName={accountName}
+          activeLocale={resolveLocale(i18n.resolvedLanguage)}
           alertNotifications={alertNotifications}
           fullscreen={actions.fullscreen}
           loggingOut={actions.loggingOut}
-          showRefresh={actions.sharedTime.policy !== 'unknown'}
           t={t}
           theme={actions.theme}
-          onRefresh={() => void actions.refresh()}
           onOpenAlerts={actions.openAlerts}
           onThemeChange={actions.setDarkTheme}
           onToggleFullscreen={() => void actions.toggleFullscreen()}
-          onChangeLanguage={() => void actions.changeLanguage()}
+          onChangeLanguage={locale => void actions.changeLanguage(locale)}
           onOpenSettings={actions.openSettings}
           onLock={() => {
             if (session) actions.lock(session, `${location.pathname}${location.search}${location.hash}`);

@@ -98,7 +98,7 @@ describe('ShellHeader logout', () => {
                           path="/dashboard"
                           element={
                             <>
-                              <ShellHeader collapsed />
+                              <ShellHeader />
                               <LocationProbe />
                             </>
                           }

@@ -72,7 +72,6 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
         onClick={() => onCollapsedChange(!collapsed)}
       >
         {collapsed ? <RightOutlined /> : <LeftOutlined />}
-        {!collapsed && <span>{t('shell.navigation.collapse')}</span>}
       </button>
     </aside>
   );

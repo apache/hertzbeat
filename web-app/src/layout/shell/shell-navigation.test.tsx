@@ -178,6 +178,18 @@ describe('expanded ShellNavigation', () => {
     expect(screen.getByRole('link', { name: 'menu.tokens' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'menu.settings' })).not.toBeInTheDocument();
   });
+
+  it('keeps the collapse control arrow-only while preserving its accessible name', () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <ShellNavigation collapsed={false} onCollapsedChange={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const control = screen.getByRole('button', { name: 'shell.navigation.collapse' });
+    expect(control.textContent).toBe('');
+    expect(control.querySelector('[data-icon="left"]')).toBeInTheDocument();
+  });
 });
 
 function groupButton(name: string) {

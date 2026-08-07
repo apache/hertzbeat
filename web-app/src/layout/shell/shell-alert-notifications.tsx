@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { AudioMutedOutlined, BellOutlined, SoundOutlined } from '@ant-design/icons';
+import { BellOutlined, MutedOutlined, SoundOutlined } from '@ant-design/icons';
 import { Badge, Button, Empty, Popover, Spin, Tag, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 
@@ -53,7 +53,13 @@ function SoundControl({ state, t }: { state: ShellAlertNotificationState; t: TFu
         aria-label={label}
         disabled={disabled}
         loading={state.sound.kind === 'ready' && state.sound.saving}
-        icon={muted ? <AudioMutedOutlined /> : <SoundOutlined />}
+        icon={
+          muted ? (
+            <MutedOutlined className={styles.soundControlIcon} />
+          ) : (
+            <SoundOutlined className={styles.soundControlIcon} />
+          )
+        }
         onClick={() => void state.toggleSound()}
       />
     </Tooltip>

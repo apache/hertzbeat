@@ -37,5 +37,15 @@ describe('shell content layout contract', () => {
     expect(routeChildRule).toMatch(/width:\s*100%/);
     expect(routeChildRule).toMatch(/min-width:\s*0/);
     expect(routeChildRule).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+    expect(contentRule).toMatch(/background:\s*var\(--hb-bg-navigation\)/);
+  });
+
+  it('treats the compact header as one continuous surface without a sidebar divider', () => {
+    const headerRule = shellStyles.match(/\.header\s*\{(?<body>[^}]*)\}/)?.groups?.body;
+    const brandRule = shellStyles.match(/\.brandSlot\s*\{(?<body>[^}]*)\}/)?.groups?.body;
+
+    expect(headerRule).toMatch(/display:\s*flex/);
+    expect(headerRule).not.toMatch(/grid-template-columns/);
+    expect(brandRule).not.toMatch(/border-right/);
   });
 });

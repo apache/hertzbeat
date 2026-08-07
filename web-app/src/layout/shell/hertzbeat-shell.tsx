@@ -40,7 +40,7 @@ function RouteOwnedShell() {
       canonicalizeInvalidExact={location.pathname !== applicationRoutePaths.explore}
     >
       <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
-        <ShellHeader collapsed={collapsed} />
+        <ShellHeader />
         <div className={styles.shellBody}>
           <ShellNavigation collapsed={collapsed} onCollapsedChange={setCollapsed} />
           <main className={styles.content}>

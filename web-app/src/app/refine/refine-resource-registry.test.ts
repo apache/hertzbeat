@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { isValidElement } from 'react';
 
 import { routeRegistry } from '@/app/route-registry';
 import { uiSessionSchema } from '@/core/auth/session-contract';
@@ -94,6 +95,17 @@ describe('Refine shell resource registry', () => {
       'object-store',
       'status-management'
     ]);
+  });
+
+  it('assigns every visible navigation item a globally unique Ant Design icon component', () => {
+    const items = flattenNavigation(buildShellNavigation(refineResources, ['ADMIN']));
+    const iconTypes = items.map(item => {
+      expect(isValidElement(item.icon)).toBe(true);
+      if (!isValidElement(item.icon)) throw new Error(`Missing icon for ${item.name}`);
+      return item.icon.type;
+    });
+
+    expect(new Set(iconTypes).size).toBe(iconTypes.length);
   });
 
   it('keeps implementation-only parents and monitor filters out of the global sidebar', () => {
@@ -236,6 +248,10 @@ function navigationChildren(tree: ReturnType<typeof buildShellNavigation>, name:
 
 function flattenNavigationNames(tree: ReturnType<typeof buildShellNavigation>): string[] {
   return tree.flatMap(item => [item.name, ...flattenNavigationNames(item.children)]);
+}
+
+function flattenNavigation(tree: ReturnType<typeof buildShellNavigation>): ReturnType<typeof buildShellNavigation> {
+  return tree.flatMap(item => [item, ...flattenNavigation(item.children)]);
 }
 
 function canAccess(resource: (typeof refineResources)[number] | undefined, roles: string[]) {

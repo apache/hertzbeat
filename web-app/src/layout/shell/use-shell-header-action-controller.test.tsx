@@ -14,20 +14,15 @@ const runtime = vi.hoisted(() => ({
   changeLocale: vi.fn<(locale: string, options?: { signal?: AbortSignal }) => Promise<boolean>>(),
   fullscreenToggle: vi.fn(),
   go: vi.fn(),
-  invalidateQueries: vi.fn(),
   logout: vi.fn(),
   messageError: vi.fn(),
   persistPreferences: vi.fn(),
   readLocale: vi.fn(),
   replaceIdentity: vi.fn(),
-  requestRefresh: vi.fn(),
   setTheme: vi.fn()
 }));
 
 vi.mock('@refinedev/core', () => ({ useGo: () => runtime.go }));
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: runtime.invalidateQueries })
-}));
 vi.mock('antd', () => ({ App: { useApp: () => ({ message: { error: runtime.messageError } }) } }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'en-US' } })
@@ -53,8 +48,7 @@ vi.mock('@/core/runtime-theme-context', () => ({
 vi.mock('@/shared/time', () => ({
   useSharedTime: () => ({
     headerMode: 'hidden',
-    manualRefreshOwner: 'active_queries',
-    requestRefresh: runtime.requestRefresh
+    manualRefreshOwner: 'active_queries'
   })
 }));
 vi.mock('@/shared/navigation/app-paths', () => ({
@@ -78,26 +72,23 @@ describe('useShellHeaderActionController', () => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
     runtime.readLocale.mockReturnValue('en-US');
-    runtime.invalidateQueries.mockResolvedValue(undefined);
     runtime.changeLocale.mockResolvedValue(true);
     runtime.fullscreenToggle.mockResolvedValue('changed');
     runtime.logout.mockResolvedValue(undefined);
   });
 
-  it('coordinates refresh, theme, language, and route actions', async () => {
+  it('coordinates theme, explicit language selection, and route actions', async () => {
     const { result } = renderHook(() => useShellHeaderActionController());
 
-    await act(() => result.current.refresh());
     act(() => result.current.setDarkTheme(false));
-    await act(() => result.current.changeLanguage());
+    await act(() => result.current.changeLanguage('ja-JP'));
     await act(() => result.current.openAlerts());
     await act(() => result.current.openSettings());
 
-    expect(runtime.requestRefresh).not.toHaveBeenCalled();
-    expect(runtime.invalidateQueries).toHaveBeenCalledWith({ type: 'active' });
+    expect(result.current).not.toHaveProperty('refresh');
     expect(runtime.setTheme).toHaveBeenCalledWith('default');
-    expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });
-    expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
+    expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'ja-JP', theme: 'dark' });
+    expect(runtime.changeLocale).toHaveBeenCalledWith('ja-JP', { signal: expect.any(AbortSignal) });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-alerts', type: 'push' });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-settings', type: 'push' });
   });

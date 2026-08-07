@@ -39,4 +39,14 @@ describe('shell runtime status style contract', () => {
     expect(valueRule).not.toMatch(/overflow:\s*hidden/);
     expect(valueRule).not.toMatch(/text-overflow:\s*ellipsis/);
   });
+
+  it('presents status as part of the header spine instead of boxed pills and keeps the signal prominent', () => {
+    const slotRule = shellStyles.match(/\.statusSlot\s*\{[^}]*\}/)?.[0] ?? '';
+    const dotRule = shellStyles.match(/\.statusDot\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(slotRule).not.toMatch(/border:/);
+    expect(slotRule).not.toMatch(/border-radius:/);
+    expect(dotRule).toMatch(/width:\s*8px/);
+    expect(dotRule).toMatch(/height:\s*8px/);
+  });
 });
