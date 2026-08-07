@@ -5,6 +5,7 @@
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
+/** Semantic YAML colors shared by the single and comparison editors. */
 export const yamlHighlightStyle = HighlightStyle.define([
   { tag: tags.propertyName, color: 'var(--hb-syntax-property)' },
   { tag: tags.string, color: 'var(--hb-syntax-string)' },

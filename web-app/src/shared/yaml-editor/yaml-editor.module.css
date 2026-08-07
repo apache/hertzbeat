@@ -3,20 +3,30 @@
 .editor {
   min-width: 0;
   overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
   border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-canvas);
+}
+
+.editor:focus-within {
+  border-color: var(--hb-focus-ring);
+  outline: 2px solid color-mix(in srgb, var(--hb-focus-ring) 18%, transparent);
 }
 
 .editor :global(.cm-editor) {
   height: 100%;
-  border: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-canvas);
   color: var(--hb-text-primary);
   font-size: 12px;
 }
 
-.editor :global(.cm-editor.cm-focused) {
-  border-color: var(--hb-focus-ring);
-  outline: 2px solid color-mix(in srgb, var(--hb-focus-ring) 18%, transparent);
+.editor :global(.cm-mergeView) {
+  height: 100%;
+  overflow: auto;
+}
+
+.editor :global(.cm-mergeViewEditors) {
+  min-height: 100%;
 }
 
 .editor :global(.cm-scroller) {
@@ -30,11 +40,6 @@
   color: var(--hb-text-muted);
 }
 
-.editor :global(.cm-activeLine),
-.editor :global(.cm-activeLineGutter) {
-  background: var(--hb-bg-hover);
-}
-
-.editor[data-read-only='true'] :global(.cm-content) {
-  color: var(--hb-text-secondary);
+.editor :global(.cm-mergeViewEditor + .cm-mergeViewEditor) {
+  border-inline-start: 1px solid var(--hb-border-subtle);
 }

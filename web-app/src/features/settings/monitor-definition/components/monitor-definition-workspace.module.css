@@ -36,16 +36,6 @@
   margin: 0;
 }
 
-.editorGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
-}
-
-.editorSingle {
-  width: 100%;
-}
-
 .editorPane {
   display: grid;
   gap: 6px;
@@ -56,6 +46,12 @@
   color: var(--hb-text-secondary);
   font-size: 12px;
   font-weight: 600;
+}
+
+.editorLabels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
 }
 
 .readOnly {
@@ -70,10 +66,4 @@
   color: var(--hb-text-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   white-space: pre;
-}
-
-@media (max-width: 960px) {
-  .editorGrid {
-    grid-template-columns: 1fr;
-  }
 }

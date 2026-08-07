@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import yamlEditorStyles from '@/shared/yaml-editor/yaml-code-editor.module.css?raw';
+import yamlEditorStyles from '@/shared/yaml-editor/yaml-editor.module.css?raw';
 
 import catalogStyles from '../components/monitor-definition-catalog.module.css?raw';
 import editorSource from '../components/monitor-definition-editor.tsx?raw';
@@ -32,7 +32,7 @@ describe('monitor definition split layout contract', () => {
     expect(catalog).toMatch(/overflow:\s*auto/);
     expect(`${workspaceSource}\n${editorSource}`).toMatch(/minHeight="clamp\([^"]*100dvh/);
     expect(yaml).toMatch(/overflow:\s*hidden/);
-    expect(yamlEditorStyles).toMatch(/\.editor\s+:global\(\.cm-editor\)\s*\{[^}]*height:\s*100%/);
+    expect(yamlEditorStyles).toMatch(/\.editor\s+:global\(\.cm-mergeView\)\s*\{[^}]*overflow:\s*auto/);
   });
 
   it('returns to natural document flow when the split workspace stacks on narrow screens', () => {
