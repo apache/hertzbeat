@@ -218,6 +218,32 @@ describe('alert center wire schemas', () => {
     });
   });
 
+  it('drops legacy null label entries without hiding the remaining alert page', () => {
+    const legacyGroup = {
+      ...group,
+      groupLabels: { ...group.groupLabels, collectorVersion: null },
+      commonLabels: { ...group.commonLabels, collectorVersion: null },
+      commonAnnotations: { summary: 'Visible annotation', collectorVersion: null },
+      alerts: group.alerts.map(alert => ({
+        ...alert,
+        labels: { ...alert.labels, collectorVersion: null },
+        annotations: { ...alert.annotations, collectorVersion: null }
+      }))
+    };
+
+    expect(parseAlertGroupPage(pageResponse([legacyGroup]), firstPageQuery).content[0]).toMatchObject({
+      groupLabels: { alertname: 'HighLatency' },
+      commonLabels: { severity: 'critical', 'service.name': 'checkout' },
+      commonAnnotations: { summary: 'Visible annotation' },
+      alerts: [
+        {
+          labels: { alertname: 'HighLatency', instance: 'checkout-1' },
+          annotations: { summary: 'Checkout latency exceeded the threshold.' }
+        }
+      ]
+    });
+  });
+
   it('accepts the acknowledged group and child evidence produced by the status endpoint', () => {
     const acknowledged = {
       ...group,

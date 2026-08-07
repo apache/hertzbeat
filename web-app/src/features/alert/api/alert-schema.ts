@@ -40,7 +40,16 @@ const maxJavaScriptDateTimestamp = 8_640_000_000_000_000;
 const nullableTimestampSchema = nonNegativeIntegerSchema
   .refine(value => value <= maxJavaScriptDateTimestamp, 'Expected a renderable epoch timestamp')
   .nullable();
-const nullableStringMapSchema = z.record(z.string().min(1), z.string()).nullable();
+const nullableStringMapSchema = z
+  .record(z.string().min(1), z.string().nullable())
+  .nullable()
+  .transform(value => {
+    if (value === null) return null;
+    // Older alert rows can contain a key whose optional source value was null.
+    // Null carries no searchable or renderable evidence, so discard only that
+    // entry while retaining strict validation for every non-null value.
+    return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => entry[1] !== null));
+  });
 const nullableStringArraySchema = z.array(z.string()).nullable();
 const nullableNonNegativeIntegerSchema = nonNegativeIntegerSchema.nullable();
 const nullableServerLocalDateTimeSchema = z
