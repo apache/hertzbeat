@@ -122,6 +122,23 @@ class SetupControllerTest {
     }
 
     @Test
+    void administratorUsernameDomainErrorWinsOverTransportValidation() throws Exception {
+        when(workflow.createAdministrator(any())).thenThrow(
+                new SetupApiException(SetupErrorCode.ADMINISTRATOR_USERNAME_INVALID, HttpStatus.BAD_REQUEST));
+
+        for (String username : new String[] {"", "   "}) {
+            String request = "{\"username\":\"" + username + "\",\"password\":\"request-secret\"}";
+            mvc.perform(post(SetupApiContract.ADMINISTRATOR_PATH)
+                            .contentType(MediaType.APPLICATION_JSON).content(request))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(header().string("Cache-Control", "no-store"))
+                    .andExpect(jsonPath("$.errorCode").value("administrator_username_invalid"))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("request-secret"))));
+        }
+    }
+
+    @Test
     void exportIsActualNoStoreAttachmentRatherThanMetadataJson() throws Exception {
         when(workflow.prepareExport(any())).thenReturn(
                 new ExportResponse("hertzbeat-setup.env", "text/plain"));

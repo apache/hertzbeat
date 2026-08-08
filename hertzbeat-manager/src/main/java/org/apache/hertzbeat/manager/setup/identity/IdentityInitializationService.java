@@ -41,12 +41,12 @@ public class IdentityInitializationService {
         char[] clear = credentials.copyPassword();
         try {
             if (accounts.existsByBootstrapSlotIsNotNull()
-                    || accounts.existsByUsername(credentials.username())) {
+                    || accounts.existsByUsername(credentials.canonicalUsername())) {
                 throw new BootstrapIdentityConflict();
             }
             try {
                 accounts.saveAndFlush(DatabaseAccount.firstAdministrator(
-                        credentials.username(), passwords.encode(clear), "admin"));
+                        credentials.canonicalUsername(), passwords.encode(clear), "admin"));
             } catch (DataIntegrityViolationException exception) {
                 throw BootstrapIdentityConflict.map(exception);
             }

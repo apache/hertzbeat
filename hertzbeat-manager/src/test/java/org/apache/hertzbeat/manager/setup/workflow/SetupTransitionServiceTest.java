@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -39,6 +40,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
+import org.apache.hertzbeat.manager.setup.identity.BootstrapIdentityConflict;
 import org.junit.jupiter.api.Test;
 
 class SetupTransitionServiceTest {
@@ -94,6 +96,57 @@ class SetupTransitionServiceTest {
             }).isInstanceOf(SetupWorkflowConflict.class);
         }
         verifyNoInteractions(identities);
+    }
+
+    @Test
+    void administratorUsesOneCanonicalUsernameForIdentityRuntimeAndResponse() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        IdentityInitializationService identities = mock(IdentityInitializationService.class);
+        SetupRuntimeState state = state(capability, SetupPhase.ADMINISTRATOR_REQUIRED, false, null);
+        SetupTransitionService transitions = transitions(state, mock(SetupRequestValidator.class),
+                mock(SetupConfigurationCoordinator.class), capability, Optional.of(identities), Optional.empty());
+
+        String responseUsername = transitions.createAdministrator(
+                SetupTransitionService.AdministratorCommand.browser(
+                        new AdministratorRequest("  operator  ", "secret")));
+
+        assertThat(responseUsername).isEqualTo("operator");
+        assertThat(state.administratorUsername()).isEqualTo("operator");
+        verify(identities).createFirstAdministrator(any());
+    }
+
+    @Test
+    void invalidAdministratorUsernameHasStableCodeWhileUniqueConflictKeepsConflictCode() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        IdentityInitializationService identities = mock(IdentityInitializationService.class);
+        SetupRuntimeState state = state(capability, SetupPhase.ADMINISTRATOR_REQUIRED, false, null);
+        SetupTransitionService transitions = transitions(state, mock(SetupRequestValidator.class),
+                mock(SetupConfigurationCoordinator.class), capability, Optional.of(identities), Optional.empty());
+
+        for (String username : List.of("   ", "x".repeat(65))) {
+            SetupTransitionService.AdministratorCommand command =
+                    SetupTransitionService.AdministratorCommand.browser(
+                            new AdministratorRequest(username, "secret"));
+            assertThatThrownBy(() -> transitions.createAdministrator(command))
+                    .isInstanceOfSatisfying(SetupApiException.class,
+                            failure -> assertThat(failure.errorCode())
+                                    .isEqualTo(SetupErrorCode.ADMINISTRATOR_USERNAME_INVALID));
+            assertThat(command.password().copy()).containsOnly('\0');
+        }
+        verifyNoInteractions(identities);
+
+        IdentityInitializationService conflicting = mock(IdentityInitializationService.class);
+        doThrow(new BootstrapIdentityConflict()).when(conflicting).createFirstAdministrator(any());
+        SetupRuntimeState conflictState = state(capability, SetupPhase.ADMINISTRATOR_REQUIRED, false, null);
+        SetupTransitionService conflictTransitions = transitions(
+                conflictState, mock(SetupRequestValidator.class), mock(SetupConfigurationCoordinator.class),
+                capability, Optional.of(conflicting), Optional.empty());
+        assertThatThrownBy(() -> conflictTransitions.createAdministrator(
+                SetupTransitionService.AdministratorCommand.browser(
+                        new AdministratorRequest("operator", "secret"))))
+                .isInstanceOfSatisfying(SetupApiException.class,
+                        failure -> assertThat(failure.errorCode())
+                                .isEqualTo(SetupErrorCode.ADMINISTRATOR_ALREADY_CONFIGURED));
     }
 
     @Test

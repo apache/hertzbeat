@@ -25,6 +25,7 @@ import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.identity.AdministratorCredentials;
 import org.apache.hertzbeat.manager.setup.identity.BootstrapIdentityConflict;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
+import org.apache.hertzbeat.manager.setup.identity.InvalidAdministratorUsername;
 import org.springframework.http.HttpStatus;
 
 /** Single state transition boundary shared by browser and headless setup adapters. */
@@ -66,15 +67,19 @@ public final class SetupTransitionService {
             requireWritable();
             state.ensurePhase(SetupPhase.ADMINISTRATOR_REQUIRED);
             char[] clear = command.password().copy();
+            String canonicalUsername;
             try (AdministratorCredentials credentials = new AdministratorCredentials(command.username(), clear)) {
+                canonicalUsername = credentials.canonicalUsername();
                 identities.orElseThrow(SetupWorkflowConflict::new).createFirstAdministrator(credentials);
+            } catch (InvalidAdministratorUsername invalid) {
+                throw new SetupApiException(SetupErrorCode.ADMINISTRATOR_USERNAME_INVALID, HttpStatus.BAD_REQUEST);
             } catch (BootstrapIdentityConflict conflict) {
                 throw new SetupApiException(SetupErrorCode.ADMINISTRATOR_ALREADY_CONFIGURED, HttpStatus.CONFLICT);
             } finally {
                 Arrays.fill(clear, '\0');
             }
-            state.administratorCreated(command.username());
-            return command.username();
+            state.administratorCreated(canonicalUsername);
+            return canonicalUsername;
         }
     }
 

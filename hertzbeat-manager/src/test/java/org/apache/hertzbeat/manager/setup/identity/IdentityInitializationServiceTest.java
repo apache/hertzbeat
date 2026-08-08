@@ -35,6 +35,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 class IdentityInitializationServiceTest {
     @Test
+    void administratorUsernameUsesCanonicalDatabaseBoundaryAndRejectsOverflow() {
+        try (AdministratorCredentials maximum = new AdministratorCredentials(
+                " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ",
+                "secret".toCharArray())) {
+            assertEquals("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                    maximum.canonicalUsername());
+        }
+        assertThrows(InvalidAdministratorUsername.class,
+                () -> new AdministratorCredentials("   ", "secret".toCharArray()));
+        assertThrows(InvalidAdministratorUsername.class,
+                () -> new AdministratorCredentials(
+                        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                        "secret".toCharArray()));
+    }
+
+    @Test
     void createsUniqueFirstAdministratorWithCostTwelveHash() {
         DatabaseAccountRepository repository = mock(DatabaseAccountRepository.class);
         CredentialRevocation revocation = mock(CredentialRevocation.class);

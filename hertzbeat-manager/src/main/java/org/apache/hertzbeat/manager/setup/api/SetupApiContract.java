@@ -504,7 +504,7 @@ public final class SetupApiContract {
 
     /** Initial administrator input. */
     public record AdministratorRequest(
-            @NotBlank String username,
+            String username,
             @NotBlank @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String password) {
 
         @Override

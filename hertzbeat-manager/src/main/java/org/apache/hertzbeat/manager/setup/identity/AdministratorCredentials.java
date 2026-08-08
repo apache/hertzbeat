@@ -27,8 +27,8 @@ public final class AdministratorCredentials implements AutoCloseable {
 
     public AdministratorCredentials(String username, char[] password) {
         String normalizedUsername = StringUtils.trimToNull(username);
-        if (normalizedUsername == null) {
-            throw new IllegalArgumentException("Administrator username is required");
+        if (normalizedUsername == null || normalizedUsername.length() > DatabaseAccount.USERNAME_MAX_LENGTH) {
+            throw new InvalidAdministratorUsername();
         }
         if (password == null || password.length == 0) {
             throw new IllegalArgumentException("Administrator password is required");
@@ -37,7 +37,7 @@ public final class AdministratorCredentials implements AutoCloseable {
         this.password = password.clone();
     }
 
-    String username() {
+    public String canonicalUsername() {
         return username;
     }
 

@@ -34,12 +34,13 @@ import org.apache.commons.lang3.StringUtils;
         @UniqueConstraint(name = "uk_hzb_account_username", columnNames = "username"),
         @UniqueConstraint(name = "uk_hzb_account_bootstrap", columnNames = "bootstrap_slot")})
 public class DatabaseAccount {
+    static final int USERNAME_MAX_LENGTH = 64;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 64)
+    @Column(nullable = false, length = USERNAME_MAX_LENGTH)
     private String username;
 
     @Column(name = "password_hash", nullable = false, length = 100)
