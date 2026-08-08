@@ -19,29 +19,36 @@ package org.apache.hertzbeat.manager.setup.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 class LoggingRecoveryFailureReporterTest {
 
     @Test
-    void logsFixedStageStoreContextAndSafeDiagnosticThrowable() {
+    void logsOnlyFixedStageStoreAndExceptionClass() {
         Logger logger = (Logger) LoggerFactory.getLogger(LoggingRecoveryFailureReporter.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
         try {
-            IOException failure = new IOException("password=secret jdbc:postgresql://private/path");
-            new LoggingRecoveryFailureReporter().report(
+            String password = "password=stack-secret";
+            String jdbcUrl = "jdbc:postgresql://private/database";
+            String cliSecret = "--token=cli-secret";
+            IOException failure = new IOException("message-secret");
+            failure.setStackTrace(new StackTraceElement[] {new StackTraceElement(
+                    password, jdbcUrl, cliSecret, "1.0", password, jdbcUrl, 17)});
+            failure.addSuppressed(new IOException(cliSecret));
+            failure.initCause(new IOException(jdbcUrl));
+            RecoveryFailureReporter.reportSafely(new LoggingRecoveryFailureReporter(),
                     RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
                     RecoveryFailureReporter.Store.SECRET,
                     failure);
@@ -52,18 +59,36 @@ class LoggingRecoveryFailureReporterTest {
             assertEquals("Managed configuration recovery failure stage=PROMOTE_CANDIDATE store=SECRET "
                             + "exception=java.io.IOException",
                     event.getFormattedMessage());
-            assertFalse(event.getFormattedMessage().contains("password"));
-            assertFalse(event.getFormattedMessage().contains("jdbc"));
-            assertNotNull(event.getThrowableProxy());
-            assertEquals(Throwable.class.getName(), event.getThrowableProxy().getClassName());
-            assertNull(event.getThrowableProxy().getMessage());
-            assertNull(event.getThrowableProxy().getCause());
-            assertTrue(event.getThrowableProxy().getStackTraceElementProxyArray().length > 0);
-            assertEquals(failure.getStackTrace()[0],
-                    event.getThrowableProxy().getStackTraceElementProxyArray()[0].getStackTraceElement());
+            assertNull(event.getThrowableProxy());
+            String arguments = Arrays.toString(event.getArgumentArray());
+            for (String secret : new String[] {password, jdbcUrl, cliSecret, "message-secret"}) {
+                assertFalse(event.getFormattedMessage().contains(secret));
+                assertFalse(arguments.contains(secret));
+            }
         } finally {
             logger.detachAppender(appender);
             appender.stop();
         }
+    }
+
+    @Test
+    void customAdapterReceivesOnlyTheExceptionClass() {
+        AtomicReference<RecoveryFailureReporter.Stage> capturedStage = new AtomicReference<>();
+        AtomicReference<RecoveryFailureReporter.Store> capturedStore = new AtomicReference<>();
+        AtomicReference<String> capturedExceptionClass = new AtomicReference<>();
+        RecoveryFailureReporter adapter = (stage, store, exceptionClass) -> {
+            capturedStage.set(stage);
+            capturedStore.set(store);
+            capturedExceptionClass.set(exceptionClass);
+        };
+
+        RecoveryFailureReporter.reportSafely(adapter,
+                RecoveryFailureReporter.Stage.RESTORE_ACTIVE,
+                RecoveryFailureReporter.Store.APPLICATION,
+                new IOException("raw failure must stay behind boundary"));
+
+        assertEquals(RecoveryFailureReporter.Stage.RESTORE_ACTIVE, capturedStage.get());
+        assertEquals(RecoveryFailureReporter.Store.APPLICATION, capturedStore.get());
+        assertEquals(IOException.class.getName(), capturedExceptionClass.get());
     }
 }

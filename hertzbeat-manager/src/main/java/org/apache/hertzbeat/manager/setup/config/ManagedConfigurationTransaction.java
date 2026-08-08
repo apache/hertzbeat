@@ -115,14 +115,14 @@ public final class ManagedConfigurationTransaction {
             try {
                 applicationStore.promoteCandidate(bundle.application(), generation);
             } catch (IOException failure) {
-                reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+                RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
                         RecoveryFailureReporter.Store.APPLICATION, failure);
                 return recovery.rollback(previousApplication, previousSecrets);
             }
             try {
                 secretStore.promoteCandidate(bundle.secrets(), generation);
             } catch (IOException failure) {
-                reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+                RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
                         RecoveryFailureReporter.Store.SECRET, failure);
                 return recovery.rollback(previousApplication, previousSecrets);
             }

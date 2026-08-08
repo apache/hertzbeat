@@ -15,14 +15,8 @@ final class LoggingRecoveryFailureReporter implements RecoveryFailureReporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingRecoveryFailureReporter.class);
 
     @Override
-    public void report(Stage stage, Store store, Exception failure) {
+    public void report(Stage stage, Store store, String exceptionClass) {
         LOGGER.warn("Managed configuration recovery failure stage={} store={} exception={}",
-                stage, store, failure.getClass().getName(), diagnosticCopy(failure));
-    }
-
-    private static Throwable diagnosticCopy(Throwable failure) {
-        Throwable diagnostic = new Throwable();
-        diagnostic.setStackTrace(failure.getStackTrace());
-        return diagnostic;
+                stage, store, exceptionClass);
     }
 }

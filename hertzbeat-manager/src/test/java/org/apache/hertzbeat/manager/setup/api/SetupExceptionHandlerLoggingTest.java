@@ -18,7 +18,8 @@
 package org.apache.hertzbeat.manager.setup.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -34,6 +35,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Arrays;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupResponseTransition;
 import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
@@ -70,8 +75,15 @@ class SetupExceptionHandlerLoggingTest {
     }
 
     @Test
-    void unexpectedFailureLogsFixedContextAndThrowableWhileResponseStaysSafe() throws Exception {
+    void unexpectedFailureLogsOnlyFixedContextWhileResponseStaysSafe() throws Exception {
+        String password = "password=stack-secret";
+        String jdbcUrl = "jdbc:postgresql://private/database";
+        String cliSecret = "--token=cli-secret";
         IllegalStateException failure = new IllegalStateException("exception-secret");
+        failure.setStackTrace(new StackTraceElement[] {new StackTraceElement(
+                password, jdbcUrl, cliSecret, "1.0", password, jdbcUrl, 17)});
+        failure.addSuppressed(new IllegalArgumentException(cliSecret));
+        failure.initCause(new IllegalArgumentException(jdbcUrl));
         when(workflow.status()).thenThrow(failure);
 
         mvc.perform(get(SetupApiContract.STATUS_PATH).queryParam("token", "query-secret"))
@@ -88,13 +100,27 @@ class SetupExceptionHandlerLoggingTest {
         ILoggingEvent event = errors.getFirst();
         assertEquals("Unexpected setup request failure exception=java.lang.IllegalStateException",
                 event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
-        assertEquals(Throwable.class.getName(), event.getThrowableProxy().getClassName());
-        assertNull(event.getThrowableProxy().getMessage());
-        assertNull(event.getThrowableProxy().getCause());
-        assertTrue(event.getThrowableProxy().getStackTraceElementProxyArray().length > 0);
-        assertEquals(failure.getStackTrace()[0],
-                event.getThrowableProxy().getStackTraceElementProxyArray()[0].getStackTraceElement());
+        assertNull(event.getThrowableProxy());
+        String arguments = Arrays.toString(event.getArgumentArray());
+        for (String secret : new String[] {password, jdbcUrl, cliSecret, "exception-secret"}) {
+            assertFalse(event.getFormattedMessage().contains(secret));
+            assertFalse(arguments.contains(secret));
+        }
+    }
+
+    @Test
+    void diagnosticSinkFailureDoesNotChangeTheSafeHttpResponse() {
+        Clock clock = Clock.fixed(Instant.parse("2026-08-09T00:00:00Z"), ZoneOffset.UTC);
+        SetupExceptionHandler handler = new SetupExceptionHandler(clock, ignored -> {
+            throw new RuntimeException("diagnostic failure");
+        });
+
+        var response = assertDoesNotThrow(() -> handler.unexpectedFailure(new IllegalStateException()));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("no-store", response.getHeaders().getFirst("Cache-Control"));
+        assertEquals(SetupErrorCode.INTERNAL_ERROR, response.getBody().errorCode());
+        assertEquals(clock.instant(), response.getBody().observedAt());
     }
 
     @Test

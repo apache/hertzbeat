@@ -60,14 +60,14 @@ final class ManagedConfigurationRecovery {
         try {
             applicationStore.discardCandidate();
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.DISCARD_CANDIDATE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.DISCARD_CANDIDATE,
                     RecoveryFailureReporter.Store.APPLICATION, failure);
             discarded = false;
         }
         try {
             secretStore.discardCandidate();
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.DISCARD_CANDIDATE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.DISCARD_CANDIDATE,
                     RecoveryFailureReporter.Store.SECRET, failure);
             discarded = false;
         }
@@ -109,7 +109,7 @@ final class ManagedConfigurationRecovery {
             applicationStore.promoteCandidate(candidate.value().orElseThrow(), candidate.generation().orElseThrow());
             return true;
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
                     RecoveryFailureReporter.Store.APPLICATION, failure);
             return false;
         }
@@ -120,7 +120,7 @@ final class ManagedConfigurationRecovery {
             secretStore.promoteCandidate(candidate.value().orElseThrow(), candidate.generation().orElseThrow());
             return true;
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
                     RecoveryFailureReporter.Store.SECRET, failure);
             return false;
         }
@@ -131,7 +131,7 @@ final class ManagedConfigurationRecovery {
             applicationStore.restoreActive(candidate);
             return true;
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.RESTORE_ACTIVE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.RESTORE_ACTIVE,
                     RecoveryFailureReporter.Store.APPLICATION, failure);
             return false;
         }
@@ -142,7 +142,7 @@ final class ManagedConfigurationRecovery {
             secretStore.restoreActive(candidate);
             return true;
         } catch (IOException failure) {
-            reporter.report(RecoveryFailureReporter.Stage.RESTORE_ACTIVE,
+            RecoveryFailureReporter.reportSafely(reporter, RecoveryFailureReporter.Stage.RESTORE_ACTIVE,
                     RecoveryFailureReporter.Store.SECRET, failure);
             return false;
         }

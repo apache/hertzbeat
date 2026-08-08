@@ -21,10 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,7 +72,25 @@ class ManagedConfigurationTransactionTest {
                 transaction.apply(bundle("next")));
         assertActivePair("previous");
         verify(diagnostics).report(eq(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE),
-                eq(RecoveryFailureReporter.Store.SECRET), any(IOException.class));
+                eq(RecoveryFailureReporter.Store.SECRET), eq(IOException.class.getName()));
+    }
+
+    @Test
+    void reporterFailureDoesNotReplaceRollbackOutcome() throws Exception {
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED,
+                new ManagedConfigurationTransaction(installationRoot).apply(bundle("previous")));
+        FileManagedApplicationConfigStore applicationStore = new FileManagedApplicationConfigStore(installationRoot);
+        FileManagedSecretStore failingSecrets = new FileManagedSecretStore(
+                installationRoot, new FailingOnceActivePublicationPublisher(new NioManagedFilePublisher()));
+        RecoveryFailureReporter failingReporter = (stage, store, exceptionClass) -> {
+            throw new RuntimeException("diagnostic failure");
+        };
+        ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(
+                applicationStore, failingSecrets, installationRoot, failingReporter);
+
+        assertEquals(ManagedConfigurationTransaction.Outcome.ROLLED_BACK,
+                transaction.apply(bundle("next")));
+        assertActivePair("previous");
     }
 
     @Test
@@ -215,7 +231,27 @@ class ManagedConfigurationTransactionTest {
                         applications, secretStore, installationRoot, diagnostics).recover());
 
         verify(diagnostics).report(eq(RecoveryFailureReporter.Stage.DISCARD_CANDIDATE),
-                eq(RecoveryFailureReporter.Store.APPLICATION), same(failure));
+                eq(RecoveryFailureReporter.Store.APPLICATION), eq(IOException.class.getName()));
+    }
+
+    @Test
+    void reporterFailureDoesNotReplaceRecoveryRequiredOutcome() throws Exception {
+        ManagedApplicationConfigStore applications = mock(ManagedApplicationConfigStore.class);
+        ManagedSecretStore secretStore = mock(ManagedSecretStore.class);
+        when(applications.readActive()).thenReturn(CandidateRead.valid(configuration("owned"), "generation"));
+        when(applications.readCandidate()).thenReturn(CandidateRead.missing());
+        when(applications.readLastKnownGood()).thenReturn(CandidateRead.missing());
+        when(secretStore.readActive()).thenReturn(CandidateRead.valid(secrets("owned"), "generation"));
+        when(secretStore.readCandidate()).thenReturn(CandidateRead.missing());
+        when(secretStore.readLastKnownGood()).thenReturn(CandidateRead.missing());
+        doThrow(new IOException("discard failure")).when(applications).discardCandidate();
+        RecoveryFailureReporter failingReporter = (stage, store, exceptionClass) -> {
+            throw new RuntimeException("diagnostic failure");
+        };
+
+        assertEquals(ManagedConfigurationTransaction.Outcome.RECOVERY_REQUIRED,
+                new ManagedConfigurationTransaction(
+                        applications, secretStore, installationRoot, failingReporter).recover());
     }
 
     private static void waitForFile(Path ready) throws Exception {

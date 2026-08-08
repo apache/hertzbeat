@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.setup.api;
 
 import java.time.Clock;
+import java.util.Objects;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.SetupUnlockRejected;
 import org.apache.hertzbeat.manager.setup.workflow.SetupWorkflowConflict;
@@ -36,13 +37,19 @@ public class SetupExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupExceptionHandler.class);
 
     private final Clock clock;
+    private final SetupFailureDiagnosticSink diagnosticSink;
 
     public SetupExceptionHandler() {
-        this(Clock.systemUTC());
+        this(Clock.systemUTC(), SetupExceptionHandler::logUnexpectedFailure);
     }
 
     SetupExceptionHandler(Clock clock) {
-        this.clock = clock;
+        this(clock, SetupExceptionHandler::logUnexpectedFailure);
+    }
+
+    SetupExceptionHandler(Clock clock, SetupFailureDiagnosticSink diagnosticSink) {
+        this.clock = Objects.requireNonNull(clock, "clock");
+        this.diagnosticSink = Objects.requireNonNull(diagnosticSink, "diagnosticSink");
     }
 
     @ExceptionHandler(SetupApiException.class)
@@ -71,15 +78,20 @@ public class SetupExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<SetupErrorResponse> unexpectedFailure(Exception failure) {
-        LOGGER.error("Unexpected setup request failure exception={}",
-                failure.getClass().getName(), diagnosticCopy(failure));
+        reportSafely(failure.getClass().getName());
         return response(HttpStatus.INTERNAL_SERVER_ERROR, SetupErrorCode.INTERNAL_ERROR);
     }
 
-    private static Throwable diagnosticCopy(Throwable failure) {
-        Throwable diagnostic = new Throwable();
-        diagnostic.setStackTrace(failure.getStackTrace());
-        return diagnostic;
+    private static void logUnexpectedFailure(String exceptionClass) {
+        LOGGER.error("Unexpected setup request failure exception={}", exceptionClass);
+    }
+
+    private void reportSafely(String exceptionClass) {
+        try {
+            diagnosticSink.report(exceptionClass);
+        } catch (RuntimeException ignored) {
+            // Diagnostics must never replace the stable HTTP failure response.
+        }
     }
 
     private ResponseEntity<SetupErrorResponse> response(HttpStatus status, SetupErrorCode code) {
