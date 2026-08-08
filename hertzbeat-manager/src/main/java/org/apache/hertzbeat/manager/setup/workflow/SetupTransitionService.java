@@ -212,7 +212,7 @@ public final class SetupTransitionService {
         @Override
         public ConfigurationResponse configure(SetupConfigurationCoordinator coordinator,
                                                ManagedConfigCapability capability) {
-            return coordinator.configure(request, SetupConfigurationMapper.map(request), capability);
+            return coordinator.configure(request, capability);
         }
     }
 

@@ -57,7 +57,6 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationRespons
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
-import org.apache.hertzbeat.manager.setup.config.ManagedConfigurationBundle;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
 import org.junit.jupiter.api.Test;
@@ -230,7 +229,7 @@ class DefaultSetupWorkflowTest {
                     .isInstanceOf(SetupWorkflowConflict.class);
         }
         verify(configuration, never()).configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class),
-                any(ManagedConfigurationBundle.class), eq(capability));
+                eq(capability));
     }
 
     private static DefaultSetupWorkflow workflow(

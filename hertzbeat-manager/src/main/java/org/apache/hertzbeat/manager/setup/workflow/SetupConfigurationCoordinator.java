@@ -42,50 +42,37 @@ public final class SetupConfigurationCoordinator {
     }
 
     public ConfigurationResponse configure(ConfigurationRequest request, ManagedConfigCapability capability) {
-        if (!configurationPhase(request.expectedPhase()) || request.applyMode() != capability.applyMode()) {
+        try (ManagedConfigurationBundle bundle = SetupConfigurationMapper.map(request)) {
+            return configureMapped(request.expectedPhase(), request.applyMode(), bundle, capability);
+        }
+    }
+
+    public ConfigurationResponse configure(HeadlessSetupWorkflow.RequiredConfiguration request,
+                                           ManagedConfigCapability capability) {
+        // Mapping copies caller-owned secrets; this scope owns and clears only the copy.
+        try (ManagedConfigurationBundle bundle = SetupConfigurationMapper.map(request)) {
+            return configureMapped(request.expectedPhase(), request.applyMode(), bundle, capability);
+        }
+    }
+
+    private ConfigurationResponse configureMapped(
+            SetupPhase expectedPhase, ApplyMode applyMode,
+            ManagedConfigurationBundle bundle, ManagedConfigCapability capability) {
+        if (!configurationPhase(expectedPhase) || applyMode != capability.applyMode()) {
             throw new SetupWorkflowConflict();
         }
-        String operationId = beginOperation(request.expectedPhase());
-        if (request.applyMode() == ApplyMode.EXTERNAL_APPLY) {
+        String operationId = beginOperation(expectedPhase);
+        if (applyMode == ApplyMode.EXTERNAL_APPLY) {
             operations.finish(operationId, SetupOperationState.AWAITING_EXTERNAL_APPLY,
                     SetupPhase.EXTERNAL_APPLY_REQUIRED, null, true);
             return response(operationId);
         }
         try {
-            return applyManaged(operationId, request);
+            return applyManaged(operationId, bundle);
         } catch (IOException failure) {
             operations.finish(operationId, SetupOperationState.FAILED,
                     SetupPhase.CONFIGURATION_REQUIRED, SetupErrorCode.CONFIG_WRITE_FAILED, false);
             throw new SetupApiException(SetupErrorCode.CONFIG_WRITE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public ConfigurationResponse configure(HeadlessSetupWorkflow.RequiredConfiguration request,
-                                           ManagedConfigurationBundle bundle,
-                                           ManagedConfigCapability capability) {
-        try (bundle) {
-            if (!configurationPhase(request.expectedPhase()) || request.applyMode() != capability.applyMode()) {
-                throw new SetupWorkflowConflict();
-            }
-            String operationId = beginOperation(request.expectedPhase());
-            if (request.applyMode() == ApplyMode.EXTERNAL_APPLY) {
-                operations.finish(operationId, SetupOperationState.AWAITING_EXTERNAL_APPLY,
-                        SetupPhase.EXTERNAL_APPLY_REQUIRED, null, true);
-                return response(operationId);
-            }
-            try {
-                return applyManaged(operationId, bundle);
-            } catch (IOException failure) {
-                operations.finish(operationId, SetupOperationState.FAILED,
-                        SetupPhase.CONFIGURATION_REQUIRED, SetupErrorCode.CONFIG_WRITE_FAILED, false);
-                throw new SetupApiException(SetupErrorCode.CONFIG_WRITE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-    }
-
-    private ConfigurationResponse applyManaged(String operationId, ConfigurationRequest request) throws IOException {
-        try (ManagedConfigurationBundle bundle = SetupConfigurationMapper.map(request)) {
-            return applyManaged(operationId, bundle);
         }
     }
 

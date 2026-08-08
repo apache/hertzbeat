@@ -68,7 +68,7 @@ class SetupTransitionServiceTest {
         SetupConfigurationCoordinator configuration = mock(SetupConfigurationCoordinator.class);
         when(configuration.configure(any(ConfigurationRequest.class), any()))
                 .thenReturn(configurationResponse("browser"));
-        when(configuration.configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any(), any()))
+        when(configuration.configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any()))
                 .thenReturn(configurationResponse("headless"));
         SetupTransitionService transitions = transitions(state, validator, configuration, capability,
                 Optional.empty(), Optional.empty());
@@ -171,7 +171,7 @@ class SetupTransitionServiceTest {
         ConfigurationResponse response = new ConfigurationResponse("replacement",
                 SetupOperationState.AWAITING_EXTERNAL_APPLY, SetupPhase.EXTERNAL_APPLY_REQUIRED, 0, true);
         when(configuration.configure(any(ConfigurationRequest.class), any())).thenReturn(response);
-        when(configuration.configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any(), any()))
+        when(configuration.configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any()))
                 .thenReturn(response);
 
         SetupRuntimeState browserState = state(capability, SetupPhase.EXTERNAL_APPLY_REQUIRED, false, null);
@@ -191,7 +191,7 @@ class SetupTransitionServiceTest {
         assertThat(browserState.phase()).isEqualTo(SetupPhase.EXTERNAL_APPLY_REQUIRED);
         assertThat(headlessState.phase()).isEqualTo(SetupPhase.EXTERNAL_APPLY_REQUIRED);
         verify(configuration).configure(any(ConfigurationRequest.class), any());
-        verify(configuration).configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any(), any());
+        verify(configuration).configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class), any());
     }
 
     @Test
