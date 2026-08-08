@@ -19,7 +19,6 @@ package org.apache.hertzbeat.startup.runtime;
 
 import java.util.Objects;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 
 /** Applies a local/container break-glass override before delegating to the installation probe. */
 public final class StartupModePropertyProbe implements StartupDecisionProbe {
@@ -30,7 +29,7 @@ public final class StartupModePropertyProbe implements StartupDecisionProbe {
     private final StartupDecisionProbe fallback;
 
     public StartupModePropertyProbe() {
-        this(StartupDecision::normal);
+        this(ignored -> StartupDecision.normal());
     }
 
     public StartupModePropertyProbe(StartupDecisionProbe fallback) {
@@ -38,26 +37,17 @@ public final class StartupModePropertyProbe implements StartupDecisionProbe {
     }
 
     @Override
-    public StartupDecision probe() {
-        return decide(System.getProperty(PROPERTY_NAME), System.getenv(ENVIRONMENT_NAME));
+    public StartupDecision probe(String[] args) {
+        return decide(args, System.getProperty(PROPERTY_NAME), System.getenv(ENVIRONMENT_NAME));
     }
 
-    StartupDecision decide(String systemValue, String environmentValue) {
-        String value = selectConfiguredValue(systemValue, environmentValue);
-        return value == null ? fallback.probe() : decisionFor(value);
-    }
-
-    static String selectConfiguredValue(String systemValue, String environmentValue) {
-        return systemValue == null ? environmentValue : systemValue;
+    StartupDecision decide(String[] args, String systemValue, String environmentValue) {
+        String value = StartupArgumentProperties.resolve(args, PROPERTY_NAME, systemValue, environmentValue);
+        return value == null ? fallback.probe(args) : decisionFor(value);
     }
 
     static StartupDecision decisionFor(String value) {
         RuntimeMode mode = RuntimeMode.fromProperty(value);
-        return switch (mode) {
-            case NORMAL -> StartupDecision.normal();
-            case SETUP_ONLY -> new StartupDecision(mode, SetupPhase.CONFIGURATION_REQUIRED, null);
-            case FULL_SETUP_GATED -> new StartupDecision(mode, SetupPhase.ADMINISTRATOR_REQUIRED, null);
-            case RECOVERY -> StartupDecision.recovery();
-        };
+        return new StartupDecision(mode);
     }
 }

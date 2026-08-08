@@ -22,21 +22,65 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class HertzBeatStartupCoordinatorTest {
+
+    @TempDir
+    private Path installationRoot;
+
+    @Test
+    void commandLineDatasourceParticipatesInThePreSpringDecision() {
+        String previous = System.getProperty(SetupInstallationPaths.ROOT_PROPERTY);
+        System.setProperty(SetupInstallationPaths.ROOT_PROPERTY, installationRoot.toString());
+        try {
+            RecordingLauncher launcher = new RecordingLauncher();
+            HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                    new StartupModePropertyProbe(new LocalInstallationStartupProbe()), launcher);
+
+            coordinator.start(new String[] {
+                    "--" + SetupInstallationPaths.ROOT_PROPERTY + "=" + installationRoot,
+                    "--spring.datasource.url=jdbc:postgresql://database.example.test/hertzbeat"
+            });
+
+            assertEquals(RuntimeMode.FULL_SETUP_GATED, coordinator.mode());
+        } finally {
+            restoreSystemProperty(SetupInstallationPaths.ROOT_PROPERTY, previous);
+        }
+    }
+
+    @Test
+    void commandLineStartupModeTakesPrecedenceOverSystemProperty() {
+        String previous = System.getProperty(StartupModePropertyProbe.PROPERTY_NAME);
+        System.setProperty(StartupModePropertyProbe.PROPERTY_NAME, RuntimeMode.FULL_SETUP_GATED.value());
+        try {
+            RecordingLauncher launcher = new RecordingLauncher();
+            HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                    new StartupModePropertyProbe(ignored -> StartupDecision.normal()), launcher);
+
+            coordinator.start(new String[] {
+                    "--" + StartupModePropertyProbe.PROPERTY_NAME + "=" + RuntimeMode.SETUP_ONLY.value(),
+                    "--" + RuntimeMode.PROPERTY_NAME + "=" + RuntimeMode.NORMAL.value()
+            });
+
+            assertEquals(RuntimeMode.SETUP_ONLY, coordinator.mode());
+        } finally {
+            restoreSystemProperty(StartupModePropertyProbe.PROPERTY_NAME, previous);
+        }
+    }
 
     @Test
     void startsFromProbeAndClosesGatedContextBeforeOpeningNormalExactlyOnce() {
         RecordingLauncher launcher = new RecordingLauncher();
-        StartupDecision gated = new StartupDecision(RuntimeMode.FULL_SETUP_GATED,
-                SetupPhase.ADMINISTRATOR_REQUIRED, null);
-        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(() -> gated, launcher);
+        StartupDecision gated = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(ignored -> gated, launcher);
 
         RunningApplicationContext first = coordinator.start(new String[]{"--server.port=0"});
         SetupRuntimeTransition transition = launcher.transitions.getFirst();
@@ -57,11 +101,11 @@ class HertzBeatStartupCoordinatorTest {
         RecordingLauncher launcher = new RecordingLauncher();
         launcher.failMode = RuntimeMode.FULL_SETUP_GATED;
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
-                () -> new StartupDecision(RuntimeMode.SETUP_ONLY, SetupPhase.CONFIGURATION_REQUIRED, null), launcher);
+                ignored -> new StartupDecision(RuntimeMode.SETUP_ONLY), launcher);
         coordinator.start(new String[0]);
 
-        RunningApplicationContext recovery = coordinator.transition(new StartupDecision(
-                RuntimeMode.FULL_SETUP_GATED, SetupPhase.ADMINISTRATOR_REQUIRED, null));
+        RunningApplicationContext recovery = coordinator.transition(
+                new StartupDecision(RuntimeMode.FULL_SETUP_GATED));
 
         assertEquals(List.of("open:setup_only", "close:setup_only", "open:full_setup_gated", "open:recovery"),
                 launcher.events);
@@ -73,7 +117,7 @@ class HertzBeatStartupCoordinatorTest {
     void probeFailureCannotBeMisclassifiedAsNewInstallation() {
         RecordingLauncher launcher = new RecordingLauncher();
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
-                () -> {
+                ignored -> {
                     throw new IllegalStateException("database unreachable");
                 }, launcher);
 
@@ -88,7 +132,8 @@ class HertzBeatStartupCoordinatorTest {
         RecordingLauncher launcher = new RecordingLauncher();
         launcher.failMode = RuntimeMode.NORMAL;
         launcher.failRecovery = true;
-        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(StartupDecision::normal, launcher);
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                ignored -> StartupDecision.normal(), launcher);
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> coordinator.start(new String[0]));
@@ -101,7 +146,8 @@ class HertzBeatStartupCoordinatorTest {
     @Test
     void nullContextIsAnExplicitLaunchFailure() {
         StartupContextLauncher launcher = (decision, args, transition) -> null;
-        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(StartupDecision::normal, launcher);
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                ignored -> StartupDecision.normal(), launcher);
 
         NullPointerException failure = assertThrows(NullPointerException.class,
                 () -> coordinator.start(new String[0]));
@@ -109,6 +155,14 @@ class HertzBeatStartupCoordinatorTest {
         assertEquals("startup context launcher returned null for recovery", failure.getMessage());
         assertEquals(1, failure.getSuppressed().length);
         assertEquals("startup context launcher returned null for normal", failure.getSuppressed()[0].getMessage());
+    }
+
+    private static void restoreSystemProperty(String name, String value) {
+        if (value == null) {
+            System.clearProperty(name);
+        } else {
+            System.setProperty(name, value);
+        }
     }
 
     private static final class RecordingLauncher implements StartupContextLauncher {

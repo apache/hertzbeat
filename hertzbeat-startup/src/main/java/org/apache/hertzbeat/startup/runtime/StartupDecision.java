@@ -19,23 +19,19 @@ package org.apache.hertzbeat.startup.runtime;
 
 import java.util.Objects;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 
 /** Safe startup classification produced before an application context is opened. */
-public record StartupDecision(RuntimeMode mode, SetupPhase phase, SetupErrorCode errorCode) {
+public record StartupDecision(RuntimeMode mode) {
 
     public StartupDecision {
         Objects.requireNonNull(mode, "mode");
-        Objects.requireNonNull(phase, "phase");
     }
 
     public static StartupDecision normal() {
-        return new StartupDecision(RuntimeMode.NORMAL, SetupPhase.COMPLETE, null);
+        return new StartupDecision(RuntimeMode.NORMAL);
     }
 
     public static StartupDecision recovery() {
-        return new StartupDecision(RuntimeMode.RECOVERY, SetupPhase.RECOVERY_REQUIRED,
-                SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        return new StartupDecision(RuntimeMode.RECOVERY);
     }
 }

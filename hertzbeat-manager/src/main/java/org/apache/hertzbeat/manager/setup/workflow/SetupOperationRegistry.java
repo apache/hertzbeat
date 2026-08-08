@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -32,11 +33,21 @@ public final class SetupOperationRegistry {
     private static final int MAX_HISTORY = 64;
     private static final long POLL_AFTER_MILLIS = 1_000;
     private final Clock clock;
+    private final SetupOperationCheckpointStore checkpointStore;
+    private final SetupPhase recoveredPhase;
     private final Map<String, OperationResponse> operations = new LinkedHashMap<>();
     private String activeOperationId;
+    private String restoredCheckpointOperationId;
 
     public SetupOperationRegistry(Clock clock) {
+        this(clock, null, null);
+    }
+
+    public SetupOperationRegistry(Clock clock, Path installationRoot, SetupPhase recoveredPhase) {
         this.clock = clock;
+        checkpointStore = installationRoot == null ? null : new SetupOperationCheckpointStore(installationRoot);
+        this.recoveredPhase = recoveredPhase;
+        restoreCheckpoint();
     }
 
     public synchronized String begin(SetupPhase phase) {
@@ -69,6 +80,9 @@ public final class SetupOperationRegistry {
                 current.startedAt(), completedAt, errorCode,
                 terminal(state) ? 0 : POLL_AFTER_MILLIS, exportAvailable);
         operations.put(id, updated);
+        if (state == SetupOperationState.AWAITING_RESTART) {
+            saveCheckpoint(updated);
+        }
         if (terminal(state)) {
             activeOperationId = null;
         }
@@ -76,7 +90,13 @@ public final class SetupOperationRegistry {
     }
 
     public synchronized OperationResponse get(String id) {
-        return operations.get(id);
+        OperationResponse operation = operations.get(id);
+        if (operation != null && id.equals(restoredCheckpointOperationId) && terminal(operation.state())) {
+            // A terminal bridge is consumed only after the rebuilt context exposes it to the caller.
+            checkpointStore.delete();
+            restoredCheckpointOperationId = null;
+        }
+        return operation;
     }
 
     private OperationResponse require(String id) {
@@ -100,5 +120,46 @@ public final class SetupOperationRegistry {
     private static boolean terminal(SetupOperationState state) {
         return state == SetupOperationState.SUCCEEDED || state == SetupOperationState.FAILED
                 || state == SetupOperationState.ROLLED_BACK;
+    }
+
+    private void restoreCheckpoint() {
+        if (checkpointStore == null || recoveredPhase == null) {
+            return;
+        }
+        checkpointStore.load().ifPresent(checkpoint -> {
+            OperationResponse restored = recoveredOperation(checkpoint.operationId(), checkpoint.createdAt());
+            operations.put(checkpoint.operationId(), restored);
+            restoredCheckpointOperationId = checkpoint.operationId();
+            if (!terminal(restored.state())) {
+                activeOperationId = checkpoint.operationId();
+            }
+        });
+    }
+
+    private OperationResponse recoveredOperation(String id, Instant createdAt) {
+        Instant now = clock.instant();
+        if (recoveredPhase == SetupPhase.RECOVERY_REQUIRED) {
+            return new OperationResponse(id, SetupOperationState.FAILED, recoveredPhase,
+                    createdAt, createdAt, now, SetupErrorCode.CONFIG_RECOVERY_REQUIRED, 0, false);
+        }
+        if (recoveredPhase == SetupPhase.ADMINISTRATOR_REQUIRED
+                || recoveredPhase == SetupPhase.OPTIONAL_CONFIGURATION
+                || recoveredPhase == SetupPhase.COMPLETE) {
+            return new OperationResponse(id, SetupOperationState.SUCCEEDED, recoveredPhase,
+                    createdAt, createdAt, now, null, 0, false);
+        }
+        if (recoveredPhase == SetupPhase.APPLICATION_STARTING) {
+            return new OperationResponse(id, SetupOperationState.AWAITING_RESTART,
+                    recoveredPhase, createdAt, createdAt, null, null, POLL_AFTER_MILLIS, false);
+        }
+        // A rebuilt context asking for configuration again proves the prior apply did not converge.
+        return new OperationResponse(id, SetupOperationState.ROLLED_BACK, recoveredPhase,
+                createdAt, createdAt, now, SetupErrorCode.CONFIG_WRITE_FAILED, 0, false);
+    }
+
+    private void saveCheckpoint(OperationResponse operation) {
+        if (checkpointStore != null) {
+            checkpointStore.save(operation.operationId(), operation.createdAt());
+        }
     }
 }

@@ -73,8 +73,8 @@ public class SetupApiConfiguration {
     }
 
     @Bean
-    public SetupOperationRegistry setupOperationRegistry() {
-        return new SetupOperationRegistry(Clock.systemUTC());
+    public SetupOperationRegistry setupOperationRegistry(Environment environment, SetupRuntimeState state) {
+        return new SetupOperationRegistry(Clock.systemUTC(), SetupInstallationPaths.root(environment), state.phase());
     }
 
     @Bean

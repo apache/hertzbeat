@@ -23,7 +23,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.State;
 import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
@@ -31,43 +30,47 @@ import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerpr
 
 /** Filesystem-first startup convergence with an explicit legacy/external upgrade entry. */
 public final class LocalInstallationStartupProbe implements StartupDecisionProbe {
-    private final Path root;
-    private final boolean externalDatabaseConfigured;
+    private static final String DATASOURCE_PROPERTY = "spring.datasource.url";
+    private static final String DATASOURCE_ENVIRONMENT = "SPRING_DATASOURCE_URL";
+    private static final String ROOT_ENVIRONMENT = "HERTZBEAT_INTERNAL_INSTALLATION_ROOT";
+    private final Path fixedRoot;
+    private final Boolean fixedExternalDatabaseConfigured;
 
     public LocalInstallationStartupProbe() {
-        this(Path.of(System.getProperty(SetupInstallationPaths.ROOT_PROPERTY, ".")),
-                externalDatabaseConfigured());
+        fixedRoot = null;
+        fixedExternalDatabaseConfigured = null;
     }
 
     LocalInstallationStartupProbe(Path root, boolean externalDatabaseConfigured) {
-        this.root = root.toAbsolutePath().normalize();
-        this.externalDatabaseConfigured = externalDatabaseConfigured;
+        fixedRoot = root.toAbsolutePath().normalize();
+        fixedExternalDatabaseConfigured = externalDatabaseConfigured;
     }
 
     @Override
-    public StartupDecision probe() {
+    public StartupDecision probe(String[] args) {
+        Path root = fixedRoot == null ? installationRoot(args) : fixedRoot;
+        boolean externalDatabaseConfigured = fixedExternalDatabaseConfigured == null
+                ? externalDatabaseConfigured(args) : fixedExternalDatabaseConfigured;
         State managed = new ManagedActiveConfigurationInspector(root).inspect().state();
         if (managed == State.RECOVERY_REQUIRED) {
             return StartupDecision.recovery();
         }
-        FingerprintState fingerprint = fingerprintState();
+        FingerprintState fingerprint = fingerprintState(root);
         if (fingerprint == FingerprintState.INVALID) {
             return StartupDecision.recovery();
         }
-        boolean legacyDatabase = legacyH2Present();
+        boolean legacyDatabase = legacyH2Present(root);
         if (fingerprint == FingerprintState.PRESENT) {
             return managed == State.LOADABLE || legacyDatabase || externalDatabaseConfigured
-                    ? new StartupDecision(RuntimeMode.FULL_SETUP_GATED,
-                    SetupPhase.ADMINISTRATOR_REQUIRED, null) : StartupDecision.recovery();
+                    ? new StartupDecision(RuntimeMode.FULL_SETUP_GATED) : StartupDecision.recovery();
         }
         if (managed == State.LOADABLE || legacyDatabase || externalDatabaseConfigured) {
-            return new StartupDecision(RuntimeMode.FULL_SETUP_GATED,
-                    SetupPhase.ADMINISTRATOR_REQUIRED, null);
+            return new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         }
-        return new StartupDecision(RuntimeMode.SETUP_ONLY, SetupPhase.CONFIGURATION_REQUIRED, null);
+        return new StartupDecision(RuntimeMode.SETUP_ONLY);
     }
 
-    private FingerprintState fingerprintState() {
+    private static FingerprintState fingerprintState(Path root) {
         Path path = root.resolve("data/config/.installation-fingerprint");
         try {
             boolean present = new LocalInstallationFingerprintStore(path, new SecureRandom()).read().isPresent();
@@ -81,14 +84,20 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
         }
     }
 
-    private boolean legacyH2Present() {
+    private static boolean legacyH2Present(Path root) {
         return Files.isRegularFile(root.resolve("data/hertzbeat.mv.db"))
                 || Files.isRegularFile(root.resolve("data/hertzbeat.h2.db"));
     }
 
-    private static boolean externalDatabaseConfigured() {
-        return hasText(System.getProperty("spring.datasource.url"))
-                || hasText(System.getenv("SPRING_DATASOURCE_URL"));
+    private static Path installationRoot(String[] args) {
+        String configured = StartupArgumentProperties.resolve(args, SetupInstallationPaths.ROOT_PROPERTY,
+                System.getProperty(SetupInstallationPaths.ROOT_PROPERTY), System.getenv(ROOT_ENVIRONMENT));
+        return Path.of(configured == null ? "." : configured).toAbsolutePath().normalize();
+    }
+
+    private static boolean externalDatabaseConfigured(String[] args) {
+        return hasText(StartupArgumentProperties.resolve(args, DATASOURCE_PROPERTY,
+                System.getProperty(DATASOURCE_PROPERTY), System.getenv(DATASOURCE_ENVIRONMENT)));
     }
 
     private static boolean hasText(String value) {

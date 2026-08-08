@@ -17,9 +17,20 @@
 
 package org.apache.hertzbeat.startup.runtime;
 
-/** Replaceable read-only source for the startup decision made before opening a context. */
-@FunctionalInterface
-public interface StartupDecisionProbe {
+import org.springframework.core.env.SimpleCommandLinePropertySource;
 
-    StartupDecision probe(String[] args);
+/** Resolves explicitly allowed pre-Spring properties without exposing arbitrary application arguments. */
+final class StartupArgumentProperties {
+
+    private StartupArgumentProperties() {
+    }
+
+    static String resolve(String[] args, String propertyName, String systemValue, String environmentValue) {
+        String commandLineValue = new SimpleCommandLinePropertySource(
+                args == null ? new String[0] : args).getProperty(propertyName);
+        if (commandLineValue != null) {
+            return commandLineValue;
+        }
+        return systemValue == null ? environmentValue : systemValue;
+    }
 }

@@ -19,6 +19,8 @@ package org.apache.hertzbeat.startup.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,16 +29,21 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.time.Clock;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
+import org.apache.hertzbeat.manager.setup.workflow.SetupOperationRegistry;
 import org.apache.hertzbeat.manager.setup.workflow.SetupRuntimeState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 class StartupRuntimeBoundaryContextTest {
 
@@ -60,10 +67,40 @@ class StartupRuntimeBoundaryContextTest {
     Path installationRoot;
 
     @Test
+    void awaitingRestartOperationConvergesAcrossContextRebuild() {
+        String operationId = createAwaitingRestartOperation(installationRoot.resolve("success"));
+        try (ConfigurableApplicationContext context = operationContext(
+                installationRoot.resolve("success"), SetupPhase.ADMINISTRATOR_REQUIRED)) {
+            var operation = context.getBean(SetupOperationRegistry.class).get(operationId);
+
+            assertNotNull(operation);
+            assertEquals(SetupOperationState.SUCCEEDED, operation.state());
+            assertEquals(SetupPhase.ADMINISTRATOR_REQUIRED, operation.phase());
+            assertNotNull(operation.completedAt());
+            assertEquals(0, operation.nextPollAfterMillis());
+            assertNull(context.getBean(SetupOperationRegistry.class).get("unknown-operation"));
+        }
+    }
+
+    @Test
+    void awaitingRestartOperationBecomesFailedDuringRecovery() {
+        Path root = installationRoot.resolve("recovery");
+        String operationId = createAwaitingRestartOperation(root);
+        try (ConfigurableApplicationContext context = operationContext(root, SetupPhase.RECOVERY_REQUIRED)) {
+            var operation = context.getBean(SetupOperationRegistry.class).get(operationId);
+
+            assertNotNull(operation);
+            assertEquals(SetupOperationState.FAILED, operation.state());
+            assertEquals(SetupPhase.RECOVERY_REQUIRED, operation.phase());
+            assertEquals(SetupErrorCode.CONFIG_RECOVERY_REQUIRED, operation.errorCode());
+            assertNotNull(operation.completedAt());
+        }
+    }
+
+    @Test
     void fullGatedSurenessChainKeepsSetupReachableAndBusinessRoutesClosed() throws Exception {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
-        StartupDecision decision = new StartupDecision(
-                RuntimeMode.FULL_SETUP_GATED, SetupPhase.ADMINISTRATOR_REQUIRED, null);
+        StartupDecision decision = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         String databaseName = "m5_setup_security_" + System.nanoTime();
         try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision, new String[]{
                 "--spring.profiles.active=test",
@@ -105,8 +142,7 @@ class StartupRuntimeBoundaryContextTest {
     @Test
     void realFullApplicationStartsGatedWithoutBusinessSideEffectsOrCliBypass() {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
-        StartupDecision decision = new StartupDecision(
-                RuntimeMode.FULL_SETUP_GATED, SetupPhase.ADMINISTRATOR_REQUIRED, null);
+        StartupDecision decision = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         String databaseName = "m2_gated_" + System.nanoTime();
         try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision, new String[]{
                 "--spring.profiles.active=test",
@@ -148,8 +184,7 @@ class StartupRuntimeBoundaryContextTest {
     @Test
     void setupOnlySourceStartsWithoutBusinessAutoConfiguration() {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
-        StartupDecision decision = new StartupDecision(
-                RuntimeMode.SETUP_ONLY, SetupPhase.CONFIGURATION_REQUIRED, null);
+        StartupDecision decision = new StartupDecision(RuntimeMode.SETUP_ONLY);
         try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision,
                 new String[]{"--spring.main.web-application-type=none", "--hertzbeat.runtime.mode=normal"},
                 SETUP_RUNTIME_TRANSITION)) {
@@ -170,5 +205,23 @@ class StartupRuntimeBoundaryContextTest {
 
     private static HttpRequest.Builder request(int port, String path) {
         return HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path));
+    }
+
+    private static String createAwaitingRestartOperation(Path root) {
+        try (ConfigurableApplicationContext context = operationContext(root, SetupPhase.CONFIGURATION_REQUIRED)) {
+            SetupOperationRegistry operations = context.getBean(SetupOperationRegistry.class);
+            String operationId = operations.begin(SetupPhase.CONFIGURATION_REQUIRED);
+            operations.finish(operationId, SetupOperationState.AWAITING_RESTART,
+                    SetupPhase.APPLICATION_STARTING, null, false);
+            return operationId;
+        }
+    }
+
+    private static ConfigurableApplicationContext operationContext(Path root, SetupPhase phase) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.registerBean(SetupOperationRegistry.class,
+                () -> new SetupOperationRegistry(Clock.systemUTC(), root, phase));
+        context.refresh();
+        return context;
     }
 }

@@ -21,47 +21,45 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.junit.jupiter.api.Test;
 
 class StartupModePropertyProbeTest {
 
     @Test
     void missingOverridePreservesNormalStartup() {
-        StartupDecision decision = new StartupModePropertyProbe().decide(null, null);
+        StartupDecision decision = new StartupModePropertyProbe().decide(new String[0], null, null);
 
         assertEquals(RuntimeMode.NORMAL, decision.mode());
-        assertEquals(SetupPhase.COMPLETE, decision.phase());
     }
 
     @Test
     void systemPropertyTakesPrecedenceOverEnvironment() {
-        StartupDecision decision = new StartupModePropertyProbe().decide("full_setup_gated", "setup_only");
+        StartupDecision decision = new StartupModePropertyProbe().decide(
+                new String[0], "full_setup_gated", "setup_only");
 
         assertEquals(RuntimeMode.FULL_SETUP_GATED, decision.mode());
-        assertEquals(SetupPhase.ADMINISTRATOR_REQUIRED, decision.phase());
     }
 
     @Test
     void environmentSelectsSetupOnlyWhenSystemPropertyIsMissing() {
-        StartupDecision decision = new StartupModePropertyProbe().decide(null, "setup_only");
+        StartupDecision decision = new StartupModePropertyProbe().decide(new String[0], null, "setup_only");
 
         assertEquals(RuntimeMode.SETUP_ONLY, decision.mode());
-        assertEquals(SetupPhase.CONFIGURATION_REQUIRED, decision.phase());
     }
 
     @Test
     void invalidOverrideFailsClosedForCoordinatorRecovery() {
         StartupModePropertyProbe probe = new StartupModePropertyProbe();
 
-        assertThrows(IllegalArgumentException.class, () -> probe.decide("unsupported", null));
+        assertThrows(IllegalArgumentException.class,
+                () -> probe.decide(new String[0], "unsupported", null));
     }
 
     @Test
     void missingOverrideDelegatesToInstallationProbe() {
         StartupDecision expected = StartupDecision.recovery();
-        StartupDecisionProbe fallback = () -> expected;
+        StartupDecisionProbe fallback = ignored -> expected;
 
-        assertEquals(expected, new StartupModePropertyProbe(fallback).decide(null, null));
+        assertEquals(expected, new StartupModePropertyProbe(fallback).decide(new String[0], null, null));
     }
 }

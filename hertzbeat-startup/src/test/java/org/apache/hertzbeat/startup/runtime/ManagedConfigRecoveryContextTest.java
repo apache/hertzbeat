@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.config.GreptimeEndpoints;
 import org.apache.hertzbeat.manager.setup.config.GreptimeSettings;
 import org.apache.hertzbeat.manager.setup.config.ManagedApplicationConfig;
@@ -49,7 +48,7 @@ class ManagedConfigRecoveryContextTest {
                 temporaryDirectory.resolve(brokenPair.name().toLowerCase(java.util.Locale.ROOT)));
         brokenPair.create(installationRoot);
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
-                StartupDecision::normal, new SpringStartupContextLauncher());
+                ignored -> StartupDecision.normal(), new SpringStartupContextLauncher());
 
         coordinator.start(new String[] {
                 "--hertzbeat.internal.installation-root=" + installationRoot,
@@ -68,8 +67,7 @@ class ManagedConfigRecoveryContextTest {
         Path installationRoot = Files.createDirectories(
                 temporaryDirectory.resolve("setup-" + brokenPair.name().toLowerCase(java.util.Locale.ROOT)));
         brokenPair.create(installationRoot);
-        StartupDecision setupOnly = new StartupDecision(
-                RuntimeMode.SETUP_ONLY, SetupPhase.CONFIGURATION_REQUIRED, null);
+        StartupDecision setupOnly = new StartupDecision(RuntimeMode.SETUP_ONLY);
 
         try (ConfigurableApplicationContext context = new SpringStartupContextLauncher().launchSpringContext(
                 setupOnly,

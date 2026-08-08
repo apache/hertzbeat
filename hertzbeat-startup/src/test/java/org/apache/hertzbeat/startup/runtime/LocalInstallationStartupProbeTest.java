@@ -31,6 +31,7 @@ import org.apache.hertzbeat.manager.setup.config.ManagedConfigurationTransaction
 import org.apache.hertzbeat.manager.setup.config.ManagedSecrets;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
+import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerprintStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -41,22 +42,45 @@ class LocalInstallationStartupProbeTest {
 
     @Test
     void freshRootStartsSetupOnlyAndLegacyDatabaseStartsGated() throws Exception {
-        assertEquals(RuntimeMode.SETUP_ONLY, new LocalInstallationStartupProbe(root, false).probe().mode());
+        assertEquals(RuntimeMode.SETUP_ONLY,
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
         Files.createDirectories(root.resolve("data"));
         Files.createFile(root.resolve("data/hertzbeat.mv.db"));
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
-                new LocalInstallationStartupProbe(root, false).probe().mode());
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
     }
 
     @Test
     void localFingerprintCanNeverOpenBusinessRuntimeWithoutDatabaseComparison() throws Exception {
         new ManagedConfigurationTransaction(root).apply(bundle());
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
-                new LocalInstallationStartupProbe(root, false).probe().mode());
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
         new LocalInstallationFingerprintStore(root.resolve("data/config/.installation-fingerprint"),
                 new SecureRandom()).create();
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
-                new LocalInstallationStartupProbe(root, false).probe().mode());
+                new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
+    }
+
+    @Test
+    void commandLineInstallationRootTakesPrecedenceOverSystemRoot() throws Exception {
+        Path systemRoot = Files.createDirectories(root.resolve("system-root/data"));
+        Files.createFile(systemRoot.resolve("hertzbeat.mv.db"));
+        Path commandLineRoot = Files.createDirectories(root.resolve("command-line-root"));
+        String previous = System.getProperty(SetupInstallationPaths.ROOT_PROPERTY);
+        System.setProperty(SetupInstallationPaths.ROOT_PROPERTY, systemRoot.getParent().toString());
+        try {
+            StartupDecision decision = new LocalInstallationStartupProbe().probe(new String[] {
+                    "--" + SetupInstallationPaths.ROOT_PROPERTY + "=" + commandLineRoot
+            });
+
+            assertEquals(RuntimeMode.SETUP_ONLY, decision.mode());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(SetupInstallationPaths.ROOT_PROPERTY);
+            } else {
+                System.setProperty(SetupInstallationPaths.ROOT_PROPERTY, previous);
+            }
+        }
     }
 
     private static ManagedConfigurationBundle bundle() {

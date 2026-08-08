@@ -19,7 +19,6 @@ package org.apache.hertzbeat.startup.runtime;
 
 import java.util.Objects;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 
 /** Serializes setup-to-normal transitions and always closes the old context first. */
@@ -39,7 +38,7 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
         args = applicationArgs == null ? new String[0] : applicationArgs.clone();
         StartupDecision decision;
         try {
-            decision = Objects.requireNonNull(probe.probe(), "startup decision");
+            decision = Objects.requireNonNull(probe.probe(args.clone()), "startup decision");
         } catch (RuntimeException exception) {
             decision = StartupDecision.recovery();
         }
@@ -48,13 +47,12 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
 
     @Override
     public synchronized void configurationApplied() {
-        transition(new StartupDecision(RuntimeMode.FULL_SETUP_GATED,
-                SetupPhase.ADMINISTRATOR_REQUIRED, null));
+        transition(new StartupDecision(RuntimeMode.FULL_SETUP_GATED));
     }
 
     @Override
     public synchronized void completeSetup() {
-        transition(new StartupDecision(RuntimeMode.NORMAL, SetupPhase.COMPLETE, null));
+        transition(StartupDecision.normal());
     }
 
     public synchronized RunningApplicationContext transition(StartupDecision decision) {
