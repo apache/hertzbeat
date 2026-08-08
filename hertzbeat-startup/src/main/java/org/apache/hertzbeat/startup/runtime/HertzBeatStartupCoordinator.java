@@ -26,12 +26,19 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
 
     private final StartupDecisionProbe probe;
     private final StartupContextLauncher launcher;
+    private final StartupFailureReporter failureReporter;
     private String[] args = new String[0];
     private RunningApplicationContext currentContext;
 
     public HertzBeatStartupCoordinator(StartupDecisionProbe probe, StartupContextLauncher launcher) {
+        this(probe, launcher, new StartupFailureReporter());
+    }
+
+    HertzBeatStartupCoordinator(
+            StartupDecisionProbe probe, StartupContextLauncher launcher, StartupFailureReporter failureReporter) {
         this.probe = Objects.requireNonNull(probe, "probe");
         this.launcher = Objects.requireNonNull(launcher, "launcher");
+        this.failureReporter = Objects.requireNonNull(failureReporter, "failureReporter");
     }
 
     public synchronized RunningApplicationContext start(String[] applicationArgs) {
@@ -40,6 +47,7 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
         try {
             decision = Objects.requireNonNull(probe.probe(args.clone()), "startup decision");
         } catch (RuntimeException exception) {
+            failureReporter.report(StartupFailureReporter.Stage.STARTUP_PROBE, RuntimeMode.RECOVERY, exception);
             decision = StartupDecision.recovery();
         }
         return transition(decision);
@@ -65,12 +73,18 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
             currentContext = launch(decision);
         } catch (RuntimeException launchFailure) {
             if (decision.mode() == RuntimeMode.RECOVERY) {
+                failureReporter.report(StartupFailureReporter.Stage.RECOVERY_LAUNCH, RuntimeMode.RECOVERY, launchFailure);
                 throw launchFailure;
             }
+            failureReporter.report(StartupFailureReporter.Stage.CONTEXT_LAUNCH, decision.mode(), launchFailure);
             try {
                 currentContext = launch(StartupDecision.recovery());
             } catch (RuntimeException recoveryFailure) {
-                recoveryFailure.addSuppressed(launchFailure);
+                failureReporter.report(
+                        StartupFailureReporter.Stage.RECOVERY_LAUNCH, RuntimeMode.RECOVERY, recoveryFailure);
+                if (recoveryFailure != launchFailure) {
+                    recoveryFailure.addSuppressed(launchFailure);
+                }
                 throw recoveryFailure;
             }
         }
