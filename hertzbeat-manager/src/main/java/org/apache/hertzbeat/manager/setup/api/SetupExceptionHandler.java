@@ -21,6 +21,8 @@ import java.time.Clock;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.SetupUnlockRejected;
 import org.apache.hertzbeat.manager.setup.workflow.SetupWorkflowConflict;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /** Owns safe HTTP classification for setup failures. */
 @RestControllerAdvice(assignableTypes = SetupController.class)
 public class SetupExceptionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SetupExceptionHandler.class);
+
     private final Clock clock;
 
     public SetupExceptionHandler() {
@@ -66,8 +70,16 @@ public class SetupExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<SetupErrorResponse> unexpectedFailure(Exception ignored) {
+    public ResponseEntity<SetupErrorResponse> unexpectedFailure(Exception failure) {
+        LOGGER.error("Unexpected setup request failure exception={}",
+                failure.getClass().getName(), diagnosticCopy(failure));
         return response(HttpStatus.INTERNAL_SERVER_ERROR, SetupErrorCode.INTERNAL_ERROR);
+    }
+
+    private static Throwable diagnosticCopy(Throwable failure) {
+        Throwable diagnostic = new Throwable();
+        diagnostic.setStackTrace(failure.getStackTrace());
+        return diagnostic;
     }
 
     private ResponseEntity<SetupErrorResponse> response(HttpStatus status, SetupErrorCode code) {

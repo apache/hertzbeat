@@ -1,0 +1,112 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.manager.setup.api;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
+import org.apache.hertzbeat.manager.setup.runtime.SetupResponseTransition;
+import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
+import org.apache.hertzbeat.manager.setup.workflow.SetupExportRenderer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+class SetupExceptionHandlerLoggingTest {
+    private final SetupWorkflow workflow = mock(SetupWorkflow.class);
+    private final Logger logger = (Logger) LoggerFactory.getLogger(SetupExceptionHandler.class);
+    private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    private MockMvc mvc;
+
+    @BeforeEach
+    void setUp() {
+        appender.start();
+        logger.addAppender(appender);
+        mvc = MockMvcBuilders.standaloneSetup(new SetupController(workflow,
+                        mock(SetupHttpUnlockService.class), mock(SetupResponseTransition.class),
+                        new SetupExportRenderer()))
+                .setControllerAdvice(new SetupExceptionHandler()).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        logger.detachAppender(appender);
+        appender.stop();
+    }
+
+    @Test
+    void unexpectedFailureLogsFixedContextAndThrowableWhileResponseStaysSafe() throws Exception {
+        IllegalStateException failure = new IllegalStateException("exception-secret");
+        when(workflow.status()).thenThrow(failure);
+
+        mvc.perform(get(SetupApiContract.STATUS_PATH).queryParam("token", "query-secret"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("internal_error"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("exception-secret"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("query-secret"))));
+
+        var errors = appender.list.stream().filter(event -> event.getLevel() == Level.ERROR).toList();
+        assertEquals(1, errors.size());
+        ILoggingEvent event = errors.getFirst();
+        assertEquals("Unexpected setup request failure exception=java.lang.IllegalStateException",
+                event.getFormattedMessage());
+        assertNotNull(event.getThrowableProxy());
+        assertEquals(Throwable.class.getName(), event.getThrowableProxy().getClassName());
+        assertNull(event.getThrowableProxy().getMessage());
+        assertNull(event.getThrowableProxy().getCause());
+        assertTrue(event.getThrowableProxy().getStackTraceElementProxyArray().length > 0);
+        assertEquals(failure.getStackTrace()[0],
+                event.getThrowableProxy().getStackTraceElementProxyArray()[0].getStackTraceElement());
+    }
+
+    @Test
+    void typedAndInvalidRequestsAreNotLoggedAsUnexpected() throws Exception {
+        when(workflow.status()).thenThrow(
+                new SetupApiException(SetupErrorCode.CONFIG_READ_ONLY, HttpStatus.CONFLICT));
+
+        mvc.perform(get(SetupApiContract.STATUS_PATH)).andExpect(status().isConflict());
+        mvc.perform(post(SetupApiContract.UNLOCK_PATH)
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+
+        assertTrue(appender.list.stream().noneMatch(event -> event.getLevel() == Level.ERROR));
+    }
+}

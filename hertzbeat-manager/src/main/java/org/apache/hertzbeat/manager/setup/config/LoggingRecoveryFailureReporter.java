@@ -10,13 +10,19 @@ package org.apache.hertzbeat.manager.setup.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Production adapter that logs only the pre-sanitized recovery diagnostic event. */
+/** Production adapter that logs safe recovery diagnostics. */
 final class LoggingRecoveryFailureReporter implements RecoveryFailureReporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingRecoveryFailureReporter.class);
 
     @Override
-    public void report(Failure failure) {
-        LOGGER.warn("Managed configuration recovery failure stage={} store={} exception={} detail={}",
-                failure.stage(), failure.store(), failure.exceptionClass(), failure.safeMessage());
+    public void report(Stage stage, Store store, Exception failure) {
+        LOGGER.warn("Managed configuration recovery failure stage={} store={} exception={}",
+                stage, store, failure.getClass().getName(), diagnosticCopy(failure));
+    }
+
+    private static Throwable diagnosticCopy(Throwable failure) {
+        Throwable diagnostic = new Throwable();
+        diagnostic.setStackTrace(failure.getStackTrace());
+        return diagnostic;
     }
 }

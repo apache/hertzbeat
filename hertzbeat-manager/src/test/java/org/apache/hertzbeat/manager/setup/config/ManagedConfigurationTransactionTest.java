@@ -21,7 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -31,8 +35,6 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
@@ -64,17 +66,15 @@ class ManagedConfigurationTransactionTest {
         FileManagedApplicationConfigStore applicationStore = new FileManagedApplicationConfigStore(installationRoot);
         FileManagedSecretStore failingSecrets = new FileManagedSecretStore(
                 installationRoot, new FailingOnceActivePublicationPublisher(new NioManagedFilePublisher()));
-        List<RecoveryFailureReporter.Failure> diagnostics = new ArrayList<>();
+        RecoveryFailureReporter diagnostics = mock(RecoveryFailureReporter.class);
         ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(
-                applicationStore, failingSecrets, installationRoot, diagnostics::add);
+                applicationStore, failingSecrets, installationRoot, diagnostics);
 
         assertEquals(ManagedConfigurationTransaction.Outcome.ROLLED_BACK,
                 transaction.apply(bundle("next")));
         assertActivePair("previous");
-        assertThat(diagnostics).containsExactly(new RecoveryFailureReporter.Failure(
-                RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
-                RecoveryFailureReporter.Store.SECRET, IOException.class.getName(),
-                RecoveryFailureReporter.SAFE_MESSAGE));
+        verify(diagnostics).report(eq(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE),
+                eq(RecoveryFailureReporter.Store.SECRET), any(IOException.class));
     }
 
     @Test
@@ -206,18 +206,16 @@ class ManagedConfigurationTransactionTest {
         when(secretStore.readActive()).thenReturn(CandidateRead.valid(secrets("owned"), "generation"));
         when(secretStore.readCandidate()).thenReturn(CandidateRead.missing());
         when(secretStore.readLastKnownGood()).thenReturn(CandidateRead.missing());
-        doThrow(new IOException("must-not-be-reported")).when(applications).discardCandidate();
-        List<RecoveryFailureReporter.Failure> diagnostics = new ArrayList<>();
+        IOException failure = new IOException("must-not-be-reported");
+        doThrow(failure).when(applications).discardCandidate();
+        RecoveryFailureReporter diagnostics = mock(RecoveryFailureReporter.class);
 
         assertEquals(ManagedConfigurationTransaction.Outcome.RECOVERY_REQUIRED,
                 new ManagedConfigurationTransaction(
-                        applications, secretStore, installationRoot, diagnostics::add).recover());
+                        applications, secretStore, installationRoot, diagnostics).recover());
 
-        assertThat(diagnostics).containsExactly(new RecoveryFailureReporter.Failure(
-                RecoveryFailureReporter.Stage.DISCARD_CANDIDATE,
-                RecoveryFailureReporter.Store.APPLICATION, IOException.class.getName(),
-                RecoveryFailureReporter.SAFE_MESSAGE));
-        assertThat(diagnostics.getFirst().toString()).doesNotContain("must-not-be-reported");
+        verify(diagnostics).report(eq(RecoveryFailureReporter.Stage.DISCARD_CANDIDATE),
+                eq(RecoveryFailureReporter.Store.APPLICATION), same(failure));
     }
 
     private static void waitForFile(Path ready) throws Exception {
