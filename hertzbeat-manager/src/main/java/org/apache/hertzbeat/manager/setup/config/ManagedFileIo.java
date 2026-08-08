@@ -28,6 +28,7 @@ final class ManagedFileIo {
 
     interface Publisher {
 
+        /** Consumes synchronously and must not modify, retain, or asynchronously use the caller buffer. */
         void publish(Path target, byte[] content, boolean ownerOnly) throws IOException;
 
         void remove(Path target) throws IOException;
@@ -36,6 +37,7 @@ final class ManagedFileIo {
     @FunctionalInterface
     interface Reader {
 
+        /** Returns a caller-owned buffer to clear after its final synchronous use. */
         byte[] read(Path path) throws IOException;
     }
 

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 
 final class FileManagedSnapshotStore<T> {
@@ -69,31 +70,35 @@ final class FileManagedSnapshotStore<T> {
 
     void stageCandidate(T value, String generation) throws IOException {
         ensureSafePaths();
-        publisher.publish(candidate, codec.encode(value, generation), ownerOnly);
+        publishEncoded(candidate, value, generation);
     }
 
     void promoteCandidate(T expected, String generation) throws IOException {
         ensureSafePaths();
+        byte[] candidateDocument = null;
         ManagedDocumentCodec.Decoded<T> decoded = null;
         CandidateRead<T> activeRead = null;
         try {
-            byte[] candidateDocument = reader.read(candidate);
+            candidateDocument = reader.read(candidate);
             decoded = codec.decode(candidateDocument);
             if (!expected.equals(decoded.value()) || !generation.equals(decoded.generation())) {
                 throw new IOException("Managed configuration candidate does not match the transaction");
             }
             activeRead = readActive();
             if (activeRead.state() == CandidateState.VALID) {
-                publisher.publish(lastKnownGood, codec.encode(
-                        activeRead.value().orElseThrow(), activeRead.generation().orElseThrow()), ownerOnly);
+                publishEncoded(lastKnownGood,
+                        activeRead.value().orElseThrow(), activeRead.generation().orElseThrow());
             } else if (activeRead.state() != CandidateState.MISSING) {
                 throw new IOException("Active managed configuration requires recovery");
             }
             publisher.publish(active, candidateDocument, ownerOnly);
+            clear(candidateDocument);
+            candidateDocument = null;
             publisher.remove(candidate);
         } catch (ManagedDocumentCodec.DocumentException failure) {
             throw new IOException("A valid managed configuration candidate is required");
         } finally {
+            clear(candidateDocument);
             close(decoded == null ? null : decoded.value());
             if (activeRead != null) {
                 activeRead.value().ifPresent(FileManagedSnapshotStore::close);
@@ -105,8 +110,12 @@ final class FileManagedSnapshotStore<T> {
         ensureSafePaths();
         if (previous.isPresent()) {
             byte[] document = codec.encode(previous.orElseThrow(), generation.orElseThrow());
-            publisher.publish(active, document, ownerOnly);
-            publisher.publish(lastKnownGood, document, ownerOnly);
+            try {
+                publisher.publish(active, document, ownerOnly);
+                publisher.publish(lastKnownGood, document, ownerOnly);
+            } finally {
+                clear(document);
+            }
         } else {
             publisher.remove(active);
             publisher.remove(lastKnownGood);
@@ -122,8 +131,10 @@ final class FileManagedSnapshotStore<T> {
         if (isUnsafePath(path)) {
             return CandidateRead.unreadable();
         }
+        byte[] document = null;
         try {
-            ManagedDocumentCodec.Decoded<T> decoded = codec.decode(reader.read(path));
+            document = reader.read(path);
+            ManagedDocumentCodec.Decoded<T> decoded = codec.decode(document);
             return CandidateRead.valid(decoded.value(), decoded.generation());
         } catch (ManagedDocumentCodec.DocumentException exception) {
             return exception.state() == CandidateState.INVALID ? CandidateRead.invalid() : CandidateRead.corrupt();
@@ -131,6 +142,17 @@ final class FileManagedSnapshotStore<T> {
             return CandidateRead.missing();
         } catch (IOException exception) {
             return CandidateRead.unreadable();
+        } finally {
+            clear(document);
+        }
+    }
+
+    private void publishEncoded(Path target, T value, String generation) throws IOException {
+        byte[] document = codec.encode(value, generation);
+        try {
+            publisher.publish(target, document, ownerOnly);
+        } finally {
+            clear(document);
         }
     }
 
@@ -156,6 +178,12 @@ final class FileManagedSnapshotStore<T> {
             } catch (Exception ignored) {
                 // Secret cleanup is best-effort and must not mask the persistence outcome.
             }
+        }
+    }
+
+    private static void clear(byte[] content) {
+        if (content != null) {
+            Arrays.fill(content, (byte) 0);
         }
     }
 }

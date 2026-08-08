@@ -27,8 +27,10 @@ import java.util.regex.Pattern;
 
 interface ManagedDocumentCodec<T> {
 
+    /** Returns a caller-owned document buffer that the caller must clear after synchronous use. */
     byte[] encode(T value, String generation);
 
+    /** Decodes synchronously and must not modify, retain, or asynchronously use the input buffer. */
     Decoded<T> decode(byte[] content) throws DocumentException;
 
     record Decoded<T>(T value, String generation) {
