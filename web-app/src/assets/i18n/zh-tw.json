@@ -2895,5 +2895,88 @@
     "notConfigured": "公開狀態頁尚未設定。",
     "invalid": "公開狀態回應無效，無法顯示。",
     "permission": "公開狀態服務拒絕了此請求。"
+  },
+  "setup": {
+    "title": "設定 HertzBeat",
+    "statusUnavailable": "無法取得設定狀態",
+    "statusRefreshUnavailable": "繼續顯示上次已驗證的設定狀態。本次重新整理暫時失敗，請在伺服器可連線時重試。",
+    "error": {
+      "invalidRequest": "設定請求無效。請檢查輸入值後重試。",
+      "internalError": "設定服務發生內部錯誤。目前不會假定操作成功，請重試。"
+    },
+    "access": {
+      "unlockTitle": "解鎖遠端設定",
+      "unlockDescription": "輸入伺服器指示的安全檔案中的一次性代碼。伺服器將透過暫時 Cookie 授予存取權限。",
+      "codeLabel": "一次性代碼",
+      "unlockAction": "解鎖設定",
+      "unlockFailed": "代碼未被接受。請取得新代碼或重試。",
+      "unlockUnavailable": "設定服務無法使用。請重試。",
+      "unlockContract": "無法驗證設定回應。請重試。",
+      "unlockError": "無法解鎖設定。請重試。",
+      "readyTitle": "已確認設定存取權限",
+      "readyDescription": "伺服器已準備好進行下一個設定步驟。"
+    },
+    "steps": {
+      "administrator": { "title": "管理員設定", "pending": "資料服務已就緒。下一步是設定管理員帳戶。" },
+      "optional": { "title": "選填設定", "pending": "管理員設定已完成。下一步是選填伺服器設定。" }
+    },
+    "configuration": {
+      "title": "連接資料服務",
+      "description": "分別設定管理資料庫與遙測儲存。套用前，伺服器會檢查每個連線。",
+      "management": {
+        "title": "HertzBeat 管理資料庫",
+        "description": "儲存 HertzBeat 使用者、監控、警報及其他管理記錄。",
+        "kind": "資料庫類型",
+        "kindPlaceholder": "選擇資料庫類型",
+        "h2Warning": "H2 僅供本機評估。持久部署請使用 MySQL 或 PostgreSQL。",
+        "jdbcUrl": "JDBC URL",
+        "connectionFailed": "管理資料庫連線失敗",
+        "kindUnsupported": "不支援此管理資料庫類型",
+        "schemaMismatch": "管理資料庫架構不相容",
+        "insufficientPrivileges": "管理資料庫使用者權限不足",
+        "validationFailed": "無法驗證管理資料庫。請檢查欄位後重試。"
+      },
+      "telemetry": {
+        "title": "GreptimeDB 遙測儲存",
+        "description": "儲存 HertzBeat 收集的指標、日誌和追蹤。",
+        "grpcEndpoints": "gRPC 端點",
+        "httpEndpoint": "HTTP 端點",
+        "database": "資料庫",
+        "credentialsHint": "使用者名稱和密碼為選填，但必須同時提供。",
+        "connectionFailed": "遙測儲存連線失敗",
+        "validationFailed": "無法驗證遙測儲存。請檢查欄位後重試。"
+      },
+      "username": "使用者名稱",
+      "password": "密碼",
+      "validate": "驗證連線",
+      "validationSucceeded": "連線驗證成功",
+      "apply": "套用設定",
+      "applyManagedHint": "HertzBeat 將寫入託管設定。每次請求後都會清除密碼。",
+      "applyExternalHint": "HertzBeat 將準備外部設定操作。輸入的密鑰只會保留在目前瀏覽器中，直到下載匯出檔案或離開此頁面。",
+      "submitFailed": "設定請求失敗。請檢查欄位後重試。",
+      "operationFailed": "設定操作失敗或已回復。繼續前需要復原伺服器。",
+      "externalApplyRequired": "請在 HertzBeat 外部套用產生的設定，然後等待伺服器狀態收斂。",
+      "externalResumeRequired": "目前瀏覽器已沒有原始設定或密鑰。請重新輸入所有連線欄位並驗證兩個服務，以產生新的匯出檔案。",
+      "applicationStarting": "HertzBeat 正在使用新設定啟動。本頁將繼續檢查伺服器操作。",
+      "recoveryRequired": "需要復原設定。已保留目前伺服器狀態，請遵循伺服器復原指引。",
+      "migrationInProgress": "管理資料庫正在遷移。請勿中斷伺服器。",
+      "pollUnavailable": "暫時無法取得操作狀態。HertzBeat 不會假定設定已成功。",
+      "pollContract": "無法驗證操作狀態回應。HertzBeat 不會假定設定已成功。",
+      "pollError": "無法檢查設定操作。請確認伺服器可連線後重試。",
+      "configReadOnly": "託管設定為唯讀。請使用外部設定流程。",
+      "configWriteFailed": "HertzBeat 無法寫入託管設定。目前設定已保留。",
+      "configRecoveryRequired": "再次嘗試前，伺服器需要從設定寫入中復原。",
+      "operationConflict": "另一個設定操作正在進行。請等待其完成後重試。",
+      "export": {
+        "title": "匯出外部設定",
+        "description": "下載一種由伺服器產生的格式，並在 HertzBeat 外部套用。下載內容可能包含密鑰。",
+        "yaml": "下載 YAML",
+        "env": "下載 ENV",
+        "kubernetesSecret": "下載 Kubernetes Secret",
+        "unavailable": "匯出服務無法使用。請重試。",
+        "contract": "無法驗證匯出附件，因此未下載。",
+        "failed": "無法匯出外部設定。請重試。"
+      }
+    }
   }
 }

@@ -1,0 +1,39 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 40px 24px 72px;
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-canvas);
+}
+
+.rail {
+  width: min(720px, 100%);
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 28px;
+}
+
+.brand > :global(.ant-typography) {
+  margin: 0;
+  font-size: 24px;
+}
+
+.content {
+  padding-top: 28px;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+@media (max-width: 560px) {
+  .brand {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

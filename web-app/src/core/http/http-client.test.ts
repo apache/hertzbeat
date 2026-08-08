@@ -130,6 +130,15 @@ describe('apiFetch', () => {
 
     await expect(request).rejects.toMatchObject({ name: 'AbortError' });
   });
+
+  it('preserves explicit include credentials for cookie-authorized setup requests', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiFetch('/api/setup/status', { credentials: 'include' });
+
+    expect(fetchMock.mock.calls[0]?.[1]?.credentials).toBe('include');
+  });
 });
 
 function pendingFetchUntilAbort() {

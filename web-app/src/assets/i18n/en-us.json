@@ -2910,5 +2910,94 @@
     "notConfigured": "The public status page has not been configured yet.",
     "invalid": "The public status response is invalid and cannot be displayed.",
     "permission": "The public status service refused this request."
+  },
+  "setup": {
+    "title": "Set up HertzBeat",
+    "statusUnavailable": "Setup status unavailable",
+    "statusRefreshUnavailable": "The last verified setup status remains visible. Refresh failed temporarily; retry when the server is reachable.",
+    "error": {
+      "invalidRequest": "The setup request is invalid. Review the entered values and try again.",
+      "internalError": "The setup service encountered an internal error. No success is assumed; try again."
+    },
+    "access": {
+      "unlockTitle": "Unlock remote setup",
+      "unlockDescription": "Enter the one-time code from the secure file indicated by the server. The server grants access with a temporary cookie.",
+      "codeLabel": "One-time code",
+      "unlockAction": "Unlock setup",
+      "unlockFailed": "The code was not accepted. Request a new code or try again.",
+      "unlockUnavailable": "Setup service is unavailable. Try again.",
+      "unlockContract": "The setup response could not be verified. Try again.",
+      "unlockError": "Setup could not be unlocked. Try again.",
+      "readyTitle": "Setup access confirmed",
+      "readyDescription": "The server is ready for the next setup step."
+    },
+    "steps": {
+      "administrator": {
+        "title": "Administrator setup",
+        "pending": "The data services are ready. Administrator account configuration is the next setup step."
+      },
+      "optional": {
+        "title": "Optional configuration",
+        "pending": "Administrator setup is complete. Optional server settings are the next setup step."
+      }
+    },
+    "configuration": {
+      "title": "Connect data services",
+      "description": "Configure the management database separately from the telemetry store. Each connection is checked against the server before it is applied.",
+      "management": {
+        "title": "HertzBeat management database",
+        "description": "Stores HertzBeat users, monitors, alerts, and other management records.",
+        "kind": "Database type",
+        "kindPlaceholder": "Select a database type",
+        "h2Warning": "H2 is for local evaluation only. Use MySQL or PostgreSQL for a durable deployment.",
+        "jdbcUrl": "JDBC URL",
+        "connectionFailed": "Management database connection failed",
+        "kindUnsupported": "Management database type is not supported",
+        "schemaMismatch": "Management database schema is not compatible",
+        "insufficientPrivileges": "Management database user has insufficient privileges",
+        "validationFailed": "The management database could not be validated. Check the fields and try again."
+      },
+      "telemetry": {
+        "title": "GreptimeDB telemetry store",
+        "description": "Stores the metrics, logs, and traces collected by HertzBeat.",
+        "grpcEndpoints": "gRPC endpoints",
+        "httpEndpoint": "HTTP endpoint",
+        "database": "Database",
+        "credentialsHint": "Username and password are optional, but must be provided together.",
+        "connectionFailed": "Telemetry store connection failed",
+        "validationFailed": "The telemetry store could not be validated. Check the fields and try again."
+      },
+      "username": "Username",
+      "password": "Password",
+      "validate": "Validate connection",
+      "validationSucceeded": "Connection validated",
+      "apply": "Apply configuration",
+      "applyManagedHint": "HertzBeat will write the managed configuration. Passwords are cleared after each request.",
+      "applyExternalHint": "HertzBeat will prepare an external configuration operation. Entered secrets remain only in this browser until the export is downloaded or this page is left.",
+      "submitFailed": "The configuration request failed. Review the fields and try again.",
+      "operationFailed": "The configuration operation failed or was rolled back. Server recovery is required before continuing.",
+      "externalApplyRequired": "Apply the generated configuration outside HertzBeat, then wait for the server status to converge.",
+      "externalResumeRequired": "This browser no longer has the original configuration or secrets. Re-enter every connection field and validate both services to generate a fresh export.",
+      "applicationStarting": "HertzBeat is starting with the new configuration. This page will continue checking the server operation.",
+      "recoveryRequired": "Configuration recovery is required. The current server state is preserved; follow the server recovery guidance.",
+      "migrationInProgress": "The management database migration is in progress. Do not interrupt the server.",
+      "pollUnavailable": "Operation status is temporarily unavailable. HertzBeat will not assume the configuration succeeded.",
+      "pollContract": "The operation status response could not be verified. HertzBeat will not assume the configuration succeeded.",
+      "pollError": "The configuration operation could not be checked. Retry after confirming the server is reachable.",
+      "configReadOnly": "The managed configuration is read-only. Use the external configuration workflow.",
+      "configWriteFailed": "HertzBeat could not write the managed configuration. The current configuration was preserved.",
+      "configRecoveryRequired": "The configuration write requires server recovery before it can be retried.",
+      "operationConflict": "Another setup operation is already active. Wait for it to finish before retrying.",
+      "export": {
+        "title": "Export external configuration",
+        "description": "Download one server-rendered format and apply it outside HertzBeat. The download may contain secrets.",
+        "yaml": "Download YAML",
+        "env": "Download ENV",
+        "kubernetesSecret": "Download Kubernetes Secret",
+        "unavailable": "The export service is unavailable. Try again.",
+        "contract": "The export attachment could not be verified and was not downloaded.",
+        "failed": "The external configuration could not be exported. Try again."
+      }
+    }
   }
 }

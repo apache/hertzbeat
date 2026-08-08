@@ -2907,5 +2907,91 @@
     "notConfigured": "公開ステータスページはまだ設定されていません。",
     "invalid": "公開ステータスの応答が無効なため表示できません。",
     "permission": "公開ステータスサービスがこの要求を拒否しました。"
+  },
+  "setup": {
+    "title": "HertzBeat をセットアップ",
+    "statusUnavailable": "セットアップ状態を取得できません",
+    "statusRefreshUnavailable": "最後に検証されたセットアップ状態を表示しています。更新に一時的に失敗しました。サーバーに接続できるときに再試行してください。",
+    "error": {
+      "invalidRequest": "セットアップ要求が無効です。入力値を確認して再試行してください。",
+      "internalError": "セットアップサービスで内部エラーが発生しました。成功とは判断しません。再試行してください。"
+    },
+    "access": {
+      "unlockTitle": "リモートセットアップを解除",
+      "unlockDescription": "サーバーが示す安全なファイルからワンタイムコードを入力してください。サーバーは一時 Cookie でアクセスを許可します。",
+      "codeLabel": "ワンタイムコード",
+      "unlockAction": "セットアップを解除",
+      "unlockFailed": "コードが受け付けられませんでした。新しいコードを取得するか、再試行してください。",
+      "unlockUnavailable": "セットアップサービスを利用できません。再試行してください。",
+      "unlockContract": "セットアップ応答を検証できませんでした。再試行してください。",
+      "unlockError": "セットアップのロックを解除できませんでした。再試行してください。",
+      "readyTitle": "セットアップアクセスを確認しました",
+      "readyDescription": "サーバーは次のセットアップ手順に進む準備ができています。"
+    },
+    "steps": {
+      "administrator": {
+        "title": "管理者設定",
+        "pending": "データサービスの準備ができました。次の手順は管理者アカウントの設定です。"
+      },
+      "optional": { "title": "任意設定", "pending": "管理者設定が完了しました。次の手順は任意のサーバー設定です。" }
+    },
+    "configuration": {
+      "title": "データサービスに接続",
+      "description": "管理データベースとテレメトリストアを個別に設定します。適用前にサーバーが各接続を確認します。",
+      "management": {
+        "title": "HertzBeat 管理データベース",
+        "description": "HertzBeat のユーザー、モニター、アラートなどの管理レコードを保存します。",
+        "kind": "データベース種別",
+        "kindPlaceholder": "データベース種別を選択",
+        "h2Warning": "H2 はローカル評価専用です。永続的な環境では MySQL または PostgreSQL を使用してください。",
+        "jdbcUrl": "JDBC URL",
+        "connectionFailed": "管理データベースへの接続に失敗しました",
+        "kindUnsupported": "この管理データベース種別はサポートされていません",
+        "schemaMismatch": "管理データベースのスキーマに互換性がありません",
+        "insufficientPrivileges": "管理データベースのユーザー権限が不足しています",
+        "validationFailed": "管理データベースを検証できませんでした。項目を確認して再試行してください。"
+      },
+      "telemetry": {
+        "title": "GreptimeDB テレメトリストア",
+        "description": "HertzBeat が収集したメトリクス、ログ、トレースを保存します。",
+        "grpcEndpoints": "gRPC エンドポイント",
+        "httpEndpoint": "HTTP エンドポイント",
+        "database": "データベース",
+        "credentialsHint": "ユーザー名とパスワードは任意ですが、両方を一緒に指定する必要があります。",
+        "connectionFailed": "テレメトリストアへの接続に失敗しました",
+        "validationFailed": "テレメトリストアを検証できませんでした。項目を確認して再試行してください。"
+      },
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "validate": "接続を検証",
+      "validationSucceeded": "接続を検証しました",
+      "apply": "設定を適用",
+      "applyManagedHint": "HertzBeat が管理設定を書き込みます。パスワードは各リクエスト後に消去されます。",
+      "applyExternalHint": "HertzBeat が外部設定操作を準備します。入力したシークレットは、エクスポートをダウンロードするかこのページを離れるまで、このブラウザー内だけに保持されます。",
+      "submitFailed": "設定リクエストに失敗しました。項目を確認して再試行してください。",
+      "operationFailed": "設定操作が失敗またはロールバックされました。続行する前にサーバーの復旧が必要です。",
+      "externalApplyRequired": "生成された設定を HertzBeat の外部で適用し、サーバー状態が収束するまでお待ちください。",
+      "externalResumeRequired": "このブラウザーには元の設定やシークレットが残っていません。すべての接続項目を再入力し、両方のサービスを検証して新しいエクスポートを生成してください。",
+      "applicationStarting": "HertzBeat は新しい設定で起動しています。このページはサーバー操作の確認を続けます。",
+      "recoveryRequired": "設定の復旧が必要です。現在のサーバー状態は保持されています。サーバーの復旧手順に従ってください。",
+      "migrationInProgress": "管理データベースを移行しています。サーバーを中断しないでください。",
+      "pollUnavailable": "操作状態を一時的に取得できません。HertzBeat は設定が成功したとは判断しません。",
+      "pollContract": "操作状態の応答を検証できません。HertzBeat は設定が成功したとは判断しません。",
+      "pollError": "設定操作を確認できません。サーバーに接続できることを確認して再試行してください。",
+      "configReadOnly": "管理設定は読み取り専用です。外部設定フローを使用してください。",
+      "configWriteFailed": "HertzBeat は管理設定を書き込めませんでした。現在の設定は保持されています。",
+      "configRecoveryRequired": "再試行する前に、設定書き込みからサーバーを復旧する必要があります。",
+      "operationConflict": "別のセットアップ操作が実行中です。完了してから再試行してください。",
+      "export": {
+        "title": "外部設定をエクスポート",
+        "description": "サーバーが生成した形式をダウンロードし、HertzBeat の外部で適用します。ダウンロードにはシークレットが含まれる場合があります。",
+        "yaml": "YAML をダウンロード",
+        "env": "ENV をダウンロード",
+        "kubernetesSecret": "Kubernetes Secret をダウンロード",
+        "unavailable": "エクスポートサービスを利用できません。再試行してください。",
+        "contract": "エクスポート添付ファイルを検証できなかったため、ダウンロードしませんでした。",
+        "failed": "外部設定をエクスポートできませんでした。再試行してください。"
+      }
+    }
   }
 }

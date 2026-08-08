@@ -97,6 +97,7 @@ describe('application data router', () => {
     ).toEqual([
       { id: 'lock', layout: 'passport' },
       { id: 'login', layout: 'passport' },
+      { id: 'setup', layout: 'blank' },
       { id: 'status', layout: 'blank' }
     ]);
     expect(applicationChildren.find(route => route.index)?.element).toBeDefined();

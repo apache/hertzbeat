@@ -19,6 +19,7 @@ import { Navigate, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
+import { SetupRouteRuntime } from '@/features/setup';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { RouteLoadingState } from '@/shared/route-state/route-state';
 
@@ -34,11 +35,23 @@ export const appRoutes: RouteObject[] = [
   {
     id: 'application',
     path: applicationRootPath,
-    element: <RefineRuntime />,
+    element: (
+      <SetupRouteRuntime
+        paths={{ setup: getAppRoute('setup').path, login: getAppRoute('login').path }}
+        product={<RefineRuntime />}
+      />
+    ),
     errorElement: <RouteErrorBoundary />,
     hydrateFallbackElement: <RouteLoadingState placement="viewport" />,
     children: [
       { index: true, element: <Navigate replace to={getAppRoute('dashboard').path} /> },
+      {
+        ...getAppRouteIdentity('setup'),
+        lazy: async () => {
+          const { SetupPage } = await import('@/features/setup');
+          return { Component: SetupPage };
+        }
+      },
       {
         ...getAppRouteIdentity('login'),
         lazy: async () => {

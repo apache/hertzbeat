@@ -135,6 +135,7 @@ export const appRouteCatalog = {
     resource: { labelKey: 'menu.bulletin' }
   }),
   status: pageRoute('status', applicationRoutePaths.status, { layout: 'blank' }),
+  setup: pageRoute('setup', '/setup', { layout: 'blank' }),
   login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
   lock: pageRoute('lock', applicationRoutePaths.lock, { layout: 'passport' }),
   'not-found': pageRoute('not-found', '*', { layout: 'blank' })

@@ -2914,5 +2914,94 @@
     "notConfigured": "A página pública de status ainda não foi configurada.",
     "invalid": "A resposta de status público é inválida e não pode ser exibida.",
     "permission": "O serviço de status público recusou esta solicitação."
+  },
+  "setup": {
+    "title": "Configurar o HertzBeat",
+    "statusUnavailable": "Status da configuração indisponível",
+    "statusRefreshUnavailable": "O último status de configuração verificado permanece visível. A atualização falhou temporariamente; tente novamente quando o servidor estiver acessível.",
+    "error": {
+      "invalidRequest": "A solicitação de configuração é inválida. Revise os valores e tente novamente.",
+      "internalError": "O serviço de configuração encontrou um erro interno. Nenhum sucesso será presumido; tente novamente."
+    },
+    "access": {
+      "unlockTitle": "Desbloquear configuração remota",
+      "unlockDescription": "Digite o código de uso único do arquivo seguro indicado pelo servidor. O servidor concede acesso com um cookie temporário.",
+      "codeLabel": "Código de uso único",
+      "unlockAction": "Desbloquear configuração",
+      "unlockFailed": "O código não foi aceito. Solicite um novo código ou tente novamente.",
+      "unlockUnavailable": "O serviço de configuração está indisponível. Tente novamente.",
+      "unlockContract": "Não foi possível verificar a resposta da configuração. Tente novamente.",
+      "unlockError": "Não foi possível desbloquear a configuração. Tente novamente.",
+      "readyTitle": "Acesso à configuração confirmado",
+      "readyDescription": "O servidor está pronto para a próxima etapa da configuração."
+    },
+    "steps": {
+      "administrator": {
+        "title": "Configuração do administrador",
+        "pending": "Os serviços de dados estão prontos. A próxima etapa é configurar a conta de administrador."
+      },
+      "optional": {
+        "title": "Configuração opcional",
+        "pending": "A configuração do administrador foi concluída. A próxima etapa contém ajustes opcionais do servidor."
+      }
+    },
+    "configuration": {
+      "title": "Conectar serviços de dados",
+      "description": "Configure o banco de gerenciamento separadamente do armazenamento de telemetria. O servidor verifica cada conexão antes de aplicá-la.",
+      "management": {
+        "title": "Banco de gerenciamento do HertzBeat",
+        "description": "Armazena usuários, monitores, alertas e outros registros de gerenciamento do HertzBeat.",
+        "kind": "Tipo de banco",
+        "kindPlaceholder": "Selecione um tipo de banco",
+        "h2Warning": "O H2 serve apenas para avaliação local. Use MySQL ou PostgreSQL em uma implantação durável.",
+        "jdbcUrl": "URL JDBC",
+        "connectionFailed": "Falha na conexão com o banco de gerenciamento",
+        "kindUnsupported": "O tipo de banco de gerenciamento não é compatível",
+        "schemaMismatch": "O esquema do banco de gerenciamento não é compatível",
+        "insufficientPrivileges": "O usuário do banco de gerenciamento não tem privilégios suficientes",
+        "validationFailed": "Não foi possível validar o banco de gerenciamento. Verifique os campos e tente novamente."
+      },
+      "telemetry": {
+        "title": "Armazenamento de telemetria GreptimeDB",
+        "description": "Armazena métricas, logs e rastros coletados pelo HertzBeat.",
+        "grpcEndpoints": "Endpoints gRPC",
+        "httpEndpoint": "Endpoint HTTP",
+        "database": "Banco de dados",
+        "credentialsHint": "Usuário e senha são opcionais, mas devem ser fornecidos juntos.",
+        "connectionFailed": "Falha na conexão com o armazenamento de telemetria",
+        "validationFailed": "Não foi possível validar o armazenamento de telemetria. Verifique os campos e tente novamente."
+      },
+      "username": "Usuário",
+      "password": "Senha",
+      "validate": "Validar conexão",
+      "validationSucceeded": "Conexão validada",
+      "apply": "Aplicar configuração",
+      "applyManagedHint": "O HertzBeat gravará a configuração gerenciada. As senhas são apagadas após cada solicitação.",
+      "applyExternalHint": "O HertzBeat preparará uma operação de configuração externa. Os segredos informados permanecem somente neste navegador até o download da exportação ou a saída desta página.",
+      "submitFailed": "A solicitação de configuração falhou. Revise os campos e tente novamente.",
+      "operationFailed": "A operação de configuração falhou ou foi revertida. É preciso recuperar o servidor antes de continuar.",
+      "externalApplyRequired": "Aplique a configuração gerada fora do HertzBeat e aguarde a convergência do status do servidor.",
+      "externalResumeRequired": "Este navegador não possui mais a configuração nem os segredos originais. Informe novamente todos os campos de conexão e valide os dois serviços para gerar uma nova exportação.",
+      "applicationStarting": "O HertzBeat está iniciando com a nova configuração. Esta página continuará verificando a operação do servidor.",
+      "recoveryRequired": "A configuração precisa ser recuperada. O estado atual do servidor foi preservado; siga as orientações de recuperação.",
+      "migrationInProgress": "A migração do banco de gerenciamento está em andamento. Não interrompa o servidor.",
+      "pollUnavailable": "O status da operação está temporariamente indisponível. O HertzBeat não presumirá que a configuração foi concluída.",
+      "pollContract": "Não foi possível verificar a resposta de status da operação. O HertzBeat não presumirá que a configuração foi concluída.",
+      "pollError": "Não foi possível verificar a operação de configuração. Confirme que o servidor está acessível e tente novamente.",
+      "configReadOnly": "A configuração gerenciada é somente leitura. Use o fluxo de configuração externa.",
+      "configWriteFailed": "O HertzBeat não conseguiu gravar a configuração gerenciada. A configuração atual foi preservada.",
+      "configRecoveryRequired": "A gravação da configuração exige recuperação do servidor antes de uma nova tentativa.",
+      "operationConflict": "Outra operação de configuração já está ativa. Aguarde sua conclusão antes de tentar novamente.",
+      "export": {
+        "title": "Exportar configuração externa",
+        "description": "Baixe um formato gerado pelo servidor e aplique-o fora do HertzBeat. O download pode conter segredos.",
+        "yaml": "Baixar YAML",
+        "env": "Baixar ENV",
+        "kubernetesSecret": "Baixar Kubernetes Secret",
+        "unavailable": "O serviço de exportação está indisponível. Tente novamente.",
+        "contract": "Não foi possível verificar o anexo de exportação e ele não foi baixado.",
+        "failed": "Não foi possível exportar a configuração externa. Tente novamente."
+      }
+    }
   }
 }

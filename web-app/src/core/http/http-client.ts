@@ -77,7 +77,7 @@ function withBrowserSession(init: RequestInit): RequestInit {
     const csrf = readCookie(CSRF_COOKIE);
     if (csrf) headers.set(CSRF_HEADER, csrf);
   }
-  return { ...init, method, headers, credentials: 'same-origin' };
+  return { ...init, method, headers, credentials: init.credentials ?? 'same-origin' };
 }
 
 export function refreshBrowserSession(options?: BrowserSessionRefreshOptions) {
