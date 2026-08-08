@@ -34,6 +34,7 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
@@ -139,6 +140,39 @@ class RemoteSetupUnlockTest {
     }
 
     @Test
+    void ensureOpenPreservesAnActiveSession() throws Exception {
+        Path codeFile = temporaryDirectory.resolve("unlock");
+        MutableClock clock = new MutableClock(Instant.parse("2026-08-08T00:00:00Z"));
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        unlock.ensureOpen();
+        SetupAccessSession session = unlock.redeem(
+                "198.51.100.4", new SetupUnlockCode(Files.readString(codeFile).toCharArray()));
+
+        unlock.ensureOpen();
+
+        assertTrue(unlock.permits(session.token()));
+        assertFalse(Files.exists(codeFile));
+    }
+
+    @Test
+    void ensureOpenRenewsProofAfterExpiry() throws Exception {
+        Path codeFile = temporaryDirectory.resolve("unlock");
+        MutableClock clock = new MutableClock(Instant.parse("2026-08-08T00:00:00Z"));
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        unlock.ensureOpen();
+        String expiredCode = Files.readString(codeFile);
+        SetupAccessSession expiredSession = unlock.redeem(
+                "198.51.100.4", new SetupUnlockCode(expiredCode.toCharArray()));
+
+        clock.advance(Duration.ofMinutes(16));
+        unlock.ensureOpen();
+
+        assertFalse(unlock.permits(expiredSession.token()));
+        assertTrue(Files.exists(codeFile));
+        assertNotEquals(expiredCode, Files.readString(codeFile));
+    }
+
+    @Test
     void failedProofRemovalDoesNotPublishUnreachableSession() throws Exception {
         Path codeFile = temporaryDirectory.resolve("unlock");
         RemoteSetupUnlock unlock = unlock(codeFile);
@@ -172,5 +206,32 @@ class RemoteSetupUnlockTest {
                 Arrays.fill(bytes, next++);
             }
         };
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant instant;
+
+        private MutableClock(Instant instant) {
+            this.instant = instant;
+        }
+
+        void advance(Duration duration) {
+            instant = instant.plus(duration);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
     }
 }

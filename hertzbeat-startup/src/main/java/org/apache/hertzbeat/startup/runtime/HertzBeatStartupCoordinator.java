@@ -47,6 +47,12 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     }
 
     @Override
+    public synchronized void configurationApplied() {
+        transition(new StartupDecision(RuntimeMode.FULL_SETUP_GATED,
+                SetupPhase.ADMINISTRATOR_REQUIRED, null));
+    }
+
+    @Override
     public synchronized void completeSetup() {
         transition(new StartupDecision(RuntimeMode.NORMAL, SetupPhase.COMPLETE, null));
     }

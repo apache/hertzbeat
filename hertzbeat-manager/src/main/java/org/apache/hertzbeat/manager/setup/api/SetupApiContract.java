@@ -273,7 +273,8 @@ public final class SetupApiContract {
         EXTERNAL_APPLY_REQUIRED("external_apply_required"),
         RESTART_REQUIRED("restart_required"),
         PUBLIC_ADDRESS_PLAINTEXT("public_address_plaintext"),
-        MAIL_SECURITY_NONE("mail_security_none");
+        MAIL_SECURITY_NONE("mail_security_none"),
+        H2_NON_PRODUCTION("h2_non_production");
 
         private final String value;
 
@@ -299,7 +300,16 @@ public final class SetupApiContract {
             @NotNull @Valid ManagementDatabaseSummary managementDatabase,
             @NotNull @Valid TelemetryStoreSummary telemetryStore,
             boolean administratorConfigured,
-            @NotNull @Valid OptionalConfigurationSummary optional) {
+            @NotNull @Valid OptionalConfigurationSummary optional,
+            @NotNull List<SetupWarningCode> pendingWarnings) {
+
+        public StatusResponse(SetupPhase phase, Instant observedAt, SetupAccess access, ApplyMode applyMode,
+                              boolean writableManagedConfig, String operationId, SetupErrorCode errorCode,
+                              ManagementDatabaseSummary managementDatabase, TelemetryStoreSummary telemetryStore,
+                              boolean administratorConfigured, OptionalConfigurationSummary optional) {
+            this(phase, observedAt, access, applyMode, writableManagedConfig, operationId, errorCode,
+                    managementDatabase, telemetryStore, administratorConfigured, optional, List.of());
+        }
     }
 
     /** Secret-free metadata database summary. */

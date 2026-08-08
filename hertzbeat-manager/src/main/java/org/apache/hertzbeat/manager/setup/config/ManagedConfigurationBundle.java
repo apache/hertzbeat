@@ -20,7 +20,8 @@ package org.apache.hertzbeat.manager.setup.config;
 import java.util.Objects;
 
 /** The only valid unit for applying or loading the separate application and secret documents. */
-public record ManagedConfigurationBundle(ManagedApplicationConfig application, ManagedSecrets secrets) {
+public record ManagedConfigurationBundle(
+        ManagedApplicationConfig application, ManagedSecrets secrets) implements AutoCloseable {
 
     public ManagedConfigurationBundle {
         Objects.requireNonNull(application, "application");
@@ -30,10 +31,20 @@ public record ManagedConfigurationBundle(ManagedApplicationConfig application, M
         if (telemetryUsername != telemetryPassword) {
             throw new IllegalArgumentException("Telemetry username and password must be configured together");
         }
+        boolean mailUsername = application.optional().mail()
+                .flatMap(ManagedOptionalConfiguration.MailSettings::username).isPresent();
+        if (mailUsername != secrets.mailPassword().isPresent()) {
+            throw new IllegalArgumentException("Mail username and password must be configured together");
+        }
     }
 
     @Override
     public String toString() {
         return "ManagedConfigurationBundle[configured=true, secrets=<redacted>]";
+    }
+
+    @Override
+    public void close() {
+        secrets.close();
     }
 }

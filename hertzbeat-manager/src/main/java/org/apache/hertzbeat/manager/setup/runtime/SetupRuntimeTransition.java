@@ -26,5 +26,9 @@ package org.apache.hertzbeat.manager.setup.runtime;
 @FunctionalInterface
 public interface SetupRuntimeTransition {
 
+    default void configurationApplied() {
+        completeSetup();
+    }
+
     void completeSetup();
 }

@@ -19,6 +19,9 @@ package org.apache.hertzbeat.manager.setup.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -165,6 +168,24 @@ class ManagedConfigurationTransactionTest {
             }
         }
         assertEquals(0, holder.exitValue());
+    }
+
+    @Test
+    void recoveryClosesEveryDecodedSecretSnapshotItOwns() throws Exception {
+        ManagedApplicationConfigStore applications = mock(ManagedApplicationConfigStore.class);
+        ManagedSecretStore secretStore = mock(ManagedSecretStore.class);
+        ManagedSecrets decoded = secrets("owned");
+        when(applications.readActive()).thenReturn(CandidateRead.valid(configuration("owned"), "generation"));
+        when(applications.readCandidate()).thenReturn(CandidateRead.missing());
+        when(applications.readLastKnownGood()).thenReturn(CandidateRead.missing());
+        when(secretStore.readActive()).thenReturn(CandidateRead.valid(decoded, "generation"));
+        when(secretStore.readCandidate()).thenReturn(CandidateRead.missing());
+        when(secretStore.readLastKnownGood()).thenReturn(CandidateRead.missing());
+
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED,
+                new ManagedConfigurationTransaction(applications, secretStore, installationRoot).recover());
+
+        assertThat(decoded.metadataDatabasePassword().copy()).containsOnly('\0');
     }
 
     private static void waitForFile(Path ready) throws Exception {

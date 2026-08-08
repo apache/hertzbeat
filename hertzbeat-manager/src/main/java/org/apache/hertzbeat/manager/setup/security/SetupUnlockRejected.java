@@ -28,7 +28,7 @@ public final class SetupUnlockRejected extends IllegalStateException {
 
     private final Reason reason;
 
-    SetupUnlockRejected(Reason reason) {
+    public SetupUnlockRejected(Reason reason) {
         super(safeMessage(reason));
         this.reason = reason;
     }

@@ -44,15 +44,15 @@ public final class ManagedActiveConfigurationInspector {
     public Inspection inspect() {
         CandidateRead<ManagedApplicationConfig> application = applicationStore.readActive();
         CandidateRead<ManagedSecrets> secrets = secretStore.readActive();
-        if (application.state() == CandidateState.MISSING && secrets.state() == CandidateState.MISSING) {
-            return Inspection.absent();
-        }
-        if (application.state() != CandidateState.VALID
-                || secrets.state() != CandidateState.VALID
-                || !application.generation().equals(secrets.generation())) {
-            return Inspection.recoveryRequired();
-        }
         try {
+            if (application.state() == CandidateState.MISSING && secrets.state() == CandidateState.MISSING) {
+                return Inspection.absent();
+            }
+            if (application.state() != CandidateState.VALID
+                    || secrets.state() != CandidateState.VALID
+                    || !application.generation().equals(secrets.generation())) {
+                return Inspection.recoveryRequired();
+            }
             ManagedConfigurationBundle bundle = new ManagedConfigurationBundle(
                     application.value().orElseThrow(), secrets.value().orElseThrow());
             return Inspection.loadable(
@@ -60,6 +60,8 @@ public final class ManagedActiveConfigurationInspector {
                     SecretConfigDocumentCodec.springProperties(bundle.secrets()));
         } catch (IllegalArgumentException failure) {
             return Inspection.recoveryRequired();
+        } finally {
+            ManagedConfigurationTransaction.close(secrets);
         }
     }
 

@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.bootstrap;
 
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiConfiguration;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeAccessConfiguration;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.actuate.autoconfigure.endpoint.EndpointAutoConfiguration;
@@ -45,6 +46,6 @@ import org.springframework.context.annotation.Import;
         HealthEndpointAutoConfiguration.class,
         WebMvcHealthEndpointExtensionAutoConfiguration.class
 })
-@Import({BusinessRuntimeConfiguration.class, SetupRuntimeAccessConfiguration.class})
+@Import({BusinessRuntimeConfiguration.class, SetupRuntimeAccessConfiguration.class, SetupApiConfiguration.class})
 public class SetupOnlyApplication {
 }

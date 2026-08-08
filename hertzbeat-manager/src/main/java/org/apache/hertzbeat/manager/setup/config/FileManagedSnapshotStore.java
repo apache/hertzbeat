@@ -74,26 +74,31 @@ final class FileManagedSnapshotStore<T> {
 
     void promoteCandidate(T expected, String generation) throws IOException {
         ensureSafePaths();
-        byte[] candidateDocument;
-        ManagedDocumentCodec.Decoded<T> decoded;
+        ManagedDocumentCodec.Decoded<T> decoded = null;
+        CandidateRead<T> activeRead = null;
         try {
-            candidateDocument = reader.read(candidate);
+            byte[] candidateDocument = reader.read(candidate);
             decoded = codec.decode(candidateDocument);
-        } catch (ManagedDocumentCodec.DocumentException | IOException failure) {
+            if (!expected.equals(decoded.value()) || !generation.equals(decoded.generation())) {
+                throw new IOException("Managed configuration candidate does not match the transaction");
+            }
+            activeRead = readActive();
+            if (activeRead.state() == CandidateState.VALID) {
+                publisher.publish(lastKnownGood, codec.encode(
+                        activeRead.value().orElseThrow(), activeRead.generation().orElseThrow()), ownerOnly);
+            } else if (activeRead.state() != CandidateState.MISSING) {
+                throw new IOException("Active managed configuration requires recovery");
+            }
+            publisher.publish(active, candidateDocument, ownerOnly);
+            publisher.remove(candidate);
+        } catch (ManagedDocumentCodec.DocumentException failure) {
             throw new IOException("A valid managed configuration candidate is required");
+        } finally {
+            close(decoded == null ? null : decoded.value());
+            if (activeRead != null) {
+                activeRead.value().ifPresent(FileManagedSnapshotStore::close);
+            }
         }
-        if (!expected.equals(decoded.value()) || !generation.equals(decoded.generation())) {
-            throw new IOException("Managed configuration candidate does not match the transaction");
-        }
-        CandidateRead<T> activeRead = readActive();
-        if (activeRead.state() == CandidateState.VALID) {
-            publisher.publish(lastKnownGood, codec.encode(
-                    activeRead.value().orElseThrow(), activeRead.generation().orElseThrow()), ownerOnly);
-        } else if (activeRead.state() != CandidateState.MISSING) {
-            throw new IOException("Active managed configuration requires recovery");
-        }
-        publisher.publish(active, candidateDocument, ownerOnly);
-        publisher.remove(candidate);
     }
 
     void restoreActive(Optional<T> previous, Optional<String> generation) throws IOException {
@@ -142,5 +147,15 @@ final class FileManagedSnapshotStore<T> {
 
     private static boolean isUnsafePath(Path path) {
         return Files.isSymbolicLink(path);
+    }
+
+    private static void close(Object value) {
+        if (value instanceof AutoCloseable closeable) {
+            try {
+                closeable.close();
+            } catch (Exception ignored) {
+                // Secret cleanup is best-effort and must not mask the persistence outcome.
+            }
+        }
     }
 }

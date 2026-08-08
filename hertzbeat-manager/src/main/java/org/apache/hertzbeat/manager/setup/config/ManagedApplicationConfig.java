@@ -22,11 +22,18 @@ import java.util.Objects;
 /** Supported non-secret application overlay owned by setup. */
 public record ManagedApplicationConfig(
         MetadataDatabaseSettings metadataDatabase,
-        GreptimeSettings telemetryStore) {
+        GreptimeSettings telemetryStore,
+        ManagedOptionalConfiguration optional) {
+
+    public ManagedApplicationConfig(MetadataDatabaseSettings metadataDatabase,
+                                    GreptimeSettings telemetryStore) {
+        this(metadataDatabase, telemetryStore, ManagedOptionalConfiguration.empty());
+    }
 
     public ManagedApplicationConfig {
         Objects.requireNonNull(metadataDatabase, "metadataDatabase");
         Objects.requireNonNull(telemetryStore, "telemetryStore");
+        Objects.requireNonNull(optional, "optional");
     }
 
     @Override

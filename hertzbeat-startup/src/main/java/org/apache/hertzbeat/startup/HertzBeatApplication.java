@@ -21,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
 import org.apache.hertzbeat.startup.runtime.HertzBeatStartupCoordinator;
+import org.apache.hertzbeat.startup.runtime.LocalInstallationStartupProbe;
 import org.apache.hertzbeat.startup.runtime.SpringStartupContextLauncher;
 import org.apache.hertzbeat.startup.runtime.StartupModePropertyProbe;
 import org.springframework.boot.SpringBootConfiguration;
@@ -55,7 +56,7 @@ public class HertzBeatApplication {
     public static void main(String[] args) {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
-                new StartupModePropertyProbe(), launcher);
+                new StartupModePropertyProbe(new LocalInstallationStartupProbe()), launcher);
         coordinator.start(args);
     }
 

@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.manager.setup.runtime;
 
+import java.time.Clock;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
+import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
+import org.apache.hertzbeat.manager.setup.security.SetupWriteAccessFilter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +43,35 @@ public class SetupRuntimeAccessConfiguration {
         FilterRegistrationBean<SetupRuntimeAccessFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         registration.addUrlPatterns("/*");
+        return registration;
+    }
+
+    @Bean
+    public SetupWriteAccessFilter setupWriteAccessFilter(SetupHttpUnlockService unlock) {
+        return new SetupWriteAccessFilter(unlock, Clock.systemUTC());
+    }
+
+    @Bean
+    public FilterRegistrationBean<SetupWriteAccessFilter> setupWriteAccessFilterRegistration(
+            SetupWriteAccessFilter filter) {
+        FilterRegistrationBean<SetupWriteAccessFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
+        registration.addUrlPatterns("/api/setup/*");
+        return registration;
+    }
+
+    @Bean
+    public SetupResponseTransitionFilter setupResponseTransitionFilter(
+            SetupRuntimeTransitionScheduler scheduler, SetupResponseTransition responseTransition) {
+        return new SetupResponseTransitionFilter(scheduler, responseTransition);
+    }
+
+    @Bean
+    public FilterRegistrationBean<SetupResponseTransitionFilter> setupResponseTransitionFilterRegistration(
+            SetupResponseTransitionFilter filter) {
+        FilterRegistrationBean<SetupResponseTransitionFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 3);
+        registration.addUrlPatterns("/api/setup/configuration", "/api/setup/complete");
         return registration;
     }
 }

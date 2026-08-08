@@ -36,4 +36,6 @@ public interface DatabaseAccountRepository extends JpaRepository<DatabaseAccount
     boolean existsByUsername(String username);
 
     boolean existsByBootstrapSlotIsNotNull();
+
+    Optional<DatabaseAccount> findByBootstrapSlotIsNotNull();
 }

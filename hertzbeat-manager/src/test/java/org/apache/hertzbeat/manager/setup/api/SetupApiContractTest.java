@@ -79,14 +79,14 @@ class SetupApiContractTest {
         assertWireValues(MailSecurity.values(), "none", "starttls", "tls");
         assertWireValues(SetupApiContract.ExportFormat.values(), "yaml", "env", "kubernetes_secret");
         assertWireValues(SetupApiContract.SetupWarningCode.values(), "external_apply_required", "restart_required",
-                "public_address_plaintext", "mail_security_none");
+                "public_address_plaintext", "mail_security_none", "h2_non_production");
     }
 
     @Test
     void freezesSafeStatusAndMutationShapes() {
         assertComponents(SetupApiContract.StatusResponse.class, "phase", "observedAt", "access", "applyMode",
                 "writableManagedConfig", "operationId", "errorCode", "managementDatabase", "telemetryStore",
-                "administratorConfigured", "optional");
+                "administratorConfigured", "optional", "pendingWarnings");
         assertComponents(SetupApiContract.ManagementDatabaseSummary.class, "kind", "configured", "source",
                 "restartRequired");
         assertComponents(SetupApiContract.TelemetryStoreSummary.class, "kind", "configured", "source",

@@ -87,7 +87,17 @@ public final class RemoteSetupUnlock {
                 Arrays.fill(encodedCode, (byte) 0);
             }
         }
-        LOGGER.warn("Remote setup requires the one-time unlock file at {}", codeFile);
+        LOGGER.warn("Setup unlock proof file created at {}", codeFile);
+    }
+
+    /** Keeps an active proof or session intact and renews it only after expiry. */
+    public synchronized boolean ensureOpen() throws IOException {
+        Instant now = clock.instant();
+        if (expiresAt != null && now.isBefore(expiresAt) && (codeDigest != null || sessionDigest != null)) {
+            return false;
+        }
+        open();
+        return true;
     }
 
     private void removeStaleCodeFile() throws IOException {

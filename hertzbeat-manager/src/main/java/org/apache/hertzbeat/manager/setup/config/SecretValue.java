@@ -20,7 +20,7 @@ package org.apache.hertzbeat.manager.setup.config;
 import java.util.Arrays;
 
 /** Mutable-copy-resistant secret value with redacted diagnostics. */
-public final class SecretValue {
+public final class SecretValue implements AutoCloseable {
 
     private final char[] content;
 
@@ -35,6 +35,23 @@ public final class SecretValue {
         return new SecretValue(content.toCharArray());
     }
 
+    public static SecretValue of(char[] content) {
+        if (content == null || content.length == 0) {
+            throw new IllegalArgumentException("Secret value must not be empty");
+        }
+        return new SecretValue(content);
+    }
+
+    /** Creates an independently clearable owner without exposing the source storage. */
+    public static SecretValue copyOf(SecretValue source) {
+        char[] copy = source.copy();
+        try {
+            return SecretValue.of(copy);
+        } finally {
+            Arrays.fill(copy, '\0');
+        }
+    }
+
     public char[] copy() {
         return content.clone();
     }
@@ -47,6 +64,11 @@ public final class SecretValue {
     @Override
     public int hashCode() {
         return Arrays.hashCode(content);
+    }
+
+    @Override
+    public void close() {
+        Arrays.fill(content, '\0');
     }
 
     @Override

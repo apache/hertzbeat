@@ -17,31 +17,37 @@
 
 package org.apache.hertzbeat.manager.setup.config;
 
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.DATASOURCE_PASSWORD;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_PASSWORD;
+
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
 final class SecretConfigDocumentCodec implements ManagedDocumentCodec<ManagedSecrets> {
 
-    private static final String METADATA_PASSWORD = "spring.datasource.password";
-    private static final String TELEMETRY_PASSWORD = "warehouse.store.greptime.password";
+    private static final String MAIL_PASSWORD = "spring.mail.password";
 
     @Override
     public byte[] encode(ManagedSecrets value, String generation) {
         StringBuilder body = new StringBuilder();
-        append(body, METADATA_PASSWORD, value.metadataDatabasePassword());
-        value.telemetryPassword().ifPresent(secret -> append(body, TELEMETRY_PASSWORD, secret));
+        append(body, DATASOURCE_PASSWORD, value.metadataDatabasePassword());
+        value.telemetryPassword().ifPresent(secret -> append(body, GREPTIME_PASSWORD, secret));
+        value.mailPassword().ifPresent(secret -> append(body, MAIL_PASSWORD, secret));
         return Integrity.envelope(body.toString(), generation);
     }
 
     static Map<String, Object> springProperties(ManagedSecrets value) {
         Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put(METADATA_PASSWORD, springLiteral(value.metadataDatabasePassword()));
+        properties.put(DATASOURCE_PASSWORD, springLiteral(value.metadataDatabasePassword()));
         value.telemetryPassword().ifPresent(
-                secret -> properties.put(TELEMETRY_PASSWORD, springLiteral(secret)));
+                secret -> properties.put(GREPTIME_PASSWORD, springLiteral(secret)));
+        value.mailPassword().ifPresent(secret -> properties.put(MAIL_PASSWORD, springLiteral(secret)));
         return Map.copyOf(properties);
     }
 
@@ -56,23 +62,32 @@ final class SecretConfigDocumentCodec implements ManagedDocumentCodec<ManagedSec
         } catch (IOException | IllegalArgumentException exception) {
             throw DocumentException.corrupt();
         }
-        if (!properties.stringPropertyNames().contains(METADATA_PASSWORD)
-                || !Set.of(METADATA_PASSWORD, TELEMETRY_PASSWORD).containsAll(properties.stringPropertyNames())) {
+        if (!properties.stringPropertyNames().contains(DATASOURCE_PASSWORD)
+                || !Set.of(DATASOURCE_PASSWORD, GREPTIME_PASSWORD, MAIL_PASSWORD)
+                .containsAll(properties.stringPropertyNames())) {
             throw DocumentException.corrupt();
         }
-        ManagedSecrets decoded;
+        SecretValue metadata = null;
+        Optional<SecretValue> telemetry = Optional.empty();
+        Optional<SecretValue> mail = Optional.empty();
         try {
-            SecretValue metadata = SecretValue.of(
-                    removeSpringPlaceholderEscapes(properties.getProperty(METADATA_PASSWORD)));
-            decoded = properties.containsKey(TELEMETRY_PASSWORD)
-                    ? ManagedSecrets.withTelemetryPassword(
-                            metadata, SecretValue.of(removeSpringPlaceholderEscapes(
-                                    properties.getProperty(TELEMETRY_PASSWORD))))
-                    : ManagedSecrets.withoutTelemetryPassword(metadata);
+            metadata = SecretValue.of(
+                    removeSpringPlaceholderEscapes(properties.getProperty(DATASOURCE_PASSWORD)));
+            telemetry = properties.containsKey(GREPTIME_PASSWORD)
+                    ? Optional.of(SecretValue.of(removeSpringPlaceholderEscapes(
+                    properties.getProperty(GREPTIME_PASSWORD)))) : Optional.empty();
+            mail = properties.containsKey(MAIL_PASSWORD)
+                    ? Optional.of(SecretValue.of(removeSpringPlaceholderEscapes(
+                    properties.getProperty(MAIL_PASSWORD)))) : Optional.empty();
+            return new Decoded<>(new ManagedSecrets(metadata, telemetry, mail), body.generation());
         } catch (IllegalArgumentException exception) {
+            if (metadata != null) {
+                metadata.close();
+            }
+            telemetry.ifPresent(SecretValue::close);
+            mail.ifPresent(SecretValue::close);
             throw DocumentException.invalid();
         }
-        return new Decoded<>(decoded, body.generation());
     }
 
     private static void append(StringBuilder body, String key, SecretValue secret) {
@@ -80,7 +95,7 @@ final class SecretConfigDocumentCodec implements ManagedDocumentCodec<ManagedSec
         try {
             body.append(key).append('=').append(escape(copy)).append('\n');
         } finally {
-            java.util.Arrays.fill(copy, '\0');
+            Arrays.fill(copy, '\0');
         }
     }
 
@@ -127,7 +142,7 @@ final class SecretConfigDocumentCodec implements ManagedDocumentCodec<ManagedSec
         try {
             return Integrity.literalForSpring(new String(copy));
         } finally {
-            java.util.Arrays.fill(copy, '\0');
+            Arrays.fill(copy, '\0');
         }
     }
 }

@@ -21,11 +21,17 @@ import java.util.Objects;
 import java.util.Optional;
 
 /** Setup-owned secrets stored outside the managed application overlay. */
-public record ManagedSecrets(SecretValue metadataDatabasePassword, Optional<SecretValue> telemetryPassword) {
+public record ManagedSecrets(SecretValue metadataDatabasePassword, Optional<SecretValue> telemetryPassword,
+                             Optional<SecretValue> mailPassword) implements AutoCloseable {
+
+    public ManagedSecrets(SecretValue metadataDatabasePassword, Optional<SecretValue> telemetryPassword) {
+        this(metadataDatabasePassword, telemetryPassword, Optional.empty());
+    }
 
     public ManagedSecrets {
         Objects.requireNonNull(metadataDatabasePassword, "metadataDatabasePassword");
         Objects.requireNonNull(telemetryPassword, "telemetryPassword");
+        Objects.requireNonNull(mailPassword, "mailPassword");
     }
 
     public static ManagedSecrets withoutTelemetryPassword(SecretValue metadataDatabasePassword) {
@@ -39,6 +45,14 @@ public record ManagedSecrets(SecretValue metadataDatabasePassword, Optional<Secr
 
     @Override
     public String toString() {
-        return "ManagedSecrets[metadataDatabasePassword=<redacted>, telemetryPassword=<redacted>]";
+        return "ManagedSecrets[metadataDatabasePassword=<redacted>, telemetryPassword=<redacted>, "
+                + "mailPassword=<redacted>]";
+    }
+
+    @Override
+    public void close() {
+        metadataDatabasePassword.close();
+        telemetryPassword.ifPresent(SecretValue::close);
+        mailPassword.ifPresent(SecretValue::close);
     }
 }

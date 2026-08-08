@@ -23,6 +23,7 @@ import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.Inspection;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.State;
+import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
@@ -42,7 +43,7 @@ import org.springframework.core.io.Resource;
 /** Loads the two fixed managed files between operator files and classpath defaults for every profile. */
 public final class ManagedConfigEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
-    static final String INSTALLATION_ROOT_PROPERTY = "hertzbeat.internal.installation-root";
+    static final String INSTALLATION_ROOT_PROPERTY = SetupInstallationPaths.ROOT_PROPERTY;
     public static final String INTERNAL_RUNTIME_PROPERTY_SOURCE = "hertzbeatInternalRuntimeMode";
     private static final String DEFAULT_INSTALLATION_ROOT = ".";
 

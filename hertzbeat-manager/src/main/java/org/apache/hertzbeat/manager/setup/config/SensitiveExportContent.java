@@ -17,8 +17,12 @@
 
 package org.apache.hertzbeat.manager.setup.config;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+
 /** Defensive secret-bearing export bytes that never render their content. */
-public final class SensitiveExportContent {
+public final class SensitiveExportContent implements AutoCloseable {
 
     private final byte[] content;
 
@@ -35,6 +39,20 @@ public final class SensitiveExportContent {
 
     public byte[] copy() {
         return content.clone();
+    }
+
+    public synchronized void writeTo(OutputStream output) throws IOException {
+        try {
+            output.write(content);
+            output.flush();
+        } finally {
+            close();
+        }
+    }
+
+    @Override
+    public synchronized void close() {
+        Arrays.fill(content, (byte) 0);
     }
 
     @Override
