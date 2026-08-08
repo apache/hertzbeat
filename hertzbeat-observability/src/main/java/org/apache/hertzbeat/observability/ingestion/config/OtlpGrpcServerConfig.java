@@ -150,7 +150,8 @@ public class OtlpGrpcServerConfig {
                 List<String> claimedRoles = claims.get("roles", List.class);
                 rejectReason = accessTokenGateway.checkManagedTokenAccess(
                         userId,
-                        claimedRoles == null ? Collections.emptyList() : claimedRoles
+                        claimedRoles == null ? Collections.emptyList() : claimedRoles,
+                        claims.get(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class)
                 );
                 if (rejectReason != null) {
                     call.close(Status.UNAUTHENTICATED.withDescription(rejectReason), new Metadata());

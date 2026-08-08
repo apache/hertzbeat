@@ -67,7 +67,7 @@ class UiSessionServiceTest {
                 "token", accessToken,
                 "refreshToken", refreshToken,
                 "role", "[\"admin\"]"));
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkSessionAccess("admin", List.of("admin"), null)).thenReturn(null);
 
         UiSessionTokens result = service.login(login);
 
@@ -91,7 +91,7 @@ class UiSessionServiceTest {
         assertEquals(UiSessionView.anonymous(), service.inspect(wrongScope));
 
         String inactiveAccount = accessToken("admin", List.of("admin"), "team-a", 3600);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn("disabled");
+        when(accountService.checkSessionAccess("admin", List.of("admin"), null)).thenReturn("disabled");
         assertEquals(UiSessionView.anonymous(), service.inspect(inactiveAccount));
     }
 
@@ -101,7 +101,7 @@ class UiSessionServiceTest {
         String newAccess = accessToken("admin", List.of("admin"), null, 3600);
         String newRefresh = JsonWebTokenUtil.issueJwt("admin", 7200L, Map.of("refresh", true));
         when(accountService.refreshToken(oldRefresh)).thenReturn(new RefreshTokenResponse(newAccess, newRefresh));
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkSessionAccess("admin", List.of("admin"), null)).thenReturn(null);
 
         UiSessionTokens result = service.refresh(oldRefresh);
 

@@ -36,6 +36,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +71,8 @@ class ApiTokenValidationFilterTest {
         AuthTokenRequestContext.clear();
         lenient().when(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER)).thenReturn(null);
         lenient().when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID)).thenReturn(null);
+        lenient().when(principalMap.getPrincipal(
+                ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION)).thenReturn(null);
     }
 
     @AfterEach
@@ -155,16 +158,17 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), 7L)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
+        when(principalMap.getPrincipal(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION)).thenReturn(7L);
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
 
             org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
             verify(accountService).checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN);
-            verify(accountService).checkManagedTokenAccess("admin", List.of("admin"));
+            verify(accountService).checkManagedTokenAccess("admin", List.of("admin"), 7L);
             verify(accountService).touchTokenLastUsedTime(managedToken);
         }
     }
@@ -176,7 +180,7 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("GET");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.READONLY_QUERY)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
 
@@ -194,7 +198,7 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/metrics");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
 
@@ -213,7 +217,7 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/metrics");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         SubjectSum subject = mockManagedSubjectWithClaims();
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))
                 .thenReturn(AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE);
@@ -238,7 +242,7 @@ class ApiTokenValidationFilterTest {
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
         when(request.getRequestURI()).thenReturn("/api/otlp/v1/traces");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
         SubjectSum subject = mockManagedSubjectWithClaims();
         when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))
@@ -264,7 +268,7 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN, "prod-west")).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         doNothing().when(accountService).touchTokenLastUsedTime(managedToken);
         SubjectSum subject = mockManagedSubjectWithClaims();
 
@@ -331,7 +335,7 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin")))
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null))
                 .thenReturn("Token permissions are outdated");
 
         StringWriter stringWriter = new StringWriter();
@@ -367,7 +371,7 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null)).thenReturn(null);
         // touchTokenLastUsedTime throws exception
         org.mockito.Mockito.doThrow(new RuntimeException("DB error"))
                 .when(accountService).touchTokenLastUsedTime(managedToken);
@@ -397,7 +401,7 @@ class ApiTokenValidationFilterTest {
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/monitor");
         when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.API_ADMIN)).thenReturn(null);
-        when(accountService.checkManagedTokenAccess("admin", List.of("admin")))
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"), null))
                 .thenThrow(new RuntimeException("account store unavailable"));
 
         StringWriter stringWriter = new StringWriter();

@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.naming.AuthenticationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.apache.hertzbeat.manager.service.AccountService;
@@ -75,7 +76,9 @@ public class UiSessionService {
                 return UiSessionView.anonymous();
             }
             List<String> roles = roles(claims.get(ROLES_CLAIM));
-            if (accountService.checkManagedTokenAccess(username, roles) != null) {
+            Long credentialVersion = claims.get(
+                    ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class);
+            if (accountService.checkSessionAccess(username, roles, credentialVersion) != null) {
                 return UiSessionView.anonymous();
             }
             String workspaceId = AuthTokenScopes.normalizeWorkspaceId(

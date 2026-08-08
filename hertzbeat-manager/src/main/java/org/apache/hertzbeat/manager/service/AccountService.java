@@ -113,4 +113,7 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
      */
     TokenRevocationResult deleteToken(Long id) throws AuthenticationException;
 
+    /** Validates roles and the credential generation carried by a browser session. */
+    String checkSessionAccess(String userId, List<String> claimedRoles, Long credentialVersion);
+
 }
