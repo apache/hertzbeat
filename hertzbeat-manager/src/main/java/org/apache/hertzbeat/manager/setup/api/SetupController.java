@@ -119,12 +119,12 @@ public class SetupController {
     @PostMapping(SetupApiContract.EXPORT_PATH)
     public ResponseEntity<StreamingResponseBody> export(@Valid @RequestBody ExportRequest request) {
         var metadata = workflow.prepareExport(request);
-        var artifact = exportRenderer.render(request, metadata);
-        StreamingResponseBody body = output -> artifact.content().writeTo(output);
+        // Async response I/O failures propagate to the servlet container after attachment headers are committed.
+        StreamingResponseBody body = output -> exportRenderer.write(request, output);
         return SetupHttpContract.noStore()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + artifact.fileName() + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, artifact.mediaType()).body(body);
+                        "attachment; filename=\"" + metadata.fileName() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, metadata.mediaType()).body(body);
     }
 
     @PostMapping(SetupApiContract.COMPLETE_PATH)

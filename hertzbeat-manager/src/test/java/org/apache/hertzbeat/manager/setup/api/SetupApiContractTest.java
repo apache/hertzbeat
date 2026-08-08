@@ -30,6 +30,7 @@ import java.util.List;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
@@ -117,6 +118,22 @@ class SetupApiContractTest {
         assertComponents(SetupApiContract.ExportResponse.class, "fileName", "mediaType");
         assertComponents(SetupApiContract.CompleteRequest.class, "expectedPhase", "acknowledgedWarnings");
         assertComponents(SetupApiContract.CompleteResponse.class, "phase", "completedAt", "loginPath", "username");
+    }
+
+    @Test
+    void exportMetadataRejectsUnsafeAttachmentHeaders() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("../managed.env", "text/plain"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("managed/env", "text/plain"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("managed\\env", "text/plain"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("managed\r\nenv", "text/plain"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("managed.env", "text/plain\r\nx-test: value"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ExportResponse("managed.env", "text\\plain"));
     }
 
     @Test

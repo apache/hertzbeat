@@ -17,8 +17,14 @@
 
 package org.apache.hertzbeat.manager.setup.api;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,11 +35,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Instant;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportFormat;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
@@ -41,6 +54,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.StatusResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.UnlockResponse;
 import org.apache.hertzbeat.manager.setup.security.SetupUnlockRejected;
@@ -164,6 +178,39 @@ class SetupControllerTest {
     }
 
     @Test
+    void exportRenderingStartsOnlyWhenStreamingBodyExecutes() throws Exception {
+        SetupExportRenderer renderer = mock(SetupExportRenderer.class);
+        SetupController controller = new SetupController(workflow,
+                mock(SetupHttpUnlockService.class), mock(SetupResponseTransition.class), renderer);
+        ExportRequest request = exportRequest();
+        when(workflow.prepareExport(request)).thenReturn(new ExportResponse("hertzbeat-setup.env", "text/plain"));
+
+        var response = controller.export(request);
+
+        verifyNoInteractions(renderer);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        response.getBody().writeTo(output);
+        verify(renderer).write(same(request), same(output));
+    }
+
+    @Test
+    void clientDisconnectPropagatesFromStreamingCallback() throws Exception {
+        SetupExportRenderer renderer = mock(SetupExportRenderer.class);
+        SetupController controller = new SetupController(workflow,
+                mock(SetupHttpUnlockService.class), mock(SetupResponseTransition.class), renderer);
+        ExportRequest request = exportRequest();
+        IOException clientAbort = new IOException("client disconnected with database-secret");
+        when(workflow.prepareExport(request)).thenReturn(new ExportResponse("hertzbeat-setup.env", "text/plain"));
+        doThrow(clientAbort).when(renderer).write(same(request), any(OutputStream.class));
+        var response = controller.export(request);
+
+        IOException thrown = assertThrows(IOException.class,
+                () -> response.getBody().writeTo(new ByteArrayOutputStream()));
+
+        assertSame(clientAbort, thrown);
+    }
+
+    @Test
     void unexpectedSetupFailureUsesStableNoStoreEnvelope() throws Exception {
         when(workflow.status()).thenThrow(new IllegalStateException("database-secret"));
 
@@ -183,5 +230,14 @@ class SetupControllerTest {
         mvc.perform(get(SetupApiContract.STATUS_PATH))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorCode").value("config_read_only"));
+    }
+
+    private static ExportRequest exportRequest() {
+        return new ExportRequest(ExportFormat.ENV,
+                new ConfigurationRequest(SetupPhase.CONFIGURATION_REQUIRED, ApplyMode.EXTERNAL_APPLY,
+                        new MetadataDatabaseConfiguration(MetadataDatabaseKind.H2,
+                                "jdbc:h2:mem:setup", "sa", "database-secret"),
+                        new TelemetryStoreConfiguration(TelemetryStoreKind.GREPTIME,
+                                "localhost:4001", "http://localhost:4000", "public", null, null)));
     }
 }

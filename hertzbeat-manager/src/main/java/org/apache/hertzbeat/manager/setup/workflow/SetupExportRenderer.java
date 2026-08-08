@@ -26,93 +26,172 @@ import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_PASSWORD;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_USERNAME;
 
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Objects;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportFormat;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportRequest;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
-import org.apache.hertzbeat.manager.setup.config.ExternalConfigExportArtifact;
-import org.apache.hertzbeat.manager.setup.config.SensitiveExportContent;
 
-/** Renders the frozen export formats entirely in memory without writing setup secrets to disk. */
+/** Incrementally writes frozen external configuration formats without retaining a rendered body. */
 public final class SetupExportRenderer {
 
-    public ExternalConfigExportArtifact render(ExportRequest request, ExportResponse metadata) {
-        String content = switch (request.format()) {
-            case YAML -> yaml(request.configuration());
-            case ENV -> environment(request.configuration());
-            case KUBERNETES_SECRET -> kubernetesSecret(request.configuration());
-        };
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        try {
-            return new ExternalConfigExportArtifact(metadata.fileName(), metadata.mediaType(),
-                    SensitiveExportContent.of(bytes));
-        } finally {
-            Arrays.fill(bytes, (byte) 0);
+    public void write(ExportRequest request, OutputStream output) throws IOException {
+        Objects.requireNonNull(request, "request");
+        Objects.requireNonNull(output, "output");
+        switch (request.format()) {
+            case YAML -> writeYaml(request.configuration(), output);
+            case ENV -> writeEnvironment(request.configuration(), output);
+            case KUBERNETES_SECRET -> writeKubernetesSecret(request.configuration(), output);
+            default -> throw new IllegalArgumentException("Unsupported export format");
         }
+        output.flush();
     }
 
-    private static String yaml(ConfigurationRequest request) {
+    private static void writeYaml(ConfigurationRequest request, OutputStream output) throws IOException {
         var metadata = request.managementDatabase();
         var telemetry = request.telemetryStore();
-        StringBuilder output = new StringBuilder();
-        yaml(output, DATASOURCE_URL, metadata.jdbcUrl());
-        yaml(output, DATASOURCE_USERNAME, metadata.username());
-        yaml(output, DATASOURCE_PASSWORD, metadata.password());
-        yaml(output, GREPTIME_GRPC, telemetry.grpcEndpoints());
-        yaml(output, GREPTIME_HTTP, telemetry.httpEndpoint());
-        yaml(output, GREPTIME_DATABASE, telemetry.database());
+        Writer writer = utf8Writer(output);
+        writeYamlEntry(writer, DATASOURCE_URL, metadata.jdbcUrl());
+        writeYamlEntry(writer, DATASOURCE_USERNAME, metadata.username());
+        writeYamlEntry(writer, DATASOURCE_PASSWORD, metadata.password());
+        writeYamlEntry(writer, GREPTIME_GRPC, telemetry.grpcEndpoints());
+        writeYamlEntry(writer, GREPTIME_HTTP, telemetry.httpEndpoint());
+        writeYamlEntry(writer, GREPTIME_DATABASE, telemetry.database());
         if (telemetry.username() != null) {
-            yaml(output, GREPTIME_USERNAME, telemetry.username());
-            yaml(output, GREPTIME_PASSWORD, telemetry.password());
+            writeYamlEntry(writer, GREPTIME_USERNAME, telemetry.username());
+            writeYamlEntry(writer, GREPTIME_PASSWORD, telemetry.password());
         }
-        return output.toString();
+        writer.flush();
     }
 
-    private static String environment(ConfigurationRequest request) {
+    private static void writeEnvironment(ConfigurationRequest request, OutputStream output) throws IOException {
         var metadata = request.managementDatabase();
         var telemetry = request.telemetryStore();
-        StringBuilder output = new StringBuilder();
-        env(output, "SPRING_DATASOURCE_URL", metadata.jdbcUrl());
-        env(output, "SPRING_DATASOURCE_USERNAME", metadata.username());
-        env(output, "SPRING_DATASOURCE_PASSWORD", metadata.password());
-        env(output, "WAREHOUSE_STORE_GREPTIME_GRPC_ENDPOINTS", telemetry.grpcEndpoints());
-        env(output, "WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT", telemetry.httpEndpoint());
-        env(output, "WAREHOUSE_STORE_GREPTIME_DATABASE", telemetry.database());
+        Writer writer = utf8Writer(output);
+        writeEnvironmentEntry(writer, "SPRING_DATASOURCE_URL", metadata.jdbcUrl());
+        writeEnvironmentEntry(writer, "SPRING_DATASOURCE_USERNAME", metadata.username());
+        writeEnvironmentEntry(writer, "SPRING_DATASOURCE_PASSWORD", metadata.password());
+        writeEnvironmentEntry(writer, "WAREHOUSE_STORE_GREPTIME_GRPC_ENDPOINTS", telemetry.grpcEndpoints());
+        writeEnvironmentEntry(writer, "WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT", telemetry.httpEndpoint());
+        writeEnvironmentEntry(writer, "WAREHOUSE_STORE_GREPTIME_DATABASE", telemetry.database());
         if (telemetry.username() != null) {
-            env(output, "WAREHOUSE_STORE_GREPTIME_USERNAME", telemetry.username());
-            env(output, "WAREHOUSE_STORE_GREPTIME_PASSWORD", telemetry.password());
+            writeEnvironmentEntry(writer, "WAREHOUSE_STORE_GREPTIME_USERNAME", telemetry.username());
+            writeEnvironmentEntry(writer, "WAREHOUSE_STORE_GREPTIME_PASSWORD", telemetry.password());
         }
-        return output.toString();
+        writer.flush();
     }
 
-    private static String kubernetesSecret(ConfigurationRequest request) {
-        StringBuilder output = new StringBuilder("apiVersion: v1\nkind: Secret\nmetadata:\n"
-                + "  name: hertzbeat-setup\ntype: Opaque\ndata:\n");
-        data(output, "managed-application.yml", yaml(request));
-        data(output, "managed-setup.env", environment(request));
-        return output.toString();
+    private static void writeKubernetesSecret(ConfigurationRequest request, OutputStream output) throws IOException {
+        Writer writer = utf8Writer(output);
+        writer.write("apiVersion: v1\nkind: Secret\nmetadata:\n  name: hertzbeat-setup\ntype: Opaque\ndata:\n");
+        writer.write("  managed-application.yml: ");
+        writer.flush();
+        writeBase64(request, ExportFormat.YAML, output);
+        writer.write("\n  managed-setup.env: ");
+        writer.flush();
+        writeBase64(request, ExportFormat.ENV, output);
+        writer.write('\n');
+        writer.flush();
     }
 
-    private static void yaml(StringBuilder output, String key, String value) {
-        output.append(key).append(": '").append(value.replace("'", "''")).append("'\n");
-    }
-
-    private static void env(StringBuilder output, String key, String value) {
-        output.append(key).append('=').append(environmentValue(value)).append('\n');
-    }
-
-    private static String environmentValue(String value) {
-        if (value.matches("[A-Za-z0-9_./:@+\\-]*")) {
-            return value;
+    private static void writeBase64(
+            ConfigurationRequest request, ExportFormat format, OutputStream output) throws IOException {
+        OutputStream encoded = Base64.getEncoder().wrap(new CloseShieldOutputStream(output));
+        if (format == ExportFormat.YAML) {
+            writeYaml(request, encoded);
+        } else {
+            writeEnvironment(request, encoded);
         }
-        return "'" + value.replace("'", "'\"'\"'") + "'";
+        encoded.close();
     }
 
-    private static void data(StringBuilder output, String key, String value) {
-        output.append("  ").append(key).append(": ").append(Base64.getEncoder()
-                .encodeToString(value.getBytes(StandardCharsets.UTF_8))).append('\n');
+    private static void writeYamlEntry(Writer writer, String key, String value) throws IOException {
+        writer.write(key);
+        writer.write(": '");
+        writeDynamicValue(writer, value, "''");
+        writer.write("'\n");
     }
 
+    private static void writeEnvironmentEntry(Writer writer, String key, String value) throws IOException {
+        writer.write(key);
+        writer.write('=');
+        if (isSafeEnvironmentValue(value)) {
+            writeDynamicValue(writer, value, null);
+        } else {
+            writer.write('\'');
+            writeDynamicValue(writer, value, "'\"'\"'");
+            writer.write('\'');
+        }
+        writer.write('\n');
+    }
+
+    private static void writeDynamicValue(
+            Writer writer, String value, String apostropheEscape) throws IOException {
+        // Setup export is a one-time path; per-code-point flushes bound secret residency in encoder buffers.
+        for (int index = 0; index < value.length();) {
+            char current = value.charAt(index);
+            if (current == '\'' && apostropheEscape != null) {
+                writer.write(apostropheEscape);
+                index++;
+            } else if (Character.isHighSurrogate(current) && index + 1 < value.length()
+                    && Character.isLowSurrogate(value.charAt(index + 1))) {
+                writer.write(value, index, 2);
+                index += 2;
+            } else if (Character.isSurrogate(current)) {
+                writer.write('?');
+                index++;
+            } else {
+                writer.write(current);
+                index++;
+            }
+            writer.flush();
+        }
+    }
+
+    private static boolean isSafeEnvironmentValue(String value) {
+        for (int index = 0; index < value.length(); index++) {
+            char current = value.charAt(index);
+            if (!(current >= 'A' && current <= 'Z') && !(current >= 'a' && current <= 'z')
+                    && !(current >= '0' && current <= '9') && "_./:@+-".indexOf(current) < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Writer utf8Writer(OutputStream output) {
+        return new OutputStreamWriter(new DeferredFlushOutputStream(output), StandardCharsets.UTF_8);
+    }
+
+    /** Drains the UTF-8 encoder without turning every secret code point into a servlet flush. */
+    private static final class DeferredFlushOutputStream extends FilterOutputStream {
+
+        private DeferredFlushOutputStream(OutputStream output) {
+            super(output);
+        }
+
+        @Override
+        public void flush() {
+            // The top-level renderer owns the single caller-visible flush.
+        }
+    }
+
+    /** Lets a Base64 wrapper finalize padding without owning the caller's response stream. */
+    private static final class CloseShieldOutputStream extends FilterOutputStream {
+
+        private CloseShieldOutputStream(OutputStream output) {
+            super(output);
+        }
+
+        @Override
+        public void close() {
+            // Base64 padding is already written before close reaches this shield.
+        }
+    }
 }

@@ -567,6 +567,16 @@ public final class SetupApiContract {
 
     /** Safe download metadata. Secret-bearing content is written only as a no-store attachment. */
     public record ExportResponse(@NotBlank String fileName, @NotBlank String mediaType) {
+
+        public ExportResponse {
+            if (fileName == null || !fileName.matches("[A-Za-z0-9._-]+")) {
+                throw new IllegalArgumentException("Export filename is unsafe");
+            }
+            if (mediaType == null || mediaType.isBlank() || mediaType.indexOf('\\') >= 0
+                    || mediaType.indexOf('\r') >= 0 || mediaType.indexOf('\n') >= 0) {
+                throw new IllegalArgumentException("Export media type is unsafe");
+            }
+        }
     }
 
     /** Setup completion acknowledgement. */
