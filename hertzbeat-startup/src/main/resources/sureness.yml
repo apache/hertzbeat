@@ -165,6 +165,8 @@ resourceRole:
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
+  # Setup has its own runtime gate, remote-unlock proof, and permanent completion closure.
+  - /api/setup/**===*
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post

@@ -22,11 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
+import org.apache.hertzbeat.manager.setup.workflow.SetupRuntimeState;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
 class StartupRuntimeBoundaryContextTest {
@@ -46,6 +55,52 @@ class StartupRuntimeBoundaryContextTest {
             "greptimeDbDataStorage", "victoriaMetricsDataStorage", "victoriaMetricsClusterDataStorage",
             "questdbDataStorage"
     };
+
+    @TempDir
+    Path installationRoot;
+
+    @Test
+    void fullGatedSurenessChainKeepsSetupReachableAndBusinessRoutesClosed() throws Exception {
+        SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
+        StartupDecision decision = new StartupDecision(
+                RuntimeMode.FULL_SETUP_GATED, SetupPhase.ADMINISTRATOR_REQUIRED, null);
+        String databaseName = "m5_setup_security_" + System.nanoTime();
+        try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision, new String[]{
+                "--spring.profiles.active=test",
+                "--server.port=0",
+                "--spring.datasource.url=jdbc:h2:mem:" + databaseName + ";MODE=MYSQL;DB_CLOSE_DELAY=-1",
+                "--spring.flyway.enabled=false",
+                "--hertzbeat.installation.root=" + installationRoot,
+                "--warehouse.store.duckdb.enabled=false",
+                "--warehouse.store.greptime.enabled=false",
+                "--hertzbeat.runtime.mode=normal"
+        }, SETUP_RUNTIME_TRANSITION);
+             HttpClient client = HttpClient.newHttpClient()) {
+            int port = ((WebServerApplicationContext) context).getWebServer().getPort();
+
+            HttpResponse<String> status = client.send(
+                    request(port, "/api/setup/status").GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, status.statusCode());
+            assertEquals("administrator_required", JsonUtil.fromJson(status.body()).path("phase").asText());
+
+            HttpResponse<String> business = client.send(
+                    request(port, "/api/monitors").GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(503, business.statusCode());
+            assertEquals("setup_not_complete", JsonUtil.fromJson(business.body()).path("msg").asText());
+
+            SetupRuntimeState state = context.getBean(SetupRuntimeState.class);
+            state.administratorCreated("admin");
+            state.complete();
+            HttpResponse<String> completedWrite = client.send(request(port, "/api/setup/administrator")
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(
+                                    "{\"username\":\"admin\",\"password\":\"not-retained\"}"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(410, completedWrite.statusCode());
+            assertEquals("setup_complete", JsonUtil.fromJson(completedWrite.body()).path("errorCode").asText());
+        }
+    }
 
     @Test
     void realFullApplicationStartsGatedWithoutBusinessSideEffectsOrCliBypass() {
@@ -111,5 +166,9 @@ class StartupRuntimeBoundaryContextTest {
             assertFalse(context.containsBeanDefinition("warehouseAutoConfiguration"));
             assertFalse(context.containsBeanDefinition("otlpGrpcServerConfig"));
         }
+    }
+
+    private static HttpRequest.Builder request(int port, String path) {
+        return HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path));
     }
 }
