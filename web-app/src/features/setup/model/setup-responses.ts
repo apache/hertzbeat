@@ -33,3 +33,8 @@ export type SetupErrorResponse = {
   errorCode: SetupErrorCode;
   observedAt: string;
 };
+
+export type SetupAdministratorResponse = {
+  username: string;
+  phase: 'optional_configuration';
+};

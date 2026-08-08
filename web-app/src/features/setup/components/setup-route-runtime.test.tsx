@@ -1,13 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initializeI18n } from '@/core/i18n/i18n';
 import { AppProviders } from '@/app/providers';
 
-const api = vi.hoisted(() => ({ loadSetupStatus: vi.fn() }));
+const api = vi.hoisted(() => ({ loadSetupStatus: vi.fn(), createSetupAdministrator: vi.fn() }));
 vi.mock('../api/setup-api', async importOriginal => ({ ...(await importOriginal()), ...api }));
 
 import { SetupRequestError } from '../api/setup-api';
@@ -25,6 +25,8 @@ describe('SetupRouteBoundary', () => {
   afterEach(() => {
     cleanup();
     productMount.mockClear();
+    api.loadSetupStatus.mockReset();
+    api.createSetupAdministrator.mockReset();
   });
 
   it('redirects incomplete product entry to setup without mounting the product runtime', () => {
@@ -73,7 +75,29 @@ describe('SetupRouteBoundary', () => {
     expect(await screen.findByText(/starting with the new configuration/i)).toBeInTheDocument();
     expect(await screen.findByText(/last verified setup status remains visible/i)).toBeInTheDocument();
     await waitFor(() => expect(api.loadSetupStatus).toHaveBeenCalledTimes(3), { timeout: 2_000 });
-    expect(await screen.findByRole('heading', { name: 'Administrator setup' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Create the first administrator' })).toBeInTheDocument();
+  });
+
+  it('creates the administrator and advances the real runtime to optional configuration', async () => {
+    api.loadSetupStatus
+      .mockResolvedValueOnce(setupStatus('administrator_required', 'local'))
+      .mockResolvedValueOnce(setupStatus('optional_configuration', 'local'));
+    api.createSetupAdministrator.mockResolvedValue({ username: 'operator', phase: 'optional_configuration' });
+    renderRuntime();
+
+    fireEvent.change(await screen.findByLabelText('Username'), { target: { value: 'operator' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'request-secret' } });
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'request-secret' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create administrator' }));
+
+    await waitFor(() =>
+      expect(api.createSetupAdministrator).toHaveBeenCalledWith(
+        { username: 'operator', password: 'request-secret' },
+        expect.any(AbortSignal)
+      )
+    );
+    expect(await screen.findByRole('heading', { name: 'Optional configuration' })).toBeInTheDocument();
+    expect(api.loadSetupStatus).toHaveBeenCalledTimes(2);
   });
 });
 

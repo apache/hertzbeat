@@ -2916,6 +2916,19 @@
       "readyTitle": "已确认设置访问权限",
       "readyDescription": "服务器已准备好进行下一步设置。"
     },
+    "administrator": {
+      "title": "创建首个管理员",
+      "description": "创建用于完成设置的本地管理员账户。密码只会随本次请求发送。",
+      "username": "用户名",
+      "password": "密码",
+      "confirmPassword": "确认密码",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "create": "创建管理员",
+      "alreadyConfigured": "管理员已配置。继续前请刷新设置状态。",
+      "usernameInvalid": "管理员用户名无效。请检查后重试。",
+      "setupLocked": "设置访问已锁定。请先解锁，再创建管理员。",
+      "createFailed": "无法确认管理员是否已创建。请先刷新设置状态，再重试。"
+    },
     "steps": {
       "administrator": { "title": "管理员设置", "pending": "数据服务已就绪。下一步是配置管理员账户。" },
       "optional": { "title": "可选配置", "pending": "管理员设置已完成。下一步是可选服务器设置。" }

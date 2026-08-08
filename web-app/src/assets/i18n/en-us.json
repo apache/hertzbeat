@@ -2931,6 +2931,19 @@
       "readyTitle": "Setup access confirmed",
       "readyDescription": "The server is ready for the next setup step."
     },
+    "administrator": {
+      "title": "Create the first administrator",
+      "description": "Create the local administrator account used to finish setup. The password is sent only with this request.",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords do not match.",
+      "create": "Create administrator",
+      "alreadyConfigured": "An administrator is already configured. Refresh setup status before continuing.",
+      "usernameInvalid": "The administrator username is not valid. Review it and try again.",
+      "setupLocked": "Setup access is locked. Unlock setup before creating the administrator.",
+      "createFailed": "Could not confirm whether the administrator was created. Refresh setup status before trying again."
+    },
     "steps": {
       "administrator": {
         "title": "Administrator setup",

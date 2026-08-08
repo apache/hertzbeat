@@ -2935,6 +2935,19 @@
       "readyTitle": "Acesso à configuração confirmado",
       "readyDescription": "O servidor está pronto para a próxima etapa da configuração."
     },
+    "administrator": {
+      "title": "Criar o primeiro administrador",
+      "description": "Crie a conta de administrador local usada para concluir a configuração. A senha é enviada somente nesta solicitação.",
+      "username": "Usuário",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "passwordMismatch": "As senhas não coincidem.",
+      "create": "Criar administrador",
+      "alreadyConfigured": "Um administrador já está configurado. Atualize o status da configuração antes de continuar.",
+      "usernameInvalid": "O nome de usuário do administrador não é válido. Revise e tente novamente.",
+      "setupLocked": "O acesso à configuração está bloqueado. Desbloqueie antes de criar o administrador.",
+      "createFailed": "Não foi possível confirmar se o administrador foi criado. Atualize o status da configuração antes de tentar novamente."
+    },
     "steps": {
       "administrator": {
         "title": "Configuração do administrador",

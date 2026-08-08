@@ -2916,6 +2916,19 @@
       "readyTitle": "已確認設定存取權限",
       "readyDescription": "伺服器已準備好進行下一個設定步驟。"
     },
+    "administrator": {
+      "title": "建立首個管理員",
+      "description": "建立用於完成設定的本機管理員帳戶。密碼只會隨本次請求傳送。",
+      "username": "使用者名稱",
+      "password": "密碼",
+      "confirmPassword": "確認密碼",
+      "passwordMismatch": "兩次輸入的密碼不一致。",
+      "create": "建立管理員",
+      "alreadyConfigured": "管理員已設定。繼續前請重新整理設定狀態。",
+      "usernameInvalid": "管理員使用者名稱無效。請檢查後重試。",
+      "setupLocked": "設定存取已鎖定。請先解除鎖定，再建立管理員。",
+      "createFailed": "無法確認管理員是否已建立。請先重新整理設定狀態，再重試。"
+    },
     "steps": {
       "administrator": { "title": "管理員設定", "pending": "資料服務已就緒。下一步是設定管理員帳戶。" },
       "optional": { "title": "選填設定", "pending": "管理員設定已完成。下一步是選填伺服器設定。" }

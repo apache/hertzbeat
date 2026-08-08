@@ -3,12 +3,14 @@
 import { apiFetch } from '@/core/http/http-client';
 
 import type { SetupErrorCode } from '../model/setup-contract';
+import type { SetupAdministratorRequest } from '../model/setup-administrator';
 import type {
   SetupConfigurationRequest,
   SetupExportRequest,
   SetupValidationRequest
 } from '../model/setup-configuration';
 import { parseSetupUnlockResponse } from './setup-access-schema';
+import { parseAdministratorResponse } from './setup-administrator-schema';
 import { parseConfigurationResponse, parseValidationResponse } from './setup-configuration-schema';
 import { parseSetupOperation } from './setup-operation-schema';
 import { parseSetupError, parseSetupStatus } from './setup-schema';
@@ -19,6 +21,7 @@ export const setupApiPaths = {
   operation: (operationId: string) => `/api/setup/operations/${encodeURIComponent(operationId)}`,
   validate: '/api/setup/validate',
   configuration: '/api/setup/configuration',
+  administrator: '/api/setup/administrator',
   export: '/api/setup/export'
 };
 
@@ -54,6 +57,11 @@ export async function validateSetupSection(value: SetupValidationRequest, signal
 export async function configureSetup(value: SetupConfigurationRequest, signal?: AbortSignal) {
   const response = await request(setupApiPaths.configuration, post(value, signal));
   return parseConfigurationResponse(await responseJson(response));
+}
+
+export async function createSetupAdministrator(value: SetupAdministratorRequest, signal?: AbortSignal) {
+  const response = await request(setupApiPaths.administrator, post(value, signal));
+  return parseAdministratorResponse(await responseJson(response));
 }
 
 export type SetupExportArtifact = { blob: Blob; fileName: string; mediaType: string };
@@ -112,7 +120,7 @@ function withSignal(options: RequestInit, signal?: AbortSignal): RequestInit {
 }
 
 function post(
-  body: SetupValidationRequest | SetupConfigurationRequest | SetupExportRequest,
+  body: SetupValidationRequest | SetupConfigurationRequest | SetupExportRequest | SetupAdministratorRequest,
   signal?: AbortSignal
 ): RequestInit {
   return {

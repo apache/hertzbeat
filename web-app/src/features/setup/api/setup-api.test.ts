@@ -7,6 +7,7 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
   configureSetup,
+  createSetupAdministrator,
   exportSetupConfiguration,
   loadSetupOperation,
   loadSetupStatus,
@@ -107,6 +108,22 @@ describe('setup API', () => {
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(configuration)
+    });
+  });
+
+  it('creates the first administrator with the exact no-store contract', async () => {
+    apiFetch.mockResolvedValue(jsonResponse({ username: 'operator', phase: 'optional_configuration' }));
+
+    await expect(createSetupAdministrator({ username: 'operator', password: 'request-secret' })).resolves.toEqual({
+      username: 'operator',
+      phase: 'optional_configuration'
+    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/setup/administrator', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'operator', password: 'request-secret' })
     });
   });
 

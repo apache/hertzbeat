@@ -64,13 +64,10 @@ describe('SetupPage access gate', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Setup service is unavailable. Try again.');
   });
 
-  it.each([
-    ['administrator_required', 'Administrator setup'],
-    ['optional_configuration', 'Optional configuration']
-  ] as const)('routes %s away from the database configuration form', (phase, heading) => {
+  it('routes administrator_required to the first-administrator form', () => {
     route.useSetupRouteContext.mockReturnValue({
       state: 'ready',
-      status: statusFixture(phase),
+      status: statusFixture('administrator_required'),
       retry: vi.fn()
     });
 
@@ -80,8 +77,27 @@ describe('SetupPage access gate', () => {
       </AppProviders>
     );
 
-    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Create the first administrator' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument();
+    expect(configuration.useSetupConfigurationController).not.toHaveBeenCalled();
+  });
+
+  it('routes optional_configuration away from the database and administrator forms', () => {
+    route.useSetupRouteContext.mockReturnValue({
+      state: 'ready',
+      status: statusFixture('optional_configuration'),
+      retry: vi.fn()
+    });
+
+    render(
+      <AppProviders>
+        <SetupPage />
+      </AppProviders>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Optional configuration' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connect data services' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Create the first administrator' })).not.toBeInTheDocument();
     expect(configuration.useSetupConfigurationController).not.toHaveBeenCalled();
   });
 });
