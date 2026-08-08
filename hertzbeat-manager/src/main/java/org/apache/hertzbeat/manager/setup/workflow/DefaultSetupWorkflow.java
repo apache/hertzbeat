@@ -27,7 +27,6 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResp
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OperationResponse;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
@@ -37,10 +36,8 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.UnlockRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.UnlockResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.api.SetupWorkflow;
-import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
 import org.springframework.http.HttpStatus;
 
 /** Cohesive setup state-machine facade; transport and persistence remain in dedicated collaborators. */
@@ -48,19 +45,17 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     private final SetupRuntimeState state;
     private final SetupRequestValidator validator;
     private final SetupOperationRegistry operations;
-    private final SetupOptionsCoordinator options;
     private final Clock clock;
     private final SetupMutationSerializer mutations;
     private final SetupTransitionService transitions;
 
     public DefaultSetupWorkflow(SetupRuntimeState state, SetupRequestValidator validator,
                                 SetupOperationRegistry operations,
-                                SetupOptionsCoordinator options, Clock clock, SetupMutationSerializer mutations,
+                                Clock clock, SetupMutationSerializer mutations,
                                 SetupTransitionService transitions) {
         this.state = state;
         this.validator = validator;
         this.operations = operations;
-        this.options = options;
         this.clock = clock;
         this.mutations = mutations;
         this.transitions = transitions;
@@ -114,30 +109,7 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     }
 
     private OptionsResponse configureOptionsMutation(OptionsRequest request) {
-        requireWritable();
-        state.ensurePhase(SetupPhase.OPTIONAL_CONFIGURATION);
-        if (request.serverInstrumentation() != null) {
-            requireValid(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                    null, null, request.serverInstrumentation(), null));
-        }
-        if (request.mail() != null) {
-            requireValid(new ValidateRequest(ValidationSection.MAIL,
-                    null, null, null, request.mail()));
-        }
-        options.persist(request);
-        OptionalConfigurationSummary summary = new OptionalConfigurationSummary(
-                request.serverInstrumentation() != null
-                        && ServerInstrumentationSettings.normalize(
-                        request.serverInstrumentation().serverOtlpHttpEndpoint()).isPresent(),
-                request.serverInstrumentation() != null
-                        && ServerInstrumentationSettings.normalize(
-                        request.serverInstrumentation().serverOtlpGrpcEndpoint()).isPresent(),
-                request.retention() != null, request.mail() != null);
-        state.optionsConfigured(summary,
-                SetupWarningPolicy.INSTANCE.evaluate(state.managementDatabaseKind(), request));
-        return new OptionsResponse(summary.serverOtlpHttpConfigured(), summary.serverOtlpGrpcConfigured(),
-                summary.retentionConfigured(), summary.mailConfigured(),
-                SetupPhase.OPTIONAL_CONFIGURATION);
+        return transitions.configureOptions(request);
     }
 
     @Override
@@ -163,13 +135,6 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     private void requireWritable() {
         if (state.phase() == SetupPhase.COMPLETE) {
             throw new SetupApiException(SetupErrorCode.SETUP_COMPLETE, HttpStatus.GONE);
-        }
-    }
-
-    private void requireValid(ValidateRequest request) {
-        ValidationResponse response = validator.validate(request);
-        if (!response.valid()) {
-            throw new SetupApiException(response.errorCode(), HttpStatus.BAD_REQUEST);
         }
     }
 

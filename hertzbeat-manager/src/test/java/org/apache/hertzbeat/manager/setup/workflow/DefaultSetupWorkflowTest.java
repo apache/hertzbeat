@@ -240,9 +240,9 @@ class DefaultSetupWorkflowTest {
             Optional<SetupCompletionCoordinator> completion, SetupOptionsCoordinator options,
             Clock clock, SetupMutationSerializer mutations) {
         SetupTransitionService transitions = new SetupTransitionService(
-                state, validator, configuration, capability, identities, completion);
+                state, validator, configuration, capability, options, identities, completion);
         return new DefaultSetupWorkflow(state, validator, operations,
-                options, clock, mutations, transitions);
+                clock, mutations, transitions);
     }
 
     private static HeadlessSetupCoordinator headless(
@@ -251,7 +251,8 @@ class DefaultSetupWorkflowTest {
             Optional<IdentityInitializationService> identities,
             Optional<SetupCompletionCoordinator> completion, SetupMutationSerializer mutations) {
         SetupTransitionService transitions = new SetupTransitionService(
-                state, validator, configuration, capability, identities, completion);
+                state, validator, configuration, capability,
+                mock(SetupOptionsCoordinator.class), identities, completion);
         return new HeadlessSetupCoordinator(state, mutations, transitions);
     }
 }

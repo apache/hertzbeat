@@ -46,6 +46,7 @@ class HeadlessSetupCoordinatorTest {
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
         SetupTransitionService transitions = new SetupTransitionService(state,
                 mock(SetupRequestValidator.class), mock(SetupConfigurationCoordinator.class), capability,
+                mock(SetupOptionsCoordinator.class),
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion));
         HeadlessSetupCoordinator coordinator = new HeadlessSetupCoordinator(
                 state, new SetupMutationSerializer(), transitions);

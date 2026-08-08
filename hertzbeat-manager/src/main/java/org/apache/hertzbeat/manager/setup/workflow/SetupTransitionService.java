@@ -14,6 +14,8 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequ
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.CompleteRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResponse;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
@@ -34,17 +36,20 @@ public final class SetupTransitionService {
     private final SetupRequestValidator validator;
     private final SetupConfigurationCoordinator configuration;
     private final ManagedConfigCapability capability;
+    private final SetupOptionsCoordinator options;
     private final Optional<IdentityInitializationService> identities;
     private final Optional<SetupCompletionCoordinator> completion;
 
     public SetupTransitionService(SetupRuntimeState state, SetupRequestValidator validator,
                                   SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
+                                  SetupOptionsCoordinator options,
                                   Optional<IdentityInitializationService> identities,
                                   Optional<SetupCompletionCoordinator> completion) {
         this.state = state;
         this.validator = validator;
         this.configuration = configuration;
         this.capability = capability;
+        this.options = options;
         this.identities = identities;
         this.completion = completion;
     }
@@ -81,6 +86,24 @@ public final class SetupTransitionService {
             state.administratorCreated(canonicalUsername);
             return canonicalUsername;
         }
+    }
+
+    public OptionsResponse configureOptions(OptionsRequest request) {
+        requireWritable();
+        state.ensurePhase(SetupPhase.OPTIONAL_CONFIGURATION);
+        if (request.serverInstrumentation() != null) {
+            requireValid(validator, new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                    null, null, request.serverInstrumentation(), null));
+        }
+        if (request.mail() != null) {
+            requireValid(validator, new ValidateRequest(ValidationSection.MAIL,
+                    null, null, null, request.mail()));
+        }
+        options.persist(request);
+        OptionalConfigurationProjection projection = OptionalConfigurationProjection.from(
+                state.managementDatabaseKind(), request);
+        state.optionsConfigured(projection.summary(), projection.warnings());
+        return projection.response();
     }
 
     public String complete(CompletionCommand command) {

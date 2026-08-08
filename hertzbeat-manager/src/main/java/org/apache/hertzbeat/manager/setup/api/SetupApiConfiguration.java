@@ -134,24 +134,30 @@ public class SetupApiConfiguration {
     }
 
     @Bean
+    public SetupOptionsCoordinator setupOptionsCoordinator(Environment environment) {
+        return new SetupOptionsCoordinator(new ManagedConfigurationTransaction(
+                SetupInstallationPaths.root(environment)));
+    }
+
+    @Bean
     public SetupTransitionService setupTransitionService(
             SetupRuntimeState state, SetupRequestValidator validator,
             SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
+            SetupOptionsCoordinator options,
             ObjectProvider<IdentityInitializationService> identityProvider,
             ObjectProvider<InstallationCompletionService> installationProvider, Environment environment) {
-        return new SetupTransitionService(state, validator, configuration, capability,
+        return new SetupTransitionService(state, validator, configuration, capability, options,
                 identityProvider.stream().findFirst(),
                 completion(environment, installationProvider.stream().findFirst()));
     }
 
     @Bean
-    public DefaultSetupWorkflow setupWorkflow(Environment environment, SetupRuntimeState state,
+    public DefaultSetupWorkflow setupWorkflow(SetupRuntimeState state,
                                        SetupRequestValidator validator,
                                        SetupOperationRegistry operations,
                                        SetupMutationSerializer mutations, SetupTransitionService transitions) {
-        return new DefaultSetupWorkflow(state, validator, operations,
-                new SetupOptionsCoordinator(new ManagedConfigurationTransaction(
-                        SetupInstallationPaths.root(environment))), Clock.systemUTC(), mutations, transitions);
+        return new DefaultSetupWorkflow(
+                state, validator, operations, Clock.systemUTC(), mutations, transitions);
     }
 
     @Bean

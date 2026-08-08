@@ -10,6 +10,7 @@ package org.apache.hertzbeat.manager.setup.workflow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.doThrow;
@@ -25,16 +26,27 @@ import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.CompleteRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResponse;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
@@ -198,6 +210,92 @@ class SetupTransitionServiceTest {
     }
 
     @Test
+    void optionsRejectWrongPhaseBeforeValidationOrPersistence() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        SetupOptionsCoordinator options = mock(SetupOptionsCoordinator.class);
+        SetupTransitionService transitions = transitions(
+                state(capability, SetupPhase.ADMINISTRATOR_REQUIRED, false, null), validator,
+                mock(SetupConfigurationCoordinator.class), capability, options,
+                Optional.empty(), Optional.empty());
+
+        assertThatThrownBy(() -> transitions.configureOptions(optionsRequest()))
+                .isInstanceOf(SetupWorkflowConflict.class);
+
+        verifyNoInteractions(validator, options);
+    }
+
+    @Test
+    void serverInstrumentationValidationFailureDoesNotPersistOrPublishState() {
+        assertOptionsValidationFailure(new OptionsRequest(
+                new ServerInstrumentationConfiguration("not-an-endpoint", null), null, null),
+                ValidationSection.SERVER_INSTRUMENTATION, SetupErrorCode.SERVER_INSTRUMENTATION_INVALID);
+    }
+
+    @Test
+    void mailValidationFailureDoesNotPersistOrPublishState() {
+        assertOptionsValidationFailure(new OptionsRequest(null, null,
+                new MailConfiguration("mail.example.test", 25, MailSecurity.STARTTLS,
+                        null, null, "alerts@example.test")),
+                ValidationSection.MAIL, SetupErrorCode.MAIL_CONNECTION_FAILED);
+    }
+
+    @Test
+    void optionsPersistenceFailureDoesNotPublishSummaryOrWarnings() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupRuntimeState state = state(capability, SetupPhase.OPTIONAL_CONFIGURATION, true, "operator");
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        when(validator.validate(any(ValidateRequest.class)))
+                .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
+        SetupOptionsCoordinator options = mock(SetupOptionsCoordinator.class);
+        doThrow(new SetupApiException(SetupErrorCode.CONFIG_WRITE_FAILED,
+                org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)).when(options).persist(any());
+        SetupTransitionService transitions = transitions(state, validator,
+                mock(SetupConfigurationCoordinator.class), capability, options,
+                Optional.empty(), Optional.empty());
+        var before = state.status();
+
+        assertThatThrownBy(() -> transitions.configureOptions(optionsRequest()))
+                .isInstanceOf(SetupApiException.class);
+
+        assertThat(state.status().optional()).isEqualTo(before.optional());
+        assertThat(state.pendingWarnings()).isEqualTo(before.pendingWarnings());
+    }
+
+    @Test
+    void successfulOptionsNormalizeSummaryAndUseCurrentManagementDatabaseWarningPolicy() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupConfigurationProjection projection = new SetupConfigurationProjection(
+                new ManagementDatabaseSummary(MetadataDatabaseKind.POSTGRESQL, true,
+                        ConfigSource.UI_MANAGED, false),
+                new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true,
+                        ConfigSource.UI_MANAGED, false),
+                new OptionalConfigurationSummary(false, false, false, false), List.of());
+        SetupRuntimeState state = new SetupRuntimeState(CLOCK, capability,
+                SetupPhase.OPTIONAL_CONFIGURATION, SetupAccess.LOCAL, true, "operator", projection);
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        when(validator.validate(any(ValidateRequest.class)))
+                .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
+        SetupOptionsCoordinator options = mock(SetupOptionsCoordinator.class);
+        SetupTransitionService transitions = transitions(state, validator,
+                mock(SetupConfigurationCoordinator.class), capability, options,
+                Optional.empty(), Optional.empty());
+        OptionsRequest request = new OptionsRequest(
+                new ServerInstrumentationConfiguration("  ", "https://server.example.test:4317"), null,
+                new MailConfiguration("mail.example.test", 25, MailSecurity.NONE,
+                        null, null, "alerts@example.test"));
+
+        var response = transitions.configureOptions(request);
+
+        assertThat(response.serverOtlpHttpConfigured()).isFalse();
+        assertThat(response.serverOtlpGrpcConfigured()).isTrue();
+        assertThat(state.status().optional()).isEqualTo(
+                new OptionalConfigurationSummary(false, true, false, true));
+        assertThat(state.pendingWarnings()).containsExactly(SetupWarningCode.MAIL_SECURITY_NONE);
+        verify(options).persist(request);
+    }
+
+    @Test
     void browserAndHeadlessCompletionUseTheSameWarningGateAndCompletionSideEffect() {
         ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
@@ -223,7 +321,41 @@ class SetupTransitionServiceTest {
             SetupRuntimeState state, SetupRequestValidator validator,
             SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
             Optional<IdentityInitializationService> identities, Optional<SetupCompletionCoordinator> completion) {
-        return new SetupTransitionService(state, validator, configuration, capability, identities, completion);
+        return transitions(state, validator, configuration, capability,
+                mock(SetupOptionsCoordinator.class), identities, completion);
+    }
+
+    private static SetupTransitionService transitions(
+            SetupRuntimeState state, SetupRequestValidator validator,
+            SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
+            SetupOptionsCoordinator options, Optional<IdentityInitializationService> identities,
+            Optional<SetupCompletionCoordinator> completion) {
+        return new SetupTransitionService(
+                state, validator, configuration, capability, options, identities, completion);
+    }
+
+    private static void assertOptionsValidationFailure(
+            OptionsRequest request, ValidationSection section, SetupErrorCode errorCode) {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupRuntimeState state = state(capability, SetupPhase.OPTIONAL_CONFIGURATION, true, "operator");
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        when(validator.validate(any(ValidateRequest.class)))
+                .thenReturn(new ValidationResponse(false, CLOCK.instant(), errorCode, List.of()));
+        SetupOptionsCoordinator options = mock(SetupOptionsCoordinator.class);
+        SetupTransitionService transitions = transitions(state, validator,
+                mock(SetupConfigurationCoordinator.class), capability, options,
+                Optional.empty(), Optional.empty());
+        var before = state.status();
+
+        assertThatThrownBy(() -> transitions.configureOptions(request))
+                .isInstanceOfSatisfying(SetupApiException.class,
+                        failure -> assertThat(failure.errorCode()).isEqualTo(errorCode));
+
+        verifyNoInteractions(options);
+        verify(validator).validate(argThat(
+                (ValidateRequest validation) -> validation.section() == section));
+        assertThat(state.status().optional()).isEqualTo(before.optional());
+        assertThat(state.pendingWarnings()).isEqualTo(before.pendingWarnings());
     }
 
     private static SetupRuntimeState state(ManagedConfigCapability capability, SetupPhase phase,
@@ -246,6 +378,11 @@ class SetupTransitionServiceTest {
                 new MetadataDatabaseConfiguration(MetadataDatabaseKind.H2, "jdbc:h2:mem:browser", "sa", "secret"),
                 new TelemetryStoreConfiguration(TelemetryStoreKind.GREPTIME,
                         "localhost:4001", "http://localhost:4000", "public", null, null));
+    }
+
+    private static OptionsRequest optionsRequest() {
+        return new OptionsRequest(
+                new ServerInstrumentationConfiguration("https://server.example.test:4318", null), null, null);
     }
 
     private static HeadlessSetupWorkflow.RequiredConfiguration headlessConfiguration(SecretValue password) {
