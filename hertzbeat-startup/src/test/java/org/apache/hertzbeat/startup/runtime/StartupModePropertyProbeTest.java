@@ -27,14 +27,14 @@ class StartupModePropertyProbeTest {
 
     @Test
     void missingOverridePreservesNormalStartup() {
-        StartupDecision decision = new StartupModePropertyProbe().decide(new String[0], null, null);
+        StartupDecision decision = normalProbe().decide(new String[0], null, null);
 
         assertEquals(RuntimeMode.NORMAL, decision.mode());
     }
 
     @Test
     void systemPropertyTakesPrecedenceOverEnvironment() {
-        StartupDecision decision = new StartupModePropertyProbe().decide(
+        StartupDecision decision = normalProbe().decide(
                 new String[0], "full_setup_gated", "setup_only");
 
         assertEquals(RuntimeMode.FULL_SETUP_GATED, decision.mode());
@@ -42,14 +42,14 @@ class StartupModePropertyProbeTest {
 
     @Test
     void environmentSelectsSetupOnlyWhenSystemPropertyIsMissing() {
-        StartupDecision decision = new StartupModePropertyProbe().decide(new String[0], null, "setup_only");
+        StartupDecision decision = normalProbe().decide(new String[0], null, "setup_only");
 
         assertEquals(RuntimeMode.SETUP_ONLY, decision.mode());
     }
 
     @Test
     void invalidOverrideFailsClosedForCoordinatorRecovery() {
-        StartupModePropertyProbe probe = new StartupModePropertyProbe();
+        StartupModePropertyProbe probe = normalProbe();
 
         assertThrows(IllegalArgumentException.class,
                 () -> probe.decide(new String[0], "unsupported", null));
@@ -61,5 +61,9 @@ class StartupModePropertyProbeTest {
         StartupDecisionProbe fallback = ignored -> expected;
 
         assertEquals(expected, new StartupModePropertyProbe(fallback).decide(new String[0], null, null));
+    }
+
+    private static StartupModePropertyProbe normalProbe() {
+        return new StartupModePropertyProbe(ignored -> StartupDecision.normal());
     }
 }

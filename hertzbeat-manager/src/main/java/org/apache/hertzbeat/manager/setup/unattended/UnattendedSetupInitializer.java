@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
@@ -42,20 +43,15 @@ public final class UnattendedSetupInitializer {
     private final HeadlessSetupWorkflow workflow;
     private final Environment environment;
     private final SetupPasswordFileLoader passwords;
-    private final Optional<SetupRuntimeTransitionScheduler> transitions;
-
-    public UnattendedSetupInitializer(
-            HeadlessSetupWorkflow workflow, Environment environment, SetupPasswordFileLoader passwords) {
-        this(workflow, environment, passwords, Optional.empty());
-    }
+    private final SetupRuntimeTransitionScheduler transitions;
 
     public UnattendedSetupInitializer(HeadlessSetupWorkflow workflow, Environment environment,
                                       SetupPasswordFileLoader passwords,
-                                      Optional<SetupRuntimeTransitionScheduler> transitions) {
+                                      SetupRuntimeTransitionScheduler transitions) {
         this.workflow = workflow;
         this.environment = environment;
         this.passwords = passwords;
-        this.transitions = transitions;
+        this.transitions = Objects.requireNonNull(transitions, "transitions");
     }
 
     public void initialize() {
@@ -115,7 +111,7 @@ public final class UnattendedSetupInitializer {
                 new HeadlessSetupWorkflow.RequiredConfiguration(
                         status.phase(), status.applyMode(), metadata, telemetry));
         if (response.phase() == SetupPhase.APPLICATION_STARTING) {
-            transitions.ifPresent(SetupRuntimeTransitionScheduler::configurationApplied);
+            transitions.configurationApplied();
         }
     }
 
@@ -130,7 +126,7 @@ public final class UnattendedSetupInitializer {
 
     private void complete() {
         workflow.complete(acknowledgedWarnings());
-        transitions.ifPresent(SetupRuntimeTransitionScheduler::installationCompleted);
+        transitions.installationCompleted();
     }
 
     private List<SetupWarningCode> acknowledgedWarnings() {

@@ -170,7 +170,7 @@ public class SetupApiConfiguration {
     public ApplicationRunner unattendedSetupRunner(
             HeadlessSetupWorkflow workflow, Environment environment, SetupRuntimeTransitionScheduler scheduler) {
         UnattendedSetupInitializer initializer = new UnattendedSetupInitializer(
-                workflow, environment, new SetupPasswordFileLoader(), Optional.of(scheduler));
+                workflow, environment, new SetupPasswordFileLoader(), scheduler);
         return arguments -> initializer.initialize();
     }
 

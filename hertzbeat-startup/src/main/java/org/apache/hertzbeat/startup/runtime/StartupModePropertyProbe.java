@@ -28,10 +28,6 @@ public final class StartupModePropertyProbe implements StartupDecisionProbe {
 
     private final StartupDecisionProbe fallback;
 
-    public StartupModePropertyProbe() {
-        this(ignored -> StartupDecision.normal());
-    }
-
     public StartupModePropertyProbe(StartupDecisionProbe fallback) {
         this.fallback = Objects.requireNonNull(fallback, "fallback");
     }
