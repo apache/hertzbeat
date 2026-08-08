@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.setup.workflow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,12 +87,34 @@ class SetupConfigurationCoordinatorTest {
     }
 
     @Test
+    void externalApplyReentryReturnsFreshAcknowledgementWithoutPersistingSubmittedSecrets() {
+        SetupOperationRegistry operations = new SetupOperationRegistry(Clock.systemUTC());
+        SetupConfigurationCoordinator coordinator = new SetupConfigurationCoordinator(
+                new ManagedConfigurationTransaction(installationRoot), operations);
+        ManagedConfigCapability capability = new ManagedConfigCapability(
+                ApplyMode.EXTERNAL_APPLY, false, DeploymentConstraint.READ_ONLY);
+
+        var first = coordinator.configure(request(SetupPhase.CONFIGURATION_REQUIRED, ApplyMode.EXTERNAL_APPLY),
+                capability);
+        var replacement = coordinator.configure(
+                request(SetupPhase.EXTERNAL_APPLY_REQUIRED, ApplyMode.EXTERNAL_APPLY), capability);
+
+        assertNotEquals(first.operationId(), replacement.operationId());
+        assertEquals(SetupOperationState.AWAITING_EXTERNAL_APPLY, replacement.state());
+        assertEquals(SetupPhase.EXTERNAL_APPLY_REQUIRED, replacement.phase());
+        assertTrue(replacement.exportAvailable());
+        assertEquals(ManagedActiveConfigurationInspector.State.ABSENT,
+                new ManagedActiveConfigurationInspector(installationRoot).inspect().state());
+    }
+
+    @Test
     void headlessExternalApplyClosesTheCoordinatorOwnedSecretBundle() {
         SetupConfigurationCoordinator coordinator = new SetupConfigurationCoordinator(
                 new ManagedConfigurationTransaction(installationRoot),
                 new SetupOperationRegistry(Clock.systemUTC()));
         try (SecretValue callerPassword = SecretValue.of("metadata-password")) {
-            var request = new HeadlessSetupWorkflow.RequiredConfiguration(ApplyMode.EXTERNAL_APPLY,
+            var request = new HeadlessSetupWorkflow.RequiredConfiguration(SetupPhase.CONFIGURATION_REQUIRED,
+                    ApplyMode.EXTERNAL_APPLY,
                     new HeadlessSetupWorkflow.Metadata(MetadataDatabaseKind.H2,
                             "jdbc:h2:./data/setup", "sa", callerPassword),
                     new HeadlessSetupWorkflow.Telemetry("localhost:4001", "http://localhost:4000",
@@ -114,7 +137,11 @@ class SetupConfigurationCoordinatorTest {
     }
 
     private static ConfigurationRequest request(ApplyMode applyMode) {
-        return new ConfigurationRequest(SetupPhase.CONFIGURATION_REQUIRED, applyMode,
+        return request(SetupPhase.CONFIGURATION_REQUIRED, applyMode);
+    }
+
+    private static ConfigurationRequest request(SetupPhase expectedPhase, ApplyMode applyMode) {
+        return new ConfigurationRequest(expectedPhase, applyMode,
                 new MetadataDatabaseConfiguration(MetadataDatabaseKind.H2,
                         "jdbc:h2:./data/setup", "sa", "metadata-password"),
                 new TelemetryStoreConfiguration(TelemetryStoreKind.GREPTIME,

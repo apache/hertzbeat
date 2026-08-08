@@ -44,10 +44,11 @@ class HeadlessSetupCoordinatorTest {
                 List.of(SetupWarningCode.H2_NON_PRODUCTION,
                         SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT));
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
-        HeadlessSetupCoordinator coordinator = new HeadlessSetupCoordinator(state,
+        SetupTransitionService transitions = new SetupTransitionService(state,
                 mock(SetupRequestValidator.class), mock(SetupConfigurationCoordinator.class), capability,
-                Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion),
-                new SetupMutationSerializer());
+                Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion));
+        HeadlessSetupCoordinator coordinator = new HeadlessSetupCoordinator(
+                state, new SetupMutationSerializer(), transitions);
 
         assertThrows(SetupApiException.class,
                 () -> coordinator.complete(List.of(SetupWarningCode.H2_NON_PRODUCTION)));

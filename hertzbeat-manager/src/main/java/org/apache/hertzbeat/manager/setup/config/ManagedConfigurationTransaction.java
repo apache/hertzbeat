@@ -37,20 +37,31 @@ public final class ManagedConfigurationTransaction {
     private final ManagedSecretStore secretStore;
     private final Path lockFile;
     private final ManagedConfigurationRecovery recovery;
+    private final RecoveryFailureReporter reporter;
 
     /** Creates the production file transaction rooted at the HertzBeat installation. */
     public ManagedConfigurationTransaction(Path installationRoot) {
         this(new FileManagedApplicationConfigStore(installationRoot),
-                new FileManagedSecretStore(installationRoot), installationRoot);
+                new FileManagedSecretStore(installationRoot), installationRoot,
+                new LoggingRecoveryFailureReporter());
     }
 
     ManagedConfigurationTransaction(
             ManagedApplicationConfigStore applicationStore,
             ManagedSecretStore secretStore,
             Path installationRoot) {
+        this(applicationStore, secretStore, installationRoot, new LoggingRecoveryFailureReporter());
+    }
+
+    ManagedConfigurationTransaction(
+            ManagedApplicationConfigStore applicationStore,
+            ManagedSecretStore secretStore,
+            Path installationRoot,
+            RecoveryFailureReporter reporter) {
         this.applicationStore = Objects.requireNonNull(applicationStore, "applicationStore");
         this.secretStore = Objects.requireNonNull(secretStore, "secretStore");
-        this.recovery = new ManagedConfigurationRecovery(applicationStore, secretStore);
+        this.reporter = Objects.requireNonNull(reporter, "reporter");
+        this.recovery = new ManagedConfigurationRecovery(applicationStore, secretStore, reporter);
         Path root = Objects.requireNonNull(installationRoot, "installationRoot")
                 .toAbsolutePath().normalize();
         this.lockFile = root.resolve("data/config").resolve(LOCK_FILE);
@@ -103,14 +114,22 @@ public final class ManagedConfigurationTransaction {
             }
             try {
                 applicationStore.promoteCandidate(bundle.application(), generation);
-                secretStore.promoteCandidate(bundle.secrets(), generation);
-                if (!matchesExpectedActive(bundle, generation)) {
-                    return recovery.rollback(previousApplication, previousSecrets);
-                }
-                return Outcome.APPLIED;
-            } catch (IOException ignored) {
+            } catch (IOException failure) {
+                reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+                        RecoveryFailureReporter.Store.APPLICATION, failure);
                 return recovery.rollback(previousApplication, previousSecrets);
             }
+            try {
+                secretStore.promoteCandidate(bundle.secrets(), generation);
+            } catch (IOException failure) {
+                reporter.report(RecoveryFailureReporter.Stage.PROMOTE_CANDIDATE,
+                        RecoveryFailureReporter.Store.SECRET, failure);
+                return recovery.rollback(previousApplication, previousSecrets);
+            }
+            if (!matchesExpectedActive(bundle, generation)) {
+                return recovery.rollback(previousApplication, previousSecrets);
+            }
+            return Outcome.APPLIED;
         } finally {
             close(previousSecrets);
         }

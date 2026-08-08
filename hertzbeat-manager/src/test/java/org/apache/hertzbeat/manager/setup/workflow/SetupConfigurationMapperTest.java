@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,8 @@ class SetupConfigurationMapperTest {
     void headlessMappingCopiesCallerOwnedSecretsIntoCoordinatorOwnedBundle() {
         SecretValue metadata = SecretValue.of("metadata-secret");
         SecretValue telemetry = SecretValue.of("telemetry-secret");
-        var request = new HeadlessSetupWorkflow.RequiredConfiguration(ApplyMode.MANAGED_WRITE,
+        var request = new HeadlessSetupWorkflow.RequiredConfiguration(SetupPhase.CONFIGURATION_REQUIRED,
+                ApplyMode.MANAGED_WRITE,
                 new HeadlessSetupWorkflow.Metadata(MetadataDatabaseKind.H2,
                         "jdbc:h2:./data/setup", "sa", metadata),
                 new HeadlessSetupWorkflow.Telemetry("localhost:4001", "http://localhost:4000",

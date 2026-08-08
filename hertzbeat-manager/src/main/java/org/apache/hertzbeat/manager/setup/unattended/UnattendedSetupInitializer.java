@@ -112,7 +112,8 @@ public final class UnattendedSetupInitializer {
     private void configure(StatusResponse status, HeadlessSetupWorkflow.Metadata metadata,
                            HeadlessSetupWorkflow.Telemetry telemetry) {
         var response = workflow.configure(
-                new HeadlessSetupWorkflow.RequiredConfiguration(status.applyMode(), metadata, telemetry));
+                new HeadlessSetupWorkflow.RequiredConfiguration(
+                        status.phase(), status.applyMode(), metadata, telemetry));
         if (response.phase() == SetupPhase.APPLICATION_STARTING) {
             transitions.ifPresent(SetupRuntimeTransitionScheduler::configurationApplied);
         }

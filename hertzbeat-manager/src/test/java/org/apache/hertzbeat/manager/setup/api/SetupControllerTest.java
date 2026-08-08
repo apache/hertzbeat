@@ -37,6 +37,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabas
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.StatusResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
@@ -49,6 +50,7 @@ import org.apache.hertzbeat.manager.setup.workflow.SetupExportRenderer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -116,7 +118,7 @@ class SetupControllerTest {
         mvc.perform(post(SetupApiContract.UNLOCK_PATH).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$.errorCode").value("setup_code_invalid"));
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
     }
 
     @Test
@@ -151,8 +153,18 @@ class SetupControllerTest {
         mvc.perform(get(SetupApiContract.STATUS_PATH))
                 .andExpect(status().isInternalServerError())
                 .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$.errorCode").value("config_write_failed"))
+                .andExpect(jsonPath("$.errorCode").value("internal_error"))
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("database-secret"))));
+    }
+
+    @Test
+    void typedSetupFailureKeepsItsDomainErrorCode() throws Exception {
+        when(workflow.status()).thenThrow(
+                new SetupApiException(SetupErrorCode.CONFIG_READ_ONLY, HttpStatus.CONFLICT));
+
+        mvc.perform(get(SetupApiContract.STATUS_PATH))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("config_read_only"));
     }
 }

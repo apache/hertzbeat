@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.setup.api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.SetupUnlockRejected;
@@ -62,15 +61,13 @@ public class SetupExceptionHandler {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
-    public ResponseEntity<SetupErrorResponse> invalidRequest(Exception ignored, HttpServletRequest request) {
-        SetupErrorCode code = SetupApiContract.UNLOCK_PATH.equals(request.getRequestURI())
-                ? SetupErrorCode.SETUP_CODE_INVALID : SetupErrorCode.OPERATION_CONFLICT;
-        return response(HttpStatus.BAD_REQUEST, code);
+    public ResponseEntity<SetupErrorResponse> invalidRequest(Exception ignored) {
+        return response(HttpStatus.BAD_REQUEST, SetupErrorCode.INVALID_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<SetupErrorResponse> unexpectedFailure(Exception ignored) {
-        return response(HttpStatus.INTERNAL_SERVER_ERROR, SetupErrorCode.CONFIG_WRITE_FAILED);
+        return response(HttpStatus.INTERNAL_SERVER_ERROR, SetupErrorCode.INTERNAL_ERROR);
     }
 
     private ResponseEntity<SetupErrorResponse> response(HttpStatus status, SetupErrorCode code) {

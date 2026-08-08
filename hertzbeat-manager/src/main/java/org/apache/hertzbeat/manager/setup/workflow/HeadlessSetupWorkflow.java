@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.StatusResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
@@ -38,8 +39,10 @@ public interface HeadlessSetupWorkflow {
     void complete(List<SetupWarningCode> acknowledgedWarnings);
 
     /** Required managed configuration with secret values kept in clearable owners. */
-    record RequiredConfiguration(ApplyMode applyMode, Metadata metadata, Telemetry telemetry) {
+    record RequiredConfiguration(SetupPhase expectedPhase, ApplyMode applyMode,
+                                 Metadata metadata, Telemetry telemetry) {
         public RequiredConfiguration {
+            Objects.requireNonNull(expectedPhase, "expectedPhase");
             Objects.requireNonNull(applyMode, "applyMode");
             Objects.requireNonNull(metadata, "metadata");
             Objects.requireNonNull(telemetry, "telemetry");

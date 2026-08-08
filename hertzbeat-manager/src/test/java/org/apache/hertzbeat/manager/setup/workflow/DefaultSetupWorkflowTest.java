@@ -70,7 +70,7 @@ class DefaultSetupWorkflowTest {
         IdentityInitializationService identities = mock(IdentityInitializationService.class);
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
         SetupMutationSerializer mutations = new SetupMutationSerializer();
-        DefaultSetupWorkflow workflow = new DefaultSetupWorkflow(state, mock(SetupRequestValidator.class),
+        DefaultSetupWorkflow workflow = workflow(state, mock(SetupRequestValidator.class),
                 mock(SetupConfigurationCoordinator.class), mock(SetupOperationRegistry.class), capability,
                 Optional.of(identities), Optional.of(completion),
                 mock(SetupOptionsCoordinator.class), Clock.systemUTC(), mutations);
@@ -90,7 +90,7 @@ class DefaultSetupWorkflowTest {
                 SetupPhase.OPTIONAL_CONFIGURATION, SetupAccess.LOCAL, true, "operator");
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
         SetupMutationSerializer mutations = new SetupMutationSerializer();
-        DefaultSetupWorkflow workflow = new DefaultSetupWorkflow(state, mock(SetupRequestValidator.class),
+        DefaultSetupWorkflow workflow = workflow(state, mock(SetupRequestValidator.class),
                 mock(SetupConfigurationCoordinator.class), mock(SetupOperationRegistry.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion),
                 mock(SetupOptionsCoordinator.class), Clock.systemUTC(), mutations);
@@ -122,11 +122,11 @@ class DefaultSetupWorkflowTest {
         }).when(options).persist(any());
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
         SetupMutationSerializer mutations = new SetupMutationSerializer();
-        DefaultSetupWorkflow workflow = new DefaultSetupWorkflow(state, validator,
+        DefaultSetupWorkflow workflow = workflow(state, validator,
                 mock(SetupConfigurationCoordinator.class), mock(SetupOperationRegistry.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion),
                 options, Clock.systemUTC(), mutations);
-        HeadlessSetupCoordinator headless = new HeadlessSetupCoordinator(state, validator,
+        HeadlessSetupCoordinator headless = headless(state, validator,
                 mock(SetupConfigurationCoordinator.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion), mutations);
         OptionsRequest request = new OptionsRequest(
@@ -167,12 +167,12 @@ class DefaultSetupWorkflowTest {
                     SetupPhase.APPLICATION_STARTING, 0, false);
         }).when(configuration).configure(any(ConfigurationRequest.class), eq(capability));
         SetupMutationSerializer mutations = new SetupMutationSerializer();
-        DefaultSetupWorkflow browser = new DefaultSetupWorkflow(state, validator, configuration,
+        DefaultSetupWorkflow browser = workflow(state, validator, configuration,
                 mock(SetupOperationRegistry.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)),
                 Optional.of(mock(SetupCompletionCoordinator.class)), mock(SetupOptionsCoordinator.class),
                 Clock.systemUTC(), mutations);
-        HeadlessSetupCoordinator headless = new HeadlessSetupCoordinator(state, validator, configuration,
+        HeadlessSetupCoordinator headless = headless(state, validator, configuration,
                 capability, Optional.of(mock(IdentityInitializationService.class)),
                 Optional.of(mock(SetupCompletionCoordinator.class)), mutations);
         ConfigurationRequest browserRequest = new ConfigurationRequest(
@@ -187,7 +187,8 @@ class DefaultSetupWorkflowTest {
             var browserResult = executor.submit(() -> browser.configure(browserRequest));
             configurationStarted.await(5, TimeUnit.SECONDS);
             var headlessResult = executor.submit(() -> headless.configure(
-                    new HeadlessSetupWorkflow.RequiredConfiguration(ApplyMode.MANAGED_WRITE,
+                    new HeadlessSetupWorkflow.RequiredConfiguration(SetupPhase.CONFIGURATION_REQUIRED,
+                            ApplyMode.MANAGED_WRITE,
                             new HeadlessSetupWorkflow.Metadata(MetadataDatabaseKind.H2,
                                     "jdbc:h2:mem:headless", "sa", metadataPassword),
                             new HeadlessSetupWorkflow.Telemetry("localhost:4001",
@@ -203,5 +204,27 @@ class DefaultSetupWorkflowTest {
         }
         verify(configuration, never()).configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class),
                 any(ManagedConfigurationBundle.class), eq(capability));
+    }
+
+    private static DefaultSetupWorkflow workflow(
+            SetupRuntimeState state, SetupRequestValidator validator,
+            SetupConfigurationCoordinator configuration, SetupOperationRegistry operations,
+            ManagedConfigCapability capability, Optional<IdentityInitializationService> identities,
+            Optional<SetupCompletionCoordinator> completion, SetupOptionsCoordinator options,
+            Clock clock, SetupMutationSerializer mutations) {
+        SetupTransitionService transitions = new SetupTransitionService(
+                state, validator, configuration, capability, identities, completion);
+        return new DefaultSetupWorkflow(state, validator, operations,
+                options, clock, mutations, transitions);
+    }
+
+    private static HeadlessSetupCoordinator headless(
+            SetupRuntimeState state, SetupRequestValidator validator,
+            SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
+            Optional<IdentityInitializationService> identities,
+            Optional<SetupCompletionCoordinator> completion, SetupMutationSerializer mutations) {
+        SetupTransitionService transitions = new SetupTransitionService(
+                state, validator, configuration, capability, identities, completion);
+        return new HeadlessSetupCoordinator(state, mutations, transitions);
     }
 }

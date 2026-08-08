@@ -52,6 +52,15 @@ public final class SetupOperationRegistry {
         return id;
     }
 
+    public synchronized String replaceExternalApply(SetupPhase phase) {
+        if (activeOperationId == null
+                || operations.get(activeOperationId).state() != SetupOperationState.AWAITING_EXTERNAL_APPLY) {
+            throw new SetupWorkflowConflict();
+        }
+        activeOperationId = null;
+        return begin(phase);
+    }
+
     public synchronized OperationResponse finish(
             String id, SetupOperationState state, SetupPhase phase, SetupErrorCode errorCode, boolean exportAvailable) {
         OperationResponse current = require(id);

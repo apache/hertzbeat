@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.manager.setup.workflow;
 
 import java.time.Clock;
-import java.util.Arrays;
-import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.CompleteRequest;
@@ -42,40 +40,29 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationRespons
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.api.SetupWorkflow;
-import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
-import org.apache.hertzbeat.manager.setup.identity.AdministratorCredentials;
-import org.apache.hertzbeat.manager.setup.identity.BootstrapIdentityConflict;
-import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
 import org.springframework.http.HttpStatus;
 
 /** Cohesive setup state-machine facade; transport and persistence remain in dedicated collaborators. */
 public final class DefaultSetupWorkflow implements SetupWorkflow {
     private final SetupRuntimeState state;
     private final SetupRequestValidator validator;
-    private final SetupConfigurationCoordinator configuration;
     private final SetupOperationRegistry operations;
-    private final ManagedConfigCapability capability;
-    private final Optional<IdentityInitializationService> identities;
-    private final Optional<SetupCompletionCoordinator> completion;
     private final SetupOptionsCoordinator options;
     private final Clock clock;
     private final SetupMutationSerializer mutations;
+    private final SetupTransitionService transitions;
 
     public DefaultSetupWorkflow(SetupRuntimeState state, SetupRequestValidator validator,
-                                SetupConfigurationCoordinator configuration, SetupOperationRegistry operations,
-                                ManagedConfigCapability capability, Optional<IdentityInitializationService> identities,
-                                Optional<SetupCompletionCoordinator> completion, SetupOptionsCoordinator options,
-                                Clock clock, SetupMutationSerializer mutations) {
+                                SetupOperationRegistry operations,
+                                SetupOptionsCoordinator options, Clock clock, SetupMutationSerializer mutations,
+                                SetupTransitionService transitions) {
         this.state = state;
         this.validator = validator;
-        this.configuration = configuration;
         this.operations = operations;
-        this.capability = capability;
-        this.identities = identities;
-        this.completion = completion;
         this.options = options;
         this.clock = clock;
         this.mutations = mutations;
+        this.transitions = transitions;
     }
 
     @Override
@@ -101,15 +88,7 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     }
 
     private ConfigurationResponse configureMutation(ConfigurationRequest request) {
-        requireWritable();
-        state.ensurePhase(SetupPhase.CONFIGURATION_REQUIRED);
-        requireValid(new ValidateRequest(ValidationSection.METADATA_DATABASE,
-                request.managementDatabase(), null, null, null));
-        requireValid(new ValidateRequest(ValidationSection.TELEMETRY_STORE,
-                null, request.telemetryStore(), null, null));
-        ConfigurationResponse response = configuration.configure(request, capability);
-        state.configurationApplied(response.operationId(), response.phase());
-        return response;
+        return transitions.configure(SetupTransitionService.ConfigurationCommand.browser(request));
     }
 
     @Override
@@ -123,19 +102,9 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     }
 
     private AdministratorResponse createAdministratorMutation(AdministratorRequest request) {
-        requireWritable();
-        state.ensurePhase(SetupPhase.ADMINISTRATOR_REQUIRED);
-        char[] password = request.password().toCharArray();
-        try {
-            identities.orElseThrow(SetupWorkflowConflict::new)
-                    .createFirstAdministrator(new AdministratorCredentials(request.username(), password));
-        } catch (BootstrapIdentityConflict conflict) {
-            throw new SetupApiException(SetupErrorCode.ADMINISTRATOR_ALREADY_CONFIGURED, HttpStatus.CONFLICT);
-        } finally {
-            Arrays.fill(password, '\0');
-        }
-        state.administratorCreated(request.username());
-        return new AdministratorResponse(request.username(), SetupPhase.OPTIONAL_CONFIGURATION);
+        String username = transitions.createAdministrator(
+                SetupTransitionService.AdministratorCommand.browser(request));
+        return new AdministratorResponse(username, SetupPhase.OPTIONAL_CONFIGURATION);
     }
 
     @Override
@@ -183,22 +152,8 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     }
 
     private CompleteResponse completeMutation(CompleteRequest request) {
-        requireWritable();
-        state.ensurePhase(SetupPhase.OPTIONAL_CONFIGURATION);
-        if (request.expectedPhase() != SetupPhase.OPTIONAL_CONFIGURATION) {
-            throw new SetupWorkflowConflict();
-        }
-        if (!request.acknowledgedWarnings().containsAll(state.pendingWarnings())) {
-            throw new SetupApiException(SetupErrorCode.OPERATION_CONFLICT, HttpStatus.CONFLICT);
-        }
-        String username = state.administratorUsername();
-        if (username == null) {
-            throw new SetupWorkflowConflict();
-        }
-        completion.orElseThrow(SetupWorkflowConflict::new).completeInstallation();
-        state.complete();
-        CompleteResponse response = new CompleteResponse(SetupPhase.COMPLETE, clock.instant(), "/login", username);
-        return response;
+        String username = transitions.complete(SetupTransitionService.CompletionCommand.browser(request));
+        return new CompleteResponse(SetupPhase.COMPLETE, clock.instant(), "/login", username);
     }
 
     private void requireWritable() {

@@ -95,7 +95,11 @@ public final class SetupRuntimeState {
     }
 
     public synchronized void configurationApplied(String id, SetupPhase next) {
-        requirePhase(SetupPhase.CONFIGURATION_REQUIRED);
+        configurationApplied(SetupPhase.CONFIGURATION_REQUIRED, id, next);
+    }
+
+    public synchronized void configurationApplied(SetupPhase expected, String id, SetupPhase next) {
+        requirePhase(expected);
         operationId = id;
         phase = next;
     }

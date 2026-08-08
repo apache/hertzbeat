@@ -55,6 +55,7 @@ import org.apache.hertzbeat.manager.setup.workflow.SetupOptionsCoordinator;
 import org.apache.hertzbeat.manager.setup.workflow.HeadlessSetupWorkflow;
 import org.apache.hertzbeat.manager.setup.workflow.SetupRequestValidator;
 import org.apache.hertzbeat.manager.setup.workflow.SetupRuntimeState;
+import org.apache.hertzbeat.manager.setup.workflow.SetupTransitionService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -133,30 +134,30 @@ public class SetupApiConfiguration {
     }
 
     @Bean
+    public SetupTransitionService setupTransitionService(
+            SetupRuntimeState state, SetupRequestValidator validator,
+            SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
+            ObjectProvider<IdentityInitializationService> identityProvider,
+            ObjectProvider<InstallationCompletionService> installationProvider, Environment environment) {
+        return new SetupTransitionService(state, validator, configuration, capability,
+                identityProvider.stream().findFirst(),
+                completion(environment, installationProvider.stream().findFirst()));
+    }
+
+    @Bean
     public DefaultSetupWorkflow setupWorkflow(Environment environment, SetupRuntimeState state,
-                                       SetupRequestValidator validator, SetupConfigurationCoordinator configuration,
-                                       SetupOperationRegistry operations, ManagedConfigCapability capability,
-                                       ObjectProvider<IdentityInitializationService> identityProvider,
-                                       ObjectProvider<InstallationCompletionService> installationProvider,
-                                       SetupMutationSerializer mutations) {
-        Optional<SetupCompletionCoordinator> completion = completion(
-                environment, installationProvider.stream().findFirst());
-        return new DefaultSetupWorkflow(state, validator, configuration, operations, capability,
-                identityProvider.stream().findFirst(), completion,
+                                       SetupRequestValidator validator,
+                                       SetupOperationRegistry operations,
+                                       SetupMutationSerializer mutations, SetupTransitionService transitions) {
+        return new DefaultSetupWorkflow(state, validator, operations,
                 new SetupOptionsCoordinator(new ManagedConfigurationTransaction(
-                        SetupInstallationPaths.root(environment))), Clock.systemUTC(), mutations);
+                        SetupInstallationPaths.root(environment))), Clock.systemUTC(), mutations, transitions);
     }
 
     @Bean
     public HeadlessSetupWorkflow headlessSetupWorkflow(
-            Environment environment, SetupRuntimeState state, SetupRequestValidator validator,
-            SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
-            ObjectProvider<IdentityInitializationService> identityProvider,
-            ObjectProvider<InstallationCompletionService> installationProvider,
-            SetupMutationSerializer mutations) {
-        return new HeadlessSetupCoordinator(state, validator, configuration, capability,
-                identityProvider.stream().findFirst(),
-                completion(environment, installationProvider.stream().findFirst()), mutations);
+            SetupRuntimeState state, SetupMutationSerializer mutations, SetupTransitionService transitions) {
+        return new HeadlessSetupCoordinator(state, mutations, transitions);
     }
 
     @Bean

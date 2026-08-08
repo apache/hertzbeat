@@ -42,11 +42,10 @@ public final class SetupConfigurationCoordinator {
     }
 
     public ConfigurationResponse configure(ConfigurationRequest request, ManagedConfigCapability capability) {
-        if (request.expectedPhase() != SetupPhase.CONFIGURATION_REQUIRED
-                || request.applyMode() != capability.applyMode()) {
+        if (!configurationPhase(request.expectedPhase()) || request.applyMode() != capability.applyMode()) {
             throw new SetupWorkflowConflict();
         }
-        String operationId = operations.begin(SetupPhase.CONFIGURATION_REQUIRED);
+        String operationId = beginOperation(request.expectedPhase());
         if (request.applyMode() == ApplyMode.EXTERNAL_APPLY) {
             operations.finish(operationId, SetupOperationState.AWAITING_EXTERNAL_APPLY,
                     SetupPhase.EXTERNAL_APPLY_REQUIRED, null, true);
@@ -65,10 +64,10 @@ public final class SetupConfigurationCoordinator {
                                            ManagedConfigurationBundle bundle,
                                            ManagedConfigCapability capability) {
         try (bundle) {
-            if (request.applyMode() != capability.applyMode()) {
+            if (!configurationPhase(request.expectedPhase()) || request.applyMode() != capability.applyMode()) {
                 throw new SetupWorkflowConflict();
             }
-            String operationId = operations.begin(SetupPhase.CONFIGURATION_REQUIRED);
+            String operationId = beginOperation(request.expectedPhase());
             if (request.applyMode() == ApplyMode.EXTERNAL_APPLY) {
                 operations.finish(operationId, SetupOperationState.AWAITING_EXTERNAL_APPLY,
                         SetupPhase.EXTERNAL_APPLY_REQUIRED, null, true);
@@ -112,5 +111,16 @@ public final class SetupConfigurationCoordinator {
         var operation = operations.get(operationId);
         return new ConfigurationResponse(operation.operationId(), operation.state(), operation.phase(),
                 operation.nextPollAfterMillis(), operation.exportAvailable());
+    }
+
+    private static boolean configurationPhase(SetupPhase phase) {
+        // External apply deliberately supports explicit re-entry after refresh; no submitted secret is retained.
+        return phase == SetupPhase.CONFIGURATION_REQUIRED || phase == SetupPhase.EXTERNAL_APPLY_REQUIRED;
+    }
+
+    private String beginOperation(SetupPhase expectedPhase) {
+        return expectedPhase == SetupPhase.EXTERNAL_APPLY_REQUIRED
+                ? operations.replaceExternalApply(SetupPhase.CONFIGURATION_REQUIRED)
+                : operations.begin(SetupPhase.CONFIGURATION_REQUIRED);
     }
 }

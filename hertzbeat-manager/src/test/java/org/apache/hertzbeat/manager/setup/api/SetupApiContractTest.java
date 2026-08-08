@@ -180,7 +180,8 @@ class SetupApiContractTest {
     @Test
     void freezesStableSafeErrorCodes() throws Exception {
         assertWireValues(SetupErrorCode.values(), "setup_complete", "setup_locked", "setup_code_invalid",
-                "setup_code_expired", "setup_rate_limited", "setup_not_complete", "config_read_only", "config_write_failed",
+                "setup_code_expired", "setup_rate_limited", "setup_not_complete", "invalid_request", "internal_error",
+                "config_read_only", "config_write_failed",
                 "config_recovery_required", "metadata_connection_failed", "metadata_kind_unsupported",
                 "metadata_schema_mismatch", "metadata_insufficient_privileges", "telemetry_connection_failed",
                 "public_address_invalid", "mail_connection_failed", "administrator_already_configured",
