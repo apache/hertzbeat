@@ -40,6 +40,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationRespons
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.api.SetupWorkflow;
+import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
 import org.springframework.http.HttpStatus;
 
 /** Cohesive setup state-machine facade; transport and persistence remain in dedicated collaborators. */
@@ -115,9 +116,9 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
     private OptionsResponse configureOptionsMutation(OptionsRequest request) {
         requireWritable();
         state.ensurePhase(SetupPhase.OPTIONAL_CONFIGURATION);
-        if (request.publicAccess() != null) {
-            requireValid(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
-                    null, null, request.publicAccess(), null));
+        if (request.serverInstrumentation() != null) {
+            requireValid(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                    null, null, request.serverInstrumentation(), null));
         }
         if (request.mail() != null) {
             requireValid(new ValidateRequest(ValidationSection.MAIL,
@@ -125,14 +126,17 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
         }
         options.persist(request);
         OptionalConfigurationSummary summary = new OptionalConfigurationSummary(
-                request.publicAccess() != null && hasText(request.publicAccess().publicBaseUrl()),
-                request.publicAccess() != null && hasText(request.publicAccess().serverOtlpHttpEndpoint()),
-                request.publicAccess() != null && hasText(request.publicAccess().serverOtlpGrpcEndpoint()),
+                request.serverInstrumentation() != null
+                        && ServerInstrumentationSettings.normalize(
+                        request.serverInstrumentation().serverOtlpHttpEndpoint()).isPresent(),
+                request.serverInstrumentation() != null
+                        && ServerInstrumentationSettings.normalize(
+                        request.serverInstrumentation().serverOtlpGrpcEndpoint()).isPresent(),
                 request.retention() != null, request.mail() != null);
         state.optionsConfigured(summary,
                 SetupWarningPolicy.INSTANCE.evaluate(state.managementDatabaseKind(), request));
-        return new OptionsResponse(summary.publicAccessConfigured(), summary.serverOtlpHttpConfigured(),
-                summary.serverOtlpGrpcConfigured(), summary.retentionConfigured(), summary.mailConfigured(),
+        return new OptionsResponse(summary.serverOtlpHttpConfigured(), summary.serverOtlpGrpcConfigured(),
+                summary.retentionConfigured(), summary.mailConfigured(),
                 SetupPhase.OPTIONAL_CONFIGURATION);
     }
 
@@ -169,7 +173,4 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
         }
     }
 
-    private static boolean hasText(String value) {
-        return value != null && !value.isBlank();
-    }
 }

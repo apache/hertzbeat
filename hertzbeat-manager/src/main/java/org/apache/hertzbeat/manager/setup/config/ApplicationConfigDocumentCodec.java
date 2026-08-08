@@ -22,17 +22,18 @@ import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.DATASOURCE_USERNAME;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_DATABASE;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_EXPIRE_TIME;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_GRPC;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_HTTP;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_USERNAME;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_HOST;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SECURITY;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.PUBLIC_BASE_URL;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_LOGS;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_METRICS;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_TRACES;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_FROM_ADDRESS;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SSL_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_STARTTLS_ENABLED;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_GRPC;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_HTTP;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_AUTHENTICATION;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_PROFILE_ID;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,7 +52,8 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
     private static final String DUCKDB_ENABLED = "warehouse.store.duckdb.enabled";
     private static final String MAIL_PORT = "spring.mail.port";
     private static final String MAIL_USERNAME = "spring.mail.username";
-    private static final String MAIL_FROM = "hertzbeat.setup.mail.from-address";
+    private static final String MANAGED_SERVER_PROFILE_ID = "server-direct";
+    private static final String MANAGED_SERVER_AUTHENTICATION = "bearer_token";
     private static final Set<String> REQUIRED_KEYS = Set.of(
             DATASOURCE_URL, DATASOURCE_USERNAME, DATABASE_KIND,
             DUCKDB_ENABLED, GREPTIME_ENABLED,
@@ -59,9 +61,9 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
     private static final Set<String> ALLOWED_KEYS = Set.of(
             DATASOURCE_URL, DATASOURCE_USERNAME, DATABASE_KIND,
             DUCKDB_ENABLED, GREPTIME_ENABLED, GREPTIME_GRPC, GREPTIME_HTTP,
-            GREPTIME_DATABASE, GREPTIME_USERNAME, PUBLIC_BASE_URL, SERVER_OTLP_HTTP,
-            SERVER_OTLP_GRPC, RETENTION_METRICS, RETENTION_LOGS, RETENTION_TRACES,
-            MAIL_HOST, MAIL_PORT, MAIL_SECURITY, MAIL_USERNAME, MAIL_FROM);
+            GREPTIME_DATABASE, GREPTIME_USERNAME, GREPTIME_EXPIRE_TIME, SERVER_OTLP_HTTP,
+            SERVER_OTLP_GRPC, SERVER_PROFILE_ID, SERVER_AUTHENTICATION, MAIL_HOST, MAIL_PORT,
+            MAIL_SSL_ENABLED, MAIL_STARTTLS_ENABLED, MAIL_USERNAME, MAIL_FROM_ADDRESS);
 
     @Override
     public byte[] encode(ManagedApplicationConfig value, String generation) {
@@ -90,22 +92,21 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         values.put(GREPTIME_HTTP, value.telemetryStore().endpoints().http());
         values.put(GREPTIME_DATABASE, value.telemetryStore().database());
         value.telemetryStore().username().ifPresent(username -> values.put(GREPTIME_USERNAME, username));
-        value.optional().publicAccess().ifPresent(publicAccess -> {
-            publicAccess.publicBaseUrl().ifPresent(item -> values.put(PUBLIC_BASE_URL, item));
-            publicAccess.serverOtlpHttpEndpoint().ifPresent(item -> values.put(SERVER_OTLP_HTTP, item));
-            publicAccess.serverOtlpGrpcEndpoint().ifPresent(item -> values.put(SERVER_OTLP_GRPC, item));
+        value.optional().serverInstrumentation().ifPresent(instrumentation -> {
+            values.put(SERVER_PROFILE_ID, MANAGED_SERVER_PROFILE_ID);
+            values.put(SERVER_AUTHENTICATION, MANAGED_SERVER_AUTHENTICATION);
+            instrumentation.serverOtlpHttpEndpoint().ifPresent(item -> values.put(SERVER_OTLP_HTTP, item));
+            instrumentation.serverOtlpGrpcEndpoint().ifPresent(item -> values.put(SERVER_OTLP_GRPC, item));
         });
-        value.optional().retention().ifPresent(retention -> {
-            putInteger(values, RETENTION_METRICS, retention.metricsDays());
-            putInteger(values, RETENTION_LOGS, retention.logsDays());
-            putInteger(values, RETENTION_TRACES, retention.tracesDays());
-        });
+        value.optional().retention().ifPresent(retention ->
+                values.put(GREPTIME_EXPIRE_TIME, retention.days() + "d"));
         value.optional().mail().ifPresent(mail -> {
             values.put(MAIL_HOST, mail.host());
             values.put(MAIL_PORT, Integer.toString(mail.port()));
-            values.put(MAIL_SECURITY, mail.security().name());
+            values.put(MAIL_SSL_ENABLED, Boolean.toString(mail.security() == MailSecurity.TLS));
+            values.put(MAIL_STARTTLS_ENABLED, Boolean.toString(mail.security() == MailSecurity.STARTTLS));
             mail.username().ifPresent(item -> values.put(MAIL_USERNAME, item));
-            values.put(MAIL_FROM, mail.fromAddress());
+            values.put(MAIL_FROM_ADDRESS, mail.fromAddress());
         });
         return values;
     }
@@ -128,6 +129,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         if (!values.keySet().stream().allMatch(String.class::isInstance)
                 || !values.keySet().containsAll(REQUIRED_KEYS)
                 || !ALLOWED_KEYS.containsAll(values.keySet())
+                || !completeServerInstrumentationGroup(values)
                 || !completeMailGroup(values)
                 || !usesSupportedTelemetryStorage(values)) {
             throw DocumentException.corrupt();
@@ -151,27 +153,47 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
     }
 
     private static ManagedOptionalConfiguration optional(Map<?, ?> values) {
-        boolean publicPresent = containsAny(values, PUBLIC_BASE_URL, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
-        Optional<ManagedOptionalConfiguration.PublicAccessSettings> publicAccess = publicPresent
-                ? Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
-                optionalText(values, PUBLIC_BASE_URL), optionalText(values, SERVER_OTLP_HTTP),
-                optionalText(values, SERVER_OTLP_GRPC))) : Optional.empty();
-        boolean retentionPresent = containsAny(values, RETENTION_METRICS, RETENTION_LOGS, RETENTION_TRACES);
-        Optional<ManagedOptionalConfiguration.RetentionSettings> retention = retentionPresent
-                ? Optional.of(new ManagedOptionalConfiguration.RetentionSettings(
-                optionalInteger(values, RETENTION_METRICS), optionalInteger(values, RETENTION_LOGS),
-                optionalInteger(values, RETENTION_TRACES))) : Optional.empty();
+        boolean instrumentationPresent = containsAny(values, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
+        Optional<ManagedOptionalConfiguration.ServerInstrumentationSettings> instrumentation =
+                instrumentationPresent ? Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                        optionalText(values, SERVER_OTLP_HTTP), optionalText(values, SERVER_OTLP_GRPC)))
+                        : Optional.empty();
+        Optional<ManagedOptionalConfiguration.RetentionSettings> retention = values.containsKey(GREPTIME_EXPIRE_TIME)
+                ? Optional.of(new ManagedOptionalConfiguration.RetentionSettings(retentionDays(values)))
+                : Optional.empty();
         Optional<ManagedOptionalConfiguration.MailSettings> mail = values.containsKey(MAIL_HOST)
                 ? Optional.of(new ManagedOptionalConfiguration.MailSettings(
-                text(values, MAIL_HOST), Integer.parseInt(text(values, MAIL_PORT)),
-                MailSecurity.valueOf(text(values, MAIL_SECURITY)), optionalText(values, MAIL_USERNAME),
-                text(values, MAIL_FROM))) : Optional.empty();
-        return new ManagedOptionalConfiguration(publicAccess, retention, mail);
+                        text(values, MAIL_HOST), Integer.parseInt(text(values, MAIL_PORT)),
+                        mailSecurity(values), optionalText(values, MAIL_USERNAME),
+                        text(values, MAIL_FROM_ADDRESS))) : Optional.empty();
+        return new ManagedOptionalConfiguration(instrumentation, retention, mail);
     }
 
     private static boolean completeMailGroup(Map<?, ?> values) {
-        boolean any = containsAny(values, MAIL_HOST, MAIL_PORT, MAIL_SECURITY, MAIL_USERNAME, MAIL_FROM);
-        return !any || values.keySet().containsAll(Set.of(MAIL_HOST, MAIL_PORT, MAIL_SECURITY, MAIL_FROM));
+        boolean any = containsAny(values, MAIL_HOST, MAIL_PORT, MAIL_SSL_ENABLED, MAIL_STARTTLS_ENABLED,
+                MAIL_USERNAME, MAIL_FROM_ADDRESS);
+        return !any || values.keySet().containsAll(Set.of(MAIL_HOST, MAIL_PORT, MAIL_SSL_ENABLED,
+                MAIL_STARTTLS_ENABLED, MAIL_FROM_ADDRESS));
+    }
+
+    private static boolean completeServerInstrumentationGroup(Map<?, ?> values) {
+        boolean endpointKeyPresent = containsAny(values, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
+        boolean endpointPresent = meaningfulEndpoint(values, SERVER_OTLP_HTTP)
+                || meaningfulEndpoint(values, SERVER_OTLP_GRPC);
+        boolean endpointValuesValid = (!values.containsKey(SERVER_OTLP_HTTP)
+                || meaningfulEndpoint(values, SERVER_OTLP_HTTP))
+                && (!values.containsKey(SERVER_OTLP_GRPC)
+                || meaningfulEndpoint(values, SERVER_OTLP_GRPC));
+        boolean internalPresent = containsAny(values, SERVER_PROFILE_ID, SERVER_AUTHENTICATION);
+        return (!endpointKeyPresent && !internalPresent) || (endpointPresent && endpointValuesValid
+                && values.keySet().containsAll(Set.of(SERVER_PROFILE_ID, SERVER_AUTHENTICATION))
+                && MANAGED_SERVER_PROFILE_ID.equals(values.get(SERVER_PROFILE_ID))
+                && MANAGED_SERVER_AUTHENTICATION.equals(values.get(SERVER_AUTHENTICATION)));
+    }
+
+    private static boolean meaningfulEndpoint(Map<?, ?> values, String key) {
+        return values.get(key) instanceof String endpoint
+                && ManagedOptionalConfiguration.ServerInstrumentationSettings.normalize(endpoint).isPresent();
     }
 
     private static boolean containsAny(Map<?, ?> values, String... keys) {
@@ -187,14 +209,29 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         return values.containsKey(key) ? Optional.of(text(values, key)) : Optional.empty();
     }
 
-    private static Integer optionalInteger(Map<?, ?> values, String key) {
-        return values.containsKey(key) ? Integer.valueOf(text(values, key)) : null;
+    private static int retentionDays(Map<?, ?> values) {
+        String value = text(values, GREPTIME_EXPIRE_TIME);
+        if (!value.endsWith("d")) {
+            throw new IllegalArgumentException("Managed retention is invalid");
+        }
+        return Integer.parseInt(value.substring(0, value.length() - 1));
     }
 
-    private static void putInteger(Map<String, String> values, String key, Integer value) {
-        if (value != null) {
-            values.put(key, value.toString());
+    private static MailSecurity mailSecurity(Map<?, ?> values) {
+        boolean ssl = booleanValue(values, MAIL_SSL_ENABLED);
+        boolean startTls = booleanValue(values, MAIL_STARTTLS_ENABLED);
+        if (ssl && startTls) {
+            throw new IllegalArgumentException("Mail security settings conflict");
         }
+        return ssl ? MailSecurity.TLS : startTls ? MailSecurity.STARTTLS : MailSecurity.NONE;
+    }
+
+    private static boolean booleanValue(Map<?, ?> values, String key) {
+        String value = text(values, key);
+        if (!"true".equals(value) && !"false".equals(value)) {
+            throw new IllegalArgumentException("Managed boolean is invalid");
+        }
+        return Boolean.parseBoolean(value);
     }
 
     /**

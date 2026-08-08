@@ -76,7 +76,7 @@ class SetupControllerTest {
                         ConfigSource.BUILT_IN_DEFAULT, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, false,
                         ConfigSource.BUILT_IN_DEFAULT, false),
-                false, new OptionalConfigurationSummary(false, false, false, false, false)));
+                false, new OptionalConfigurationSummary(false, false, false, false)));
 
         mvc.perform(get(SetupApiContract.STATUS_PATH))
                 .andExpect(status().isOk())

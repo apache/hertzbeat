@@ -26,8 +26,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.junit.jupiter.api.Test;
@@ -49,20 +50,60 @@ class SetupRequestValidatorTest {
     }
 
     @Test
-    void publicAddressValidatorProducesStablePlaintextWarning() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
-                null, null, new PublicAccessConfiguration("http://monitor.example.test", null, null), null));
+    void serverInstrumentationValidatorProducesStablePlaintextWarning() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration("http://monitor.example.test", null), null));
 
         assertTrue(response.valid());
         assertEquals(1, response.warnings().size());
     }
 
     @Test
-    void publicGrpcPortMustFitTheTransportRange() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
-                null, null, new PublicAccessConfiguration(null, null, "collector.example.test:99999"), null));
+    void serverGrpcEndpointMustBeAnExplicitHttpUrl() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration(null, "collector.example.test:4317"), null));
 
         assertFalse(response.valid());
-        assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
+        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+    }
+
+    @Test
+    void serverEndpointRejectsUrlCredentialsAndQuery() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration(
+                        "https://user:secret@collector.example.test:4318?token=secret", null), null));
+
+        assertFalse(response.valid());
+        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+    }
+
+    @Test
+    void grpcOnlyPlaintextEndpointProducesWarning() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration(null, "http://collector.example.test:4317"),
+                null));
+
+        assertTrue(response.valid());
+        assertEquals(java.util.List.of(SetupWarningCode.SERVER_OTLP_PLAINTEXT), response.warnings());
+    }
+
+    @Test
+    void serverInstrumentationSectionRequiresAtLeastOneEndpoint() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration(" ", null), null));
+
+        assertFalse(response.valid());
+        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+    }
+
+    @Test
+    void endpointWhitespaceIsNormalizedBeforeValidationAndWarnings() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
+                null, null, new ServerInstrumentationConfiguration(
+                        "  https://collector.example.test:4318/otlp  ",
+                        "  http://collector.example.test:4317  "), null));
+
+        assertTrue(response.valid());
+        assertEquals(java.util.List.of(SetupWarningCode.SERVER_OTLP_PLAINTEXT), response.warnings());
     }
 }

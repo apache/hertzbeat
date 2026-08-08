@@ -23,12 +23,12 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 
 /** Typed optional setup overlay kept in the existing managed application document. */
 public record ManagedOptionalConfiguration(
-        Optional<PublicAccessSettings> publicAccess,
+        Optional<ServerInstrumentationSettings> serverInstrumentation,
         Optional<RetentionSettings> retention,
         Optional<MailSettings> mail) {
 
     public ManagedOptionalConfiguration {
-        Objects.requireNonNull(publicAccess, "publicAccess");
+        Objects.requireNonNull(serverInstrumentation, "serverInstrumentation");
         Objects.requireNonNull(retention, "retention");
         Objects.requireNonNull(mail, "mail");
     }
@@ -37,28 +37,40 @@ public record ManagedOptionalConfiguration(
         return new ManagedOptionalConfiguration(Optional.empty(), Optional.empty(), Optional.empty());
     }
 
-    /** Optional externally advertised operator and OTLP endpoints. */
-    public record PublicAccessSettings(
-            Optional<String> publicBaseUrl,
+    /** Optional server OTLP intake endpoints. */
+    public record ServerInstrumentationSettings(
             Optional<String> serverOtlpHttpEndpoint,
             Optional<String> serverOtlpGrpcEndpoint) {
-        public PublicAccessSettings {
-            Objects.requireNonNull(publicBaseUrl, "publicBaseUrl");
+        public ServerInstrumentationSettings {
             Objects.requireNonNull(serverOtlpHttpEndpoint, "serverOtlpHttpEndpoint");
             Objects.requireNonNull(serverOtlpGrpcEndpoint, "serverOtlpGrpcEndpoint");
+            serverOtlpHttpEndpoint = normalizeConfigured(serverOtlpHttpEndpoint);
+            serverOtlpGrpcEndpoint = normalizeConfigured(serverOtlpGrpcEndpoint);
+            if (serverOtlpHttpEndpoint.isEmpty() && serverOtlpGrpcEndpoint.isEmpty()) {
+                throw new IllegalArgumentException("At least one server instrumentation endpoint is required");
+            }
+        }
+
+        public static Optional<String> normalize(String value) {
+            if (value == null) {
+                return Optional.empty();
+            }
+            String normalized = value.trim();
+            return normalized.isEmpty() ? Optional.empty() : Optional.of(normalized);
+        }
+
+        private static Optional<String> normalizeConfigured(Optional<String> endpoint) {
+            if (endpoint.isPresent() && normalize(endpoint.orElseThrow()).isEmpty()) {
+                throw new IllegalArgumentException("Server instrumentation endpoint must not be blank");
+            }
+            return endpoint.flatMap(ServerInstrumentationSettings::normalize);
         }
     }
 
-    /** Optional retention periods by signal family. */
-    public record RetentionSettings(Integer metricsDays, Integer logsDays, Integer tracesDays) {
+    /** Optional Greptime database retention period. */
+    public record RetentionSettings(int days) {
         public RetentionSettings {
-            requirePositive(metricsDays);
-            requirePositive(logsDays);
-            requirePositive(tracesDays);
-        }
-
-        private static void requirePositive(Integer days) {
-            if (days != null && days <= 0) {
+            if (days <= 0) {
                 throw new IllegalArgumentException("Retention must be positive");
             }
         }

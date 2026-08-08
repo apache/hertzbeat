@@ -29,14 +29,15 @@ public final class ManagedConfigurationKeys {
     public static final String GREPTIME_DATABASE = "warehouse.store.greptime.database";
     public static final String GREPTIME_USERNAME = "warehouse.store.greptime.username";
     public static final String GREPTIME_PASSWORD = "warehouse.store.greptime.password";
-    public static final String PUBLIC_BASE_URL = "hertzbeat.setup.public-base-url";
-    public static final String SERVER_OTLP_HTTP = "hertzbeat.setup.server-otlp-http-endpoint";
-    public static final String SERVER_OTLP_GRPC = "hertzbeat.setup.server-otlp-grpc-endpoint";
-    public static final String RETENTION_METRICS = "hertzbeat.setup.retention.metrics-days";
-    public static final String RETENTION_LOGS = "hertzbeat.setup.retention.logs-days";
-    public static final String RETENTION_TRACES = "hertzbeat.setup.retention.traces-days";
+    public static final String SERVER_OTLP_HTTP = "hertzbeat.instrumentation.server.otlp-http-endpoint";
+    public static final String SERVER_OTLP_GRPC = "hertzbeat.instrumentation.server.otlp-grpc-endpoint";
+    public static final String SERVER_PROFILE_ID = "hertzbeat.instrumentation.server.profile-id";
+    public static final String SERVER_AUTHENTICATION = "hertzbeat.instrumentation.server.authentication";
+    public static final String GREPTIME_EXPIRE_TIME = "warehouse.store.greptime.expire-time";
     public static final String MAIL_HOST = "spring.mail.host";
-    public static final String MAIL_SECURITY = "hertzbeat.setup.mail.security";
+    public static final String MAIL_SSL_ENABLED = "spring.mail.properties.mail.smtp.ssl.enable";
+    public static final String MAIL_STARTTLS_ENABLED = "spring.mail.properties.mail.smtp.starttls.enable";
+    public static final String MAIL_FROM_ADDRESS = "hertzbeat.mail.from-address";
 
     private ManagedConfigurationKeys() {
     }

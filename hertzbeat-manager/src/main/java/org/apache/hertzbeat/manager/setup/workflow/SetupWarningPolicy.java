@@ -19,11 +19,11 @@ package org.apache.hertzbeat.manager.setup.workflow;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
+import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
 
 /** Single warning policy shared by live setup and restart status projection. */
 public final class SetupWarningPolicy {
@@ -33,23 +33,33 @@ public final class SetupWarningPolicy {
     }
 
     public List<SetupWarningCode> evaluate(MetadataDatabaseKind kind, OptionsRequest options) {
-        String publicUrl = options.publicAccess() == null ? null : options.publicAccess().publicBaseUrl();
+        String otlpHttpEndpoint = options.serverInstrumentation() == null ? null
+                : options.serverInstrumentation().serverOtlpHttpEndpoint();
+        String otlpGrpcEndpoint = options.serverInstrumentation() == null ? null
+                : options.serverInstrumentation().serverOtlpGrpcEndpoint();
         MailSecurity mailSecurity = options.mail() == null ? null : options.mail().security();
-        return evaluate(kind, publicUrl, mailSecurity);
+        return evaluate(kind, otlpHttpEndpoint, otlpGrpcEndpoint, mailSecurity);
     }
 
     public List<SetupWarningCode> evaluate(
-            MetadataDatabaseKind kind, String publicUrl, MailSecurity mailSecurity) {
+            MetadataDatabaseKind kind, String otlpHttpEndpoint, String otlpGrpcEndpoint,
+            MailSecurity mailSecurity) {
         List<SetupWarningCode> warnings = new ArrayList<>();
         if (kind == MetadataDatabaseKind.H2) {
             warnings.add(SetupWarningCode.H2_NON_PRODUCTION);
         }
-        if (publicUrl != null && publicUrl.toLowerCase(Locale.ROOT).startsWith("http://")) {
-            warnings.add(SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT);
+        if (plaintext(otlpHttpEndpoint) || plaintext(otlpGrpcEndpoint)) {
+            warnings.add(SetupWarningCode.SERVER_OTLP_PLAINTEXT);
         }
         if (mailSecurity == MailSecurity.NONE) {
             warnings.add(SetupWarningCode.MAIL_SECURITY_NONE);
         }
         return List.copyOf(warnings);
+    }
+
+    private static boolean plaintext(String endpoint) {
+        return ServerInstrumentationSettings.normalize(endpoint)
+                .filter(value -> value.regionMatches(true, 0, "http://", 0, 7))
+                .isPresent();
     }
 }

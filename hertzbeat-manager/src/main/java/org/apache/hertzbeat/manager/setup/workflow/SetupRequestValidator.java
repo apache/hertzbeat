@@ -32,7 +32,8 @@ public final class SetupRequestValidator {
     private final Clock clock;
     private final MetadataConfigurationValidator metadata = new MetadataConfigurationValidator();
     private final TelemetryConfigurationValidator telemetry = new TelemetryConfigurationValidator();
-    private final PublicAccessConfigurationValidator publicAccess = new PublicAccessConfigurationValidator();
+    private final ServerInstrumentationConfigurationValidator serverInstrumentation =
+            new ServerInstrumentationConfigurationValidator();
     private final MailConfigurationValidator mail = new MailConfigurationValidator();
     private final MetadataConnectionProbe metadataConnection;
     private final TelemetryConnectionProbe telemetryConnection;
@@ -57,7 +58,7 @@ public final class SetupRequestValidator {
         Validation structural = switch (request.section()) {
             case METADATA_DATABASE -> metadata.validate(request.managementDatabase());
             case TELEMETRY_STORE -> telemetry.validate(request.telemetryStore());
-            case PUBLIC_ACCESS -> publicAccess.validate(request.publicAccess());
+            case SERVER_INSTRUMENTATION -> serverInstrumentation.validate(request.serverInstrumentation());
             case MAIL -> mail.validate(request.mail());
         };
         Validation result = structural.valid() ? liveValidation(request, structural) : structural;
@@ -86,7 +87,7 @@ public final class SetupRequestValidator {
             case METADATA_DATABASE -> metadataConnection.probe(request.managementDatabase());
             case TELEMETRY_STORE -> telemetryConnection.probe(request.telemetryStore());
             case MAIL -> mailConnection.probe(request.mail());
-            case PUBLIC_ACCESS -> Optional.empty();
+            case SERVER_INSTRUMENTATION -> Optional.empty();
         };
         return failure.map(Validation::failed).orElse(structural);
     }

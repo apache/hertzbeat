@@ -37,13 +37,17 @@ public final class SetupOptionsCoordinator {
 
     public void persist(OptionsRequest request) {
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.ofNullable(request.publicAccess()).map(value ->
-                        new ManagedOptionalConfiguration.PublicAccessSettings(
-                                text(value.publicBaseUrl()), text(value.serverOtlpHttpEndpoint()),
-                                text(value.serverOtlpGrpcEndpoint()))),
+                Optional.ofNullable(request.serverInstrumentation()).flatMap(value -> {
+                    Optional<String> httpEndpoint = ManagedOptionalConfiguration.ServerInstrumentationSettings
+                            .normalize(value.serverOtlpHttpEndpoint());
+                    Optional<String> grpcEndpoint = ManagedOptionalConfiguration.ServerInstrumentationSettings
+                            .normalize(value.serverOtlpGrpcEndpoint());
+                    return httpEndpoint.isEmpty() && grpcEndpoint.isEmpty() ? Optional.empty()
+                            : Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                                    httpEndpoint, grpcEndpoint));
+                }),
                 Optional.ofNullable(request.retention()).map(value ->
-                        new ManagedOptionalConfiguration.RetentionSettings(
-                                value.metricsDays(), value.logsDays(), value.tracesDays())),
+                        new ManagedOptionalConfiguration.RetentionSettings(value.days())),
                 Optional.ofNullable(request.mail()).map(value ->
                         new ManagedOptionalConfiguration.MailSettings(value.host(), value.port(), value.security(),
                                 text(value.username()), value.fromAddress())));

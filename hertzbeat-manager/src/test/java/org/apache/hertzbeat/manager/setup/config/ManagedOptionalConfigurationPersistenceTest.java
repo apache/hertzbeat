@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.setup.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
@@ -34,10 +35,10 @@ class ManagedOptionalConfigurationPersistenceTest {
         ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(root);
         assertThat(transaction.apply(required())).isEqualTo(ManagedConfigurationTransaction.Outcome.APPLIED);
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
-                        Optional.of("https://hertzbeat.example"),
-                        Optional.of("https://hertzbeat.example/otlp"), Optional.of("hertzbeat.example:4317"))),
-                Optional.of(new ManagedOptionalConfiguration.RetentionSettings(30, 14, 7)),
+                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                        Optional.of("https://hertzbeat.example/otlp"),
+                        Optional.of("https://hertzbeat.example:4317"))),
+                Optional.of(new ManagedOptionalConfiguration.RetentionSettings(30)),
                 Optional.of(new ManagedOptionalConfiguration.MailSettings(
                         "smtp.example", 465, MailSecurity.TLS, Optional.of("mailer"), "alerts@example.test")));
 
@@ -50,8 +51,77 @@ class ManagedOptionalConfigurationPersistenceTest {
         assertThat(application.metadataDatabase()).isEqualTo(required().application().metadataDatabase());
         assertThat(application.optional()).isEqualTo(options);
         assertThat(secrets.mailPassword()).get().isEqualTo(SecretValue.of("mail-secret"));
-        assertThat(ApplicationConfigDocumentCodec.springProperties(application).toString())
-                .doesNotContain("mail-secret");
+        var properties = ApplicationConfigDocumentCodec.springProperties(application);
+        assertThat(properties)
+                .containsEntry("hertzbeat.instrumentation.server.otlp-http-endpoint",
+                        "https://hertzbeat.example/otlp")
+                .containsEntry("hertzbeat.instrumentation.server.otlp-grpc-endpoint",
+                        "https://hertzbeat.example:4317")
+                .containsEntry("hertzbeat.instrumentation.server.profile-id", "server-direct")
+                .containsEntry("hertzbeat.instrumentation.server.authentication", "bearer_token")
+                .containsEntry("warehouse.store.greptime.expire-time", "30d")
+                .containsEntry("spring.mail.properties.mail.smtp.ssl.enable", "true")
+                .containsEntry("spring.mail.properties.mail.smtp.starttls.enable", "false")
+                .containsEntry("hertzbeat.mail.from-address", "alerts@example.test")
+                .doesNotContainKeys("hertzbeat.setup.public-base-url", "hertzbeat.setup.retention.metrics-days",
+                        "hertzbeat.setup.retention.logs-days", "hertzbeat.setup.retention.traces-days",
+                        "hertzbeat.setup.mail.security");
+        assertThat(properties.toString()).doesNotContain("mail-secret");
+    }
+
+    @Test
+    void rejectsServerEndpointsWithoutCompleteInternalProfileSettings() throws Exception {
+        ManagedApplicationConfig application = required().application();
+        ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
+                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                        Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
+                Optional.empty(), Optional.empty());
+        application = new ManagedApplicationConfig(
+                application.metadataDatabase(), application.telemetryStore(), options);
+        ApplicationConfigDocumentCodec codec = new ApplicationConfigDocumentCodec();
+        ManagedDocumentCodec.Integrity.VerifiedBody encoded = ManagedDocumentCodec.Integrity.extract(
+                codec.encode(application, "generation"));
+        String incomplete = encoded.content().replace(
+                "hertzbeat.instrumentation.server.authentication: 'bearer_token'\n", "");
+
+        byte[] document = ManagedDocumentCodec.Integrity.envelope(incomplete, encoded.generation());
+        assertThatThrownBy(() -> codec.decode(document))
+                .isInstanceOf(ManagedDocumentCodec.DocumentException.class);
+    }
+
+    @Test
+    void rejectsBlankManagedServerEndpoint() {
+        assertThatThrownBy(() -> new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                Optional.of("  "), Optional.empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsControlOnlyManagedServerEndpoint() {
+        assertThatThrownBy(() -> new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                Optional.of("\u0000"), Optional.empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsBlankServerEndpointInManagedDocument() throws Exception {
+        ManagedApplicationConfig application = required().application();
+        ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
+                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                        Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
+                Optional.empty(), Optional.empty());
+        application = new ManagedApplicationConfig(
+                application.metadataDatabase(), application.telemetryStore(), options);
+        ApplicationConfigDocumentCodec codec = new ApplicationConfigDocumentCodec();
+        ManagedDocumentCodec.Integrity.VerifiedBody encoded = ManagedDocumentCodec.Integrity.extract(
+                codec.encode(application, "generation"));
+        String blankEndpoint = encoded.content().replace(
+                "hertzbeat.instrumentation.server.otlp-http-endpoint: 'https://hertzbeat.example/otlp'",
+                "hertzbeat.instrumentation.server.otlp-http-endpoint: '  '");
+
+        byte[] document = ManagedDocumentCodec.Integrity.envelope(blankEndpoint, encoded.generation());
+        assertThatThrownBy(() -> codec.decode(document))
+                .isInstanceOf(ManagedDocumentCodec.DocumentException.class);
     }
 
     private static ManagedConfigurationBundle required() {

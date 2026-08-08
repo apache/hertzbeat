@@ -9,12 +9,10 @@ package org.apache.hertzbeat.manager.setup.api;
 
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.DATABASE_KIND;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.GREPTIME_EXPIRE_TIME;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_HOST;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SECURITY;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.PUBLIC_BASE_URL;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_LOGS;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_METRICS;
-import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.RETENTION_TRACES;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SSL_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_STARTTLS_ENABLED;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_GRPC;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_HTTP;
 
@@ -29,6 +27,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSum
 import org.apache.hertzbeat.manager.setup.config.EffectiveConfigurationResolver;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.Inspection;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.State;
+import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
 import org.apache.hertzbeat.manager.setup.config.RestartRequirement;
 import org.apache.hertzbeat.manager.setup.workflow.SetupConfigurationProjection;
 import org.apache.hertzbeat.manager.setup.workflow.SetupWarningPolicy;
@@ -48,30 +47,49 @@ final class SetupStatusProjectionFactory {
                 : database.source();
         boolean managedPresent = inspection.state() == State.LOADABLE;
         MetadataDatabaseKind kind = MetadataDatabaseKind.valueOf(database.value().toUpperCase(Locale.ROOT));
+        boolean mailConfigured = externallyConfigured(environment, MAIL_HOST, true);
         OptionalConfigurationSummary optional = new OptionalConfigurationSummary(
-                hasText(environment, PUBLIC_BASE_URL), hasText(environment, SERVER_OTLP_HTTP),
-                hasText(environment, SERVER_OTLP_GRPC), hasRetention(environment),
-                hasText(environment, MAIL_HOST));
-        String mailSecurityValue = environment.getProperty(MAIL_SECURITY);
-        MailSecurity mailSecurity = mailSecurityValue != null
-                && MailSecurity.NONE.name().equalsIgnoreCase(mailSecurityValue) ? MailSecurity.NONE : null;
+                externallyConfiguredEndpoint(environment, SERVER_OTLP_HTTP),
+                externallyConfiguredEndpoint(environment, SERVER_OTLP_GRPC),
+                externallyConfigured(environment, GREPTIME_EXPIRE_TIME, true), mailConfigured);
+        MailSecurity mailSecurity = mailConfigured ? mailSecurity(environment) : null;
         return new SetupConfigurationProjection(
                 new ManagementDatabaseSummary(kind, managedPresent || database.source() != ConfigSource.BUILT_IN_DEFAULT,
                         database.source(), false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME,
                         managedPresent || telemetrySource != ConfigSource.BUILT_IN_DEFAULT,
                         telemetrySource, false), optional, SetupWarningPolicy.INSTANCE.evaluate(
-                        kind, environment.getProperty(PUBLIC_BASE_URL), mailSecurity));
+                        kind, environment.getProperty(SERVER_OTLP_HTTP),
+                        environment.getProperty(SERVER_OTLP_GRPC), mailSecurity));
     }
 
-    private static boolean hasText(Environment environment, String key) {
-        String value = environment.getProperty(key);
-        return value != null && !value.isBlank();
+    private boolean externallyConfigured(Environment environment, String key, boolean requireText) {
+        if (!environment.containsProperty(key)) {
+            return false;
+        }
+        var resolved = resolver.resolve(environment, key, RestartRequirement.LIVE_RELOAD);
+        return resolved.source() != ConfigSource.BUILT_IN_DEFAULT
+                && (!requireText || !resolved.value().isBlank());
     }
 
-    private static boolean hasRetention(Environment environment) {
-        return environment.containsProperty(RETENTION_METRICS)
-                || environment.containsProperty(RETENTION_LOGS)
-                || environment.containsProperty(RETENTION_TRACES);
+    private boolean externallyConfiguredEndpoint(Environment environment, String key) {
+        if (!environment.containsProperty(key)) {
+            return false;
+        }
+        var resolved = resolver.resolve(environment, key, RestartRequirement.LIVE_RELOAD);
+        return resolved.source() != ConfigSource.BUILT_IN_DEFAULT
+                && ServerInstrumentationSettings.normalize(resolved.value()).isPresent();
+    }
+
+    private static MailSecurity mailSecurity(Environment environment) {
+        if (!environment.containsProperty(MAIL_SSL_ENABLED)
+                || !environment.containsProperty(MAIL_STARTTLS_ENABLED)) {
+            return null;
+        }
+        if (environment.getProperty(MAIL_SSL_ENABLED, Boolean.class, false)) {
+            return MailSecurity.TLS;
+        }
+        return environment.getProperty(MAIL_STARTTLS_ENABLED, Boolean.class, false)
+                ? MailSecurity.STARTTLS : MailSecurity.NONE;
     }
 }

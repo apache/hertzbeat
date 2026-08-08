@@ -193,7 +193,7 @@ public final class SetupApiContract {
     public enum ValidationSection implements WireValue {
         METADATA_DATABASE("metadata_database"),
         TELEMETRY_STORE("telemetry_store"),
-        PUBLIC_ACCESS("public_access"),
+        SERVER_INSTRUMENTATION("server_instrumentation"),
         MAIL("mail");
 
         private final String value;
@@ -244,7 +244,7 @@ public final class SetupApiContract {
         METADATA_SCHEMA_MISMATCH("metadata_schema_mismatch"),
         METADATA_INSUFFICIENT_PRIVILEGES("metadata_insufficient_privileges"),
         TELEMETRY_CONNECTION_FAILED("telemetry_connection_failed"),
-        PUBLIC_ADDRESS_INVALID("public_address_invalid"),
+        SERVER_INSTRUMENTATION_INVALID("server_instrumentation_invalid"),
         MAIL_CONNECTION_FAILED("mail_connection_failed"),
         ADMINISTRATOR_ALREADY_CONFIGURED("administrator_already_configured"),
         ADMINISTRATOR_USERNAME_INVALID("administrator_username_invalid"),
@@ -274,7 +274,7 @@ public final class SetupApiContract {
     public enum SetupWarningCode implements WireValue {
         EXTERNAL_APPLY_REQUIRED("external_apply_required"),
         RESTART_REQUIRED("restart_required"),
-        PUBLIC_ADDRESS_PLAINTEXT("public_address_plaintext"),
+        SERVER_OTLP_PLAINTEXT("server_otlp_plaintext"),
         MAIL_SECURITY_NONE("mail_security_none"),
         H2_NON_PRODUCTION("h2_non_production");
 
@@ -338,7 +338,6 @@ public final class SetupApiContract {
 
     /** Secret-free optional configuration status. */
     public record OptionalConfigurationSummary(
-            boolean publicAccessConfigured,
             boolean serverOtlpHttpConfigured,
             boolean serverOtlpGrpcConfigured,
             boolean retentionConfigured,
@@ -408,9 +407,8 @@ public final class SetupApiContract {
         }
     }
 
-    /** Public endpoint input; HTTP and HTTPS are both contractually valid. */
-    public record PublicAccessConfiguration(
-            String publicBaseUrl,
+    /** Server OTLP endpoint input; HTTP and HTTPS are both contractually valid. */
+    public record ServerInstrumentationConfiguration(
             String serverOtlpHttpEndpoint,
             String serverOtlpGrpcEndpoint) {
     }
@@ -442,16 +440,16 @@ public final class SetupApiContract {
             @NotNull ValidationSection section,
             @Valid MetadataDatabaseConfiguration managementDatabase,
             @Valid TelemetryStoreConfiguration telemetryStore,
-            @Valid PublicAccessConfiguration publicAccess,
+            @Valid ServerInstrumentationConfiguration serverInstrumentation,
             @Valid MailConfiguration mail) {
 
         public ValidateRequest {
             Objects.requireNonNull(section, "section");
-            int supplied = countPresent(managementDatabase, telemetryStore, publicAccess, mail);
+            int supplied = countPresent(managementDatabase, telemetryStore, serverInstrumentation, mail);
             boolean matches = switch (section) {
                 case METADATA_DATABASE -> managementDatabase != null;
                 case TELEMETRY_STORE -> telemetryStore != null;
-                case PUBLIC_ACCESS -> publicAccess != null;
+                case SERVER_INSTRUMENTATION -> serverInstrumentation != null;
                 case MAIL -> mail != null;
             };
             if (supplied != 1 || !matches) {
@@ -518,28 +516,24 @@ public final class SetupApiContract {
     }
 
     /** Optional retention input. */
-    public record RetentionConfiguration(
-            @Positive Integer metricsDays,
-            @Positive Integer logsDays,
-            @Positive Integer tracesDays) {
+    public record RetentionConfiguration(@Positive int days) {
 
         public RetentionConfiguration {
-            requirePositiveIfPresent(metricsDays);
-            requirePositiveIfPresent(logsDays);
-            requirePositiveIfPresent(tracesDays);
+            if (days <= 0) {
+                throw new IllegalArgumentException("Retention must be positive");
+            }
         }
     }
 
     /** Optional setup input. */
     public record OptionsRequest(
-            @Valid PublicAccessConfiguration publicAccess,
+            @Valid ServerInstrumentationConfiguration serverInstrumentation,
             @Valid RetentionConfiguration retention,
             @Valid MailConfiguration mail) {
     }
 
     /** Secret-free optional setup result. */
     public record OptionsResponse(
-            boolean publicAccessConfigured,
             boolean serverOtlpHttpConfigured,
             boolean serverOtlpGrpcConfigured,
             boolean retentionConfigured,
@@ -607,12 +601,6 @@ public final class SetupApiContract {
             }
         }
         return count;
-    }
-
-    private static void requirePositiveIfPresent(Integer value) {
-        if (value != null && value <= 0) {
-            throw new IllegalArgumentException("Retention days must be positive when supplied");
-        }
     }
 
     private static boolean hasText(String value) {

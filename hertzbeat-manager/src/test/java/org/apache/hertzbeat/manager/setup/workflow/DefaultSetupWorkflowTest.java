@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -44,7 +46,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResp
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
@@ -61,6 +63,31 @@ import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService
 import org.junit.jupiter.api.Test;
 
 class DefaultSetupWorkflowTest {
+
+    @Test
+    void optionSummaryUsesMeaningfulEndpointSemantics() {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupRuntimeState state = new SetupRuntimeState(Clock.systemUTC(), capability,
+                SetupPhase.OPTIONAL_CONFIGURATION, SetupAccess.LOCAL, true, "operator");
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        when(validator.validate(any(ValidateRequest.class)))
+                .thenReturn(new ValidationResponse(true, Instant.now(), null, List.of()));
+        DefaultSetupWorkflow workflow = workflow(state, validator,
+                mock(SetupConfigurationCoordinator.class), mock(SetupOperationRegistry.class), capability,
+                Optional.of(mock(IdentityInitializationService.class)),
+                Optional.of(mock(SetupCompletionCoordinator.class)), mock(SetupOptionsCoordinator.class),
+                Clock.systemUTC(), new SetupMutationSerializer());
+        OptionsRequest request = new OptionsRequest(
+                new ServerInstrumentationConfiguration("https://server.example.test:4318", "\u0000"),
+                null, null);
+
+        var response = workflow.configureOptions(request);
+
+        assertTrue(response.serverOtlpHttpConfigured());
+        assertFalse(response.serverOtlpGrpcConfigured());
+        assertTrue(state.status().optional().serverOtlpHttpConfigured());
+        assertFalse(state.status().optional().serverOtlpGrpcConfigured());
+    }
 
     @Test
     void wrongPhaseMustBeRejectedBeforeAdministratorOrCompletionWrites() {
@@ -130,7 +157,7 @@ class DefaultSetupWorkflowTest {
                 mock(SetupConfigurationCoordinator.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion), mutations);
         OptionsRequest request = new OptionsRequest(
-                new PublicAccessConfiguration("http://localhost:1157", null, null), null, null);
+                new ServerInstrumentationConfiguration("http://localhost:4318", null), null, null);
 
         try (var executor = Executors.newFixedThreadPool(2)) {
             var optionsResult = executor.submit(() -> workflow.configureOptions(request));

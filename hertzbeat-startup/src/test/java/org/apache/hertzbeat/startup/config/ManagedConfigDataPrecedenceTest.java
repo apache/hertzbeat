@@ -19,12 +19,17 @@ package org.apache.hertzbeat.startup.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.config.EffectiveConfigurationResolver;
 import org.apache.hertzbeat.manager.setup.config.EffectiveConfigurationValue;
@@ -34,14 +39,26 @@ import org.apache.hertzbeat.manager.setup.config.ManagedApplicationConfig;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigurationBundle;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigurationTransaction;
+import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration;
 import org.apache.hertzbeat.manager.setup.config.ManagedSecrets;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.RestartRequirement;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
+import org.apache.hertzbeat.startup.instrumentation.ExternalOtelCollectorIntakeProperties;
+import org.apache.hertzbeat.startup.instrumentation.ManagerInstrumentationIntakeProfileStore;
+import org.apache.hertzbeat.startup.instrumentation.ServerInstrumentationIntakeProperties;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -49,6 +66,8 @@ import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 class ManagedConfigDataPrecedenceTest {
 
@@ -96,6 +115,49 @@ class ManagedConfigDataPrecedenceTest {
         assertLayer(Map.of(INSTALLATION_ROOT, installationRoot.toString(), KEY, "system"),
                 Map.of("SPRING_DATASOURCE_USERNAME", "environment"),
                 new String[] {"--" + KEY + "=cli"}, "cli", "commandLineArgs", ConfigSource.COMMAND_LINE);
+    }
+
+    @Test
+    void managedOptionalSettingsReachRuntimeConsumers() throws Exception {
+        Path installationRoot = Files.createDirectories(temporaryDirectory.resolve("runtime-consumers"));
+        ManagedSecrets managedSecrets = new ManagedSecrets(SecretValue.of(TEST_PASSWORD), Optional.empty(),
+                Optional.of(SecretValue.of("mail-secret")));
+        ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(installationRoot);
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED,
+                transaction.apply(new ManagedConfigurationBundle(managedApplicationWithOptions(), managedSecrets)));
+
+        ConfigurableEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().addFirst(new MapPropertySource("testInstallationRoot",
+                Map.of(INSTALLATION_ROOT, installationRoot.toString())));
+        SpringApplication application = new SpringApplication(RuntimeConsumerBinding.class);
+        application.setEnvironment(environment);
+        application.setWebApplicationType(WebApplicationType.NONE);
+        application.setLogStartupInfo(false);
+        try (ConfigurableApplicationContext context = application.run()) {
+            ServerInstrumentationIntakeProperties server =
+                    context.getBean(ServerInstrumentationIntakeProperties.class);
+            assertEquals("http://server.example.test:4318", server.otlpHttpEndpoint());
+            assertEquals("https://server.example.test:4317", server.otlpGrpcEndpoint());
+            CollectorDao collectorDao = mock(CollectorDao.class);
+            when(collectorDao.findAll(any(Pageable.class))).thenReturn(Page.empty());
+            var profile = new ManagerInstrumentationIntakeProfileStore(
+                    collectorDao, mock(CollectorIntakeAdvertisementReader.class), server,
+                    new ExternalOtelCollectorIntakeProperties(null, null, null, null))
+                    .profiles().getFirst();
+            assertEquals("server-direct", profile.id());
+            assertEquals(Availability.AVAILABLE, profile.availability());
+            assertEquals(Gateway.SERVER, profile.gateway());
+            assertEquals(Authentication.BEARER_TOKEN, profile.authentication());
+            assertEquals(java.util.List.of(OtlpTransport.HTTP_PROTOBUF, OtlpTransport.GRPC),
+                    profile.supportedTransports());
+            assertEquals("30d", context.getBean(GreptimeProperties.class).expireTime());
+            assertEquals("true", context.getEnvironment().getProperty(
+                    "spring.mail.properties.mail.smtp.ssl.enable"));
+            assertEquals("false", context.getEnvironment().getProperty(
+                    "spring.mail.properties.mail.smtp.starttls.enable"));
+            assertEquals("alerts@example.test",
+                    context.getEnvironment().getProperty("hertzbeat.mail.from-address"));
+        }
     }
 
     private static void assertLayer(
@@ -160,7 +222,24 @@ class ManagedConfigDataPrecedenceTest {
                         new GreptimeEndpoints("greptime:4001", "http://greptime:4000"), "public"));
     }
 
+    private static ManagedApplicationConfig managedApplicationWithOptions() {
+        ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
+                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                        Optional.of("http://server.example.test:4318"),
+                        Optional.of("https://server.example.test:4317"))),
+                Optional.of(new ManagedOptionalConfiguration.RetentionSettings(30)),
+                Optional.of(new ManagedOptionalConfiguration.MailSettings("smtp.example.test", 465,
+                        MailSecurity.TLS, Optional.of("mailer@example.test"), "alerts@example.test")));
+        ManagedApplicationConfig required = managedApplication();
+        return new ManagedApplicationConfig(required.metadataDatabase(), required.telemetryStore(), options);
+    }
+
     @Configuration(proxyBeanMethods = false)
     static class ProbeConfiguration {
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableConfigurationProperties({ServerInstrumentationIntakeProperties.class, GreptimeProperties.class})
+    static class RuntimeConsumerBinding {
     }
 }

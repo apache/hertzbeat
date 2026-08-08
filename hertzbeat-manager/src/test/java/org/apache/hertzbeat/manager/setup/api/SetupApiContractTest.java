@@ -34,7 +34,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailConfiguration
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
@@ -75,11 +75,12 @@ class SetupApiContractTest {
                 "awaiting_restart", "succeeded", "failed", "rolled_back");
         assertWireValues(MetadataDatabaseKind.values(), "h2", "mysql", "postgresql");
         assertWireValues(TelemetryStoreKind.values(), "greptime");
-        assertWireValues(ValidationSection.values(), "metadata_database", "telemetry_store", "public_access", "mail");
+        assertWireValues(ValidationSection.values(), "metadata_database", "telemetry_store",
+                "server_instrumentation", "mail");
         assertWireValues(MailSecurity.values(), "none", "starttls", "tls");
         assertWireValues(SetupApiContract.ExportFormat.values(), "yaml", "env", "kubernetes_secret");
         assertWireValues(SetupApiContract.SetupWarningCode.values(), "external_apply_required", "restart_required",
-                "public_address_plaintext", "mail_security_none", "h2_non_production");
+                "server_otlp_plaintext", "mail_security_none", "h2_non_production");
     }
 
     @Test
@@ -91,12 +92,12 @@ class SetupApiContractTest {
                 "restartRequired");
         assertComponents(SetupApiContract.TelemetryStoreSummary.class, "kind", "configured", "source",
                 "restartRequired");
-        assertComponents(SetupApiContract.OptionalConfigurationSummary.class, "publicAccessConfigured",
-                "serverOtlpHttpConfigured", "serverOtlpGrpcConfigured", "retentionConfigured", "mailConfigured");
+        assertComponents(SetupApiContract.OptionalConfigurationSummary.class, "serverOtlpHttpConfigured",
+                "serverOtlpGrpcConfigured", "retentionConfigured", "mailConfigured");
         assertComponents(SetupApiContract.UnlockRequest.class, "code");
         assertComponents(SetupApiContract.UnlockResponse.class, "access", "expiresAt");
         assertComponents(SetupApiContract.ValidateRequest.class, "section", "managementDatabase", "telemetryStore",
-                "publicAccess", "mail");
+                "serverInstrumentation", "mail");
         assertComponents(SetupApiContract.TelemetryStoreConfiguration.class, "kind", "grpcEndpoints", "httpEndpoint",
                 "database", "username", "password");
         assertComponents(SetupApiContract.ValidationResponse.class, "valid", "observedAt", "errorCode", "warnings");
@@ -108,9 +109,9 @@ class SetupApiContractTest {
                 "startedAt", "completedAt", "errorCode", "nextPollAfterMillis", "exportAvailable");
         assertComponents(SetupApiContract.AdministratorRequest.class, "username", "password");
         assertComponents(SetupApiContract.AdministratorResponse.class, "username", "phase");
-        assertComponents(SetupApiContract.OptionsRequest.class, "publicAccess", "retention", "mail");
-        assertComponents(SetupApiContract.RetentionConfiguration.class, "metricsDays", "logsDays", "tracesDays");
-        assertComponents(SetupApiContract.OptionsResponse.class, "publicAccessConfigured", "serverOtlpHttpConfigured",
+        assertComponents(SetupApiContract.OptionsRequest.class, "serverInstrumentation", "retention", "mail");
+        assertComponents(SetupApiContract.RetentionConfiguration.class, "days");
+        assertComponents(SetupApiContract.OptionsResponse.class, "serverOtlpHttpConfigured",
                 "serverOtlpGrpcConfigured", "retentionConfigured", "mailConfigured", "phase");
         assertComponents(SetupApiContract.ExportRequest.class, "format", "configuration");
         assertComponents(SetupApiContract.ExportResponse.class, "fileName", "mediaType");
@@ -156,7 +157,7 @@ class SetupApiContractTest {
                 () -> new ValidateRequest(ValidationSection.METADATA_DATABASE, null, null, null, null));
         assertThrows(IllegalArgumentException.class, () -> new ValidateRequest(
                 ValidationSection.METADATA_DATABASE, metadata, null,
-                new PublicAccessConfiguration("http://localhost:1157", null, null), null));
+                new ServerInstrumentationConfiguration("http://localhost:4318", null), null));
         assertThrows(IllegalArgumentException.class, () -> new ValidateRequest(
                 ValidationSection.MAIL, metadata, null, null, null));
     }
@@ -184,7 +185,7 @@ class SetupApiContractTest {
                 "config_read_only", "config_write_failed",
                 "config_recovery_required", "metadata_connection_failed", "metadata_kind_unsupported",
                 "metadata_schema_mismatch", "metadata_insufficient_privileges", "telemetry_connection_failed",
-                "public_address_invalid", "mail_connection_failed", "administrator_already_configured",
+                "server_instrumentation_invalid", "mail_connection_failed", "administrator_already_configured",
                 "administrator_username_invalid", "operation_not_found", "operation_conflict",
                 "migration_source_unsupported", "migration_target_not_empty", "migration_multi_node_unsupported",
                 "migration_copy_failed", "migration_verification_failed", "migration_activation_failed",
@@ -206,7 +207,7 @@ class SetupApiContractTest {
                 new SetupApiContract.TelemetryStoreSummary(
                         TelemetryStoreKind.GREPTIME, false, ConfigSource.BUILT_IN_DEFAULT, false),
                 false,
-                new SetupApiContract.OptionalConfigurationSummary(false, false, false, false, false));
+                new SetupApiContract.OptionalConfigurationSummary(false, false, false, false));
         String json = objectMapper.writeValueAsString(response);
         assertFalse(json.contains("jdbc"));
         assertFalse(json.contains("username"));
