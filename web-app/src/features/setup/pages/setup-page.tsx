@@ -54,7 +54,11 @@ export function SetupPage() {
             </Form>
           </section>
         ) : (
-          <SetupPhaseRouter status={controller.status} refetchStatus={controller.retry} />
+          <SetupPhaseRouter
+            status={controller.status}
+            refetchStatus={controller.retry}
+            onCompleted={controller.completeSetupNavigation}
+          />
         )}
       </div>
     </main>

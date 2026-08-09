@@ -81,6 +81,7 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
         {controller.defaultPasswordWarning && <Alert showIcon type="warning" message={t('auth.defaultPassword')} />}
         <Form<LoginCredentials>
           layout="vertical"
+          initialValues={{ identifier: controller.prefillUsername }}
           onValuesChange={controller.resetDefaultPasswordConfirmation}
           onFinish={values => {
             void controller.submit(values);

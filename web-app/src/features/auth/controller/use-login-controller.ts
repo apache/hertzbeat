@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { safeRedirectTarget } from '@/core/auth/navigation';
 import { loginSession, SessionRequestError } from '@/core/auth/session-api';
@@ -35,6 +35,7 @@ import {
 
 export function useLoginController() {
   const navigate = useNavigate();
+  const location = useLocation();
   const replaceSessionIdentity = useSessionIdentityBoundary();
   const [searchParams] = useSearchParams();
   const { failure: sessionFailure, loading, retry, session } = useSession();
@@ -70,6 +71,7 @@ export function useLoginController() {
     errorKey: login.failure ? loginErrorMessageKey(login.failure) : undefined,
     defaultPasswordWarning: login.defaultPasswordWarning,
     failureKind: login.failure,
+    prefillUsername: transientPrefillUsername(location.state),
     pending: login.pending,
     retrySession: retry,
     resetDefaultPasswordConfirmation,
@@ -77,6 +79,12 @@ export function useLoginController() {
     sessionState,
     submit: login.submit
   };
+}
+
+function transientPrefillUsername(state: unknown) {
+  if (!state || typeof state !== 'object' || !('prefillUsername' in state)) return '';
+  const username = (state as { prefillUsername?: unknown }).prefillUsername;
+  return typeof username === 'string' ? username : '';
 }
 
 function useLoginCommand(replaceSessionIdentity: ReplaceSessionIdentity) {

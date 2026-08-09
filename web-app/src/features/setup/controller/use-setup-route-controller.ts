@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadSetupStatus, SetupRequestError, unlockSetup } from '../api/setup-api';
 import { SetupContractError } from '../api/setup-schema';
 import type { SetupErrorCode, SetupStatus } from '../model/setup-contract';
+import type { SetupCompleteResponse } from '../model/setup-optional';
 import { setupQueryKeys } from './setup-query-keys';
 import {
   failedSetupStatusRefresh,
@@ -38,15 +39,25 @@ type SetupControllerBase<State extends string, Status> = {
   unlockErrorCode: SetupErrorCode | null;
   unlockFailureKind: SetupUnlockFailureKind | null;
   statusRefreshFailed: boolean;
+  completionNavigation: { loginPath: string; username: string } | null;
+  completeSetupNavigation: (response: SetupCompleteResponse) => void;
 };
 
 export function useSetupRouteController(): SetupRouteController {
   const { statusQuery, retry } = useSetupStatusController();
   const unlockController = useSetupUnlockController(statusQuery.data ?? null, retry);
+  const [completionNavigation, setCompletionNavigation] = useState<{ loginPath: string; username: string } | null>(
+    null
+  );
+  const completeSetupNavigation = useCallback((response: SetupCompleteResponse) => {
+    setCompletionNavigation({ loginPath: response.loginPath, username: response.username });
+  }, []);
   const shared = {
     retry,
     ...unlockController,
-    statusRefreshFailed: Boolean(statusQuery.data && statusQuery.error)
+    statusRefreshFailed: Boolean(statusQuery.data && statusQuery.error),
+    completionNavigation,
+    completeSetupNavigation
   };
 
   if (statusQuery.isPending && !statusQuery.data) return { state: 'loading', status: null, ...shared };

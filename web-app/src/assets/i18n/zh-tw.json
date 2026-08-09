@@ -2933,6 +2933,56 @@
       "administrator": { "title": "管理員設定", "pending": "資料服務已就緒。下一步是設定管理員帳戶。" },
       "optional": { "title": "選填設定", "pending": "管理員設定已完成。下一步是選填伺服器設定。" }
     },
+    "optional": {
+      "description": "立即設定公用端點、資料保留與郵件，或留空並稍後在設定中完成。",
+      "publicAccess": {
+        "title": "公用存取",
+        "description": "請填寫管理員與遙測傳送端應使用的位址。HertzBeat 不會從目前瀏覽器推斷這些位址。",
+        "publicBaseUrl": "公用基礎 URL",
+        "otlpHttp": "伺服器 OTLP HTTP 端點",
+        "otlpGrpc": "伺服器 OTLP gRPC 端點"
+      },
+      "retention": { "title": "資料保留", "description": "設定資料保留天數，或留空並稍後設定。", "days": "保留天數" },
+      "mail": {
+        "title": "郵件伺服器",
+        "description": "設定 SMTP 傳送或略過。連線測試失敗不會阻止完成設定。",
+        "host": "SMTP 主機",
+        "port": "SMTP 連接埠",
+        "security": "傳輸安全",
+        "securityMode": { "none": "無", "starttls": "STARTTLS", "tls": "TLS" },
+        "username": "使用者名稱",
+        "password": "密碼",
+        "fromAddress": "寄件位址"
+      },
+      "validatePublicAccess": "驗證公用存取",
+      "validateMail": "測試郵件連線",
+      "save": "儲存選填設定",
+      "saveRejected": "選填設定遭拒。已驗證的狀態允許安全重試。",
+      "saveUncertain": "無法確認選填設定是否已儲存。請重新整理設定狀態後再試。",
+      "validation": {
+        "succeeded": "驗證成功",
+        "publicAddressInvalid": "公用位址無效。",
+        "mailConnectionFailed": "郵件連線失敗。你可以修正設定或略過郵件設定。",
+        "failed": "驗證失敗。請檢查輸入內容。",
+        "unavailable": "驗證服務無法使用，不會假設結果。",
+        "contract": "無法驗證服務傳回的結果。",
+        "error": "驗證失敗，不會假設結果。"
+      },
+      "warning": {
+        "external_apply_required": "仍需套用外部設定。",
+        "restart_required": "仍需重新啟動伺服器。",
+        "public_address_plaintext": "公用位址使用未加密的 HTTP。",
+        "mail_security_none": "郵件傳輸加密已停用。",
+        "h2_non_production": "H2 資料庫僅適用於本機評估。"
+      },
+      "complete": {
+        "title": "完成設定",
+        "description": "完成前請檢視並確認伺服器的所有警告。",
+        "action": "完成設定",
+        "rejected": "完成設定請求遭拒。已驗證的狀態允許安全重試。",
+        "uncertain": "無法確認設定是否完成。請重新整理設定狀態後再試。"
+      }
+    },
     "configuration": {
       "title": "連接資料服務",
       "description": "分別設定管理資料庫與遙測儲存。套用前，伺服器會檢查每個連線。",

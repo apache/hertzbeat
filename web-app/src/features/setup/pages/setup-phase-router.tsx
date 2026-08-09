@@ -1,27 +1,31 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
-
 import { SetupAdministratorForm } from '../components/setup-administrator-form';
 import { SetupConfigurationForm } from '../components/setup-configuration-form';
+import { SetupOptionalForm } from '../components/setup-optional-form';
 import { useSetupAdministratorController } from '../controller/use-setup-administrator-controller';
 import { useSetupConfigurationController } from '../controller/use-setup-configuration-controller';
+import { useSetupOptionalController } from '../controller/use-setup-optional-controller';
+import type { SetupCompleteResponse } from '../model/setup-optional';
 import type { SetupStatus } from '../model/setup-contract';
 import type { SetupStatusRefresh } from '../controller/setup-status-refresh';
 import styles from './setup-page.module.css';
 
 export function SetupPhaseRouter({
   status,
-  refetchStatus
+  refetchStatus,
+  onCompleted
 }: {
   status: SetupStatus;
   refetchStatus: SetupStatusRefresh;
+  onCompleted: (response: SetupCompleteResponse) => void;
 }) {
   if (status.phase === 'administrator_required') {
     return <AdministratorStep status={status} refetchStatus={refetchStatus} />;
   }
-  if (status.phase === 'optional_configuration') return <PendingStep kind="optional" />;
+  if (status.phase === 'optional_configuration') {
+    return <OptionalStep status={status} refetchStatus={refetchStatus} onCompleted={onCompleted} />;
+  }
   if (status.phase === 'complete') return null;
   return <ConfigurationStep key={configurationFlowKey(status.phase)} status={status} refetchStatus={refetchStatus} />;
 }
@@ -49,14 +53,19 @@ function ConfigurationStep({ status, refetchStatus }: { status: SetupStatus; ref
   );
 }
 
-function PendingStep({ kind }: { kind: 'administrator' | 'optional' }) {
-  const { t } = useTranslation();
+function OptionalStep({
+  status,
+  refetchStatus,
+  onCompleted
+}: {
+  status: SetupStatus;
+  refetchStatus: SetupStatusRefresh;
+  onCompleted: (response: SetupCompleteResponse) => void;
+}) {
+  const controller = useSetupOptionalController(status, refetchStatus, onCompleted);
   return (
-    <section className={styles.content} aria-labelledby={`setup-${kind}-title`}>
-      <Typography.Title id={`setup-${kind}-title`} level={2}>
-        {t(`setup.steps.${kind}.title`)}
-      </Typography.Title>
-      <Typography.Paragraph>{t(`setup.steps.${kind}.pending`)}</Typography.Paragraph>
+    <section className={styles.content}>
+      <SetupOptionalForm {...controller} />
     </section>
   );
 }

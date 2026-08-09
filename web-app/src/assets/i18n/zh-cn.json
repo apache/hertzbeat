@@ -2933,6 +2933,56 @@
       "administrator": { "title": "管理员设置", "pending": "数据服务已就绪。下一步是配置管理员账户。" },
       "optional": { "title": "可选配置", "pending": "管理员设置已完成。下一步是可选服务器设置。" }
     },
+    "optional": {
+      "description": "现在配置公共端点、数据保留和邮件，或留空并稍后在设置中配置。",
+      "publicAccess": {
+        "title": "公共访问",
+        "description": "请填写管理员和遥测发送端应使用的地址。HertzBeat 不会从当前浏览器推断这些地址。",
+        "publicBaseUrl": "公共基础 URL",
+        "otlpHttp": "服务器 OTLP HTTP 端点",
+        "otlpGrpc": "服务器 OTLP gRPC 端点"
+      },
+      "retention": { "title": "数据保留", "description": "设置数据保留天数，或留空并稍后配置。", "days": "保留天数" },
+      "mail": {
+        "title": "邮件服务器",
+        "description": "配置 SMTP 发送或跳过。连接测试失败不会阻止完成设置。",
+        "host": "SMTP 主机",
+        "port": "SMTP 端口",
+        "security": "传输安全",
+        "securityMode": { "none": "无", "starttls": "STARTTLS", "tls": "TLS" },
+        "username": "用户名",
+        "password": "密码",
+        "fromAddress": "发件地址"
+      },
+      "validatePublicAccess": "验证公共访问",
+      "validateMail": "测试邮件连接",
+      "save": "保存可选配置",
+      "saveRejected": "可选配置被拒绝。已验证的状态允许安全重试。",
+      "saveUncertain": "无法确认可选配置是否已保存。请刷新设置状态后再重试。",
+      "validation": {
+        "succeeded": "验证成功",
+        "publicAddressInvalid": "公共地址无效。",
+        "mailConnectionFailed": "邮件连接失败。你可以修改配置或跳过邮件设置。",
+        "failed": "验证失败。请检查填写内容。",
+        "unavailable": "验证服务不可用，不会假定结果。",
+        "contract": "无法验证服务返回的验证结果。",
+        "error": "验证失败，不会假定结果。"
+      },
+      "warning": {
+        "external_apply_required": "仍需应用外部配置。",
+        "restart_required": "仍需重启服务器。",
+        "public_address_plaintext": "公共地址使用未加密的 HTTP。",
+        "mail_security_none": "邮件传输加密已禁用。",
+        "h2_non_production": "H2 数据库仅适用于本地评估。"
+      },
+      "complete": {
+        "title": "完成设置",
+        "description": "完成前请查看并确认服务器的所有警告。",
+        "action": "完成设置",
+        "rejected": "完成设置请求被拒绝。已验证的状态允许安全重试。",
+        "uncertain": "无法确认设置是否已完成。请刷新设置状态后再重试。"
+      }
+    },
     "configuration": {
       "title": "连接数据服务",
       "description": "分别配置管理数据库与遥测存储。应用前，服务器会检查每个连接。",

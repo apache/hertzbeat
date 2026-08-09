@@ -2948,6 +2948,60 @@
       },
       "optional": { "title": "任意設定", "pending": "管理者設定が完了しました。次の手順は任意のサーバー設定です。" }
     },
+    "optional": {
+      "description": "公開エンドポイント、保持期間、メールを今設定するか、空のままにして後で設定できます。",
+      "publicAccess": {
+        "title": "公開アクセス",
+        "description": "利用者とテレメトリ送信元が使用するアドレスを入力してください。このブラウザーから自動推測されません。",
+        "publicBaseUrl": "公開ベース URL",
+        "otlpHttp": "サーバー OTLP HTTP エンドポイント",
+        "otlpGrpc": "サーバー OTLP gRPC エンドポイント"
+      },
+      "retention": {
+        "title": "データ保持",
+        "description": "データを保持する日数を設定するか、空のまま後で設定します。",
+        "days": "保持日数"
+      },
+      "mail": {
+        "title": "メールサーバー",
+        "description": "SMTP 配信を設定するかスキップできます。接続テストの失敗はセットアップ完了を妨げません。",
+        "host": "SMTP ホスト",
+        "port": "SMTP ポート",
+        "security": "通信の暗号化",
+        "securityMode": { "none": "なし", "starttls": "STARTTLS", "tls": "TLS" },
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "fromAddress": "送信元アドレス"
+      },
+      "validatePublicAccess": "公開アクセスを検証",
+      "validateMail": "メール接続をテスト",
+      "save": "任意設定を保存",
+      "saveRejected": "任意設定は拒否されました。確認済みの状態に基づいて安全に再試行できます。",
+      "saveUncertain": "任意設定が保存されたか確認できません。再試行する前にセットアップ状態を更新してください。",
+      "validation": {
+        "succeeded": "検証に成功しました",
+        "publicAddressInvalid": "公開アドレスが無効です。",
+        "mailConnectionFailed": "メール接続に失敗しました。修正するかメール設定をスキップできます。",
+        "failed": "検証に失敗しました。入力内容を確認してください。",
+        "unavailable": "検証を利用できません。結果は推測されません。",
+        "contract": "検証応答を確認できませんでした。",
+        "error": "検証に失敗しました。結果は推測されません。"
+      },
+      "warning": {
+        "external_apply_required": "外部設定を引き続き適用する必要があります。",
+        "restart_required": "サーバーの再起動が必要です。",
+        "public_address_plaintext": "公開アドレスは暗号化されていない HTTP を使用しています。",
+        "mail_security_none": "メール通信の暗号化が無効です。",
+        "h2_non_production": "H2 データベースはローカル評価専用です。"
+      },
+      "complete": {
+        "title": "セットアップを完了",
+        "description": "完了する前にサーバーの警告をすべて確認して承認してください。",
+        "action": "セットアップを完了",
+        "rejected": "セットアップ完了は拒否されました。確認済みの状態に基づいて安全に再試行できます。",
+        "uncertain": "セットアップが完了したか確認できません。再試行する前に状態を更新してください。"
+      }
+    },
     "configuration": {
       "title": "データサービスに接続",
       "description": "管理データベースとテレメトリストアを個別に設定します。適用前にサーバーが各接続を確認します。",

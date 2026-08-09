@@ -7,6 +7,7 @@ import type {
   SetupPhase,
   TelemetryStoreConfiguration
 } from './setup-contract';
+import type { SetupOptionalValidationRequest } from './setup-optional';
 
 export type SetupValidationSection = 'metadata_database' | 'telemetry_store';
 export type SetupConfigurationDraft = {
@@ -15,7 +16,8 @@ export type SetupConfigurationDraft = {
 };
 export type SetupValidationRequest =
   | { section: 'metadata_database'; managementDatabase: MetadataDatabaseConfiguration }
-  | { section: 'telemetry_store'; telemetryStore: TelemetryStoreConfiguration };
+  | { section: 'telemetry_store'; telemetryStore: TelemetryStoreConfiguration }
+  | SetupOptionalValidationRequest;
 export type SetupConfigurationRequest = {
   expectedPhase: SetupPhase;
   applyMode: SetupApplyMode;

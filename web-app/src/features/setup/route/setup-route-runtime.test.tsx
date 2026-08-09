@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initializeI18n } from '@/core/i18n/i18n';
@@ -10,6 +10,8 @@ import { AppProviders } from '@/app/providers';
 const api = vi.hoisted(() => ({
   loadSetupStatus: vi.fn(),
   createSetupAdministrator: vi.fn(),
+  saveSetupOptions: vi.fn(),
+  completeSetup: vi.fn(),
   unlockSetup: vi.fn(),
   validateSetupSection: vi.fn(),
   configureSetup: vi.fn(),
@@ -38,6 +40,8 @@ describe('SetupRouteBoundary', () => {
     productMount.mockClear();
     api.loadSetupStatus.mockReset();
     api.createSetupAdministrator.mockReset();
+    api.saveSetupOptions.mockReset();
+    api.completeSetup.mockReset();
     api.unlockSetup.mockReset();
     api.validateSetupSection.mockReset();
     api.configureSetup.mockReset();
@@ -174,6 +178,26 @@ describe('SetupRouteBoundary', () => {
     );
     expect(await screen.findByRole('heading', { name: 'Optional configuration' })).toBeInTheDocument();
     expect(api.loadSetupStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('finishes setup through the backend login path with only transient username state', async () => {
+    api.loadSetupStatus.mockResolvedValue(
+      setupStatus('optional_configuration', 'local', { pendingWarnings: ['h2_non_production'] })
+    );
+    api.completeSetup.mockResolvedValue({
+      phase: 'complete',
+      completedAt: '2026-08-09T08:00:00Z',
+      loginPath: '/passport/login',
+      username: 'operator'
+    });
+    renderRuntime();
+
+    fireEvent.click(await screen.findByRole('checkbox', { name: /H2 database/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finish setup' }));
+
+    await waitFor(() => expect(api.completeSetup).toHaveBeenCalledOnce());
+    expect(await screen.findByTestId('login-navigation')).toHaveTextContent('/passport/login:operator');
+    expect(screen.getByTestId('login-navigation')).not.toHaveTextContent('password');
   });
 
   it('converges administrator creation after serialized status refresh failures without replaying the POST', async () => {
@@ -379,13 +403,20 @@ function renderRuntime() {
     <AppProviders>
       <MemoryRouter initialEntries={['/setup']}>
         <Routes>
-          <Route element={<SetupRouteRuntime paths={paths} product={<div>Product</div>} />}>
+          <Route element={<SetupRouteRuntime paths={paths} product={<Outlet />} />}>
             <Route path="/setup" element={<SetupPage />} />
+            <Route path="/passport/login" element={<LoginNavigationProbe />} />
           </Route>
         </Routes>
       </MemoryRouter>
     </AppProviders>
   );
+}
+
+function LoginNavigationProbe() {
+  const location = useLocation();
+  const state = location.state as { prefillUsername?: string } | null;
+  return <output data-testid="login-navigation">{`${location.pathname}:${state?.prefillUsername ?? ''}`}</output>;
 }
 
 async function flushImmediateQueryUpdates() {
@@ -438,7 +469,9 @@ function controllerState(
     unlockPending: false,
     unlockErrorCode: null,
     unlockFailureKind: null,
-    statusRefreshFailed: false
+    statusRefreshFailed: false,
+    completionNavigation: null,
+    completeSetupNavigation: vi.fn()
   };
   if (state === 'ready' && status) {
     return { state: 'ready', status: setupStatus(status.phase, status.access), ...shared };

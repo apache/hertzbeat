@@ -7,10 +7,12 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
   configureSetup,
+  completeSetup,
   createSetupAdministrator,
   exportSetupConfiguration,
   loadSetupOperation,
   loadSetupStatus,
+  saveSetupOptions,
   unlockSetup,
   validateSetupSection
 } from './setup-api';
@@ -127,6 +129,47 @@ describe('setup API', () => {
     });
   });
 
+  it('submits only the entered optional sections with the exact no-store contract', async () => {
+    apiFetch.mockResolvedValue(jsonResponse(optionsResponseFixture()));
+    const request = {
+      publicAccess: { publicBaseUrl: 'https://hertzbeat.example.test' },
+      retention: { days: 30 }
+    };
+
+    await expect(saveSetupOptions(request)).resolves.toMatchObject({ phase: 'optional_configuration' });
+    expect(apiFetch).toHaveBeenCalledWith('/api/setup/options', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request)
+    });
+  });
+
+  it('completes setup with the exact warning acknowledgement contract', async () => {
+    apiFetch.mockResolvedValue(
+      jsonResponse({
+        phase: 'complete',
+        completedAt: '2026-08-09T08:00:00Z',
+        loginPath: '/passport/login',
+        username: 'operator'
+      })
+    );
+    const request = {
+      expectedPhase: 'optional_configuration' as const,
+      acknowledgedWarnings: ['h2_non_production' as const]
+    };
+
+    await expect(completeSetup(request)).resolves.toMatchObject({ phase: 'complete', username: 'operator' });
+    expect(apiFetch).toHaveBeenCalledWith('/api/setup/complete', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request)
+    });
+  });
+
   it('returns only safe attachment metadata and an opaque export blob', async () => {
     apiFetch.mockResolvedValue(
       new Response('secret artifact', {
@@ -230,5 +273,16 @@ function operationFixture() {
     errorCode: null,
     nextPollAfterMillis: 500,
     exportAvailable: false
+  };
+}
+
+function optionsResponseFixture() {
+  return {
+    publicBaseUrlConfigured: true,
+    serverOtlpHttpConfigured: false,
+    serverOtlpGrpcConfigured: false,
+    retentionConfigured: true,
+    mailConfigured: false,
+    phase: 'optional_configuration'
   };
 }

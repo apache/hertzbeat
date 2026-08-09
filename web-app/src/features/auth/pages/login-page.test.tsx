@@ -135,6 +135,15 @@ describe('LoginPage', () => {
     expect(screen.getByTestId('route')).not.toHaveTextContent('typed-session-credential');
   });
 
+  it('prefills only the username from transient completion navigation state', () => {
+    renderLogin({ pathname: '/passport/login', state: { prefillUsername: 'operator', credential: 'ignored-secret' } });
+
+    expect(screen.getByLabelText('Username')).toHaveValue('operator');
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+    expect(screen.getByTestId('route')).not.toHaveTextContent('operator');
+    expect(screen.getByTestId('route')).not.toHaveTextContent('ignored-secret');
+  });
+
   it('restores the product context around the secure login form', () => {
     renderLogin();
 
@@ -251,7 +260,10 @@ describe('LoginPage', () => {
   });
 });
 
-function renderLogin(initialEntry = '/passport/login', initialSession: UiSession = anonymousSession) {
+function renderLogin(
+  initialEntry: string | { pathname: string; state?: unknown } = '/passport/login',
+  initialSession: UiSession = anonymousSession
+) {
   const queryClients: QueryClient[] = [];
   const createQueryClient = () => {
     const queryClient = new QueryClient({

@@ -27,6 +27,11 @@ export function SetupRouteBoundary({
   if (controller.state === 'unavailable') {
     return typeof unavailable === 'function' ? unavailable(controller.retry) : unavailable;
   }
+  if (controller.completionNavigation) {
+    if (location.pathname !== paths.setup) return product;
+    const { loginPath, username } = controller.completionNavigation;
+    return <Navigate replace to={loginPath} state={{ prefillUsername: username }} />;
+  }
   const decision = setupRouteDecision(controller.status.phase, location.pathname, paths);
   if (decision.kind === 'redirect') return <Navigate replace to={decision.to} />;
   return decision.kind === 'setup' ? setup : product;

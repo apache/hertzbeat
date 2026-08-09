@@ -10,12 +10,17 @@ const route = vi.hoisted(() => ({ useSetupRouteContext: vi.fn() }));
 vi.mock('../controller/setup-route-context', () => route);
 const configuration = vi.hoisted(() => ({ useSetupConfigurationController: vi.fn() }));
 vi.mock('../controller/use-setup-configuration-controller', () => configuration);
+const optional = vi.hoisted(() => ({ useSetupOptionalController: vi.fn() }));
+vi.mock('../controller/use-setup-optional-controller', () => optional);
 
 import { SetupPage } from './setup-page';
 
 describe('SetupPage access gate', () => {
   beforeAll(() => initializeI18n());
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    optional.useSetupOptionalController.mockReturnValue(optionalController());
+  });
   afterEach(cleanup);
 
   it('shows only the one-time-code unlock view while remote setup is locked', () => {
@@ -96,6 +101,7 @@ describe('SetupPage access gate', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Optional configuration' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Public access' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connect data services' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Create the first administrator' })).not.toBeInTheDocument();
     expect(configuration.useSetupConfigurationController).not.toHaveBeenCalled();
@@ -122,5 +128,30 @@ function statusFixture(phase: 'administrator_required' | 'optional_configuration
       mailConfigured: false
     },
     pendingWarnings: []
+  };
+}
+
+function optionalController() {
+  return {
+    draft: {
+      publicBaseUrl: '',
+      serverOtlpHttpEndpoint: '',
+      serverOtlpGrpcEndpoint: '',
+      retentionDays: null,
+      mail: { host: '', port: null, security: 'starttls', username: '', password: '', fromAddress: '' }
+    },
+    updateDraft: vi.fn(),
+    save: vi.fn(),
+    savePending: false,
+    saveFailureKey: null,
+    validatePublicAccess: vi.fn(),
+    validateMail: vi.fn(),
+    validation: { publicAccess: null, mail: null },
+    pendingWarnings: [],
+    acknowledgedWarnings: [],
+    setWarningAcknowledged: vi.fn(),
+    complete: vi.fn(),
+    completePending: false,
+    completeFailureKey: null
   };
 }

@@ -2958,6 +2958,60 @@
         "pending": "A configuração do administrador foi concluída. A próxima etapa contém ajustes opcionais do servidor."
       }
     },
+    "optional": {
+      "description": "Configure endpoints públicos, retenção e e-mail agora, ou deixe em branco para configurar depois.",
+      "publicAccess": {
+        "title": "Acesso público",
+        "description": "Informe os endereços usados por operadores e remetentes de telemetria. O HertzBeat não os deduz deste navegador.",
+        "publicBaseUrl": "URL base pública",
+        "otlpHttp": "Endpoint HTTP OTLP do servidor",
+        "otlpGrpc": "Endpoint gRPC OTLP do servidor"
+      },
+      "retention": {
+        "title": "Retenção de dados",
+        "description": "Defina por quantos dias os dados serão mantidos ou deixe em branco para configurar depois.",
+        "days": "Dias de retenção"
+      },
+      "mail": {
+        "title": "Servidor de e-mail",
+        "description": "Configure o envio SMTP ou ignore esta etapa. Uma falha no teste não impede a conclusão.",
+        "host": "Host SMTP",
+        "port": "Porta SMTP",
+        "security": "Segurança do transporte",
+        "securityMode": { "none": "Nenhuma", "starttls": "STARTTLS", "tls": "TLS" },
+        "username": "Nome de usuário",
+        "password": "Senha",
+        "fromAddress": "Endereço do remetente"
+      },
+      "validatePublicAccess": "Validar acesso público",
+      "validateMail": "Testar conexão de e-mail",
+      "save": "Salvar configuração opcional",
+      "saveRejected": "A configuração opcional foi rejeitada. O status verificado permite tentar novamente com segurança.",
+      "saveUncertain": "Não foi possível confirmar se a configuração foi salva. Atualize o status antes de tentar novamente.",
+      "validation": {
+        "succeeded": "Validação concluída",
+        "publicAddressInvalid": "O endereço público é inválido.",
+        "mailConnectionFailed": "A conexão de e-mail falhou. Corrija os dados ou ignore a configuração de e-mail.",
+        "failed": "A validação falhou. Revise os valores informados.",
+        "unavailable": "A validação está indisponível. Nenhum resultado é presumido.",
+        "contract": "Não foi possível verificar a resposta de validação.",
+        "error": "A validação falhou. Nenhum resultado é presumido."
+      },
+      "warning": {
+        "external_apply_required": "A configuração externa ainda precisa ser aplicada.",
+        "restart_required": "O servidor ainda precisa ser reiniciado.",
+        "public_address_plaintext": "O endereço público usa HTTP sem criptografia.",
+        "mail_security_none": "A criptografia do transporte de e-mail está desativada.",
+        "h2_non_production": "O banco H2 destina-se apenas à avaliação local."
+      },
+      "complete": {
+        "title": "Concluir configuração",
+        "description": "Revise e confirme todos os avisos do servidor antes de concluir.",
+        "action": "Concluir configuração",
+        "rejected": "A conclusão foi rejeitada. O status verificado permite tentar novamente com segurança.",
+        "uncertain": "Não foi possível confirmar a conclusão. Atualize o status antes de tentar novamente."
+      }
+    },
     "configuration": {
       "title": "Conectar serviços de dados",
       "description": "Configure o banco de gerenciamento separadamente do armazenamento de telemetria. O servidor verifica cada conexão antes de aplicá-la.",

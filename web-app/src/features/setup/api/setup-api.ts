@@ -9,10 +9,12 @@ import type {
   SetupExportRequest,
   SetupValidationRequest
 } from '../model/setup-configuration';
+import type { SetupCompleteRequest, SetupOptionsRequest } from '../model/setup-optional';
 import { parseSetupUnlockResponse } from './setup-access-schema';
 import { parseAdministratorResponse } from './setup-administrator-schema';
 import { parseConfigurationResponse, parseValidationResponse } from './setup-configuration-schema';
 import { parseSetupOperation } from './setup-operation-schema';
+import { parseSetupCompleteResponse, parseSetupOptionsResponse } from './setup-optional-schema';
 import { parseSetupError, parseSetupStatus } from './setup-schema';
 
 const setupApiPaths = {
@@ -22,6 +24,8 @@ const setupApiPaths = {
   validate: '/api/setup/validate',
   configuration: '/api/setup/configuration',
   administrator: '/api/setup/administrator',
+  options: '/api/setup/options',
+  complete: '/api/setup/complete',
   export: '/api/setup/export'
 };
 
@@ -62,6 +66,16 @@ export async function configureSetup(value: SetupConfigurationRequest, signal?: 
 export async function createSetupAdministrator(value: SetupAdministratorRequest, signal?: AbortSignal) {
   const response = await request(setupApiPaths.administrator, post(value, signal));
   return parseAdministratorResponse(await responseJson(response));
+}
+
+export async function saveSetupOptions(value: SetupOptionsRequest, signal?: AbortSignal) {
+  const response = await request(setupApiPaths.options, post(value, signal));
+  return parseSetupOptionsResponse(await responseJson(response));
+}
+
+export async function completeSetup(value: SetupCompleteRequest, signal?: AbortSignal) {
+  const response = await request(setupApiPaths.complete, post(value, signal));
+  return parseSetupCompleteResponse(await responseJson(response));
 }
 
 export type SetupExportArtifact = { blob: Blob; fileName: string; mediaType: string };
@@ -120,7 +134,13 @@ function withSignal(options: RequestInit, signal?: AbortSignal): RequestInit {
 }
 
 function post(
-  body: SetupValidationRequest | SetupConfigurationRequest | SetupExportRequest | SetupAdministratorRequest,
+  body:
+    | SetupValidationRequest
+    | SetupConfigurationRequest
+    | SetupExportRequest
+    | SetupAdministratorRequest
+    | SetupOptionsRequest
+    | SetupCompleteRequest,
   signal?: AbortSignal
 ): RequestInit {
   return {

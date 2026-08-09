@@ -8,7 +8,11 @@ export type SetupRouteDecision =
 export type SetupRouteBoundaryState =
   | Readonly<{ state: 'loading' }>
   | Readonly<{ state: 'unavailable'; retry: () => void }>
-  | Readonly<{ state: 'ready'; status: Readonly<{ phase: SetupPhase }> }>;
+  | Readonly<{
+      state: 'ready';
+      status: Readonly<{ phase: SetupPhase }>;
+      completionNavigation?: Readonly<{ loginPath: string; username: string }> | null;
+    }>;
 
 export function setupRouteDecision(
   phase: SetupPhase,

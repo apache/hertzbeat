@@ -2954,6 +2954,60 @@
         "pending": "Administrator setup is complete. Optional server settings are the next setup step."
       }
     },
+    "optional": {
+      "description": "Configure public endpoints, retention, and mail now, or leave them empty and configure them later in Settings.",
+      "publicAccess": {
+        "title": "Public access",
+        "description": "Enter the addresses that operators and telemetry senders should use. HertzBeat does not infer them from this browser.",
+        "publicBaseUrl": "Public base URL",
+        "otlpHttp": "Server OTLP HTTP endpoint",
+        "otlpGrpc": "Server OTLP gRPC endpoint"
+      },
+      "retention": {
+        "title": "Data retention",
+        "description": "Set the number of days to retain data, or leave it empty to configure later.",
+        "days": "Retention days"
+      },
+      "mail": {
+        "title": "Mail server",
+        "description": "Configure SMTP delivery or skip it. A failed connection test does not block setup completion.",
+        "host": "SMTP host",
+        "port": "SMTP port",
+        "security": "Transport security",
+        "securityMode": { "none": "None", "starttls": "STARTTLS", "tls": "TLS" },
+        "username": "Username",
+        "password": "Password",
+        "fromAddress": "From address"
+      },
+      "validatePublicAccess": "Validate public access",
+      "validateMail": "Test mail connection",
+      "save": "Save optional configuration",
+      "saveRejected": "The optional configuration was rejected. Verified status permits a safe retry.",
+      "saveUncertain": "Could not confirm whether the optional configuration was saved. Refresh setup status before trying again.",
+      "validation": {
+        "succeeded": "Validation succeeded",
+        "publicAddressInvalid": "The public address is invalid.",
+        "mailConnectionFailed": "The mail connection failed. You may correct it or skip mail configuration.",
+        "failed": "Validation failed. Review the entered values.",
+        "unavailable": "Validation is unavailable. No result is assumed.",
+        "contract": "The validation response could not be verified.",
+        "error": "Validation failed. No result is assumed."
+      },
+      "warning": {
+        "external_apply_required": "External configuration must still be applied.",
+        "restart_required": "A server restart is still required.",
+        "public_address_plaintext": "The public address uses unencrypted HTTP.",
+        "mail_security_none": "Mail transport encryption is disabled.",
+        "h2_non_production": "The H2 database is intended only for local evaluation."
+      },
+      "complete": {
+        "title": "Complete setup",
+        "description": "Review and acknowledge every server warning before finishing setup.",
+        "action": "Finish setup",
+        "rejected": "Setup completion was rejected. Verified status permits a safe retry.",
+        "uncertain": "Could not confirm whether setup completed. Refresh setup status before trying again."
+      }
+    },
     "configuration": {
       "title": "Connect data services",
       "description": "Configure the management database separately from the telemetry store. Each connection is checked against the server before it is applied.",
