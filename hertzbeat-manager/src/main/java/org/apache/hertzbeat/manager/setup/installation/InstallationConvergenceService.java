@@ -27,17 +27,21 @@ import java.util.Optional;
 /** Compares the durable database marker with the owner-only local fingerprint. */
 public final class InstallationConvergenceService {
     private final InstallationRecordRepository records;
+    private final Path installationRoot;
     private final Path fingerprintPath;
 
-    public InstallationConvergenceService(InstallationRecordRepository records, Path fingerprintPath) {
+    public InstallationConvergenceService(
+            InstallationRecordRepository records, Path installationRoot, Path fingerprintPath) {
         this.records = records;
+        this.installationRoot = installationRoot.toAbsolutePath().normalize();
         this.fingerprintPath = fingerprintPath.toAbsolutePath().normalize();
     }
 
     public InstallationMode classify() {
         try {
             Optional<InstallationFingerprint> fingerprint =
-                    new LocalInstallationFingerprintStore(fingerprintPath, new SecureRandom()).read();
+                    new LocalInstallationFingerprintStore(
+                            installationRoot, fingerprintPath, new SecureRandom()).read();
             if (fingerprint.isEmpty() && Files.exists(fingerprintPath, LinkOption.NOFOLLOW_LINKS)) {
                 return InstallationMode.RECOVERY;
             }

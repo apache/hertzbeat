@@ -18,13 +18,20 @@
 package org.apache.hertzbeat.manager.setup.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -83,5 +90,32 @@ class NioManagedFilePublisherTest {
 
         assertEquals("permission denied", failure.getMessage());
         assertEquals(0, directoryForces.get());
+    }
+
+    @Test
+    void ownerOnlyPublicationFailsWhenFileSystemHasNoPosixOrAclBoundary() throws Exception {
+        Path archive = temporaryDirectory.resolve("basic-only.zip");
+        URI uri = URI.create("jar:" + archive.toUri());
+        try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
+            Path target = fileSystem.getPath("/managed-secrets.properties");
+            NioManagedFilePublisher publisher = new NioManagedFilePublisher();
+
+            IOException failure = assertThrows(IOException.class, () -> publisher.publish(
+                    target, "secret-content".getBytes(StandardCharsets.UTF_8), true));
+
+            assertEquals("Owner-only file permissions are unavailable", failure.getMessage());
+            assertFalse(Files.exists(target));
+        }
+    }
+
+    @Test
+    void ownerOnlyPublicationSetsAndVerifiesPosixPermissions() throws Exception {
+        assumeTrue(Files.getFileStore(temporaryDirectory).supportsFileAttributeView("posix"));
+        Path target = temporaryDirectory.resolve("managed-secrets.properties");
+
+        new NioManagedFilePublisher().publish(
+                target, "secret-content".getBytes(StandardCharsets.UTF_8), true);
+
+        assertEquals(PosixFilePermissions.fromString("rw-------"), Files.getPosixFilePermissions(target));
     }
 }

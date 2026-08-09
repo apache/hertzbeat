@@ -22,8 +22,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +42,7 @@ public final class RemoteSetupUnlock {
     private static final Duration TTL = Duration.ofMinutes(15);
     private static final int MAX_ATTEMPTS = 5;
     private static final int MAX_CLIENTS = 1024;
+    private final Path installationRoot;
     private final Path codeFile;
     private final Clock clock;
     private final SecureRandom random;
@@ -52,7 +51,8 @@ public final class RemoteSetupUnlock {
     private byte[] sessionDigest;
     private Instant expiresAt;
 
-    public RemoteSetupUnlock(Path codeFile, Clock clock, SecureRandom random) {
+    public RemoteSetupUnlock(Path installationRoot, Path codeFile, Clock clock, SecureRandom random) {
+        this.installationRoot = installationRoot.toAbsolutePath().normalize();
         this.codeFile = codeFile.toAbsolutePath().normalize();
         this.clock = clock;
         this.random = random;
@@ -63,7 +63,6 @@ public final class RemoteSetupUnlock {
     }
 
     public synchronized void open() throws IOException {
-        SecureSetupFile.ensureSafeParent(codeFile);
         removeStaleCodeFile();
         clearDigest(sessionDigest);
         sessionDigest = null;
@@ -76,7 +75,7 @@ public final class RemoteSetupUnlock {
             clearDigest(codeDigest);
             codeDigest = digest(encodedCode);
             expiresAt = clock.instant().plus(TTL);
-            SecureSetupFile.create(codeFile, encodedCode);
+            SecureSetupFile.create(installationRoot, codeFile, encodedCode);
         } catch (IOException | RuntimeException exception) {
             clearDigest(codeDigest);
             codeDigest = null;
@@ -101,13 +100,7 @@ public final class RemoteSetupUnlock {
     }
 
     private void removeStaleCodeFile() throws IOException {
-        if (!Files.exists(codeFile, LinkOption.NOFOLLOW_LINKS)) {
-            return;
-        }
-        if (!SecureSetupFile.isOwnerOnlyRegularFile(codeFile)) {
-            throw new IOException("Existing setup unlock path is not an owner-only regular file");
-        }
-        Files.delete(codeFile);
+        SecureSetupFile.deleteOwnerOnlyInsideRoot(installationRoot, codeFile);
     }
 
     public synchronized SetupAccessSession redeem(String remoteAddress, SetupUnlockCode supplied) throws IOException {
@@ -142,7 +135,7 @@ public final class RemoteSetupUnlock {
                 newSessionDigest = digest(token);
 
                 // Publish the in-memory session only after the one-time proof is durably unavailable.
-                Files.deleteIfExists(codeFile);
+                SecureSetupFile.deleteOwnerOnlyInsideRoot(installationRoot, codeFile);
                 clearDigest(sessionDigest);
                 sessionDigest = newSessionDigest;
                 newSessionDigest = null;
@@ -178,7 +171,7 @@ public final class RemoteSetupUnlock {
         codeDigest = null;
         sessionDigest = null;
         attempts.clear();
-        Files.deleteIfExists(codeFile);
+        SecureSetupFile.deleteOwnerOnlyInsideRoot(installationRoot, codeFile);
     }
 
     private static byte[] digest(String value) {

@@ -121,10 +121,12 @@ public class SetupApiConfiguration {
     @Bean(destroyMethod = "close")
     public SetupHttpUnlockService setupHttpUnlockService(
             Environment environment, SetupRuntimeState state) throws IOException {
-        Path codeFile = SetupInstallationPaths.root(environment).resolve("data/config/setup-unlock-code");
+        Path installationRoot = SetupInstallationPaths.root(environment);
+        Path codeFile = installationRoot.resolve("data/config/setup-unlock-code");
         InetAddress bindAddress = bindAddress(environment.getProperty("server.address"));
         Clock clock = Clock.systemUTC();
-        return new SetupHttpUnlockService(new RemoteSetupUnlock(codeFile, clock, new SecureRandom()),
+        return new SetupHttpUnlockService(new RemoteSetupUnlock(
+                installationRoot, codeFile, clock, new SecureRandom()),
                 bindAddress, state, clock);
     }
 
@@ -186,10 +188,11 @@ public class SetupApiConfiguration {
 
     private Optional<SetupCompletionCoordinator> completion(
             Environment environment, Optional<InstallationCompletionService> installations) {
-        Path fingerprint = SetupInstallationPaths.root(environment)
-                .resolve("data/config/.installation-fingerprint");
+        Path installationRoot = SetupInstallationPaths.root(environment);
+        Path fingerprint = installationRoot.resolve("data/config/.installation-fingerprint");
         return installations.map(service -> new SetupCompletionCoordinator(
-                new LocalInstallationFingerprintStore(fingerprint, new SecureRandom()), service));
+                new LocalInstallationFingerprintStore(
+                        installationRoot, fingerprint, new SecureRandom()), service));
     }
 
     static InetAddress bindAddress(String configured) {

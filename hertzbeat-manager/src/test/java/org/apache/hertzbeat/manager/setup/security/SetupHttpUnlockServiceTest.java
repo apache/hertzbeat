@@ -52,7 +52,7 @@ class SetupHttpUnlockServiceTest {
                 SetupPhase.COMPLETE, SetupAccess.LOCKED, true, "operator");
 
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, Clock.systemUTC(), new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, Clock.systemUTC(), new SecureRandom()),
                 InetAddress.getByName("0.0.0.0"), state, Clock.systemUTC())) {
             assertThat(service.requiresUnlock()).isFalse();
             assertThat(Files.exists(codeFile)).isFalse();
@@ -65,7 +65,7 @@ class SetupHttpUnlockServiceTest {
         SetupRuntimeState state = new SetupRuntimeState(Clock.systemUTC(), mock(ManagedConfigCapability.class),
                 SetupPhase.CONFIGURATION_REQUIRED, SetupAccess.LOCAL, false, null);
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, Clock.systemUTC(), new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, Clock.systemUTC(), new SecureRandom()),
                 InetAddress.getLoopbackAddress(), state, Clock.systemUTC())) {
             MockHttpServletRequest direct = new MockHttpServletRequest("GET", "/api/setup/status");
             assertThat(service.requiresUnlock(direct)).isFalse();
@@ -79,7 +79,7 @@ class SetupHttpUnlockServiceTest {
         SetupRuntimeState state = new SetupRuntimeState(Clock.systemUTC(), mock(ManagedConfigCapability.class),
                 SetupPhase.CONFIGURATION_REQUIRED, SetupAccess.LOCAL, false, null);
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, Clock.systemUTC(), new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, Clock.systemUTC(), new SecureRandom()),
                 InetAddress.getLoopbackAddress(), state, Clock.systemUTC())) {
             MockHttpServletRequest direct = new MockHttpServletRequest("GET", "/api/setup/status");
             assertThat(service.requiresUnlock(direct)).isFalse();
@@ -105,7 +105,7 @@ class SetupHttpUnlockServiceTest {
         SetupRuntimeState state = new SetupRuntimeState(Clock.systemUTC(), mock(ManagedConfigCapability.class),
                 SetupPhase.CONFIGURATION_REQUIRED, SetupAccess.LOCAL, false, null);
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, Clock.systemUTC(), new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, Clock.systemUTC(), new SecureRandom()),
                 InetAddress.getLoopbackAddress(), state, Clock.systemUTC())) {
             MockHttpServletRequest forwarded = new MockHttpServletRequest(
                     "POST", "/api/setup/unlock");
@@ -146,7 +146,7 @@ class SetupHttpUnlockServiceTest {
         SetupRuntimeState state = new SetupRuntimeState(clock, mock(ManagedConfigCapability.class),
                 SetupPhase.CONFIGURATION_REQUIRED, SetupAccess.LOCKED, false, null);
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, clock, new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, clock, new SecureRandom()),
                 InetAddress.getByName("0.0.0.0"), state, clock)) {
             MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/setup/unlock");
             request.setRemoteAddr("198.51.100.4");
@@ -170,7 +170,7 @@ class SetupHttpUnlockServiceTest {
         SetupRuntimeState state = new SetupRuntimeState(clock, mock(ManagedConfigCapability.class),
                 SetupPhase.CONFIGURATION_REQUIRED, SetupAccess.LOCKED, false, null);
         try (SetupHttpUnlockService service = new SetupHttpUnlockService(
-                new RemoteSetupUnlock(codeFile, clock, new SecureRandom()),
+                new RemoteSetupUnlock(codeFile.getParent(), codeFile, clock, new SecureRandom()),
                 InetAddress.getByName("0.0.0.0"), state, clock)) {
             MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/setup/unlock");
             request.setRemoteAddr("198.51.100.7");

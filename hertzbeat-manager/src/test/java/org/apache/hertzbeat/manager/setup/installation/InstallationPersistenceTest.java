@@ -93,7 +93,8 @@ class InstallationPersistenceTest {
     @Test
     void localFingerprintIsOwnerOnlyReadableAndCollisionSafe() throws Exception {
         Path path = temporaryDirectory.resolve("installation-id");
-        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(path, new SecureRandom());
+        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(
+                temporaryDirectory, path, new SecureRandom());
         InstallationFingerprint created = store.create();
         assertEquals(Optional.of(created), store.read());
         assertEquals(PosixFilePermissions.fromString("rw-------"), Files.getPosixFilePermissions(path));
@@ -106,7 +107,8 @@ class InstallationPersistenceTest {
         Files.writeString(target, FIRST.value());
         Path link = temporaryDirectory.resolve("installation-id");
         Files.createSymbolicLink(link, target);
-        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(link, new SecureRandom());
+        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(
+                temporaryDirectory, link, new SecureRandom());
         assertEquals(Optional.empty(), store.read());
         assertThrows(java.nio.file.FileAlreadyExistsException.class, store::create);
     }
@@ -114,10 +116,25 @@ class InstallationPersistenceTest {
     @Test
     void localFingerprintRejectsPermissionsThatExposeItToOtherUsers() throws Exception {
         Path path = temporaryDirectory.resolve("installation-id");
-        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(path, new SecureRandom());
+        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(
+                temporaryDirectory, path, new SecureRandom());
         store.create();
         Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-r--r--"));
 
-        assertEquals(Optional.empty(), store.read());
+        assertThrows(java.io.IOException.class, store::read);
+    }
+
+    @Test
+    void localFingerprintReadRejectsAncestorSymlinkOutsideInstallationRoot() throws Exception {
+        Path installationRoot = Files.createDirectory(temporaryDirectory.resolve("installation"));
+        Path outside = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        Path outsideFingerprint = outside.resolve("fingerprint");
+        Files.writeString(outsideFingerprint, FIRST.value());
+        Files.setPosixFilePermissions(outsideFingerprint, PosixFilePermissions.fromString("r--------"));
+        Files.createSymbolicLink(installationRoot.resolve("data"), outside);
+        LocalInstallationFingerprintStore store = new LocalInstallationFingerprintStore(
+                installationRoot, installationRoot.resolve("data/fingerprint"), new SecureRandom());
+
+        assertThrows(java.io.IOException.class, store::read);
     }
 }

@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.setup.installation;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -29,19 +28,32 @@ import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 
 /** Owner-only local installation identity store. */
 public final class LocalInstallationFingerprintStore {
+    private static final int MAX_FINGERPRINT_BYTES = 128;
+    private final Path installationRoot;
     private final Path path;
     private final SecureRandom random;
 
-    public LocalInstallationFingerprintStore(Path path, SecureRandom random) {
+    public LocalInstallationFingerprintStore(Path installationRoot, Path path, SecureRandom random) {
+        this.installationRoot = installationRoot.toAbsolutePath().normalize();
         this.path = path.toAbsolutePath().normalize();
         this.random = random;
     }
 
     public Optional<InstallationFingerprint> read() throws IOException {
-        if (!SecureSetupFile.isOwnerOnlyRegularFile(path)) {
+        if (!SecureSetupFile.existsInsideRootWithoutLinks(installationRoot, path)) {
             return Optional.empty();
         }
-        return Optional.of(new InstallationFingerprint(Files.readString(path, StandardCharsets.US_ASCII).trim()));
+        byte[] encoded = null;
+        try {
+            encoded = SecureSetupFile.readOwnerOnlyWithoutLinks(
+                    installationRoot, path, MAX_FINGERPRINT_BYTES);
+            return Optional.of(new InstallationFingerprint(
+                    new String(encoded, StandardCharsets.US_ASCII).trim()));
+        } finally {
+            if (encoded != null) {
+                Arrays.fill(encoded, (byte) 0);
+            }
+        }
     }
 
     public InstallationFingerprint create() throws IOException {
@@ -49,8 +61,8 @@ public final class LocalInstallationFingerprintStore {
         random.nextBytes(value);
         InstallationFingerprint fingerprint = new InstallationFingerprint(HexFormat.of().formatHex(value));
         try {
-            SecureSetupFile.ensureSafeParent(path);
-            SecureSetupFile.create(path, fingerprint.value().getBytes(StandardCharsets.US_ASCII));
+            SecureSetupFile.create(installationRoot, path,
+                    fingerprint.value().getBytes(StandardCharsets.US_ASCII));
             return fingerprint;
         } finally {
             Arrays.fill(value, (byte) 0);

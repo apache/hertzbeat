@@ -24,14 +24,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Set;
+import java.util.UUID;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 
 /** Durable temp-write, file-fsync, replace, and directory-fsync publication. */
 final class NioManagedFilePublisher implements ManagedFileIo.Publisher {
-
-    private static final Set<PosixFilePermission> OWNER_ONLY = Set.of(
-            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
 
     private final ManagedFileIo.Operations operations;
 
@@ -47,18 +44,14 @@ final class NioManagedFilePublisher implements ManagedFileIo.Publisher {
     public void publish(Path target, byte[] content, boolean ownerOnly) throws IOException {
         Path directory = target.toAbsolutePath().getParent();
         Files.createDirectories(directory);
-        Path temporary = Files.createTempFile(directory, ".managed-config-", ".tmp");
+        Path temporary = ownerOnly
+                ? directory.resolve(".managed-config-" + UUID.randomUUID() + ".tmp")
+                : Files.createTempFile(directory, ".managed-config-", ".tmp");
         try {
             if (ownerOnly) {
-                setOwnerOnlyWhenSupported(temporary);
-            }
-            try (FileChannel channel = FileChannel.open(
-                    temporary, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                ByteBuffer buffer = ByteBuffer.wrap(content);
-                while (buffer.hasRemaining()) {
-                    channel.write(buffer);
-                }
-                channel.force(true);
+                SecureSetupFile.create(directory, temporary, content);
+            } else {
+                writeAndForce(temporary, content);
             }
             replaceAndForce(temporary, target);
         } finally {
@@ -78,9 +71,14 @@ final class NioManagedFilePublisher implements ManagedFileIo.Publisher {
         operations.forceDirectory(target.toAbsolutePath().getParent());
     }
 
-    private static void setOwnerOnlyWhenSupported(Path path) throws IOException {
-        if (Files.getFileStore(path).supportsFileAttributeView("posix")) {
-            Files.setPosixFilePermissions(path, OWNER_ONLY);
+    private static void writeAndForce(Path target, byte[] content) throws IOException {
+        try (FileChannel channel = FileChannel.open(
+                target, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            ByteBuffer buffer = ByteBuffer.wrap(content);
+            while (buffer.hasRemaining()) {
+                channel.write(buffer);
+            }
+            channel.force(true);
         }
     }
 

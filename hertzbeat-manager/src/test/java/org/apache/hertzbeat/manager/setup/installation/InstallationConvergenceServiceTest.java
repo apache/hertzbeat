@@ -36,28 +36,29 @@ class InstallationConvergenceServiceTest {
     void matchingDatabaseAndLocalFingerprintsAreRequiredForFullRuntime() throws Exception {
         Path fingerprintPath = temporaryDirectory.resolve("fingerprint");
         InstallationFingerprint fingerprint = new LocalInstallationFingerprintStore(
-                fingerprintPath, new SecureRandom()).create();
+                temporaryDirectory, fingerprintPath, new SecureRandom()).create();
         InstallationRecordRepository records = mock(InstallationRecordRepository.class);
         when(records.findById(InstallationRecord.SINGLETON_ID))
                 .thenReturn(Optional.of(new InstallationRecord(fingerprint.value())));
 
-        assertThat(new InstallationConvergenceService(records, fingerprintPath).classify())
+        assertThat(new InstallationConvergenceService(records, temporaryDirectory, fingerprintPath).classify())
                 .isEqualTo(InstallationMode.FULL);
 
         when(records.findById(InstallationRecord.SINGLETON_ID))
                 .thenReturn(Optional.of(new InstallationRecord("f".repeat(64))));
-        assertThat(new InstallationConvergenceService(records, fingerprintPath).classify())
+        assertThat(new InstallationConvergenceService(records, temporaryDirectory, fingerprintPath).classify())
                 .isEqualTo(InstallationMode.RECOVERY);
     }
 
     @Test
     void fingerprintWrittenBeforeDatabaseRecordRemainsGatedAndCanConverge() throws Exception {
         Path fingerprintPath = temporaryDirectory.resolve("fingerprint");
-        new LocalInstallationFingerprintStore(fingerprintPath, new SecureRandom()).create();
+        new LocalInstallationFingerprintStore(
+                temporaryDirectory, fingerprintPath, new SecureRandom()).create();
         InstallationRecordRepository records = mock(InstallationRecordRepository.class);
         when(records.findById(InstallationRecord.SINGLETON_ID)).thenReturn(Optional.empty());
 
-        assertThat(new InstallationConvergenceService(records, fingerprintPath).classify())
+        assertThat(new InstallationConvergenceService(records, temporaryDirectory, fingerprintPath).classify())
                 .isEqualTo(InstallationMode.UPGRADE);
     }
 
@@ -67,7 +68,7 @@ class InstallationConvergenceServiceTest {
         Files.writeString(fingerprintPath, "not-a-fingerprint");
         InstallationRecordRepository records = mock(InstallationRecordRepository.class);
 
-        assertThat(new InstallationConvergenceService(records, fingerprintPath).classify())
+        assertThat(new InstallationConvergenceService(records, temporaryDirectory, fingerprintPath).classify())
                 .isEqualTo(InstallationMode.RECOVERY);
     }
 }

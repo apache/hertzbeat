@@ -59,18 +59,49 @@ class SetupPasswordFileLoaderTest {
     }
 
     @Test
-    void rejectsNonOwnerFileAndSymlink() throws Exception {
-        Path file = temporaryDirectory.resolve("password");
+    void rejectsNonOwnerFileAndOutOfRootSymlink() throws Exception {
+        Path mount = Files.createDirectory(temporaryDirectory.resolve("mount"));
+        Path file = mount.resolve("password");
         Files.writeString(file, "secret");
         Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-r--r--"));
         SetupPasswordFileLoader loader = new SetupPasswordFileLoader();
         assertThrows(IllegalStateException.class, () -> loader.read(file));
 
-        Path target = temporaryDirectory.resolve("target");
+        Path target = temporaryDirectory.resolve("outside-target");
         Files.writeString(target, "secret");
         Files.setPosixFilePermissions(target, PosixFilePermissions.fromString("rw-------"));
-        Path link = temporaryDirectory.resolve("link");
+        Path link = mount.resolve("password-link");
         Files.createSymbolicLink(link, target);
         assertThrows(IllegalStateException.class, () -> loader.read(link));
+    }
+
+    @Test
+    void readsKubernetesStyleInRootSymlinkAndFollowsRotation() throws Exception {
+        Path mount = Files.createDirectory(temporaryDirectory.resolve("mount"));
+        Path firstVersion = Files.createDirectory(mount.resolve("..2026_08_09_01"));
+        Path secondVersion = Files.createDirectory(mount.resolve("..2026_08_09_02"));
+        writeOwnerReadOnly(firstVersion.resolve("password"), "first-secret");
+        writeOwnerReadOnly(secondVersion.resolve("password"), "second-secret");
+        Path dataLink = mount.resolve("..data");
+        Files.createSymbolicLink(dataLink, firstVersion.getFileName());
+        Path passwordLink = mount.resolve("password");
+        Files.createSymbolicLink(passwordLink, Path.of("..data", "password"));
+
+        SetupPasswordFileLoader loader = new SetupPasswordFileLoader();
+        try (SetupPasswordFileLoader.Password password = loader.read(passwordLink)) {
+            assertArrayEquals("first-secret".toCharArray(), password.copy());
+        }
+
+        Files.delete(dataLink);
+        Files.createSymbolicLink(dataLink, secondVersion.getFileName());
+
+        try (SetupPasswordFileLoader.Password password = loader.read(passwordLink)) {
+            assertArrayEquals("second-secret".toCharArray(), password.copy());
+        }
+    }
+
+    private static void writeOwnerReadOnly(Path target, String value) throws Exception {
+        Files.writeString(target, value);
+        Files.setPosixFilePermissions(target, PosixFilePermissions.fromString("r--------"));
     }
 }

@@ -18,14 +18,10 @@
 package org.apache.hertzbeat.manager.setup.unattended;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 import org.springframework.core.env.Environment;
 
 /** Loads unattended passwords exclusively from bounded owner-only files. */
@@ -34,21 +30,17 @@ public final class SetupPasswordFileLoader {
 
     public Password read(Path path) {
         Path normalized = path.toAbsolutePath().normalize();
+        Path declaredMountRoot = normalized.getParent();
+        if (declaredMountRoot == null) {
+            throw new IllegalStateException("Setup password file is unavailable");
+        }
         byte[] encoded = null;
         char[] decoded = null;
         try {
-            if (!SecureSetupFile.isOwnerOnlyRegularFile(normalized)) {
-                throw new IllegalStateException("Setup password file is unavailable");
-            }
-            long size = Files.size(normalized);
-            if (size <= 0 || size > MAX_PASSWORD_BYTES) {
-                throw new IllegalStateException("Setup password file size is invalid");
-            }
-            encoded = Files.readAllBytes(normalized);
-            CharBuffer buffer = StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(encoded));
-            decoded = new char[buffer.remaining()];
-            buffer.get(decoded);
-            int length = withoutLineEnding(decoded);
+            encoded = SecureSetupFile.readOwnerOnly(declaredMountRoot, normalized, MAX_PASSWORD_BYTES);
+            decoded = new char[encoded.length];
+            int decodedLength = Utf8SecretDecoder.decode(encoded, decoded);
+            int length = withoutLineEnding(decoded, decodedLength);
             if (length == 0) {
                 throw new IllegalStateException("Setup password file is empty");
             }
@@ -77,8 +69,8 @@ public final class SetupPasswordFileLoader {
         return Path.of(file);
     }
 
-    private static int withoutLineEnding(char[] value) {
-        int length = value.length;
+    private static int withoutLineEnding(char[] value, int decodedLength) {
+        int length = decodedLength;
         if (length > 0 && value[length - 1] == '\n') {
             length--;
         }

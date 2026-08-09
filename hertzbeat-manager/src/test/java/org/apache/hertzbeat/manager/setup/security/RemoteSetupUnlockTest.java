@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -55,7 +55,8 @@ class RemoteSetupUnlockTest {
     void ownerOnlyCodeIsSingleUseAndBecomesStrictHttpOnlyCookie() throws Exception {
         Path codeFile = temporaryDirectory.resolve("unlock");
         Clock clock = Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC);
-        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                temporaryDirectory, codeFile, clock, deterministicRandom());
         unlock.open();
         String code = Files.readString(codeFile);
         assertTrue(Files.getPosixFilePermissions(codeFile)
@@ -73,6 +74,64 @@ class RemoteSetupUnlockTest {
         assertTrue(cookie.contains("SameSite=Strict"));
         assertTrue(cookie.contains("Secure"));
         assertFalse(session.toString().contains(session.token()));
+    }
+
+    @Test
+    void openRejectsTargetParentSymlinkOutsideInstallationRoot() throws Exception {
+        Path installationRoot = Files.createDirectory(temporaryDirectory.resolve("installation"));
+        Path outside = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        Files.createDirectory(outside.resolve("config"));
+        Path outsideCodeFile = outside.resolve("config/unlock");
+        Files.writeString(outsideCodeFile, "existing-secret");
+        Files.setPosixFilePermissions(outsideCodeFile, PosixFilePermissions.fromString("rw-------"));
+        Files.createSymbolicLink(installationRoot.resolve("data"), outside);
+        Path codeFile = installationRoot.resolve("data/config/unlock");
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                installationRoot, codeFile, Clock.systemUTC(), deterministicRandom());
+
+        assertThrows(java.io.IOException.class, unlock::open);
+        assertTrue(Files.exists(outsideCodeFile));
+    }
+
+    @Test
+    void redeemRejectsAncestorReplacementAndDoesNotDeleteOutsideRoot() throws Exception {
+        Path installationRoot = Files.createDirectory(temporaryDirectory.resolve("installation"));
+        Path data = Files.createDirectory(installationRoot.resolve("data"));
+        Path codeFile = data.resolve("unlock");
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                installationRoot, codeFile, Clock.systemUTC(), deterministicRandom());
+        unlock.open();
+        String code = Files.readString(codeFile);
+        Path originalData = installationRoot.resolve("original-data");
+        Files.move(data, originalData);
+        Path outside = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        Path outsideCodeFile = outside.resolve("unlock");
+        Files.writeString(outsideCodeFile, "outside-secret");
+        Files.setPosixFilePermissions(outsideCodeFile, PosixFilePermissions.fromString("rw-------"));
+        Files.createSymbolicLink(data, outside);
+
+        assertThrows(java.io.IOException.class,
+                () -> unlock.redeem("198.51.100.4", new SetupUnlockCode(code.toCharArray())));
+        assertTrue(Files.exists(outsideCodeFile));
+    }
+
+    @Test
+    void closeRejectsAncestorReplacementAndDoesNotDeleteOutsideRoot() throws Exception {
+        Path installationRoot = Files.createDirectory(temporaryDirectory.resolve("installation"));
+        Path data = Files.createDirectory(installationRoot.resolve("data"));
+        Path codeFile = data.resolve("unlock");
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                installationRoot, codeFile, Clock.systemUTC(), deterministicRandom());
+        unlock.open();
+        Files.move(data, installationRoot.resolve("original-data"));
+        Path outside = Files.createDirectory(temporaryDirectory.resolve("outside"));
+        Path outsideCodeFile = outside.resolve("unlock");
+        Files.writeString(outsideCodeFile, "outside-secret");
+        Files.setPosixFilePermissions(outsideCodeFile, PosixFilePermissions.fromString("rw-------"));
+        Files.createSymbolicLink(data, outside);
+
+        assertThrows(java.io.IOException.class, unlock::close);
+        assertTrue(Files.exists(outsideCodeFile));
     }
 
     @Test
@@ -94,7 +153,8 @@ class RemoteSetupUnlockTest {
         Clock clock = mock(Clock.class);
         when(clock.instant()).thenReturn(openedAt, openedAt.plus(Duration.ofMinutes(16)));
         Path codeFile = temporaryDirectory.resolve("unlock");
-        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                temporaryDirectory, codeFile, clock, deterministicRandom());
         unlock.open();
 
         SetupUnlockRejected expired = assertThrows(SetupUnlockRejected.class,
@@ -109,11 +169,11 @@ class RemoteSetupUnlockTest {
         Path codeFile = temporaryDirectory.resolve("unlock");
         Clock clock = Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC);
         SecureRandom random = deterministicRandom();
-        RemoteSetupUnlock firstProcess = new RemoteSetupUnlock(codeFile, clock, random);
+        RemoteSetupUnlock firstProcess = new RemoteSetupUnlock(temporaryDirectory, codeFile, clock, random);
         firstProcess.open();
         String staleCode = Files.readString(codeFile);
 
-        RemoteSetupUnlock restarted = new RemoteSetupUnlock(codeFile, clock, random);
+        RemoteSetupUnlock restarted = new RemoteSetupUnlock(temporaryDirectory, codeFile, clock, random);
         restarted.open();
         String replacementCode = Files.readString(codeFile);
 
@@ -129,7 +189,8 @@ class RemoteSetupUnlockTest {
     void openingNewProofInvalidatesPreviousSession() throws Exception {
         Path codeFile = temporaryDirectory.resolve("unlock");
         Clock clock = Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC);
-        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                temporaryDirectory, codeFile, clock, deterministicRandom());
         unlock.open();
         SetupAccessSession oldSession = unlock.redeem(
                 "198.51.100.4", new SetupUnlockCode(Files.readString(codeFile).toCharArray()));
@@ -143,7 +204,8 @@ class RemoteSetupUnlockTest {
     void ensureOpenPreservesAnActiveSession() throws Exception {
         Path codeFile = temporaryDirectory.resolve("unlock");
         MutableClock clock = new MutableClock(Instant.parse("2026-08-08T00:00:00Z"));
-        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                temporaryDirectory, codeFile, clock, deterministicRandom());
         unlock.ensureOpen();
         SetupAccessSession session = unlock.redeem(
                 "198.51.100.4", new SetupUnlockCode(Files.readString(codeFile).toCharArray()));
@@ -158,7 +220,8 @@ class RemoteSetupUnlockTest {
     void ensureOpenRenewsProofAfterExpiry() throws Exception {
         Path codeFile = temporaryDirectory.resolve("unlock");
         MutableClock clock = new MutableClock(Instant.parse("2026-08-08T00:00:00Z"));
-        RemoteSetupUnlock unlock = new RemoteSetupUnlock(codeFile, clock, deterministicRandom());
+        RemoteSetupUnlock unlock = new RemoteSetupUnlock(
+                temporaryDirectory, codeFile, clock, deterministicRandom());
         unlock.ensureOpen();
         String expiredCode = Files.readString(codeFile);
         SetupAccessSession expiredSession = unlock.redeem(
@@ -182,7 +245,7 @@ class RemoteSetupUnlockTest {
         Files.createDirectory(codeFile);
         Files.writeString(codeFile.resolve("blocker"), "keep-directory-non-empty");
 
-        assertThrows(DirectoryNotEmptyException.class,
+        assertThrows(IOException.class,
                 () -> unlock.redeem("198.51.100.4", new SetupUnlockCode(code.toCharArray())));
 
         Files.delete(codeFile.resolve("blocker"));
@@ -193,7 +256,7 @@ class RemoteSetupUnlockTest {
     }
 
     private static RemoteSetupUnlock unlock(Path path) {
-        return new RemoteSetupUnlock(path,
+        return new RemoteSetupUnlock(path.getParent(), path,
                 Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC), deterministicRandom());
     }
 

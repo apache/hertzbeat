@@ -34,6 +34,7 @@ final class SetupRuntimeStateFactory {
         var administrator = accounts.flatMap(DatabaseAccountRepository::findByBootstrapSlotIsNotNull);
         Optional<InstallationMode> installationMode = installations.map(repository ->
                 new InstallationConvergenceService(repository,
+                        root,
                         root.resolve("data/config/.installation-fingerprint")).classify());
         SetupPhase phase = phase(gate.mode(), inspection.state(), administrator.isPresent(), installationMode);
         return new SetupRuntimeState(Clock.systemUTC(), capability, phase,
