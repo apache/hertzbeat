@@ -24,11 +24,13 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 final class MigrationOperationFileCodec {
 
     private static final String ABSENT = "-";
-    private static final int FIELD_COUNT = 16;
+    private static final String SCHEMA_VERSION = "2";
+    private static final int FIELD_COUNT = 18;
     private final MigrationOperationCollectionPolicy collectionPolicy = new MigrationOperationCollectionPolicy();
 
     byte[] encode(List<MigrationOperationSnapshot> snapshots) {
-        StringBuilder output = new StringBuilder("schema=1\ncount=").append(snapshots.size()).append('\n');
+        StringBuilder output = new StringBuilder("schema=").append(SCHEMA_VERSION)
+                .append("\ncount=").append(snapshots.size()).append('\n');
         for (int index = 0; index < snapshots.size(); index++) {
             append(output, index, snapshots.get(index));
         }
@@ -37,7 +39,7 @@ final class MigrationOperationFileCodec {
 
     List<MigrationOperationSnapshot> decode(byte[] encoded) {
         Map<String, String> fields = fields(new String(encoded, StandardCharsets.UTF_8));
-        if (!"1".equals(fields.remove("schema"))) {
+        if (!SCHEMA_VERSION.equals(fields.remove("schema"))) {
             throw new IllegalArgumentException("Unknown migration operation schema");
         }
         int count = integer(fields.remove("count"));
@@ -74,6 +76,8 @@ final class MigrationOperationFileCodec {
         field(output, prefix, "activation", Boolean.toString(value.activationAvailable()));
         field(output, prefix, "restart", Boolean.toString(value.restartRequired()));
         field(output, prefix, "external", Boolean.toString(value.externalApplyRequired()));
+        field(output, prefix, "targetIdentityHash", value.targetIdentityHash());
+        field(output, prefix, "managedCandidateGeneration", optional(value.managedCandidateGeneration()));
     }
 
     private MigrationOperationSnapshot snapshot(Map<String, String> fields, int index) {
@@ -94,7 +98,9 @@ final class MigrationOperationFileCodec {
                 Long.parseLong(take(fields, prefix, "pollMillis")),
                 bool(take(fields, prefix, "activation")),
                 bool(take(fields, prefix, "restart")),
-                bool(take(fields, prefix, "external")));
+                bool(take(fields, prefix, "external")),
+                take(fields, prefix, "targetIdentityHash"),
+                nullable(take(fields, prefix, "managedCandidateGeneration")));
     }
 
     private Map<String, String> fields(String content) {
@@ -133,6 +139,10 @@ final class MigrationOperationFileCodec {
 
     private Instant instant(String value) {
         return ABSENT.equals(value) ? null : Instant.parse(value);
+    }
+
+    private String nullable(String value) {
+        return ABSENT.equals(value) ? null : value;
     }
 
     private SetupErrorCode error(String value) {

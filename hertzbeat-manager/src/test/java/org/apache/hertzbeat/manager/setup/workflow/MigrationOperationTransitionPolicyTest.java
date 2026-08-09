@@ -21,6 +21,9 @@ import org.junit.jupiter.api.Test;
 
 class MigrationOperationTransitionPolicyTest {
 
+    private static final String TARGET_IDENTITY_HASH =
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    private static final String MANAGED_CANDIDATE_GENERATION = "migration-generation-1";
     private static final Instant CREATED = Instant.parse("2026-08-09T01:00:00Z");
     private static final Instant STARTED = CREATED.plusSeconds(1);
     private static final Instant COMPLETED = STARTED.plusSeconds(1);
@@ -172,13 +175,36 @@ class MigrationOperationTransitionPolicyTest {
         assertRejected(ready, verifying);
     }
 
+    @Test
+    void targetIdentityAndManagedCandidateStayImmutableAcrossEveryTransition() {
+        MigrationOperationSnapshot pending = snapshot(MigrationOperationState.PENDING, MigrationStage.QUEUED,
+                0, null, null, VerificationState.PENDING, null, 1000, false, false, false);
+        MigrationOperationSnapshot running = snapshot(MigrationOperationState.RUNNING, MigrationStage.COPYING,
+                25, STARTED, null, VerificationState.PENDING, null, 1000, false, false, false);
+
+        assertRejected(pending, new MigrationOperationSnapshot(
+                running.operationId(), running.state(), running.target(), running.applyMode(), running.stage(),
+                running.progressPercent(), running.createdAt(), running.startedAt(), running.completedAt(),
+                running.verificationState(), running.errorCode(), running.rollbackOrigin(),
+                running.nextPollAfterMillis(), running.activationAvailable(), running.restartRequired(),
+                running.externalApplyRequired(), "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                running.managedCandidateGeneration()));
+        assertRejected(pending, new MigrationOperationSnapshot(
+                running.operationId(), running.state(), running.target(), running.applyMode(), running.stage(),
+                running.progressPercent(), running.createdAt(), running.startedAt(), running.completedAt(),
+                running.verificationState(), running.errorCode(), running.rollbackOrigin(),
+                running.nextPollAfterMillis(), running.activationAvailable(), running.restartRequired(),
+                running.externalApplyRequired(), running.targetIdentityHash(), "migration-generation-2"));
+    }
+
     private MigrationOperationSnapshot external(
             MigrationOperationState state, MigrationStage stage, VerificationState verification,
             SetupErrorCode error, boolean externalRequired, Instant completedAt) {
         return new MigrationOperationSnapshot("migration-1", state, MigrationTarget.POSTGRESQL,
                 ApplyMode.EXTERNAL_APPLY, stage, 100, CREATED, STARTED, completedAt, verification,
                 error, null, state == MigrationOperationState.RUNNING ? 1000 : 0,
-                state == MigrationOperationState.READY_TO_ACTIVATE, false, externalRequired);
+                state == MigrationOperationState.READY_TO_ACTIVATE, false, externalRequired,
+                TARGET_IDENTITY_HASH, null);
     }
 
     private MigrationOperationSnapshot snapshot(
@@ -187,7 +213,8 @@ class MigrationOperationTransitionPolicyTest {
             boolean activation, boolean restart, boolean external) {
         return new MigrationOperationSnapshot("migration-1", state, MigrationTarget.MYSQL,
                 ApplyMode.MANAGED_WRITE, stage, progress, CREATED, startedAt, completedAt,
-                verification, error, null, pollMillis, activation, restart, external);
+                verification, error, null, pollMillis, activation, restart, external,
+                TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION);
     }
 
     private MigrationOperationSnapshot failed(SetupErrorCode errorCode) {
@@ -205,7 +232,7 @@ class MigrationOperationTransitionPolicyTest {
         return new MigrationOperationSnapshot("migration-1", MigrationOperationState.RUNNING,
                 MigrationTarget.MYSQL, ApplyMode.MANAGED_WRITE, MigrationStage.ROLLING_BACK,
                 100, CREATED, STARTED, null, origin.verificationState(), null, origin,
-                1000, false, false, false);
+                1000, false, false, false, TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION);
     }
 
     private MigrationOperationSnapshot rolledBack(
@@ -213,7 +240,7 @@ class MigrationOperationTransitionPolicyTest {
         return new MigrationOperationSnapshot("migration-1", MigrationOperationState.ROLLED_BACK,
                 MigrationTarget.MYSQL, ApplyMode.MANAGED_WRITE, MigrationStage.ROLLED_BACK,
                 100, CREATED, STARTED, COMPLETED, origin.verificationState(), errorCode, origin,
-                0, false, false, false);
+                0, false, false, false, TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION);
     }
 
     private void assertAllowed(MigrationOperationSnapshot current, MigrationOperationSnapshot next) {

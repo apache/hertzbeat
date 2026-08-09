@@ -10,6 +10,7 @@ package org.apache.hertzbeat.manager.setup.workflow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -36,6 +37,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 class FileMigrationOperationStoreTest {
 
+    private static final String TARGET_IDENTITY_HASH =
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    private static final String MANAGED_CANDIDATE_GENERATION = "migration-generation-1";
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     @TempDir
     private Path root;
 
@@ -53,7 +59,49 @@ class FileMigrationOperationStoreTest {
                 .isTrue();
 
         String persisted = Files.readString(root.resolve(FileMigrationOperationStore.RELATIVE_PATH));
+        assertThat(persisted).startsWith("schema=2\n")
+                .contains("targetIdentityHash=" + TARGET_IDENTITY_HASH)
+                .contains("managedCandidateGeneration=" + MANAGED_CANDIDATE_GENERATION);
         assertThat(persisted).doesNotContain("jdbc:", "username", "password", "SELECT", "secret-value");
+        assertThat(running.toString())
+                .doesNotContain(TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION,
+                        "targetIdentityHash", "managedCandidateGeneration");
+        assertThat(objectMapper.writeValueAsString(running))
+                .doesNotContain(TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION,
+                        "targetIdentityHash", "managedCandidateGeneration");
+    }
+
+    @Test
+    void roundTripsManagedAndExternalVersionTwoManifests() {
+        MigrationOperationSnapshot managed = succeeded(
+                pending("managed", Instant.parse("2026-08-09T01:00:00Z")));
+        MigrationOperationSnapshot external = externalPending(
+                "external", Instant.parse("2026-08-09T02:00:00Z"));
+
+        MigrationOperationFileCodec codec = new MigrationOperationFileCodec();
+        byte[] encoded = codec.encode(List.of(managed, external));
+
+        assertThat(new String(encoded, StandardCharsets.UTF_8)).startsWith("schema=2\n");
+        assertThat(codec.decode(encoded)).containsExactly(managed, external);
+    }
+
+    @Test
+    void rejectsInvalidIdentityAndCandidateCouplingBeforePersistence() {
+        Instant createdAt = Instant.parse("2026-08-09T01:00:00Z");
+
+        assertThatThrownBy(() -> pending("invalid-hash", createdAt,
+                TARGET_IDENTITY_HASH.toUpperCase(), MANAGED_CANDIDATE_GENERATION))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> pending("missing-candidate", createdAt, TARGET_IDENTITY_HASH, null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> pending("unsafe-candidate", createdAt,
+                TARGET_IDENTITY_HASH, "candidate/../secret"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> pending("reserved-candidate", createdAt, TARGET_IDENTITY_HASH, "-"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> externalPending(
+                "external-with-candidate", createdAt, MANAGED_CANDIDATE_GENERATION))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -97,7 +145,11 @@ class FileMigrationOperationStoreTest {
         assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
                 () -> new FileMigrationOperationStore(root).history());
 
-        Files.writeString(file, "schema=1\ncount=1\n", StandardCharsets.UTF_8);
+        MigrationOperationSnapshot pending = pending("old-schema", Instant.parse("2026-08-09T01:00:00Z"));
+        String oldSchema = new String(
+                new MigrationOperationFileCodec().encode(List.of(pending)), StandardCharsets.UTF_8)
+                .replaceFirst("schema=2", "schema=1");
+        Files.writeString(file, oldSchema, StandardCharsets.UTF_8);
         ownerOnly(file);
         assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
                 () -> new FileMigrationOperationStore(root).history());
@@ -113,7 +165,7 @@ class FileMigrationOperationStoreTest {
     void rejectsNonOwnerOnlyFileAndSymlinkedConfigurationDirectory() throws Exception {
         Path file = root.resolve(FileMigrationOperationStore.RELATIVE_PATH);
         Files.createDirectories(file.getParent());
-        Files.writeString(file, "schema=1\ncount=0\n", StandardCharsets.UTF_8);
+        Files.writeString(file, "schema=2\ncount=0\n", StandardCharsets.UTF_8);
         if (Files.getFileStore(file).supportsFileAttributeView("posix")) {
             Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-r--r--"));
             assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
@@ -192,6 +244,39 @@ class FileMigrationOperationStoreTest {
     }
 
     @Test
+    void missingOrTamperedVersionTwoIdentityFieldsRequireRecovery() throws Exception {
+        MigrationOperationSnapshot pending = pending("tampered", Instant.parse("2026-08-09T01:00:00Z"));
+        String encoded = new String(
+                new MigrationOperationFileCodec().encode(List.of(pending)), StandardCharsets.UTF_8);
+        Path file = root.resolve(FileMigrationOperationStore.RELATIVE_PATH);
+
+        SecureSetupFile.create(root, file, encoded
+                .replace("0.targetIdentityHash=" + TARGET_IDENTITY_HASH + "\n", "")
+                .getBytes(StandardCharsets.UTF_8));
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> new FileMigrationOperationStore(root).history());
+
+        Files.writeString(file, encoded.replace(TARGET_IDENTITY_HASH, TARGET_IDENTITY_HASH.toUpperCase()),
+                StandardCharsets.UTF_8);
+        ownerOnly(file);
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> new FileMigrationOperationStore(root).history());
+
+        Files.writeString(file, encoded.replace(
+                "0.managedCandidateGeneration=" + MANAGED_CANDIDATE_GENERATION,
+                "0.managedCandidateGeneration=-"), StandardCharsets.UTF_8);
+        ownerOnly(file);
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> new FileMigrationOperationStore(root).history());
+
+        Files.writeString(file, encoded.replace(
+                "0.applyMode=MANAGED_WRITE", "0.applyMode=EXTERNAL_APPLY"), StandardCharsets.UTF_8);
+        ownerOnly(file);
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> new FileMigrationOperationStore(root).history());
+    }
+
+    @Test
     void failedAtomicPublicationPreservesPreviousState() throws Exception {
         FileMigrationOperationStore initial = new FileMigrationOperationStore(root);
         MigrationOperationSnapshot pending = pending("migration-1", Instant.parse("2026-08-09T01:00:00Z"));
@@ -252,23 +337,42 @@ class FileMigrationOperationStoreTest {
     }
 
     private static MigrationOperationSnapshot pending(String id, Instant createdAt) {
+        return pending(id, createdAt, TARGET_IDENTITY_HASH, MANAGED_CANDIDATE_GENERATION);
+    }
+
+    private static MigrationOperationSnapshot pending(
+            String id, Instant createdAt, String targetIdentityHash, String managedCandidateGeneration) {
         return new MigrationOperationSnapshot(id, MigrationOperationState.PENDING, MigrationTarget.MYSQL,
                 ApplyMode.MANAGED_WRITE, MigrationStage.QUEUED, 0, createdAt, null, null,
-                VerificationState.PENDING, null, null, 1000, false, false, false);
+                VerificationState.PENDING, null, null, 1000, false, false, false,
+                targetIdentityHash, managedCandidateGeneration);
+    }
+
+    private static MigrationOperationSnapshot externalPending(String id, Instant createdAt) {
+        return externalPending(id, createdAt, null);
+    }
+
+    private static MigrationOperationSnapshot externalPending(
+            String id, Instant createdAt, String managedCandidateGeneration) {
+        return new MigrationOperationSnapshot(id, MigrationOperationState.PENDING, MigrationTarget.POSTGRESQL,
+                ApplyMode.EXTERNAL_APPLY, MigrationStage.QUEUED, 0, createdAt, null, null,
+                VerificationState.PENDING, null, null, 1000, false, false, false,
+                TARGET_IDENTITY_HASH, managedCandidateGeneration);
     }
 
     private static MigrationOperationSnapshot running(MigrationOperationSnapshot pending, int progress) {
         return new MigrationOperationSnapshot(pending.operationId(), MigrationOperationState.RUNNING, pending.target(),
                 pending.applyMode(), MigrationStage.COPYING, progress, pending.createdAt(),
                 pending.createdAt().plusSeconds(1), null, VerificationState.PENDING, null, null, 1000,
-                false, false, false);
+                false, false, false, pending.targetIdentityHash(), pending.managedCandidateGeneration());
     }
 
     private static MigrationOperationSnapshot succeeded(MigrationOperationSnapshot pending) {
         Instant started = pending.createdAt().plusSeconds(1);
         return new MigrationOperationSnapshot(pending.operationId(), MigrationOperationState.SUCCEEDED, pending.target(),
                 pending.applyMode(), MigrationStage.COMPLETED, 100, pending.createdAt(), started,
-                started.plusSeconds(1), VerificationState.SUCCEEDED, null, null, 0, false, false, false);
+                started.plusSeconds(1), VerificationState.SUCCEEDED, null, null, 0, false, false, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
     }
 
     private static MigrationOperationSnapshot rolledBack(
@@ -277,7 +381,8 @@ class FileMigrationOperationStoreTest {
         return new MigrationOperationSnapshot(pending.operationId(), MigrationOperationState.ROLLED_BACK,
                 pending.target(), pending.applyMode(), MigrationStage.ROLLED_BACK, 100,
                 pending.createdAt(), started, started.plusSeconds(1), origin.verificationState(),
-                origin.errorCode(), origin, 0, false, false, false);
+                origin.errorCode(), origin, 0, false, false, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
     }
 
     private static void complete(FileMigrationOperationStore store, MigrationOperationSnapshot pending) {
@@ -286,17 +391,20 @@ class FileMigrationOperationStoreTest {
         MigrationOperationSnapshot verifying = new MigrationOperationSnapshot(
                 pending.operationId(), MigrationOperationState.RUNNING, pending.target(), pending.applyMode(),
                 MigrationStage.VERIFYING, 100, pending.createdAt(), pending.createdAt().plusSeconds(1), null,
-                VerificationState.RUNNING, null, null, 1000, false, false, false);
+                VerificationState.RUNNING, null, null, 1000, false, false, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
         store.compareAndTransition(pending.operationId(), MigrationOperationState.RUNNING, verifying);
         MigrationOperationSnapshot ready = new MigrationOperationSnapshot(
                 pending.operationId(), MigrationOperationState.READY_TO_ACTIVATE, pending.target(), pending.applyMode(),
                 MigrationStage.READY_TO_ACTIVATE, 100, pending.createdAt(), pending.createdAt().plusSeconds(1), null,
-                VerificationState.SUCCEEDED, null, null, 0, true, false, false);
+                VerificationState.SUCCEEDED, null, null, 0, true, false, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
         store.compareAndTransition(pending.operationId(), MigrationOperationState.RUNNING, ready);
         MigrationOperationSnapshot activating = new MigrationOperationSnapshot(
                 pending.operationId(), MigrationOperationState.RUNNING, pending.target(), pending.applyMode(),
                 MigrationStage.ACTIVATING, 100, pending.createdAt(), pending.createdAt().plusSeconds(1), null,
-                VerificationState.SUCCEEDED, null, null, 1000, false, false, false);
+                VerificationState.SUCCEEDED, null, null, 1000, false, false, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
         store.compareAndTransition(pending.operationId(), MigrationOperationState.READY_TO_ACTIVATE, activating);
         store.compareAndTransition(pending.operationId(), MigrationOperationState.RUNNING, succeeded(pending));
     }

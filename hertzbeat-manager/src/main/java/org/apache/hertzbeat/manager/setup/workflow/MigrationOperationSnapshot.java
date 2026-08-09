@@ -7,8 +7,10 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationTarget;
@@ -35,10 +37,16 @@ public record MigrationOperationSnapshot(
         long nextPollAfterMillis,
         boolean activationAvailable,
         boolean restartRequired,
-        boolean externalApplyRequired) {
+        boolean externalApplyRequired,
+        @JsonIgnore String targetIdentityHash,
+        @JsonIgnore String managedCandidateGeneration) {
+
+    private static final Pattern TARGET_IDENTITY_HASH = Pattern.compile("[0-9a-f]{64}");
+    private static final Pattern MANAGED_CANDIDATE_GENERATION = Pattern.compile("[A-Za-z0-9][A-Za-z0-9-]{0,63}");
 
     public MigrationOperationSnapshot {
         Objects.requireNonNull(applyMode, "applyMode");
+        validateManifestIdentity(applyMode, targetIdentityHash, managedCandidateGeneration);
         new MigrationView(operationId, state, MetadataDatabaseKind.H2, target, stage, progressPercent,
                 createdAt, startedAt, completedAt, verificationState, errorCode, nextPollAfterMillis,
                 activationAvailable, restartRequired, externalApplyRequired);
@@ -49,6 +57,28 @@ public record MigrationOperationSnapshot(
         return state == MigrationOperationState.SUCCEEDED
                 || state == MigrationOperationState.FAILED
                 || state == MigrationOperationState.ROLLED_BACK;
+    }
+
+    @Override
+    public String toString() {
+        return "MigrationOperationSnapshot[operationId=" + operationId + ", state=" + state
+                + ", target=" + target + ", applyMode=" + applyMode + ", stage=" + stage
+                + ", progressPercent=" + progressPercent + "]";
+    }
+
+    private static void validateManifestIdentity(
+            ApplyMode applyMode, String targetIdentityHash, String managedCandidateGeneration) {
+        if (targetIdentityHash == null || !TARGET_IDENTITY_HASH.matcher(targetIdentityHash).matches()) {
+            throw new IllegalArgumentException("Invalid migration target identity");
+        }
+        if (applyMode == ApplyMode.MANAGED_WRITE) {
+            if (managedCandidateGeneration == null
+                    || !MANAGED_CANDIDATE_GENERATION.matcher(managedCandidateGeneration).matches()) {
+                throw new IllegalArgumentException("Invalid managed migration candidate");
+            }
+        } else if (managedCandidateGeneration != null) {
+            throw new IllegalArgumentException("External migration cannot reference a managed candidate");
+        }
     }
 
     private static void validateRollback(

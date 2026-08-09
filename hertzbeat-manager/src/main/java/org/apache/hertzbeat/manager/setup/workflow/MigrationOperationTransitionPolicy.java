@@ -7,6 +7,7 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import java.util.Objects;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.VerificationState;
@@ -20,6 +21,8 @@ final class MigrationOperationTransitionPolicy {
         if (!current.operationId().equals(next.operationId())
                 || current.target() != next.target()
                 || current.applyMode() != next.applyMode()
+                || !current.targetIdentityHash().equals(next.targetIdentityHash())
+                || !Objects.equals(current.managedCandidateGeneration(), next.managedCandidateGeneration())
                 || !current.createdAt().equals(next.createdAt())
                 || current.startedAt() != null && !current.startedAt().equals(next.startedAt())
                 || next.progressPercent() < current.progressPercent()
