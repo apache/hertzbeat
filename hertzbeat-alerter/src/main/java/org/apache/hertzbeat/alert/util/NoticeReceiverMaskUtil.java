@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.util;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
@@ -92,6 +93,7 @@ public final class NoticeReceiverMaskUtil {
      * A re-entered secret or a cleared field is left untouched.
      * @param incoming receiver submitted by the ui, modified in place
      * @param existing receiver currently stored in the database
+     * @throws IllegalArgumentException if a submitted mask does not match the stored secret
      */
     public static void resolveMask(NoticeReceiver incoming, NoticeReceiver existing) {
         if (incoming == null || existing == null) {
@@ -102,7 +104,57 @@ public final class NoticeReceiverMaskUtil {
             String stored = field.getter().apply(existing);
             if (isMaskOf(submitted, stored)) {
                 field.setter().accept(incoming, stored);
+            } else if (isMaskValue(submitted)) {
+                throw new IllegalArgumentException(
+                        "The submitted secret mask does not match the stored secret.");
             }
+        }
+    }
+
+    /**
+     * Resolve masked secrets for a test message while binding them to their persisted destination.
+     * A caller that changes the notification type or a URL receiving authentication data
+     * must submit the new secret explicitly instead of reusing a stored secret mask.
+     * @param incoming receiver submitted for a test message, modified in place
+     * @param existing receiver currently stored in the database
+     * @throws IllegalArgumentException if a masked secret is combined with a changed destination
+     */
+    public static void resolveMaskForTest(NoticeReceiver incoming, NoticeReceiver existing) {
+        if (incoming == null || existing == null) {
+            return;
+        }
+
+        boolean containsStoredSecretMask = SECRET_FIELDS.stream()
+                .anyMatch(field -> isMaskOf(field.getter().apply(incoming), field.getter().apply(existing)));
+        if (containsStoredSecretMask && !Objects.equals(incoming.getType(), existing.getType())) {
+            throw new IllegalArgumentException(
+                    "The notification type cannot be changed when reusing a masked secret.");
+        }
+        rejectChangedSecretDestination(
+                incoming.getHookAuthToken(),
+                existing.getHookAuthToken(),
+                incoming.getHookUrl(),
+                existing.getHookUrl(),
+                "webhook URL");
+        rejectChangedSecretDestination(
+                incoming.getNtfyToken(),
+                existing.getNtfyToken(),
+                incoming.getNtfyServerUrl(),
+                existing.getNtfyServerUrl(),
+                "ntfy server URL");
+        resolveMask(incoming, existing);
+    }
+
+    private static void rejectChangedSecretDestination(
+            String submittedSecret,
+            String storedSecret,
+            String submittedDestination,
+            String storedDestination,
+            String destinationName) {
+        if (isMaskOf(submittedSecret, storedSecret)
+                && !Objects.equals(submittedDestination, storedDestination)) {
+            throw new IllegalArgumentException(
+                    "The " + destinationName + " cannot be changed when reusing a masked secret.");
         }
     }
 
@@ -110,7 +162,14 @@ public final class NoticeReceiverMaskUtil {
         if (submitted == null || StringUtils.isBlank(stored)) {
             return false;
         }
-        return submitted.equals(SECRET_MASK) || submitted.equals(maskValue(stored));
+        return submitted.equals(maskValue(stored));
+    }
+
+    private static boolean isMaskValue(String value) {
+        return value != null
+                && value.startsWith(SECRET_MASK)
+                && (value.length() == SECRET_MASK.length()
+                    || value.length() == SECRET_MASK.length() + VISIBLE_SUFFIX_LENGTH);
     }
 
     private static String maskValue(String value) {
