@@ -32,6 +32,9 @@ final class ManagedFileIo {
         void publish(Path target, byte[] content, boolean ownerOnly) throws IOException;
 
         void remove(Path target) throws IOException;
+
+        /** Confirms that prior directory-entry mutations for the target are durably published. */
+        void confirmDurability(Path target) throws IOException;
     }
 
     @FunctionalInterface
@@ -47,4 +50,5 @@ final class ManagedFileIo {
 
         void forceDirectory(Path directory) throws IOException;
     }
+
 }

@@ -364,6 +364,11 @@ class ManagedConfigurationTransactionTest {
         public void remove(Path target) throws IOException {
             delegate.remove(target);
         }
+
+        @Override
+        public void confirmDurability(Path target) throws IOException {
+            delegate.confirmDurability(target);
+        }
     }
 
     private static final class AtomicUnsupportedPublisher implements ManagedFileIo.Publisher {
@@ -377,6 +382,11 @@ class ManagedConfigurationTransactionTest {
         @Override
         public void remove(Path target) throws IOException {
             Files.deleteIfExists(target);
+        }
+
+        @Override
+        public void confirmDurability(Path target) {
+            // Atomic publication is rejected before durability confirmation is relevant.
         }
     }
 

@@ -22,11 +22,15 @@ public final class ManagedMigrationConfigurationTransaction {
 
     private final ManagedConfigurationLock lock;
     private final MigrationCandidateStore store;
+    private final ManagedMigrationActivation activation;
 
     /** Creates the production migration candidate transaction. */
     public ManagedMigrationConfigurationTransaction(Path installationRoot) {
         lock = new ManagedConfigurationLock(installationRoot);
         store = new MigrationCandidateStore(installationRoot);
+        activation = new ManagedMigrationActivation(
+                new FileManagedApplicationConfigStore(installationRoot),
+                new FileManagedSecretStore(installationRoot));
     }
 
     /** Stages the exact candidate or fails with a stable, secret-free error. */
@@ -68,6 +72,28 @@ public final class ManagedMigrationConfigurationTransaction {
     public DiscardOutcome discardExact(CandidateRef reference) throws IOException {
         Objects.requireNonNull(reference, "reference");
         return lock.execute(() -> store.discardExact(reference));
+    }
+
+    /** Activates only the exact candidate over its recorded base generation. */
+    public ActivationOutcome activate(CandidateRef reference) throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        return lock.execute(() -> store.withMaterial(reference, material -> {
+            if (material.inspection().state() != CandidateState.READY) {
+                return ActivationOutcome.RECOVERY_REQUIRED;
+            }
+            return activation.activate(material);
+        }));
+    }
+
+    /** Restores only the exact recorded base while the candidate generation remains active. */
+    public RollbackOutcome rollback(CandidateRef reference) throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        return lock.execute(() -> store.withMaterial(reference, material -> {
+            if (material.inspection().state() != CandidateState.READY) {
+                return RollbackOutcome.RECOVERY_REQUIRED;
+            }
+            return activation.rollback(material);
+        }));
     }
 
     static void requireGeneration(String value, String label) {
@@ -121,6 +147,12 @@ public final class ManagedMigrationConfigurationTransaction {
 
     /** Stable exact-discard result. */
     public enum DiscardOutcome { DISCARDED, NOT_FOUND }
+
+    /** Stable exact activation result. */
+    public enum ActivationOutcome { ACTIVATED, ALREADY_ACTIVE, STALE, RECOVERY_REQUIRED }
+
+    /** Stable exact rollback result. */
+    public enum RollbackOutcome { ROLLED_BACK, ALREADY_ROLLED_BACK, STALE, RECOVERY_REQUIRED }
 
     /** Synchronous, non-retaining access to a decoded candidate bundle. */
     @FunctionalInterface

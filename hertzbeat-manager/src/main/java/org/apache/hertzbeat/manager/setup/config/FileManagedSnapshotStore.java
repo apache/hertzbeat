@@ -127,6 +127,109 @@ final class FileManagedSnapshotStore<T> {
         publisher.remove(candidate);
     }
 
+    ExactSnapshotOutcome stageCandidateExact(T expected, String generation) throws IOException {
+        ensureSafePaths();
+        CandidateRead<T> current = readCandidate();
+        try {
+            if (current.state() == CandidateState.MISSING) {
+                publishEncoded(candidate, expected, generation);
+                return ExactSnapshotOutcome.APPLIED;
+            }
+            return matches(current, expected, generation)
+                    ? ExactSnapshotOutcome.ALREADY_APPLIED : ExactSnapshotOutcome.RECOVERY_REQUIRED;
+        } finally {
+            closeRead(current);
+        }
+    }
+
+    ExactSnapshotOutcome promoteCandidateExact(T expected, String generation,
+                                                String baseGeneration) throws IOException {
+        ensureSafePaths();
+        CandidateRead<T> activeRead = readActive();
+        CandidateRead<T> candidateRead = readCandidate();
+        CandidateRead<T> lastKnownGoodRead = readLastKnownGood();
+        try {
+            if (matches(activeRead, expected, generation)) {
+                if (!hasGeneration(lastKnownGoodRead, baseGeneration)
+                        || !(candidateRead.state() == CandidateState.MISSING
+                        || matches(candidateRead, expected, generation))) {
+                    return ExactSnapshotOutcome.RECOVERY_REQUIRED;
+                }
+                if (candidateRead.state() == CandidateState.VALID) {
+                    publisher.remove(candidate);
+                }
+                return ExactSnapshotOutcome.ALREADY_APPLIED;
+            }
+            if (activeRead.state() == CandidateState.VALID
+                    && !hasGeneration(activeRead, baseGeneration)) {
+                return ExactSnapshotOutcome.STALE;
+            }
+            if (!hasGeneration(activeRead, baseGeneration)
+                    || !matches(candidateRead, expected, generation)) {
+                return ExactSnapshotOutcome.RECOVERY_REQUIRED;
+            }
+            if (!sameSnapshot(activeRead, lastKnownGoodRead)) {
+                publishEncoded(lastKnownGood, activeRead.value().orElseThrow(), baseGeneration);
+            }
+            publishEncoded(active, expected, generation);
+            publisher.remove(candidate);
+            return ExactSnapshotOutcome.APPLIED;
+        } finally {
+            closeRead(activeRead);
+            closeRead(candidateRead);
+            closeRead(lastKnownGoodRead);
+        }
+    }
+
+    ExactSnapshotOutcome restoreActiveExact(T expectedTarget, String targetGeneration,
+                                            String baseGeneration) throws IOException {
+        ensureSafePaths();
+        CandidateRead<T> activeRead = readActive();
+        CandidateRead<T> lastKnownGoodRead = readLastKnownGood();
+        try {
+            if (!hasGeneration(lastKnownGoodRead, baseGeneration)) {
+                return ExactSnapshotOutcome.RECOVERY_REQUIRED;
+            }
+            if (sameSnapshot(activeRead, lastKnownGoodRead)) {
+                return ExactSnapshotOutcome.ALREADY_APPLIED;
+            }
+            if (activeRead.state() == CandidateState.VALID
+                    && !matches(activeRead, expectedTarget, targetGeneration)) {
+                return ExactSnapshotOutcome.STALE;
+            }
+            if (!matches(activeRead, expectedTarget, targetGeneration)) {
+                return ExactSnapshotOutcome.RECOVERY_REQUIRED;
+            }
+            publishEncoded(active, lastKnownGoodRead.value().orElseThrow(), baseGeneration);
+            return ExactSnapshotOutcome.APPLIED;
+        } finally {
+            closeRead(activeRead);
+            closeRead(lastKnownGoodRead);
+        }
+    }
+
+    ExactSnapshotOutcome discardCandidateExact(T expected, String generation) throws IOException {
+        ensureSafePaths();
+        CandidateRead<T> current = readCandidate();
+        try {
+            if (current.state() == CandidateState.MISSING) {
+                return ExactSnapshotOutcome.ALREADY_APPLIED;
+            }
+            if (!matches(current, expected, generation)) {
+                return ExactSnapshotOutcome.RECOVERY_REQUIRED;
+            }
+            publisher.remove(candidate);
+            return ExactSnapshotOutcome.APPLIED;
+        } finally {
+            closeRead(current);
+        }
+    }
+
+    void confirmDurability() throws IOException {
+        ensureSafePaths();
+        publisher.confirmDurability(active);
+    }
+
     private CandidateRead<T> read(Path path) {
         if (isUnsafePath(path)) {
             return CandidateRead.unreadable();
@@ -179,6 +282,23 @@ final class FileManagedSnapshotStore<T> {
                 // Secret cleanup is best-effort and must not mask the persistence outcome.
             }
         }
+    }
+
+    private static boolean hasGeneration(CandidateRead<?> read, String generation) {
+        return read.state() == CandidateState.VALID && read.generation().filter(generation::equals).isPresent();
+    }
+
+    private static <T> boolean matches(CandidateRead<T> read, T expected, String generation) {
+        return hasGeneration(read, generation) && read.value().filter(expected::equals).isPresent();
+    }
+
+    private static boolean sameSnapshot(CandidateRead<?> left, CandidateRead<?> right) {
+        return left.state() == CandidateState.VALID && right.state() == CandidateState.VALID
+                && left.generation().equals(right.generation()) && left.value().equals(right.value());
+    }
+
+    private static void closeRead(CandidateRead<?> read) {
+        read.value().ifPresent(FileManagedSnapshotStore::close);
     }
 
     private static void clear(byte[] content) {

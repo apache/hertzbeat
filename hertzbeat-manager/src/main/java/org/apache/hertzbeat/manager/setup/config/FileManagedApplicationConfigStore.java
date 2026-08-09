@@ -76,4 +76,28 @@ final class FileManagedApplicationConfigStore implements ManagedApplicationConfi
     public void discardCandidate() throws IOException {
         delegate.discardCandidate();
     }
+
+    ExactSnapshotOutcome stageCandidateExact(ManagedApplicationConfig candidate, String generation)
+            throws IOException {
+        return delegate.stageCandidateExact(candidate, generation);
+    }
+
+    ExactSnapshotOutcome promoteCandidateExact(ManagedApplicationConfig candidate, String generation,
+                                               String baseGeneration) throws IOException {
+        return delegate.promoteCandidateExact(candidate, generation, baseGeneration);
+    }
+
+    ExactSnapshotOutcome restoreActiveExact(ManagedApplicationConfig candidate, String generation,
+                                            String baseGeneration) throws IOException {
+        return delegate.restoreActiveExact(candidate, generation, baseGeneration);
+    }
+
+    ExactSnapshotOutcome discardCandidateExact(ManagedApplicationConfig candidate, String generation)
+            throws IOException {
+        return delegate.discardCandidateExact(candidate, generation);
+    }
+
+    void confirmDurability() throws IOException {
+        delegate.confirmDurability();
+    }
 }

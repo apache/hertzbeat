@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
+import org.apache.hertzbeat.manager.setup.security.CommittedSetupFileDurabilityException;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 
 /** Durable temp-write, file-fsync, replace, and directory-fsync publication. */
@@ -62,13 +63,26 @@ final class NioManagedFilePublisher implements ManagedFileIo.Publisher {
     @Override
     public void remove(Path target) throws IOException {
         if (Files.deleteIfExists(target)) {
-            operations.forceDirectory(target.toAbsolutePath().getParent());
+            forceCommittedDirectory(target);
         }
+    }
+
+    @Override
+    public void confirmDurability(Path target) throws IOException {
+        operations.forceDirectory(target.toAbsolutePath().getParent());
     }
 
     private void replaceAndForce(Path source, Path target) throws IOException {
         operations.atomicReplace(source, target);
-        operations.forceDirectory(target.toAbsolutePath().getParent());
+        forceCommittedDirectory(target);
+    }
+
+    private void forceCommittedDirectory(Path target) throws IOException {
+        try {
+            confirmDurability(target);
+        } catch (IOException failure) {
+            throw new CommittedSetupFileDurabilityException();
+        }
     }
 
     private static void writeAndForce(Path target, byte[] content) throws IOException {

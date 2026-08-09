@@ -184,6 +184,11 @@ class FileManagedConfigurationStoreTest {
             public void remove(Path target) throws IOException {
                 throw new IOException("injected removal failure");
             }
+
+            @Override
+            public void confirmDurability(Path target) throws IOException {
+                throw new IOException("injected durability failure");
+            }
         };
         FileManagedApplicationConfigStore failing =
                 new FileManagedApplicationConfigStore(installationRoot, failingPublisher);

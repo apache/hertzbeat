@@ -75,4 +75,26 @@ final class FileManagedSecretStore implements ManagedSecretStore {
     public void discardCandidate() throws IOException {
         delegate.discardCandidate();
     }
+
+    ExactSnapshotOutcome stageCandidateExact(ManagedSecrets candidate, String generation) throws IOException {
+        return delegate.stageCandidateExact(candidate, generation);
+    }
+
+    ExactSnapshotOutcome promoteCandidateExact(ManagedSecrets candidate, String generation,
+                                               String baseGeneration) throws IOException {
+        return delegate.promoteCandidateExact(candidate, generation, baseGeneration);
+    }
+
+    ExactSnapshotOutcome restoreActiveExact(ManagedSecrets candidate, String generation,
+                                            String baseGeneration) throws IOException {
+        return delegate.restoreActiveExact(candidate, generation, baseGeneration);
+    }
+
+    ExactSnapshotOutcome discardCandidateExact(ManagedSecrets candidate, String generation) throws IOException {
+        return delegate.discardCandidateExact(candidate, generation);
+    }
+
+    void confirmDurability() throws IOException {
+        delegate.confirmDurability();
+    }
 }

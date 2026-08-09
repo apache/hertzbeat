@@ -101,6 +101,13 @@ final class MigrationCandidateStore {
         }
     }
 
+    <T> T withMaterial(ManagedMigrationConfigurationTransaction.CandidateRef reference,
+                       MaterialReader<T> reader) {
+        try (MigrationCandidateMaterial material = read(reference)) {
+            return reader.read(material);
+        }
+    }
+
     ManagedMigrationConfigurationTransaction.DiscardOutcome discardExact(
             ManagedMigrationConfigurationTransaction.CandidateRef reference) throws IOException {
         CandidatePaths paths = paths(reference);
@@ -262,5 +269,10 @@ final class MigrationCandidateStore {
     private enum ActivePairState { MATCH, STALE, RECOVERY_REQUIRED }
 
     private enum EntryState { MISSING, PRESENT, UNSAFE }
+
+    @FunctionalInterface
+    interface MaterialReader<T> {
+        T read(MigrationCandidateMaterial material);
+    }
 
 }

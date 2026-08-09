@@ -299,6 +299,11 @@ class FileManagedSnapshotStoreBufferTest {
             Files.deleteIfExists(target);
         }
 
+        @Override
+        public void confirmDurability(Path target) {
+            // The in-memory failure adapter has no delayed directory publication.
+        }
+
         private List<Path> publishedTargets() {
             return publishedTargets;
         }

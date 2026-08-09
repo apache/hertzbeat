@@ -9,7 +9,7 @@ package org.apache.hertzbeat.manager.setup.security;
 
 import java.io.IOException;
 
-/** Rename committed the new file, but parent-directory durability could not be confirmed. */
+/** A filesystem entry mutation committed, but parent-directory durability could not be confirmed. */
 public final class CommittedSetupFileDurabilityException extends IOException {
 
     public CommittedSetupFileDurabilityException() {
