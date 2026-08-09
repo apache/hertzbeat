@@ -363,18 +363,73 @@ class SqlSecurityValidatorTest {
             .validate("SELECT * INTO backup FROM cpu"));
     }
 
-    /**
-     * A `WITH` statement can be a select or a data modifying cte, which the statement scan
-     * cannot tell apart, so it passes only when the parser proves it reads.
-     */
     @Test
-    void testSelectOnlyAcceptsCteOnlyWhenTheParserProvesItReads() {
+    void testSelectOnlyAcceptsCte() {
         SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("WITH x AS (SELECT 1 AS v) SELECT * FROM x"));
+        assertDoesNotThrow(() -> selectOnly.validate(
+            "WITH x AS (SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s') SELECT * FROM x"));
+    }
+
+    /**
+     * An outermost node that is a plain select proves nothing about the rest of the tree: a
+     * write hides in a cte, in a branch of a set operation, or in a subquery, and JSqlParser
+     * reports the outermost node of all three as a select.
+     */
+    @Test
+    void testSelectOnlyRejectsWritesNestedInsideReads() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "WITH x AS (DELETE FROM cpu RETURNING *) SELECT * FROM x"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "WITH x AS (INSERT INTO cpu VALUES (1) RETURNING *) SELECT * FROM x"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
             "WITH x AS (SELECT id FROM t) DELETE FROM cpu WHERE id IN (SELECT id FROM x)"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
-            "WITH x AS (SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s') SELECT * FROM x"));
+            "SELECT * INTO backup FROM cpu UNION SELECT * FROM cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "SELECT * FROM cpu UNION SELECT * INTO backup FROM cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "SELECT * FROM (SELECT * INTO backup FROM cpu) t"));
+    }
+
+    /**
+     * The nested writes above have to stay rejected when the parser cannot read the dialect
+     * and there is no tree to walk, which is the case the whole read only mode exists for.
+     */
+    @Test
+    void testNestedWritesStayRejectedWithoutTheParser() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "SELECT * FROM (DELETE FROM cpu RETURNING *) t ALIGN '5s'"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "WITH x AS (DELETE FROM cpu RETURNING *) SELECT avg(v) RANGE '10s' FROM x ALIGN '5s'"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "SELECT * INTO backup FROM cpu ALIGN '5s'"));
+    }
+
+    /**
+     * The word scan matches whole words only, so ordinary reads whose identifiers or functions
+     * merely contain one keep working. An identifier that collides outright can be quoted.
+     */
+    @Test
+    void testWriteWordScanDoesNotCatchOrdinaryReads() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT delete_count, insert_rate FROM cpu"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT truncate(value, 2) FROM cpu"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT replace(msg, 'a', 'b') FROM logs"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'drop table cpu'"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT \"drop\" FROM cpu"));
+    }
+
+    /**
+     * The whitelist says which tables a statement may touch, so on its own it lets a write
+     * through as long as every table it names is allowed.
+     */
+    @Test
+    void testWhitelistModeRejectsSelectIntoOnAnAllowedTable() {
+        assertThrows(SqlSecurityException.class, () -> validator.validate(
+            "SELECT * INTO backup FROM hertzbeat_logs"));
     }
 
     /**

@@ -22,12 +22,16 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.merge.Merge;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
 import net.sf.jsqlparser.statement.select.ParenthesedSelect;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 import net.sf.jsqlparser.statement.select.WithItem;
+import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 import org.springframework.util.CollectionUtils;
 
@@ -49,7 +53,8 @@ import java.util.stream.Collectors;
  *   <li>read only: only SELECT, any table, nested reads kept.</li>
  * </ul>
  *
- * <p>Both modes reject a string that carries more than one statement.
+ * <p>Both modes reject a string that carries more than one statement, and neither lets a
+ * write through at any depth of the statement.
  */
 @Slf4j
 public class SqlSecurityValidator {
@@ -57,6 +62,23 @@ public class SqlSecurityValidator {
     private static final String SELECT_KEYWORD = "SELECT";
 
     private static final String WITH_KEYWORD = "WITH";
+
+    /**
+     * Words that no read contains, matched as whole words outside literals and comments.
+     *
+     * <p>This is the check that holds when the parser cannot read the dialect and there is no
+     * tree to walk, so it has to catch a write wherever it sits, including nested in a cte or
+     * a subquery. It is deliberately coarse; the tree walk is the precise one.
+     *
+     * <p>Statements that can only stand alone, {@code TRUNCATE} and {@code CALL} among them,
+     * are absent: the leading keyword already rejects those, and several of them double as
+     * ordinary functions, {@code TRUNCATE(value, 2)} and {@code REPLACE(msg, 'a', 'b')} being
+     * the ones a metric query really does use. An identifier that collides with a word listed
+     * here can still be quoted, which the scan skips over.
+     */
+    private static final Set<String> WRITE_KEYWORDS = Set.of(
+            "DELETE", "INSERT", "UPDATE", "MERGE", "INTO", "DROP", "ALTER",
+            "CREATE", "GRANT", "REVOKE", "COPY", "RENAME", "ATTACH", "DETACH");
 
     private final Set<String> allowedTables;
 
@@ -112,16 +134,16 @@ public class SqlSecurityValidator {
      * {@code SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s'} are rejected by the parser
      * although they are ordinary reads.
      *
-     * <p>So the two properties this mode has to guarantee, one statement and read only, are
-     * established without the parser: statements are counted by scanning outside string
-     * literals and comments, and the leading keyword decides whether it reads. Both checks
-     * are dialect independent. The parser then runs as a second, stricter opinion, and a
-     * statement it cannot parse is still accepted on the scan alone rather than failing a
-     * user whose dialect is merely richer than the parser.
+     * <p>So the properties this mode has to guarantee are established without the parser:
+     * statements are counted by scanning outside string literals and comments, the leading
+     * keyword decides whether the statement reads, and no word that only a write contains may
+     * appear anywhere. All three are dialect independent, and the last one is what covers a
+     * write nested where the scan has no structure to reason about, as in
+     * {@code WITH x AS (DELETE FROM cpu RETURNING *) SELECT * FROM x}.
      *
-     * <p>A {@code WITH} statement is the exception: it can be a select, but it can equally
-     * be a data modifying cte such as {@code WITH x AS (...) DELETE FROM t}, which the scan
-     * cannot tell apart. It therefore passes only when the parser proves it is a select.
+     * <p>The parser then runs as a second and precise opinion over the whole tree. A statement
+     * it cannot parse is still accepted on the scan alone rather than failing a user whose
+     * dialect is merely richer than the parser.
      * @param sql statement to validate
      * @throws SqlSecurityException if the statement writes, or carries more than one statement
      */
@@ -130,8 +152,10 @@ public class SqlSecurityValidator {
         if (shape.statementCount() != 1) {
             throw new SqlSecurityException("Only a single statement is allowed.");
         }
-        boolean cte = WITH_KEYWORD.equals(shape.leadingKeyword());
-        if (!cte && !SELECT_KEYWORD.equals(shape.leadingKeyword())) {
+        if (shape.writeKeyword() != null) {
+            throw new SqlSecurityException("'" + shape.writeKeyword() + "' is not allowed, only reads are.");
+        }
+        if (!SELECT_KEYWORD.equals(shape.leadingKeyword()) && !WITH_KEYWORD.equals(shape.leadingKeyword())) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
 
@@ -139,21 +163,38 @@ public class SqlSecurityValidator {
         try {
             statement = parseSingleStatement(sql);
         } catch (SqlSecurityException e) {
-            if (cte) {
-                throw e;
-            }
             // debug, not warn: a dialect the parser does not cover is the expected case here,
             // and this runs on every evaluation of every rule that uses one
             log.debug("SQL not understood by the parser, accepted as a read on the statement scan: {}", sql);
             return;
         }
 
-        if (!(statement instanceof Select select)) {
+        if (!(statement instanceof Select)) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
-        // SELECT ... INTO writes a new table in the dialects that support it, so it is not a read
-        if (select instanceof PlainSelect plainSelect && !CollectionUtils.isEmpty(plainSelect.getIntoTables())) {
-            throw new SqlSecurityException("SELECT ... INTO is not allowed.");
+        assertNothingWrites(statement);
+    }
+
+    /**
+     * Walks the whole statement rather than its outermost node, because a write hides at any
+     * depth: {@code SELECT * INTO backup FROM cpu UNION SELECT * FROM cpu} puts the write in a
+     * branch of a set operation, and {@code SELECT * FROM (SELECT * INTO backup FROM cpu) t}
+     * puts it in a subquery, so an outermost node that is a plain select proves nothing.
+     *
+     * <p>Any other failure of the walk is a rejection too. A data modifying cte makes
+     * JSqlParser's own finder cast a {@code ParenthesedDelete} to a {@code ParenthesedSelect},
+     * and a walk that ended in an exception established nothing about the statement.
+     * @param statement parsed statement to walk
+     * @throws SqlSecurityException if any part of the statement writes, or could not be walked
+     */
+    private void assertNothingWrites(Statement statement) throws SqlSecurityException {
+        try {
+            new ReadOnlyStatementFinder().getTableList(statement);
+        } catch (SecurityViolationException e) {
+            throw new SqlSecurityException(e.getMessage());
+        } catch (RuntimeException e) {
+            log.debug("Failed to walk SQL, so nothing about it is established: {}", statement, e);
+            throw new SqlSecurityException("SQL structure could not be verified as a read.");
         }
     }
 
@@ -163,6 +204,10 @@ public class SqlSecurityValidator {
         if (!(statement instanceof Select select)) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
+
+        // the whitelist is about which tables a statement may touch, so on its own it lets
+        // "select * into backup from hertzbeat_logs" through: every table it names is allowed
+        assertNothingWrites(statement);
 
         // Check for CTE at top level
         if (select.getWithItemsList() != null && !select.getWithItemsList().isEmpty()) {
@@ -209,8 +254,9 @@ public class SqlSecurityValidator {
      * What a statement string looks like from outside any sql dialect.
      * @param statementCount statements the string carries, a trailing semicolon not counting as one
      * @param leadingKeyword first word of the first statement, upper cased, empty when it does not start with a word
+     * @param writeKeyword first word from {@link #WRITE_KEYWORDS} found anywhere, null when there is none
      */
-    private record StatementShape(int statementCount, String leadingKeyword) {
+    private record StatementShape(int statementCount, String leadingKeyword, String writeKeyword) {
     }
 
     /**
@@ -230,6 +276,7 @@ public class SqlSecurityValidator {
         int statementCount = 0;
         boolean statementHasContent = false;
         String leadingKeyword = "";
+        String writeKeyword = null;
         int index = 0;
         while (index < sql.length()) {
             char current = sql.charAt(index);
@@ -251,11 +298,21 @@ public class SqlSecurityValidator {
                 }
                 statementHasContent = false;
                 index++;
+            } else if (Character.isLetter(current) || current == '_') {
+                // read the whole word and step past it, so that a word listed as a write is
+                // only matched on its own and never inside an identifier like delete_count
+                int wordEnd = wordEnd(sql, index);
+                String word = sql.substring(index, wordEnd).toUpperCase(Locale.ROOT);
+                if (statementCount == 0 && !statementHasContent) {
+                    leadingKeyword = word;
+                }
+                if (writeKeyword == null && WRITE_KEYWORDS.contains(word)) {
+                    writeKeyword = word;
+                }
+                statementHasContent = true;
+                index = wordEnd;
             } else {
                 if (!Character.isWhitespace(current)) {
-                    if (statementCount == 0 && !statementHasContent) {
-                        leadingKeyword = readKeyword(sql, index);
-                    }
                     statementHasContent = true;
                 }
                 index++;
@@ -264,7 +321,7 @@ public class SqlSecurityValidator {
         if (statementHasContent) {
             statementCount++;
         }
-        return new StatementShape(statementCount, leadingKeyword);
+        return new StatementShape(statementCount, leadingKeyword, writeKeyword);
     }
 
     /**
@@ -289,12 +346,19 @@ public class SqlSecurityValidator {
         throw new SqlSecurityException("Unterminated quoted literal.");
     }
 
-    private String readKeyword(String sql, int start) {
+    /**
+     * @param sql statement string being scanned
+     * @param start index of the first character of a word
+     * @return index just past the word, digits and underscores counting as part of it so that
+     *     {@code delete_count} is one word rather than a {@code delete} followed by a remainder
+     */
+    private int wordEnd(String sql, int start) {
         int index = start;
-        while (index < sql.length() && (Character.isLetter(sql.charAt(index)) || sql.charAt(index) == '_')) {
+        while (index < sql.length()
+                && (Character.isLetterOrDigit(sql.charAt(index)) || sql.charAt(index) == '_' || sql.charAt(index) == '$')) {
             index++;
         }
-        return sql.substring(start, index).toUpperCase(Locale.ROOT);
+        return index;
     }
 
     private void validateTables(List<String> tables) throws SqlSecurityException {
@@ -324,6 +388,41 @@ public class SqlSecurityValidator {
     private static class SecurityViolationException extends RuntimeException {
         SecurityViolationException(String message) {
             super(message);
+        }
+    }
+
+    /**
+     * Walks a statement and throws as soon as it finds a part of it that writes, at any depth.
+     */
+    private static class ReadOnlyStatementFinder extends TablesNamesFinder<Void> {
+
+        @Override
+        public Void visit(PlainSelect plainSelect, Object context) {
+            // SELECT ... INTO writes a new table in the dialects that support it, so it is not a read
+            if (!CollectionUtils.isEmpty(plainSelect.getIntoTables())) {
+                throw new SecurityViolationException("SELECT ... INTO is not allowed.");
+            }
+            return super.visit(plainSelect, context);
+        }
+
+        @Override
+        public Void visit(Delete delete, Object context) {
+            throw new SecurityViolationException("DELETE is not allowed, only reads are.");
+        }
+
+        @Override
+        public Void visit(Insert insert, Object context) {
+            throw new SecurityViolationException("INSERT is not allowed, only reads are.");
+        }
+
+        @Override
+        public Void visit(Update update, Object context) {
+            throw new SecurityViolationException("UPDATE is not allowed, only reads are.");
+        }
+
+        @Override
+        public Void visit(Merge merge, Object context) {
+            throw new SecurityViolationException("MERGE is not allowed, only reads are.");
         }
     }
 
