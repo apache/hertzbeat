@@ -30,6 +30,7 @@ import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_FROM_ADDRESS;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SSL_ENABLED;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_STARTTLS_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.PUBLIC_BASE_URL;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_GRPC;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_HTTP;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_AUTHENTICATION;
@@ -62,7 +63,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
             DATASOURCE_URL, DATASOURCE_USERNAME, DATABASE_KIND,
             DUCKDB_ENABLED, GREPTIME_ENABLED, GREPTIME_GRPC, GREPTIME_HTTP,
             GREPTIME_DATABASE, GREPTIME_USERNAME, GREPTIME_EXPIRE_TIME, SERVER_OTLP_HTTP,
-            SERVER_OTLP_GRPC, SERVER_PROFILE_ID, SERVER_AUTHENTICATION, MAIL_HOST, MAIL_PORT,
+            SERVER_OTLP_GRPC, SERVER_PROFILE_ID, SERVER_AUTHENTICATION, PUBLIC_BASE_URL, MAIL_HOST, MAIL_PORT,
             MAIL_SSL_ENABLED, MAIL_STARTTLS_ENABLED, MAIL_USERNAME, MAIL_FROM_ADDRESS);
 
     @Override
@@ -92,11 +93,15 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         values.put(GREPTIME_HTTP, value.telemetryStore().endpoints().http());
         values.put(GREPTIME_DATABASE, value.telemetryStore().database());
         value.telemetryStore().username().ifPresent(username -> values.put(GREPTIME_USERNAME, username));
-        value.optional().serverInstrumentation().ifPresent(instrumentation -> {
-            values.put(SERVER_PROFILE_ID, MANAGED_SERVER_PROFILE_ID);
-            values.put(SERVER_AUTHENTICATION, MANAGED_SERVER_AUTHENTICATION);
-            instrumentation.serverOtlpHttpEndpoint().ifPresent(item -> values.put(SERVER_OTLP_HTTP, item));
-            instrumentation.serverOtlpGrpcEndpoint().ifPresent(item -> values.put(SERVER_OTLP_GRPC, item));
+        value.optional().publicAccess().ifPresent(publicAccess -> {
+            publicAccess.publicBaseUrl().ifPresent(item -> values.put(PUBLIC_BASE_URL, item));
+            if (publicAccess.serverOtlpHttpEndpoint().isPresent()
+                    || publicAccess.serverOtlpGrpcEndpoint().isPresent()) {
+                values.put(SERVER_PROFILE_ID, MANAGED_SERVER_PROFILE_ID);
+                values.put(SERVER_AUTHENTICATION, MANAGED_SERVER_AUTHENTICATION);
+            }
+            publicAccess.serverOtlpHttpEndpoint().ifPresent(item -> values.put(SERVER_OTLP_HTTP, item));
+            publicAccess.serverOtlpGrpcEndpoint().ifPresent(item -> values.put(SERVER_OTLP_GRPC, item));
         });
         value.optional().retention().ifPresent(retention ->
                 values.put(GREPTIME_EXPIRE_TIME, retention.days() + "d"));
@@ -129,7 +134,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
         if (!values.keySet().stream().allMatch(String.class::isInstance)
                 || !values.keySet().containsAll(REQUIRED_KEYS)
                 || !ALLOWED_KEYS.containsAll(values.keySet())
-                || !completeServerInstrumentationGroup(values)
+                || !completeServerOtlpGroup(values)
                 || !completeMailGroup(values)
                 || !usesSupportedTelemetryStorage(values)) {
             throw DocumentException.corrupt();
@@ -153,10 +158,11 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
     }
 
     private static ManagedOptionalConfiguration optional(Map<?, ?> values) {
-        boolean instrumentationPresent = containsAny(values, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
-        Optional<ManagedOptionalConfiguration.ServerInstrumentationSettings> instrumentation =
-                instrumentationPresent ? Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                        optionalText(values, SERVER_OTLP_HTTP), optionalText(values, SERVER_OTLP_GRPC)))
+        boolean publicAccessPresent = containsAny(values, PUBLIC_BASE_URL, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
+        Optional<ManagedOptionalConfiguration.PublicAccessSettings> publicAccess =
+                publicAccessPresent ? Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        optionalText(values, PUBLIC_BASE_URL), optionalText(values, SERVER_OTLP_HTTP),
+                        optionalText(values, SERVER_OTLP_GRPC)))
                         : Optional.empty();
         Optional<ManagedOptionalConfiguration.RetentionSettings> retention = values.containsKey(GREPTIME_EXPIRE_TIME)
                 ? Optional.of(new ManagedOptionalConfiguration.RetentionSettings(retentionDays(values)))
@@ -166,7 +172,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
                         text(values, MAIL_HOST), Integer.parseInt(text(values, MAIL_PORT)),
                         mailSecurity(values), optionalText(values, MAIL_USERNAME),
                         text(values, MAIL_FROM_ADDRESS))) : Optional.empty();
-        return new ManagedOptionalConfiguration(instrumentation, retention, mail);
+        return new ManagedOptionalConfiguration(publicAccess, retention, mail);
     }
 
     private static boolean completeMailGroup(Map<?, ?> values) {
@@ -176,7 +182,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
                 MAIL_STARTTLS_ENABLED, MAIL_FROM_ADDRESS));
     }
 
-    private static boolean completeServerInstrumentationGroup(Map<?, ?> values) {
+    private static boolean completeServerOtlpGroup(Map<?, ?> values) {
         boolean endpointKeyPresent = containsAny(values, SERVER_OTLP_HTTP, SERVER_OTLP_GRPC);
         boolean endpointPresent = meaningfulEndpoint(values, SERVER_OTLP_HTTP)
                 || meaningfulEndpoint(values, SERVER_OTLP_GRPC);
@@ -193,7 +199,7 @@ final class ApplicationConfigDocumentCodec implements ManagedDocumentCodec<Manag
 
     private static boolean meaningfulEndpoint(Map<?, ?> values, String key) {
         return values.get(key) instanceof String endpoint
-                && ManagedOptionalConfiguration.ServerInstrumentationSettings.normalize(endpoint).isPresent();
+                && SetupPublicAddress.tryServerOtlpEndpoint(endpoint).isPresent();
     }
 
     private static boolean containsAny(Map<?, ?> values, String... keys) {

@@ -46,7 +46,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResp
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
@@ -77,13 +77,16 @@ class DefaultSetupWorkflowTest {
                 Optional.of(mock(SetupCompletionCoordinator.class)), mock(SetupOptionsCoordinator.class),
                 Clock.systemUTC(), new SetupMutationSerializer());
         OptionsRequest request = new OptionsRequest(
-                new ServerInstrumentationConfiguration("https://server.example.test:4318", "\u0000"),
+                new PublicAccessConfiguration("https://hertzbeat.example.test",
+                        "https://server.example.test:4318", "\u0000"),
                 null, null);
 
         var response = workflow.configureOptions(request);
 
+        assertTrue(response.publicBaseUrlConfigured());
         assertTrue(response.serverOtlpHttpConfigured());
         assertFalse(response.serverOtlpGrpcConfigured());
+        assertTrue(state.status().optional().publicBaseUrlConfigured());
         assertTrue(state.status().optional().serverOtlpHttpConfigured());
         assertFalse(state.status().optional().serverOtlpGrpcConfigured());
     }
@@ -156,7 +159,7 @@ class DefaultSetupWorkflowTest {
                 mock(SetupConfigurationCoordinator.class), capability,
                 Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion), mutations);
         OptionsRequest request = new OptionsRequest(
-                new ServerInstrumentationConfiguration("http://localhost:4318", null), null, null);
+                new PublicAccessConfiguration(null, "http://collector.example.test:4318", null), null, null);
 
         try (var executor = Executors.newFixedThreadPool(2)) {
             var optionsResult = executor.submit(() -> workflow.configureOptions(request));

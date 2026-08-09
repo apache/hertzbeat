@@ -25,6 +25,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigurationTransaction;
 import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
+import org.apache.hertzbeat.manager.setup.config.SetupPublicAddress;
 import org.springframework.http.HttpStatus;
 
 /** Maps and atomically persists optional setup settings through the existing two-file transaction. */
@@ -37,14 +38,16 @@ public final class SetupOptionsCoordinator {
 
     public void persist(OptionsRequest request) {
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.ofNullable(request.serverInstrumentation()).flatMap(value -> {
-                    Optional<String> httpEndpoint = ManagedOptionalConfiguration.ServerInstrumentationSettings
-                            .normalize(value.serverOtlpHttpEndpoint());
-                    Optional<String> grpcEndpoint = ManagedOptionalConfiguration.ServerInstrumentationSettings
-                            .normalize(value.serverOtlpGrpcEndpoint());
-                    return httpEndpoint.isEmpty() && grpcEndpoint.isEmpty() ? Optional.empty()
-                            : Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                                    httpEndpoint, grpcEndpoint));
+                Optional.ofNullable(request.publicAccess()).flatMap(value -> {
+                    Optional<String> publicBaseUrl = SetupPublicAddress.publicBaseUrl(value.publicBaseUrl())
+                            .map(SetupPublicAddress::value);
+                    Optional<String> httpEndpoint = SetupPublicAddress
+                            .serverOtlpEndpoint(value.serverOtlpHttpEndpoint()).map(SetupPublicAddress::value);
+                    Optional<String> grpcEndpoint = SetupPublicAddress
+                            .serverOtlpEndpoint(value.serverOtlpGrpcEndpoint()).map(SetupPublicAddress::value);
+                    return publicBaseUrl.isEmpty() && httpEndpoint.isEmpty() && grpcEndpoint.isEmpty()
+                            ? Optional.empty() : Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                                    publicBaseUrl, httpEndpoint, grpcEndpoint));
                 }),
                 Optional.ofNullable(request.retention()).map(value ->
                         new ManagedOptionalConfiguration.RetentionSettings(value.days())),

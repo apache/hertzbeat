@@ -109,13 +109,13 @@ class UnattendedSetupInitializerTest {
         MockEnvironment environment = new MockEnvironment()
                 .withProperty(UnattendedSetupInitializer.ENABLED_PROPERTY, "true")
                 .withProperty("hertzbeat.setup.unattended.acknowledged-warnings",
-                        "h2_non_production, server_otlp_plaintext");
+                        "h2_non_production, public_address_plaintext");
 
         new UnattendedSetupInitializer(workflow, environment, new SetupPasswordFileLoader(), transitions)
                 .initialize();
 
         verify(workflow).complete(java.util.List.of(
-                SetupWarningCode.H2_NON_PRODUCTION, SetupWarningCode.SERVER_OTLP_PLAINTEXT));
+                SetupWarningCode.H2_NON_PRODUCTION, SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT));
         verify(transitions).installationCompleted();
     }
 
@@ -180,6 +180,6 @@ class UnattendedSetupInitializerTest {
                 new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
                 phase != SetupPhase.ADMINISTRATOR_REQUIRED,
-                new OptionalConfigurationSummary(false, false, false, false));
+                new OptionalConfigurationSummary(false, false, false, false, false));
     }
 }

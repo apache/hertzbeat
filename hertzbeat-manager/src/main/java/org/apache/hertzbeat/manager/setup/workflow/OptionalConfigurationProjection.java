@@ -14,7 +14,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
-import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
+import org.apache.hertzbeat.manager.setup.config.SetupPublicAddress;
 
 /** Projects persisted optional settings into the secret-free runtime and response shape. */
 record OptionalConfigurationProjection(
@@ -22,19 +22,22 @@ record OptionalConfigurationProjection(
 
     static OptionalConfigurationProjection from(MetadataDatabaseKind databaseKind, OptionsRequest request) {
         OptionalConfigurationSummary summary = new OptionalConfigurationSummary(
-                request.serverInstrumentation() != null
-                        && ServerInstrumentationSettings.normalize(
-                        request.serverInstrumentation().serverOtlpHttpEndpoint()).isPresent(),
-                request.serverInstrumentation() != null
-                        && ServerInstrumentationSettings.normalize(
-                        request.serverInstrumentation().serverOtlpGrpcEndpoint()).isPresent(),
+                request.publicAccess() != null
+                        && SetupPublicAddress.tryPublicBaseUrl(request.publicAccess().publicBaseUrl()).isPresent(),
+                request.publicAccess() != null
+                        && SetupPublicAddress.tryServerOtlpEndpoint(
+                        request.publicAccess().serverOtlpHttpEndpoint()).isPresent(),
+                request.publicAccess() != null
+                        && SetupPublicAddress.tryServerOtlpEndpoint(
+                        request.publicAccess().serverOtlpGrpcEndpoint()).isPresent(),
                 request.retention() != null, request.mail() != null);
         return new OptionalConfigurationProjection(
                 summary, SetupWarningPolicy.INSTANCE.evaluate(databaseKind, request));
     }
 
     OptionsResponse response() {
-        return new OptionsResponse(summary.serverOtlpHttpConfigured(), summary.serverOtlpGrpcConfigured(),
-                summary.retentionConfigured(), summary.mailConfigured(), SetupPhase.OPTIONAL_CONFIGURATION);
+        return new OptionsResponse(summary.publicBaseUrlConfigured(), summary.serverOtlpHttpConfigured(),
+                summary.serverOtlpGrpcConfigured(), summary.retentionConfigured(), summary.mailConfigured(),
+                SetupPhase.OPTIONAL_CONFIGURATION);
     }
 }

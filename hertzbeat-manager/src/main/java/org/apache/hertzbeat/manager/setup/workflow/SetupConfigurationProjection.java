@@ -33,7 +33,7 @@ public record SetupConfigurationProjection(
                         ConfigSource.BUILT_IN_DEFAULT, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, false,
                         ConfigSource.BUILT_IN_DEFAULT, false),
-                new OptionalConfigurationSummary(false, false, false, false),
+                new OptionalConfigurationSummary(false, false, false, false, false),
                 List.of(SetupWarningCode.H2_NON_PRODUCTION));
     }
 }

@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
@@ -50,60 +50,155 @@ class SetupRequestValidatorTest {
     }
 
     @Test
-    void serverInstrumentationValidatorProducesStablePlaintextWarning() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration("http://monitor.example.test", null), null));
+    void publicAccessValidatorProducesStablePlaintextWarningForPublicHttp() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(
+                        "http://monitor.example.test", null, null), null));
 
         assertTrue(response.valid());
-        assertEquals(1, response.warnings().size());
+        assertEquals(java.util.List.of(SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT), response.warnings());
+    }
+
+    @Test
+    void internalHttpAddressIsAllowedWithoutPublicPlaintextWarning() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration("http://192.168.10.5:1157", null, null), null));
+
+        assertTrue(response.valid());
+        assertTrue(response.warnings().isEmpty());
+    }
+
+    @Test
+    void internalIpv6HttpAddressesDoNotProducePublicPlaintextWarning() {
+        for (String address : java.util.List.of(
+                "http://[::1]:1157", "http://[fd00::1]:1157",
+                "http://[::ffff:192.168.10.5]:1157", "http://[::ffff:127.0.0.1]:1157",
+                "http://[0:0:0:0::ffff:192.168.10.5]:1157", "http://[::ffff:c0a8:0a05]:1157")) {
+            var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                    null, null, new PublicAccessConfiguration(address, null, null), null));
+
+            assertTrue(response.valid());
+            assertTrue(response.warnings().isEmpty());
+        }
+    }
+
+    @Test
+    void publicBaseUrlMustBeAnExplicitAbsoluteHttpOrHttpsAddress() {
+        var relative = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration("/from-browser-origin", null, null), null));
+        var https = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration("https://hertzbeat.example.test", null, null), null));
+
+        assertFalse(relative.valid());
+        assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, relative.errorCode());
+        assertTrue(https.valid());
+        assertTrue(https.warnings().isEmpty());
     }
 
     @Test
     void serverGrpcEndpointMustBeAnExplicitHttpUrl() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration(null, "collector.example.test:4317"), null));
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(null, null, "collector.example.test:4317"), null));
 
         assertFalse(response.valid());
-        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+        assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
+    }
+
+    @Test
+    void serverEndpointsRejectPortsOutsideTheTcpRange() {
+        for (PublicAccessConfiguration configuration : java.util.List.of(
+                new PublicAccessConfiguration("http://hertzbeat.example.test:0", null, null),
+                new PublicAccessConfiguration("http://hertzbeat.example.test:70000", null, null),
+                new PublicAccessConfiguration(null, "http://collector.example.test:0", null),
+                new PublicAccessConfiguration(null, "http://collector.example.test:70000", null),
+                new PublicAccessConfiguration(null, null, "http://collector.example.test:0"),
+                new PublicAccessConfiguration(null, null, "http://collector.example.test:70000"))) {
+            var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                    null, null, configuration, null));
+
+            assertFalse(response.valid());
+            assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
+        }
+    }
+
+    @Test
+    void advertisedAddressesRejectWildcardHosts() {
+        for (PublicAccessConfiguration configuration : java.util.List.of(
+                new PublicAccessConfiguration("http://0.0.0.0:1157", null, null),
+                new PublicAccessConfiguration("http://[::]:1157", null, null),
+                new PublicAccessConfiguration("http://[::ffff:0.0.0.0]:1157", null, null),
+                new PublicAccessConfiguration("http://[::ffff:0:0]:1157", null, null),
+                new PublicAccessConfiguration(null, "http://0.0.0.0:4318", null),
+                new PublicAccessConfiguration(null, null, "http://[0:0:0:0:0:0:0:0]:4317"))) {
+            var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                    null, null, configuration, null));
+
+            assertFalse(response.valid());
+            assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
+        }
+    }
+
+    @Test
+    void advertisedIpv6AddressesRejectZoneIdentifiers() {
+        for (PublicAccessConfiguration configuration : java.util.List.of(
+                new PublicAccessConfiguration("http://[::%25eth0]:4318", null, null),
+                new PublicAccessConfiguration("http://[::%eth0]:4318", null, null),
+                new PublicAccessConfiguration(null, "http://[fe80::1%25eth0]:4318", null),
+                new PublicAccessConfiguration(null, "http://[fe80::1%eth0]:4318", null))) {
+            var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                    null, null, configuration, null));
+
+            assertFalse(response.valid());
+            assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
+        }
+    }
+
+    @Test
+    void publicIpv4MappedIpv6AddressStillProducesPlaintextWarning() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration("http://[::ffff:0808:0808]:1157", null, null), null));
+
+        assertTrue(response.valid());
+        assertEquals(java.util.List.of(SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT), response.warnings());
     }
 
     @Test
     void serverEndpointRejectsUrlCredentialsAndQuery() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration(
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(null,
                         "https://user:secret@collector.example.test:4318?token=secret", null), null));
 
         assertFalse(response.valid());
-        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+        assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
     }
 
     @Test
     void grpcOnlyPlaintextEndpointProducesWarning() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration(null, "http://collector.example.test:4317"),
-                null));
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(
+                        null, null, "http://collector.example.test:4317"), null));
 
         assertTrue(response.valid());
-        assertEquals(java.util.List.of(SetupWarningCode.SERVER_OTLP_PLAINTEXT), response.warnings());
+        assertEquals(java.util.List.of(SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT), response.warnings());
     }
 
     @Test
-    void serverInstrumentationSectionRequiresAtLeastOneEndpoint() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration(" ", null), null));
+    void publicAccessSectionRequiresAtLeastOneExplicitAddress() {
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(" ", null, null), null));
 
         assertFalse(response.valid());
-        assertEquals(SetupErrorCode.SERVER_INSTRUMENTATION_INVALID, response.errorCode());
+        assertEquals(SetupErrorCode.PUBLIC_ADDRESS_INVALID, response.errorCode());
     }
 
     @Test
     void endpointWhitespaceIsNormalizedBeforeValidationAndWarnings() {
-        var response = validator.validate(new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                null, null, new ServerInstrumentationConfiguration(
+        var response = validator.validate(new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                null, null, new PublicAccessConfiguration(null,
                         "  https://collector.example.test:4318/otlp  ",
                         "  http://collector.example.test:4317  "), null));
 
         assertTrue(response.valid());
-        assertEquals(java.util.List.of(SetupWarningCode.SERVER_OTLP_PLAINTEXT), response.warnings());
+        assertEquals(java.util.List.of(SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT), response.warnings());
     }
 }

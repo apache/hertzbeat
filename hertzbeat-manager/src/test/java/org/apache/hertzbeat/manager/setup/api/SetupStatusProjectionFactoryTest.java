@@ -73,6 +73,25 @@ class SetupStatusProjectionFactoryTest {
     }
 
     @Test
+    void invalidExternalAddressesAreNotReportedAsConfigured() {
+        StandardEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().replace(
+                StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME,
+                new MapPropertySource(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, Map.of(
+                "spring.jpa.database", "H2",
+                "warehouse.store.greptime.enabled", "true",
+                "hertzbeat.setup.public-base-url", "http://0.0.0.0:1157",
+                "hertzbeat.instrumentation.server.otlp-http-endpoint", "http://collector.example.test:70000")));
+        var inspection = new ManagedActiveConfigurationInspector.Inspection(
+                ManagedActiveConfigurationInspector.State.ABSENT, Map.of(), Map.of());
+
+        var projection = new SetupStatusProjectionFactory().create(environment, inspection);
+
+        assertThat(projection.optional().publicBaseUrlConfigured()).isFalse();
+        assertThat(projection.optional().serverOtlpHttpConfigured()).isFalse();
+    }
+
+    @Test
     void restartProjectionUsesEffectiveSourceAndRehydratesSafeManagedOptions() {
         StandardEnvironment environment = new StandardEnvironment();
         environment.getPropertySources().replace(
@@ -83,6 +102,7 @@ class SetupStatusProjectionFactoryTest {
                 ManagedActiveConfigurationInspector.MANAGED_APPLICATION_SOURCE,
                 Map.of("spring.jpa.database", "H2",
                         "warehouse.store.greptime.enabled", "true",
+                        "hertzbeat.setup.public-base-url", "http://hertzbeat.example.test",
                         "hertzbeat.instrumentation.server.otlp-http-endpoint", "http://localhost:4318",
                         "warehouse.store.greptime.expire-time", "30d",
                         "spring.mail.host", "mail.example.test",
@@ -95,11 +115,12 @@ class SetupStatusProjectionFactoryTest {
 
         assertThat(projection.managementDatabase().kind()).isEqualTo(MetadataDatabaseKind.POSTGRESQL);
         assertThat(projection.managementDatabase().source()).isEqualTo(ConfigSource.SYSTEM_PROPERTY);
+        assertThat(projection.optional().publicBaseUrlConfigured()).isTrue();
         assertThat(projection.optional().serverOtlpHttpConfigured()).isTrue();
         assertThat(projection.optional().retentionConfigured()).isTrue();
         assertThat(projection.optional().mailConfigured()).isTrue();
         assertThat(projection.warnings()).containsExactlyInAnyOrder(
-                SetupWarningCode.SERVER_OTLP_PLAINTEXT, SetupWarningCode.MAIL_SECURITY_NONE);
+                SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT, SetupWarningCode.MAIL_SECURITY_NONE);
     }
 
     @Test

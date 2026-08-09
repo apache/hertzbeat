@@ -35,7 +35,8 @@ class ManagedOptionalConfigurationPersistenceTest {
         ManagedConfigurationTransaction transaction = new ManagedConfigurationTransaction(root);
         assertThat(transaction.apply(required())).isEqualTo(ManagedConfigurationTransaction.Outcome.APPLIED);
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.of("https://hertzbeat.example"),
                         Optional.of("https://hertzbeat.example/otlp"),
                         Optional.of("https://hertzbeat.example:4317"))),
                 Optional.of(new ManagedOptionalConfiguration.RetentionSettings(30)),
@@ -53,6 +54,7 @@ class ManagedOptionalConfigurationPersistenceTest {
         assertThat(secrets.mailPassword()).get().isEqualTo(SecretValue.of("mail-secret"));
         var properties = ApplicationConfigDocumentCodec.springProperties(application);
         assertThat(properties)
+                .containsEntry("hertzbeat.setup.public-base-url", "https://hertzbeat.example")
                 .containsEntry("hertzbeat.instrumentation.server.otlp-http-endpoint",
                         "https://hertzbeat.example/otlp")
                 .containsEntry("hertzbeat.instrumentation.server.otlp-grpc-endpoint",
@@ -63,9 +65,7 @@ class ManagedOptionalConfigurationPersistenceTest {
                 .containsEntry("spring.mail.properties.mail.smtp.ssl.enable", "true")
                 .containsEntry("spring.mail.properties.mail.smtp.starttls.enable", "false")
                 .containsEntry("hertzbeat.mail.from-address", "alerts@example.test")
-                .doesNotContainKeys("hertzbeat.setup.public-base-url", "hertzbeat.setup.retention.metrics-days",
-                        "hertzbeat.setup.retention.logs-days", "hertzbeat.setup.retention.traces-days",
-                        "hertzbeat.setup.mail.security");
+                .doesNotContainKey("hertzbeat.setup.mail.security");
         assertThat(properties.toString()).doesNotContain("mail-secret");
     }
 
@@ -73,8 +73,8 @@ class ManagedOptionalConfigurationPersistenceTest {
     void rejectsServerEndpointsWithoutCompleteInternalProfileSettings() throws Exception {
         ManagedApplicationConfig application = required().application();
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                        Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.empty(), Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
                 Optional.empty(), Optional.empty());
         application = new ManagedApplicationConfig(
                 application.metadataDatabase(), application.telemetryStore(), options);
@@ -90,16 +90,38 @@ class ManagedOptionalConfigurationPersistenceTest {
     }
 
     @Test
-    void rejectsBlankManagedServerEndpoint() {
-        assertThatThrownBy(() -> new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                Optional.of("  "), Optional.empty()))
+    void publicBaseUrlRoundTripsWithoutInventingServerEndpoints() throws Exception {
+        ManagedApplicationConfig application = required().application();
+        ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.of("http://192.168.10.5:1157"), Optional.empty(), Optional.empty())),
+                Optional.empty(), Optional.empty());
+        application = new ManagedApplicationConfig(
+                application.metadataDatabase(), application.telemetryStore(), options);
+        ApplicationConfigDocumentCodec codec = new ApplicationConfigDocumentCodec();
+
+        ManagedApplicationConfig decoded = codec.decode(codec.encode(application, "generation")).value();
+
+        assertThat(decoded.optional()).isEqualTo(options);
+        assertThat(ApplicationConfigDocumentCodec.springProperties(decoded))
+                .containsEntry("hertzbeat.setup.public-base-url", "http://192.168.10.5:1157")
+                .doesNotContainKeys("hertzbeat.instrumentation.server.otlp-http-endpoint",
+                        "hertzbeat.instrumentation.server.otlp-grpc-endpoint",
+                        "hertzbeat.instrumentation.server.profile-id",
+                        "hertzbeat.instrumentation.server.authentication");
+    }
+
+    @Test
+    void rejectsBlankManagedPublicAddress() {
+        assertThatThrownBy(() -> new ManagedOptionalConfiguration.PublicAccessSettings(
+                Optional.of("  "), Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void rejectsControlOnlyManagedServerEndpoint() {
-        assertThatThrownBy(() -> new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                Optional.of("\u0000"), Optional.empty()))
+    void rejectsControlOnlyManagedPublicAddress() {
+        assertThatThrownBy(() -> new ManagedOptionalConfiguration.PublicAccessSettings(
+                Optional.of("\u0000"), Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -107,8 +129,8 @@ class ManagedOptionalConfigurationPersistenceTest {
     void rejectsBlankServerEndpointInManagedDocument() throws Exception {
         ManagedApplicationConfig application = required().application();
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
-                        Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.empty(), Optional.of("https://hertzbeat.example/otlp"), Optional.empty())),
                 Optional.empty(), Optional.empty());
         application = new ManagedApplicationConfig(
                 application.metadataDatabase(), application.telemetryStore(), options);
@@ -120,6 +142,27 @@ class ManagedOptionalConfigurationPersistenceTest {
                 "hertzbeat.instrumentation.server.otlp-http-endpoint: '  '");
 
         byte[] document = ManagedDocumentCodec.Integrity.envelope(blankEndpoint, encoded.generation());
+        assertThatThrownBy(() -> codec.decode(document))
+                .isInstanceOf(ManagedDocumentCodec.DocumentException.class);
+    }
+
+    @Test
+    void rejectsInvalidPublicAddressInManagedDocument() throws Exception {
+        ManagedApplicationConfig application = required().application();
+        ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.of("https://hertzbeat.example.test"), Optional.empty(), Optional.empty())),
+                Optional.empty(), Optional.empty());
+        application = new ManagedApplicationConfig(
+                application.metadataDatabase(), application.telemetryStore(), options);
+        ApplicationConfigDocumentCodec codec = new ApplicationConfigDocumentCodec();
+        ManagedDocumentCodec.Integrity.VerifiedBody encoded = ManagedDocumentCodec.Integrity.extract(
+                codec.encode(application, "generation"));
+        String invalid = encoded.content().replace(
+                "hertzbeat.setup.public-base-url: 'https://hertzbeat.example.test'",
+                "hertzbeat.setup.public-base-url: 'http://0.0.0.0:1157'");
+
+        byte[] document = ManagedDocumentCodec.Integrity.envelope(invalid, encoded.generation());
         assertThatThrownBy(() -> codec.decode(document))
                 .isInstanceOf(ManagedDocumentCodec.DocumentException.class);
     }

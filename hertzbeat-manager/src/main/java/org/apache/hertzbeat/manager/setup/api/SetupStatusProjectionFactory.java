@@ -13,6 +13,7 @@ import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_HOST;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_SSL_ENABLED;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.MAIL_STARTTLS_ENABLED;
+import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.PUBLIC_BASE_URL;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_GRPC;
 import static org.apache.hertzbeat.manager.setup.config.ManagedConfigurationKeys.SERVER_OTLP_HTTP;
 
@@ -27,8 +28,8 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSum
 import org.apache.hertzbeat.manager.setup.config.EffectiveConfigurationResolver;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.Inspection;
 import org.apache.hertzbeat.manager.setup.config.ManagedActiveConfigurationInspector.State;
-import org.apache.hertzbeat.manager.setup.config.ManagedOptionalConfiguration.ServerInstrumentationSettings;
 import org.apache.hertzbeat.manager.setup.config.RestartRequirement;
+import org.apache.hertzbeat.manager.setup.config.SetupPublicAddress;
 import org.apache.hertzbeat.manager.setup.workflow.SetupConfigurationProjection;
 import org.apache.hertzbeat.manager.setup.workflow.SetupWarningPolicy;
 import org.springframework.core.env.Environment;
@@ -49,8 +50,11 @@ final class SetupStatusProjectionFactory {
         MetadataDatabaseKind kind = MetadataDatabaseKind.valueOf(database.value().toUpperCase(Locale.ROOT));
         boolean mailConfigured = externallyConfigured(environment, MAIL_HOST, true);
         OptionalConfigurationSummary optional = new OptionalConfigurationSummary(
-                externallyConfiguredEndpoint(environment, SERVER_OTLP_HTTP),
-                externallyConfiguredEndpoint(environment, SERVER_OTLP_GRPC),
+                externallyConfiguredAddress(environment, PUBLIC_BASE_URL, SetupPublicAddress.Kind.PUBLIC_BASE_URL),
+                externallyConfiguredAddress(
+                        environment, SERVER_OTLP_HTTP, SetupPublicAddress.Kind.SERVER_OTLP_ENDPOINT),
+                externallyConfiguredAddress(
+                        environment, SERVER_OTLP_GRPC, SetupPublicAddress.Kind.SERVER_OTLP_ENDPOINT),
                 externallyConfigured(environment, GREPTIME_EXPIRE_TIME, true), mailConfigured);
         MailSecurity mailSecurity = mailConfigured ? mailSecurity(environment) : null;
         return new SetupConfigurationProjection(
@@ -59,7 +63,7 @@ final class SetupStatusProjectionFactory {
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME,
                         managedPresent || telemetrySource != ConfigSource.BUILT_IN_DEFAULT,
                         telemetrySource, false), optional, SetupWarningPolicy.INSTANCE.evaluate(
-                        kind, environment.getProperty(SERVER_OTLP_HTTP),
+                        kind, environment.getProperty(PUBLIC_BASE_URL), environment.getProperty(SERVER_OTLP_HTTP),
                         environment.getProperty(SERVER_OTLP_GRPC), mailSecurity));
     }
 
@@ -72,13 +76,15 @@ final class SetupStatusProjectionFactory {
                 && (!requireText || !resolved.value().isBlank());
     }
 
-    private boolean externallyConfiguredEndpoint(Environment environment, String key) {
+    private boolean externallyConfiguredAddress(Environment environment, String key, SetupPublicAddress.Kind kind) {
         if (!environment.containsProperty(key)) {
             return false;
         }
         var resolved = resolver.resolve(environment, key, RestartRequirement.LIVE_RELOAD);
-        return resolved.source() != ConfigSource.BUILT_IN_DEFAULT
-                && ServerInstrumentationSettings.normalize(resolved.value()).isPresent();
+        boolean valid = kind == SetupPublicAddress.Kind.PUBLIC_BASE_URL
+                ? SetupPublicAddress.tryPublicBaseUrl(resolved.value()).isPresent()
+                : SetupPublicAddress.tryServerOtlpEndpoint(resolved.value()).isPresent();
+        return resolved.source() != ConfigSource.BUILT_IN_DEFAULT && valid;
     }
 
     private static MailSecurity mailSecurity(Environment environment) {

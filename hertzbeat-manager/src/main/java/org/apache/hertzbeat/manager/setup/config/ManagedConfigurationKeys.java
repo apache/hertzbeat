@@ -29,6 +29,7 @@ public final class ManagedConfigurationKeys {
     public static final String GREPTIME_DATABASE = "warehouse.store.greptime.database";
     public static final String GREPTIME_USERNAME = "warehouse.store.greptime.username";
     public static final String GREPTIME_PASSWORD = "warehouse.store.greptime.password";
+    public static final String PUBLIC_BASE_URL = "hertzbeat.setup.public-base-url";
     public static final String SERVER_OTLP_HTTP = "hertzbeat.instrumentation.server.otlp-http-endpoint";
     public static final String SERVER_OTLP_GRPC = "hertzbeat.instrumentation.server.otlp-grpc-endpoint";
     public static final String SERVER_PROFILE_ID = "hertzbeat.instrumentation.server.profile-id";

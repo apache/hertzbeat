@@ -36,7 +36,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseC
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ServerInstrumentationConfiguration;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
@@ -226,10 +226,10 @@ class SetupTransitionServiceTest {
     }
 
     @Test
-    void serverInstrumentationValidationFailureDoesNotPersistOrPublishState() {
+    void publicAccessValidationFailureDoesNotPersistOrPublishState() {
         assertOptionsValidationFailure(new OptionsRequest(
-                new ServerInstrumentationConfiguration("not-an-endpoint", null), null, null),
-                ValidationSection.SERVER_INSTRUMENTATION, SetupErrorCode.SERVER_INSTRUMENTATION_INVALID);
+                new PublicAccessConfiguration("not-an-address", null, null), null, null),
+                ValidationSection.PUBLIC_ACCESS, SetupErrorCode.PUBLIC_ADDRESS_INVALID);
     }
 
     @Test
@@ -270,7 +270,7 @@ class SetupTransitionServiceTest {
                         ConfigSource.UI_MANAGED, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true,
                         ConfigSource.UI_MANAGED, false),
-                new OptionalConfigurationSummary(false, false, false, false), List.of());
+                new OptionalConfigurationSummary(false, false, false, false, false), List.of());
         SetupRuntimeState state = new SetupRuntimeState(CLOCK, capability,
                 SetupPhase.OPTIONAL_CONFIGURATION, SetupAccess.LOCAL, true, "operator", projection);
         SetupRequestValidator validator = mock(SetupRequestValidator.class);
@@ -281,16 +281,18 @@ class SetupTransitionServiceTest {
                 mock(SetupConfigurationCoordinator.class), capability, options,
                 Optional.empty(), Optional.empty());
         OptionsRequest request = new OptionsRequest(
-                new ServerInstrumentationConfiguration("  ", "https://server.example.test:4317"), null,
+                new PublicAccessConfiguration("https://hertzbeat.example.test", "  ",
+                        "https://server.example.test:4317"), null,
                 new MailConfiguration("mail.example.test", 25, MailSecurity.NONE,
                         null, null, "alerts@example.test"));
 
         var response = transitions.configureOptions(request);
 
+        assertThat(response.publicBaseUrlConfigured()).isTrue();
         assertThat(response.serverOtlpHttpConfigured()).isFalse();
         assertThat(response.serverOtlpGrpcConfigured()).isTrue();
         assertThat(state.status().optional()).isEqualTo(
-                new OptionalConfigurationSummary(false, true, false, true));
+                new OptionalConfigurationSummary(true, false, true, false, true));
         assertThat(state.pendingWarnings()).containsExactly(SetupWarningCode.MAIL_SECURITY_NONE);
         verify(options).persist(request);
     }
@@ -382,7 +384,7 @@ class SetupTransitionServiceTest {
 
     private static OptionsRequest optionsRequest() {
         return new OptionsRequest(
-                new ServerInstrumentationConfiguration("https://server.example.test:4318", null), null, null);
+                new PublicAccessConfiguration(null, "https://server.example.test:4318", null), null, null);
     }
 
     private static HeadlessSetupWorkflow.RequiredConfiguration headlessConfiguration(SecretValue password) {

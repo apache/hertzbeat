@@ -193,7 +193,7 @@ public final class SetupApiContract {
     public enum ValidationSection implements WireValue {
         METADATA_DATABASE("metadata_database"),
         TELEMETRY_STORE("telemetry_store"),
-        SERVER_INSTRUMENTATION("server_instrumentation"),
+        PUBLIC_ACCESS("public_access"),
         MAIL("mail");
 
         private final String value;
@@ -244,7 +244,7 @@ public final class SetupApiContract {
         METADATA_SCHEMA_MISMATCH("metadata_schema_mismatch"),
         METADATA_INSUFFICIENT_PRIVILEGES("metadata_insufficient_privileges"),
         TELEMETRY_CONNECTION_FAILED("telemetry_connection_failed"),
-        SERVER_INSTRUMENTATION_INVALID("server_instrumentation_invalid"),
+        PUBLIC_ADDRESS_INVALID("public_address_invalid"),
         MAIL_CONNECTION_FAILED("mail_connection_failed"),
         ADMINISTRATOR_ALREADY_CONFIGURED("administrator_already_configured"),
         ADMINISTRATOR_USERNAME_INVALID("administrator_username_invalid"),
@@ -274,7 +274,7 @@ public final class SetupApiContract {
     public enum SetupWarningCode implements WireValue {
         EXTERNAL_APPLY_REQUIRED("external_apply_required"),
         RESTART_REQUIRED("restart_required"),
-        SERVER_OTLP_PLAINTEXT("server_otlp_plaintext"),
+        PUBLIC_ADDRESS_PLAINTEXT("public_address_plaintext"),
         MAIL_SECURITY_NONE("mail_security_none"),
         H2_NON_PRODUCTION("h2_non_production");
 
@@ -338,6 +338,7 @@ public final class SetupApiContract {
 
     /** Secret-free optional configuration status. */
     public record OptionalConfigurationSummary(
+            boolean publicBaseUrlConfigured,
             boolean serverOtlpHttpConfigured,
             boolean serverOtlpGrpcConfigured,
             boolean retentionConfigured,
@@ -407,10 +408,18 @@ public final class SetupApiContract {
         }
     }
 
-    /** Server OTLP endpoint input; HTTP and HTTPS are both contractually valid. */
-    public record ServerInstrumentationConfiguration(
+    /** Operator-owned public addresses; values are never inferred from the setup request. */
+    public record PublicAccessConfiguration(
+            String publicBaseUrl,
             String serverOtlpHttpEndpoint,
             String serverOtlpGrpcEndpoint) {
+
+        @Override
+        public String toString() {
+            return "PublicAccessConfiguration[publicBaseUrlProvided=" + hasText(publicBaseUrl)
+                    + ", serverOtlpHttpEndpointProvided=" + hasText(serverOtlpHttpEndpoint)
+                    + ", serverOtlpGrpcEndpointProvided=" + hasText(serverOtlpGrpcEndpoint) + "]";
+        }
     }
 
     /** Mail input. */
@@ -440,16 +449,16 @@ public final class SetupApiContract {
             @NotNull ValidationSection section,
             @Valid MetadataDatabaseConfiguration managementDatabase,
             @Valid TelemetryStoreConfiguration telemetryStore,
-            @Valid ServerInstrumentationConfiguration serverInstrumentation,
+            @Valid PublicAccessConfiguration publicAccess,
             @Valid MailConfiguration mail) {
 
         public ValidateRequest {
             Objects.requireNonNull(section, "section");
-            int supplied = countPresent(managementDatabase, telemetryStore, serverInstrumentation, mail);
+            int supplied = countPresent(managementDatabase, telemetryStore, publicAccess, mail);
             boolean matches = switch (section) {
                 case METADATA_DATABASE -> managementDatabase != null;
                 case TELEMETRY_STORE -> telemetryStore != null;
-                case SERVER_INSTRUMENTATION -> serverInstrumentation != null;
+                case PUBLIC_ACCESS -> publicAccess != null;
                 case MAIL -> mail != null;
             };
             if (supplied != 1 || !matches) {
@@ -527,13 +536,14 @@ public final class SetupApiContract {
 
     /** Optional setup input. */
     public record OptionsRequest(
-            @Valid ServerInstrumentationConfiguration serverInstrumentation,
+            @Valid PublicAccessConfiguration publicAccess,
             @Valid RetentionConfiguration retention,
             @Valid MailConfiguration mail) {
     }
 
     /** Secret-free optional setup result. */
     public record OptionsResponse(
+            boolean publicBaseUrlConfigured,
             boolean serverOtlpHttpConfigured,
             boolean serverOtlpGrpcConfigured,
             boolean retentionConfigured,

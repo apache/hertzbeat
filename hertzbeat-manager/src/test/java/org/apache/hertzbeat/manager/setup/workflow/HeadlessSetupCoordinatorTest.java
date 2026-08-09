@@ -40,9 +40,9 @@ class HeadlessSetupCoordinatorTest {
         ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
         SetupRuntimeState state = new SetupRuntimeState(Clock.systemUTC(), capability,
                 SetupPhase.OPTIONAL_CONFIGURATION, SetupAccess.LOCAL, true, "operator");
-        state.optionsConfigured(new OptionalConfigurationSummary(true, false, false, false),
+        state.optionsConfigured(new OptionalConfigurationSummary(false, true, false, false, false),
                 List.of(SetupWarningCode.H2_NON_PRODUCTION,
-                        SetupWarningCode.SERVER_OTLP_PLAINTEXT));
+                        SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT));
         SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
         SetupTransitionService transitions = new SetupTransitionService(state,
                 mock(SetupRequestValidator.class), mock(SetupConfigurationCoordinator.class), capability,
@@ -56,7 +56,7 @@ class HeadlessSetupCoordinatorTest {
         verifyNoInteractions(completion);
 
         coordinator.complete(List.of(SetupWarningCode.H2_NON_PRODUCTION,
-                SetupWarningCode.SERVER_OTLP_PLAINTEXT));
+                SetupWarningCode.PUBLIC_ADDRESS_PLAINTEXT));
         verify(completion).completeInstallation();
     }
 }

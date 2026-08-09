@@ -23,12 +23,12 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MailSecurity;
 
 /** Typed optional setup overlay kept in the existing managed application document. */
 public record ManagedOptionalConfiguration(
-        Optional<ServerInstrumentationSettings> serverInstrumentation,
+        Optional<PublicAccessSettings> publicAccess,
         Optional<RetentionSettings> retention,
         Optional<MailSettings> mail) {
 
     public ManagedOptionalConfiguration {
-        Objects.requireNonNull(serverInstrumentation, "serverInstrumentation");
+        Objects.requireNonNull(publicAccess, "publicAccess");
         Objects.requireNonNull(retention, "retention");
         Objects.requireNonNull(mail, "mail");
     }
@@ -37,33 +37,36 @@ public record ManagedOptionalConfiguration(
         return new ManagedOptionalConfiguration(Optional.empty(), Optional.empty(), Optional.empty());
     }
 
-    /** Optional server OTLP intake endpoints. */
-    public record ServerInstrumentationSettings(
+    /** Explicit operator-owned public access addresses. */
+    public record PublicAccessSettings(
+            Optional<String> publicBaseUrl,
             Optional<String> serverOtlpHttpEndpoint,
             Optional<String> serverOtlpGrpcEndpoint) {
-        public ServerInstrumentationSettings {
+        public PublicAccessSettings {
+            Objects.requireNonNull(publicBaseUrl, "publicBaseUrl");
             Objects.requireNonNull(serverOtlpHttpEndpoint, "serverOtlpHttpEndpoint");
             Objects.requireNonNull(serverOtlpGrpcEndpoint, "serverOtlpGrpcEndpoint");
-            serverOtlpHttpEndpoint = normalizeConfigured(serverOtlpHttpEndpoint);
-            serverOtlpGrpcEndpoint = normalizeConfigured(serverOtlpGrpcEndpoint);
-            if (serverOtlpHttpEndpoint.isEmpty() && serverOtlpGrpcEndpoint.isEmpty()) {
-                throw new IllegalArgumentException("At least one server instrumentation endpoint is required");
+            publicBaseUrl = validateConfigured(publicBaseUrl, SetupPublicAddress.Kind.PUBLIC_BASE_URL);
+            serverOtlpHttpEndpoint = validateConfigured(
+                    serverOtlpHttpEndpoint, SetupPublicAddress.Kind.SERVER_OTLP_ENDPOINT);
+            serverOtlpGrpcEndpoint = validateConfigured(
+                    serverOtlpGrpcEndpoint, SetupPublicAddress.Kind.SERVER_OTLP_ENDPOINT);
+            if (publicBaseUrl.isEmpty() && serverOtlpHttpEndpoint.isEmpty() && serverOtlpGrpcEndpoint.isEmpty()) {
+                throw new IllegalArgumentException("At least one public access address is required");
             }
         }
 
-        public static Optional<String> normalize(String value) {
-            if (value == null) {
+        private static Optional<String> validateConfigured(Optional<String> endpoint, SetupPublicAddress.Kind kind) {
+            if (endpoint.isEmpty()) {
                 return Optional.empty();
             }
-            String normalized = value.trim();
-            return normalized.isEmpty() ? Optional.empty() : Optional.of(normalized);
-        }
-
-        private static Optional<String> normalizeConfigured(Optional<String> endpoint) {
-            if (endpoint.isPresent() && normalize(endpoint.orElseThrow()).isEmpty()) {
-                throw new IllegalArgumentException("Server instrumentation endpoint must not be blank");
+            String value = endpoint.orElseThrow();
+            Optional<SetupPublicAddress> address = kind == SetupPublicAddress.Kind.PUBLIC_BASE_URL
+                    ? SetupPublicAddress.publicBaseUrl(value) : SetupPublicAddress.serverOtlpEndpoint(value);
+            if (address.isEmpty()) {
+                throw new IllegalArgumentException("Public access address must not be blank");
             }
-            return endpoint.flatMap(ServerInstrumentationSettings::normalize);
+            return address.map(SetupPublicAddress::value);
         }
     }
 

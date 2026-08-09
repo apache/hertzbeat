@@ -91,9 +91,9 @@ public final class SetupTransitionService {
     public OptionsResponse configureOptions(OptionsRequest request) {
         requireWritable();
         state.ensurePhase(SetupPhase.OPTIONAL_CONFIGURATION);
-        if (request.serverInstrumentation() != null) {
-            requireValid(validator, new ValidateRequest(ValidationSection.SERVER_INSTRUMENTATION,
-                    null, null, request.serverInstrumentation(), null));
+        if (request.publicAccess() != null) {
+            requireValid(validator, new ValidateRequest(ValidationSection.PUBLIC_ACCESS,
+                    null, null, request.publicAccess(), null));
         }
         if (request.mail() != null) {
             requireValid(validator, new ValidateRequest(ValidationSection.MAIL,
