@@ -92,6 +92,8 @@ resourceRole:
   - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
