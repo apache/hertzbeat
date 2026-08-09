@@ -17,12 +17,14 @@
 
 package org.apache.hertzbeat.manager.component.status;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenancePhase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -218,6 +221,141 @@ class CalculateStatusTest {
         assertTrue(interrupted.await(5, TimeUnit.SECONDS));
         assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
         assertEquals(1, invocations.get());
+    }
+
+    @Test
+    void quiesceAtomicallyDropsPendingRunAndWaitsForInFlightCompletion() throws Exception {
+        calculateStatus.start();
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch quiesced = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            invocations.incrementAndGet();
+            entered.countDown();
+            release.await();
+            return Collections.emptyList();
+        }).when(statusPageOrgDao).findAll();
+
+        calculateStatus.dispatchCalculate();
+        assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+        calculateStatus.dispatchCalculate();
+        Thread controller = Thread.ofPlatform().unstarted(() -> {
+            calculateStatus.quiesce(Duration.ofSeconds(5));
+            quiesced.countDown();
+        });
+        controller.start();
+
+        awaitPhase(MetadataMaintenancePhase.QUIESCING);
+        assertThat(quiesced.getCount()).isOne();
+        release.countDown();
+        assertThat(quiesced.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(invocations).hasValue(1);
+
+        calculateStatus.dispatchCalculate();
+        assertThat(invocations).hasValue(1);
+    }
+
+    @Test
+    void resumeCoalescesPausedCalculateDispatchesIntoOneRun() throws Exception {
+        calculateStatus.start();
+        calculateStatus.quiesce(Duration.ofSeconds(1));
+        CountDownLatch invoked = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            invocations.incrementAndGet();
+            invoked.countDown();
+            return Collections.emptyList();
+        }).when(statusPageOrgDao).findAll();
+
+        calculateStatus.dispatchCalculate();
+        calculateStatus.dispatchCalculate();
+        calculateStatus.resume();
+        calculateStatus.resume();
+
+        assertThat(invoked.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(invocations).hasValue(1);
+    }
+
+    @Test
+    void resumeCoalescesMissedDailyCombineIntoOneRun() throws Exception {
+        calculateStatus.start();
+        calculateStatus.quiesce(Duration.ofSeconds(1));
+        CountDownLatch invoked = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            invocations.incrementAndGet();
+            invoked.countDown();
+            return Collections.emptyList();
+        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+
+        calculateStatus.dispatchCombineHistory();
+        calculateStatus.dispatchCombineHistory();
+        calculateStatus.resume();
+        calculateStatus.resume();
+
+        assertThat(invoked.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(invocations).hasValue(1);
+    }
+
+    @Test
+    void runningDailyCombinePreservesOnePendingDueRunAcrossMaintenance() throws Exception {
+        calculateStatus.start();
+        CountDownLatch firstEntered = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondEntered = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            int invocationNumber = invocations.incrementAndGet();
+            if (invocationNumber == 1) {
+                firstEntered.countDown();
+                releaseFirst.await();
+            } else {
+                secondEntered.countDown();
+            }
+            return Collections.emptyList();
+        }).when(statusPageHistoryDao).findStatusPageHistoriesByTimestampBetween(anyLong(), anyLong());
+
+        calculateStatus.dispatchCombineHistory();
+        assertThat(firstEntered.await(1, TimeUnit.SECONDS)).isTrue();
+        calculateStatus.dispatchCombineHistory();
+        CountDownLatch quiesced = new CountDownLatch(1);
+        Thread controller = Thread.ofPlatform().unstarted(() -> {
+            calculateStatus.quiesce(Duration.ofSeconds(5));
+            quiesced.countDown();
+        });
+        controller.start();
+        awaitPhase(MetadataMaintenancePhase.QUIESCING);
+        assertThat(quiesced.getCount()).isOne();
+
+        releaseFirst.countDown();
+        assertThat(quiesced.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(invocations).hasValue(1);
+        calculateStatus.resume();
+
+        assertThat(secondEntered.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(invocations).hasValue(2);
+    }
+
+    @Test
+    void quiesceCanBeRepeatedWithoutDestroyingSchedulers() {
+        calculateStatus.start();
+
+        calculateStatus.quiesce(Duration.ofSeconds(1));
+        calculateStatus.quiesce(Duration.ofSeconds(1));
+        calculateStatus.resume();
+        calculateStatus.resume();
+
+        assertThat(calculateStatus.isStarted()).isTrue();
+        verifyNoInteractions(statusPageOrgDao, statusPageComponentDao, statusPageHistoryDao, monitorDao);
+    }
+
+    private void awaitPhase(MetadataMaintenancePhase expected) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+        while (calculateStatus.maintenancePhase() != expected && System.nanoTime() < deadline) {
+            Thread.onSpinWait();
+        }
+        assertThat(calculateStatus.maintenancePhase()).isEqualTo(expected);
     }
 
     private StatusProperties statusProperties() {

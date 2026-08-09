@@ -11,9 +11,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionAdvisor;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionCoordinator;
+import org.apache.hertzbeat.manager.component.sd.ServiceDiscoveryWorker;
+import org.apache.hertzbeat.manager.component.status.CalculateStatus;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceCoordinator;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceParticipant;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.warehouse.store.DataStorageDispatch;
 import org.apache.hertzbeat.warehouse.store.metadata.JdbcMonitorStatusMetadataWriter;
@@ -44,6 +49,15 @@ class MetadataWriteAdmissionStartupContextTest {
 
     @Test
     void startupHasOneAdmissionBoundaryAndOneTransactionSource() throws Exception {
+        assertThat(context.getBeansOfType(MetadataMaintenanceCoordinator.class)).hasSize(1);
+        List<MetadataMaintenanceParticipant> participants = context.getBeanProvider(
+                MetadataMaintenanceParticipant.class).orderedStream().toList();
+        assertThat(participants)
+                .containsExactly(
+                        context.getBean(ServiceDiscoveryWorker.class),
+                        context.getBean(CalculateStatus.class));
+        assertThat(participants).noneMatch(DataStorageDispatch.class::isInstance);
+
         assertThat(context.getBeansOfType(MetadataWriteAdmissionCoordinator.class)).hasSize(1);
         assertThat(context.getBeansOfType(MetadataWriteAdmissionAdvisor.class)).hasSize(1);
         assertThat(context.getBeansOfType(TransactionAttributeSource.class)).hasSize(1);
