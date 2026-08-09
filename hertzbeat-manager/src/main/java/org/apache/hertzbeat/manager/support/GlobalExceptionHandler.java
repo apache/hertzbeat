@@ -25,6 +25,7 @@ import java.util.Objects;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
 
     private static final String CONNECT_STR = "||";
     private static final String UNKNOWN_ERROR_MESSAGE = "unknown error happen";
+
+    /** Return a retryable, cache-safe maintenance response without logging private state. */
+    @ExceptionHandler(MetadataWriteAdmissionException.class)
+    @ResponseBody
+    ResponseEntity<MetadataWriteMaintenanceErrorResponse> handleMetadataWriteAdmissionException(
+            MetadataWriteAdmissionException exception) {
+        return MetadataWriteMaintenanceErrorResponse.httpResponse(exception);
+    }
 
     /**
      * Processing probe failure

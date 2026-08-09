@@ -21,24 +21,24 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
+import org.apache.hertzbeat.warehouse.store.metadata.MonitorAvailability;
+import org.apache.hertzbeat.warehouse.store.metadata.MonitorStatusMetadataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 class DataStorageDispatchStatusTest {
 
     @Test
     void firstAvailabilityResultCanReplacePendingStatus() {
-        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        MonitorStatusMetadataWriter statusWriter = mock(MonitorStatusMetadataWriter.class);
         DataStorageDispatch dispatch = new DataStorageDispatch(
                 mock(CommonDataQueue.class),
                 mock(WarehouseWorkerPool.class),
-                jdbcTemplate,
+                statusWriter,
                 List.of(),
                 mock(RealTimeDataWriter.class),
                 mock(PluginRunner.class));
@@ -50,11 +50,6 @@ class DataStorageDispatchStatusTest {
 
         dispatch.calculateMonitorStatus(firstResult);
 
-        verify(jdbcTemplate).update(
-                "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status <> ? AND status <> ?",
-                CommonConstants.MONITOR_UP_CODE,
-                42L,
-                CommonConstants.MONITOR_PAUSED_CODE,
-                CommonConstants.MONITOR_UP_CODE);
+        verify(statusWriter).updateAvailability(42L, MonitorAvailability.UP);
     }
 }

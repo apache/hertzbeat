@@ -19,9 +19,11 @@ package org.apache.hertzbeat.manager.setup.api;
 
 import java.time.Clock;
 import java.util.Objects;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.SetupUnlockRejected;
 import org.apache.hertzbeat.manager.setup.workflow.SetupWorkflowConflict;
+import org.apache.hertzbeat.manager.support.MetadataWriteMaintenanceErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -74,6 +76,13 @@ public class SetupExceptionHandler {
     @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<SetupErrorResponse> invalidRequest(Exception ignored) {
         return response(HttpStatus.BAD_REQUEST, SetupErrorCode.INVALID_REQUEST);
+    }
+
+    /** Return the same safe maintenance contract used by ordinary manager endpoints. */
+    @ExceptionHandler(MetadataWriteAdmissionException.class)
+    public ResponseEntity<MetadataWriteMaintenanceErrorResponse> metadataWriteAdmission(
+            MetadataWriteAdmissionException failure) {
+        return MetadataWriteMaintenanceErrorResponse.httpResponse(failure);
     }
 
     @ExceptionHandler(Exception.class)

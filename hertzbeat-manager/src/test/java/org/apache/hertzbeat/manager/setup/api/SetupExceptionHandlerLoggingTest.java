@@ -39,6 +39,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupResponseTransition;
 import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
@@ -132,6 +133,21 @@ class SetupExceptionHandlerLoggingTest {
         mvc.perform(post(SetupApiContract.UNLOCK_PATH)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest());
+
+        assertTrue(appender.list.stream().noneMatch(event -> event.getLevel() == Level.ERROR));
+    }
+
+    @Test
+    void metadataWriteAdmissionFailureIsSafeServiceUnavailableInsteadOfInternalError() throws Exception {
+        when(workflow.status()).thenThrow(MetadataWriteAdmissionException.metadataWritesPaused());
+
+        mvc.perform(get(SetupApiContract.STATUS_PATH))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("metadata_writes_paused"))
+                .andExpect(jsonPath("$.message").value("Metadata writes are temporarily unavailable"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("operation-private"))));
 
         assertTrue(appender.list.stream().noneMatch(event -> event.getLevel() == Level.ERROR));
     }

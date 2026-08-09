@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
@@ -144,6 +145,19 @@ class DeploymentControllerTest {
                         org.hamcrest.Matchers.containsString("request-secret"))))
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("internal_table"))));
+    }
+
+    @Test
+    void metadataWriteAdmissionFailureUsesSafeRetryableEnvelope() throws Exception {
+        when(workflow.deployment()).thenThrow(MetadataWriteAdmissionException.metadataWritesPaused());
+
+        mvc.perform(get(DeploymentApiContract.DEPLOYMENT_PATH))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("metadata_writes_paused"))
+                .andExpect(jsonPath("$.message").value("Metadata writes are temporarily unavailable"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("operation-private"))));
     }
 
     @Test
