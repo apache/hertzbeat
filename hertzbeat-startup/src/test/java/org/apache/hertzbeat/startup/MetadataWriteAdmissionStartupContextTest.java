@@ -8,8 +8,10 @@
 package org.apache.hertzbeat.startup;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionAdvisor;
@@ -21,6 +23,12 @@ import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceCoordinator;
 import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceParticipant;
 import org.apache.hertzbeat.manager.maintenance.AlertMetadataMaintenanceParticipant;
 import org.apache.hertzbeat.manager.maintenance.CollectorLifecycleMaintenanceParticipant;
+import org.apache.hertzbeat.manager.maintenance.DeploymentSingletonAuthority;
+import org.apache.hertzbeat.manager.maintenance.EmbeddedH2SourceGuard;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceOrchestrator;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceErrorCode;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceException;
+import org.apache.hertzbeat.manager.maintenance.MigrationSourceGuard;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.warehouse.store.DataStorageDispatch;
 import org.apache.hertzbeat.warehouse.store.metadata.JdbcMonitorStatusMetadataWriter;
@@ -52,6 +60,17 @@ class MetadataWriteAdmissionStartupContextTest {
     @Test
     void startupHasOneAdmissionBoundaryAndOneTransactionSource() throws Exception {
         assertThat(context.getBeansOfType(MetadataMaintenanceCoordinator.class)).hasSize(1);
+        assertThat(context.getBeansOfType(MigrationMaintenanceOrchestrator.class)).hasSize(1);
+        assertThat(context.getBeansOfType(MigrationSourceGuard.class))
+                .containsOnlyKeys("embeddedH2SourceGuard");
+        assertThat(context.getBean(MigrationSourceGuard.class)).isInstanceOf(EmbeddedH2SourceGuard.class);
+        assertThat(context.getBeansOfType(DeploymentSingletonAuthority.class))
+                .containsOnlyKeys("unavailableDeploymentSingletonAuthority");
+        assertThatThrownBy(() -> context.getBean(MigrationMaintenanceOrchestrator.class)
+                .acquire("normal-proof", Duration.ZERO))
+                .isInstanceOfSatisfying(MigrationMaintenanceException.class, exception ->
+                        assertThat(exception.code())
+                                .isEqualTo(MigrationMaintenanceErrorCode.MIGRATION_DEPLOYMENT_AUTHORITY_UNAVAILABLE));
         List<MetadataMaintenanceParticipant> participants = context.getBeanProvider(
                 MetadataMaintenanceParticipant.class).orderedStream().toList();
         assertThat(participants)

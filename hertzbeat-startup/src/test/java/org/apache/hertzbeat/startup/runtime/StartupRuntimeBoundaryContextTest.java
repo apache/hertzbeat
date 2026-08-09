@@ -30,10 +30,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceErrorCode;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceException;
+import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceOrchestrator;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
@@ -167,6 +171,15 @@ class StartupRuntimeBoundaryContextTest {
             assertTrue(context.containsBeanDefinition("periodicAlertRuleScheduler"));
             assertTrue(context.containsBeanDefinition("manageServer"));
             assertFalse(context.containsBeanDefinition("collectorLifecycleMaintenanceParticipant"));
+            MigrationMaintenanceOrchestrator orchestrator =
+                    context.getBean(MigrationMaintenanceOrchestrator.class);
+            try {
+                orchestrator.acquire("gated-proof", Duration.ZERO);
+                org.junit.jupiter.api.Assertions.fail("Gated runtime must fail closed");
+            } catch (MigrationMaintenanceException exception) {
+                assertEquals(MigrationMaintenanceErrorCode.MIGRATION_DEPLOYMENT_AUTHORITY_UNAVAILABLE,
+                        exception.code());
+            }
             assertTrue(context.containsBeanDefinition("otlpGrpcMetricsService"));
             assertTrue(context.containsBeanDefinition("alarmGroupReduce"));
             assertTrue(context.containsBeanDefinition("alarmInhibitReduce"));

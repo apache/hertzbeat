@@ -73,6 +73,23 @@ public final class MetadataMaintenanceCoordinator {
         }
     }
 
+    void recover(String requestedOperationId) {
+        requireOperationId(requestedOperationId);
+        lock.lock();
+        try {
+            if (phase != MetadataMaintenancePhase.RECOVERY_REQUIRED
+                    || !requestedOperationId.equals(operationId)) {
+                throw MetadataMaintenanceException.operationConflict();
+            }
+            if (!resumeAllParticipants()) {
+                throw MetadataMaintenanceException.resumeFailure();
+            }
+            reopen();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     void resume(String resumedOperationId, long resumedEpoch, Object resumedToken) {
         lock.lock();
         try {

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -199,7 +200,8 @@ class MetadataMaintenanceCoordinatorTest {
     }
 
     @Test
-    void failedParticipantRecoveryCannotBeReportedAsRunning() {
+    void failedParticipantRecoveryRequiresSameOperationAndCanBeRetriedExplicitly() {
+        AtomicBoolean resumeFails = new AtomicBoolean(true);
         MetadataMaintenanceParticipant participant = new MetadataMaintenanceParticipant() {
             @Override
             public String participantId() {
@@ -213,7 +215,9 @@ class MetadataMaintenanceCoordinatorTest {
 
             @Override
             public void resume() {
-                throw MetadataMaintenanceException.resumeFailure();
+                if (resumeFails.get()) {
+                    throw MetadataMaintenanceException.resumeFailure();
+                }
             }
         };
         MetadataMaintenanceCoordinator coordinator = new MetadataMaintenanceCoordinator(List.of(participant));
@@ -223,6 +227,12 @@ class MetadataMaintenanceCoordinatorTest {
                         assertThat(exception.code()).isEqualTo(MetadataMaintenanceErrorCode.QUIESCE_TIMEOUT));
 
         assertThat(coordinator.snapshot().phase()).isEqualTo(MetadataMaintenancePhase.RECOVERY_REQUIRED);
+        assertThatThrownBy(() -> coordinator.recover("operation-b"))
+                .isInstanceOfSatisfying(MetadataMaintenanceException.class, exception ->
+                        assertThat(exception.code()).isEqualTo(MetadataMaintenanceErrorCode.OPERATION_CONFLICT));
+        resumeFails.set(false);
+        coordinator.recover("operation-a");
+        assertThat(coordinator.snapshot().phase()).isEqualTo(MetadataMaintenancePhase.RUNNING);
     }
 
     @Test
