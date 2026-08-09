@@ -176,7 +176,7 @@ CREATE TABLE hzb_auth_token (
 CREATE TABLE hzb_signal_saved_view (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL COMMENT 'Saved view creator',
-    signal VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
+    `signal` VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
     view_key VARCHAR(128) NOT NULL COMMENT 'Stable saved view key',
     label VARCHAR(255) NOT NULL COMMENT 'Saved view display label',
     description VARCHAR(512) COMMENT 'Saved view description',
@@ -185,15 +185,15 @@ CREATE TABLE hzb_signal_saved_view (
     payload TEXT COMMENT 'Additional saved view payload JSON',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
-    UNIQUE KEY uk_hzb_signal_saved_view_signal_key (signal, view_key),
-    INDEX idx_hzb_signal_saved_view_signal (signal),
+    UNIQUE KEY uk_hzb_signal_saved_view_signal_key (`signal`, view_key),
+    INDEX idx_hzb_signal_saved_view_signal (`signal`),
     INDEX idx_hzb_signal_saved_view_update (update_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE hzb_signal_dashboard_panel_draft (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     creator VARCHAR(255) NOT NULL COMMENT 'Panel draft creator',
-    signal VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
+    `signal` VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
     draft_key VARCHAR(128) NOT NULL COMMENT 'Stable dashboard panel draft key',
     title VARCHAR(255) NOT NULL COMMENT 'Dashboard panel title',
     description VARCHAR(512) COMMENT 'Dashboard panel description',
@@ -203,8 +203,8 @@ CREATE TABLE hzb_signal_dashboard_panel_draft (
     payload TEXT COMMENT 'Additional dashboard panel payload JSON',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
-    UNIQUE KEY uk_hzb_signal_dashboard_panel_draft_creator_signal_key (creator, signal, draft_key),
-    INDEX idx_hzb_signal_dashboard_panel_draft_creator_signal (creator, signal),
+    UNIQUE KEY uk_hzb_signal_dashboard_panel_draft_creator_signal_key (creator, `signal`, draft_key),
+    INDEX idx_hzb_signal_dashboard_panel_draft_creator_signal (creator, `signal`),
     INDEX idx_hzb_signal_dashboard_panel_draft_update (update_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
