@@ -23,7 +23,9 @@ import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
 import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -40,8 +42,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,6 +76,62 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     private AlarmCacheManager alarmCacheManager;
 
     private MetricsRealTimeAlertCalculator metricsRealTimeAlertCalculator;
+
+    @Test
+    void positiveCapacityMaintenanceBufferKeepsTelemetryLoopForwardingLaterSamples() throws Exception {
+        int sampleCount = 8;
+        CountDownLatch stored = new CountDownLatch(sampleCount);
+        InMemoryCommonDataQueue queue = new InMemoryCommonDataQueue() {
+            @Override
+            public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
+                super.sendMetricsDataToStorage(metricsData);
+                stored.countDown();
+            }
+        };
+        AlarmCommonReduce reduce = new AlarmCommonReduce(
+                org.mockito.Mockito.mock(AlarmGroupReduce.class), positiveReduceCapacityProperties());
+        AlerterWorkerPool loopPool = new AlerterWorkerPool();
+        MetricsRealTimeAlertCalculator calculator = new MetricsRealTimeAlertCalculator(
+                loopPool, queue, alertDefineService, singleAlertDao, reduce, alarmCacheManager,
+                new JexlExprCalculator(), false) {
+            @Override
+            protected void calculate(CollectRep.MetricsData metricsData) {
+                reduce.reduceAndSendAlarm(org.apache.hertzbeat.common.entity.alerter.SingleAlert.builder()
+                        .labels(Map.of("sample", Long.toString(metricsData.getId())))
+                        .build());
+            }
+        };
+        reduce.pauseAdmission();
+        calculator.startCalculate();
+        for (int index = 0; index < sampleCount; index++) {
+            queue.sendMetricsData(CollectRep.MetricsData.newBuilder().setId(index + 1L).build());
+        }
+
+        assertTrue(stored.await(2, TimeUnit.SECONDS));
+        for (int index = 0; index < sampleCount; index++) {
+            assertNotNull(queue.pollMetricsDataToStorage());
+        }
+
+        reduce.destroy();
+        loopPool.destroy();
+    }
+
+    private static VirtualThreadProperties positiveReduceCapacityProperties() {
+        return new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        new VirtualThreadProperties.QueueProperties(1, 1),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+    }
 
     @BeforeEach
     public void setUp() {
@@ -169,6 +231,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         verify(alarmCacheManager, times(1)).getPending(any(), any());
         verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+        verify(dataQueue, times(1)).sendMetricsDataToStorage(metricsData);
     }
 
     @Test

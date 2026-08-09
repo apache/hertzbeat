@@ -24,6 +24,8 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -178,6 +180,20 @@ class AlertNoticeDispatchTest {
 
         verify(workerPool).executeNotify(eq((byte) 1), any(Runnable.class));
         verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
+        verify(emitterManager).broadcast(any(String.class));
+    }
+
+    @Test
+    void postStoreFailureDoesNotChangeMetadataSuccessOutcome() {
+        when(alertStoreHandler.store(alert)).thenReturn(alert);
+        when(noticeConfigService.getReceiverFilterRule(alert))
+                .thenThrow(new IllegalStateException("notice unavailable"));
+        doThrow(new IllegalStateException("broadcast unavailable"))
+                .when(emitterManager).broadcast(any(String.class));
+
+        assertTrue(alertNoticeDispatch.dispatchAlarm(alert));
+
+        verify(alertStoreHandler, times(1)).store(alert);
         verify(emitterManager).broadcast(any(String.class));
     }
 }

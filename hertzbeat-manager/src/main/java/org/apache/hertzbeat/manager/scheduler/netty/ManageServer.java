@@ -28,9 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
+import org.apache.hertzbeat.manager.maintenance.CollectorLifecycleMaintenanceParticipant;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicServiceDiscoveryDataResponseProcessor;
@@ -45,6 +47,7 @@ import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.apache.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
@@ -63,6 +66,8 @@ public class ManageServer {
     private final CollectorRuntimeStatusRegistry runtimeStatusRegistry;
 
     private final CollectorRuntimeConfigService runtimeConfigService;
+
+    private final CollectorLifecycleMaintenanceParticipant collectorLifecycleMaintenance;
 
     private ScheduledExecutorService channelSchedule;
 
@@ -97,7 +102,7 @@ public class ManageServer {
                         final CommonDataQueue commonDataQueue,
                         final VirtualThreadProperties virtualThreadProperties) {
         this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler, commonDataQueue,
-                virtualThreadProperties, new CollectorRuntimeStatusRegistry(), null);
+                virtualThreadProperties, new CollectorRuntimeStatusRegistry(), null, null);
     }
 
     public ManageServer(final SchedulerProperties schedulerProperties,
@@ -108,7 +113,7 @@ public class ManageServer {
                         final VirtualThreadProperties virtualThreadProperties,
                         final CollectorRuntimeStatusRegistry runtimeStatusRegistry) {
         this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler, commonDataQueue,
-                virtualThreadProperties, runtimeStatusRegistry, null);
+                virtualThreadProperties, runtimeStatusRegistry, null, null);
     }
 
     @Autowired
@@ -119,13 +124,15 @@ public class ManageServer {
                         final CommonDataQueue commonDataQueue,
                         final VirtualThreadProperties virtualThreadProperties,
                         final CollectorRuntimeStatusRegistry runtimeStatusRegistry,
-                        final CollectorRuntimeConfigService runtimeConfigService) {
+                        final CollectorRuntimeConfigService runtimeConfigService,
+                        @Nullable final CollectorLifecycleMaintenanceParticipant collectorLifecycleMaintenance) {
         this.collectorJobScheduler = collectorJobScheduler;
         this.collectorJobScheduler.setManageServer(this);
         this.collectorAlertHandler = collectorAlertHandler;
         this.commonDataQueue = commonDataQueue;
         this.runtimeStatusRegistry = runtimeStatusRegistry;
         this.runtimeConfigService = runtimeConfigService;
+        this.collectorLifecycleMaintenance = collectorLifecycleMaintenance;
         this.schedulerProperties = schedulerProperties;
         this.threadPool = threadPool;
         this.virtualThreadProperties = virtualThreadProperties == null
@@ -219,7 +226,28 @@ public class ManageServer {
             preChannel.close();
         }
         this.clientChannelTable.put(identity, channel);
-        this.collectorAlertHandler.online(identity);
+    }
+
+    public void collectorOnline(String identity, CollectorInfo collectorInfo, boolean submitAlert) {
+        if (collectorLifecycleMaintenance != null) {
+            collectorLifecycleMaintenance.collectorOnline(identity, collectorInfo, submitAlert);
+        } else {
+            if (submitAlert) {
+                collectorAlertHandler.online(identity);
+            }
+            collectorJobScheduler.collectorGoOnline(identity, collectorInfo);
+        }
+    }
+
+    public void collectorOffline(String identity, boolean submitAlert) {
+        if (collectorLifecycleMaintenance != null) {
+            collectorLifecycleMaintenance.collectorOffline(identity, submitAlert);
+        } else {
+            collectorJobScheduler.collectorGoOffline(identity);
+            if (submitAlert) {
+                collectorAlertHandler.offline(identity);
+            }
+        }
     }
 
     public void closeChannel(final String identity) {
@@ -230,10 +258,10 @@ public class ManageServer {
         this.runtimeStatusRegistry.remove(identity);
         Channel channel = this.getChannel(identity);
         if (channel != null) {
-            this.collectorJobScheduler.collectorGoOffline(identity);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build();
             currentServer.sendMsg(channel, message);
             this.clientChannelTable.remove(identity);
+            collectorOffline(identity, false);
             log.info("close collect client success, identity: {}", identity);
         }
     }
@@ -300,7 +328,7 @@ public class ManageServer {
             if (identity != null) {
                 ManageServer.this.clientChannelTable.remove(identity);
                 ManageServer.this.runtimeStatusRegistry.remove(identity);
-                ManageServer.this.collectorJobScheduler.collectorGoOffline(identity);
+                ManageServer.this.collectorOffline(identity, false);
                 channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
             }
@@ -380,8 +408,7 @@ public class ManageServer {
                     channel.closeFuture();
                     this.clientChannelTable.remove(collector);
                     this.runtimeStatusRegistry.remove(collector);
-                    this.collectorJobScheduler.collectorGoOffline(collector);
-                    this.collectorAlertHandler.offline(collector);
+                    this.collectorOffline(collector, true);
                 }
             });
         } catch (Exception e) {

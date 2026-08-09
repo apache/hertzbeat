@@ -203,15 +203,14 @@ public class AlarmInhibitReduce implements DisposableBean {
      * If alert is inhibited, it will not be forwarded
      * @param groupAlert Grouped and pending alerts to be processed
      */
-    public void inhibitAlarm(GroupAlert groupAlert) {
+    public boolean inhibitAlarm(GroupAlert groupAlert) {
         if (groupAlert == null) {
             log.warn("Received null GroupAlert. Skipping processing.");
-            return;
+            return false;
         }
         try {
             if (inhibitRules.isEmpty()) {
-                alarmSilenceReduce.silenceAlarm(groupAlert);
-                return;
+                return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
 
             // Process each individual alert
@@ -228,10 +227,12 @@ public class AlarmInhibitReduce implements DisposableBean {
 
             // Continue processing if there are remaining alerts
             if (!groupAlert.getAlerts().isEmpty()) {
-                alarmSilenceReduce.silenceAlarm(groupAlert);
+                return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
+            return true;
         } catch (Exception e) {
-            log.error("Error inhibiting alarm for {}", groupAlert, e);
+            log.error("Alarm inhibit metadata processing failed");
+            return false;
         }
     }
 

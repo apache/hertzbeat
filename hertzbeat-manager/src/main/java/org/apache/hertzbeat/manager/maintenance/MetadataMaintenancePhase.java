@@ -11,5 +11,6 @@ package org.apache.hertzbeat.manager.maintenance;
 public enum MetadataMaintenancePhase {
     RUNNING,
     QUIESCING,
-    QUIESCED
+    QUIESCED,
+    RECOVERY_REQUIRED
 }

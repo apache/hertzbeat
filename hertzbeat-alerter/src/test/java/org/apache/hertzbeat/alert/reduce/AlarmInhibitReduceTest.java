@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -231,6 +232,15 @@ class AlarmInhibitReduceTest {
 
         alarmInhibitReduce.inhibitAlarm(alert);
         verify(alarmSilenceReduce).silenceAlarm(alert);
+    }
+
+    @Test
+    void synchronousSilenceOrStoreFailureIsReportedToGroupOwner() {
+        GroupAlert alert = GroupAlert.builder().alerts(new ArrayList<>()).build();
+        doThrow(new IllegalStateException("store unavailable"))
+                .when(alarmSilenceReduce).silenceAlarm(alert);
+
+        assertFalse(alarmInhibitReduce.inhibitAlarm(alert));
     }
 
     @Test

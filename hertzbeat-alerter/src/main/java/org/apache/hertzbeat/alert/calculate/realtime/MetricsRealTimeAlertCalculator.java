@@ -137,8 +137,10 @@ public class MetricsRealTimeAlertCalculator {
                         continue;
                     }
                     backoff.reset();
-                    calculate(metricsData);
+                    // The telemetry handoff precedes alert reduction so maintenance backpressure cannot
+                    // occupy every calculator before later samples reach storage.
                     dataQueue.sendMetricsDataToStorage(metricsData);
+                    calculate(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {

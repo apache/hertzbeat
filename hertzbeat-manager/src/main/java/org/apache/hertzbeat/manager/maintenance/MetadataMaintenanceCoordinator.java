@@ -45,20 +45,20 @@ public final class MetadataMaintenanceCoordinator {
         requireOperationId(requestedOperationId);
         Acquisition acquisition = beginAcquisition(requestedOperationId);
 
-        List<MetadataMaintenanceParticipant> completed = new ArrayList<>(participants.size());
+        List<MetadataMaintenanceParticipant> started = new ArrayList<>(participants.size());
         try {
             for (MetadataMaintenanceParticipant participant : participants) {
+                started.add(participant);
                 participant.quiesce(deadline.remaining());
-                completed.add(participant);
             }
         } catch (MetadataMaintenanceException exception) {
-            rollback(acquisition, completed);
+            rollback(acquisition, started);
             throw exception;
         } catch (Error error) {
-            rollback(acquisition, completed);
+            rollback(acquisition, started);
             throw error;
         } catch (RuntimeException exception) {
-            rollback(acquisition, completed);
+            rollback(acquisition, started);
             throw MetadataMaintenanceException.participantFailure();
         }
         return completeAcquisition(acquisition);
@@ -100,6 +100,15 @@ public final class MetadataMaintenanceCoordinator {
     private Acquisition beginAcquisition(String requestedOperationId) {
         lock.lock();
         try {
+            if (phase == MetadataMaintenancePhase.RECOVERY_REQUIRED) {
+                if (!requestedOperationId.equals(operationId)) {
+                    throw MetadataMaintenanceException.operationConflict();
+                }
+                if (!resumeAllParticipants()) {
+                    throw MetadataMaintenanceException.resumeFailure();
+                }
+                reopen();
+            }
             if (phase != MetadataMaintenancePhase.RUNNING) {
                 throw MetadataMaintenanceException.operationConflict();
             }
@@ -112,6 +121,18 @@ public final class MetadataMaintenanceCoordinator {
         } finally {
             lock.unlock();
         }
+    }
+
+    private boolean resumeAllParticipants() {
+        boolean resumed = true;
+        for (int index = participants.size() - 1; index >= 0; index--) {
+            try {
+                participants.get(index).resume();
+            } catch (RuntimeException exception) {
+                resumed = false;
+            }
+        }
+        return resumed;
     }
 
     private MetadataMaintenanceLease completeAcquisition(Acquisition acquisition) {
@@ -127,19 +148,22 @@ public final class MetadataMaintenanceCoordinator {
         }
     }
 
-    private void rollback(Acquisition acquisition, List<MetadataMaintenanceParticipant> completed) {
-        Collections.reverse(completed);
-        for (MetadataMaintenanceParticipant participant : completed) {
+    private void rollback(Acquisition acquisition, List<MetadataMaintenanceParticipant> started) {
+        Collections.reverse(started);
+        boolean failed = false;
+        for (MetadataMaintenanceParticipant participant : started) {
             try {
                 participant.resume();
             } catch (RuntimeException exception) {
-                // Rollback is best effort and must not replace the primary safe failure category.
+                failed = true;
             }
         }
         lock.lock();
         try {
-            if (ownsAcquisition(acquisition)) {
+            if (ownsAcquisition(acquisition) && !failed) {
                 reopen();
+            } else if (ownsAcquisition(acquisition)) {
+                phase = MetadataMaintenancePhase.RECOVERY_REQUIRED;
             }
         } finally {
             lock.unlock();

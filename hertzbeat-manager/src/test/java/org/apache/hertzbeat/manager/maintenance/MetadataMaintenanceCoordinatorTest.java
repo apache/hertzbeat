@@ -163,7 +163,8 @@ class MetadataMaintenanceCoordinatorTest {
                     assertThat(exception.getCause()).isNull();
                 });
 
-        assertThat(events).containsExactly("pause-first", "pause-failing", "resume-first");
+        assertThat(events).containsExactly(
+                "pause-first", "pause-failing", "resume-failing", "resume-first");
         assertThat(coordinator.snapshot().phase()).isEqualTo(MetadataMaintenancePhase.RUNNING);
     }
 
@@ -183,7 +184,7 @@ class MetadataMaintenanceCoordinatorTest {
 
             @Override
             public void resume() {
-                events.add("unexpected-resume");
+                events.add("resume-timeout");
             }
         };
         MetadataMaintenanceCoordinator coordinator = new MetadataMaintenanceCoordinator(List.of(timeout));
@@ -193,8 +194,35 @@ class MetadataMaintenanceCoordinatorTest {
                     assertThat(exception.code()).isEqualTo(MetadataMaintenanceErrorCode.QUIESCE_TIMEOUT);
                     assertThat(exception.getCause()).isNull();
                 });
-        assertThat(events).isEmpty();
+        assertThat(events).containsExactly("resume-timeout");
         assertThat(coordinator.snapshot().phase()).isEqualTo(MetadataMaintenancePhase.RUNNING);
+    }
+
+    @Test
+    void failedParticipantRecoveryCannotBeReportedAsRunning() {
+        MetadataMaintenanceParticipant participant = new MetadataMaintenanceParticipant() {
+            @Override
+            public String participantId() {
+                return "recovery-failure";
+            }
+
+            @Override
+            public void quiesce(Duration ignored) {
+                throw MetadataMaintenanceException.quiesceTimeout();
+            }
+
+            @Override
+            public void resume() {
+                throw MetadataMaintenanceException.resumeFailure();
+            }
+        };
+        MetadataMaintenanceCoordinator coordinator = new MetadataMaintenanceCoordinator(List.of(participant));
+
+        assertThatThrownBy(() -> coordinator.quiesce("operation-a", Duration.ZERO))
+                .isInstanceOfSatisfying(MetadataMaintenanceException.class, exception ->
+                        assertThat(exception.code()).isEqualTo(MetadataMaintenanceErrorCode.QUIESCE_TIMEOUT));
+
+        assertThat(coordinator.snapshot().phase()).isEqualTo(MetadataMaintenancePhase.RECOVERY_REQUIRED);
     }
 
     @Test

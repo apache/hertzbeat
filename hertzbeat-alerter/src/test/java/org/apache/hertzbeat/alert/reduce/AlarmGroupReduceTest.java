@@ -40,11 +40,13 @@ package org.apache.hertzbeat.alert.reduce;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -52,9 +54,11 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
@@ -98,6 +102,7 @@ class AlarmGroupReduceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(alarmInhibitReduce.inhibitAlarm(any())).thenReturn(true);
         when(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue())
             .thenReturn(Collections.emptyList());
         alarmGroupReduce = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
@@ -214,6 +219,102 @@ class AlarmGroupReduceTest {
 
         assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS));
         assertEquals(1, invocations.get());
+    }
+
+    @Test
+    void pauseDrainsRunningGroupPassAndCoalescesOneMissedPass() throws Exception {
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch resumedStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        alarmGroupReduce.destroy();
+        alarmGroupReduce = new TestAlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
+                new VirtualThreadProperties(), null, null, firstStarted, releaseFirst, resumedStarted,
+                new AtomicInteger(), invocations);
+        alarmGroupReduce.start();
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+
+        alarmGroupReduce.pauseAdmission();
+        assertThrows(TimeoutException.class, () -> alarmGroupReduce.awaitDrained(0));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        releaseFirst.countDown();
+        alarmGroupReduce.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+
+        alarmGroupReduce.resumeAdmission();
+        assertTrue(resumedStarted.await(5, TimeUnit.SECONDS));
+        assertEquals(2, invocations.get());
+    }
+
+    @Test
+    void failedGroupStoreRetainsSnapshotForOneRetry() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        when(alarmInhibitReduce.inhibitAlarm(any())).thenReturn(false, true);
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+
+        dispatchAndDrain();
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    @Test
+    void repeatSkipRetainsFiringUntilResolvedSnapshotIsStored() throws Exception {
+        AlertGroupConverge rule = groupRule(600);
+        alarmGroupReduce.refreshGroupDefines(List.of(rule));
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+        dispatchAndDrain();
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "resolved"));
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    @Test
+    void concurrentInsertIsNotClearedWithSuccessfulSnapshot() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(0)));
+        AtomicBoolean inserted = new AtomicBoolean();
+        doAnswer(invocation -> {
+            if (inserted.compareAndSet(false, true)) {
+                alarmGroupReduce.processGroupAlert(groupAlert("fp-2", "firing"));
+            }
+            return true;
+        }).when(alarmInhibitReduce).inhibitAlarm(any());
+        alarmGroupReduce.processGroupAlert(groupAlert("fp-1", "firing"));
+
+        dispatchAndDrain();
+        dispatchAndDrain();
+        dispatchAndDrain();
+
+        verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
+    }
+
+    private void dispatchAndDrain() throws Exception {
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        alarmGroupReduce.pauseAdmission();
+        alarmGroupReduce.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+        alarmGroupReduce.resumeAdmission();
+    }
+
+    private AlertGroupConverge groupRule(long repeatInterval) {
+        AlertGroupConverge rule = new AlertGroupConverge();
+        rule.setName("test-rule");
+        rule.setGroupLabels(List.of("severity"));
+        rule.setGroupWait(0L);
+        rule.setGroupInterval(0L);
+        rule.setRepeatInterval(repeatInterval);
+        return rule;
+    }
+
+    private SingleAlert groupAlert(String fingerprint, String status) {
+        return SingleAlert.builder()
+                .fingerprint(fingerprint)
+                .status(status)
+                .labels(createLabels("severity", "critical"))
+                .annotations(Map.of())
+                .build();
     }
 
     private Map<String, String> createLabels(String... keyValues) {

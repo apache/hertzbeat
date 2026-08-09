@@ -166,6 +166,7 @@ class StartupRuntimeBoundaryContextTest {
             assertFalse(gate.isOpen());
             assertTrue(context.containsBeanDefinition("periodicAlertRuleScheduler"));
             assertTrue(context.containsBeanDefinition("manageServer"));
+            assertFalse(context.containsBeanDefinition("collectorLifecycleMaintenanceParticipant"));
             assertTrue(context.containsBeanDefinition("otlpGrpcMetricsService"));
             assertTrue(context.containsBeanDefinition("alarmGroupReduce"));
             assertTrue(context.containsBeanDefinition("alarmInhibitReduce"));

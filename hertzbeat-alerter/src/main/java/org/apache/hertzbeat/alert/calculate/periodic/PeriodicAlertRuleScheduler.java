@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.apache.hertzbeat.common.concurrent.WorkAdmissionGate;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,6 +59,8 @@ public class PeriodicAlertRuleScheduler {
     private final VirtualThreadProperties virtualThreadProperties;
     private boolean virtualThreadsEnabled;
     private final Map<Long, ScheduledTaskState> scheduledTasks;
+    private final WorkAdmissionGate maintenanceGate = new WorkAdmissionGate();
+    private boolean maintenancePaused;
 
     @Autowired
     public PeriodicAlertRuleScheduler(MetricsPeriodicAlertCalculator metricsCalculator,
@@ -152,7 +155,7 @@ public class PeriodicAlertRuleScheduler {
             ScheduledTaskState state = new ScheduledTaskState(
                     rule, currentPeriodicExecutor, currentPeriodicPermits);
             ScheduledFuture<?> future = currentScheduledExecutor.scheduleAtFixedRate(
-                    virtualThreadsEnabled ? state::trigger : () -> executeRule(rule),
+                    state::trigger,
                     0, rule.getPeriod(), TimeUnit.SECONDS);
             state.setScheduledFuture(future);
             scheduledTasks.put(rule.getId(), state);
@@ -166,6 +169,48 @@ public class PeriodicAlertRuleScheduler {
             logCalculator.calculate(rule);
         } else if (rule.getType().equals(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)) {
             traceCalculator.calculate(rule);
+        }
+    }
+
+    public synchronized void pauseAdmission() {
+        maintenancePaused = true;
+        maintenanceGate.pauseAdmission();
+    }
+
+    public void awaitDrained(long timeoutNanos) throws InterruptedException, java.util.concurrent.TimeoutException {
+        maintenanceGate.awaitDrained(timeoutNanos);
+    }
+
+    public void resumeAdmission() {
+        List<ScheduledTaskState> states;
+        synchronized (this) {
+            if (!maintenancePaused) {
+                return;
+            }
+            maintenanceGate.resumeAdmission();
+            maintenancePaused = false;
+            states = new ArrayList<>(scheduledTasks.values());
+        }
+        states.forEach(ScheduledTaskState::resumeMissed);
+    }
+
+    private synchronized WorkAdmissionGate.Permit acquireTriggerPermit(ScheduledTaskState state) {
+        if (maintenancePaused) {
+            state.markMissed();
+            return null;
+        }
+        return maintenanceGate.tryAcquire();
+    }
+
+    void beforeRuleTrigger(AlertDefine rule) {
+    }
+
+    private void executeRuleWithPermit(AlertDefine rule, WorkAdmissionGate.Permit permit) {
+        if (permit == null) {
+            return;
+        }
+        try (permit) {
+            executeRule(rule);
         }
     }
 
@@ -184,7 +229,9 @@ public class PeriodicAlertRuleScheduler {
         private Future<?> runningFuture;
         private boolean running;
         private boolean pending;
+        private WorkAdmissionGate.Permit pendingPermit;
         private boolean cancelled;
+        private boolean missedWhilePaused;
 
         private ScheduledTaskState(AlertDefine rule, ExecutorService taskExecutor, Semaphore taskPermits) {
             this.rule = rule;
@@ -196,21 +243,39 @@ public class PeriodicAlertRuleScheduler {
             this.scheduledFuture = scheduledFuture;
         }
 
-        private synchronized void trigger() {
-            if (cancelled) {
+        private void trigger() {
+            beforeRuleTrigger(rule);
+            WorkAdmissionGate.Permit permit = acquireTriggerPermit(this);
+            if (permit == null) {
                 return;
             }
-            if (running) {
-                pending = true;
-                return;
+            synchronized (this) {
+                if (cancelled) {
+                    permit.close();
+                    return;
+                }
+                if (running) {
+                    if (!pending) {
+                        pending = true;
+                        pendingPermit = permit;
+                    } else {
+                        permit.close();
+                    }
+                    return;
+                }
+                running = true;
             }
-            running = true;
-            submitLocked();
+            submit(permit);
         }
 
         private synchronized void cancel() {
             cancelled = true;
             pending = false;
+            if (pendingPermit != null) {
+                pendingPermit.close();
+                pendingPermit = null;
+            }
+            missedWhilePaused = false;
             ScheduledFuture<?> periodicFuture = scheduledFuture;
             Future<?> currentFuture = runningFuture;
             if (periodicFuture != null) {
@@ -221,30 +286,43 @@ public class PeriodicAlertRuleScheduler {
             }
         }
 
-        private void submitLocked() {
+        private void submit(WorkAdmissionGate.Permit permit) {
+            if (taskExecutor == null) {
+                runTask(permit);
+                return;
+            }
             try {
-                runningFuture = taskExecutor.submit(() -> {
-                    boolean permitAcquired = false;
-                    try {
-                        taskPermits.acquire();
-                        permitAcquired = true;
-                        if (!Thread.currentThread().isInterrupted()) {
-                            executeRule(rule);
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    } catch (Exception e) {
-                        log.error("Periodic alert rule {} execution error: {}", rule.getName(), e.getMessage(), e);
-                    } finally {
-                        if (permitAcquired) {
-                            taskPermits.release();
-                        }
-                        onComplete();
-                    }
-                });
+                runningFuture = taskExecutor.submit(() -> runTask(permit));
             } catch (RuntimeException e) {
                 running = false;
+                permit.close();
                 throw e;
+            }
+        }
+
+        private void runTask(WorkAdmissionGate.Permit permit) {
+            boolean concurrencyPermitAcquired = false;
+            try {
+                if (taskPermits != null) {
+                    taskPermits.acquire();
+                    concurrencyPermitAcquired = true;
+                }
+                if (!Thread.currentThread().isInterrupted()) {
+                    executeRuleWithPermit(rule, permit);
+                    permit = null;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                log.error("Periodic alert rule {} execution error: {}", rule.getName(), e.getMessage(), e);
+            } finally {
+                if (permit != null) {
+                    permit.close();
+                }
+                if (concurrencyPermitAcquired) {
+                    taskPermits.release();
+                }
+                onComplete();
             }
         }
 
@@ -260,7 +338,25 @@ public class PeriodicAlertRuleScheduler {
                 return;
             }
             pending = false;
-            submitLocked();
+            WorkAdmissionGate.Permit nextPermit = pendingPermit;
+            pendingPermit = null;
+            submit(nextPermit);
+        }
+
+        private synchronized void markMissed() {
+            if (!cancelled) {
+                missedWhilePaused = true;
+            }
+        }
+
+        private void resumeMissed() {
+            synchronized (this) {
+                if (!missedWhilePaused || cancelled) {
+                    return;
+                }
+                missedWhilePaused = false;
+            }
+            trigger();
         }
     }
 }

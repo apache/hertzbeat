@@ -21,6 +21,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT
 import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
@@ -258,6 +260,76 @@ class PeriodicAlertRuleSchedulerTest {
         assertEquals(1, invocations.get());
     }
 
+    @Test
+    void pauseDrainsAnEnteredPeriodicCalculationWithoutStoppingScheduler() throws Exception {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch resumed = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (invocations.incrementAndGet() == 1) {
+                started.countDown();
+                release.await();
+            } else {
+                resumed.countDown();
+            }
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+        scheduler.updateSchedule(metricRule(9L));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        scheduler.pauseAdmission();
+        assertThrows(TimeoutException.class, () -> scheduler.awaitDrained(0));
+        release.countDown();
+        scheduler.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+
+        scheduler.resumeAdmission();
+        scheduler.updateSchedule(metricRule(10L));
+        assertTrue(resumed.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void pausedTicksCoalescePerRuleAndResumeOnceWithVirtualExecutor() throws Exception {
+        assertPausedTicksResumeOnce(periodicProperties(true, 1));
+    }
+
+    @Test
+    void pausedTicksCoalescePerRuleAndResumeOnceWithScheduledExecutor() throws Exception {
+        assertPausedTicksResumeOnce(periodicProperties(false, 1));
+    }
+
+    private void assertPausedTicksResumeOnce(VirtualThreadProperties properties) throws Exception {
+        scheduler.stop();
+        CountDownLatch pausedTicks = new CountDownLatch(2);
+        scheduler = new PeriodicAlertRuleScheduler(
+                metricsCalculator, logCalculator, traceCalculator, alertDefineDao, properties) {
+            @Override
+            void beforeRuleTrigger(AlertDefine rule) {
+                pausedTicks.countDown();
+            }
+        };
+        scheduler.start();
+        CountDownLatch calculated = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            invocations.incrementAndGet();
+            calculated.countDown();
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+        AlertDefine rule = metricRule(11L);
+
+        scheduler.pauseAdmission();
+        scheduler.updateSchedule(rule);
+        assertTrue(pausedTicks.await(3, TimeUnit.SECONDS));
+        scheduler.awaitDrained(0);
+
+        scheduler.resumeAdmission();
+        scheduler.resumeAdmission();
+        assertTrue(calculated.await(1, TimeUnit.SECONDS));
+        scheduler.cancelSchedule(rule.getId());
+        assertEquals(1, invocations.get());
+    }
+
     private AlertDefine metricRule(Long id) {
         return AlertDefine.builder()
                 .id(id)
@@ -279,8 +351,12 @@ class PeriodicAlertRuleSchedulerTest {
     }
 
     private VirtualThreadProperties periodicProperties(int maxConcurrentJobs) {
+        return periodicProperties(true, maxConcurrentJobs);
+    }
+
+    private VirtualThreadProperties periodicProperties(boolean enabled, int maxConcurrentJobs) {
         return new VirtualThreadProperties(
-                true,
+                enabled,
                 VirtualThreadProperties.PoolProperties.collectorDefaults(),
                 VirtualThreadProperties.PoolProperties.commonDefaults(),
                 VirtualThreadProperties.PoolProperties.managerDefaults(),

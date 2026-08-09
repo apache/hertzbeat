@@ -19,6 +19,8 @@ import org.apache.hertzbeat.manager.component.status.CalculateStatus;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceCoordinator;
 import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceParticipant;
+import org.apache.hertzbeat.manager.maintenance.AlertMetadataMaintenanceParticipant;
+import org.apache.hertzbeat.manager.maintenance.CollectorLifecycleMaintenanceParticipant;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.warehouse.store.DataStorageDispatch;
 import org.apache.hertzbeat.warehouse.store.metadata.JdbcMonitorStatusMetadataWriter;
@@ -55,7 +57,9 @@ class MetadataWriteAdmissionStartupContextTest {
         assertThat(participants)
                 .containsExactly(
                         context.getBean(ServiceDiscoveryWorker.class),
-                        context.getBean(CalculateStatus.class));
+                        context.getBean(CalculateStatus.class),
+                        context.getBean(CollectorLifecycleMaintenanceParticipant.class),
+                        context.getBean(AlertMetadataMaintenanceParticipant.class));
         assertThat(participants).noneMatch(DataStorageDispatch.class::isInstance);
 
         assertThat(context.getBeansOfType(MetadataWriteAdmissionCoordinator.class)).hasSize(1);

@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -143,6 +144,36 @@ public class AlarmGroupReduce implements DisposableBean {
     void beforeCheckAndSendGroupsRun() {
     }
 
+    public void pauseAdmission() {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.pauseAdmission();
+        }
+    }
+
+    public void awaitDrained(long timeoutNanos) throws InterruptedException, TimeoutException {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.awaitDrained(timeoutNanos);
+        }
+    }
+
+    public void resumeAdmission() {
+        ScheduledDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = checkTask;
+        }
+        if (currentTask != null) {
+            currentTask.resumeAdmission();
+        }
+    }
+
     @Override
     public synchronized void destroy() {
         if (checkTask != null) {
@@ -191,8 +222,6 @@ public class AlarmGroupReduce implements DisposableBean {
             groupCacheMap.forEach((groupKey, cache) -> {
                 if (shouldSendGroup(cache, now)) {
                     sendGroupAlert(cache);
-                    cache.setLastSendTime(now);
-                    cache.getAlertFingerprints().clear();
                 }
             });
         } catch (Exception e) {
@@ -289,43 +318,50 @@ public class AlarmGroupReduce implements DisposableBean {
 
         if (shouldSendGroupImmediately(cache)) {
             sendGroupAlert(cache);
-            cache.setLastSendTime(System.currentTimeMillis());
-            cache.getAlertFingerprints().clear();
         }
     }
 
     private void sendGroupAlert(GroupAlertCache cache) {
-        if (cache.getAlertFingerprints().isEmpty()) {
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        String status = determineGroupStatus(cache.getAlertFingerprints().values());
-
-        // For firing alerts, check repeat interval
-        if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
-            AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            long repeatInterval = ruleConfig.getRepeatInterval() != null
-                    ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
-
-            // Skip if within repeat interval
-            if (cache.getLastRepeatTime() > 0
-                && now - cache.getLastRepeatTime() < repeatInterval) {
+        synchronized (cache) {
+            Map<String, SingleAlert> snapshot = new HashMap<>(cache.getAlertFingerprints());
+            if (snapshot.isEmpty()) {
                 return;
             }
-            cache.setLastRepeatTime(now);
+
+            long now = System.currentTimeMillis();
+            String status = determineGroupStatus(snapshot.values());
+
+            // For firing alerts, check repeat interval without consuming the retained snapshot.
+            if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
+                AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
+                long repeatInterval = ruleConfig.getRepeatInterval() != null
+                        ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
+
+                if (cache.getLastRepeatTime() > 0
+                        && now - cache.getLastRepeatTime() < repeatInterval) {
+                    return;
+                }
+            }
+
+            GroupAlert groupAlert = GroupAlert.builder()
+                    .groupKey(cache.getGroupKey())
+                    .groupLabels(cache.getGroupLabels())
+                    .commonLabels(extractCommonLabels(snapshot.values()))
+                    .commonAnnotations(extractCommonAnnotations(snapshot.values()))
+                    .alerts(new ArrayList<>(snapshot.values()))
+                    .status(status)
+                    .build();
+
+            if (!alarmInhibitReduce.inhibitAlarm(groupAlert)) {
+                return;
+            }
+            snapshot.forEach((fingerprint, alert) ->
+                    cache.getAlertFingerprints().remove(fingerprint, alert));
+            cache.setLastSendTime(now);
+            if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
+                cache.setLastRepeatTime(now);
+            }
         }
-
-        GroupAlert groupAlert = GroupAlert.builder()
-                .groupKey(cache.getGroupKey())
-                .groupLabels(cache.getGroupLabels())
-                .commonLabels(extractCommonLabels(cache.getAlertFingerprints().values()))
-                .commonAnnotations(extractCommonAnnotations(cache.getAlertFingerprints().values()))
-                .alerts(new ArrayList<>(cache.getAlertFingerprints().values()))
-                .status(status)
-                .build();
-
-        alarmInhibitReduce.inhibitAlarm(groupAlert);
     }
 
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {
@@ -429,6 +465,10 @@ public class AlarmGroupReduce implements DisposableBean {
 
         private boolean cancelled;
 
+        private boolean paused;
+
+        private boolean missedWhilePaused;
+
         private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
             this.executor = executor;
             this.task = task;
@@ -438,6 +478,10 @@ public class AlarmGroupReduce implements DisposableBean {
             boolean shouldSchedule;
             synchronized (this) {
                 if (cancelled) {
+                    return;
+                }
+                if (paused) {
+                    missedWhilePaused = true;
                     return;
                 }
                 pendingRuns++;
@@ -473,12 +517,14 @@ public class AlarmGroupReduce implements DisposableBean {
                 if (cancelled) {
                     pendingRuns = 0;
                     running = false;
+                    notifyAll();
                     return;
                 }
                 pendingRuns = Math.max(0, pendingRuns - 1);
                 shouldSchedule = pendingRuns > 0;
                 if (!shouldSchedule) {
                     running = false;
+                    notifyAll();
                     return;
                 }
             }
@@ -488,6 +534,49 @@ public class AlarmGroupReduce implements DisposableBean {
         private synchronized void cancel() {
             cancelled = true;
             pendingRuns = 0;
+            missedWhilePaused = false;
+            notifyAll();
+        }
+
+        private synchronized void pauseAdmission() {
+            paused = true;
+            missedWhilePaused |= pendingRuns > 1;
+            pendingRuns = running ? 1 : 0;
+        }
+
+        private synchronized void awaitDrained(long timeoutNanos)
+                throws InterruptedException, TimeoutException {
+            long remainingNanos = timeoutNanos;
+            long startedNanos = System.nanoTime();
+            while (running) {
+                if (remainingNanos <= 0) {
+                    throw new TimeoutException();
+                }
+                TimeUnit.NANOSECONDS.timedWait(this, remainingNanos);
+                long elapsedNanos = System.nanoTime() - startedNanos;
+                if (elapsedNanos <= 0) {
+                    remainingNanos = timeoutNanos;
+                } else if (elapsedNanos >= timeoutNanos) {
+                    remainingNanos = 0;
+                } else {
+                    remainingNanos = timeoutNanos - elapsedNanos;
+                }
+            }
+        }
+
+        private void resumeAdmission() {
+            boolean dispatchMissed;
+            synchronized (this) {
+                if (!paused) {
+                    return;
+                }
+                paused = false;
+                dispatchMissed = missedWhilePaused && !cancelled;
+                missedWhilePaused = false;
+            }
+            if (dispatchMissed) {
+                dispatch();
+            }
         }
     }
 }
