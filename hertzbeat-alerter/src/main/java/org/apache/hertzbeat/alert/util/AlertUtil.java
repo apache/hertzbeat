@@ -17,10 +17,8 @@
 
 package org.apache.hertzbeat.alert.util;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * alert util
@@ -28,13 +26,31 @@ import java.util.Objects;
 public class AlertUtil {
 
     /**
-     * calculate fingerprint
-     * @param fingerPrints finger prints
+     * Calculate an in-memory alert cache coordinate.
+     *
+     * <p>This value is rebuilt from persisted alert labels when the process
+     * starts. It is not the durable {@code SingleAlert.fingerprint} used by
+     * persistence, grouping, silence, or inhibition.</p>
+     *
+     * @param fingerPrints labels used by the calculator cache
+     * @return deterministic cache coordinate
      */
     public static String calculateFingerprint(Map<String, String> fingerPrints) {
-        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
-        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
-        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
-                + Arrays.hashCode(valueList.toArray(new String[0]));
+        StringBuilder canonicalLabels = new StringBuilder();
+        fingerPrints.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.nullsFirst(Comparator.naturalOrder())))
+                .forEach(entry -> {
+                    appendLengthPrefixed(canonicalLabels, entry.getKey());
+                    appendLengthPrefixed(canonicalLabels, entry.getValue());
+                });
+        return CryptoUtils.sha256Hex(canonicalLabels.toString());
+    }
+
+    private static void appendLengthPrefixed(StringBuilder target, String value) {
+        if (value == null) {
+            target.append("-1:");
+            return;
+        }
+        target.append(value.length()).append(':').append(value);
     }
 }
