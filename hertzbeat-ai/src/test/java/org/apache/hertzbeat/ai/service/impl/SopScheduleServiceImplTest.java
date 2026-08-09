@@ -24,11 +24,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -46,7 +48,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Ownership contracts for user-facing SOP schedule operations.
+ * Ownership and scheduling contracts for user-facing SOP schedule operations.
  */
 @ExtendWith(MockitoExtension.class)
 class SopScheduleServiceImplTest {
@@ -150,6 +152,26 @@ class SopScheduleServiceImplTest {
                         .build()));
 
         assertSame(schedule, service.getScheduleForExecution(1L));
+    }
+
+    @Test
+    void createScheduleShouldRejectCronWithoutFutureExecutionTime() {
+        SopSchedule schedule = SopSchedule.builder()
+                .conversationId(10L)
+                .sopName("daily_inspection")
+                .cronExpression("0 0 0 31 2 *")
+                .build();
+        when(conversationDao.findByIdAndCreator(10L, "alice"))
+                .thenReturn(Optional.of(ChatConversation.builder()
+                        .id(10L)
+                        .creator("alice")
+                        .build()));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class, () -> service.createSchedule(schedule));
+
+        assertTrue(exception.getMessage().contains("no future execution time"));
+        verifyNoInteractions(scheduleDao);
     }
 
     private SopSchedule schedule(Long id, String creator) {

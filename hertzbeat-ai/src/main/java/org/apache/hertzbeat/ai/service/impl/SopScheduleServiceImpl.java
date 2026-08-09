@@ -182,10 +182,17 @@ public class SopScheduleServiceImpl implements SopScheduleService {
     private LocalDateTime calculateNextRunTime(String cronExpression) {
         try {
             CronExpression cron = CronExpression.parse(cronExpression);
-            return cron.next(LocalDateTime.now());
-        } catch (Exception e) {
-            log.error("Failed to calculate next run time for cron: {}", cronExpression, e);
-            return null;
+            LocalDateTime nextRunTime = cron.next(LocalDateTime.now());
+            if (nextRunTime == null) {
+                // Expressions such as February 31 are syntactically valid but can never be triggered.
+                throw new IllegalArgumentException(
+                        "Cron expression has no future execution time: " + cronExpression);
+            }
+            return nextRunTime;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("Failed to calculate next run time: " + cronExpression, e);
         }
     }
 

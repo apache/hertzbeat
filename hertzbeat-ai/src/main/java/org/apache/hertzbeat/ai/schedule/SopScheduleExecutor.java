@@ -112,9 +112,8 @@ public class SopScheduleExecutor {
             // Check if skill exists
             var definition = skillRegistry.getSkill(schedule.getSopName());
             if (definition == null) {
-                log.warn("Skill {} not found, skipping schedule {}", 
-                        schedule.getSopName(), schedule.getId());
-                return;
+                // Do not silently skip an invalid schedule because its execution time will still be advanced.
+                throw new IllegalStateException("SOP skill not found: " + schedule.getSopName());
             }
             
             // Parse parameters

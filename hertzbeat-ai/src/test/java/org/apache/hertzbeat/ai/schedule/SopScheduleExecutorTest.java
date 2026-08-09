@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.schedule;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -38,6 +39,7 @@ import org.apache.hertzbeat.common.entity.ai.SopSchedule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -136,6 +138,22 @@ class SopScheduleExecutorTest {
 
         verify(sopEngine).executeSync(any(SopDefinition.class), anyMap());
         verifyNoInteractions(chatMessageDao);
+        verify(scheduleService).updateAfterExecution(1L);
+    }
+
+    @Test
+    void checkShouldPushErrorWhenScheduledSkillNoLongerExists() {
+        SopSchedule schedule = schedule(1L, null);
+        when(scheduleService.getDueSchedules()).thenReturn(List.of(schedule));
+        when(scheduleService.getScheduleForExecution(1L)).thenReturn(schedule, schedule);
+        when(skillRegistry.getSkill("daily_inspection")).thenReturn(null);
+
+        executor.checkAndExecuteDueSchedules();
+
+        ArgumentCaptor<ChatMessage> messageCaptor = ArgumentCaptor.forClass(ChatMessage.class);
+        verify(chatMessageDao).save(messageCaptor.capture());
+        assertTrue(messageCaptor.getValue().getContent().contains("SOP skill not found: daily_inspection"));
+        verifyNoInteractions(sopEngine);
         verify(scheduleService).updateAfterExecution(1L);
     }
 
