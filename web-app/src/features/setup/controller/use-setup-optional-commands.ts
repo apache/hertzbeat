@@ -135,11 +135,20 @@ function useCompletionCommand(dependencies: CommandDependencies) {
     startWrite,
     status.pendingWarnings
   ]);
+  return completionCommandResult(acknowledgements, complete, completeFailureKey, admission.pending);
+}
+
+function completionCommandResult(
+  acknowledgements: ReturnType<typeof useWarningAcknowledgements>,
+  complete: () => Promise<void>,
+  completeFailureKey: string | null,
+  completePending: boolean
+) {
   return {
-    acknowledgedWarnings,
+    acknowledgedWarnings: acknowledgements.acknowledgedWarnings,
     complete,
     completeFailureKey,
-    completePending: admission.pending,
+    completePending,
     setWarningAcknowledged: acknowledgements.setWarningAcknowledged
   };
 }
