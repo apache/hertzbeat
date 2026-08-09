@@ -25,7 +25,7 @@ resourceRole:
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
+  - /api/monitor/**===delete===[admin]
   - /api/monitors/**===get===[admin,user,guest]
   - /api/monitors/**===post===[admin,user]
   - /api/monitors/**===put===[admin,user]
@@ -54,6 +54,16 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  # the secret config holds the jwt signing key and the aes key protecting stored
+  # credentials, so it stays admin only and is additionally refused by the controller
+  - /api/config/secret===get===[admin]
+  - /api/config/secret===post===[admin]
+  # the mute toggle sits in the notification widget every signed in user sees
+  - /api/config/mute===post===[admin,user,guest]
+  - /api/config/**===get===[admin,user,guest]
+  - /api/config/**===post===[admin]
+  - /api/config/**===put===[admin]
+  - /api/config/**===delete===[admin]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
@@ -70,6 +80,10 @@ resourceRole:
   - /api/mcp/**===post===[admin]
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin]
+  - /api/ai/**===get===[admin]
+  - /api/ai/**===post===[admin]
+  - /api/ai/**===put===[admin]
+  - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
   # the openapi document is a map of every route, parameter and model, so it is

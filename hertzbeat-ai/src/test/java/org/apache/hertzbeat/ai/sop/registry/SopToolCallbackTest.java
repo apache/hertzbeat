@@ -76,6 +76,23 @@ class SopToolCallbackTest {
         assertThrows(IllegalArgumentException.class, () -> callback.call("not-json"));
     }
 
+    @Test
+    void schemaShouldRejectInvalidBooleanDefault() {
+        SopParameter enabled = SopParameter.builder()
+                .name("enabled")
+                .type("boolean")
+                .defaultValue("yes")
+                .build();
+        SopDefinition definition = SopDefinition.builder()
+                .name("invalid-default")
+                .description("包含非法布尔默认值")
+                .parameters(List.of(enabled))
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new SopToolCallback(definition, new RecordingEngine()));
+    }
+
     private SopDefinition definition() {
         SopParameter monitorId = SopParameter.builder()
                 .name("monitorId")
