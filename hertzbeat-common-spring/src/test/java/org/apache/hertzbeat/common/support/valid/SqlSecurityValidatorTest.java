@@ -346,8 +346,6 @@ class SqlSecurityValidatorTest {
         final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'a; DROP TABLE cpu'"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'it''s; fine'"));
-        assertDoesNotThrow(() -> selectOnly.validate("SELECT $$a; -- DROP TABLE cpu$$"));
-        assertDoesNotThrow(() -> selectOnly.validate("SELECT $body$a; -- DROP TABLE cpu$body$"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu -- ; DROP TABLE cpu"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu /* ; DROP TABLE cpu */ LIMIT 1"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT value FROM \"cpu;usage\""));
@@ -358,8 +356,40 @@ class SqlSecurityValidatorTest {
         final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'open"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu /* open"));
+    }
+
+    /**
+     * A dollar-quoted literal is refused outright rather than skipped over, so that neither
+     * answer to "does this dialect have dollar quoting" can hide a statement.
+     *
+     * <p>Skipping would lose a stacked statement to a dialect that has it, since the comment
+     * marker in {@code SELECT $$--$$; DROP TABLE cpu} is data rather than a comment. Skipping
+     * would equally lose one to a dialect that does not, since the semicolon in
+     * {@code SELECT 1 $$;DROP TABLE cpu$$} really does separate statements there.
+     */
+    @Test
+    void testDollarQuotedLiteralIsRejectedRatherThanSkipped() {
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $$--$$; DROP TABLE cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT 1 $$;DROP TABLE cpu$$"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT 1 $t$;DROP TABLE cpu$t$"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $$a; -- DROP TABLE cpu$$"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $body$a; -- DROP TABLE cpu$body$"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $$open"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $body$open"));
+        // a literal opening right after an identifier is still a literal
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT a$$b;c$$ FROM cpu"));
+    }
+
+    /**
+     * A dollar sign that opens nothing is an ordinary character, so reads keep working.
+     */
+    @Test
+    void testLoneDollarSignIsNotTreatedAsLiteral() {
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT $1 FROM cpu"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT a$b FROM cpu"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE cost = '$5; x'"));
     }
 
     /**

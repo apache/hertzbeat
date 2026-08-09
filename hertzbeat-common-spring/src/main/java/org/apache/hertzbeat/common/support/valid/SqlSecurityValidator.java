@@ -124,6 +124,8 @@ public class SqlSecurityValidator {
         switch (validationPolicy) {
             case WHITELISTED_SELECT -> validateAgainstWhitelist(sql);
             case READ_ONLY -> validateReadOnly(sql);
+            // not dead: a policy added later that nobody wired up here must refuse the
+            // statement rather than fall through this switch having validated nothing
             default -> throw new SqlSecurityException("Unknown SQL validation policy.");
         }
     }
@@ -289,14 +291,9 @@ public class SqlSecurityValidator {
                 }
                 index = commentEnd + 2;
             } else if (current == '$') {
-                final int dollarQuoteEnd = skipDollarQuoted(sql, index);
-                if (dollarQuoteEnd > index) {
-                    index = dollarQuoteEnd;
-                    statementHasContent = true;
-                } else {
-                    statementHasContent = true;
-                    index++;
-                }
+                rejectDollarQuote(sql, index);
+                statementHasContent = true;
+                index++;
             } else if (current == '\'' || current == '"' || current == '`') {
                 index = skipQuoted(sql, index, current);
                 statementHasContent = true;
@@ -355,51 +352,56 @@ public class SqlSecurityValidator {
     }
 
     /**
-     * Skips a PostgreSQL dollar-quoted literal. Comment markers and semicolons inside the
-     * literal are data, so treating them as SQL syntax can hide the remainder of the input
-     * from the statement scanner.
+     * Rejects a PostgreSQL dollar-quoted literal, {@code $$...$$} or {@code $tag$...$tag$}.
+     *
+     * <p>Comment markers and semicolons inside such a literal are data, so a scan that reads
+     * them as syntax loses the rest of the input: {@code SELECT $$--$$; DROP TABLE cpu} looks
+     * like one statement once the {@code --} is taken for a comment.
+     *
+     * <p>Rejecting rather than skipping, because skipping would be the same assumption in
+     * reverse. A dialect without dollar quoting means the semicolon inside one really does
+     * separate statements, and a scan that skipped the literal would be the thing hiding
+     * them. Rejecting needs no assumption either way: a dialect that has dollar quoting is
+     * refused, and one that does not was going to fail on the syntax regardless. No read of a
+     * metric table spells anything this way.
      * @param sql Statement string being scanned
-     * @param start Index of the opening dollar sign
-     * @return Index just past the closing delimiter, or {@code start} when this is not a delimiter
-     * @throws SqlSecurityException If a dollar-quoted literal is left open
+     * @param start Index of the dollar sign
+     * @throws SqlSecurityException If a dollar-quoted literal opens here
      */
-    private int skipDollarQuoted(String sql, int start) throws SqlSecurityException {
+    private void rejectDollarQuote(String sql, int start) throws SqlSecurityException {
         int tagEnd = start + 1;
         if (tagEnd >= sql.length()) {
-            return start;
+            return;
         }
         final char firstTagCharacter = sql.charAt(tagEnd);
         if (firstTagCharacter != '$'
                 && !Character.isLetter(firstTagCharacter)
                 && firstTagCharacter != '_') {
-            return start;
+            // a positional parameter such as $1, or a dollar sign that is just a character
+            return;
         }
         while (tagEnd < sql.length()
                 && (Character.isLetterOrDigit(sql.charAt(tagEnd)) || sql.charAt(tagEnd) == '_')) {
             tagEnd++;
         }
         if (tagEnd >= sql.length() || sql.charAt(tagEnd) != '$') {
-            return start;
+            return;
         }
-
-        final String delimiter = sql.substring(start, tagEnd + 1);
-        final int closingDelimiter = sql.indexOf(delimiter, tagEnd + 1);
-        if (closingDelimiter < 0) {
-            throw new SqlSecurityException("Unterminated dollar-quoted literal.");
-        }
-        return closingDelimiter + delimiter.length();
+        throw new SqlSecurityException("Dollar-quoted literals are not allowed.");
     }
 
     /**
      * @param sql Statement string being scanned
      * @param start Index of the first character of a word
      * @return Index just past the word, digits and underscores counting as part of it so that
-     *     {@code delete_count} is one word rather than a {@code delete} followed by a remainder
+     *     {@code delete_count} is one word rather than a {@code delete} followed by a remainder.
+     *     A dollar sign ends the word, so that a literal opening right after an identifier is
+     *     still seen by {@link #rejectDollarQuote}
      */
     private int wordEnd(String sql, int start) {
         int index = start;
         while (index < sql.length()
-                && (Character.isLetterOrDigit(sql.charAt(index)) || sql.charAt(index) == '_' || sql.charAt(index) == '$')) {
+                && (Character.isLetterOrDigit(sql.charAt(index)) || sql.charAt(index) == '_')) {
             index++;
         }
         return index;
