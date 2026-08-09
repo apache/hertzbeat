@@ -797,7 +797,7 @@ class DataSourceServiceTest {
      */
     @Test
     void calculateRejectsWritesWhateverSpellingTheyArrivedIn() {
-        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         when(mockExecutor.support("sql")).thenReturn(true);
         dataSourceService.setExecutors(List.of(mockExecutor));
 
@@ -817,12 +817,12 @@ class DataSourceServiceTest {
      */
     @Test
     void calculateLeavesPromqlDatasourcesAlone() {
-        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         when(mockExecutor.support("promql")).thenReturn(true);
         when(mockExecutor.execute(anyString())).thenReturn(List.of(new HashMap<>(Map.of("__value__", 100.0))));
         dataSourceService.setExecutors(List.of(mockExecutor));
 
-        List<Map<String, Object>> result = dataSourceService.calculate(
+        final List<Map<String, Object>> result = dataSourceService.calculate(
                 "promql", "promql(\"rate(http_requests_total[5m])\") > 70");
 
         assertEquals(1, result.size());
@@ -835,13 +835,14 @@ class DataSourceServiceTest {
      */
     @Test
     void calculateStillRunsReadsOnSqlDatasources() {
-        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        final QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         when(mockExecutor.support("sql")).thenReturn(true);
         when(mockExecutor.execute(anyString())).thenReturn(List.of(new HashMap<>(Map.of("__value__", 100.0))));
         dataSourceService.setExecutors(List.of(mockExecutor));
 
-        String rangeQuery = "select avg(value) RANGE '10s' from cpu ALIGN '5s'";
-        List<Map<String, Object>> result = dataSourceService.calculate("sql", "sql(\"" + rangeQuery + "\") > 70");
+        final String rangeQuery = "select avg(value) RANGE '10s' from cpu ALIGN '5s'";
+        final List<Map<String, Object>> result =
+                dataSourceService.calculate("sql", "sql(\"" + rangeQuery + "\") > 70");
 
         assertEquals(1, result.size());
         verify(mockExecutor).execute(rangeQuery);

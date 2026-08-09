@@ -869,7 +869,8 @@ class AlertExpressionEvalVisitorTest {
         when(mockExecutor.execute("select value from cpu where host = 'server1'"))
                 .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
 
-        List<Map<String, Object>> result = evaluate("sql(\"select value from cpu where host = 'server1'\") > 70");
+        final List<Map<String, Object>> result =
+                evaluate("sql(\"select value from cpu where host = 'server1'\") > 70");
 
         assertEquals(1, result.size());
         assertEquals(80.0, result.get(0).get("__value__"));
@@ -882,10 +883,10 @@ class AlertExpressionEvalVisitorTest {
      */
     @Test
     void testSqlCallKeepsSubqueriesWorking() {
-        String sql = "select value from cpu where host = (select host from hosts limit 1)";
+        final String sql = "select value from cpu where host = (select host from hosts limit 1)";
         when(mockExecutor.execute(sql)).thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
 
-        List<Map<String, Object>> result = evaluate("sql(\"" + sql + "\") > 70");
+        final List<Map<String, Object>> result = evaluate("sql(\"" + sql + "\") > 70");
 
         assertEquals(1, result.size());
         assertEquals(80.0, result.get(0).get("__value__"));
@@ -902,7 +903,7 @@ class AlertExpressionEvalVisitorTest {
         when(mockExecutor.execute("rate(http_requests_total[5m])"))
                 .thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
 
-        List<Map<String, Object>> result = evaluate("promql(\"rate(http_requests_total[5m])\") > 70");
+        final List<Map<String, Object>> result = evaluate("promql(\"rate(http_requests_total[5m])\") > 70");
 
         assertEquals(1, result.size());
         assertEquals(80.0, result.get(0).get("__value__"));

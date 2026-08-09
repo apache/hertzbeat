@@ -82,7 +82,7 @@ public class SqlSecurityValidator {
 
     private final Set<String> allowedTables;
 
-    private final boolean restrictTables;
+    private final ValidationPolicy validationPolicy;
 
     public SqlSecurityValidator(Collection<String> allowedTables) {
         if (CollectionUtils.isEmpty(allowedTables)) {
@@ -92,12 +92,12 @@ public class SqlSecurityValidator {
                     .map(this::normalizeIdentifier)
                     .collect(Collectors.toSet());
         }
-        this.restrictTables = true;
+        this.validationPolicy = ValidationPolicy.WHITELISTED_SELECT;
     }
 
     private SqlSecurityValidator() {
         this.allowedTables = new HashSet<>();
-        this.restrictTables = false;
+        this.validationPolicy = ValidationPolicy.READ_ONLY;
     }
 
     /**
@@ -111,7 +111,7 @@ public class SqlSecurityValidator {
      * Those structures are blocked there because they are the ways a statement can reach a
      * table the whitelist never mentions; with every table already readable they buy no
      * protection, while alert expressions do use subqueries and nested aggregation.
-     * @return a validator that only rejects statements which are not plain selects
+     * @return A validator that accepts only statements proven to be read-only
      */
     public static SqlSecurityValidator selectOnly() {
         return new SqlSecurityValidator();
@@ -121,10 +121,10 @@ public class SqlSecurityValidator {
         if (sql == null || sql.trim().isEmpty()) {
             throw new SqlSecurityException("SQL statement cannot be empty");
         }
-        if (restrictTables) {
-            validateAgainstWhitelist(sql);
-        } else {
-            validateReadOnly(sql);
+        switch (validationPolicy) {
+            case WHITELISTED_SELECT -> validateAgainstWhitelist(sql);
+            case READ_ONLY -> validateReadOnly(sql);
+            default -> throw new SqlSecurityException("Unknown SQL validation policy.");
         }
     }
 
@@ -144,11 +144,11 @@ public class SqlSecurityValidator {
      * <p>The parser then runs as a second and precise opinion over the whole tree. A statement
      * it cannot parse is still accepted on the scan alone rather than failing a user whose
      * dialect is merely richer than the parser.
-     * @param sql statement to validate
-     * @throws SqlSecurityException if the statement writes, or carries more than one statement
+     * @param sql Statement to validate
+     * @throws SqlSecurityException If the statement writes, or carries more than one statement
      */
     private void validateReadOnly(String sql) throws SqlSecurityException {
-        StatementShape shape = scan(sql);
+        final StatementShape shape = scan(sql);
         if (shape.statementCount() != 1) {
             throw new SqlSecurityException("Only a single statement is allowed.");
         }
@@ -159,13 +159,13 @@ public class SqlSecurityValidator {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
 
-        Statement statement;
+        final Statement statement;
         try {
             statement = parseSingleStatement(sql);
-        } catch (SqlSecurityException e) {
-            // debug, not warn: a dialect the parser does not cover is the expected case here,
-            // and this runs on every evaluation of every rule that uses one
-            log.debug("SQL not understood by the parser, accepted as a read on the statement scan: {}", sql);
+        } catch (JSQLParserException e) {
+            // Debug, not warn: a dialect the parser does not cover is the expected case here.
+            // This validation runs on every evaluation of every rule that uses one.
+            log.debug("SQL not understood by the parser, accepted as a read on the statement scan: {}", sql, e);
             return;
         }
 
@@ -184,8 +184,8 @@ public class SqlSecurityValidator {
      * <p>Any other failure of the walk is a rejection too. A data modifying cte makes
      * JSqlParser's own finder cast a {@code ParenthesedDelete} to a {@code ParenthesedSelect},
      * and a walk that ended in an exception established nothing about the statement.
-     * @param statement parsed statement to walk
-     * @throws SqlSecurityException if any part of the statement writes, or could not be walked
+     * @param statement Parsed statement to walk
+     * @throws SqlSecurityException If any part of the statement writes, or could not be walked
      */
     private void assertNothingWrites(Statement statement) throws SqlSecurityException {
         try {
@@ -199,13 +199,19 @@ public class SqlSecurityValidator {
     }
 
     private void validateAgainstWhitelist(String sql) throws SqlSecurityException {
-        Statement statement = parseSingleStatement(sql);
+        final Statement statement;
+        try {
+            statement = parseSingleStatement(sql);
+        } catch (JSQLParserException e) {
+            log.debug("Failed to parse SQL: {}", sql, e);
+            throw new SqlSecurityException("Invalid SQL syntax: " + e.getMessage(), e);
+        }
 
         if (!(statement instanceof Select select)) {
             throw new SqlSecurityException("Only SELECT statements are allowed.");
         }
 
-        // the whitelist is about which tables a statement may touch, so on its own it lets
+        // The whitelist is about which tables a statement may touch, so on its own it lets
         // "select * into backup from hertzbeat_logs" through: every table it names is allowed
         assertNothingWrites(statement);
 
@@ -215,8 +221,8 @@ public class SqlSecurityValidator {
         }
 
         // Use custom TablesNamesFinder that throws on dangerous structures
-        SecurityTablesNamesFinder finder = new SecurityTablesNamesFinder();
-        List<String> tables;
+        final SecurityTablesNamesFinder finder = new SecurityTablesNamesFinder();
+        final List<String> tables;
         try {
             tables = finder.getTableList(statement);
         } catch (SecurityViolationException e) {
@@ -227,23 +233,16 @@ public class SqlSecurityValidator {
     }
 
     /**
-     * @param sql statement to parse
-     * @return the only statement the string carries
-     * @throws SqlSecurityException if the string does not parse, or carries more than one statement
+     * @param sql Statement to parse
+     * @return The only statement the string carries
+     * @throws JSQLParserException If the string does not parse
+     * @throws SqlSecurityException If the string carries more than one statement
      */
-    private Statement parseSingleStatement(String sql) throws SqlSecurityException {
-        Statements statements;
-        try {
-            statements = CCJSqlParserUtil.parseStatements(sql);
-        } catch (JSQLParserException e) {
-            // the reason travels on the exception, and read only mode treats a parse failure
-            // as a normal outcome, so the stack trace does not belong at warn
-            log.debug("Failed to parse SQL: {}", sql, e);
-            throw new SqlSecurityException("Invalid SQL syntax: " + e.getMessage(), e);
-        }
-        // parseStatements rather than parse: parse() returns the first statement and discards
-        // the rest, so "select 1; drop table x" would validate as a plain select while the
-        // caller still hands the whole string to the database
+    private Statement parseSingleStatement(String sql) throws JSQLParserException, SqlSecurityException {
+        final Statements statements = CCJSqlParserUtil.parseStatements(sql);
+        // ParseStatements rather than parse: parse() returns only the first statement.
+        // Otherwise, "select 1; drop table x" would validate as a plain select.
+        // The caller would still hand the whole string to the database.
         if (statements.getStatements().size() != 1) {
             throw new SqlSecurityException("Only a single statement is allowed.");
         }
@@ -252,9 +251,9 @@ public class SqlSecurityValidator {
 
     /**
      * What a statement string looks like from outside any sql dialect.
-     * @param statementCount statements the string carries, a trailing semicolon not counting as one
-     * @param leadingKeyword first word of the first statement, upper cased, empty when it does not start with a word
-     * @param writeKeyword first word from {@link #WRITE_KEYWORDS} found anywhere, null when there is none
+     * @param statementCount Statements the string carries, a trailing semicolon not counting as one
+     * @param leadingKeyword First word of the first statement, upper cased, empty when it does not start with a word
+     * @param writeKeyword First word from {@link #WRITE_KEYWORDS} found anywhere, null when there is none
      */
     private record StatementShape(int statementCount, String leadingKeyword, String writeKeyword) {
     }
@@ -268,9 +267,9 @@ public class SqlSecurityValidator {
      * quote in a dialect where it does not would let {@code 'a\'; DROP TABLE t} hide a second
      * statement inside what this scan thinks is one literal. Not assuming it costs at worst a
      * rejection of a statement that uses backslash escapes, which errs the safe way.
-     * @param sql statement string to scan
-     * @return the shape of the string
-     * @throws SqlSecurityException if a literal or a block comment is left open
+     * @param sql Statement string to scan
+     * @return The shape of the string
+     * @throws SqlSecurityException If a literal or a block comment is left open
      */
     private StatementShape scan(String sql) throws SqlSecurityException {
         int statementCount = 0;
@@ -279,16 +278,25 @@ public class SqlSecurityValidator {
         String writeKeyword = null;
         int index = 0;
         while (index < sql.length()) {
-            char current = sql.charAt(index);
+            final char current = sql.charAt(index);
             if (current == '-' && index + 1 < sql.length() && sql.charAt(index + 1) == '-') {
-                int lineEnd = sql.indexOf('\n', index);
+                final int lineEnd = sql.indexOf('\n', index);
                 index = lineEnd < 0 ? sql.length() : lineEnd + 1;
             } else if (current == '/' && index + 1 < sql.length() && sql.charAt(index + 1) == '*') {
-                int commentEnd = sql.indexOf("*/", index + 2);
+                final int commentEnd = sql.indexOf("*/", index + 2);
                 if (commentEnd < 0) {
                     throw new SqlSecurityException("Unterminated block comment.");
                 }
                 index = commentEnd + 2;
+            } else if (current == '$') {
+                final int dollarQuoteEnd = skipDollarQuoted(sql, index);
+                if (dollarQuoteEnd > index) {
+                    index = dollarQuoteEnd;
+                    statementHasContent = true;
+                } else {
+                    statementHasContent = true;
+                    index++;
+                }
             } else if (current == '\'' || current == '"' || current == '`') {
                 index = skipQuoted(sql, index, current);
                 statementHasContent = true;
@@ -299,10 +307,10 @@ public class SqlSecurityValidator {
                 statementHasContent = false;
                 index++;
             } else if (Character.isLetter(current) || current == '_') {
-                // read the whole word and step past it, so that a word listed as a write is
-                // only matched on its own and never inside an identifier like delete_count
-                int wordEnd = wordEnd(sql, index);
-                String word = sql.substring(index, wordEnd).toUpperCase(Locale.ROOT);
+                // Read the whole word and step past it.
+                // Match a write keyword only on its own, never inside an identifier like delete_count.
+                final int wordEnd = wordEnd(sql, index);
+                final String word = sql.substring(index, wordEnd).toUpperCase(Locale.ROOT);
                 if (statementCount == 0 && !statementHasContent) {
                     leadingKeyword = word;
                 }
@@ -325,11 +333,11 @@ public class SqlSecurityValidator {
     }
 
     /**
-     * @param sql statement string being scanned
-     * @param start index of the opening quote
-     * @param quote quote character to close on, a doubled one being an escaped quote rather than the close
-     * @return index just past the closing quote
-     * @throws SqlSecurityException if the quote is never closed
+     * @param sql Statement string being scanned
+     * @param start Index of the opening quote
+     * @param quote Quote character to close on, a doubled one being an escaped quote rather than the close
+     * @return Index just past the closing quote
+     * @throws SqlSecurityException If the quote is never closed
      */
     private int skipQuoted(String sql, int start, char quote) throws SqlSecurityException {
         int index = start + 1;
@@ -347,9 +355,45 @@ public class SqlSecurityValidator {
     }
 
     /**
-     * @param sql statement string being scanned
-     * @param start index of the first character of a word
-     * @return index just past the word, digits and underscores counting as part of it so that
+     * Skips a PostgreSQL dollar-quoted literal. Comment markers and semicolons inside the
+     * literal are data, so treating them as SQL syntax can hide the remainder of the input
+     * from the statement scanner.
+     * @param sql Statement string being scanned
+     * @param start Index of the opening dollar sign
+     * @return Index just past the closing delimiter, or {@code start} when this is not a delimiter
+     * @throws SqlSecurityException If a dollar-quoted literal is left open
+     */
+    private int skipDollarQuoted(String sql, int start) throws SqlSecurityException {
+        int tagEnd = start + 1;
+        if (tagEnd >= sql.length()) {
+            return start;
+        }
+        final char firstTagCharacter = sql.charAt(tagEnd);
+        if (firstTagCharacter != '$'
+                && !Character.isLetter(firstTagCharacter)
+                && firstTagCharacter != '_') {
+            return start;
+        }
+        while (tagEnd < sql.length()
+                && (Character.isLetterOrDigit(sql.charAt(tagEnd)) || sql.charAt(tagEnd) == '_')) {
+            tagEnd++;
+        }
+        if (tagEnd >= sql.length() || sql.charAt(tagEnd) != '$') {
+            return start;
+        }
+
+        final String delimiter = sql.substring(start, tagEnd + 1);
+        final int closingDelimiter = sql.indexOf(delimiter, tagEnd + 1);
+        if (closingDelimiter < 0) {
+            throw new SqlSecurityException("Unterminated dollar-quoted literal.");
+        }
+        return closingDelimiter + delimiter.length();
+    }
+
+    /**
+     * @param sql Statement string being scanned
+     * @param start Index of the first character of a word
+     * @return Index just past the word, digits and underscores counting as part of it so that
      *     {@code delete_count} is one word rather than a {@code delete} followed by a remainder
      */
     private int wordEnd(String sql, int start) {
@@ -391,6 +435,11 @@ public class SqlSecurityValidator {
         }
     }
 
+    private enum ValidationPolicy {
+        WHITELISTED_SELECT,
+        READ_ONLY
+    }
+
     /**
      * Walks a statement and throws as soon as it finds a part of it that writes, at any depth.
      */
@@ -398,7 +447,7 @@ public class SqlSecurityValidator {
 
         @Override
         public Void visit(PlainSelect plainSelect, Object context) {
-            // SELECT ... INTO writes a new table in the dialects that support it, so it is not a read
+            // SELECT ... INTO writes a new table in the dialects that support it, so it is not a read.
             if (!CollectionUtils.isEmpty(plainSelect.getIntoTables())) {
                 throw new SecurityViolationException("SELECT ... INTO is not allowed.");
             }

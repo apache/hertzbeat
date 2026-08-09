@@ -276,6 +276,10 @@ class SqlSecurityValidatorTest {
             "SELECT * FROM hertzbeat_logs; DROP TABLE hertzbeat_logs"));
         assertThrows(SqlSecurityException.class, () -> SqlSecurityValidator.selectOnly().validate(
             "SELECT 1; DROP TABLE cpu"));
+        assertThrows(SqlSecurityException.class, () -> SqlSecurityValidator.selectOnly().validate(
+            "SELECT $$--$$; DROP TABLE cpu"));
+        assertThrows(SqlSecurityException.class, () -> SqlSecurityValidator.selectOnly().validate(
+            "SELECT $body$--$body$; DROP TABLE cpu"));
     }
 
     @Test
@@ -285,7 +289,7 @@ class SqlSecurityValidatorTest {
 
     @Test
     void testSelectOnlyRejectsWrites() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DROP TABLE cpu"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DELETE FROM cpu"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("INSERT INTO cpu VALUES (1)"));
@@ -299,7 +303,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testSelectOnlyAcceptsAnyTableAndNestedReads() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("SELECT value FROM any_metric_table"));
         assertDoesNotThrow(() -> selectOnly.validate(
             "SELECT value FROM cpu WHERE host = (SELECT host FROM hosts LIMIT 1)"));
@@ -313,7 +317,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testSelectOnlyAcceptsDialectTheParserDoesNotUnderstand() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate(
             "SELECT ts, avg(value) RANGE '10s' FROM cpu ALIGN '5s' FILL LINEAR"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu ALIGN '5s'"));
@@ -326,7 +330,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testUnparsableStatementMustStillBeOneRead() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
             "SELECT avg(value) RANGE '10s' FROM cpu ALIGN '5s'; DROP TABLE cpu"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DROP TABLE cpu ALIGN '5s'"));
@@ -339,9 +343,11 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testSemicolonInsideLiteralOrCommentDoesNotSplitTheStatement() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'a; DROP TABLE cpu'"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'it''s; fine'"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT $$a; -- DROP TABLE cpu$$"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT $body$a; -- DROP TABLE cpu$body$"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu -- ; DROP TABLE cpu"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu /* ; DROP TABLE cpu */ LIMIT 1"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT value FROM \"cpu;usage\""));
@@ -349,9 +355,11 @@ class SqlSecurityValidatorTest {
 
     @Test
     void testUnclosedLiteralOrCommentIsRejected() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'open"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu /* open"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $$open"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT $body$open"));
     }
 
     /**
@@ -365,7 +373,7 @@ class SqlSecurityValidatorTest {
 
     @Test
     void testSelectOnlyAcceptsCte() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("WITH x AS (SELECT 1 AS v) SELECT * FROM x"));
         assertDoesNotThrow(() -> selectOnly.validate(
             "WITH x AS (SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s') SELECT * FROM x"));
@@ -378,7 +386,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testSelectOnlyRejectsWritesNestedInsideReads() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
             "WITH x AS (DELETE FROM cpu RETURNING *) SELECT * FROM x"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
@@ -399,7 +407,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testNestedWritesStayRejectedWithoutTheParser() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
             "SELECT * FROM (DELETE FROM cpu RETURNING *) t ALIGN '5s'"));
         assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
@@ -414,7 +422,7 @@ class SqlSecurityValidatorTest {
      */
     @Test
     void testWriteWordScanDoesNotCatchOrdinaryReads() {
-        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        final SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
         assertDoesNotThrow(() -> selectOnly.validate("SELECT delete_count, insert_rate FROM cpu"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT truncate(value, 2) FROM cpu"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT replace(msg, 'a', 'b') FROM logs"));

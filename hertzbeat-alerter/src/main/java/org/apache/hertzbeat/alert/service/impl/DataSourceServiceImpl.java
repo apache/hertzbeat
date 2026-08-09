@@ -128,7 +128,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         try {
             return guardSql(executor, sqlSecurityValidator).execute(expr);
         } catch (AlertExpressionException ae) {
-            // a statement the policy rejected, whose message names the part it broke
+            // A statement the policy rejected, whose message names the part it broke.
             throw ae;
         } catch (Exception e) {
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
@@ -144,9 +144,9 @@ public class DataSourceServiceImpl implements DataSourceService {
      * A datasource that does not speak sql is handed back untouched: a promql endpoint takes
      * a query string, not a statement, and running it through a sql parser would only reject
      * valid promql.
-     * @param executor executor chosen for this datasource
-     * @param validator policy to enforce, read only for expressions and whitelisting for raw log queries
-     * @return the executor, guarded when it speaks sql
+     * @param executor Executor chosen for this datasource
+     * @param validator Policy to enforce, read only for expressions and whitelisting for raw log queries
+     * @return The executor, guarded when it speaks sql
      */
     private QueryExecutor guardSql(QueryExecutor executor, SqlSecurityValidator validator) {
         if (!executor.support(WarehouseConstants.SQL)) {
