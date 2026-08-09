@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock;
 
 /** Detects whether setup may safely use managed files or must export them for an operator. */
 public final class ManagedConfigDeploymentDetector {
@@ -32,7 +33,7 @@ public final class ManagedConfigDeploymentDetector {
             "managed-secrets.properties",
             "managed-secrets.properties.candidate",
             "managed-secrets.properties.last-known-good",
-            ".managed-config.lock");
+            ManagedConfigurationLock.LOCK_FILE_NAME);
 
     private final Path installationRoot;
     private final Predicate<Path> writable;
@@ -74,6 +75,12 @@ public final class ManagedConfigDeploymentDetector {
         for (String fileName : MANAGED_ARTIFACTS) {
             Path managedFile = configDirectory.resolve(fileName);
             if (Files.exists(managedFile) && !Files.isRegularFile(managedFile)) {
+                return ManagedConfigCapability.constrained(DeploymentConstraint.UNSAFE_PATH);
+            }
+            if (fileName.equals(ManagedConfigurationLock.LOCK_FILE_NAME)
+                    && Files.exists(managedFile)
+                    && !SecureSetupFileLock.isValidExistingLock(
+                            installationRoot, "data/config/" + ManagedConfigurationLock.LOCK_FILE_NAME)) {
                 return ManagedConfigCapability.constrained(DeploymentConstraint.UNSAFE_PATH);
             }
             if (Files.exists(managedFile)

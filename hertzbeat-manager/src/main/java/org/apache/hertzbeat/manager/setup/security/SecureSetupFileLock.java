@@ -18,6 +18,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -73,6 +74,30 @@ public final class SecureSetupFileLock {
             action.run();
             return null;
         });
+    }
+
+    /** Validates an existing lock without creating, replacing, or otherwise mutating it. */
+    public static boolean isValidExistingLock(Path installationRoot, String relativePath) {
+        Objects.requireNonNull(installationRoot, "installationRoot");
+        Objects.requireNonNull(relativePath, "relativePath");
+        byte[] encoded = null;
+        try {
+            Path root = installationRoot.toAbsolutePath().normalize().toRealPath();
+            Path lock = root.resolve(relativePath).normalize();
+            if (!lock.startsWith(root) || lock.equals(root)
+                    || !SecureSetupFile.isOwnerOnlyRegularFile(lock)) {
+                return false;
+            }
+            encoded = SecureSetupFile.readOwnerOnlyWithoutLinks(root, lock, MAXIMUM_IDENTITY_BYTES);
+            validateIdentity(new String(encoded, StandardCharsets.UTF_8));
+            return true;
+        } catch (IOException | RuntimeException failure) {
+            return false;
+        } finally {
+            if (encoded != null) {
+                Arrays.fill(encoded, (byte) 0);
+            }
+        }
     }
 
     private LockIdentity initializeAndValidate() throws IOException {
@@ -135,7 +160,7 @@ public final class SecureSetupFileLock {
         return validateIdentity(new String(encoded.array(), StandardCharsets.UTF_8));
     }
 
-    private String validateIdentity(String encoded) throws IOException {
+    private static String validateIdentity(String encoded) throws IOException {
         String identity = encoded.strip();
         if (!identity.startsWith(IDENTITY_PREFIX)) {
             throw new IOException("Secure setup-file lock identity is invalid");

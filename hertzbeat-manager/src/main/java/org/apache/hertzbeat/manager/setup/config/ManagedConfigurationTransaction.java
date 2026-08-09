@@ -18,12 +18,7 @@
 package org.apache.hertzbeat.manager.setup.config;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,11 +26,9 @@ import java.util.UUID;
 /** Coordinates the application and secret snapshots as one locked, recoverable operation. */
 public final class ManagedConfigurationTransaction {
 
-    private static final String LOCK_FILE = ".managed-config.lock";
-
     private final ManagedApplicationConfigStore applicationStore;
     private final ManagedSecretStore secretStore;
-    private final Path lockFile;
+    private final ManagedConfigurationLock lock;
     private final ManagedConfigurationRecovery recovery;
     private final RecoveryFailureReporter reporter;
 
@@ -62,9 +55,8 @@ public final class ManagedConfigurationTransaction {
         this.secretStore = Objects.requireNonNull(secretStore, "secretStore");
         this.reporter = Objects.requireNonNull(reporter, "reporter");
         this.recovery = new ManagedConfigurationRecovery(applicationStore, secretStore, reporter);
-        Path root = Objects.requireNonNull(installationRoot, "installationRoot")
-                .toAbsolutePath().normalize();
-        this.lockFile = root.resolve("data/config").resolve(LOCK_FILE);
+        this.lock = new ManagedConfigurationLock(
+                Objects.requireNonNull(installationRoot, "installationRoot"));
     }
 
     /** Stages and publishes one validated configuration generation under the process lock. */
@@ -136,29 +128,7 @@ public final class ManagedConfigurationTransaction {
     }
 
     private Outcome withLock(LockedOperation operation) throws IOException {
-        Path directory = lockFile.getParent();
-        if (Files.isSymbolicLink(lockFile) || Files.isSymbolicLink(directory)
-                || Files.isSymbolicLink(directory.getParent())
-                || Files.isSymbolicLink(directory.getParent().getParent())) {
-            throw new IOException("Managed configuration lock is unavailable");
-        }
-        Files.createDirectories(directory);
-        try (FileChannel channel = FileChannel.open(lockFile,
-                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-                FileLock lock = tryLock(channel)) {
-            if (lock == null) {
-                throw new IOException("Managed configuration operation is already in progress");
-            }
-            return operation.run();
-        }
-    }
-
-    private static FileLock tryLock(FileChannel channel) throws IOException {
-        try {
-            return channel.tryLock();
-        } catch (OverlappingFileLockException failure) {
-            return null;
-        }
+        return lock.execute(operation::run);
     }
 
     private static void discardCandidate(ManagedApplicationConfigStore store, IOException failure) {

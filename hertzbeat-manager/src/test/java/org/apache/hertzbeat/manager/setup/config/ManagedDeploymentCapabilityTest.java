@@ -22,14 +22,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class ManagedDeploymentCapabilityTest {
+
+    private static final byte[] VALID_LOCK_IDENTITY =
+            "secure-setup-lock-v1:01234567-89ab-cdef-0123-456789abcdef\n".getBytes(StandardCharsets.UTF_8);
 
     @TempDir
     private Path installationRoot;
@@ -127,7 +134,7 @@ class ManagedDeploymentCapabilityTest {
     void rejectsSymlinkedLockAndNonRegularSnapshotArtifacts() throws Exception {
         Path config = Files.createDirectories(installationRoot.resolve("data/config"));
         Path outside = Files.writeString(installationRoot.resolve("outside-lock"), "lock");
-        Path lock = config.resolve(".managed-config.lock");
+        Path lock = config.resolve(".managed-config-v2.lock");
         try {
             Files.createSymbolicLink(lock, outside);
         } catch (UnsupportedOperationException | IOException exception) {
@@ -145,7 +152,8 @@ class ManagedDeploymentCapabilityTest {
     @Test
     void checksLockCandidateAndLastKnownGoodReadWriteAccess() throws Exception {
         Path config = Files.createDirectories(installationRoot.resolve("data/config"));
-        Path lock = Files.writeString(config.resolve(".managed-config.lock"), "lock");
+        Path lock = config.resolve(".managed-config-v2.lock");
+        SecureSetupFile.create(installationRoot, lock, VALID_LOCK_IDENTITY);
         Path candidate = Files.writeString(
                 config.resolve("managed-application.yml.candidate"), "candidate");
         Path lastKnownGood = Files.writeString(
@@ -160,5 +168,54 @@ class ManagedDeploymentCapabilityTest {
         assertEquals(DeploymentConstraint.READ_ONLY,
                 new ManagedConfigDeploymentDetector(
                         installationRoot, path -> true, path -> !path.equals(lastKnownGood)).detect().constraint());
+    }
+
+    @Test
+    void ignoresTheLegacyLockButChecksTheVersionedLockShapeAndAccess() throws Exception {
+        Path config = Files.createDirectories(installationRoot.resolve("data/config"));
+        Path legacyLock = Files.write(config.resolve(".managed-config.lock"), new byte[0]);
+        Path versionedLock = config.resolve(".managed-config-v2.lock");
+
+        assertEquals(ApplyMode.MANAGED_WRITE,
+                new ManagedConfigDeploymentDetector(
+                        installationRoot, path -> !path.equals(legacyLock), path -> !path.equals(legacyLock))
+                        .detect().applyMode());
+
+        Files.createDirectory(versionedLock);
+        assertEquals(DeploymentConstraint.UNSAFE_PATH,
+                new ManagedConfigDeploymentDetector(installationRoot).detect().constraint());
+        Files.delete(versionedLock);
+        SecureSetupFile.create(installationRoot, versionedLock, VALID_LOCK_IDENTITY);
+        assertEquals(DeploymentConstraint.READ_ONLY,
+                new ManagedConfigDeploymentDetector(
+                        installationRoot, path -> !path.equals(versionedLock), path -> true)
+                        .detect().constraint());
+    }
+
+    @Test
+    void validatesExistingVersionedLockPermissionsAndIdentityWithoutMutatingIt() throws Exception {
+        Path config = Files.createDirectories(installationRoot.resolve("data/config"));
+        Path lock = config.resolve(".managed-config-v2.lock");
+        SecureSetupFile.create(installationRoot, lock, new byte[0]);
+        assertEquals(DeploymentConstraint.UNSAFE_PATH,
+                new ManagedConfigDeploymentDetector(installationRoot).detect().constraint());
+
+        Files.delete(lock);
+        SecureSetupFile.create(installationRoot, lock, "malformed\n".getBytes(StandardCharsets.UTF_8));
+        assertEquals(DeploymentConstraint.UNSAFE_PATH,
+                new ManagedConfigDeploymentDetector(installationRoot).detect().constraint());
+
+        Files.delete(lock);
+        SecureSetupFile.create(installationRoot, lock, VALID_LOCK_IDENTITY);
+        assertEquals(ApplyMode.MANAGED_WRITE,
+                new ManagedConfigDeploymentDetector(installationRoot).detect().applyMode());
+
+        if (Files.getFileStore(lock).supportsFileAttributeView("posix")) {
+            Files.setPosixFilePermissions(lock, Set.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ));
+            assertEquals(DeploymentConstraint.UNSAFE_PATH,
+                    new ManagedConfigDeploymentDetector(installationRoot).detect().constraint());
+        }
     }
 }

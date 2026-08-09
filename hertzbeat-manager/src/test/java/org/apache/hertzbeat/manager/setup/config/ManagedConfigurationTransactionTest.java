@@ -159,7 +159,7 @@ class ManagedConfigurationTransactionTest {
     @Test
     void secondTransactionCannotEnterWhileSameProcessHoldsTheOsLock() throws Exception {
         Path config = Files.createDirectories(installationRoot.resolve("data/config"));
-        Path lockPath = config.resolve(".managed-config.lock");
+        Path lockPath = config.resolve(".managed-config-v2.lock");
         try (FileChannel channel = FileChannel.open(lockPath,
                 StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                 FileLock ignored = channel.lock()) {
@@ -171,7 +171,7 @@ class ManagedConfigurationTransactionTest {
     @Test
     void transactionCannotEnterWhileAnotherProcessHoldsTheOsLock() throws Exception {
         Path config = Files.createDirectories(installationRoot.resolve("data/config"));
-        Path lockPath = config.resolve(".managed-config.lock");
+        Path lockPath = config.resolve(".managed-config-v2.lock");
         Path ready = installationRoot.resolve("lock-ready");
         Path release = installationRoot.resolve("lock-release");
         Process holder = new ProcessBuilder(
