@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
@@ -64,7 +65,8 @@ class DeploymentApiContractTest {
                 DeploymentApiContract.EXPORT_PATH);
         assertComponents(DeploymentApiContract.DeploymentView.class, "observedAt", "managementDatabase",
                 "greptimeDatabase", "applyMode", "maintenanceMode", "topology", "migration");
-        assertComponents(DeploymentApiContract.MigrationCapability.class, "allowed", "blockedBy");
+        assertComponents(DeploymentApiContract.MigrationCapability.class, "allowed", "blockedBy",
+                "maintenanceAdmission", "activeOperationId");
         assertComponents(DeploymentApiContract.MetadataMigrationValidationRequest.class,
                 "target", "targetDatabase");
         assertComponents(DeploymentApiContract.MetadataMigrationRequest.class, "target", "targetDatabase", "applyMode");
@@ -76,6 +78,8 @@ class DeploymentApiContractTest {
         assertComponents(DeploymentApiContract.MigrationExportRequest.class,
                 "format", "expectedState", "targetDatabase");
         assertWireValues(MaintenanceMode.values(), "inactive", "active");
+        assertWireValues(MaintenanceAdmission.values(),
+                "use_current", "auto_enter", "unavailable", "not_applicable");
         assertWireValues(DeploymentTopology.values(), "single_node", "multi_node", "unknown");
         assertWireValues(MigrationTarget.values(), "mysql", "postgresql");
         assertWireValues(MigrationStage.values(), "queued", "copying", "verifying", "ready_to_activate",
@@ -101,30 +105,77 @@ class DeploymentApiContractTest {
                 new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
                 ApplyMode.MANAGED_WRITE, MaintenanceMode.ACTIVE, DeploymentTopology.SINGLE_NODE,
-                MigrationCapability.permitted());
+                MigrationCapability.permitted(MaintenanceAdmission.USE_CURRENT));
 
         assertTrue(view.migration().allowed());
         assertNull(view.migration().blockedBy());
+        assertEquals(MaintenanceAdmission.USE_CURRENT, view.migration().maintenanceAdmission());
+        assertNull(view.migration().activeOperationId());
         String json = objectMapper.writeValueAsString(view);
+        assertTrue(json.contains("\"maintenanceAdmission\":\"use_current\""));
+        assertTrue(json.contains("\"activeOperationId\":null"));
         assertFalse(json.contains("jdbc:"));
         assertFalse(json.contains("password"));
         assertFalse(json.contains("table"));
         assertThrows(IllegalArgumentException.class,
-                () -> new MigrationCapability(false, null));
+                () -> new MigrationCapability(false, null, MaintenanceAdmission.UNAVAILABLE, null));
         assertThrows(IllegalArgumentException.class,
-                () -> new MigrationCapability(true, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED));
+                () -> new MigrationCapability(true, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
+                        MaintenanceAdmission.USE_CURRENT, null));
         assertDeploymentRejected(MetadataDatabaseKind.MYSQL, DeploymentTopology.SINGLE_NODE,
-                MigrationCapability.permitted());
+                MigrationCapability.permitted(MaintenanceAdmission.USE_CURRENT));
         assertDeploymentRejected(MetadataDatabaseKind.H2, DeploymentTopology.MULTI_NODE,
-                MigrationCapability.blocked(SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE));
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE,
+                        MaintenanceAdmission.NOT_APPLICABLE));
         assertDeploymentRejected(MetadataDatabaseKind.H2, DeploymentTopology.UNKNOWN,
-                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED));
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
+                        MaintenanceAdmission.NOT_APPLICABLE));
         assertThrows(IllegalArgumentException.class,
-                () -> MigrationCapability.blocked(SetupErrorCode.CONFIG_READ_ONLY));
+                () -> MigrationCapability.blocked(SetupErrorCode.CONFIG_READ_ONLY,
+                        MaintenanceAdmission.UNAVAILABLE));
         assertDeploymentRejected(MetadataDatabaseKind.H2, MaintenanceMode.INACTIVE,
-                DeploymentTopology.SINGLE_NODE, MigrationCapability.permitted());
+                DeploymentTopology.SINGLE_NODE,
+                MigrationCapability.permitted(MaintenanceAdmission.USE_CURRENT));
         assertDoesNotThrow(() -> deployment(MaintenanceMode.INACTIVE,
-                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED)));
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED,
+                        MaintenanceAdmission.UNAVAILABLE)));
+    }
+
+    @Test
+    void migrationCapabilityMatchesTheFrozenMaintenanceAdmissionMatrix() {
+        assertDoesNotThrow(() -> deployment(MetadataDatabaseKind.MYSQL, MaintenanceMode.ACTIVE,
+                DeploymentTopology.SINGLE_NODE, MigrationCapability.blocked(
+                        SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED, MaintenanceAdmission.NOT_APPLICABLE)));
+        assertDoesNotThrow(() -> deployment(MetadataDatabaseKind.H2, MaintenanceMode.ACTIVE,
+                DeploymentTopology.MULTI_NODE, MigrationCapability.blocked(
+                        SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED, MaintenanceAdmission.NOT_APPLICABLE)));
+        assertDoesNotThrow(() -> deployment(MetadataDatabaseKind.H2, MaintenanceMode.INACTIVE,
+                DeploymentTopology.UNKNOWN, MigrationCapability.blocked(
+                        SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE, MaintenanceAdmission.NOT_APPLICABLE)));
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.ACTIVE, MigrationCapability.blocked(
+                SetupErrorCode.OPERATION_CONFLICT, MaintenanceAdmission.UNAVAILABLE, "migration-42")));
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.INACTIVE, MigrationCapability.blocked(
+                SetupErrorCode.MIGRATION_UNAVAILABLE, MaintenanceAdmission.UNAVAILABLE)));
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.ACTIVE,
+                MigrationCapability.permitted(MaintenanceAdmission.USE_CURRENT)));
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.INACTIVE,
+                MigrationCapability.permitted(MaintenanceAdmission.AUTO_ENTER)));
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.INACTIVE, MigrationCapability.blocked(
+                SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED, MaintenanceAdmission.UNAVAILABLE)));
+
+        assertThrows(IllegalArgumentException.class, () -> deployment(MaintenanceMode.ACTIVE,
+                MigrationCapability.permitted(MaintenanceAdmission.AUTO_ENTER)));
+        assertThrows(IllegalArgumentException.class, () -> deployment(MaintenanceMode.ACTIVE,
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
+                        MaintenanceAdmission.NOT_APPLICABLE)));
+        assertThrows(IllegalArgumentException.class, () -> MigrationCapability.blocked(
+                SetupErrorCode.OPERATION_CONFLICT, MaintenanceAdmission.UNAVAILABLE, null));
+        assertThrows(IllegalArgumentException.class, () -> MigrationCapability.blocked(
+                SetupErrorCode.MIGRATION_UNAVAILABLE, MaintenanceAdmission.UNAVAILABLE, "migration-42"));
+        assertThrows(IllegalArgumentException.class, () -> MigrationCapability.blocked(
+                SetupErrorCode.OPERATION_CONFLICT, MaintenanceAdmission.UNAVAILABLE, "../migration"));
+        assertThrows(IllegalArgumentException.class, () -> MigrationCapability.blocked(
+                SetupErrorCode.OPERATION_CONFLICT, MaintenanceAdmission.UNAVAILABLE, ".."));
     }
 
     @Test
@@ -218,6 +269,8 @@ class DeploymentApiContractTest {
         assertThrows(IllegalArgumentException.class, () -> rolledBackView(
                 SetupErrorCode.MIGRATION_ACTIVATION_FAILED, VerificationState.SUCCEEDED, 99));
         assertThrows(IllegalArgumentException.class, () -> migrationViewWithIdentity(" ", MigrationTarget.MYSQL));
+        assertThrows(IllegalArgumentException.class,
+                () -> migrationViewWithIdentity("migration/../secret", MigrationTarget.MYSQL));
         assertThrows(IllegalArgumentException.class, () -> migrationViewWithIdentity("migration-1", null));
     }
 
@@ -269,10 +322,16 @@ class DeploymentApiContractTest {
 
     private DeploymentApiContract.DeploymentView deployment(
             MaintenanceMode maintenance, MigrationCapability capability) {
+        return deployment(MetadataDatabaseKind.H2, maintenance, DeploymentTopology.SINGLE_NODE, capability);
+    }
+
+    private DeploymentApiContract.DeploymentView deployment(
+            MetadataDatabaseKind kind, MaintenanceMode maintenance,
+            DeploymentTopology topology, MigrationCapability capability) {
         return new DeploymentApiContract.DeploymentView(Instant.parse("2026-08-09T00:00:00Z"),
-                new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
+                new ManagementDatabaseSummary(kind, true, ConfigSource.UI_MANAGED, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
-                ApplyMode.MANAGED_WRITE, maintenance, DeploymentTopology.SINGLE_NODE, capability);
+                ApplyMode.MANAGED_WRITE, maintenance, topology, capability);
     }
 
     private void assertComponents(Class<? extends Record> type, String... names) {

@@ -35,6 +35,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExportRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
@@ -43,9 +48,14 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationVie
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.VerificationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportFormat;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
 import org.apache.hertzbeat.manager.setup.workflow.MigrationExportRenderer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,6 +87,7 @@ class DeploymentControllerTest {
 
     @Test
     void routesValidationCreationPollingAndActivationWithoutStoringResponses() throws Exception {
+        when(workflow.deployment()).thenReturn(deployment());
         when(workflow.validate(any())).thenReturn(new ValidationResponse(
                 true, Instant.parse("2026-08-09T00:00:00Z"), null, List.of()));
         when(workflow.migrate(any())).thenReturn(readyMigration());
@@ -92,6 +103,12 @@ class DeploymentControllerTest {
                 "applyMode":"managed_write"}
                 """;
 
+        mvc.perform(get(DeploymentApiContract.DEPLOYMENT_PATH))
+                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.migration.allowed").value(false))
+                .andExpect(jsonPath("$.migration.blockedBy").value("operation_conflict"))
+                .andExpect(jsonPath("$.migration.maintenanceAdmission").value("unavailable"))
+                .andExpect(jsonPath("$.migration.activeOperationId").value("migration-42"));
         mvc.perform(post(DeploymentApiContract.VALIDATE_PATH).contentType(MediaType.APPLICATION_JSON)
                         .content(target))
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
@@ -137,6 +154,32 @@ class DeploymentControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.errorCode").value("operation_not_found"));
+    }
+
+    @Test
+    void rejectsInvalidOperationIdsBeforeWorkflowOrRendererDispatch() throws Exception {
+        mvc.perform(get(DeploymentApiContract.MIGRATION_OPERATION_PATH, ".hidden"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
+        mvc.perform(post(DeploymentApiContract.ACTIVATE_PATH, "\u8fc1\u79fb")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"expectedState\":\"ready_to_activate\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
+        String exportRequest = """
+                {"format":"env","expectedState":"awaiting_external_apply",
+                "targetDatabase":{"kind":"mysql","jdbcUrl":"jdbc:mysql://db/hertzbeat",
+                "username":"operator","password":"export-secret"}}
+                """;
+        mvc.perform(post(DeploymentApiContract.EXPORT_PATH, "a".repeat(129))
+                        .contentType(MediaType.APPLICATION_JSON).content(exportRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
+
+        verifyNoInteractions(workflow, exportRenderer);
     }
 
     @Test
@@ -201,6 +244,15 @@ class DeploymentControllerTest {
                 MigrationStage.READY_TO_ACTIVATE, 100, Instant.parse("2026-08-09T00:00:00Z"),
                 Instant.parse("2026-08-09T00:00:01Z"), null,
                 VerificationState.SUCCEEDED, null, 0, true, false, false);
+    }
+
+    private DeploymentView deployment() {
+        return new DeploymentView(Instant.parse("2026-08-09T00:00:00Z"),
+                new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
+                new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
+                ApplyMode.MANAGED_WRITE, MaintenanceMode.ACTIVE, DeploymentTopology.SINGLE_NODE,
+                MigrationCapability.blocked(SetupApiContract.SetupErrorCode.OPERATION_CONFLICT,
+                        MaintenanceAdmission.UNAVAILABLE, "migration-42"));
     }
 
     private MigrationView restartingMigration() {

@@ -25,6 +25,7 @@ import java.time.Instant;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
@@ -49,14 +50,13 @@ class MetadataMigrationPolicyTest {
     private final MetadataMigrationPolicy policy = new MetadataMigrationPolicy();
 
     @Test
-    void permitsOnlySingleNodeEmptyTargetMigrationFromH2() {
+    void permitsCurrentOrAtomicAutoEnterAdmissionForSingleNodeEmptyTargetMigrationFromH2() {
         assertDoesNotThrow(() -> policy.requireMigrationAllowed(
                 deployment(MaintenanceMode.ACTIVE, DeploymentTopology.SINGLE_NODE),
                 MigrationTarget.MYSQL, TargetInspection.EMPTY));
-        assertFailure(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED,
-                () -> policy.requireMigrationAllowed(
-                        deployment(MaintenanceMode.INACTIVE, DeploymentTopology.SINGLE_NODE),
-                        MigrationTarget.MYSQL, TargetInspection.EMPTY));
+        assertDoesNotThrow(() -> policy.requireMigrationAllowed(
+                deployment(MaintenanceMode.INACTIVE, DeploymentTopology.SINGLE_NODE),
+                MigrationTarget.MYSQL, TargetInspection.EMPTY));
         assertFailure(SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
                 () -> policy.requireMigrationAllowed(
                         deployment(MetadataDatabaseKind.MYSQL, MaintenanceMode.ACTIVE,
@@ -78,6 +78,24 @@ class MetadataMigrationPolicyTest {
                 () -> policy.requireMigrationAllowed(
                         deployment(MaintenanceMode.ACTIVE, DeploymentTopology.MULTI_NODE),
                         MigrationTarget.POSTGRESQL, TargetInspection.EMPTY));
+        assertFailure(SetupErrorCode.OPERATION_CONFLICT,
+                () -> policy.requireMigrationAllowed(deployment(MaintenanceMode.ACTIVE,
+                                DeploymentTopology.SINGLE_NODE, MigrationCapability.blocked(
+                                        SetupErrorCode.OPERATION_CONFLICT,
+                                        MaintenanceAdmission.UNAVAILABLE, "migration-42")),
+                        MigrationTarget.MYSQL, TargetInspection.EMPTY));
+        assertFailure(SetupErrorCode.MIGRATION_UNAVAILABLE,
+                () -> policy.requireMigrationAllowed(deployment(MaintenanceMode.INACTIVE,
+                                DeploymentTopology.SINGLE_NODE, MigrationCapability.blocked(
+                                        SetupErrorCode.MIGRATION_UNAVAILABLE,
+                                        MaintenanceAdmission.UNAVAILABLE)),
+                        MigrationTarget.MYSQL, TargetInspection.EMPTY));
+        assertFailure(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED,
+                () -> policy.requireMigrationAllowed(deployment(MaintenanceMode.INACTIVE,
+                                DeploymentTopology.SINGLE_NODE, MigrationCapability.blocked(
+                                        SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED,
+                                        MaintenanceAdmission.UNAVAILABLE)),
+                        MigrationTarget.MYSQL, TargetInspection.EMPTY));
     }
 
     @Test
@@ -106,11 +124,21 @@ class MetadataMigrationPolicyTest {
             case UNKNOWN -> SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE;
             case SINGLE_NODE -> kind == MetadataDatabaseKind.H2 ? null : SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED;
         };
-        if (blocker == null && maintenance == MaintenanceMode.INACTIVE) {
-            blocker = SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED;
-        }
         MigrationCapability capability = blocker == null
-                ? MigrationCapability.permitted() : MigrationCapability.blocked(blocker);
+                ? MigrationCapability.permitted(maintenance == MaintenanceMode.ACTIVE
+                        ? MaintenanceAdmission.USE_CURRENT : MaintenanceAdmission.AUTO_ENTER)
+                : MigrationCapability.blocked(blocker, MaintenanceAdmission.NOT_APPLICABLE);
+        return deployment(maintenance, topology, capability, kind);
+    }
+
+    private DeploymentView deployment(
+            MaintenanceMode maintenance, DeploymentTopology topology, MigrationCapability capability) {
+        return deployment(maintenance, topology, capability, MetadataDatabaseKind.H2);
+    }
+
+    private DeploymentView deployment(
+            MaintenanceMode maintenance, DeploymentTopology topology,
+            MigrationCapability capability, MetadataDatabaseKind kind) {
         return new DeploymentView(Instant.parse("2026-08-09T00:00:00Z"),
                 new ManagementDatabaseSummary(kind, true, ConfigSource.UI_MANAGED, false),
                 new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),

@@ -70,6 +70,7 @@ public final class DeploymentController {
 
     @GetMapping(DeploymentApiContract.MIGRATION_OPERATION_PATH)
     public ResponseEntity<MigrationView> migration(@PathVariable String operationId) {
+        requireOperationId(operationId);
         MigrationView migration = workflow().migration(operationId);
         if (migration == null) {
             throw new SetupApiException(SetupApiContract.SetupErrorCode.OPERATION_NOT_FOUND, HttpStatus.NOT_FOUND);
@@ -80,12 +81,14 @@ public final class DeploymentController {
     @PostMapping(DeploymentApiContract.ACTIVATE_PATH)
     public ResponseEntity<MigrationView> activate(
             @PathVariable String operationId, @Valid @RequestBody ActivateMigrationRequest request) {
+        requireOperationId(operationId);
         return SetupHttpContract.noStore().body(workflow().activate(operationId, request));
     }
 
     @PostMapping(DeploymentApiContract.EXPORT_PATH)
     public ResponseEntity<StreamingResponseBody> export(
             @PathVariable String operationId, @Valid @RequestBody MigrationExportRequest request) {
+        requireOperationId(operationId);
         MigrationExportRenderer renderer = renderer();
         ExportResponse metadata = workflow().prepareExport(operationId, request);
         StreamingResponseBody body = output -> renderer.write(operationId, request, output);
@@ -101,6 +104,12 @@ public final class DeploymentController {
             throw unavailable();
         }
         return workflow;
+    }
+
+    private void requireOperationId(String operationId) {
+        if (!OperationIdValidator.isSafe(operationId)) {
+            throw new SetupApiException(SetupApiContract.SetupErrorCode.INVALID_REQUEST, HttpStatus.BAD_REQUEST);
+        }
     }
 
     private MigrationExportRenderer renderer() {

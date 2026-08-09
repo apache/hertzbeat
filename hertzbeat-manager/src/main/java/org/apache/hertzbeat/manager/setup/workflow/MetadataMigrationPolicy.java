@@ -17,14 +17,11 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
-import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
-import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationTarget;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.TargetInspection;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.springframework.http.HttpStatus;
@@ -37,17 +34,8 @@ public final class MetadataMigrationPolicy {
         if (deployment == null || target == null || targetInspection == null) {
             throw new SetupApiException(SetupErrorCode.INVALID_REQUEST, HttpStatus.BAD_REQUEST);
         }
-        if (deployment.managementDatabase().kind() != MetadataDatabaseKind.H2) {
-            throw conflict(SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED);
-        }
-        if (deployment.topology() == DeploymentTopology.UNKNOWN) {
-            throw conflict(SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE);
-        }
-        if (deployment.topology() == DeploymentTopology.MULTI_NODE) {
-            throw conflict(SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED);
-        }
-        if (deployment.maintenanceMode() != MaintenanceMode.ACTIVE) {
-            throw conflict(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED);
+        if (!deployment.migration().allowed()) {
+            throw conflict(deployment.migration().blockedBy());
         }
         if (targetInspection == TargetInspection.UNKNOWN) {
             throw conflict(SetupErrorCode.METADATA_CONNECTION_FAILED);

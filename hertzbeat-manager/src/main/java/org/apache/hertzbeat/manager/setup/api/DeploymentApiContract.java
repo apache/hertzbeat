@@ -64,6 +64,14 @@ public final class DeploymentApiContract {
         ACTIVE
     }
 
+    /** How a future migration coordinator can satisfy the maintenance precondition. */
+    public enum MaintenanceAdmission implements WireValue {
+        USE_CURRENT,
+        AUTO_ENTER,
+        UNAVAILABLE,
+        NOT_APPLICABLE
+    }
+
     /** Deployment shape relevant to migration safety. */
     public enum DeploymentTopology implements WireValue {
         SINGLE_NODE,
@@ -130,18 +138,28 @@ public final class DeploymentApiContract {
     }
 
     /** Explicit migration eligibility and safe blocker for the deployment screen. */
-    public record MigrationCapability(boolean allowed, SetupErrorCode blockedBy) {
+    public record MigrationCapability(
+            boolean allowed,
+            SetupErrorCode blockedBy,
+            @NotNull MaintenanceAdmission maintenanceAdmission,
+            String activeOperationId) {
 
         public MigrationCapability {
-            MigrationContractValidator.validateCapability(allowed, blockedBy);
+            MigrationContractValidator.validateCapability(
+                    allowed, blockedBy, maintenanceAdmission, activeOperationId);
         }
 
-        public static MigrationCapability permitted() {
-            return new MigrationCapability(true, null);
+        public static MigrationCapability permitted(MaintenanceAdmission admission) {
+            return new MigrationCapability(true, null, admission, null);
         }
 
-        public static MigrationCapability blocked(SetupErrorCode blocker) {
-            return new MigrationCapability(false, blocker);
+        public static MigrationCapability blocked(SetupErrorCode blocker, MaintenanceAdmission admission) {
+            return blocked(blocker, admission, null);
+        }
+
+        public static MigrationCapability blocked(
+                SetupErrorCode blocker, MaintenanceAdmission admission, String activeOperationId) {
+            return new MigrationCapability(false, blocker, admission, activeOperationId);
         }
     }
 

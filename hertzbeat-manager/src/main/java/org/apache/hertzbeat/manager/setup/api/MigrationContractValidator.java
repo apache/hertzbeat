@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.setup.api;
 import java.time.Instant;
 import java.util.Set;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
@@ -43,15 +44,28 @@ final class MigrationContractValidator {
             SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
             SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
             SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE,
-            SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED);
+            SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED,
+            SetupErrorCode.MIGRATION_UNAVAILABLE,
+            SetupErrorCode.OPERATION_CONFLICT);
 
     private MigrationContractValidator() {
     }
 
-    static void validateCapability(boolean allowed, SetupErrorCode blockedBy) {
+    static void validateCapability(
+            boolean allowed, SetupErrorCode blockedBy,
+            MaintenanceAdmission admission, String activeOperationId) {
         if (allowed != (blockedBy == null)
-                || (blockedBy != null && !CAPABILITY_BLOCKERS.contains(blockedBy))) {
+                || admission == null
+                || blockedBy != null && !CAPABILITY_BLOCKERS.contains(blockedBy)) {
             invalid("Migration capability and blocker are inconsistent");
+        }
+        boolean validAdmission = switch (admission) {
+            case USE_CURRENT, AUTO_ENTER -> allowed && activeOperationId == null;
+            case NOT_APPLICABLE -> !allowed && structuralBlocker(blockedBy) && activeOperationId == null;
+            case UNAVAILABLE -> unavailable(blockedBy, activeOperationId);
+        };
+        if (!validAdmission) {
+            invalid("Migration maintenance admission is inconsistent");
         }
     }
 
@@ -68,15 +82,16 @@ final class MigrationContractValidator {
             invalid("Deployment migration context is incomplete");
         }
         if (database.kind() != MetadataDatabaseKind.H2) {
-            requireBlocker(capability, SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED);
+            requireBlocker(capability, SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
+                    MaintenanceAdmission.NOT_APPLICABLE);
         } else if (topology == DeploymentTopology.MULTI_NODE) {
-            requireBlocker(capability, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED);
+            requireBlocker(capability, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
+                    MaintenanceAdmission.NOT_APPLICABLE);
         } else if (topology == DeploymentTopology.UNKNOWN) {
-            requireBlocker(capability, SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE);
-        } else if (maintenance == MaintenanceMode.INACTIVE) {
-            requireBlocker(capability, SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED);
-        } else if (!capability.allowed()) {
-            invalid("Active single-node H2 migration must be permitted");
+            requireBlocker(capability, SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE,
+                    MaintenanceAdmission.NOT_APPLICABLE);
+        } else {
+            validateSingleNodeAdmission(maintenance, capability);
         }
     }
 
@@ -86,7 +101,7 @@ final class MigrationContractValidator {
             int progress, Instant createdAt, Instant startedAt, Instant completedAt,
             VerificationState verification, SetupErrorCode errorCode, long pollAfterMillis,
             boolean activationAvailable, boolean restartRequired, boolean externalApplyRequired) {
-        if (operationId == null || operationId.isBlank() || source != MetadataDatabaseKind.H2 || target == null
+        if (!OperationIdValidator.isSafe(operationId) || source != MetadataDatabaseKind.H2 || target == null
                 || state == null || stage == null
                 || createdAt == null || verification == null || progress < 0 || progress > 100
                 || pollAfterMillis < 0) {
@@ -180,8 +195,44 @@ final class MigrationContractValidator {
                 || state == MigrationOperationState.ROLLED_BACK;
     }
 
-    private static void requireBlocker(MigrationCapability capability, SetupErrorCode expected) {
-        if (capability.allowed() || capability.blockedBy() != expected) {
+    private static void validateSingleNodeAdmission(
+            MaintenanceMode maintenance, MigrationCapability capability) {
+        if (capability.allowed()) {
+            MaintenanceAdmission expected = maintenance == MaintenanceMode.ACTIVE
+                    ? MaintenanceAdmission.USE_CURRENT : MaintenanceAdmission.AUTO_ENTER;
+            if (capability.maintenanceAdmission() != expected) {
+                invalid("Migration admission does not match maintenance state");
+            }
+            return;
+        }
+        if (structuralBlocker(capability.blockedBy())) {
+            invalid("Single-node migration cannot report a structural blocker");
+        }
+        if (capability.blockedBy() == SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED
+                && maintenance != MaintenanceMode.INACTIVE) {
+            invalid("Maintenance-required blocker is stale");
+        }
+    }
+
+    private static boolean structuralBlocker(SetupErrorCode blocker) {
+        return blocker == SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED
+                || blocker == SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED
+                || blocker == SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE;
+    }
+
+    private static boolean unavailable(SetupErrorCode blocker, String activeOperationId) {
+        if (blocker == SetupErrorCode.OPERATION_CONFLICT) {
+            return OperationIdValidator.isSafe(activeOperationId);
+        }
+        return (blocker == SetupErrorCode.MIGRATION_UNAVAILABLE
+                || blocker == SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED)
+                && activeOperationId == null;
+    }
+
+    private static void requireBlocker(
+            MigrationCapability capability, SetupErrorCode expected, MaintenanceAdmission admission) {
+        if (capability.allowed() || capability.blockedBy() != expected
+                || capability.maintenanceAdmission() != admission || capability.activeOperationId() != null) {
             invalid("Deployment migration blocker does not match its structure");
         }
     }
