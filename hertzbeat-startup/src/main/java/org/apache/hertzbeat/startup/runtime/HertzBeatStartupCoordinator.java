@@ -22,36 +22,70 @@ import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 
 /** Serializes setup-to-normal transitions and always closes the old context first. */
-public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition {
+public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition, AutoCloseable {
 
     private final StartupDecisionProbe probe;
     private final StartupContextLauncher launcher;
     private final StartupFailureReporter failureReporter;
+    private final StartupInstallationRootResolver rootResolver;
+    private final StandaloneDeploymentOwnerFactory ownerFactory;
     private String[] args = new String[0];
     private RunningApplicationContext currentContext;
+    private ResolvedStartupInstallationRoot installationRoot;
+    private StandaloneDeploymentOwner deploymentOwner;
     private boolean normalRuntimeSelected;
+    private boolean convergenceConfirmed;
+    private boolean closed;
 
     public HertzBeatStartupCoordinator(StartupDecisionProbe probe, StartupContextLauncher launcher) {
-        this(probe, launcher, new StartupFailureReporter());
+        this(probe, launcher, new StartupFailureReporter(), null, null);
+    }
+
+    public HertzBeatStartupCoordinator(
+            StartupDecisionProbe probe,
+            StartupContextLauncher launcher,
+            StartupInstallationRootResolver rootResolver,
+            StandaloneDeploymentOwnerFactory ownerFactory) {
+        this(probe, launcher, new StartupFailureReporter(), rootResolver, ownerFactory);
     }
 
     HertzBeatStartupCoordinator(
             StartupDecisionProbe probe, StartupContextLauncher launcher, StartupFailureReporter failureReporter) {
+        this(probe, launcher, failureReporter, null, null);
+    }
+
+    HertzBeatStartupCoordinator(
+            StartupDecisionProbe probe,
+            StartupContextLauncher launcher,
+            StartupFailureReporter failureReporter,
+            StartupInstallationRootResolver rootResolver,
+            StandaloneDeploymentOwnerFactory ownerFactory) {
         this.probe = Objects.requireNonNull(probe, "probe");
         this.launcher = Objects.requireNonNull(launcher, "launcher");
         this.failureReporter = Objects.requireNonNull(failureReporter, "failureReporter");
+        this.rootResolver = rootResolver;
+        this.ownerFactory = ownerFactory;
     }
 
     public synchronized RunningApplicationContext start(String[] applicationArgs) {
+        if (closed) {
+            throw StandaloneDeploymentOwnerException.unavailable();
+        }
         args = applicationArgs == null ? new String[0] : applicationArgs.clone();
+        acquireDeploymentOwner();
         StartupDecision decision;
         try {
-            decision = Objects.requireNonNull(probe.probe(args.clone()), "startup decision");
+            decision = probeDecision();
         } catch (RuntimeException exception) {
             failureReporter.report(StartupFailureReporter.Stage.STARTUP_PROBE, RuntimeMode.RECOVERY, exception);
             decision = StartupDecision.recovery();
         }
-        return transition(decision);
+        try {
+            return transition(decision);
+        } catch (RuntimeException exception) {
+            releaseOwnerAfterFailedStart();
+            throw exception;
+        }
     }
 
     @Override
@@ -61,12 +95,16 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
         }
         // The intent may be stale; the durable startup probe remains authoritative for the target mode.
         StartupDecision currentDecision = Objects.requireNonNull(
-                probe.probe(args.clone()), "startup decision");
+                probeDecision(), "startup decision");
         transition(currentDecision);
     }
 
     @Override
     public synchronized void completeSetup() {
+        if (currentContext == null || currentContext.mode() != RuntimeMode.FULL_SETUP_GATED) {
+            return;
+        }
+        convergenceConfirmed = true;
         transition(StartupDecision.normal());
     }
 
@@ -123,8 +161,51 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     }
 
     private RunningApplicationContext launch(StartupDecision decision) {
+        if (deploymentOwner == null) {
+            return Objects.requireNonNull(
+                    launcher.launch(decision, args.clone(), this),
+                    "startup context launcher returned null for " + decision.mode().value());
+        }
+        boolean exposeAuthority = convergenceConfirmed && decision.mode() == RuntimeMode.NORMAL;
         return Objects.requireNonNull(
-                launcher.launch(decision, args.clone(), this),
+                launcher.launch(decision, args.clone(), this, installationRoot.canonicalRoot(),
+                        exposeAuthority ? deploymentOwner.view() : null),
                 "startup context launcher returned null for " + decision.mode().value());
+    }
+
+    private StartupDecision probeDecision() {
+        StartupDecision decision = installationRoot == null
+                ? probe.probe(args.clone())
+                : probe.probe(args.clone(), installationRoot.canonicalRoot());
+        return Objects.requireNonNull(decision, "startup decision");
+    }
+
+    private void acquireDeploymentOwner() {
+        if (deploymentOwner != null || ownerFactory == null || rootResolver == null) {
+            return;
+        }
+        installationRoot = rootResolver.resolve(args.clone());
+        deploymentOwner = Objects.requireNonNull(
+                ownerFactory.acquire(installationRoot), "standalone deployment owner");
+    }
+
+    private void releaseOwnerAfterFailedStart() {
+        if (currentContext == null && deploymentOwner != null) {
+            deploymentOwner.close();
+            deploymentOwner = null;
+        }
+    }
+
+    @Override
+    public synchronized void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        closeCurrent();
+        if (deploymentOwner != null) {
+            deploymentOwner.close();
+            deploymentOwner = null;
+        }
     }
 }

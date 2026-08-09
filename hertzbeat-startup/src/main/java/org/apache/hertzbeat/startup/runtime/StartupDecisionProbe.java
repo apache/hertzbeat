@@ -17,9 +17,15 @@
 
 package org.apache.hertzbeat.startup.runtime;
 
+import java.nio.file.Path;
+
 /** Replaceable read-only source for the startup decision made before opening a context. */
 @FunctionalInterface
 public interface StartupDecisionProbe {
 
     StartupDecision probe(String[] args);
+
+    default StartupDecision probe(String[] args, Path installationRoot) {
+        return probe(args);
+    }
 }

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.startup.runtime;
 
+import java.nio.file.Path;
+import org.apache.hertzbeat.manager.maintenance.StandaloneDeploymentOwnerView;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 
 /** Opens exactly one source set for a classified runtime mode. */
@@ -25,4 +27,13 @@ public interface StartupContextLauncher {
 
     RunningApplicationContext launch(
             StartupDecision decision, String[] args, SetupRuntimeTransition setupRuntimeTransition);
+
+    default RunningApplicationContext launch(
+            StartupDecision decision,
+            String[] args,
+            SetupRuntimeTransition setupRuntimeTransition,
+            Path installationRoot,
+            StandaloneDeploymentOwnerView authorityView) {
+        return launch(decision, args, setupRuntimeTransition);
+    }
 }

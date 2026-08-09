@@ -49,6 +49,12 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
     @Override
     public StartupDecision probe(String[] args) {
         Path root = fixedRoot == null ? installationRoot(args) : fixedRoot;
+        return probe(args, root);
+    }
+
+    @Override
+    public StartupDecision probe(String[] args, Path installationRoot) {
+        Path root = fixedRoot == null ? installationRoot : fixedRoot;
         boolean externalDatabaseConfigured = fixedExternalDatabaseConfigured == null
                 ? externalDatabaseConfigured(args) : fixedExternalDatabaseConfigured;
         State managed = new ManagedActiveConfigurationInspector(root).inspect().state();

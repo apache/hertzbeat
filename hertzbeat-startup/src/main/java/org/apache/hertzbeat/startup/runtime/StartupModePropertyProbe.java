@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.startup.runtime;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 
@@ -35,6 +36,13 @@ public final class StartupModePropertyProbe implements StartupDecisionProbe {
     @Override
     public StartupDecision probe(String[] args) {
         return decide(args, System.getProperty(PROPERTY_NAME), System.getenv(ENVIRONMENT_NAME));
+    }
+
+    @Override
+    public StartupDecision probe(String[] args, Path installationRoot) {
+        String value = StartupArgumentProperties.resolve(
+                args, PROPERTY_NAME, System.getProperty(PROPERTY_NAME), System.getenv(ENVIRONMENT_NAME));
+        return value == null ? fallback.probe(args, installationRoot) : decisionFor(value);
     }
 
     StartupDecision decide(String[] args, String systemValue, String environmentValue) {

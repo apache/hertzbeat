@@ -24,6 +24,8 @@ import org.apache.hertzbeat.startup.runtime.HertzBeatStartupCoordinator;
 import org.apache.hertzbeat.startup.runtime.LocalInstallationStartupProbe;
 import org.apache.hertzbeat.startup.runtime.SpringStartupContextLauncher;
 import org.apache.hertzbeat.startup.runtime.StartupModePropertyProbe;
+import org.apache.hertzbeat.startup.runtime.StartupInstallationRootResolver;
+import org.apache.hertzbeat.startup.runtime.StandaloneDeploymentOwnerFactory;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -55,8 +57,12 @@ public class HertzBeatApplication {
 
     public static void main(String[] args) {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
+        StartupInstallationRootResolver rootResolver = new StartupInstallationRootResolver();
         HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
-                new StartupModePropertyProbe(new LocalInstallationStartupProbe()), launcher);
+                new StartupModePropertyProbe(new LocalInstallationStartupProbe()), launcher,
+                rootResolver, StandaloneDeploymentOwnerFactory.system());
+        Runtime.getRuntime().addShutdownHook(
+                Thread.ofPlatform().name("hertzbeat-standalone-owner-close").unstarted(coordinator::close));
         coordinator.start(args);
     }
 

@@ -127,7 +127,7 @@ public final class SecureSetupFile {
         return true;
     }
 
-    static Path prepareTrustedRoot(Path trustedRoot) throws IOException {
+    public static Path prepareTrustedRoot(Path trustedRoot) throws IOException {
         Path absoluteRoot = absolute(trustedRoot);
         if (!Files.exists(absoluteRoot, LinkOption.NOFOLLOW_LINKS)) {
             createMissingParents(absoluteRoot);
