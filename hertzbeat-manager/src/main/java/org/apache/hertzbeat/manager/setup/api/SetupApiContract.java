@@ -44,6 +44,7 @@ public final class SetupApiContract {
     public static final String OPTIONS_PATH = "/api/setup/options";
     public static final String EXPORT_PATH = "/api/setup/export";
     public static final String COMPLETE_PATH = "/api/setup/complete";
+    public static final String LOGIN_PATH = "/passport/login";
 
     private SetupApiContract() {
     }

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import static org.apache.hertzbeat.manager.setup.api.SetupApiContract.LOGIN_PATH;
+
 import java.time.Clock;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorResponse;
@@ -129,7 +131,7 @@ public final class DefaultSetupWorkflow implements SetupWorkflow {
 
     private CompleteResponse completeMutation(CompleteRequest request) {
         String username = transitions.complete(SetupTransitionService.CompletionCommand.browser(request));
-        return new CompleteResponse(SetupPhase.COMPLETE, clock.instant(), "/login", username);
+        return new CompleteResponse(SetupPhase.COMPLETE, clock.instant(), LOGIN_PATH, username);
     }
 
     private void requireWritable() {

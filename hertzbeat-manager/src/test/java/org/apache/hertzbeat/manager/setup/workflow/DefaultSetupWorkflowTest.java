@@ -44,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.CompleteRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.CompleteResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationRequest;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
@@ -133,8 +134,10 @@ class DefaultSetupWorkflowTest {
                 () -> workflow.complete(new CompleteRequest(SetupPhase.OPTIONAL_CONFIGURATION, List.of())));
         verifyNoInteractions(completion);
 
-        workflow.complete(new CompleteRequest(SetupPhase.OPTIONAL_CONFIGURATION,
-                List.of(SetupWarningCode.H2_NON_PRODUCTION)));
+        CompleteResponse response = workflow.complete(new CompleteRequest(
+                SetupPhase.OPTIONAL_CONFIGURATION, List.of(SetupWarningCode.H2_NON_PRODUCTION)));
+
+        assertThat(response.loginPath()).isEqualTo("/passport/login");
         verify(completion).completeInstallation();
     }
 
