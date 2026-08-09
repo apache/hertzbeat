@@ -24,6 +24,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.util.Arrays;
@@ -126,6 +127,43 @@ public final class SecureSetupFile {
         return true;
     }
 
+    static Path prepareTrustedRoot(Path trustedRoot) throws IOException {
+        Path absoluteRoot = absolute(trustedRoot);
+        if (!Files.exists(absoluteRoot, LinkOption.NOFOLLOW_LINKS)) {
+            createMissingParents(absoluteRoot);
+        }
+        return absoluteRoot.toRealPath();
+    }
+
+    /**
+     * Publishes an already-forced owner-only temporary file without exposing a partial replacement.
+     * Providers without atomic-move support fail closed; callers must not downgrade to a non-atomic move.
+     */
+    public static void atomicReplace(Path trustedRoot, Path source, Path target) throws IOException {
+        atomicReplace(trustedRoot, source, target,
+                replaced -> forceParentDirectoryIfSupported(trustedRoot, replaced));
+    }
+
+    static void atomicReplace(
+            Path trustedRoot, Path source, Path target, ParentDirectorySync parentDirectorySync) throws IOException {
+        Path resolvedSource = resolveWithoutLinksInsideRoot(trustedRoot, source);
+        Path resolvedTarget = resolveWithoutLinksInsideRoot(trustedRoot, target);
+        if (!isOwnerOnlyRegularFile(resolvedSource) || !resolvedSource.getParent().equals(resolvedTarget.getParent())) {
+            throw new IOException("Setup replacement source is invalid");
+        }
+        if (Files.exists(resolvedTarget, LinkOption.NOFOLLOW_LINKS)
+                && !isOwnerOnlyRegularFile(resolvedTarget)) {
+            throw new IOException("Setup replacement target is invalid");
+        }
+        Files.move(resolvedSource, resolvedTarget, StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING);
+        try {
+            parentDirectorySync.force(target);
+        } catch (IOException failure) {
+            throw new CommittedSetupFileDurabilityException();
+        }
+    }
+
     private static byte[] readResolvedOwnerOnly(Path resolvedTarget, int maximumBytes) throws IOException {
         if (!isOwnerOnlyRegularFile(resolvedTarget)) {
             throw new IOException("Setup file is not an owner-only regular file");
@@ -225,5 +263,10 @@ public final class SecureSetupFile {
 
     private static Path absolute(Path path) {
         return path.toAbsolutePath().normalize();
+    }
+
+    @FunctionalInterface
+    interface ParentDirectorySync {
+        void force(Path target) throws IOException;
     }
 }

@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -78,7 +79,7 @@ class SecureSetupFileTest {
         Path linkedDirectory = temporaryDirectory.resolve("linked");
         Files.createSymbolicLink(linkedDirectory, realDirectory);
 
-        assertThrows(java.io.IOException.class, () -> SecureSetupFile.create(
+        assertThrows(IOException.class, () -> SecureSetupFile.create(
                 temporaryDirectory,
                 linkedDirectory.resolve("nested").resolve("secret"),
                 "secret-content".getBytes(StandardCharsets.UTF_8)));
@@ -92,9 +93,23 @@ class SecureSetupFileTest {
         Path linkedDirectory = trustedRoot.resolve("linked");
         Files.createSymbolicLink(linkedDirectory, outside);
 
-        assertThrows(java.io.IOException.class, () -> SecureSetupFile.create(
+        assertThrows(IOException.class, () -> SecureSetupFile.create(
                 trustedRoot,
                 linkedDirectory.resolve("nested").resolve("secret"),
                 "secret-content".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void reportsCommittedReplacementWhenParentSyncFails() throws Exception {
+        Path target = temporaryDirectory.resolve("state");
+        Path replacement = temporaryDirectory.resolve("replacement");
+        SecureSetupFile.create(temporaryDirectory, target, "old".getBytes(StandardCharsets.UTF_8));
+        SecureSetupFile.create(temporaryDirectory, replacement, "new".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(CommittedSetupFileDurabilityException.class, () -> SecureSetupFile.atomicReplace(
+                temporaryDirectory, replacement, target, ignored -> {
+                    throw new IOException("simulated parent fsync failure");
+                }));
+        assertArrayEquals("new".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(target));
     }
 }

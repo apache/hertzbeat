@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore.Intent;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock;
 import org.apache.hertzbeat.startup.runtime.HertzBeatStartupCoordinator;
 import org.apache.hertzbeat.startup.runtime.RunningApplicationContext;
 import org.apache.hertzbeat.startup.runtime.StartupContextLauncher;
@@ -55,7 +56,7 @@ class SetupTransitionSplitLockTest {
                 FileSetupTransitionIntentStore.COMPLETION_RELATIVE_PATH);
         FileSetupTransitionIntentStore staleContext = new FileSetupTransitionIntentStore(
                 installationRoot, ignored -> { },
-                new FileSetupTransitionIntentLock(
+                new SecureSetupFileLock(
                         installationRoot, "data/config/.setup-transition-stale.lock"),
                 (path, present) -> {
                     if (path.equals(completionMarker) && !present
@@ -80,7 +81,7 @@ class SetupTransitionSplitLockTest {
     private FileSetupTransitionIntentStore storeWithLock(String identity) {
         return new FileSetupTransitionIntentStore(
                 installationRoot, ignored -> { },
-                new FileSetupTransitionIntentLock(
+                new SecureSetupFileLock(
                         installationRoot, "data/config/.setup-transition-" + identity + ".lock"),
                 FileSetupTransitionIntentStore.MarkerObservation.NONE);
     }

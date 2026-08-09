@@ -20,14 +20,14 @@ package org.apache.hertzbeat.manager.setup.api;
 import java.util.regex.Pattern;
 
 /** Shared path-segment boundary for stable operation identifiers exposed by setup APIs. */
-final class OperationIdValidator {
+public final class OperationIdValidator {
 
     private static final Pattern URL_SAFE_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,127}");
 
     private OperationIdValidator() {
     }
 
-    static boolean isSafe(String operationId) {
+    public static boolean isSafe(String operationId) {
         return operationId != null && URL_SAFE_ID.matcher(operationId).matches();
     }
 }

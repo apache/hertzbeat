@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock;
 
 /** Owner-only, monotonic managed-file adapter for pending setup runtime transitions. */
 public final class FileSetupTransitionIntentStore implements SetupTransitionIntentStore {
@@ -36,13 +37,14 @@ public final class FileSetupTransitionIntentStore implements SetupTransitionInte
     static final String TERMINAL_RELATIVE_PATH =
             "data/config/setup-transition-closed";
     private static final String INSTALLATION_CLOSED = "INSTALLATION_CLOSED";
+    private static final String LOCK_PATH = "data/config/.setup-transition-intent.lock";
     private static final int MAXIMUM_BYTES = 64;
     private final Path installationRoot;
     private final Marker configurationMarker;
     private final Marker completionMarker;
     private final Marker terminalMarker;
     private final ParentDirectorySync parentDirectorySync;
-    private final FileSetupTransitionIntentLock intentLock;
+    private final SecureSetupFileLock intentLock;
     private final MarkerObservation markerObservation;
 
     public FileSetupTransitionIntentStore(Path installationRoot) {
@@ -52,12 +54,12 @@ public final class FileSetupTransitionIntentStore implements SetupTransitionInte
 
     FileSetupTransitionIntentStore(Path installationRoot, ParentDirectorySync parentDirectorySync) {
         this(installationRoot, parentDirectorySync,
-                new FileSetupTransitionIntentLock(installationRoot), MarkerObservation.NONE);
+                new SecureSetupFileLock(installationRoot, LOCK_PATH), MarkerObservation.NONE);
     }
 
     FileSetupTransitionIntentStore(
             Path installationRoot, ParentDirectorySync parentDirectorySync,
-            FileSetupTransitionIntentLock intentLock, MarkerObservation markerObservation) {
+            SecureSetupFileLock intentLock, MarkerObservation markerObservation) {
         this.installationRoot = Objects.requireNonNull(installationRoot, "installationRoot")
                 .toAbsolutePath().normalize();
         configurationMarker = marker(RELATIVE_PATH, Intent.CONFIGURATION_APPLIED.name());
