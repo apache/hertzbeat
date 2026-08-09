@@ -20,6 +20,7 @@ package org.apache.hertzbeat.startup.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import com.usthe.sureness.matcher.util.TirePathTree;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,8 @@ class SurenessResourceRuleTest {
     private static final int RESOURCE_ROLE_SEGMENTS = 3;
 
     private static final int EXCLUDED_RESOURCE_SEGMENTS = 2;
+
+    private static final Path SCRIPT_DIR = Path.of("..", "script");
 
     private static List<String> resourceRole;
 
@@ -115,6 +118,38 @@ class SurenessResourceRuleTest {
     }
 
     /**
+     * Only the {@code get} verb under {@code /api/apps} used to be listed, so the monitoring
+     * template writes behind {@code AppController} reached any authenticated caller, down to
+     * a {@code guest}.
+     *
+     * <p>The write verbs are not equally dangerous, and the rules deliberately differ.
+     * {@code post} refuses to overwrite an existing template, so it only adds a type that
+     * nobody is obliged to use, which puts it on the same footing as creating a monitor.
+     * {@code put} overwrites any template including the built-in ones and then hands the new
+     * definition to {@code updateAppCollectJob}, retroactively changing what every existing
+     * monitor of that type collects for every account, so it stays admin only.
+     */
+    @Test
+    void addingMonitorTemplatesIsOpenToUsers() {
+        assertEquals("[admin,user]", roleTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"));
+    }
+
+    @Test
+    void overwritingMonitorTemplatesIsRestrictedToAdmin() {
+        assertEquals("[admin]", roleTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "put"));
+    }
+
+    @Test
+    void deletingMonitorTemplatesIsRestrictedToAdmin() {
+        assertEquals("[admin]", roleTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "delete"));
+    }
+
+    @Test
+    void readingMonitorTemplatesStaysOpenToEveryRole() {
+        assertEquals("[admin,user,guest]", roleTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "get"));
+    }
+
+    /**
      * The deployment scripts ship their own copies of {@code sureness.yml}; a rule fixed only
      * in the packaged file would still leave every container deployment exposed.
      *
@@ -127,28 +162,10 @@ class SurenessResourceRuleTest {
      * wave through.
      */
     @Test
-    @SuppressWarnings("unchecked")
     void deploymentCopiesCarryWellFormedRules() throws IOException {
-        Path scriptDir = Path.of("..", "script");
-        if (!Files.isDirectory(scriptDir)) {
-            // running outside the source tree, the packaged file asserted above is all we can see
-            return;
-        }
-        Set<Path> copies;
-        try (Stream<Path> paths = Files.walk(scriptDir)) {
-            copies = paths.filter(path -> path.getFileName().toString().equals("sureness.yml"))
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-        }
-        assertFalse(copies.isEmpty(), "expected the deployment scripts to ship sureness.yml copies");
-        for (Path copy : copies) {
-            Map<String, Object> document;
-            try (InputStream in = Files.newInputStream(copy)) {
-                document = new Yaml().load(in);
-            }
-            List<String> copyResourceRole = (List<String>) document.get("resourceRole");
-            List<String> copyExcludedResource = (List<String>) document.get("excludedResource");
-            assertNotNull(copyResourceRole, "resourceRole must be present in " + copy);
-            assertNotNull(copyExcludedResource, "excludedResource must be present in " + copy);
+        for (Path copy : deploymentCopies()) {
+            List<String> copyResourceRole = sectionOf(copy, "resourceRole");
+            List<String> copyExcludedResource = sectionOf(copy, "excludedResource");
 
             for (String rule : copyResourceRole) {
                 assertEquals(RESOURCE_ROLE_SEGMENTS, rule.split(SEPARATOR, -1).length,
@@ -161,5 +178,50 @@ class SurenessResourceRuleTest {
                                 + ", it needs exactly one '" + SEPARATOR + "' separator: " + rule);
             }
         }
+    }
+
+    /**
+     * Well formed is not the same as correct: a copy that simply never listed the write verbs
+     * passes every shape check above while leaving the monitoring template writes unruled. The
+     * copies are edited by hand, one per deployment flavour, so the roles themselves are pinned
+     * here too and a missed copy fails instead of shipping.
+     */
+    @Test
+    void deploymentCopiesRestrictMonitorTemplateWrites() throws IOException {
+        for (Path copy : deploymentCopies()) {
+            TirePathTree copyTree = new TirePathTree();
+            copyTree.buildTree(new LinkedHashSet<>(sectionOf(copy, "resourceRole")));
+            assertEquals("[admin,user]", copyTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "post"),
+                    "adding a monitoring template is unruled or over-granted in " + copy);
+            assertEquals("[admin]", copyTree.searchPathFilterRoles("/api/apps/define/yml" + SEPARATOR + "put"),
+                    "overwriting a monitoring template is unruled or over-granted in " + copy);
+            assertEquals("[admin]", copyTree.searchPathFilterRoles("/api/apps/linux/define/yml" + SEPARATOR + "delete"),
+                    "deleting a monitoring template is unruled or over-granted in " + copy);
+        }
+    }
+
+    /**
+     * @return the {@code sureness.yml} copies shipped by the deployment scripts
+     */
+    private static Set<Path> deploymentCopies() throws IOException {
+        assumeTrue(Files.isDirectory(SCRIPT_DIR),
+                "running outside the source tree, the packaged file asserted above is all we can see");
+        try (Stream<Path> paths = Files.walk(SCRIPT_DIR)) {
+            Set<Path> copies = paths.filter(path -> path.getFileName().toString().equals("sureness.yml"))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            assertFalse(copies.isEmpty(), "expected the deployment scripts to ship sureness.yml copies");
+            return copies;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> sectionOf(Path copy, String section) throws IOException {
+        Map<String, Object> document;
+        try (InputStream in = Files.newInputStream(copy)) {
+            document = new Yaml().load(in);
+        }
+        List<String> rules = (List<String>) document.get(section);
+        assertNotNull(rules, section + " must be present in " + copy);
+        return rules;
     }
 }
