@@ -30,6 +30,9 @@ import org.apache.hertzbeat.ai.tools.DatabaseTools;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.hertzbeat.common.util.JdbcUrlSafetyUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.ai.tool.annotation.Tool;
@@ -240,11 +243,21 @@ public class DatabaseToolsImpl implements DatabaseTools {
     
     private String buildJdbcUrl(String platform, String host, String port, String database) {
         String effectivePort = (port == null || port.isEmpty()) ? "3306" : port;
-        String effectiveDb = (database == null || database.isEmpty()) ? "" : database;
-        
-        return "jdbc:mysql://" + host + ":" + effectivePort + "/" + effectiveDb
+        // host, port and database come from monitor parameters and are concatenated into the url,
+        // so they must not carry url syntax of their own
+        String effectiveDb = JdbcUrlSafetyUtil.requireSafeDatabaseName(database);
+        if (!IpDomainUtil.validateIpDomain(host)) {
+            throw new IllegalArgumentException("Invalid database host: " + host);
+        }
+        if (!CommonUtil.isNumeric(effectivePort)) {
+            throw new IllegalArgumentException("Invalid database port: " + effectivePort);
+        }
+
+        String url = "jdbc:mysql://" + host + ":" + effectivePort + "/" + effectiveDb
                 + "?useUnicode=true&characterEncoding=utf-8&useSSL=false"
                 + "&allowPublicKeyRetrieval=true&connectTimeout=5000";
+        JdbcUrlSafetyUtil.requireSafeJdbcUrl(url);
+        return url;
     }
     
     private String executeAndFormat(String url, String username, String password, 
