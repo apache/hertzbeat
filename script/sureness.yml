@@ -22,6 +22,12 @@
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  # the define yml routes persist the global collection templates
+  # post can only add a new type, put overwrites an existing one and immediately
+  # redispatches its collect job to every monitor already using it - hence admin only
+  - /api/apps/**===post===[admin,user]
+  - /api/apps/**===put===[admin]
+  - /api/apps/**===delete===[admin]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
@@ -54,6 +60,16 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  # the secret config holds the jwt signing key and the aes key protecting stored
+  # credentials, so it stays admin only and is additionally refused by the controller
+  - /api/config/secret===get===[admin]
+  - /api/config/secret===post===[admin]
+  # the mute toggle sits in the notification widget every signed in user sees
+  - /api/config/mute===post===[admin,user,guest]
+  - /api/config/**===get===[admin,user,guest]
+  - /api/config/**===post===[admin]
+  - /api/config/**===put===[admin]
+  - /api/config/**===delete===[admin]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
@@ -70,12 +86,18 @@ resourceRole:
   - /api/mcp/**===post===[admin]
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin]
+  - /api/ai/**===get===[admin]
+  - /api/ai/**===post===[admin]
+  - /api/ai/**===put===[admin]
+  - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
   - /api/otlp/**===post===[admin,user]
   - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/logs/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
