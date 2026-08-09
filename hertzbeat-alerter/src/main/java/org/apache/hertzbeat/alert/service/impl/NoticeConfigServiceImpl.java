@@ -190,13 +190,28 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
      *                                  be resolved, and saving would persist the placeholder
      */
     private void resolveMaskedSecrets(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, false);
+    }
+
+    /**
+     * Bind stored secrets to their original notification type and destination for test messages.
+     */
+    private void resolveMaskedSecretsForTest(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver, true);
+    }
+
+    private void resolveMaskedSecrets(NoticeReceiver noticeReceiver, boolean testMessage) {
         if (noticeReceiver == null || noticeReceiver.getId() == null) {
             return;
         }
         NoticeReceiver existing = noticeReceiverDao.findById(noticeReceiver.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "The receiver with id " + noticeReceiver.getId() + " does not exist."));
-        NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
+        if (testMessage) {
+            NoticeReceiverMaskUtil.resolveMaskForTest(noticeReceiver, existing);
+        } else {
+            NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
+        }
     }
 
     @Override
@@ -231,11 +246,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             CacheFactory.setNoticeCache(rules);
         }
 
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // TODO: This matches an already-grouped alert against notice rules (group-then-route). It cannot fully
-        //  separate alerts that were grouped together but should reach different receivers, so a rule matched by
-        //  one alert still notifies the whole group. The ideal design is route-then-group (like Alertmanager):
-        //  route each single alert by its labels first, then group per receiver. Tracked as a follow-up to #3852.
+        // Match grouped alerts here; dispatch scopes each notification to the single alerts matching its rule.
         return rules.stream()
             .filter(rule -> {
                 if (!rule.isFilterAll()) {
@@ -339,7 +350,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
-        resolveMaskedSecrets(noticeReceiver);
+        resolveMaskedSecretsForTest(noticeReceiver);
         Map<String, String> labels = new HashMap<>(8);
         labels.put(CommonConstants.LABEL_INSTANCE, "127.0.0.1");
         labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
