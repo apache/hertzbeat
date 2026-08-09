@@ -251,6 +251,7 @@
   "alert.integration.source.prometheus": "Prometheus",
   "alert.integration.source.tencent": "Monitoramento de nuvem Tencent",
   "alert.integration.source.webhook": "PadrãoWebhook",
+  "alert.integration.source.alibabacloud-cms": "Alibaba Cloud Monitor",
   "alert.integration.source.alibabacloud-sls": "AlibabaCloud-SLS",
   "alert.integration.source.huaweicloud-ces": "Huawei Cloud Eye",
   "alert.integration.source.volcengine": "Volcengine",
