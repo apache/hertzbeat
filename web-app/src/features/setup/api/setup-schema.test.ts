@@ -49,7 +49,7 @@ function statusFixture(overrides: Record<string, unknown> = {}) {
     },
     administratorConfigured: false,
     optional: {
-      publicAccessConfigured: false,
+      publicBaseUrlConfigured: false,
       serverOtlpHttpConfigured: false,
       serverOtlpGrpcConfigured: false,
       retentionConfigured: false,

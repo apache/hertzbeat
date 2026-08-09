@@ -15,7 +15,7 @@ import { parseConfigurationResponse, parseValidationResponse } from './setup-con
 import { parseSetupOperation } from './setup-operation-schema';
 import { parseSetupError, parseSetupStatus } from './setup-schema';
 
-export const setupApiPaths = {
+const setupApiPaths = {
   status: '/api/setup/status',
   unlock: '/api/setup/unlock',
   operation: (operationId: string) => `/api/setup/operations/${encodeURIComponent(operationId)}`,

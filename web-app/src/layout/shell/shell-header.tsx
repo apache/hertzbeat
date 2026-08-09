@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
-import { resolveLocale } from '@/core/i18n/i18n';
+import { resolveLocale } from '@/core/i18n/locale';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';

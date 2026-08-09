@@ -3,15 +3,21 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const query = vi.hoisted(() => ({
-  useQuery: vi.fn(),
-  useMutation: vi.fn()
-}));
+const query = vi.hoisted(() => {
+  const cancelQueries = vi.fn();
+  return {
+    useQuery: vi.fn(),
+    useQueryClient: vi.fn(() => ({ cancelQueries })),
+    useMutation: vi.fn(),
+    cancelQueries
+  };
+});
 vi.mock('@tanstack/react-query', () => query);
 const api = vi.hoisted(() => ({ loadSetupStatus: vi.fn(), unlockSetup: vi.fn() }));
 vi.mock('../api/setup-api', async importOriginal => ({ ...(await importOriginal()), ...api }));
 
 import { SetupRequestError } from '../api/setup-api';
+import { SetupContractError } from '../api/setup-schema';
 import type { SetupStatus } from '../model/setup-contract';
 import { useSetupRouteController } from './use-setup-route-controller';
 
@@ -52,7 +58,7 @@ describe('setup route controller', () => {
 
     await act(() => result.current.unlock());
 
-    expect(api.unlockSetup).toHaveBeenCalledWith('once-only');
+    expect(api.unlockSetup).toHaveBeenCalledWith('once-only', expect.any(AbortSignal));
     expect(refetch).toHaveBeenCalledOnce();
     expect(result.current.unlockCode).toBe('');
     expect(query.useMutation).not.toHaveBeenCalled();
@@ -85,6 +91,21 @@ describe('setup route controller', () => {
     expect(query.useMutation).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['contract', new SetupContractError()],
+    ['unknown', new Error('unknown write result')]
+  ] as const)('suppresses a stale %s failure when authoritative unlock status advanced', async (_label, failure) => {
+    api.unlockSetup.mockRejectedValue(failure);
+    refetch.mockResolvedValue({ data: statusFixture({ access: 'unlocked' }), error: null });
+    const { result } = renderHook(() => useSetupRouteController());
+    act(() => result.current.setUnlockCode('private-code'));
+
+    await act(() => result.current.unlock());
+
+    expect(refetch).toHaveBeenCalledOnce();
+    expect(result.current.unlockFailureKind).toBeNull();
+  });
+
   it('maps an initial status failure to an unavailable boundary', () => {
     query.useQuery.mockReturnValue({ data: undefined, error: new Error('private'), isPending: false, refetch });
 
@@ -104,6 +125,25 @@ describe('setup route controller', () => {
       statusRefreshFailed: true
     });
   });
+
+  it('retires an unlock error when status advances and does not revive it after relocking', async () => {
+    let currentStatus = statusFixture({ access: 'locked' });
+    query.useQuery.mockImplementation(() => ({ data: currentStatus, error: null, isPending: false, refetch }));
+    api.unlockSetup.mockRejectedValue(new SetupRequestError('http', 401, 'setup_code_invalid'));
+    const { result, rerender } = renderHook(() => useSetupRouteController());
+    act(() => result.current.setUnlockCode('stale-code'));
+    await act(() => result.current.unlock());
+    expect(result.current.unlockErrorCode).toBe('setup_code_invalid');
+
+    currentStatus = statusFixture({ access: 'unlocked', observedAt: '2026-08-08T06:00:01Z' });
+    rerender();
+    expect(result.current.unlockErrorCode).toBeNull();
+    expect(result.current.unlockFailureKind).toBeNull();
+
+    currentStatus = statusFixture({ access: 'locked', observedAt: '2026-08-08T06:10:00Z' });
+    rerender();
+    expect(result.current.unlockErrorCode).toBeNull();
+  });
 });
 
 function statusFixture(overrides: Partial<SetupStatus> = {}): SetupStatus {
@@ -119,7 +159,7 @@ function statusFixture(overrides: Partial<SetupStatus> = {}): SetupStatus {
     telemetryStore: { kind: 'greptime', configured: false, source: 'built_in_default', restartRequired: false },
     administratorConfigured: false,
     optional: {
-      publicAccessConfigured: false,
+      publicBaseUrlConfigured: false,
       serverOtlpHttpConfigured: false,
       serverOtlpGrpcConfigured: false,
       retentionConfigured: false,

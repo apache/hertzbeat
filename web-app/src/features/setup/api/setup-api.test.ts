@@ -209,7 +209,7 @@ function statusFixture() {
     telemetryStore: { kind: 'greptime', configured: false, source: 'built_in_default', restartRequired: false },
     administratorConfigured: false,
     optional: {
-      publicAccessConfigured: false,
+      publicBaseUrlConfigured: false,
       serverOtlpHttpConfigured: false,
       serverOtlpGrpcConfigured: false,
       retentionConfigured: false,

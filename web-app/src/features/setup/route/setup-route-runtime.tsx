@@ -9,8 +9,8 @@ import { Outlet } from 'react-router-dom';
 import { RouteLoadingState, RouteStateFrame } from '@/shared/route-state/route-state';
 
 import { SetupRouteBoundary } from '../components/setup-route-boundary';
-import { SetupRouteContext } from './setup-route-context';
-import { useSetupRouteController } from './use-setup-route-controller';
+import { SetupRouteContext } from '../controller/setup-route-context';
+import { useSetupRouteController } from '../controller/use-setup-route-controller';
 
 type SetupPaths = { setup: string; login: string };
 

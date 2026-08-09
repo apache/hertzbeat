@@ -27,7 +27,7 @@ export function SetupPage() {
             type="warning"
             showIcon
             message={t('setup.statusRefreshUnavailable')}
-            action={<Button onClick={controller.retry}>{t('common.retry')}</Button>}
+            action={<Button onClick={() => void controller.retry()}>{t('common.retry')}</Button>}
           />
         )}
         {locked ? (

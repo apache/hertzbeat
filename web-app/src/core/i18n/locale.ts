@@ -22,3 +22,9 @@ export type SupportedLocale = (typeof supportedLocales)[number];
 export function isSupportedLocale(value: unknown): value is SupportedLocale {
   return supportedLocales.some(locale => locale === value);
 }
+
+export function resolveLocale(value?: string | null): SupportedLocale {
+  if (isSupportedLocale(value)) return value;
+  const language = value?.split('-')[0];
+  return supportedLocales.find(locale => locale.startsWith(`${language}-`)) ?? 'en-US';
+}

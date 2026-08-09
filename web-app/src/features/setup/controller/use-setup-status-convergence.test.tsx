@@ -13,8 +13,13 @@ describe('useSetupStatusConvergence', () => {
     let resolveFirst: (() => void) | undefined;
     const refetch = vi
       .fn()
-      .mockImplementationOnce(() => new Promise<void>(resolve => (resolveFirst = resolve)))
-      .mockResolvedValue(undefined);
+      .mockImplementationOnce(
+        () =>
+          new Promise<ReturnType<typeof refreshSucceeded>>(
+            resolve => (resolveFirst = () => resolve(refreshSucceeded()))
+          )
+      )
+      .mockResolvedValue(refreshSucceeded());
     const acknowledgement = {
       operationId: 'restart-1',
       state: 'awaiting_restart' as const,
@@ -45,7 +50,7 @@ describe('useSetupStatusConvergence', () => {
 
   it('resumes convergence after refresh from the server phase and stable restart operation', async () => {
     vi.useFakeTimers();
-    const refetch = vi.fn().mockResolvedValue(undefined);
+    const refetch = vi.fn().mockResolvedValue(refreshSucceeded());
     renderHook(() =>
       useSetupStatusConvergence(
         null,
@@ -63,7 +68,7 @@ describe('useSetupStatusConvergence', () => {
 
   it('polls status for a locally acknowledged external apply operation', async () => {
     vi.useFakeTimers();
-    const refetch = vi.fn().mockResolvedValue(undefined);
+    const refetch = vi.fn().mockResolvedValue(refreshSucceeded());
     const acknowledgement = {
       operationId: 'external-1',
       state: 'awaiting_external_apply' as const,
@@ -81,7 +86,7 @@ describe('useSetupStatusConvergence', () => {
 
   it('polls authoritative application-starting status without operation evidence', async () => {
     vi.useFakeTimers();
-    const refetch = vi.fn().mockResolvedValue(undefined);
+    const refetch = vi.fn().mockResolvedValue(refreshSucceeded());
     renderHook(() => useSetupStatusConvergence(null, 'application_starting', null, refetch));
 
     await act(() => vi.advanceTimersByTimeAsync(249));
@@ -92,7 +97,7 @@ describe('useSetupStatusConvergence', () => {
 
   it('does not poll an external refresh that has no local acknowledgement', async () => {
     vi.useFakeTimers();
-    const refetch = vi.fn().mockResolvedValue(undefined);
+    const refetch = vi.fn().mockResolvedValue(refreshSucceeded());
     renderHook(() => useSetupStatusConvergence(null, 'external_apply_required', null, refetch));
 
     await act(() => vi.advanceTimersByTimeAsync(5_000));
@@ -101,7 +106,10 @@ describe('useSetupStatusConvergence', () => {
 
   it('continues bounded convergence after a rejected status refetch', async () => {
     vi.useFakeTimers();
-    const refetch = vi.fn().mockRejectedValueOnce(new Error('temporarily unavailable')).mockResolvedValue(undefined);
+    const refetch = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('temporarily unavailable'))
+      .mockResolvedValue(refreshSucceeded());
     renderHook(() =>
       useSetupStatusConvergence(
         null,
@@ -113,9 +121,38 @@ describe('useSetupStatusConvergence', () => {
 
     await act(() => vi.advanceTimersByTimeAsync(250));
     expect(refetch).toHaveBeenCalledOnce();
-    await act(() => vi.advanceTimersByTimeAsync(249));
+    await act(() => vi.advanceTimersByTimeAsync(499));
     expect(refetch).toHaveBeenCalledOnce();
     await act(() => vi.advanceTimersByTimeAsync(1));
     expect(refetch).toHaveBeenCalledTimes(2);
   });
+
+  it.each(['succeeded', 'failed', 'rolled_back'] as const)(
+    'cedes status polling to terminal lifecycle ownership for %s',
+    async state => {
+      vi.useFakeTimers();
+      const refetch = vi.fn().mockResolvedValue(refreshSucceeded());
+      renderHook(() =>
+        useSetupStatusConvergence(
+          {
+            operationId: 'terminal-1',
+            state: 'awaiting_restart',
+            phase: 'application_starting',
+            nextPollAfterMillis: 20,
+            exportAvailable: false
+          },
+          'application_starting',
+          { state, nextPollAfterMillis: 0 },
+          refetch
+        )
+      );
+
+      await act(() => vi.advanceTimersByTimeAsync(5_000));
+      expect(refetch).not.toHaveBeenCalled();
+    }
+  );
 });
+
+function refreshSucceeded() {
+  return { succeeded: true as const, status: {} as never };
+}

@@ -22,8 +22,7 @@ export type SetupConfigurationRequest = {
   managementDatabase: MetadataDatabaseConfiguration;
   telemetryStore: TelemetryStoreConfiguration;
 };
-export const SETUP_EXPORT_FORMATS = ['yaml', 'env', 'kubernetes_secret'] as const;
-export type SetupExportFormat = (typeof SETUP_EXPORT_FORMATS)[number];
+export type SetupExportFormat = 'yaml' | 'env' | 'kubernetes_secret';
 export type SetupExportRequest = { format: SetupExportFormat; configuration: SetupConfigurationRequest };
 
 export const SETUP_CONFIGURATION_FORM_DEFAULTS = {

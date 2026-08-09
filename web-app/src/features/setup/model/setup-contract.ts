@@ -73,7 +73,7 @@ export type SetupPhase = (typeof SETUP_PHASES)[number];
 export type SetupAccess = (typeof SETUP_ACCESS)[number];
 export type SetupApplyMode = (typeof SETUP_APPLY_MODES)[number];
 export type SetupOperationState = (typeof SETUP_OPERATION_STATES)[number];
-export type SetupConfigSource = (typeof SETUP_CONFIG_SOURCES)[number];
+type SetupConfigSource = (typeof SETUP_CONFIG_SOURCES)[number];
 export type SetupErrorCode = (typeof SETUP_ERROR_CODES)[number];
 export type SetupWarningCode = (typeof SETUP_WARNING_CODES)[number];
 export type MetadataDatabaseKind = (typeof METADATA_DATABASE_KINDS)[number];
@@ -100,7 +100,7 @@ export type SetupStatus = Readonly<{
   }>;
   administratorConfigured: boolean;
   optional: Readonly<{
-    publicAccessConfigured: boolean;
+    publicBaseUrlConfigured: boolean;
     serverOtlpHttpConfigured: boolean;
     serverOtlpGrpcConfigured: boolean;
     retentionConfigured: boolean;
@@ -122,22 +122,4 @@ export type TelemetryStoreConfiguration = {
   database: string;
   username?: string | null;
   password?: string | null;
-};
-export type PublicAccessConfiguration = {
-  publicBaseUrl?: string | null;
-  serverOtlpHttpEndpoint?: string | null;
-  serverOtlpGrpcEndpoint?: string | null;
-};
-export type RetentionConfiguration = {
-  metricsDays?: number | null;
-  logsDays?: number | null;
-  tracesDays?: number | null;
-};
-export type MailConfiguration = {
-  host: string;
-  port: number;
-  security: 'none' | 'starttls' | 'tls';
-  username?: string | null;
-  password?: string | null;
-  fromAddress: string;
 };

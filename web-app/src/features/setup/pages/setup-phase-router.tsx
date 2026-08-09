@@ -8,6 +8,7 @@ import { SetupConfigurationForm } from '../components/setup-configuration-form';
 import { useSetupAdministratorController } from '../controller/use-setup-administrator-controller';
 import { useSetupConfigurationController } from '../controller/use-setup-configuration-controller';
 import type { SetupStatus } from '../model/setup-contract';
+import type { SetupStatusRefresh } from '../controller/setup-status-refresh';
 import styles from './setup-page.module.css';
 
 export function SetupPhaseRouter({
@@ -15,18 +16,23 @@ export function SetupPhaseRouter({
   refetchStatus
 }: {
   status: SetupStatus;
-  refetchStatus: () => Promise<unknown> | void;
+  refetchStatus: SetupStatusRefresh;
 }) {
   if (status.phase === 'administrator_required') {
-    return <AdministratorStep refetchStatus={refetchStatus} />;
+    return <AdministratorStep status={status} refetchStatus={refetchStatus} />;
   }
   if (status.phase === 'optional_configuration') return <PendingStep kind="optional" />;
   if (status.phase === 'complete') return null;
-  return <ConfigurationStep status={status} refetchStatus={refetchStatus} />;
+  return <ConfigurationStep key={configurationFlowKey(status.phase)} status={status} refetchStatus={refetchStatus} />;
 }
 
-function AdministratorStep({ refetchStatus }: { refetchStatus: () => Promise<unknown> | void }) {
-  const controller = useSetupAdministratorController(refetchStatus);
+function configurationFlowKey(phase: SetupStatus['phase']) {
+  if (phase === 'configuration_required' || phase === 'external_apply_required') return 'configuration';
+  return phase;
+}
+
+function AdministratorStep({ status, refetchStatus }: { status: SetupStatus; refetchStatus: SetupStatusRefresh }) {
+  const controller = useSetupAdministratorController(status, refetchStatus);
   return (
     <section className={styles.content}>
       <SetupAdministratorForm {...controller} />
@@ -34,13 +40,7 @@ function AdministratorStep({ refetchStatus }: { refetchStatus: () => Promise<unk
   );
 }
 
-function ConfigurationStep({
-  status,
-  refetchStatus
-}: {
-  status: SetupStatus;
-  refetchStatus: () => Promise<unknown> | void;
-}) {
+function ConfigurationStep({ status, refetchStatus }: { status: SetupStatus; refetchStatus: SetupStatusRefresh }) {
   const controller = useSetupConfigurationController(status, refetchStatus);
   return (
     <section className={styles.content}>

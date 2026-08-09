@@ -49,7 +49,7 @@ const statusSchema = z
     administratorConfigured: z.boolean(),
     optional: z
       .object({
-        publicAccessConfigured: z.boolean(),
+        publicBaseUrlConfigured: z.boolean(),
         serverOtlpHttpConfigured: z.boolean(),
         serverOtlpGrpcConfigured: z.boolean(),
         retentionConfigured: z.boolean(),

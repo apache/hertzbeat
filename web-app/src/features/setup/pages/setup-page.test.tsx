@@ -115,7 +115,7 @@ function statusFixture(phase: 'administrator_required' | 'optional_configuration
     telemetryStore: { kind: 'greptime', configured: true, source: 'ui_managed', restartRequired: false },
     administratorConfigured: false,
     optional: {
-      publicAccessConfigured: false,
+      publicBaseUrlConfigured: false,
       serverOtlpHttpConfigured: false,
       serverOtlpGrpcConfigured: false,
       retentionConfigured: false,

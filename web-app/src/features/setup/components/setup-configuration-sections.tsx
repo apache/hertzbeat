@@ -1,9 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Form, Input, Select, Typography } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { METADATA_DATABASE_KINDS, type MetadataDatabaseKind } from '../model/setup-contract';
 import {
   managementSectionComplete,
   telemetrySectionComplete,
@@ -12,9 +11,8 @@ import {
 } from '../model/setup-configuration';
 import type { SetupSectionValidationMap } from '../model/setup-configuration-state';
 import styles from './setup-configuration-form.module.css';
+import { SetupManagementDatabaseFields } from './setup-management-database-fields';
 import { SetupValidationEvidence } from './setup-validation-evidence';
-
-const evidenceClass = styles.evidence ?? '';
 
 type Props = {
   draft: SetupConfigurationDraft;
@@ -36,37 +34,7 @@ export function ManagementConfigurationSection(props: Props) {
         title={t('setup.configuration.management.title')}
         description={t('setup.configuration.management.description')}
       />
-      <Form.Item label={t('setup.configuration.management.kind')} htmlFor="setup-management-kind">
-        <Select
-          id="setup-management-kind"
-          aria-label={t('setup.configuration.management.kind')}
-          disabled={!editable}
-          value={database.kind ?? undefined}
-          placeholder={t('setup.configuration.management.kindPlaceholder')}
-          options={METADATA_DATABASE_KINDS.map(value => ({ value, label: databaseKindLabel(value) }))}
-          onChange={kind => {
-            if (kind) props.updateManagement({ kind });
-          }}
-        />
-      </Form.Item>
-      {database.kind === 'h2' && (
-        <Alert
-          className={evidenceClass}
-          type="warning"
-          role="note"
-          showIcon
-          message={t('setup.configuration.management.h2Warning')}
-        />
-      )}
-      <Form.Item label={t('setup.configuration.management.jdbcUrl')} htmlFor="setup-management-jdbc-url" required>
-        <Input
-          id="setup-management-jdbc-url"
-          required
-          disabled={!editable}
-          value={database.jdbcUrl}
-          onChange={event => props.updateManagement({ jdbcUrl: event.target.value })}
-        />
-      </Form.Item>
+      <SetupManagementDatabaseFields database={database} editable={editable} update={props.updateManagement} />
       <CredentialFields
         idPrefix="setup-management"
         required
@@ -182,12 +150,6 @@ type CredentialProps = {
   password: string;
   update: (value: { username?: string; password?: string }) => void;
 };
-
-function databaseKindLabel(kind: MetadataDatabaseKind) {
-  if (kind === 'h2') return 'H2';
-  if (kind === 'mysql') return 'MySQL';
-  return 'PostgreSQL';
-}
 
 function SectionHeading({ id, title, description }: { id: string; title: string; description: string }) {
   return (

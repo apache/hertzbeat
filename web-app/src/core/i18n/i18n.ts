@@ -19,9 +19,10 @@ import i18next from 'i18next';
 
 import { readRuntimeLocale } from '@/core/runtime-preferences';
 
-import { isSupportedLocale, supportedLocales, type SupportedLocale } from './locale';
+import { resolveLocale, type SupportedLocale } from './locale';
 
 export type { SupportedLocale } from './locale';
+export { resolveLocale } from './locale';
 
 const localeLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
   'en-US': () => import('@/assets/i18n/en-us.json'),
@@ -50,12 +51,6 @@ const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Rec
 export const i18n = i18next.createInstance();
 let latestLocaleLoad = 0;
 let localePublication = Promise.resolve();
-
-export function resolveLocale(value?: string | null): SupportedLocale {
-  if (isSupportedLocale(value)) return value;
-  const language = value?.split('-')[0];
-  return supportedLocales.find(locale => locale.startsWith(`${language}-`)) ?? 'en-US';
-}
 
 export async function loadLocale(locale: SupportedLocale, options: { signal?: AbortSignal } = {}) {
   const owner = ++latestLocaleLoad;

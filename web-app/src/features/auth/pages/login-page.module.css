@@ -108,7 +108,7 @@
   border: 1px solid var(--hb-border-subtle);
   border-radius: var(--hb-radius-surface);
   background: var(--hb-bg-raised);
-  box-shadow: 0 18px 50px rgb(0 0 0 / 12%);
+  box-shadow: var(--hb-shadow-surface);
 }
 
 .brand {
@@ -149,7 +149,7 @@
 
 @media (min-width: 960px) {
   .page {
-    background-image: linear-gradient(rgb(13 15 20 / 86%), rgb(13 15 20 / 90%)), url('/assets/bg.png');
+    background-image: linear-gradient(var(--hb-bg-image-scrim), var(--hb-bg-image-scrim)), url('/assets/bg.png');
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
@@ -162,8 +162,8 @@
 
   :global(:root[data-theme='default']) .brandDescription,
   :global(:root[data-theme='default']) .introduction {
-    color: #fff;
-    text-shadow: 0 1px 10px rgb(72 25 52 / 26%);
+    color: var(--hb-text-on-image);
+    text-shadow: var(--hb-shadow-on-image);
   }
 
   :global(:root[data-theme='default']) .panel {

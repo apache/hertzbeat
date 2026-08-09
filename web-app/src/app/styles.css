@@ -29,6 +29,10 @@
   --hb-text-muted: #929aaa;
   --hb-text-disabled: #626a78;
   --hb-text-on-accent: #ffffff;
+  --hb-text-on-image: #ffffff;
+  --hb-bg-image-scrim: rgb(13 15 20 / 88%);
+  --hb-shadow-on-image: 0 1px 10px rgb(72 25 52 / 26%);
+  --hb-shadow-surface: 0 18px 50px rgb(0 0 0 / 12%);
   --hb-nav-text: #adb4c0;
   --hb-nav-selected: var(--hb-bg-selected);
   --hb-nav-hover: #181b22;
