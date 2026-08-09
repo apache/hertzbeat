@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /** Owns safe HTTP classification for setup failures. */
-@RestControllerAdvice(assignableTypes = SetupController.class)
+@RestControllerAdvice(assignableTypes = {SetupController.class, DeploymentController.class})
 public class SetupExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupExceptionHandler.class);
 

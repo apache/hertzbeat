@@ -19,17 +19,19 @@ package org.apache.hertzbeat.manager.setup.api;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Instant;
+import java.util.Locale;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportFormat;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
 
 /** Authenticated deployment configuration and H2 migration contract. */
@@ -42,6 +44,8 @@ public final class DeploymentApiContract {
             "/api/config/deployment/metadata-migrations/{operationId}";
     public static final String ACTIVATE_PATH =
             "/api/config/deployment/metadata-migrations/{operationId}/activate";
+    public static final String EXPORT_PATH =
+            "/api/config/deployment/metadata-migrations/{operationId}/export";
 
     private DeploymentApiContract() {
     }
@@ -49,25 +53,52 @@ public final class DeploymentApiContract {
     private interface WireValue {
 
         @JsonValue
-        String value();
+        default String value() {
+            return ((Enum<?>) this).name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    /** Whether maintenance mode currently protects migration writes. */
+    public enum MaintenanceMode implements WireValue {
+        INACTIVE,
+        ACTIVE
+    }
+
+    /** Deployment shape relevant to migration safety. */
+    public enum DeploymentTopology implements WireValue {
+        SINGLE_NODE,
+        MULTI_NODE,
+        UNKNOWN
+    }
+
+    /** Target schema inspection result supplied by a database-specific adapter. */
+    public enum TargetInspection implements WireValue {
+        EMPTY,
+        NON_EMPTY,
+        UNKNOWN
+    }
+
+    /** Migration-specific lifecycle; ready-to-activate is deliberately non-terminal. */
+    public enum MigrationOperationState implements WireValue {
+        PENDING,
+        RUNNING,
+        READY_TO_ACTIVATE,
+        AWAITING_EXTERNAL_APPLY,
+        AWAITING_RESTART,
+        SUCCEEDED,
+        FAILED,
+        ROLLED_BACK
     }
 
     /** Supported external metadata migration target. */
     public enum MigrationTarget implements WireValue {
-        MYSQL("mysql", MetadataDatabaseKind.MYSQL),
-        POSTGRESQL("postgresql", MetadataDatabaseKind.POSTGRESQL);
+        MYSQL(MetadataDatabaseKind.MYSQL),
+        POSTGRESQL(MetadataDatabaseKind.POSTGRESQL);
 
-        private final String value;
         private final MetadataDatabaseKind databaseKind;
 
-        MigrationTarget(String value, MetadataDatabaseKind databaseKind) {
-            this.value = value;
+        MigrationTarget(MetadataDatabaseKind databaseKind) {
             this.databaseKind = databaseKind;
-        }
-
-        @Override
-        public String value() {
-            return value;
         }
 
         MetadataDatabaseKind databaseKind() {
@@ -75,22 +106,42 @@ public final class DeploymentApiContract {
         }
     }
 
+    /** Operator-visible stage without table names, SQL, or verification evidence. */
+    public enum MigrationStage implements WireValue {
+        QUEUED,
+        COPYING,
+        VERIFYING,
+        READY_TO_ACTIVATE,
+        AWAITING_EXTERNAL_APPLY,
+        ACTIVATING,
+        AWAITING_RESTART,
+        COMPLETED,
+        ROLLING_BACK,
+        ROLLED_BACK,
+        FAILED
+    }
+
     /** Migration verification lifecycle. */
     public enum VerificationState implements WireValue {
-        PENDING("pending"),
-        RUNNING("running"),
-        SUCCEEDED("succeeded"),
-        FAILED("failed");
+        PENDING,
+        RUNNING,
+        SUCCEEDED,
+        FAILED
+    }
 
-        private final String value;
+    /** Explicit migration eligibility and safe blocker for the deployment screen. */
+    public record MigrationCapability(boolean allowed, SetupErrorCode blockedBy) {
 
-        VerificationState(String value) {
-            this.value = value;
+        public MigrationCapability {
+            MigrationContractValidator.validateCapability(allowed, blockedBy);
         }
 
-        @Override
-        public String value() {
-            return value;
+        public static MigrationCapability permitted() {
+            return new MigrationCapability(true, null);
+        }
+
+        public static MigrationCapability blocked(SetupErrorCode blocker) {
+            return new MigrationCapability(false, blocker);
         }
     }
 
@@ -98,10 +149,31 @@ public final class DeploymentApiContract {
     public record DeploymentView(
             @NotNull Instant observedAt,
             @NotNull @Valid ManagementDatabaseSummary managementDatabase,
-            @NotNull @Valid TelemetryStoreSummary telemetryStore,
+            @NotNull @Valid TelemetryStoreSummary greptimeDatabase,
             @NotNull ApplyMode applyMode,
-            boolean maintenanceMode,
-            boolean migrationAllowed) {
+            @NotNull MaintenanceMode maintenanceMode,
+            @NotNull DeploymentTopology topology,
+            @NotNull @Valid MigrationCapability migration) {
+
+        public DeploymentView {
+            MigrationContractValidator.validateDeployment(
+                    managementDatabase, maintenanceMode, topology, migration);
+        }
+    }
+
+    /** External target validation input, separate from first-install setup validation. */
+    public record MetadataMigrationValidationRequest(
+            @NotNull MigrationTarget target,
+            @NotNull @Valid MetadataDatabaseConfiguration targetDatabase) {
+
+        public MetadataMigrationValidationRequest {
+            MigrationContractValidator.validateTarget(target, targetDatabase);
+        }
+
+        @Override
+        public String toString() {
+            return "MetadataMigrationValidationRequest[target=" + target + ", targetDatabase=<redacted>]";
+        }
     }
 
     /** H2-to-external-database migration input. */
@@ -111,44 +183,64 @@ public final class DeploymentApiContract {
             @NotNull ApplyMode applyMode) {
 
         public MetadataMigrationRequest {
-            if (target == null || targetDatabase == null || target.databaseKind() != targetDatabase.kind()) {
-                throw new IllegalArgumentException("Migration target and target database kind must match");
+            MigrationContractValidator.validateTarget(target, targetDatabase);
+        }
+
+        @Override
+        public String toString() {
+            return "MetadataMigrationRequest[target=" + target + ", targetDatabase=<redacted>, applyMode="
+                    + applyMode + "]";
+        }
+    }
+
+    /** One-shot external-apply export input; target credentials are never retained by the operation. */
+    public record MigrationExportRequest(
+            @NotNull ExportFormat format,
+            @NotNull MigrationOperationState expectedState,
+            @NotNull @Valid MetadataDatabaseConfiguration targetDatabase) {
+
+        public MigrationExportRequest {
+            if (expectedState != MigrationOperationState.AWAITING_EXTERNAL_APPLY
+                    || targetDatabase == null || targetDatabase.kind() == MetadataDatabaseKind.H2) {
+                throw new IllegalArgumentException("Migration export requires an external target awaiting apply");
             }
+        }
+
+        @Override
+        public String toString() {
+            return "MigrationExportRequest[format=" + format + ", expectedState=" + expectedState
+                    + ", targetDatabase=<redacted>]";
         }
     }
 
     /** Safe migration operation view; table identities and verification details are intentionally absent. */
     public record MigrationView(
             @NotBlank String operationId,
-            @NotNull SetupOperationState state,
+            @NotNull MigrationOperationState state,
             @NotNull MetadataDatabaseKind source,
             @NotNull MigrationTarget target,
-            @NotNull SetupPhase phase,
+            @NotNull MigrationStage stage,
+            @Min(0) @Max(100) int progressPercent,
             @NotNull Instant createdAt,
             Instant startedAt,
             Instant completedAt,
-            @PositiveOrZero long tablesTotal,
-            @PositiveOrZero long tablesCopied,
             @NotNull VerificationState verificationState,
             SetupErrorCode errorCode,
+            @PositiveOrZero long nextPollAfterMillis,
             boolean activationAvailable,
+            boolean restartRequired,
             boolean externalApplyRequired) {
 
         public MigrationView {
-            if (source != MetadataDatabaseKind.H2) {
-                throw new IllegalArgumentException("Migration source must be H2");
-            }
-            if (phase != SetupPhase.MIGRATION_IN_PROGRESS) {
-                throw new IllegalArgumentException("Migration view must report migration in progress");
-            }
-            if (tablesTotal < 0 || tablesCopied < 0 || tablesCopied > tablesTotal) {
-                throw new IllegalArgumentException("Migration table counts are inconsistent");
-            }
+            MigrationContractValidator.validateMigration(operationId, source, target, state, stage, progressPercent,
+                    createdAt, startedAt, completedAt, verificationState, errorCode, nextPollAfterMillis,
+                    activationAvailable, restartRequired, externalApplyRequired);
         }
     }
 
     /** Explicit migration activation input. */
     public record ActivateMigrationRequest(
-            @NotNull SetupOperationState expectedState) {
+            @NotNull MigrationOperationState expectedState) {
     }
+
 }

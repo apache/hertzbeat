@@ -18,18 +18,32 @@
 package org.apache.hertzbeat.manager.setup.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.RecordComponent;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentTopology;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationTarget;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.VerificationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
 import org.junit.jupiter.api.Test;
 
 /** Freezes authenticated deployment and H2 migration contracts. */
@@ -46,19 +60,71 @@ class DeploymentApiContractTest {
                 DeploymentApiContract.MIGRATION_OPERATION_PATH);
         assertEquals("/api/config/deployment/metadata-migrations/{operationId}/activate",
                 DeploymentApiContract.ACTIVATE_PATH);
+        assertEquals("/api/config/deployment/metadata-migrations/{operationId}/export",
+                DeploymentApiContract.EXPORT_PATH);
         assertComponents(DeploymentApiContract.DeploymentView.class, "observedAt", "managementDatabase",
-                "telemetryStore", "applyMode", "maintenanceMode", "migrationAllowed");
+                "greptimeDatabase", "applyMode", "maintenanceMode", "topology", "migration");
+        assertComponents(DeploymentApiContract.MigrationCapability.class, "allowed", "blockedBy");
+        assertComponents(DeploymentApiContract.MetadataMigrationValidationRequest.class,
+                "target", "targetDatabase");
         assertComponents(DeploymentApiContract.MetadataMigrationRequest.class, "target", "targetDatabase", "applyMode");
         assertComponents(DeploymentApiContract.MigrationView.class, "operationId", "state", "source", "target",
-                "phase", "createdAt", "startedAt", "completedAt", "tablesTotal", "tablesCopied",
-                "verificationState", "errorCode", "activationAvailable", "externalApplyRequired");
+                "stage", "progressPercent", "createdAt", "startedAt", "completedAt", "verificationState",
+                "errorCode", "nextPollAfterMillis", "activationAvailable", "restartRequired",
+                "externalApplyRequired");
         assertComponents(DeploymentApiContract.ActivateMigrationRequest.class, "expectedState");
+        assertComponents(DeploymentApiContract.MigrationExportRequest.class,
+                "format", "expectedState", "targetDatabase");
+        assertWireValues(MaintenanceMode.values(), "inactive", "active");
+        assertWireValues(DeploymentTopology.values(), "single_node", "multi_node", "unknown");
         assertWireValues(MigrationTarget.values(), "mysql", "postgresql");
+        assertWireValues(MigrationStage.values(), "queued", "copying", "verifying", "ready_to_activate",
+                "awaiting_external_apply", "activating", "awaiting_restart", "completed", "rolling_back",
+                "rolled_back", "failed");
         assertWireValues(VerificationState.values(), "pending", "running", "succeeded", "failed");
+        assertWireValues(MigrationOperationState.values(), "pending", "running", "ready_to_activate",
+                "awaiting_external_apply", "awaiting_restart", "succeeded", "failed", "rolled_back");
         assertEquals(DeploymentApiContract.MigrationView.class,
                 DeploymentWorkflow.class.getMethod(
                         "activate", String.class, DeploymentApiContract.ActivateMigrationRequest.class)
                         .getReturnType());
+        assertEquals(SetupApiContract.ValidationResponse.class,
+                DeploymentWorkflow.class.getMethod(
+                        "validate", DeploymentApiContract.MetadataMigrationValidationRequest.class)
+                        .getReturnType());
+    }
+
+    @Test
+    void deploymentViewExplainsMigrationAvailabilityWithoutConnectionDetails() throws Exception {
+        DeploymentApiContract.DeploymentView view = new DeploymentApiContract.DeploymentView(
+                Instant.parse("2026-08-09T00:00:00Z"),
+                new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
+                new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
+                ApplyMode.MANAGED_WRITE, MaintenanceMode.ACTIVE, DeploymentTopology.SINGLE_NODE,
+                MigrationCapability.permitted());
+
+        assertTrue(view.migration().allowed());
+        assertNull(view.migration().blockedBy());
+        String json = objectMapper.writeValueAsString(view);
+        assertFalse(json.contains("jdbc:"));
+        assertFalse(json.contains("password"));
+        assertFalse(json.contains("table"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new MigrationCapability(false, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new MigrationCapability(true, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED));
+        assertDeploymentRejected(MetadataDatabaseKind.MYSQL, DeploymentTopology.SINGLE_NODE,
+                MigrationCapability.permitted());
+        assertDeploymentRejected(MetadataDatabaseKind.H2, DeploymentTopology.MULTI_NODE,
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE));
+        assertDeploymentRejected(MetadataDatabaseKind.H2, DeploymentTopology.UNKNOWN,
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED));
+        assertThrows(IllegalArgumentException.class,
+                () -> MigrationCapability.blocked(SetupErrorCode.CONFIG_READ_ONLY));
+        assertDeploymentRejected(MetadataDatabaseKind.H2, MaintenanceMode.INACTIVE,
+                DeploymentTopology.SINGLE_NODE, MigrationCapability.permitted());
+        assertDoesNotThrow(() -> deployment(MaintenanceMode.INACTIVE,
+                MigrationCapability.blocked(SetupErrorCode.MIGRATION_MAINTENANCE_REQUIRED)));
     }
 
     @Test
@@ -86,6 +152,127 @@ class DeploymentApiContractTest {
                 MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE);
         assertFalse(objectMapper.writeValueAsString(request).contains(secret));
         assertFalse(request.toString().contains(secret));
+        DeploymentApiContract.MigrationExportRequest export = new DeploymentApiContract.MigrationExportRequest(
+                SetupApiContract.ExportFormat.ENV, MigrationOperationState.AWAITING_EXTERNAL_APPLY, mysql);
+        assertFalse(objectMapper.writeValueAsString(export).contains(secret));
+        assertFalse(export.toString().contains(secret));
+    }
+
+    @Test
+    void migrationViewMakesPollingAndActivationTransitionsExplicit() {
+        DeploymentApiContract.MigrationView ready = migrationView(
+                MigrationOperationState.READY_TO_ACTIVATE, MigrationStage.READY_TO_ACTIVATE, 100,
+                VerificationState.SUCCEEDED, null, 0, true, false, false, null);
+        assertTrue(ready.activationAvailable());
+        DeploymentApiContract.MigrationView external = migrationView(
+                MigrationOperationState.AWAITING_EXTERNAL_APPLY, MigrationStage.AWAITING_EXTERNAL_APPLY, 100,
+                VerificationState.SUCCEEDED, null, 0, false, false, true, null);
+        assertFalse(external.activationAvailable());
+        assertTrue(external.externalApplyRequired());
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.READY_TO_ACTIVATE, MigrationStage.READY_TO_ACTIVATE, 50,
+                VerificationState.PENDING, null, 0, true, false, false, null));
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.READY_TO_ACTIVATE, MigrationStage.COPYING, 100,
+                VerificationState.SUCCEEDED, null, 0, true, false, false, null));
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.SUCCEEDED, MigrationStage.COMPLETED, 100,
+                VerificationState.SUCCEEDED, Instant.parse("2026-08-08T23:59:59Z"), 0,
+                false, false, false, null));
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.SUCCEEDED, MigrationStage.COMPLETED, 100,
+                VerificationState.SUCCEEDED, Instant.parse("2026-08-09T00:02:00Z"), 500,
+                false, false, false, null));
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.RUNNING, MigrationStage.COPYING, 45,
+                VerificationState.PENDING, null, 500, false, false, false,
+                SetupErrorCode.MIGRATION_COPY_FAILED));
+        assertThrows(IllegalArgumentException.class, () -> migrationView(
+                MigrationOperationState.FAILED, MigrationStage.FAILED, 45,
+                VerificationState.FAILED, null, 0, false, false, false,
+                SetupErrorCode.MIGRATION_COPY_FAILED));
+        assertEquals(SetupErrorCode.MIGRATION_COPY_FAILED, migrationView(
+                MigrationOperationState.FAILED, MigrationStage.FAILED, 45,
+                VerificationState.PENDING, Instant.parse("2026-08-09T00:02:00Z"), 0,
+                false, false, false, SetupErrorCode.MIGRATION_COPY_FAILED).errorCode());
+        assertEquals(VerificationState.FAILED, failedView(
+                SetupErrorCode.MIGRATION_VERIFICATION_FAILED, VerificationState.FAILED, 100).verificationState());
+        assertEquals(VerificationState.SUCCEEDED, failedView(
+                SetupErrorCode.MIGRATION_ACTIVATION_FAILED, VerificationState.SUCCEEDED, 100).verificationState());
+        assertEquals(VerificationState.SUCCEEDED, failedView(
+                SetupErrorCode.RESTART_FAILED, VerificationState.SUCCEEDED, 100).verificationState());
+        assertThrows(IllegalArgumentException.class, () -> failedView(
+                SetupErrorCode.MIGRATION_COPY_FAILED, VerificationState.FAILED, 45));
+        assertThrows(IllegalArgumentException.class, () -> failedView(
+                SetupErrorCode.MIGRATION_VERIFICATION_FAILED, VerificationState.SUCCEEDED, 100));
+        assertThrows(IllegalArgumentException.class, () -> failedView(
+                SetupErrorCode.MIGRATION_COPY_FAILED, VerificationState.PENDING, 100));
+        assertThrows(IllegalArgumentException.class, () -> failedView(
+                SetupErrorCode.MIGRATION_VERIFICATION_FAILED, VerificationState.FAILED, 99));
+        assertEquals(VerificationState.PENDING, rolledBackView(
+                SetupErrorCode.MIGRATION_COPY_FAILED, VerificationState.PENDING, 99).verificationState());
+        assertEquals(VerificationState.SUCCEEDED, rolledBackView(
+                SetupErrorCode.RESTART_FAILED, VerificationState.SUCCEEDED, 100).verificationState());
+        assertThrows(IllegalArgumentException.class, () -> rolledBackView(
+                SetupErrorCode.MIGRATION_COPY_FAILED, VerificationState.FAILED, 45));
+        assertThrows(IllegalArgumentException.class, () -> rolledBackView(
+                SetupErrorCode.MIGRATION_ACTIVATION_FAILED, VerificationState.SUCCEEDED, 99));
+        assertThrows(IllegalArgumentException.class, () -> migrationViewWithIdentity(" ", MigrationTarget.MYSQL));
+        assertThrows(IllegalArgumentException.class, () -> migrationViewWithIdentity("migration-1", null));
+    }
+
+    private DeploymentApiContract.MigrationView migrationView(
+            MigrationOperationState state, MigrationStage stage, int progress,
+            VerificationState verification, Instant completedAt, long nextPollAfterMillis,
+            boolean activationAvailable,
+            boolean restartRequired, boolean externalApplyRequired, SetupErrorCode errorCode) {
+        return new DeploymentApiContract.MigrationView("migration-1", state, MetadataDatabaseKind.H2,
+                MigrationTarget.MYSQL, stage, progress, Instant.parse("2026-08-09T00:00:00Z"),
+                Instant.parse("2026-08-09T00:00:01Z"), completedAt, verification, errorCode, nextPollAfterMillis,
+                activationAvailable, restartRequired, externalApplyRequired);
+    }
+
+    private DeploymentApiContract.MigrationView failedView(
+            SetupErrorCode errorCode, VerificationState verification, int progress) {
+        return migrationView(MigrationOperationState.FAILED, MigrationStage.FAILED, progress, verification,
+                Instant.parse("2026-08-09T00:02:00Z"), 0, false, false, false, errorCode);
+    }
+
+    private DeploymentApiContract.MigrationView rolledBackView(
+            SetupErrorCode errorCode, VerificationState verification, int progress) {
+        return migrationView(MigrationOperationState.ROLLED_BACK, MigrationStage.ROLLED_BACK, progress, verification,
+                Instant.parse("2026-08-09T00:02:00Z"), 0, false, false, false, errorCode);
+    }
+
+    private DeploymentApiContract.MigrationView migrationViewWithIdentity(
+            String operationId, MigrationTarget target) {
+        return new DeploymentApiContract.MigrationView(operationId, MigrationOperationState.READY_TO_ACTIVATE,
+                MetadataDatabaseKind.H2, target, MigrationStage.READY_TO_ACTIVATE, 100,
+                Instant.parse("2026-08-09T00:00:00Z"), Instant.parse("2026-08-09T00:00:01Z"), null,
+                VerificationState.SUCCEEDED, null, 0, true, false, false);
+    }
+
+    private void assertDeploymentRejected(
+            MetadataDatabaseKind kind, DeploymentTopology topology, MigrationCapability capability) {
+        assertDeploymentRejected(kind, MaintenanceMode.INACTIVE, topology, capability);
+    }
+
+    private void assertDeploymentRejected(
+            MetadataDatabaseKind kind, MaintenanceMode maintenance,
+            DeploymentTopology topology, MigrationCapability capability) {
+        assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.DeploymentView(
+                Instant.parse("2026-08-09T00:00:00Z"),
+                new ManagementDatabaseSummary(kind, true, ConfigSource.UI_MANAGED, false),
+                new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
+                ApplyMode.EXTERNAL_APPLY, maintenance, topology, capability));
+    }
+
+    private DeploymentApiContract.DeploymentView deployment(
+            MaintenanceMode maintenance, MigrationCapability capability) {
+        return new DeploymentApiContract.DeploymentView(Instant.parse("2026-08-09T00:00:00Z"),
+                new ManagementDatabaseSummary(MetadataDatabaseKind.H2, true, ConfigSource.UI_MANAGED, false),
+                new TelemetryStoreSummary(TelemetryStoreKind.GREPTIME, true, ConfigSource.UI_MANAGED, false),
+                ApplyMode.MANAGED_WRITE, maintenance, DeploymentTopology.SINGLE_NODE, capability);
     }
 
     private void assertComponents(Class<? extends Record> type, String... names) {

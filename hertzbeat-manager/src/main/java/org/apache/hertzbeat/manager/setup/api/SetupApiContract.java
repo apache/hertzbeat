@@ -254,8 +254,12 @@ public final class SetupApiContract {
         MIGRATION_SOURCE_UNSUPPORTED("migration_source_unsupported"),
         MIGRATION_TARGET_NOT_EMPTY("migration_target_not_empty"),
         MIGRATION_MULTI_NODE_UNSUPPORTED("migration_multi_node_unsupported"),
+        MIGRATION_TOPOLOGY_UNAVAILABLE("migration_topology_unavailable"),
+        MIGRATION_MAINTENANCE_REQUIRED("migration_maintenance_required"),
+        MIGRATION_UNAVAILABLE("migration_unavailable"),
         MIGRATION_COPY_FAILED("migration_copy_failed"),
         MIGRATION_VERIFICATION_FAILED("migration_verification_failed"),
+        MIGRATION_ACTIVATION_NOT_AVAILABLE("migration_activation_not_available"),
         MIGRATION_ACTIVATION_FAILED("migration_activation_failed"),
         RESTART_FAILED("restart_failed");
 

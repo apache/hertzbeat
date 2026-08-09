@@ -20,8 +20,10 @@ package org.apache.hertzbeat.manager.setup.api;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.ActivateMigrationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationRequest;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationValidationRequest;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExportRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationView;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
 
 /** Authenticated deployment boundary implemented by a later migration engine milestone. */
@@ -29,11 +31,13 @@ public interface DeploymentWorkflow {
 
     DeploymentView deployment();
 
-    ValidationResponse validate(ValidateRequest request);
+    ValidationResponse validate(MetadataMigrationValidationRequest request);
 
     MigrationView migrate(MetadataMigrationRequest request);
 
     MigrationView migration(String operationId);
 
     MigrationView activate(String operationId, ActivateMigrationRequest request);
+
+    ExportResponse prepareExport(String operationId, MigrationExportRequest request);
 }
