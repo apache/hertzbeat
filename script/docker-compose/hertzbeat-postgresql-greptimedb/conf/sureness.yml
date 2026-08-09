@@ -96,6 +96,8 @@ resourceRole:
   - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/logs/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
