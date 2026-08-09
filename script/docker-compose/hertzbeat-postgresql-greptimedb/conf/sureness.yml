@@ -16,12 +16,18 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  # the define yml routes persist the global collection templates
+  # post can only add a new type, put overwrites an existing one and immediately
+  # redispatches its collect job to every monitor already using it - hence admin only
+  - /api/apps/**===post===[admin,user]
+  - /api/apps/**===put===[admin]
+  - /api/apps/**===delete===[admin]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
@@ -96,9 +102,11 @@ resourceRole:
   - /v3/api-docs.yaml===get===[admin]
   - /v2/api-docs/**===get===[admin]
   - /swagger-resources/**===get===[admin]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*
