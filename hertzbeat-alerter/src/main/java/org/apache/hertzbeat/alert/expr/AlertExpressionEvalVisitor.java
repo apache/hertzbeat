@@ -19,10 +19,7 @@ package org.apache.hertzbeat.alert.expr;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.common.support.exception.ExpressionVisitorException;
-import org.apache.hertzbeat.common.support.valid.SqlSecurityException;
-import org.apache.hertzbeat.common.support.valid.SqlSecurityValidator;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 import java.util.ArrayList;
@@ -43,11 +40,10 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     private static final String TIMESTAMP = "__timestamp__";
 
     /**
-     * Metric tables are created on demand, one per metric, so there is no table list to
-     * whitelist against here; what this enforces is that a statement can only read.
+     * Every statement this visitor evaluates goes to this executor, so whether a statement is
+     * allowed to run is decided there rather than at each visit method, see
+     * {@code DataSourceServiceImpl}.
      */
-    private static final SqlSecurityValidator SQL_VALIDATOR = SqlSecurityValidator.selectOnly();
-
     private final QueryExecutor executor;
     private final CommonTokenStream tokens;
 
@@ -263,12 +259,12 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     @Override
     public List<Map<String, Object>> visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
         String rawSql = tokens.getText(ctx.selectSql());
-        return executor.execute(validateSql(rawSql));
+        return executor.execute(rawSql);
     }
 
     @Override
     public List<Map<String, Object>> visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) {
-        return executor.execute(validateSql(unquote(tokens.getText(ctx.string()))));
+        return executor.execute(unquote(tokens.getText(ctx.string())));
     }
 
     @Override
@@ -278,34 +274,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
 
     private String unquote(String text) {
         return text.substring(1, text.length() - 1);
-    }
-
-    /**
-     * Every statement that reaches the query executor from an alert expression passes
-     * through here.
-     *
-     * <p>The {@code sql("...")} spelling carries an arbitrary string, and the executor runs
-     * it with the server side database credentials, so without this check an expression
-     * could drop or rewrite a table. Validating where the statement reaches the executor
-     * covers both spellings, and covers the preview endpoint and the periodic evaluation
-     * loop alike, rather than relying on each caller to remember.
-     *
-     * <p>The policy is read only, nothing narrower: which tables an expression may read is
-     * not constrained here because metric tables are created per metric on demand.
-     * @param sql statement about to be executed
-     * @return the same statement, once it is known to be a plain read
-     * @throws AlertExpressionException if the statement is not a plain read
-     */
-    private String validateSql(String sql) {
-        try {
-            SQL_VALIDATOR.validate(sql);
-        } catch (SqlSecurityException e) {
-            // AlertExpressionException rather than ExpressionVisitorException: it is the type
-            // DataSourceServiceImpl.calculate rethrows untouched, so the author of the rule sees
-            // which part of the policy the statement broke instead of a generic failure
-            throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
-        }
-        return sql;
     }
 
     /**

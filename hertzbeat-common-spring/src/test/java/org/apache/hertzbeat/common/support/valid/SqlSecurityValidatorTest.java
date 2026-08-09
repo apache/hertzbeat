@@ -305,4 +305,85 @@ class SqlSecurityValidatorTest {
             "SELECT value FROM cpu WHERE host = (SELECT host FROM hosts LIMIT 1)"));
         assertDoesNotThrow(() -> selectOnly.validate("SELECT a FROM t1 UNION ALL SELECT b FROM t2"));
     }
+
+    /**
+     * The only sql executor today talks to GreptimeDB, whose range query syntax JSqlParser
+     * cannot parse. These are ordinary reads and used to run, so read only mode has to keep
+     * accepting them rather than turn a richer dialect into a rule that no longer fires.
+     */
+    @Test
+    void testSelectOnlyAcceptsDialectTheParserDoesNotUnderstand() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate(
+            "SELECT ts, avg(value) RANGE '10s' FROM cpu ALIGN '5s' FILL LINEAR"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu ALIGN '5s'"));
+    }
+
+    /**
+     * Accepting what the parser cannot read must not become a way through: the statement
+     * count and the leading keyword are established without the parser, so they still hold
+     * for a string it never understood.
+     */
+    @Test
+    void testUnparsableStatementMustStillBeOneRead() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "SELECT avg(value) RANGE '10s' FROM cpu ALIGN '5s'; DROP TABLE cpu"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("DROP TABLE cpu ALIGN '5s'"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("TQL EVAL (0, 10, '5s') sum(cpu)"));
+    }
+
+    /**
+     * A semicolon that is data or commentary is not a statement separator, and a statement
+     * scan that cannot tell the difference would reject ordinary queries.
+     */
+    @Test
+    void testSemicolonInsideLiteralOrCommentDoesNotSplitTheStatement() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'a; DROP TABLE cpu'"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'it''s; fine'"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu -- ; DROP TABLE cpu"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT * FROM cpu /* ; DROP TABLE cpu */ LIMIT 1"));
+        assertDoesNotThrow(() -> selectOnly.validate("SELECT value FROM \"cpu;usage\""));
+    }
+
+    @Test
+    void testUnclosedLiteralOrCommentIsRejected() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu WHERE msg = 'open"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate("SELECT * FROM cpu /* open"));
+    }
+
+    /**
+     * `SELECT ... INTO` parses as a select but writes a table in the dialects that support it.
+     */
+    @Test
+    void testSelectOnlyRejectsSelectInto() {
+        assertThrows(SqlSecurityException.class, () -> SqlSecurityValidator.selectOnly()
+            .validate("SELECT * INTO backup FROM cpu"));
+    }
+
+    /**
+     * A `WITH` statement can be a select or a data modifying cte, which the statement scan
+     * cannot tell apart, so it passes only when the parser proves it reads.
+     */
+    @Test
+    void testSelectOnlyAcceptsCteOnlyWhenTheParserProvesItReads() {
+        SqlSecurityValidator selectOnly = SqlSecurityValidator.selectOnly();
+        assertDoesNotThrow(() -> selectOnly.validate("WITH x AS (SELECT 1 AS v) SELECT * FROM x"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "WITH x AS (SELECT id FROM t) DELETE FROM cpu WHERE id IN (SELECT id FROM x)"));
+        assertThrows(SqlSecurityException.class, () -> selectOnly.validate(
+            "WITH x AS (SELECT avg(v) RANGE '10s' FROM cpu ALIGN '5s') SELECT * FROM x"));
+    }
+
+    /**
+     * The whitelisting mode needs the parse tree to enumerate table names, so unlike read
+     * only mode it has nothing to fall back on and keeps rejecting what it cannot parse.
+     */
+    @Test
+    void testWhitelistModeStillRejectsWhatItCannotParse() {
+        assertThrows(SqlSecurityException.class, () -> validator.validate(
+            "SELECT avg(value) RANGE '10s' FROM hertzbeat_logs ALIGN '5s'"));
+    }
 }
