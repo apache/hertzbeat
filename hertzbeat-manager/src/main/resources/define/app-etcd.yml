@@ -1,0 +1,328 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
+category: mid
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: etcd
+# The monitoring i18n name
+name:
+  zh-CN: etcd
+  en-US: etcd
+  ja-JP: etcd
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 通过调用 <a href='https://etcd.io/docs/latest/metrics/' class='help_module_content'>etcd Prometheus Metrics 接口</a>（默认在客户端端口 <i>2379</i> 的 <i>/metrics</i> 路径）对 etcd 键值存储（3.4+）的领导者状态、数据库大小、进程资源等指标进行采集监控。<br>您可以点击“<i>新建 etcd</i>”并配置 HOST 端口等相关参数进行添加。<br><span class='help_module_span'>⚠️注意：请确保 HertzBeat 能访问 etcd 的 /metrics 接口。该接口默认由 client listener 提供；若 etcd 仅监听 localhost 或客户端启用了双向 TLS，请通过 --listen-metrics-urls 配置独立的 metrics 地址。</span>
+  en-US: HertzBeat monitors the etcd key-value store's (3.4+) leader status, database size and process resource usage by calling the <a href='https://etcd.io/docs/latest/metrics/' class='help_module_content'>etcd Prometheus Metrics endpoint</a> (default at the <i>/metrics</i> path on the client port <i>2379</i>).<br>You can click "<i>New etcd</i>" and configure the host, port and other related params to add it.<br><span class='help_module_span'>Note - make sure HertzBeat can reach etcd's /metrics endpoint. It is served on the client listener by default; if etcd only listens on localhost or client mutual TLS is enabled, configure a dedicated metrics address via --listen-metrics-urls.</span>
+  zh-TW: HertzBeat 透過調用 <a href='https://etcd.io/docs/latest/metrics/' class='help_module_content'>etcd Prometheus Metrics 介面</a>（預設在客戶端連接埠 <i>2379</i> 的 <i>/metrics</i> 路徑）對 etcd 鍵值儲存（3.4+）的領導者狀態、資料庫大小、程序資源等指標進行採集監控。<br>您可以點擊“<i>新建 etcd</i>”並配置 HOST 連接埠等相關參數進行添加。<br><span class='help_module_span'>⚠️注意：請確保 HertzBeat 能訪問 etcd 的 /metrics 介面。該介面預設由 client listener 提供；若 etcd 僅監聽 localhost 或客戶端啟用了雙向 TLS，請透過 --listen-metrics-urls 配置獨立的 metrics 地址。</span>
+  ja-JP: HertzBeat は etcd（3.4+）が公開する <a href='https://etcd.io/docs/latest/metrics/' class='help_module_content'>Prometheus metrics エンドポイント</a>（デフォルトではクライアントポート <i>2379</i> の <i>/metrics</i> パス）から、リーダー状態・データベースサイズ・プロセスリソース等の指標を収集し、etcd キーバリューストアを監視します。<br>「<i>新規 etcd</i>」をクリックしてホストやポートなどのパラメータを設定して追加できます。<br><span class='help_module_span'>⚠️注意：HertzBeat が etcd の /metrics エンドポイントへ到達できることを確認してください。デフォルトでは client listener が提供しますが、etcd が localhost のみを監視している場合やクライアント相互 TLS が有効な場合は、--listen-metrics-urls で専用の metrics アドレスを設定してください。</span>
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/etcd/
+  en-US: https://hertzbeat.apache.org/docs/help/etcd/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # default value: etcd client port that serves /metrics
+    defaultValue: 2379
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+      ja-JP: クエリタイムアウト
+    type: number
+    required: false
+    # hide param-true or false
+    hide: true
+    defaultValue: 6000
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+      ja-JP: HTTPS
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    hide: true
+    # field-param field key
+  - field: headers
+    # name-param field display i18n name
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+      ja-JP: ヘッダ
+    # type-param field type(most mapping the html input type)
+    type: key-value
+    # required-true or false
+    required: false
+    hide: true
+    # when type is key-value, use keyAlias to config key alias name
+    keyAlias: Header Name
+    # when type is key-value, use valueAlias to config value alias name
+    valueAlias: Header Value
+    # field-param field key
+  - field: authType
+    # name-param field display i18n name
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+      ja-JP: 認証方法
+    # type-param field type(most mapping the html input type)
+    type: radio
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+    # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
+# each metrics group name must exactly match a Prometheus metric family name exposed by etcd /metrics
+metrics:
+  # metrics - etcd_server_has_leader (availability: whether this etcd member has a raft leader)
+  - name: etcd_server_has_leader
+    i18n:
+      zh-CN: 领导者状态
+      en-US: Leader Status
+      ja-JP: リーダー状態
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    fields:
+      - field: hasLeader
+        type: 0
+        i18n:
+          zh-CN: 是否存在领导者(1有0无)
+          en-US: Has Leader(1=yes 0=no)
+          ja-JP: リーダー有無(1=有 0=無)
+    aliasFields:
+      - value
+    calculates:
+      - hasLeader=value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /metrics
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^
+      method: GET
+      headers:
+        ^_^headers^_^: ^_^headers^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: prometheus
+  # metrics - etcd_mvcc_db_total_size_in_bytes
+  - name: etcd_mvcc_db_total_size_in_bytes
+    i18n:
+      zh-CN: 数据库大小
+      en-US: Database Size
+      ja-JP: データベースサイズ
+    priority: 1
+    fields:
+      - field: dbSize
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 物理分配的数据库大小
+          en-US: Physically Allocated DB Size
+          ja-JP: 物理割当済みDBサイズ
+    aliasFields:
+      - value
+    calculates:
+      - dbSize=value
+    units:
+      - dbSize=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /metrics
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^
+      method: GET
+      headers:
+        ^_^headers^_^: ^_^headers^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: prometheus
+  # metrics - etcd_server_leader_changes_seen_total
+  - name: etcd_server_leader_changes_seen_total
+    i18n:
+      zh-CN: 领导者变更次数
+      en-US: Leader Changes
+      ja-JP: リーダー変更回数
+    priority: 1
+    fields:
+      - field: leaderChanges
+        type: 0
+        i18n:
+          zh-CN: 已观测到的领导者变更总次数
+          en-US: Total Leader Changes Seen
+          ja-JP: 観測されたリーダー変更総数
+    aliasFields:
+      - value
+    calculates:
+      - leaderChanges=value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /metrics
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^
+      method: GET
+      headers:
+        ^_^headers^_^: ^_^headers^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: prometheus
+  # metrics - process_cpu_seconds_total (standard Go/Prometheus client process collector, always present)
+  - name: process_cpu_seconds_total
+    i18n:
+      zh-CN: 进程CPU时间
+      en-US: Process CPU Time
+      ja-JP: プロセスCPU時間
+    priority: 1
+    fields:
+      - field: cpuSeconds
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 累计用户与系统CPU时间
+          en-US: Total User+System CPU Time
+          ja-JP: 累計ユーザー+システムCPU時間
+    aliasFields:
+      - value
+    calculates:
+      - cpuSeconds=value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /metrics
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^
+      method: GET
+      headers:
+        ^_^headers^_^: ^_^headers^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: prometheus
+  # metrics - process_resident_memory_bytes
+  - name: process_resident_memory_bytes
+    i18n:
+      zh-CN: 进程内存占用
+      en-US: Process Resident Memory
+      ja-JP: プロセス常駐メモリ
+    priority: 1
+    fields:
+      - field: memory
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 常驻内存大小
+          en-US: Resident Memory Size
+          ja-JP: 常駐メモリサイズ
+    aliasFields:
+      - value
+    calculates:
+      - memory=value
+    units:
+      - memory=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /metrics
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^
+      method: GET
+      headers:
+        ^_^headers^_^: ^_^headers^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: prometheus
