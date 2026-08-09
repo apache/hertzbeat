@@ -62,13 +62,22 @@ final class TargetSchemaContract {
     }
 
     boolean matches(Connection connection, Set<String> baselineTables) throws SQLException {
-        return JdbcTargetSchemaState.capture(connection, kind, baselineTables).equals(readRecordedState(connection));
+        return matches(connection, baselineTables, 0);
     }
 
-    private JdbcTargetSchemaState.SchemaState readRecordedState(Connection connection) throws SQLException {
+    boolean matches(Connection connection, Set<String> baselineTables, int queryTimeoutSeconds) throws SQLException {
+        return JdbcTargetSchemaState.capture(connection, kind, baselineTables, queryTimeoutSeconds)
+                .equals(readRecordedState(connection, queryTimeoutSeconds));
+    }
+
+    private JdbcTargetSchemaState.SchemaState readRecordedState(
+            Connection connection, int queryTimeoutSeconds) throws SQLException {
         Map<String, Integer> facts = new TreeMap<>();
         String select = "SELECT database_kind, definition, occurrences FROM " + TABLE;
         try (PreparedStatement statement = connection.prepareStatement(select)) {
+            if (queryTimeoutSeconds > 0) {
+                statement.setQueryTimeout(queryTimeoutSeconds);
+            }
             try (ResultSet rows = statement.executeQuery()) {
                 while (rows.next()) {
                     if (!kind.name().equals(rows.getString("database_kind"))) {

@@ -39,28 +39,39 @@ final class FlywaySchemaHistory {
     }
 
     boolean isCurrent(Connection connection, TargetSchemaBaseline baseline) throws SQLException {
+        return isCurrent(connection, baseline, 0);
+    }
+
+    boolean isCurrent(
+            Connection connection, TargetSchemaBaseline baseline, int queryTimeoutSeconds) throws SQLException {
         Set<String> currentTables = currentBaselineTables(connection);
         if (!currentTables.contains(TABLE)) {
             return false;
         }
         String sql = "SELECT installed_rank, version, type, script, checksum, success FROM " + TABLE;
-        try (Statement statement = connection.createStatement(); ResultSet result = statement.executeQuery(sql)) {
-            if (!result.next()) {
-                throw unexpectedTargetState();
+        try (Statement statement = connection.createStatement()) {
+            if (queryTimeoutSeconds > 0) {
+                statement.setQueryTimeout(queryTimeoutSeconds);
             }
-            boolean current = result.getInt("installed_rank") == 1
-                    && TargetSchemaBaseline.VERSION.equals(result.getString("version"))
-                    && TargetSchemaBaseline.TYPE.equals(result.getString("type"))
-                    && TargetSchemaBaseline.SCRIPT.equals(result.getString("script"))
-                    && baseline.checksum() == result.getInt("checksum")
-                    && !result.wasNull()
-                    && result.getBoolean("success");
-            if (!current || result.next() || !currentTables.contains(TargetSchemaContract.TABLE)
-                    || !currentTables.containsAll(baseline.expectedTables())
-                    || !new TargetSchemaContract(kind).matches(connection, baseline.expectedTables())) {
-                throw unexpectedTargetState();
+            try (ResultSet result = statement.executeQuery(sql)) {
+                if (!result.next()) {
+                    throw unexpectedTargetState();
+                }
+                boolean current = result.getInt("installed_rank") == 1
+                        && TargetSchemaBaseline.VERSION.equals(result.getString("version"))
+                        && TargetSchemaBaseline.TYPE.equals(result.getString("type"))
+                        && TargetSchemaBaseline.SCRIPT.equals(result.getString("script"))
+                        && baseline.checksum() == result.getInt("checksum")
+                        && !result.wasNull()
+                        && result.getBoolean("success");
+                if (!current || result.next() || !currentTables.contains(TargetSchemaContract.TABLE)
+                        || !currentTables.containsAll(baseline.expectedTables())
+                        || !new TargetSchemaContract(kind)
+                                .matches(connection, baseline.expectedTables(), queryTimeoutSeconds)) {
+                    throw unexpectedTargetState();
+                }
+                return true;
             }
-            return true;
         }
     }
 

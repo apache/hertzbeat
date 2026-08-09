@@ -22,7 +22,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -39,40 +41,61 @@ final class JdbcTargetSchemaState {
             Connection connection,
             MetadataDatabaseKind kind,
             Set<String> baselineTables) throws SQLException {
+        return capture(connection, kind, baselineTables, 0);
+    }
+
+    static SchemaState capture(
+            Connection connection,
+            MetadataDatabaseKind kind,
+            Set<String> baselineTables,
+            int queryTimeoutSeconds) throws SQLException {
         DatabaseMetaData metadata = connection.getMetaData();
         String catalog = connection.getCatalog();
         String schema = kind == MetadataDatabaseKind.POSTGRESQL ? connection.getSchema() : null;
         FactCollector facts = new FactCollector();
         for (String table : baselineTables.stream().sorted().toList()) {
             facts.add("table", table);
-            readColumns(metadata, catalog, schema, table, kind, facts);
+            List<String> identities = readColumns(metadata, catalog, schema, table, kind, facts);
+            JdbcTargetSchemaObjectState.captureIdentityOwnership(
+                    connection, kind, table, identities, queryTimeoutSeconds, facts::add);
             readPrimaryKey(metadata, catalog, schema, table, facts);
             readIndexes(metadata, catalog, schema, table, facts);
             readForeignKeys(metadata, catalog, schema, table, facts);
         }
+        JdbcTargetSchemaObjectState.capture(
+                connection, kind, baselineTables, queryTimeoutSeconds, facts::add);
         return facts.build();
     }
 
-    private static void readColumns(
+    private static List<String> readColumns(
             DatabaseMetaData metadata,
             String catalog,
             String schema,
             String table,
             MetadataDatabaseKind kind,
             FactCollector facts) throws SQLException {
+        List<String> identities = new ArrayList<>();
         try (ResultSet columns = metadata.getColumns(catalog, schema, table, null)) {
             while (columns.next()) {
                 int jdbcType = columns.getInt("DATA_TYPE");
                 int size = columns.getInt("COLUMN_SIZE");
                 int scale = columns.getInt("DECIMAL_DIGITS");
+                String column = normalize(columns.getString("COLUMN_NAME"));
+                String generated = generated(columns.getString("IS_AUTOINCREMENT"));
+                if (generated.equals("identity")) {
+                    identities.add(column);
+                }
                 facts.add(
                         "column",
                         table,
-                        normalize(columns.getString("COLUMN_NAME")),
+                        column,
                         stableTypeFamily(kind, jdbcType, size, scale),
-                        nullable(columns.getInt("NULLABLE")));
+                        nullable(columns.getInt("NULLABLE")),
+                        generated,
+                        defaultValue(columns.getString("COLUMN_DEF")));
             }
         }
+        return List.copyOf(identities);
     }
 
     private static void readPrimaryKey(
@@ -189,6 +212,18 @@ final class JdbcTargetSchemaState {
             case DatabaseMetaData.columnNullable -> "nullable";
             default -> throw new SQLException("Target schema column nullability is unknown", "55000");
         };
+    }
+
+    private static String generated(String value) throws SQLException {
+        return switch (normalize(value)) {
+            case "yes" -> "identity";
+            case "no", "" -> "not-identity";
+            default -> throw new SQLException("Target schema identity metadata is unknown", "55000");
+        };
+    }
+
+    private static String defaultValue(String value) {
+        return value == null ? "no-default" : "default=" + value.strip();
     }
 
     private static String foreignKeyRule(short value) throws SQLException {
