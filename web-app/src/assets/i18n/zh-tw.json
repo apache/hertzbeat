@@ -1334,6 +1334,7 @@
     "collectors": "採集器",
     "plugins": "外掛程式",
     "monitorDefinitions": "監控定義",
+    "deployment": "部署",
     "system": "系統",
     "labels": "標籤",
     "objectStore": "物件儲存",
@@ -2895,6 +2896,118 @@
     "notConfigured": "公開狀態頁尚未設定。",
     "invalid": "公開狀態回應無效，無法顯示。",
     "permission": "公開狀態服務拒絕了此請求。"
+  },
+  "deployment": {
+    "title": "部署設定",
+    "description": "檢視目前資料庫設定來源，並將 HertzBeat 中繼資料從 H2 安全移轉。",
+    "loading": "正在載入部署設定…",
+    "unavailable": "部署設定暫時無法使用。",
+    "current": {
+      "title": "目前部署",
+      "description": "伺服器觀察到的設定來源與重新啟動要求。",
+      "managementDatabase": "管理資料庫",
+      "greptimeDatabase": "GreptimeDB 遙測資料庫",
+      "applyMode": "套用方式",
+      "maintenanceMode": "維護模式",
+      "topology": "部署拓撲",
+      "restartRequired": "需要重新啟動"
+    },
+    "source": {
+      "built_in_default": "內建預設值",
+      "ui_managed": "由 HertzBeat 管理",
+      "external_file": "外部檔案",
+      "environment": "環境變數",
+      "system_property": "系統屬性",
+      "command_line": "命令列"
+    },
+    "applyMode": { "managed_write": "受管理設定", "external_apply": "外部 / GitOps 設定" },
+    "maintenance": {
+      "active": "維護模式已啟用",
+      "inactive": "維護模式未啟用",
+      "instructions": "伺服器無法自動進入維護模式。請依部署維運流程進入維護狀態，然後重新整理此頁。",
+      "acknowledgement": "我瞭解在移轉與啟用完成前，監控寫入必須保持暫停。",
+      "acknowledgementAutoEnter": "我瞭解開始移轉時伺服器會自動進入維護模式並暫停監控寫入。"
+    },
+    "topology": { "single_node": "單一節點", "multi_node": "多個節點", "unknown": "未知" },
+    "migration": {
+      "title": "H2 中繼資料移轉",
+      "description": "複製中繼資料前，請驗證空白的 MySQL 或 PostgreSQL 目標資料庫。",
+      "blocked": "伺服器已阻止目前部署執行移轉。"
+    },
+    "fields": {
+      "target": "目標資料庫",
+      "jdbcUrl": "JDBC URL",
+      "username": "使用者名稱",
+      "password": "密碼",
+      "applyMode": "啟用方式"
+    },
+    "export": {
+      "format": "匯出格式",
+      "password": "匯出密碼",
+      "formats": { "yaml": "YAML", "env": "環境變數", "kubernetes_secret": "Kubernetes Secret" }
+    },
+    "actions": {
+      "validate": "驗證目標",
+      "start": "開始移轉",
+      "activate": "啟用受管理設定",
+      "export": "匯出設定",
+      "checkStatus": "檢查移轉狀態",
+      "startNew": "開始新的移轉",
+      "retryMigration": "重試移轉",
+      "returnToConfiguration": "返回目前設定",
+      "continueCurrent": "繼續目前移轉"
+    },
+    "validation": { "valid": "目標驗證成功", "invalid": "目標驗證失敗" },
+    "state": {
+      "pending": "移轉已排入佇列",
+      "running": "正在移轉",
+      "ready_to_activate": "可以啟用",
+      "awaiting_external_apply": "可以外部套用",
+      "awaiting_restart": "等待重新啟動",
+      "succeeded": "移轉成功",
+      "failed": "移轉失敗",
+      "rolled_back": "移轉已回復"
+    },
+    "stage": {
+      "queued": "正在等待移轉工作。",
+      "copying": "正在將中繼資料複製到目標。",
+      "verifying": "正在驗證已複製的中繼資料。",
+      "ready_to_activate": "驗證已通過，可以執行受管理啟用。",
+      "awaiting_external_apply": "驗證已通過，請匯出並從外部套用設定。",
+      "activating": "正在啟用受管理設定。",
+      "awaiting_restart": "設定已就緒，需要重新啟動伺服器。",
+      "completed": "移轉與啟用已完成。",
+      "rolling_back": "正在回復移轉。",
+      "rolled_back": "移轉已回復。",
+      "failed": "移轉未完成並已停止。"
+    },
+    "operation": {
+      "id": "操作 ID",
+      "verification": "驗證",
+      "restart": "請依照部署的正常維運流程重新啟動 HertzBeat。本頁會繼續輪詢收斂狀態。"
+    },
+    "verification": { "pending": "等待中", "running": "進行中", "succeeded": "成功", "failed": "失敗" },
+    "errors": {
+      "migration_unavailable": "目前伺服器版本未提供移轉引擎。",
+      "migration_source_unsupported": "只能移轉 H2 管理資料庫。",
+      "migration_target_not_empty": "目標資料庫不是空白資料庫。",
+      "migration_multi_node_unsupported": "多節點部署不支援移轉。",
+      "migration_topology_unavailable": "伺服器無法判定部署拓撲。",
+      "migration_maintenance_required": "移轉前必須啟用維護模式。",
+      "migration_copy_failed": "中繼資料複製失敗。",
+      "migration_verification_failed": "已複製的中繼資料驗證失敗。",
+      "migration_activation_not_available": "目前操作尚未能啟用。",
+      "migration_activation_failed": "受管理啟用失敗。",
+      "restart_failed": "伺服器重新啟動後未能收斂。",
+      "operation_not_found": "找不到移轉操作。",
+      "operation_conflict": "另一個移轉轉換正在進行。",
+      "invalid_request": "移轉要求無效。",
+      "internal_error": "移轉服務發生內部錯誤。",
+      "metadata_connection_failed": "目標資料庫連線失敗。",
+      "metadata_kind_unsupported": "不支援此目標資料庫類型。",
+      "metadata_schema_mismatch": "目標資料庫結構不相容。",
+      "metadata_insufficient_privileges": "目標帳號權限不足。"
+    }
   },
   "setup": {
     "title": "設定 HertzBeat",

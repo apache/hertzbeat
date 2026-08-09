@@ -1340,6 +1340,7 @@
     "collectors": "Collectors",
     "plugins": "Plugins",
     "monitorDefinitions": "Monitor definitions",
+    "deployment": "Deployment",
     "system": "System",
     "labels": "Labels",
     "objectStore": "Object storage",
@@ -2910,6 +2911,118 @@
     "notConfigured": "The public status page has not been configured yet.",
     "invalid": "The public status response is invalid and cannot be displayed.",
     "permission": "The public status service refused this request."
+  },
+  "deployment": {
+    "title": "Deployment configuration",
+    "description": "Inspect active database sources and safely migrate HertzBeat metadata from H2.",
+    "loading": "Loading deployment configuration…",
+    "unavailable": "Deployment configuration is unavailable.",
+    "current": {
+      "title": "Current deployment",
+      "description": "Server-observed configuration sources and restart requirements.",
+      "managementDatabase": "Management database",
+      "greptimeDatabase": "GreptimeDB telemetry database",
+      "applyMode": "Apply mode",
+      "maintenanceMode": "Maintenance mode",
+      "topology": "Deployment topology",
+      "restartRequired": "Restart required"
+    },
+    "source": {
+      "built_in_default": "Built-in default",
+      "ui_managed": "Managed by HertzBeat",
+      "external_file": "External file",
+      "environment": "Environment",
+      "system_property": "System property",
+      "command_line": "Command line"
+    },
+    "applyMode": { "managed_write": "Managed configuration", "external_apply": "External / GitOps configuration" },
+    "maintenance": {
+      "active": "Maintenance mode is active",
+      "inactive": "Maintenance mode is inactive",
+      "instructions": "Automatic maintenance admission is unavailable. Follow the server deployment's maintenance procedure, then refresh this page.",
+      "acknowledgement": "I understand monitoring writes must remain paused until migration and activation are complete.",
+      "acknowledgementAutoEnter": "I understand starting migration will automatically enter maintenance mode and pause monitoring writes."
+    },
+    "topology": { "single_node": "Single node", "multi_node": "Multiple nodes", "unknown": "Unknown" },
+    "migration": {
+      "title": "H2 metadata migration",
+      "description": "Validate an empty MySQL or PostgreSQL target before copying metadata.",
+      "blocked": "The server has blocked migration for the current deployment."
+    },
+    "fields": {
+      "target": "Target database",
+      "jdbcUrl": "JDBC URL",
+      "username": "Username",
+      "password": "Password",
+      "applyMode": "Activation method"
+    },
+    "export": {
+      "format": "Export format",
+      "password": "Export password",
+      "formats": { "yaml": "YAML", "env": "Environment variables", "kubernetes_secret": "Kubernetes Secret" }
+    },
+    "actions": {
+      "validate": "Validate target",
+      "start": "Start migration",
+      "activate": "Activate managed configuration",
+      "export": "Export configuration",
+      "checkStatus": "Check migration status",
+      "startNew": "Start a new migration",
+      "retryMigration": "Retry migration",
+      "returnToConfiguration": "Return to current configuration",
+      "continueCurrent": "Continue current migration"
+    },
+    "validation": { "valid": "Target validation succeeded", "invalid": "Target validation failed" },
+    "state": {
+      "pending": "Migration queued",
+      "running": "Migration in progress",
+      "ready_to_activate": "Ready to activate",
+      "awaiting_external_apply": "Ready for external apply",
+      "awaiting_restart": "Waiting for restart",
+      "succeeded": "Migration succeeded",
+      "failed": "Migration failed",
+      "rolled_back": "Migration rolled back"
+    },
+    "stage": {
+      "queued": "Waiting for the migration worker.",
+      "copying": "Copying metadata to the target.",
+      "verifying": "Verifying the copied metadata.",
+      "ready_to_activate": "Verification passed. Managed activation is available.",
+      "awaiting_external_apply": "Verification passed. Export and apply the configuration externally.",
+      "activating": "Activating the managed configuration.",
+      "awaiting_restart": "The configuration is ready and requires a server restart.",
+      "completed": "Migration and activation are complete.",
+      "rolling_back": "Rolling back the migration.",
+      "rolled_back": "The migration was rolled back.",
+      "failed": "The migration stopped before completion."
+    },
+    "operation": {
+      "id": "Operation ID",
+      "verification": "Verification",
+      "restart": "Restart HertzBeat using the deployment's normal operational procedure. This page will continue polling for convergence."
+    },
+    "verification": { "pending": "Pending", "running": "Running", "succeeded": "Succeeded", "failed": "Failed" },
+    "errors": {
+      "migration_unavailable": "The migration engine is not available in this server build.",
+      "migration_source_unsupported": "Only an H2 management database can be migrated.",
+      "migration_target_not_empty": "The target database is not empty.",
+      "migration_multi_node_unsupported": "Migration is not supported for multi-node deployments.",
+      "migration_topology_unavailable": "The server cannot determine the deployment topology.",
+      "migration_maintenance_required": "Maintenance mode must be active before migration.",
+      "migration_copy_failed": "Metadata copying failed.",
+      "migration_verification_failed": "Copied metadata verification failed.",
+      "migration_activation_not_available": "This operation is not ready for activation.",
+      "migration_activation_failed": "Managed activation failed.",
+      "restart_failed": "The server did not converge after restart.",
+      "operation_not_found": "The migration operation was not found.",
+      "operation_conflict": "Another migration transition is already in progress.",
+      "invalid_request": "The migration request is invalid.",
+      "internal_error": "The migration service encountered an internal error.",
+      "metadata_connection_failed": "The target database connection failed.",
+      "metadata_kind_unsupported": "The target database kind is unsupported.",
+      "metadata_schema_mismatch": "The target database schema is incompatible.",
+      "metadata_insufficient_privileges": "The target account has insufficient privileges."
+    }
   },
   "setup": {
     "title": "Set up HertzBeat",

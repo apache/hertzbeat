@@ -14,6 +14,7 @@ export const settingsPaths = {
   collectors: '/settings/collectors',
   plugins: '/settings/plugins',
   monitorDefinitions: '/settings/monitor-definitions',
+  deployment: '/settings/deployment',
   system: '/settings/system',
   labels: '/settings/labels',
   objectStore: '/settings/storage/object-store',

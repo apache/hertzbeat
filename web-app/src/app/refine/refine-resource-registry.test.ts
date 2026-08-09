@@ -88,6 +88,7 @@ describe('Refine shell resource registry', () => {
     ]);
     expect(navigationChildren(tree, 'shell-administration')).toEqual([
       'system-config',
+      'deployment-settings',
       'plugins',
       'collectors',
       'tokens',

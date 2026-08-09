@@ -23,7 +23,11 @@ import { SetupRouteRuntime } from '@/features/setup';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { RouteLoadingState } from '@/shared/route-state/route-state';
 
-import { AdministrativePluginRoutePage, AdministrativeTokenRoutePage } from './administrative-route-pages';
+import {
+  AdministrativeDeploymentRoutePage,
+  AdministrativePluginRoutePage,
+  AdministrativeTokenRoutePage
+} from './administrative-route-pages';
 import { AuthenticatedRouteFailure } from './authenticated-route-failure';
 import { RefineRuntime } from './refine/refine-runtime';
 import { ResourceRouteAccess } from './resource-route-access';
@@ -318,6 +322,14 @@ export const appRoutes: RouteObject[] = [
                   const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');
                   return { Component: MonitorDefinitionPage };
                 }
+              },
+              {
+                ...getAppRouteIdentity('deployment-settings'),
+                element: (
+                  <ResourceRouteAccess routeId="deployment-settings">
+                    <AdministrativeDeploymentRoutePage />
+                  </ResourceRouteAccess>
+                )
               },
               {
                 ...getAppRouteIdentity('system-settings'),

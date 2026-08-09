@@ -1337,6 +1337,7 @@
     "collectors": "コレクター",
     "plugins": "プラグイン",
     "monitorDefinitions": "監視定義",
+    "deployment": "デプロイ",
     "system": "システム",
     "labels": "ラベル",
     "objectStore": "オブジェクトストレージ",
@@ -2907,6 +2908,118 @@
     "notConfigured": "公開ステータスページはまだ設定されていません。",
     "invalid": "公開ステータスの応答が無効なため表示できません。",
     "permission": "公開ステータスサービスがこの要求を拒否しました。"
+  },
+  "deployment": {
+    "title": "デプロイ設定",
+    "description": "有効なデータベース設定元を確認し、HertzBeat メタデータを H2 から安全に移行します。",
+    "loading": "デプロイ設定を読み込んでいます…",
+    "unavailable": "デプロイ設定を利用できません。",
+    "current": {
+      "title": "現在のデプロイ",
+      "description": "サーバーが確認した設定元と再起動要件です。",
+      "managementDatabase": "管理データベース",
+      "greptimeDatabase": "GreptimeDB テレメトリデータベース",
+      "applyMode": "適用方法",
+      "maintenanceMode": "メンテナンスモード",
+      "topology": "デプロイトポロジ",
+      "restartRequired": "再起動が必要"
+    },
+    "source": {
+      "built_in_default": "組み込み既定値",
+      "ui_managed": "HertzBeat 管理",
+      "external_file": "外部ファイル",
+      "environment": "環境変数",
+      "system_property": "システムプロパティ",
+      "command_line": "コマンドライン"
+    },
+    "applyMode": { "managed_write": "管理対象設定", "external_apply": "外部 / GitOps 設定" },
+    "maintenance": {
+      "active": "メンテナンスモードは有効です",
+      "inactive": "メンテナンスモードは無効です",
+      "instructions": "サーバーは自動でメンテナンスモードに移行できません。デプロイの運用手順に従ってから、このページを更新してください。",
+      "acknowledgement": "移行と有効化が完了するまで監視書き込みを停止する必要があることを理解しました。",
+      "acknowledgementAutoEnter": "移行を開始するとサーバーが自動でメンテナンスモードに入り、監視書き込みを停止することを理解しました。"
+    },
+    "topology": { "single_node": "単一ノード", "multi_node": "複数ノード", "unknown": "不明" },
+    "migration": {
+      "title": "H2 メタデータ移行",
+      "description": "メタデータをコピーする前に、空の MySQL または PostgreSQL 移行先を検証します。",
+      "blocked": "サーバーは現在のデプロイでの移行をブロックしています。"
+    },
+    "fields": {
+      "target": "移行先データベース",
+      "jdbcUrl": "JDBC URL",
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "applyMode": "有効化方法"
+    },
+    "export": {
+      "format": "エクスポート形式",
+      "password": "エクスポート用パスワード",
+      "formats": { "yaml": "YAML", "env": "環境変数", "kubernetes_secret": "Kubernetes Secret" }
+    },
+    "actions": {
+      "validate": "移行先を検証",
+      "start": "移行を開始",
+      "activate": "管理対象設定を有効化",
+      "export": "設定をエクスポート",
+      "checkStatus": "移行状態を確認",
+      "startNew": "新しい移行を開始",
+      "retryMigration": "移行を再試行",
+      "returnToConfiguration": "現在の設定に戻る",
+      "continueCurrent": "現在の移行を続行"
+    },
+    "validation": { "valid": "移行先の検証に成功しました", "invalid": "移行先の検証に失敗しました" },
+    "state": {
+      "pending": "移行はキューに入りました",
+      "running": "移行中",
+      "ready_to_activate": "有効化の準備完了",
+      "awaiting_external_apply": "外部適用の準備完了",
+      "awaiting_restart": "再起動待ち",
+      "succeeded": "移行成功",
+      "failed": "移行失敗",
+      "rolled_back": "移行をロールバックしました"
+    },
+    "stage": {
+      "queued": "移行ワーカーを待っています。",
+      "copying": "メタデータを移行先へコピーしています。",
+      "verifying": "コピーしたメタデータを検証しています。",
+      "ready_to_activate": "検証に成功しました。管理対象の有効化が可能です。",
+      "awaiting_external_apply": "検証に成功しました。設定をエクスポートして外部で適用してください。",
+      "activating": "管理対象設定を有効化しています。",
+      "awaiting_restart": "設定の準備が完了し、サーバーの再起動が必要です。",
+      "completed": "移行と有効化が完了しました。",
+      "rolling_back": "移行をロールバックしています。",
+      "rolled_back": "移行をロールバックしました。",
+      "failed": "移行は完了前に停止しました。"
+    },
+    "operation": {
+      "id": "操作 ID",
+      "verification": "検証",
+      "restart": "通常の運用手順で HertzBeat を再起動してください。このページは収束状態のポーリングを続けます。"
+    },
+    "verification": { "pending": "保留中", "running": "実行中", "succeeded": "成功", "failed": "失敗" },
+    "errors": {
+      "migration_unavailable": "このサーバービルドでは移行エンジンを利用できません。",
+      "migration_source_unsupported": "移行できる管理データベースは H2 のみです。",
+      "migration_target_not_empty": "移行先データベースが空ではありません。",
+      "migration_multi_node_unsupported": "複数ノードのデプロイでは移行できません。",
+      "migration_topology_unavailable": "サーバーはデプロイトポロジを特定できません。",
+      "migration_maintenance_required": "移行前にメンテナンスモードを有効にしてください。",
+      "migration_copy_failed": "メタデータのコピーに失敗しました。",
+      "migration_verification_failed": "コピーしたメタデータの検証に失敗しました。",
+      "migration_activation_not_available": "この操作はまだ有効化できません。",
+      "migration_activation_failed": "管理対象の有効化に失敗しました。",
+      "restart_failed": "再起動後にサーバーが収束しませんでした。",
+      "operation_not_found": "移行操作が見つかりません。",
+      "operation_conflict": "別の移行処理が進行中です。",
+      "invalid_request": "移行リクエストが無効です。",
+      "internal_error": "移行サービスで内部エラーが発生しました。",
+      "metadata_connection_failed": "移行先データベースへの接続に失敗しました。",
+      "metadata_kind_unsupported": "移行先データベースの種類はサポートされていません。",
+      "metadata_schema_mismatch": "移行先データベースのスキーマに互換性がありません。",
+      "metadata_insufficient_privileges": "移行先アカウントの権限が不足しています。"
+    }
   },
   "setup": {
     "title": "HertzBeat をセットアップ",

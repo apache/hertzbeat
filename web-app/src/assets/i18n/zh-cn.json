@@ -1334,6 +1334,7 @@
     "collectors": "采集器",
     "plugins": "插件",
     "monitorDefinitions": "监控定义",
+    "deployment": "部署",
     "system": "系统",
     "labels": "标签",
     "objectStore": "对象存储",
@@ -2895,6 +2896,118 @@
     "notConfigured": "公开状态页尚未配置。",
     "invalid": "公开状态响应无效，无法显示。",
     "permission": "公开状态服务拒绝了此请求。"
+  },
+  "deployment": {
+    "title": "部署配置",
+    "description": "查看当前数据库配置来源，并将 HertzBeat 元数据从 H2 安全迁移。",
+    "loading": "正在加载部署配置…",
+    "unavailable": "部署配置暂不可用。",
+    "current": {
+      "title": "当前部署",
+      "description": "服务器观测到的配置来源与重启要求。",
+      "managementDatabase": "管理数据库",
+      "greptimeDatabase": "GreptimeDB 遥测数据库",
+      "applyMode": "应用方式",
+      "maintenanceMode": "维护模式",
+      "topology": "部署拓扑",
+      "restartRequired": "需要重启"
+    },
+    "source": {
+      "built_in_default": "内置默认值",
+      "ui_managed": "由 HertzBeat 管理",
+      "external_file": "外部文件",
+      "environment": "环境变量",
+      "system_property": "系统属性",
+      "command_line": "命令行"
+    },
+    "applyMode": { "managed_write": "托管配置", "external_apply": "外部 / GitOps 配置" },
+    "maintenance": {
+      "active": "维护模式已启用",
+      "inactive": "维护模式未启用",
+      "instructions": "服务器无法自动进入维护模式。请按部署运维流程进入维护状态，然后刷新本页。",
+      "acknowledgement": "我了解在迁移和激活完成前，监控写入必须保持暂停。",
+      "acknowledgementAutoEnter": "我了解开始迁移时服务器会自动进入维护模式并暂停监控写入。"
+    },
+    "topology": { "single_node": "单节点", "multi_node": "多节点", "unknown": "未知" },
+    "migration": {
+      "title": "H2 元数据迁移",
+      "description": "复制元数据前，请验证一个空的 MySQL 或 PostgreSQL 目标库。",
+      "blocked": "服务器已阻止当前部署执行迁移。"
+    },
+    "fields": {
+      "target": "目标数据库",
+      "jdbcUrl": "JDBC URL",
+      "username": "用户名",
+      "password": "密码",
+      "applyMode": "激活方式"
+    },
+    "export": {
+      "format": "导出格式",
+      "password": "导出密码",
+      "formats": { "yaml": "YAML", "env": "环境变量", "kubernetes_secret": "Kubernetes Secret" }
+    },
+    "actions": {
+      "validate": "验证目标库",
+      "start": "开始迁移",
+      "activate": "激活托管配置",
+      "export": "导出配置",
+      "checkStatus": "检查迁移状态",
+      "startNew": "开始新的迁移",
+      "retryMigration": "重试迁移",
+      "returnToConfiguration": "返回当前配置",
+      "continueCurrent": "继续当前迁移"
+    },
+    "validation": { "valid": "目标库验证成功", "invalid": "目标库验证失败" },
+    "state": {
+      "pending": "迁移已排队",
+      "running": "正在迁移",
+      "ready_to_activate": "可以激活",
+      "awaiting_external_apply": "可以外部应用",
+      "awaiting_restart": "等待重启",
+      "succeeded": "迁移成功",
+      "failed": "迁移失败",
+      "rolled_back": "迁移已回滚"
+    },
+    "stage": {
+      "queued": "正在等待迁移任务。",
+      "copying": "正在将元数据复制到目标库。",
+      "verifying": "正在验证已复制的元数据。",
+      "ready_to_activate": "验证已通过，可以执行托管激活。",
+      "awaiting_external_apply": "验证已通过，请导出配置并在外部应用。",
+      "activating": "正在激活托管配置。",
+      "awaiting_restart": "配置已就绪，需要重启服务器。",
+      "completed": "迁移和激活已完成。",
+      "rolling_back": "正在回滚迁移。",
+      "rolled_back": "迁移已回滚。",
+      "failed": "迁移未完成并已停止。"
+    },
+    "operation": {
+      "id": "操作 ID",
+      "verification": "验证状态",
+      "restart": "请按照部署的常规运维流程重启 HertzBeat。本页会继续轮询收敛状态。"
+    },
+    "verification": { "pending": "等待中", "running": "进行中", "succeeded": "成功", "failed": "失败" },
+    "errors": {
+      "migration_unavailable": "当前服务器构建未提供迁移引擎。",
+      "migration_source_unsupported": "只能迁移 H2 管理数据库。",
+      "migration_target_not_empty": "目标数据库不是空库。",
+      "migration_multi_node_unsupported": "多节点部署不支持迁移。",
+      "migration_topology_unavailable": "服务器无法确定部署拓扑。",
+      "migration_maintenance_required": "迁移前必须启用维护模式。",
+      "migration_copy_failed": "元数据复制失败。",
+      "migration_verification_failed": "已复制元数据验证失败。",
+      "migration_activation_not_available": "当前操作尚不能激活。",
+      "migration_activation_failed": "托管激活失败。",
+      "restart_failed": "服务器重启后未能收敛。",
+      "operation_not_found": "未找到迁移操作。",
+      "operation_conflict": "另一个迁移转换正在进行。",
+      "invalid_request": "迁移请求无效。",
+      "internal_error": "迁移服务发生内部错误。",
+      "metadata_connection_failed": "目标数据库连接失败。",
+      "metadata_kind_unsupported": "不支持该目标数据库类型。",
+      "metadata_schema_mismatch": "目标数据库结构不兼容。",
+      "metadata_insufficient_privileges": "目标数据库账号权限不足。"
+    }
   },
   "setup": {
     "title": "设置 HertzBeat",

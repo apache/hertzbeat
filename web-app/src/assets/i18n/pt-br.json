@@ -1350,6 +1350,7 @@
     "collectors": "Coletores",
     "plugins": "Plugins",
     "monitorDefinitions": "Definições de monitor",
+    "deployment": "Implantação",
     "system": "Sistema",
     "labels": "Rótulos",
     "objectStore": "Armazenamento de objetos",
@@ -2914,6 +2915,118 @@
     "notConfigured": "A página pública de status ainda não foi configurada.",
     "invalid": "A resposta de status público é inválida e não pode ser exibida.",
     "permission": "O serviço de status público recusou esta solicitação."
+  },
+  "deployment": {
+    "title": "Configuração da implantação",
+    "description": "Inspecione as origens ativas dos bancos e migre com segurança os metadados do HertzBeat a partir do H2.",
+    "loading": "Carregando configuração da implantação…",
+    "unavailable": "A configuração da implantação está indisponível.",
+    "current": {
+      "title": "Implantação atual",
+      "description": "Origens de configuração e requisitos de reinicialização observados pelo servidor.",
+      "managementDatabase": "Banco de gerenciamento",
+      "greptimeDatabase": "Banco de telemetria GreptimeDB",
+      "applyMode": "Modo de aplicação",
+      "maintenanceMode": "Modo de manutenção",
+      "topology": "Topologia da implantação",
+      "restartRequired": "Reinicialização necessária"
+    },
+    "source": {
+      "built_in_default": "Padrão interno",
+      "ui_managed": "Gerenciado pelo HertzBeat",
+      "external_file": "Arquivo externo",
+      "environment": "Ambiente",
+      "system_property": "Propriedade do sistema",
+      "command_line": "Linha de comando"
+    },
+    "applyMode": { "managed_write": "Configuração gerenciada", "external_apply": "Configuração externa / GitOps" },
+    "maintenance": {
+      "active": "O modo de manutenção está ativo",
+      "inactive": "O modo de manutenção está inativo",
+      "instructions": "A admissão automática de manutenção está indisponível. Siga o procedimento operacional da implantação e atualize esta página.",
+      "acknowledgement": "Entendo que as gravações de monitoramento devem permanecer pausadas até a conclusão da migração e da ativação.",
+      "acknowledgementAutoEnter": "Entendo que iniciar a migração entrará automaticamente no modo de manutenção e pausará as gravações de monitoramento."
+    },
+    "topology": { "single_node": "Nó único", "multi_node": "Vários nós", "unknown": "Desconhecida" },
+    "migration": {
+      "title": "Migração de metadados H2",
+      "description": "Valide um destino MySQL ou PostgreSQL vazio antes de copiar os metadados.",
+      "blocked": "O servidor bloqueou a migração para a implantação atual."
+    },
+    "fields": {
+      "target": "Banco de destino",
+      "jdbcUrl": "URL JDBC",
+      "username": "Usuário",
+      "password": "Senha",
+      "applyMode": "Método de ativação"
+    },
+    "export": {
+      "format": "Formato de exportação",
+      "password": "Senha de exportação",
+      "formats": { "yaml": "YAML", "env": "Variáveis de ambiente", "kubernetes_secret": "Secret do Kubernetes" }
+    },
+    "actions": {
+      "validate": "Validar destino",
+      "start": "Iniciar migração",
+      "activate": "Ativar configuração gerenciada",
+      "export": "Exportar configuração",
+      "checkStatus": "Verificar status da migração",
+      "startNew": "Iniciar nova migração",
+      "retryMigration": "Tentar migração novamente",
+      "returnToConfiguration": "Voltar à configuração atual",
+      "continueCurrent": "Continuar migração atual"
+    },
+    "validation": { "valid": "Validação do destino concluída", "invalid": "Falha na validação do destino" },
+    "state": {
+      "pending": "Migração na fila",
+      "running": "Migração em andamento",
+      "ready_to_activate": "Pronta para ativar",
+      "awaiting_external_apply": "Pronta para aplicação externa",
+      "awaiting_restart": "Aguardando reinicialização",
+      "succeeded": "Migração concluída",
+      "failed": "Falha na migração",
+      "rolled_back": "Migração revertida"
+    },
+    "stage": {
+      "queued": "Aguardando o processo de migração.",
+      "copying": "Copiando metadados para o destino.",
+      "verifying": "Verificando os metadados copiados.",
+      "ready_to_activate": "A verificação passou. A ativação gerenciada está disponível.",
+      "awaiting_external_apply": "A verificação passou. Exporte e aplique a configuração externamente.",
+      "activating": "Ativando a configuração gerenciada.",
+      "awaiting_restart": "A configuração está pronta e exige reinicialização do servidor.",
+      "completed": "A migração e a ativação foram concluídas.",
+      "rolling_back": "Revertendo a migração.",
+      "rolled_back": "A migração foi revertida.",
+      "failed": "A migração parou antes de ser concluída."
+    },
+    "operation": {
+      "id": "ID da operação",
+      "verification": "Verificação",
+      "restart": "Reinicie o HertzBeat pelo procedimento operacional normal da implantação. Esta página continuará consultando a convergência."
+    },
+    "verification": { "pending": "Pendente", "running": "Em andamento", "succeeded": "Concluída", "failed": "Falhou" },
+    "errors": {
+      "migration_unavailable": "O mecanismo de migração não está disponível nesta versão do servidor.",
+      "migration_source_unsupported": "Somente um banco de gerenciamento H2 pode ser migrado.",
+      "migration_target_not_empty": "O banco de destino não está vazio.",
+      "migration_multi_node_unsupported": "A migração não é compatível com implantações de vários nós.",
+      "migration_topology_unavailable": "O servidor não consegue determinar a topologia da implantação.",
+      "migration_maintenance_required": "O modo de manutenção deve estar ativo antes da migração.",
+      "migration_copy_failed": "Falha ao copiar os metadados.",
+      "migration_verification_failed": "Falha ao verificar os metadados copiados.",
+      "migration_activation_not_available": "Esta operação ainda não está pronta para ativação.",
+      "migration_activation_failed": "Falha na ativação gerenciada.",
+      "restart_failed": "O servidor não convergiu após a reinicialização.",
+      "operation_not_found": "A operação de migração não foi encontrada.",
+      "operation_conflict": "Outra transição de migração já está em andamento.",
+      "invalid_request": "A solicitação de migração é inválida.",
+      "internal_error": "O serviço de migração encontrou um erro interno.",
+      "metadata_connection_failed": "Falha na conexão com o banco de destino.",
+      "metadata_kind_unsupported": "O tipo do banco de destino não é compatível.",
+      "metadata_schema_mismatch": "O esquema do banco de destino é incompatível.",
+      "metadata_insufficient_privileges": "A conta de destino não tem privilégios suficientes."
+    }
   },
   "setup": {
     "title": "Configurar o HertzBeat",

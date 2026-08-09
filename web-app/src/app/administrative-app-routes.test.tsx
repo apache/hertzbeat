@@ -7,6 +7,7 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,12 +18,18 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { appRoutes } from './app-routes';
 
 const probes = vi.hoisted(() => ({
+  deploymentApi: vi.fn(),
+  deploymentLoader: vi.fn(),
   pluginApi: vi.fn(),
   pluginLoader: vi.fn(),
   tokenApi: vi.fn(),
   tokenLoader: vi.fn()
 }));
 
+vi.mock('@/features/setup', () => ({
+  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product,
+  SetupPage: () => null
+}));
 vi.mock('./refine/refine-runtime', async () => {
   const { Outlet } = await import('react-router-dom');
   return { RefineRuntime: Outlet };
@@ -61,6 +68,18 @@ vi.mock('@/features/settings/plugin', async () => {
     }
   };
 });
+vi.mock('@/features/deployment', async () => {
+  const React = await import('react');
+  probes.deploymentLoader();
+  return {
+    DeploymentPage: () => {
+      React.useEffect(() => {
+        probes.deploymentApi();
+      }, []);
+      return React.createElement('div', { 'data-testid': 'deployment-page' });
+    }
+  };
+});
 
 describe('actual administrative app routes', () => {
   beforeEach(async () => {
@@ -70,6 +89,8 @@ describe('actual administrative app routes', () => {
 
   afterEach(() => {
     cleanup();
+    probes.deploymentApi.mockClear();
+    probes.deploymentLoader.mockClear();
     probes.pluginApi.mockClear();
     probes.pluginLoader.mockClear();
     probes.tokenApi.mockClear();
@@ -80,7 +101,9 @@ describe('actual administrative app routes', () => {
     ['/settings/tokens', 'USER'],
     ['/settings/tokens', 'GUEST'],
     ['/settings/plugins', 'USER'],
-    ['/settings/plugins', 'GUEST']
+    ['/settings/plugins', 'GUEST'],
+    ['/settings/deployment', 'USER'],
+    ['/settings/deployment', 'GUEST']
   ])('does not mount the feature loader or API at %s for %s', async (path, role) => {
     renderAppRoute(path, role);
 
@@ -92,6 +115,8 @@ describe('actual administrative app routes', () => {
     expect(probes.tokenApi).not.toHaveBeenCalled();
     expect(probes.pluginLoader).not.toHaveBeenCalled();
     expect(probes.pluginApi).not.toHaveBeenCalled();
+    expect(probes.deploymentLoader).not.toHaveBeenCalled();
+    expect(probes.deploymentApi).not.toHaveBeenCalled();
   });
 
   it('admits ADMIN to the Token loader and page API', async () => {
@@ -108,6 +133,14 @@ describe('actual administrative app routes', () => {
     expect(await screen.findByTestId('plugins-page')).toBeInTheDocument();
     expect(probes.pluginLoader).toHaveBeenCalledOnce();
     await waitFor(() => expect(probes.pluginApi).toHaveBeenCalledOnce());
+  });
+
+  it('admits ADMIN to the guarded Deployment loader and page API', async () => {
+    renderAppRoute('/settings/deployment', 'ADMIN');
+
+    expect(await screen.findByTestId('deployment-page')).toBeInTheDocument();
+    expect(probes.deploymentLoader).toHaveBeenCalledOnce();
+    await waitFor(() => expect(probes.deploymentApi).toHaveBeenCalledOnce());
   });
 
   it('converges the legacy Plugin path on the guarded canonical route', async () => {

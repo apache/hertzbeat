@@ -119,6 +119,9 @@ export const appRouteCatalog = {
   'monitor-definitions': pageRoute('monitor-definitions', settingsPaths.monitorDefinitions, {
     resource: { labelKey: 'settingsNavigation.monitorDefinitions' }
   }),
+  'deployment-settings': pageRoute('deployment-settings', settingsPaths.deployment, {
+    resource: { labelKey: 'settingsNavigation.deployment', requiredRoles: ['ADMIN'] }
+  }),
   'system-settings': pageRoute('system-settings', settingsPaths.system, {
     resource: { labelKey: 'settingsNavigation.system' }
   }),

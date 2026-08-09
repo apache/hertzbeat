@@ -19,6 +19,10 @@ const PluginRoutePage = lazy(async () => {
   const { PluginPage } = await import('@/features/settings/plugin');
   return { default: PluginPage };
 });
+const DeploymentRoutePage = lazy(async () => {
+  const { DeploymentPage } = await import('@/features/deployment');
+  return { default: DeploymentPage };
+});
 
 export function AdministrativeTokenRoutePage() {
   return (
@@ -32,6 +36,14 @@ export function AdministrativePluginRoutePage() {
   return (
     <Suspense fallback={<RouteLoadingState />}>
       <PluginRoutePage />
+    </Suspense>
+  );
+}
+
+export function AdministrativeDeploymentRoutePage() {
+  return (
+    <Suspense fallback={<RouteLoadingState />}>
+      <DeploymentRoutePage />
     </Suspense>
   );
 }

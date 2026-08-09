@@ -18,6 +18,7 @@ import {
   ControlOutlined,
   DashboardOutlined,
   DatabaseOutlined,
+  DeploymentUnitOutlined,
   FileTextOutlined,
   HddOutlined,
   HeartOutlined,
@@ -282,6 +283,12 @@ const staticRefineResources: ResourceProps[] = [
     icon: <SettingOutlined />,
     order: 10,
     dataProviderName: systemConfigResourceName,
+    timePolicy: 'none'
+  }),
+  routedNavigationResource('deployment-settings', {
+    parent: 'shell-administration',
+    icon: <DeploymentUnitOutlined />,
+    order: 15,
     timePolicy: 'none'
   }),
   routedNavigationResource('labels', {

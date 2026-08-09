@@ -1,0 +1,26 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.workflow {
+  display: grid;
+  gap: var(--hb-space-5);
+}
+
+.form,
+.operation,
+.exportForm {
+  display: grid;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: 0;
+  gap: var(--hb-space-3);
+}
+
+.form :global(.ant-form-item),
+.exportForm :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.validationEvidence {
+  display: grid;
+  gap: var(--hb-space-2);
+}

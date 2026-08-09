@@ -7,6 +7,7 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import type { ReactNode } from 'react';
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -17,6 +18,10 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 vi.mock('./refine/refine-runtime', () => ({ RefineRuntime: Outlet }));
 vi.mock('@/layout/basic/basic-layout', () => ({ BasicLayout: Outlet }));
+vi.mock('@/features/setup', () => ({
+  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product,
+  SetupPage: () => null
+}));
 
 import { appRoutes } from './app-routes';
 import { getAppRoute } from './route-registry';
