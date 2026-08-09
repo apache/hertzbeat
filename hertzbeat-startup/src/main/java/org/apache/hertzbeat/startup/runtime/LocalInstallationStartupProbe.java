@@ -73,7 +73,7 @@ public final class LocalInstallationStartupProbe implements StartupDecisionProbe
     private static FingerprintState fingerprintState(Path root) {
         Path path = root.resolve("data/config/.installation-fingerprint");
         try {
-            boolean present = new LocalInstallationFingerprintStore(path, new SecureRandom()).read().isPresent();
+            boolean present = new LocalInstallationFingerprintStore(root, path, new SecureRandom()).read().isPresent();
             if (present) {
                 return FingerprintState.PRESENT;
             }

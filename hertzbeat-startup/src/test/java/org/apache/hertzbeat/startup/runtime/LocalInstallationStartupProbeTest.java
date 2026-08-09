@@ -55,8 +55,8 @@ class LocalInstallationStartupProbeTest {
         new ManagedConfigurationTransaction(root).apply(bundle());
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
                 new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
-        new LocalInstallationFingerprintStore(root.resolve("data/config/.installation-fingerprint"),
-                new SecureRandom()).create();
+        new LocalInstallationFingerprintStore(root,
+                root.resolve("data/config/.installation-fingerprint"), new SecureRandom()).create();
         assertEquals(RuntimeMode.FULL_SETUP_GATED,
                 new LocalInstallationStartupProbe(root, false).probe(new String[0]).mode());
     }

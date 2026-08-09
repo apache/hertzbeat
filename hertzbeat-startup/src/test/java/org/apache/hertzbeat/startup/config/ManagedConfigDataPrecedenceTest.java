@@ -224,7 +224,8 @@ class ManagedConfigDataPrecedenceTest {
 
     private static ManagedApplicationConfig managedApplicationWithOptions() {
         ManagedOptionalConfiguration options = new ManagedOptionalConfiguration(
-                Optional.of(new ManagedOptionalConfiguration.ServerInstrumentationSettings(
+                Optional.of(new ManagedOptionalConfiguration.PublicAccessSettings(
+                        Optional.empty(),
                         Optional.of("http://server.example.test:4318"),
                         Optional.of("https://server.example.test:4317"))),
                 Optional.of(new ManagedOptionalConfiguration.RetentionSettings(30)),
