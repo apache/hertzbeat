@@ -7,6 +7,7 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationSection;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
@@ -28,6 +30,8 @@ import org.apache.hertzbeat.manager.setup.identity.AdministratorCredentials;
 import org.apache.hertzbeat.manager.setup.identity.BootstrapIdentityConflict;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
 import org.apache.hertzbeat.manager.setup.identity.InvalidAdministratorUsername;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore.Intent;
 import org.springframework.http.HttpStatus;
 
 /** Single state transition boundary shared by browser and headless setup adapters. */
@@ -39,12 +43,14 @@ public final class SetupTransitionService {
     private final SetupOptionsCoordinator options;
     private final Optional<IdentityInitializationService> identities;
     private final Optional<SetupCompletionCoordinator> completion;
+    private final SetupTransitionIntentStore transitionIntents;
 
     public SetupTransitionService(SetupRuntimeState state, SetupRequestValidator validator,
                                   SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
                                   SetupOptionsCoordinator options,
                                   Optional<IdentityInitializationService> identities,
-                                  Optional<SetupCompletionCoordinator> completion) {
+                                  Optional<SetupCompletionCoordinator> completion,
+                                  SetupTransitionIntentStore transitionIntents) {
         this.state = state;
         this.validator = validator;
         this.configuration = configuration;
@@ -52,6 +58,7 @@ public final class SetupTransitionService {
         this.options = options;
         this.identities = identities;
         this.completion = completion;
+        this.transitionIntents = transitionIntents;
     }
 
     public ConfigurationResponse configure(ConfigurationCommand command) {
@@ -63,6 +70,9 @@ public final class SetupTransitionService {
         state.ensurePhase(expected);
         command.validate(validator);
         ConfigurationResponse response = command.configure(configuration, capability);
+        if (response.phase() == SetupPhase.APPLICATION_STARTING) {
+            recordTransition(Intent.CONFIGURATION_APPLIED);
+        }
         state.configurationApplied(expected, response.operationId(), response.phase());
         return response;
     }
@@ -120,6 +130,7 @@ public final class SetupTransitionService {
             throw new SetupWorkflowConflict();
         }
         completion.orElseThrow(SetupWorkflowConflict::new).completeInstallation();
+        recordTransition(Intent.INSTALLATION_COMPLETED);
         state.complete();
         return username;
     }
@@ -127,6 +138,14 @@ public final class SetupTransitionService {
     private void requireWritable() {
         if (state.phase() == SetupPhase.COMPLETE) {
             throw new SetupApiException(SetupErrorCode.SETUP_COMPLETE, HttpStatus.GONE);
+        }
+    }
+
+    private void recordTransition(Intent intent) {
+        try {
+            transitionIntents.save(intent);
+        } catch (IOException | RuntimeException failure) {
+            throw new SetupApiException(SetupErrorCode.CONFIG_WRITE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -217,7 +236,7 @@ public final class SetupTransitionService {
     }
 
     private static void requireValid(SetupRequestValidator validator, ValidateRequest request) {
-        var response = validator.validate(request);
+        ValidationResponse response = validator.validate(request);
         if (!response.valid()) {
             throw new SetupApiException(response.errorCode(), HttpStatus.BAD_REQUEST);
         }

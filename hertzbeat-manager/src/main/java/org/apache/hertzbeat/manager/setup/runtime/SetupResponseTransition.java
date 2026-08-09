@@ -19,7 +19,7 @@ package org.apache.hertzbeat.manager.setup.runtime;
 
 import jakarta.servlet.ServletRequest;
 
-/** Marks one successful setup response for a transition after serialization and commit. */
+/** Marks a request whose already-durable transition intent should be woken after response processing. */
 public final class SetupResponseTransition {
     private static final String ATTRIBUTE = SetupResponseTransition.class.getName() + ".transition";
 

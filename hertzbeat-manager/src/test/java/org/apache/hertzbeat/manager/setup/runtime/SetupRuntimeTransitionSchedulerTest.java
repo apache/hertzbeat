@@ -25,8 +25,8 @@ import static org.mockito.Mockito.verify;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,7 +39,8 @@ class SetupRuntimeTransitionSchedulerTest {
     void runningConfigurationCoalescesDuplicatesAndQueuesOneHigherPriorityCompletion() {
         SetupRuntimeTransition transition = mock(SetupRuntimeTransition.class);
         List<Runnable> tasks = new ArrayList<>();
-        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(transition, tasks::add);
+        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(
+                transition, mock(SetupTransitionIntentStore.class), (task, ignored) -> tasks.add(task));
         scheduler.onApplicationReady(mock(ApplicationReadyEvent.class));
 
         scheduler.configurationApplied();
@@ -60,7 +61,8 @@ class SetupRuntimeTransitionSchedulerTest {
     void completionSupersedesConfigurationBeforeReadiness() {
         SetupRuntimeTransition transition = mock(SetupRuntimeTransition.class);
         List<Runnable> tasks = new ArrayList<>();
-        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(transition, tasks::add);
+        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(
+                transition, mock(SetupTransitionIntentStore.class), (task, ignored) -> tasks.add(task));
         scheduler.configurationApplied();
         scheduler.installationCompleted();
 
@@ -74,8 +76,8 @@ class SetupRuntimeTransitionSchedulerTest {
 
     @Test
     void transitionCanCloseSchedulerFromItsExecutorWithoutInterruptingOrDispatchingPendingWork()
-            throws InterruptedException {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+            throws Exception {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         AtomicReference<SetupRuntimeTransitionScheduler> schedulerReference = new AtomicReference<>();
         CountDownLatch transitionStarted = new CountDownLatch(1);
         CountDownLatch allowClose = new CountDownLatch(1);
@@ -105,7 +107,9 @@ class SetupRuntimeTransitionSchedulerTest {
                 completionCalls.incrementAndGet();
             }
         };
-        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(transition, executor);
+        SetupTransitionIntentStore intents = mock(SetupTransitionIntentStore.class);
+        SetupRuntimeTransitionScheduler scheduler = new SetupRuntimeTransitionScheduler(
+                transition, intents, executor);
         schedulerReference.set(scheduler);
         scheduler.onApplicationReady(mock(ApplicationReadyEvent.class));
 
@@ -120,5 +124,6 @@ class SetupRuntimeTransitionSchedulerTest {
         assertThat(interrupted).isFalse();
         assertThat(configurationCalls).hasValue(1);
         assertThat(completionCalls).hasValue(0);
+        verify(intents).clear(SetupTransitionIntentStore.Intent.CONFIGURATION_APPLIED);
     }
 }

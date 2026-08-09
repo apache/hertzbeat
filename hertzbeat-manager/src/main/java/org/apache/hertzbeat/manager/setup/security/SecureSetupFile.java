@@ -26,6 +26,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
+import java.util.Arrays;
 import java.util.Set;
 
 /** Secure creation, permission enforcement, and bounded reading of local setup files. */
@@ -107,6 +108,24 @@ public final class SecureSetupFile {
         return true;
     }
 
+    /**
+     * Forces the target's parent directory on POSIX providers after a directory-entry mutation.
+     *
+     * @return {@code false} when the provider has no POSIX directory-fsync contract; the owner-only forced-file
+     *         guarantee remains intact on that provider
+     */
+    public static boolean forceParentDirectoryIfSupported(Path trustedRoot, Path target) throws IOException {
+        Path parent = resolveWithoutLinksInsideRoot(trustedRoot, target).getParent();
+        if (!Files.getFileStore(parent).supportsFileAttributeView("posix")) {
+            return false;
+        }
+        try (FileChannel channel = FileChannel.open(
+                parent, Set.of(StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS))) {
+            channel.force(true);
+        }
+        return true;
+    }
+
     private static byte[] readResolvedOwnerOnly(Path resolvedTarget, int maximumBytes) throws IOException {
         if (!isOwnerOnlyRegularFile(resolvedTarget)) {
             throw new IOException("Setup file is not an owner-only regular file");
@@ -131,7 +150,7 @@ public final class SecureSetupFile {
             return transferred;
         } finally {
             if (content != null) {
-                java.util.Arrays.fill(content, (byte) 0);
+                Arrays.fill(content, (byte) 0);
             }
         }
     }

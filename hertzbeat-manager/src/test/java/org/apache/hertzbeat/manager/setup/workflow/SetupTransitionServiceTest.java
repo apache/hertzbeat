@@ -12,12 +12,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -36,11 +38,13 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseC
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionalConfigurationSummary;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.StatusResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
@@ -53,7 +57,11 @@ import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
 import org.apache.hertzbeat.manager.setup.identity.BootstrapIdentityConflict;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore.Intent;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+import org.springframework.http.HttpStatus;
 
 class SetupTransitionServiceTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC);
@@ -63,7 +71,7 @@ class SetupTransitionServiceTest {
         ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
         SetupRuntimeState state = state(capability, SetupPhase.CONFIGURATION_REQUIRED, false, null);
         SetupRequestValidator validator = mock(SetupRequestValidator.class);
-        when(validator.validate(any(org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest.class)))
+        when(validator.validate(any(ValidateRequest.class)))
                 .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
         SetupConfigurationCoordinator configuration = mock(SetupConfigurationCoordinator.class);
         when(configuration.configure(any(ConfigurationRequest.class), any()))
@@ -84,6 +92,76 @@ class SetupTransitionServiceTest {
                     headlessConfiguration(metadataPassword)));
         }
         assertThat(headlessState.phase()).isEqualTo(SetupPhase.APPLICATION_STARTING);
+    }
+
+    @Test
+    void durableConfigurationAndCompletionRecordIntentBeforePublishingRuntimeState() throws Exception {
+        ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+        SetupRequestValidator validator = mock(SetupRequestValidator.class);
+        when(validator.validate(any(ValidateRequest.class)))
+                .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
+        SetupConfigurationCoordinator configuration = mock(SetupConfigurationCoordinator.class);
+        when(configuration.configure(any(ConfigurationRequest.class), any()))
+                .thenReturn(configurationResponse("configuration"));
+        SetupTransitionIntentStore configurationIntents = mock(SetupTransitionIntentStore.class);
+        SetupRuntimeState configurationState = state(
+                capability, SetupPhase.CONFIGURATION_REQUIRED, false, null);
+        SetupTransitionService configurationTransitions = new SetupTransitionService(
+                configurationState, validator, configuration, capability, mock(SetupOptionsCoordinator.class),
+                Optional.empty(), Optional.empty(), configurationIntents);
+
+        configurationTransitions.configure(
+                SetupTransitionService.ConfigurationCommand.browser(browserConfiguration()));
+
+        InOrder configurationOrder = inOrder(configuration, configurationIntents);
+        configurationOrder.verify(configuration).configure(any(ConfigurationRequest.class), any());
+        configurationOrder.verify(configurationIntents).save(Intent.CONFIGURATION_APPLIED);
+        assertThat(configurationState.phase()).isEqualTo(SetupPhase.APPLICATION_STARTING);
+
+        SetupCompletionCoordinator completion = mock(SetupCompletionCoordinator.class);
+        SetupTransitionIntentStore completionIntents = mock(SetupTransitionIntentStore.class);
+        SetupRuntimeState completionState = state(
+                capability, SetupPhase.OPTIONAL_CONFIGURATION, true, "operator");
+        SetupTransitionService completionTransitions = new SetupTransitionService(
+                completionState, validator, configuration, capability, mock(SetupOptionsCoordinator.class),
+                Optional.empty(), Optional.of(completion), completionIntents);
+
+        completionTransitions.complete(SetupTransitionService.CompletionCommand.headless(
+                completionState.pendingWarnings()));
+
+        InOrder order = inOrder(completion, completionIntents);
+        order.verify(completion).completeInstallation();
+        order.verify(completionIntents).save(Intent.INSTALLATION_COMPLETED);
+        assertThat(completionState.phase()).isEqualTo(SetupPhase.COMPLETE);
+    }
+
+    @Test
+    void transitionIntentFailuresUseStableErrorWithoutPublishingRuntimeState() throws Exception {
+        for (Throwable storeFailure : List.<Throwable>of(
+                new IOException("private checkpoint path"),
+                new IllegalStateException("private provider failure"))) {
+            ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
+            SetupRuntimeState state = state(capability, SetupPhase.CONFIGURATION_REQUIRED, false, null);
+            SetupRequestValidator validator = mock(SetupRequestValidator.class);
+            when(validator.validate(any(ValidateRequest.class)))
+                    .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
+            SetupConfigurationCoordinator configuration = mock(SetupConfigurationCoordinator.class);
+            when(configuration.configure(any(ConfigurationRequest.class), any()))
+                    .thenReturn(configurationResponse("configuration"));
+            SetupTransitionIntentStore intents = mock(SetupTransitionIntentStore.class);
+            doThrow(storeFailure).when(intents).save(Intent.CONFIGURATION_APPLIED);
+            SetupTransitionService transitions = new SetupTransitionService(
+                    state, validator, configuration, capability, mock(SetupOptionsCoordinator.class),
+                    Optional.empty(), Optional.empty(), intents);
+
+            assertThatThrownBy(() -> transitions.configure(
+                    SetupTransitionService.ConfigurationCommand.browser(browserConfiguration())))
+                    .isInstanceOfSatisfying(SetupApiException.class, failure -> {
+                        assertThat(failure.errorCode()).isEqualTo(SetupErrorCode.CONFIG_WRITE_FAILED);
+                        assertThat(failure).hasMessage("config_write_failed").hasNoCause();
+                    });
+            assertThat(state.phase()).isEqualTo(SetupPhase.CONFIGURATION_REQUIRED);
+        }
     }
 
     @Test
@@ -165,7 +243,7 @@ class SetupTransitionServiceTest {
     void externalApplyReentryIsExplicitAndStillRunsValidationForBothTransports() {
         ManagedConfigCapability capability = mock(ManagedConfigCapability.class);
         SetupRequestValidator validator = mock(SetupRequestValidator.class);
-        when(validator.validate(any(org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidateRequest.class)))
+        when(validator.validate(any(ValidateRequest.class)))
                 .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
         SetupConfigurationCoordinator configuration = mock(SetupConfigurationCoordinator.class);
         ConfigurationResponse response = new ConfigurationResponse("replacement",
@@ -249,11 +327,11 @@ class SetupTransitionServiceTest {
                 .thenReturn(new ValidationResponse(true, CLOCK.instant(), null, List.of()));
         SetupOptionsCoordinator options = mock(SetupOptionsCoordinator.class);
         doThrow(new SetupApiException(SetupErrorCode.CONFIG_WRITE_FAILED,
-                org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)).when(options).persist(any());
+                HttpStatus.INTERNAL_SERVER_ERROR)).when(options).persist(any());
         SetupTransitionService transitions = transitions(state, validator,
                 mock(SetupConfigurationCoordinator.class), capability, options,
                 Optional.empty(), Optional.empty());
-        var before = state.status();
+        StatusResponse before = state.status();
 
         assertThatThrownBy(() -> transitions.configureOptions(optionsRequest()))
                 .isInstanceOf(SetupApiException.class);
@@ -286,7 +364,7 @@ class SetupTransitionServiceTest {
                 new MailConfiguration("mail.example.test", 25, MailSecurity.NONE,
                         null, null, "alerts@example.test"));
 
-        var response = transitions.configureOptions(request);
+        OptionsResponse response = transitions.configureOptions(request);
 
         assertThat(response.publicBaseUrlConfigured()).isTrue();
         assertThat(response.serverOtlpHttpConfigured()).isFalse();
@@ -333,7 +411,8 @@ class SetupTransitionServiceTest {
             SetupOptionsCoordinator options, Optional<IdentityInitializationService> identities,
             Optional<SetupCompletionCoordinator> completion) {
         return new SetupTransitionService(
-                state, validator, configuration, capability, options, identities, completion);
+                state, validator, configuration, capability, options, identities, completion,
+                mock(SetupTransitionIntentStore.class));
     }
 
     private static void assertOptionsValidationFailure(
@@ -347,7 +426,7 @@ class SetupTransitionServiceTest {
         SetupTransitionService transitions = transitions(state, validator,
                 mock(SetupConfigurationCoordinator.class), capability, options,
                 Optional.empty(), Optional.empty());
-        var before = state.status();
+        StatusResponse before = state.status();
 
         assertThatThrownBy(() -> transitions.configureOptions(request))
                 .isInstanceOfSatisfying(SetupApiException.class,

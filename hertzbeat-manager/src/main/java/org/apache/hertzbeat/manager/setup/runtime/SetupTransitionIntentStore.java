@@ -17,18 +17,25 @@
 
 package org.apache.hertzbeat.manager.setup.runtime;
 
-/**
- * Application boundary used by setup completion to activate the normal runtime.
- *
- * <p>The transition closes the currently active Spring context. Callers must therefore invoke it asynchronously
- * after the setup mutation has durably recorded its intent, rather than from the request thread.
- */
-@FunctionalInterface
-public interface SetupRuntimeTransition {
+import java.io.IOException;
+import java.util.Optional;
 
-    default void configurationApplied() {
-        completeSetup();
+/** Durable, secret-free intent that bridges a committed setup mutation and its runtime transition. */
+public interface SetupTransitionIntentStore {
+
+    Optional<Intent> load() throws IOException;
+
+    void save(Intent intent) throws IOException;
+
+    void clear(Intent completed) throws IOException;
+
+    /** Completion subsumes the earlier configuration transition and must never be downgraded. */
+    enum Intent {
+        CONFIGURATION_APPLIED,
+        INSTALLATION_COMPLETED;
+
+        boolean supersedes(Intent current) {
+            return this == INSTALLATION_COMPLETED && current == CONFIGURATION_APPLIED;
+        }
     }
-
-    void completeSetup();
 }

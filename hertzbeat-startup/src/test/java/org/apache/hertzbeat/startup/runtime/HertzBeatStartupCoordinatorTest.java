@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
@@ -94,6 +95,27 @@ class HertzBeatStartupCoordinatorTest {
         assertSame(normal, repeated);
         assertEquals(RuntimeMode.NORMAL, coordinator.mode());
         assertFalse(first.isActive());
+    }
+
+    @Test
+    void normalLaunchFallbackToRecoveryCanReprobeAndConvergeAfterConfiguration() {
+        RecordingLauncher launcher = new RecordingLauncher();
+        launcher.failMode = RuntimeMode.NORMAL;
+        AtomicInteger probeCalls = new AtomicInteger();
+        HertzBeatStartupCoordinator coordinator = new HertzBeatStartupCoordinator(
+                ignored -> probeCalls.getAndIncrement() == 0
+                        ? StartupDecision.normal()
+                        : new StartupDecision(RuntimeMode.FULL_SETUP_GATED), launcher);
+
+        coordinator.start(new String[0]);
+        launcher.failMode = null;
+        coordinator.configurationApplied();
+
+        assertEquals(2, probeCalls.get());
+        assertEquals(RuntimeMode.FULL_SETUP_GATED, coordinator.mode());
+        assertEquals(List.of(
+                "open:normal", "open:recovery", "close:recovery", "open:full_setup_gated"),
+                launcher.events);
     }
 
     @Test

@@ -32,6 +32,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupWarningCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore;
 import org.junit.jupiter.api.Test;
 
 class HeadlessSetupCoordinatorTest {
@@ -47,7 +48,8 @@ class HeadlessSetupCoordinatorTest {
         SetupTransitionService transitions = new SetupTransitionService(state,
                 mock(SetupRequestValidator.class), mock(SetupConfigurationCoordinator.class), capability,
                 mock(SetupOptionsCoordinator.class),
-                Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion));
+                Optional.of(mock(IdentityInitializationService.class)), Optional.of(completion),
+                mock(SetupTransitionIntentStore.class));
         HeadlessSetupCoordinator coordinator = new HeadlessSetupCoordinator(
                 state, new SetupMutationSerializer(), transitions);
 

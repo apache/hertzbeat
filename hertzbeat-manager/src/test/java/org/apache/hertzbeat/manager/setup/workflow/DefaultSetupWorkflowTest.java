@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,7 +36,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.AdministratorRequest;
@@ -46,6 +49,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigurationResp
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsRequest;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.OptionsResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.PublicAccessConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupAccess;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupOperationState;
@@ -59,6 +63,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiException;
 import org.apache.hertzbeat.manager.setup.config.ManagedConfigCapability;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore;
 import org.junit.jupiter.api.Test;
 
 class DefaultSetupWorkflowTest {
@@ -81,7 +86,7 @@ class DefaultSetupWorkflowTest {
                         "https://server.example.test:4318", "\u0000"),
                 null, null);
 
-        var response = workflow.configureOptions(request);
+        OptionsResponse response = workflow.configureOptions(request);
 
         assertTrue(response.publicBaseUrlConfigured());
         assertTrue(response.serverOtlpHttpConfigured());
@@ -130,7 +135,7 @@ class DefaultSetupWorkflowTest {
 
         workflow.complete(new CompleteRequest(SetupPhase.OPTIONAL_CONFIGURATION,
                 List.of(SetupWarningCode.H2_NON_PRODUCTION)));
-        org.mockito.Mockito.verify(completion).completeInstallation();
+        verify(completion).completeInstallation();
     }
 
     @Test
@@ -161,10 +166,10 @@ class DefaultSetupWorkflowTest {
         OptionsRequest request = new OptionsRequest(
                 new PublicAccessConfiguration(null, "http://collector.example.test:4318", null), null, null);
 
-        try (var executor = Executors.newFixedThreadPool(2)) {
-            var optionsResult = executor.submit(() -> workflow.configureOptions(request));
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<OptionsResponse> optionsResult = executor.submit(() -> workflow.configureOptions(request));
             persistenceStarted.await(5, TimeUnit.SECONDS);
-            var completionResult = executor.submit(() -> headless.complete(
+            Future<?> completionResult = executor.submit(() -> headless.complete(
                     List.of(SetupWarningCode.H2_NON_PRODUCTION)));
 
             assertThrows(TimeoutException.class, () -> completionResult.get(200, TimeUnit.MILLISECONDS));
@@ -172,7 +177,7 @@ class DefaultSetupWorkflowTest {
             optionsResult.get(5, TimeUnit.SECONDS);
             ExecutionException rejected = assertThrows(ExecutionException.class,
                     () -> completionResult.get(5, TimeUnit.SECONDS));
-            org.assertj.core.api.Assertions.assertThat(rejected.getCause()).isInstanceOf(SetupApiException.class);
+            assertThat(rejected.getCause()).isInstanceOf(SetupApiException.class);
         }
         verifyNoInteractions(completion);
     }
@@ -212,10 +217,10 @@ class DefaultSetupWorkflowTest {
                         "localhost:4001", "http://localhost:4000", "public", null, null));
 
         try (SecretValue metadataPassword = SecretValue.of("secret");
-             var executor = Executors.newFixedThreadPool(2)) {
-            var browserResult = executor.submit(() -> browser.configure(browserRequest));
+             ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            Future<ConfigurationResponse> browserResult = executor.submit(() -> browser.configure(browserRequest));
             configurationStarted.await(5, TimeUnit.SECONDS);
-            var headlessResult = executor.submit(() -> headless.configure(
+            Future<ConfigurationResponse> headlessResult = executor.submit(() -> headless.configure(
                     new HeadlessSetupWorkflow.RequiredConfiguration(SetupPhase.CONFIGURATION_REQUIRED,
                             ApplyMode.MANAGED_WRITE,
                             new HeadlessSetupWorkflow.Metadata(MetadataDatabaseKind.H2,
@@ -228,7 +233,7 @@ class DefaultSetupWorkflowTest {
             browserResult.get(5, TimeUnit.SECONDS);
             ExecutionException rejected = assertThrows(ExecutionException.class,
                     () -> headlessResult.get(5, TimeUnit.SECONDS));
-            org.assertj.core.api.Assertions.assertThat(rejected.getCause())
+            assertThat(rejected.getCause())
                     .isInstanceOf(SetupWorkflowConflict.class);
         }
         verify(configuration, never()).configure(any(HeadlessSetupWorkflow.RequiredConfiguration.class),
@@ -242,7 +247,8 @@ class DefaultSetupWorkflowTest {
             Optional<SetupCompletionCoordinator> completion, SetupOptionsCoordinator options,
             Clock clock, SetupMutationSerializer mutations) {
         SetupTransitionService transitions = new SetupTransitionService(
-                state, validator, configuration, capability, options, identities, completion);
+                state, validator, configuration, capability, options, identities, completion,
+                mock(SetupTransitionIntentStore.class));
         return new DefaultSetupWorkflow(state, validator, operations,
                 clock, mutations, transitions);
     }
@@ -254,7 +260,8 @@ class DefaultSetupWorkflowTest {
             Optional<SetupCompletionCoordinator> completion, SetupMutationSerializer mutations) {
         SetupTransitionService transitions = new SetupTransitionService(
                 state, validator, configuration, capability,
-                mock(SetupOptionsCoordinator.class), identities, completion);
+                mock(SetupOptionsCoordinator.class), identities, completion,
+                mock(SetupTransitionIntentStore.class));
         return new HeadlessSetupCoordinator(state, mutations, transitions);
     }
 }

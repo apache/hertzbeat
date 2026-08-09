@@ -23,8 +23,8 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import org.apache.hertzbeat.common.runtime.BusinessRuntimeGate;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupPhase;
@@ -37,9 +37,11 @@ import org.apache.hertzbeat.manager.setup.identity.IdentityInitializationService
 import org.apache.hertzbeat.manager.setup.installation.InstallationCompletionService;
 import org.apache.hertzbeat.manager.setup.installation.InstallationRecordRepository;
 import org.apache.hertzbeat.manager.setup.installation.LocalInstallationFingerprintStore;
+import org.apache.hertzbeat.manager.setup.runtime.FileSetupTransitionIntentStore;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.manager.setup.runtime.SetupResponseTransition;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransitionScheduler;
+import org.apache.hertzbeat.manager.setup.runtime.SetupTransitionIntentStore;
 import org.apache.hertzbeat.manager.setup.security.RemoteSetupUnlock;
 import org.apache.hertzbeat.manager.setup.security.SetupHttpUnlockService;
 import org.apache.hertzbeat.manager.setup.unattended.SetupPasswordFileLoader;
@@ -84,10 +86,15 @@ public class SetupApiConfiguration {
 
     @Bean(destroyMethod = "close")
     public SetupRuntimeTransitionScheduler setupRuntimeTransitionScheduler(
-            SetupRuntimeTransition transition) {
-        ExecutorService executor = Executors.newSingleThreadExecutor(
+            SetupRuntimeTransition transition, SetupTransitionIntentStore intents) {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform().name("setup-runtime-transition").factory());
-        return new SetupRuntimeTransitionScheduler(transition, executor);
+        return new SetupRuntimeTransitionScheduler(transition, intents, executor);
+    }
+
+    @Bean
+    public SetupTransitionIntentStore setupTransitionIntentStore(Environment environment) {
+        return new FileSetupTransitionIntentStore(SetupInstallationPaths.root(environment));
     }
 
     @Bean
@@ -147,10 +154,11 @@ public class SetupApiConfiguration {
             SetupConfigurationCoordinator configuration, ManagedConfigCapability capability,
             SetupOptionsCoordinator options,
             ObjectProvider<IdentityInitializationService> identityProvider,
-            ObjectProvider<InstallationCompletionService> installationProvider, Environment environment) {
+            ObjectProvider<InstallationCompletionService> installationProvider,
+            SetupTransitionIntentStore transitionIntents, Environment environment) {
         return new SetupTransitionService(state, validator, configuration, capability, options,
                 identityProvider.stream().findFirst(),
-                completion(environment, installationProvider.stream().findFirst()));
+                completion(environment, installationProvider.stream().findFirst()), transitionIntents);
     }
 
     @Bean

@@ -29,6 +29,7 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     private final StartupFailureReporter failureReporter;
     private String[] args = new String[0];
     private RunningApplicationContext currentContext;
+    private boolean normalRuntimeSelected;
 
     public HertzBeatStartupCoordinator(StartupDecisionProbe probe, StartupContextLauncher launcher) {
         this(probe, launcher, new StartupFailureReporter());
@@ -55,7 +56,13 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
 
     @Override
     public synchronized void configurationApplied() {
-        transition(new StartupDecision(RuntimeMode.FULL_SETUP_GATED));
+        if (normalRuntimeSelected) {
+            return;
+        }
+        // The intent may be stale; the durable startup probe remains authoritative for the target mode.
+        StartupDecision currentDecision = Objects.requireNonNull(
+                probe.probe(args.clone()), "startup decision");
+        transition(currentDecision);
     }
 
     @Override
@@ -66,6 +73,7 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     public synchronized RunningApplicationContext transition(StartupDecision decision) {
         Objects.requireNonNull(decision, "decision");
         if (currentContext != null && currentContext.isActive() && currentContext.mode() == decision.mode()) {
+            recordNormalSelection();
             return currentContext;
         }
         closeCurrent();
@@ -88,7 +96,15 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
                 throw recoveryFailure;
             }
         }
+        recordNormalSelection();
         return currentContext;
+    }
+
+    private void recordNormalSelection() {
+        if (currentContext != null && currentContext.isActive()
+                && currentContext.mode() == RuntimeMode.NORMAL) {
+            normalRuntimeSelected = true;
+        }
     }
 
     public synchronized RuntimeMode mode() {

@@ -24,7 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Commits a successful configuration response before scheduling the destructive context transition. */
+/** Flushes successful responses while always waking an already-durable runtime transition intent. */
 public final class SetupResponseTransitionFilter extends OncePerRequestFilter {
     private final SetupRuntimeTransitionScheduler scheduler;
     private final SetupResponseTransition responseTransition;
@@ -38,13 +38,20 @@ public final class SetupResponseTransitionFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        chain.doFilter(request, response);
-        SetupResponseTransition.Transition transition = responseTransition.consume(request);
-        if (transition != null) {
-            response.flushBuffer();
+        SetupResponseTransition.Transition transition = null;
+        try {
+            chain.doFilter(request, response);
+            transition = responseTransition.consume(request);
+            if (transition != null) {
+                response.flushBuffer();
+            }
+        } finally {
+            if (transition == null) {
+                transition = responseTransition.consume(request);
+            }
             if (transition == SetupResponseTransition.Transition.INSTALLATION_COMPLETED) {
                 scheduler.installationCompleted();
-            } else {
+            } else if (transition == SetupResponseTransition.Transition.CONFIGURATION_APPLIED) {
                 scheduler.configurationApplied();
             }
         }
