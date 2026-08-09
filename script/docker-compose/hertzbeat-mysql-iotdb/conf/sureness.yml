@@ -22,6 +22,12 @@
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  # the define yml routes persist the global collection templates
+  # post can only add a new type, put overwrites an existing one and immediately
+  # redispatches its collect job to every monitor already using it - hence admin only
+  - /api/apps/**===post===[admin,user]
+  - /api/apps/**===put===[admin]
+  - /api/apps/**===delete===[admin]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
@@ -86,6 +92,8 @@ resourceRole:
   - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
