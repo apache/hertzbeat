@@ -133,6 +133,23 @@ final class MigrationCandidateStore {
         }
     }
 
+    <T> T readExact(
+            ManagedMigrationConfigurationTransaction.CandidateRef reference,
+            String expectedTargetIdentityHash,
+            ManagedMigrationConfigurationTransaction.CandidateReader<T> reader) throws IOException {
+        try (MigrationCandidateMaterial material = read(reference)) {
+            ManagedMigrationConfigurationTransaction.Inspection inspection = material.inspection();
+            if (inspection.state() != ManagedMigrationConfigurationTransaction.CandidateState.READY
+                    || !inspection.targetIdentityHash().orElseThrow()
+                            .equals(expectedTargetIdentityHash)) {
+                throw new IOException("Managed migration candidate identity does not match");
+            }
+            ManagedConfigurationBundle bundle = new ManagedConfigurationBundle(
+                    material.application().orElseThrow(), material.secrets().orElseThrow());
+            return reader.read(bundle);
+        }
+    }
+
     <T> T withMaterial(ManagedMigrationConfigurationTransaction.CandidateRef reference,
                        MaterialReader<T> reader) {
         try (MigrationCandidateMaterial material = read(reference)) {

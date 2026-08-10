@@ -85,6 +85,16 @@ public final class ManagedMigrationConfigurationTransaction {
         return lock.execute(() -> store.readExact(reference, reader));
     }
 
+    /** Reads only the ready candidate whose target identity exactly matches the journal. */
+    public <T> T readExact(
+            CandidateRef reference, String expectedTargetIdentityHash, CandidateReader<T> reader)
+            throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        requireIdentityHash(expectedTargetIdentityHash);
+        Objects.requireNonNull(reader, "reader");
+        return lock.execute(() -> store.readExact(reference, expectedTargetIdentityHash, reader));
+    }
+
     /** Removes only the operation-and-generation scoped candidate named by the reference. */
     public DiscardOutcome discardExact(CandidateRef reference) throws IOException {
         Objects.requireNonNull(reference, "reference");
@@ -108,12 +118,15 @@ public final class ManagedMigrationConfigurationTransaction {
     /** Restores only the exact recorded base while the candidate generation remains active. */
     public RollbackOutcome rollback(CandidateRef reference) throws IOException {
         Objects.requireNonNull(reference, "reference");
-        return lock.execute(() -> store.withMaterial(reference, material -> {
-            if (material.inspection().state() != CandidateState.READY) {
-                return RollbackOutcome.RECOVERY_REQUIRED;
-            }
-            return activation.rollback(material);
-        }));
+        return lock.execute(() -> rollbackMaterial(reference, null));
+    }
+
+    /** Restores the exact base only when candidate and journal target identities match. */
+    public RollbackOutcome rollbackExact(
+            CandidateRef reference, String expectedTargetIdentityHash) throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        requireIdentityHash(expectedTargetIdentityHash);
+        return lock.execute(() -> rollbackMaterial(reference, expectedTargetIdentityHash));
     }
 
     private ActivationOutcome activateMaterial(
@@ -127,6 +140,20 @@ public final class ManagedMigrationConfigurationTransaction {
                 return ActivationOutcome.RECOVERY_REQUIRED;
             }
             return activation.activate(material);
+        });
+    }
+
+    private RollbackOutcome rollbackMaterial(
+            CandidateRef reference, String expectedTargetIdentityHash) {
+        return store.withMaterial(reference, material -> {
+            Inspection inspection = material.inspection();
+            if (inspection.state() != CandidateState.READY
+                    || expectedTargetIdentityHash != null
+                    && !inspection.targetIdentityHash().orElseThrow()
+                            .equals(expectedTargetIdentityHash)) {
+                return RollbackOutcome.RECOVERY_REQUIRED;
+            }
+            return activation.rollback(material);
         });
     }
 

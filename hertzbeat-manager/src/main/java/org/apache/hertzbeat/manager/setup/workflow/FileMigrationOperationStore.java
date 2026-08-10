@@ -100,6 +100,21 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
                 .filter(snapshot -> snapshot.operationId().equals(operationId)).findFirst());
     }
 
+    /** Selects one startup record only when no other operation still owns migration progress. */
+    Optional<MigrationOperationSnapshot> selectForStartup(String operationId) {
+        requireSafeId(operationId);
+        return locked(() -> {
+            List<MigrationOperationSnapshot> snapshots = read();
+            if (snapshots.stream().anyMatch(snapshot -> !snapshot.terminal()
+                    && !snapshot.operationId().equals(operationId))) {
+                throw failure(SetupErrorCode.OPERATION_CONFLICT);
+            }
+            return snapshots.stream()
+                    .filter(snapshot -> snapshot.operationId().equals(operationId))
+                    .findFirst();
+        });
+    }
+
     @Override
     public List<MigrationOperationSnapshot> history() {
         return locked(() -> List.copyOf(read()));
