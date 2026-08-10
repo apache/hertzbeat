@@ -158,6 +158,14 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         return locked(() -> transitionOrConfirm(read(), operationId, expectedState, replacement));
     }
 
+    /** Derives and durably publishes one exact replacement while holding the store lock. */
+    ExactTransitionDisposition transformAndTransitionOrConfirmDisposition(
+            String operationId, SnapshotTransition transition) {
+        requireSafeId(operationId);
+        Objects.requireNonNull(transition, "transition");
+        return locked(() -> transformOrConfirm(read(), operationId, transition));
+    }
+
     private MigrationOperationSnapshot transition(
             List<MigrationOperationSnapshot> snapshots, String operationId,
             MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
@@ -189,6 +197,30 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
                 }
                 if (current.state() != expectedState) {
                     throw failure(SetupErrorCode.OPERATION_CONFLICT);
+                }
+                transitionPolicy.requireAllowed(current, replacement);
+                snapshots.set(index, replacement);
+                trim(snapshots);
+                writeAndConfirm(snapshots);
+                return ExactTransitionDisposition.TRANSITIONED;
+            }
+        }
+        throw failure(SetupErrorCode.OPERATION_NOT_FOUND);
+    }
+
+    private ExactTransitionDisposition transformOrConfirm(
+            List<MigrationOperationSnapshot> snapshots, String operationId, SnapshotTransition transition) {
+        for (int index = 0; index < snapshots.size(); index++) {
+            MigrationOperationSnapshot current = snapshots.get(index);
+            if (current.operationId().equals(operationId)) {
+                MigrationOperationSnapshot replacement = Objects.requireNonNull(
+                        transition.apply(current), "replacement");
+                if (!replacement.operationId().equals(operationId)) {
+                    throw failure(SetupErrorCode.OPERATION_CONFLICT);
+                }
+                if (current.equals(replacement)) {
+                    writeAndConfirm(snapshots);
+                    return ExactTransitionDisposition.ALREADY_CONFIRMED;
                 }
                 transitionPolicy.requireAllowed(current, replacement);
                 snapshots.set(index, replacement);
@@ -297,6 +329,12 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
     @FunctionalInterface
     interface Publisher {
         void publish(Path target, byte[] content) throws IOException;
+    }
+
+    @FunctionalInterface
+    interface SnapshotTransition {
+        /** Pure in-memory transform; called while the operation-store lock is held. */
+        MigrationOperationSnapshot apply(MigrationOperationSnapshot current);
     }
 
     enum ExactTransitionDisposition { TRANSITIONED, ALREADY_CONFIRMED }
