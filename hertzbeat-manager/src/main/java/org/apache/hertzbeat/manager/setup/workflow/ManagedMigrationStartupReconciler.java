@@ -73,7 +73,7 @@ final class ManagedMigrationStartupReconciler {
             return MigrationStartupReconciliation.ALREADY_ROLLED_BACK_RESTART_REQUIRED;
         }
         current = convergeActivation(current);
-        if (isRestartRollback(current)) {
+        if (isStartupRollback(current)) {
             return rollback(current);
         }
         if (!new RetainedManagedActivationSnapshots(current).awaitingRestart()) {
@@ -135,10 +135,11 @@ final class ManagedMigrationStartupReconciler {
         return MigrationStartupReconciliation.ROLLED_BACK_RESTART_REQUIRED;
     }
 
-    private boolean isRestartRollback(MigrationOperationSnapshot current) {
+    private boolean isStartupRollback(MigrationOperationSnapshot current) {
         return current.state() == MigrationOperationState.RUNNING
                 && current.stage() == MigrationStage.ROLLING_BACK
-                && current.rollbackOrigin() == MigrationRollbackOrigin.RESTART_FAILURE;
+                && (current.rollbackOrigin() == MigrationRollbackOrigin.ACTIVATION_FAILURE
+                || current.rollbackOrigin() == MigrationRollbackOrigin.RESTART_FAILURE);
     }
 
     private void requireExactDraft(MigrationOperationSnapshot current) {

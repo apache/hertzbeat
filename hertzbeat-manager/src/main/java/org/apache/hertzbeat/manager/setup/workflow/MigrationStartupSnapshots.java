@@ -34,9 +34,13 @@ final class MigrationStartupSnapshots {
     }
 
     MigrationOperationSnapshot rolledBack(Instant completedAt) {
+        MigrationRollbackOrigin rollbackOrigin = source.rollbackOrigin();
+        if (rollbackOrigin != MigrationRollbackOrigin.ACTIVATION_FAILURE
+                && rollbackOrigin != MigrationRollbackOrigin.RESTART_FAILURE) {
+            throw new IllegalArgumentException("Unsupported startup rollback origin");
+        }
         return snapshot(MigrationOperationState.ROLLED_BACK, MigrationStage.ROLLED_BACK,
-                completedAt, SetupErrorCode.RESTART_FAILED,
-                MigrationRollbackOrigin.RESTART_FAILURE, 0);
+                completedAt, rollbackOrigin.errorCode(), rollbackOrigin, 0);
     }
 
     private MigrationOperationSnapshot snapshot(

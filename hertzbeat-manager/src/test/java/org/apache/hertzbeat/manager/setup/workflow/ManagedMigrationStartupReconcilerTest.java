@@ -205,6 +205,28 @@ class ManagedMigrationStartupReconcilerTest {
     }
 
     @Test
+    void activationFailureRollbackConvergesAndReplaysItsExactTerminalCause() throws Exception {
+        MigrationOperationSnapshot rollingBack = activationRollback(current());
+        store.compareAndTransition(
+                OPERATION, MigrationOperationState.READY_TO_ACTIVATE, rollingBack);
+        when(configuration.rollbackExact(CANDIDATE, IDENTITY))
+                .thenReturn(RollbackOutcome.ROLLED_BACK);
+        ManagedMigrationStartupReconciler reconciler = reconciler();
+
+        assertThat(reconciler.reconcile())
+                .isEqualTo(MigrationStartupReconciliation.ROLLED_BACK_RESTART_REQUIRED);
+        assertThat(reconciler.reconcile())
+                .isEqualTo(MigrationStartupReconciliation.ALREADY_ROLLED_BACK_RESTART_REQUIRED);
+
+        MigrationOperationSnapshot terminal = current();
+        assertThat(terminal.state()).isEqualTo(MigrationOperationState.ROLLED_BACK);
+        assertThat(terminal.rollbackOrigin()).isEqualTo(MigrationRollbackOrigin.ACTIVATION_FAILURE);
+        assertThat(terminal.errorCode()).isEqualTo(SetupErrorCode.MIGRATION_ACTIVATION_FAILED);
+        verify(configuration, times(1)).rollbackExact(CANDIDATE, IDENTITY);
+        verifyNoInteractions(verifier);
+    }
+
+    @Test
     void targetVerifierErrorRemainsPrimaryAndDoesNotChangeJournal() {
         seedAwaitingRestart();
         AssertionError fatal = new AssertionError("private target failure");
@@ -282,5 +304,14 @@ class ManagedMigrationStartupReconcilerTest {
                 "operation-b", MigrationTarget.MYSQL, ApplyMode.MANAGED_WRITE,
                 CREATED.plusSeconds(30), STARTED.plusSeconds(30), "foreign-generation");
         return new DurableCutoverSnapshots(foreign, "b".repeat(64)).cleanPending();
+    }
+
+    private MigrationOperationSnapshot activationRollback(MigrationOperationSnapshot source) {
+        return new MigrationOperationSnapshot(
+                source.operationId(), MigrationOperationState.RUNNING, source.target(), source.applyMode(),
+                MigrationStage.ROLLING_BACK, 100, source.createdAt(), source.startedAt(), null,
+                source.verificationState(), null, MigrationRollbackOrigin.ACTIVATION_FAILURE,
+                1000, false, false, false, source.targetIdentityHash(),
+                source.managedCandidateGeneration());
     }
 }

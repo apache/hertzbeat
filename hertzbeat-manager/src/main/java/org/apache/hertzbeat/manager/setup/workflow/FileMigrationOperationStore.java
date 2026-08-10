@@ -115,6 +115,19 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         });
     }
 
+    /** Selects the only nonterminal startup record under the operation-store lock. */
+    Optional<MigrationOperationSnapshot> selectUniqueNonterminalForStartup() {
+        return locked(() -> {
+            List<MigrationOperationSnapshot> active = read().stream()
+                    .filter(snapshot -> !snapshot.terminal())
+                    .toList();
+            if (active.size() > 1) {
+                throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+            }
+            return active.stream().findFirst();
+        });
+    }
+
     @Override
     public List<MigrationOperationSnapshot> history() {
         return locked(() -> List.copyOf(read()));
