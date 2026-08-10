@@ -40,6 +40,27 @@ final class RetainedCutoverSteps {
         return targetFactory.acquire(target, password, deadline);
     }
 
+    RetainedCutoverOutcome prepare(
+            RetainedCutoverPreparation preparation,
+            RetainedCutoverPreparationContext context,
+            JdbcMetadataMigrationDeadline deadline) {
+        try {
+            requirePreparationBudget(deadline);
+            preparation.prepare(context);
+            requirePreparationBudget(deadline);
+            return RetainedCutoverOutcome.success();
+        } catch (RuntimeException | Error failure) {
+            return RetainedCutoverOutcome.failure(failure);
+        }
+    }
+
+    private static void requirePreparationBudget(JdbcMetadataMigrationDeadline deadline) {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new MetadataMigrationException(MetadataMigrationErrorCode.TIMEOUT);
+        }
+        deadline.remainingDuration();
+    }
+
     RetainedCutoverOutcome provision(
             TargetJdbcConnectionLease lease,
             MetadataDatabaseSettings target,

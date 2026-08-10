@@ -146,7 +146,8 @@ class RetainedCutoverCoordinatorTest {
         verify(fixture.executor).execute(any(), any(), any(), anyDeadline(), any());
         assertConflict(fixture::execute);
         assertConflict(() -> fixture.coordinator.execute(
-                "operation-b", TARGET, fixture.password, TIMEOUT, MetadataMigrationProgressSink.NO_OP));
+                "operation-b", TARGET, fixture.password, TIMEOUT,
+                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP));
     }
 
     @Test
@@ -321,7 +322,8 @@ class RetainedCutoverCoordinatorTest {
 
         private RetainedCutoverResult execute() {
             return coordinator.execute(
-                    OPERATION_ID, TARGET, password, TIMEOUT, MetadataMigrationProgressSink.NO_OP);
+                    OPERATION_ID, TARGET, password, TIMEOUT,
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP);
         }
 
         private static void scopedTarget(TargetJdbcConnectionLease lease, Connection connection) {

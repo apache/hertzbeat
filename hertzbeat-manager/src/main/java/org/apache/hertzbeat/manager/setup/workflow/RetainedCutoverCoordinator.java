@@ -48,13 +48,22 @@ final class RetainedCutoverCoordinator {
             MetadataDatabaseSettings target,
             SecretValue borrowedPassword,
             Duration timeout,
-            MetadataMigrationProgressSink progress) {
-        requireRequest(operationId, target, borrowedPassword, timeout, progress);
+            MetadataMigrationProgressSink progress,
+            RetainedCutoverPreparation preparation) {
+        requireRequest(operationId, target, borrowedPassword, timeout, progress, preparation);
         JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(timeout, ticker);
         RetainedCutoverState.Execution execution = state.reserve(operationId);
         TargetJdbcConnectionLease provisionLease = acquire(execution, target, borrowedPassword, deadline);
         String provisionIdentity = targetIdentity(execution, provisionLease, deadline);
         execution.targetIdentityHash(provisionIdentity);
+        RetainedCutoverOutcome preparationOutcome = steps.prepare(
+                preparation,
+                new RetainedCutoverPreparationContext(operationId, provisionIdentity),
+                deadline);
+        if (!preparationOutcome.successful()) {
+            return finish(execution, RetainedCutoverRelease.resources(
+                    provisionLease, null, preparationOutcome, false), deadline);
+        }
         RetainedCutoverOutcome provisionOutcome = steps.provision(
                 provisionLease, target, deadline);
         if (!provisionOutcome.successful()) {
@@ -207,12 +216,14 @@ final class RetainedCutoverCoordinator {
             MetadataDatabaseSettings target,
             SecretValue password,
             Duration timeout,
-            MetadataMigrationProgressSink progress) {
+            MetadataMigrationProgressSink progress,
+            RetainedCutoverPreparation preparation) {
         requireOperationId(operationId);
         Objects.requireNonNull(target, "target");
         Objects.requireNonNull(password, "password");
         Objects.requireNonNull(timeout, "timeout");
         Objects.requireNonNull(progress, "progress");
+        Objects.requireNonNull(preparation, "preparation");
     }
 
     private static void requireOperationId(String operationId) {
