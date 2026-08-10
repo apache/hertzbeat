@@ -10,6 +10,9 @@ package org.apache.hertzbeat.manager.maintenance;
 /** Owner capability for one fully acquired migration maintenance window. */
 public interface MigrationMaintenanceLease extends AutoCloseable {
 
+    /** Runs synchronous work against the exact source fenced by this maintenance window. */
+    void withSourceConnection(MigrationSourceAction action);
+
     @Override
     void close();
 }

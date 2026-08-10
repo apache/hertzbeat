@@ -25,11 +25,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
+@Timeout(15)
 class EmbeddedH2SourceGuardTest {
 
     @Test
@@ -50,6 +52,93 @@ class EmbeddedH2SourceGuardTest {
         lease.close();
         verify(connection).close();
         guard.destroy();
+    }
+
+    @Test
+    void scopesTheExactGuardedConnectionAndRejectsUseAfterClose() throws Exception {
+        DataSource dataSource = Mockito.mock(DataSource.class);
+        Connection connection = Mockito.mock(Connection.class);
+        DatabaseMetaData metadata = Mockito.mock(DatabaseMetaData.class);
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.getMetaData()).thenReturn(metadata);
+        when(metadata.getDatabaseProductName()).thenReturn("H2");
+        when(metadata.getURL()).thenReturn("jdbc:h2:mem:manager");
+        EmbeddedH2SourceGuard guard = guard(dataSource, "jdbc:h2:mem:manager");
+        MigrationSourceLease lease = guard.fence("operation-a", Duration.ofSeconds(1));
+        AtomicReference<Connection> observed = new AtomicReference<>();
+
+        lease.withConnection(observed::set);
+        assertThat(observed.get()).isSameAs(connection);
+        lease.close();
+        assertThatThrownBy(() -> lease.withConnection(ignored -> { }))
+                .isInstanceOfSatisfying(MigrationMaintenanceException.class, failure ->
+                        assertThat(failure.code())
+                                .isEqualTo(MigrationMaintenanceErrorCode.MIGRATION_OPERATION_CONFLICT));
+        guard.destroy();
+    }
+
+    @Test
+    void sourceCloseCannotOverlapAnActiveScopedCallback() throws Exception {
+        DataSource dataSource = Mockito.mock(DataSource.class);
+        Connection connection = Mockito.mock(Connection.class);
+        DatabaseMetaData metadata = Mockito.mock(DatabaseMetaData.class);
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.getMetaData()).thenReturn(metadata);
+        when(metadata.getDatabaseProductName()).thenReturn("H2");
+        when(metadata.getURL()).thenReturn("jdbc:h2:mem:manager");
+        EmbeddedH2SourceGuard guard = guard(dataSource, "jdbc:h2:mem:manager");
+        MigrationSourceLease lease = guard.fence("operation-a", Duration.ofSeconds(1));
+        CountDownLatch callbackEntered = new CountDownLatch(1);
+        CountDownLatch releaseCallback = new CountDownLatch(1);
+        CountDownLatch closeReturned = new CountDownLatch(1);
+        Thread callback = Thread.ofPlatform().start(() -> lease.withConnection(ignored -> {
+            callbackEntered.countDown();
+            awaitIgnoringInterrupt(releaseCallback);
+        }));
+        Thread closer = null;
+
+        try {
+            assertThat(callbackEntered.await(5, TimeUnit.SECONDS)).isTrue();
+            closer = Thread.ofPlatform().start(() -> {
+                lease.close();
+                closeReturned.countDown();
+            });
+            assertThat(closeReturned.await(1, TimeUnit.SECONDS)).isFalse();
+        } finally {
+            releaseCallback.countDown();
+        }
+        callback.join(5_000);
+        if (closer != null) {
+            closer.join(5_000);
+        }
+        assertThat(closeReturned.getCount()).isZero();
+        verify(connection).close();
+        guard.destroy();
+    }
+
+    @Test
+    void sourceCloseFromItsOwnScopedCallbackFailsFast() throws Exception {
+        DataSource dataSource = Mockito.mock(DataSource.class);
+        Connection connection = Mockito.mock(Connection.class);
+        DatabaseMetaData metadata = Mockito.mock(DatabaseMetaData.class);
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.getMetaData()).thenReturn(metadata);
+        when(metadata.getDatabaseProductName()).thenReturn("H2");
+        when(metadata.getURL()).thenReturn("jdbc:h2:mem:manager");
+        EmbeddedH2SourceGuard guard = guard(dataSource, "jdbc:h2:mem:manager");
+        MigrationSourceLease lease = guard.fence("operation-a", Duration.ofSeconds(1));
+
+        try {
+            lease.withConnection(ignored -> assertThatThrownBy(lease::close)
+                    .isInstanceOfSatisfying(MigrationMaintenanceException.class, failure ->
+                            assertThat(failure.code())
+                                    .isEqualTo(MigrationMaintenanceErrorCode.MIGRATION_OPERATION_CONFLICT)));
+            verify(connection, never()).close();
+        } finally {
+            lease.close();
+            guard.destroy();
+        }
+        verify(connection).close();
     }
 
     @Test
@@ -228,5 +317,19 @@ class EmbeddedH2SourceGuardTest {
         DataSourceProperties properties = new DataSourceProperties();
         properties.setUrl(configuredUrl);
         return new EmbeddedH2SourceGuard(dataSource, properties);
+    }
+
+    private static void awaitIgnoringInterrupt(CountDownLatch latch) {
+        boolean interrupted = false;
+        while (latch.getCount() > 0) {
+            try {
+                latch.await();
+            } catch (InterruptedException ignored) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

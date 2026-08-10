@@ -40,7 +40,7 @@ public final class MigrationMaintenanceException extends RuntimeException {
                 "Multi-node metadata migration is unsupported");
     }
 
-    static MigrationMaintenanceException operationConflict() {
+    public static MigrationMaintenanceException operationConflict() {
         return failure(MigrationMaintenanceErrorCode.MIGRATION_OPERATION_CONFLICT,
                 "Migration maintenance operation is already active");
     }
@@ -55,7 +55,7 @@ public final class MigrationMaintenanceException extends RuntimeException {
                 "Migration maintenance acquisition was interrupted");
     }
 
-    static MigrationMaintenanceException maintenanceFailure() {
+    public static MigrationMaintenanceException maintenanceFailure() {
         return failure(MigrationMaintenanceErrorCode.MIGRATION_MAINTENANCE_FAILURE,
                 "Migration maintenance acquisition failed");
     }
@@ -65,7 +65,7 @@ public final class MigrationMaintenanceException extends RuntimeException {
                 "Migration maintenance release failed");
     }
 
-    static MigrationMaintenanceException invalidRequest() {
+    public static MigrationMaintenanceException invalidRequest() {
         return failure(MigrationMaintenanceErrorCode.INVALID_REQUEST,
                 "Migration maintenance request is invalid");
     }

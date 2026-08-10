@@ -16,6 +16,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Connection;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -24,9 +25,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionCoordinator;
 import org.apache.hertzbeat.common.transaction.MetadataWriteMaintenanceLease;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
+@Timeout(15)
 class DefaultMigrationMaintenanceOrchestratorTest {
 
     @Test
@@ -70,6 +73,79 @@ class DefaultMigrationMaintenanceOrchestratorTest {
         order.verify(harness.producerLease).resume();
         order.verify(harness.sourceLease).close();
         order.verify(harness.authorityLease).close();
+    }
+
+    @Test
+    void compositeScopesTheExactSourceAndCannotCloseAcrossTheCallback() throws Exception {
+        Harness harness = harness();
+        Connection source = Mockito.mock(Connection.class);
+        CountDownLatch callbackEntered = new CountDownLatch(1);
+        CountDownLatch releaseCallback = new CountDownLatch(1);
+        CountDownLatch closeReturned = new CountDownLatch(1);
+        Mockito.doAnswer(invocation -> {
+            MigrationSourceAction action = invocation.getArgument(0);
+            action.execute(source);
+            return null;
+        }).when(harness.sourceLease).withConnection(any());
+        when(harness.sourceGuard.fence(any(), any())).thenReturn(harness.sourceLease);
+        when(harness.producerCoordinator.quiesce(any(), any())).thenReturn(harness.producerLease);
+        when(harness.writeCoordinator.acquire(any(), any())).thenReturn(harness.writeLease);
+        MigrationMaintenanceLease lease = harness.orchestrator()
+                .acquire("operation-a", Duration.ofSeconds(1));
+        AtomicReference<Connection> observed = new AtomicReference<>();
+        Thread callback = Thread.ofPlatform().start(() -> lease.withSourceConnection(connection -> {
+            observed.set(connection);
+            callbackEntered.countDown();
+            awaitIgnoringInterrupt(releaseCallback);
+        }));
+        Thread closer = null;
+
+        try {
+            assertThat(callbackEntered.await(5, TimeUnit.SECONDS)).isTrue();
+            closer = Thread.ofPlatform().start(() -> {
+                lease.close();
+                closeReturned.countDown();
+            });
+            assertThat(closeReturned.await(1, TimeUnit.SECONDS)).isFalse();
+            verify(harness.writeLease, never()).close();
+        } finally {
+            releaseCallback.countDown();
+        }
+        callback.join(5_000);
+        if (closer != null) {
+            closer.join(5_000);
+        }
+        assertThat(observed.get()).isSameAs(source);
+        assertThat(closeReturned.getCount()).isZero();
+        verify(harness.sourceLease).withConnection(any());
+        verify(harness.writeLease).close();
+    }
+
+    @Test
+    void compositeCloseFromItsOwnSourceCallbackFailsFast() {
+        Harness harness = harness();
+        Connection source = Mockito.mock(Connection.class);
+        Mockito.doAnswer(invocation -> {
+            MigrationSourceAction action = invocation.getArgument(0);
+            action.execute(source);
+            return null;
+        }).when(harness.sourceLease).withConnection(any());
+        when(harness.sourceGuard.fence(any(), any())).thenReturn(harness.sourceLease);
+        when(harness.producerCoordinator.quiesce(any(), any())).thenReturn(harness.producerLease);
+        when(harness.writeCoordinator.acquire(any(), any())).thenReturn(harness.writeLease);
+        MigrationMaintenanceLease lease = harness.orchestrator()
+                .acquire("operation-a", Duration.ofSeconds(1));
+
+        try {
+            lease.withSourceConnection(ignored -> assertThatThrownBy(lease::close)
+                    .isInstanceOfSatisfying(MigrationMaintenanceException.class, failure ->
+                            assertThat(failure.code())
+                                    .isEqualTo(MigrationMaintenanceErrorCode.MIGRATION_OPERATION_CONFLICT)));
+            verify(harness.writeLease, never()).close();
+        } finally {
+            lease.close();
+        }
+        verify(harness.writeLease).close();
     }
 
     @Test
@@ -317,6 +393,20 @@ class DefaultMigrationMaintenanceOrchestratorTest {
         when(harness.producerCoordinator.snapshot()).thenReturn(
                 new MetadataMaintenanceSnapshot(MetadataMaintenancePhase.RUNNING, null, 0));
         return harness;
+    }
+
+    private static void awaitIgnoringInterrupt(CountDownLatch latch) {
+        boolean interrupted = false;
+        while (latch.getCount() > 0) {
+            try {
+                latch.await();
+            } catch (InterruptedException ignored) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private record Harness(

@@ -11,7 +11,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
 import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.springframework.beans.factory.DisposableBean;
@@ -79,21 +78,47 @@ public final class EmbeddedH2SourceGuard implements MigrationSourceGuard, Dispos
     private static final class ConnectionSourceLease implements MigrationSourceLease {
 
         private final Connection connection;
-        private final AtomicBoolean closed = new AtomicBoolean();
+        private boolean closed;
+        private boolean callbackActive;
+        private Thread callbackOwner;
 
         private ConnectionSourceLease(Connection connection) {
             this.connection = connection;
         }
 
         @Override
-        public void close() {
-            if (!closed.compareAndSet(false, true)) {
+        public synchronized void withConnection(MigrationSourceAction action) {
+            if (action == null) {
+                throw MigrationMaintenanceException.invalidRequest();
+            }
+            if (closed) {
+                throw MigrationMaintenanceException.operationConflict();
+            }
+            if (callbackActive) {
+                throw MigrationMaintenanceException.operationConflict();
+            }
+            callbackActive = true;
+            callbackOwner = Thread.currentThread();
+            try {
+                action.execute(connection);
+            } finally {
+                callbackOwner = null;
+                callbackActive = false;
+            }
+        }
+
+        @Override
+        public synchronized void close() {
+            if (callbackActive && callbackOwner == Thread.currentThread()) {
+                throw MigrationMaintenanceException.operationConflict();
+            }
+            if (closed) {
                 return;
             }
             try {
                 connection.close();
+                closed = true;
             } catch (SQLException | RuntimeException exception) {
-                closed.set(false);
                 throw MigrationMaintenanceException.resumeFailure();
             }
         }

@@ -67,11 +67,22 @@ public final class JdbcMetadataMigrationExecutor implements AutoCloseable {
             MetadataDatabaseKind targetKind,
             Duration timeout,
             MetadataMigrationProgressSink progress) {
+        JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(timeout, ticker);
+        execute(source, target, targetKind, deadline, progress);
+    }
+
+    /** Executes with an exact caller-owned monotonic budget. */
+    void execute(
+            Connection source,
+            Connection target,
+            MetadataDatabaseKind targetKind,
+            JdbcMetadataMigrationDeadline deadline,
+            MetadataMigrationProgressSink progress) {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(target, "target");
         Objects.requireNonNull(targetKind, "targetKind");
+        Objects.requireNonNull(deadline, "deadline");
         Objects.requireNonNull(progress, "progress");
-        JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(timeout, ticker);
         JdbcMigrationConnectionScope connections = new JdbcMigrationConnectionScope(
                 source, target, deadline, networkExecutor, abortWorker);
         JdbcMetadataMigrationAttempt attempt = new JdbcMetadataMigrationAttempt(

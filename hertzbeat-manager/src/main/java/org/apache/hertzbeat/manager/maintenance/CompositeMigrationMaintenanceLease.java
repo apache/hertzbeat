@@ -21,6 +21,8 @@ final class CompositeMigrationMaintenanceLease implements MigrationMaintenanceLe
     private boolean producerReleased;
     private boolean sourceReleased;
     private boolean authorityReleased;
+    private boolean sourceCallbackActive;
+    private Thread sourceCallbackOwner;
 
     CompositeMigrationMaintenanceLease(
             DeploymentSingletonLease authorityLease,
@@ -36,7 +38,31 @@ final class CompositeMigrationMaintenanceLease implements MigrationMaintenanceLe
     }
 
     @Override
+    public synchronized void withSourceConnection(MigrationSourceAction action) {
+        if (action == null) {
+            throw MigrationMaintenanceException.invalidRequest();
+        }
+        if (writeReleased || producerReleased || sourceReleased || authorityReleased) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
+        if (sourceCallbackActive) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
+        sourceCallbackActive = true;
+        sourceCallbackOwner = Thread.currentThread();
+        try {
+            sourceLease.withConnection(action);
+        } finally {
+            sourceCallbackOwner = null;
+            sourceCallbackActive = false;
+        }
+    }
+
+    @Override
     public synchronized void close() {
+        if (sourceCallbackActive && sourceCallbackOwner == Thread.currentThread()) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
         try {
             releaseInOrder();
         } catch (MigrationMaintenanceException exception) {

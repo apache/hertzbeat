@@ -10,6 +10,9 @@ package org.apache.hertzbeat.manager.maintenance;
 /** Capability that releases one safe metadata-source fence. */
 public interface MigrationSourceLease extends AutoCloseable {
 
+    /** Runs synchronous work against the exact source owned by this lease. */
+    void withConnection(MigrationSourceAction action);
+
     @Override
     void close();
 }
