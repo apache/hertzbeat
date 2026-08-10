@@ -18,7 +18,10 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { configureShallowTest } from '@testing';
 
+import { Monitor } from '../../../pojo/Monitor';
 import { MonitorFormComponent } from './monitor-form.component';
 
 describe('MonitorFormComponent', () => {
@@ -26,14 +29,13 @@ describe('MonitorFormComponent', () => {
   let fixture: ComponentFixture<MonitorFormComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorFormComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorFormComponent, [FormsModule]).compileComponents();
   });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(MonitorFormComponent);
     component = fixture.componentInstance;
+    component.monitor = new Monitor();
     fixture.detectChanges();
   });
 

@@ -18,6 +18,8 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureStandaloneTest } from '@testing';
+import { MarkdownModule } from 'ngx-markdown';
 
 import { AlertIntegrationComponent } from './alert-integration.component';
 
@@ -26,9 +28,7 @@ describe('AlertIntegrationComponent', () => {
   let fixture: ComponentFixture<AlertIntegrationComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [AlertIntegrationComponent]
-    }).compileComponents();
+    await configureStandaloneTest(AlertIntegrationComponent, [MarkdownModule.forRoot()]).compileComponents();
 
     fixture = TestBed.createComponent(AlertIntegrationComponent);
     component = fixture.componentInstance;

@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { AlertDefineService } from './alert-define.service';
 
@@ -25,7 +26,7 @@ describe('AlertDefineService', () => {
   let service: AlertDefineService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(AlertDefineService);
   });
 
