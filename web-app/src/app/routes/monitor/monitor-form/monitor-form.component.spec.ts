@@ -17,27 +17,56 @@
  * under the License.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { MonitorFormComponent } from './monitor-form.component';
 
 describe('MonitorFormComponent', () => {
   let component: MonitorFormComponent;
-  let fixture: ComponentFixture<MonitorFormComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorFormComponent]
-    }).compileComponents();
-  });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MonitorFormComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    component = new MonitorFormComponent(
+      {
+        info: () => undefined,
+        error: () => undefined
+      } as any,
+      {
+        fanyi: (key: string) => key
+      } as any
+    );
+    component.monitor = { name: 'api monitor', scheduleType: 'interval' } as any;
+    component.collector = '';
+    component.sdParams = [];
+    component.paramDefines = [];
+    component.sdDefines = [];
+    component.advancedParamDefines = [{ depend: { httpMethod: ['POST'] } } as any];
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should clear payload when httpMethod changes to a method without body', () => {
+    component.advancedParams = [{ field: 'payload', paramValue: 'old body' } as any];
+
+    component.onDependChanged('GET', 'httpMethod');
+
+    expect(component.advancedParams[0].paramValue).toBe('');
+  });
+
+  it('should keep payload when httpMethod changes to POST-like methods', () => {
+    component.advancedParams = [{ field: 'payload', paramValue: 'old body' } as any];
+
+    component.onDependChanged('POST', 'httpMethod');
+
+    expect(component.advancedParams[0].paramValue).toBe('old body');
+  });
+
+  it('should clear payload before submitting a GET monitor', () => {
+    component.params = [{ field: 'httpMethod', paramValue: 'GET' } as any];
+    component.advancedParams = [{ field: 'payload', paramValue: 'old body' } as any];
+    spyOn(component.formSubmit, 'emit');
+
+    component.onSubmit({ invalid: false } as any);
+
+    expect(component.advancedParams[0].paramValue).toBe('');
   });
 });

@@ -120,6 +120,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+    this.clearPayloadIfHttpMethodHasNoBody(this.params.find(param => param.field === 'httpMethod')?.paramValue);
 
     // Set monitor.instance to host param value, let backend handle the port concatenation
     const hostParam = this.params.find(param => param.field === 'host');
@@ -170,6 +171,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+    this.clearPayloadIfHttpMethodHasNoBody(this.params.find(param => param.field === 'httpMethod')?.paramValue);
 
     // Set monitor.instance to host param value, let backend handle the port concatenation
     const hostParam = this.params.find(param => param.field === 'host');
@@ -265,6 +267,19 @@ export class MonitorFormComponent implements OnChanges {
         }
       }
     });
+    if (dependField === 'httpMethod') {
+      this.clearPayloadIfHttpMethodHasNoBody(dependValue);
+    }
+  }
+
+  private clearPayloadIfHttpMethodHasNoBody(httpMethod: unknown): void {
+    if (httpMethod == null || ['POST', 'PUT', 'PATCH'].includes(String(httpMethod).toUpperCase())) {
+      return;
+    }
+    const payloadParam = this.advancedParams?.find(param => param.field === 'payload');
+    if (payloadParam) {
+      payloadParam.paramValue = '';
+    }
   }
 
   //start grafana
