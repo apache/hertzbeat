@@ -60,16 +60,20 @@ export class MonitorDataTableComponent implements OnInit {
   showModal!: boolean;
   time!: any;
   fields!: any[];
-  valueRows!: any[];
+  valueRows: any[] = [];
   rowValues!: any[];
   isTable: boolean = true;
   scrollY: string = '100%';
+  pagedScrollY: string = '100%';
   loading: boolean = false;
+  pageSize: number = 10;
+  pageIndex: number = 1;
 
   constructor(private monitorSvc: MonitorService, private notifySvc: NzNotificationService) {}
 
   ngOnInit(): void {
     this.scrollY = `calc(${this.height} - 130px)`;
+    this.pagedScrollY = `calc(${this.height} - 170px)`;
   }
 
   loadData() {
@@ -85,6 +89,7 @@ export class MonitorDataTableComponent implements OnInit {
             this.time = message.data.time;
             this.fields = message.data.fields;
             this.valueRows = message.data.valueRows;
+            this.pageIndex = 1;
             if (this.valueRows.length == 1) {
               this.isTable = false;
               this.rowValues = this.valueRows[0].values;
