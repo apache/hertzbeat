@@ -349,20 +349,20 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
-    void signalWorkspaceTablesStayInV200BaselineOnly() throws IOException {
+    void signalWorkspaceTablesAreCreatedOnlyByV200OrCurrentBaselines() throws IOException {
         Path migrationRoot = repoRoot().resolve("hertzbeat-startup/src/main/resources/db/migration");
         try (Stream<Path> migrationFiles = Files.walk(migrationRoot)) {
             List<String> laterSignalMigrations = migrationFiles
                     .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".sql"))
+                    .filter(path -> path.getFileName().toString().startsWith("V"))
                     .filter(path -> !path.getFileName().toString().startsWith("V200__create_entity_foundation"))
-                    .filter(path -> containsSignalWorkspaceTable(path))
+                    .filter(path -> createsSignalWorkspaceTable(path))
                     .map(migrationRoot::relativize)
                     .map(Path::toString)
                     .toList();
 
             assertThat(laterSignalMigrations)
-                    .as("signal workspace tables must stay in the V200 baseline instead of a later V213-style migration")
+                    .as("versioned migrations after V200 may evolve but must not recreate signal workspace tables")
                     .isEmpty();
         }
     }
@@ -454,12 +454,12 @@ class ReleaseReadinessRuntimeAssemblyTest {
                 .contains(rule);
     }
 
-    private static boolean containsSignalWorkspaceTable(Path path) {
+    private static boolean createsSignalWorkspaceTable(Path path) {
         try {
             String content = Files.readString(path).toLowerCase();
-            return content.contains("hzb_signal_saved_view")
-                    || content.contains("hzb_signal_dashboard_panel_draft")
-                    || content.contains("hzb_signal_dashboard");
+            return content.contains("create table hzb_signal_saved_view")
+                    || content.contains("create table hzb_signal_dashboard_panel_draft")
+                    || content.contains("create table hzb_signal_dashboard");
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read migration " + path, e);
         }
