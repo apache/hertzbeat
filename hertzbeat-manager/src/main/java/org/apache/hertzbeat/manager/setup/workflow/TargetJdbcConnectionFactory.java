@@ -105,6 +105,28 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
         cleanupLane.retry(deadline);
     }
 
+    TargetJdbcFailedAcquireSettlement settleFailedAcquire(
+            JdbcMetadataMigrationDeadline deadline) {
+        awaitInactive(deadline);
+        TargetJdbcConnectionErrorCode cleanupState = cleanupLane.acquisitionFailure();
+        if (cleanupState == TargetJdbcConnectionErrorCode.CLEANUP_REQUIRED) {
+            cleanupLane.retry(deadline);
+        }
+        synchronized (this) {
+            if (lateFailure != null) {
+                throw lateFailure;
+            }
+            cleanupState = cleanupLane.acquisitionFailure();
+            if (closed || cleanupState == TargetJdbcConnectionErrorCode.FACTORY_CLOSED) {
+                return TargetJdbcFailedAcquireSettlement.TERMINAL_CLOSED;
+            }
+            if (cleanupState != null) {
+                throw failure(cleanupState);
+            }
+            return TargetJdbcFailedAcquireSettlement.REUSABLE;
+        }
+    }
+
     @Override
     public synchronized void close() {
         closed = true;
@@ -138,8 +160,31 @@ final class TargetJdbcConnectionFactory implements AutoCloseable, TargetJdbcConn
     public synchronized void finished(TargetJdbcConnectionAttempt attempt) {
         if (active == attempt) {
             active = null;
+            notifyAll();
             if (closed) {
                 cleanupLane.close();
+            }
+        }
+    }
+
+    private synchronized void awaitInactive(JdbcMetadataMigrationDeadline deadline) {
+        boolean interrupted = false;
+        try {
+            while (active != null) {
+                long remaining = deadline.remainingNanos();
+                if (remaining <= 0) {
+                    throw failure(TargetJdbcConnectionErrorCode.CLEANUP_REQUIRED);
+                }
+                try {
+                    TimeUnit.NANOSECONDS.timedWait(this, remaining);
+                } catch (InterruptedException ignored) {
+                    interrupted = true;
+                    throw failure(TargetJdbcConnectionErrorCode.CLEANUP_REQUIRED);
+                }
+            }
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
             }
         }
     }
