@@ -22,6 +22,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.CommittedSetupFileDurabilityException;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock;
+import org.apache.hertzbeat.manager.setup.security.SecureSetupFileLock.TryResult;
 
 /** Root-bound owner-only file adapter for the single active migration operation. */
 public final class FileMigrationOperationStore implements MigrationOperationStore {
@@ -98,6 +99,21 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         requireSafeId(operationId);
         return locked(() -> read().stream()
                 .filter(snapshot -> snapshot.operationId().equals(operationId)).findFirst());
+    }
+
+    NonblockingSnapshotRead tryFind(String operationId) {
+        requireSafeId(operationId);
+        try {
+            TryResult<Optional<MigrationOperationSnapshot>> result = lock.tryExecute(() -> read().stream()
+                    .filter(snapshot -> snapshot.operationId().equals(operationId)).findFirst());
+            if (!result.acquired()) {
+                return NonblockingSnapshotRead.busy();
+            }
+            return result.value().map(NonblockingSnapshotRead::present)
+                    .orElseGet(NonblockingSnapshotRead::missing);
+        } catch (IOException | RuntimeException ignored) {
+            throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        }
     }
 
     /** Selects one startup record only when no other operation still owns migration progress. */
@@ -360,4 +376,21 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
     }
 
     enum ExactTransitionDisposition { TRANSITIONED, ALREADY_CONFIRMED }
+
+    record NonblockingSnapshotRead(ReadState state, MigrationOperationSnapshot snapshot) {
+
+        static NonblockingSnapshotRead busy() {
+            return new NonblockingSnapshotRead(ReadState.BUSY, null);
+        }
+
+        static NonblockingSnapshotRead missing() {
+            return new NonblockingSnapshotRead(ReadState.MISSING, null);
+        }
+
+        static NonblockingSnapshotRead present(MigrationOperationSnapshot snapshot) {
+            return new NonblockingSnapshotRead(ReadState.PRESENT, snapshot);
+        }
+    }
+
+    enum ReadState { BUSY, MISSING, PRESENT }
 }

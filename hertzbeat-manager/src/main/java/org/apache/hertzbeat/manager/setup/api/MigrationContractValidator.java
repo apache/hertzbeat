@@ -90,8 +90,10 @@ final class MigrationContractValidator {
             requireBlocker(capability, SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
                     MaintenanceAdmission.NOT_APPLICABLE);
         } else if (topology == DeploymentTopology.UNKNOWN) {
-            requireBlocker(capability, SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE,
-                    MaintenanceAdmission.NOT_APPLICABLE);
+            if (capability.blockedBy() != SetupErrorCode.MIGRATION_UNAVAILABLE) {
+                requireBlocker(capability, SetupErrorCode.MIGRATION_TOPOLOGY_UNAVAILABLE,
+                        MaintenanceAdmission.NOT_APPLICABLE);
+            }
         } else {
             validateSingleNodeAdmission(maintenance, capability);
         }

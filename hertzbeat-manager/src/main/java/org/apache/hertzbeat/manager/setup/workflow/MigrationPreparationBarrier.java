@@ -9,6 +9,7 @@ package org.apache.hertzbeat.manager.setup.workflow;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ final class MigrationPreparationBarrier implements RetainedCutoverPreparation {
     private final CompletableFuture<MigrationView> prepared = new CompletableFuture<>();
     private DurableCutoverDraft draft;
     private RetainedCutoverPreparation delegate;
+    private MigrationOperationSnapshot confirmedSnapshot;
 
     MigrationPreparationBarrier(FileMigrationOperationStore store) {
         this.store = Objects.requireNonNull(store, "store");
@@ -92,6 +94,13 @@ final class MigrationPreparationBarrier implements RetainedCutoverPreparation {
         }
     }
 
+    synchronized Optional<MigrationOperationSnapshot> confirmedSnapshot() {
+        if (!prepared.isDone() || prepared.isCompletedExceptionally()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(confirmedSnapshot);
+    }
+
     private static long timeoutNanos(Duration timeout) {
         try {
             return Math.max(1, timeout.toNanos());
@@ -120,7 +129,11 @@ final class MigrationPreparationBarrier implements RetainedCutoverPreparation {
     }
 
     private void publish(RetainedCutoverPreparationContext context) {
-        prepared.complete(MigrationOperationProjection.view(requireExactSnapshot(context)));
+        MigrationOperationSnapshot snapshot = requireExactSnapshot(context);
+        synchronized (this) {
+            confirmedSnapshot = snapshot;
+        }
+        prepared.complete(MigrationOperationProjection.view(snapshot));
     }
 
     private MigrationOperationSnapshot requireExactSnapshot(

@@ -50,8 +50,19 @@ final class ManagedDeploymentMigrationCommands implements AutoCloseable {
     MigrationView migration(String operationId) {
         requireOpen();
         requireOperationId(operationId);
-        Optional<MigrationView> stored = runner.find(operationId);
         RetainedCutoverStatus retained = coordinator.status();
+        if (retained.owns(operationId) && liveCopyPhase(retained.phase())) {
+            Optional<MigrationOperationSnapshot> proof = runner.inFlightSnapshot(operationId);
+            if (proof.isPresent()) {
+                return liveProjection(operationId, proof.orElseThrow());
+            }
+            retained = coordinator.status();
+        }
+        Optional<MigrationView> stored = retained.owns(operationId)
+                && confirmedRetainedPhase(retained.phase())
+                ? store.find(operationId).map(MigrationOperationProjection::view)
+                : runner.find(operationId);
+        retained = coordinator.status();
         if (retained.owns(operationId) && !matchesRetainedShape(stored, retained.phase())) {
             throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
         }
@@ -91,6 +102,12 @@ final class ManagedDeploymentMigrationCommands implements AutoCloseable {
             throw failure(SetupErrorCode.OPERATION_CONFLICT);
         }
         return Optional.of(retained.operationId());
+    }
+
+    Optional<MigrationView> joinExecuting(MetadataMigrationRequest request) {
+        requireOpen();
+        Objects.requireNonNull(request, "request");
+        return runner.joinExecuting(request);
     }
 
     @Override
@@ -140,8 +157,68 @@ final class ManagedDeploymentMigrationCommands implements AutoCloseable {
             case RETAINED -> view.state() == MigrationOperationState.READY_TO_ACTIVATE;
             case AWAITING_RESTART_RETAINED ->
                     view.state() == MigrationOperationState.AWAITING_RESTART;
+            case EXECUTING, HANDOFFING ->
+                    view.state() == MigrationOperationState.RUNNING;
             default -> false;
         }).isPresent();
+    }
+
+    private static boolean liveCopyPhase(RetainedCutoverStatus.Phase phase) {
+        return phase == RetainedCutoverStatus.Phase.EXECUTING
+                || phase == RetainedCutoverStatus.Phase.HANDOFFING;
+    }
+
+    private static boolean confirmedRetainedPhase(RetainedCutoverStatus.Phase phase) {
+        return phase == RetainedCutoverStatus.Phase.RETAINED
+                || phase == RetainedCutoverStatus.Phase.AWAITING_RESTART_RETAINED;
+    }
+
+    private MigrationView liveProjection(
+            String operationId, MigrationOperationSnapshot proof) {
+        FileMigrationOperationStore.NonblockingSnapshotRead read = store.tryFind(operationId);
+        return switch (read.state()) {
+            case BUSY -> MigrationOperationProjection.view(proof);
+            case MISSING -> throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+            case PRESENT -> {
+                MigrationOperationSnapshot current = read.snapshot();
+                if (!compatibleLiveSnapshot(proof, current)) {
+                    throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+                }
+                yield current.state() == MigrationOperationState.READY_TO_ACTIVATE
+                        ? finalLiveProjection(proof, current)
+                        : MigrationOperationProjection.view(current);
+            }
+        };
+    }
+
+    private MigrationView finalLiveProjection(
+            MigrationOperationSnapshot proof, MigrationOperationSnapshot current) {
+        RetainedCutoverStatus retained = coordinator.status();
+        if (retained.owns(current.operationId())
+                && retained.phase() == RetainedCutoverStatus.Phase.RETAINED) {
+            return MigrationOperationProjection.view(current);
+        }
+        if (retained.owns(current.operationId()) && liveCopyPhase(retained.phase())) {
+            return MigrationOperationProjection.view(proof);
+        }
+        throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+    }
+
+    private static boolean compatibleLiveSnapshot(
+            MigrationOperationSnapshot proof, MigrationOperationSnapshot current) {
+        boolean compatibleState = proof.state() == MigrationOperationState.PENDING
+                ? current.equals(proof)
+                : current.state() == MigrationOperationState.RUNNING
+                        || current.state() == MigrationOperationState.READY_TO_ACTIVATE;
+        return compatibleState
+                && current.operationId().equals(proof.operationId())
+                && current.target() == proof.target()
+                && current.applyMode() == proof.applyMode()
+                && current.createdAt().equals(proof.createdAt())
+                && Objects.equals(current.startedAt(), proof.startedAt())
+                && current.targetIdentityHash().equals(proof.targetIdentityHash())
+                && Objects.equals(current.managedCandidateGeneration(),
+                        proof.managedCandidateGeneration());
     }
 
     private static void requireOwned(RetainedCutoverStatus retained, String operationId) {

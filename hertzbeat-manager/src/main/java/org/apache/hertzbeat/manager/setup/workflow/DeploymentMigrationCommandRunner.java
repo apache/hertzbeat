@@ -87,6 +87,24 @@ final class DeploymentMigrationCommandRunner implements AutoCloseable {
         return barrier.await(timeout);
     }
 
+    Optional<MigrationView> joinExecuting(MetadataMigrationRequest request) {
+        Objects.requireNonNull(request, "request");
+        requireManaged(request.applyMode());
+        MigrationTargetRequest target = taskFactory.request(request);
+        MigrationPreparationBarrier barrier;
+        synchronized (this) {
+            requireOpen();
+            if (active == null || !active.executing()) {
+                return Optional.empty();
+            }
+            if (!active.operationId().equals(target.operationId()) || !active.matches(target)) {
+                throw failure(SetupErrorCode.OPERATION_CONFLICT);
+            }
+            barrier = active.barrier();
+        }
+        return Optional.of(barrier.await(timeout));
+    }
+
     Optional<MigrationView> find(String operationId) {
         Optional<MigrationOperationSnapshot> persisted = store.find(operationId);
         synchronized (this) {
@@ -96,6 +114,13 @@ final class DeploymentMigrationCommandRunner implements AutoCloseable {
             }
         }
         return persisted.map(MigrationOperationProjection::view);
+    }
+
+    synchronized Optional<MigrationOperationSnapshot> inFlightSnapshot(String operationId) {
+        if (active == null || !active.operationId().equals(operationId) || !active.executing()) {
+            return Optional.empty();
+        }
+        return active.barrier().confirmedSnapshot();
     }
 
     synchronized Optional<String> activeOperationId() {

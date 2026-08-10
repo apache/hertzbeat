@@ -17,6 +17,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -72,6 +73,115 @@ class ManagedDeploymentMigrationCommandsTest {
         InOrder order = inOrder(fixture.runner, fixture.coordinator);
         order.verify(fixture.runner).find(OPERATION);
         order.verify(fixture.coordinator).status();
+    }
+
+    @Test
+    void executingAndHandoffInProgressReplayTheExactRunningJournal() {
+        Fixture fixture = fixture();
+        MigrationView running = MigrationOperationProjection.view(running());
+        fixture.store.create(pending());
+        fixture.store.compareAndTransition(
+                OPERATION, MigrationOperationState.PENDING, running());
+        when(fixture.runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.of(running()));
+        when(fixture.coordinator.status())
+                .thenReturn(new RetainedCutoverStatus(
+                        OPERATION, RetainedCutoverStatus.Phase.EXECUTING))
+                .thenReturn(new RetainedCutoverStatus(
+                        OPERATION, RetainedCutoverStatus.Phase.HANDOFFING));
+
+        assertThat(fixture.commands.migration(OPERATION)).isEqualTo(running);
+        assertThat(fixture.commands.migration(OPERATION)).isEqualTo(running);
+    }
+
+    @Test
+    void livePhaseWhoseTaskJustClearedReplaysTheConfirmedReadyJournal() {
+        Fixture fixture = fixture();
+        advanceToReady(fixture.store);
+        when(fixture.runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.empty());
+        when(fixture.runner.find(OPERATION)).thenThrow(
+                new MigrationOperationStoreException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED));
+        when(fixture.coordinator.status())
+                .thenReturn(new RetainedCutoverStatus(
+                        OPERATION, RetainedCutoverStatus.Phase.HANDOFFING))
+                .thenReturn(new RetainedCutoverStatus(
+                        OPERATION, RetainedCutoverStatus.Phase.RETAINED));
+
+        assertThat(fixture.commands.migration(OPERATION).state())
+                .isEqualTo(MigrationOperationState.READY_TO_ACTIVATE);
+        verify(fixture.runner, never()).find(OPERATION);
+    }
+
+    @Test
+    void handoffPhaseNeverExposesReadyBeforeTheCoordinatorConfirmsRetention() {
+        Fixture fixture = fixture();
+        advanceToReady(fixture.store);
+        when(fixture.runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.of(running()));
+        when(fixture.coordinator.status()).thenReturn(new RetainedCutoverStatus(
+                OPERATION, RetainedCutoverStatus.Phase.HANDOFFING));
+
+        MigrationView view = fixture.commands.migration(OPERATION);
+
+        assertThat(view.state()).isEqualTo(MigrationOperationState.RUNNING);
+        assertThat(view.progressPercent()).isZero();
+    }
+
+    @Test
+    void retainedPhaseReplaysConfirmedReadyWhileTheWorkerIsStillUnwinding() {
+        Fixture fixture = fixture();
+        advanceToReady(fixture.store);
+        when(fixture.runner.find(OPERATION)).thenThrow(
+                new MigrationOperationStoreException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED));
+        when(fixture.coordinator.status()).thenReturn(new RetainedCutoverStatus(
+                OPERATION, RetainedCutoverStatus.Phase.RETAINED));
+
+        assertThat(fixture.commands.migration(OPERATION).state())
+                .isEqualTo(MigrationOperationState.READY_TO_ACTIVATE);
+        verify(fixture.runner, never()).find(OPERATION);
+    }
+
+    @Test
+    void liveProjectionReadsCurrentProgressInsteadOfFreezingThePreparationView() {
+        Fixture fixture = fixture();
+        fixture.store.create(pending());
+        fixture.store.compareAndTransition(
+                OPERATION, MigrationOperationState.PENDING, running(0));
+        fixture.store.compareAndTransition(
+                OPERATION, MigrationOperationState.RUNNING, running(37));
+        when(fixture.runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.of(running(0)));
+        when(fixture.coordinator.status()).thenReturn(new RetainedCutoverStatus(
+                OPERATION, RetainedCutoverStatus.Phase.EXECUTING));
+
+        assertThat(fixture.commands.migration(OPERATION).progressPercent()).isEqualTo(37);
+    }
+
+    @Test
+    void liveProjectionFailsClosedWhenTheJournalIsMissingOrCorrupt() throws Exception {
+        Fixture missing = fixture();
+        missing.store.create(pending());
+        missing.store.compareAndTransition(
+                OPERATION, MigrationOperationState.PENDING, running());
+        when(missing.runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.of(running()));
+        when(missing.coordinator.status()).thenReturn(new RetainedCutoverStatus(
+                OPERATION, RetainedCutoverStatus.Phase.EXECUTING));
+        Files.delete(root.resolve(FileMigrationOperationStore.RELATIVE_PATH));
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> missing.commands.migration(OPERATION));
+
+        Path corruptRoot = root.resolve("corrupt");
+        FileMigrationOperationStore corruptStore = new FileMigrationOperationStore(corruptRoot);
+        DeploymentMigrationCommandRunner runner = mock(DeploymentMigrationCommandRunner.class);
+        RetainedCutoverCoordinator coordinator = mock(RetainedCutoverCoordinator.class);
+        ManagedDeploymentMigrationCommands commands = new ManagedDeploymentMigrationCommands(
+                runner, corruptStore, mock(ManagedMigrationConfigurationTransaction.class), coordinator);
+        corruptStore.create(pending());
+        corruptStore.compareAndTransition(
+                OPERATION, MigrationOperationState.PENDING, running());
+        Files.writeString(corruptRoot.resolve(FileMigrationOperationStore.RELATIVE_PATH), "broken");
+        when(runner.inFlightSnapshot(OPERATION)).thenReturn(Optional.of(running()));
+        when(coordinator.status()).thenReturn(new RetainedCutoverStatus(
+                OPERATION, RetainedCutoverStatus.Phase.EXECUTING));
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> commands.migration(OPERATION));
     }
 
     @Test
@@ -266,7 +376,11 @@ class ManagedDeploymentMigrationCommandsTest {
     }
 
     private static MigrationOperationSnapshot running() {
-        return snapshot(MigrationOperationState.RUNNING, MigrationStage.COPYING, 0,
+        return running(0);
+    }
+
+    private static MigrationOperationSnapshot running(int progress) {
+        return snapshot(MigrationOperationState.RUNNING, MigrationStage.COPYING, progress,
                 VerificationState.PENDING, false, false);
     }
 

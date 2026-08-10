@@ -76,6 +76,31 @@ public final class SecureSetupFileLock {
         });
     }
 
+    /** Attempts one operation without waiting for either the in-JVM or OS lock. */
+    public <T> TryResult<T> tryExecute(IoOperation<T> operation) throws IOException {
+        Objects.requireNonNull(operation, "operation");
+        if (!jvmLock.tryLock()) {
+            return TryResult.busy();
+        }
+        try {
+            LockIdentity identity = initializeAndValidate();
+            try (FileChannel channel = FileChannel.open(
+                    lockFile, Set.of(StandardOpenOption.READ, StandardOpenOption.WRITE,
+                            LinkOption.NOFOLLOW_LINKS));
+                 FileLock acquired = channel.tryLock()) {
+                if (acquired == null) {
+                    return TryResult.busy();
+                }
+                validateLockedIdentity(channel, identity);
+                T result = operation.run();
+                validateLockedIdentity(channel, identity);
+                return TryResult.acquired(result);
+            }
+        } finally {
+            jvmLock.unlock();
+        }
+    }
+
     /** Validates an existing lock without creating, replacing, or otherwise mutating it. */
     public static boolean isValidExistingLock(Path installationRoot, String relativePath) {
         Objects.requireNonNull(installationRoot, "installationRoot");
@@ -194,5 +219,17 @@ public final class SecureSetupFileLock {
     @FunctionalInterface
     public interface IoAction {
         void run() throws IOException;
+    }
+
+    /** Non-blocking lock attempt result; a null operation value remains distinguishable from busy. */
+    public record TryResult<T>(boolean acquired, T value) {
+
+        static <T> TryResult<T> busy() {
+            return new TryResult<>(false, null);
+        }
+
+        static <T> TryResult<T> acquired(T value) {
+            return new TryResult<>(true, value);
+        }
     }
 }
