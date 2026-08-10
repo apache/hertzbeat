@@ -117,6 +117,13 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
     /** Transitions or confirms one fully equal replacement under the store lock. */
     MigrationOperationSnapshot compareAndTransitionOrConfirm(
             String operationId, MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
+        compareAndTransitionOrConfirmDisposition(operationId, expectedState, replacement);
+        return replacement;
+    }
+
+    /** Transitions or confirms exact state while reporting which action won under the store lock. */
+    ExactTransitionDisposition compareAndTransitionOrConfirmDisposition(
+            String operationId, MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
         requireSafeId(operationId);
         Objects.requireNonNull(expectedState, "expectedState");
         Objects.requireNonNull(replacement, "replacement");
@@ -142,7 +149,7 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         throw failure(SetupErrorCode.OPERATION_NOT_FOUND);
     }
 
-    private MigrationOperationSnapshot transitionOrConfirm(
+    private ExactTransitionDisposition transitionOrConfirm(
             List<MigrationOperationSnapshot> snapshots, String operationId,
             MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
         for (int index = 0; index < snapshots.size(); index++) {
@@ -150,7 +157,7 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
             if (current.operationId().equals(operationId)) {
                 if (current.equals(replacement)) {
                     writeAndConfirm(snapshots);
-                    return replacement;
+                    return ExactTransitionDisposition.ALREADY_CONFIRMED;
                 }
                 if (current.state() != expectedState) {
                     throw failure(SetupErrorCode.OPERATION_CONFLICT);
@@ -159,7 +166,7 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
                 snapshots.set(index, replacement);
                 trim(snapshots);
                 writeAndConfirm(snapshots);
-                return replacement;
+                return ExactTransitionDisposition.TRANSITIONED;
             }
         }
         throw failure(SetupErrorCode.OPERATION_NOT_FOUND);
@@ -263,4 +270,6 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
     interface Publisher {
         void publish(Path target, byte[] content) throws IOException;
     }
+
+    enum ExactTransitionDisposition { TRANSITIONED, ALREADY_CONFIRMED }
 }

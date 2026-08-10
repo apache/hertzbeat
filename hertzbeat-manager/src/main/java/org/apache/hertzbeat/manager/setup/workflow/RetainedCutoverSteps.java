@@ -43,10 +43,12 @@ final class RetainedCutoverSteps {
     RetainedCutoverOutcome prepare(
             RetainedCutoverPreparation preparation,
             RetainedCutoverPreparationContext context,
+            MetadataDatabaseSettings target,
+            SecretValue borrowedPassword,
             JdbcMetadataMigrationDeadline deadline) {
         try {
             requirePreparationBudget(deadline);
-            preparation.prepare(context);
+            preparation.prepare(context, target, borrowedPassword);
             requirePreparationBudget(deadline);
             return RetainedCutoverOutcome.success();
         } catch (RuntimeException | Error failure) {

@@ -53,7 +53,7 @@ class RetainedCutoverPreparationTest {
         doAnswer(invocation -> {
             observed.set(invocation.getArgument(0));
             return null;
-        }).when(preparation).prepare(any());
+        }).when(preparation).prepare(any(), same(TARGET), same(fixture.password));
 
         fixture.execute(preparation);
 
@@ -62,17 +62,17 @@ class RetainedCutoverPreparationTest {
         InOrder order = inOrder(fixture.factory, fixture.provisionLease, preparation, fixture.provisioner);
         order.verify(fixture.factory).acquire(same(TARGET), same(fixture.password), anyDeadline());
         order.verify(fixture.provisionLease).targetIdentityHash();
-        order.verify(preparation).prepare(observed.get());
+        order.verify(preparation).prepare(observed.get(), TARGET, fixture.password);
         order.verify(fixture.provisionLease).withConnection(any());
         order.verify(fixture.provisioner).provision(
                 same(fixture.provisionConnection), eq(MetadataDatabaseKind.MYSQL), anyDeadline());
-        verify(preparation).prepare(any());
+        verify(preparation).prepare(any(), same(TARGET), same(fixture.password));
     }
 
     @Test
     void elapsedRootDeadlineAfterPreparationPreventsProvision() {
         Fixture fixture = new Fixture();
-        RetainedCutoverPreparation preparation = context -> fixture.ticker.set(100);
+        RetainedCutoverPreparation preparation = (context, target, password) -> fixture.ticker.set(100);
 
         assertThatThrownBy(() -> fixture.execute(preparation))
                 .isInstanceOfSatisfying(MetadataMigrationException.class, failure ->
@@ -129,7 +129,7 @@ class RetainedCutoverPreparationTest {
         Fixture stable = new Fixture();
         MetadataMigrationException expected = new MetadataMigrationException(
                 MetadataMigrationErrorCode.VERIFICATION);
-        RetainedCutoverPreparation stableFailure = context -> {
+        RetainedCutoverPreparation stableFailure = (context, target, password) -> {
             throw expected;
         };
 
@@ -138,7 +138,7 @@ class RetainedCutoverPreparationTest {
         verifyNoInteractions(stable.provisioner, stable.maintenance, stable.executor);
 
         Fixture unexpected = new Fixture();
-        RetainedCutoverPreparation privateFailure = context -> {
+        RetainedCutoverPreparation privateFailure = (context, target, password) -> {
             throw new IllegalStateException("private preparation diagnostic");
         };
         assertThatThrownBy(() -> unexpected.execute(privateFailure))
@@ -150,11 +150,25 @@ class RetainedCutoverPreparationTest {
     }
 
     @Test
+    void durableStopCodeIsPreservedWithoutAllowingProvision() {
+        Fixture fixture = new Fixture();
+        DurableCutoverPreparationException expected = new DurableCutoverPreparationException(
+                org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        RetainedCutoverPreparation stop = (context, target, password) -> {
+            throw expected;
+        };
+
+        assertThatThrownBy(() -> fixture.execute(stop)).isSameAs(expected);
+        verify(fixture.provisionLease).close();
+        verifyNoInteractions(fixture.provisioner, fixture.maintenance, fixture.executor);
+    }
+
+    @Test
     void fatalPreparationRemainsPrimaryAcrossExactCloseRetry() {
         Fixture fixture = new Fixture();
         AssertionError fatal = new AssertionError("preparation fatal");
         RetainedCutoverPreparation preparation = mock(RetainedCutoverPreparation.class);
-        doThrow(fatal).when(preparation).prepare(any());
+        doThrow(fatal).when(preparation).prepare(any(), same(TARGET), same(fixture.password));
         doThrow(new TargetJdbcConnectionException(TargetJdbcConnectionErrorCode.CLEANUP_REQUIRED))
                 .doNothing().when(fixture.provisionLease).close();
 
@@ -165,7 +179,7 @@ class RetainedCutoverPreparationTest {
         assertThatThrownBy(() -> fixture.coordinator.retryRelease(OPERATION, Duration.ofSeconds(1)))
                 .isSameAs(fatal);
 
-        verify(preparation).prepare(any());
+        verify(preparation).prepare(any(), same(TARGET), same(fixture.password));
         verify(fixture.provisionLease, times(2)).close();
         verifyNoInteractions(fixture.provisioner, fixture.maintenance, fixture.executor);
     }
@@ -173,7 +187,8 @@ class RetainedCutoverPreparationTest {
     @Test
     void preparationInterruptIsClearedForCloseAndRestoredForCaller() {
         Fixture fixture = new Fixture();
-        RetainedCutoverPreparation preparation = context -> Thread.currentThread().interrupt();
+        RetainedCutoverPreparation preparation =
+                (context, target, password) -> Thread.currentThread().interrupt();
         doAnswer(invocation -> {
             assertThat(Thread.currentThread().isInterrupted()).isFalse();
             return null;
@@ -194,7 +209,7 @@ class RetainedCutoverPreparationTest {
         Fixture fixture = new Fixture();
         AtomicReference<Throwable> sameOperation = new AtomicReference<>();
         AtomicReference<Throwable> foreignOperation = new AtomicReference<>();
-        RetainedCutoverPreparation preparation = context -> {
+        RetainedCutoverPreparation preparation = (context, target, password) -> {
             capture(sameOperation, () -> fixture.execute(RetainedCutoverPreparation.NO_OP));
             capture(foreignOperation, () -> fixture.coordinator.execute(
                     "operation-b", TARGET, fixture.password, TIMEOUT,

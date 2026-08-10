@@ -59,6 +59,8 @@ final class RetainedCutoverCoordinator {
         RetainedCutoverOutcome preparationOutcome = steps.prepare(
                 preparation,
                 new RetainedCutoverPreparationContext(operationId, provisionIdentity),
+                target,
+                borrowedPassword,
                 deadline);
         if (!preparationOutcome.successful()) {
             return finish(execution, RetainedCutoverRelease.resources(

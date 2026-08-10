@@ -23,6 +23,7 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.Verification
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.security.CommittedSetupFileDurabilityException;
+import org.apache.hertzbeat.manager.setup.workflow.FileMigrationOperationStore.ExactTransitionDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -43,10 +44,12 @@ class FileMigrationOperationStoreExactTest {
 
         assertThat(store.createOrConfirm(pending)).isEqualTo(pending);
         assertThat(store.createOrConfirm(pending)).isEqualTo(pending);
-        assertThat(store.compareAndTransitionOrConfirm(
-                pending.operationId(), MigrationOperationState.PENDING, running)).isEqualTo(running);
-        assertThat(store.compareAndTransitionOrConfirm(
-                pending.operationId(), MigrationOperationState.PENDING, running)).isEqualTo(running);
+        assertThat(store.compareAndTransitionOrConfirmDisposition(
+                pending.operationId(), MigrationOperationState.PENDING, running))
+                .isEqualTo(ExactTransitionDisposition.TRANSITIONED);
+        assertThat(store.compareAndTransitionOrConfirmDisposition(
+                pending.operationId(), MigrationOperationState.PENDING, running))
+                .isEqualTo(ExactTransitionDisposition.ALREADY_CONFIRMED);
     }
 
     @Test

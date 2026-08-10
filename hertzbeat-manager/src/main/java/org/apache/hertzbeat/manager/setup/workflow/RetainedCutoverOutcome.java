@@ -47,6 +47,7 @@ final class RetainedCutoverOutcome {
                 || failure instanceof TargetJdbcConnectionException
                 || failure instanceof TargetSchemaProvisioningException
                 || failure instanceof MigrationMaintenanceException
+                || failure instanceof DurableCutoverPreparationException
                 || failure instanceof RetainedCutoverException) {
             return stable((RuntimeException) failure);
         }
