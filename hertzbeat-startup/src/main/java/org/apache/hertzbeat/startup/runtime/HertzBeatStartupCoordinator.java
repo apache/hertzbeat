@@ -166,7 +166,18 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
                     launcher.launch(decision, args.clone(), this),
                     "startup context launcher returned null for " + decision.mode().value());
         }
+        if (!deploymentOwner.isValid()) {
+            throw StandaloneDeploymentOwnerException.unavailable();
+        }
         boolean exposeAuthority = convergenceConfirmed && decision.mode() == RuntimeMode.NORMAL;
+        if (launcher instanceof AdmittedStartupContextLauncher admitted) {
+            return Objects.requireNonNull(
+                    admitted.launchAdmitted(
+                            decision, args.clone(), this, installationRoot.canonicalRoot(),
+                            exposeAuthority ? deploymentOwner.view() : null,
+                            StartupLaunchAdmission.Mode.ORDINARY),
+                    "startup context launcher returned null for " + decision.mode().value());
+        }
         return Objects.requireNonNull(
                 launcher.launch(decision, args.clone(), this, installationRoot.canonicalRoot(),
                         exposeAuthority ? deploymentOwner.view() : null),

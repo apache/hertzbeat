@@ -18,27 +18,25 @@
 package org.apache.hertzbeat.startup.runtime;
 
 import java.nio.file.Path;
-import java.util.Map;
 import org.apache.hertzbeat.manager.maintenance.StandaloneDeploymentOwnerView;
-import org.apache.hertzbeat.manager.setup.config.SetupInstallationPaths;
 import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.startup.HertzBeatApplication;
-import org.apache.hertzbeat.startup.config.ManagedConfigEnvironmentPostProcessor;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
 /** Spring implementation with explicit AOT-visible source classes. */
-public final class SpringStartupContextLauncher implements StartupContextLauncher {
+public final class SpringStartupContextLauncher
+        implements StartupContextLauncher, AdmittedStartupContextLauncher {
 
     @Override
     public RunningApplicationContext launch(
             StartupDecision decision, String[] args, SetupRuntimeTransition setupRuntimeTransition) {
         ConfigurableApplicationContext context = launchSpringContext(
-                decision, args, setupRuntimeTransition, null, null);
+                decision, args, setupRuntimeTransition, null, null,
+                false, StartupLaunchAdmission.Mode.ORDINARY);
         return new SpringRunningApplicationContext(decision.mode(), context);
     }
 
@@ -50,13 +48,38 @@ public final class SpringStartupContextLauncher implements StartupContextLaunche
             Path installationRoot,
             StandaloneDeploymentOwnerView authorityView) {
         ConfigurableApplicationContext context = launchSpringContext(
-                decision, args, setupRuntimeTransition, installationRoot, authorityView);
+                decision, args, setupRuntimeTransition, installationRoot, authorityView,
+                false, StartupLaunchAdmission.Mode.ORDINARY);
+        return new SpringRunningApplicationContext(decision.mode(), context);
+    }
+
+    @Override
+    public RunningApplicationContext launchAdmitted(
+            StartupDecision decision,
+            String[] args,
+            SetupRuntimeTransition setupRuntimeTransition,
+            Path installationRoot,
+            StandaloneDeploymentOwnerView authorityView,
+            StartupLaunchAdmission.Mode admissionMode) {
+        ConfigurableApplicationContext context = launchSpringContext(
+                decision, args, setupRuntimeTransition, installationRoot, authorityView,
+                true, admissionMode);
         return new SpringRunningApplicationContext(decision.mode(), context);
     }
 
     ConfigurableApplicationContext launchSpringContext(
             StartupDecision decision, String[] args, SetupRuntimeTransition setupRuntimeTransition) {
-        return launchSpringContext(decision, args, setupRuntimeTransition, null, null);
+        return launchSpringContext(decision, args, setupRuntimeTransition, null, null,
+                false, StartupLaunchAdmission.Mode.ORDINARY);
+    }
+
+    ConfigurableApplicationContext launchAdmittedSpringContext(
+            StartupDecision decision,
+            String[] args,
+            SetupRuntimeTransition setupRuntimeTransition,
+            Path installationRoot) {
+        return launchSpringContext(decision, args, setupRuntimeTransition, installationRoot, null,
+                true, StartupLaunchAdmission.Mode.ORDINARY);
     }
 
     private ConfigurableApplicationContext launchSpringContext(
@@ -64,11 +87,13 @@ public final class SpringStartupContextLauncher implements StartupContextLaunche
             String[] args,
             SetupRuntimeTransition setupRuntimeTransition,
             Path installationRoot,
-            StandaloneDeploymentOwnerView authorityView) {
+            StandaloneDeploymentOwnerView authorityView,
+            boolean trustedLaunch,
+            StartupLaunchAdmission.Mode admissionMode) {
         StandardEnvironment environment = new StandardEnvironment();
-        environment.getPropertySources().addFirst(new MapPropertySource(
-                ManagedConfigEnvironmentPostProcessor.INTERNAL_RUNTIME_PROPERTY_SOURCE,
-                internalProperties(decision, installationRoot)));
+        environment.getPropertySources().addFirst(trustedLaunch
+                ? StartupLaunchAdmission.internalPropertySource(decision, installationRoot, admissionMode)
+                : StartupLaunchAdmission.runtimeModePropertySource(decision));
         return new SpringApplicationBuilder(sourceFor(decision.mode()))
                 .environment(environment)
                 .initializers(context -> {
@@ -80,15 +105,6 @@ public final class SpringStartupContextLauncher implements StartupContextLaunche
                     }
                 })
                 .run(args);
-    }
-
-    private Map<String, Object> internalProperties(StartupDecision decision, Path installationRoot) {
-        if (installationRoot == null) {
-            return Map.of(RuntimeMode.PROPERTY_NAME, decision.mode().value());
-        }
-        return Map.of(
-                RuntimeMode.PROPERTY_NAME, decision.mode().value(),
-                SetupInstallationPaths.ROOT_PROPERTY, installationRoot.toString());
     }
 
     static Class<?> sourceFor(RuntimeMode mode) {

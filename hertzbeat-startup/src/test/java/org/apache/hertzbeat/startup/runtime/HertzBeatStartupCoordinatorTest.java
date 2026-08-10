@@ -309,7 +309,8 @@ class HertzBeatStartupCoordinatorTest {
         }
     }
 
-    private static final class OfficialRecordingLauncher implements StartupContextLauncher {
+    private static final class OfficialRecordingLauncher
+            implements StartupContextLauncher, AdmittedStartupContextLauncher {
 
         private final List<String> events = new ArrayList<>();
         private final List<SetupRuntimeTransition> transitions = new ArrayList<>();
@@ -328,7 +329,19 @@ class HertzBeatStartupCoordinatorTest {
                 SetupRuntimeTransition setupRuntimeTransition,
                 Path resolvedRoot,
                 StandaloneDeploymentOwnerView authorityView) {
+            throw new AssertionError("Owned startup must use the admitted launcher capability");
+        }
+
+        @Override
+        public RunningApplicationContext launchAdmitted(
+                StartupDecision decision,
+                String[] args,
+                SetupRuntimeTransition setupRuntimeTransition,
+                Path resolvedRoot,
+                StandaloneDeploymentOwnerView authorityView,
+                StartupLaunchAdmission.Mode admissionMode) {
             assertTrue(resolvedRoot.isAbsolute());
+            assertEquals(StartupLaunchAdmission.Mode.ORDINARY, admissionMode);
             events.add("open:" + decision.mode().value());
             transitions.add(setupRuntimeTransition);
             views.add(authorityView);

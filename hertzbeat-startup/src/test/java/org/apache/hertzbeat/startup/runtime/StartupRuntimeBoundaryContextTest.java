@@ -106,7 +106,7 @@ class StartupRuntimeBoundaryContextTest {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
         StartupDecision decision = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         String databaseName = "m5_setup_security_" + System.nanoTime();
-        try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision, new String[]{
+        try (ConfigurableApplicationContext context = launcher.launchAdmittedSpringContext(decision, new String[]{
                 "--spring.profiles.active=test",
                 "--server.port=0",
                 "--spring.datasource.url=jdbc:h2:mem:" + databaseName + ";MODE=MYSQL;DB_CLOSE_DELAY=-1",
@@ -115,7 +115,7 @@ class StartupRuntimeBoundaryContextTest {
                 "--warehouse.store.duckdb.enabled=false",
                 "--warehouse.store.greptime.enabled=false",
                 "--hertzbeat.runtime.mode=normal"
-        }, SETUP_RUNTIME_TRANSITION);
+        }, SETUP_RUNTIME_TRANSITION, installationRoot);
              HttpClient client = HttpClient.newHttpClient()) {
             int port = ((WebServerApplicationContext) context).getWebServer().getPort();
 
@@ -148,7 +148,7 @@ class StartupRuntimeBoundaryContextTest {
         SpringStartupContextLauncher launcher = new SpringStartupContextLauncher();
         StartupDecision decision = new StartupDecision(RuntimeMode.FULL_SETUP_GATED);
         String databaseName = "m2_gated_" + System.nanoTime();
-        try (ConfigurableApplicationContext context = launcher.launchSpringContext(decision, new String[]{
+        try (ConfigurableApplicationContext context = launcher.launchAdmittedSpringContext(decision, new String[]{
                 "--spring.profiles.active=test",
                 "--spring.main.web-application-type=none",
                 "--spring.datasource.url=jdbc:h2:mem:" + databaseName + ";MODE=MYSQL;DB_CLOSE_DELAY=-1",
@@ -163,7 +163,7 @@ class StartupRuntimeBoundaryContextTest {
                 "--warehouse.store.victoria-metrics.cluster.enabled=true",
                 "--warehouse.store.questdb.enabled=true",
                 "--hertzbeat.runtime.mode=normal"
-        }, SETUP_RUNTIME_TRANSITION)) {
+        }, SETUP_RUNTIME_TRANSITION, installationRoot)) {
             BusinessRuntimeGate gate = context.getBean(BusinessRuntimeGate.class);
             assertSame(SETUP_RUNTIME_TRANSITION, context.getBean(SetupRuntimeTransition.class));
             assertEquals(RuntimeMode.FULL_SETUP_GATED, gate.mode());
