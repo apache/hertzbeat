@@ -245,6 +245,7 @@
             "help/kafka_client",
             "help/pulsar",
             "help/nacos",
+            "help/etcd",
             "help/rabbitmq",
             "help/rocketmq",
             "help/shenyu",
