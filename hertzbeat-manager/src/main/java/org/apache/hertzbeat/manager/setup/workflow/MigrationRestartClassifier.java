@@ -8,8 +8,10 @@
 package org.apache.hertzbeat.manager.setup.workflow;
 
 import java.util.Objects;
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 
 /**
  * Classifies durable migration state after a restart without performing recovery I/O.
@@ -20,6 +22,10 @@ final class MigrationRestartClassifier {
     Plan classify(MigrationOperationSnapshot snapshot, CandidateEvidence evidence) {
         Objects.requireNonNull(snapshot, "snapshot");
         Objects.requireNonNull(evidence, "evidence");
+        if (snapshot.state() == MigrationOperationState.PENDING
+                && snapshot.errorCode() == SetupErrorCode.CONFIG_RECOVERY_REQUIRED) {
+            return Plan.RECOVERY_REQUIRED;
+        }
         if (evidence == CandidateEvidence.INCONSISTENT
                 || evidence == CandidateEvidence.RECOVERY_REQUIRED) {
             return Plan.RECOVERY_REQUIRED;

@@ -129,7 +129,7 @@ class MigrationOperationTransitionPolicyTest {
         MigrationOperationSnapshot rolledBack = rolledBack(MigrationRollbackOrigin.RESTART_FAILURE,
                 SetupErrorCode.RESTART_FAILED);
 
-        assertAllowed(pending, failed(SetupErrorCode.MIGRATION_COPY_FAILED));
+        assertRejected(pending, failed(SetupErrorCode.MIGRATION_COPY_FAILED));
         assertAllowed(copying, failed(SetupErrorCode.MIGRATION_COPY_FAILED));
         assertAllowed(verifying, failed(SetupErrorCode.MIGRATION_VERIFICATION_FAILED));
         assertAllowed(activating, failed(SetupErrorCode.MIGRATION_ACTIVATION_FAILED));

@@ -44,7 +44,14 @@ final class MigrationOperationTransitionPolicy {
 
     private boolean pendingExit(MigrationOperationSnapshot next) {
         return runningAt(next, MigrationStage.COPYING, VerificationState.PENDING)
-                || failedWith(next, SetupErrorCode.MIGRATION_COPY_FAILED);
+                || blockedPending(next)
+                || failedWith(next, SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED)
+                || failedWith(next, SetupErrorCode.OPERATION_CONFLICT);
+    }
+
+    private boolean blockedPending(MigrationOperationSnapshot next) {
+        return next.state() == MigrationOperationState.PENDING
+                && next.errorCode() == SetupErrorCode.CONFIG_RECOVERY_REQUIRED;
     }
 
     private boolean runningExit(MigrationOperationSnapshot current, MigrationOperationSnapshot next) {

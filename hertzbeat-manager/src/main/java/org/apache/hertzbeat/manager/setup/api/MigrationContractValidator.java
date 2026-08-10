@@ -39,7 +39,9 @@ final class MigrationContractValidator {
             SetupErrorCode.MIGRATION_COPY_FAILED,
             SetupErrorCode.MIGRATION_VERIFICATION_FAILED,
             SetupErrorCode.MIGRATION_ACTIVATION_FAILED,
-            SetupErrorCode.RESTART_FAILED);
+            SetupErrorCode.RESTART_FAILED,
+            SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
+            SetupErrorCode.OPERATION_CONFLICT);
     private static final Set<SetupErrorCode> CAPABILITY_BLOCKERS = Set.of(
             SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED,
             SetupErrorCode.MIGRATION_MULTI_NODE_UNSUPPORTED,
@@ -107,20 +109,22 @@ final class MigrationContractValidator {
                 || pollAfterMillis < 0) {
             invalid("Migration projection is incomplete or out of range");
         }
-        validateTimes(state, createdAt, startedAt, completedAt);
+        validateTimes(state, errorCode, createdAt, startedAt, completedAt);
         validateState(state, stage, progress, verification, errorCode, pollAfterMillis);
         validateOutcome(state, errorCode, activationAvailable, restartRequired, externalApplyRequired);
     }
 
     private static void validateTimes(
-            MigrationOperationState state, Instant createdAt, Instant startedAt, Instant completedAt) {
-        boolean pending = state == MigrationOperationState.PENDING;
+            MigrationOperationState state, SetupErrorCode errorCode,
+            Instant createdAt, Instant startedAt, Instant completedAt) {
+        boolean notStarted = state == MigrationOperationState.PENDING
+                || state == MigrationOperationState.FAILED && preparationFailure(errorCode);
         boolean terminal = terminal(state);
-        if (pending != (startedAt == null) || terminal != (completedAt != null)) {
+        if (notStarted != (startedAt == null) || terminal != (completedAt != null)) {
             invalid("Migration timestamps do not match lifecycle state");
         }
         if (startedAt != null && startedAt.isBefore(createdAt)
-                || completedAt != null && completedAt.isBefore(startedAt)) {
+                || completedAt != null && completedAt.isBefore(startedAt == null ? createdAt : startedAt)) {
             invalid("Migration timestamps are out of order");
         }
     }
@@ -130,7 +134,9 @@ final class MigrationContractValidator {
             VerificationState verification, SetupErrorCode errorCode, long pollAfterMillis) {
         boolean valid = switch (state) {
             case PENDING -> stage == MigrationStage.QUEUED && progress == 0
-                    && verification == VerificationState.PENDING && pollAfterMillis > 0;
+                    && verification == VerificationState.PENDING
+                    && (errorCode == null && pollAfterMillis > 0
+                        || errorCode == SetupErrorCode.CONFIG_RECOVERY_REQUIRED && pollAfterMillis == 0);
             case RUNNING -> running(stage, progress, verification) && pollAfterMillis > 0;
             case READY_TO_ACTIVATE -> stage == MigrationStage.READY_TO_ACTIVATE && progress == 100
                     && verification == VerificationState.SUCCEEDED && pollAfterMillis == 0;
@@ -140,10 +146,11 @@ final class MigrationContractValidator {
                     && verification == VerificationState.SUCCEEDED && pollAfterMillis > 0;
             case SUCCEEDED -> stage == MigrationStage.COMPLETED && progress == 100
                     && verification == VerificationState.SUCCEEDED && pollAfterMillis == 0;
-            case FAILED -> stage == MigrationStage.FAILED && failureMatches(errorCode, verification, progress)
+            case FAILED -> stage == MigrationStage.FAILED
+                    && failureMatches(state, errorCode, verification, progress)
                     && pollAfterMillis == 0;
             case ROLLED_BACK -> stage == MigrationStage.ROLLED_BACK
-                    && failureMatches(errorCode, verification, progress)
+                    && failureMatches(state, errorCode, verification, progress)
                     && pollAfterMillis == 0;
         };
         if (!valid) {
@@ -152,7 +159,8 @@ final class MigrationContractValidator {
     }
 
     private static boolean failureMatches(
-            SetupErrorCode errorCode, VerificationState verification, int progress) {
+            MigrationOperationState state, SetupErrorCode errorCode,
+            VerificationState verification, int progress) {
         if (errorCode == null) {
             return false;
         }
@@ -161,6 +169,9 @@ final class MigrationContractValidator {
             case MIGRATION_VERIFICATION_FAILED -> verification == VerificationState.FAILED && progress == 100;
             case MIGRATION_ACTIVATION_FAILED, RESTART_FAILED ->
                     verification == VerificationState.SUCCEEDED && progress == 100;
+            case MIGRATION_SOURCE_UNSUPPORTED, OPERATION_CONFLICT ->
+                    state == MigrationOperationState.FAILED
+                            && verification == VerificationState.PENDING && progress == 0;
             default -> false;
         };
     }
@@ -179,14 +190,23 @@ final class MigrationContractValidator {
     private static void validateOutcome(
             MigrationOperationState state, SetupErrorCode errorCode,
             boolean activationAvailable, boolean restartRequired, boolean externalApplyRequired) {
-        boolean failure = state == MigrationOperationState.FAILED || state == MigrationOperationState.ROLLED_BACK;
         boolean activatable = state == MigrationOperationState.READY_TO_ACTIVATE;
-        if (failure != (errorCode != null) || errorCode != null && !OPERATION_ERRORS.contains(errorCode)
+        boolean validError = switch (state) {
+            case PENDING -> errorCode == null || errorCode == SetupErrorCode.CONFIG_RECOVERY_REQUIRED;
+            case FAILED, ROLLED_BACK -> errorCode != null && OPERATION_ERRORS.contains(errorCode);
+            default -> errorCode == null;
+        };
+        if (!validError
                 || activationAvailable != activatable
                 || restartRequired != (state == MigrationOperationState.AWAITING_RESTART)
                 || externalApplyRequired != (state == MigrationOperationState.AWAITING_EXTERNAL_APPLY)) {
             invalid("Migration outcome and transition flags are inconsistent");
         }
+    }
+
+    private static boolean preparationFailure(SetupErrorCode errorCode) {
+        return errorCode == SetupErrorCode.MIGRATION_SOURCE_UNSUPPORTED
+                || errorCode == SetupErrorCode.OPERATION_CONFLICT;
     }
 
     private static boolean terminal(MigrationOperationState state) {
