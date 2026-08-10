@@ -13,7 +13,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.UUID;
+import org.apache.hertzbeat.manager.setup.security.CommittedSetupFileDurabilityException;
 import org.apache.hertzbeat.manager.setup.security.SecureSetupFile;
 
 /** Root-bound file store for generation-scoped, owner-only migration candidates. */
@@ -27,33 +27,45 @@ final class MigrationCandidateStore {
     private final Path candidateRoot;
     private final ManagedApplicationConfigStore applicationStore;
     private final ManagedSecretStore secretStore;
+    private final MigrationCandidateFileIo fileIo;
     private final ApplicationConfigDocumentCodec applicationCodec = new ApplicationConfigDocumentCodec();
     private final SecretConfigDocumentCodec secretCodec = new SecretConfigDocumentCodec();
     private final MigrationCandidateManifestCodec manifestCodec = new MigrationCandidateManifestCodec();
 
     MigrationCandidateStore(Path installationRoot) {
+        this(installationRoot, null);
+    }
+
+    MigrationCandidateStore(Path installationRoot, MigrationCandidateFileIo fileIo) {
         root = prepareRoot(installationRoot);
         candidateRoot = root.resolve("data/config/migration-candidates");
         applicationStore = new FileManagedApplicationConfigStore(root);
         secretStore = new FileManagedSecretStore(root);
+        this.fileIo = fileIo == null ? new SecureMigrationCandidateFileIo(root) : fileIo;
     }
 
     ManagedMigrationConfigurationTransaction.StageOutcome stage(
             ManagedMigrationConfigurationTransaction.CandidateRef reference, String baseGeneration,
             String targetIdentityHash, ManagedConfigurationBundle bundle) throws IOException {
+        boolean confirmExisting = false;
         try (MigrationCandidateMaterial existing = read(reference)) {
             if (existing.inspection().state() == ManagedMigrationConfigurationTransaction.CandidateState.READY) {
                 boolean same = existing.manifest().filter(manifest -> manifest.baseGeneration().equals(baseGeneration)
                                 && manifest.targetIdentityHash().equals(targetIdentityHash)).isPresent()
                         && existing.application().filter(bundle.application()::equals).isPresent()
                         && existing.secrets().filter(bundle.secrets()::equals).isPresent();
-                return same ? ManagedMigrationConfigurationTransaction.StageOutcome.ALREADY_STAGED
-                        : ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
+                if (!same) {
+                    return ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
+                }
+                confirmExisting = true;
             }
-            if (existing.inspection().state()
+            if (!confirmExisting && existing.inspection().state()
                     != ManagedMigrationConfigurationTransaction.CandidateState.MISSING) {
                 return ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
             }
+        }
+        if (confirmExisting) {
+            return confirmReady(reference);
         }
         ActivePairState activePair = activePairState(baseGeneration);
         if (activePair != ActivePairState.MATCH) {
@@ -67,18 +79,38 @@ final class MigrationCandidateStore {
         byte[] manifest = manifestCodec.encode(new MigrationCandidateManifest(
                 reference.operationId(), reference.candidateGeneration(), baseGeneration, targetIdentityHash));
         try {
-            publish(paths.application(), application);
-            publish(paths.secrets(), secrets);
-            publish(paths.manifest(), manifest);
+            fileIo.publish(paths.application(), application);
+            fileIo.publish(paths.secrets(), secrets);
+            fileIo.publish(paths.manifest(), manifest);
+            boolean ready;
             try (MigrationCandidateMaterial staged = read(reference)) {
-                return staged.inspection().state() == ManagedMigrationConfigurationTransaction.CandidateState.READY
-                        ? ManagedMigrationConfigurationTransaction.StageOutcome.STAGED
-                        : ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
+                ready = staged.inspection().state()
+                        == ManagedMigrationConfigurationTransaction.CandidateState.READY;
             }
+            return ready ? confirmReady(reference, ManagedMigrationConfigurationTransaction.StageOutcome.STAGED)
+                    : ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
+        } catch (CommittedSetupFileDurabilityException uncertain) {
+            return ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
         } finally {
             clear(application);
             clear(secrets);
             clear(manifest);
+        }
+    }
+
+    private ManagedMigrationConfigurationTransaction.StageOutcome confirmReady(
+            ManagedMigrationConfigurationTransaction.CandidateRef reference) {
+        return confirmReady(reference, ManagedMigrationConfigurationTransaction.StageOutcome.ALREADY_STAGED);
+    }
+
+    private ManagedMigrationConfigurationTransaction.StageOutcome confirmReady(
+            ManagedMigrationConfigurationTransaction.CandidateRef reference,
+            ManagedMigrationConfigurationTransaction.StageOutcome confirmedOutcome) {
+        try {
+            fileIo.confirmDurability(paths(reference).manifest());
+            return confirmedOutcome;
+        } catch (IOException failure) {
+            return ManagedMigrationConfigurationTransaction.StageOutcome.RECOVERY_REQUIRED;
         }
     }
 
@@ -206,18 +238,6 @@ final class MigrationCandidateStore {
         }
         return new CandidatePaths(directory.resolve("application"), directory.resolve("secrets"),
                 directory.resolve("manifest"));
-    }
-
-    private void publish(Path target, byte[] content) throws IOException {
-        Path temporary = target.resolveSibling("." + target.getFileName() + "-" + UUID.randomUUID() + ".tmp");
-        try {
-            SecureSetupFile.create(root, temporary, content);
-            SecureSetupFile.atomicReplace(root, temporary, target);
-        } finally {
-            if (Files.exists(temporary, LinkOption.NOFOLLOW_LINKS)) {
-                SecureSetupFile.deleteOwnerOnlyInsideRoot(root, temporary);
-            }
-        }
     }
 
     private void delete(Path target) throws IOException {
