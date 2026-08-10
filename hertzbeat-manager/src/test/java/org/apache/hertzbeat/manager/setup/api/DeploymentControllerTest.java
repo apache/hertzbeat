@@ -18,21 +18,19 @@
 package org.apache.hertzbeat.manager.setup.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
 import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
@@ -41,49 +39,38 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentVi
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceAdmission;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MaintenanceMode;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationCapability;
-import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExportRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationTarget;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.VerificationState;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportFormat;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ApplyMode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ConfigSource;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ManagementDatabaseSummary;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseConfiguration;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
-import org.apache.hertzbeat.manager.setup.workflow.MigrationExportRenderer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /** Transport proof for authenticated, no-store deployment routes. */
 class DeploymentControllerTest {
 
     private final DeploymentWorkflow workflow = mock(DeploymentWorkflow.class);
-    private final MigrationExportRenderer exportRenderer = mock(MigrationExportRenderer.class);
     private ObjectProvider<DeploymentWorkflow> workflowProvider;
-    private ObjectProvider<MigrationExportRenderer> rendererProvider;
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
-        StaticListableBeanFactory factory = providerFactory(List.of(workflow), List.of(exportRenderer));
+        StaticListableBeanFactory factory = providerFactory(List.of(workflow));
         workflowProvider = factory.getBeanProvider(DeploymentWorkflow.class);
-        rendererProvider = factory.getBeanProvider(MigrationExportRenderer.class);
-        mvc = mvc(workflowProvider, rendererProvider);
+        mvc = mvc(workflowProvider);
     }
 
     @Test
@@ -99,7 +86,7 @@ class DeploymentControllerTest {
                 "jdbcUrl":"jdbc:mysql://db/hertzbeat","username":"operator","password":"request-secret"}}
                 """;
         String migration = """
-                {"target":"mysql","targetDatabase":{"kind":"mysql",
+                {"operationId":"migration-1","target":"mysql","targetDatabase":{"kind":"mysql",
                 "jdbcUrl":"jdbc:mysql://db/hertzbeat","username":"operator","password":"request-secret"},
                 "applyMode":"managed_write"}
                 """;
@@ -130,6 +117,7 @@ class DeploymentControllerTest {
                 .andExpect(jsonPath("$.restartRequired").value(true));
 
         verify(workflow).migration("migration-1");
+        verify(workflow).migrate(argThat(request -> "migration-1".equals(request.operationId())));
     }
 
     @Test
@@ -171,7 +159,27 @@ class DeploymentControllerTest {
     }
 
     @Test
-    void rejectsInvalidOperationIdsBeforeWorkflowOrRendererDispatch() throws Exception {
+    void rejectsInvalidOperationIdsBeforeWorkflowDispatch() throws Exception {
+        String migrationWithoutId = """
+                {"target":"mysql","targetDatabase":{"kind":"mysql",
+                "jdbcUrl":"jdbc:mysql://db/hertzbeat","username":"operator","password":"request-secret"},
+                "applyMode":"managed_write"}
+                """;
+        String migrationWithUnsafeId = """
+                {"operationId":".hidden","target":"mysql","targetDatabase":{"kind":"mysql",
+                "jdbcUrl":"jdbc:mysql://db/hertzbeat","username":"operator","password":"request-secret"},
+                "applyMode":"managed_write"}
+                """;
+        mvc.perform(post(DeploymentApiContract.MIGRATION_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .content(migrationWithoutId))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
+        mvc.perform(post(DeploymentApiContract.MIGRATION_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .content(migrationWithUnsafeId))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"));
         mvc.perform(get(DeploymentApiContract.MIGRATION_OPERATION_PATH, ".hidden"))
                 .andExpect(status().isBadRequest())
                 .andExpect(header().string("Cache-Control", "no-store"))
@@ -193,63 +201,17 @@ class DeploymentControllerTest {
                 .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"));
 
-        verifyNoInteractions(workflow, exportRenderer);
+        verifyNoInteractions(workflow);
     }
 
     @Test
     void missingWorkflowReturnsStableNoStoreUnavailable() throws Exception {
-        assertDeploymentUnavailable(mvc(List.of(), List.of(exportRenderer)));
+        assertDeploymentUnavailable(mvc(List.of()));
     }
 
     @Test
     void ambiguousWorkflowReturnsStableNoStoreUnavailable() throws Exception {
-        assertDeploymentUnavailable(mvc(
-                List.of(workflow, mock(DeploymentWorkflow.class)), List.of(exportRenderer)));
-    }
-
-    @Test
-    void missingOrAmbiguousRendererReturnsStableNoStoreUnavailable() throws Exception {
-        assertExportUnavailable(mvc(List.of(workflow), List.of()));
-        assertExportUnavailable(mvc(List.of(workflow),
-                List.of(exportRenderer, mock(MigrationExportRenderer.class))));
-    }
-
-    @Test
-    void externalApplyExportStreamsOnlyAfterNoStoreAttachmentIsPrepared() throws Exception {
-        when(workflow.prepareExport(eq("migration-1"), any())).thenReturn(
-                new ExportResponse("hertzbeat-migration.env", "text/plain"));
-        String request = """
-                {"format":"env","expectedState":"awaiting_external_apply",
-                "targetDatabase":{"kind":"mysql","jdbcUrl":"jdbc:mysql://db/hertzbeat",
-                "username":"operator","password":"export-secret"}}
-                """;
-
-        MvcResult pending = mvc.perform(post(DeploymentApiContract.EXPORT_PATH, "migration-1")
-                        .contentType(MediaType.APPLICATION_JSON).content(request))
-                .andExpect(request().asyncStarted()).andReturn();
-        mvc.perform(asyncDispatch(pending))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(header().string("Content-Disposition",
-                        "attachment; filename=\"hertzbeat-migration.env\""));
-        verify(exportRenderer).write(eq("migration-1"), any(), any());
-    }
-
-    @Test
-    void exportBodyIsDeferredUntilTheStreamingCallbackRuns() throws Exception {
-        MigrationExportRequest request = new MigrationExportRequest(ExportFormat.ENV,
-                MigrationOperationState.AWAITING_EXTERNAL_APPLY,
-                new MetadataDatabaseConfiguration(MetadataDatabaseKind.MYSQL,
-                        "jdbc:mysql://db/hertzbeat", "operator", "export-secret"));
-        when(workflow.prepareExport("migration-1", request)).thenReturn(
-                new ExportResponse("hertzbeat-migration.env", "text/plain"));
-        DeploymentController controller = new DeploymentController(workflowProvider, rendererProvider);
-
-        ResponseEntity<StreamingResponseBody> response = controller.export("migration-1", request);
-
-        verifyNoInteractions(exportRenderer);
-        response.getBody().writeTo(new ByteArrayOutputStream());
-        verify(exportRenderer).write(eq("migration-1"), eq(request), any());
+        assertDeploymentUnavailable(mvc(List.of(workflow, mock(DeploymentWorkflow.class))));
     }
 
     private MigrationView readyMigration() {
@@ -277,28 +239,20 @@ class DeploymentControllerTest {
                 VerificationState.SUCCEEDED, null, 1000, false, true, false);
     }
 
-    private MockMvc mvc(
-            List<DeploymentWorkflow> workflows, List<MigrationExportRenderer> renderers) {
-        StaticListableBeanFactory factory = providerFactory(workflows, renderers);
-        return mvc(factory.getBeanProvider(DeploymentWorkflow.class),
-                factory.getBeanProvider(MigrationExportRenderer.class));
+    private MockMvc mvc(List<DeploymentWorkflow> workflows) {
+        StaticListableBeanFactory factory = providerFactory(workflows);
+        return mvc(factory.getBeanProvider(DeploymentWorkflow.class));
     }
 
-    private MockMvc mvc(
-            ObjectProvider<DeploymentWorkflow> workflows,
-            ObjectProvider<MigrationExportRenderer> renderers) {
-        return MockMvcBuilders.standaloneSetup(new DeploymentController(workflows, renderers))
+    private MockMvc mvc(ObjectProvider<DeploymentWorkflow> workflows) {
+        return MockMvcBuilders.standaloneSetup(new DeploymentController(workflows))
                 .setControllerAdvice(new SetupExceptionHandler()).build();
     }
 
-    private StaticListableBeanFactory providerFactory(
-            List<DeploymentWorkflow> workflows, List<MigrationExportRenderer> renderers) {
+    private StaticListableBeanFactory providerFactory(List<DeploymentWorkflow> workflows) {
         StaticListableBeanFactory factory = new StaticListableBeanFactory();
         for (int index = 0; index < workflows.size(); index++) {
             factory.addBean("workflow-" + index, workflows.get(index));
-        }
-        for (int index = 0; index < renderers.size(); index++) {
-            factory.addBean("renderer-" + index, renderers.get(index));
         }
         return factory;
     }
@@ -310,16 +264,4 @@ class DeploymentControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("migration_unavailable"));
     }
 
-    private void assertExportUnavailable(MockMvc candidate) throws Exception {
-        String request = """
-                {"format":"env","expectedState":"awaiting_external_apply",
-                "targetDatabase":{"kind":"mysql","jdbcUrl":"jdbc:mysql://db/hertzbeat",
-                "username":"operator","password":"export-secret"}}
-                """;
-        candidate.perform(post(DeploymentApiContract.EXPORT_PATH, "migration-1")
-                        .contentType(MediaType.APPLICATION_JSON).content(request))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$.errorCode").value("migration_unavailable"));
-    }
 }

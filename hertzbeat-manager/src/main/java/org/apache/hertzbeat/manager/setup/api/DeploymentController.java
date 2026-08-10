@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.manager.setup.api;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.ActivateMigrationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.DeploymentView;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationRequest;
@@ -26,9 +28,9 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExp
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationView;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
-import org.apache.hertzbeat.manager.setup.workflow.MigrationExportRenderer;
+import org.apache.hertzbeat.manager.setup.workflow.PreparedMigrationExport;
+import org.apache.hertzbeat.manager.setup.workflow.StagedMigrationExport;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,20 +38,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /** Transport-only adapter that fails safely until the migration workflow is available. */
 @RestController
 public final class DeploymentController {
 
     private final ObjectProvider<DeploymentWorkflow> workflowProvider;
-    private final ObjectProvider<MigrationExportRenderer> rendererProvider;
 
-    public DeploymentController(
-            ObjectProvider<DeploymentWorkflow> workflowProvider,
-            ObjectProvider<MigrationExportRenderer> rendererProvider) {
+    public DeploymentController(ObjectProvider<DeploymentWorkflow> workflowProvider) {
         this.workflowProvider = workflowProvider;
-        this.rendererProvider = rendererProvider;
     }
 
     @GetMapping(DeploymentApiContract.DEPLOYMENT_PATH)
@@ -86,16 +83,25 @@ public final class DeploymentController {
     }
 
     @PostMapping(DeploymentApiContract.EXPORT_PATH)
-    public ResponseEntity<StreamingResponseBody> export(
-            @PathVariable String operationId, @Valid @RequestBody MigrationExportRequest request) {
+    public void export(
+            @PathVariable String operationId, @Valid @RequestBody MigrationExportRequest request,
+            HttpServletResponse response) throws IOException {
         requireOperationId(operationId);
-        MigrationExportRenderer renderer = renderer();
-        ExportResponse metadata = workflow().prepareExport(operationId, request);
-        StreamingResponseBody body = output -> renderer.write(operationId, request, output);
-        return SetupHttpContract.noStore()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + metadata.fileName() + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, metadata.mediaType()).body(body);
+        boolean responseMutated = false;
+        try (PreparedMigrationExport prepared = workflow().prepareExport(operationId, request);
+                StagedMigrationExport staged = prepared.stage()) {
+            ExportResponse metadata = staged.metadata();
+            responseMutated = true;
+            response.setHeader("Cache-Control", "no-store");
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + metadata.fileName() + "\"");
+            response.setContentType(metadata.mediaType());
+            response.setContentLength(staged.size());
+            staged.writeTo(response.getOutputStream());
+            response.flushBuffer();
+        } catch (IOException | RuntimeException failure) {
+            resetUncommitted(response, responseMutated);
+            throw failure;
+        }
     }
 
     private DeploymentWorkflow workflow() {
@@ -112,16 +118,22 @@ public final class DeploymentController {
         }
     }
 
-    private MigrationExportRenderer renderer() {
-        MigrationExportRenderer renderer = rendererProvider.getIfUnique();
-        if (renderer == null) {
-            throw unavailable();
-        }
-        return renderer;
-    }
-
     private SetupApiException unavailable() {
         return new SetupApiException(
                 SetupApiContract.SetupErrorCode.MIGRATION_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    private void resetUncommitted(HttpServletResponse response, boolean responseMutated) {
+        if (!responseMutated) {
+            return;
+        }
+        try {
+            if (!response.isCommitted()) {
+                response.reset();
+            }
+        } catch (RuntimeException ignored) {
+            // Preserve the original safe transport failure; response rollback is best effort.
+        }
+    }
+
 }

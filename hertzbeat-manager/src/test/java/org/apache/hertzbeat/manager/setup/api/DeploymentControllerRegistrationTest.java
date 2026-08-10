@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
-import org.apache.hertzbeat.manager.setup.workflow.MigrationExportRenderer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.ComponentScan;
@@ -48,9 +47,8 @@ class DeploymentControllerRegistrationTest {
     }
 
     @Test
-    void componentScanResolvesWorkflowAndRendererRegisteredAlongsideController() {
+    void componentScanResolvesWorkflowRegisteredAlongsideController() {
         context.withBean(DeploymentWorkflow.class, () -> mock(DeploymentWorkflow.class))
-                .withBean(MigrationExportRenderer.class, () -> mock(MigrationExportRenderer.class))
                 .run(result -> assertThat(result).hasSingleBean(DeploymentController.class));
     }
 

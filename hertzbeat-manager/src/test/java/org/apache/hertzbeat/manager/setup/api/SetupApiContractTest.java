@@ -222,8 +222,9 @@ class SetupApiContractTest {
                 "public_address_invalid", "mail_connection_failed", "administrator_already_configured",
                 "administrator_username_invalid", "operation_not_found", "operation_conflict",
                 "migration_source_unsupported", "migration_target_not_empty", "migration_multi_node_unsupported",
-                "migration_copy_failed", "migration_verification_failed", "migration_activation_failed",
-                "restart_failed");
+                "migration_topology_unavailable", "migration_maintenance_required", "migration_unavailable",
+                "migration_copy_failed", "migration_verification_failed", "migration_activation_not_available",
+                "migration_activation_failed", "restart_failed");
     }
 
     @Test

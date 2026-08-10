@@ -45,6 +45,7 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseK
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreKind;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.TelemetryStoreSummary;
+import org.apache.hertzbeat.manager.setup.workflow.PreparedMigrationExport;
 import org.junit.jupiter.api.Test;
 
 /** Freezes authenticated deployment and H2 migration contracts. */
@@ -69,7 +70,8 @@ class DeploymentApiContractTest {
                 "maintenanceAdmission", "activeOperationId");
         assertComponents(DeploymentApiContract.MetadataMigrationValidationRequest.class,
                 "target", "targetDatabase");
-        assertComponents(DeploymentApiContract.MetadataMigrationRequest.class, "target", "targetDatabase", "applyMode");
+        assertComponents(DeploymentApiContract.MetadataMigrationRequest.class,
+                "operationId", "target", "targetDatabase", "applyMode");
         assertComponents(DeploymentApiContract.MigrationView.class, "operationId", "state", "source", "target",
                 "stage", "progressPercent", "createdAt", "startedAt", "completedAt", "verificationState",
                 "errorCode", "nextPollAfterMillis", "activationAvailable", "restartRequired",
@@ -95,6 +97,10 @@ class DeploymentApiContractTest {
         assertEquals(SetupApiContract.ValidationResponse.class,
                 DeploymentWorkflow.class.getMethod(
                         "validate", DeploymentApiContract.MetadataMigrationValidationRequest.class)
+                        .getReturnType());
+        assertEquals(PreparedMigrationExport.class,
+                DeploymentWorkflow.class.getMethod(
+                        "prepareExport", String.class, DeploymentApiContract.MigrationExportRequest.class)
                         .getReturnType());
     }
 
@@ -183,15 +189,22 @@ class DeploymentApiContractTest {
         MetadataDatabaseConfiguration mysql = new MetadataDatabaseConfiguration(
                 MetadataDatabaseKind.MYSQL, "jdbc:mysql://db/hertzbeat", "user", "secret");
         assertEquals(mysql, new DeploymentApiContract.MetadataMigrationRequest(
-                MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE).targetDatabase());
+                "migration-1", MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE).targetDatabase());
         MetadataDatabaseConfiguration postgres = new MetadataDatabaseConfiguration(
                 MetadataDatabaseKind.POSTGRESQL, "jdbc:postgresql://db/hertzbeat", "user", "secret");
         assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.MetadataMigrationRequest(
-                MigrationTarget.MYSQL, postgres, ApplyMode.MANAGED_WRITE));
+                "migration-1", MigrationTarget.MYSQL, postgres, ApplyMode.MANAGED_WRITE));
         MetadataDatabaseConfiguration h2 = new MetadataDatabaseConfiguration(
                 MetadataDatabaseKind.H2, "jdbc:h2:file:./data/hertzbeat", "sa", "secret");
         assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.MetadataMigrationRequest(
-                MigrationTarget.POSTGRESQL, h2, ApplyMode.EXTERNAL_APPLY));
+                "migration-1", MigrationTarget.POSTGRESQL, h2, ApplyMode.EXTERNAL_APPLY));
+
+        assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.MetadataMigrationRequest(
+                null, MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE));
+        assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.MetadataMigrationRequest(
+                ".hidden", MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE));
+        assertThrows(IllegalArgumentException.class, () -> new DeploymentApiContract.MetadataMigrationRequest(
+                "a".repeat(129), MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE));
     }
 
     @Test
@@ -200,13 +213,17 @@ class DeploymentApiContractTest {
         MetadataDatabaseConfiguration mysql = new MetadataDatabaseConfiguration(
                 MetadataDatabaseKind.MYSQL, "jdbc:mysql://db/hertzbeat", "user", secret);
         DeploymentApiContract.MetadataMigrationRequest request = new DeploymentApiContract.MetadataMigrationRequest(
-                MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE);
+                "migration-1", MigrationTarget.MYSQL, mysql, ApplyMode.MANAGED_WRITE);
         assertFalse(objectMapper.writeValueAsString(request).contains(secret));
         assertFalse(request.toString().contains(secret));
         DeploymentApiContract.MigrationExportRequest export = new DeploymentApiContract.MigrationExportRequest(
                 SetupApiContract.ExportFormat.ENV, MigrationOperationState.AWAITING_EXTERNAL_APPLY, mysql);
         assertFalse(objectMapper.writeValueAsString(export).contains(secret));
         assertFalse(export.toString().contains(secret));
+        assertThrows(IllegalArgumentException.class,
+                () -> new SetupApiContract.ExportResponse("unsafe\".env", "text/plain"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new SetupApiContract.ExportResponse("safe.env", "text/plain\r\nprivate-header"));
     }
 
     @Test

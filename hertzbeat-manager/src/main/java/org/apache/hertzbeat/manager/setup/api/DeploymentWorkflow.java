@@ -23,8 +23,8 @@ import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigr
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MetadataMigrationValidationRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationExportRequest;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationView;
-import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ExportResponse;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.ValidationResponse;
+import org.apache.hertzbeat.manager.setup.workflow.PreparedMigrationExport;
 
 /** Authenticated deployment boundary implemented by a later migration engine milestone. */
 public interface DeploymentWorkflow {
@@ -39,5 +39,5 @@ public interface DeploymentWorkflow {
 
     MigrationView activate(String operationId, ActivateMigrationRequest request);
 
-    ExportResponse prepareExport(String operationId, MigrationExportRequest request);
+    PreparedMigrationExport prepareExport(String operationId, MigrationExportRequest request);
 }

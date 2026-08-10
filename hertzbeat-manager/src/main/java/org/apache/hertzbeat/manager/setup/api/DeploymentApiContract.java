@@ -196,18 +196,22 @@ public final class DeploymentApiContract {
 
     /** H2-to-external-database migration input. */
     public record MetadataMigrationRequest(
+            @NotBlank String operationId,
             @NotNull MigrationTarget target,
             @NotNull @Valid MetadataDatabaseConfiguration targetDatabase,
             @NotNull ApplyMode applyMode) {
 
         public MetadataMigrationRequest {
+            if (!OperationIdValidator.isSafe(operationId)) {
+                throw new IllegalArgumentException("Invalid migration operation id");
+            }
             MigrationContractValidator.validateTarget(target, targetDatabase);
         }
 
         @Override
         public String toString() {
-            return "MetadataMigrationRequest[target=" + target + ", targetDatabase=<redacted>, applyMode="
-                    + applyMode + "]";
+            return "MetadataMigrationRequest[operationId=" + operationId + ", target=" + target
+                    + ", targetDatabase=<redacted>, applyMode=" + applyMode + "]";
         }
     }
 
