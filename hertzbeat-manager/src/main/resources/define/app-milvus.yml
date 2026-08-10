@@ -1,0 +1,401 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: milvus
+name:
+  zh-CN: Milvus
+  en-US: Milvus
+  ja-JP: Milvus
+help:
+  zh-CN: HertzBeat 通过抓取 Milvus 暴露的 Prometheus 格式指标接口（默认端口 9091，路径 /metrics）来监控 Milvus 向量数据库的运行状态，涵盖代理层请求、查询节点性能及根节点协调器等核心指标。<br>您可以点击 "<i>新建 Milvus 监控</i>" 并进行配置，或者选择"<i>更多操作</i>"，导入已有配置。
+  en-US: HertzBeat monitors Milvus vector database health by scraping its Prometheus-format metrics endpoint (default port 9091, path /metrics), covering Proxy request metrics, QueryNode performance, and RootCoord state. <br>You could click the "<i>New Milvus Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 透過抓取 Milvus 暴露的 Prometheus 格式指標介面（預設埠 9091，路徑 /metrics）監控 Milvus 向量資料庫的運行狀態，涵蓋代理層請求、查詢節點效能及根節點協調器等核心指標。
+  ja-JP: HertzBeat は Milvus が公開する Prometheus 形式のメトリクスエンドポイント（デフォルトポート 9091、パス /metrics）をスクレイピングして Milvus ベクターデータベースを監視します。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/milvus/
+  en-US: https://hertzbeat.apache.org/docs/help/milvus/
+params:
+  - field: host
+    name:
+      zh-CN: 目标 Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9091
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+      ja-JP: クエリタイムアウト
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+
+metrics:
+  # ---- Priority 0: availability / proxy request count ----
+  - name: milvus_proxy_req_count
+    i18n:
+      zh-CN: 代理请求总数
+      en-US: Proxy Request Count
+      ja-JP: プロキシリクエスト数
+    priority: 0
+    fields:
+      - field: function_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 函数名称
+          en-US: Function Name
+          ja-JP: 関数名
+      - field: status
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+          ja-JP: ステータス
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 请求数
+          en-US: Count
+          ja-JP: リクエスト数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 1: slow queries ----
+  - name: milvus_proxy_slow_query_count
+    i18n:
+      zh-CN: 代理慢查询数
+      en-US: Proxy Slow Query Count
+      ja-JP: プロキシスロークエリ数
+    priority: 1
+    fields:
+      - field: function_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 函数名称
+          en-US: Function Name
+          ja-JP: 関数名
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 慢查询数
+          en-US: Slow Query Count
+          ja-JP: スロークエリ数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 2: search vector count ----
+  - name: milvus_proxy_search_vectors_count
+    i18n:
+      zh-CN: 搜索向量累计数
+      en-US: Search Vectors Count
+      ja-JP: 検索ベクター累計数
+    priority: 2
+    fields:
+      - field: value
+        type: 0
+        label: true
+        i18n:
+          zh-CN: 向量数
+          en-US: Vector Count
+          ja-JP: ベクター数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 3: insert vector count ----
+  - name: milvus_proxy_insert_vectors_count
+    i18n:
+      zh-CN: 插入向量累计数
+      en-US: Insert Vectors Count
+      ja-JP: 挿入ベクター累計数
+    priority: 3
+    fields:
+      - field: value
+        type: 0
+        label: true
+        i18n:
+          zh-CN: 向量数
+          en-US: Vector Count
+          ja-JP: ベクター数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 4: sq latency ----
+  - name: milvus_proxy_sq_latency
+    i18n:
+      zh-CN: 搜索/查询请求延迟
+      en-US: Search/Query Request Latency
+      ja-JP: 検索/クエリリクエスト遅延
+    priority: 4
+    fields:
+      - field: le
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 分位数上限
+          en-US: Bucket Upper Bound
+          ja-JP: バケット上限
+      - field: value
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 延迟
+          en-US: Latency
+          ja-JP: 遅延
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 5: mutation latency ----
+  - name: milvus_proxy_mutation_latency
+    i18n:
+      zh-CN: 写入请求延迟
+      en-US: Mutation Request Latency
+      ja-JP: 変更リクエスト遅延
+    priority: 5
+    fields:
+      - field: le
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 分位数上限
+          en-US: Bucket Upper Bound
+          ja-JP: バケット上限
+      - field: value
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 延迟
+          en-US: Latency
+          ja-JP: 遅延
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 6: QueryNode collections loaded ----
+  - name: milvus_querynode_collection_num
+    i18n:
+      zh-CN: 查询节点已加载集合数
+      en-US: QueryNode Loaded Collection Count
+      ja-JP: クエリノードロード済みコレクション数
+    priority: 6
+    fields:
+      - field: node_id
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 节点ID
+          en-US: Node ID
+          ja-JP: ノードID
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 集合数
+          en-US: Collection Count
+          ja-JP: コレクション数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 7: QueryNode entity count ----
+  - name: milvus_querynode_entity_num
+    i18n:
+      zh-CN: 查询节点已加载实体数
+      en-US: QueryNode Loaded Entity Count
+      ja-JP: クエリノードロード済みエンティティ数
+    priority: 7
+    fields:
+      - field: node_id
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 节点ID
+          en-US: Node ID
+          ja-JP: ノードID
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 实体数
+          en-US: Entity Count
+          ja-JP: エンティティ数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 8: RootCoord collection total ----
+  - name: milvus_rootcoord_collection_num
+    i18n:
+      zh-CN: 根节点集合总数
+      en-US: RootCoord Collection Count
+      ja-JP: ルートコーディネーターコレクション数
+    priority: 8
+    fields:
+      - field: value
+        type: 0
+        label: true
+        i18n:
+          zh-CN: 集合数
+          en-US: Collection Count
+          ja-JP: コレクション数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 9: RootCoord partition total ----
+  - name: milvus_rootcoord_partition_num
+    i18n:
+      zh-CN: 根节点分区总数
+      en-US: RootCoord Partition Count
+      ja-JP: ルートコーディネーターパーティション数
+    priority: 9
+    fields:
+      - field: value
+        type: 0
+        label: true
+        i18n:
+          zh-CN: 分区数
+          en-US: Partition Count
+          ja-JP: パーティション数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 10: RootCoord DML request count ----
+  - name: milvus_rootcoord_dml_req_count
+    i18n:
+      zh-CN: 根节点DML请求数
+      en-US: RootCoord DML Request Count
+      ja-JP: ルートコーディネーターDMLリクエスト数
+    priority: 10
+    fields:
+      - field: status
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+          ja-JP: ステータス
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 请求数
+          en-US: Request Count
+          ja-JP: リクエスト数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  # ---- Priority 11: RootCoord DDL request count ----
+  - name: milvus_rootcoord_ddl_req_count
+    i18n:
+      zh-CN: 根节点DDL请求数
+      en-US: RootCoord DDL Request Count
+      ja-JP: ルートコーディネーターDDLリクエスト数
+    priority: 11
+    fields:
+      - field: status
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+          ja-JP: ステータス
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 请求数
+          en-US: Request Count
+          ja-JP: リクエスト数
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
