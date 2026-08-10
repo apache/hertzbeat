@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.hertzbeat.manager.setup.api.OperationIdValidator;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 
 /** Locked public boundary for migration-owned managed-configuration candidates. */
 public final class ManagedMigrationConfigurationTransaction {
@@ -23,14 +24,30 @@ public final class ManagedMigrationConfigurationTransaction {
     private final ManagedConfigurationLock lock;
     private final MigrationCandidateStore store;
     private final ManagedMigrationActivation activation;
+    private final ManagedMetadataTargetStage metadataTargetStage;
 
     /** Creates the production migration candidate transaction. */
     public ManagedMigrationConfigurationTransaction(Path installationRoot) {
         lock = new ManagedConfigurationLock(installationRoot);
         store = new MigrationCandidateStore(installationRoot);
-        activation = new ManagedMigrationActivation(
-                new FileManagedApplicationConfigStore(installationRoot),
-                new FileManagedSecretStore(installationRoot));
+        FileManagedApplicationConfigStore applications = new FileManagedApplicationConfigStore(installationRoot);
+        FileManagedSecretStore secrets = new FileManagedSecretStore(installationRoot);
+        activation = new ManagedMigrationActivation(applications, secrets);
+        metadataTargetStage = new ManagedMetadataTargetStage(applications, secrets, store::stage);
+    }
+
+    /** Stages a metadata-only target over the exact active H2 managed configuration. */
+    public MetadataTargetStageResult stageMetadataTarget(
+            String operationId, String candidateGeneration, String targetIdentityHash,
+            MetadataDatabaseSettings target, SecretValue password) throws IOException {
+        CandidateRef reference = new CandidateRef(operationId, candidateGeneration);
+        requireIdentityHash(targetIdentityHash);
+        Objects.requireNonNull(target, "target");
+        Objects.requireNonNull(password, "password");
+        if (target.kind() == MetadataDatabaseKind.H2) {
+            throw new IllegalArgumentException("A migration target must use a production metadata database");
+        }
+        return lock.execute(() -> metadataTargetStage.stage(reference, targetIdentityHash, target, password));
     }
 
     /** Stages the exact candidate or fails with a stable, secret-free error. */
@@ -120,6 +137,24 @@ public final class ManagedMigrationConfigurationTransaction {
         }
     }
 
+    /** Secret-free result of staging a metadata-only target candidate. */
+    public record MetadataTargetStageResult(StageOutcome outcome, Optional<CandidateRef> candidate) {
+        public MetadataTargetStageResult {
+            Objects.requireNonNull(outcome, "outcome");
+            Objects.requireNonNull(candidate, "candidate");
+            boolean staged = outcome == StageOutcome.STAGED || outcome == StageOutcome.ALREADY_STAGED;
+            if (staged != candidate.isPresent()) {
+                throw new IllegalArgumentException("Only a staged metadata target exposes a candidate reference");
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "MetadataTargetStageResult[outcome=" + outcome
+                    + ", candidatePresent=" + candidate.isPresent() + "]";
+        }
+    }
+
     /** Secret-free persisted candidate state and exact base/target identity metadata. */
     public record Inspection(CandidateState state, Optional<String> baseGeneration,
                              Optional<String> targetIdentityHash) {
@@ -143,7 +178,7 @@ public final class ManagedMigrationConfigurationTransaction {
     public enum CandidateState { MISSING, READY, RECOVERY_REQUIRED }
 
     /** Stable staging result without filesystem or configuration details. */
-    public enum StageOutcome { STAGED, ALREADY_STAGED, STALE, RECOVERY_REQUIRED }
+    public enum StageOutcome { STAGED, ALREADY_STAGED, STALE, SOURCE_UNSUPPORTED, RECOVERY_REQUIRED }
 
     /** Stable exact-discard result. */
     public enum DiscardOutcome { DISCARDED, NOT_FOUND }
