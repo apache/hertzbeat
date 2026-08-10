@@ -25,6 +25,7 @@ public final class ManagedMigrationConfigurationTransaction {
     private final MigrationCandidateStore store;
     private final ManagedMigrationActivation activation;
     private final ManagedMetadataTargetStage metadataTargetStage;
+    private final ManagedMigrationActiveConfiguration activeConfiguration;
 
     /** Creates the production migration candidate transaction. */
     public ManagedMigrationConfigurationTransaction(Path installationRoot) {
@@ -34,6 +35,7 @@ public final class ManagedMigrationConfigurationTransaction {
         FileManagedSecretStore secrets = new FileManagedSecretStore(installationRoot);
         activation = new ManagedMigrationActivation(applications, secrets);
         metadataTargetStage = new ManagedMetadataTargetStage(applications, secrets, store::stage);
+        activeConfiguration = new ManagedMigrationActiveConfiguration(applications, secrets, store);
     }
 
     /** Stages a metadata-only target over the exact active H2 managed configuration. */
@@ -93,6 +95,17 @@ public final class ManagedMigrationConfigurationTransaction {
         requireIdentityHash(expectedTargetIdentityHash);
         Objects.requireNonNull(reader, "reader");
         return lock.execute(() -> store.readExact(reference, expectedTargetIdentityHash, reader));
+    }
+
+    /** Reads only when active application and secrets exactly equal the identity-bound candidate. */
+    public <T> T readExactActive(
+            CandidateRef reference, String expectedTargetIdentityHash, CandidateReader<T> reader)
+            throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        requireIdentityHash(expectedTargetIdentityHash);
+        Objects.requireNonNull(reader, "reader");
+        return lock.execute(() -> activeConfiguration.readExact(
+                reference, expectedTargetIdentityHash, reader));
     }
 
     /** Removes only the operation-and-generation scoped candidate named by the reference. */

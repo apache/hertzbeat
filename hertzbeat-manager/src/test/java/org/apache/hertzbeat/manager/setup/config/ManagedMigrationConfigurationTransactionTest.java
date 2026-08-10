@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
@@ -120,6 +121,86 @@ class ManagedMigrationConfigurationTransactionTest {
         assertThrows(IOException.class, () -> migration.readExact(
                 new ManagedMigrationConfigurationTransaction.CandidateRef("wrong-operation", CANDIDATE),
                 candidate -> "unreachable"));
+    }
+
+    @Test
+    void readsOnlyTheExactActiveCandidateAggregateAndClosesItsSecrets() throws Exception {
+        ManagedMigrationConfigurationTransaction migration = activatedCandidate();
+        ManagedMigrationConfigurationTransaction.CandidateRef ref = reference();
+        AtomicReference<ManagedSecrets> observed = new AtomicReference<>();
+
+        assertEquals("jdbc:postgresql://db/next", migration.readExactActive(ref, IDENTITY, active -> {
+            observed.set(active.secrets());
+            assertEquals("database-next", new String(active.secrets().metadataDatabasePassword().copy()));
+            return active.application().metadataDatabase().jdbcUrl();
+        }));
+
+        assertTrue(new String(observed.get().metadataDatabasePassword().copy())
+                .chars().allMatch(value -> value == 0));
+        assertTrue(new String(observed.get().telemetryPassword().orElseThrow().copy())
+                .chars().allMatch(value -> value == 0));
+        assertTrue(new String(observed.get().mailPassword().orElseThrow().copy())
+                .chars().allMatch(value -> value == 0));
+    }
+
+    @Test
+    void exactActiveReadRejectsLaterGenerationWithoutInvokingReader() throws Exception {
+        ManagedMigrationConfigurationTransaction migration = activatedCandidate();
+        try (ManagedConfigurationBundle later = bundle("later")) {
+            assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED,
+                    new ManagedConfigurationTransaction(installationRoot).apply(later));
+        }
+        AtomicBoolean invoked = new AtomicBoolean();
+
+        assertThrows(IOException.class, () -> migration.readExactActive(reference(), IDENTITY, active -> {
+            invoked.set(true);
+            return null;
+        }));
+
+        assertTrue(!invoked.get());
+        assertEquals(ManagedMigrationConfigurationTransaction.CandidateState.READY,
+                migration.inspect(reference()).state());
+    }
+
+    @Test
+    void exactActiveReadRejectsSameGenerationWithDifferentTargetAndPassword() throws Exception {
+        ManagedMigrationConfigurationTransaction migration = activatedCandidate();
+        try (ManagedConfigurationBundle different = bundle("different")) {
+            writeActive(different, CANDIDATE);
+        }
+        AtomicBoolean invoked = new AtomicBoolean();
+
+        assertThrows(IOException.class, () -> migration.readExactActive(reference(), IDENTITY, active -> {
+            invoked.set(true);
+            return null;
+        }));
+
+        assertTrue(!invoked.get());
+        assertEquals(ManagedMigrationConfigurationTransaction.CandidateState.READY,
+                migration.inspect(reference()).state());
+    }
+
+    @Test
+    void exactActiveReadRejectsAggregateInvalidSecretsWithoutInvokingReader() throws Exception {
+        ManagedMigrationConfigurationTransaction migration = activatedCandidate();
+        ManagedSecrets incomplete = ManagedSecrets.withoutTelemetryPassword(SecretValue.of("database-next"));
+        byte[] encoded = new SecretConfigDocumentCodec().encode(incomplete, CANDIDATE);
+        try {
+            Files.write(installationRoot.resolve("data/config/managed-secrets.properties"), encoded);
+        } finally {
+            Arrays.fill(encoded, (byte) 0);
+            incomplete.close();
+        }
+        AtomicBoolean invoked = new AtomicBoolean();
+
+        assertThrows(IOException.class, () -> migration.readExactActive(reference(), IDENTITY, active -> {
+            invoked.set(true);
+            return null;
+        }));
+
+        assertTrue(!invoked.get());
+        assertEquals(ManagedMigrationConfigurationTransaction.CandidateState.READY,
+                migration.inspect(reference()).state());
     }
 
     @Test
@@ -465,6 +546,38 @@ class ManagedMigrationConfigurationTransactionTest {
     private Path candidateDirectory(String generation) {
         return installationRoot.resolve("data/config/migration-candidates")
                 .resolve(OPERATION).resolve(generation);
+    }
+
+    private ManagedMigrationConfigurationTransaction activatedCandidate() throws Exception {
+        try (ManagedConfigurationBundle base = bundle("base");
+             ManagedConfigurationBundle next = bundle("next")) {
+            assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED,
+                    new ManagedConfigurationTransaction(installationRoot).apply(base));
+            String actualBase = new FileManagedApplicationConfigStore(installationRoot)
+                    .readActive().generation().orElseThrow();
+            ManagedMigrationConfigurationTransaction migration =
+                    new ManagedMigrationConfigurationTransaction(installationRoot);
+            migration.stage(OPERATION, CANDIDATE, actualBase, IDENTITY, next);
+            assertEquals(ManagedMigrationConfigurationTransaction.ActivationOutcome.ACTIVATED,
+                    migration.activateExact(reference(), IDENTITY));
+            return migration;
+        }
+    }
+
+    private ManagedMigrationConfigurationTransaction.CandidateRef reference() {
+        return new ManagedMigrationConfigurationTransaction.CandidateRef(OPERATION, CANDIDATE);
+    }
+
+    private void writeActive(ManagedConfigurationBundle active, String generation) throws IOException {
+        byte[] application = new ApplicationConfigDocumentCodec().encode(active.application(), generation);
+        byte[] secrets = new SecretConfigDocumentCodec().encode(active.secrets(), generation);
+        try {
+            Files.write(installationRoot.resolve("data/config/managed-application.yml"), application);
+            Files.write(installationRoot.resolve("data/config/managed-secrets.properties"), secrets);
+        } finally {
+            Arrays.fill(application, (byte) 0);
+            Arrays.fill(secrets, (byte) 0);
+        }
     }
 
     private static ManagedConfigurationBundle bundle(String suffix) {

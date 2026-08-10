@@ -66,7 +66,7 @@ final class CandidateBackedMigrationStartupTargetVerifier
             }
             settleAcquire(context, deadline);
             InstallationFingerprint fingerprint = readFingerprint(deadline);
-            return configuration.readExact(candidate, targetIdentityHash,
+            return configuration.readExactActive(candidate, targetIdentityHash,
                     bundle -> verifyBundle(context, bundle, fingerprint, deadline));
         } catch (IOException failure) {
             throw recovery();

@@ -83,7 +83,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                                 new GreptimeEndpoints("greptime:4001", "http://greptime:4000"), "public")),
                 ManagedSecrets.withoutTelemetryPassword(borrowedPassword));
         when(fingerprints.read()).thenReturn(Optional.of(FINGERPRINT));
-        when(configuration.readExact(eq(CANDIDATE), eq(IDENTITY), any()))
+        when(configuration.readExactActive(eq(CANDIDATE), eq(IDENTITY), any()))
                 .thenAnswer(invocation -> invocation.<CandidateReader<?>>getArgument(2).read(bundle));
         when(factory.acquire(eq(SETTINGS), eq(borrowedPassword), any())).thenReturn(lease);
         when(lease.targetIdentityHash()).thenReturn(IDENTITY);
@@ -151,9 +151,9 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                 .isEqualTo(MigrationStartupTargetVerification.CONFIRMED);
 
         InOrder retryOrder = inOrder(factory, configuration);
-        retryOrder.verify(configuration).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        retryOrder.verify(configuration).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         retryOrder.verify(factory).settleFailedAcquire(any());
-        retryOrder.verify(configuration).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        retryOrder.verify(configuration).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(2)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
     }
 
@@ -188,7 +188,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
         assertThat(verifier.verify(CANDIDATE, IDENTITY))
                 .isEqualTo(MigrationStartupTargetVerification.CONFIRMED);
 
-        verify(configuration, times(1)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(1)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(1)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
         verify(lease, times(2)).close();
     }
@@ -212,7 +212,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
         assertThat(verifier.verify(CANDIDATE, IDENTITY))
                 .isEqualTo(MigrationStartupTargetVerification.CONFIRMED);
 
-        verify(configuration, times(1)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(1)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(1)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
         verify(lease, times(3)).close();
     }
@@ -234,7 +234,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                 .isEqualTo(MigrationStartupTargetVerification.TRANSIENT_UNAVAILABLE);
 
         verify(factory, times(2)).settleFailedAcquire(any());
-        verify(configuration, times(2)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(2)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
     }
 
     @Test
@@ -249,13 +249,13 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                 .hasMessageNotContaining("private")
                 .hasMessageNotContaining("fingerprint path");
 
-        verify(configuration, never()).readExact(any(), any(), any());
+        verify(configuration, never()).readExactActive(any(), any(), any());
         verify(factory, never()).acquire(any(), any(), any());
     }
 
     @Test
     void candidateReadFailuresAreCauseFreeAndNeverAcquireTarget() throws Exception {
-        when(configuration.readExact(eq(CANDIDATE), eq(IDENTITY), any()))
+        when(configuration.readExactActive(eq(CANDIDATE), eq(IDENTITY), any()))
                 .thenThrow(new IOException("private candidate path"))
                 .thenThrow(new IllegalStateException("private candidate state"));
         CandidateBackedMigrationStartupTargetVerifier verifier = verifier();
@@ -276,7 +276,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                     .isEqualTo(MigrationStartupTargetVerification.TRANSIENT_UNAVAILABLE);
             assertThat(Thread.currentThread().isInterrupted()).isTrue();
             verify(fingerprints, never()).read();
-            verify(configuration, never()).readExact(any(), any(), any());
+            verify(configuration, never()).readExactActive(any(), any(), any());
             verify(factory, never()).acquire(any(), any(), any());
         } finally {
             Thread.interrupted();
@@ -305,7 +305,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
         assertThatThrownBy(() -> verifier.verify(CANDIDATE, IDENTITY)).isSameAs(inspectorFatal);
         assertThatThrownBy(() -> verifier.verify(CANDIDATE, IDENTITY)).isSameAs(inspectorFatal);
 
-        verify(configuration, times(1)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(1)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(1)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
         verify(lease, times(2)).close();
     }
@@ -324,7 +324,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
         assertThatThrownBy(() -> verifier.verify(CANDIDATE, IDENTITY)).isSameAs(inspectorFatal);
         assertThatThrownBy(() -> verifier.verify(CANDIDATE, IDENTITY)).isSameAs(inspectorFatal);
 
-        verify(configuration, times(1)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(1)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(1)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
         verify(inspector, times(1)).inspect(any(), any(), any(), any());
         verify(lease, times(3)).close();
@@ -344,7 +344,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
         assertThatThrownBy(verifier::close).isSameAs(inspectorFatal);
         assertThatThrownBy(verifier::close).isSameAs(inspectorFatal);
 
-        verify(configuration, times(1)).readExact(eq(CANDIDATE), eq(IDENTITY), any());
+        verify(configuration, times(1)).readExactActive(eq(CANDIDATE), eq(IDENTITY), any());
         verify(factory, times(1)).acquire(eq(SETTINGS), eq(borrowedPassword), any());
         verify(inspector, times(1)).inspect(any(), any(), any(), any());
         verify(lease, times(3)).close();
@@ -372,7 +372,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
                         GreptimeSettings.anonymous(
                                 new GreptimeEndpoints("greptime:4001", "http://greptime:4000"), "public")),
                 ManagedSecrets.withoutTelemetryPassword(borrowedPassword));
-        when(configuration.readExact(any(CandidateRef.class), anyString(), any()))
+        when(configuration.readExactActive(any(CandidateRef.class), anyString(), any()))
                 .thenAnswer(invocation -> invocation.<CandidateReader<?>>getArgument(2).read(mysqlBundle));
         TargetJdbcConnector connector = (target, username, password, deadline) -> provisional;
         TargetJdbcConnectionFactory realFactory = new TargetJdbcConnectionFactory(connector, Runnable::run);
@@ -390,7 +390,7 @@ class CandidateBackedMigrationStartupTargetVerifierTest {
             assertThatThrownBy(() -> verifier.verify(CANDIDATE, IDENTITY))
                     .isInstanceOf(MigrationStartupReconciliationException.class);
 
-            verify(configuration, times(1)).readExact(any(CandidateRef.class), anyString(), any());
+            verify(configuration, times(1)).readExactActive(any(CandidateRef.class), anyString(), any());
             verify(provisional, times(2)).close();
         } finally {
             verifier.close();
