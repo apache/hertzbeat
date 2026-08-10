@@ -115,6 +115,28 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         });
     }
 
+    /** Confirms one fully equal startup snapshot and its containing collection durably. */
+    MigrationOperationSnapshot confirmExactForStartup(MigrationOperationSnapshot expected) {
+        Objects.requireNonNull(expected, "expected");
+        requireSafeId(expected.operationId());
+        return locked(() -> {
+            List<MigrationOperationSnapshot> snapshots = read();
+            if (snapshots.stream().anyMatch(snapshot -> !snapshot.terminal()
+                    && !snapshot.operationId().equals(expected.operationId()))) {
+                throw failure(SetupErrorCode.OPERATION_CONFLICT);
+            }
+            MigrationOperationSnapshot current = snapshots.stream()
+                    .filter(snapshot -> snapshot.operationId().equals(expected.operationId()))
+                    .findFirst()
+                    .orElseThrow(() -> failure(SetupErrorCode.OPERATION_NOT_FOUND));
+            if (!current.equals(expected)) {
+                throw failure(SetupErrorCode.OPERATION_CONFLICT);
+            }
+            writeAndConfirm(snapshots);
+            return current;
+        });
+    }
+
     /** Selects the only nonterminal startup record under the operation-store lock. */
     Optional<MigrationOperationSnapshot> selectUniqueNonterminalForStartup() {
         return locked(() -> {

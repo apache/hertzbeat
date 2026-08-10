@@ -86,7 +86,10 @@ class DurableCutoverFailureFinalizerTest {
     @Test
     void acceptsOnlyTheClosedKnownCleanupFailureCapability() {
         assertThat(DurableKnownFailure.values())
-                .containsExactly(DurableKnownFailure.COPY, DurableKnownFailure.VERIFICATION);
+                .containsExactly(
+                        DurableKnownFailure.COPY,
+                        DurableKnownFailure.VERIFICATION,
+                        DurableKnownFailure.CURRENT_PHASE);
         assertThat(DurableCutoverFailureFinalizer.class.getDeclaredMethods())
                 .filteredOn(method -> method.getName().equals("finalizeFailure"))
                 .singleElement()

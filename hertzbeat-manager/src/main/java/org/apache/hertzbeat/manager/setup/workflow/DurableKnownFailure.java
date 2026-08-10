@@ -7,6 +7,7 @@
 
 package org.apache.hertzbeat.manager.setup.workflow;
 
+import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationOperationState;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.MigrationStage;
 import org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.VerificationState;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
@@ -17,7 +18,8 @@ enum DurableKnownFailure {
     VERIFICATION(
             SetupErrorCode.MIGRATION_VERIFICATION_FAILED,
             MigrationStage.VERIFYING,
-            VerificationState.FAILED);
+            VerificationState.FAILED),
+    CURRENT_PHASE(null, null, null);
 
     private final SetupErrorCode errorCode;
     private final MigrationStage requiredStage;
@@ -46,5 +48,27 @@ enum DurableKnownFailure {
 
     int progress(MigrationOperationSnapshot current) {
         return this == COPY ? current.progressPercent() : 100;
+    }
+
+    DurableKnownFailure resolve(MigrationOperationSnapshot current) {
+        if (this != CURRENT_PHASE) {
+            return this;
+        }
+        if (current.state() == MigrationOperationState.FAILED) {
+            return switch (current.errorCode()) {
+                case MIGRATION_COPY_FAILED -> COPY;
+                case MIGRATION_VERIFICATION_FAILED -> VERIFICATION;
+                default -> throw conflict();
+            };
+        }
+        return switch (current.stage()) {
+            case COPYING -> COPY;
+            case VERIFYING -> VERIFICATION;
+            default -> throw conflict();
+        };
+    }
+
+    private static MigrationOperationStoreException conflict() {
+        return new MigrationOperationStoreException(SetupErrorCode.OPERATION_CONFLICT);
     }
 }

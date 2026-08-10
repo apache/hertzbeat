@@ -164,6 +164,27 @@ class FileMigrationOperationStoreExactTest {
     }
 
     @Test
+    void exactSnapshotReplayMustRepublishBeforeReturningSuccess() {
+        MigrationOperationSnapshot pending = pending("operation-a", IDENTITY, GENERATION);
+        new FileMigrationOperationStore(root).create(pending);
+        MigrationOperationFilePublisher committed = new MigrationOperationFilePublisher(root);
+        AtomicInteger publications = new AtomicInteger();
+        FileMigrationOperationStore uncertain = new FileMigrationOperationStore(root, (target, content) -> {
+            committed.publish(target, content);
+            if (publications.incrementAndGet() <= 4) {
+                throw new CommittedSetupFileDurabilityException();
+            }
+        });
+
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> uncertain.confirmExactForStartup(pending));
+        assertStoreError(SetupErrorCode.CONFIG_RECOVERY_REQUIRED,
+                () -> uncertain.confirmExactForStartup(pending));
+        assertThat(uncertain.confirmExactForStartup(pending)).isEqualTo(pending);
+        assertThat(publications).hasValue(5);
+    }
+
+    @Test
     void uncertainCreateMissingOrCorruptFailsClosed() {
         MigrationOperationSnapshot pending = pending("operation-a", IDENTITY, GENERATION);
         FileMigrationOperationStore missing = new FileMigrationOperationStore(root, (target, content) -> {

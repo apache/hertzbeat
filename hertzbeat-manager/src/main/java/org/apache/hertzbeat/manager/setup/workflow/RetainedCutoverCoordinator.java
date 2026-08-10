@@ -118,6 +118,11 @@ final class RetainedCutoverCoordinator {
         return runHandoff(state.claimPendingHandoff(operationId));
     }
 
+    RetainedCutoverRecoveryPhase recoveryPhase(String operationId) {
+        requireOperationId(operationId);
+        return state.recoveryPhase(operationId);
+    }
+
     RetainedManagedActivationResult activateRetained(
             String operationId, RetainedManagedActivation activation) {
         requireOperationId(operationId);

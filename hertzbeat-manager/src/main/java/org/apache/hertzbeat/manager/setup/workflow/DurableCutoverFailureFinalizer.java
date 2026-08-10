@@ -35,14 +35,15 @@ final class DurableCutoverFailureFinalizer {
 
     private MigrationOperationSnapshot replacement(
             MigrationOperationSnapshot current, DurableKnownFailure failure, Instant completedAt) {
+        DurableKnownFailure resolved = failure.resolve(current);
         if (current.state() == MigrationOperationState.FAILED) {
-            if (current.errorCode() == failure.errorCode() && current.completedAt().equals(completedAt)) {
+            if (current.errorCode() == resolved.errorCode() && current.completedAt().equals(completedAt)) {
                 return current;
             }
             throw conflict();
         }
         if (current.state() != MigrationOperationState.RUNNING
-                || current.stage() != failure.requiredStage()) {
+                || current.stage() != resolved.requiredStage()) {
             throw conflict();
         }
         if (completedAt.isBefore(current.startedAt())) {
@@ -50,8 +51,8 @@ final class DurableCutoverFailureFinalizer {
         }
         return new MigrationOperationSnapshot(
                 current.operationId(), MigrationOperationState.FAILED, current.target(), current.applyMode(),
-                MigrationStage.FAILED, failure.progress(current), current.createdAt(), current.startedAt(),
-                completedAt, failure.verificationState(), failure.errorCode(), null, 0,
+                MigrationStage.FAILED, resolved.progress(current), current.createdAt(), current.startedAt(),
+                completedAt, resolved.verificationState(), resolved.errorCode(), null, 0,
                 false, false, false, current.targetIdentityHash(), current.managedCandidateGeneration());
     }
 

@@ -138,6 +138,20 @@ final class RetainedCutoverState {
         }
     }
 
+    synchronized RetainedCutoverRecoveryPhase recoveryPhase(String operationId) {
+        if (active == null) {
+            return RetainedCutoverRecoveryPhase.NONE;
+        }
+        if (!active.operationId.equals(operationId)) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
+        return switch (active.phase) {
+            case RELEASE_PENDING -> RetainedCutoverRecoveryPhase.RELEASE_PENDING;
+            case HANDOFF_PENDING -> RetainedCutoverRecoveryPhase.HANDOFF_PENDING;
+            default -> RetainedCutoverRecoveryPhase.NONE;
+        };
+    }
+
     private Execution require(String operationId, Phase phase) {
         Execution execution = requireActive(operationId);
         requirePhase(execution, phase);
