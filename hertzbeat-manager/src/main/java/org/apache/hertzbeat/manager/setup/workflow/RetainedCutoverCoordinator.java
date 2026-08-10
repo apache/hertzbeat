@@ -100,6 +100,15 @@ final class RetainedCutoverCoordinator {
         return state.retained(operationId);
     }
 
+    RetainedCutoverStatus status() {
+        return state.status();
+    }
+
+    void shutdownOperation(String operationId) {
+        requireOperationId(operationId);
+        RetainedCutoverShutdown.run(this, operationId);
+    }
+
     void releaseRetained(String operationId) {
         requireOperationId(operationId);
         RetainedCutoverState.Execution execution = state.claimRetainedRelease(operationId);

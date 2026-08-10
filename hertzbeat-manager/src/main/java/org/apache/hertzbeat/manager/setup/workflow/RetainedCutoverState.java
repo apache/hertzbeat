@@ -16,6 +16,24 @@ final class RetainedCutoverState {
 
     private Execution active;
 
+    synchronized RetainedCutoverStatus status() {
+        if (active == null) {
+            return RetainedCutoverStatus.empty();
+        }
+        return new RetainedCutoverStatus(active.operationId, switch (active.phase) {
+                case EXECUTING -> RetainedCutoverStatus.Phase.EXECUTING;
+                case HANDOFFING -> RetainedCutoverStatus.Phase.HANDOFFING;
+                case HANDOFF_PENDING -> RetainedCutoverStatus.Phase.HANDOFF_PENDING;
+                case RETAINED -> RetainedCutoverStatus.Phase.RETAINED;
+                case ACTIVATING -> RetainedCutoverStatus.Phase.ACTIVATING;
+                case ACTIVATION_PENDING -> RetainedCutoverStatus.Phase.ACTIVATION_PENDING;
+                case AWAITING_RESTART_RETAINED ->
+                        RetainedCutoverStatus.Phase.AWAITING_RESTART_RETAINED;
+                case RELEASING -> RetainedCutoverStatus.Phase.RELEASING;
+                case RELEASE_PENDING -> RetainedCutoverStatus.Phase.RELEASE_PENDING;
+            });
+    }
+
     synchronized Execution reserve(String operationId, RetainedCopyJournalHandoff handoff) {
         if (active != null) {
             throw MigrationMaintenanceException.operationConflict();
