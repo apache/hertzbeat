@@ -32,6 +32,13 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseK
 final class FlywaySchemaHistory {
 
     private static final String TABLE = "flyway_schema_history";
+    private static final Set<String> MYSQL_HISTORY_INDEXES =
+            Set.of("primary", "flyway_schema_history_s_idx");
+    private static final Set<String> MYSQL_CONTRACT_INDEXES = Set.of("primary");
+    private static final Set<String> POSTGRESQL_HISTORY_INDEXES =
+            Set.of("flyway_schema_history_pk", "flyway_schema_history_s_idx");
+    private static final Set<String> POSTGRESQL_CONTRACT_INDEXES =
+            Set.of("flyway_schema_contract_pk");
     private final MetadataDatabaseKind kind;
 
     FlywaySchemaHistory(MetadataDatabaseKind kind) {
@@ -88,7 +95,7 @@ final class FlywaySchemaHistory {
     }
 
     void requireEmptyTarget(Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
-        if (!currentCatalogSchemaObjects(connection, null, budget).isEmpty()) {
+        if (!catalogSchemaObjects(connection, budget).isEmpty()) {
             throw unexpectedTargetState();
         }
     }
@@ -154,10 +161,81 @@ final class FlywaySchemaHistory {
 
     private Set<String> currentBaselineTables(
             Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
-        return currentCatalogSchemaObjects(connection, new String[]{"TABLE"}, budget);
+        return catalogSchemaTables(connection, budget);
     }
 
-    private Set<String> currentCatalogSchemaObjects(
+    Set<String> catalogSchemaTables(
+            Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
+        return readCatalogSchemaObjects(connection, new String[]{"TABLE"}, budget).stream()
+                .map(CatalogObject::name)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    Set<CatalogObject> catalogSchemaObjects(
+            Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
+        return readCatalogSchemaObjects(connection, null, budget);
+    }
+
+    boolean hasExactHousekeepingIndexes(
+            Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
+        budget.check();
+        DatabaseMetaData metadata = connection.getMetaData();
+        budget.check();
+        String catalog = connection.getCatalog();
+        budget.check();
+        String schema = null;
+        if (kind == MetadataDatabaseKind.POSTGRESQL) {
+            schema = connection.getSchema();
+            budget.check();
+        }
+        Set<String> historyIndexes = readIndexes(metadata, catalog, schema, TABLE, budget);
+        Set<String> contractIndexes =
+                readIndexes(metadata, catalog, schema, TargetSchemaContract.TABLE, budget);
+        return hasExactHousekeepingIndexes(historyIndexes, contractIndexes);
+    }
+
+    boolean hasExactHousekeepingIndexes(
+            Set<String> historyIndexes, Set<String> contractIndexes) {
+        Set<String> expectedHistory = kind == MetadataDatabaseKind.MYSQL
+                ? MYSQL_HISTORY_INDEXES : POSTGRESQL_HISTORY_INDEXES;
+        Set<String> expectedContract = kind == MetadataDatabaseKind.MYSQL
+                ? MYSQL_CONTRACT_INDEXES : POSTGRESQL_CONTRACT_INDEXES;
+        return expectedHistory.equals(normalizeIndexes(historyIndexes))
+                && expectedContract.equals(normalizeIndexes(contractIndexes));
+    }
+
+    private static Set<String> readIndexes(
+            DatabaseMetaData metadata,
+            String catalog,
+            String schema,
+            String table,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        Set<String> indexes = new HashSet<>();
+        budget.check();
+        try (ResultSet rows = metadata.getIndexInfo(catalog, schema, table, false, false)) {
+            budget.check();
+            while (rows.next()) {
+                budget.check();
+                short type = rows.getShort("TYPE");
+                budget.check();
+                String name = rows.getString("INDEX_NAME");
+                budget.check();
+                if (type != DatabaseMetaData.tableIndexStatistic && name != null) {
+                    indexes.add(name.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        budget.check();
+        return Set.copyOf(indexes);
+    }
+
+    private static Set<String> normalizeIndexes(Set<String> indexes) {
+        return indexes.stream()
+                .map(index -> index.toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    private Set<CatalogObject> readCatalogSchemaObjects(
             Connection connection,
             String[] types,
             TargetSchemaJdbcBudget budget) throws SQLException {
@@ -171,16 +249,24 @@ final class FlywaySchemaHistory {
             schema = connection.getSchema();
             budget.check();
         }
-        Set<String> names = new HashSet<>();
-        try (ResultSet objects = metadata.getTables(catalog, schema, "%", types)) {
+        Set<CatalogObject> catalogObjects = new HashSet<>();
+        try (ResultSet rows = metadata.getTables(catalog, schema, "%", types)) {
             budget.check();
-            while (objects.next()) {
+            while (rows.next()) {
                 budget.check();
-                names.add(objects.getString("TABLE_NAME").toLowerCase(Locale.ROOT));
+                String name = rows.getString("TABLE_NAME");
+                budget.check();
+                String type = types == null ? rows.getString("TABLE_TYPE") : types[0];
+                budget.check();
+                if (name == null || type == null) {
+                    throw unexpectedTargetState();
+                }
+                catalogObjects.add(new CatalogObject(
+                        name.toLowerCase(Locale.ROOT), type.toUpperCase(Locale.ROOT)));
             }
         }
         budget.check();
-        return Set.copyOf(names);
+        return Set.copyOf(catalogObjects);
     }
 
     private static String abbreviate(String value, int maximumLength) {
@@ -189,5 +275,16 @@ final class FlywaySchemaHistory {
 
     private static SQLException unexpectedTargetState() {
         return new SQLException("Target schema is not empty or does not contain the current baseline", "55000");
+    }
+
+    record CatalogObject(String name, String type) {
+
+        CatalogObject {
+            if (name == null || name.isBlank() || type == null || type.isBlank()) {
+                throw new IllegalArgumentException("Catalog object fields must not be blank");
+            }
+            name = name.toLowerCase(Locale.ROOT);
+            type = type.toUpperCase(Locale.ROOT);
+        }
     }
 }
