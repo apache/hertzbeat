@@ -19,6 +19,7 @@ package org.apache.hertzbeat.startup.runtime;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
@@ -35,6 +36,7 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     private final StartupMigrationRecoveryPreflightFactory preflightFactory;
     private final Duration migrationRecoveryTimeout;
     private final Executor abortExecutor;
+    private final CountDownLatch termination = new CountDownLatch(1);
     private String[] args = new String[0];
     private RunningApplicationContext currentContext;
     private ResolvedStartupInstallationRoot installationRoot;
@@ -159,6 +161,22 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
 
     public synchronized RunningApplicationContext currentContext() {
         return currentContext;
+    }
+
+    /** Keeps the standalone process alive while Spring contexts are replaced. */
+    public void awaitTermination() {
+        boolean interrupted = false;
+        while (true) {
+            try {
+                termination.await();
+                break;
+            } catch (InterruptedException ignored) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private RunningApplicationContext transitionInternal(StartupPlan plan) {
@@ -307,10 +325,15 @@ public final class HertzBeatStartupCoordinator implements SetupRuntimeTransition
     @Override
     public synchronized void close() {
         if (closed && currentContext == null && migrationPreflight == null && deploymentOwner == null) {
+            termination.countDown();
             return;
         }
         closed = true;
-        StartupCleanup.rethrow(cleanupResources(null));
+        Throwable failure = cleanupResources(null);
+        if (failure == null && currentContext == null && migrationPreflight == null && deploymentOwner == null) {
+            termination.countDown();
+        }
+        StartupCleanup.rethrow(failure);
     }
 
     private Throwable cleanupResources(Throwable primary) {

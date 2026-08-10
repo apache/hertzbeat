@@ -64,6 +64,7 @@ public class HertzBeatApplication {
         Runtime.getRuntime().addShutdownHook(
                 Thread.ofPlatform().name("hertzbeat-standalone-owner-close").unstarted(coordinator::close));
         coordinator.start(args);
+        coordinator.awaitTermination();
     }
 
     @PostConstruct
