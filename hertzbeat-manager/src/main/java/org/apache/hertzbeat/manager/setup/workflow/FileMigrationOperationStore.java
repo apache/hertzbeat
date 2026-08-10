@@ -67,6 +67,32 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         });
     }
 
+    /** Creates or confirms one fully equal PENDING snapshot under the store lock. */
+    MigrationOperationSnapshot createOrConfirm(MigrationOperationSnapshot snapshot) {
+        Objects.requireNonNull(snapshot, "snapshot");
+        if (snapshot.state() != MigrationOperationState.PENDING) {
+            throw failure(SetupErrorCode.INVALID_REQUEST);
+        }
+        return locked(() -> {
+            List<MigrationOperationSnapshot> snapshots = read();
+            for (MigrationOperationSnapshot current : snapshots) {
+                if (current.operationId().equals(snapshot.operationId())) {
+                    if (current.equals(snapshot)) {
+                        writeAndConfirm(snapshots);
+                        return snapshot;
+                    }
+                    throw failure(SetupErrorCode.OPERATION_CONFLICT);
+                }
+                if (!current.terminal()) {
+                    throw failure(SetupErrorCode.OPERATION_CONFLICT);
+                }
+            }
+            snapshots.add(snapshot);
+            writeAndConfirm(snapshots);
+            return snapshot;
+        });
+    }
+
     @Override
     public Optional<MigrationOperationSnapshot> find(String operationId) {
         requireSafeId(operationId);
@@ -88,6 +114,15 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
         return locked(() -> transition(read(), operationId, expectedState, replacement));
     }
 
+    /** Transitions or confirms one fully equal replacement under the store lock. */
+    MigrationOperationSnapshot compareAndTransitionOrConfirm(
+            String operationId, MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
+        requireSafeId(operationId);
+        Objects.requireNonNull(expectedState, "expectedState");
+        Objects.requireNonNull(replacement, "replacement");
+        return locked(() -> transitionOrConfirm(read(), operationId, expectedState, replacement));
+    }
+
     private MigrationOperationSnapshot transition(
             List<MigrationOperationSnapshot> snapshots, String operationId,
             MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
@@ -101,6 +136,29 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
                 snapshots.set(index, replacement);
                 trim(snapshots);
                 write(snapshots);
+                return replacement;
+            }
+        }
+        throw failure(SetupErrorCode.OPERATION_NOT_FOUND);
+    }
+
+    private MigrationOperationSnapshot transitionOrConfirm(
+            List<MigrationOperationSnapshot> snapshots, String operationId,
+            MigrationOperationState expectedState, MigrationOperationSnapshot replacement) {
+        for (int index = 0; index < snapshots.size(); index++) {
+            MigrationOperationSnapshot current = snapshots.get(index);
+            if (current.operationId().equals(operationId)) {
+                if (current.equals(replacement)) {
+                    writeAndConfirm(snapshots);
+                    return replacement;
+                }
+                if (current.state() != expectedState) {
+                    throw failure(SetupErrorCode.OPERATION_CONFLICT);
+                }
+                transitionPolicy.requireAllowed(current, replacement);
+                snapshots.set(index, replacement);
+                trim(snapshots);
+                writeAndConfirm(snapshots);
                 return replacement;
             }
         }
@@ -136,6 +194,32 @@ public final class FileMigrationOperationStore implements MigrationOperationStor
             throw failure(SetupErrorCode.CONFIG_WRITE_FAILED);
         } finally {
             Arrays.fill(encoded, (byte) 0);
+        }
+    }
+
+    private void writeAndConfirm(List<MigrationOperationSnapshot> snapshots) {
+        collectionPolicy.validate(snapshots);
+        byte[] encoded = codec.encode(snapshots);
+        try {
+            publisher.publish(operationFile, encoded);
+        } catch (CommittedSetupFileDurabilityException uncertain) {
+            confirmAndRepublish(snapshots, encoded);
+        } catch (IOException failure) {
+            throw failure(SetupErrorCode.CONFIG_WRITE_FAILED);
+        } finally {
+            Arrays.fill(encoded, (byte) 0);
+        }
+    }
+
+    private void confirmAndRepublish(List<MigrationOperationSnapshot> intended, byte[] encoded) {
+        List<MigrationOperationSnapshot> persisted = read();
+        if (!persisted.equals(intended)) {
+            throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        }
+        try {
+            publisher.publish(operationFile, encoded);
+        } catch (IOException failure) {
+            throw failure(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
         }
     }
 
