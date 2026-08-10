@@ -57,7 +57,6 @@ final class MigrationOperationTransitionPolicy {
             case ACTIVATING -> runningAt(next, MigrationStage.ACTIVATING, VerificationState.SUCCEEDED)
                     || rollingBackAt(next, MigrationRollbackOrigin.ACTIVATION_FAILURE)
                     || next.state() == MigrationOperationState.AWAITING_RESTART
-                    || next.state() == MigrationOperationState.SUCCEEDED
                     || failedWith(next, SetupErrorCode.MIGRATION_ACTIVATION_FAILED);
             case ROLLING_BACK -> rollbackContinues(current, next) || rollbackCompletes(current, next);
             default -> false;

@@ -57,6 +57,21 @@ class MigrationOperationTransitionPolicyTest {
     }
 
     @Test
+    void managedActivationMustPersistRestartBeforeSuccess() {
+        MigrationOperationSnapshot activating = snapshot(MigrationOperationState.RUNNING, MigrationStage.ACTIVATING,
+                100, STARTED, null, VerificationState.SUCCEEDED, null, 1000, false, false, false);
+        MigrationOperationSnapshot restart = snapshot(MigrationOperationState.AWAITING_RESTART,
+                MigrationStage.AWAITING_RESTART, 100, STARTED, null, VerificationState.SUCCEEDED,
+                null, 1000, false, true, false);
+        MigrationOperationSnapshot succeeded = snapshot(MigrationOperationState.SUCCEEDED, MigrationStage.COMPLETED,
+                100, STARTED, COMPLETED, VerificationState.SUCCEEDED, null, 0, false, false, false);
+
+        assertRejected(activating, succeeded);
+        assertAllowed(activating, restart);
+        assertAllowed(restart, succeeded);
+    }
+
+    @Test
     void acceptsExternalFailedAndRolledBackExitsButTerminalStatesStayClosed() {
         MigrationOperationSnapshot verifying = external(MigrationOperationState.RUNNING, MigrationStage.VERIFYING,
                 VerificationState.RUNNING, null, false, null);

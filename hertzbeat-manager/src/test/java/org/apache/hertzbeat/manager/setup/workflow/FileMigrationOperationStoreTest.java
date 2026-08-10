@@ -406,7 +406,14 @@ class FileMigrationOperationStoreTest {
                 VerificationState.SUCCEEDED, null, null, 1000, false, false, false,
                 pending.targetIdentityHash(), pending.managedCandidateGeneration());
         store.compareAndTransition(pending.operationId(), MigrationOperationState.READY_TO_ACTIVATE, activating);
-        store.compareAndTransition(pending.operationId(), MigrationOperationState.RUNNING, succeeded(pending));
+        MigrationOperationSnapshot awaitingRestart = new MigrationOperationSnapshot(
+                pending.operationId(), MigrationOperationState.AWAITING_RESTART, pending.target(), pending.applyMode(),
+                MigrationStage.AWAITING_RESTART, 100, pending.createdAt(), pending.createdAt().plusSeconds(1), null,
+                VerificationState.SUCCEEDED, null, null, 1000, false, true, false,
+                pending.targetIdentityHash(), pending.managedCandidateGeneration());
+        store.compareAndTransition(pending.operationId(), MigrationOperationState.RUNNING, awaitingRestart);
+        store.compareAndTransition(
+                pending.operationId(), MigrationOperationState.AWAITING_RESTART, succeeded(pending));
     }
 
     private static void assertStoreError(SetupErrorCode expected, ThrowingAction action) {
