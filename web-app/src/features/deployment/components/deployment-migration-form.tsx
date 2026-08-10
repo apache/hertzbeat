@@ -3,8 +3,8 @@
 import { Alert, Button, Checkbox, Form, Input, Radio, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { optionalWarningKey } from '@/features/setup';
 import { OperationalFormActions } from '@/shared/operational-page';
+import { setupOptionalWarningKey } from '@/shared/setup-warning';
 
 import type { DeploymentView, ValidationResponse } from '../model/deployment-contract';
 import type { DeploymentDraft } from '../model/deployment-workflow';
@@ -152,7 +152,7 @@ function ValidationEvidence({ validation }: { validation: ValidationResponse }) 
         }
       />
       {validation.warnings.map(warning => (
-        <Alert key={warning} type="warning" showIcon message={t(optionalWarningKey(warning))} />
+        <Alert key={warning} type="warning" showIcon message={t(setupOptionalWarningKey(warning))} />
       ))}
     </div>
   );

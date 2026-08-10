@@ -39,6 +39,7 @@ const runtime = vi.hoisted(() => ({
 
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
+  useLocation: () => ({ state: null }),
   useNavigate: () => runtime.navigate,
   useSearchParams: () => [new URLSearchParams(runtime.redirect ? { redirect: runtime.redirect } : {})]
 }));

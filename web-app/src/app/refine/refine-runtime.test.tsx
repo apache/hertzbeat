@@ -57,6 +57,7 @@ const { authenticatedSession, monitorApi } = vi.hoisted(() => ({
     loadMonitorNavigationApps: vi.fn()
   }
 }));
+const setupApi = vi.hoisted(() => ({ loadSetupStatus: vi.fn() }));
 
 vi.mock('@/core/auth/session-api', async () => {
   const actual = await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api');
@@ -66,6 +67,10 @@ vi.mock('@/features/monitor/navigation', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor/navigation')>()),
   ...monitorApi
 }));
+vi.mock('@/features/setup/api/setup-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/setup/api/setup-api')>()),
+  ...setupApi
+}));
 
 afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
@@ -73,10 +78,12 @@ beforeEach(() => {
   monitorApi.loadMonitorNavigationApps.mockResolvedValue([
     { category: 'db', value: 'mysql', label: 'MySQL', hide: false }
   ]);
+  setupApi.loadSetupStatus.mockReset();
+  setupApi.loadSetupStatus.mockResolvedValue(completedSetupStatus);
 });
 
 describe('production Refine runtime', () => {
-  it('shares one Refine-owned QueryClient under the single data router', async () => {
+  it('keeps setup admission isolated from the one Refine-owned product QueryClient', async () => {
     await initializeI18n();
     const mountSpy = vi.spyOn(QueryClient.prototype, 'mount');
     const observedClients: QueryClient[] = [];
@@ -130,14 +137,36 @@ describe('production Refine runtime', () => {
     expect(monitorApi.loadMonitorNavigationApps).toHaveBeenCalledWith('en-US', expect.any(AbortSignal));
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
-    const mountedClients = mountSpy.mock.instances;
-    expect(mountedClients).toHaveLength(1);
+    const mountedClients = mountSpy.mock.instances as QueryClient[];
+    expect(mountedClients).toHaveLength(2);
     const observedClient = observedClients.at(-1);
-    expect(observedClient).toBe(mountedClients[0]);
     if (!observedClient) throw new Error('The runtime QueryClient was not observed.');
+    expect(mountedClients).toContain(observedClient);
+    expect(mountedClients.filter(client => client.getQueryData(sessionQueryKey))).toEqual([observedClient]);
     expect(observedClient.getQueryData(sessionQueryKey)).toEqual(authenticatedSession);
   });
 });
+
+const completedSetupStatus = {
+  phase: 'complete',
+  observedAt: '2026-08-10T00:00:00Z',
+  access: 'local',
+  applyMode: 'managed_write',
+  writableManagedConfig: true,
+  operationId: null,
+  errorCode: null,
+  managementDatabase: { kind: 'h2', configured: true, source: 'ui_managed', restartRequired: false },
+  telemetryStore: { kind: 'greptime', configured: true, source: 'ui_managed', restartRequired: false },
+  administratorConfigured: true,
+  optional: {
+    publicBaseUrlConfigured: true,
+    serverOtlpHttpConfigured: true,
+    serverOtlpGrpcConfigured: true,
+    retentionConfigured: true,
+    mailConfigured: false
+  },
+  pendingWarnings: []
+} as const;
 
 function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void }) {
   const queryClient = useQueryClient();

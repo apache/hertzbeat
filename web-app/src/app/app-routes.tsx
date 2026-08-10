@@ -19,7 +19,7 @@ import { Navigate, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
-import { SetupRouteRuntime } from '@/features/setup';
+import { SetupRouteRuntime } from '@/features/setup/route/setup-route-runtime';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { RouteLoadingState } from '@/shared/route-state/route-state';
 

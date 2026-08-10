@@ -27,8 +27,10 @@ const probes = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/setup', () => ({
-  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product,
   SetupPage: () => null
+}));
+vi.mock('@/features/setup/route/setup-route-runtime', () => ({
+  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product
 }));
 vi.mock('./refine/refine-runtime', async () => {
   const { Outlet } = await import('react-router-dom');

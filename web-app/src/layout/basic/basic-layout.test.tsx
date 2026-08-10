@@ -17,8 +17,7 @@
 
 import { Refine } from '@refinedev/core';
 import routerProvider from '@refinedev/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
@@ -27,8 +26,6 @@ import { refineResources, shellAccessControlProvider } from '@/app/refine/refine
 import { SessionContext } from '@/core/auth/session-context';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
 import { initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { useSharedTime } from '@/shared/time';
-
 import { BasicLayout } from './basic-layout';
 
 vi.mock('@/features/runtime-status', () => ({
@@ -62,10 +59,10 @@ describe('BasicLayout shell', () => {
     renderLayout();
 
     const logo = screen.getByRole('img', { name: 'HertzBeat' });
-    expect(logo).toHaveAttribute('src', '/assets/logo.svg');
-    expect(logo).toHaveAttribute('width', '24');
-    expect(logo).toHaveAttribute('height', '23');
-    expect(screen.getByText('HertzBeat')).toHaveAttribute('aria-hidden', 'true');
+    expect(logo).toHaveAttribute('src', '/assets/hertzbeat-brand-white.svg');
+    expect(logo).toHaveAttribute('width', '144');
+    expect(logo).toHaveAttribute('height', '36');
+    expect(screen.getAllByRole('img', { name: 'HertzBeat' })).toHaveLength(1);
   });
 
   it('renders authoritative runtime status without a global time claim the route API cannot honor', () => {
@@ -79,60 +76,42 @@ describe('BasicLayout shell', () => {
     );
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Available');
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
   it('does not render fake shared time or refresh ownership for settings routes', () => {
     renderLayout('/settings/notifications/templates');
 
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
-  it('refreshes Instrumentation queries without claiming its onboarding timestamps are shell time', async () => {
-    const fetchActiveData = vi.fn().mockResolvedValue('ready');
-    renderLayout(
-      '/observability/integration?instrumentationStage=5',
-      <ActiveQueryProbe fetchActiveData={fetchActiveData} />
-    );
+  it('does not claim instrumentation timestamps or refresh ownership in the shell', () => {
+    renderLayout('/observability/integration?instrumentationStage=5');
 
-    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
-
-    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
-  it.each(['/dashboard', '/monitors'])(
-    'invalidates the active %s query from the header without fake time controls',
-    async path => {
-      const fetchActiveData = vi.fn().mockResolvedValue('ready');
-      renderLayout(path, <ActiveQueryProbe fetchActiveData={fetchActiveData} />);
+  it.each(['/dashboard', '/monitors'])('does not claim refresh ownership for the active %s route', path => {
+    renderLayout(path);
 
-      await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
-      expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
-
-      await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
-    }
-  );
-
-  it('refreshes monitor detail active queries without publishing a meaningless global revision', async () => {
-    const fetchActiveData = vi.fn().mockResolvedValue('ready');
-    renderLayout('/monitors/7', <MonitorQueryProbe fetchActiveData={fetchActiveData} />);
-
-    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
+  });
 
-    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
+  it('does not publish a global refresh control for monitor detail', () => {
+    renderLayout('/monitors/7');
+
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
   it.each(['/monitors/new', '/monitors/7/edit'])('does not apply monitor detail global time to %s', path => {
     renderLayout(path);
 
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
   it('selects the longest Refine route and exposes the collapsed navigation state', () => {
@@ -189,19 +168,4 @@ function renderLayout(path = '/alerts', routeElement: React.ReactNode = <div>Rou
       </MemoryRouter>
     </AppProviders>
   );
-}
-
-function ActiveQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
-  useQuery({ queryKey: ['shell-active-query-proof'], queryFn: fetchActiveData, staleTime: Number.POSITIVE_INFINITY });
-  return null;
-}
-
-function MonitorQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
-  const time = useSharedTime();
-  useQuery({
-    queryKey: ['shell-time-query-proof', time.window?.from, time.window?.to, time.refreshRevision],
-    queryFn: fetchActiveData,
-    staleTime: Number.POSITIVE_INFINITY
-  });
-  return null;
 }

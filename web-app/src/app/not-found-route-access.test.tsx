@@ -19,8 +19,10 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 vi.mock('./refine/refine-runtime', () => ({ RefineRuntime: Outlet }));
 vi.mock('@/layout/basic/basic-layout', () => ({ BasicLayout: Outlet }));
 vi.mock('@/features/setup', () => ({
-  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product,
   SetupPage: () => null
+}));
+vi.mock('@/features/setup/route/setup-route-runtime', () => ({
+  SetupRouteRuntime: ({ product }: { product: ReactNode }) => product
 }));
 
 import { appRoutes } from './app-routes';

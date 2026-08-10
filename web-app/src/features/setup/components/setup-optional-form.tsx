@@ -3,6 +3,8 @@
 import { Alert, Button, Checkbox, Form, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { setupOptionalWarningKey } from '@/shared/setup-warning';
+
 import type { SetupWarningCode } from '../model/setup-contract';
 import {
   optionalDraftValid,
@@ -11,7 +13,6 @@ import {
 } from '../model/setup-optional';
 import styles from './setup-configuration-form.module.css';
 import { MailSection, PublicAccessSection, RetentionSection } from './setup-optional-sections';
-import { optionalWarningKey } from './setup-optional-warning';
 
 export type SetupOptionalFormProps = {
   draft: SetupOptionalDraft;
@@ -59,7 +60,7 @@ export function SetupOptionalForm(props: SetupOptionalFormProps) {
             checked={props.acknowledgedWarnings.includes(warning)}
             onChange={event => props.setWarningAcknowledged(warning, event.target.checked)}
           >
-            {t(optionalWarningKey(warning))}
+            {t(setupOptionalWarningKey(warning))}
           </Checkbox>
         ))}
         {props.completeFailureKey && <Alert type="error" showIcon message={t(props.completeFailureKey)} />}

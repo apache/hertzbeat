@@ -3,8 +3,9 @@
 import { Alert, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { setupOptionalWarningKey } from '@/shared/setup-warning';
+
 import type { SetupOptionalValidationEvidence } from '../model/setup-optional';
-import { optionalWarningKey } from './setup-optional-warning';
 
 export function SetupOptionalValidation({ evidence }: { evidence: SetupOptionalValidationEvidence }) {
   const { t } = useTranslation();
@@ -16,7 +17,7 @@ export function SetupOptionalValidation({ evidence }: { evidence: SetupOptionalV
     <Space direction="vertical">
       <Alert type="success" showIcon message={t('setup.optional.validation.succeeded')} />
       {evidence.warnings.map(warning => (
-        <Alert key={warning} type="warning" showIcon message={t(optionalWarningKey(warning))} />
+        <Alert key={warning} type="warning" showIcon message={t(setupOptionalWarningKey(warning))} />
       ))}
     </Space>
   );
