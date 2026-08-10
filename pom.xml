@@ -165,6 +165,7 @@
         <consul-api.version>1.4.5</consul-api.version>
         <nacos-client.version>3.1.1</nacos-client.version>
         <vesoft-client.version>3.6.0</vesoft-client.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
         <jutf7.version>1.0.0</jutf7.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
