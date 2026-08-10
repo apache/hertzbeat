@@ -14,6 +14,7 @@ import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceException;
 import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceLease;
 import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceOrchestrator;
 import org.apache.hertzbeat.manager.setup.api.OperationIdValidator;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 
@@ -49,10 +50,11 @@ final class RetainedCutoverCoordinator {
             SecretValue borrowedPassword,
             Duration timeout,
             MetadataMigrationProgressSink progress,
-            RetainedCutoverPreparation preparation) {
-        requireRequest(operationId, target, borrowedPassword, timeout, progress, preparation);
+            RetainedCutoverPreparation preparation,
+            RetainedCopyJournalHandoff handoff) {
+        requireRequest(operationId, target, borrowedPassword, timeout, progress, preparation, handoff);
         JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(timeout, ticker);
-        RetainedCutoverState.Execution execution = state.reserve(operationId);
+        RetainedCutoverState.Execution execution = state.reserve(operationId, handoff);
         TargetJdbcConnectionLease provisionLease = acquire(execution, target, borrowedPassword, deadline);
         String provisionIdentity = targetIdentity(execution, provisionLease, deadline);
         execution.targetIdentityHash(provisionIdentity);
@@ -109,6 +111,11 @@ final class RetainedCutoverCoordinator {
         JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(timeout, ticker);
         RetainedCutoverState.Execution execution = state.claimPendingRelease(operationId);
         return finish(execution, execution.release(), deadline);
+    }
+
+    RetainedCutoverResult retryHandoff(String operationId) {
+        requireOperationId(operationId);
+        return runHandoff(state.claimPendingHandoff(operationId));
     }
 
     private TargetJdbcConnectionLease acquire(
@@ -192,16 +199,35 @@ final class RetainedCutoverCoordinator {
             restoreInterrupt(interrupted | Thread.interrupted());
         }
         if (advance == RetainedCutoverRelease.Advance.RETAINED) {
-            return retain(execution, release.takeRetainedMaintenance());
+            state.beginHandoff(execution, release.takeRetainedMaintenance());
+            return runHandoff(execution);
         }
         state.clear(execution);
         release.outcome().replay();
         return execution.result(RetainedCutoverResult.Status.RELEASED);
     }
 
-    private RetainedCutoverResult retain(
-            RetainedCutoverState.Execution execution, MigrationMaintenanceLease maintenanceLease) {
-        return state.retain(execution, maintenanceLease);
+    private RetainedCutoverResult runHandoff(RetainedCutoverState.Execution execution) {
+        try {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new MetadataMigrationException(MetadataMigrationErrorCode.TIMEOUT);
+            }
+            RetainedCopyJournalDisposition disposition = Objects.requireNonNull(
+                    execution.handoff().handoff(execution.handoffContext()), "handoff disposition");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new MetadataMigrationException(MetadataMigrationErrorCode.TIMEOUT);
+            }
+            return state.completeHandoff(execution, disposition);
+        } catch (Error fatal) {
+            state.handoffPending(execution);
+            throw fatal;
+        } catch (RuntimeException failure) {
+            state.handoffPending(execution);
+            if (failure instanceof RetainedCopyJournalHandoffException handoffFailure) {
+                throw handoffFailure;
+            }
+            throw new RetainedCopyJournalHandoffException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        }
     }
 
     private void releasePending(
@@ -219,13 +245,15 @@ final class RetainedCutoverCoordinator {
             SecretValue password,
             Duration timeout,
             MetadataMigrationProgressSink progress,
-            RetainedCutoverPreparation preparation) {
+            RetainedCutoverPreparation preparation,
+            RetainedCopyJournalHandoff handoff) {
         requireOperationId(operationId);
         Objects.requireNonNull(target, "target");
         Objects.requireNonNull(password, "password");
         Objects.requireNonNull(timeout, "timeout");
         Objects.requireNonNull(progress, "progress");
         Objects.requireNonNull(preparation, "preparation");
+        Objects.requireNonNull(handoff, "handoff");
     }
 
     private static void requireOperationId(String operationId) {

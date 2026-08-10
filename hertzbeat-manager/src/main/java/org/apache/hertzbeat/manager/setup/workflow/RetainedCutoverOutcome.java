@@ -48,6 +48,7 @@ final class RetainedCutoverOutcome {
                 || failure instanceof TargetSchemaProvisioningException
                 || failure instanceof MigrationMaintenanceException
                 || failure instanceof DurableCutoverPreparationException
+                || failure instanceof RetainedCopyJournalHandoffException
                 || failure instanceof RetainedCutoverException) {
             return stable((RuntimeException) failure);
         }

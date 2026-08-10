@@ -120,7 +120,8 @@ class RetainedCutoverFactoryRaceTest {
             RetainedCutoverCoordinator coordinator, String operationId, SecretValue password) {
         return coordinator.execute(
                 operationId, TARGET, password, TIMEOUT,
-                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP);
+                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                RetainedCopyJournalHandoff.NO_OP);
     }
 
     private static void assertConflict(Runnable action) {

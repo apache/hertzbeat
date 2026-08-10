@@ -31,6 +31,7 @@ import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceLease;
 import org.apache.hertzbeat.manager.maintenance.MigrationMaintenanceOrchestrator;
 import org.apache.hertzbeat.manager.maintenance.MigrationSourceAction;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
+import org.apache.hertzbeat.manager.setup.api.SetupApiContract.SetupErrorCode;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,8 @@ class RetainedCutoverCoordinatorTest {
         assertThat(result.targetIdentityHash()).isEqualTo(IDENTITY);
         InOrder order = inOrder(
                 fixture.factory, fixture.provisionLease, fixture.provisioner,
-                fixture.copyLease, fixture.maintenance, fixture.maintenanceLease, fixture.executor);
+                fixture.copyLease, fixture.maintenance, fixture.maintenanceLease,
+                fixture.executor, fixture.handoff);
         order.verify(fixture.factory).acquire(same(TARGET), same(fixture.password), anyDeadline());
         order.verify(fixture.provisionLease).withConnection(any());
         order.verify(fixture.provisioner).provision(
@@ -74,6 +76,8 @@ class RetainedCutoverCoordinatorTest {
                 eq(MetadataDatabaseKind.POSTGRESQL), anyDeadline(),
                 same(MetadataMigrationProgressSink.NO_OP));
         order.verify(fixture.copyLease).close();
+        order.verify(fixture.handoff).handoff(
+                new RetainedCopyJournalContext(OPERATION_ID, IDENTITY));
         verify(fixture.maintenanceLease, never()).close();
         verify(fixture.factory, never()).close();
         assertThat(fixture.provisionConnection).isNotSameAs(fixture.copyConnection);
@@ -147,7 +151,8 @@ class RetainedCutoverCoordinatorTest {
         assertConflict(fixture::execute);
         assertConflict(() -> fixture.coordinator.execute(
                 "operation-b", TARGET, fixture.password, TIMEOUT,
-                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP));
+                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                RetainedCopyJournalHandoff.NO_OP));
     }
 
     @Test
@@ -207,12 +212,101 @@ class RetainedCutoverCoordinatorTest {
 
         assertThatThrownBy(fixture::execute)
                 .isInstanceOf(RetainedCutoverReleaseRequiredException.class);
+        verifyNoInteractions(fixture.handoff);
 
         RetainedCutoverResult result = fixture.coordinator.retryRelease(
                 OPERATION_ID, Duration.ofSeconds(1));
         assertThat(result.status()).isEqualTo(RetainedCutoverResult.Status.RETAINED_SUCCESS);
         verify(fixture.executor).execute(any(), any(), any(), anyDeadline(), any());
+        verify(fixture.handoff).handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY));
         verify(fixture.maintenanceLease, never()).close();
+    }
+
+    @Test
+    void failedMandatoryHandoffRetainsFenceAndRetryUsesTheOriginallyBoundCallbackOnly() {
+        Fixture fixture = new Fixture();
+        when(fixture.handoff.handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY)))
+                .thenThrow(new RetainedCopyJournalHandoffException(
+                        SetupErrorCode.CONFIG_RECOVERY_REQUIRED))
+                .thenReturn(RetainedCopyJournalDisposition.TRANSITIONED);
+
+        assertThatThrownBy(fixture::execute)
+                .isInstanceOf(RetainedCopyJournalHandoffException.class)
+                .hasNoCause();
+        assertConflict(() -> fixture.coordinator.retained(OPERATION_ID));
+        assertConflict(() -> fixture.coordinator.releaseRetained(OPERATION_ID));
+        assertConflict(() -> fixture.coordinator.retryHandoff("operation-b"));
+
+        RetainedCutoverResult retried = fixture.coordinator.retryHandoff(OPERATION_ID);
+
+        assertThat(retried.status()).isEqualTo(RetainedCutoverResult.Status.RETAINED_SUCCESS);
+        verify(fixture.handoff, times(2)).handoff(
+                new RetainedCopyJournalContext(OPERATION_ID, IDENTITY));
+        verify(fixture.executor).execute(any(), any(), any(), anyDeadline(), any());
+        verify(fixture.maintenanceLease, never()).close();
+    }
+
+    @Test
+    void privateHandoffRuntimeIsRedactedAndLeavesTheFencePending() {
+        Fixture fixture = new Fixture();
+        when(fixture.handoff.handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY)))
+                .thenThrow(new IllegalStateException("private journal details"));
+
+        assertThatThrownBy(fixture::execute)
+                .isInstanceOfSatisfying(RetainedCopyJournalHandoffException.class, failure ->
+                        assertThat(failure.errorCode()).isEqualTo(
+                                SetupErrorCode.CONFIG_RECOVERY_REQUIRED))
+                .hasNoCause()
+                .hasMessageNotContaining("private journal details");
+        assertConflict(() -> fixture.coordinator.retained(OPERATION_ID));
+        assertConflict(() -> fixture.coordinator.releaseRetained(OPERATION_ID));
+        verify(fixture.maintenanceLease, never()).close();
+    }
+
+    @Test
+    void handoffInterruptIsPreservedAndRetainsTheFence() {
+        Fixture fixture = new Fixture();
+        when(fixture.handoff.handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY)))
+                .thenAnswer(invocation -> {
+                    Thread.currentThread().interrupt();
+                    return RetainedCopyJournalDisposition.TRANSITIONED;
+                });
+
+        try {
+            assertThatThrownBy(fixture::execute)
+                    .isInstanceOf(RetainedCopyJournalHandoffException.class)
+                    .hasNoCause();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            assertConflict(() -> fixture.coordinator.releaseRetained(OPERATION_ID));
+            verify(fixture.maintenanceLease, never()).close();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void handoffFatalRemainsPrimaryAndRetainsTheFence() {
+        Fixture fixture = new Fixture();
+        AssertionError fatal = new AssertionError("handoff fatal");
+        when(fixture.handoff.handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY)))
+                .thenThrow(fatal);
+
+        assertThatThrownBy(fixture::execute).isSameAs(fatal);
+        assertConflict(() -> fixture.coordinator.releaseRetained(OPERATION_ID));
+        verify(fixture.maintenanceLease, never()).close();
+    }
+
+    @Test
+    void handoffReentryConflictsWhileTheBoundCallbackIsActive() {
+        Fixture fixture = new Fixture();
+        when(fixture.handoff.handoff(new RetainedCopyJournalContext(OPERATION_ID, IDENTITY)))
+                .thenAnswer(invocation -> {
+                    assertConflict(() -> fixture.coordinator.retryHandoff(OPERATION_ID));
+                    assertConflict(() -> fixture.coordinator.releaseRetained(OPERATION_ID));
+                    return RetainedCopyJournalDisposition.TRANSITIONED;
+                });
+
+        assertThat(fixture.execute().status()).isEqualTo(RetainedCutoverResult.Status.RETAINED_SUCCESS);
     }
 
     @Test
@@ -296,6 +390,7 @@ class RetainedCutoverCoordinatorTest {
         private final MigrationMaintenanceOrchestrator maintenance = mock(MigrationMaintenanceOrchestrator.class);
         private final MigrationMaintenanceLease maintenanceLease = mock(MigrationMaintenanceLease.class);
         private final JdbcMetadataMigrationExecutor executor = mock(JdbcMetadataMigrationExecutor.class);
+        private final RetainedCopyJournalHandoff handoff = mock(RetainedCopyJournalHandoff.class);
         private final SecretValue password = mock(SecretValue.class);
         private final AtomicLong ticker = new AtomicLong();
         private final RetainedCutoverCoordinator coordinator;
@@ -316,6 +411,7 @@ class RetainedCutoverCoordinatorTest {
                     .thenReturn(new TargetSchemaProvisioningOutcome(
                             TargetSchemaConnectionDisposition.REUSABLE));
             when(maintenance.acquire(eq(OPERATION_ID), any())).thenReturn(maintenanceLease);
+            when(handoff.handoff(any())).thenReturn(RetainedCopyJournalDisposition.TRANSITIONED);
             coordinator = new RetainedCutoverCoordinator(
                     factory, provisioner, maintenance, executor, ticker::get);
         }
@@ -323,7 +419,7 @@ class RetainedCutoverCoordinatorTest {
         private RetainedCutoverResult execute() {
             return coordinator.execute(
                     OPERATION_ID, TARGET, password, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP);
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP, handoff);
         }
 
         private static void scopedTarget(TargetJdbcConnectionLease lease, Connection connection) {

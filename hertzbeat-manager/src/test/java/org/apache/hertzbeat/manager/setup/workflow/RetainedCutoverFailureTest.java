@@ -169,7 +169,8 @@ class RetainedCutoverFailureTest {
                 fixture.password,
                 Duration.ZERO,
                 MetadataMigrationProgressSink.NO_OP,
-                RetainedCutoverPreparation.NO_OP))
+                RetainedCutoverPreparation.NO_OP,
+                RetainedCopyJournalHandoff.NO_OP))
                 .isInstanceOf(MetadataMigrationException.class);
 
         assertThat(fixture.execute().status()).isEqualTo(RetainedCutoverResult.Status.RETAINED_SUCCESS);
@@ -212,7 +213,8 @@ class RetainedCutoverFailureTest {
                 .isInstanceOf(RetainedCutoverReleaseRequiredException.class);
         assertConflict(() -> fixture.coordinator.execute(
                 "operation-b", TARGET, fixture.password, TIMEOUT,
-                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP));
+                MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                RetainedCopyJournalHandoff.NO_OP));
 
         verify(fixture.factory).acquire(any(), any(), anyDeadline());
         verifyNoInteractions(fixture.provisioner, fixture.maintenance, fixture.executor);
@@ -269,7 +271,8 @@ class RetainedCutoverFailureTest {
         private RetainedCutoverResult execute() {
             return coordinator.execute(
                     OPERATION_ID, TARGET, password, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP);
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                    RetainedCopyJournalHandoff.NO_OP);
         }
 
         private static void scopedTarget(TargetJdbcConnectionLease lease, Connection connection) {

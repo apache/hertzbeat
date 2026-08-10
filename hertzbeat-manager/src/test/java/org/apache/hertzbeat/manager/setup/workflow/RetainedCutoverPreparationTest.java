@@ -213,7 +213,8 @@ class RetainedCutoverPreparationTest {
             capture(sameOperation, () -> fixture.execute(RetainedCutoverPreparation.NO_OP));
             capture(foreignOperation, () -> fixture.coordinator.execute(
                     "operation-b", TARGET, fixture.password, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP));
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                    RetainedCopyJournalHandoff.NO_OP));
         };
 
         fixture.execute(preparation);
@@ -290,7 +291,8 @@ class RetainedCutoverPreparationTest {
         private RetainedCutoverResult execute(RetainedCutoverPreparation preparation) {
             return coordinator.execute(
                     OPERATION, TARGET, password, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, preparation);
+                    MetadataMigrationProgressSink.NO_OP, preparation,
+                    RetainedCopyJournalHandoff.NO_OP);
         }
 
         private static void scopedTarget(TargetJdbcConnectionLease lease, Connection connection) {

@@ -63,7 +63,8 @@ class RetainedCutoverLifecycleTest {
             assertConflict(fixture::execute);
             assertConflict(() -> fixture.coordinator.execute(
                     "operation-b", TARGET, fixture.password, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP));
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                    RetainedCopyJournalHandoff.NO_OP));
         } finally {
             releaseProvision.countDown();
             first.get(2, TimeUnit.SECONDS);
@@ -178,7 +179,8 @@ class RetainedCutoverLifecycleTest {
         private RetainedCutoverResult execute(SecretValue borrowedPassword) {
             return coordinator.execute(
                     OPERATION_ID, TARGET, borrowedPassword, TIMEOUT,
-                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP);
+                    MetadataMigrationProgressSink.NO_OP, RetainedCutoverPreparation.NO_OP,
+                    RetainedCopyJournalHandoff.NO_OP);
         }
 
         private static void scopedTarget(TargetJdbcConnectionLease lease, Connection connection) {
