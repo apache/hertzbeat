@@ -68,6 +68,25 @@ class ManagedMigrationActivationTest {
     }
 
     @Test
+    void exactActivationRejectsJournalIdentityMismatchWithoutChangingActiveConfiguration()
+            throws Exception {
+        ManagedConfigurationTransaction setup = new ManagedConfigurationTransaction(installationRoot);
+        assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED, setup.apply(bundle("base")));
+        String baseGeneration = activeGeneration(installationRoot);
+        ManagedMigrationConfigurationTransaction migration =
+                new ManagedMigrationConfigurationTransaction(installationRoot);
+        ManagedMigrationConfigurationTransaction.CandidateRef reference =
+                migration.stage(OPERATION, CANDIDATE, baseGeneration, IDENTITY, bundle("next"));
+
+        assertEquals(ManagedMigrationConfigurationTransaction.ActivationOutcome.RECOVERY_REQUIRED,
+                migration.activateExact(reference, "f".repeat(64)));
+
+        assertEquals(baseGeneration, activeGeneration(installationRoot));
+        assertEquals(ManagedMigrationConfigurationTransaction.CandidateState.READY,
+                migration.inspect(reference).state());
+    }
+
+    @Test
     void laterActiveGenerationMakesActivationAndRollbackStaleWithoutWriting() throws Exception {
         ManagedConfigurationTransaction setup = new ManagedConfigurationTransaction(installationRoot);
         assertEquals(ManagedConfigurationTransaction.Outcome.APPLIED, setup.apply(bundle("base")));

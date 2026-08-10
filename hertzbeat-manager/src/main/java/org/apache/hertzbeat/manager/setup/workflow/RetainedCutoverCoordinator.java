@@ -118,6 +118,18 @@ final class RetainedCutoverCoordinator {
         return runHandoff(state.claimPendingHandoff(operationId));
     }
 
+    RetainedManagedActivationResult activateRetained(
+            String operationId, RetainedManagedActivation activation) {
+        requireOperationId(operationId);
+        Objects.requireNonNull(activation, "activation");
+        return runActivation(state.claimManagedActivation(operationId, activation));
+    }
+
+    RetainedManagedActivationResult retryActivation(String operationId) {
+        requireOperationId(operationId);
+        return runActivation(state.claimPendingActivation(operationId));
+    }
+
     private TargetJdbcConnectionLease acquire(
             RetainedCutoverState.Execution execution,
             MetadataDatabaseSettings target,
@@ -227,6 +239,35 @@ final class RetainedCutoverCoordinator {
                 throw handoffFailure;
             }
             throw new RetainedCopyJournalHandoffException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
+        }
+    }
+
+    private RetainedManagedActivationResult runActivation(
+            RetainedManagedActivationClaim claim) {
+        if (claim.completed()) {
+            return claim.replay();
+        }
+        RetainedCutoverState.Execution execution = claim.execution();
+        try {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new MetadataMigrationException(MetadataMigrationErrorCode.TIMEOUT);
+            }
+            RetainedManagedActivationDisposition disposition = Objects.requireNonNull(
+                    execution.activation().activate(execution.activationContext()),
+                    "activation disposition");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new MetadataMigrationException(MetadataMigrationErrorCode.TIMEOUT);
+            }
+            return state.completeActivation(execution, disposition);
+        } catch (Error fatal) {
+            state.activationPending(execution);
+            throw fatal;
+        } catch (RuntimeException failure) {
+            state.activationPending(execution);
+            if (failure instanceof RetainedManagedActivationException activationFailure) {
+                throw activationFailure;
+            }
+            throw new RetainedManagedActivationException(SetupErrorCode.CONFIG_RECOVERY_REQUIRED);
         }
     }
 

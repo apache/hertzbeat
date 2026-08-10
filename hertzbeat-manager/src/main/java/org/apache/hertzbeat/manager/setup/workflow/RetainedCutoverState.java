@@ -50,6 +50,30 @@ final class RetainedCutoverState {
         return execution;
     }
 
+    synchronized RetainedManagedActivationClaim claimManagedActivation(
+            String operationId, RetainedManagedActivation activation) {
+        Execution execution = requireActive(operationId);
+        if (execution.phase == Phase.AWAITING_RESTART_RETAINED) {
+            return RetainedManagedActivationClaim.replay(execution.activationResult(
+                    RetainedManagedActivationResult.Status.ALREADY_AWAITING_RESTART));
+        }
+        requirePhase(execution, Phase.RETAINED);
+        execution.activation = Objects.requireNonNull(activation, "activation");
+        execution.phase = Phase.ACTIVATING;
+        return RetainedManagedActivationClaim.execute(execution);
+    }
+
+    synchronized RetainedManagedActivationClaim claimPendingActivation(String operationId) {
+        Execution execution = requireActive(operationId);
+        if (execution.phase == Phase.AWAITING_RESTART_RETAINED) {
+            return RetainedManagedActivationClaim.replay(execution.activationResult(
+                    RetainedManagedActivationResult.Status.ALREADY_AWAITING_RESTART));
+        }
+        requirePhase(execution, Phase.ACTIVATION_PENDING);
+        execution.phase = Phase.ACTIVATING;
+        return RetainedManagedActivationClaim.execute(execution);
+    }
+
     synchronized void releasePending(Execution execution, RetainedCutoverRelease release) {
         if (active == execution) {
             execution.release = release;
@@ -87,6 +111,27 @@ final class RetainedCutoverState {
         execution.phase = Phase.HANDOFF_PENDING;
     }
 
+    synchronized RetainedManagedActivationResult completeActivation(
+            Execution execution, RetainedManagedActivationDisposition disposition) {
+        if (active != execution || execution.phase != Phase.ACTIVATING) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
+        RetainedManagedActivationResult.Status status =
+                disposition == RetainedManagedActivationDisposition.ACTIVATED
+                        ? RetainedManagedActivationResult.Status.ACTIVATED
+                        : RetainedManagedActivationResult.Status.ALREADY_AWAITING_RESTART;
+        RetainedManagedActivationResult result = execution.activationResult(status);
+        execution.phase = Phase.AWAITING_RESTART_RETAINED;
+        return result;
+    }
+
+    synchronized void activationPending(Execution execution) {
+        if (active != execution || execution.phase != Phase.ACTIVATING) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
+        execution.phase = Phase.ACTIVATION_PENDING;
+    }
+
     synchronized void clear(Execution execution) {
         if (active == execution) {
             active = null;
@@ -94,18 +139,29 @@ final class RetainedCutoverState {
     }
 
     private Execution require(String operationId, Phase phase) {
-        if (active == null
-                || active.phase != phase
-                || !active.operationId.equals(operationId)) {
+        Execution execution = requireActive(operationId);
+        requirePhase(execution, phase);
+        return execution;
+    }
+
+    private Execution requireActive(String operationId) {
+        if (active == null || !active.operationId.equals(operationId)) {
             throw MigrationMaintenanceException.operationConflict();
         }
         return active;
+    }
+
+    private void requirePhase(Execution execution, Phase phase) {
+        if (execution.phase != phase) {
+            throw MigrationMaintenanceException.operationConflict();
+        }
     }
 
     static final class Execution {
 
         private final String operationId;
         private final RetainedCopyJournalHandoff handoff;
+        private RetainedManagedActivation activation;
         private String targetIdentityHash;
         private MigrationMaintenanceLease maintenanceLease;
         private RetainedCutoverRelease release;
@@ -132,8 +188,20 @@ final class RetainedCutoverState {
             return handoff;
         }
 
+        RetainedManagedActivationContext activationContext() {
+            return new RetainedManagedActivationContext(operationId, targetIdentityHash);
+        }
+
+        RetainedManagedActivation activation() {
+            return activation;
+        }
+
         RetainedCutoverResult result(RetainedCutoverResult.Status status) {
             return new RetainedCutoverResult(operationId, targetIdentityHash, status);
+        }
+
+        RetainedManagedActivationResult activationResult(RetainedManagedActivationResult.Status status) {
+            return new RetainedManagedActivationResult(operationId, targetIdentityHash, status);
         }
     }
 
@@ -142,6 +210,9 @@ final class RetainedCutoverState {
         HANDOFFING,
         HANDOFF_PENDING,
         RETAINED,
+        ACTIVATING,
+        ACTIVATION_PENDING,
+        AWAITING_RESTART_RETAINED,
         RELEASING,
         RELEASE_PENDING
     }

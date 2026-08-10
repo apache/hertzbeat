@@ -94,12 +94,15 @@ public final class ManagedMigrationConfigurationTransaction {
     /** Activates only the exact candidate over its recorded base generation. */
     public ActivationOutcome activate(CandidateRef reference) throws IOException {
         Objects.requireNonNull(reference, "reference");
-        return lock.execute(() -> store.withMaterial(reference, material -> {
-            if (material.inspection().state() != CandidateState.READY) {
-                return ActivationOutcome.RECOVERY_REQUIRED;
-            }
-            return activation.activate(material);
-        }));
+        return lock.execute(() -> activateMaterial(reference, null));
+    }
+
+    /** Activates only a ready candidate whose target identity exactly matches the journal. */
+    public ActivationOutcome activateExact(
+            CandidateRef reference, String expectedTargetIdentityHash) throws IOException {
+        Objects.requireNonNull(reference, "reference");
+        requireIdentityHash(expectedTargetIdentityHash);
+        return lock.execute(() -> activateMaterial(reference, expectedTargetIdentityHash));
     }
 
     /** Restores only the exact recorded base while the candidate generation remains active. */
@@ -111,6 +114,20 @@ public final class ManagedMigrationConfigurationTransaction {
             }
             return activation.rollback(material);
         }));
+    }
+
+    private ActivationOutcome activateMaterial(
+            CandidateRef reference, String expectedTargetIdentityHash) throws IOException {
+        return store.withMaterial(reference, material -> {
+            Inspection inspection = material.inspection();
+            if (inspection.state() != CandidateState.READY
+                    || expectedTargetIdentityHash != null
+                    && !inspection.targetIdentityHash().orElseThrow()
+                            .equals(expectedTargetIdentityHash)) {
+                return ActivationOutcome.RECOVERY_REQUIRED;
+            }
+            return activation.activate(material);
+        });
     }
 
     static void requireGeneration(String value, String label) {
