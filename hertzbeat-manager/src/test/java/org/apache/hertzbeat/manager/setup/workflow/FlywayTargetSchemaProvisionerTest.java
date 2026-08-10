@@ -19,6 +19,10 @@ package org.apache.hertzbeat.manager.setup.workflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
@@ -26,6 +30,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -46,6 +51,24 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 class FlywayTargetSchemaProvisionerTest {
 
     private static final String FLYWAY_LOG_FACTORY = "flyway-log-factory";
+
+    @Test
+    void callerOwnedEntryAcceptsNoIdentityAndNeverClosesOnDeadline() throws Exception {
+        Connection connection = mock(Connection.class);
+        long[] ticks = {0, 2};
+        int[] index = {0};
+        JdbcMetadataMigrationDeadline deadline = JdbcMetadataMigrationDeadline.start(
+                Duration.ofNanos(1), () -> ticks[Math.min(index[0]++, ticks.length - 1)]);
+
+        assertThatThrownBy(() -> new FlywayTargetSchemaProvisioner()
+                        .provision(connection, MetadataDatabaseKind.MYSQL, deadline))
+                .isInstanceOfSatisfying(TargetSchemaProvisioningException.class, failure -> {
+                    assertThat(failure.failure().phase())
+                            .isEqualTo(TargetSchemaProvisioningFailure.Phase.DEADLINE);
+                    assertThat(failure.disposition()).isEqualTo(TargetSchemaConnectionDisposition.REUSABLE);
+                });
+        verify(connection, never()).close();
+    }
 
     @Test
     void rejectsEmbeddedTargetsBeforeConnectionOpen() {
@@ -109,13 +132,63 @@ class FlywayTargetSchemaProvisionerTest {
             assertThatThrownBy(() -> new FlywayTargetSchemaProvisioner().provision(target))
                     .isInstanceOfSatisfying(TargetSchemaProvisioningException.class, exception -> {
                         assertThat(exception.failure().phase())
-                                .isEqualTo(TargetSchemaProvisioningFailure.Phase.BASELINE_RESOURCE);
+                                .isEqualTo(TargetSchemaProvisioningFailure.Phase.PRECONDITION);
                         assertThat(exception.getSuppressed()).isEmpty();
                         assertThat(exception.getMessage()).doesNotContain(jdbcUrl, "secret-value", "SELECT");
                     });
         } finally {
             DriverManager.deregisterDriver(driver);
         }
+    }
+
+    @Test
+    void ownedConnectionCloseFailureAfterSuccessIsStableCleanupFailure() throws Exception {
+        Connection connection = mock(Connection.class);
+        doThrow(new SQLException("private close diagnostic", "08006", 93)).when(connection).close();
+
+        assertThatThrownBy(() -> new FlywayTargetSchemaProvisioner()
+                        .provisionOwned(connection, MetadataDatabaseKind.MYSQL, () -> { }))
+                .isInstanceOfSatisfying(TargetSchemaProvisioningException.class, failure -> {
+                    assertThat(failure.failure().phase())
+                            .isEqualTo(TargetSchemaProvisioningFailure.Phase.CLEANUP);
+                    assertThat(failure).hasNoCause();
+                    assertThat(failure.getMessage()).doesNotContain("private close diagnostic");
+                });
+    }
+
+    @Test
+    void ownedConnectionCloseErrorNeverOverridesStableOperationFailure() throws Exception {
+        Connection connection = mock(Connection.class);
+        doThrow(new AssertionError("private close fatal")).when(connection).close();
+        TargetSchemaProvisioningException operation = new TargetSchemaProvisioningException(
+                MetadataDatabaseKind.MYSQL,
+                new TargetSchemaProvisioningFailure(
+                        TargetSchemaProvisioningFailure.Phase.PRECONDITION,
+                        TargetSchemaBaseline.VERSION,
+                        null,
+                        0),
+                TargetSchemaConnectionDisposition.REUSABLE);
+
+        assertThatThrownBy(() -> new FlywayTargetSchemaProvisioner()
+                        .provisionOwned(connection, MetadataDatabaseKind.MYSQL, () -> {
+                            throw operation;
+                        }))
+                .isSameAs(operation)
+                .satisfies(failure -> assertThat(failure.getSuppressed()).isEmpty());
+    }
+
+    @Test
+    void ownedConnectionCloseErrorNeverOverridesEarlierFatal() throws Exception {
+        Connection connection = mock(Connection.class);
+        doThrow(new AssertionError("private close fatal")).when(connection).close();
+        AssertionError operation = new AssertionError("first fatal");
+
+        assertThatThrownBy(() -> new FlywayTargetSchemaProvisioner()
+                        .provisionOwned(connection, MetadataDatabaseKind.MYSQL, () -> {
+                            throw operation;
+                        }))
+                .isSameAs(operation)
+                .satisfies(failure -> assertThat(failure.getSuppressed()).isEmpty());
     }
 
     @Test
@@ -256,6 +329,15 @@ class FlywayTargetSchemaProvisionerTest {
                     getClass().getClassLoader(), new Class<?>[]{Connection.class}, (proxy, method, arguments) -> {
                         if (method.getName().equals("close")) {
                             throw new SQLException("close leaked " + url + " after SELECT secret-value", "08006", 999);
+                        }
+                        if (method.getName().equals("getAutoCommit")) {
+                            return true;
+                        }
+                        if (method.getName().equals("isReadOnly")) {
+                            return false;
+                        }
+                        if (method.getName().equals("getMetaData")) {
+                            throw new SQLException("metadata unavailable after SELECT secret-value", "08006", 998);
                         }
                         return null;
                     });

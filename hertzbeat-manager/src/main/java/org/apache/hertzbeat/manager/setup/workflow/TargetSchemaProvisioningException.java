@@ -23,14 +23,27 @@ import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseK
 public final class TargetSchemaProvisioningException extends RuntimeException {
 
     private final TargetSchemaProvisioningFailure failure;
+    private final TargetSchemaConnectionDisposition disposition;
 
     TargetSchemaProvisioningException(
             MetadataDatabaseKind kind, TargetSchemaProvisioningFailure failure) {
+        this(kind, failure, TargetSchemaConnectionDisposition.DISCARD_REQUIRED);
+    }
+
+    TargetSchemaProvisioningException(
+            MetadataDatabaseKind kind,
+            TargetSchemaProvisioningFailure failure,
+            TargetSchemaConnectionDisposition disposition) {
         super("Target schema provisioning failed for " + kind);
         this.failure = failure;
+        this.disposition = disposition;
     }
 
     public TargetSchemaProvisioningFailure failure() {
         return failure;
+    }
+
+    public TargetSchemaConnectionDisposition disposition() {
+        return disposition;
     }
 }

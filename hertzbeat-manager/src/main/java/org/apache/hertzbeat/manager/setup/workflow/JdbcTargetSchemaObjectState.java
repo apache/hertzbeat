@@ -36,11 +36,11 @@ final class JdbcTargetSchemaObjectState {
             Connection connection,
             MetadataDatabaseKind kind,
             Set<String> baselineTables,
-            int queryTimeoutSeconds,
+            TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
-        captureChecks(connection, kind, baselineTables, queryTimeoutSeconds, facts);
-        captureTriggers(connection, kind, baselineTables, queryTimeoutSeconds, facts);
-        captureSequences(connection, kind, queryTimeoutSeconds, facts);
+        captureChecks(connection, kind, baselineTables, budget, facts);
+        captureTriggers(connection, kind, baselineTables, budget, facts);
+        captureSequences(connection, kind, budget, facts);
     }
 
     static void captureIdentityOwnership(
@@ -48,20 +48,22 @@ final class JdbcTargetSchemaObjectState {
             MetadataDatabaseKind kind,
             String table,
             List<String> identities,
-            int queryTimeoutSeconds,
+            TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
         if (kind != MetadataDatabaseKind.POSTGRESQL) {
             return;
         }
         try (PreparedStatement statement = connection.prepareStatement("SELECT pg_get_serial_sequence(?, ?)")) {
-            applyTimeout(statement, queryTimeoutSeconds);
             for (String column : identities) {
+                budget.apply(statement);
                 statement.setString(1, table);
                 statement.setString(2, column);
                 try (ResultSet rows = statement.executeQuery()) {
+                    budget.check();
                     if (!rows.next()) {
                         throw new SQLException("Target identity sequence ownership is absent", "55000");
                     }
+                    budget.check();
                     String sequence = rows.getString(1);
                     if (sequence == null) {
                         throw new SQLException("Target identity sequence ownership is absent", "55000");
@@ -69,6 +71,7 @@ final class JdbcTargetSchemaObjectState {
                     facts.add("identity-sequence", table, column, normalize(sequence));
                 }
             }
+            budget.check();
         }
     }
 
@@ -76,7 +79,7 @@ final class JdbcTargetSchemaObjectState {
             Connection connection,
             MetadataDatabaseKind kind,
             Set<String> baselineTables,
-            int queryTimeoutSeconds,
+            TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
         String sql = kind == MetadataDatabaseKind.POSTGRESQL
                 ? "SELECT relation.relname, pg_get_constraintdef(c.oid, false) "
@@ -92,14 +95,17 @@ final class JdbcTargetSchemaObjectState {
                         + "WHERE table_constraint.constraint_type = 'CHECK' "
                         + "AND table_constraint.table_schema = DATABASE()";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            applyTimeout(statement, queryTimeoutSeconds);
+            budget.apply(statement);
             try (ResultSet rows = statement.executeQuery()) {
+                budget.check();
                 while (rows.next()) {
+                    budget.check();
                     String table = normalize(rows.getString(1));
                     if (baselineTables.contains(table)) {
                         facts.add("check", table, rows.getString(2).strip());
                     }
                 }
+                budget.check();
             }
         }
     }
@@ -108,7 +114,7 @@ final class JdbcTargetSchemaObjectState {
             Connection connection,
             MetadataDatabaseKind kind,
             Set<String> baselineTables,
-            int queryTimeoutSeconds,
+            TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
         String schemaPredicate = kind == MetadataDatabaseKind.POSTGRESQL
                 ? "trigger_schema = current_schema()"
@@ -116,15 +122,18 @@ final class JdbcTargetSchemaObjectState {
         String sql = "SELECT event_object_table, action_timing, event_manipulation, action_statement "
                 + "FROM information_schema.triggers WHERE " + schemaPredicate;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            applyTimeout(statement, queryTimeoutSeconds);
+            budget.apply(statement);
             try (ResultSet rows = statement.executeQuery()) {
+                budget.check();
                 while (rows.next()) {
+                    budget.check();
                     String table = normalize(rows.getString(1));
                     if (baselineTables.contains(table)) {
                         facts.add("trigger", table, normalize(rows.getString(2)),
                                 normalize(rows.getString(3)), rows.getString(4).strip());
                     }
                 }
+                budget.check();
             }
         }
     }
@@ -132,7 +141,7 @@ final class JdbcTargetSchemaObjectState {
     private static void captureSequences(
             Connection connection,
             MetadataDatabaseKind kind,
-            int queryTimeoutSeconds,
+            TargetSchemaJdbcBudget budget,
             FactSink facts) throws SQLException {
         if (kind != MetadataDatabaseKind.POSTGRESQL) {
             return;
@@ -140,9 +149,11 @@ final class JdbcTargetSchemaObjectState {
         String sql = "SELECT schemaname, sequencename, increment_by, min_value, max_value, "
                 + "cache_size, cycle FROM pg_sequences WHERE schemaname = current_schema()";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            applyTimeout(statement, queryTimeoutSeconds);
+            budget.apply(statement);
             try (ResultSet rows = statement.executeQuery()) {
+                budget.check();
                 while (rows.next()) {
+                    budget.check();
                     String qualifiedName = normalize(rows.getString(1)) + '.' + normalize(rows.getString(2));
                     facts.add(
                             "sequence",
@@ -153,13 +164,8 @@ final class JdbcTargetSchemaObjectState {
                             "cache=" + rows.getLong(6),
                             "cycle=" + rows.getBoolean(7));
                 }
+                budget.check();
             }
-        }
-    }
-
-    private static void applyTimeout(PreparedStatement statement, int queryTimeoutSeconds) throws SQLException {
-        if (queryTimeoutSeconds > 0) {
-            statement.setQueryTimeout(queryTimeoutSeconds);
         }
     }
 

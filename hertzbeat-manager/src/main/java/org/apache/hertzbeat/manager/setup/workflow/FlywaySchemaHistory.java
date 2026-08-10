@@ -39,24 +39,31 @@ final class FlywaySchemaHistory {
     }
 
     boolean isCurrent(Connection connection, TargetSchemaBaseline baseline) throws SQLException {
-        return isCurrent(connection, baseline, 0);
+        return isCurrent(connection, baseline, TargetSchemaJdbcBudget.none());
     }
 
     boolean isCurrent(
             Connection connection, TargetSchemaBaseline baseline, int queryTimeoutSeconds) throws SQLException {
-        Set<String> currentTables = currentBaselineTables(connection);
+        return isCurrent(connection, baseline, TargetSchemaJdbcBudget.fixed(queryTimeoutSeconds));
+    }
+
+    boolean isCurrent(
+            Connection connection,
+            TargetSchemaBaseline baseline,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        Set<String> currentTables = currentBaselineTables(connection, budget);
         if (!currentTables.contains(TABLE)) {
             return false;
         }
         String sql = "SELECT installed_rank, version, type, script, checksum, success FROM " + TABLE;
         try (Statement statement = connection.createStatement()) {
-            if (queryTimeoutSeconds > 0) {
-                statement.setQueryTimeout(queryTimeoutSeconds);
-            }
+            budget.apply(statement);
             try (ResultSet result = statement.executeQuery(sql)) {
+                budget.check();
                 if (!result.next()) {
                     throw unexpectedTargetState();
                 }
+                budget.check();
                 boolean current = result.getInt("installed_rank") == 1
                         && TargetSchemaBaseline.VERSION.equals(result.getString("version"))
                         && TargetSchemaBaseline.TYPE.equals(result.getString("type"))
@@ -64,10 +71,11 @@ final class FlywaySchemaHistory {
                         && baseline.checksum() == result.getInt("checksum")
                         && !result.wasNull()
                         && result.getBoolean("success");
+                budget.check();
                 if (!current || result.next() || !currentTables.contains(TargetSchemaContract.TABLE)
                         || !currentTables.containsAll(baseline.expectedTables())
                         || !new TargetSchemaContract(kind)
-                                .matches(connection, baseline.expectedTables(), queryTimeoutSeconds)) {
+                                .matches(connection, baseline.expectedTables(), budget)) {
                     throw unexpectedTargetState();
                 }
                 return true;
@@ -76,7 +84,11 @@ final class FlywaySchemaHistory {
     }
 
     void requireEmptyTarget(Connection connection) throws SQLException {
-        if (!currentCatalogSchemaObjects(connection).isEmpty()) {
+        requireEmptyTarget(connection, TargetSchemaJdbcBudget.none());
+    }
+
+    void requireEmptyTarget(Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
+        if (!currentCatalogSchemaObjects(connection, null, budget).isEmpty()) {
             throw unexpectedTargetState();
         }
     }
@@ -86,9 +98,19 @@ final class FlywaySchemaHistory {
             TargetSchemaBaseline baseline,
             String installedBy,
             int executionTimeMillis) throws SQLException {
-        new TargetSchemaContract(kind).record(connection, baseline.expectedTables());
+        record(connection, baseline, installedBy, executionTimeMillis, TargetSchemaJdbcBudget.none());
+    }
+
+    void record(
+            Connection connection,
+            TargetSchemaBaseline baseline,
+            String installedBy,
+            int executionTimeMillis,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        new TargetSchemaContract(kind).record(connection, baseline.expectedTables(), budget);
         try (Statement statement = connection.createStatement()) {
             for (String sql : createStatements()) {
+                budget.apply(statement);
                 statement.execute(sql);
             }
         }
@@ -96,6 +118,7 @@ final class FlywaySchemaHistory {
                 + " (installed_rank, version, description, type, script, checksum, installed_by, execution_time, success)"
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insert)) {
+            budget.apply(statement);
             statement.setInt(1, 1);
             statement.setString(2, TargetSchemaBaseline.VERSION);
             statement.setString(3, TargetSchemaBaseline.DESCRIPTION);
@@ -105,6 +128,7 @@ final class FlywaySchemaHistory {
             statement.setString(7, abbreviate(installedBy, 100));
             statement.setInt(8, executionTimeMillis);
             statement.setBoolean(9, true);
+            budget.apply(statement);
             statement.executeUpdate();
         }
     }
@@ -128,23 +152,34 @@ final class FlywaySchemaHistory {
         return new String[]{table, "CREATE INDEX flyway_schema_history_s_idx ON " + TABLE + " (success)"};
     }
 
-    private Set<String> currentBaselineTables(Connection connection) throws SQLException {
-        return currentCatalogSchemaObjects(connection, new String[]{"TABLE"});
+    private Set<String> currentBaselineTables(
+            Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
+        return currentCatalogSchemaObjects(connection, new String[]{"TABLE"}, budget);
     }
 
-    private Set<String> currentCatalogSchemaObjects(Connection connection) throws SQLException {
-        return currentCatalogSchemaObjects(connection, null);
-    }
-
-    private Set<String> currentCatalogSchemaObjects(Connection connection, String[] types) throws SQLException {
+    private Set<String> currentCatalogSchemaObjects(
+            Connection connection,
+            String[] types,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        budget.check();
         DatabaseMetaData metadata = connection.getMetaData();
-        String schema = kind == MetadataDatabaseKind.POSTGRESQL ? connection.getSchema() : null;
+        budget.check();
+        String catalog = connection.getCatalog();
+        budget.check();
+        String schema = null;
+        if (kind == MetadataDatabaseKind.POSTGRESQL) {
+            schema = connection.getSchema();
+            budget.check();
+        }
         Set<String> names = new HashSet<>();
-        try (ResultSet objects = metadata.getTables(connection.getCatalog(), schema, "%", types)) {
+        try (ResultSet objects = metadata.getTables(catalog, schema, "%", types)) {
+            budget.check();
             while (objects.next()) {
+                budget.check();
                 names.add(objects.getString("TABLE_NAME").toLowerCase(Locale.ROOT));
             }
         }
+        budget.check();
         return Set.copyOf(names);
     }
 

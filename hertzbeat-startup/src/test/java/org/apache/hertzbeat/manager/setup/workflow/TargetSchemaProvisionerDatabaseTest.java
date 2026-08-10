@@ -29,6 +29,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -200,6 +201,7 @@ class TargetSchemaProvisionerDatabaseTest {
         MetadataDatabaseConfiguration target =
                 new MetadataDatabaseConfiguration(kind, jdbcUrl, USERNAME, PASSWORD);
         TargetSchemaProvisioner provisioner = new FlywayTargetSchemaProvisioner();
+        assertCallerOwnedProvisioningIsCurrentAndReusable(target);
         assertProvisioningLogsAreSanitized(provisioner, target);
         assertCurrentBaselineAllowsAdditionalTable(provisioner, target);
         assertCurrentBaselineRejectsSchemaCorruption(provisioner, target);
@@ -210,10 +212,12 @@ class TargetSchemaProvisionerDatabaseTest {
                     TargetSchemaBaselineResourceTest.mappedTables());
             try (Statement statement = connection.createStatement();
                     ResultSet history = statement.executeQuery(
-                            "SELECT version, type, success FROM flyway_schema_history ORDER BY installed_rank")) {
+                            "SELECT version, type, installed_by, success "
+                                    + "FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
                 assertThat(history.getString("version")).isEqualTo("206");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
+                assertThat(history.getString("installed_by")).isEqualTo("hertzbeat-migration");
                 assertThat(history.getBoolean("success")).isTrue();
                 assertThat(history.next()).isFalse();
             }
@@ -238,6 +242,29 @@ class TargetSchemaProvisionerDatabaseTest {
                     .extracting(MetadataSchemaSnapshot.Index::columns)
                     .isEqualTo(List.of(new MetadataSchemaSnapshot.IndexColumn((short) 1, "app", "a")));
             assertThat(schemaDifferences(baseline, migrated)).isEmpty();
+        }
+    }
+
+    private static void assertCallerOwnedProvisioningIsCurrentAndReusable(
+            MetadataDatabaseConfiguration target) throws Exception {
+        FlywayTargetSchemaProvisioner provisioner = new FlywayTargetSchemaProvisioner();
+        try (Connection connection = DriverManager.getConnection(
+                target.jdbcUrl(), target.username(), target.password())) {
+            JdbcMetadataMigrationDeadline firstDeadline = JdbcMetadataMigrationDeadline.start(
+                    Duration.ofMinutes(2), System::nanoTime);
+            TargetSchemaProvisioningOutcome first = provisioner.provision(
+                    connection, target.kind(), firstDeadline);
+            assertThat(first.disposition()).isEqualTo(TargetSchemaConnectionDisposition.REUSABLE);
+            assertThat(connection.isClosed()).isFalse();
+            assertThat(connection.getAutoCommit()).isTrue();
+
+            JdbcMetadataMigrationDeadline currentDeadline = JdbcMetadataMigrationDeadline.start(
+                    Duration.ofMinutes(2), System::nanoTime);
+            TargetSchemaProvisioningOutcome current = provisioner.provision(
+                    connection, target.kind(), currentDeadline);
+            assertThat(current.disposition()).isEqualTo(TargetSchemaConnectionDisposition.REUSABLE);
+            assertThat(connection.isClosed()).isFalse();
+            assertThat(connection.getAutoCommit()).isTrue();
         }
     }
 

@@ -72,6 +72,9 @@ public record TargetSchemaProvisioningFailure(
         BASELINE_EXECUTION,
         HISTORY_WRITE,
         TRANSACTION,
-        CLEANUP
+        CLEANUP,
+        DEADLINE,
+        COMMIT_OUTCOME_UNKNOWN,
+        ROLLBACK_OUTCOME_UNKNOWN
     }
 }

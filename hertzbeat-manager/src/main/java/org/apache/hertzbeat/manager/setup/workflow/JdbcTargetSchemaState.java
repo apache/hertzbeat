@@ -41,7 +41,7 @@ final class JdbcTargetSchemaState {
             Connection connection,
             MetadataDatabaseKind kind,
             Set<String> baselineTables) throws SQLException {
-        return capture(connection, kind, baselineTables, 0);
+        return capture(connection, kind, baselineTables, TargetSchemaJdbcBudget.none());
     }
 
     static SchemaState capture(
@@ -49,21 +49,36 @@ final class JdbcTargetSchemaState {
             MetadataDatabaseKind kind,
             Set<String> baselineTables,
             int queryTimeoutSeconds) throws SQLException {
+        return capture(connection, kind, baselineTables, TargetSchemaJdbcBudget.fixed(queryTimeoutSeconds));
+    }
+
+    static SchemaState capture(
+            Connection connection,
+            MetadataDatabaseKind kind,
+            Set<String> baselineTables,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        budget.check();
         DatabaseMetaData metadata = connection.getMetaData();
+        budget.check();
         String catalog = connection.getCatalog();
-        String schema = kind == MetadataDatabaseKind.POSTGRESQL ? connection.getSchema() : null;
+        budget.check();
+        String schema = null;
+        if (kind == MetadataDatabaseKind.POSTGRESQL) {
+            schema = connection.getSchema();
+            budget.check();
+        }
         FactCollector facts = new FactCollector();
         for (String table : baselineTables.stream().sorted().toList()) {
             facts.add("table", table);
-            List<String> identities = readColumns(metadata, catalog, schema, table, kind, facts);
+            List<String> identities = readColumns(metadata, catalog, schema, table, kind, facts, budget);
             JdbcTargetSchemaObjectState.captureIdentityOwnership(
-                    connection, kind, table, identities, queryTimeoutSeconds, facts::add);
-            readPrimaryKey(metadata, catalog, schema, table, facts);
-            readIndexes(metadata, catalog, schema, table, facts);
-            readForeignKeys(metadata, catalog, schema, table, facts);
+                    connection, kind, table, identities, budget, facts::add);
+            readPrimaryKey(metadata, catalog, schema, table, facts, budget);
+            readIndexes(metadata, catalog, schema, table, facts, budget);
+            readForeignKeys(metadata, catalog, schema, table, facts, budget);
         }
         JdbcTargetSchemaObjectState.capture(
-                connection, kind, baselineTables, queryTimeoutSeconds, facts::add);
+                connection, kind, baselineTables, budget, facts::add);
         return facts.build();
     }
 
@@ -73,10 +88,14 @@ final class JdbcTargetSchemaState {
             String schema,
             String table,
             MetadataDatabaseKind kind,
-            FactCollector facts) throws SQLException {
+            FactCollector facts,
+            TargetSchemaJdbcBudget budget) throws SQLException {
         List<String> identities = new ArrayList<>();
+        budget.check();
         try (ResultSet columns = metadata.getColumns(catalog, schema, table, null)) {
+            budget.check();
             while (columns.next()) {
+                budget.check();
                 int jdbcType = columns.getInt("DATA_TYPE");
                 int size = columns.getInt("COLUMN_SIZE");
                 int scale = columns.getInt("DECIMAL_DIGITS");
@@ -95,6 +114,7 @@ final class JdbcTargetSchemaState {
                         defaultValue(columns.getString("COLUMN_DEF")));
             }
         }
+        budget.check();
         return List.copyOf(identities);
     }
 
@@ -103,13 +123,18 @@ final class JdbcTargetSchemaState {
             String catalog,
             String schema,
             String table,
-            FactCollector facts) throws SQLException {
+            FactCollector facts,
+            TargetSchemaJdbcBudget budget) throws SQLException {
         OrderedColumns columns = new OrderedColumns();
+        budget.check();
         try (ResultSet keys = metadata.getPrimaryKeys(catalog, schema, table)) {
+            budget.check();
             while (keys.next()) {
+                budget.check();
                 columns.add(keys.getShort("KEY_SEQ"), normalize(keys.getString("COLUMN_NAME")));
             }
         }
+        budget.check();
         if (!columns.isEmpty()) {
             facts.add("primary-key", table, columns.definition());
         }
@@ -120,11 +145,15 @@ final class JdbcTargetSchemaState {
             String catalog,
             String schema,
             String table,
-            FactCollector facts) throws SQLException {
+            FactCollector facts,
+            TargetSchemaJdbcBudget budget) throws SQLException {
         Map<String, IndexColumns> indexes = new HashMap<>();
         int unnamedIndex = 0;
+        budget.check();
         try (ResultSet rows = metadata.getIndexInfo(catalog, schema, table, false, false)) {
+            budget.check();
             while (rows.next()) {
+                budget.check();
                 String name = rows.getString("INDEX_NAME");
                 String column = rows.getString("COLUMN_NAME");
                 short position = rows.getShort("ORDINAL_POSITION");
@@ -141,6 +170,7 @@ final class JdbcTargetSchemaState {
                         .add(position, normalize(column));
             }
         }
+        budget.check();
         indexes.values().forEach(index -> facts.add(
                 "index", table, Boolean.toString(index.unique()), index.columns().definition()));
     }
@@ -150,11 +180,15 @@ final class JdbcTargetSchemaState {
             String catalog,
             String schema,
             String table,
-            FactCollector facts) throws SQLException {
+            FactCollector facts,
+            TargetSchemaJdbcBudget budget) throws SQLException {
         Map<String, ForeignKeyColumns> keys = new HashMap<>();
         int unnamedKey = 0;
+        budget.check();
         try (ResultSet rows = metadata.getImportedKeys(catalog, schema, table)) {
+            budget.check();
             while (rows.next()) {
+                budget.check();
                 String referencedTable = normalize(rows.getString("PKTABLE_NAME"));
                 String name = rows.getString("FK_NAME");
                 short position = rows.getShort("KEY_SEQ");
@@ -174,6 +208,7 @@ final class JdbcTargetSchemaState {
                                 normalize(rows.getString("PKCOLUMN_NAME")));
             }
         }
+        budget.check();
         keys.values().forEach(key -> facts.add(
                 "foreign-key", table, key.localColumns(), key.referencedTable(), key.referencedColumns(),
                 key.updateRule(), key.deleteRule(), key.deferrability()));

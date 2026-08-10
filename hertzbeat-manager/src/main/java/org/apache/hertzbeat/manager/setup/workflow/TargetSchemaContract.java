@@ -42,44 +42,63 @@ final class TargetSchemaContract {
     }
 
     void record(Connection connection, Set<String> baselineTables) throws SQLException {
-        JdbcTargetSchemaState.SchemaState state = JdbcTargetSchemaState.capture(connection, kind, baselineTables);
+        record(connection, baselineTables, TargetSchemaJdbcBudget.none());
+    }
+
+    void record(
+            Connection connection,
+            Set<String> baselineTables,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        JdbcTargetSchemaState.SchemaState state =
+                JdbcTargetSchemaState.capture(connection, kind, baselineTables, budget);
         try (Statement statement = connection.createStatement()) {
+            budget.apply(statement);
             statement.execute(CREATE_TABLE);
         }
         String insert = "INSERT INTO " + TABLE
                 + " (contract_id, database_kind, definition, occurrences) VALUES (?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insert)) {
+            budget.apply(statement);
             int contractId = 1;
             for (Map.Entry<String, Integer> fact : state.facts().entrySet()) {
+                budget.check();
                 statement.setInt(1, contractId++);
                 statement.setString(2, kind.name());
                 statement.setString(3, fact.getKey());
                 statement.setInt(4, fact.getValue());
                 statement.addBatch();
             }
+            budget.apply(statement);
             statement.executeBatch();
         }
     }
 
     boolean matches(Connection connection, Set<String> baselineTables) throws SQLException {
-        return matches(connection, baselineTables, 0);
+        return matches(connection, baselineTables, TargetSchemaJdbcBudget.none());
     }
 
     boolean matches(Connection connection, Set<String> baselineTables, int queryTimeoutSeconds) throws SQLException {
-        return JdbcTargetSchemaState.capture(connection, kind, baselineTables, queryTimeoutSeconds)
-                .equals(readRecordedState(connection, queryTimeoutSeconds));
+        return matches(connection, baselineTables, TargetSchemaJdbcBudget.fixed(queryTimeoutSeconds));
+    }
+
+    boolean matches(
+            Connection connection,
+            Set<String> baselineTables,
+            TargetSchemaJdbcBudget budget) throws SQLException {
+        return JdbcTargetSchemaState.capture(connection, kind, baselineTables, budget)
+                .equals(readRecordedState(connection, budget));
     }
 
     private JdbcTargetSchemaState.SchemaState readRecordedState(
-            Connection connection, int queryTimeoutSeconds) throws SQLException {
+            Connection connection, TargetSchemaJdbcBudget budget) throws SQLException {
         Map<String, Integer> facts = new TreeMap<>();
         String select = "SELECT database_kind, definition, occurrences FROM " + TABLE;
         try (PreparedStatement statement = connection.prepareStatement(select)) {
-            if (queryTimeoutSeconds > 0) {
-                statement.setQueryTimeout(queryTimeoutSeconds);
-            }
+            budget.apply(statement);
             try (ResultSet rows = statement.executeQuery()) {
+                budget.check();
                 while (rows.next()) {
+                    budget.check();
                     if (!kind.name().equals(rows.getString("database_kind"))) {
                         throw new SQLException("Target schema contract contains another database kind", "55000");
                     }
@@ -88,6 +107,7 @@ final class TargetSchemaContract {
                         throw new SQLException("Target schema contract contains duplicate definitions", "55000");
                     }
                 }
+                budget.check();
             }
         }
         return new JdbcTargetSchemaState.SchemaState(facts);
