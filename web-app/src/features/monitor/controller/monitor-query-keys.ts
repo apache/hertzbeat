@@ -43,6 +43,7 @@ export const monitorQueryKeys = {
   importTask: (taskId: string | null) => [...rootKey, 'import-tasks', 'detail', taskId] as const,
   collectors: () => [...rootKey, 'collectors'] as const,
   labelSuggestions: () => [...rootKey, 'editor', 'label-suggestions'] as const,
+  appGuidance: (app: string, locale: string) => [...rootKey, 'editor', 'guidance', app, locale] as const,
   appDefines: (app: string) => [...rootKey, 'defines', 'app', app] as const,
   sdDefines: (scrape: string) => [...rootKey, 'defines', 'sd', scrape] as const,
   metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>

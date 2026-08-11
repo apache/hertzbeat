@@ -63,6 +63,15 @@ export function apiMessagePost(path: string, data: unknown, options?: Pick<Reque
   return apiMessageRequest(path, jsonRequest('POST', data, options));
 }
 
+/** Preserves a structured backend diagnostic when an endpoint intentionally uses a non-2xx status. */
+export function apiMessagePostWithErrorEnvelope(
+  path: string,
+  data: unknown,
+  options?: Pick<RequestInit, 'signal'>
+): Promise<unknown> {
+  return apiMessageRequest(path, jsonRequest('POST', data, options), true);
+}
+
 export function apiMessagePostForm(
   path: string,
   data: FormData,
@@ -83,7 +92,7 @@ export function apiMessageDelete(path: string, options?: Pick<RequestInit, 'sign
   return apiMessageRequest(path, { ...options, method: 'DELETE' });
 }
 
-async function apiMessageRequest(path: string, init?: RequestInit): Promise<unknown> {
+async function apiMessageRequest(path: string, init?: RequestInit, preserveErrorEnvelope = false): Promise<unknown> {
   let response: Response;
   try {
     response = await apiFetch(path, init);
@@ -92,6 +101,13 @@ async function apiMessageRequest(path: string, init?: RequestInit): Promise<unkn
     throw new ApiMessageError(message, { cause });
   }
   if (!response.ok) {
+    if (preserveErrorEnvelope) {
+      const message = await parseApiEnvelope(response);
+      throw new ApiMessageError(message.msg ?? `Request failed with status ${response.status}`, {
+        code: message.code,
+        status: response.status
+      });
+    }
     throw new ApiMessageError(`Request failed with status ${response.status}`, { status: response.status });
   }
   const message = await parseApiEnvelope(response);

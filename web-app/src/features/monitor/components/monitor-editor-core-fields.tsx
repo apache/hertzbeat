@@ -60,6 +60,7 @@ export function MonitorEditorNameField({ controller, draft }: Pick<CoreFieldProp
         disabled={controller.state.busy}
         status={controller.state.validationIssues.includes('name') ? 'error' : ''}
         value={draft.monitor.name}
+        placeholder={t('monitor.editor.namePlaceholder')}
         onChange={event => controller.actions.updateMonitor({ name: event.target.value })}
       />
       {controller.state.validationIssues.includes('name') ? (
@@ -76,7 +77,9 @@ export function MonitorEditorCollectionFields({ controller, draft }: Pick<CoreFi
   return (
     <>
       <label className={styles.formRow}>
-        <MonitorEditorFieldLabel>{t('monitor.editor.collector')}</MonitorEditorFieldLabel>
+        <MonitorEditorFieldLabel help={t('monitor.editor.collectorHelp')}>
+          {t('monitor.editor.collector')}
+        </MonitorEditorFieldLabel>
         <Select
           disabled={controller.state.busy}
           value={draft.collector}
@@ -157,7 +160,9 @@ function IntervalScheduleField({ draft, issues, disabled, update }: ScheduleValu
   const invalid = issues.includes('intervals');
   return (
     <label className={`${styles.formRow} ${styles.compactField}`}>
-      <MonitorEditorFieldLabel required>{t('monitor.editor.interval')}</MonitorEditorFieldLabel>
+      <MonitorEditorFieldLabel required help={t('monitor.editor.intervalHelp')}>
+        {t('monitor.editor.interval')}
+      </MonitorEditorFieldLabel>
       <InputNumber
         aria-label={t('monitor.editor.interval')}
         disabled={disabled}

@@ -24,7 +24,12 @@ import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
 import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { MonitorEditorFormView } from './monitor-editor-form-view';
 
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US' } }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: { message?: string }) => (values?.message ? `${key}:${values.message}` : key),
+    i18n: { language: 'en-US' }
+  })
+}));
 
 afterEach(cleanup);
 
@@ -333,6 +338,17 @@ describe('MonitorEditorFormView validation evidence', () => {
     expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.detectFailed');
     expect(screen.getByRole('status')).toHaveTextContent('monitor.editor.failure.permission');
     expect(screen.getByRole('status')).not.toHaveTextContent('private backend');
+
+    controller.state.feedback = {
+      kind: 'failure',
+      action: 'detect',
+      failure: 'validation',
+      diagnostic: 'Public Key Retrieval is not allowed'
+    };
+    rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.backendDiagnostic');
+    expect(screen.getByRole('alert')).toHaveTextContent('Public Key Retrieval is not allowed');
+    expect(screen.getByRole('alert')).toHaveTextContent('monitor.editor.failure.validation');
 
     controller.state.feedback = 'save-unknown';
     rendered.rerender(<MonitorEditorFormView mode="new" controller={controller} />);

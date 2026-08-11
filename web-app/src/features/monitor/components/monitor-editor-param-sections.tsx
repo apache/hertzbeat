@@ -8,7 +8,7 @@ import { groupMonitorParamDefines, isMonitorParamVisible } from '../model/monito
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 import type { MonitorEditorFieldLabels } from './monitor-editor-field-labels';
 import type { MonitorEditorFormController } from './monitor-editor-form-model';
-import { MonitorEditorFieldLabel } from './monitor-editor-field-label';
+import { MonitorEditorFieldHelp, MonitorEditorFieldLabel } from './monitor-editor-field-label';
 import { MonitorParamField } from './monitor-param-field';
 import styles from './monitor-editor-form-view.module.css';
 
@@ -19,6 +19,7 @@ type ParamContext = {
   language: string;
   labels: MonitorEditorFieldLabels;
   invalidMessage: string;
+  hostPlaceholder: string;
 };
 
 /**
@@ -70,7 +71,7 @@ function renderParamField(define: MonitorParamDefine, context: ParamContext) {
       className={invalid ? styles.fieldError : styles.field}
     >
       <MonitorParamField
-        define={define}
+        define={presentedDefine(define, context)}
         className={styles.formRow}
         value={param.paramValue}
         label={<MonitorEditorFieldLabel required={define.required}>{label}</MonitorEditorFieldLabel>}
@@ -91,6 +92,13 @@ function renderParamField(define: MonitorParamDefine, context: ParamContext) {
   );
 }
 
+function presentedDefine(define: MonitorParamDefine, context: ParamContext) {
+  if (define.field === 'host' && define.placeholder === null) {
+    return { ...define, placeholder: context.hostPlaceholder };
+  }
+  return define;
+}
+
 function AdvancedFields({ defines, context }: { defines: MonitorParamDefine[]; context: ParamContext }) {
   const { t } = useTranslation();
   if (defines.length === 0) return null;
@@ -100,7 +108,12 @@ function AdvancedFields({ defines, context }: { defines: MonitorParamDefine[]; c
       items={[
         {
           key: 'advanced',
-          label: t('monitor.editor.advanced'),
+          label: (
+            <span className={styles.advancedLabel}>
+              {t('monitor.editor.advanced')}
+              <MonitorEditorFieldHelp help={t('monitor.editor.advancedHelp')} />
+            </span>
+          ),
           children: (
             <div className={`${styles.formRail} ${styles.form}`}>
               {defines.map(define => renderParamField(define, context))}

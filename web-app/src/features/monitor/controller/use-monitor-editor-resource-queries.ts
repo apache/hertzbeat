@@ -7,7 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { resolveLocale } from '@/core/i18n/i18n';
 import { loadLabelSuggestions } from '@/features/settings';
 
-import { loadMonitorApps, loadMonitorCollectors, loadMonitorDetail, loadMonitorParamDefines } from '../api/monitor-api';
+import {
+  loadMonitorAppGuidance,
+  loadMonitorApps,
+  loadMonitorCollectors,
+  loadMonitorDetail,
+  loadMonitorParamDefines
+} from '../api/monitor-api';
 import { normalizeMonitorScrape, type MonitorEditorMode, type MonitorScrape } from '../model/monitor-contract';
 import { monitorQueryKeys } from './monitor-query-keys';
 import { combineMonitorEditorDefines, selectMonitorEditorApp } from './monitor-editor-resource-model';
@@ -28,7 +34,7 @@ export function useMonitorEditorResourceQueries(input: MonitorEditorResourceInpu
     input.mode === 'edit'
       ? normalizeMonitorScrape(input.rawScrape ?? base.detail.data?.monitor.scrape)
       : input.requestedScrape;
-  const definitions = useMonitorEditorDefinitionQueries(input, app, scrape);
+  const definitions = useMonitorEditorDefinitionQueries(input, app, scrape, base.locale);
   return { ...base, ...definitions, app, scrape, source: `${input.mode}:${input.id ?? 'new'}:${app}:${scrape}` };
 }
 
@@ -59,10 +65,21 @@ function useMonitorEditorBaseQueries(input: MonitorEditorResourceInput) {
     queryFn: detailId === undefined ? skipToken : ({ signal }) => loadMonitorDetail(detailId, signal),
     retry: false
   });
-  return { apps, collectors, detail, labelSuggestions };
+  return { apps, collectors, detail, labelSuggestions, locale };
 }
 
-function useMonitorEditorDefinitionQueries(input: MonitorEditorResourceInput, app: string, scrape: MonitorScrape) {
+function useMonitorEditorDefinitionQueries(
+  input: MonitorEditorResourceInput,
+  app: string,
+  scrape: MonitorScrape,
+  locale: ReturnType<typeof resolveLocale>
+) {
+  const appGuidance = useQuery({
+    queryKey: monitorQueryKeys.appGuidance(app, locale),
+    queryFn: ({ signal }) => loadMonitorAppGuidance(app, locale, signal),
+    enabled: input.validRoute && Boolean(app),
+    retry: false
+  });
   const appDefines = useQuery({
     queryKey: monitorQueryKeys.appDefines(app),
     queryFn: ({ signal }) => loadMonitorParamDefines(app, signal),
@@ -79,5 +96,5 @@ function useMonitorEditorDefinitionQueries(input: MonitorEditorResourceInput, ap
     () => combineMonitorEditorDefines(appDefines.data ?? [], sdDefines.data ?? [], scrape),
     [appDefines.data, scrape, sdDefines.data]
   );
-  return { appDefines, sdDefines, defines };
+  return { appDefines, appGuidance, sdDefines, defines };
 }

@@ -24,6 +24,26 @@ import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
 
 describe('Monitor list locale coverage', () => {
+  it('preserves the established task-name label and guidance in every runtime locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.monitor.name).toBeTruthy();
+      expect(locale.monitor.editor.namePlaceholder).toBeTruthy();
+      expect(locale.monitor.editor.hostPlaceholder).toBeTruthy();
+      expect(locale.monitor.editor.collectorHelp).toBeTruthy();
+      expect(locale.monitor.editor.intervalHelp).toBeTruthy();
+      expect(locale.monitor.editor.labelsHelp).toBeTruthy();
+      expect(locale.monitor.editor.annotationsHelp).toBeTruthy();
+      expect(locale.monitor.editor.descriptionHelp).toBeTruthy();
+      expect(locale.monitor.editor.detectHelp).toBeTruthy();
+      expect(locale.monitor.editor.advancedHelp).toBeTruthy();
+      expect(locale.monitor.editor.grafanaEnabledHelp).toBeTruthy();
+      expect(locale.monitor.editor.grafanaTemplateHelp).toBeTruthy();
+      expect(locale.monitor.editor.backendDiagnostic).toBeTruthy();
+    }
+    expect(en.monitor.name).toBe('Task Name');
+    expect(en.monitor.editor.namePlaceholder).toBe('The unique name that identifies the task');
+  });
+
   it('provides the label filter copy in every runtime locale', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw]) {
       expect(locale.labels.filter).toBeTruthy();

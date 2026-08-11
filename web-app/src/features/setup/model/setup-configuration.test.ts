@@ -7,8 +7,10 @@ import {
   clearConfigurationSecrets,
   createConfigurationRequest,
   createExternalApplyResumeDraft,
+  createManagementDatabaseDraft,
   createSetupConfigurationDraft,
   createValidationRequest,
+  managementJdbcUrlPlaceholder,
   managementSectionComplete,
   telemetrySectionComplete
 } from './setup-configuration';
@@ -36,6 +38,30 @@ describe('setup configuration model', () => {
         password: ''
       }
     });
+  });
+
+  it('switches management database kinds without retaining contradictory connection values', () => {
+    expect(createManagementDatabaseDraft('h2')).toEqual({
+      kind: 'h2',
+      jdbcUrl: 'jdbc:h2:./data/hertzbeat;MODE=MYSQL',
+      username: 'sa',
+      password: ''
+    });
+    expect(createManagementDatabaseDraft('mysql')).toEqual({
+      kind: 'mysql',
+      jdbcUrl: '',
+      username: '',
+      password: ''
+    });
+    expect(createManagementDatabaseDraft('postgresql')).toEqual({
+      kind: 'postgresql',
+      jdbcUrl: '',
+      username: '',
+      password: ''
+    });
+    expect(managementJdbcUrlPlaceholder(null)).toBe('');
+    expect(managementJdbcUrlPlaceholder('mysql')).toBe('jdbc:mysql://host:3306/hertzbeat');
+    expect(managementJdbcUrlPlaceholder('postgresql')).toBe('jdbc:postgresql://host:5432/hertzbeat');
   });
 
   it('requires complete management fields and paired optional telemetry credentials', () => {

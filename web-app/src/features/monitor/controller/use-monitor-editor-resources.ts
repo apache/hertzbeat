@@ -31,8 +31,19 @@ export type MonitorEditorEvidence =
   { kind: 'loading' } | { kind: 'missing' | 'invalid' | 'unavailable' | 'error' } | { kind: 'ready' };
 
 export function useMonitorEditorResources(input: ResourceInput) {
-  const { app, appDefines, apps, collectors, defines, detail, labelSuggestions, scrape, sdDefines, source } =
-    useMonitorEditorResourceQueries(input);
+  const {
+    app,
+    appDefines,
+    appGuidance,
+    apps,
+    collectors,
+    defines,
+    detail,
+    labelSuggestions,
+    scrape,
+    sdDefines,
+    source
+  } = useMonitorEditorResourceQueries(input);
   const canonical = useMemo(
     () =>
       createMonitorEditorCanonicalDraft({
@@ -63,16 +74,7 @@ export function useMonitorEditorResources(input: ResourceInput) {
   const canonicalDraft = canonical instanceof MonitorParamDraftError ? undefined : canonical;
   const evidence = resolveEvidence(input, { apps, collectors, detail, appDefines, sdDefines }, app, scrape, canonical);
 
-  const retry = async () => {
-    const requests = [
-      ...(apps.error ? [apps.refetch()] : []),
-      ...(collectors.error ? [collectors.refetch()] : []),
-      ...(detail.error && input.mode === 'edit' && input.id !== undefined ? [detail.refetch()] : []),
-      ...(appDefines.error && app ? [appDefines.refetch()] : []),
-      ...(sdDefines.error && app && scrape !== 'static' ? [sdDefines.refetch()] : [])
-    ];
-    await Promise.all(requests);
-  };
+  const retry = () => refetchFailedResources(input, { apps, collectors, detail, appDefines, sdDefines }, app, scrape);
 
   return {
     app,
@@ -83,11 +85,28 @@ export function useMonitorEditorResources(input: ResourceInput) {
     defines,
     detail: detail.data,
     evidence,
+    helpUrl: appGuidance.data?.helpUrl ?? undefined,
     labelSuggestions: labelSuggestions.data,
     retry,
     scrape,
     source
   };
+}
+
+async function refetchFailedResources(
+  input: ResourceInput,
+  queries: ResourceQueries,
+  app: string,
+  scrape: MonitorScrape
+) {
+  const requests = [
+    ...(queries.apps.error ? [queries.apps.refetch()] : []),
+    ...(queries.collectors.error ? [queries.collectors.refetch()] : []),
+    ...(queries.detail.error && input.mode === 'edit' && input.id !== undefined ? [queries.detail.refetch()] : []),
+    ...(queries.appDefines.error && app ? [queries.appDefines.refetch()] : []),
+    ...(queries.sdDefines.error && app && scrape !== 'static' ? [queries.sdDefines.refetch()] : [])
+  ];
+  await Promise.all(requests);
 }
 
 type ResourceQueries = {

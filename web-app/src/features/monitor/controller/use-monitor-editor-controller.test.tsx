@@ -25,6 +25,7 @@ import { MonitorContractError } from '../model/monitor-contract';
 
 const api = vi.hoisted(() => ({
   detectMonitor: vi.fn(),
+  loadMonitorAppGuidance: vi.fn(),
   loadMonitorApps: vi.fn(),
   loadMonitorCollectors: vi.fn(),
   loadMonitorDetail: vi.fn(),
@@ -99,6 +100,7 @@ describe('useMonitorEditorController', () => {
     api.loadMonitorApps.mockResolvedValue([{ value: 'website', label: 'Website' }]);
     api.loadMonitorCollectors.mockResolvedValue([{ name: 'collector-a', online: true }]);
     api.loadMonitorDetail.mockResolvedValue(detail);
+    api.loadMonitorAppGuidance.mockResolvedValue({ help: null, helpUrl: null });
     api.loadMonitorParamDefines.mockResolvedValue([]);
     api.detectMonitor.mockResolvedValue(undefined);
     api.saveMonitor.mockResolvedValue(undefined);
@@ -405,6 +407,28 @@ describe('useMonitorEditorController', () => {
 
     expect(routed.current().state.feedback).toEqual({ kind: 'failure', action: 'detect', failure });
     expect(routed.current().state.feedback).not.toHaveProperty('message');
+  });
+
+  it.each([
+    'Public Key Retrieval is not allowed',
+    'Connection refused',
+    'HTTP 401 Unauthorized',
+    'SNMP request timed out'
+  ])('preserves the backend detect diagnostic for every monitor type: %s', async diagnostic => {
+    api.detectMonitor.mockRejectedValueOnce(new ApiMessageError(diagnostic, { code: 15, status: 200 }));
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.detect());
+
+    expect(routed.current().state.feedback).toEqual({
+      kind: 'failure',
+      action: 'detect',
+      failure: 'validation',
+      diagnostic
+    });
+    expect(notify.error).toHaveBeenCalledWith(`monitor.editor.detectFailed: ${diagnostic}`);
   });
 
   it('returns a direct edit save and cancel to the monitor application context', async () => {

@@ -20,7 +20,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('./http-client', () => ({ apiFetch }));
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePostForm, apiMessagePut } from './api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePostForm,
+  apiMessagePostWithErrorEnvelope,
+  apiMessagePut
+} from './api-message';
 
 describe('api message errors', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -65,6 +72,19 @@ describe('api message errors', () => {
       code: undefined,
       status: undefined,
       message: 'Failed to fetch'
+    });
+  });
+
+  it('preserves an intentional backend diagnostic from a non-success response only when requested', async () => {
+    apiFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ code: 15, msg: 'SNMP request timed out', data: null }), { status: 400 })
+    );
+
+    await expect(apiMessagePostWithErrorEnvelope('/api/monitor/detect', {})).rejects.toMatchObject({
+      name: 'ApiMessageError',
+      code: 15,
+      status: 400,
+      message: 'SNMP request timed out'
     });
   });
 

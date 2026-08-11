@@ -52,6 +52,64 @@ const metricsLabels = { ...mapLabels, unit: 'Unit', type: 'Type', numberType: 'N
 afterEach(cleanup);
 
 describe('MonitorParamField', () => {
+  it('honors source-defined placeholders, text limits, number ranges, textarea shape, and boolean defaults', () => {
+    const view = render(
+      <MonitorParamField
+        define={define('path', 'text', { placeholder: '/health', limit: 12 })}
+        label="Path"
+        value=""
+        onChange={vi.fn()}
+        mapLabels={mapLabels}
+        metricsLabels={metricsLabels}
+      />
+    );
+    expect(screen.getByLabelText('Path')).toHaveAttribute('placeholder', '/health');
+    expect(screen.getByLabelText('Path')).toHaveAttribute('maxlength', '12');
+    view.unmount();
+
+    const textarea = render(
+      <MonitorParamField
+        define={define('script', 'textarea', { placeholder: 'command', limit: 100 })}
+        label="Script"
+        value=""
+        onChange={vi.fn()}
+        mapLabels={mapLabels}
+        metricsLabels={metricsLabels}
+      />
+    );
+    expect(screen.getByLabelText('Script').tagName).toBe('TEXTAREA');
+    expect(screen.getByLabelText('Script')).toHaveAttribute('placeholder', 'command');
+    textarea.unmount();
+
+    const number = render(
+      <MonitorParamField
+        define={define('port', 'number', { range: '[0,65535]' })}
+        label="Port"
+        ariaLabel="Port"
+        value={3306}
+        onChange={vi.fn()}
+        mapLabels={mapLabels}
+        metricsLabels={metricsLabels}
+      />
+    );
+    expect(screen.getByRole('spinbutton', { name: 'Port' })).toHaveAttribute('aria-valuemin', '0');
+    expect(screen.getByRole('spinbutton', { name: 'Port' })).toHaveAttribute('aria-valuemax', '65535');
+    number.unmount();
+
+    render(
+      <MonitorParamField
+        define={define('enabled', 'boolean')}
+        label="Enabled"
+        ariaLabel="Enabled"
+        value={false}
+        onChange={vi.fn()}
+        mapLabels={mapLabels}
+        metricsLabels={metricsLabels}
+      />
+    );
+    expect(screen.getByRole('switch', { name: 'Enabled' })).not.toBeChecked();
+  });
+
   it('masks passwords and renders authoritative radio options', () => {
     const password = render(
       <MonitorParamField

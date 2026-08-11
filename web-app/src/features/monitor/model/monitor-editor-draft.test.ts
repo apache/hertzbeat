@@ -27,6 +27,7 @@ import {
   transitionMonitorEditorParam
 } from './monitor-editor-draft';
 import { MonitorParamDraftError } from './monitor-editor-model';
+import { createReadableMonitorName } from './monitor-name';
 
 const define = (patch: Partial<MonitorParamDefine> & Pick<MonitorParamDefine, 'field'>): MonitorParamDefine => ({
   id: null,
@@ -165,5 +166,21 @@ describe('Monitor editor draft', () => {
       []
     );
     expect(normalized.monitor).toMatchObject({ scheduleType: 'interval', intervals: 60 });
+  });
+
+  it('generates the established readable task name only for a blank new static host', () => {
+    expect(createReadableMonitorName(() => 0)).toBe('Quick_Fox_22AA');
+    const host = define({ field: 'host', type: 'host', required: true });
+    const draft = createMonitorEditorDraft(undefined, 'website', 'static', [host]);
+    const generated = transitionMonitorEditorParam(draft, 'host', 'example.org', () => 'Quick_Fox_22AA');
+    expect(generated.monitor.name).toBe('Quick_Fox_22AA');
+
+    const named = { ...draft, monitor: { ...draft.monitor, name: 'Production website' } };
+    expect(transitionMonitorEditorParam(named, 'host', 'example.org', () => 'unused').monitor.name).toBe(
+      'Production website'
+    );
+
+    const existing = { ...draft, monitor: { ...draft.monitor, id: 7 } };
+    expect(transitionMonitorEditorParam(existing, 'host', 'example.org', () => 'unused').monitor.name).toBe('');
   });
 });

@@ -71,6 +71,7 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
       busy: commands.command !== 'idle',
       command: commands.command,
       feedback: commands.feedback,
+      helpUrl: resources.helpUrl,
       validationIssues: commands.validationIssues,
       scrapeValues: monitorScrapeValues,
       sourceKey: resources.source

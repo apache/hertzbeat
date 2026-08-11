@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { OperationalPage, OperationalPageHeader } from '@/shared/operational-page';
 
 import { MonitorEditorFormView } from '../components/monitor-editor-form-view';
+import { MonitorHelpLink } from '../components/monitor-help-link';
 import { useMonitorEditorController } from '../controller/use-monitor-editor-controller';
 
 export function MonitorEditorWorkspace({ mode }: { mode: 'new' | 'edit' }) {
@@ -20,6 +21,7 @@ export function MonitorEditorWorkspace({ mode }: { mode: 'new' | 'edit' }) {
       <OperationalPageHeader
         title={t(mode === 'new' ? 'monitor.editor.newTitle' : 'monitor.editor.editTitle')}
         description={t('monitor.editor.description')}
+        actions={<MonitorHelpLink href={controller.state.helpUrl} />}
       />
       <MonitorEditorFormView key={controller.state.sourceKey} mode={mode} controller={controller} />
     </OperationalPage>

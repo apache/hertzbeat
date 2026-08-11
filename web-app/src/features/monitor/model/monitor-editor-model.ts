@@ -38,6 +38,7 @@ export type MonitorEditorCommandFeedback =
       kind: 'failure';
       action: 'detect' | 'save';
       failure: MonitorEditorCommandFailureKind;
+      diagnostic?: string;
     };
 export type MonitorEditorDraft = {
   monitor: Monitor;

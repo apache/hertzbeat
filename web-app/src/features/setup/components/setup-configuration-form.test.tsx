@@ -40,6 +40,37 @@ describe('SetupConfigurationForm', () => {
     expect(await screen.findByText('PostgreSQL')).toBeInTheDocument();
   });
 
+  it('replaces the H2 connection fields when the management database kind changes', async () => {
+    const updateManagement = vi.fn();
+    render(
+      formFixture(
+        { metadata_database: { state: 'idle' }, telemetry_store: { state: 'idle' } },
+        null,
+        'editing',
+        createSetupConfigurationDraft(),
+        updateManagement
+      )
+    );
+    const management = screen.getByRole('region', { name: 'HertzBeat management database' });
+    fireEvent.mouseDown(within(management).getByRole('combobox'));
+    fireEvent.click(await screen.findByText('MySQL'));
+
+    expect(updateManagement).toHaveBeenCalledWith({ kind: 'mysql', jdbcUrl: '', username: '', password: '' });
+
+    const mysqlDraft = createSetupConfigurationDraft();
+    mysqlDraft.managementDatabase = { kind: 'mysql', jdbcUrl: '', username: '', password: '' };
+    cleanup();
+    render(
+      formFixture(
+        { metadata_database: { state: 'idle' }, telemetry_store: { state: 'idle' } },
+        null,
+        'editing',
+        mysqlDraft
+      )
+    );
+    expect(screen.getByLabelText('JDBC URL')).toHaveAttribute('placeholder', 'jdbc:mysql://host:3306/hertzbeat');
+  });
+
   it.each([
     ['metadata_connection_failed', 'Management database connection failed'],
     ['metadata_kind_unsupported', 'Management database type is not supported'],
@@ -140,7 +171,8 @@ function formFixture(
   validation: SetupSectionValidationMap,
   submitFailure: SetupRequestFailure | null = null,
   workflowState: SetupConfigurationWorkflowState = 'editing',
-  draft: SetupConfigurationDraft = createSetupConfigurationDraft()
+  draft: SetupConfigurationDraft = createSetupConfigurationDraft(),
+  updateManagement = vi.fn()
 ) {
   const canSubmit = Object.values(validation).every(item => item.state === 'complete' && item.valid);
   return (
@@ -156,7 +188,7 @@ function formFixture(
         submitting={false}
         submitFailure={submitFailure}
         validation={validation}
-        updateManagement={vi.fn()}
+        updateManagement={updateManagement}
         updateTelemetry={vi.fn()}
         validateSection={vi.fn()}
         submit={vi.fn()}

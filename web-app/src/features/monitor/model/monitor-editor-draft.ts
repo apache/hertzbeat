@@ -24,6 +24,7 @@ import {
   type MonitorParamFormValue
 } from './monitor-editor-model';
 import { monitorParamFormValue, numberDefineRange } from './monitor-param-codec';
+import { createReadableMonitorName } from './monitor-name';
 
 export function buildMonitorParams(defines: MonitorParamDefine[], existing: MonitorParam[] = []): MonitorParamDraft[] {
   const values = new Map(existing.map(param => [param.field, param]));
@@ -137,20 +138,26 @@ export function isMonitorParamVisible(define: MonitorParamDefine, params: Monito
 export function transitionMonitorEditorParam(
   draft: MonitorEditorDraft,
   field: string,
-  value: MonitorParamFormValue
+  value: MonitorParamFormValue,
+  createName: () => string = createReadableMonitorName
 ): MonitorEditorDraft {
   const targetExists = draft.params.some(param => param.field === field);
   const params = draft.params.map<MonitorParamDraft>(param =>
     param.field === field ? { ...param, paramValue: value } : param
   );
   const transition = targetExists ? securePortTransition(draft.monitor.app, field, value) : undefined;
-  if (!transition) return { ...draft, params };
+  const monitor =
+    field === 'host' && draft.monitor.id === 0 && !draft.monitor.name.trim()
+      ? { ...draft.monitor, name: createName() }
+      : draft.monitor;
+  if (!transition) return { ...draft, monitor, params };
   const port = params.find(param => param.field === 'port');
   if (!port || (port.paramValue !== null && port.paramValue !== transition.from)) {
-    return { ...draft, params };
+    return { ...draft, monitor, params };
   }
   return {
     ...draft,
+    monitor,
     params: params.map(param => (param.field === 'port' ? { ...param, paramValue: transition.to } : param))
   };
 }

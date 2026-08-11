@@ -14,6 +14,17 @@ export function classifyMonitorEditorCommandFailure(error: unknown): MonitorEdit
   return classifyMonitorApiMessageFailure(error);
 }
 
+/** Returns only diagnostics deliberately published by a successful HertzBeat API envelope. */
+export function monitorEditorBackendDiagnostic(error: unknown) {
+  if (!isApiMessageError(error) || error.cause !== undefined || error.code === undefined) return undefined;
+  const diagnostic = error.message.trim();
+  return diagnostic || undefined;
+}
+
+function isApiMessageError(error: unknown): error is ApiMessageError {
+  return error instanceof ApiMessageError || (error instanceof Error && error.name === 'ApiMessageError');
+}
+
 function classifyMonitorApiMessageFailure(error: ApiMessageError): MonitorEditorCommandFailureKind {
   const status = error.status;
   if (error.cause !== undefined || status === undefined || temporarilyUnavailableStatuses.has(status)) {

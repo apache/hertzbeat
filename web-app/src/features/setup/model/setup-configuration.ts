@@ -35,12 +35,7 @@ export const SETUP_CONFIGURATION_FORM_DEFAULTS = {
 
 export function createSetupConfigurationDraft(): SetupConfigurationDraft {
   return {
-    managementDatabase: {
-      kind: 'h2',
-      jdbcUrl: SETUP_CONFIGURATION_FORM_DEFAULTS.managementJdbcUrl,
-      username: SETUP_CONFIGURATION_FORM_DEFAULTS.managementUsername,
-      password: ''
-    },
+    managementDatabase: createManagementDatabaseDraft('h2'),
     telemetryStore: {
       kind: 'greptime',
       grpcEndpoints: '',
@@ -50,6 +45,27 @@ export function createSetupConfigurationDraft(): SetupConfigurationDraft {
       password: ''
     }
   };
+}
+
+export function createManagementDatabaseDraft(
+  kind: MetadataDatabaseKind
+): SetupConfigurationDraft['managementDatabase'] {
+  if (kind === 'h2') {
+    return {
+      kind,
+      jdbcUrl: SETUP_CONFIGURATION_FORM_DEFAULTS.managementJdbcUrl,
+      username: SETUP_CONFIGURATION_FORM_DEFAULTS.managementUsername,
+      password: ''
+    };
+  }
+  return { kind, jdbcUrl: '', username: '', password: '' };
+}
+
+export function managementJdbcUrlPlaceholder(kind: MetadataDatabaseKind | null) {
+  if (kind === 'mysql') return 'jdbc:mysql://host:3306/hertzbeat';
+  if (kind === 'postgresql') return 'jdbc:postgresql://host:5432/hertzbeat';
+  if (kind === null) return '';
+  return SETUP_CONFIGURATION_FORM_DEFAULTS.managementJdbcUrl;
 }
 
 export function createExternalApplyResumeDraft(): SetupConfigurationDraft {

@@ -26,6 +26,7 @@ export function MonitorEditorMetadataFields({
       <MapMetadataField
         field="labels"
         label={t('monitor.editor.labels')}
+        help={t('monitor.editor.labelsHelp')}
         value={draft.monitor.labels ?? null}
         controller={controller}
         labels={labels}
@@ -33,14 +34,20 @@ export function MonitorEditorMetadataFields({
       <MapMetadataField
         field="annotations"
         label={t('monitor.editor.annotations')}
+        help={t('monitor.editor.annotationsHelp')}
         value={draft.monitor.annotations ?? null}
         controller={controller}
         labels={labels}
       />
       <label className={`${styles.formRow} ${styles.wide}`}>
-        <MonitorEditorFieldLabel>{t('monitor.editor.descriptionLabel')}</MonitorEditorFieldLabel>
+        <MonitorEditorFieldLabel help={t('monitor.editor.descriptionHelp')}>
+          {t('monitor.editor.descriptionLabel')}
+        </MonitorEditorFieldLabel>
         <Input.TextArea
           rows={3}
+          maxLength={100}
+          showCount
+          aria-label={t('monitor.editor.descriptionLabel')}
           value={draft.monitor.description ?? ''}
           disabled={controller.state.busy}
           onChange={event => controller.actions.updateMonitor({ description: event.target.value })}
@@ -53,12 +60,14 @@ export function MonitorEditorMetadataFields({
 function MapMetadataField({
   field,
   label,
+  help,
   value,
   controller,
   labels
 }: {
   field: 'labels' | 'annotations';
   label: string;
+  help: string;
   value: MonitorParamFormValue;
   controller: MonitorEditorFormController;
   labels: MonitorEditorFieldLabels;
@@ -68,7 +77,7 @@ function MapMetadataField({
     <div className={controller.state.validationIssues.includes(issue) ? styles.fieldError : styles.field}>
       <MonitorParamField
         define={mapDefine(field)}
-        label={<MonitorEditorFieldLabel>{label}</MonitorEditorFieldLabel>}
+        label={<MonitorEditorFieldLabel help={help}>{label}</MonitorEditorFieldLabel>}
         className={styles.formRow}
         value={value}
         onChange={next => controller.actions.updateMonitor({ [field]: mapValue(next) })}

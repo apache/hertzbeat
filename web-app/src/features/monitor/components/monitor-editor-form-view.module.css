@@ -127,11 +127,35 @@
   color: var(--ant-color-error);
 }
 
+.fieldHelp {
+  color: var(--ant-color-text-tertiary);
+  cursor: help;
+  font-size: 13px;
+}
+
+.advancedLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .fieldMessage {
   margin-left: var(--hb-form-control-offset);
   color: var(--ant-color-error);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.failureDescription {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.failureDiagnostic {
+  color: var(--ant-color-text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .formRow > .fieldMessage {

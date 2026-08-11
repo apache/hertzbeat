@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import { apiMessageGet, apiMessagePost, apiMessagePostWithErrorEnvelope, apiMessagePut } from '@/core/http/api-message';
 import { MonitorContractError, type MonitorCollector } from '../model/monitor-contract';
 import { monitorCollectorPageSize, parseMonitorCollectorPage, parseMonitorParamDefines } from './monitor-editor-schema';
 
@@ -64,7 +64,7 @@ export function detectMonitor(payload: unknown, signal?: AbortSignal) {
   // definitions can legitimately allow longer timeouts. Keep only the
   // caller's lifecycle signal here so a cold JDBC/Arrow initialization is not
   // reported as a connection failure while navigation can still cancel work.
-  return apiMessagePost('/api/monitor/detect', payload, signal ? { signal } : undefined);
+  return apiMessagePostWithErrorEnvelope('/api/monitor/detect', payload, signal ? { signal } : undefined);
 }
 
 export function saveMonitor(mode: 'new' | 'edit', payload: unknown, signal?: AbortSignal) {

@@ -4,7 +4,11 @@ import { Alert, Form, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { METADATA_DATABASE_KINDS, type MetadataDatabaseKind } from '../model/setup-contract';
-import type { SetupConfigurationDraft } from '../model/setup-configuration';
+import {
+  createManagementDatabaseDraft,
+  managementJdbcUrlPlaceholder,
+  type SetupConfigurationDraft
+} from '../model/setup-configuration';
 import styles from './setup-configuration-form.module.css';
 
 const evidenceClass = styles.evidence ?? '';
@@ -28,7 +32,7 @@ export function SetupManagementDatabaseFields({ database, editable, update }: Pr
           placeholder={t('setup.configuration.management.kindPlaceholder')}
           options={METADATA_DATABASE_KINDS.map(value => ({ value, label: databaseKindLabel(value) }))}
           onChange={kind => {
-            if (kind) update({ kind });
+            if (kind) update(createManagementDatabaseDraft(kind));
           }}
         />
       </Form.Item>
@@ -47,6 +51,7 @@ export function SetupManagementDatabaseFields({ database, editable, update }: Pr
           required
           disabled={!editable}
           value={database.jdbcUrl}
+          placeholder={managementJdbcUrlPlaceholder(database.kind)}
           onChange={event => update({ jdbcUrl: event.target.value })}
         />
       </Form.Item>

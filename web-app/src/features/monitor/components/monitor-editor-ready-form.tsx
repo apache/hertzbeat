@@ -33,7 +33,8 @@ export function ReadyMonitorEditorForm({
     validationIssues: controller.state.validationIssues,
     language: i18n.language,
     labels,
-    invalidMessage: t('monitor.editor.invalidField')
+    invalidMessage: t('monitor.editor.invalidField'),
+    hostPlaceholder: t('monitor.editor.hostPlaceholder')
   };
   return (
     <>
@@ -60,18 +61,38 @@ export function ReadyMonitorEditorForm({
       <div className={`${styles.formRail} ${styles.formActions}`}>
         <MonitorEditorActions controller={controller} />
       </div>
-      {mode === 'new' ? (
-        <MonitorEditorAppPicker
-          apps={controller.state.apps}
-          open={appPickerOpen}
-          onCancel={() => setAppPickerOpen(false)}
-          onSelect={app => {
-            setAppPickerOpen(false);
-            controller.actions.changeSource({ app, scrape: 'static' });
-          }}
-        />
-      ) : null}
+      <MonitorEditorApplicationPicker
+        mode={mode}
+        controller={controller}
+        open={appPickerOpen}
+        setOpen={setAppPickerOpen}
+      />
     </>
+  );
+}
+
+function MonitorEditorApplicationPicker({
+  mode,
+  controller,
+  open,
+  setOpen
+}: {
+  mode: 'new' | 'edit';
+  controller: MonitorEditorFormController;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
+  if (mode !== 'new') return null;
+  return (
+    <MonitorEditorAppPicker
+      apps={controller.state.apps}
+      open={open}
+      onCancel={() => setOpen(false)}
+      onSelect={app => {
+        setOpen(false);
+        controller.actions.changeSource({ app, scrape: 'static' });
+      }}
+    />
   );
 }
 
@@ -96,6 +117,7 @@ function MonitorEditorActions({ controller }: { controller: MonitorEditorFormCon
       <Button onClick={controller.actions.cancel}>{t('common.cancel')}</Button>
       <Button
         aria-label={t('monitor.editor.detect')}
+        title={t('monitor.editor.detectHelp')}
         loading={command === 'detecting'}
         disabled={busy}
         onClick={() => void controller.actions.detect()}
@@ -124,7 +146,7 @@ function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorComma
         <OperationalStatePanel
           kind={commandFailureState(feedback.failure)}
           title={t(feedback.action === 'detect' ? 'monitor.editor.detectFailed' : 'monitor.editor.saveFailed')}
-          description={t(`monitor.editor.failure.${feedback.failure}`)}
+          description={<MonitorEditorFailureDescription feedback={feedback} />}
         />
       </div>
     );
@@ -138,6 +160,24 @@ function MonitorEditorCommandResult({ feedback }: { feedback: MonitorEditorComma
         message={t(feedback === 'detect-success' ? 'monitor.editor.detectSuccess' : 'monitor.editor.saveUnknown')}
       />
     </div>
+  );
+}
+
+function MonitorEditorFailureDescription({
+  feedback
+}: {
+  feedback: Extract<MonitorEditorCommandFeedback, { kind: 'failure' }>;
+}) {
+  const { t } = useTranslation();
+  return (
+    <span className={styles.failureDescription}>
+      {feedback.diagnostic ? (
+        <span className={styles.failureDiagnostic} data-monitor-backend-diagnostic>
+          {t('monitor.editor.backendDiagnostic', { message: feedback.diagnostic })}
+        </span>
+      ) : null}
+      <span>{t(`monitor.editor.failure.${feedback.failure}`)}</span>
+    </span>
   );
 }
 

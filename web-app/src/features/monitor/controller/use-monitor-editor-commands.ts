@@ -18,14 +18,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-import { ApiMessageError } from '@/core/http/api-message';
-import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
-
 import { detectMonitor } from '../api/monitor-api';
-import { classifyMonitorEditorCommandFailure } from '../api/monitor-editor-api-failure';
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
 import type { MonitorEditorCommandFeedback } from '../model/monitor-editor-model';
 import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
+import { failMonitorCommand } from './monitor-editor-command-failure';
 import {
   createMonitorEditorOperation,
   isCurrentMonitorEditorOperation,
@@ -189,30 +186,6 @@ function completeMonitorCommand(
   }
   completeAcknowledgedMonitorSave(input);
   return true;
-}
-
-function failMonitorCommand(
-  action: CommandAction,
-  error: unknown,
-  input: CommandInput,
-  current: MonitorEditorActiveOperation | null,
-  active: MonitorEditorActiveOperation
-) {
-  if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return null;
-  if (action === 'save' && isUncertainMonitorSave(error)) {
-    void input.message.warning(input.text.saveUnknown);
-    return 'save-unknown' as const;
-  }
-  void input.message.error(action === 'detect' ? input.text.detectFailed : input.text.saveFailed);
-  return {
-    kind: 'failure' as const,
-    action,
-    failure: classifyMonitorEditorCommandFailure(error)
-  };
-}
-
-function isUncertainMonitorSave(error: unknown) {
-  return error instanceof ApiMessageError && apiMessageWriteOutcome(error) === 'uncertain';
 }
 
 function releaseMonitorCommand(

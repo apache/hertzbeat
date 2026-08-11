@@ -20,10 +20,10 @@ import { useTranslation } from 'react-i18next';
 
 import { monitorHelpUrl } from '../model/monitor-model';
 
-export function MonitorHelpLink() {
+export function MonitorHelpLink({ href = monitorHelpUrl }: { href?: string | undefined } = {}) {
   const { t } = useTranslation();
   return (
-    <Button href={monitorHelpUrl} target="_blank" rel="noreferrer">
+    <Button href={href} target="_blank" rel="noreferrer">
       {t('monitor.help')}
     </Button>
   );

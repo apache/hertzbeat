@@ -33,7 +33,9 @@ export function MonitorGrafanaFields({ draft, disabled, update }: MonitorGrafana
   return (
     <>
       <label className={styles.formRow}>
-        <MonitorEditorFieldLabel>{t('monitor.editor.grafanaEnabled')}</MonitorEditorFieldLabel>
+        <MonitorEditorFieldLabel help={t('monitor.editor.grafanaEnabledHelp')}>
+          {t('monitor.editor.grafanaEnabled')}
+        </MonitorEditorFieldLabel>
         <Switch
           checked={draft.grafanaDashboard.enabled}
           disabled={disabled}
@@ -42,7 +44,9 @@ export function MonitorGrafanaFields({ draft, disabled, update }: MonitorGrafana
       </label>
       {draft.grafanaDashboard.enabled && (
         <label className={`${styles.formRow} ${styles.wide}`}>
-          <MonitorEditorFieldLabel>{t('monitor.editor.grafanaTemplate')}</MonitorEditorFieldLabel>
+          <MonitorEditorFieldLabel help={t('monitor.editor.grafanaTemplateHelp')}>
+            {t('monitor.editor.grafanaTemplate')}
+          </MonitorEditorFieldLabel>
           <Upload
             accept=".json,application/json"
             disabled={disabled}
