@@ -100,6 +100,7 @@
   "alert.integration.source.skywalking": "SkyWalking",
   "alert.integration.source.uptime-kuma": "Uptime Kuma",
   "alert.integration.source.zabbix": "Zabbix",
+  "alert.integration.source.alibabacloud-cms": "阿里云云监控",
   "alert.integration.source.alibabacloud-sls": "阿里云日志服务 SLS",
   "alert.integration.source.huaweicloud-ces": "华为云监控服务",
   "alert.integration.source.volcengine": "火山引擎云监控",
