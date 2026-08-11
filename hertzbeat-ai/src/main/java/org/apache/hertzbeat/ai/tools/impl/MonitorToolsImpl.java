@@ -312,8 +312,16 @@ public class MonitorToolsImpl implements MonitorTools {
 
             // Query and add sensitive parameters
             if (conversationId != null) {
-                Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
-                if (chatConversation.isPresent() && StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
+                SubjectSum subject = McpContextHolder.getSubject();
+                if (subject == null || subject.getPrincipal() == null) {
+                    return "Error: Authenticated conversation context is required";
+                }
+                Optional<ChatConversation> chatConversation = conversationDao.findByIdAndCreator(
+                        conversationId, String.valueOf(subject.getPrincipal()));
+                if (chatConversation.isEmpty()) {
+                    return "Error: Conversation not found or inaccessible";
+                }
+                if (StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
                     List<Param> securityParams = JsonUtil.fromJson(
                         AesUtil.aesDecode(chatConversation.get().getSecurityData()),
                         new TypeReference<List<Param>>() {

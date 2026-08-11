@@ -74,6 +74,15 @@ public interface SopScheduleService {
     List<SopSchedule> getDueSchedules();
 
     /**
+     * Re-read a schedule for background execution and verify that its persisted
+     * creator still owns the target conversation. This method does not depend
+     * on a request-thread subject.
+     * @param id schedule ID
+     * @return validated schedule, or {@code null} when it must not execute
+     */
+    SopSchedule getScheduleForExecution(Long id);
+
+    /**
      * Update the execution times after a schedule runs.
      * @param id The schedule ID
      */

@@ -15,21 +15,31 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.dao;
+package org.apache.hertzbeat.common.entity.ai;
 
-import java.util.List;
-import java.util.Optional;
-import org.apache.hertzbeat.common.entity.ai.ChatConversation;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.junit.jupiter.api.Test;
 
 /**
- * Repository interface for Conversation entities
+ * Tests AI conversation serialization.
  */
-@Repository
-public interface ChatConversationDao extends JpaRepository<ChatConversation, Long> {
+class ChatConversationTest {
 
-    Optional<ChatConversation> findByIdAndCreator(Long id, String creator);
+    @Test
+    void serializationShouldExcludeStoredSecurityData() {
+        ChatConversation conversation = ChatConversation.builder()
+            .id(1L)
+            .title("Owned conversation")
+            .securityData("encrypted-value")
+            .build();
 
-    List<ChatConversation> findAllByCreatorOrderByIdDesc(String creator);
+        String json = JsonUtil.toJson(conversation);
+
+        assertNotNull(json);
+        assertFalse(json.contains("securityData"));
+        assertFalse(json.contains("encrypted-value"));
+    }
 }

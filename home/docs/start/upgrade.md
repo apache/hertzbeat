@@ -43,4 +43,30 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
    - `bin/shutdown.sh` stops the HertzBeat process and downloads the new installation package
    - Refer to [Installation package to install HertzBeat](./package-deploy) to start with the new installation package and configure the database connection in `application.yml`
 
+## AI Schedule Ownership After Upgrade
+
+AI conversations without a recorded creator are isolated and do not appear in
+any user's conversation list. Scheduled AI SOP tasks are owned by the creator
+of their target conversation. During upgrade, schedules without a recorded
+creator are disabled. Schedules without a target conversation or whose creator
+does not match the conversation creator are disabled before they can execute.
+The records remain in the database so an administrator can recover them after
+verifying the intended owner.
+
+Ownerless schedules are disabled by the database migration. Missing
+conversations and creator mismatches are rechecked and disabled before every
+background execution.
+
+Before re-enabling a legacy schedule:
+
+1. Back up the metadata database.
+2. Verify the owner of the target row in `hzb_ai_conversation`.
+3. Set the same verified principal in the conversation and schedule `creator`
+   columns.
+4. Re-enable only the reviewed schedule.
+
+Do not assign all legacy rows to a shared account. A schedule is executed only
+while its stored creator still owns the target conversation; ownership
+mismatches are disabled automatically.
+
 **HAVE FUN**

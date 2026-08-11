@@ -19,12 +19,14 @@ package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
@@ -47,7 +49,9 @@ import java.util.List;
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_ai_conversation")
+@Table(name = "hzb_ai_conversation", indexes = {
+    @Index(name = "idx_ai_conversation_creator", columnList = "creator")
+})
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatConversation {
@@ -81,5 +85,6 @@ public class ChatConversation {
     @OneToMany(mappedBy = "conversation")
     private List<ChatMessage> messages;
 
+    @JsonIgnore
     private String securityData;
 }
