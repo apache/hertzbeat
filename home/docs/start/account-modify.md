@@ -157,7 +157,9 @@ springdoc:
     enabled: true
 ```
 
-Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI adds the stored HertzBeat token to its same-origin document and try-it-out requests. Opening the UI without an administrator session reports `Failed to load API definition` without exposing the document.
+Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI attaches the stored HertzBeat token to its same-origin document and try-it-out requests, and the page loads without asking for anything.
+
+Without that session the document is not exposed, but the page does not fail silently either. `/swagger-ui/index.html` is a static file and still loads; its request for `/v3/api-docs/swagger-config` is answered with `401` and a `WWW-Authenticate: Digest` challenge, so the browser asks for a username and password. Administrator credentials entered there let the document through, and an account without the `admin` role is answered with `403`.
 
 The document can also be fetched directly with an administrator token:
 

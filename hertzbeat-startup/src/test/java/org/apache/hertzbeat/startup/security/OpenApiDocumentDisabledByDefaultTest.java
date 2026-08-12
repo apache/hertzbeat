@@ -45,7 +45,7 @@ import org.yaml.snakeyaml.Yaml;
  * should not serve it at all: both switches are off unless a deployment opts in, and the
  * rbac rules stay as the second line of defence for deployments that do. The swagger ui
  * page itself is reachable anonymously through the {@code /**}{@code /*.html===get}
- * exclusion, but it only renders for a caller whose browser holds an administrator session.
+ * exclusion, but it renders nothing until the caller proves it holds the admin role.
  */
 class OpenApiDocumentDisabledByDefaultTest {
 
