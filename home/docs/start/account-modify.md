@@ -51,6 +51,12 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
+  # the openapi document is a map of every route, parameter and model, so it is
+  # scoped like any other administrative resource instead of being anonymous
+  - /v3/api-docs/**===get===[admin]
+  - /v3/api-docs.yaml===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
@@ -82,10 +88,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
@@ -139,6 +141,28 @@ account:
     salt: 123
     role: [user]
 ```
+
+## OpenAPI Document And Swagger UI
+
+The generated OpenAPI document lists every route, http method, parameter name and type, and every request and response model. It is a ready made map of the attack surface, so HertzBeat does not serve it by default: `springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled` are both `false` in the shipped `application.yml`, which makes `/v3/api-docs` and `/swagger-ui/index.html` return 404.
+
+If you need the document, opt in by updating the `application.yml` file in the `config` directory:
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+```
+
+Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above, so they have to be fetched with an administrator token:
+
+```shell
+curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
+```
+
+> ⚠️ Note that the Swagger UI page fetches `/v3/api-docs/swagger-config` and `/v3/api-docs` without an `Authorization` header - its **Authorize** button only applies to try-it-out calls, not to the spec fetch. The page will therefore report `Failed to load API definition` unless you also move those two paths into `excludedResource`, which makes the document anonymous again. Only do that on a deployment that is not reachable from an untrusted network.
 
 ## Update Security Secret
 
