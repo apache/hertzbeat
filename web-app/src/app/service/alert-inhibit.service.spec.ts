@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { AlertInhibitService } from './alert-inhibit.service';
 
@@ -25,7 +26,7 @@ describe('AlertInhibitService', () => {
   let service: AlertInhibitService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(AlertInhibitService);
   });
 

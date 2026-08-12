@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { StatusPublicComponent } from './status-public.component';
 
@@ -26,9 +27,7 @@ describe('StatusPublicComponent', () => {
   let fixture: ComponentFixture<StatusPublicComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [StatusPublicComponent]
-    }).compileComponents();
+    await configureShallowTest(StatusPublicComponent).compileComponents();
 
     fixture = TestBed.createComponent(StatusPublicComponent);
     component = fixture.componentInstance;

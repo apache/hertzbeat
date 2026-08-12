@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertSilenceComponent } from './alert-silence.component';
 
@@ -26,9 +27,7 @@ describe('AlertSilenceComponent', () => {
   let fixture: ComponentFixture<AlertSilenceComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [AlertSilenceComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertSilenceComponent).compileComponents();
 
     fixture = TestBed.createComponent(AlertSilenceComponent);
     component = fixture.componentInstance;
