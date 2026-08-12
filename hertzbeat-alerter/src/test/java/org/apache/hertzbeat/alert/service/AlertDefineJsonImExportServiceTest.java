@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -29,8 +31,10 @@ import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * test case for {@link AlertDefineJsonImExportServiceImpl}
@@ -43,7 +47,7 @@ class AlertDefineJsonImExportServiceTest {
     @SuppressWarnings("checkstyle:OperatorWrap")
     private static final String JSON_DATA = "[{\"alertDefine\":{\"name\":\"App1\",\"type\":\"realtime\"," +
             "\"expr\":\"Expr1\",\"period\":3000,\"times\":3," +
-            "\"enable\":true,\"template\":\"Template1\"}}]";
+            "\"enable\":true,\"template\":\"Template1\",\"datasource\":\"promql\"}}]";
 
     private InputStream inputStream;
     private List<ExportAlertDefineDTO> alertDefineList;
@@ -77,6 +81,7 @@ class AlertDefineJsonImExportServiceTest {
         assertEquals(1, result.size());
         assertEquals("App1", result.get(0).getAlertDefine().getName());
         assertEquals("realtime", result.get(0).getAlertDefine().getType());
+        assertEquals("promql", result.get(0).getAlertDefine().getDatasource());
     }
 
     @Test
@@ -98,6 +103,29 @@ class AlertDefineJsonImExportServiceTest {
         assertNotNull(result);
         assertTrue(result.contains("App1"));
         assertTrue(result.contains("realtime"));
+    }
+
+    @Test
+    void testExportKeepsDatasource() {
+        AlertDefineService alertDefineService = mock(AlertDefineService.class);
+        AlertDefine define = AlertDefine.builder()
+                .name("test")
+                .type("periodic_metric")
+                .expr("cpu_usage{instance=\"server1\"} > 80")
+                .datasource("promql")
+                .period(300)
+                .times(3)
+                .template("test")
+                .enable(true)
+                .build();
+        when(alertDefineService.getAlertDefine(1L)).thenReturn(define);
+        ReflectionTestUtils.setField(service, "alertDefineService", alertDefineService);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        service.exportConfig(outputStream, List.of(1L));
+
+        String result = outputStream.toString(StandardCharsets.UTF_8);
+        assertTrue(result.contains("promql"), "exported config should keep datasource, but got: " + result);
     }
 
     @Test

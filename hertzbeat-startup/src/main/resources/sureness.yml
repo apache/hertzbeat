@@ -22,10 +22,16 @@
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  # the define yml routes persist the global collection templates
+  # post can only add a new type, put overwrites an existing one and immediately
+  # redispatches its collect job to every monitor already using it - hence admin only
+  - /api/apps/**===post===[admin,user]
+  - /api/apps/**===put===[admin]
+  - /api/apps/**===delete===[admin]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
+  - /api/monitor/**===delete===[admin]
   - /api/monitors/**===get===[admin,user,guest]
   - /api/monitors/**===post===[admin,user]
   - /api/monitors/**===put===[admin,user]
@@ -64,6 +70,23 @@ resourceRole:
   - /api/config/**===post===[admin]
   - /api/config/**===put===[admin]
   - /api/config/**===delete===[admin]
+  # queue depth of the hertzbeat process itself, operational data
+  - /api/metrics===get===[admin]
+  # per account metric favourites rendered on the monitor pages
+  - /api/metrics/**===get===[admin,user,guest]
+  - /api/metrics/**===post===[admin,user,guest]
+  - /api/metrics/**===delete===[admin,user,guest]
+  - /api/label/**===get===[admin,user,guest]
+  - /api/label/**===post===[admin,user]
+  - /api/label/**===put===[admin,user]
+  - /api/label/**===delete===[admin]
+  # the storage availability probe is read by every monitor page, while the query
+  # route forwards a raw promql expression straight to the time series database
+  - /api/warehouse/**===get===[admin,user,guest]
+  - /api/warehouse/query===post===[admin]
+  - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs===delete===[admin]
+  - /api/v2/alerts===post===[admin,user]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
@@ -93,6 +116,8 @@ resourceRole:
   - /api/account/token===get===[admin]
   - /api/account/token/**===post===[admin]
   - /api/account/token/**===delete===[admin]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
