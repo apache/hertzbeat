@@ -84,7 +84,8 @@
   text-rendering: optimizeLegibility;
 }
 
-:root[data-theme='default'] {
+:root[data-theme='default'],
+[data-theme-scope='default'] {
   --hb-bg-canvas: #f5f6f8;
   --hb-bg-chrome: #ffffff;
   --hb-bg-navigation: #ffffff;

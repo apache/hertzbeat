@@ -8,7 +8,7 @@
 import { theme } from 'antd';
 import { describe, expect, it } from 'vitest';
 
-import { createHertzBeatTheme } from './hertzbeat-theme';
+import { createHertzBeatTheme } from '@/shared/theme/hertzbeat-theme';
 
 describe('HertzBeat semantic theme', () => {
   it('maps the dense purple operator tokens into Ant Design', () => {

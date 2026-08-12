@@ -29,7 +29,7 @@ import {
 } from '@/core/runtime-preferences';
 import { RuntimeThemeContext } from '@/core/runtime-theme-context';
 
-import { createHertzBeatTheme } from './theme/hertzbeat-theme';
+import { createHertzBeatTheme } from '@/shared/theme/hertzbeat-theme';
 
 function RuntimeProviders({ children }: PropsWithChildren) {
   const { i18n: runtimeI18n } = useTranslation();

@@ -1,0 +1,99 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.realtimeGroup {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+  scroll-margin-top: var(--hb-space-3);
+}
+
+.realtimeGroupHeader {
+  display: flex;
+  flex: none;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+  padding: 4px 8px 4px 10px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.realtimeGroupIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.realtimeGroupIdentity h5 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--hb-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realtimeGroupIdentity span {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 999px;
+  color: var(--hb-brand-accent);
+  background: var(--hb-bg-selected);
+  font-size: 10px;
+}
+
+.realtimeGroupIdentity time,
+.realtimeGroupActions > span {
+  flex: none;
+  color: var(--hb-text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.realtimeGroupActions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+}
+
+.realtimeGroupActions :global(.ant-btn) {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+.realtimeGroup :global(.ant-table-thead > tr > th:not(:last-child)),
+.realtimeGroup :global(.ant-table-tbody > tr > td:not(:last-child)) {
+  border-inline-end: 1px solid var(--hb-border-subtle);
+}
+
+.realtimeGroup :global(.ant-table-thead > tr > th::before) {
+  display: none;
+}
+
+.realtimeGroupBody {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.loadMore {
+  grid-column: 1 / -1;
+  justify-self: center;
+}

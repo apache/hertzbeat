@@ -149,12 +149,25 @@ describe('LoginPage', () => {
 
     const page = screen.getByRole('main');
     const introduction = screen.getByTestId('passport-introduction');
-    const capabilityList = within(introduction).getByRole('list');
 
     expect(page).toHaveAttribute('data-passport-page', 'true');
     expect(page).toHaveAttribute('data-passport-background', 'legacy-artwork');
+    expect(page).toHaveAttribute('data-theme-scope', 'default');
     expect(introduction).toBeInTheDocument();
-    expect(within(capabilityList).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(introduction).queryByRole('list')).not.toBeInTheDocument();
+    expect(within(introduction).getByTestId('passport-introduction-brand')).toHaveAttribute(
+      'src',
+      '/assets/hertzbeat-brand-white.svg'
+    );
+    expect(within(introduction).queryByText(i18n.t('auth.passport.introductionPrefix'))).not.toBeInTheDocument();
+    expect(within(introduction).getByText(i18n.t('auth.passport.description'))).toBeInTheDocument();
+    expect(within(introduction).getByTestId('passport-introduction-phrase')).toHaveTextContent('');
+    expect(introduction.querySelector('p')).toBeNull();
+    expect(
+      screen.getAllByText('Open-source monitoring and observability for infrastructure and applications')
+    ).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Sign in to Apache HertzBeat' })).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('auth.description'))).not.toBeInTheDocument();
     expect(screen.getByTestId('passport-form-region')).toContainElement(
       screen.getByRole('button', { name: 'Sign in' })
     );

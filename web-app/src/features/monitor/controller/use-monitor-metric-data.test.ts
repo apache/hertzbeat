@@ -50,7 +50,7 @@ describe('useMonitorMetricData refresh interval', () => {
         realtimeGroups: [],
         historyRequests:
           currentMetric && !('historySupported' in currentMetric && currentMetric.historySupported === false)
-            ? [{ metric: currentMetric, history: '30m' }]
+            ? [{ metric: currentMetric, history: '30m', interval: false }]
             : [],
         metricKey: currentMetric?.key ?? '',
         refreshSeconds: 30
@@ -71,7 +71,7 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
-      historyRequests: [{ metric, history: '12W' }],
+      historyRequests: [{ metric, history: '12W', interval: true }],
       metricKey: metric.key,
       refreshSeconds: 30
     });
@@ -83,7 +83,7 @@ describe('useMonitorMetricData refresh interval', () => {
 
     expect(api.loadFavoriteMetrics).toHaveBeenCalledWith(7, signal);
     expect(api.loadRealtimeMetric).toHaveBeenCalledWith(7, metric, signal);
-    expect(api.loadHistoryMetric).toHaveBeenCalledWith(monitor, metric, '12W', signal);
+    expect(api.loadHistoryMetric).toHaveBeenCalledWith(monitor, metric, '12W', true, signal);
   });
 
   it('applies the selected interval to favorites, realtime, and history', () => {
@@ -91,7 +91,7 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
-      historyRequests: [{ metric, history: '30m' }],
+      historyRequests: [{ metric, history: '30m', interval: false }],
       metricKey: metric.key,
       refreshSeconds: 30
     });
@@ -108,7 +108,7 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
-      historyRequests: [{ metric, history: '30m' }],
+      historyRequests: [{ metric, history: '30m', interval: false }],
       metricKey: metric.key,
       refreshSeconds: 0
     });
@@ -143,7 +143,7 @@ describe('useMonitorMetricData refresh interval', () => {
       monitor,
       metric,
       realtimeGroups: [],
-      historyRequests: [{ metric, history: '12W' }],
+      historyRequests: [{ metric, history: '12W', interval: true }],
       metricKey: metric.key,
       refreshSeconds: 30
     });
@@ -158,7 +158,8 @@ describe('useMonitorMetricData refresh interval', () => {
       'website',
       undefined,
       'summary.value',
-      '12W'
+      '12W',
+      true
     ]);
   });
 });

@@ -49,9 +49,10 @@ export const monitorQueryKeys = {
   metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>
     [...rootKey, 'metrics', 'catalog', id, app, scrape] as const,
   favorites: (id: number | undefined) => [...rootKey, 'metrics', 'favorites', id] as const,
+  layout: (application: string | undefined) => [...rootKey, 'metrics', 'layout', application] as const,
   realtime: (id: number | undefined, group: string | undefined) =>
     [...rootKey, 'metrics', 'realtime', id, group] as const,
-  history: (source: MonitorHistorySource, metricKey: string, history: string) =>
+  history: (source: MonitorHistorySource, metricKey: string, history: string, interval = false) =>
     [
       ...rootKey,
       'metrics',
@@ -62,6 +63,7 @@ export const monitorQueryKeys = {
       source?.app,
       source?.scrape,
       metricKey,
-      history
+      history,
+      interval
     ] as const
 };

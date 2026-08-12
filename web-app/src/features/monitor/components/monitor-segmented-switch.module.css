@@ -1,0 +1,27 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.switch:global(.ant-segmented) {
+  padding: 2px;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-hover);
+}
+
+.switch :global(.ant-segmented-item) {
+  min-width: 56px;
+  color: var(--hb-text-secondary);
+}
+
+.switch :global(.ant-segmented-item-selected) {
+  background: var(--hb-brand-accent);
+  box-shadow: none;
+  color: var(--hb-text-on-accent);
+}
+
+.switch :global(.ant-segmented-item:not(.ant-segmented-item-selected):hover) {
+  color: var(--hb-text-primary);
+}

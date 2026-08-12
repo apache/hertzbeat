@@ -44,11 +44,16 @@ export function buildFavoriteMetricPath(monitorId: number, metricKey?: string) {
     : `/api/metrics/favorite/${monitorId}/${encodeURIComponent(metricKey)}`;
 }
 
-export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOption, history: MonitorMetricHistory) {
+export function buildHistoryMetricPath(
+  monitor: Monitor,
+  metric: MonitorMetricOption,
+  history: MonitorMetricHistory,
+  interval = monitorMetricHistoryUsesInterval(history)
+) {
   const sourceApp = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
   const app = sourceApp === 'prometheus' ? `_prometheus_${monitor.name}` : sourceApp;
   const fullMetric = `${app}.${metric.group}.${metric.field}`;
-  const params = new URLSearchParams({ history, interval: String(monitorMetricHistoryUsesInterval(history)) });
+  const params = new URLSearchParams({ history, interval: String(interval) });
   return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
 }
 
@@ -76,8 +81,12 @@ export async function loadHistoryMetric(
   monitor: Monitor,
   metric: MonitorMetricOption,
   history: MonitorMetricHistory,
+  interval: boolean,
   signal?: AbortSignal
 ) {
-  const value = await apiMessageGet(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
+  const value = await apiMessageGet(
+    buildHistoryMetricPath(monitor, metric, history, interval),
+    signal ? { signal } : undefined
+  );
   return parseHistoryMetric(value, monitor.instance, metric.group, metric.field);
 }

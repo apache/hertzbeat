@@ -16,44 +16,6 @@ import { monitorStatusColor, monitorStatusKey, parseMonitorTimestamp } from '../
 import styles from './monitor-detail-view.module.css';
 
 /**
- * Keeps the complete operational identity visible on the read-only surface.
- * These fields were present in the Angular detail and already belong to the
- * canonical monitor response, so hiding them would force operators into edit.
- */
-export function MonitorDetailSummary({
-  monitor,
-  collector
-}: {
-  monitor: Monitor;
-  collector: string | null | undefined;
-}) {
-  const { t } = useTranslation();
-  const facts = [
-    {
-      key: 'status',
-      label: t('monitor.status.label'),
-      value: <Tag color={monitorStatusColor(monitor.status)}>{t(monitorStatusKey(monitor.status))}</Tag>
-    },
-    { key: 'schedule', label: t('monitor.metadata.schedule'), value: monitorSchedule(t, monitor) },
-    { key: 'collector', label: t('monitor.metadata.collector'), value: collector || '—' },
-    { key: 'updated', label: t('monitor.metadata.updated'), value: monitorTime(monitor.gmtUpdate) }
-  ];
-
-  return (
-    <section className={styles.summaryStrip} aria-label={t('monitor.metadata.summary')}>
-      <dl className={styles.summaryFacts}>
-        {facts.map(fact => (
-          <div className={styles.summaryFact} key={fact.key}>
-            <dt>{fact.label}</dt>
-            <dd>{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-/**
  * Full configuration stays available without competing with the metric workbench.
  * A drawer preserves Angular's data-first detail flow while keeping audit fields
  * and encrypted parameter evidence one explicit action away.

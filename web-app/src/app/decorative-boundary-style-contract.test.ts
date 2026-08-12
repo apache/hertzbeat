@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 
 import noticeRuleEditorStyles from '@/features/alert/notice-rule/components/notice-rule-editor.module.css?raw';
 import alertRuleEditorStyles from '@/features/alert/shared/alert-rule-editor.module.css?raw';
-import monitorDetailStyles from '@/features/monitor/components/monitor-detail-view.module.css?raw';
 import monitorListStyles from '@/features/monitor/components/monitor-list.module.css?raw';
+import monitorWorkbenchStyles from '@/features/monitor/components/monitor-metric-workbench.module.css?raw';
 import messageServerStyles from '@/features/settings/message-server/pages/message-server-page.module.css?raw';
 import objectStoreStyles from '@/features/settings/object-store/components/object-store.module.css?raw';
 import statusManagementStyles from '@/features/status/management/components/status-management.module.css?raw';
@@ -44,7 +44,9 @@ describe('decorative boundary style contract', () => {
 
   it('keeps toolbars, summaries, and workflow navigation visually open', () => {
     expect(ruleBody(monitorListStyles, /\.bulk\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
-    expect(ruleBody(monitorDetailStyles, /\.summaryStrip\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
+    expect(ruleBody(monitorWorkbenchStyles, /\.metricToolbarPrimary[^{]*\{(?<body>[^}]*)\}/)).not.toMatch(
+      horizontalBorder
+    );
     expect(ruleBody(notificationWorkspaceStyles, /\.workspace\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
     expect(ruleBody(statusManagementStyles, /\.section\s*\{(?<body>[^}]*)\}/)).not.toMatch(horizontalBorder);
   });

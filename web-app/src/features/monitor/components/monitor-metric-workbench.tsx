@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-import { Alert, Button } from 'antd';
+import { Alert } from 'antd';
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  OperationalCommandBar,
-  OperationalSection,
-  OperationalStatePanel,
-  type OperationalStateKind
-} from '@/shared/operational-page';
+import { OperationalSection, OperationalStatePanel, type OperationalStateKind } from '@/shared/operational-page';
 
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
 import { MonitorMetricResults } from './monitor-metric-results';
-import { MonitorRefreshSelect } from './monitor-refresh-select';
 import styles from './monitor-metric-workbench.module.css';
 
 export function MonitorMetricWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
@@ -78,31 +73,16 @@ function monitorMetricCatalogPresentation(
 
 function MonitorMetricReadyWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
   const { t } = useTranslation();
+  const historyHeight = state.layout.layout.historyDock.height * 22;
   return (
-    <OperationalSection title={t('monitorMetrics.title')} description={t('monitorMetrics.description')}>
-      <div className={styles.workbench}>
-        <MonitorMetricToolbar state={state} actions={actions} />
-        {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
-        {state.favorite.kind === 'error' && (
-          <Alert type="error" showIcon message={t('common.routeError.description')} />
-        )}
-        <MonitorMetricResults state={state} actions={actions} />
-      </div>
-    </OperationalSection>
-  );
-}
-
-function MonitorMetricToolbar({ state, actions }: MonitorMetricWorkbenchController) {
-  const { t } = useTranslation();
-  return (
-    <OperationalCommandBar
-      ariaLabel={t('monitorMetrics.title')}
-      primary={
-        <div className={styles.toolbarControls}>
-          <MonitorRefreshSelect value={state.refreshSeconds} onChange={actions.setRefreshSeconds} />
-        </div>
-      }
-      secondary={<Button onClick={actions.refresh}>{t('common.refresh')}</Button>}
-    />
+    <section
+      className={styles.workbench}
+      aria-label={t('monitorMetrics.title')}
+      style={{ '--monitor-history-height': `${historyHeight}px` } as CSSProperties}
+    >
+      {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
+      {state.favorite.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
+      <MonitorMetricResults state={state} actions={actions} />
+    </section>
   );
 }

@@ -71,7 +71,6 @@ function LoginFormContent({ controller }: { controller: LoginController }) {
         <Typography.Title id="login-title" level={2}>
           {t('auth.title')}
         </Typography.Title>
-        <Typography.Paragraph type="secondary">{t('auth.description')}</Typography.Paragraph>
         {controller.errorKey && (
           <OperationalStatePanel
             kind={controller.failureKind === 'unavailable' ? 'unavailable' : 'error'}

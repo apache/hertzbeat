@@ -15,7 +15,7 @@ export function useMonitorMetricData(input: {
   monitor: Monitor | undefined;
   metric: MonitorMetricOption | undefined;
   realtimeGroups: Array<{ group: string }>;
-  historyRequests: Array<{ metric: MonitorMetricOption; history: MonitorMetricHistory }>;
+  historyRequests: Array<{ metric: MonitorMetricOption; history: MonitorMetricHistory; interval: boolean }>;
   metricKey: string;
   refreshSeconds: MonitorDetailRefreshSeconds;
 }) {
@@ -33,7 +33,14 @@ export function useMonitorMetricData(input: {
   });
   const historyQueries = useQueries({
     queries: historyRequests.map(request =>
-      historyMetricQueryOptions(monitor, request.metric, request.metric.key, request.history, refetchInterval)
+      historyMetricQueryOptions(
+        monitor,
+        request.metric,
+        request.metric.key,
+        request.history,
+        request.interval,
+        refetchInterval
+      )
     )
   });
   const historyCharts = historyRequests.map((request, index) => ({ ...request, query: historyQueries[index]! }));
@@ -78,13 +85,14 @@ function historyMetricQueryOptions(
   metric: MonitorMetricOption | undefined,
   metricKey: string,
   history: MonitorMetricHistory,
+  interval: boolean,
   refetchInterval: number | false
 ) {
   return {
-    queryKey: monitorQueryKeys.history(monitor, metricKey, history),
+    queryKey: monitorQueryKeys.history(monitor, metricKey, history, interval),
     queryFn:
       monitor && metric
-        ? ({ signal }: QueryFunctionContext) => loadHistoryMetric(monitor, metric, history, signal)
+        ? ({ signal }: QueryFunctionContext) => loadHistoryMetric(monitor, metric, history, interval, signal)
         : skipToken,
     refetchInterval: activeRefreshInterval(Boolean(monitor && metric), refetchInterval)
   } as const;

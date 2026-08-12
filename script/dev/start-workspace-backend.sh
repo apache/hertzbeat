@@ -26,13 +26,33 @@ resolve_mapped_port() {
 GREPTIME_HTTP_PORT="${GREPTIME_HTTP_PORT:-$(resolve_mapped_port 4000 4000)}"
 GREPTIME_GRPC_PORT="${GREPTIME_GRPC_PORT:-$(resolve_mapped_port 4001 4001)}"
 
+export WAREHOUSE_STORE_DUCKDB_ENABLED="${WAREHOUSE_STORE_DUCKDB_ENABLED:-false}"
+export WAREHOUSE_STORE_GREPTIME_ENABLED="${WAREHOUSE_STORE_GREPTIME_ENABLED:-true}"
 export WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT="${WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT:-http://127.0.0.1:${GREPTIME_HTTP_PORT}}"
 export WAREHOUSE_STORE_GREPTIME_GRPC_ENDPOINTS="${WAREHOUSE_STORE_GREPTIME_GRPC_ENDPOINTS:-127.0.0.1:${GREPTIME_GRPC_PORT}}"
 export WAREHOUSE_STORE_GREPTIME_EXPIRE_TIME="${WAREHOUSE_STORE_GREPTIME_EXPIRE_TIME:-1d}"
 
+require_greptime() {
+  local health_endpoint="${WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT%/}/health"
+  local max_attempts="${GREPTIME_HEALTH_ATTEMPTS:-20}"
+  local attempt
+
+  for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+    if curl --fail --silent --show-error --max-time 2 "${health_endpoint}" >/dev/null; then
+      return
+    fi
+    sleep 0.5
+  done
+
+  printf 'workspace backend requires a healthy GreptimeDB at %s\n' "${health_endpoint}" >&2
+  return 1
+}
+
 printf 'workspace backend Greptime HTTP endpoint: %s\n' "${WAREHOUSE_STORE_GREPTIME_HTTP_ENDPOINT}"
 printf 'workspace backend Greptime gRPC endpoints: %s\n' "${WAREHOUSE_STORE_GREPTIME_GRPC_ENDPOINTS}"
 printf 'workspace backend Greptime expire time: %s\n' "${WAREHOUSE_STORE_GREPTIME_EXPIRE_TIME}"
+
+require_greptime
 
 cd "${ROOT_DIR}"
 

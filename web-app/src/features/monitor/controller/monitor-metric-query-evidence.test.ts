@@ -39,12 +39,12 @@ describe('monitor metric query evidence', () => {
   });
 
   it('exposes payloads only after a successful read', () => {
-    const query = { isPending: false, isError: false, error: null, data: ['summary.value'] };
+    const query = { isPending: false, isError: false, error: null, data: ['summary'] };
 
     expect(favoriteEvidence(query, { key: 'summary.value', group: 'summary', field: 'value' })).toEqual({
       kind: 'ready',
       value: true,
-      token: 'summary.value'
+      token: 'summary'
     });
     expect(
       favoriteCollectionEvidence(query, [
@@ -53,9 +53,9 @@ describe('monitor metric query evidence', () => {
       ])
     ).toEqual({
       kind: 'ready',
-      items: [{ key: 'summary.value', available: true }]
+      items: [{ key: 'summary', available: true }]
     });
-    expect(metricEvidence(query, values => values)).toEqual({ kind: 'ready', rows: ['summary.value'] });
+    expect(metricEvidence(query, values => values)).toEqual({ kind: 'ready', rows: ['summary'] });
   });
 
   it('keeps unresolved favorite tokens visible without presenting them as queryable metrics', () => {
@@ -63,19 +63,19 @@ describe('monitor metric query evidence', () => {
       isPending: false,
       isError: false,
       error: null,
-      data: ['retired.value', 'retired.value', 'summary.value']
+      data: ['retired.value', 'retired.value', 'summary']
     };
 
     expect(favoriteCollectionEvidence(query, [{ key: 'summary.value', group: 'summary', field: 'value' }])).toEqual({
       kind: 'ready',
       items: [
         { key: 'retired.value', available: false },
-        { key: 'summary.value', available: true }
+        { key: 'summary', available: true }
       ]
     });
   });
 
-  it('resolves legacy group and field favorite tokens to current numeric metrics', () => {
+  it('accepts only group tokens and keeps legacy field tokens unavailable', () => {
     const query = { isPending: false, isError: false, error: null, data: ['summary', 'latency'] };
 
     expect(
@@ -87,9 +87,8 @@ describe('monitor metric query evidence', () => {
     ).toEqual({
       kind: 'ready',
       items: [
-        { key: 'summary.value', available: true },
-        { key: 'summary.latency', available: true },
-        { key: 'network.latency', available: true }
+        { key: 'summary', available: true },
+        { key: 'latency', available: false }
       ]
     });
     expect(favoriteEvidence(query, { key: 'summary.value', group: 'summary', field: 'value' })).toEqual({

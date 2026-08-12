@@ -132,8 +132,8 @@ describe('useMonitorMetricWorkbenchController', () => {
     );
   });
 
-  it('exposes the canonical favorite collection without hiding retired metric tokens', async () => {
-    api.loadFavoriteMetrics.mockResolvedValue(['retired.value', 'summary.value']);
+  it('exposes group favorites without hiding retired field tokens', async () => {
+    api.loadFavoriteMetrics.mockResolvedValue(['retired.value', 'summary']);
     const view = renderController(monitor(), [], '/monitors/7');
 
     await waitFor(() =>
@@ -141,7 +141,7 @@ describe('useMonitorMetricWorkbenchController', () => {
         kind: 'ready',
         items: [
           { key: 'retired.value', available: false },
-          { key: 'summary.value', available: true }
+          { key: 'summary', available: true }
         ]
       })
     );
@@ -183,6 +183,7 @@ describe('useMonitorMetricWorkbenchController', () => {
       expect.objectContaining({ id: 7 }),
       expect.objectContaining({ key: 'group-1.value' }),
       '30m',
+      false,
       expect.any(AbortSignal)
     );
 
@@ -192,10 +193,24 @@ describe('useMonitorMetricWorkbenchController', () => {
         expect.objectContaining({ id: 7 }),
         expect.objectContaining({ key: 'group-1.value' }),
         '12W',
+        false,
         expect.any(AbortSignal)
       )
     );
     expect(view.result.current.controller.state.historyCharts[0]?.history).toBe('12W');
+    expect(view.result.current.controller.state.historyCharts[0]?.interval).toBe(false);
+
+    act(() => view.result.current.controller.actions.setHistoryChartMode('group-1.value', true));
+    await waitFor(() =>
+      expect(api.loadHistoryMetric).toHaveBeenLastCalledWith(
+        expect.objectContaining({ id: 7 }),
+        expect.objectContaining({ key: 'group-1.value' }),
+        '12W',
+        true,
+        expect.any(AbortSignal)
+      )
+    );
+    expect(view.result.current.controller.state.historyCharts[0]?.interval).toBe(true);
 
     act(() => view.result.current.controller.actions.loadMoreHistoryCharts());
     await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(8));
@@ -258,6 +273,25 @@ describe('useMonitorMetricWorkbenchController', () => {
         token: 'summary'
       })
     );
+  });
+
+  it('does not promote a field token to the whole-group favorite', async () => {
+    api.loadFavoriteMetrics.mockResolvedValueOnce(['summary.value']).mockResolvedValueOnce(['summary']);
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() =>
+      expect(view.result.current.controller.state.realtimeGroups[0]).toMatchObject({
+        group: 'summary',
+        favorite: { kind: 'ready', value: false }
+      })
+    );
+    expect(view.result.current.controller.state.favoriteCollection).toEqual({
+      kind: 'ready',
+      items: [{ key: 'summary.value', available: false }]
+    });
+    await act(() => view.result.current.controller.actions.toggleRealtimeFavorite('summary'));
+
+    expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary', true);
   });
 
   it('keeps refresh inert until monitor and metric context is available', async () => {
@@ -349,7 +383,7 @@ describe('useMonitorMetricWorkbenchController', () => {
 
     expect(view.result.current.controller.state.favoriteCollection).toEqual({
       kind: 'ready',
-      items: [{ key: 'identity.version', available: true }]
+      items: [{ key: 'identity', available: true }]
     });
 
     await act(() => view.result.current.controller.actions.toggleFavorite());
@@ -392,6 +426,7 @@ describe('useMonitorMetricWorkbenchController', () => {
       expect.objectContaining({ id: 7 }),
       expect.objectContaining({ key: 'summary.value' }),
       '12W',
+      true,
       expect.any(AbortSignal)
     );
     vi.clearAllMocks();
@@ -445,13 +480,13 @@ describe('useMonitorMetricWorkbenchController', () => {
   });
 
   it('marks favorite ready only after canonical reread convergence', async () => {
-    api.loadFavoriteMetrics.mockResolvedValueOnce([]).mockResolvedValueOnce(['summary.value']);
+    api.loadFavoriteMetrics.mockResolvedValueOnce([]).mockResolvedValueOnce(['summary']);
     const view = renderController(monitor(), [], '/monitors/7');
     await waitFor(() =>
       expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false })
     );
     await act(() => view.result.current.controller.actions.toggleFavorite());
-    expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary.value', true);
+    expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary', true);
     expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: true });
   });
@@ -544,7 +579,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     });
     expect(view.result.current.controller.state.favoriteBusy).toBe(true);
 
-    api.loadFavoriteMetrics.mockResolvedValue(['summary.value']);
+    api.loadFavoriteMetrics.mockResolvedValue(['summary']);
     act(() => view.result.current.controller.actions.refresh());
     await waitFor(() => {
       expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: true });
@@ -581,7 +616,7 @@ describe('useMonitorMetricWorkbenchController', () => {
     await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('summary.value'));
     expect(view.result.current.controller.state.favoriteBusy).toBe(false);
     api.updateFavoriteMetric.mockResolvedValue(undefined);
-    api.loadFavoriteMetrics.mockResolvedValueOnce(['summary.value']);
+    api.loadFavoriteMetrics.mockResolvedValueOnce(['summary']);
     await act(() => view.result.current.controller.actions.toggleFavorite());
     expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.favoriteBusy).toBe(false);

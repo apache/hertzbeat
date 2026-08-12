@@ -1,0 +1,231 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.selectedHistoryTray {
+  position: relative;
+  min-width: 0;
+  height: var(--monitor-history-height, 264px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+}
+
+.historyDockResizeHandle {
+  position: absolute;
+  z-index: 3;
+  inset-inline-end: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+}
+
+.historyDockResizeHandle::after {
+  position: absolute;
+  inset-inline-end: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-inline-end: 2px solid var(--hb-brand-accent);
+  border-bottom: 2px solid var(--hb-brand-accent);
+  content: '';
+}
+
+.historyDockResizeHandle:focus-visible {
+  outline: 2px solid var(--hb-brand-accent);
+  outline-offset: -2px;
+}
+
+.selectedHistoryTray > .historyResult {
+  min-height: 0;
+  flex: 1;
+}
+
+.selectedHistoryTray > .historyResult .historyChartCanvas,
+.selectedHistoryTray > .historyResult .historyChartState {
+  height: 100%;
+  min-height: 118px;
+}
+
+.selectedHistoryHeader {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: 5px 9px 5px 12px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.selectedHistoryIdentity,
+.selectedHistoryControls,
+.historyStatistics {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.selectedHistoryIdentity > span:not(.currentMetricValue),
+.selectedHistoryIdentity time {
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedHistoryIdentity :global(.ant-btn) {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+}
+
+.currentMetricValue {
+  flex: none;
+  color: var(--hb-brand-accent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selectedHistoryControls {
+  flex: none;
+}
+
+.selectedHistoryControls > :global(.ant-select) {
+  width: 84px;
+}
+
+.historyStatistics {
+  min-height: 32px;
+  justify-content: flex-start;
+  gap: var(--hb-space-4);
+  margin: 0;
+  padding: 6px 14px 2px;
+  color: var(--hb-text-muted);
+  font-size: 10px;
+}
+
+.historyStatistic {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--hb-space-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.historyStatistic dt,
+.historyStatistic dd {
+  margin: 0;
+}
+
+.historyStatistic dt {
+  color: var(--hb-text-muted);
+}
+
+.historyStatistic dd {
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.historyResult {
+  display: grid;
+  gap: var(--hb-space-3);
+}
+
+.historyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hb-space-3);
+}
+
+.historyChart {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-surface);
+  background: var(--hb-bg-raised);
+}
+
+.historyChartHeader {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2) var(--hb-space-3);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.historyChartTitle {
+  min-width: 0;
+}
+
+.historyChartTitle h5 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyChartTitle span {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.historyChartActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+
+.historyChartCanvas,
+.historyChartState {
+  width: 100%;
+  height: 190px;
+}
+
+.historyChartState {
+  display: grid;
+  place-items: center;
+}
+
+.loadMore {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+@container monitor-workbench (max-width: 860px) {
+  .selectedHistoryHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .selectedHistoryControls {
+    width: 100%;
+  }
+}
+
+@container monitor-workbench (max-width: 720px) {
+  .historyGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .historyStatistics {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+}

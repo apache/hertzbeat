@@ -21,7 +21,7 @@ describe('shell runtime status style contract', () => {
 
   it('defines globally resolvable status tokens without adding raw colors to the shell component', () => {
     expect(appStyles).toMatch(/--hb-status-loading:\s*var\(--hb-status-unknown\)/);
-    const lightTheme = appStyles.match(/:root\[data-theme='default'\]\s*\{[^}]*\}/)?.[0] ?? '';
+    const lightTheme = appStyles.match(/:root\[data-theme='default'\][^{]*\{[^}]*\}/)?.[0] ?? '';
     for (const status of ['available', 'degraded', 'unavailable']) {
       expect(appStyles).toMatch(new RegExp(`--hb-status-${status}:\\s*#[\\da-f]{6}`, 'i'));
       expect(lightTheme).toMatch(new RegExp(`--hb-status-${status}:\\s*#[\\da-f]{6}`, 'i'));

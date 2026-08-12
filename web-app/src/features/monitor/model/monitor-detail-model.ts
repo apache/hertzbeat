@@ -27,6 +27,7 @@ import type {
   MonitorGrafanaDashboard
 } from './monitor-contract';
 import type { MonitorHistorySeries } from './monitor-history-model';
+import type { MonitorMetricLayoutActions, MonitorMetricLayoutState } from './monitor-metric-layout-model';
 
 export { monitorHistoryMetrics, monitorHistorySeries } from './monitor-history-model';
 
@@ -132,6 +133,7 @@ export type MonitorHistoryAvailability = {
 export type MonitorHistoryChart = {
   metric: MonitorMetricOption;
   history: MonitorMetricHistory;
+  interval: boolean;
   result: MonitorMetricRowsEvidence<MonitorHistorySeries>;
 };
 export type MonitorMetricWorkbenchController = {
@@ -144,6 +146,7 @@ export type MonitorMetricWorkbenchController = {
     favorite: MonitorMetricFavoriteEvidence;
     favoriteCollection: MonitorMetricFavoriteCollectionEvidence;
     favoriteBusy: boolean;
+    realtimeGroupNames: string[];
     realtimeGroups: MonitorRealtimeGroup[];
     hasMoreRealtimeGroups: boolean;
     historyAvailability: MonitorHistoryAvailability;
@@ -152,6 +155,7 @@ export type MonitorMetricWorkbenchController = {
     hasMoreHistoryCharts: boolean;
     realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
     historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;
+    layout: MonitorMetricLayoutState;
   };
   actions: {
     setMetric: (value: string) => void;
@@ -159,12 +163,15 @@ export type MonitorMetricWorkbenchController = {
     setRefreshSeconds: (value: MonitorDetailRefreshChoice) => void;
     toggleFavorite: () => Promise<void>;
     toggleRealtimeFavorite: (group: string) => Promise<void>;
+    revealRealtimeGroup: (group: string) => void;
     loadMoreRealtimeGroups: () => void;
     activateHistoryChart: (metricKey: string) => void;
     setHistoryChartRange: (metricKey: string, value: MonitorMetricHistory) => void;
+    setHistoryChartMode: (metricKey: string, interval: boolean) => void;
     refreshHistoryChart: (metricKey: string) => void;
     loadMoreHistoryCharts: () => void;
     refresh: () => void;
+    layout: MonitorMetricLayoutActions;
   };
 };
 
@@ -231,7 +238,8 @@ export function monitorRealtimeRows(data: MonitorRealtimeMetric) {
               field: field.name,
               unit: field.unit,
               value: displayMetricValue(value),
-              time: value.time ?? data.time ?? null
+              time: value.time ?? data.time ?? null,
+              collectedAt: data.time
             }
           ]
         : [];

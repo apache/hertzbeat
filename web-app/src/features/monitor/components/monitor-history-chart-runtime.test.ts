@@ -17,8 +17,18 @@ type ChartOptionContract = {
   color: string[];
   tooltip: { trigger: string; confine: boolean; axisPointer: { type: string } };
   legend: { show: boolean; top: number; right: number };
+  toolbox?: unknown;
+  grid: { left: number; right: number; top: number; bottom: number; containLabel: boolean };
+  dataZoom: Array<{
+    type: string;
+    zoomOnMouseWheel?: boolean;
+    moveOnMouseMove?: boolean;
+    moveOnMouseWheel?: boolean;
+  }>;
   series: Array<{
     smooth: boolean;
+    showSymbol: boolean;
+    symbolSize: number;
     lineStyle: { color: string; width: number };
     areaStyle?: unknown;
   }>;
@@ -29,6 +39,15 @@ type ChartOptionContract = {
     axisTick: { show: boolean };
     axisLabel: { hideOverlap: boolean; showMinLabel: boolean; showMaxLabel: boolean };
   };
+  yAxis: {
+    minInterval?: number;
+    splitNumber: number;
+    min: number;
+    max: number;
+    interval: number;
+    splitLine: { lineStyle: { type: string } };
+    splitArea: { show: boolean };
+  };
 };
 
 const colors = {
@@ -36,7 +55,10 @@ const colors = {
   muted: '#8d96a8',
   border: '#28303d',
   grid: '#202733',
-  background: '#11151c'
+  background: '#11151c',
+  accent: '#9b5bb3',
+  available: '#49aa19',
+  degraded: '#d89614'
 };
 
 function chartOption(input: MonitorHistoryChartRenderInput) {
@@ -51,7 +73,7 @@ describe('monitor history chart runtime', () => {
     expect(formatMonitorHistoryAxisTickLabel(timestamp, 48 * 60 * 60 * 1000)).toBe('08/03 23:04');
   });
 
-  it('uses the established blue primary curve and a subtle area fill', () => {
+  it('uses a compact Grafana-like plot without detached toolbox or slider chrome', () => {
     const option = chartOption({
       title: 'basic.max_connections',
       series: [
@@ -59,42 +81,61 @@ describe('monitor history chart runtime', () => {
           name: 'origin',
           points: [
             [1, 151],
-            [2, 152]
+            [2, 151]
           ]
         }
-      ],
-      saveImageTitle: 'Save image'
+      ]
     });
 
-    expect(option.color[0]).toBe('#60a5fa');
-    expect(option.tooltip).toMatchObject({ trigger: 'axis', confine: true, axisPointer: { type: 'cross' } });
+    expect(option.color[0]).toBe('#9b5bb3');
+    expect(option.tooltip).toMatchObject({ trigger: 'axis', confine: true, axisPointer: { type: 'line' } });
     expect(option.legend.show).toBe(false);
+    expect(option.toolbox).toBeUndefined();
+    expect(option.grid).toMatchObject({ left: 8, right: 16, bottom: 20, containLabel: true });
+    expect(option.dataZoom).toEqual([
+      { type: 'inside', zoomOnMouseWheel: true, moveOnMouseMove: true, moveOnMouseWheel: false }
+    ]);
     expect(option.series[0]).toMatchObject({
-      smooth: true,
-      lineStyle: { color: '#60a5fa', width: 2.4 },
-      areaStyle: expect.any(Object)
+      smooth: false,
+      showSymbol: true,
+      symbolSize: 5,
+      lineStyle: { color: '#9b5bb3', width: 2 }
     });
+    expect(option.series[0]!.areaStyle).toBeDefined();
+    expect(option.yAxis.splitArea.show).toBe(false);
+    expect(option.yAxis.minInterval).toBeUndefined();
+    expect(option.yAxis.splitNumber).toBe(3);
+    expect(option.yAxis.splitLine.lineStyle.type).toBe('solid');
+    expect(option.yAxis).toMatchObject({ min: 149, max: 153, interval: 2 });
     expect(option.xAxis).toMatchObject({
-      splitNumber: 5,
+      splitNumber: 4,
       min: 1,
       max: 2,
       axisTick: { show: false },
-      axisLabel: { hideOverlap: true, showMinLabel: true, showMaxLabel: true }
+      axisLabel: { hideOverlap: true, showMinLabel: true, showMaxLabel: false }
     });
   });
 
-  it('shows a top legend and stable semantic colors for interval aggregates', () => {
+  it('shows a top legend and token-backed semantic colors for interval aggregates', () => {
     const option = chartOption({
       title: 'status.qps',
       series: [
         { name: 'Max', points: [[1, 10]] },
         { name: 'Min', points: [[1, 2]] },
         { name: 'Mean', points: [[1, 6]] }
-      ],
-      saveImageTitle: 'Save image'
+      ]
     });
 
     expect(option.legend).toMatchObject({ show: true, top: 8, right: 12 });
-    expect(option.series.map(series => series.lineStyle.color)).toEqual(['#fbbf24', '#34d399', '#60a5fa']);
+    expect(option.series.map(series => series.lineStyle.color)).toEqual(['#d89614', '#49aa19', '#9b5bb3']);
+  });
+
+  it('hides symbols once a series is dense enough to read as a continuous signal', () => {
+    const option = chartOption({
+      title: 'status.qps',
+      series: [{ name: 'origin', points: Array.from({ length: 17 }, (_, index) => [index, index]) }]
+    });
+
+    expect(option.series[0]).toMatchObject({ showSymbol: false, symbolSize: 5 });
   });
 });

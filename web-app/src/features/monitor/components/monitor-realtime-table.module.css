@@ -1,0 +1,150 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.realtimeTable {
+  min-width: 0;
+}
+
+.compactMetricTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.compactMetricTable tr + tr {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.compactMetricTable tr:hover {
+  background: var(--hb-bg-hover);
+}
+
+.metricIdentityColumn {
+  width: 60%;
+}
+
+.compactMetricTable td {
+  height: 27px;
+  padding: 2px 8px;
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactMetricTable td:first-child {
+  padding-inline-start: 10px;
+}
+
+.compactMetricTable td.metricValue {
+  width: auto;
+  color: var(--hb-text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-align: end;
+}
+
+.metricValueText {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  cursor: text;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metricValueText[role='button'] {
+  cursor: pointer;
+}
+
+.metricValueText:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 1px;
+}
+
+.metricValuePopover {
+  display: grid;
+  width: min(420px, calc(100vw - 48px));
+  max-height: 240px;
+  gap: var(--hb-space-2);
+}
+
+.metricValuePopoverText {
+  max-height: 180px;
+  padding: var(--hb-space-2);
+  overflow: auto;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-subtle);
+  color: var(--hb-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  user-select: text;
+  white-space: pre-wrap;
+}
+
+.metricValuePopover :global(.ant-btn) {
+  justify-self: end;
+}
+
+.selectedMetricRow {
+  background: var(--hb-bg-selected);
+  box-shadow: inset 2px 0 0 var(--hb-brand-accent);
+}
+
+.metricFieldButton {
+  display: flex;
+  width: 100%;
+  height: 23px;
+  min-width: 0;
+  justify-content: flex-start;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  text-align: start;
+}
+
+.metricFieldButton > span {
+  min-width: 0;
+}
+
+.realtimeField {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.realtimeField > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realtimeField :global(.ant-tag) {
+  flex: none;
+  margin-inline-end: 0;
+  padding-inline: 4px;
+  font-size: 9px;
+  line-height: 16px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

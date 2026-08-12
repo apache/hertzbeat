@@ -27,15 +27,7 @@
   flex-direction: column;
   align-items: center;
   align-self: center;
-  gap: 8px;
   text-align: center;
-}
-
-.brandDescription {
-  margin: 0;
-  color: var(--hb-text-secondary);
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .brandFull {
@@ -50,10 +42,6 @@
   display: block;
   width: 220px;
   height: 55px;
-  filter: brightness(0) invert(1);
-}
-
-:global(:root[data-theme='default']) .brandLogoFull {
   filter: none;
 }
 
@@ -72,29 +60,126 @@
   color: var(--hb-text-primary);
 }
 
-.introduction h1 {
-  margin: 0 0 34px;
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.introductionHeading {
   font-size: clamp(32px, 3.4vw, 48px);
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.14;
+  text-wrap: balance;
 }
 
-.introduction h1 span {
+.introductionBrand {
   display: block;
+  width: 280px;
+  height: 70px;
+  margin-bottom: 4px;
 }
 
-.introduction ul {
-  display: grid;
-  margin: 0;
-  padding-left: 1.15em;
-  gap: 15px;
-  font-size: 15px;
-  line-height: 1.55;
+.introductionPositioning {
+  display: block;
+  max-width: 540px;
+  margin-bottom: clamp(26px, 2.5vw, 32px);
+  font-size: clamp(16px, 1.45vw, 20px);
+  font-weight: 520;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
 }
 
-.introduction li::marker {
-  color: var(--hb-color-primary);
+.introductionPhraseStage {
+  position: relative;
+  display: block;
+  width: 100%;
+  block-size: 1.45em;
+  overflow: hidden;
+  font-size: 34px;
+  line-height: 1.18;
+}
+
+.introductionTypingLine {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  will-change: opacity, transform;
+}
+
+.introductionPhrase {
+  display: inline;
+}
+
+.introductionCursor {
+  display: inline-block;
+  width: 0.075em;
+  height: 0.95em;
+  margin-left: 0.08em;
+  vertical-align: -0.08em;
+  background: currentColor;
+  animation: passportIntroductionCursor 860ms steps(1, end) infinite;
+}
+
+.introductionMeasure {
+  position: absolute;
+  visibility: hidden;
+  font-size: 34px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.introductionRollOut {
+  animation: passportIntroductionRollOut 460ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.introductionRollIn {
+  animation: passportIntroductionRollIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes passportIntroductionRollOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-115%);
+  }
+}
+
+@keyframes passportIntroductionRollIn {
+  from {
+    opacity: 0.28;
+    transform: translateY(115%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes passportIntroductionCursor {
+  0%,
+  46% {
+    opacity: 1;
+  }
+
+  47%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .formRegion {
@@ -148,27 +233,36 @@
 }
 
 @media (min-width: 960px) {
+  .brandHeader {
+    display: none;
+  }
+
   .page {
-    background-image: linear-gradient(var(--hb-bg-image-scrim), var(--hb-bg-image-scrim)), url('/assets/bg.png');
+    background-image: url('/assets/bg.png');
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
     background-size: cover;
   }
 
-  :global(:root[data-theme='default']) .page {
-    background-image: url('/assets/bg.png');
-  }
-
-  :global(:root[data-theme='default']) .brandDescription,
-  :global(:root[data-theme='default']) .introduction {
+  .introduction {
     color: var(--hb-text-on-image);
     text-shadow: var(--hb-shadow-on-image);
   }
 
-  :global(:root[data-theme='default']) .panel {
-    background: color-mix(in srgb, var(--hb-bg-raised) 94%, transparent);
-    backdrop-filter: blur(10px);
+  .panel {
+    border-color: color-mix(in srgb, var(--hb-bg-raised) 72%, transparent);
+    background: color-mix(in srgb, var(--hb-bg-raised) 58%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    backdrop-filter: blur(18px) saturate(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .introductionCursor,
+  .introductionRollOut,
+  .introductionRollIn {
+    animation: none;
   }
 }
 
@@ -203,11 +297,7 @@
   }
 
   .brandHeader {
-    gap: 4px;
-  }
-
-  .brandDescription {
-    font-size: 13px;
+    gap: 0;
   }
 
   .content {

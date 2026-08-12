@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import { initializeI18n } from '@/core/i18n/i18n';
+import { PassportPageFrame } from '@/features/auth/pages/passport-page-frame';
 
 import { AppProviders } from './providers';
 
@@ -84,5 +85,22 @@ describe('AppProviders theme contract', () => {
     await screen.findByTestId('probe');
     expect(screen.getByTestId('theme')).toHaveTextContent('default');
     expect(screen.getByTestId('background')).toHaveTextContent('#f5f6f8');
+  });
+
+  it('keeps passport content light without changing the signed-in runtime preference', async () => {
+    localStorage.setItem('hertzbeat.theme', 'dark');
+
+    render(
+      <AppProviders>
+        <PassportPageFrame>
+          <ThemeProbe />
+        </PassportPageFrame>
+      </AppProviders>
+    );
+
+    await screen.findByTestId('probe');
+    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
+    expect(screen.getByTestId('background')).toHaveTextContent('#f5f6f8');
+    expect(localStorage.getItem('hertzbeat.theme')).toBe('dark');
   });
 });

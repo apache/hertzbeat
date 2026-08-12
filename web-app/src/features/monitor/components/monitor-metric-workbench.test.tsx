@@ -10,11 +10,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import type {
-  MonitorMetricCatalogEvidence,
-  MonitorMetricFavoriteCollectionEvidence,
-  MonitorMetricWorkbenchController
-} from '../model/monitor-detail-model';
+import type { MonitorMetricCatalogEvidence, MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
 import { MonitorMetricWorkbench } from './monitor-metric-workbench';
 
 const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
@@ -22,11 +18,6 @@ const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
   [{ kind: 'unavailable', options: [] }, 'common.unavailable'],
   [{ kind: 'error', options: [] }, 'common.routeError.description'],
   [{ kind: 'empty', options: [] }, 'monitorMetrics.noCatalog']
-];
-const favoriteCollectionCases: Array<[MonitorMetricFavoriteCollectionEvidence, string]> = [
-  [{ kind: 'unavailable' }, 'common.unavailable'],
-  [{ kind: 'error' }, 'common.routeError.description'],
-  [{ kind: 'empty', items: [] }, 'monitorMetrics.favoriteEmpty']
 ];
 
 describe('MonitorMetricWorkbench', () => {
@@ -39,210 +30,187 @@ describe('MonitorMetricWorkbench', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders all realtime group fields with units, honest nulls, and epoch zero', () => {
-    renderWorkbench(
-      controller({
-        realtime: {
-          kind: 'ready',
-          rows: [
-            {
-              key: '0:responseTime',
-              labels: { host: 'a' },
-              field: 'responseTime',
-              unit: 'ms',
-              value: '12',
-              time: 0
-            },
-            {
-              key: '0:status',
-              labels: { host: 'a' },
-              field: 'status',
-              unit: null,
-              value: 'UP',
-              time: 1000
-            },
-            {
-              key: '0:message',
-              labels: { host: 'a' },
-              field: 'message',
-              unit: null,
-              value: '—',
-              time: null
-            }
-          ]
-        }
-      })
-    );
-    const responseTimeRow = screen.getByText('responseTime').closest('tr');
-    expect(responseTimeRow).not.toBeNull();
-    expect(within(responseTimeRow!).getByText('ms')).toBeInTheDocument();
-    expect(within(responseTimeRow!).getByText('12')).toBeInTheDocument();
-    expect(
-      screen.getByText(new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(0))
-    ).toBeInTheDocument();
-    expect(within(screen.getByText('status').closest('tr')!).getByText('UP')).toBeInTheDocument();
-    expect(within(screen.getByText('message').closest('tr')!).getAllByText('—')).toHaveLength(3);
-  });
-
-  it('renders independent realtime groups instead of one selected metric result', () => {
+  it('renders the selected current-value workspace without detached realtime, history, or favorite tabs', () => {
     const value = controller({
+      catalog: {
+        kind: 'ready',
+        options: [
+          { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' },
+          { key: 'availability.status', group: 'availability', field: 'status' }
+        ]
+      },
+      metricKey: 'summary.responseTime',
+      favorite: { kind: 'ready', value: true, token: 'summary.responseTime' },
+      favoriteCollection: { kind: 'ready', items: [{ key: 'summary', available: true }] },
+      realtimeGroupNames: ['summary', 'availability'],
       realtimeGroups: [
         {
-          group: 'summary',
+          ...realtimeGroup('summary'),
           favorite: { kind: 'ready', value: true, token: 'summary' },
-          favoriteBusy: false,
-          result: { kind: 'ready', rows: [metricRow('responseTime', '12')] }
+          result: { kind: 'ready', rows: [{ ...metricRow('responseTime', '12'), unit: 'ms' }] }
         },
         {
-          group: 'availability',
-          favorite: { kind: 'ready', value: false },
-          favoriteBusy: false,
+          ...realtimeGroup('availability'),
           result: { kind: 'ready', rows: [metricRow('status', 'UP')] }
         }
       ],
-      hasMoreRealtimeGroups: true
+      realtime: { kind: 'ready', rows: [{ ...metricRow('responseTime', '12'), unit: 'ms', collectedAt: 0 }] },
+      selectedHistoryChart: historyChart('summary.responseTime', { kind: 'loading', rows: [] })
     });
     renderWorkbench(value);
 
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: i18n.t('monitorMetrics.allMetricCount', { count: 2 }) })).toBeChecked();
+    expect(document.querySelector('[data-monitor-history-tray]')).toHaveAttribute(
+      'data-history-metric',
+      'summary.responseTime'
+    );
+    expect(document.querySelector('[data-monitor-history-tray]')).toHaveTextContent('Current: 12');
+
+    fireEvent.click(screen.getByRole('button', { name: 'summary.responseTime' }));
+    expect(value.actions.setMetric).toHaveBeenCalledWith('summary.responseTime');
+    expect(value.actions.activateHistoryChart).toHaveBeenCalledWith('summary.responseTime');
+
+    const row = document.querySelector('[data-monitor-metric="summary.responseTime"]')!;
+    expect(within(row as HTMLElement).queryByRole('button', { name: i18n.t('monitorMetrics.unfavorite') })).toBeNull();
+    expect(within(row as HTMLElement).queryByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeNull();
+    expect(
+      within(document.querySelector('[data-monitor-history-tray]') as HTMLElement).queryByRole('button', {
+        name: i18n.t('monitorMetrics.unfavorite')
+      })
+    ).toBeNull();
+    expect(screen.getAllByRole('button', { name: i18n.t('monitorMetrics.unfavorite') })).toHaveLength(1);
+  });
+
+  it('renders one realtime sample as a dense field/value table without field-level favorites', () => {
+    const value = controller({
+      catalog: {
+        kind: 'ready',
+        options: [
+          { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' },
+          { key: 'summary.status', group: 'summary', field: 'status' }
+        ]
+      },
+      realtimeGroups: [
+        {
+          ...realtimeGroup('summary'),
+          result: {
+            kind: 'ready',
+            rows: [
+              { ...metricRow('responseTime', '12'), unit: 'ms', collectedAt: 0 },
+              { ...metricRow('status', 'UP'), collectedAt: 0 },
+              metricRow('message', '—')
+            ]
+          }
+        }
+      ]
+    });
+    renderWorkbench(value);
+
+    expect(screen.queryByRole('columnheader')).not.toBeInTheDocument();
+    const responseTimeRow = document.querySelector('[data-monitor-metric="summary.responseTime"]')!;
+    expect(within(responseTimeRow as HTMLElement).getByText('ms')).toBeInTheDocument();
+    expect(within(responseTimeRow as HTMLElement).getByText('12')).toBeInTheDocument();
+    expect(screen.getByText(new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' }).format(0))).toBeInTheDocument();
+    expect(
+      within(responseTimeRow as HTMLElement).queryByRole('button', { name: i18n.t('monitorMetrics.favorite') })
+    ).toBeNull();
+  });
+
+  it('reserves the compact table width for metric identities and values only', () => {
+    renderWorkbench(controller());
+
+    const columns = screen.getByRole('table', { name: i18n.t('monitorMetrics.currentValues') }).querySelectorAll('col');
+    expect(columns).toHaveLength(2);
+    expect(columns[0]).toHaveAttribute('data-metric-column', 'identity');
+    expect(document.querySelector('[data-metric-column="favorite"]')).toBeNull();
+  });
+
+  it('preserves the multi-sample label and field matrix', () => {
+    renderWorkbench(
+      controller({
+        realtimeGroups: [
+          {
+            ...realtimeGroup('summary'),
+            result: {
+              kind: 'ready',
+              rows: [
+                { ...metricRow('qps', '10'), labels: { host: 'a' }, time: 1000 },
+                { ...metricRow('threads', '2'), labels: { host: 'a' }, time: 1000 },
+                { ...metricRow('qps', '11'), key: '1:qps', labels: { host: 'b' }, time: 2000 },
+                { ...metricRow('threads', '3'), key: '1:threads', labels: { host: 'b' }, time: 2000 }
+              ]
+            }
+          }
+        ]
+      })
+    );
+
+    expect(screen.getByRole('columnheader', { name: 'host' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'qps' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'threads' })).toBeInTheDocument();
+    expect(within(screen.getByText('b').closest('tr')!).getByText('3')).toBeInTheDocument();
+  });
+
+  it('filters favorites, search, and groups through the single dashboard toolbar', () => {
+    const value = controller({
+      catalog: {
+        kind: 'ready',
+        options: [
+          { key: 'summary.responseTime', group: 'summary', field: 'responseTime' },
+          { key: 'availability.status', group: 'availability', field: 'status' }
+        ]
+      },
+      favoriteCollection: { kind: 'ready', items: [{ key: 'summary', available: true }] },
+      realtimeGroupNames: ['summary', 'availability'],
+      realtimeGroups: [
+        {
+          ...realtimeGroup('summary'),
+          favorite: { kind: 'ready', value: true, token: 'summary' },
+          result: { kind: 'ready', rows: [metricRow('responseTime', '12')] }
+        },
+        { ...realtimeGroup('availability'), result: { kind: 'ready', rows: [metricRow('status', 'UP')] } }
+      ]
+    });
+    renderWorkbench(value);
+
+    fireEvent.click(screen.getByRole('radio', { name: /Favorites 1/ }));
     expect(screen.getByRole('heading', { name: 'summary' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'availability' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: i18n.t('monitorMetrics.allMetricCount', { count: 2 }) }));
+    fireEvent.change(screen.getByRole('searchbox', { name: i18n.t('monitorMetrics.search') }), {
+      target: { value: 'status' }
+    });
+    expect(screen.queryByRole('heading', { name: 'summary' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'availability' })).toBeInTheDocument();
-    expect(screen.getByText('responseTime')).toBeInTheDocument();
-    expect(screen.getByText('status')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.unfavorite') }));
-    expect(value.actions.toggleRealtimeFavorite).toHaveBeenCalledWith('summary');
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMore') }));
-    expect(value.actions.loadMoreRealtimeGroups).toHaveBeenCalledOnce();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: i18n.t('monitorMetrics.search') }), {
+      target: { value: '' }
+    });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: i18n.t('monitorMetrics.groupFilter') }));
+    fireEvent.click(
+      screen.getAllByText('summary').find(element => element.classList.contains('ant-select-item-option-content'))!
+    );
+    expect(screen.getByRole('heading', { name: 'summary' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'availability' })).not.toBeInTheDocument();
+  });
+
+  it('uses the same two-way segmented control for metric view and history value mode', () => {
+    renderWorkbench(controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) }));
+
+    expect(screen.getByRole('radiogroup', { name: i18n.t('monitorMetrics.metricView') })).toHaveClass('ant-segmented');
+    expect(screen.getByRole('radiogroup', { name: i18n.t('monitorMetrics.historyMode') })).toHaveClass('ant-segmented');
   });
 
   it('loads the next realtime group batch when the fallback control enters the viewport', () => {
     let notifyIntersection: IntersectionObserverCallback | undefined;
     const observeMock = vi.fn();
-    const disconnectMock = vi.fn();
     class MockIntersectionObserver {
       constructor(callback: IntersectionObserverCallback) {
         notifyIntersection = callback;
       }
-
       observe = observeMock;
-      disconnect = disconnectMock;
-      unobserve = vi.fn();
-      takeRecords = vi.fn();
-      root = null;
-      rootMargin = '';
-      thresholds: number[] = [];
-    }
-    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
-    const value = controller({
-      realtimeGroups: [realtimeGroup('summary')],
-      hasMoreRealtimeGroups: true
-    });
-
-    renderWorkbench(value);
-    expect(observeMock).toHaveBeenCalledWith(screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMore') }));
-    act(() =>
-      notifyIntersection?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
-    );
-
-    expect(disconnectMock).toHaveBeenCalled();
-    expect(value.actions.loadMoreRealtimeGroups).toHaveBeenCalledOnce();
-  });
-
-  it.each([
-    ['unavailable', 'common.unavailable'],
-    ['error', 'common.routeError.description'],
-    ['empty', 'monitorMetrics.empty']
-  ] as const)('renders distinct realtime %s evidence', (kind, key) => {
-    renderWorkbench(controller({ realtime: { kind, rows: [] } }));
-    expect(screen.getByText(i18n.t(key))).toBeInTheDocument();
-  });
-
-  it.each(catalogCases)('renders distinct catalog evidence %#', (catalog, key) => {
-    renderWorkbench(controller({ catalog }));
-    expect(screen.getByText(i18n.t(key)).closest('[data-state]')).toBeInTheDocument();
-  });
-
-  it('uses the shared command hierarchy for metric selection and actions', () => {
-    renderWorkbench(controller());
-
-    expect(document.querySelector('[data-hb-operational-command-bar]')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: i18n.t('monitorMetrics.title') })).toBeInTheDocument();
-  });
-
-  it.each([
-    ['unavailable', 'common.unavailable'],
-    ['error', 'common.routeError.description']
-  ] as const)('renders favorite %s as unknown evidence', (kind, key) => {
-    renderWorkbench(
-      controller({
-        favorite: { kind },
-        realtimeGroups: [{ ...realtimeGroup('summary'), favorite: { kind } }]
-      })
-    );
-    expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeDisabled();
-  });
-
-  it('keeps favorite unavailable to interaction while canonical verification is pending', () => {
-    renderWorkbench(
-      controller({
-        favoriteBusy: true,
-        realtimeGroups: [{ ...realtimeGroup('summary'), favoriteBusy: true }]
-      })
-    );
-
-    expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeDisabled();
-  });
-
-  it.each([
-    ['unavailable', 'common.unavailable'],
-    ['error', 'common.routeError.description'],
-    ['empty', 'monitorMetrics.empty']
-  ] as const)('renders distinct history %s evidence', (kind, key) => {
-    renderWorkbench(
-      controller({
-        historyCharts: [historyChart('summary.value', { kind, rows: [] })]
-      })
-    );
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
-    expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
-  });
-
-  it('distinguishes storage availability before showing history charts', () => {
-    renderWorkbench(controller({ historyAvailability: { kind: 'unavailable' } }));
-
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
-
-    expect(screen.getByText(i18n.t('common.unavailable')).closest('[data-state]')).toBeInTheDocument();
-    expect(document.querySelector('[data-history-metric]')).not.toBeInTheDocument();
-  });
-
-  it('applies the same storage gate to a selected favorite history chart', () => {
-    renderWorkbench(
-      controller({
-        favoriteCollection: { kind: 'ready', items: [{ key: 'summary.value', available: true }] },
-        selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }),
-        historyAvailability: { kind: 'unavailable' }
-      })
-    );
-
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
-    fireEvent.click(screen.getAllByRole('tab', { name: i18n.t('monitorMetrics.history') }).at(-1)!);
-
-    expect(screen.getByText(i18n.t('common.unavailable')).closest('[data-state]')).toBeInTheDocument();
-    expect(document.querySelector('[data-history-metric]')).not.toBeInTheDocument();
-  });
-
-  it('activates, ranges, refreshes, and extends history charts without route-local requests', () => {
-    const observations: Array<{ callback: IntersectionObserverCallback; element?: Element }> = [];
-    class MockIntersectionObserver {
-      record: { callback: IntersectionObserverCallback; element?: Element };
-      constructor(callback: IntersectionObserverCallback) {
-        this.record = { callback };
-        observations.push(this.record);
-      }
-      observe = (element: Element) => {
-        this.record.element = element;
-      };
       disconnect = vi.fn();
       unobserve = vi.fn();
       takeRecords = vi.fn();
@@ -251,103 +219,134 @@ describe('MonitorMetricWorkbench', () => {
       thresholds: number[] = [];
     }
     vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
-    const value = controller({
-      historyCharts: [historyChart('summary.value', { kind: 'loading', rows: [] })],
-      hasMoreHistoryCharts: true
-    });
+    const value = controller({ hasMoreRealtimeGroups: true });
+
     renderWorkbench(value);
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
-
-    const cardObservation = observations.find(
-      item => item.element?.getAttribute('data-history-metric') === 'summary.value'
-    );
+    const loadMore = screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMore') });
+    expect(observeMock).toHaveBeenCalledWith(loadMore);
     act(() =>
-      cardObservation?.callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+      notifyIntersection?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
     );
-    expect(value.actions.activateHistoryChart).toHaveBeenCalledWith('summary.value');
-
-    const range = screen.getByRole('combobox', { name: i18n.t('monitorMetrics.historyRange') });
-    fireEvent.mouseDown(range);
-    fireEvent.click(screen.getAllByText('12W').at(-1)!);
-    expect(value.actions.setHistoryChartRange).toHaveBeenCalledWith('summary.value', '12W');
-
-    const card = document.querySelector('[data-history-metric="summary.value"]')!;
-    fireEvent.click(within(card as HTMLElement).getByRole('button', { name: i18n.t('common.refresh') }));
-    expect(value.actions.refreshHistoryChart).toHaveBeenCalledWith('summary.value');
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.loadMoreHistory') }));
-    expect(value.actions.loadMoreHistoryCharts).toHaveBeenCalledOnce();
+    expect(value.actions.loadMoreRealtimeGroups).toHaveBeenCalledOnce();
   });
 
-  it('marks realtime-only history unsupported while retaining favorite interaction', () => {
+  it('does not promote a legacy field token to a whole-group favorite', () => {
     const value = controller({
-      historySupported: false,
-      historical: { kind: 'unsupported', rows: [] },
+      favoriteCollection: { kind: 'ready', items: [{ key: 'summary.value', available: false }] },
       realtimeGroups: [realtimeGroup('summary')]
     });
     renderWorkbench(value);
 
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') }));
-    expect(value.actions.toggleRealtimeFavorite).toHaveBeenCalledWith('summary');
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
-    expect(screen.getByText(i18n.t('monitorMetrics.historyUnsupported'))).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Favorites 0/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: /Favorites 0/ }));
+    expect(screen.queryByRole('heading', { name: 'summary' })).not.toBeInTheDocument();
+    expect(screen.getByText(i18n.t('monitorMetrics.favoriteEmpty'))).toBeInTheDocument();
   });
 
-  it('shows the auto-refresh choices and forwards an Off selection', () => {
-    const value = controller();
-    renderWorkbench(value);
-
-    const refreshSelect = screen.getByRole('combobox', { name: i18n.t('monitorMetrics.autoRefresh.label') });
-    expect(refreshSelect.closest('.ant-select')).toHaveTextContent(
-      i18n.t('monitorMetrics.autoRefresh.seconds', { count: 90 })
-    );
-    fireEvent.mouseDown(refreshSelect);
-    fireEvent.click(screen.getByText(i18n.t('monitorMetrics.autoRefresh.off')));
-
-    expect(value.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
-  });
-
-  it('offers the exact uppercase long history range tokens', () => {
-    const value = controller({ historyCharts: [historyChart('summary.value', { kind: 'loading', rows: [] })] });
-    renderWorkbench(value);
-
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.history') }));
-    const historySelect = screen.getByRole('combobox', { name: i18n.t('monitorMetrics.historyRange') });
-    fireEvent.mouseDown(historySelect);
-    fireEvent.click(screen.getByText('4W'));
-
-    expect(value.actions.setHistoryChartRange).toHaveBeenCalledWith('summary.value', '4W');
-    expect(screen.getByText('1W')).toBeInTheDocument();
-    expect(screen.getByText('12W')).toBeInTheDocument();
-  });
-
-  it('makes the favorite collection discoverable and selects only available favorite metrics', () => {
+  it('lets panel height own dense scrolling without a second expand surface', () => {
+    const rows = Array.from({ length: 8 }, (_, index) => metricRow(`metric_${index + 1}`, String(index + 1)));
     const value = controller({
-      favoriteCollection: {
+      catalog: {
         kind: 'ready',
-        items: [
-          { key: 'retired.value', available: false },
-          { key: 'summary.value', available: true }
-        ]
-      }
+        options: rows.map(row => ({ key: `summary.${row.field}`, group: 'summary', field: row.field }))
+      },
+      metricKey: 'summary.metric_8',
+      favoriteCollection: { kind: 'ready', items: [{ key: 'summary.metric_8', available: false }] },
+      realtimeGroups: [
+        {
+          ...realtimeGroup('summary'),
+          result: { kind: 'ready', rows }
+        }
+      ]
     });
     renderWorkbench(value);
 
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
-    expect(screen.getByRole('button', { name: 'retired.value' })).toBeDisabled();
-    expect(screen.getByText(i18n.t('monitorMetrics.favoriteUnavailable'))).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'summary.value' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'summary.value' })).not.toHaveClass('ant-btn-primary');
-    fireEvent.click(screen.getByRole('button', { name: 'summary.value' }));
-
-    expect(value.actions.setMetric).toHaveBeenCalledWith('summary.value');
-    expect(screen.getAllByRole('tab', { name: i18n.t('monitorMetrics.realtime') })).toHaveLength(2);
-    expect(screen.getAllByRole('tab', { name: i18n.t('monitorMetrics.history') })).toHaveLength(2);
+    const card = screen.getByRole('article');
+    expect(within(card).getAllByRole('row')).toHaveLength(8);
+    expect(within(card).getByRole('button', { name: 'summary.metric_7' })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'summary.metric_8' })).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: /Expand metric group/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it.each(favoriteCollectionCases)('renders distinct favorite collection %# evidence', (favoriteCollection, key) => {
-    renderWorkbench(controller({ favoriteCollection }));
+  it.each([
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description'],
+    ['empty', 'monitorMetrics.empty']
+  ] as const)('renders distinct realtime group %s evidence', (kind, key) => {
+    renderWorkbench(controller({ realtimeGroups: [{ ...realtimeGroup('summary'), result: { kind, rows: [] } }] }));
+    expect(screen.getByText(i18n.t(key))).toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole('tab', { name: i18n.t('monitorMetrics.favorites') }));
+  it.each(catalogCases)('renders distinct catalog evidence %#', (catalog, key) => {
+    renderWorkbench(controller({ catalog, realtimeGroups: [] }));
+    expect(screen.getByText(i18n.t(key)).closest('[data-state]')).toBeInTheDocument();
+  });
+
+  it('fails the selected history tray closed when storage is unavailable', () => {
+    renderWorkbench(
+      controller({
+        selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }),
+        historyAvailability: { kind: 'unavailable' }
+      })
+    );
+
+    expect(screen.getByText(i18n.t('common.unavailable')).closest('[data-state]')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'summary.value' })).not.toBeInTheDocument();
+  });
+
+  it('controls exact history ranges, raw/aggregate mode, and refresh from an in-flow panel', () => {
+    const value = controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) });
+    renderWorkbench(value);
+
+    const range = screen.getByRole('combobox', { name: i18n.t('monitorMetrics.historyRange') });
+    fireEvent.mouseDown(range);
+    fireEvent.click(screen.getByText('4W'));
+    expect(value.actions.setHistoryChartRange).toHaveBeenCalledWith('summary.value', '4W');
+
+    fireEvent.click(screen.getByRole('radio', { name: i18n.t('monitorMetrics.aggregatedValues') }));
+    expect(value.actions.setHistoryChartMode).toHaveBeenCalledWith('summary.value', true);
+    expect(value.actions.setHistoryChartRange).not.toHaveBeenCalledWith('summary.value', '1W');
+    fireEvent.click(
+      within(document.querySelector('[data-monitor-history-tray]') as HTMLElement).getByRole('button', {
+        name: i18n.t('monitorMetrics.refreshHistory')
+      })
+    );
+    expect(value.actions.refreshHistoryChart).toHaveBeenCalledWith('summary.value');
+    expect(screen.queryByRole('button', { name: i18n.t('monitorMetrics.collapseHistory') })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('monitorMetrics.expandHistory') })).not.toBeInTheDocument();
+  });
+
+  it('integrates layout editing into the dashboard command bar and places history before realtime panels', () => {
+    renderWorkbench(controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) }));
+
+    const commandBar = document.querySelector('[data-hb-operational-command-bar]') as HTMLElement;
+    const history = document.querySelector('[data-monitor-history-tray]') as HTMLElement;
+    const realtime = screen.getByRole('article');
+
+    expect(within(commandBar).getByRole('button', { name: i18n.t('monitorMetrics.layout.edit') })).toBeVisible();
+    expect(history.compareDocumentPosition(realtime) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'summary' })).not.toBeInTheDocument();
+  });
+
+  it('pauses and resumes shared live refresh without hiding current values', () => {
+    const value = controller();
+    const rendered = renderWorkbench(value);
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.pause') }));
+    expect(value.actions.setRefreshSeconds).toHaveBeenCalledWith(0);
+    rendered.rerender(workbenchNode(controller({ refreshSeconds: 0 })));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitorMetrics.returnLive') }));
+    expect(screen.getByRole('heading', { name: 'summary' })).toBeInTheDocument();
+  });
+
+  it.each([
+    [{ kind: 'unavailable' as const }, 'common.unavailable'],
+    [{ kind: 'error' as const }, 'common.routeError.description'],
+    [{ kind: 'empty' as const, items: [] }, 'monitorMetrics.favoriteEmpty']
+  ])('renders distinct favorites evidence %#', (favoriteCollection, key) => {
+    renderWorkbench(controller({ favoriteCollection }));
+    fireEvent.click(screen.getByRole('radio', { name: /Favorites/ }));
     expect(screen.getAllByText(i18n.t(key)).length).toBeGreaterThan(0);
   });
 });
@@ -365,13 +364,28 @@ function controller(
       favorite: { kind: 'ready', value: false },
       favoriteCollection: { kind: 'empty', items: [] },
       favoriteBusy: false,
-      realtimeGroups: [],
+      realtimeGroupNames: ['summary'],
+      realtimeGroups: [realtimeGroup('summary')],
       hasMoreRealtimeGroups: false,
       historyAvailability: { kind: 'available' },
       historyCharts: [],
       hasMoreHistoryCharts: false,
-      realtime: { kind: 'empty', rows: [] },
+      realtime: { kind: 'ready', rows: [metricRow('value', '12')] },
       historical: { kind: 'empty', rows: [] },
+      layout: {
+        readState: 'ready',
+        editing: false,
+        saving: false,
+        revision: '',
+        hasSavedLayout: false,
+        layout: {
+          schemaVersion: 1,
+          mode: 'auto',
+          columns: 12,
+          items: [{ group: 'summary', x: 0, y: 0, w: 4, h: 10, collapsed: false, order: 0 }],
+          historyDock: { collapsed: false, height: 12 }
+        }
+      },
       ...statePatch
     },
     actions: {
@@ -380,18 +394,28 @@ function controller(
       setRefreshSeconds: vi.fn(),
       toggleFavorite: vi.fn(),
       toggleRealtimeFavorite: vi.fn(),
+      revealRealtimeGroup: vi.fn(),
       loadMoreRealtimeGroups: vi.fn(),
       activateHistoryChart: vi.fn(),
       setHistoryChartRange: vi.fn(),
+      setHistoryChartMode: vi.fn(),
       refreshHistoryChart: vi.fn(),
       loadMoreHistoryCharts: vi.fn(),
-      refresh: vi.fn()
+      refresh: vi.fn(),
+      layout: {
+        beginEdit: vi.fn(),
+        cancelEdit: vi.fn(),
+        changeItems: vi.fn(),
+        changeHistoryDock: vi.fn(),
+        save: vi.fn(),
+        reset: vi.fn()
+      }
     }
   };
 }
 
 function metricRow(field: string, value: string) {
-  return { key: `0:${field}`, labels: {}, field, unit: null, value, time: null };
+  return { key: `0:${field}`, labels: {}, field, unit: null, value, time: null, collectedAt: null };
 }
 
 function realtimeGroup(group: string): MonitorMetricWorkbenchController['state']['realtimeGroups'][number] {
@@ -408,17 +432,17 @@ function historyChart(
   result: MonitorMetricWorkbenchController['state']['historyCharts'][number]['result']
 ): MonitorMetricWorkbenchController['state']['historyCharts'][number] {
   const [group, field] = key.split('.');
-  return {
-    metric: { key, group: group!, field: field! },
-    history: '30m',
-    result
-  };
+  return { metric: { key, group: group!, field: field! }, history: '30m', interval: false, result };
 }
 
-function renderWorkbench(value: MonitorMetricWorkbenchController) {
-  return render(
+function workbenchNode(value: MonitorMetricWorkbenchController) {
+  return (
     <I18nextProvider i18n={i18n}>
       <MonitorMetricWorkbench {...value} />
     </I18nextProvider>
   );
+}
+
+function renderWorkbench(value: MonitorMetricWorkbenchController) {
+  return render(workbenchNode(value));
 }

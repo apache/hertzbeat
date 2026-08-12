@@ -49,8 +49,20 @@ function useRealtimeGroupSelection(monitorId: number | undefined, definitions: M
     setSelection({ sourceKey, visibleCount });
   }
   return {
+    names: groups.map(group => group.group),
     visible: groups.slice(0, visibleCount),
     hasMore: visibleCount < groups.length,
+    reveal: (group: string) => {
+      const index = groups.findIndex(candidate => candidate.group === group);
+      if (index < 0) return;
+      setSelection(current => ({
+        sourceKey,
+        visibleCount: Math.max(
+          current.sourceKey === sourceKey ? current.visibleCount : realtimeGroupPageSize,
+          index + 1
+        )
+      }));
+    },
     loadMore: () =>
       setSelection(current => ({
         sourceKey,

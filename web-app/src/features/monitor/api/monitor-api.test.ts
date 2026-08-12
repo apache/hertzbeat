@@ -21,6 +21,7 @@ const http = vi.hoisted(() => ({
   apiMessageDelete: vi.fn(),
   apiMessageGet: vi.fn(),
   apiMessagePost: vi.fn(),
+  apiMessagePostWithErrorEnvelope: vi.fn(),
   apiMessagePut: vi.fn()
 }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
@@ -352,17 +353,14 @@ describe('monitor metric API paths', () => {
 
   it.each([
     ['30m', false],
-    ['1h', false],
-    ['6h', false],
-    ['24h', false],
-    ['1W', true],
-    ['4W', true],
-    ['12W', true]
-  ] as const)('sends history=%s with interval=%s', (history, interval) => {
+    ['30m', true],
+    ['1W', false],
+    ['1W', true]
+  ] as const)('sends history=%s independently from interval=%s', (history, interval) => {
     const monitor = { id: 7, app: 'website', name: 'home', instance: 'example.com:443', status: 1 };
     const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
 
-    expect(buildHistoryMetricPath(monitor, metric, history)).toBe(
+    expect(buildHistoryMetricPath(monitor, metric, history, interval)).toBe(
       `/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=${history}&interval=${interval}`
     );
   });
@@ -549,12 +547,13 @@ describe('monitor detail API contracts', () => {
     const { signal } = controller;
     const payload = { monitor: { name: 'home' } };
     http.apiMessagePost.mockResolvedValue(undefined);
+    http.apiMessagePostWithErrorEnvelope.mockResolvedValue(undefined);
     http.apiMessagePut.mockResolvedValue(undefined);
     await detectMonitor(payload, signal);
     await saveMonitor('new', payload, signal);
     await saveMonitor('edit', payload, signal);
-    expect(http.apiMessagePost).toHaveBeenCalledWith('/api/monitor/detect', payload, { signal });
-    const detectSignal = http.apiMessagePost.mock.calls[0]?.[2]?.signal as AbortSignal;
+    expect(http.apiMessagePostWithErrorEnvelope).toHaveBeenCalledWith('/api/monitor/detect', payload, { signal });
+    const detectSignal = http.apiMessagePostWithErrorEnvelope.mock.calls[0]?.[2]?.signal as AbortSignal;
     expect(detectSignal).toBe(signal);
     expect(detectSignal.aborted).toBe(false);
     controller.abort();
@@ -889,7 +888,7 @@ describe('monitor metric API contracts', () => {
         }
       ]
     });
-    await expect(loadHistoryMetric(monitor, metric, '30m', signal)).resolves.toEqual({
+    await expect(loadHistoryMetric(monitor, metric, '30m', false, signal)).resolves.toEqual({
       values: {
         'host=a': [{ origin: null, mean: '11', median: null, min: null, max: null, time: 0 }]
       }
@@ -980,7 +979,7 @@ describe('monitor metric API contracts', () => {
           ? loadFavoriteMetrics(7)
           : kind === 'realtime'
             ? loadRealtimeMetric(7, metric)
-            : loadHistoryMetric(monitor, metric, '30m');
+            : loadHistoryMetric(monitor, metric, '30m', false);
     await expect(promise).rejects.toBeInstanceOf(MonitorContractError);
   });
 

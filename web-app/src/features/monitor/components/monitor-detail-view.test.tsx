@@ -79,7 +79,7 @@ describe('MonitorDetailView', () => {
     expect(document.querySelector('[data-hb-operational-page][data-mode="workspace"]')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'checkout' })).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('monitor.metadata.interval', { seconds: 0 }))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('monitor.metadata.interval', { seconds: 0 }))).not.toBeInTheDocument();
     expect(screen.getByTestId('metrics')).toHaveTextContent('1');
   });
 
@@ -152,7 +152,7 @@ describe('MonitorDetailView', () => {
     expect(document.body).not.toHaveTextContent('private-encrypted-wire-value');
   });
 
-  it('uses the monitor identity as the only page heading and keeps a compact operational summary', () => {
+  it('keeps the monitor identity as the only page heading and leaves metadata in the configuration drawer', () => {
     renderView({
       ...ready,
       detail: {
@@ -164,7 +164,13 @@ describe('MonitorDetailView', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'checkout' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: i18n.t('monitor.detail') })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: i18n.t('monitor.metadata.summary') })).toHaveTextContent('collector-a');
+    expect(screen.queryByRole('region', { name: i18n.t('monitor.metadata.summary') })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('monitor.metadata.viewConfiguration') }));
+
+    expect(screen.getByRole('dialog', { name: i18n.t('monitor.metadata.configuration') })).toHaveTextContent(
+      'collector-a'
+    );
   });
 
   it('closes configuration when the route resolves to a different monitor', () => {

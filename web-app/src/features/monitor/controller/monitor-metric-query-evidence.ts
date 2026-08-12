@@ -41,7 +41,7 @@ export function favoriteEvidence(
   if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
   if (!query.data) return { kind: 'error' };
   if (!metric) return { kind: 'ready', value: false };
-  const token = [metric.key, metric.group, metric.field].find(candidate => query.data?.includes(candidate));
+  const token = query.data.includes(metric.group) ? metric.group : undefined;
   return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
 }
 
@@ -52,7 +52,7 @@ export function realtimeGroupFavoriteEvidence(
   if (query.isPending) return { kind: 'loading' };
   if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
   if (!query.data) return { kind: 'error' };
-  const token = query.data.find(candidate => candidate === group || candidate.startsWith(`${group}.`));
+  const token = query.data.find(candidate => candidate === group);
   return token ? { kind: 'ready', value: true, token } : { kind: 'ready', value: false };
 }
 
@@ -68,23 +68,8 @@ export function favoriteCollectionEvidence(
 }
 
 function resolveFavoriteItems(tokens: string[], options: MonitorMetricOption[]) {
-  // Older monitor definitions persisted a group, a field, or a full metric key.
-  // Resolve every supported form while retaining orphaned tokens as honest evidence.
-  const items: Array<{ key: string; available: boolean }> = [];
-  const emitted = new Set<string>();
-  for (const token of new Set(tokens)) {
-    const matches = options.filter(option => option.key === token || option.group === token || option.field === token);
-    if (matches.length === 0) {
-      items.push({ key: token, available: false });
-      continue;
-    }
-    for (const option of matches) {
-      if (emitted.has(option.key)) continue;
-      emitted.add(option.key);
-      items.push({ key: option.key, available: true });
-    }
-  }
-  return items;
+  const groups = new Set(options.map(option => option.group));
+  return [...new Set(tokens)].map(token => ({ key: token, available: groups.has(token) }));
 }
 
 export function metricEvidence<T, Row>(

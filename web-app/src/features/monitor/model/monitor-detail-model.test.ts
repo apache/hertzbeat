@@ -37,7 +37,7 @@ import {
 } from './monitor-detail-model';
 
 describe('monitor detail model', () => {
-  it('keeps exact history wire tokens and aggregates only uppercase week ranges', () => {
+  it('keeps exact history wire tokens and Angular-compatible initial interval defaults', () => {
     expect(monitorMetricHistoryRanges).toEqual(['30m', '1h', '6h', '24h', '1W', '4W', '12W']);
     expect(monitorMetricHistoryRanges.map(monitorMetricHistoryUsesInterval)).toEqual([
       false,
@@ -201,7 +201,8 @@ describe('monitor detail model', () => {
         field: 'responseTime',
         unit: 'ms',
         value: '12',
-        time: 0
+        time: 0,
+        collectedAt: 2000
       },
       {
         key: '0:status',
@@ -209,7 +210,8 @@ describe('monitor detail model', () => {
         field: 'status',
         unit: null,
         value: 'UP',
-        time: 2000
+        time: 2000,
+        collectedAt: 2000
       },
       {
         key: '0:message',
@@ -217,7 +219,8 @@ describe('monitor detail model', () => {
         field: 'message',
         unit: null,
         value: '—',
-        time: 2000
+        time: 2000,
+        collectedAt: 2000
       }
     ]);
     expect(
@@ -238,7 +241,8 @@ describe('monitor detail model', () => {
         field: 'status',
         unit: null,
         value: 'UP',
-        time: null
+        time: null,
+        collectedAt: null
       }
     ]);
   });

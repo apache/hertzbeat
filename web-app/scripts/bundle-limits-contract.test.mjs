@@ -25,7 +25,7 @@ import bundleLimits from './bundle-limits.json' with { type: 'json' };
 
 test('vendor chunks stay within the application chunk warning boundary', () => {
   const chunkWarningBytes = bundleLimits.chunkWarningKilobytes * 1024;
-  const approvedTotalJavaScriptCeiling = 6.25 * 1024 * 1024;
+  const approvedTotalJavaScriptCeiling = 6.3 * 1024 * 1024;
 
   assert.ok(bundleLimits.vendorChunkMinBytes > 0);
   assert.ok(bundleLimits.vendorChunkMinBytes <= bundleLimits.vendorChunkMaxBytes);

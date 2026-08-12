@@ -52,8 +52,8 @@ describe('Monitor Query Key factory', () => {
     );
     expect(monitorQueryKeys.favorites(7)).toEqual(monitorQueryKeys.favorites(7));
     expect(monitorQueryKeys.realtime(7, 'summary')).toEqual(monitorQueryKeys.realtime(7, 'summary'));
-    expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m')).toEqual(
-      monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m')
+    expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', false)).toEqual(
+      monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m', false)
     );
   });
 
@@ -90,7 +90,7 @@ describe('Monitor Query Key factory', () => {
     for (const candidate of [monitorQueryKeys.realtime(8, 'summary'), monitorQueryKeys.realtime(7, 'cpu')])
       expect(candidate).not.toEqual(realtime);
 
-    const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m');
+    const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', false);
     for (const candidate of [
       monitorQueryKeys.history({ ...historySource, id: 8 }, 'summary.responseTime', '30m'),
       monitorQueryKeys.history({ ...historySource, instance: '127.0.0.1:9090' }, 'summary.responseTime', '30m'),
@@ -98,7 +98,8 @@ describe('Monitor Query Key factory', () => {
       monitorQueryKeys.history({ ...historySource, app: 'prometheus' }, 'summary.responseTime', '30m'),
       monitorQueryKeys.history({ ...historySource, scrape: 'http_sd' }, 'summary.responseTime', '30m'),
       monitorQueryKeys.history(historySource, 'summary.max', '30m'),
-      monitorQueryKeys.history(historySource, 'summary.responseTime', '1h')
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '1h', false),
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', true)
     ])
       expect(candidate).not.toEqual(history);
   });

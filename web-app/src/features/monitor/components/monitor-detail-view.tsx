@@ -33,7 +33,7 @@ import type {
   MonitorDetailViewState
 } from '../model/monitor-detail-model';
 import { safeMonitorGrafanaUrl } from '../model/monitor-detail-model';
-import { MonitorDetailConfigurationDrawer, MonitorDetailSummary } from './monitor-detail-metadata';
+import { MonitorDetailConfigurationDrawer } from './monitor-detail-metadata';
 import { MonitorHelpLink } from './monitor-help-link';
 import styles from './monitor-detail-view.module.css';
 
@@ -98,7 +98,6 @@ function MonitorReadyDetailView({
           </>
         }
       />
-      <MonitorDetailSummary monitor={monitor} collector={detail.collector} />
       {metricWorkbench}
       <MonitorDetailConfigurationDrawer
         open={configurationOpen}

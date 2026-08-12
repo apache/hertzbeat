@@ -350,25 +350,26 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
         timeSeriesSelector = timeSeriesSelector + "}";
 
+        Map<String, List<Value>> intervalValuesMap = new HashMap<>(instanceValuesMap.size());
         try {
             // max
             String finalTimeSeriesSelector = timeSeriesSelector;
             URI uri = getUri(effectiveStart, effectiveEnd, queryStep,
                     uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMax);
             // min
             uri = getUri(effectiveStart, effectiveEnd, queryStep,
                     uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMin);
             // avg
             uri = getUri(effectiveStart, effectiveEnd, queryStep,
                     uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
-            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
+            requestIntervalMetricAndPutValue(uri, intervalValuesMap, Value::setMean);
         } catch (Exception e) {
             log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
         }
 
-        return instanceValuesMap;
+        return intervalValuesMap;
     }
 
     /**
@@ -594,14 +595,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 continue;
             }
             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
-            if (valueList.size() == content.getValues().size()) {
-                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
-                    Value value = valueList.get(timestampIndex);
-                    Object[] valueArr = content.getValues().get(timestampIndex);
-                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                    valueConsumer.accept(value, avgValue);
-                }
+            Map<Long, Value> valuesByTime = valueList.stream()
+                    .collect(Collectors.toMap(Value::getTime, Function.identity(), (first, ignored) -> first));
+            for (Object[] valueArr : content.getValues()) {
+                long timestamp = ((Double) valueArr[0]).longValue() * 1000;
+                Value value = valuesByTime.computeIfAbsent(timestamp, key -> new Value(null, key));
+                String intervalValue = new BigDecimal(String.valueOf(valueArr[1]))
+                        .setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                valueConsumer.accept(value, intervalValue);
             }
+            valueList.clear();
+            valueList.addAll(valuesByTime.values().stream()
+                    .sorted((left, right) -> Long.compare(left.getTime(), right.getTime()))
+                    .toList());
         }
     }
 
