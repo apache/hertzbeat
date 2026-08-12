@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertNoticeRuleComponent } from './alert-notice-rule.component';
 
@@ -26,9 +27,7 @@ describe('AlertNoticeRuleComponent', () => {
   let fixture: ComponentFixture<AlertNoticeRuleComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [AlertNoticeRuleComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertNoticeRuleComponent).compileComponents();
 
     fixture = TestBed.createComponent(AlertNoticeRuleComponent);
     component = fixture.componentInstance;
