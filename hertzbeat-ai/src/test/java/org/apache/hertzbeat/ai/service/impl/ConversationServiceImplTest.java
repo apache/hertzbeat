@@ -125,7 +125,7 @@ class ConversationServiceImplTest {
     }
 
     /**
-     * 客户端省略可选会话 ID 时，服务端应创建会话并在整个流式响应中返回新 ID。
+     * The service should create a conversation and return its ID when the client omits the optional conversation ID.
      */
     @Test
     void streamChatShouldCreateConversationWhenConversationIdIsMissing() {

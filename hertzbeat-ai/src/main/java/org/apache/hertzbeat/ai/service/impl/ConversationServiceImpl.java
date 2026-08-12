@@ -80,7 +80,7 @@ public class ConversationServiceImpl implements ConversationService {
 
         ChatConversation conversation;
         if (conversationId == null) {
-            // 接口约定 conversationId 可选，首次聊天时按需创建会话。
+            // The API contract makes conversationId optional, so create a conversation for the first message.
             conversation = new ChatConversation();
             conversation.setTitle(buildConversationTitle(message));
             conversation = conversationDao.save(conversation);
