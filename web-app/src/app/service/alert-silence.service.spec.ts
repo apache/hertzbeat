@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { AlertSilenceService } from './alert-silence.service';
 
@@ -25,7 +26,7 @@ describe('AlertSilenceService', () => {
   let service: AlertSilenceService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(AlertSilenceService);
   });
 

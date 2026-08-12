@@ -18,6 +18,8 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { configureShallowTest } from '@testing';
 
 import { SettingsComponent } from './settings.component';
 
@@ -26,10 +28,9 @@ describe('SettingsComponent', () => {
   let fixture: ComponentFixture<SettingsComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [SettingsComponent]
-    }).compileComponents();
+    await configureShallowTest(SettingsComponent).compileComponents();
 
+    spyOnProperty(TestBed.inject(Router), 'url').and.returnValue('/setting/settings/config');
     fixture = TestBed.createComponent(SettingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

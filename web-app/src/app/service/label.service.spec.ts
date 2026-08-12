@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { LabelService } from './label.service';
 
@@ -25,7 +26,7 @@ describe('LabelService', () => {
   let service: LabelService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(LabelService);
   });
 
