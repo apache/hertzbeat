@@ -77,9 +77,9 @@ management:
 # the admin role in sureness.yml either way.
 springdoc:
   api-docs:
-    enabled: true
+    enabled: false
   swagger-ui:
-    enabled: true
+    enabled: false
 
 sureness:
   container: jakarta_servlet
