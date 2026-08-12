@@ -69,6 +69,7 @@ public class AlertDefineExcelImExportServiceTest {
         row.createCell(6).setCellValue(JsonUtil.toJson(Map.of("key", "value")));
         row.createCell(7).setCellValue("template1");
         row.createCell(8).setCellValue(true);
+        row.createCell(9).setCellValue("promql");
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(toByteArray(initialWorkbook));
 
@@ -93,6 +94,7 @@ public class AlertDefineExcelImExportServiceTest {
             assertEquals(Map.of("key", "value"), alertDefineDTO.getAnnotations());
             assertEquals("template1", alertDefineDTO.getTemplate());
             assertTrue(alertDefineDTO.getEnable());
+            assertEquals("promql", alertDefineDTO.getDatasource());
         }
     }
 
@@ -111,6 +113,7 @@ public class AlertDefineExcelImExportServiceTest {
         alertDefineDTO.setAnnotations(Map.of("key", "value"));
         alertDefineDTO.setTemplate("template1");
         alertDefineDTO.setEnable(true);
+        alertDefineDTO.setDatasource("promql");
         exportAlertDefineDTO.setAlertDefine(alertDefineDTO);
         exportAlertDefineList.add(exportAlertDefineDTO);
 
@@ -129,6 +132,7 @@ public class AlertDefineExcelImExportServiceTest {
                 assertEquals("Annotations", headerRow.getCell(6).getStringCellValue());
                 assertEquals("Template", headerRow.getCell(7).getStringCellValue());
                 assertEquals("Enable", headerRow.getCell(8).getStringCellValue());
+                assertEquals("Datasource", headerRow.getCell(9).getStringCellValue());
 
                 Row dataRow = resultSheet.getRow(1);
                 assertEquals("app1", dataRow.getCell(0).getStringCellValue());
@@ -140,6 +144,7 @@ public class AlertDefineExcelImExportServiceTest {
                 assertEquals(JsonUtil.toJson(Map.of("key", "value")), dataRow.getCell(6).getStringCellValue());
                 assertEquals("template1", dataRow.getCell(7).getStringCellValue());
                 assertTrue(dataRow.getCell(8).getBooleanCellValue());
+                assertEquals("promql", dataRow.getCell(9).getStringCellValue());
             }
         }
     }
