@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MonitorEditComponent } from './monitor-edit.component';
 
@@ -26,9 +27,7 @@ describe('MonitorModifyComponent', () => {
   let fixture: ComponentFixture<MonitorEditComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorEditComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorEditComponent).compileComponents();
   });
 
   beforeEach(() => {

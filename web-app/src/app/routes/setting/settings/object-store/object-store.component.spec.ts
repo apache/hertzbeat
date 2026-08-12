@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { ObjectStoreComponent } from './object-store.component';
 
@@ -26,9 +27,7 @@ describe('ObjectStoreComponent', () => {
   let fixture: ComponentFixture<ObjectStoreComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ObjectStoreComponent]
-    }).compileComponents();
+    await configureShallowTest(ObjectStoreComponent).compileComponents();
 
     fixture = TestBed.createComponent(ObjectStoreComponent);
     component = fixture.componentInstance;

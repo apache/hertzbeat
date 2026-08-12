@@ -26,6 +26,9 @@
       "@core": [
         "src/app/core/index"
       ],
+      "@testing": [
+        "src/testing"
+      ],
       "@env/*": [
         "src/environments/*"
       ]
