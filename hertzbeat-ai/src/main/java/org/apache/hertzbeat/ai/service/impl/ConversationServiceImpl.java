@@ -78,24 +78,32 @@ public class ConversationServiceImpl implements ConversationService {
                 .build());
         }
 
-        log.info("Starting streaming conversation: {}", conversationId);
-        ChatConversation conversation = conversationDao.findById(conversationId)
-            .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
+        ChatConversation conversation;
+        if (conversationId == null) {
+            // 接口约定 conversationId 可选，首次聊天时按需创建会话。
+            conversation = new ChatConversation();
+            conversation.setTitle(buildConversationTitle(message));
+            conversation = conversationDao.save(conversation);
+        } else {
+            conversation = conversationDao.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
+        }
+        Long currentConversationId = conversation.getId();
+        log.info("Starting streaming conversation: {}", currentConversationId);
 
         // Manually load messages for conversation history
-        List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
+        List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(currentConversationId);
         conversation.setMessages(messages);
 
         if (conversation.getTitle().startsWith("conversation")) {
             // Auto-generate title from first user message
-            String title = message.length() > 30 ? message.substring(0, 27) + "..." : message;
-            conversation.setTitle(title);
+            conversation.setTitle(buildConversationTitle(message));
             conversationDao.save(conversation);
         }
 
         // Add user message to conversation
         ChatMessage chatMessage = ChatMessage.builder()
-            .conversationId(conversationId)
+            .conversationId(currentConversationId)
             .content(message)
             .role("user")
             .build();
@@ -103,7 +111,7 @@ public class ConversationServiceImpl implements ConversationService {
 
         ChatRequestContext context = ChatRequestContext.builder()
             .message(message)
-            .conversationId(conversationId)
+            .conversationId(currentConversationId)
             .conversationHistory(messages)
             .build();
 
@@ -116,7 +124,7 @@ public class ConversationServiceImpl implements ConversationService {
             .map(chunk -> {
                 fullResponse.append(chunk);
                 ChatResponseChunk responseChunk = ChatResponseChunk.builder()
-                    .conversationId(conversationId)
+                    .conversationId(currentConversationId)
                     .userMessageId(finalChatMessage.getId())
                     .response(chunk)
                     .build();
@@ -128,13 +136,13 @@ public class ConversationServiceImpl implements ConversationService {
             .concatWith(Flux.defer(() -> {
                 // Add the complete AI response to conversation
                 ChatMessage assistantMessage = ChatMessage.builder()
-                    .conversationId(conversationId)
+                    .conversationId(currentConversationId)
                     .content(fullResponse.toString())
                     .role("assistant")
                     .build();
                 assistantMessage = messageDao.save(assistantMessage);
                 ChatResponseChunk finalResponse = ChatResponseChunk.builder()
-                    .conversationId(conversationId)
+                    .conversationId(currentConversationId)
                     .response("")
                     .assistantMessageId(assistantMessage.getId())
                     .build();
@@ -143,12 +151,12 @@ public class ConversationServiceImpl implements ConversationService {
                     .event("complete")
                     .build());
             }))
-            .doOnComplete(() -> log.info("Streaming completed for conversation: {}", conversationId))
-            .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", conversationId,
+            .doOnComplete(() -> log.info("Streaming completed for conversation: {}", currentConversationId))
+            .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", currentConversationId,
                 error.getMessage(), error))
             .onErrorResume(error -> {
                 ChatResponseChunk errorResponse = ChatResponseChunk.builder()
-                    .conversationId(conversationId)
+                    .conversationId(currentConversationId)
                     .response("An error occurred: " + error.getMessage())
                     .userMessageId(finalChatMessage.getId())
                     .build();
@@ -163,6 +171,10 @@ public class ConversationServiceImpl implements ConversationService {
         ChatConversation conversation = new ChatConversation();
         conversation.setTitle("conversation-" + UUID.randomUUID().toString().substring(0, 4));
         return conversationDao.save(conversation);
+    }
+
+    private String buildConversationTitle(String message) {
+        return message.length() > 30 ? message.substring(0, 27) + "..." : message;
     }
 
     @Override
