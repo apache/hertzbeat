@@ -18,6 +18,7 @@
  */
 
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { SettingLabelComponent } from './label.component';
 
@@ -26,9 +27,7 @@ describe('SettingLabelComponent', () => {
   let fixture: ComponentFixture<SettingLabelComponent>;
 
   beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [SettingLabelComponent]
-    }).compileComponents();
+    configureShallowTest(SettingLabelComponent).compileComponents();
   }));
 
   beforeEach(() => {
