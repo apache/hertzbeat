@@ -51,10 +51,11 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
-  # the openapi document is a map of every route, parameter and model, so it is
+  # The OpenAPI document is a map of every route, parameter and model, so it is
   # scoped like any other administrative resource instead of being anonymous
   - /v3/api-docs/**===get===[admin]
   - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
   - /v2/api-docs/**===get===[admin]
   - /swagger-resources/**===get===[admin]
 
@@ -156,13 +157,15 @@ springdoc:
     enabled: true
 ```
 
-Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above, so they have to be fetched with an administrator token:
+Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI adds the stored HertzBeat token to its same-origin document and try-it-out requests. Opening the UI without an administrator session reports `Failed to load API definition` without exposing the document.
+
+The document can also be fetched directly with an administrator token:
 
 ```shell
 curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
 ```
 
-> ⚠️ Note that the Swagger UI page fetches `/v3/api-docs/swagger-config` and `/v3/api-docs` without an `Authorization` header - its **Authorize** button only applies to try-it-out calls, not to the spec fetch. The page will therefore report `Failed to load API definition` unless you also move those two paths into `excludedResource`, which makes the document anonymous again. Only do that on a deployment that is not reachable from an untrusted network.
+> ⚠️ Do not move the OpenAPI paths into `excludedResource`; doing so makes the complete document anonymous again.
 
 ## Update Security Secret
 

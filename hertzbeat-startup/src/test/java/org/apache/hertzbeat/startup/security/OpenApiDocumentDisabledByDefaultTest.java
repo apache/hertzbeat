@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -39,14 +40,12 @@ import org.yaml.snakeyaml.Yaml;
 /**
  * Guards the springdoc switches that keep the openapi document off by default.
  *
- * <p>Scoping the document to the admin role is only half the story. The swagger ui page
- * is still reachable anonymously through the {@code /**}{@code /*.html===get} exclusion,
- * and it fetches {@code /v3/api-docs/swagger-config} and {@code /v3/api-docs} without an
- * {@code Authorization} header - its Authorize button only applies to try-it-out calls.
- * Shipping the page while the document is admin-only would leave everyone, administrators
- * included, staring at "Failed to load API definition". Both endpoints are therefore off
- * unless a deployment opts in, and the rbac rules stay as the second line of defence for
- * deployments that do.
+ * <p>Scoping the document to the admin role is only half the story. The document is a map
+ * of every route, http method, parameter and model, so a deployment that has no use for it
+ * should not serve it at all: both switches are off unless a deployment opts in, and the
+ * rbac rules stay as the second line of defence for deployments that do. The swagger ui
+ * page itself is reachable anonymously through the {@code /**}{@code /*.html===get}
+ * exclusion, but it only renders for a caller whose browser holds an administrator session.
  */
 class OpenApiDocumentDisabledByDefaultTest {
 
@@ -57,7 +56,7 @@ class OpenApiDocumentDisabledByDefaultTest {
             List.of("springdoc", "swagger-ui", "enabled"));
 
     @Test
-    void thePackagedConfigServesNoOpenApiDocument() throws IOException {
+    void shouldDisableTheOpenApiDocumentInThePackagedConfig() throws IOException {
         try (InputStream in = OpenApiDocumentDisabledByDefaultTest.class.getResourceAsStream("/application.yml")) {
             assertNotNull(in, "application.yml must be on the classpath");
             assertDisabled(documentsOf(in), "application.yml");
@@ -70,7 +69,7 @@ class OpenApiDocumentDisabledByDefaultTest {
      * still leave every container deployment serving the document.
      */
     @Test
-    void theDeploymentCopiesServeNoOpenApiDocumentEither() throws IOException {
+    void shouldDisableTheOpenApiDocumentInDeploymentCopies() throws IOException {
         for (Path copy : deploymentCopies()) {
             try (InputStream in = Files.newInputStream(copy)) {
                 assertDisabled(documentsOf(in), copy.toString());
@@ -104,6 +103,7 @@ class OpenApiDocumentDisabledByDefaultTest {
      * @param path     the key path to walk, outermost first
      * @return the value at that path, or null when any segment is missing
      */
+    @Nullable
     private static Object valueAt(Map<String, Object> document, List<String> path) {
         Object current = document;
         for (String key : path) {

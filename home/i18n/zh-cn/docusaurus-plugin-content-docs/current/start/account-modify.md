@@ -52,10 +52,11 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
-  # openapi 文档包含全部路由、参数与数据模型,等同于一份接口地图,
+  # OpenAPI 文档包含全部路由、参数与数据模型,等同于一份接口地图,
   # 因此按普通管理类资源收敛到 admin,不再匿名开放
   - /v3/api-docs/**===get===[admin]
   - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
   - /v2/api-docs/**===get===[admin]
   - /swagger-resources/**===get===[admin]
 
@@ -157,13 +158,15 @@ springdoc:
     enabled: true
 ```
 
-开启之后，文档接口仍然被上面的 `resourceRole` 规则收敛在 `admin` 角色，需要携带管理员令牌访问：
+开启之后，文档接口仍然被上面的 `resourceRole` 规则收敛在 `admin` 角色。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；Swagger UI 会在同源的文档请求与 try-it-out 请求中附带 HertzBeat 保存的令牌。没有管理员会话时，页面只会提示 `Failed to load API definition`，不会泄露文档。
+
+也可以直接携带管理员令牌获取文档：
 
 ```shell
 curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
 ```
 
-> ⚠️ 注意 Swagger UI 页面在首屏加载时会以不带 `Authorization` 头的方式请求 `/v3/api-docs/swagger-config` 和 `/v3/api-docs`——它的 **Authorize** 按钮只作用于 try-it-out 调用，不影响文档本身的拉取。因此除非你把这两个路径重新放回 `excludedResource`（这会让文档再次匿名可读），页面都会提示 `Failed to load API definition`。仅在不会被非受信网络访问到的部署上这样做。
+> ⚠️ 不要把 OpenAPI 路径放回 `excludedResource`，否则完整接口文档会再次匿名开放。
 
 ## 更新安全密钥
 

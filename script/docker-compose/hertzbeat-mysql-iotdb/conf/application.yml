@@ -74,9 +74,9 @@ management:
       export:
         enabled: true
 
-# the generated openapi document is a map of every route, http method, parameter
-# and model, so it is not served by default. a deployment that wants the swagger
-# ui opts in by turning both switches on; the document endpoints stay scoped to
+# The generated OpenAPI document is a map of every route, HTTP method, parameter
+# and model, so it is not served by default. A deployment that wants the Swagger
+# UI opts in by turning both switches on; the document endpoints stay scoped to
 # the admin role in sureness.yml either way.
 springdoc:
   api-docs:
@@ -119,7 +119,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-          
+
   flyway:
     enabled: true
     clean-disabled: true
@@ -127,7 +127,7 @@ spring:
     baseline-version: 1
     locations:
       - classpath:db/migration/mysql
-      
+
   # Not Require, Please config if you need email notify
   mail:
     # Attention: this is mail server address.
@@ -148,7 +148,7 @@ common:
   queue:
     # memory or kafka
     type: memory
-    
+
 warehouse:
   store:
 # store history metrics data, enable only one below
@@ -232,7 +232,7 @@ alerter:
       region: AWS_REGION_FOR_END_USER_MESSAGING
     twilio:
       account-sid: YOUR_ACCOUNT_SID
-      auth-token: YOUR_AUTH_TOKEN 
+      auth-token: YOUR_AUTH_TOKEN
       twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:

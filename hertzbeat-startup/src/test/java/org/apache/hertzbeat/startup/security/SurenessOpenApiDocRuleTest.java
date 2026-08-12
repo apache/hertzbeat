@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import com.usthe.sureness.matcher.util.TirePathTree;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -85,21 +86,21 @@ class SurenessOpenApiDocRuleTest {
     }
 
     @Test
-    void theOpenApiDocumentIsRestrictedToAdmin() {
+    void shouldRestrictTheOpenApiDocumentToAdmin() {
         assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs"));
         assertEquals("[admin]", rolesFor(roleTree, "/v2/api-docs"));
         assertEquals("[admin]", rolesFor(roleTree, "/swagger-resources/configuration/ui"));
     }
 
     /**
-     * springdoc also serves the grouped documents and its own config under the same
+     * Springdoc also serves the grouped documents and its own config under the same
      * prefix; a rule bound to the bare path would leave those anonymous.
      */
     @Test
-    void theGroupedDocumentsAreCoveredToo() {
+    void shouldCoverTheGroupedDocumentsToo() {
         assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs/swagger-config"));
         assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs/default"));
-        assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs/default.yaml"));
+        assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs.yaml/default"));
     }
 
     /**
@@ -110,14 +111,15 @@ class SurenessOpenApiDocRuleTest {
      * sureness treats as no restriction for any authenticated caller including guest.
      */
     @Test
-    void theYamlDocumentIsRestrictedToAdmin() {
+    void shouldRestrictTheYamlDocumentToAdmin() {
         assertEquals("[admin]", rolesFor(roleTree, "/v3/api-docs.yaml"));
     }
 
     @Test
-    void theOpenApiDocumentIsNoLongerAnonymous() {
+    void shouldStopTreatingTheOpenApiDocumentAsAnonymous() {
         assertNull(rolesFor(excludeTree, "/v3/api-docs"));
         assertNull(rolesFor(excludeTree, "/v3/api-docs.yaml"));
+        assertNull(rolesFor(excludeTree, "/v3/api-docs.yaml/default"));
         assertNull(rolesFor(excludeTree, "/v3/api-docs/swagger-config"));
         assertNull(rolesFor(excludeTree, "/v2/api-docs"));
         assertNull(rolesFor(excludeTree, "/swagger-resources/configuration/ui"));
@@ -130,7 +132,7 @@ class SurenessOpenApiDocRuleTest {
      * rejected.
      */
     @Test
-    void theExclusionTreeStillMatchesWhatItShould() {
+    void shouldKeepMatchingIntentionallyExcludedResources() {
         assertEquals("[exclude]", rolesFor(excludeTree, "/api/i18n/lang"));
     }
 
@@ -148,6 +150,8 @@ class SurenessOpenApiDocRuleTest {
                     "the openapi document is unruled or over-granted in " + copy);
             assertEquals("[admin]", rolesFor(copyRoleTree, "/v3/api-docs.yaml"),
                     "the yaml openapi document is unruled or over-granted in " + copy);
+            assertEquals("[admin]", rolesFor(copyRoleTree, "/v3/api-docs.yaml/default"),
+                    "the grouped yaml openapi document is unruled or over-granted in " + copy);
             assertEquals("[admin]", rolesFor(copyRoleTree, "/v3/api-docs/swagger-config"),
                     "the springdoc ui config is unruled or over-granted in " + copy);
 
@@ -159,6 +163,7 @@ class SurenessOpenApiDocRuleTest {
         }
     }
 
+    @Nullable
     private static String rolesFor(TirePathTree tree, String path) {
         return tree.searchPathFilterRoles(path + SEPARATOR + "get");
     }
