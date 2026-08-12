@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { StatusPagePublicService } from './status-page-public.service';
 
@@ -25,7 +26,7 @@ describe('StatusPagePublicService', () => {
   let service: StatusPagePublicService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(StatusPagePublicService);
   });
 
