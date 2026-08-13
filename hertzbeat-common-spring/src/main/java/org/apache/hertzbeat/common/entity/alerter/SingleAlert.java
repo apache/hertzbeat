@@ -111,6 +111,12 @@ public class SingleAlert {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime gmtUpdate;
 
+    /**
+     * Event published after a source alert receives its stable fingerprint.
+     */
+    public record CreatedEvent(SingleAlert alert) {
+    }
+
     @Override
     public SingleAlert clone() {
         // deep clone

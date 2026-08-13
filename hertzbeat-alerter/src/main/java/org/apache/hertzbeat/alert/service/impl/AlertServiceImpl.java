@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
@@ -169,6 +170,18 @@ public class AlertServiceImpl implements AlertService {
         Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
         groupAlertPage.getContent().forEach(this::hydrateGroupAlerts);
         return groupAlertPage;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<SingleAlert> findSingleAlert(long id) {
+        return singleAlertDao.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<GroupAlert> findGroupAlert(long id) {
+        return groupAlertDao.findById(id);
     }
 
     @Override

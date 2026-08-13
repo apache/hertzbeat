@@ -189,7 +189,8 @@ public class AgentAlertToolService {
     private Map<String, Object> queryGroupAlerts(String status, String search, String sort, String order,
                                                  Integer pageIndex, Integer pageSize) {
         Page<GroupAlert> page = alertService.getGroupAlerts(resolvedStatus(status),
-                AgentToolArguments.firstNonBlank(search), resolvedSort(sort), resolvedOrder(order),
+                AgentToolArguments.firstNonBlank(search), null, null, null, null,
+                resolvedSort(sort), resolvedOrder(order),
                 resolvedPageIndex(pageIndex), resolvedPageSize(pageSize));
         return pageResult(page, this::groupAlertRow);
     }
@@ -259,7 +260,7 @@ public class AgentAlertToolService {
                 .orElseThrow(() -> new IllegalArgumentException("Group alert not found: " + alertId));
         String matchValue = similarityValue(baseline.getCommonLabels(), baseline.getGroupKey());
         List<Map<String, Object>> content = alertService.getGroupAlerts(null, matchValue,
-                        "gmtUpdate", "desc", 0, limit + 1).getContent().stream()
+                        null, null, null, null, "gmtUpdate", "desc", 0, limit + 1).getContent().stream()
                 .filter(alert -> !Long.valueOf(alertId).equals(alert.getId()))
                 .limit(limit)
                 .map(this::groupAlertRow)

@@ -20,15 +20,16 @@ package org.apache.hertzbeat.ai.gateway.tool.alert;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
+import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
-import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,17 +48,18 @@ class AgentAlertSilenceToolServiceTest {
     @Test
     void shouldCreateBoundedTimezoneAwareSilence() {
         doAnswer(invocation -> {
-            AlertSilence silence = invocation.getArgument(0);
-            silence.setId(7L);
-            return null;
-        }).when(alertSilenceService).addAlertSilence(org.mockito.ArgumentMatchers.any(AlertSilence.class));
+            AlertSilenceRequest silence = invocation.getArgument(0);
+            return new AlertSilenceResponse(7L, silence.getName(), silence.getEnable(), silence.getMatchAll(),
+                    silence.getType(), null, silence.getLabels(), List.of(), silence.getPeriodStart(),
+                    silence.getPeriodEnd(), null, null, null, null);
+        }).when(alertSilenceService).create(org.mockito.ArgumentMatchers.any(AlertSilenceRequest.class));
 
         Map<String, Object> result = service.createOnce("maintenance", Map.of("environment", "production"),
                 "2026-07-17T10:00:00+08:00", "2026-07-17T12:00:00+08:00", true);
 
-        verify(alertSilenceService).validate(argThat(silence -> silence.getType() == 0
-                && !silence.isMatchAll()
-                && Duration.between(silence.getPeriodStart(), silence.getPeriodEnd()).toHours() == 2), eq(false));
+        verify(alertSilenceService).create(argThat(silence -> silence.getType() == 0
+                && !silence.getMatchAll()
+                && Duration.between(silence.getPeriodStart(), silence.getPeriodEnd()).toHours() == 2));
         assertEquals(7L, result.get("silenceId"));
     }
 

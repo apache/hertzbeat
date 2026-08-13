@@ -28,12 +28,13 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
+import org.apache.hertzbeat.alert.dto.AlertSilencePageResponse;
+import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
+import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
-import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 /**
@@ -59,11 +60,11 @@ public class AgentAlertSilenceToolService {
             @ToolParam(required = false, description = "Page size; maximum 100.") Integer pageSize) {
         int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, Integer.MAX_VALUE);
         int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 20 : pageSize, 1, 100);
-        Page<AlertSilence> page = alertSilenceService.getAlertSilences(null, search, "gmtCreate", "desc",
+        AlertSilencePageResponse page = alertSilenceService.list(null, search, "gmtCreate", "desc",
                 resolvedPageIndex, resolvedPageSize);
-        return Map.of("content", page.getContent().stream().map(this::silenceRow).toList(),
-                "pageIndex", page.getNumber(), "pageSize", page.getSize(),
-                "totalElements", page.getTotalElements(), "totalPages", page.getTotalPages());
+        return Map.of("content", page.content().stream().map(this::silenceRow).toList(),
+                "pageIndex", page.number(), "pageSize", page.size(),
+                "totalElements", page.totalElements(), "totalPages", page.totalPages());
     }
 
     @Tool(name = "alert_silence.get", description = "Get an exact alert silence policy by id.")
@@ -99,18 +100,15 @@ public class AgentAlertSilenceToolService {
         if (duration.isNegative() || duration.isZero() || duration.compareTo(MAX_SILENCE_DURATION) > 0) {
             throw new IllegalArgumentException("endsAt must be after startsAt and the interval must not exceed 366 days");
         }
-        AlertSilence silence = AlertSilence.builder()
-                .name(name.trim())
-                .enable(enabled == null || enabled)
-                .matchAll(resolvedLabels.isEmpty())
-                .type((byte) 0)
-                .labels(resolvedLabels)
-                .periodStart(start)
-                .periodEnd(end)
-                .build();
-        alertSilenceService.validate(silence, false);
-        alertSilenceService.addAlertSilence(silence);
-        return silenceRow(silence);
+        AlertSilenceRequest request = new AlertSilenceRequest();
+        request.setName(name.trim());
+        request.setEnable(enabled == null || enabled);
+        request.setMatchAll(resolvedLabels.isEmpty());
+        request.setType((byte) 0);
+        request.setLabels(resolvedLabels);
+        request.setPeriodStart(start);
+        request.setPeriodEnd(end);
+        return silenceRow(alertSilenceService.create(request));
     }
 
     @Tool(name = "alert_silence.toggle", description = "Enable or disable an exact alert silence policy.")
@@ -122,11 +120,10 @@ public class AgentAlertSilenceToolService {
         if (enabled == null) {
             throw new IllegalArgumentException("enabled is required");
         }
-        AlertSilence silence = requiredSilence(silenceId);
-        silence.setEnable(enabled);
-        alertSilenceService.validate(silence, true);
-        alertSilenceService.modifyAlertSilence(silence);
-        return silenceRow(silence);
+        AlertSilenceResponse silence = requiredSilence(silenceId);
+        AlertSilenceRequest request = requestFrom(silence);
+        request.setEnable(enabled);
+        return silenceRow(alertSilenceService.update(request));
     }
 
     @Tool(name = "alert_silence.delete", description = "Permanently delete an exact alert silence policy.")
@@ -139,20 +136,16 @@ public class AgentAlertSilenceToolService {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for alert_silence.delete");
         }
-        AlertSilence silence = requiredSilence(silenceId);
-        alertSilenceService.deleteAlertSilences(Set.of(silence.getId()));
-        return Map.of("operation", "delete", "silenceId", silence.getId(), "name", silence.getName());
+        AlertSilenceResponse silence = requiredSilence(silenceId);
+        alertSilenceService.delete(Set.of(silence.id()));
+        return Map.of("operation", "delete", "silenceId", silence.id(), "name", silence.name());
     }
 
-    private AlertSilence requiredSilence(Long silenceId) {
+    private AlertSilenceResponse requiredSilence(Long silenceId) {
         if (silenceId == null || silenceId <= 0) {
             throw new IllegalArgumentException("silenceId must be positive");
         }
-        AlertSilence silence = alertSilenceService.getAlertSilence(silenceId);
-        if (silence == null) {
-            throw new IllegalArgumentException("Alert silence was not found: " + silenceId);
-        }
-        return silence;
+        return alertSilenceService.get(silenceId);
     }
 
     private ZonedDateTime dateTime(String value, ZonedDateTime defaultValue) {
@@ -175,16 +168,30 @@ public class AgentAlertSilenceToolService {
         }
     }
 
-    private Map<String, Object> silenceRow(AlertSilence silence) {
+    private AlertSilenceRequest requestFrom(AlertSilenceResponse silence) {
+        AlertSilenceRequest request = new AlertSilenceRequest();
+        request.setId(silence.id());
+        request.setName(silence.name());
+        request.setEnable(silence.enable());
+        request.setMatchAll(silence.matchAll());
+        request.setType(silence.type());
+        request.setLabels(silence.labels());
+        request.setDays(silence.days());
+        request.setPeriodStart(silence.periodStart());
+        request.setPeriodEnd(silence.periodEnd());
+        return request;
+    }
+
+    private Map<String, Object> silenceRow(AlertSilenceResponse silence) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("silenceId", silence.getId());
-        row.put("name", silence.getName());
-        row.put("enabled", silence.isEnable());
-        row.put("type", silence.getType() != null && silence.getType() == 1 ? "recurring" : "once");
-        row.put("matchAll", silence.isMatchAll());
-        row.put("labels", silence.getLabels() == null ? Map.of() : silence.getLabels());
-        row.put("startsAt", silence.getPeriodStart());
-        row.put("endsAt", silence.getPeriodEnd());
+        row.put("silenceId", silence.id());
+        row.put("name", silence.name());
+        row.put("enabled", silence.enable());
+        row.put("type", silence.type() != null && silence.type() == 1 ? "recurring" : "once");
+        row.put("matchAll", silence.matchAll());
+        row.put("labels", silence.labels() == null ? Map.of() : silence.labels());
+        row.put("startsAt", silence.periodStart());
+        row.put("endsAt", silence.periodEnd());
         return row;
     }
 }

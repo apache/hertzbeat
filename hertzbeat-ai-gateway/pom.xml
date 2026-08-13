@@ -27,7 +27,6 @@
     </parent>
 
     <artifactId>hertzbeat-ai-gateway</artifactId>
-    <version>${hertzbeat.version}</version>
     <name>${project.artifactId}</name>
     <description>HertzBeat Agent Gateway shell and read-only runtime boundary.</description>
 
