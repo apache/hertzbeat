@@ -98,6 +98,12 @@
             <artifactId>hertzbeat-ai</artifactId>
         </dependency>
 
+        <!-- HertzBeat Agent Gateway -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-ai-gateway</artifactId>
+        </dependency>
+
         <!-- HertzBeat observability modules -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
