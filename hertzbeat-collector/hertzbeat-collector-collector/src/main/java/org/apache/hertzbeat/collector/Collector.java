@@ -23,12 +23,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportRuntimeHints;
 
 /**
  * collector startup
  */
-@ComponentScan(basePackages = {"org.apache.hertzbeat"})
+@ComponentScan(basePackages = {"org.apache.hertzbeat"}, excludeFilters = @ComponentScan.Filter(
+        type = FilterType.REGEX, pattern = "org\\.apache\\.hertzbeat\\.ai\\.gateway\\..*"))
 @ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
 @SpringBootApplication
 @ImportRuntimeHints(CollectorRuntimeHintsRegistrar.class)

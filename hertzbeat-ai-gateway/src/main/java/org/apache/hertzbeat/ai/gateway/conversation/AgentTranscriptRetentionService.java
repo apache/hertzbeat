@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentTranscriptEntryDao;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ public class AgentTranscriptRetentionService {
     private final AgentRuntimeProperties properties;
     private final Clock clock;
 
+    @Autowired
     public AgentTranscriptRetentionService(AgentTranscriptEntryDao transcriptEntryDao,
                                            AgentRuntimeProperties properties) {
         this(transcriptEntryDao, properties, Clock.systemUTC());

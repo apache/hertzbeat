@@ -19,7 +19,11 @@
 package org.apache.hertzbeat.ai.config;
 
 import com.openai.client.OpenAIClient;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.observation.ObservationRegistry;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
@@ -31,6 +35,8 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.setup.OpenAiSetup;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -50,11 +56,31 @@ public class LlmConfig {
 
     private final GeneralConfigDao generalConfigDao;
 
+    private final ObservationRegistry observationRegistry;
+
+    private final MeterRegistry meterRegistry;
+
     private ApplicationContext applicationContext;
 
-    public LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext) {
+    @Autowired
+    public LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext,
+                     ObjectProvider<ObservationRegistry> observationRegistryProvider,
+                     ObjectProvider<MeterRegistry> meterRegistryProvider) {
+        this(generalConfigDao, applicationContext,
+                observationRegistryProvider.getIfAvailable(() -> ObservationRegistry.NOOP),
+                meterRegistryProvider.getIfAvailable(() -> Metrics.globalRegistry));
+    }
+
+    private LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext,
+                      ObservationRegistry observationRegistry, MeterRegistry meterRegistry) {
         this.generalConfigDao = generalConfigDao;
         this.applicationContext = applicationContext;
+        this.observationRegistry = observationRegistry;
+        this.meterRegistry = meterRegistry;
+    }
+
+    LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext) {
+        this(generalConfigDao, applicationContext, ObservationRegistry.NOOP, Metrics.globalRegistry);
     }
 
     void registerInitialChatClient() {
@@ -128,7 +154,10 @@ public class LlmConfig {
                 Duration.ofSeconds(60),
                 10,
                 null,
-                Map.of());
+                Map.of(),
+                observationRegistry,
+                meterRegistry,
+                List.of());
 
         // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()

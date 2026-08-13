@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.conversation;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentTranscriptEntryDao;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -58,5 +60,14 @@ class AgentTranscriptRetentionServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> properties.setTranscriptRetention(Duration.ZERO));
+    }
+
+    @Test
+    void springSelectsTheRuntimeConstructorWhenTheClockTestSeamIsPresent() {
+        new ApplicationContextRunner()
+                .withBean(AgentTranscriptEntryDao.class, () -> transcriptEntryDao)
+                .withBean(AgentRuntimeProperties.class, AgentRuntimeProperties::new)
+                .withBean(AgentTranscriptRetentionService.class)
+                .run(context -> assertNull(context.getStartupFailure()));
     }
 }

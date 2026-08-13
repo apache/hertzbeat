@@ -86,8 +86,9 @@ class LlmConfigTest {
 
         new ApplicationContextRunner()
                 .withBean(GeneralConfigDao.class, () -> generalConfigDao)
-                .withUserConfiguration(LlmConfig.class)
+                .withUserConfiguration(LlmConfig.class, LlmConfigInitializer.class)
                 .run(context -> {
+                    context.getBean(LlmConfigInitializer.class).run();
                     assertFalse(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
                     assertNull(context.getStartupFailure());
                 });
@@ -100,8 +101,9 @@ class LlmConfigTest {
 
         new ApplicationContextRunner()
                 .withBean(GeneralConfigDao.class, () -> generalConfigDao)
-                .withUserConfiguration(LlmConfig.class)
+                .withUserConfiguration(LlmConfig.class, LlmConfigInitializer.class)
                 .run(context -> {
+                    context.getBean(LlmConfigInitializer.class).run();
                     assertFalse(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
                     assertNull(context.getStartupFailure());
                 });
@@ -119,8 +121,9 @@ class LlmConfigTest {
 
         new ApplicationContextRunner()
                 .withBean(GeneralConfigDao.class, () -> generalConfigDao)
-                .withUserConfiguration(LlmConfig.class)
+                .withUserConfiguration(LlmConfig.class, LlmConfigInitializer.class)
                 .run(context -> {
+                    context.getBean(LlmConfigInitializer.class).run();
                     assertTrue(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
                     assertNull(context.getStartupFailure());
                 });

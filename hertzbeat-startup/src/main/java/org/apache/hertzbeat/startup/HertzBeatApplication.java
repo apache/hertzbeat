@@ -19,7 +19,9 @@ package org.apache.hertzbeat.startup;
 
 import jakarta.annotation.PostConstruct;
 import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
+import org.apache.hertzbeat.collector.Collector;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
+import org.apache.hertzbeat.startup.config.AgentGatewayRuntimeConfiguration;
 import org.apache.hertzbeat.startup.runtime.HertzBeatStartupCoordinator;
 import org.apache.hertzbeat.startup.runtime.LocalInstallationStartupProbe;
 import org.apache.hertzbeat.startup.runtime.SpringStartupContextLauncher;
@@ -45,10 +47,16 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
+@EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"}, excludeFilters = @ComponentScan.Filter(
+        type = FilterType.REGEX, pattern = "org\\.apache\\.hertzbeat\\.ai\\.gateway\\..*"))
 @EntityScan(basePackages = {"org.apache.hertzbeat"})
-@ComponentScan(basePackages = {"org.apache.hertzbeat"}, excludeFilters = @ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE, classes = SetupOnlyApplication.class))
+@ComponentScan(basePackages = {"org.apache.hertzbeat"}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
+                classes = {SetupOnlyApplication.class, Collector.class,
+                        AgentGatewayRuntimeConfiguration.class}),
+        @ComponentScan.Filter(type = FilterType.REGEX,
+                pattern = "org\\.apache\\.hertzbeat\\.ai\\.gateway\\..*")
+})
 @ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync

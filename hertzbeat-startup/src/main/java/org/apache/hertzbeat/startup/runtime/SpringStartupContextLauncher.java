@@ -23,6 +23,7 @@ import org.apache.hertzbeat.bootstrap.SetupOnlyApplication;
 import org.apache.hertzbeat.common.runtime.RuntimeMode;
 import org.apache.hertzbeat.manager.setup.runtime.SetupRuntimeTransition;
 import org.apache.hertzbeat.startup.HertzBeatApplication;
+import org.apache.hertzbeat.startup.config.AgentGatewayRuntimeConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.StandardEnvironment;
@@ -94,11 +95,18 @@ public final class SpringStartupContextLauncher
         environment.getPropertySources().addFirst(trustedLaunch
                 ? StartupLaunchAdmission.internalPropertySource(decision, installationRoot, admissionMode)
                 : StartupLaunchAdmission.runtimeModePropertySource(decision));
-        return new SpringApplicationBuilder(sourceFor(decision.mode()))
-                .environment(environment)
+        SpringApplicationBuilder application = new SpringApplicationBuilder(sourceFor(decision.mode()));
+        if (decision.mode() == RuntimeMode.NORMAL) {
+            application.sources(AgentGatewayRuntimeConfiguration.class);
+        }
+        return application.environment(environment)
                 .initializers(context -> {
                     context.getBeanFactory().registerSingleton(
                             "setupRuntimeTransition", setupRuntimeTransition);
+                    if (decision.mode() != RuntimeMode.NORMAL) {
+                        context.getBeanFactory().registerSingleton(
+                                "startupRuntimeComponentBoundary", new StartupRuntimeComponentBoundary());
+                    }
                     if (decision.mode() == RuntimeMode.NORMAL && authorityView != null) {
                         context.getBeanFactory().registerSingleton(
                                 "standaloneDeploymentOwnerView", authorityView);

@@ -189,6 +189,8 @@ class StartupRuntimeBoundaryContextTest {
             assertTrue(context.containsBeanDefinition("pluginParameterServiceImpl"));
             assertTrue(context.containsBeanDefinition("pluginServiceImpl"));
             assertTrue(context.containsBeanDefinition("llmConfig"));
+            assertFalse(context.containsBeanDefinition("agentCommandService"));
+            assertFalse(context.containsBeanDefinition("agentSessionDao"));
             for (String beanName : SIDE_EFFECT_BEANS) {
                 assertFalse(context.containsBeanDefinition(beanName), beanName);
             }

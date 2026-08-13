@@ -262,3 +262,144 @@ CREATE UNIQUE INDEX uk_hzb_signal_dashboard_key
 
 CREATE INDEX idx_hzb_signal_dashboard_update
     ON hzb_signal_dashboard(update_time);
+
+-- HertzBeat 2.0.0 baseline additions.
+
+-- V201  add collector intake token boundary.sql.
+ALTER TABLE hzb_auth_token ADD COLUMN token_audience VARCHAR(32);
+ALTER TABLE hzb_auth_token ADD COLUMN collector_id VARCHAR(128);
+ALTER TABLE hzb_auth_token ADD COLUMN allowed_signals VARCHAR(64);
+CREATE INDEX idx_hzb_auth_token_collector ON hzb_auth_token(collector_id);
+
+-- V202  add collector runtime config.sql.
+ALTER TABLE hzb_collector ADD COLUMN runtime_config TEXT;
+
+-- V203  add collector instrumentation intake.sql.
+ALTER TABLE hzb_collector ADD COLUMN instrumentation_intake TEXT;
+
+-- V204  add config revision.sql.
+ALTER TABLE hzb_config ADD COLUMN config_revision VARCHAR(36);
+UPDATE hzb_config SET config_revision = gen_random_uuid()::text WHERE config_revision IS NULL;
+ALTER TABLE hzb_config ALTER COLUMN config_revision SET NOT NULL;
+
+-- V205  add monitor metric layout.sql.
+CREATE TABLE IF NOT EXISTS hzb_monitor_metric_layout (
+    id BIGSERIAL PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL,
+    application VARCHAR(128) NOT NULL,
+    schema_version INTEGER NOT NULL,
+    layout_document TEXT NOT NULL,
+    revision VARCHAR(64) NOT NULL,
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_hzb_monitor_metric_layout_creator_app
+    ON hzb_monitor_metric_layout(creator, application);
+
+-- V206  add agent gateway.sql.
+CREATE TABLE hzb_agent_session (
+    id BIGSERIAL PRIMARY KEY,
+    session_uid VARCHAR(64) NOT NULL,
+    session_key VARCHAR(128) NOT NULL,
+    channel VARCHAR(64), conversation_id VARCHAR(256), actor_type VARCHAR(64),
+    actor_id VARCHAR(128), actor_roles VARCHAR(1024), status VARCHAR(32), title VARCHAR(256),
+    transcript_sequence BIGINT NOT NULL DEFAULT 0,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX uk_agent_session_uid ON hzb_agent_session(session_uid);
+CREATE UNIQUE INDEX uk_agent_session_key ON hzb_agent_session(session_key);
+CREATE INDEX idx_agent_session_owner ON hzb_agent_session(channel, actor_type, actor_id);
+
+CREATE TABLE hzb_agent_run (
+    id BIGSERIAL PRIMARY KEY,
+    run_uid VARCHAR(64) NOT NULL, session_id BIGINT NOT NULL, message_id VARCHAR(128) NOT NULL,
+    target_monitor_id BIGINT, target_alert_id BIGINT, target_collector VARCHAR(128),
+    target_context_json TEXT,
+    status VARCHAR(32) NOT NULL, result_summary TEXT, error_message VARCHAR(1024),
+    started_at TIMESTAMP, completed_at TIMESTAMP,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX uk_agent_run_uid ON hzb_agent_run(run_uid);
+CREATE UNIQUE INDEX uk_agent_run_session_message ON hzb_agent_run(session_id, message_id);
+CREATE INDEX idx_agent_run_session ON hzb_agent_run(session_id);
+CREATE INDEX idx_agent_run_target ON hzb_agent_run(target_monitor_id, target_alert_id);
+
+CREATE TABLE hzb_agent_tool_call (
+    id BIGSERIAL PRIMARY KEY,
+    tool_call_id VARCHAR(128) NOT NULL, run_id BIGINT NOT NULL,
+    session_id BIGINT, run_uid VARCHAR(64), session_uid VARCHAR(64),
+    tool_name VARCHAR(128) NOT NULL, exposure VARCHAR(64), risk VARCHAR(32),
+    policy_decision VARCHAR(32), status VARCHAR(32) NOT NULL,
+    input_json TEXT, input_hash VARCHAR(64), approval_id VARCHAR(64),
+    approval_status VARCHAR(32), approval_expires_at TIMESTAMP, approval_decided_at TIMESTAMP,
+    approval_actor_type VARCHAR(64), approval_actor_id VARCHAR(128), approval_reason VARCHAR(1024),
+    result_output TEXT, elapsed_ms BIGINT, error_message TEXT,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX uk_agent_tool_call_run_call ON hzb_agent_tool_call(run_id, tool_call_id);
+CREATE UNIQUE INDEX uk_agent_tool_call_approval_id ON hzb_agent_tool_call(approval_id);
+CREATE INDEX idx_agent_tool_call_run ON hzb_agent_tool_call(run_id);
+CREATE INDEX idx_agent_tool_call_session ON hzb_agent_tool_call(session_id);
+CREATE INDEX idx_agent_tool_call_name ON hzb_agent_tool_call(tool_name);
+CREATE INDEX idx_agent_tool_call_status ON hzb_agent_tool_call(status);
+CREATE INDEX idx_agent_tool_call_approval_status ON hzb_agent_tool_call(approval_status);
+
+CREATE TABLE hzb_agent_transcript_entry (
+    id BIGSERIAL PRIMARY KEY,
+    session_id BIGINT NOT NULL, run_id BIGINT, session_sequence BIGINT NOT NULL,
+    payload_json TEXT NOT NULL, message_role VARCHAR(32) NOT NULL,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX uk_agent_transcript_session_sequence
+    ON hzb_agent_transcript_entry(session_id, session_sequence);
+CREATE INDEX idx_agent_transcript_run ON hzb_agent_transcript_entry(run_id, session_sequence);
+CREATE INDEX idx_agent_transcript_checkpoint
+    ON hzb_agent_transcript_entry(session_id, message_role, session_sequence);
+
+CREATE TABLE hzb_agent_scheduled_command (
+    id BIGSERIAL PRIMARY KEY,
+    session_id BIGINT NOT NULL, channel VARCHAR(64) NOT NULL,
+    conversation_id VARCHAR(256) NOT NULL, actor_type VARCHAR(64) NOT NULL,
+    actor_id VARCHAR(128) NOT NULL, actor_roles VARCHAR(1024) NOT NULL,
+    message VARCHAR(4096) NOT NULL, cron_expression VARCHAR(64) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE, last_run_time TIMESTAMP, next_run_time TIMESTAMP,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_agent_scheduled_command_session ON hzb_agent_scheduled_command(session_id);
+CREATE INDEX idx_agent_scheduled_command_due ON hzb_agent_scheduled_command(enabled, next_run_time);
+
+CREATE TABLE hzb_alert_analysis_policy (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(128) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    match_labels VARCHAR(4096) NOT NULL, group_by_labels VARCHAR(2048) NOT NULL,
+    window_seconds BIGINT NOT NULL, minimum_alert_count INTEGER NOT NULL,
+    cooldown_seconds BIGINT NOT NULL,
+    gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_alert_analysis_enabled ON hzb_alert_analysis_policy(enabled);
+
+ALTER TABLE hzb_config ALTER COLUMN content TYPE TEXT;
+
+CREATE TABLE IF NOT EXISTS hzb_account (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    username VARCHAR(64) NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    roles VARCHAR(128) NOT NULL,
+    credential_version BIGINT NOT NULL,
+    disabled BOOLEAN NOT NULL,
+    bootstrap_slot SMALLINT,
+    CONSTRAINT uk_hzb_account_username UNIQUE (username),
+    CONSTRAINT uk_hzb_account_bootstrap UNIQUE (bootstrap_slot)
+);
+
+CREATE TABLE IF NOT EXISTS hzb_installation (
+    id SMALLINT PRIMARY KEY,
+    installation_fingerprint VARCHAR(64) NOT NULL UNIQUE,
+    complete BOOLEAN NOT NULL
+);
+
+ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled DROP DEFAULT;
+ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled TYPE BOOLEAN USING enabled <> 0;
+ALTER TABLE hzb_sop_schedule ALTER COLUMN enabled SET DEFAULT TRUE;
