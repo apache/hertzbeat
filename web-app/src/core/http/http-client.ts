@@ -54,6 +54,15 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   return fetchWithTimeout(input, request);
 }
 
+/**
+ * Opens a caller-cancelled streaming request with the same browser-session and
+ * CSRF policy as ordinary API calls, but without the 30-second response-body
+ * deadline used for finite requests. Mutating streams are never replayed.
+ */
+export function apiStreamFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, withBrowserSession(init));
+}
+
 function isSessionManagementRequest(input: RequestInfo | URL) {
   const value = requestUrl(input);
   return (

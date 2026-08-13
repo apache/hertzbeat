@@ -31,6 +31,7 @@ import {
   MutedOutlined,
   NotificationOutlined,
   RadarChartOutlined,
+  RobotOutlined,
   ScheduleOutlined,
   SettingOutlined,
   StopOutlined,
@@ -138,6 +139,11 @@ const staticRefineResources: ResourceProps[] = [
   routedNavigationResource('dashboard', {
     icon: <DashboardOutlined />,
     order: 5,
+    timePolicy: 'none'
+  }),
+  routedNavigationResource('ai-workspace', {
+    icon: <RobotOutlined />,
+    order: 6,
     timePolicy: 'none'
   }),
   routedNavigationResource('monitors', {

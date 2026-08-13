@@ -65,6 +65,7 @@ describe('Refine shell resource registry', () => {
 
     expect(tree.map(item => item.name)).toEqual([
       'dashboard',
+      'ai-workspace',
       'shell-basic-monitoring',
       'shell-application-observability',
       'shell-resources',

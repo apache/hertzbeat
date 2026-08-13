@@ -1,0 +1,197 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 220px minmax(420px, 1fr) 300px;
+  min-width: 0;
+  height: calc(100vh - 116px);
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-base);
+}
+
+.sessions,
+.context,
+.investigation {
+  min-width: 0;
+  min-height: 0;
+}
+
+.sessions,
+.context {
+  display: flex;
+  flex-direction: column;
+  background: var(--hb-bg-navigation);
+}
+
+.sessions {
+  border-right: 1px solid var(--hb-border-subtle);
+}
+.context {
+  overflow: auto;
+  border-left: 1px solid var(--hb-border-subtle);
+}
+
+.paneHeader,
+.investigationHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.sessionList {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: var(--hb-space-2);
+  overflow: auto;
+}
+
+.sessionButton {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: var(--hb-text-primary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sessionButton:hover {
+  background: var(--hb-bg-hover);
+}
+.sessionButton[data-selected='true'] {
+  border-left-color: var(--hb-color-primary);
+  background: var(--hb-bg-selected);
+}
+.sessionButton small {
+  color: var(--hb-text-secondary);
+}
+.providerButton {
+  margin: auto var(--hb-space-3) var(--hb-space-3);
+}
+
+.investigation {
+  display: grid;
+  grid-template-rows: max-content minmax(0, 1fr) max-content;
+  background: var(--hb-bg-base);
+}
+
+.investigationHeader h2 {
+  margin: 0;
+  font-size: var(--hb-page-title-size);
+}
+.transcript {
+  overflow: auto;
+  padding: var(--hb-space-5);
+}
+.emptyConversation {
+  display: grid;
+  place-content: center;
+  min-height: 100%;
+  text-align: center;
+}
+.emptyConversation h4 {
+  margin: 0 0 var(--hb-space-2);
+}
+
+.message {
+  display: grid;
+  gap: var(--hb-space-1);
+  max-width: 760px;
+  margin: 0 auto var(--hb-space-5);
+}
+.message[data-role='user'] {
+  padding-left: clamp(24px, 8vw, 112px);
+}
+.messageRole {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.messageText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+.failure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-3);
+  border-left: 3px solid var(--hb-status-unavailable);
+  background: var(--hb-bg-raised);
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: end;
+  gap: var(--hb-space-2);
+  padding: var(--hb-space-3) var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-navigation);
+}
+
+.contextSection {
+  padding: var(--hb-space-4);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.contextBody {
+  display: grid;
+  gap: var(--hb-space-2);
+  margin-top: var(--hb-space-2);
+}
+.activity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-2);
+}
+.activity code,
+.approval code {
+  overflow-wrap: anywhere;
+}
+.approval,
+.inputRequest {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.approvalActions {
+  display: flex;
+  gap: var(--hb-space-2);
+}
+.inputField {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: 190px minmax(360px, 1fr);
+  }
+  .context {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100vh - 96px);
+  }
+  .sessions {
+    display: none;
+  }
+}

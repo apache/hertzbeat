@@ -10,6 +10,7 @@ import {
   FullscreenOutlined,
   GlobalOutlined,
   MoonOutlined,
+  RobotOutlined,
   SunOutlined
 } from '@ant-design/icons';
 import { Button, Dropdown, Switch, Tooltip, type MenuProps } from 'antd';
@@ -31,6 +32,7 @@ type ShellHeaderActionsProps = {
   activeLocale: SupportedLocale;
   fullscreen: ShellFullscreenState;
   loggingOut: boolean;
+  investigation?: { label: string; onOpen: () => void } | undefined;
   t: TFunction;
   theme: RuntimeTheme;
   onOpenAlerts: () => void;
@@ -48,6 +50,7 @@ export function ShellHeaderActions({
   activeLocale,
   fullscreen,
   loggingOut,
+  investigation,
   t,
   theme,
   onOpenAlerts,
@@ -60,6 +63,9 @@ export function ShellHeaderActions({
 }: ShellHeaderActionsProps) {
   return (
     <div className={styles.headerActions}>
+      {investigation ? (
+        <ShellHeaderAction label={investigation.label} icon={<RobotOutlined />} onClick={investigation.onOpen} />
+      ) : null}
       <ShellAlertNotifications state={alertNotifications} t={t} onOpenAlerts={onOpenAlerts} />
       <ShellThemeSwitch theme={theme} t={t} onChange={onThemeChange} />
       {fullscreen.available ? (

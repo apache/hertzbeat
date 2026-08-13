@@ -1,0 +1,45 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.providerList {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+.providerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: var(--hb-space-3);
+  min-height: 54px;
+  padding-block: var(--hb-space-2);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+.providerCopy {
+  display: grid;
+  gap: 2px;
+}
+.providerActions,
+.formActions,
+.failure {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+}
+.failure {
+  justify-content: space-between;
+  padding: var(--hb-space-3);
+  border-left: 3px solid var(--hb-status-unavailable);
+}
+.form {
+  margin-top: var(--hb-space-4);
+  padding-top: var(--hb-space-4);
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+@media (max-width: 600px) {
+  .providerRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .providerActions {
+    flex-wrap: wrap;
+  }
+}

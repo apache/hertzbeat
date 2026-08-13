@@ -33,6 +33,7 @@
     "workspace": "Workspace",
     "primary": "Primary navigation",
     "dashboard": "Start",
+    "aiWorkspace": "AI workspace",
     "monitors": "Monitors",
     "entities": "Resources",
     "topology": "Topology",
@@ -3262,6 +3263,62 @@
         "contract": "The export attachment could not be verified and was not downloaded.",
         "failed": "The external configuration could not be exported. Try again."
       }
+    }
+  },
+  "aiWorkspace": {
+    "title": "AI workspace",
+    "description": "Investigate live HertzBeat data and review every proposed action before it runs.",
+    "sessions": {
+      "label": "Investigations",
+      "title": "Investigations",
+      "new": "New",
+      "loading": "Loading investigations…",
+      "unavailable": "Investigations are unavailable.",
+      "empty": "No investigations yet.",
+      "untitled": "Untitled investigation"
+    },
+    "investigation": { "label": "Investigation" },
+    "roles": { "you": "You", "assistant": "HertzBeat AI" },
+    "empty": {
+      "title": "What do you want to investigate?",
+      "description": "Ask about a monitor, entity, alert, metric, log stream, trace, or topology scope."
+    },
+    "composer": { "label": "Investigation prompt", "placeholder": "Ask HertzBeat to inspect an operational problem…" },
+    "actions": { "send": "Send", "stop": "Stop", "approve": "Approve", "reject": "Reject", "submit": "Submit" },
+    "failure": "The investigation stream is unavailable. No action was assumed to have completed.",
+    "context": {
+      "label": "Run context",
+      "target": "Target",
+      "none": "No page context attached",
+      "activity": "Tool activity",
+      "noActivity": "No tools used yet",
+      "approvals": "Approvals",
+      "noApprovals": "No pending approvals",
+      "inputs": "Requested input",
+      "noInputs": "No input requested"
+    },
+    "approval": { "adminRequired": "Administrator approval required" },
+    "providers": {
+      "action": "Model providers",
+      "title": "Model providers",
+      "description": "Configure the model connections available to the HertzBeat AI runtime.",
+      "loading": "Loading providers…",
+      "unavailable": "Model provider settings are unavailable.",
+      "default": "YAML default",
+      "active": "Active",
+      "activate": "Use",
+      "configured": "Key configured",
+      "notConfigured": "Key not configured",
+      "add": "Add provider",
+      "edit": "Edit",
+      "delete": "Delete",
+      "type": "Provider type",
+      "code": "Provider code",
+      "baseUrl": "Base URL",
+      "model": "Model",
+      "apiKey": "API key",
+      "apiKeyHint": "Leave blank to keep the existing key.",
+      "save": "Save provider"
     }
   }
 }

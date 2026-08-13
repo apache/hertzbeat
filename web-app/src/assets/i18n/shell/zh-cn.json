@@ -60,6 +60,7 @@
     "actions": {
       "refresh": "刷新当前数据",
       "alerts": "打开告警",
+      "investigate": "调查当前页面",
       "alertsWithCount": "打开告警，当前 {{count}} 条",
       "useLightTheme": "使用浅色主题",
       "useDarkTheme": "使用深色主题",

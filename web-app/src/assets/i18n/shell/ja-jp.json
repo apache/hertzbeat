@@ -60,6 +60,7 @@
     "actions": {
       "refresh": "現在のデータを更新",
       "alerts": "アラートを開く",
+      "investigate": "この画面を調査",
       "alertsWithCount": "アラートを開く、アクティブ {{count}} 件",
       "useLightTheme": "ライトテーマを使用",
       "useDarkTheme": "ダークテーマを使用",

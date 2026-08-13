@@ -238,6 +238,16 @@ describe('route registry', () => {
     expectTypeOf<'topology'>().toMatchTypeOf<AppResourceRouteId>();
   });
 
+  it('registers the Agent workspace as a canonical product-wide resource', () => {
+    expect(getAppRoute('ai-workspace')).toMatchObject({
+      id: 'ai-workspace',
+      path: '/ai',
+      kind: 'page',
+      resource: { labelKey: 'menu.aiWorkspace', requiredRoles: ['ADMIN', 'USER'] }
+    });
+    expectTypeOf<'ai-workspace'>().toMatchTypeOf<AppResourceRouteId>();
+  });
+
   it('registers existing resource definition editing centrally', () => {
     expect(getAppRoute('entity-definition')).toMatchObject({
       id: 'entity-definition',
@@ -322,12 +332,14 @@ describe('route registry', () => {
   });
 
   it('owns backend read roles for restricted resource routes', () => {
+    expect(getAppRoute('ai-workspace').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER'] });
     expect(getAppRoute('instrumentation').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER'] });
     expect(getAppRoute('tokens').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('plugins').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('deployment-settings').resource).toMatchObject({ requiredRoles: ['ADMIN'] });
     expect(getAppRoute('labels').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER', 'GUEST'] });
     expect(routeRegistry.flatMap(route => (route.resource?.requiredRoles ? [route.id] : []))).toEqual([
+      'ai-workspace',
       'instrumentation',
       'tokens',
       'plugins',

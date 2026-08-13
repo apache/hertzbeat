@@ -60,6 +60,7 @@
     "actions": {
       "refresh": "Refresh active data",
       "alerts": "Open alerts",
+      "investigate": "Investigate this view",
       "alertsWithCount": "Open alerts, {{count}} active",
       "useLightTheme": "Use light theme",
       "useDarkTheme": "Use dark theme",

@@ -119,6 +119,19 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('ai-workspace'),
+                element: <ResourceRouteAccess routeId="ai-workspace" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => {
+                      const { AgentWorkspacePage } = await import('@/features/ai-workspace');
+                      return { Component: AgentWorkspacePage };
+                    }
+                  }
+                ]
+              },
+              {
                 ...getAppRouteIdentity('monitors'),
                 lazy: async () => {
                   const { MonitorListPage } = await import('@/features/monitor');

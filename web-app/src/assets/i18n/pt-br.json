@@ -33,6 +33,7 @@
     "workspace": "Área de trabalho",
     "primary": "Navegação principal",
     "dashboard": "Começar",
+    "aiWorkspace": "Espaço de trabalho de IA",
     "monitors": "Monitores",
     "entities": "Recursos",
     "topology": "Topologia",
@@ -3266,6 +3267,65 @@
         "contract": "Não foi possível verificar o anexo de exportação e ele não foi baixado.",
         "failed": "Não foi possível exportar a configuração externa. Tente novamente."
       }
+    }
+  },
+  "aiWorkspace": {
+    "title": "Espaço de trabalho de IA",
+    "description": "Investigue dados ativos do HertzBeat e revise cada ação proposta antes da execução.",
+    "sessions": {
+      "label": "Investigações",
+      "title": "Investigações",
+      "new": "Nova",
+      "loading": "Carregando investigações…",
+      "unavailable": "As investigações estão indisponíveis.",
+      "empty": "Ainda não há investigações.",
+      "untitled": "Investigação sem título"
+    },
+    "investigation": { "label": "Investigação" },
+    "roles": { "you": "Você", "assistant": "HertzBeat AI" },
+    "empty": {
+      "title": "O que você quer investigar?",
+      "description": "Pergunte sobre um monitor, entidade, alerta, métrica, log, trace ou escopo de topologia."
+    },
+    "composer": {
+      "label": "Prompt da investigação",
+      "placeholder": "Peça ao HertzBeat para investigar um problema operacional…"
+    },
+    "actions": { "send": "Enviar", "stop": "Parar", "approve": "Aprovar", "reject": "Rejeitar", "submit": "Enviar" },
+    "failure": "O fluxo da investigação está indisponível. Nenhuma ação será considerada concluída.",
+    "context": {
+      "label": "Contexto da execução",
+      "target": "Alvo",
+      "none": "Nenhum contexto de página anexado",
+      "activity": "Atividade das ferramentas",
+      "noActivity": "Nenhuma ferramenta usada",
+      "approvals": "Aprovações",
+      "noApprovals": "Nenhuma aprovação pendente",
+      "inputs": "Entrada solicitada",
+      "noInputs": "Nenhuma entrada solicitada"
+    },
+    "approval": { "adminRequired": "Aprovação do administrador necessária" },
+    "providers": {
+      "action": "Provedores de modelo",
+      "title": "Provedores de modelo",
+      "description": "Configure as conexões de modelo disponíveis para o runtime de IA do HertzBeat.",
+      "loading": "Carregando provedores…",
+      "unavailable": "As configurações do provedor estão indisponíveis.",
+      "default": "Padrão do YAML",
+      "active": "Ativo",
+      "activate": "Usar",
+      "configured": "Chave configurada",
+      "notConfigured": "Chave não configurada",
+      "add": "Adicionar provedor",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "type": "Tipo de provedor",
+      "code": "Código do provedor",
+      "baseUrl": "URL base",
+      "model": "Modelo",
+      "apiKey": "Chave da API",
+      "apiKeyHint": "Deixe em branco para manter a chave existente.",
+      "save": "Salvar provedor"
     }
   }
 }

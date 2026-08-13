@@ -60,6 +60,7 @@
     "actions": {
       "refresh": "Atualizar dados ativos",
       "alerts": "Abrir alertas",
+      "investigate": "Investigar esta tela",
       "alertsWithCount": "Abrir alertas, {{count}} ativos",
       "useLightTheme": "Usar tema claro",
       "useDarkTheme": "Usar tema escuro",

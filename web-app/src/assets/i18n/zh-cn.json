@@ -33,6 +33,7 @@
     "workspace": "工作区",
     "primary": "主导航",
     "dashboard": "开始",
+    "aiWorkspace": "AI 工作台",
     "monitors": "监控中心",
     "entities": "资源目录",
     "topology": "拓扑",
@@ -3237,6 +3238,62 @@
         "contract": "无法验证导出附件，因此未下载。",
         "failed": "无法导出外部配置。请重试。"
       }
+    }
+  },
+  "aiWorkspace": {
+    "title": "AI 工作台",
+    "description": "基于 HertzBeat 实时数据排查问题，并在执行前审核每一项操作。",
+    "sessions": {
+      "label": "调查记录",
+      "title": "调查记录",
+      "new": "新建",
+      "loading": "正在加载调查记录…",
+      "unavailable": "调查记录暂不可用。",
+      "empty": "还没有调查记录。",
+      "untitled": "未命名调查"
+    },
+    "investigation": { "label": "问题调查" },
+    "roles": { "you": "你", "assistant": "HertzBeat AI" },
+    "empty": {
+      "title": "你想排查什么？",
+      "description": "可以询问监控、实体、告警、指标、日志、链路或拓扑范围内的问题。"
+    },
+    "composer": { "label": "调查问题", "placeholder": "让 HertzBeat 帮你排查一个运行问题…" },
+    "actions": { "send": "发送", "stop": "停止", "approve": "批准", "reject": "拒绝", "submit": "提交" },
+    "failure": "调查连接暂不可用。系统不会假定任何操作已经完成。",
+    "context": {
+      "label": "运行上下文",
+      "target": "目标",
+      "none": "未附带页面上下文",
+      "activity": "工具活动",
+      "noActivity": "尚未使用工具",
+      "approvals": "待审批操作",
+      "noApprovals": "没有待审批操作",
+      "inputs": "需要补充的信息",
+      "noInputs": "无需补充信息"
+    },
+    "approval": { "adminRequired": "需要管理员审批" },
+    "providers": {
+      "action": "模型提供方",
+      "title": "模型提供方",
+      "description": "配置 HertzBeat AI 运行时可用的模型连接。",
+      "loading": "正在加载模型提供方…",
+      "unavailable": "模型提供方设置暂不可用。",
+      "default": "YAML 默认配置",
+      "active": "使用中",
+      "activate": "使用",
+      "configured": "密钥已配置",
+      "notConfigured": "密钥未配置",
+      "add": "添加提供方",
+      "edit": "编辑",
+      "delete": "删除",
+      "type": "提供方类型",
+      "code": "提供方代码",
+      "baseUrl": "基础 URL",
+      "model": "模型",
+      "apiKey": "API 密钥",
+      "apiKeyHint": "留空可保留现有密钥。",
+      "save": "保存提供方"
     }
   }
 }

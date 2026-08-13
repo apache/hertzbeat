@@ -33,6 +33,7 @@
     "workspace": "工作區",
     "primary": "主導覽",
     "dashboard": "開始",
+    "aiWorkspace": "AI 工作台",
     "monitors": "監控中心",
     "entities": "資源目錄",
     "topology": "拓撲",
@@ -3237,6 +3238,62 @@
         "contract": "無法驗證匯出附件，因此未下載。",
         "failed": "無法匯出外部設定。請重試。"
       }
+    }
+  },
+  "aiWorkspace": {
+    "title": "AI 工作台",
+    "description": "根據 HertzBeat 即時資料排查問題，並在執行前審核每一項操作。",
+    "sessions": {
+      "label": "調查記錄",
+      "title": "調查記錄",
+      "new": "新增",
+      "loading": "正在載入調查記錄…",
+      "unavailable": "調查記錄暫不可用。",
+      "empty": "尚無調查記錄。",
+      "untitled": "未命名調查"
+    },
+    "investigation": { "label": "問題調查" },
+    "roles": { "you": "你", "assistant": "HertzBeat AI" },
+    "empty": {
+      "title": "你想排查什麼？",
+      "description": "可以詢問監控、實體、告警、指標、日誌、鏈路或拓撲範圍內的問題。"
+    },
+    "composer": { "label": "調查問題", "placeholder": "讓 HertzBeat 協助排查一個運行問題…" },
+    "actions": { "send": "傳送", "stop": "停止", "approve": "批准", "reject": "拒絕", "submit": "提交" },
+    "failure": "調查連線暫不可用。系統不會假定任何操作已經完成。",
+    "context": {
+      "label": "運行上下文",
+      "target": "目標",
+      "none": "未附帶頁面上下文",
+      "activity": "工具活動",
+      "noActivity": "尚未使用工具",
+      "approvals": "待審批操作",
+      "noApprovals": "沒有待審批操作",
+      "inputs": "需要補充的資訊",
+      "noInputs": "無需補充資訊"
+    },
+    "approval": { "adminRequired": "需要管理員審批" },
+    "providers": {
+      "action": "模型提供方",
+      "title": "模型提供方",
+      "description": "設定 HertzBeat AI 運行時可用的模型連線。",
+      "loading": "正在載入模型提供方…",
+      "unavailable": "模型提供方設定暫不可用。",
+      "default": "YAML 預設設定",
+      "active": "使用中",
+      "activate": "使用",
+      "configured": "金鑰已設定",
+      "notConfigured": "金鑰未設定",
+      "add": "新增提供方",
+      "edit": "編輯",
+      "delete": "刪除",
+      "type": "提供方類型",
+      "code": "提供方代碼",
+      "baseUrl": "基礎 URL",
+      "model": "模型",
+      "apiKey": "API 金鑰",
+      "apiKeyHint": "留空可保留現有金鑰。",
+      "save": "儲存提供方"
     }
   }
 }

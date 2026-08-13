@@ -60,6 +60,7 @@
     "actions": {
       "refresh": "重新整理目前資料",
       "alerts": "開啟告警",
+      "investigate": "調查目前頁面",
       "alertsWithCount": "開啟告警，目前 {{count}} 筆",
       "useLightTheme": "使用淺色主題",
       "useDarkTheme": "使用深色主題",

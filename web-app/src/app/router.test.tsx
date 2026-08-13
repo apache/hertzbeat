@@ -70,7 +70,7 @@ describe('application data router', () => {
   it('leaves excluded legacy product areas on the wildcard 404 route', () => {
     const legacyPaths = new Set(legacyRouteCatalog.map(route => route.path));
 
-    for (const path of ['/actions', '/incidents', '/events', '/ai', '/mcp', '/ui-lab']) {
+    for (const path of ['/actions', '/incidents', '/events', '/mcp', '/ui-lab']) {
       expect(legacyPaths.has(path)).toBe(false);
       expect(flattenRoutes(appRoutes).some(route => route.path === path)).toBe(false);
     }

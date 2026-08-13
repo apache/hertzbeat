@@ -33,6 +33,7 @@
     "workspace": "ワークスペース",
     "primary": "メインナビゲーション",
     "dashboard": "はじめる",
+    "aiWorkspace": "AI ワークスペース",
     "monitors": "監視センター",
     "entities": "リソース",
     "topology": "トポロジー",
@@ -3256,6 +3257,62 @@
         "contract": "エクスポート添付ファイルを検証できなかったため、ダウンロードしませんでした。",
         "failed": "外部設定をエクスポートできませんでした。再試行してください。"
       }
+    }
+  },
+  "aiWorkspace": {
+    "title": "AI ワークスペース",
+    "description": "HertzBeat のライブデータを調査し、実行前にすべての操作を確認します。",
+    "sessions": {
+      "label": "調査履歴",
+      "title": "調査履歴",
+      "new": "新規",
+      "loading": "調査履歴を読み込んでいます…",
+      "unavailable": "調査履歴を利用できません。",
+      "empty": "調査履歴はまだありません。",
+      "untitled": "無題の調査"
+    },
+    "investigation": { "label": "調査" },
+    "roles": { "you": "あなた", "assistant": "HertzBeat AI" },
+    "empty": {
+      "title": "何を調査しますか？",
+      "description": "監視、エンティティ、アラート、メトリクス、ログ、トレース、トポロジーについて質問できます。"
+    },
+    "composer": { "label": "調査プロンプト", "placeholder": "運用上の問題を HertzBeat に調査させる…" },
+    "actions": { "send": "送信", "stop": "停止", "approve": "承認", "reject": "拒否", "submit": "送信" },
+    "failure": "調査ストリームを利用できません。操作が完了したとは見なしません。",
+    "context": {
+      "label": "実行コンテキスト",
+      "target": "対象",
+      "none": "ページコンテキストなし",
+      "activity": "ツールの実行",
+      "noActivity": "ツールはまだ使用されていません",
+      "approvals": "承認",
+      "noApprovals": "保留中の承認はありません",
+      "inputs": "要求された入力",
+      "noInputs": "入力要求はありません"
+    },
+    "approval": { "adminRequired": "管理者の承認が必要です" },
+    "providers": {
+      "action": "モデルプロバイダー",
+      "title": "モデルプロバイダー",
+      "description": "HertzBeat AI ランタイムで利用するモデル接続を設定します。",
+      "loading": "プロバイダーを読み込んでいます…",
+      "unavailable": "モデルプロバイダー設定を利用できません。",
+      "default": "YAML 既定値",
+      "active": "使用中",
+      "activate": "使用",
+      "configured": "キー設定済み",
+      "notConfigured": "キー未設定",
+      "add": "プロバイダーを追加",
+      "edit": "編集",
+      "delete": "削除",
+      "type": "プロバイダー種別",
+      "code": "プロバイダーコード",
+      "baseUrl": "ベース URL",
+      "model": "モデル",
+      "apiKey": "API キー",
+      "apiKeyHint": "空欄にすると既存のキーを維持します。",
+      "save": "プロバイダーを保存"
     }
   }
 }

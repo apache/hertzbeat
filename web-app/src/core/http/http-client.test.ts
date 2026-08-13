@@ -17,7 +17,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { apiFetch, registerBrowserSessionRefreshCoordinator } from './http-client';
+import { apiFetch, apiStreamFetch, registerBrowserSessionRefreshCoordinator } from './http-client';
 
 describe('apiFetch', () => {
   let unregisterRefreshCoordinator: (() => void) | undefined;
@@ -138,6 +138,22 @@ describe('apiFetch', () => {
     await apiFetch('/api/setup/status', { credentials: 'include' });
 
     expect(fetchMock.mock.calls[0]?.[1]?.credentials).toBe('include');
+  });
+
+  it('opens caller-owned streams with CSRF and no finite response timeout', async () => {
+    document.cookie = 'hb_ui_csrf=stream-token; path=/';
+    const caller = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiStreamFetch('/api/agent/webui/chat/stream', { method: 'POST', signal: caller.signal });
+
+    expect(timeoutSpy).not.toHaveBeenCalled();
+    const init = fetchMock.mock.calls[0]?.[1];
+    expect(init?.signal).toBe(caller.signal);
+    expect(init?.credentials).toBe('same-origin');
+    expect(new Headers(init?.headers).get('X-HertzBeat-CSRF')).toBe('stream-token');
   });
 });
 

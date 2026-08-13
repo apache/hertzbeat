@@ -143,6 +143,14 @@ describe('ShellHeaderActions account menu', () => {
     fireEvent.click(screen.getByText('systemConfig.locale.ja_JP'));
     expect(onChangeLanguage).toHaveBeenCalledWith('ja-JP');
   });
+
+  it('opens a context-bound investigation from an operational page', () => {
+    const onOpen = vi.fn();
+    render(<ShellHeaderActions {...createProps()} investigation={{ label: 'Investigate this view', onOpen }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Investigate this view' }));
+    expect(onOpen).toHaveBeenCalledOnce();
+  });
 });
 
 function createProps(overrides: Partial<React.ComponentProps<typeof ShellHeaderActions>> = {}) {

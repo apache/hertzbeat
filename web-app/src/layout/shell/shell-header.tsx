@@ -9,13 +9,17 @@ import { ClockCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
 import { resolveLocale } from '@/core/i18n/locale';
 import { useShellAlertNotificationController } from '@/features/alert/shell';
 import { useShellMonitorImportTaskNotifications } from '@/features/monitor/shell';
 import { useRuntimeStatusController } from '@/features/runtime-status';
+import {
+  buildAgentWorkspacePath,
+  deriveAgentTargetFromLocation
+} from '@/features/ai-workspace/model/agent-workspace-context';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
@@ -27,6 +31,7 @@ export function ShellHeader() {
   const { t, i18n } = useTranslation();
   const { session } = useSession();
   const location = useLocation();
+  const navigate = useNavigate();
   const actions = useShellHeaderActionController();
   useShellMonitorImportTaskNotifications();
   const alertNotifications = useShellAlertNotificationController({
@@ -38,6 +43,7 @@ export function ShellHeader() {
   });
   const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';
+  const investigationTarget = deriveAgentTargetFromLocation(location);
 
   return (
     <header className={styles.header}>
@@ -53,6 +59,16 @@ export function ShellHeader() {
           alertNotifications={alertNotifications}
           fullscreen={actions.fullscreen}
           loggingOut={actions.loggingOut}
+          {...(investigationTarget
+            ? {
+                investigation: {
+                  label: t('shell.actions.investigate'),
+                  onOpen: () => {
+                    void navigate(buildAgentWorkspacePath(investigationTarget));
+                  }
+                }
+              }
+            : {})}
           t={t}
           theme={actions.theme}
           onOpenAlerts={actions.openAlerts}
