@@ -102,7 +102,7 @@ class AppServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         when(defineDao.findAll()).thenReturn(new ArrayList<>());
-        appService.afterPropertiesSet();
+        appService.initializeRuntimeDefinitions();
     }
 
     @Test

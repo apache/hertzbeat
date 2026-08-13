@@ -25,6 +25,7 @@ import java.util.List;
 public interface ObservabilityAccessTokenGateway {
 
     String CLAIM_MANAGED = "managed";
+    String CLAIM_CREDENTIAL_VERSION = "credentialVersion";
 
     /**
      * Check the status of a managed token.
@@ -62,9 +63,10 @@ public interface ObservabilityAccessTokenGateway {
      *
      * @param userId subject from token
      * @param claimedRoles roles embedded in token
+     * @param credentialVersion account credential generation embedded in token, or null for legacy accounts
      * @return null when owner is still allowed, otherwise rejection reason
      */
-    String checkManagedTokenAccess(String userId, List<String> claimedRoles);
+    String checkManagedTokenAccess(String userId, List<String> claimedRoles, Long credentialVersion);
 
     /**
      * Touch token last used time.

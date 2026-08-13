@@ -73,6 +73,7 @@ class LogSseManagerTest {
     @BeforeEach
     void setUp() {
         logSseManager = new LogSseManager();
+        logSseManager.start();
     }
 
     @AfterEach

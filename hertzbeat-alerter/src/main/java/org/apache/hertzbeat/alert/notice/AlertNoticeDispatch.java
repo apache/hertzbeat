@@ -106,18 +106,29 @@ public class AlertNoticeDispatch {
         return Optional.ofNullable(noticeConfigService.getReceiverFilterRule(alert));
     }
 
-    public void dispatchAlarm(GroupAlert groupAlert) {
-        if (groupAlert != null) {
-            // Determining alarm type storage
-            GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
-            // Notice distribution
-            sendNotify(storedGroupAlert);
-            // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)
-            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(storedGroupAlert));
-            // Execute the plugin if enable with params
-            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(storedGroupAlert, pluginContext));
-            // Send alert to the sse client
-            emitterManager.broadcast(JsonUtil.toJson(storedGroupAlert));
+    public boolean dispatchAlarm(GroupAlert groupAlert) {
+        if (groupAlert == null) {
+            return false;
+        }
+        GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
+        dispatchAfterStore(storedGroupAlert);
+        return true;
+    }
+
+    private void dispatchAfterStore(GroupAlert storedGroupAlert) {
+        runAfterStore(() -> sendNotify(storedGroupAlert), "notice");
+        runAfterStore(() -> pluginRunner.pluginExecute(
+                Plugin.class, plugin -> plugin.alert(storedGroupAlert)), "legacy-plugin");
+        runAfterStore(() -> pluginRunner.pluginExecute(PostAlertPlugin.class,
+                (plugin, context) -> plugin.execute(storedGroupAlert, context)), "post-plugin");
+        runAfterStore(() -> emitterManager.broadcast(JsonUtil.toJson(storedGroupAlert)), "sse");
+    }
+
+    private void runAfterStore(Runnable action, String stage) {
+        try {
+            action.run();
+        } catch (RuntimeException exception) {
+            log.warn("Post-store alert dispatch failed at stage: {}", stage);
         }
     }
 

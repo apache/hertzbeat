@@ -66,6 +66,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
@@ -92,6 +93,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
 public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {

@@ -51,6 +51,7 @@ import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.http.ssl.SSLContexts;
@@ -61,6 +62,7 @@ import org.springframework.stereotype.Component;
  * HistoryQuestdbDataStorage class
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.questdb", name = "enabled", havingValue = "true")
 @Slf4j
 public class QuestdbDataStorage extends AbstractHistoryDataStorage {

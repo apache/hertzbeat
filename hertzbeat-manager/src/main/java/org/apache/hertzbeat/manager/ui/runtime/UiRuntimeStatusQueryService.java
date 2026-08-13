@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.ui.runtime;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_STATUS_ONLINE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MAIN_COLLECTOR_NODE;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -96,9 +97,15 @@ public class UiRuntimeStatusQueryService implements UiRuntimeStatusQuery {
         boolean enabledRuntimeFailure = false;
         Instant lastReportedAt = null;
         for (CollectorStatusInventory collector : inventory) {
-            boolean collectorOnline = collector.getStatus() == COLLECTOR_STATUS_ONLINE;
+            boolean embedded = MAIN_COLLECTOR_NODE.equals(collector.getName());
+            // The embedded Java Collector shares the Server process lifetime and has no external heartbeat.
+            boolean collectorOnline = embedded || collector.getStatus() == COLLECTOR_STATUS_ONLINE;
             if (collectorOnline) {
                 online++;
+            }
+            if (embedded) {
+                runtimeHealthy++;
+                continue;
             }
             ReportedStatus report = runtimeStatusRegistry.current(collector.getName()).orElse(null);
             if (report == null) {

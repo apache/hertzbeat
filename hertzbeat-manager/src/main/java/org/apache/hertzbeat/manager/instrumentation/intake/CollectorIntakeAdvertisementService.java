@@ -21,12 +21,16 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_ST
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.OtlpGatewayState;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.OtlpGatewayTransport;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.ErrorCode;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,14 +41,22 @@ public class CollectorIntakeAdvertisementService implements CollectorIntakeAdver
 
     private final CollectorDao collectorDao;
     private final CollectorIntakeAdvertisementCodec codec;
+    private final CollectorRuntimeStatusRegistry runtimeStatuses;
 
-    public CollectorIntakeAdvertisementService(CollectorDao collectorDao, CollectorIntakeAdvertisementCodec codec) {
+    public CollectorIntakeAdvertisementService(
+            CollectorDao collectorDao,
+            CollectorIntakeAdvertisementCodec codec,
+            CollectorRuntimeStatusRegistry runtimeStatuses) {
         this.collectorDao = collectorDao;
         this.codec = codec;
+        this.runtimeStatuses = runtimeStatuses;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public CollectorInstrumentationIntake update(String collectorName, CollectorIntakeAdvertisementRequest request) {
+        if (request.gateway() != Gateway.COLLECTOR) {
+            throw new IllegalArgumentException("Collector intake advertisement must be Collector-owned");
+        }
         Collector collector = requireCollector(collectorName);
         collector.setInstrumentationIntake(codec.encode(request));
         collectorDao.save(collector);
@@ -73,11 +85,33 @@ public class CollectorIntakeAdvertisementService implements CollectorIntakeAdver
             return CollectorInstrumentationIntake.unavailable(
                     collectorId, ErrorCode.INTAKE_ADVERTISEMENT_INVALID);
         }
-        if (request.gateway() == Gateway.COLLECTOR && collector.getStatus() != COLLECTOR_STATUS_ONLINE) {
-            return CollectorInstrumentationIntake.unavailable(
-                    collectorId, ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE);
+        if (request.gateway() == Gateway.COLLECTOR) {
+            if (collector.getStatus() != COLLECTOR_STATUS_ONLINE || !runtimeSupports(collectorId, request)) {
+                return CollectorInstrumentationIntake.unavailable(
+                        collectorId, ErrorCode.INTAKE_ADVERTISEMENT_UNAVAILABLE);
+            }
         }
         return request.available(collectorId);
+    }
+
+    private boolean runtimeSupports(String collectorId, CollectorIntakeAdvertisementRequest request) {
+        return runtimeStatuses.current(collectorId)
+                .map(reported -> supports(reported.status(), request))
+                .orElse(false);
+    }
+
+    private boolean supports(ManagedOtelRuntimeStatus status, CollectorIntakeAdvertisementRequest request) {
+        if (!status.enabled()
+                || status.state() != ManagedOtelRuntimeStatus.RuntimeState.RUNNING
+                || status.otlpGateway().state() != OtlpGatewayState.AVAILABLE) {
+            return false;
+        }
+        return request.capabilities().stream().allMatch(capability -> switch (capability) {
+            case OTLP_HTTP_PROTOBUF -> status.otlpGateway().supportedTransports()
+                    .contains(OtlpGatewayTransport.HTTP_PROTOBUF);
+            case OTLP_GRPC -> status.otlpGateway().supportedTransports()
+                    .contains(OtlpGatewayTransport.GRPC);
+        });
     }
 
     private Collector requireCollector(String collectorName) {

@@ -21,6 +21,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
@@ -35,6 +36,7 @@ import org.springframework.util.StringUtils;
  */
 @Slf4j
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 public class GreptimeTtlApplicationReadyListener {
 

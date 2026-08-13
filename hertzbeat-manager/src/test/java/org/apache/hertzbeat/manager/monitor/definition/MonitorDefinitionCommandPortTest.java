@@ -100,7 +100,7 @@ class MonitorDefinitionCommandPortTest {
                 monitorServiceProvider,
                 objectStoreServiceProvider);
         commandService = new MonitorDefinitionCommandService(appService);
-        appService.afterPropertiesSet();
+        appService.initializeRuntimeDefinitions();
         clearInvocations(defineDao, monitorDao, monitorService);
     }
 
@@ -132,6 +132,10 @@ class MonitorDefinitionCommandPortTest {
         assertError(MonitorDefinitionErrorCode.UPDATE_TARGET_MISMATCH,
                 () -> commandService.update("write-update", MonitorDefinitionRevision.from(updated),
                         customDefinition("different-app", "three")));
+    }
+
+    @Test
+    void updatingBuiltinCreatesDeletableOverrideWithoutMutatingPackagedDefinition() {
         MonitorDefinitionSource builtin = source("jvm");
         String builtinRevision = MonitorDefinitionRevision.from(builtin);
         MonitorDefinitionSource override = commandService.update(

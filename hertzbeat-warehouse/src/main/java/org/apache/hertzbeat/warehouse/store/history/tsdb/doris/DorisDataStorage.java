@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
@@ -71,6 +72,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * - stream: HTTP Stream Load API (high throughput, suitable for large scale)
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.doris", name = "enabled", havingValue = "true")
 @Slf4j
 public class DorisDataStorage extends AbstractHistoryDataStorage {

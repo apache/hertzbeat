@@ -60,7 +60,7 @@ class OldMonitorServiceDiscoveryExpansionSourceOwnershipTest {
         assertTrue(compactSource.indexOf("Set<Long>allMonitorIds=oldMonitorServiceDiscoveryExpansionService"
                         + ".resolveMonitorIdsWithServiceDiscoveryChildren(ids);")
                 < compactSource.indexOf("List<Monitor>unManagedMonitors=oldMonitorStatusWriteModelService"
-                        + ".findAndMarkPausedMonitorsUp(allMonitorIds);"));
+                        + ".findAndMarkPausedMonitorsPending(allMonitorIds);"));
 
         assertTrue(Files.exists(OLD_MONITOR_SERVICE_DISCOVERY_EXPANSION_SERVICE));
         String expansionSource = Files.readString(OLD_MONITOR_SERVICE_DISCOVERY_EXPANSION_SERVICE);

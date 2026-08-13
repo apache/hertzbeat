@@ -104,4 +104,11 @@ public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecifi
     @Transactional
     @Query("UPDATE AuthToken t SET t.lastUsedTime = :lastUsedTime WHERE t.tokenHash = :tokenHash")
     void updateLastUsedTime(@Param("tokenHash") String tokenHash, @Param("lastUsedTime") LocalDateTime lastUsedTime);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE AuthToken t SET t.status = 1, t.revokedBy = :revokedBy, t.revokedTime = :revokedTime "
+            + "WHERE t.creator = :creator AND t.status = 0")
+    int revokeActiveByCreator(@Param("creator") String creator, @Param("revokedBy") String revokedBy,
+                              @Param("revokedTime") LocalDateTime revokedTime);
 }

@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -48,6 +49,7 @@ import org.springframework.util.StringUtils;
  * scheduler init
  */
 @Configuration
+@ConditionalOnNormalBusinessRuntime
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {

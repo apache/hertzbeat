@@ -56,24 +56,35 @@ public class LogSseManager {
     
     private final Map<Long, SseSubscriber> emitters = new ConcurrentHashMap<>();
     private final Queue<LogEntry> logQueue = new ConcurrentLinkedQueue<>();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "sse-batch-scheduler");
-        t.setDaemon(true);
-        return t;
-    });
-    private final ExecutorService senderPool = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r, "sse-sender");
-        t.setDaemon(true);
-        return t;
-    });
-    private final AtomicLong queueSize = new AtomicLong(0);
+    private ScheduledExecutorService scheduler;
+    private ExecutorService senderPool;
 
-    public LogSseManager() {
-        scheduler.scheduleAtFixedRate(this::flushBatch, BATCH_INTERVAL_MS, BATCH_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    synchronized void start() {
+        if (scheduler != null) {
+            return;
+        }
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "sse-batch-scheduler");
+            t.setDaemon(true);
+            return t;
+        });
+        senderPool = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "sse-sender");
+            t.setDaemon(true);
+            return t;
+        });
+        ExecutorService currentSenderPool = senderPool;
+        scheduler.scheduleAtFixedRate(
+                () -> flushBatch(currentSenderPool), BATCH_INTERVAL_MS, BATCH_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
+    private final AtomicLong queueSize = new AtomicLong(0);
+
     @PreDestroy
-    public void shutdown() {
+    public synchronized void shutdown() {
+        if (scheduler == null) {
+            return;
+        }
         scheduler.shutdown();
         senderPool.shutdown();
         try {
@@ -84,6 +95,8 @@ public class LogSseManager {
         }
         scheduler.shutdownNow();
         senderPool.shutdownNow();
+        scheduler = null;
+        senderPool = null;
     }
 
     /**
@@ -117,7 +130,13 @@ public class LogSseManager {
     /**
      * Flush queued logs to all subscribers in batch
      */
-    private void flushBatch() {
+    synchronized void flushBatch() {
+        if (senderPool != null) {
+            flushBatch(senderPool);
+        }
+    }
+
+    private void flushBatch(ExecutorService currentSenderPool) {
         try {
             if (logQueue.isEmpty() || emitters.isEmpty()) {
                 return;
@@ -140,7 +159,7 @@ public class LogSseManager {
                 SseSubscriber subscriber = e.getValue();
                 List<LogEntry> filtered = filterLogs(batch, subscriber.filters);
                 if (!filtered.isEmpty()) {
-                    senderPool.submit(() -> sendToSubscriber(clientId, subscriber.emitter, filtered));
+                    currentSenderPool.submit(() -> sendToSubscriber(clientId, subscriber.emitter, filtered));
                 }
             }
         } catch (Exception e) {

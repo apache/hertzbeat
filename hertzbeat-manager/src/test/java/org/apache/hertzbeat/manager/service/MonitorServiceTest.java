@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
@@ -328,6 +329,8 @@ class MonitorServiceTest {
         assertEquals(10, job.getDefaultInterval());
         assertEquals("interval", job.getScheduleType());
         assertNull(job.getCronExpression());
+        assertEquals(CommonConstants.MONITOR_PENDING_CODE, monitor.getStatus());
+        verify(collectJobScheduling, never()).collectSyncJobData(any(Job.class));
         verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
     }
 
@@ -1240,6 +1243,7 @@ class MonitorServiceTest {
         assertEquals(10, job.getDefaultInterval());
         assertEquals("cron", job.getScheduleType());
         assertEquals("0 0 * * * ?", job.getCronExpression());
+        monitors.forEach(monitor -> assertEquals(CommonConstants.MONITOR_PENDING_CODE, monitor.getStatus()));
     }
 
     @Test
@@ -1276,6 +1280,23 @@ class MonitorServiceTest {
         when(appService.getAppDefine(appCounts.get(0).getApp())).thenReturn(job);
 
         assertDoesNotThrow(() -> monitorService.getAllAppMonitorsCount());
+    }
+
+    @Test
+    void getAllAppMonitorsCountIncludesPendingMonitorsInTotal() {
+        AppCount pending = new AppCount("test", CommonConstants.MONITOR_PENDING_CODE, 2L);
+        when(monitorDao.findAppsStatusCount()).thenReturn(List.of(pending));
+        Job job = new Job();
+        job.setMetrics(new ArrayList<>());
+        when(appService.getAppDefine("test")).thenReturn(job);
+
+        List<AppCount> result = monitorService.getAllAppMonitorsCount();
+
+        assertEquals(1, result.size());
+        assertEquals(2L, result.getFirst().getSize());
+        assertEquals(0L, result.getFirst().getAvailableSize());
+        assertEquals(0L, result.getFirst().getUnAvailableSize());
+        assertEquals(0L, result.getFirst().getUnManageSize());
     }
 
     @Test

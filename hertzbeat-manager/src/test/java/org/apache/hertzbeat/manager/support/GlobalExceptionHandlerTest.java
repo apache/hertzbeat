@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import ch.qos.logback.classic.Level;
@@ -21,6 +23,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -136,6 +139,17 @@ class GlobalExceptionHandlerTest {
                 .andExpect(content().string(not(containsString(PRIVATE_SERIALIZATION_DETAIL))));
     }
 
+    @Test
+    void metadataWriteAdmissionFailureIsStableNoStoreServiceUnavailable() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/metadata-write-maintenance"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.errorCode").value("metadata_writes_paused"))
+                .andExpect(jsonPath("$.message").value("Metadata writes are temporarily unavailable"))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("operation-private"))));
+    }
+
     @RestController
     private static final class DisconnectController {
 
@@ -163,6 +177,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/telemetry-storage-unavailable")
         void telemetryStorageUnavailable() {
             throw new TelemetryStorageUnavailableException();
+        }
+
+        @org.springframework.web.bind.annotation.PostMapping("/metadata-write-maintenance")
+        void metadataWriteMaintenance() {
+            throw MetadataWriteAdmissionException.metadataWritesPaused();
         }
 
         private HttpMessageNotWritableException wrappedDisconnectFailure() {

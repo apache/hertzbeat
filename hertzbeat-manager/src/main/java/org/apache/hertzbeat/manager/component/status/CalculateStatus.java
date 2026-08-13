@@ -47,8 +47,13 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
+import org.apache.hertzbeat.manager.maintenance.MaintenanceDeadline;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceException;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenanceParticipant;
+import org.apache.hertzbeat.manager.maintenance.MetadataMaintenancePhase;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -57,7 +62,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class CalculateStatus implements DisposableBean {
+@Order(200)
+public class CalculateStatus implements DisposableBean, MetadataMaintenanceParticipant {
 
     private static final int DEFAULT_CALCULATE_INTERVAL_TIME = 300;
 
@@ -70,61 +76,145 @@ public class CalculateStatus implements DisposableBean {
     private final MonitorDao monitorDao;
 
     private final int intervals;
+    private final VirtualThreadProperties virtualThreadProperties;
 
-    private final ScheduledExecutorService calculateScheduler;
+    private ScheduledExecutorService calculateScheduler;
 
-    private final ScheduledExecutorService combineHistoryScheduler;
+    private ScheduledExecutorService combineHistoryScheduler;
 
-    private final ExecutorService calculateExecutor;
+    private ExecutorService calculateExecutor;
 
-    private final ExecutorService combineHistoryExecutor;
+    private ExecutorService combineHistoryExecutor;
 
-    private final ScheduledDispatchTask calculateTask;
+    private PausableDispatchTask calculateTask;
 
-    private final ScheduledDispatchTask combineHistoryTask;
+    private PausableDispatchTask combineHistoryTask;
+
+    private boolean started;
+
+    private volatile MetadataMaintenancePhase maintenancePhase = MetadataMaintenancePhase.RUNNING;
 
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
                            StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
                            MonitorDao monitorDao) {
         this(statusPageOrgDao, statusPageComponentDao, statusProperties, statusPageHistoryDao, monitorDao,
-                VirtualThreadProperties.defaults(), true);
+                VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
                            StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
                            MonitorDao monitorDao, VirtualThreadProperties virtualThreadProperties) {
-        this(statusPageOrgDao, statusPageComponentDao, statusProperties, statusPageHistoryDao, monitorDao,
-                virtualThreadProperties, true);
-    }
-
-    CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
-                    StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
-                    MonitorDao monitorDao, VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.statusPageOrgDao = statusPageOrgDao;
         this.monitorDao = monitorDao;
         this.statusPageComponentDao = statusPageComponentDao;
         this.statusPageHistoryDao = statusPageHistoryDao;
-        intervals = statusProperties.getCalculate() == null ? DEFAULT_CALCULATE_INTERVAL_TIME : statusProperties.getCalculate().getInterval();
-        this.calculateScheduler = createScheduler("status-page-calculate-%d", "Status calculate has uncaughtException.");
-        this.combineHistoryScheduler = createScheduler("status-page-history-%d", "History combine has uncaughtException.");
-        this.calculateExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-calculate-vt-",
-                "Status calculate worker has uncaughtException.");
-        this.combineHistoryExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-history-vt-",
-                "History combine worker has uncaughtException.");
-        this.calculateTask = new ScheduledDispatchTask(calculateExecutor, this::runCalculate);
-        this.combineHistoryTask = new ScheduledDispatchTask(combineHistoryExecutor, this::runCombineHistory);
-        if (autoStart) {
-            startCalculate();
-            startCombineHistory();
+        StatusProperties.CalculateProperties calculateProperties = statusProperties.getCalculate();
+        intervals = calculateProperties == null
+                ? DEFAULT_CALCULATE_INTERVAL_TIME : calculateProperties.getInterval();
+        this.virtualThreadProperties = virtualThreadProperties == null
+                ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+    }
+
+    synchronized void start() {
+        if (started) {
+            return;
+        }
+        try {
+            calculateScheduler = createScheduler(
+                    "status-page-calculate-%d", "Status calculate has uncaughtException.");
+            combineHistoryScheduler = createScheduler(
+                    "status-page-history-%d", "History combine has uncaughtException.");
+            calculateExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-calculate-vt-",
+                    "Status calculate worker has uncaughtException.");
+            combineHistoryExecutor = createVirtualExecutor(virtualThreadProperties, "status-page-history-vt-",
+                    "History combine worker has uncaughtException.");
+            PausableDispatchTask currentCalculateTask =
+                    new PausableDispatchTask(calculateExecutor, this::runCalculate);
+            PausableDispatchTask currentCombineHistoryTask =
+                    new PausableDispatchTask(combineHistoryExecutor, this::runCombineHistory);
+            calculateTask = currentCalculateTask;
+            combineHistoryTask = currentCombineHistoryTask;
+            startCalculate(currentCalculateTask);
+            startCombineHistory(currentCombineHistoryTask);
+            started = true;
+        } catch (RuntimeException | Error e) {
+            destroy();
+            throw e;
         }
     }
 
-    private void startCalculate() {
-        calculateScheduler.scheduleAtFixedRate(this::dispatchCalculate, 5, intervals, TimeUnit.SECONDS);
+    synchronized boolean isStarted() {
+        return started;
     }
 
-    private void startCombineHistory() {
+    @Override
+    public String participantId() {
+        return "status-calculation";
+    }
+
+    @Override
+    public void quiesce(Duration timeout) {
+        MaintenanceDeadline deadline = MaintenanceDeadline.start(timeout);
+        PausableDispatchTask currentCalculateTask;
+        PausableDispatchTask currentCombineHistoryTask;
+        synchronized (this) {
+            if (maintenancePhase == MetadataMaintenancePhase.QUIESCED) {
+                return;
+            }
+            maintenancePhase = MetadataMaintenancePhase.QUIESCING;
+            currentCalculateTask = calculateTask;
+            currentCombineHistoryTask = combineHistoryTask;
+            if (currentCalculateTask != null) {
+                currentCalculateTask.pauseAdmission();
+            }
+            if (currentCombineHistoryTask != null) {
+                currentCombineHistoryTask.pauseAdmission();
+            }
+        }
+        try {
+            if (currentCalculateTask != null) {
+                currentCalculateTask.awaitDrained(deadline);
+            }
+            if (currentCombineHistoryTask != null) {
+                currentCombineHistoryTask.awaitDrained(deadline);
+            }
+            maintenancePhase = MetadataMaintenancePhase.QUIESCED;
+        } catch (MetadataMaintenanceException exception) {
+            resumeTasks(currentCalculateTask, currentCombineHistoryTask);
+            maintenancePhase = MetadataMaintenancePhase.RUNNING;
+            throw exception;
+        }
+    }
+
+    @Override
+    public synchronized void resume() {
+        if (maintenancePhase == MetadataMaintenancePhase.RUNNING) {
+            return;
+        }
+        maintenancePhase = MetadataMaintenancePhase.RUNNING;
+        resumeTasks(calculateTask, combineHistoryTask);
+    }
+
+    MetadataMaintenancePhase maintenancePhase() {
+        return maintenancePhase;
+    }
+
+    private void resumeTasks(PausableDispatchTask first, PausableDispatchTask second) {
+        if (second != null) {
+            second.resumeAdmission();
+        }
+        if (first != null) {
+            first.resumeAdmission();
+        }
+    }
+
+
+    private void startCalculate(PausableDispatchTask currentCalculateTask) {
+        calculateScheduler.scheduleAtFixedRate(currentCalculateTask::dispatch, 5, intervals, TimeUnit.SECONDS);
+    }
+
+    private void startCombineHistory(PausableDispatchTask currentCombineHistoryTask) {
         // combine history every day at 1:00 AM
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = now.withHour(1).withMinute(0).withSecond(0);
@@ -132,7 +222,7 @@ public class CalculateStatus implements DisposableBean {
             nextRun = nextRun.plusDays(1);
         }
         long delay = Duration.between(now, nextRun).toMillis();
-        combineHistoryScheduler.scheduleAtFixedRate(this::dispatchCombineHistory, delay,
+        combineHistoryScheduler.scheduleAtFixedRate(currentCombineHistoryTask::dispatch, delay,
                 TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
     }
 
@@ -145,23 +235,52 @@ public class CalculateStatus implements DisposableBean {
     }
 
     void dispatchCalculate() {
-        calculateTask.dispatch();
+        PausableDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = calculateTask;
+        }
+        if (currentTask != null) {
+            currentTask.dispatch();
+        }
     }
 
     void dispatchCombineHistory() {
-        combineHistoryTask.dispatch();
+        PausableDispatchTask currentTask;
+        synchronized (this) {
+            currentTask = combineHistoryTask;
+        }
+        if (currentTask != null) {
+            currentTask.dispatch();
+        }
     }
 
     @Override
-    public void destroy() {
-        calculateScheduler.shutdownNow();
-        combineHistoryScheduler.shutdownNow();
+    public synchronized void destroy() {
+        started = false;
+        if (calculateTask != null) {
+            calculateTask.cancel();
+        }
+        if (combineHistoryTask != null) {
+            combineHistoryTask.cancel();
+        }
+        if (calculateScheduler != null) {
+            calculateScheduler.shutdownNow();
+            calculateScheduler = null;
+        }
+        if (combineHistoryScheduler != null) {
+            combineHistoryScheduler.shutdownNow();
+            combineHistoryScheduler = null;
+        }
         if (calculateExecutor != null) {
             calculateExecutor.shutdownNow();
+            calculateExecutor = null;
         }
         if (combineHistoryExecutor != null) {
             combineHistoryExecutor.shutdownNow();
+            combineHistoryExecutor = null;
         }
+        calculateTask = null;
+        combineHistoryTask = null;
     }
 
     private void runCalculate() {
@@ -318,71 +437,5 @@ public class CalculateStatus implements DisposableBean {
                     log.error(throwable.getMessage(), throwable);
                 })
                 .factory());
-    }
-
-    private static final class ScheduledDispatchTask {
-
-        private final ExecutorService executorService;
-        private final Runnable task;
-        private final Object lock = new Object();
-        private boolean running;
-        private int pendingRuns;
-
-        private ScheduledDispatchTask(ExecutorService executorService, Runnable task) {
-            this.executorService = executorService;
-            this.task = task;
-        }
-
-        private void dispatch() {
-            if (executorService == null) {
-                task.run();
-                return;
-            }
-            synchronized (lock) {
-                if (running) {
-                    pendingRuns++;
-                    return;
-                }
-                running = true;
-            }
-            submit();
-        }
-
-        private void submit() {
-            boolean submitted = false;
-            try {
-                executorService.execute(() -> {
-                    try {
-                        task.run();
-                    } finally {
-                        onComplete();
-                    }
-                });
-                submitted = true;
-            } finally {
-                if (!submitted) {
-                    synchronized (lock) {
-                        running = false;
-                        pendingRuns = 0;
-                    }
-                }
-            }
-        }
-
-        private void onComplete() {
-            boolean shouldRunAgain;
-            synchronized (lock) {
-                if (pendingRuns > 0) {
-                    pendingRuns--;
-                    shouldRunAgain = true;
-                } else {
-                    running = false;
-                    shouldRunAgain = false;
-                }
-            }
-            if (shouldRunAgain) {
-                submit();
-            }
-        }
     }
 }

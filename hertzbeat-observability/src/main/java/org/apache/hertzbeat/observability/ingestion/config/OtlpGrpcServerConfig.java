@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.observability.ingestion.grpc.OtlpGrpcLogsService;
 import org.apache.hertzbeat.observability.ingestion.grpc.OtlpGrpcMetricsService;
 import org.apache.hertzbeat.observability.ingestion.grpc.OtlpGrpcTraceService;
@@ -51,6 +52,7 @@ import org.springframework.context.annotation.Configuration;
  * OTLP gRPC server configuration.
  */
 @Configuration
+@ConditionalOnNormalBusinessRuntime
 public class OtlpGrpcServerConfig {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
@@ -148,7 +150,8 @@ public class OtlpGrpcServerConfig {
                 List<String> claimedRoles = claims.get("roles", List.class);
                 rejectReason = accessTokenGateway.checkManagedTokenAccess(
                         userId,
-                        claimedRoles == null ? Collections.emptyList() : claimedRoles
+                        claimedRoles == null ? Collections.emptyList() : claimedRoles,
+                        claims.get(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, Long.class)
                 );
                 if (rejectReason != null) {
                     call.close(Status.UNAUTHENTICATED.withDescription(rejectReason), new Metadata());

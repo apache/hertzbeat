@@ -29,16 +29,17 @@ import io.jsonwebtoken.MalformedJwtException;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.AuthTokenDao;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
+import org.apache.hertzbeat.manager.setup.identity.AccountCredentialVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.naming.AuthenticationException;
@@ -92,8 +93,8 @@ class AccountServiceTest {
 
         accountProvider = mock(SurenessAccountProvider.class);
         authTokenDao = mock(AuthTokenDao.class);
-        accountService = new AccountServiceImpl(accountProvider);
-        ReflectionTestUtils.setField(accountService, "authTokenDao", authTokenDao);
+        accountService = new AccountServiceImpl(accountProvider, authTokenDao,
+                new AccountCredentialVerifier(new org.apache.hertzbeat.manager.setup.identity.IdentityPasswordPolicy()));
 
         JsonWebTokenUtil.setDefaultSecretKey(jwt);
     }
@@ -481,7 +482,8 @@ class AccountServiceTest {
             String token = accountService.generateToken("test", null);
 
             Claims claims = JsonWebTokenUtil.parseJwt(token);
-            assertEquals(Boolean.TRUE, claims.get(AccountServiceImpl.CLAIM_MANAGED, Boolean.class));
+            assertEquals(Boolean.TRUE,
+                    claims.get(ObservabilityAccessTokenGateway.CLAIM_MANAGED, Boolean.class));
         }
     }
 
@@ -770,7 +772,7 @@ class AccountServiceTest {
     void testCheckManagedTokenAccessValid() {
         when(accountProvider.loadAccount(identifier)).thenReturn(buildActiveAccount());
 
-        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"));
+        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"), null);
 
         assertNull(result);
     }
@@ -786,7 +788,7 @@ class AccountServiceTest {
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
 
-        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"));
+        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"), null);
 
         assertEquals("Token owner account is no longer valid", result);
     }
@@ -802,7 +804,7 @@ class AccountServiceTest {
                 .build();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
 
-        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"));
+        String result = accountService.checkManagedTokenAccess(identifier, List.of("admin"), null);
 
         assertEquals("Token permissions are outdated", result);
     }

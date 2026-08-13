@@ -79,6 +79,12 @@ resourceRole:
   - /api/notice/**===post===[admin,user]
   - /api/notice/**===put===[admin,user]
   - /api/notice/**===delete===[admin]
+  - /api/config/deployment===get===[admin]
+  - /api/config/deployment/validate===post===[admin]
+  - /api/config/deployment/metadata-migrations===post===[admin]
+  - /api/config/deployment/metadata-migrations/*===get===[admin]
+  - /api/config/deployment/metadata-migrations/*/activate===post===[admin]
+  - /api/config/deployment/metadata-migrations/*/export===post===[admin]
   - /api/config/email===get===[admin,user,guest]
   - /api/config/email===post===[admin]
   - /api/config/sms===get===[admin,user,guest]
@@ -179,6 +185,8 @@ resourceRole:
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
+  # Setup has its own runtime gate, remote-unlock proof, and permanent completion closure.
+  - /api/setup/**===*
   - /api/account/auth/**===*
   - /api/ui/session===get
   - /api/ui/session===post

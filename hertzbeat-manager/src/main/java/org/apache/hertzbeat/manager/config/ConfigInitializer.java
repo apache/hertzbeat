@@ -22,6 +22,7 @@ import jakarta.annotation.Resource;
 import java.security.SecureRandom;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MuteConfig;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 2)
+@ConditionalOnNormalBusinessRuntime
 public class ConfigInitializer implements SmartLifecycle {
 
     private boolean running = false;

@@ -78,7 +78,7 @@ class ObjectStoreConfigServiceTest {
 
     @Test
     void testStartupWithNullConfigDoesNotPublishChange() throws Exception {
-        objectStoreConfigService.afterPropertiesSet();
+        objectStoreConfigService.initializeRuntimeState();
         verify(ctx, never()).publishEvent(any());
     }
 

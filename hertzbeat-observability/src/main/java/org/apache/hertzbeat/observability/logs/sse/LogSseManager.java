@@ -61,25 +61,32 @@ public class LogSseManager {
     private final Map<Long, SseSubscriber> emitters = new ConcurrentHashMap<>();
     private final Queue<QueuedItem> logQueue = new ConcurrentLinkedQueue<>();
     private final Object queueLock = new Object();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "sse-batch-scheduler");
-        t.setDaemon(true);
-        return t;
-    });
+    private ScheduledExecutorService scheduler;
     private final AtomicLong queueSize = new AtomicLong(0);
     private final AtomicLong broadcastSequence = new AtomicLong(0);
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicReference<PendingGap> pendingGap = new AtomicReference<>();
 
-    public LogSseManager() {
+    synchronized void start() {
+        if (scheduler != null) {
+            return;
+        }
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "sse-batch-scheduler");
+            t.setDaemon(true);
+            return t;
+        });
         scheduler.scheduleAtFixedRate(this::flushBatch, BATCH_INTERVAL_MS, BATCH_INTERVAL_MS, TimeUnit.MILLISECONDS);
         scheduler.scheduleAtFixedRate(
                 this::sendHeartbeats, HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
-    public void shutdown() {
+    public synchronized void shutdown() {
         if (!closed.compareAndSet(false, true)) {
+            return;
+        }
+        if (scheduler == null) {
             return;
         }
         scheduler.shutdownNow();
@@ -107,6 +114,7 @@ public class LogSseManager {
             queueSize.set(0);
             pendingGap.set(null);
         }
+        scheduler = null;
     }
 
     /**

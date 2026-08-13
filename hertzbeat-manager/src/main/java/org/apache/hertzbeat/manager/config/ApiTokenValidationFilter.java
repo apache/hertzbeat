@@ -35,9 +35,9 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.AccountService;
-import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -103,7 +103,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
                     }
                     touchTokenLastUsedTime(token);
                 } catch (RuntimeException e) {
-                    log.warn("Managed token validation failed");
+                    log.warn("Managed token validation failed ({})", e.getClass().getSimpleName());
                     return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
                 }
             }
@@ -135,7 +135,8 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (rejectReason != null) {
             return rejectReason;
         }
-        rejectReason = accountService.checkManagedTokenAccess(getCurrentUserId(subject), extractClaimedRoles(subject));
+        rejectReason = accountService.checkManagedTokenAccess(
+                getCurrentUserId(subject), extractClaimedRoles(subject), extractCredentialVersion(subject));
         if (rejectReason != null) {
             return rejectReason;
         }
@@ -155,7 +156,7 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (principalMap == null) {
             return false;
         }
-        Object managed = principalMap.getPrincipal(AccountServiceImpl.CLAIM_MANAGED);
+        Object managed = principalMap.getPrincipal(ObservabilityAccessTokenGateway.CLAIM_MANAGED);
         return managed instanceof Boolean ? (Boolean) managed : Boolean.parseBoolean(String.valueOf(managed));
     }
 
@@ -179,6 +180,16 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     private String getCurrentUserId(SubjectSum subject) {
         Object principal = subject.getPrincipal();
         return principal == null ? null : String.valueOf(principal);
+    }
+
+    private Long extractCredentialVersion(SubjectSum subject) {
+        PrincipalMap principalMap = subject.getPrincipalMap();
+        if (principalMap == null) {
+            return null;
+        }
+        Object claimedVersion = principalMap.getPrincipal(
+                ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION);
+        return claimedVersion instanceof Number number ? number.longValue() : null;
     }
 
     private String bindManagedCollectorBoundary(HttpServletRequest request, SubjectSum subject) {

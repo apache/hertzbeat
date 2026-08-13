@@ -20,25 +20,23 @@ package org.apache.hertzbeat.warehouse.store;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import jakarta.persistence.EntityManagerFactory;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
+import org.apache.hertzbeat.warehouse.store.metadata.MonitorStatusMetadataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 class DataStorageDispatchContextTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withBean(CommonDataQueue.class, () -> mock(CommonDataQueue.class))
             .withBean(WarehouseWorkerPool.class, () -> mock(WarehouseWorkerPool.class))
-            .withBean(JdbcTemplate.class, () -> mock(JdbcTemplate.class))
+            .withBean(MonitorStatusMetadataWriter.class, () -> mock(MonitorStatusMetadataWriter.class))
             .withBean(RealTimeDataWriter.class, () -> mock(RealTimeDataWriter.class))
             .withBean(PluginRunner.class, () -> mock(PluginRunner.class))
-            .withBean(EntityManagerFactory.class, () -> mock(EntityManagerFactory.class))
             .withBean("duckdbDatabaseDataStorage", HistoryDataWriter.class, () -> mock(HistoryDataWriter.class))
             .withBean("greptimeDbDataStorage", HistoryDataWriter.class, () -> mock(HistoryDataWriter.class))
             .withBean(DataStorageDispatch.class);

@@ -25,6 +25,7 @@ import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit;
  * 4. Distributing logs to workers
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @Slf4j
 public class WindowedLogRealTimeAlertCalculator implements Runnable {
 

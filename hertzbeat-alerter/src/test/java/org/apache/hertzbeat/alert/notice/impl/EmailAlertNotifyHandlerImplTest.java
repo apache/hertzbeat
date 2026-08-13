@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -46,6 +47,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for Email Alert Notify
@@ -106,7 +109,7 @@ class EmailAlertNotifyHandlerImplTest {
                 .content(JsonUtil.toJson(mailServerConfig))
                 .build();
         when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
-        when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
+        lenient().when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
     }
 
     @Test
@@ -129,5 +132,31 @@ class EmailAlertNotifyHandlerImplTest {
         when(mailSender.createMimeMessage()).thenThrow(new RuntimeException("Test Error"));
         assertThrows(AlertNoticeException.class,
                 () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    void configuredFromAddressIsUsedByProductionHandler() throws Exception {
+        AtomicReference<MimeMessage> sent = new AtomicReference<>();
+        JavaMailSenderImpl sender = new JavaMailSenderImpl() {
+            @Override
+            public void send(MimeMessage mimeMessage) {
+                sent.set(mimeMessage);
+            }
+        };
+        when(generalConfigDao.findByType(any())).thenReturn(null);
+        EmailAlertNotifyHandlerImpl handler = new EmailAlertNotifyHandlerImpl(sender, generalConfigDao);
+        ReflectionTestUtils.setField(handler, "host", "smtp.example.test");
+        ReflectionTestUtils.setField(handler, "port", 465);
+        ReflectionTestUtils.setField(handler, "username", "smtp-user@example.test");
+        ReflectionTestUtils.setField(handler, "password", "password");
+        ReflectionTestUtils.setField(handler, "fromAddress", "alerts@example.test");
+        ReflectionTestUtils.setField(handler, "sslEnable", true);
+        ReflectionTestUtils.setField(handler, "starttlsEnable", false);
+        ReflectionTestUtils.setField(handler, "bundle", bundle);
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+        handler.send(receiver, template, groupAlert);
+
+        assertEquals("alerts@example.test", sent.get().getFrom()[0].toString());
     }
 }

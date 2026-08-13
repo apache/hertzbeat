@@ -51,6 +51,7 @@ class LogSseManagerTest {
     @BeforeEach
     void setUp() {
         logSseManager = new LogSseManager();
+        logSseManager.start();
     }
 
     @AfterEach
@@ -170,6 +171,17 @@ class LogSseManagerTest {
             verify(mockEmitter).complete();
             assertFalse(logSseManager.getEmitters().containsKey(CLIENT_ID));
         });
+    }
+
+    @Test
+    void flushAfterShutdownIsSafeNoOp() {
+        logSseManager.shutdown();
+        logSseManager.broadcast(createLogEntry("INFO", "after shutdown"));
+
+        logSseManager.flushBatch();
+        logSseManager.shutdown();
+
+        assertEquals(1, logSseManager.getQueueSize());
     }
 
     /**

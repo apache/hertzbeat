@@ -57,20 +57,17 @@ public interface CommonConstants {
      */
     byte LOGIN_FAILED_CODE = 0x05;
 
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+    /** Monitoring status 0: Paused. */
     byte MONITOR_PAUSED_CODE = 0x00;
 
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+    /** Monitoring status 1: Up. */
     byte MONITOR_UP_CODE = 0x01;
 
-    /**
-     * Monitoring status 0: Paused, 1: Up, 2: Down
-     */
+    /** Monitoring status 2: Down. */
     byte MONITOR_DOWN_CODE = 0x02;
+
+    /** Monitoring status 3: Scheduled and waiting for the first availability result. */
+    byte MONITOR_PENDING_CODE = 0x03;
 
     /**
      * scrape type static

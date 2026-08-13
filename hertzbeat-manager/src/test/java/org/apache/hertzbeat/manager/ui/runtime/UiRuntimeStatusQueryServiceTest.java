@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.ui.runtime;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_STATUS_OFFLINE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_STATUS_ONLINE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MAIN_COLLECTOR_NODE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -93,6 +94,17 @@ class UiRuntimeStatusQueryServiceTest {
         when(collectorDao.findStatusInventory()).thenReturn(List.of(
                 inventory("a", COLLECTOR_STATUS_ONLINE), inventory("b", COLLECTOR_STATUS_ONLINE)));
         assertCollectors(service().current(), State.AVAILABLE, 2, 2, 0);
+    }
+
+    @Test
+    void treatsTheServerEmbeddedCollectorAsOnlineWithTheServerProcess() {
+        when(collectorDao.findStatusInventory()).thenReturn(
+                List.of(inventory(MAIN_COLLECTOR_NODE, COLLECTOR_STATUS_OFFLINE)));
+
+        RuntimeStatusResponse response = service().current();
+
+        assertCollectors(response, State.AVAILABLE, 1, 1, 1);
+        assertNull(response.collectors().lastReportedAt());
     }
 
     @Test

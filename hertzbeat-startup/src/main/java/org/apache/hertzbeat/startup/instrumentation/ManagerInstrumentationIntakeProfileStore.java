@@ -20,13 +20,11 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
-import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Authentication;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.ErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Gateway;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.IntakeKind;
@@ -46,21 +44,38 @@ import org.springframework.stereotype.Component;
 public class ManagerInstrumentationIntakeProfileStore implements InstrumentationIntakeProfileStore {
 
     private static final int MAX_PROFILES = 128;
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String INVALID_SERVER_PROFILE_ID = "server:configured";
     private static final String INVALID_EXTERNAL_PROFILE_ID = "external:configured";
-    private static final Pattern PROFILE_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._:-]{0,127}");
     private final CollectorDao collectorDao;
     private final CollectorIntakeAdvertisementReader advertisementReader;
+    private final ServerInstrumentationIntakeProperties serverProperties;
     private final ExternalOtelCollectorIntakeProperties externalProperties;
 
     @Override
     public List<IntakeProfile> profiles() {
-        int managerProfileLimit = externalProperties.configured() ? MAX_PROFILES - 1 : MAX_PROFILES;
-        List<IntakeProfile> profiles = new ArrayList<>(collectorDao
-                .findAll(PageRequest.of(0, managerProfileLimit, Sort.by("name").ascending())).stream()
+        int configuredProfiles = (serverProperties.configured() ? 1 : 0)
+                + (externalProperties.configured() ? 1 : 0);
+        int collectorProfileLimit = MAX_PROFILES - configuredProfiles;
+        List<IntakeProfile> collectorProfiles = collectorDao
+                .findAll(PageRequest.of(0, collectorProfileLimit, Sort.by("name").ascending())).stream()
                 .map(advertisementReader::read)
+                // Legacy Server advertisements remain readable on the Collector row for migration,
+                // but Server discovery is owned exclusively by the global deployment properties.
+                .filter(intake -> intake.gateway() != CollectorInstrumentationIntake.Gateway.SERVER)
                 .map(this::map)
-                .toList());
+                .toList();
+        List<IntakeProfile> profiles = new ArrayList<>();
+        if (serverProperties.configured()) {
+            IntakeProfile configuredServer = mapServer();
+            boolean profileIdCollides = collectorProfiles.stream()
+                    .anyMatch(profile -> profile.id().equals(configuredServer.id()));
+            IntakeProfile server = profileIdCollides
+                    ? ConfiguredInstrumentationIntakeProfileFactory.invalid(
+                            INVALID_SERVER_PROFILE_ID, IntakeKind.SERVER)
+                    : configuredServer;
+            profiles.add(server);
+        }
+        profiles.addAll(collectorProfiles);
         if (externalProperties.configured()) {
             IntakeProfile external = mapExternal();
             String externalId = external.id();
@@ -73,21 +88,17 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
     }
 
     private IntakeProfile map(CollectorInstrumentationIntake intake) {
-        IntakeKind kind = intake.gateway() == CollectorInstrumentationIntake.Gateway.SERVER
-                ? IntakeKind.SERVER
-                : IntakeKind.HERTZBEAT_COLLECTOR;
-        String id = (kind == IntakeKind.SERVER ? "server:" : "collector:") + intake.collectorId();
-        String collectorId = kind == IntakeKind.HERTZBEAT_COLLECTOR ? intake.collectorId() : null;
+        String id = "collector:" + intake.collectorId();
         if (intake.state() != CollectorInstrumentationIntake.State.AVAILABLE) {
             return new IntakeProfile(
                     id,
-                    kind,
+                    IntakeKind.HERTZBEAT_COLLECTOR,
                     Availability.UNAVAILABLE,
                     null,
                     List.of(),
                     Map.of(),
                     null,
-                    collectorId,
+                    intake.collectorId(),
                     mapError(intake.errorCode()));
         }
         EnumMap<OtlpTransport, IntakeEndpoint> endpoints = new EnumMap<>(OtlpTransport.class);
@@ -102,87 +113,32 @@ public class ManagerInstrumentationIntakeProfileStore implements Instrumentation
         }
         return new IntakeProfile(
                 id,
-                kind,
+                IntakeKind.HERTZBEAT_COLLECTOR,
                 Availability.AVAILABLE,
-                kind == IntakeKind.SERVER ? Gateway.SERVER : Gateway.COLLECTOR,
+                Gateway.COLLECTOR,
                 transports,
                 endpoints,
                 intake.authorizationHeader(),
-                collectorId,
+                intake.collectorId(),
                 null);
     }
 
-    private IntakeProfile mapExternal() {
-        String profileId = normalize(externalProperties.profileId());
-        if (profileId == null || !PROFILE_ID.matcher(profileId).matches()) {
-            return invalidExternal(INVALID_EXTERNAL_PROFILE_ID);
-        }
-        try {
-            EnumMap<OtlpTransport, IntakeEndpoint> endpoints = new EnumMap<>(OtlpTransport.class);
-            List<OtlpTransport> transports = new ArrayList<>();
-            addExternalEndpoint(
-                    transports,
-                    endpoints,
-                    OtlpTransport.HTTP_PROTOBUF,
-                    externalProperties.otlpHttpEndpoint());
-            addExternalEndpoint(
-                    transports,
-                    endpoints,
-                    OtlpTransport.GRPC,
-                    externalProperties.otlpGrpcEndpoint());
-            if (transports.isEmpty()) {
-                return invalidExternal(profileId);
-            }
-            Authentication authentication =
-                    Authentication.fromCode(normalize(externalProperties.authentication()));
-            return new IntakeProfile(
-                    profileId,
-                    IntakeKind.EXTERNAL_OTEL_COLLECTOR,
-                    Availability.AVAILABLE,
-                    Gateway.EXTERNAL,
-                    transports,
-                    endpoints,
-                    authentication,
-                    authentication == Authentication.BEARER_TOKEN ? AUTHORIZATION_HEADER : null,
-                    null,
-                    null);
-        } catch (IllegalArgumentException exception) {
-            // Deployment values can be sensitive even when malformed; expose only the stable contract code.
-            return invalidExternal(profileId);
-        }
+    private IntakeProfile mapServer() {
+        return ConfiguredInstrumentationIntakeProfileFactory.create(
+                serverProperties, IntakeKind.SERVER, Gateway.SERVER, INVALID_SERVER_PROFILE_ID);
     }
 
-    private void addExternalEndpoint(
-            List<OtlpTransport> transports,
-            Map<OtlpTransport, IntakeEndpoint> endpoints,
-            OtlpTransport transport,
-            String configuredEndpoint) {
-        String endpoint = normalize(configuredEndpoint);
-        if (endpoint != null) {
-            transports.add(transport);
-            endpoints.put(transport, IntakeEndpoint.fromUrl(endpoint));
-        }
+    private IntakeProfile mapExternal() {
+        return ConfiguredInstrumentationIntakeProfileFactory.create(
+                externalProperties,
+                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
+                Gateway.EXTERNAL,
+                INVALID_EXTERNAL_PROFILE_ID);
     }
 
     private IntakeProfile invalidExternal(String profileId) {
-        return new IntakeProfile(
-                profileId,
-                IntakeKind.EXTERNAL_OTEL_COLLECTOR,
-                Availability.UNAVAILABLE,
-                null,
-                List.of(),
-                Map.of(),
-                null,
-                null,
-                ErrorCode.ADVERTISEMENT_INVALID);
-    }
-
-    private String normalize(String value) {
-        if (value == null) {
-            return null;
-        }
-        String normalized = value.trim();
-        return normalized.isEmpty() ? null : normalized;
+        return ConfiguredInstrumentationIntakeProfileFactory.invalid(
+                profileId, IntakeKind.EXTERNAL_OTEL_COLLECTOR);
     }
 
     private ErrorCode mapError(CollectorInstrumentationIntake.ErrorCode errorCode) {

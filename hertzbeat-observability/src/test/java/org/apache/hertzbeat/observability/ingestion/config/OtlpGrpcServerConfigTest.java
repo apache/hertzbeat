@@ -79,7 +79,7 @@ class OtlpGrpcServerConfigTest {
         String token = issueManagedToken();
         Metadata headers = bearerHeaders(token);
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L)).thenReturn(null);
         when(next.startCall(any(), any())).thenReturn(new ServerCall.Listener<>() {
         });
 
@@ -87,7 +87,7 @@ class OtlpGrpcServerConfigTest {
 
         verify(next).startCall(call, headers);
         verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
-        verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"));
+        verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"), 3L);
         verify(accessTokenGateway).touchTokenLastUsedTime(token);
     }
 
@@ -97,7 +97,7 @@ class OtlpGrpcServerConfigTest {
         Metadata headers = bearerHeaders(token);
         headers.put(WORKSPACE_ID, "prod-west");
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST, "prod-west")).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L)).thenReturn(null);
         when(next.startCall(any(), any())).thenReturn(new ServerCall.Listener<>() {
         });
 
@@ -114,7 +114,7 @@ class OtlpGrpcServerConfigTest {
         Metadata headers = bearerHeaders(token);
         headers.put(WORKSPACE_ID, " prod-west ");
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST, "prod-west")).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L)).thenReturn(null);
         when(next.startCall(any(), any())).thenAnswer(invocation -> {
             assertEquals("prod-west", AuthTokenRequestContext.currentWorkspaceId());
             return new ServerCall.Listener<>() {
@@ -139,7 +139,7 @@ class OtlpGrpcServerConfigTest {
         when(methodDescriptor.getFullMethodName())
                 .thenReturn("opentelemetry.proto.collector.metrics.v1.MetricsService/Export");
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L)).thenReturn(null);
         when(next.startCall(any(), any())).thenAnswer(invocation -> {
             assertEquals("edge-west", AuthTokenRequestContext.currentCollectorId());
             return new ServerCall.Listener<>() {
@@ -161,7 +161,7 @@ class OtlpGrpcServerConfigTest {
         when(methodDescriptor.getFullMethodName())
                 .thenReturn("opentelemetry.proto.collector.trace.v1.TraceService/Export");
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L)).thenReturn(null);
 
         interceptor.interceptCall(call, headers, next);
 
@@ -210,7 +210,7 @@ class OtlpGrpcServerConfigTest {
         verify(call).close(statusCaptor.capture(), any(Metadata.class));
         verify(next, never()).startCall(any(), any());
         verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
-        verify(accessTokenGateway, never()).checkManagedTokenAccess(any(), any());
+        verify(accessTokenGateway, never()).checkManagedTokenAccess(any(), any(), any());
         verify(accessTokenGateway, never()).touchTokenLastUsedTime(any());
         assertEquals(Status.Code.UNAUTHENTICATED, statusCaptor.getValue().getCode());
     }
@@ -220,7 +220,7 @@ class OtlpGrpcServerConfigTest {
         String token = issueManagedToken();
         Metadata headers = bearerHeaders(token);
         when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
-        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin")))
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"), 3L))
                 .thenReturn("Token owner account is no longer valid");
 
         interceptor.interceptCall(call, headers, next);
@@ -229,7 +229,7 @@ class OtlpGrpcServerConfigTest {
         verify(call).close(statusCaptor.capture(), any(Metadata.class));
         verify(next, never()).startCall(any(), any());
         verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
-        verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"));
+        verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"), 3L);
         verify(accessTokenGateway, never()).touchTokenLastUsedTime(any());
         assertEquals(Status.Code.UNAUTHENTICATED, statusCaptor.getValue().getCode());
     }
@@ -241,14 +241,16 @@ class OtlpGrpcServerConfigTest {
     }
 
     private static String issueManagedToken() {
-        Map<String, Object> customClaims = new HashMap<>(1);
+        Map<String, Object> customClaims = new HashMap<>(2);
         customClaims.put(ObservabilityAccessTokenGateway.CLAIM_MANAGED, true);
+        customClaims.put(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, 3L);
         return JsonWebTokenUtil.issueJwt("admin", 3600L, List.of("admin"), customClaims);
     }
 
     private static String issueManagedCollectorToken(List<String> allowedSignals) {
         Map<String, Object> customClaims = new HashMap<>();
         customClaims.put(ObservabilityAccessTokenGateway.CLAIM_MANAGED, true);
+        customClaims.put(ObservabilityAccessTokenGateway.CLAIM_CREDENTIAL_VERSION, 3L);
         customClaims.put(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE);
         customClaims.put(AuthTokenScopes.CLAIM_COLLECTOR_ID, "edge-west");
         customClaims.put(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, allowedSignals);

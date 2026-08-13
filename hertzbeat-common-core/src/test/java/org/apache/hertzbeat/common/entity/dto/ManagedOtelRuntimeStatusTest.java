@@ -190,5 +190,38 @@ class ManagedOtelRuntimeStatusTest {
                 status.telemetry().queueSize().state());
         assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
                 status.telemetry().queueCapacityBySignal().traces().state());
+        assertEquals(ManagedOtelRuntimeStatus.OtlpGatewayState.NOT_REPORTED,
+                status.otlpGateway().state());
+    }
+
+    @Test
+    void carriesOnlyBoundedPayloadFreeOtlpGatewayCapabilities() {
+        ManagedOtelRuntimeStatus.OtlpGatewayStatus gateway =
+                ManagedOtelRuntimeStatus.OtlpGatewayStatus.available(List.of(
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.HTTP_PROTOBUF,
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.GRPC));
+        ManagedOtelRuntimeStatus status = new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                1,
+                1,
+                -1,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.now(),
+                "",
+                ManagedOtelRuntimeStatus.FailureCode.NONE,
+                ManagedOtelRuntimeStatus.RuntimeTelemetry.unavailable(false),
+                List.of(),
+                gateway);
+
+        assertEquals(ManagedOtelRuntimeStatus.OtlpGatewayState.AVAILABLE,
+                status.otlpGateway().state());
+        assertEquals(List.of(
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.HTTP_PROTOBUF,
+                        ManagedOtelRuntimeStatus.OtlpGatewayTransport.GRPC),
+                status.otlpGateway().supportedTransports());
+        assertFalse(status.toString().contains("endpoint"));
     }
 }

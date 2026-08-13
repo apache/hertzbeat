@@ -20,14 +20,18 @@ package org.apache.hertzbeat.alert.calculate.periodic;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
@@ -64,12 +68,13 @@ class PeriodicAlertRuleSchedulerTest {
     void setUp() {
         scheduler = new PeriodicAlertRuleScheduler(metricsCalculator, logCalculator, traceCalculator, alertDefineDao,
                 VirtualThreadProperties.defaults());
+        scheduler.start();
     }
 
     @AfterEach
     void tearDown() {
         if (scheduler != null) {
-            scheduler.destroy();
+            scheduler.stop();
         }
     }
 
@@ -151,9 +156,10 @@ class PeriodicAlertRuleSchedulerTest {
 
     @Test
     void updateScheduleHonorsConfiguredGlobalPeriodicConcurrencyLimit() throws InterruptedException {
-        scheduler.destroy();
+        scheduler.stop();
         scheduler = new PeriodicAlertRuleScheduler(metricsCalculator, logCalculator, traceCalculator, alertDefineDao,
                 periodicProperties(1));
+        scheduler.start();
 
         CountDownLatch firstStarted = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
@@ -191,7 +197,9 @@ class PeriodicAlertRuleSchedulerTest {
     }
 
     @Test
-    void runLoadsPeriodicTraceRulesAtStartup() throws Exception {
+    void startLoadsPeriodicTraceRulesAtStartup() {
+        scheduler.stop();
+        clearInvocations(alertDefineDao);
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC))
                 .thenReturn(java.util.List.of());
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(
@@ -200,7 +208,7 @@ class PeriodicAlertRuleSchedulerTest {
         when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
                 .thenReturn(java.util.List.of(traceRule(6L)));
 
-        scheduler.run();
+        scheduler.start();
 
         verify(alertDefineDao).findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
     }
@@ -216,6 +224,110 @@ class PeriodicAlertRuleSchedulerTest {
         scheduler.updateSchedule(traceRule(7L));
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void stopDuringPendingExecutionIsIdempotentAndDoesNotResubmit() throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch interrupted = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            int current = invocations.incrementAndGet();
+            if (current == 1) {
+                started.countDown();
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    interrupted.countDown();
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                secondStarted.countDown();
+            }
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+
+        scheduler.updateSchedule(metricRule(8L));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        Thread.sleep(1200L);
+
+        scheduler.stop();
+        scheduler.stop();
+
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+        assertFalse(secondStarted.await(1500, TimeUnit.MILLISECONDS));
+        assertEquals(1, invocations.get());
+    }
+
+    @Test
+    void pauseDrainsAnEnteredPeriodicCalculationWithoutStoppingScheduler() throws Exception {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch resumed = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (invocations.incrementAndGet() == 1) {
+                started.countDown();
+                release.await();
+            } else {
+                resumed.countDown();
+            }
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+        scheduler.updateSchedule(metricRule(9L));
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        scheduler.pauseAdmission();
+        assertThrows(TimeoutException.class, () -> scheduler.awaitDrained(0));
+        release.countDown();
+        scheduler.awaitDrained(TimeUnit.SECONDS.toNanos(1));
+
+        scheduler.resumeAdmission();
+        scheduler.updateSchedule(metricRule(10L));
+        assertTrue(resumed.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void pausedTicksCoalescePerRuleAndResumeOnceWithVirtualExecutor() throws Exception {
+        assertPausedTicksResumeOnce(periodicProperties(true, 1));
+    }
+
+    @Test
+    void pausedTicksCoalescePerRuleAndResumeOnceWithScheduledExecutor() throws Exception {
+        assertPausedTicksResumeOnce(periodicProperties(false, 1));
+    }
+
+    private void assertPausedTicksResumeOnce(VirtualThreadProperties properties) throws Exception {
+        scheduler.stop();
+        CountDownLatch pausedTicks = new CountDownLatch(2);
+        scheduler = new PeriodicAlertRuleScheduler(
+                metricsCalculator, logCalculator, traceCalculator, alertDefineDao, properties) {
+            @Override
+            void beforeRuleTrigger(AlertDefine rule) {
+                pausedTicks.countDown();
+            }
+        };
+        scheduler.start();
+        CountDownLatch calculated = new CountDownLatch(1);
+        AtomicInteger invocations = new AtomicInteger();
+        doAnswer(invocation -> {
+            invocations.incrementAndGet();
+            calculated.countDown();
+            return null;
+        }).when(metricsCalculator).calculate(any(AlertDefine.class));
+        AlertDefine rule = metricRule(11L);
+
+        scheduler.pauseAdmission();
+        scheduler.updateSchedule(rule);
+        assertTrue(pausedTicks.await(3, TimeUnit.SECONDS));
+        scheduler.awaitDrained(0);
+
+        scheduler.resumeAdmission();
+        scheduler.resumeAdmission();
+        assertTrue(calculated.await(1, TimeUnit.SECONDS));
+        scheduler.cancelSchedule(rule.getId());
+        assertEquals(1, invocations.get());
     }
 
     private AlertDefine metricRule(Long id) {
@@ -239,8 +351,12 @@ class PeriodicAlertRuleSchedulerTest {
     }
 
     private VirtualThreadProperties periodicProperties(int maxConcurrentJobs) {
+        return periodicProperties(true, maxConcurrentJobs);
+    }
+
+    private VirtualThreadProperties periodicProperties(boolean enabled, int maxConcurrentJobs) {
         return new VirtualThreadProperties(
-                true,
+                enabled,
                 VirtualThreadProperties.PoolProperties.collectorDefaults(),
                 VirtualThreadProperties.PoolProperties.commonDefaults(),
                 VirtualThreadProperties.PoolProperties.managerDefaults(),

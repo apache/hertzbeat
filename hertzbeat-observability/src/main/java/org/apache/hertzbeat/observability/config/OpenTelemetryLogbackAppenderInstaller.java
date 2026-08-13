@@ -21,6 +21,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component;
  * Installs the OpenTelemetryAppender for Logback once the auto-configured SDK is ready.
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(name = "warehouse.store.greptime.enabled", havingValue = "true")
 @Slf4j
 public class OpenTelemetryLogbackAppenderInstaller implements InitializingBean {

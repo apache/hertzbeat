@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
@@ -60,6 +61,7 @@ import java.util.regex.Pattern;
  * data storage by duckdb
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @ConditionalOnProperty(prefix = "warehouse.store.duckdb", name = "enabled", havingValue = "true")
 @Slf4j
 public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {

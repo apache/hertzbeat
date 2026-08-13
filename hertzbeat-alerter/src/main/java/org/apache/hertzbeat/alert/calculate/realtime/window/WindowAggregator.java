@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.runtime.ConditionalOnNormalBusinessRuntime;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PreDestroy;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  * 4. Sending closed windows to AlarmEvaluator
  */
 @Component
+@ConditionalOnNormalBusinessRuntime
 @Slf4j
 public class WindowAggregator implements TimeService.WatermarkListener, Runnable {
 

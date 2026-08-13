@@ -25,6 +25,7 @@ import java.util.Objects;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.transaction.MetadataWriteAdmissionException;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
@@ -68,6 +69,14 @@ public class GlobalExceptionHandler {
         log.warn("[telemetry storage unavailable]");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Message.fail(FAIL_CODE, TELEMETRY_STORAGE_UNAVAILABLE_MESSAGE));
+    }
+
+    /** Return a retryable, cache-safe maintenance response without logging private state. */
+    @ExceptionHandler(MetadataWriteAdmissionException.class)
+    @ResponseBody
+    ResponseEntity<MetadataWriteMaintenanceErrorResponse> handleMetadataWriteAdmissionException(
+            MetadataWriteAdmissionException exception) {
+        return MetadataWriteMaintenanceErrorResponse.httpResponse(exception);
     }
 
     /**

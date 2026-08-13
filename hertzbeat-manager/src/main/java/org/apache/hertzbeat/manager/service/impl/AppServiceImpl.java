@@ -54,7 +54,6 @@ import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
@@ -92,8 +91,7 @@ import static java.util.Objects.isNull;
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
-public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, MonitorDefinitionCommandExecutor,
-        InitializingBean {
+public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, MonitorDefinitionCommandExecutor {
 
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
     private static final String[] RISKY_DEFINE_TOKENS = {"ScriptEngineManager", "URLClassLoader", "!!",
@@ -608,8 +606,8 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         }
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    /** Loads the definition store when the normal business runtime opens. */
+    public void initializeRuntimeDefinitions() {
         // Guaranteed to be non-null due to constructor injection
         var objectStoreConfig = objectStoreConfigService.getConfig();
         refreshStore(objectStoreConfig);
