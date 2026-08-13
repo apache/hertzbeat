@@ -373,3 +373,8 @@ hertzbeat:
       concurrency-limit: 256
       reject-when-limit-reached: true
       task-termination-timeout: 5000
+  # Bounds on what a single request to the push gateway may consume.
+  push:
+    max-auto-created-monitors: ${HERTZBEAT_PUSH_MAX_AUTO_CREATED_MONITORS:10000}
+    max-body-bytes: ${HERTZBEAT_PUSH_MAX_BODY_BYTES:5242880}
+    max-samples: ${HERTZBEAT_PUSH_MAX_SAMPLES:10000}

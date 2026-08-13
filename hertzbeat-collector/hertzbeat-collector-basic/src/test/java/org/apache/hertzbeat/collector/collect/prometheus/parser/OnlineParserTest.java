@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class OnlineParserTest {
@@ -458,5 +460,28 @@ class OnlineParserTest {
 
         assertEquals("run_as", metricFamily.getMetricList().get(0).getLabels().get(3).getName());
         assertEquals("NT AUTHORITY\nLocalService", metricFamily.getMetricList().get(0).getLabels().get(3).getValue());
+    }
+
+    @Test
+    void testParseMetricsStopsBeforeSampleBeyondLimit() {
+        final String metrics = "metric_a 1\nmetric_b 2\nmetric_c 3\nmetric_d 4\n";
+        final ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(OnlineParser.SampleLimitExceededException.class,
+                () -> OnlineParser.parseMetrics(inputStream, 2));
+
+        assertTrue(inputStream.available() > 0, "samples after the limit should remain unread");
+    }
+
+    @Test
+    void testParseMetricsAllowsExactlyTheSampleLimit() throws Exception {
+        final String metrics = "metric_a 1\nmetric_b 2\n";
+        final InputStream inputStream = new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8));
+
+        final Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream, 2);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.size());
     }
 }
