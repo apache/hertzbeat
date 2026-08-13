@@ -132,8 +132,8 @@ class RuntimePromptBuilderTest {
         assertFalse(runtimeContext.contains("Trusted"));
         assertFalse(runtimeContext.contains("<runtime_context>"));
         assertTrue(runtimeContext.contains("### Time"));
-        assertTrue(runtimeContext.contains("Current time: 1970-01-01T00:00:00Z"));
-        assertTrue(runtimeContext.contains("Timezone: Z"));
+        assertTrue(runtimeContext.contains("Current time: " + context.getCurrentTimeIso()));
+        assertTrue(runtimeContext.contains("Timezone: " + context.getTimezone()));
         assertFalse(runtimeContext.contains("Deadline epoch millis"));
         assertTrue(runtimeContext.contains("### Channel"));
         assertTrue(runtimeContext.contains("Channel: web-ui"));

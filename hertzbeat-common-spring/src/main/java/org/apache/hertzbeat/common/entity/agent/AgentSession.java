@@ -69,6 +69,9 @@ public class AgentSession {
     @Column(length = 64)
     private String channel;
 
+    @Column(name = "origin_entry_type", nullable = false, length = 32)
+    private String originEntryType;
+
     @Column(name = "conversation_id", length = 256)
     private String conversationId;
 

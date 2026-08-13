@@ -29,6 +29,7 @@ import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
@@ -67,7 +68,8 @@ public class AgentSessionService {
         this.entityManager = entityManager;
     }
 
-    public AgentSession findOrCreateSession(GatewayEnvelope envelope, UserInput userInput) {
+    public AgentSession findOrCreateSession(GatewayEnvelope envelope, UserInput userInput,
+                                            AgentRuntimeEntryType originEntryType) {
         AgentActor actor = envelope.getActor();
         String sessionKey = sessionKeyBuilder.build(envelope, userInput.getConversationId());
         Optional<AgentSession> existed = sessionDao.findBySessionKey(sessionKey);
@@ -79,6 +81,7 @@ public class AgentSessionService {
             .sessionUid("ags_" + SnowFlakeIdGenerator.generateId())
             .sessionKey(sessionKey)
             .channel(envelope.getChannelId())
+            .originEntryType(originEntryType.name())
             .conversationId(userInput.getConversationId())
             .actorType(actor.getType())
             .actorId(actor.getId())
@@ -129,7 +132,8 @@ public class AgentSessionService {
         return sessionDao.findBySessionUid(normalized);
     }
 
-    public Optional<AgentSession> findOwnedSession(String sessionId, GatewayEnvelope envelope) {
+    public Optional<AgentSession> findOwnedSession(
+            String sessionId, GatewayEnvelope envelope, AgentRuntimeEntryType originEntryType) {
         AgentActor actor = envelope.getActor();
         if (!ActorSupport.hasIdentity(actor)) {
             throw new IllegalArgumentException("Session query actor is required");
@@ -140,28 +144,39 @@ public class AgentSessionService {
             return Optional.empty();
         }
         if (normalized.chars().allMatch(Character::isDigit)) {
-            return sessionDao.findByIdAndChannelAndActorTypeAndActorId(
-                    Long.parseLong(normalized), envelope.getChannelId(), actor.getType(), actor.getId());
+            return sessionDao.findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+                    Long.parseLong(normalized), envelope.getChannelId(), actor.getType(), actor.getId(),
+                    originEntryType.name());
         }
-        return sessionDao.findBySessionUidAndChannelAndActorTypeAndActorId(
-                normalized, envelope.getChannelId(), actor.getType(), actor.getId());
+        return sessionDao.findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+                normalized, envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name());
     }
 
-    public Page<AgentSession> findSessions(GatewayEnvelope envelope, String title, Pageable pageable) {
+    public Page<AgentSession> findSessions(
+            GatewayEnvelope envelope, AgentRuntimeEntryType originEntryType, String title, Pageable pageable) {
         AgentActor actor = envelope.getActor();
         if (!ActorSupport.hasIdentity(actor)) {
             throw new IllegalArgumentException("Session query actor is required");
         }
         if (!StringUtils.hasText(title)) {
-            return sessionDao.findByChannelAndActorTypeAndActorIdOrderByGmtUpdateDesc(
-                    envelope.getChannelId(), actor.getType(), actor.getId(), pageable);
+            return sessionDao.findByChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
+                    envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name(), pageable);
         }
-        return sessionDao.findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-                envelope.getChannelId(), actor.getType(), actor.getId(), title, pageable);
+        return sessionDao
+                .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                        envelope.getChannelId(), actor.getType(), actor.getId(), originEntryType.name(), title, pageable);
     }
 
     public Page<AgentTranscriptEntry> findTranscriptEntries(Long sessionId, Pageable pageable) {
         return transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(sessionId, pageable);
+    }
+
+    public Page<AgentTranscriptEntry> findConversationTranscriptEntries(Long sessionId, Pageable pageable) {
+        return transcriptEntryDao.findBySessionIdAndMessageRoleInOrderBySessionSequenceDesc(
+            sessionId,
+            List.of(TranscriptMessage.TranscriptRole.USER.wireValue(),
+                TranscriptMessage.TranscriptRole.ASSISTANT.wireValue()),
+            pageable);
     }
 
     @Transactional

@@ -37,6 +37,7 @@ import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,7 +82,8 @@ class GatewayCommandRouterTest {
     void queryCommandShouldRouteOnlyToQueryService() {
         GatewaySingleResponse expected = response("session");
         GetSessionCommand command = new GetSessionCommand(
-                envelope(), ReplyMode.FINAL_ONLY, "get-session", "ags-1");
+                envelope(), ReplyMode.FINAL_ONLY, "get-session",
+                AgentRuntimeEntryType.USER_INPUT, "ags-1");
         when(queryService.getSession(command)).thenReturn(expected);
 
         assertSame(expected, router().handle(command));
@@ -95,7 +97,8 @@ class GatewayCommandRouterTest {
     void sessionListCommandShouldRouteOnlyToQueryService() {
         GatewaySingleResponse expected = response("sessions");
         ListSessionsCommand command = new ListSessionsCommand(
-                envelope(), ReplyMode.FINAL_ONLY, "list-sessions", null, 0, 50);
+                envelope(), ReplyMode.FINAL_ONLY, "list-sessions",
+                AgentRuntimeEntryType.USER_INPUT, null, 0, 50);
         when(queryService.listSessions(command)).thenReturn(expected);
 
         assertSame(expected, router().handle(command));
@@ -109,7 +112,8 @@ class GatewayCommandRouterTest {
     void transcriptCommandShouldRouteOnlyToQueryService() {
         GatewaySingleResponse expected = response("session-transcript");
         GetSessionTranscriptCommand command = new GetSessionTranscriptCommand(
-                envelope(), ReplyMode.FINAL_ONLY, "get-transcript", "ags-1", 0, 50);
+                envelope(), ReplyMode.FINAL_ONLY, "get-transcript",
+                AgentRuntimeEntryType.USER_INPUT, "ags-1", 0, 50);
         when(queryService.getSessionTranscript(command)).thenReturn(expected);
 
         assertSame(expected, router().handle(command));

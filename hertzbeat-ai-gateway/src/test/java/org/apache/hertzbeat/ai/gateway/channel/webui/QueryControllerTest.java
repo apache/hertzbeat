@@ -37,6 +37,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.GetSessionTran
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ListSessionsCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -87,6 +88,7 @@ class QueryControllerTest {
         GetSessionCommand command = (GetSessionCommand) commandCaptor.getValue();
         assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
         assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
     }
 
     @Test
@@ -103,6 +105,7 @@ class QueryControllerTest {
         assertInstanceOf(ListSessionsCommand.class, commandCaptor.getValue());
         ListSessionsCommand command = (ListSessionsCommand) commandCaptor.getValue();
         assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
         assertEquals(0, command.pageIndex());
         assertEquals(50, command.pageSize());
     }
@@ -120,9 +123,10 @@ class QueryControllerTest {
         assertSame(page, response.getBody().getData());
         assertInstanceOf(ListSessionsCommand.class, commandCaptor.getValue());
         ListSessionsCommand command = (ListSessionsCommand) commandCaptor.getValue();
-        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals(ChannelId.SYSTEM.id(), command.envelope().getChannelId());
         assertEquals("system", command.envelope().getActor().getType());
         assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.originEntryType());
         assertEquals("database", command.title());
     }
 
@@ -136,8 +140,9 @@ class QueryControllerTest {
 
         assertInstanceOf(GetSessionCommand.class, commandCaptor.getValue());
         GetSessionCommand command = (GetSessionCommand) commandCaptor.getValue();
-        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals(ChannelId.SYSTEM.id(), command.envelope().getChannelId());
         assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.originEntryType());
         assertEquals("ags-1", command.sessionUid());
     }
 
@@ -161,6 +166,7 @@ class QueryControllerTest {
         assertInstanceOf(GetSessionTranscriptCommand.class, commandCaptor.getValue());
         GetSessionTranscriptCommand command = (GetSessionTranscriptCommand) commandCaptor.getValue();
         assertEquals("trusted-user", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT, command.originEntryType());
         assertEquals("ags-1", command.sessionUid());
         assertEquals(0, command.pageIndex());
         assertEquals(50, command.pageSize());
@@ -181,8 +187,9 @@ class QueryControllerTest {
         assertSame(transcript, response.getBody().getData());
         assertInstanceOf(GetSessionTranscriptCommand.class, commandCaptor.getValue());
         GetSessionTranscriptCommand command = (GetSessionTranscriptCommand) commandCaptor.getValue();
-        assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
+        assertEquals(ChannelId.SYSTEM.id(), command.envelope().getChannelId());
         assertEquals("alert-analysis", command.envelope().getActor().getId());
+        assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.originEntryType());
         assertEquals("ags-1", command.sessionUid());
     }
 

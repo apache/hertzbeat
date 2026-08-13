@@ -38,6 +38,8 @@ public final class ActorSupport {
 
     public static final String ID_ALERT_ANALYSIS = "alert-analysis";
 
+    public static final String ID_SCHEDULE = "schedule";
+
     public static final String ROLE_ADMIN = "admin";
 
     public static final String ROLE_USER = "user";
@@ -45,6 +47,8 @@ public final class ActorSupport {
     public static final String ROLE_GUEST = "guest";
 
     public static final String ROLE_ALERT_ANALYSIS = "alert-analysis";
+
+    public static final String ROLE_SCHEDULE = "schedule";
 
     private static final String ROLES_CLAIM = "roles";
 

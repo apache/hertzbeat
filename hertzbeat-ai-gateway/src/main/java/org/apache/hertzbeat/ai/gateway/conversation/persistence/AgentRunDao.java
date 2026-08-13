@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.conversation.persistence;
 
+import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,4 +38,9 @@ public interface AgentRunDao extends JpaRepository<AgentRun, Long> {
      * Find the existing run for a session event.
      */
     Optional<AgentRun> findBySessionIdAndMessageId(Long sessionId, String messageId);
+
+    Optional<AgentRun> findFirstBySessionIdAndStatusOrderByGmtCreateAsc(Long sessionId, String status);
+
+    boolean existsBySessionIdAndStatusIn(Long sessionId, List<String> statuses);
+
 }

@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
@@ -231,6 +232,29 @@ class AgentRuntimeContextBuilderTest {
         assertEquals(1_000L, restored.getSignal().getStart());
         assertEquals("edge-42-43", restored.getTopology().getEdgeId());
         assertEquals(3, restored.getTopology().getDepth());
+    }
+
+    @Test
+    void shouldUseHertzBeatSystemTimezone() {
+        TimeZone original = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+            AgentRuntimeRequest request = AgentRuntimeRequest.builder()
+                    .envelope(envelope())
+                    .session(session())
+                    .run(run())
+                    .entryType(AgentRuntimeEntryType.USER_INPUT)
+                    .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+                    .userInput(userInput("inspect"))
+                    .build();
+
+            AgentRuntimeContext context = builder("trace").build(request, new AgentRuntimeProperties());
+
+            assertEquals("Asia/Shanghai", context.getTimezone());
+            assertEquals("2026-04-19T08:00:00+08:00", context.getCurrentTimeIso());
+        } finally {
+            TimeZone.setDefault(original);
+        }
     }
 
     private AgentRuntimeContextBuilder builder(String traceId) {

@@ -29,6 +29,7 @@ import java.util.Map;
 import org.apache.hertzbeat.alert.service.AlertAnalysisPolicyService;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommandRouter;
+import org.apache.hertzbeat.ai.gateway.channel.core.ChannelId;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.common.entity.alerter.AlertAnalysisPolicy;
@@ -86,6 +87,7 @@ class AgentAlertAnalysisEventHandlerTest {
 
         ArgumentCaptor<InvokeCommand> command = ArgumentCaptor.forClass(InvokeCommand.class);
         verify(commandRouter, org.mockito.Mockito.timeout(2000)).handle(command.capture());
+        assertEquals(ChannelId.SYSTEM.id(), command.getValue().envelope().getChannelId());
         assertEquals(AgentRuntimeEntryType.ALERT_TRIGGER, command.getValue().entryType());
         assertEquals(List.of(ActorSupport.ROLE_ALERT_ANALYSIS),
                 command.getValue().envelope().getActor().getRoles());

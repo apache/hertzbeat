@@ -48,4 +48,12 @@ public class AgentActor {
             .roles(List.of(ActorSupport.ROLE_ALERT_ANALYSIS))
             .build();
     }
+
+    public static AgentActor scheduleActor() {
+        return AgentActor.builder()
+            .type(ActorSupport.TYPE_SYSTEM)
+            .id(ActorSupport.ID_SCHEDULE)
+            .roles(List.of(ActorSupport.ROLE_SCHEDULE))
+            .build();
+    }
 }

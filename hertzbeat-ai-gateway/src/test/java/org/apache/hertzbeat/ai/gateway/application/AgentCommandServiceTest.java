@@ -76,8 +76,8 @@ class AgentCommandServiceTest {
     void setUp() {
         session = AgentSession.builder().id(1L).sessionUid("session-1").build();
         run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
-        when(sessionService.findOrCreateSession(any(), any())).thenReturn(session);
-        when(runService.createOrResumeRun(any(), any())).thenReturn(run);
+        when(sessionService.findOrCreateSession(any(), any(), any())).thenReturn(session);
+        when(runService.createOrResumeRun(any(), any(), any())).thenReturn(run);
         when(transcriptRecorder.chatHistory(session.getId())).thenReturn(List.of());
         when(runService.markRunning(run)).thenReturn(run);
     }

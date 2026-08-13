@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.gateway.runtime;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
@@ -60,8 +61,9 @@ public class AgentRuntimeContextBuilder {
         AgentTargetRef effectiveTarget = effectiveTarget(entryType, userInput, run);
         List<TranscriptMessage> chatHistory = List.copyOf(request.getChatHistory());
         Instant now = Instant.now(clock);
-        String currentTimeIso = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(now.atZone(clock.getZone()));
-        String timezone = clock.getZone().getId();
+        ZoneId systemZone = ZoneId.systemDefault();
+        String currentTimeIso = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(now.atZone(systemZone));
+        String timezone = systemZone.getId();
         String traceId = resolveTraceId();
         return AgentRuntimeContext.builder()
                 .entryType(entryType)

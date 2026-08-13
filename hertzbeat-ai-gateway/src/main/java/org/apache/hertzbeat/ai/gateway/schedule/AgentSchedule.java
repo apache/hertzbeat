@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.schedule;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -26,53 +27,42 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.manager.JsonLongListAttributeConverter;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * Recurring Gateway command that replays a user input through the standard runtime entry.
+ * System-level recurring Agent inspection rule.
  */
 @Data
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_agent_scheduled_command", indexes = {
-        @Index(name = "idx_agent_scheduled_command_session", columnList = "session_id"),
-        @Index(name = "idx_agent_scheduled_command_due", columnList = "enabled, next_run_time")
+@Table(name = "hzb_agent_schedule", indexes = {
+        @Index(name = "idx_agent_schedule_due", columnList = "enabled, next_trigger_at"),
+        @Index(name = "idx_agent_schedule_session", columnList = "session_id")
 })
 @AllArgsConstructor
 @NoArgsConstructor
-public class AgentScheduledCommand {
+public class AgentSchedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "session_id", nullable = false)
-    private Long sessionId;
+    @Column(nullable = false, length = 128)
+    private String name;
 
-    @Column(name = "channel", nullable = false, length = 64)
-    private String channel;
-
-    @Column(name = "conversation_id", nullable = false, length = 256)
-    private String conversationId;
-
-    @Column(name = "actor_type", nullable = false, length = 64)
-    private String actorType;
-
-    @Column(name = "actor_id", nullable = false, length = 128)
-    private String actorId;
-
-    @Column(name = "actor_roles", nullable = false, length = 1024)
-    private String actorRoles;
-
-    @Column(name = "message", nullable = false, length = 4096)
-    private String message;
+    @Column(nullable = false, length = 4096)
+    private String instruction;
 
     @Column(name = "cron_expression", nullable = false, length = 64)
     private String cronExpression;
@@ -81,11 +71,32 @@ public class AgentScheduledCommand {
     @Column(nullable = false)
     private boolean enabled = true;
 
-    @Column(name = "last_run_time")
-    private LocalDateTime lastRunTime;
+    @Column(name = "session_id")
+    private Long sessionId;
 
-    @Column(name = "next_run_time")
-    private LocalDateTime nextRunTime;
+    @Convert(converter = JsonLongListAttributeConverter.class)
+    @Column(name = "receiver_ids", nullable = false, length = 2048)
+    private List<Long> receiverIds;
+
+    @Column(name = "template_id")
+    private Long templateId;
+
+    @Column(name = "created_from_session_uid", length = 64)
+    private String createdFromSessionUid;
+
+    @Column(name = "last_trigger_at")
+    private Long lastTriggerAt;
+
+    @Column(name = "next_trigger_at")
+    private Long nextTriggerAt;
+
+    @CreatedBy
+    @Column(length = 64)
+    private String creator;
+
+    @LastModifiedBy
+    @Column(length = 64)
+    private String modifier;
 
     @CreatedDate
     @Column(name = "gmt_create")

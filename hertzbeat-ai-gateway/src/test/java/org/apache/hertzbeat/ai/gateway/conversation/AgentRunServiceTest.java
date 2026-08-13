@@ -40,6 +40,7 @@ import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,8 @@ class AgentRunServiceTest {
         AgentRun persisted = AgentRun.builder().id(2L).runUid("run_saved").build();
         when(runDao.saveAndFlush(any(AgentRun.class))).thenReturn(persisted);
 
-        AgentRun result = service.createOrResumeRun(session, userInput);
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.USER_INPUT);
 
         ArgumentCaptor<AgentRun> captor = ArgumentCaptor.forClass(AgentRun.class);
         verify(runDao).saveAndFlush(captor.capture());
@@ -88,6 +90,7 @@ class AgentRunServiceTest {
         assertTrue(saved.getRunUid().startsWith("run_"));
         assertSame(persisted, result);
         assertEquals(AgentRunStatus.CREATED.name(), saved.getStatus());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT.name(), saved.getEntryType());
         assertEquals("msg_1", saved.getMessageId());
     }
 
@@ -103,7 +106,8 @@ class AgentRunServiceTest {
         AgentRun existed = AgentRun.builder().id(2L).runUid("run_1").messageId("msg_1").build();
         when(runDao.findBySessionIdAndMessageId(1L, "msg_1")).thenReturn(Optional.of(existed));
 
-        AgentRun result = service.createOrResumeRun(session, userInput);
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.ALERT_TRIGGER);
 
         assertSame(existed, result);
         verify(runDao, never()).saveAndFlush(any());
@@ -138,7 +142,7 @@ class AgentRunServiceTest {
         when(runDao.findBySessionIdAndMessageId(1L, "msg_context")).thenReturn(Optional.empty());
         when(runDao.saveAndFlush(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AgentRun saved = service.createOrResumeRun(session, userInput);
+        AgentRun saved = service.createOrResumeRun(session, userInput, AgentRuntimeEntryType.USER_INPUT);
 
         AgentTargetRef persisted = service.targetFromRun(saved);
         assertEquals(300L, persisted.getEntityId());
@@ -161,7 +165,8 @@ class AgentRunServiceTest {
         when(runDao.findBySessionIdAndMessageId(1L, "msg_1")).thenReturn(Optional.empty(), Optional.of(existed));
         when(runDao.saveAndFlush(any(AgentRun.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        AgentRun result = service.createOrResumeRun(session, userInput);
+        AgentRun result = service.createOrResumeRun(
+            session, userInput, AgentRuntimeEntryType.SCHEDULE_TRIGGER);
 
         assertSame(existed, result);
         verify(entityManager).clear();

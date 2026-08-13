@@ -32,6 +32,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -66,6 +67,7 @@ public class QueryController {
                         .envelope(webUiEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("get-session:" + sessionId)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                         .sessionUid(sessionId)
                         .build())));
     }
@@ -81,6 +83,7 @@ public class QueryController {
                         .envelope(webUiEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("list-sessions:" + pageIndex)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                         .title(null)
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
@@ -100,6 +103,7 @@ public class QueryController {
                         .envelope(alertAnalysisEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("list-alert-analysis-sessions:" + pageIndex)
+                        .originEntryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                         .title(search)
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
@@ -116,6 +120,7 @@ public class QueryController {
                         .envelope(alertAnalysisEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("get-alert-analysis-session:" + sessionId)
+                        .originEntryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                         .sessionUid(sessionId)
                         .build())));
     }
@@ -132,6 +137,7 @@ public class QueryController {
                         .envelope(webUiEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("get-session-transcript:" + sessionUid)
+                        .originEntryType(AgentRuntimeEntryType.USER_INPUT)
                         .sessionUid(sessionUid)
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
@@ -151,6 +157,7 @@ public class QueryController {
                         .envelope(alertAnalysisEnvelope())
                         .replyMode(ReplyMode.FINAL_ONLY)
                         .commandId("get-alert-analysis-session-transcript:" + sessionUid)
+                        .originEntryType(AgentRuntimeEntryType.ALERT_TRIGGER)
                         .sessionUid(sessionUid)
                         .pageIndex(pageIndex)
                         .pageSize(pageSize)
@@ -169,7 +176,7 @@ public class QueryController {
     private GatewayEnvelope alertAnalysisEnvelope() {
         ActorSupport.requireCurrentAdminSurenessActor();
         return GatewayEnvelope.builder()
-                .channelId(ChannelId.ALERT.id())
+                .channelId(ChannelId.SYSTEM.id())
                 .receivedAt(System.currentTimeMillis())
                 .actor(AgentActor.alertAnalysisActor())
                 .build();

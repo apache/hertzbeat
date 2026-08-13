@@ -68,6 +68,9 @@ public class AgentRun {
     @Column(name = "message_id", nullable = false, length = 128)
     private String messageId;
 
+    @Column(name = "entry_type", nullable = false, length = 32)
+    private String entryType;
+
     @Column(name = "target_monitor_id")
     private Long targetMonitorId;
 

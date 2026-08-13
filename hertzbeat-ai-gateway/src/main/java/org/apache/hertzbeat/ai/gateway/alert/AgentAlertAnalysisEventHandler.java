@@ -150,7 +150,7 @@ public class AgentAlertAnalysisEventHandler {
                 .build();
         InvokeCommand command = InvokeCommand.builder()
                 .envelope(GatewayEnvelope.builder()
-                        .channelId(ChannelId.ALERT.id())
+                        .channelId(ChannelId.SYSTEM.id())
                         .receivedAt(now)
                         .actor(AgentActor.alertAnalysisActor())
                         .preferredLanguage(AgentResponseLanguage.systemDefault())

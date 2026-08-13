@@ -33,7 +33,7 @@ final class StartupRuntimeComponentBoundary implements BeanDefinitionRegistryPos
     private static final String AGENT_GATEWAY_RESOURCE = "org/apache/hertzbeat/ai/gateway";
     private static final Set<String> AGENT_GATEWAY_INFRASTRUCTURE = Set.of(
             "agentGatewayRuntimeConfiguration", "agentRunDao", "agentSessionDao",
-            "agentTranscriptEntryDao", "agentScheduledCommandDao", "agentToolCallDao");
+            "agentTranscriptEntryDao", "agentScheduleDao", "agentToolCallDao");
 
     @Override
     public int getOrder() {

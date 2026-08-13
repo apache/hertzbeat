@@ -302,7 +302,8 @@ CREATE TABLE hzb_agent_session (
     id BIGSERIAL PRIMARY KEY,
     session_uid VARCHAR(64) NOT NULL,
     session_key VARCHAR(128) NOT NULL,
-    channel VARCHAR(64), conversation_id VARCHAR(256), actor_type VARCHAR(64),
+    channel VARCHAR(64), origin_entry_type VARCHAR(32) NOT NULL,
+    conversation_id VARCHAR(256), actor_type VARCHAR(64),
     actor_id VARCHAR(128), actor_roles VARCHAR(1024), status VARCHAR(32), title VARCHAR(256),
     transcript_sequence BIGINT NOT NULL DEFAULT 0,
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -315,6 +316,7 @@ CREATE INDEX idx_agent_session_owner ON hzb_agent_session(channel, actor_type, a
 CREATE TABLE hzb_agent_run (
     id BIGSERIAL PRIMARY KEY,
     run_uid VARCHAR(64) NOT NULL, session_id BIGINT NOT NULL, message_id VARCHAR(128) NOT NULL,
+    entry_type VARCHAR(32) NOT NULL,
     target_monitor_id BIGINT, target_alert_id BIGINT, target_collector VARCHAR(128),
     target_context_json TEXT,
     status VARCHAR(32) NOT NULL, result_summary TEXT, error_message VARCHAR(1024),
@@ -358,17 +360,17 @@ CREATE INDEX idx_agent_transcript_run ON hzb_agent_transcript_entry(run_id, sess
 CREATE INDEX idx_agent_transcript_checkpoint
     ON hzb_agent_transcript_entry(session_id, message_role, session_sequence);
 
-CREATE TABLE hzb_agent_scheduled_command (
+CREATE TABLE hzb_agent_schedule (
     id BIGSERIAL PRIMARY KEY,
-    session_id BIGINT NOT NULL, channel VARCHAR(64) NOT NULL,
-    conversation_id VARCHAR(256) NOT NULL, actor_type VARCHAR(64) NOT NULL,
-    actor_id VARCHAR(128) NOT NULL, actor_roles VARCHAR(1024) NOT NULL,
-    message VARCHAR(4096) NOT NULL, cron_expression VARCHAR(64) NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT TRUE, last_run_time TIMESTAMP, next_run_time TIMESTAMP,
+    name VARCHAR(128) NOT NULL, instruction VARCHAR(4096) NOT NULL,
+    cron_expression VARCHAR(64) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    session_id BIGINT, receiver_ids VARCHAR(2048) NOT NULL, template_id BIGINT,
+    created_from_session_uid VARCHAR(64), last_trigger_at BIGINT, next_trigger_at BIGINT,
+    creator VARCHAR(64), modifier VARCHAR(64),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP, gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_agent_scheduled_command_session ON hzb_agent_scheduled_command(session_id);
-CREATE INDEX idx_agent_scheduled_command_due ON hzb_agent_scheduled_command(enabled, next_run_time);
+CREATE INDEX idx_agent_schedule_due ON hzb_agent_schedule(enabled, next_trigger_at);
+CREATE INDEX idx_agent_schedule_session ON hzb_agent_schedule(session_id);
 
 CREATE TABLE hzb_alert_analysis_policy (
     id BIGSERIAL PRIMARY KEY,
