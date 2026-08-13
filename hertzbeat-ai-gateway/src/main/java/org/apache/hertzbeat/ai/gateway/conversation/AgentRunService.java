@@ -26,10 +26,12 @@ import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * Default run ledger service for Agent Gateway.
@@ -73,7 +75,7 @@ public class AgentRunService {
     @Transactional
     public AgentRun markSucceeded(AgentRun run, String resultSummary) {
         run.setStatus(AgentRunStatus.SUCCEEDED.name());
-        run.setResultSummary(resultSummary);
+        run.setResultSummary(GatewayText.redactSecrets(resultSummary));
         run.setCompletedAt(LocalDateTime.now());
         return runDao.save(run);
     }
@@ -103,6 +105,32 @@ public class AgentRunService {
         return runDao.findByRunUid(normalized);
     }
 
+    /**
+     * Restore the complete target snapshot recorded for a run, with a legacy-column fallback.
+     */
+    public static AgentTargetRef targetFromRun(AgentRun run) {
+        if (run == null) {
+            return null;
+        }
+        if (StringUtils.hasText(run.getTargetContextJson())) {
+            AgentTargetRef target = JsonUtil.fromJson(run.getTargetContextJson(), AgentTargetRef.class);
+            if (target == null) {
+                throw new IllegalStateException("Agent run target context cannot be decoded");
+            }
+            return target;
+        }
+        if (run.getTargetMonitorId() == null
+            && run.getTargetAlertId() == null
+            && !StringUtils.hasText(run.getTargetCollector())) {
+            return null;
+        }
+        return AgentTargetRef.builder()
+            .monitorId(run.getTargetMonitorId())
+            .alertId(run.getTargetAlertId())
+            .collector(run.getTargetCollector())
+            .build();
+    }
+
     private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId) {
         AgentTargetRef target = userInput.getTarget();
         return AgentRun.builder()
@@ -112,7 +140,19 @@ public class AgentRunService {
             .targetMonitorId(target == null ? null : target.getMonitorId())
             .targetAlertId(target == null ? null : target.getAlertId())
             .targetCollector(target == null ? null : target.getCollector())
+            .targetContextJson(targetJson(target))
             .status(AgentRunStatus.CREATED.name())
             .build();
+    }
+
+    private static String targetJson(AgentTargetRef target) {
+        if (target == null) {
+            return null;
+        }
+        String json = JsonUtil.toJson(target);
+        if (!StringUtils.hasText(json)) {
+            throw new IllegalArgumentException("Agent run target context cannot be serialized");
+        }
+        return GatewayText.redactSecrets(json);
     }
 }

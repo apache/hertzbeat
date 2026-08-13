@@ -77,6 +77,10 @@ public class AgentRun {
     @Column(name = "target_collector", length = 128)
     private String targetCollector;
 
+    @Lob
+    @Column(name = "target_context_json")
+    private String targetContextJson;
+
     @Column(nullable = false, length = 32)
     private String status;
 

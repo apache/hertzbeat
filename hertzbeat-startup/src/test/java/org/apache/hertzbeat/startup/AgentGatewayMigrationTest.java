@@ -65,6 +65,7 @@ class AgentGatewayMigrationTest {
                 for (String table : AGENT_TABLES) {
                     assertTrue(tableExists(statement, table), table);
                 }
+                assertTrue(columnExists(statement, "hzb_agent_run", "target_context_json"));
             }
         }
     }
@@ -78,6 +79,7 @@ class AgentGatewayMigrationTest {
             for (String table : AGENT_TABLES) {
                 assertTrue(sql.contains("create table") && sql.contains(table), database + ":" + table);
             }
+            assertTrue(sql.contains("target_context_json"), database);
         }
     }
 
@@ -94,6 +96,18 @@ class AgentGatewayMigrationTest {
                   FROM INFORMATION_SCHEMA.TABLES
                  WHERE TABLE_NAME = UPPER('%s')
                 """.formatted(table))) {
+            assertTrue(rows.next());
+            return rows.getInt(1) == 1;
+        }
+    }
+
+    private boolean columnExists(Statement statement, String table, String column) throws Exception {
+        try (ResultSet rows = statement.executeQuery("""
+                SELECT COUNT(*)
+                  FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_NAME = UPPER('%s')
+                   AND COLUMN_NAME = UPPER('%s')
+                """.formatted(table, column))) {
             assertTrue(rows.next());
             return rows.getInt(1) == 1;
         }

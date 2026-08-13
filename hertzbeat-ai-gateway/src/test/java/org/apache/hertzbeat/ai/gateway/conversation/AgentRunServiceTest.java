@@ -35,6 +35,9 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
@@ -107,6 +110,45 @@ class AgentRunServiceTest {
     }
 
     @Test
+    void createRunShouldPersistTheCompleteInvestigationTarget() {
+        AgentRunService service = new AgentRunService(runDao, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
+        AgentTargetRef target = AgentTargetRef.builder()
+            .entityId(300L)
+            .signal(AgentSignalRef.builder()
+                .type("logs")
+                .query("service.name=checkout")
+                .timeRange("last-30m")
+                .start(1_000L)
+                .end(2_000L)
+                .build())
+            .topology(AgentTopologyRef.builder()
+                .rootEntityId(300L)
+                .nodeId("300")
+                .edgeId("edge-300-301")
+                .depth(2)
+                .build())
+            .build();
+        UserInput userInput = UserInput.builder()
+            .messageId("msg_context")
+            .conversationId("conversation-1")
+            .target(target)
+            .message(Message.builder().text("investigate checkout").build())
+            .build();
+        when(runDao.findBySessionIdAndMessageId(1L, "msg_context")).thenReturn(Optional.empty());
+        when(runDao.saveAndFlush(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AgentRun saved = service.createOrResumeRun(session, userInput);
+
+        AgentTargetRef persisted = service.targetFromRun(saved);
+        assertEquals(300L, persisted.getEntityId());
+        assertEquals("logs", persisted.getSignal().getType());
+        assertEquals("last-30m", persisted.getSignal().getTimeRange());
+        assertEquals("edge-300-301", persisted.getTopology().getEdgeId());
+        assertFalse(saved.getTargetContextJson().contains("password"));
+    }
+
+    @Test
     void createOrResumeRunShouldRecoverExistingRunAfterSessionMessageUniqueConflict() {
         AgentRunService service = new AgentRunService(runDao, entityManager);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags_1").build();
@@ -135,7 +177,7 @@ class AgentRunServiceTest {
     }
 
     @Test
-    void lifecycleUpdatesShouldKeepSucceededResultRawAndSanitizeErrors() {
+    void lifecycleUpdatesShouldKeepNonSecretResultDetailAndSanitizeAllStoredOutcomes() {
         AgentRunService service = new AgentRunService(runDao, entityManager);
         when(runDao.save(any(AgentRun.class))).thenAnswer(invocation -> invocation.getArgument(0));
         String finalAnswer = "ok password=hunter2 token=tok-secret " + "detail ".repeat(3000);
@@ -146,7 +188,8 @@ class AgentRunServiceTest {
             AgentRun.builder().id(2L).runUid("run_2").build(),
             "failed authorization=Bearer auth-secret");
 
-        assertEquals(finalAnswer, succeeded.getResultSummary());
+        assertTrue(succeeded.getResultSummary().contains("detail ".repeat(100)));
+        assertNoRawSecret(succeeded.getResultSummary());
         assertNoRawSecret(failed.getErrorMessage());
     }
 

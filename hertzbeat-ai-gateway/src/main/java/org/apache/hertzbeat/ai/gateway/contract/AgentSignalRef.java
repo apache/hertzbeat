@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.ai.gateway.contract;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,27 +29,39 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * HertzBeat resource target referenced by an Agent Gateway request.
+ * Signal query and time-window context selected by an operator.
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AgentTargetRef {
+public class AgentSignalRef {
 
-    private Long monitorId;
+    @NotBlank
+    @Pattern(regexp = "metrics|logs|traces")
+    private String type;
 
-    private Long alertId;
+    @Size(max = 2048)
+    private String query;
 
-    @Positive
-    private Long entityId;
+    @Size(max = 64)
+    private String timeRange;
 
-    @Size(max = 128)
-    private String collector;
+    @PositiveOrZero
+    private Long start;
 
-    @Valid
-    private AgentSignalRef signal;
+    @PositiveOrZero
+    private Long end;
 
-    @Valid
-    private AgentTopologyRef topology;
+    /**
+     * Absolute windows must be complete and ordered; relative-only windows leave both boundaries absent.
+     */
+    @AssertTrue
+    @JsonIgnore
+    public boolean isAbsoluteWindowValid() {
+        if (start == null && end == null) {
+            return true;
+        }
+        return start != null && end != null && start <= end;
+    }
 }

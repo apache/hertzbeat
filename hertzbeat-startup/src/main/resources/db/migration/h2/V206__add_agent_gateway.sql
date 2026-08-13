@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS hzb_agent_run (
     target_monitor_id BIGINT,
     target_alert_id BIGINT,
     target_collector VARCHAR(128),
+    target_context_json TEXT,
     status VARCHAR(32) NOT NULL,
     result_summary TEXT,
     error_message VARCHAR(1024),

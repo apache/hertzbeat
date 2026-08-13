@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
-import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.springframework.util.StringUtils;
 
@@ -87,20 +88,7 @@ public class AgentRuntimeContextBuilder {
         if (entryType == AgentRuntimeEntryType.USER_INPUT && userInput.getTarget() != null) {
             return userInput.getTarget();
         }
-        return targetFromRun(run);
-    }
-
-    private static AgentTargetRef targetFromRun(AgentRun run) {
-        if (run.getTargetMonitorId() == null
-                && run.getTargetAlertId() == null
-                && !StringUtils.hasText(run.getTargetCollector())) {
-            return null;
-        }
-        return AgentTargetRef.builder()
-                .monitorId(run.getTargetMonitorId())
-                .alertId(run.getTargetAlertId())
-                .collector(run.getTargetCollector())
-                .build();
+        return AgentRunService.targetFromRun(run);
     }
 
     private String resolveTraceId() {

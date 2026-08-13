@@ -23,6 +23,7 @@ CREATE TABLE hzb_agent_run (
     session_id BIGINT NOT NULL,
     message_id VARCHAR(128) NOT NULL,
     target_monitor_id BIGINT, target_alert_id BIGINT, target_collector VARCHAR(128),
+    target_context_json TEXT,
     status VARCHAR(32) NOT NULL, result_summary TEXT, error_message VARCHAR(1024),
     started_at DATETIME, completed_at DATETIME,
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP,

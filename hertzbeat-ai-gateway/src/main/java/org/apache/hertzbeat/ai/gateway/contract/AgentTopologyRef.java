@@ -17,7 +17,8 @@
 
 package org.apache.hertzbeat.ai.gateway.contract;
 
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -26,27 +27,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * HertzBeat resource target referenced by an Agent Gateway request.
+ * Topology scope and selection selected by an operator.
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AgentTargetRef {
-
-    private Long monitorId;
-
-    private Long alertId;
+public class AgentTopologyRef {
 
     @Positive
-    private Long entityId;
+    private Long rootEntityId;
 
     @Size(max = 128)
-    private String collector;
+    private String nodeId;
 
-    @Valid
-    private AgentSignalRef signal;
+    @Size(max = 128)
+    private String edgeId;
 
-    @Valid
-    private AgentTopologyRef topology;
+    @Min(1)
+    @Max(10)
+    private Integer depth;
 }

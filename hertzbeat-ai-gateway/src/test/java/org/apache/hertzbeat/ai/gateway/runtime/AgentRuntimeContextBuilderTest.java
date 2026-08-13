@@ -28,13 +28,16 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.contract.AgentTopologyRef;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
-import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -185,6 +188,49 @@ class AgentRuntimeContextBuilderTest {
         assertEquals(100L, context.getEffectiveTarget().getMonitorId());
         assertEquals(200L, context.getEffectiveTarget().getAlertId());
         assertEquals("collector-a", context.getEffectiveTarget().getCollector());
+    }
+
+    @Test
+    void shouldRestoreDurableEntitySignalAndTopologyContextFromRun() {
+        AgentTargetRef target = AgentTargetRef.builder()
+            .entityId(42L)
+            .signal(AgentSignalRef.builder()
+                .type("traces")
+                .query("service.name=checkout")
+                .timeRange("last-1h")
+                .start(1_000L)
+                .end(2_000L)
+                .build())
+            .topology(AgentTopologyRef.builder()
+                .rootEntityId(42L)
+                .nodeId("42")
+                .edgeId("edge-42-43")
+                .depth(3)
+                .build())
+            .build();
+        AgentRun run = AgentRun.builder()
+            .id(2L)
+            .runUid("run-target-context")
+            .sessionId(1L)
+            .targetContextJson(JsonUtil.toJson(target))
+            .build();
+        AgentRuntimeRequest request = AgentRuntimeRequest.builder()
+            .envelope(envelope())
+            .session(session())
+            .run(run)
+            .entryType(AgentRuntimeEntryType.SCHEDULE_TRIGGER)
+            .approvalHandling(AgentApprovalHandling.WAIT_FOR_DECISION)
+            .userInput(userInput("restore durable context"))
+            .build();
+
+        AgentTargetRef restored = builder("trace").build(request, new AgentRuntimeProperties())
+            .getEffectiveTarget();
+
+        assertEquals(42L, restored.getEntityId());
+        assertEquals("traces", restored.getSignal().getType());
+        assertEquals(1_000L, restored.getSignal().getStart());
+        assertEquals("edge-42-43", restored.getTopology().getEdgeId());
+        assertEquals(3, restored.getTopology().getDepth());
     }
 
     private AgentRuntimeContextBuilder builder(String traceId) {

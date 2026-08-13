@@ -82,6 +82,7 @@ public class RuntimePrompt {
     public enum Frame {
         BASE_INSTRUCTIONS("base_instructions", "Base Instructions"),
         RUNTIME("runtime", "Runtime"),
+        TARGET("target", "Target"),
         INCIDENT("incident", "Incident"),
         TOOL_PROTOCOL("tool_protocol", "Tool Protocol");
 

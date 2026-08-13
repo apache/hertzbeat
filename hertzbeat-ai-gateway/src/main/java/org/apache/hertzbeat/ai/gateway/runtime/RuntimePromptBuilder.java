@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import org.apache.hertzbeat.ai.gateway.contract.AgentAlertIncidentContext;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillDefinition;
+import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 import org.springframework.util.StringUtils;
 
@@ -90,6 +91,7 @@ public class RuntimePromptBuilder {
         return RuntimePromptDraft.create()
                 .instructions(baseInstructions(context))
                 .system(RuntimePrompt.Frame.RUNTIME, runtimeMetadata(context))
+                .user(RuntimePrompt.Frame.TARGET, targetMetadata(context.getEffectiveTarget()))
                 .user(RuntimePrompt.Frame.INCIDENT, incidentMetadata(context.getAlertIncident()))
                 .system(RuntimePrompt.Frame.TOOL_PROTOCOL, capabilityCatalog(availableTools, availableSkills))
                 .build();
@@ -120,14 +122,40 @@ public class RuntimePromptBuilder {
                         .line("Preferred response language", context.getPreferredLanguage())
                         .line("Instruction", context.getPreferredLanguage() == null ? null
                                 : "Respond in this language unless the user explicitly requests another language."));
-        AgentTargetRef target = context.getEffectiveTarget();
-        if (target != null) {
-            text.section("Target", section -> section
-                    .line("Monitor ID", target.getMonitorId())
-                    .line("Alert ID", target.getAlertId())
-                    .line("Collector", target.getCollector()));
+        return text;
+    }
+
+    private PromptText targetMetadata(AgentTargetRef target) {
+        if (target == null) {
+            return PromptText.create();
+        }
+        PromptText text = PromptText.create()
+            .section("Investigation Target", section -> section
+                .line("Monitor ID", target.getMonitorId())
+                .line("Alert ID", target.getAlertId())
+                .line("Collector", safePromptValue(target.getCollector()))
+                .line("Entity ID", target.getEntityId()));
+        if (target.getSignal() != null) {
+            text.section("Signal", section -> section
+                .line("Signal type", safePromptValue(target.getSignal().getType()))
+                .line("Signal query", safePromptValue(target.getSignal().getQuery()))
+                .line("Time range", safePromptValue(target.getSignal().getTimeRange()))
+                .line("Start epoch millis", target.getSignal().getStart())
+                .line("End epoch millis", target.getSignal().getEnd()));
+        }
+        if (target.getTopology() != null) {
+            text.section("Topology", section -> section
+                .line("Topology root entity ID", target.getTopology().getRootEntityId())
+                .line("Topology node ID", safePromptValue(target.getTopology().getNodeId()))
+                .line("Topology edge ID", safePromptValue(target.getTopology().getEdgeId()))
+                .line("Topology depth", target.getTopology().getDepth()));
         }
         return text;
+    }
+
+    private String safePromptValue(String value) {
+        String redacted = GatewayText.redactSecrets(value);
+        return redacted == null ? null : redacted.replace('\r', ' ').replace('\n', ' ');
     }
 
     private PromptText incidentMetadata(AgentAlertIncidentContext incident) {
