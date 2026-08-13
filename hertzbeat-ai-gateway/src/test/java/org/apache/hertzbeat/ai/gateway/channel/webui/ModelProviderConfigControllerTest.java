@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -126,6 +128,15 @@ class ModelProviderConfigControllerTest {
         assertWebUiActor(command);
     }
 
+    @Test
+    void nonAdminCannotReadOrMutateProviderConfiguration() {
+        bindSubject("user");
+
+        assertThrows(IllegalStateException.class, () -> controller().getConfigurations());
+        assertThrows(IllegalStateException.class, () -> controller().createConfiguration(new ModelProviderConfig()));
+        verifyNoInteractions(commandRouter);
+    }
+
     private ModelProviderConfigController controller() {
         return new ModelProviderConfigController(commandRouter);
     }
@@ -143,10 +154,14 @@ class ModelProviderConfigControllerTest {
     }
 
     private void bindSubject() {
+        bindSubject("admin");
+    }
+
+    private void bindSubject(String role) {
         when(subject.getPrincipal()).thenReturn("trusted-user");
-        when(subject.getRoles()).thenReturn(List.of("user"));
-        when(subject.hasRole("admin")).thenReturn(false);
-        when(subject.hasRole("user")).thenReturn(true);
+        when(subject.getRoles()).thenReturn(List.of(role));
+        when(subject.hasRole("admin")).thenReturn("admin".equals(role));
+        when(subject.hasRole("user")).thenReturn("user".equals(role));
         when(subject.hasRole("guest")).thenReturn(false);
         SurenessContextHolder.bindSubject(subject);
     }

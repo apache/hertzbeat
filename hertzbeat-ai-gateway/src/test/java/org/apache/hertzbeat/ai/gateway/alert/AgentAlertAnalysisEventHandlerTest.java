@@ -134,7 +134,7 @@ class AgentAlertAnalysisEventHandlerTest {
                         "alertname", alertName,
                         "defineid", defineId,
                         "instance", "8.137.157.93:22",
-                        "instancename", "我的阿里云服务器",
+                        "instancename", "production-server",
                         "provider", "aliyun",
                         "severity", "emergency"))
                 .content(alertName)

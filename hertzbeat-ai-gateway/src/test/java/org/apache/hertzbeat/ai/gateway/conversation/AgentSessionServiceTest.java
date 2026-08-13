@@ -207,6 +207,25 @@ class AgentSessionServiceTest {
     }
 
     @Test
+    void recordTranscriptEntryShouldRedactSecretsAtThePersistenceBoundary() {
+        AgentSessionService service = new AgentSessionService(
+            sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        AgentSession session = AgentSession.builder().id(1L).transcriptSequence(0L).build();
+        when(sessionDao.findFirstById(1L)).thenReturn(Optional.of(session));
+        when(transcriptEntryDao.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AgentTranscriptEntry entry = service.recordTranscriptEntry(AgentTranscriptEntry.builder()
+            .sessionId(1L)
+            .payloadJson("{\"password\":\"raw-secret\",\"message\":\"keep this\"}")
+            .messageRole("assistant")
+            .build());
+
+        assertFalse(entry.getPayloadJson().contains("raw-secret"));
+        assertTrue(entry.getPayloadJson().contains("[REDACTED]"));
+        assertTrue(entry.getPayloadJson().contains("keep this"));
+    }
+
+    @Test
     void recordTranscriptEntryShouldRejectMissingRole() {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);

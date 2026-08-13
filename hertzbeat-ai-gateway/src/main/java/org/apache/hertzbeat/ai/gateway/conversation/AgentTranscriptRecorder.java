@@ -22,8 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
+import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
@@ -89,7 +91,9 @@ public class AgentTranscriptRecorder {
             .toolName(GatewayText.requireBounded(
                     message.getToolName(), TRANSCRIPT_TOOL_NAME_LIMIT, "Transcript tool name"))
             .errorMessage(GatewayText.requireBounded(
-                    message.getErrorMessage(), TRANSCRIPT_TOOL_ERROR_LIMIT,
+                    AgentRuntimeTextSanitizer.sanitizeAndLimit(
+                            message.getErrorMessage(), TRANSCRIPT_TOOL_ERROR_LIMIT),
+                    TRANSCRIPT_TOOL_ERROR_LIMIT,
                     "Transcript tool error"))
             .content(validateTranscriptContent(message.getContent()))
             .build();
@@ -106,7 +110,9 @@ public class AgentTranscriptRecorder {
                         block.getId(), TRANSCRIPT_TOOL_CALL_ID_LIMIT, "Transcript tool-call id"))
                 .name(GatewayText.requireBounded(
                         block.getName(), TRANSCRIPT_TOOL_NAME_LIMIT, "Transcript tool name"))
-                .input(block.getInput() == null ? Map.of() : block.getInput())
+                .text(GatewayText.redactSecrets(block.getText()))
+                .input(GatewaySecretRedactor.redactMap(
+                        block.getInput() == null ? Map.of() : block.getInput()))
                 .build())
             .toList();
     }

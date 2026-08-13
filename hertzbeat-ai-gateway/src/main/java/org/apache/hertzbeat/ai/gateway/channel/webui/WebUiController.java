@@ -50,7 +50,6 @@ import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputSer
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -93,7 +92,7 @@ public class WebUiController {
         return ((GatewayStreamResponse) commandRouter.handle(
                 chatCommand(request, ReplyMode.STREAM, acceptLanguage))).events()
                 .map(this::toServerSentEvent)
-                .onErrorResume(exception -> Flux.just(toServerSentEvent(errorEvent(exception))));
+                .onErrorResume(exception -> Flux.just(toServerSentEvent(errorEvent())));
     }
 
     @PostMapping("/runs/{runUid}/stop")
@@ -188,12 +187,9 @@ public class WebUiController {
                 .build();
     }
 
-    private GatewayEvent errorEvent(Throwable exception) {
-        String message = StringUtils.hasText(exception.getMessage())
-                ? exception.getMessage()
-                : "Agent Gateway stream failed";
+    private GatewayEvent errorEvent() {
         return new GatewayEvent(GatewayEventType.ERROR, "webui:error", null, null, null, null,
-                new ErrorPayload(null, message), System.currentTimeMillis());
+                new ErrorPayload(null, "Agent Gateway stream failed"), System.currentTimeMillis());
     }
 
     /** Values supplied to a pending interaction request. */

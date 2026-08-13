@@ -18,11 +18,16 @@
 package org.apache.hertzbeat.ai.gateway.conversation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
+import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
@@ -43,7 +48,7 @@ class AgentTranscriptRecorderTest {
     private AgentSessionService sessionService;
 
     @Test
-    void shouldPersistUserAndToolTextWithoutSanitizingOrTruncating() {
+    void shouldPersistFullTranscriptTextWithSecretsRedacted() {
         when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
         AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
         AgentSession session = AgentSession.builder().id(1L).sessionUid("session-1").build();
@@ -61,10 +66,32 @@ class AgentTranscriptRecorderTest {
         AgentTranscriptEntry toolEntry = recorder.recordRunMessage(
             session, run, TranscriptMessage.toolResult("call-1", "monitor.get", toolText, toolError));
 
-        assertEquals(userText, message(userEntry).text());
-        assertEquals(toolText, message(toolEntry).text());
+        assertTrue(message(userEntry).text().contains("detail ".repeat(500)));
+        assertFalse(message(userEntry).text().contains("user-secret"));
+        assertTrue(message(userEntry).text().contains("token=[REDACTED]"));
+        assertFalse(message(toolEntry).text().contains("tool-secret"));
+        assertTrue(message(toolEntry).text().contains("\"token\":\"[REDACTED]\""));
         assertEquals(toolError, message(toolEntry).getErrorMessage());
         assertEquals("call-1", message(toolEntry).getToolCallId());
+    }
+
+    @Test
+    void shouldRedactNestedToolArgumentsBeforePersistence() {
+        when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("session-1").build();
+        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
+        TranscriptMessage message = TranscriptMessage.assistantToolCalls(null, List.of(
+                TranscriptContent.toolCall("call-1", "database.connect", Map.of(
+                        "username", "operator",
+                        "credentials", Map.of("password", "nested-secret")))), null);
+
+        AgentTranscriptEntry entry = recorder.recordRunMessage(session, run, message);
+        Map<String, Object> input = message(entry).toolCalls().getFirst().getInput();
+
+        assertEquals("operator", input.get("username"));
+        assertFalse(entry.getPayloadJson().contains("nested-secret"));
+        assertTrue(entry.getPayloadJson().contains("[REDACTED]"));
     }
 
     private TranscriptMessage message(AgentTranscriptEntry entry) {

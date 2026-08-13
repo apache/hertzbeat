@@ -167,6 +167,7 @@ public class QueryController {
     }
 
     private GatewayEnvelope alertAnalysisEnvelope() {
+        ActorSupport.requireCurrentAdminSurenessActor();
         return GatewayEnvelope.builder()
                 .channelId(ChannelId.ALERT.id())
                 .receivedAt(System.currentTimeMillis())

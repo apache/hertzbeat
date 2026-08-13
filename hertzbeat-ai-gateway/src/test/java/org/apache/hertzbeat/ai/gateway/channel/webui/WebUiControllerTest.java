@@ -19,6 +19,7 @@ package org.apache.hertzbeat.ai.gateway.channel.webui;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.SUCCESS_CODE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.verify;
@@ -43,6 +44,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingleResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
+import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ErrorPayload;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.junit.jupiter.api.AfterEach;
@@ -126,6 +128,21 @@ class WebUiControllerTest {
         assertEquals(ReplyMode.STREAM, command.replyMode());
         assertEquals(ChannelId.WEB_UI.id(), command.envelope().getChannelId());
         assertEquals("ja-JP", command.envelope().getPreferredLanguage());
+    }
+
+    @Test
+    void streamChatShouldNotExposeRuntimeExceptionDetails() {
+        bindSubject();
+        when(commandRouter.handle(commandCaptor.capture())).thenReturn(new GatewayStreamResponse(
+                new Meta("msg-1", "conv-1", "ags-1", "run-1", false, "streaming"),
+                Flux.error(new IllegalStateException("provider apiKey=private-value"))));
+
+        List<ServerSentEvent<GatewayEvent>> events = controller().streamChat(chatRequest(), null)
+                .collectList().block();
+
+        ErrorPayload error = (ErrorPayload) events.getFirst().data().payload();
+        assertFalse(error.errorMessage().contains("private-value"));
+        assertEquals("Agent Gateway stream failed", error.errorMessage());
     }
 
     @Test

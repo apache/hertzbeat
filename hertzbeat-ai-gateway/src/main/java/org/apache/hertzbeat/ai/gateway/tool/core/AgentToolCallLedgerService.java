@@ -21,11 +21,12 @@ import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
-import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
+import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
+import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.springframework.stereotype.Service;
@@ -53,7 +54,8 @@ public class AgentToolCallLedgerService {
         toolCall.setStatus(AgentToolStatus.DENIED.name());
         toolCall.setApprovalStatus(AgentApprovalStatus.NOT_REQUIRED.name());
         toolCall.setErrorMessage(GatewayText.requireBounded(
-                policy.getReason(), ERROR_LIMIT, "tool policy reason"));
+                AgentRuntimeTextSanitizer.sanitizeAndLimit(policy.getReason(), ERROR_LIMIT),
+                ERROR_LIMIT, "tool policy reason"));
         return toolCallDao.save(toolCall);
     }
 
@@ -69,7 +71,7 @@ public class AgentToolCallLedgerService {
     public AgentToolCall recordApprovedToolResumed(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
                                                    AgentPolicyResult policy) {
         AgentToolCall toolCall = approvedPendingToolCall(request, descriptor);
-        String canonicalArgs = AgentToolPayloadHasher.canonicalArgumentsJson(request.getArguments());
+        String canonicalArgs = safeArgumentsJson(request);
         toolCall.setStatus(AgentToolStatus.RUNNING.name());
         toolCall.setRisk(policy.getRisk().name());
         toolCall.setPolicyDecision(policy.getDecision().name());
@@ -130,7 +132,7 @@ public class AgentToolCallLedgerService {
     @Transactional
     public AgentToolCall completeToolCall(AgentToolCall toolCall, AgentToolOutput output, long elapsedMs) {
         toolCall.setStatus(output.getStatus().name());
-        toolCall.setResultOutput(output.getModelContent());
+        toolCall.setResultOutput(AgentRuntimeTextSanitizer.redact(output.getModelContent()));
         if (AgentToolStatus.SUCCEEDED.equals(output.getStatus())) {
             toolCall.setErrorMessage(null);
         } else {
@@ -158,7 +160,7 @@ public class AgentToolCallLedgerService {
     }
 
     private AgentToolCall baseToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor, AgentPolicyResult policy) {
-        String canonicalArgs = AgentToolPayloadHasher.canonicalArgumentsJson(request.getArguments());
+        String canonicalArgs = safeArgumentsJson(request);
         return AgentToolCall.builder()
             .toolCallId(GatewayText.requireBounded(request.getToolCallId(), 128, "tool call id"))
             .runId(request.getRunId())
@@ -172,6 +174,11 @@ public class AgentToolCallLedgerService {
             .inputJson(canonicalArgs)
             .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()))
             .build();
+    }
+
+    private String safeArgumentsJson(AgentToolExecutionRequest request) {
+        return AgentToolPayloadHasher.canonicalArgumentsJson(
+                GatewaySecretRedactor.redactMap(request.getArguments()));
     }
 
     private AgentToolCall approvedPendingToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor) {

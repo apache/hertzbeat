@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.conversation.persistence;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
@@ -52,4 +53,9 @@ public interface AgentTranscriptEntryDao extends JpaRepository<AgentTranscriptEn
      */
     List<AgentTranscriptEntry> findBySessionIdAndSessionSequenceGreaterThanEqualOrderBySessionSequenceAsc(
         Long sessionId, Long sessionSequence, Pageable pageable);
+
+    /**
+     * Delete transcript entries older than the configured retention boundary.
+     */
+    long deleteByGmtCreateBefore(LocalDateTime cutoff);
 }

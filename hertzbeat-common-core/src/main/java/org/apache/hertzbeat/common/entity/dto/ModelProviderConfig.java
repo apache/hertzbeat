@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Model Provider Configuration
@@ -47,5 +48,6 @@ public class ModelProviderConfig {
     private String model;
 
     @Schema(title = "API Key", description = "API key", example = "sk-...")
+    @ToString.Exclude
     private String apiKey;
 }

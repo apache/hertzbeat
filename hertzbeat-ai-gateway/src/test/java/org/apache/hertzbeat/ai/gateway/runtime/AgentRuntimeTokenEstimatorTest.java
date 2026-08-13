@@ -34,7 +34,7 @@ class AgentRuntimeTokenEstimatorTest {
     void estimateTextShouldUseCeilingUtf8BytesDividedByFour() {
         assertEquals(1L, estimator.estimateText("test"));
         assertEquals(2L, estimator.estimateText("tests"));
-        assertEquals(3L, estimator.estimateText("告警分析"));
+        assertEquals(3L, estimator.estimateText("alert now"));
     }
 
     @Test

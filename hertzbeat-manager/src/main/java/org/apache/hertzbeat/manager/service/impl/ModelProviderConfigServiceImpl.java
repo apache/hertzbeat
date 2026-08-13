@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfigState;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.ModelProviderConfigurationService;
 import org.springframework.stereotype.Service;
@@ -54,18 +55,18 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
 
     @Override
     public ModelProviderConfigState getState() {
-        return getConfig();
+        return copyState(getConfig());
     }
 
     @Override
     public ModelProviderConfig getConfiguration(String uid) {
-        return copyConfiguration(findConfiguration(getConfig(), uid));
+        return decryptedConfiguration(findConfiguration(getConfig(), uid));
     }
 
     @Override
     public ModelProviderConfig getActiveConfiguration() {
         ModelProviderConfig activeConfiguration = activeConfiguration(getConfig());
-        return activeConfiguration == null ? null : copyConfiguration(activeConfiguration);
+        return activeConfiguration == null ? null : decryptedConfiguration(activeConfiguration);
     }
 
     @Override
@@ -77,7 +78,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         savedConfig.setUid(UUID.randomUUID().toString());
         state.getProviders().add(savedConfig);
         saveConfig(state);
-        return getConfig();
+        return getState();
     }
 
     @Override
@@ -99,7 +100,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         int index = state.getProviders().indexOf(previous);
         state.getProviders().set(index, replacement);
         saveConfig(state);
-        return getConfig();
+        return getState();
     }
 
     @Override
@@ -112,7 +113,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
             state.setActiveProviderUid(null);
         }
         saveConfig(state);
-        return getConfig();
+        return getState();
     }
 
     @Override
@@ -127,7 +128,13 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         }
         state.setActiveProviderUid(uid);
         saveConfig(state);
-        return getConfig();
+        return getState();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveConfig(ModelProviderConfigState state) {
+        super.saveConfig(encryptedState(state));
     }
 
     @Override
@@ -181,6 +188,51 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
 
     private ModelProviderConfigState emptyState() {
         return new ModelProviderConfigState(null, new ArrayList<>());
+    }
+
+    private ModelProviderConfigState encryptedState(ModelProviderConfigState state) {
+        Objects.requireNonNull(state, "model provider configuration state is required");
+        List<ModelProviderConfig> providers = state.getProviders() == null
+                ? List.of()
+                : state.getProviders();
+        List<ModelProviderConfig> encryptedProviders = new ArrayList<>(providers.size());
+        for (ModelProviderConfig provider : providers) {
+            ModelProviderConfig encrypted = copyConfiguration(provider);
+            encrypted.setApiKey(encryptSecret(encrypted.getApiKey()));
+            encryptedProviders.add(encrypted);
+        }
+        return new ModelProviderConfigState(state.getActiveProviderUid(), encryptedProviders);
+    }
+
+    private ModelProviderConfigState copyState(ModelProviderConfigState state) {
+        List<ModelProviderConfig> providers = state.getProviders().stream()
+                .map(this::copyConfiguration)
+                .toList();
+        return new ModelProviderConfigState(state.getActiveProviderUid(), new ArrayList<>(providers));
+    }
+
+    private String encryptSecret(String secret) {
+        if (!StringUtils.hasText(secret) || AesUtil.isCiphertext(secret)) {
+            return secret;
+        }
+        String encrypted = AesUtil.aesEncode(secret);
+        if (!AesUtil.isCiphertext(encrypted)) {
+            throw new IllegalStateException("Model provider secret encryption failed");
+        }
+        return encrypted;
+    }
+
+    private ModelProviderConfig decryptedConfiguration(ModelProviderConfig persisted) {
+        ModelProviderConfig copy = copyConfiguration(persisted);
+        if (StringUtils.hasText(copy.getApiKey()) && AesUtil.isCiphertext(copy.getApiKey())) {
+            String ciphertext = copy.getApiKey();
+            String plaintext = AesUtil.aesDecode(ciphertext);
+            if (Objects.equals(ciphertext, plaintext)) {
+                throw new IllegalStateException("Model provider secret decryption failed");
+            }
+            copy.setApiKey(plaintext);
+        }
+        return copy;
     }
 
     private ModelProviderConfig findConfiguration(ModelProviderConfigState state, String uid) {

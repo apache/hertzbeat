@@ -111,7 +111,7 @@ public class AgentSessionService {
             throw new IllegalArgumentException("Transcript message role must not be blank");
         }
         entry.setSessionSequence(nextSessionSequence(entry.getSessionId()));
-        entry.setPayloadJson(rawPayload);
+        entry.setPayloadJson(GatewayText.redactSecrets(rawPayload));
         entry.setMessageRole(GatewayText.requireBounded(
                 entry.getMessageRole(), TRANSCRIPT_ROLE_LIMIT, "Transcript message role"));
         return transcriptEntryDao.save(entry);

@@ -47,6 +47,8 @@ public class AgentRuntimeProperties {
 
     private Duration toolTimeout = Duration.ofSeconds(180);
 
+    private Duration transcriptRetention = Duration.ofDays(30);
+
     private ContextProperties context = new ContextProperties();
 
     private RetryProperties retry = new RetryProperties();
@@ -78,6 +80,10 @@ public class AgentRuntimeProperties {
 
     public void setToolTimeout(Duration toolTimeout) {
         this.toolTimeout = requirePositive("toolTimeout", toolTimeout);
+    }
+
+    public void setTranscriptRetention(Duration transcriptRetention) {
+        this.transcriptRetention = requirePositive("transcriptRetention", transcriptRetention);
     }
 
     public void setContext(ContextProperties context) {

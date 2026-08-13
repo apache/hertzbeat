@@ -166,7 +166,7 @@ public class ModelProviderConfigController {
         return GatewayEnvelope.builder()
                 .channelId(ChannelId.WEB_UI.id())
                 .receivedAt(System.currentTimeMillis())
-                .actor(ActorSupport.requireCurrentSurenessActor())
+                .actor(ActorSupport.requireCurrentAdminSurenessActor())
                 .build();
     }
 }

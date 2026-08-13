@@ -66,9 +66,9 @@ class AgentToolCallLedgerServiceTest {
         assertEquals("RUNNING", toolCall.getStatus());
         assertEquals(AgentApprovalStatus.NOT_REQUIRED.name(), toolCall.getApprovalStatus());
         assertTrue(toolCall.getInputJson().contains("\"pageSize\":1"));
-        assertTrue(toolCall.getInputJson().contains("\"password\":\"hunter2\""));
+        assertFalse(toolCall.getInputJson().contains("hunter2"));
         assertEquals(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()), toolCall.getInputHash());
-        assertFalse(toolCall.getInputJson().contains("[REDACTED]"));
+        assertTrue(toolCall.getInputJson().contains("[REDACTED]"));
     }
 
     @Test
@@ -159,7 +159,8 @@ class AgentToolCallLedgerServiceTest {
         assertEquals(2L, completed.getRunId());
         assertEquals("run_1", completed.getRunUid());
         assertEquals(1L, completed.getSessionId());
-        assertEquals("ok password=hunter2", completed.getResultOutput());
+        assertFalse(completed.getResultOutput().contains("hunter2"));
+        assertTrue(completed.getResultOutput().contains("[REDACTED]"));
         assertEquals(AgentToolStatus.FAILED.name(), failedOutput.getStatus());
         assertFalse(failedOutput.getErrorMessage().contains("abc123"));
         assertEquals(2L, failed.getRunId());

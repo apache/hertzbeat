@@ -60,6 +60,15 @@ public final class ActorSupport {
         return requireSurenessActor(SurenessContextHolder.getBindSubject());
     }
 
+    /** Build an authenticated administrator actor from the current Sureness context. */
+    public static AgentActor requireCurrentAdminSurenessActor() {
+        AgentActor actor = requireCurrentSurenessActor();
+        if (!actor.getRoles().contains(ROLE_ADMIN)) {
+            throw new IllegalStateException("Administrator role is required");
+        }
+        return actor;
+    }
+
     /**
      * Build a trusted user actor from a Sureness subject and validate principal and roles.
      */

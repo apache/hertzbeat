@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -107,6 +109,7 @@ class QueryControllerTest {
 
     @Test
     void alertAnalysisListShouldRouteSystemEnvelopeAndSearchThroughGatewayCommandRouter() {
+        bindSubject();
         Page<AgentSession> page = Page.empty(PageRequest.of(0, 50));
         when(commandRouter.handle(commandCaptor.capture()))
                 .thenReturn(response("list-alert-analysis-sessions:0", "sessions", page));
@@ -125,6 +128,7 @@ class QueryControllerTest {
 
     @Test
     void alertAnalysisSessionShouldRouteSystemEnvelopeThroughGatewayCommandRouter() {
+        bindSubject();
         GatewaySingleResponse sessionResponse = response("get-alert-analysis-session:ags-1", "session");
         when(commandRouter.handle(commandCaptor.capture())).thenReturn(sessionResponse);
 
@@ -164,6 +168,7 @@ class QueryControllerTest {
 
     @Test
     void alertAnalysisTranscriptShouldRouteSystemEnvelopeThroughGatewayCommandRouter() {
+        bindSubject();
         PageRequest defaultPage = PageRequest.of(0, 50);
         Page<AgentTranscriptEntry> transcript = Page.empty(defaultPage);
         when(commandRouter.handle(commandCaptor.capture()))
@@ -179,6 +184,15 @@ class QueryControllerTest {
         assertEquals(ChannelId.ALERT.id(), command.envelope().getChannelId());
         assertEquals("alert-analysis", command.envelope().getActor().getId());
         assertEquals("ags-1", command.sessionUid());
+    }
+
+    @Test
+    void nonAdminCannotReadAutomaticAlertAnalysisSessions() {
+        bindSubject("user");
+
+        assertThrows(IllegalStateException.class,
+                () -> controller().listAlertAnalysisSessions(0, 50, null));
+        verifyNoInteractions(commandRouter);
     }
 
     @Test
@@ -212,10 +226,14 @@ class QueryControllerTest {
     }
 
     private void bindSubject() {
+        bindSubject("admin");
+    }
+
+    private void bindSubject(String role) {
         when(subject.getPrincipal()).thenReturn("trusted-user");
-        when(subject.getRoles()).thenReturn(List.of("admin"));
-        when(subject.hasRole("admin")).thenReturn(true);
-        when(subject.hasRole("user")).thenReturn(false);
+        when(subject.getRoles()).thenReturn(List.of(role));
+        when(subject.hasRole("admin")).thenReturn("admin".equals(role));
+        when(subject.hasRole("user")).thenReturn("user".equals(role));
         when(subject.hasRole("guest")).thenReturn(false);
         SurenessContextHolder.bindSubject(subject);
     }
