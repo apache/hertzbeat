@@ -37,6 +37,12 @@ public interface AgentTranscriptEntryDao extends JpaRepository<AgentTranscriptEn
     Page<AgentTranscriptEntry> findBySessionIdOrderBySessionSequenceAsc(Long sessionId, Pageable pageable);
 
     /**
+     * Find conversation messages for a session from newest to oldest.
+     */
+    Page<AgentTranscriptEntry> findBySessionIdAndMessageRoleInOrderBySessionSequenceDesc(
+        Long sessionId, List<String> messageRoles, Pageable pageable);
+
+    /**
      * Find recent transcript entries for a session in reverse append order.
      */
     List<AgentTranscriptEntry> findBySessionIdOrderBySessionSequenceDesc(Long sessionId, Pageable pageable);

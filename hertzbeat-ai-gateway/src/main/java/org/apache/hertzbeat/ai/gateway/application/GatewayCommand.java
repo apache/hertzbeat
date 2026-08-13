@@ -51,7 +51,7 @@ public sealed interface GatewayCommand permits
     String commandId();
 
     /**
-     * Normalized runtime invocation shared by interactive and alert channels.
+     * Normalized runtime invocation shared by interactive and system-triggered entries.
      */
     @Builder
     record InvokeCommand(
@@ -125,11 +125,14 @@ public sealed interface GatewayCommand permits
             GatewayEnvelope envelope,
             ReplyMode replyMode,
             String commandId,
+            AgentRuntimeEntryType originEntryType,
             String sessionUid) implements GatewayCommand {
 
         public GetSessionCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            // The command must fully describe the session query scope.
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(sessionUid)) {
                 throw new IllegalArgumentException("commandId and sessionUid are required");
             }
@@ -147,6 +150,7 @@ public sealed interface GatewayCommand permits
             GatewayEnvelope envelope,
             ReplyMode replyMode,
             String commandId,
+            AgentRuntimeEntryType originEntryType,
             String title,
             int pageIndex,
             int pageSize) implements GatewayCommand {
@@ -154,6 +158,8 @@ public sealed interface GatewayCommand permits
         public ListSessionsCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            // The command must fully describe the session query scope.
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
             if (!StringUtils.hasText(commandId)) {
                 throw new IllegalArgumentException("commandId is required");
             }
@@ -175,6 +181,7 @@ public sealed interface GatewayCommand permits
             GatewayEnvelope envelope,
             ReplyMode replyMode,
             String commandId,
+            AgentRuntimeEntryType originEntryType,
             String sessionUid,
             int pageIndex,
             int pageSize) implements GatewayCommand {
@@ -182,6 +189,8 @@ public sealed interface GatewayCommand permits
         public GetSessionTranscriptCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
             replyMode = Objects.requireNonNull(replyMode, "replyMode is required");
+            // The command must fully describe the session query scope.
+            originEntryType = Objects.requireNonNull(originEntryType, "originEntryType is required");
             if (!StringUtils.hasText(commandId) || !StringUtils.hasText(sessionUid)) {
                 throw new IllegalArgumentException("commandId and sessionUid are required");
             }

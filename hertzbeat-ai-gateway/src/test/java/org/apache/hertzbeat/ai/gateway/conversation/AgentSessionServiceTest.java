@@ -42,6 +42,7 @@ import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptContent;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
@@ -81,13 +82,14 @@ class AgentSessionServiceTest {
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         GatewayEnvelope envelope = envelope("bob");
         AgentSession session = AgentSession.builder().id(1L).sessionUid("ags-1").build();
-        when(sessionDao.findBySessionUidAndChannelAndActorTypeAndActorId(
-            "ags-1", "web-ui", "user", "bob")).thenReturn(Optional.of(session));
+        when(sessionDao.findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            "ags-1", "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
 
-        assertSame(session, service.findOwnedSession(" ags-1 ", envelope).orElseThrow());
+        assertSame(session, service.findOwnedSession(
+            " ags-1 ", envelope, AgentRuntimeEntryType.USER_INPUT).orElseThrow());
 
-        verify(sessionDao).findBySessionUidAndChannelAndActorTypeAndActorId(
-            "ags-1", "web-ui", "user", "bob");
+        verify(sessionDao).findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            "ags-1", "web-ui", "user", "bob", "USER_INPUT");
     }
 
     @Test
@@ -96,13 +98,14 @@ class AgentSessionServiceTest {
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         GatewayEnvelope envelope = envelope("bob");
         AgentSession session = AgentSession.builder().id(42L).sessionUid("ags-42").build();
-        when(sessionDao.findByIdAndChannelAndActorTypeAndActorId(
-            42L, "web-ui", "user", "bob")).thenReturn(Optional.of(session));
+        when(sessionDao.findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            42L, "web-ui", "user", "bob", "USER_INPUT")).thenReturn(Optional.of(session));
 
-        assertSame(session, service.findOwnedSession("42", envelope).orElseThrow());
+        assertSame(session, service.findOwnedSession(
+            "42", envelope, AgentRuntimeEntryType.USER_INPUT).orElseThrow());
 
-        verify(sessionDao).findByIdAndChannelAndActorTypeAndActorId(
-            42L, "web-ui", "user", "bob");
+        verify(sessionDao).findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            42L, "web-ui", "user", "bob", "USER_INPUT");
     }
 
     @Test
@@ -110,19 +113,22 @@ class AgentSessionServiceTest {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
         GatewayEnvelope envelope = GatewayEnvelope.builder()
-            .channelId("alert")
+            .channelId("system")
             .receivedAt(100L)
             .actor(AgentActor.alertAnalysisActor())
             .build();
         PageRequest pageRequest = PageRequest.of(0, 8);
         Page<AgentSession> page = Page.empty(pageRequest);
-        when(sessionDao.findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-            "alert", "system", "alert-analysis", "database", pageRequest)).thenReturn(page);
+        when(sessionDao
+            .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest)).thenReturn(page);
 
-        assertSame(page, service.findSessions(envelope, "database", pageRequest));
+        assertSame(page, service.findSessions(
+            envelope, AgentRuntimeEntryType.ALERT_TRIGGER, "database", pageRequest));
 
-        verify(sessionDao).findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-            "alert", "system", "alert-analysis", "database", pageRequest);
+        verify(sessionDao)
+            .findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                "system", "system", "alert-analysis", "ALERT_TRIGGER", "database", pageRequest);
     }
 
     @Test
@@ -150,7 +156,8 @@ class AgentSessionServiceTest {
         when(sessionKeyBuilder.build(envelope, "chat-1")).thenReturn("key-1");
         when(sessionDao.findBySessionKey("key-1")).thenReturn(Optional.of(existing));
 
-        AgentSession session = service.findOrCreateSession(envelope, userInput);
+        AgentSession session = service.findOrCreateSession(
+            envelope, userInput, AgentRuntimeEntryType.USER_INPUT);
 
         assertSame(existing, session);
         assertEquals("[\"old-role\"]", existing.getActorRoles());
@@ -177,10 +184,12 @@ class AgentSessionServiceTest {
         when(sessionDao.saveAndFlush(any(AgentSession.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        AgentSession session = service.findOrCreateSession(envelope, userInput);
+        AgentSession session = service.findOrCreateSession(
+            envelope, userInput, AgentRuntimeEntryType.USER_INPUT);
 
         assertEquals(AgentSessionStatus.ACTIVE, session.getStatus());
         assertEquals("ACTIVE", session.getStatus().name());
+        assertEquals(AgentRuntimeEntryType.USER_INPUT.name(), session.getOriginEntryType());
     }
 
     @Test
@@ -233,6 +242,26 @@ class AgentSessionServiceTest {
 
         assertSame(page, result);
         assertEquals(4L, result.getContent().get(0).getSessionSequence());
+    }
+
+    @Test
+    void findConversationTranscriptEntriesShouldQueryLatestUserAndAssistantMessages() {
+        AgentSessionService service = new AgentSessionService(
+            sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        PageRequest pageable = PageRequest.of(0, 20);
+        AgentTranscriptEntry entry = transcriptEntry(8L, TranscriptMessage.assistantText("latest", null));
+        Page<AgentTranscriptEntry> page = new PageImpl<>(List.of(entry), pageable, 21);
+        List<String> roles = List.of(
+            TranscriptMessage.TranscriptRole.USER.wireValue(),
+            TranscriptMessage.TranscriptRole.ASSISTANT.wireValue());
+        when(transcriptEntryDao.findBySessionIdAndMessageRoleInOrderBySessionSequenceDesc(
+            eq(1L), eq(roles), eq(pageable))).thenReturn(page);
+
+        Page<AgentTranscriptEntry> result = service.findConversationTranscriptEntries(1L, pageable);
+
+        assertSame(page, result);
+        assertEquals(8L, result.getContent().get(0).getSessionSequence());
+        assertEquals(2, result.getTotalPages());
     }
 
     @Test

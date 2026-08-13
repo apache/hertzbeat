@@ -33,6 +33,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.apache.hertzbeat.common.entity.agent.AgentTranscriptEntry;
 import org.junit.jupiter.api.Test;
@@ -57,41 +58,49 @@ class GatewayQueryServiceTest {
         GatewayEnvelope envelope = envelope("bob");
         PageRequest pageRequest = PageRequest.of(0, 50);
         Page<AgentSession> sessions = Page.empty(pageRequest);
-        when(sessionService.findSessions(envelope, null, pageRequest)).thenReturn(sessions);
+        when(sessionService.findSessions(
+                envelope, AgentRuntimeEntryType.USER_INPUT, null, pageRequest)).thenReturn(sessions);
         ListSessionsCommand command = new ListSessionsCommand(
-                envelope, ReplyMode.FINAL_ONLY, "list-sessions", null, 0, 50);
+                envelope, ReplyMode.FINAL_ONLY, "list-sessions",
+                AgentRuntimeEntryType.USER_INPUT, null, 0, 50);
 
         GatewayResponse.GatewaySingleResponse response = service().listSessions(command);
 
         assertSame(sessions, response.body());
-        verify(sessionService).findSessions(envelope, null, pageRequest);
+        verify(sessionService).findSessions(
+                envelope, AgentRuntimeEntryType.USER_INPUT, null, pageRequest);
     }
 
     @Test
     void listSessionsShouldForwardAlertAnalysisEnvelopeAndTitle() {
         GatewayEnvelope envelope = GatewayEnvelope.builder()
-                .channelId("alert")
+                .channelId("system")
                 .receivedAt(100L)
                 .actor(AgentActor.alertAnalysisActor())
                 .build();
         PageRequest pageRequest = PageRequest.of(0, 50);
         Page<AgentSession> sessions = Page.empty(pageRequest);
-        when(sessionService.findSessions(envelope, "database", pageRequest)).thenReturn(sessions);
+        when(sessionService.findSessions(
+                envelope, AgentRuntimeEntryType.ALERT_TRIGGER, "database", pageRequest)).thenReturn(sessions);
         ListSessionsCommand command = new ListSessionsCommand(
-                envelope, ReplyMode.FINAL_ONLY, "list-alert-sessions", "database", 0, 50);
+                envelope, ReplyMode.FINAL_ONLY, "list-alert-sessions",
+                AgentRuntimeEntryType.ALERT_TRIGGER, "database", 0, 50);
 
         GatewayResponse.GatewaySingleResponse response = service().listSessions(command);
 
         assertSame(sessions, response.body());
-        verify(sessionService).findSessions(envelope, "database", pageRequest);
+        verify(sessionService).findSessions(
+                envelope, AgentRuntimeEntryType.ALERT_TRIGGER, "database", pageRequest);
     }
 
     @Test
     void getSessionShouldHideAnotherWebUiActorsSession() {
         GatewayEnvelope envelope = envelope("bob");
-        when(sessionService.findOwnedSession("ags-alice", envelope)).thenReturn(Optional.empty());
+        when(sessionService.findOwnedSession(
+                "ags-alice", envelope, AgentRuntimeEntryType.USER_INPUT)).thenReturn(Optional.empty());
         GetSessionCommand command = new GetSessionCommand(
-                envelope, ReplyMode.FINAL_ONLY, "get-session", "ags-alice");
+                envelope, ReplyMode.FINAL_ONLY, "get-session",
+                AgentRuntimeEntryType.USER_INPUT, "ags-alice");
 
         GatewayResponse.GatewaySingleResponse response = service().getSession(command);
 
@@ -103,9 +112,11 @@ class GatewayQueryServiceTest {
     @Test
     void getTranscriptShouldNotLoadAnotherWebUiActorsEntries() {
         GatewayEnvelope envelope = envelope("bob");
-        when(sessionService.findOwnedSession("ags-alice", envelope)).thenReturn(Optional.empty());
+        when(sessionService.findOwnedSession(
+                "ags-alice", envelope, AgentRuntimeEntryType.USER_INPUT)).thenReturn(Optional.empty());
         GetSessionTranscriptCommand command = new GetSessionTranscriptCommand(
-                envelope, ReplyMode.FINAL_ONLY, "get-transcript", "ags-alice", 0, 50);
+                envelope, ReplyMode.FINAL_ONLY, "get-transcript",
+                AgentRuntimeEntryType.USER_INPUT, "ags-alice", 0, 50);
 
         GatewayResponse.GatewaySingleResponse response = service().getSessionTranscript(command);
 
@@ -122,10 +133,12 @@ class GatewayQueryServiceTest {
         PageRequest pageRequest = PageRequest.of(0, 50);
         Page<AgentTranscriptEntry> transcript = new PageImpl<>(
                 List.of(AgentTranscriptEntry.builder().sessionId(2L).build()), pageRequest, 1);
-        when(sessionService.findOwnedSession("ags-bob", envelope)).thenReturn(Optional.of(session));
+        when(sessionService.findOwnedSession(
+                "ags-bob", envelope, AgentRuntimeEntryType.USER_INPUT)).thenReturn(Optional.of(session));
         when(sessionService.findTranscriptEntries(2L, pageRequest)).thenReturn(transcript);
         GetSessionTranscriptCommand command = new GetSessionTranscriptCommand(
-                envelope, ReplyMode.FINAL_ONLY, "get-transcript", "ags-bob", 0, 50);
+                envelope, ReplyMode.FINAL_ONLY, "get-transcript",
+                AgentRuntimeEntryType.USER_INPUT, "ags-bob", 0, 50);
 
         GatewayResponse.GatewaySingleResponse response = service().getSessionTranscript(command);
 

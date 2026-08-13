@@ -45,6 +45,7 @@ public class GatewayQueryService {
     public GatewaySingleResponse listSessions(ListSessionsCommand command) {
         Page<AgentSession> sessions = sessionService.findSessions(
                 command.envelope(),
+                command.originEntryType(),
                 command.title(),
                 PageRequest.of(command.pageIndex(), command.pageSize()));
         return GatewaySingleResponse.builder()
@@ -59,7 +60,8 @@ public class GatewayQueryService {
     }
 
     public GatewaySingleResponse getSession(GetSessionCommand command) {
-        return sessionService.findOwnedSession(command.sessionUid(), command.envelope())
+        return sessionService.findOwnedSession(
+                        command.sessionUid(), command.envelope(), command.originEntryType())
                 .<GatewaySingleResponse>map(session -> GatewaySingleResponse.builder()
                         .meta(Meta.builder()
                                 .commandId(command.commandId())
@@ -83,7 +85,8 @@ public class GatewayQueryService {
 
     public GatewaySingleResponse getSessionTranscript(GetSessionTranscriptCommand command) {
         PageRequest pageRequest = PageRequest.of(command.pageIndex(), command.pageSize());
-        AgentSession session = sessionService.findOwnedSession(command.sessionUid(), command.envelope()).orElse(null);
+        AgentSession session = sessionService.findOwnedSession(
+                command.sessionUid(), command.envelope(), command.originEntryType()).orElse(null);
         Page<AgentTranscriptEntry> transcript = session == null
                 ? Page.empty(pageRequest)
                 : sessionService.findTranscriptEntries(session.getId(), pageRequest);

@@ -33,10 +33,12 @@ import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
+import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { MarkdownComponent } from 'ngx-markdown';
 
+import { AgentScheduleComponent } from './agent-schedule/agent-schedule.component';
 import { AlertAnalysisComponent } from './alert-analysis/alert-analysis.component';
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
@@ -51,6 +53,7 @@ import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
 
 const COMPONENTS: Array<Type<void>> = [
   AlertCenterComponent,
+  AgentScheduleComponent,
   AlertAnalysisComponent,
   AlertSettingComponent,
   AlertNoticeComponent,
@@ -76,6 +79,7 @@ const COMPONENTS: Array<Type<void>> = [
     NzCollapseModule,
     NzListModule,
     NzTimePickerModule,
+    NzTimelineModule,
     NzDatePickerModule,
     NzBadgeModule,
     NzUploadModule,

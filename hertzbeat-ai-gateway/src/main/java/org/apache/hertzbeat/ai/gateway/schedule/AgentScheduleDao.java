@@ -7,7 +7,6 @@
  * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +16,33 @@
 
 package org.apache.hertzbeat.ai.gateway.schedule;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
- * Persistence for scheduled Gateway commands.
+ * Agent schedule persistence.
  */
 @Repository
-public interface AgentScheduledCommandDao extends JpaRepository<AgentScheduledCommand, Long> {
+public interface AgentScheduleDao extends JpaRepository<AgentSchedule, Long> {
 
-    List<AgentScheduledCommand> findBySessionIdOrderByIdAsc(Long sessionId);
+    List<AgentSchedule> findByEnabledTrueAndNextTriggerAtLessThanEqualOrderByNextTriggerAtAsc(
+            Long now, Pageable pageable);
 
-    List<AgentScheduledCommand> findByEnabledTrueAndNextRunTimeLessThanEqual(LocalDateTime now);
+    List<AgentSchedule> findByEnabledTrue();
+
+    Optional<AgentSchedule> findBySessionId(Long sessionId);
+
+    @Query("""
+            select schedule from AgentSchedule schedule
+            where schedule.sessionId in (
+                select run.sessionId from AgentRun run where run.status = :status
+            )
+            order by schedule.gmtUpdate asc
+            """)
+    List<AgentSchedule> findWithRuns(@Param("status") String status, Pageable pageable);
 }

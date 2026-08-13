@@ -345,7 +345,7 @@ class AgentRuntimeLoopTest {
         assertEquals(modelArguments(), catalog.lastRequest.getArguments());
         AgentRuntimeModelRequest secondRequest = modelClient.requests.get(1);
         String runtimeContext = runtimeContext(secondRequest.getPrompt());
-        assertTrue(runtimeContext.contains("Current time: 2026-04-19T00:00:00Z"));
+        assertTrue(runtimeContext.contains("Current time: " + context.getCurrentTimeIso()));
         assertFalse(runtimeContext.contains("Run: uid=run-context"));
         assertFalse(runtimeContext.contains("run-context"));
         assertFalse(runtimeContext.contains("session-context"));

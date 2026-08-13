@@ -19,10 +19,12 @@ package org.apache.hertzbeat.ai.gateway.conversation;
 
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
@@ -45,13 +47,14 @@ public class AgentRunService {
         this.entityManager = entityManager;
     }
 
-    public AgentRun createOrResumeRun(AgentSession session, UserInput userInput) {
+    public AgentRun createOrResumeRun(AgentSession session, UserInput userInput,
+                                      AgentRuntimeEntryType entryType) {
         String messageId = userInput.getMessageId();
         Optional<AgentRun> existingRun = runDao.findBySessionIdAndMessageId(session.getId(), messageId);
         if (existingRun.isPresent()) {
             return existingRun.get();
         }
-        AgentRun run = buildRun(session, userInput, messageId);
+        AgentRun run = buildRun(session, userInput, messageId, entryType);
         try {
             return runDao.saveAndFlush(run);
         } catch (DataIntegrityViolationException e) {
@@ -103,12 +106,29 @@ public class AgentRunService {
         return runDao.findByRunUid(normalized);
     }
 
-    private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId) {
+    public Optional<AgentRun> findCreatedRun(Long sessionId) {
+        return runDao.findFirstBySessionIdAndStatusOrderByGmtCreateAsc(
+                sessionId, AgentRunStatus.CREATED.name());
+    }
+
+    public Optional<AgentRun> findRunningRun(Long sessionId) {
+        return runDao.findFirstBySessionIdAndStatusOrderByGmtCreateAsc(
+                sessionId, AgentRunStatus.RUNNING.name());
+    }
+
+    public boolean hasActiveRun(Long sessionId) {
+        return runDao.existsBySessionIdAndStatusIn(sessionId,
+                List.of(AgentRunStatus.CREATED.name(), AgentRunStatus.RUNNING.name()));
+    }
+
+    private AgentRun buildRun(AgentSession session, UserInput userInput, String messageId,
+                              AgentRuntimeEntryType entryType) {
         AgentTargetRef target = userInput.getTarget();
         return AgentRun.builder()
             .runUid("run_" + SnowFlakeIdGenerator.generateId())
             .sessionId(session.getId())
             .messageId(messageId)
+            .entryType(entryType.name())
             .targetMonitorId(target == null ? null : target.getMonitorId())
             .targetAlertId(target == null ? null : target.getAlertId())
             .targetCollector(target == null ? null : target.getCollector())

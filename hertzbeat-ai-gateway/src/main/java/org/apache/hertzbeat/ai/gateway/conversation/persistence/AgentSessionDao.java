@@ -42,17 +42,19 @@ public interface AgentSessionDao extends JpaRepository<AgentSession, Long> {
      */
     Optional<AgentSession> findBySessionUid(String sessionUid);
 
-    Optional<AgentSession> findByIdAndChannelAndActorTypeAndActorId(
-            Long id, String channel, String actorType, String actorId);
+    Optional<AgentSession> findByIdAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            Long id, String channel, String actorType, String actorId, String originEntryType);
 
-    Optional<AgentSession> findBySessionUidAndChannelAndActorTypeAndActorId(
-            String sessionUid, String channel, String actorType, String actorId);
+    Optional<AgentSession> findBySessionUidAndChannelAndActorTypeAndActorIdAndOriginEntryType(
+            String sessionUid, String channel, String actorType, String actorId, String originEntryType);
 
-    Page<AgentSession> findByChannelAndActorTypeAndActorIdOrderByGmtUpdateDesc(
-            String channel, String actorType, String actorId, Pageable pageable);
+    Page<AgentSession> findByChannelAndActorTypeAndActorIdAndOriginEntryTypeOrderByGmtUpdateDesc(
+            String channel, String actorType, String actorId, String originEntryType, Pageable pageable);
 
-    Page<AgentSession> findByChannelAndActorTypeAndActorIdAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
-            String channel, String actorType, String actorId, String title, Pageable pageable);
+    Page<AgentSession>
+            findByChannelAndActorTypeAndActorIdAndOriginEntryTypeAndTitleContainingIgnoreCaseOrderByGmtUpdateDesc(
+                    String channel, String actorType, String actorId, String originEntryType,
+                    String title, Pageable pageable);
 
     /**
      * Lock a session row while assigning transcript append sequence.

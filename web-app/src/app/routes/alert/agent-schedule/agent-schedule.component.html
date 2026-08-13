@@ -1,0 +1,200 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'alert.help.schedule' | i18n"
+  [guild_link]="'alert.help.schedule.link' | i18n"
+  [module_name]="'menu.alert.schedule'"
+  [icon_name]="'field-time'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      <i nz-icon nzType="plus"></i>
+      {{ 'agent.schedule.new' | i18n }}
+    </button>
+    <button nz-button (click)="loadSchedules()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync"></i>
+    </button>
+  </ng-template>
+</app-toolbar>
+
+<nz-table
+  #scheduleTable
+  nzShowSizeChanger
+  [nzData]="schedules"
+  [nzLoading]="loading"
+  [nzFrontPagination]="false"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  (nzQueryParams)="onTableChange($event)"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center">{{ 'agent.schedule.name' | i18n }}</th>
+      <th nzAlign="center">{{ 'agent.schedule.cron' | i18n }}</th>
+      <th nzAlign="center">{{ 'agent.schedule.delivery' | i18n }}</th>
+      <th nzAlign="center">{{ 'agent.schedule.next-run' | i18n }}</th>
+      <th nzAlign="center">{{ 'agent.schedule.enabled' | i18n }}</th>
+      <th nzAlign="center" nzRight>{{ 'alert.analysis.operation' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let schedule of scheduleTable.data">
+      <td nzAlign="center">
+        <strong>{{ schedule.name }}</strong>
+        <div class="schedule-instruction">{{ schedule.instruction }}</div>
+      </td>
+      <td nzAlign="center"
+        ><code>{{ schedule.cronExpression }}</code></td
+      >
+      <td nzAlign="center">
+        <div>{{ receiverNames(schedule) || '-' }}</div>
+        <small>{{ templateName(schedule.templateId) }}</small>
+      </td>
+      <td nzAlign="center">
+        <span *ngIf="schedule.nextTriggerAt; else noNext">{{ schedule.nextTriggerAt | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
+        <ng-template #noNext>-</ng-template>
+      </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="schedule.enabled" (ngModelChange)="toggle(schedule, $event)"></nz-switch>
+      </td>
+      <td nzAlign="center" nzRight>
+        <button nz-button nzType="link" (click)="viewTranscript(schedule)">{{ 'agent.schedule.transcript' | i18n }}</button>
+        <button nz-button nzType="link" [nzLoading]="runningScheduleIds.has(schedule.id)" (click)="runNow(schedule)">
+          {{ 'agent.schedule.run-now' | i18n }}
+        </button>
+        <button nz-button nzType="link" (click)="openEdit(schedule)">{{ 'common.button.edit' | i18n }}</button>
+        <button nz-button nzType="link" nzDanger (click)="confirmDelete(schedule)">{{ 'common.button.delete' | i18n }}</button>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<nz-modal
+  [(nzVisible)]="modalVisible"
+  [nzTitle]="(editingSchedule ? 'agent.schedule.edit' : 'agent.schedule.new') | i18n"
+  [nzOkLoading]="modalLoading"
+  [nzWidth]="680"
+  [nzMaskClosable]="false"
+  (nzOnCancel)="modalVisible = false"
+  (nzOnOk)="save()"
+>
+  <div *nzModalContent>
+    <form nz-form #scheduleForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>{{ 'agent.schedule.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="17" nzHasFeedback>
+          <input nz-input name="name" required maxlength="128" [(ngModel)]="request.name" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>{{ 'agent.schedule.instruction' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="17" nzHasFeedback>
+          <textarea nz-input name="instruction" required maxlength="4096" rows="5" [(ngModel)]="request.instruction"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired [nzTooltipTitle]="'agent.schedule.cron-tip' | i18n">
+          {{ 'agent.schedule.cron' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="17" nzHasFeedback>
+          <input nz-input name="cronExpression" required maxlength="64" [(ngModel)]="request.cronExpression" />
+          <small>{{ 'agent.schedule.cron-example' | i18n }} {{ 'agent.schedule.system-timezone' | i18n }}</small>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>{{ 'agent.schedule.receivers' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="17" nzHasFeedback>
+          <nz-select
+            name="receiverIds"
+            nzMode="multiple"
+            required
+            [(ngModel)]="request.receiverIds"
+            (ngModelChange)="receiverSelectionChanged()"
+          >
+            <nz-option *ngFor="let receiver of receivers" [nzValue]="receiver.id" [nzLabel]="receiver.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" [nzTooltipTitle]="'agent.schedule.template-tip' | i18n">
+          {{ 'agent.schedule.template' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="17">
+          <nz-select name="templateId" nzAllowClear [(ngModel)]="request.templateId">
+            <nz-option *ngFor="let template of availableTemplates" [nzValue]="template.id" [nzLabel]="template.name"></nz-option>
+          </nz-select>
+          <small>{{ 'agent.schedule.template-default-tip' | i18n }}</small>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="!editingSchedule">
+        <nz-form-label [nzSpan]="6">{{ 'agent.schedule.enabled' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="17">
+          <nz-switch name="enabled" [(ngModel)]="request.enabled"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<nz-drawer
+  [nzVisible]="transcriptVisible"
+  [nzTitle]="selectedSchedule?.name || ('agent.schedule.transcript' | i18n)"
+  [nzWidth]="720"
+  (nzOnClose)="transcriptVisible = false"
+>
+  <ng-container *nzDrawerContent>
+    <nz-spin [nzSpinning]="transcriptLoading">
+      <div #transcriptContainer class="transcript-scroll">
+        <div *ngIf="transcriptHasEarlier" class="transcript-pagination">
+          <button nz-button nzType="link" [nzLoading]="transcriptLoadingEarlier" (click)="loadEarlierTranscript()">
+            <i nz-icon nzType="up"></i>
+            {{ 'agent.schedule.load-earlier' | i18n }}
+          </button>
+        </div>
+        <nz-empty *ngIf="!transcriptLoading && transcript.length === 0"></nz-empty>
+        <nz-timeline *ngIf="transcript.length > 0" class="transcript-timeline">
+          <nz-timeline-item
+            *ngFor="let message of transcript; trackBy: trackTranscript"
+            [nzColor]="message.role === 'assistant' ? '#3f51b5' : 'gray'"
+          >
+            <article class="transcript-message" [class.assistant]="message.role === 'assistant'">
+              <header>
+                <strong>
+                  <i nz-icon [nzType]="message.role === 'assistant' ? 'robot' : 'field-time'"></i>
+                  {{ (message.role === 'assistant' ? 'agent.schedule.agent' : 'agent.schedule.trigger') | i18n }}
+                </strong>
+                <time>{{ message.createdAt | date : 'YYYY-MM-dd HH:mm:ss' }}</time>
+              </header>
+              <markdown *ngIf="message.role === 'assistant'; else triggerInput" [data]="message.content"></markdown>
+              <ng-template #triggerInput>
+                <pre>{{ message.content }}</pre>
+              </ng-template>
+            </article>
+          </nz-timeline-item>
+        </nz-timeline>
+      </div>
+    </nz-spin>
+  </ng-container>
+</nz-drawer>

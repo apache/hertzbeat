@@ -193,6 +193,12 @@
           "link": "/alert/analysis"
         },
         {
+          "text": "Agent Schedule",
+          "i18n": "menu.alert.schedule",
+          "icon": "anticon-field-time",
+          "link": "/alert/schedule"
+        },
+        {
           "text": "Group",
           "i18n": "menu.alert.group",
           "icon": "anticon-filter",

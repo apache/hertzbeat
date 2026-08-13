@@ -17,11 +17,11 @@
 
 package org.apache.hertzbeat.ai.gateway.channel.core;
 
-/** Built-in Agent Gateway channel identifiers. */
+/** Built-in Agent Gateway ingress channel identifiers. */
 public enum ChannelId {
 
     WEB_UI("web-ui"),
-    ALERT("alert");
+    SYSTEM("system");
 
     private final String id;
 

@@ -18,17 +18,18 @@
 package org.apache.hertzbeat.ai.gateway.tool.schedule;
 
 import java.util.List;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentSessionService;
-import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
-import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduledCommand;
-import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduledCommandService;
+import org.apache.hertzbeat.ai.gateway.schedule.AgentSchedule;
+import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduleExecutor;
+import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduleService;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
-import org.apache.hertzbeat.common.entity.agent.AgentSession;
+import org.apache.hertzbeat.common.entity.agent.AgentRun;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
@@ -37,43 +38,65 @@ import org.springframework.stereotype.Service;
 @Service
 public class AgentScheduleToolService {
 
-    private final AgentScheduledCommandService commandService;
-    private final AgentSessionService sessionService;
+    private final AgentScheduleService scheduleService;
+    private final AgentScheduleExecutor scheduleExecutor;
 
-    public AgentScheduleToolService(AgentScheduledCommandService commandService,
-                                    AgentSessionService sessionService) {
-        this.commandService = commandService;
-        this.sessionService = sessionService;
+    public AgentScheduleToolService(AgentScheduleService scheduleService,
+                                    @Lazy AgentScheduleExecutor scheduleExecutor) {
+        this.scheduleService = scheduleService;
+        this.scheduleExecutor = scheduleExecutor;
     }
 
-    @Tool(name = "schedule.create", description = "Schedule a recurring user request in the current Agent session.")
+    @Tool(name = "schedule.create", description = "Create a system-level recurring Agent inspection.")
     @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public AgentScheduledCommand createSchedule(
-            @ToolParam(description = "User request to run at each scheduled time.") String message,
-            @ToolParam(description = "Six-field Spring cron expression.") String cronExpression,
+    public AgentSchedule createSchedule(
+            @ToolParam(description = "Schedule name.") String name,
+            @ToolParam(description = "Inspection instruction to run at each scheduled time.") String instruction,
+            @ToolParam(description = "Six-field Spring cron expression with seconds set to 0.")
+            String cronExpression,
+            @ToolParam(description = "Existing HertzBeat notice receiver IDs.") List<Long> receiverIds,
+            @ToolParam(required = false, description = "Existing notice template ID; omit to use channel defaults.")
+            Long templateId,
             @ToolParam(required = false, description = "Whether the schedule starts enabled.") Boolean enabled) {
         var request = AgentToolContextSupport.invocation().getRequest();
-        AgentSession session = sessionService.findSession(request.getSessionUid())
-                .orElseThrow(() -> new IllegalStateException("Current Agent session was not found"));
-        return commandService.create(AgentScheduledCommand.builder()
-                .sessionId(session.getId())
-                .channel(session.getChannel())
-                .conversationId(session.getConversationId())
-                .actorType(request.getActor().getType())
-                .actorId(request.getActor().getId())
-                .actorRoles(ActorSupport.rolesJson(request.getActor()))
-                .message(message)
+        return scheduleService.create(AgentSchedule.builder()
+                .name(name)
+                .instruction(instruction)
                 .cronExpression(cronExpression)
                 .enabled(enabled == null || enabled)
+                .receiverIds(receiverIds)
+                .templateId(templateId)
+                .createdFromSessionUid(request.getSessionUid())
                 .build());
     }
 
-    @Tool(name = "schedule.list", description = "List recurring Gateway commands for the current session.")
+    @Tool(name = "schedule.list", description = "List system-level Agent schedules.")
     @AgentToolPolicy(
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public List<AgentScheduledCommand> listSchedules() {
-        return commandService.findSessionCommands(AgentToolContextSupport.invocation().getRequest().getRunSessionId());
+    public List<AgentSchedule> listSchedules() {
+        return scheduleService.list(PageRequest.of(0, 100)).getContent();
+    }
+
+    @Tool(name = "schedule.update", description = "Update an existing system-level Agent inspection.")
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public AgentSchedule updateSchedule(
+            @ToolParam(description = "Schedule id.") Long scheduleId,
+            @ToolParam(description = "Schedule name.") String name,
+            @ToolParam(description = "Inspection instruction to run at each scheduled time.") String instruction,
+            @ToolParam(description = "Six-field Spring cron expression with seconds set to 0.")
+            String cronExpression,
+            @ToolParam(description = "Existing HertzBeat notice receiver IDs.") List<Long> receiverIds,
+            @ToolParam(required = false, description = "Existing notice template ID; omit to use channel defaults.")
+            Long templateId) {
+        return scheduleService.update(scheduleId, AgentSchedule.builder()
+                .name(name)
+                .instruction(instruction)
+                .cronExpression(cronExpression)
+                .receiverIds(receiverIds)
+                .templateId(templateId)
+                .build());
     }
 
     @Tool(name = "schedule.delete", description = "Delete a recurring diagnostic schedule.")
@@ -86,17 +109,24 @@ public class AgentScheduleToolService {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for schedule.delete");
         }
-        commandService.delete(scheduleId, AgentToolContextSupport.invocation().getRequest().getRunSessionId());
+        scheduleService.delete(scheduleId);
         return "Schedule deleted: " + scheduleId;
     }
 
     @Tool(name = "schedule.toggle", description = "Enable or disable a recurring diagnostic schedule.")
     @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
-    public AgentScheduledCommand toggleSchedule(
+    public AgentSchedule toggleSchedule(
             @ToolParam(description = "Schedule id.") Long scheduleId,
             @ToolParam(description = "Whether the schedule should be enabled.") boolean enabled) {
-        return commandService.toggle(scheduleId,
-                AgentToolContextSupport.invocation().getRequest().getRunSessionId(), enabled);
+        return scheduleService.toggle(scheduleId, enabled);
     }
+
+    @Tool(name = "schedule.run_now", description = "Run a system-level Agent schedule immediately.")
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public AgentRun runNow(@ToolParam(description = "Schedule id.") Long scheduleId) {
+        return scheduleExecutor.executeNow(scheduleId);
+    }
+
 }

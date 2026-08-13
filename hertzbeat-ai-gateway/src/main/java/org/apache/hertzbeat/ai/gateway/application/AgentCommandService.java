@@ -39,6 +39,7 @@ import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEventType;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeRequest;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeService;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
@@ -118,13 +119,14 @@ public class AgentCommandService {
 
     AgentRuntimeRequest prepare(GatewayCommand command, UserInput userInput) {
         GatewayEnvelope envelope = command.envelope();
-        AgentSession session = sessionService.findOrCreateSession(envelope, userInput);
-        AgentRun run = runService.createOrResumeRun(session, userInput);
+        AgentRuntimeEntryType entryType = ((InvokeCommand) command).entryType();
+        AgentSession session = sessionService.findOrCreateSession(envelope, userInput, entryType);
+        AgentRun run = runService.createOrResumeRun(session, userInput, entryType);
         List<TranscriptMessage> chatHistory = transcriptRecorder.chatHistory(session.getId());
         transcriptRecorder.recordUserTranscriptEntry(session, run, userInput);
         AgentRun runningRun = runService.markRunning(run);
         return AgentRuntimeRequest.builder()
-                .entryType(((InvokeCommand) command).entryType())
+                .entryType(entryType)
                 .approvalHandling(command.replyMode() == ReplyMode.STREAM
                         ? AgentApprovalHandling.WAIT_FOR_DECISION
                         : AgentApprovalHandling.DENY)
