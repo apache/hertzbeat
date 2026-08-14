@@ -52,6 +52,13 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
+  # OpenAPI 文档包含全部路由、参数与数据模型,等同于一份接口地图,
+  # 因此按普通管理类资源收敛到 admin,不再匿名开放
+  - /v3/api-docs/**===get===[admin]
+  - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
 
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
@@ -82,10 +89,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
@@ -140,6 +143,32 @@ account:
     salt: 123
     role: [user]
 ```
+
+## OpenAPI 文档与 Swagger UI
+
+生成的 OpenAPI 文档会列出全部路由、HTTP 方法、参数名与类型，以及所有请求和响应模型，等同于一份现成的攻击面地图，因此 HertzBeat 默认不对外提供：随包发布的 `application.yml` 中 `springdoc.api-docs.enabled` 与 `springdoc.swagger-ui.enabled` 均为 `false`，此时 `/v3/api-docs` 和 `/swagger-ui/index.html` 返回 404。
+
+如果确实需要该文档，更新 `config` 目录下的 `application.yml` 文件显式开启：
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+```
+
+开启之后，文档接口仍然被上面的 `resourceRole` 规则收敛在 `admin` 角色。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；Swagger UI 会在同源的文档请求与 try-it-out 请求中附带 HertzBeat 保存的令牌，页面不会再要求任何输入。
+
+没有该会话时文档同样不会泄露，但页面并非静默失败：`/swagger-ui/index.html` 是静态文件，仍然可以打开，而它请求 `/v3/api-docs/swagger-config` 会得到 `401` 与 `WWW-Authenticate: Digest` 挑战，浏览器因此弹出用户名密码框。在该弹框中输入管理员账号可以正常加载文档；没有 `admin` 角色的账号则会收到 `403`。
+
+也可以直接携带管理员令牌获取文档：
+
+```shell
+curl -H "Authorization: Bearer $YOUR_ADMIN_TOKEN" http://localhost:1157/v3/api-docs
+```
+
+> ⚠️ 不要把 OpenAPI 路径放回 `excludedResource`，否则完整接口文档会再次匿名开放。
 
 ## 更新安全密钥
 
