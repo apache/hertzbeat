@@ -109,7 +109,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-  
+
   flyway:
     enabled: true
     clean-disabled: true
@@ -117,7 +117,7 @@ spring:
     baseline-version: 1
     locations:
       - classpath:db/migration/mysql
-  
+
   # Not Require, Please config if you need email notify
   mail:
     # Attention: this is mail server address.
@@ -142,7 +142,7 @@ warehouse:
       expire-time: 1h
     victoria-metrics:
       enabled: true
-      url: http://victoria-metrics:8428      
+      url: http://victoria-metrics:8428
       username: root
       password: root
       insert:
@@ -222,7 +222,7 @@ alerter:
       region: AWS_REGION_FOR_END_USER_MESSAGING
     twilio:
       account-sid: YOUR_ACCOUNT_SID
-      auth-token: YOUR_AUTH_TOKEN 
+      auth-token: YOUR_AUTH_TOKEN
       twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:
@@ -273,3 +273,8 @@ hertzbeat:
       concurrency-limit: 256
       reject-when-limit-reached: true
       task-termination-timeout: 5000
+  # Bounds on what a single request to the push gateway may consume.
+  push:
+    max-auto-created-monitors: ${HERTZBEAT_PUSH_MAX_AUTO_CREATED_MONITORS:10000}
+    max-body-bytes: ${HERTZBEAT_PUSH_MAX_BODY_BYTES:5242880}
+    max-samples: ${HERTZBEAT_PUSH_MAX_SAMPLES:10000}
