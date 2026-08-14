@@ -16,12 +16,18 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  # the define yml routes persist the global collection templates
+  # post can only add a new type, put overwrites an existing one and immediately
+  # redispatches its collect job to every monitor already using it - hence admin only
+  - /api/apps/**===post===[admin,user]
+  - /api/apps/**===put===[admin]
+  - /api/apps/**===delete===[admin]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
   - /api/monitor/**===put===[admin,user]
@@ -64,6 +70,23 @@ resourceRole:
   - /api/config/**===post===[admin]
   - /api/config/**===put===[admin]
   - /api/config/**===delete===[admin]
+  # queue depth of the hertzbeat process itself, operational data
+  - /api/metrics===get===[admin]
+  # per account metric favourites rendered on the monitor pages
+  - /api/metrics/**===get===[admin,user,guest]
+  - /api/metrics/**===post===[admin,user,guest]
+  - /api/metrics/**===delete===[admin,user,guest]
+  - /api/label/**===get===[admin,user,guest]
+  - /api/label/**===post===[admin,user]
+  - /api/label/**===put===[admin,user]
+  - /api/label/**===delete===[admin]
+  # the storage availability probe is read by every monitor page, while the query
+  # route forwards a raw promql expression straight to the time series database
+  - /api/warehouse/**===get===[admin,user,guest]
+  - /api/warehouse/query===post===[admin]
+  - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs===delete===[admin]
+  - /api/v2/alerts===post===[admin,user]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
@@ -86,13 +109,15 @@ resourceRole:
   - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
+  # spring boot actuator exposes jvm, http and datasource internals for scraping
+  - /actuator/**===get===[admin]
   # the alert stream carries full alert payloads and the manager stream carries import
   # progress; both are scoped like the log stream above rather than left anonymous
   - /api/alert/sse/**===get===[admin,user,guest]
   - /api/manager/sse/**===get===[admin,user,guest]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/account/auth/**===*

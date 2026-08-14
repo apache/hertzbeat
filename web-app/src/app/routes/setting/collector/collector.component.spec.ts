@@ -18,6 +18,7 @@
  */
 
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { CollectorComponent } from './collector.component';
 
@@ -26,9 +27,7 @@ describe('CollectorComponent', () => {
   let fixture: ComponentFixture<CollectorComponent>;
 
   beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [CollectorComponent]
-    }).compileComponents();
+    configureShallowTest(CollectorComponent).compileComponents();
   }));
 
   beforeEach(() => {

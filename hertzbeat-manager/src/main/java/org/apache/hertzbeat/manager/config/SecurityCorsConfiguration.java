@@ -35,7 +35,9 @@ public class SecurityCorsConfiguration {
     public FilterRegistrationBean corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowCredentials(true);
+        // Requests authenticate with a token in the Authorization header rather than a
+        // cookie, so no request relies on ambient credentials being sent cross origin.
+        corsConfiguration.setAllowCredentials(false);
         corsConfiguration.setAllowedOriginPatterns(Collections.singletonList(CorsConfiguration.ALL));
         corsConfiguration.addAllowedHeader(CorsConfiguration.ALL);
         corsConfiguration.addAllowedMethod(CorsConfiguration.ALL);

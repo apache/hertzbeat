@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertCenterComponent } from './alert-center.component';
 
@@ -26,9 +27,7 @@ describe('AlertCenterComponent', () => {
   let fixture: ComponentFixture<AlertCenterComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [AlertCenterComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertCenterComponent).compileComponents();
   });
 
   beforeEach(() => {
