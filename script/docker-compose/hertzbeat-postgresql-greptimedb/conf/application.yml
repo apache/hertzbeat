@@ -74,6 +74,16 @@ management:
       export:
         enabled: true
 
+# The generated OpenAPI document is a map of every route, HTTP method, parameter
+# and model, so it is not served by default. A deployment that wants the Swagger
+# UI opts in by turning both switches on; the document endpoints stay scoped to
+# the admin role in sureness.yml either way.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 sureness:
   container: jakarta_servlet
   auths:
