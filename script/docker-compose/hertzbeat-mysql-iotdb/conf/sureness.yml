@@ -16,7 +16,7 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
@@ -109,11 +109,18 @@ resourceRole:
   - /api/ai/**===delete===[admin]
   - /api/logs/sse/**===get===[admin,user,guest]
   - /api/logs/ingest/**===post===[admin,user]
+  # The OpenAPI document is a map of every route, parameter and model, so it is
+  # scoped like any other administrative resource instead of being anonymous
+  - /v3/api-docs/**===get===[admin]
+  - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
   # spring boot actuator exposes jvm, http and datasource internals for scraping
   - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*
@@ -147,10 +154,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
