@@ -25,6 +25,13 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.properties.SwaggerUiOAuthProperties;
+import org.springdoc.core.providers.ObjectMapperProvider;
+import org.springdoc.webmvc.ui.SwaggerIndexTransformer;
+import org.springdoc.webmvc.ui.SwaggerWelcomeCommon;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,6 +43,27 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     private static final String SECURITY_SCHEME_NAME = "BearerAuth";
+
+    /**
+     * The springdoc beans this one is built from only exist while both switches are on:
+     * its own ui configuration is conditional on {@code SpringDocConfiguration}, which
+     * {@code springdoc.api-docs.enabled} gates in turn. Matching both switches keeps a
+     * deployment that turns the document off from failing to start.
+     *
+     * @return the swagger ui index transformer, replacing the springdoc default
+     */
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    @ConditionalOnProperty(name = {"springdoc.api-docs.enabled", "springdoc.swagger-ui.enabled"},
+            havingValue = "true", matchIfMissing = true)
+    public SwaggerIndexTransformer authorizedSwaggerIndexTransformer(
+            SwaggerUiConfigProperties swaggerUiConfig,
+            SwaggerUiOAuthProperties swaggerUiOauthProperties,
+            SwaggerWelcomeCommon swaggerWelcomeCommon,
+            ObjectMapperProvider objectMapperProvider) {
+        return new AuthorizedSwaggerIndexTransformer(swaggerUiConfig, swaggerUiOauthProperties,
+                swaggerWelcomeCommon, objectMapperProvider);
+    }
 
     @Bean
     public OpenAPI springOpenApi() {

@@ -37,6 +37,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
     - uses: pnpm/action-setup@v4
@@ -53,3 +54,6 @@ jobs:
     - name: EsLint Test
       working-directory: web-app
       run: pnpm lint:ts
+    - name: Unit Test
+      working-directory: web-app
+      run: pnpm test

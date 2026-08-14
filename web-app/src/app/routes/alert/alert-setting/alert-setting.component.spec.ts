@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { AlertSettingComponent } from './alert-setting.component';
 
@@ -26,9 +27,7 @@ describe('AlertSettingComponent', () => {
   let fixture: ComponentFixture<AlertSettingComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [AlertSettingComponent]
-    }).compileComponents();
+    await configureShallowTest(AlertSettingComponent).compileComponents();
   });
 
   beforeEach(() => {
