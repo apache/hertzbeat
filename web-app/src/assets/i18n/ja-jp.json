@@ -3314,5 +3314,57 @@
       "apiKeyHint": "空欄にすると既存のキーを維持します。",
       "save": "プロバイダーを保存"
     }
+  },
+  "aiSchedules": {
+    "title": "定期調査",
+    "description": "決まった調査をスケジュール実行し、設定済みの通知先へ結果を送信します。",
+    "workspaceAction": "定期調査",
+    "create": "定期調査を作成",
+    "never": "未設定",
+    "receiverCount": "{{count}} 件の通知先",
+    "columns": {
+      "schedule": "スケジュール",
+      "instruction": "調査指示",
+      "delivery": "通知",
+      "nextRun": "次回実行",
+      "enabled": "有効",
+      "actions": "操作"
+    },
+    "actions": {
+      "runNow": "今すぐ実行",
+      "transcript": "実行履歴",
+      "edit": "編集",
+      "delete": "削除",
+      "deleteConfirm": "この定期調査を削除しますか？"
+    },
+    "states": {
+      "loading": "定期調査を読み込んでいます…",
+      "empty": "定期調査はまだありません。",
+      "emptyDescription": "同じ調査を定期実行し、指定した通知先へ送信できます。",
+      "unavailable": "定期調査を利用できません。",
+      "mutationFailed": "変更を確認できませんでした。更新してから再試行してください。"
+    },
+    "editor": {
+      "createTitle": "定期調査を作成",
+      "editTitle": "定期調査を編集",
+      "name": "名前",
+      "instruction": "調査指示",
+      "cron": "実行スケジュール",
+      "cronHint": "6 フィールドの Spring cron。秒は 0 にしてください",
+      "receivers": "通知先",
+      "template": "通知テンプレート",
+      "templateHint": "カスタムテンプレートでは通知先の種別を統一してください",
+      "defaultTemplate": "通知先種別ごとの既定テンプレートを使用",
+      "enabled": "保存後に有効化",
+      "save": "定期調査を保存"
+    },
+    "transcript": {
+      "title": "実行履歴 · {{name}}",
+      "loading": "実行履歴を読み込んでいます…",
+      "empty": "この定期調査には実行履歴がありません。",
+      "unavailable": "実行履歴を利用できません。",
+      "loadEarlier": "以前の履歴を読み込む",
+      "noText": "テキスト内容なし"
+    }
   }
 }

@@ -75,7 +75,9 @@
 .sessionButton small {
   color: var(--hb-text-secondary);
 }
-.providerButton {
+.adminActions {
+  display: grid;
+  gap: var(--hb-space-2);
   margin: auto var(--hb-space-3) var(--hb-space-3);
 }
 

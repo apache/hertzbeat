@@ -88,6 +88,14 @@ export function apiMessagePut(
   return apiMessageRequest(path, jsonRequest('PUT', data, options));
 }
 
+export function apiMessagePatch(
+  path: string,
+  data: unknown,
+  options?: Pick<RequestInit, 'signal' | 'headers'>
+): Promise<unknown> {
+  return apiMessageRequest(path, jsonRequest('PATCH', data, options));
+}
+
 export function apiMessageDelete(path: string, options?: Pick<RequestInit, 'signal' | 'headers'>): Promise<unknown> {
   return apiMessageRequest(path, { ...options, method: 'DELETE' });
 }
@@ -128,7 +136,7 @@ async function parseApiEnvelope(response: Response) {
 }
 
 function jsonRequest(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'PATCH',
   data: unknown,
   options?: Pick<RequestInit, 'signal' | 'headers'>
 ): RequestInit {

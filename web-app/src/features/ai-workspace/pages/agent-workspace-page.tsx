@@ -3,8 +3,11 @@
 import { AgentProviderDialog } from '../components/agent-provider-dialog';
 import { AgentWorkspaceView } from '../components/agent-workspace-view';
 import { useAgentWorkspacePageController } from '../controller/use-agent-workspace-page-controller';
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
+import { useNavigate } from 'react-router-dom';
 
 export function AgentWorkspacePage() {
+  const navigate = useNavigate();
   const controller = useAgentWorkspacePageController();
   return (
     <>
@@ -12,6 +15,7 @@ export function AgentWorkspacePage() {
         controller={controller.workspace}
         isAdmin={controller.isAdmin}
         onOpenProviders={controller.openProviders}
+        onOpenSchedules={() => void navigate(applicationRoutePaths.aiSchedules)}
       />
       {controller.isAdmin ? (
         <AgentProviderDialog

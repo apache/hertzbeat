@@ -3320,5 +3320,57 @@
       "apiKeyHint": "Leave blank to keep the existing key.",
       "save": "Save provider"
     }
+  },
+  "aiSchedules": {
+    "title": "Scheduled investigations",
+    "description": "Run a fixed investigation on a schedule and deliver the result through configured notification receivers.",
+    "workspaceAction": "Scheduled investigations",
+    "create": "Create schedule",
+    "never": "Not scheduled",
+    "receiverCount": "{{count}} receivers",
+    "columns": {
+      "schedule": "Schedule",
+      "instruction": "Investigation instruction",
+      "delivery": "Delivery",
+      "nextRun": "Next run",
+      "enabled": "Enabled",
+      "actions": "Actions"
+    },
+    "actions": {
+      "runNow": "Run now",
+      "transcript": "Run history",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this schedule?"
+    },
+    "states": {
+      "loading": "Loading scheduled investigations…",
+      "empty": "No scheduled investigations yet.",
+      "emptyDescription": "Create a schedule to run the same investigation and notify the same receivers automatically.",
+      "unavailable": "Scheduled investigations are unavailable.",
+      "mutationFailed": "The schedule change could not be confirmed. Refresh before trying again."
+    },
+    "editor": {
+      "createTitle": "Create scheduled investigation",
+      "editTitle": "Edit scheduled investigation",
+      "name": "Name",
+      "instruction": "Investigation instruction",
+      "cron": "Schedule expression",
+      "cronHint": "Six-field Spring cron; seconds must be 0",
+      "receivers": "Notification receivers",
+      "template": "Notification template",
+      "templateHint": "A custom template requires receivers of one type",
+      "defaultTemplate": "Use each receiver type's default template",
+      "enabled": "Enable after saving",
+      "save": "Save schedule"
+    },
+    "transcript": {
+      "title": "Run history · {{name}}",
+      "loading": "Loading run history…",
+      "empty": "This schedule has not produced a transcript yet.",
+      "unavailable": "Run history is unavailable.",
+      "loadEarlier": "Load earlier runs",
+      "noText": "No text content"
+    }
   }
 }

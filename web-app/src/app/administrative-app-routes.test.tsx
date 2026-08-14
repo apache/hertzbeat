@@ -18,6 +18,7 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { appRoutes } from './app-routes';
 
 const probes = vi.hoisted(() => ({
+  agentScheduleApi: vi.fn(),
   deploymentApi: vi.fn(),
   deploymentLoader: vi.fn(),
   pluginApi: vi.fn(),
@@ -25,6 +26,19 @@ const probes = vi.hoisted(() => ({
   tokenApi: vi.fn(),
   tokenLoader: vi.fn()
 }));
+
+vi.mock('@/features/ai-workspace', async () => {
+  const React = await import('react');
+  return {
+    AgentWorkspacePage: () => React.createElement('div', { 'data-testid': 'ai-workspace-page' }),
+    AgentSchedulePage: () => {
+      React.useEffect(() => {
+        probes.agentScheduleApi();
+      }, []);
+      return React.createElement('div', { 'data-testid': 'agent-schedules-page' });
+    }
+  };
+});
 
 vi.mock('@/features/setup', () => ({
   SetupPage: () => null
@@ -97,6 +111,7 @@ describe('actual administrative app routes', () => {
     probes.pluginLoader.mockClear();
     probes.tokenApi.mockClear();
     probes.tokenLoader.mockClear();
+    probes.agentScheduleApi.mockClear();
   });
 
   it.each([
@@ -105,7 +120,9 @@ describe('actual administrative app routes', () => {
     ['/settings/plugins', 'USER'],
     ['/settings/plugins', 'GUEST'],
     ['/settings/deployment', 'USER'],
-    ['/settings/deployment', 'GUEST']
+    ['/settings/deployment', 'GUEST'],
+    ['/ai/schedules', 'USER'],
+    ['/ai/schedules', 'GUEST']
   ])('does not mount the feature loader or API at %s for %s', async (path, role) => {
     renderAppRoute(path, role);
 
@@ -119,6 +136,7 @@ describe('actual administrative app routes', () => {
     expect(probes.pluginApi).not.toHaveBeenCalled();
     expect(probes.deploymentLoader).not.toHaveBeenCalled();
     expect(probes.deploymentApi).not.toHaveBeenCalled();
+    expect(probes.agentScheduleApi).not.toHaveBeenCalled();
   });
 
   it('admits ADMIN to the Token loader and page API', async () => {
@@ -143,6 +161,13 @@ describe('actual administrative app routes', () => {
     expect(await screen.findByTestId('deployment-page')).toBeInTheDocument();
     expect(probes.deploymentLoader).toHaveBeenCalledOnce();
     await waitFor(() => expect(probes.deploymentApi).toHaveBeenCalledOnce());
+  });
+
+  it('admits ADMIN to the guarded Agent schedule page API', async () => {
+    renderAppRoute('/ai/schedules', 'ADMIN');
+
+    expect(await screen.findByTestId('agent-schedules-page')).toBeInTheDocument();
+    await waitFor(() => expect(probes.agentScheduleApi).toHaveBeenCalledOnce());
   });
 
   it('converges the legacy Plugin path on the guarded canonical route', async () => {

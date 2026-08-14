@@ -31,7 +31,7 @@ import java.sql.Statement;
 import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
-/** Upgrade contract for the non-destructive Agent Gateway schema. */
+/** Contract for the Agent Gateway schema included in the 2.0 foundation. */
 class AgentGatewayMigrationTest {
 
     private static final String[] AGENT_TABLES = {
@@ -39,7 +39,7 @@ class AgentGatewayMigrationTest {
             "hzb_agent_run",
             "hzb_agent_tool_call",
             "hzb_agent_transcript_entry",
-            "hzb_agent_scheduled_command",
+            "hzb_agent_schedule",
             "hzb_alert_analysis_policy"
     };
 
@@ -54,7 +54,7 @@ class AgentGatewayMigrationTest {
                 statement.execute("CREATE TABLE hzb_sop_schedule (id BIGINT PRIMARY KEY)");
                 statement.execute("INSERT INTO hzb_ai_conversation(id) VALUES (1)");
 
-                for (String sql : migration("h2").split(";")) {
+                for (String sql : gatewaySchema(migration("h2")).split(";")) {
                     if (!sql.isBlank()) {
                         statement.execute(sql);
                     }
@@ -66,6 +66,8 @@ class AgentGatewayMigrationTest {
                     assertTrue(tableExists(statement, table), table);
                 }
                 assertTrue(columnExists(statement, "hzb_agent_run", "target_context_json"));
+                assertTrue(columnExists(statement, "hzb_agent_run", "entry_type"));
+                assertTrue(columnExists(statement, "hzb_agent_session", "origin_entry_type"));
             }
         }
     }
@@ -114,10 +116,18 @@ class AgentGatewayMigrationTest {
     }
 
     private String migration(String database) throws IOException {
-        String path = "/db/migration/" + database + "/V206__add_agent_gateway.sql";
+        String path = "/db/migration/" + database + "/V200__create_entity_foundation.sql";
         try (var input = getClass().getResourceAsStream(path)) {
             assertNotNull(input, path);
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    private String gatewaySchema(String migration) {
+        int start = migration.indexOf("CREATE TABLE IF NOT EXISTS hzb_agent_session");
+        int end = migration.indexOf("ALTER TABLE hzb_config ALTER COLUMN content CLOB", start);
+        assertTrue(start >= 0, "agent session schema");
+        assertTrue(end > start, "agent gateway schema boundary");
+        return migration.substring(start, end);
     }
 }

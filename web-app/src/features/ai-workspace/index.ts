@@ -1,3 +1,4 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 export { AgentWorkspacePage } from './pages/agent-workspace-page';
+export { AgentSchedulePage } from './pages/agent-schedule-page';

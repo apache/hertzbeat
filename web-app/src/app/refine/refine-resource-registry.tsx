@@ -146,6 +146,12 @@ const staticRefineResources: ResourceProps[] = [
     order: 6,
     timePolicy: 'none'
   }),
+  routedNavigationResource('ai-schedules', {
+    navigation: false,
+    icon: <ScheduleOutlined />,
+    order: 0,
+    timePolicy: 'none'
+  }),
   routedNavigationResource('monitors', {
     parent: 'shell-basic-monitoring',
     icon: <RadarChartOutlined />,

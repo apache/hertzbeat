@@ -26,6 +26,7 @@ const entityListPath = '/entities';
 export const applicationRoutePaths = {
   dashboard: defaultAuthenticatedPath,
   aiWorkspace: '/ai',
+  aiSchedules: '/ai/schedules',
   instrumentation: '/observability/integration',
   topology: '/topology',
   explore: '/explore',

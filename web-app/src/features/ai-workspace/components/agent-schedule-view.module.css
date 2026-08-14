@@ -1,0 +1,76 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--hb-space-3);
+}
+
+.scheduleName {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.scheduleName small,
+.scheduleTime {
+  color: var(--hb-text-secondary);
+}
+
+.scheduleInstruction {
+  display: -webkit-box;
+  max-width: 420px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.45;
+}
+
+.failure {
+  margin-bottom: var(--hb-space-3);
+}
+
+.editor {
+  display: grid;
+  gap: var(--hb-space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--hb-space-2);
+}
+
+.fieldHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+}
+
+.fieldHint {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+}
+
+.transcript {
+  display: grid;
+  gap: var(--hb-space-4);
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.transcriptEntry {
+  display: grid;
+  gap: var(--hb-space-1);
+  padding-left: var(--hb-space-3);
+  border-left: 2px solid var(--hb-border-subtle);
+}
+
+.transcriptEntry p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -3295,5 +3295,57 @@
       "apiKeyHint": "留空可保留現有金鑰。",
       "save": "儲存提供方"
     }
+  },
+  "aiSchedules": {
+    "title": "定時調查",
+    "description": "依排程執行固定調查，並透過已設定的通知接收者傳送結果。",
+    "workspaceAction": "定時調查",
+    "create": "新增定時調查",
+    "never": "未排程",
+    "receiverCount": "{{count}} 位接收者",
+    "columns": {
+      "schedule": "任務",
+      "instruction": "調查指令",
+      "delivery": "通知",
+      "nextRun": "下次執行",
+      "enabled": "啟用",
+      "actions": "操作"
+    },
+    "actions": {
+      "runNow": "立即執行",
+      "transcript": "執行記錄",
+      "edit": "編輯",
+      "delete": "刪除",
+      "deleteConfirm": "刪除這個定時調查嗎？"
+    },
+    "states": {
+      "loading": "正在載入定時調查…",
+      "empty": "尚無定時調查。",
+      "emptyDescription": "建立後可依排程重複執行相同調查，並通知指定接收者。",
+      "unavailable": "定時調查暫時無法使用。",
+      "mutationFailed": "無法確認本次變更，請重新整理後再試。"
+    },
+    "editor": {
+      "createTitle": "新增定時調查",
+      "editTitle": "編輯定時調查",
+      "name": "名稱",
+      "instruction": "調查指令",
+      "cron": "執行排程",
+      "cronHint": "使用六段 Spring cron，秒必須為 0",
+      "receivers": "通知接收者",
+      "template": "通知範本",
+      "templateHint": "自訂範本要求所有接收者類型一致",
+      "defaultTemplate": "使用各接收者類型的預設範本",
+      "enabled": "儲存後啟用",
+      "save": "儲存定時調查"
+    },
+    "transcript": {
+      "title": "執行記錄 · {{name}}",
+      "loading": "正在載入執行記錄…",
+      "empty": "這個定時調查尚無執行記錄。",
+      "unavailable": "執行記錄暫時無法使用。",
+      "loadEarlier": "載入更早記錄",
+      "noText": "沒有文字內容"
+    }
   }
 }

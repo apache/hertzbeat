@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { SettingOutlined } from '@ant-design/icons';
+import { ScheduleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
@@ -10,11 +10,13 @@ import styles from './agent-workspace-view.module.css';
 export function AgentWorkspaceSessionPane({
   controller,
   isAdmin,
-  onOpenProviders
+  onOpenProviders,
+  onOpenSchedules
 }: {
   controller: AgentWorkspaceViewModel;
   isAdmin: boolean;
   onOpenProviders: () => void;
+  onOpenSchedules: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -41,9 +43,14 @@ export function AgentWorkspaceSessionPane({
         ))}
       </div>
       {isAdmin ? (
-        <Button className={styles.providerButton ?? ''} icon={<SettingOutlined />} onClick={onOpenProviders}>
-          {t('aiWorkspace.providers.action')}
-        </Button>
+        <div className={styles.adminActions}>
+          <Button aria-label={t('aiSchedules.workspaceAction')} icon={<ScheduleOutlined />} onClick={onOpenSchedules}>
+            {t('aiSchedules.workspaceAction')}
+          </Button>
+          <Button icon={<SettingOutlined />} onClick={onOpenProviders}>
+            {t('aiWorkspace.providers.action')}
+          </Button>
+        </div>
       ) : null}
     </nav>
   );

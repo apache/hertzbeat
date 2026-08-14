@@ -50,6 +50,9 @@ export const appRouteCatalog = {
   'ai-workspace': pageRoute('ai-workspace', applicationRoutePaths.aiWorkspace, {
     resource: { labelKey: 'menu.aiWorkspace', requiredRoles: ['ADMIN', 'USER'] }
   }),
+  'ai-schedules': pageRoute('ai-schedules', applicationRoutePaths.aiSchedules, {
+    resource: { labelKey: 'aiSchedules.title', requiredRoles: ['ADMIN'] }
+  }),
   monitors: pageRoute('monitors', monitorRoutePaths.list, {
     resource: { labelKey: 'menu.monitors' }
   }),

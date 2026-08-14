@@ -248,6 +248,15 @@ describe('route registry', () => {
     expectTypeOf<'ai-workspace'>().toMatchTypeOf<AppResourceRouteId>();
   });
 
+  it('keeps system Agent schedules inside the administrative AI workspace', () => {
+    expect(getAppRoute('ai-schedules')).toMatchObject({
+      id: 'ai-schedules',
+      path: '/ai/schedules',
+      kind: 'page',
+      resource: { labelKey: 'aiSchedules.title', requiredRoles: ['ADMIN'] }
+    });
+  });
+
   it('registers existing resource definition editing centrally', () => {
     expect(getAppRoute('entity-definition')).toMatchObject({
       id: 'entity-definition',
@@ -340,6 +349,7 @@ describe('route registry', () => {
     expect(getAppRoute('labels').resource).toMatchObject({ requiredRoles: ['ADMIN', 'USER', 'GUEST'] });
     expect(routeRegistry.flatMap(route => (route.resource?.requiredRoles ? [route.id] : []))).toEqual([
       'ai-workspace',
+      'ai-schedules',
       'instrumentation',
       'tokens',
       'plugins',

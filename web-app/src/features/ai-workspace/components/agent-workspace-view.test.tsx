@@ -17,9 +17,10 @@ describe('AgentWorkspaceView', () => {
 
   it('keeps investigation history, the streamed answer, and exact action review in separate regions', () => {
     const controller = fixture();
+    const openSchedules = vi.fn();
     const view = render(
       <I18nextProvider i18n={i18n}>
-        <AgentWorkspaceView controller={controller} isAdmin onOpenProviders={vi.fn()} />
+        <AgentWorkspaceView controller={controller} isAdmin onOpenProviders={vi.fn()} onOpenSchedules={openSchedules} />
       </I18nextProvider>
     );
 
@@ -32,6 +33,8 @@ describe('AgentWorkspaceView', () => {
     expect(context).toHaveTextContent('monitor.disable');
     expect(within(context).getByRole('button', { name: 'Approve' })).toBeInTheDocument();
     expect(within(context).getByRole('button', { name: 'Reject' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Scheduled investigations' }));
+    expect(openSchedules).toHaveBeenCalledOnce();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Investigation prompt' }), {
       target: { value: 'Check database waits' }
@@ -42,6 +45,7 @@ describe('AgentWorkspaceView', () => {
           controller={{ ...controller, composer: 'Check database waits' }}
           isAdmin
           onOpenProviders={vi.fn()}
+          onOpenSchedules={openSchedules}
         />
       </I18nextProvider>
     );

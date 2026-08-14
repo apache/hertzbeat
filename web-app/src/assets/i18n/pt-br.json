@@ -3327,5 +3327,57 @@
       "apiKeyHint": "Deixe em branco para manter a chave existente.",
       "save": "Salvar provedor"
     }
+  },
+  "aiSchedules": {
+    "title": "Investigações agendadas",
+    "description": "Execute uma investigação fixa por agenda e envie o resultado aos destinatários configurados.",
+    "workspaceAction": "Investigações agendadas",
+    "create": "Criar agendamento",
+    "never": "Não agendado",
+    "receiverCount": "{{count}} destinatários",
+    "columns": {
+      "schedule": "Agendamento",
+      "instruction": "Instrução da investigação",
+      "delivery": "Entrega",
+      "nextRun": "Próxima execução",
+      "enabled": "Ativo",
+      "actions": "Ações"
+    },
+    "actions": {
+      "runNow": "Executar agora",
+      "transcript": "Histórico",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "deleteConfirm": "Excluir este agendamento?"
+    },
+    "states": {
+      "loading": "Carregando investigações agendadas…",
+      "empty": "Ainda não há investigações agendadas.",
+      "emptyDescription": "Crie um agendamento para repetir a investigação e notificar os mesmos destinatários.",
+      "unavailable": "As investigações agendadas estão indisponíveis.",
+      "mutationFailed": "Não foi possível confirmar a alteração. Atualize antes de tentar novamente."
+    },
+    "editor": {
+      "createTitle": "Criar investigação agendada",
+      "editTitle": "Editar investigação agendada",
+      "name": "Nome",
+      "instruction": "Instrução da investigação",
+      "cron": "Expressão de agendamento",
+      "cronHint": "Cron Spring de seis campos; os segundos devem ser 0",
+      "receivers": "Destinatários da notificação",
+      "template": "Modelo de notificação",
+      "templateHint": "Um modelo personalizado requer destinatários do mesmo tipo",
+      "defaultTemplate": "Usar o modelo padrão de cada tipo de destinatário",
+      "enabled": "Ativar após salvar",
+      "save": "Salvar agendamento"
+    },
+    "transcript": {
+      "title": "Histórico · {{name}}",
+      "loading": "Carregando histórico…",
+      "empty": "Este agendamento ainda não gerou um histórico.",
+      "unavailable": "O histórico está indisponível.",
+      "loadEarlier": "Carregar histórico anterior",
+      "noText": "Sem conteúdo de texto"
+    }
   }
 }

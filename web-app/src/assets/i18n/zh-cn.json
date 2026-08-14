@@ -3295,5 +3295,57 @@
       "apiKeyHint": "留空可保留现有密钥。",
       "save": "保存提供方"
     }
+  },
+  "aiSchedules": {
+    "title": "定时调查",
+    "description": "按计划执行固定调查，并通过已配置的通知接收人发送结果。",
+    "workspaceAction": "定时调查",
+    "create": "新建定时调查",
+    "never": "未安排",
+    "receiverCount": "{{count}} 个接收人",
+    "columns": {
+      "schedule": "任务",
+      "instruction": "调查指令",
+      "delivery": "通知",
+      "nextRun": "下次执行",
+      "enabled": "启用",
+      "actions": "操作"
+    },
+    "actions": {
+      "runNow": "立即执行",
+      "transcript": "执行记录",
+      "edit": "编辑",
+      "delete": "删除",
+      "deleteConfirm": "删除这个定时调查吗？"
+    },
+    "states": {
+      "loading": "正在加载定时调查…",
+      "empty": "还没有定时调查。",
+      "emptyDescription": "创建后可按计划重复执行同一调查，并通知指定接收人。",
+      "unavailable": "定时调查暂不可用。",
+      "mutationFailed": "无法确认本次变更，请刷新后重试。"
+    },
+    "editor": {
+      "createTitle": "新建定时调查",
+      "editTitle": "编辑定时调查",
+      "name": "名称",
+      "instruction": "调查指令",
+      "cron": "执行计划",
+      "cronHint": "使用六段 Spring cron，秒必须为 0",
+      "receivers": "通知接收人",
+      "template": "通知模板",
+      "templateHint": "自定义模板要求所有接收人类型一致",
+      "defaultTemplate": "使用各接收人类型的默认模板",
+      "enabled": "保存后启用",
+      "save": "保存定时调查"
+    },
+    "transcript": {
+      "title": "执行记录 · {{name}}",
+      "loading": "正在加载执行记录…",
+      "empty": "这个定时调查还没有执行记录。",
+      "unavailable": "执行记录暂不可用。",
+      "loadEarlier": "加载更早记录",
+      "noText": "没有文本内容"
+    }
   }
 }

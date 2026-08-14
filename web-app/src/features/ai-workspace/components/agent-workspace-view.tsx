@@ -9,15 +9,22 @@ import styles from './agent-workspace-view.module.css';
 export function AgentWorkspaceView({
   controller,
   isAdmin,
-  onOpenProviders
+  onOpenProviders,
+  onOpenSchedules
 }: {
   controller: AgentWorkspaceViewModel;
   isAdmin: boolean;
   onOpenProviders: () => void;
+  onOpenSchedules: () => void;
 }) {
   return (
     <div className={styles.workspace}>
-      <AgentWorkspaceSessionPane controller={controller} isAdmin={isAdmin} onOpenProviders={onOpenProviders} />
+      <AgentWorkspaceSessionPane
+        controller={controller}
+        isAdmin={isAdmin}
+        onOpenProviders={onOpenProviders}
+        onOpenSchedules={onOpenSchedules}
+      />
       <AgentWorkspaceConversation controller={controller} />
       <AgentWorkspaceContextPane controller={controller} isAdmin={isAdmin} />
     </div>
