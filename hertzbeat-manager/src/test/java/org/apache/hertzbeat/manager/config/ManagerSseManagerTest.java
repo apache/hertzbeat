@@ -21,8 +21,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
+import org.apache.hertzbeat.common.support.SseEmitterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -30,8 +38,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 /**
  * Test case for {@link ManagerSseManager}.
  *
- * <p>Every open subscription holds a request thread for as long as it lives, so both how
- * long one may live and how many may exist at once have to be bounded.
+ * <p>Note: how a subscription is bounded and cleaned up is covered by
+ * {@code SseEmitterRegistryTest}; what is left here is what makes this stream the manager one.
  */
 class ManagerSseManagerTest {
 
@@ -42,24 +50,52 @@ class ManagerSseManagerTest {
         managerSseManager = new ManagerSseManager();
     }
 
+    /**
+     * The ui subscribes by event name, so import progress delivered under any other name
+     * reaches nobody even though the connection is up.
+     */
     @Test
-    void testSubscriptionsAreGivenFiniteTimeout() {
-        SseEmitter emitter = managerSseManager.createEmitter(1L);
+    void testImportProgressIsDeliveredUnderTheImportTaskEventName() throws Exception {
+        managerSseManager.createEmitter(1L);
+        final SseEmitter subscriber = mock(SseEmitter.class);
+        emitters().put(1L, subscriber);
 
-        assertNotNull(emitter.getTimeout());
-        assertTrue(emitter.getTimeout() > 0 && emitter.getTimeout() < Long.MAX_VALUE,
-                "timeout must be finite, was " + emitter.getTimeout());
+        managerSseManager.broadcastImportTaskSuccess("my-task");
+
+        final ArgumentCaptor<SseEmitter.SseEventBuilder> event =
+                ArgumentCaptor.forClass(SseEmitter.SseEventBuilder.class);
+        verify(subscriber).send(event.capture());
+        final String rendered = event.getValue().build().stream()
+                .map(part -> String.valueOf(part.getData()))
+                .collect(Collectors.joining());
+        assertTrue(rendered.contains("event:" + ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue()),
+                "import progress must be delivered as IMPORT_TASK_EVENT, was " + rendered);
+        assertTrue(rendered.contains("my-task"), "the task name must reach the subscriber, was " + rendered);
     }
 
+    /**
+     * The manager has to hand its subscriptions to a registry rather than hold them itself,
+     * otherwise none of the bounds that registry enforces apply to this stream.
+     */
     @Test
-    void testSubscriptionsBeyondLimitAreRefused() {
+    void testSubscriptionsAreBoundedByTheRegistry() {
         managerSseManager.setMaxEmitters(1);
 
-        managerSseManager.createEmitter(1L);
-        ResponseStatusException thrown =
+        assertNotNull(managerSseManager.createEmitter(1L));
+        final ResponseStatusException thrown =
                 assertThrows(ResponseStatusException.class, () -> managerSseManager.createEmitter(2L));
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, thrown.getStatusCode());
         assertEquals(1, managerSseManager.subscriptionCount());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, SseEmitter> emitters() throws Exception {
+        final Field registryField = ManagerSseManager.class.getDeclaredField("registry");
+        registryField.setAccessible(true);
+        final Object registry = registryField.get(managerSseManager);
+        final Field emittersField = SseEmitterRegistry.class.getDeclaredField("emitters");
+        emittersField.setAccessible(true);
+        return (Map<Long, SseEmitter>) emittersField.get(registry);
     }
 }

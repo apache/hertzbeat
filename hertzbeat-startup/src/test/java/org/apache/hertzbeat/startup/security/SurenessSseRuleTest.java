@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -43,6 +44,8 @@ import org.yaml.snakeyaml.Yaml;
 class SurenessSseRuleTest {
 
     private static final String SEPARATOR = "===";
+
+    private static final String EXCLUDE_ROLE = SEPARATOR + "[exclude]";
 
     private static TirePathTree roleTree;
 
@@ -64,7 +67,9 @@ class SurenessSseRuleTest {
         roleTree = new TirePathTree();
         roleTree.buildTree(new LinkedHashSet<>(resourceRole));
         excludeTree = new TirePathTree();
-        excludeTree.buildTree(new LinkedHashSet<>(excludedResource));
+        excludeTree.buildTree(excludedResource.stream()
+                .map(rule -> rule + EXCLUDE_ROLE)
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
     }
 
     @Test
