@@ -47,6 +47,63 @@ params:
     range: '[0,65535]'
     required: true
     defaultValue: 9092
+  - field: securityProtocol
+    name:
+      zh-CN: 安全协议
+      en-US: Security Protocol
+      ja-JP: セキュリティプロトコル
+    type: radio
+    options:
+      - label: PLAINTEXT
+        value: PLAINTEXT
+      - label: SASL_PLAINTEXT
+        value: SASL_PLAINTEXT
+      - label: SASL_SSL
+        value: SASL_SSL
+    required: true
+    defaultValue: PLAINTEXT
+  - field: saslMechanism
+    name:
+      zh-CN: SASL机制
+      en-US: SASL Mechanism
+      ja-JP: SASLメカニズム
+    type: radio
+    options:
+      - label: SCRAM-SHA-256
+        value: SCRAM-SHA-256
+      - label: SCRAM-SHA-512
+        value: SCRAM-SHA-512
+    depend:
+      securityProtocol:
+        - SASL_PLAINTEXT
+        - SASL_SSL
+    required: false
+    hide: true
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+    type: text
+    limit: 50
+    depend:
+      securityProtocol:
+        - SASL_PLAINTEXT
+        - SASL_SSL
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+    type: password
+    depend:
+      securityProtocol:
+        - SASL_PLAINTEXT
+        - SASL_SSL
+    required: false
+    hide: true
   - field: monitorInternalTopic
     name:
       zh-CN: 是否监控内部主题
@@ -74,6 +131,10 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      securityProtocol: ^_^securityProtocol^_^
+      saslMechanism: ^_^saslMechanism^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
       monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-list
   - name: topic_detail
@@ -129,6 +190,10 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      securityProtocol: ^_^securityProtocol^_^
+      saslMechanism: ^_^saslMechanism^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
       monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-describe
   - name: topic_offset
@@ -170,6 +235,10 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      securityProtocol: ^_^securityProtocol^_^
+      saslMechanism: ^_^saslMechanism^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
       monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-offset
   - name: consumer_detail
@@ -217,5 +286,9 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      securityProtocol: ^_^securityProtocol^_^
+      saslMechanism: ^_^saslMechanism^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
       monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: consumer-detail
