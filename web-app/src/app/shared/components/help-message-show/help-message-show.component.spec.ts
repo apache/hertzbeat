@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { HelpMessageShowComponent } from './help-message-show.component';
 
@@ -26,9 +27,7 @@ describe('HelpMessageShowComponent', () => {
   let fixture: ComponentFixture<HelpMessageShowComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [HelpMessageShowComponent]
-    }).compileComponents();
+    await configureShallowTest(HelpMessageShowComponent).compileComponents();
 
     fixture = TestBed.createComponent(HelpMessageShowComponent);
     component = fixture.componentInstance;

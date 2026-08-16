@@ -18,6 +18,7 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { configureHttpServiceTest } from '@testing';
 
 import { NoticeRuleService } from './notice-rule.service';
 
@@ -25,7 +26,7 @@ describe('NoticeRuleService', () => {
   let service: NoticeRuleService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    configureHttpServiceTest();
     service = TestBed.inject(NoticeRuleService);
   });
 
