@@ -41,6 +41,19 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 - 如果无法在同一维护窗口内改完 exporter，上表两条接收别名在 1.9.x 仍然可用；请关注 HertzBeat 日志中的 `Deprecated OTLP log route ... was called` 告警并在 2.0 之前完成迁移。
 - 如果使用了自定义 `sureness.yml`，请补充 `/api/otlp/v1/**===post===[admin,user]` 与 `/api/observability/**===get===[admin,user,guest]`（参考安装包内的 `sureness.yml`）；旧的 `/api/logs/**`、`/api/traces/**`、`/api/ingestion/otlp/**` 规则在 exporter 迁移完成后即可删除。
 
+### GreptimeDB 自监控表改名
+
+当 `warehouse.store.greptime.enabled=true` 时，HertzBeat 会通过 OpenTelemetry 把**自身**运行日志与链路写入 GreptimeDB。1.9.0 为了与产品可观测数据区分开，将这些内部表改名：
+
+| 数据 | 1.8.x 表名 | 1.9.0 表名 |
+|---|---|---|
+| HertzBeat 自身日志（自监控） | `hzb_logs` | `hzb_internal_logs` |
+| HertzBeat 自身链路（自监控） | `hzb_traces` | `hzb_internal_traces` |
+
+- 产品日志表 `hertzbeat_logs`（日志页面、日志告警 SQL、SQL 编辑器使用的表）**没有**改名，1.8.x 期间接入的历史日志升级后仍可正常查询。
+- 不做自动迁移。旧的 `hzb_logs` / `hzb_traces` 表会原样保留但不再写入新数据；如需把历史数据并入新表，可在 1.9.0 建好新表后手动执行（例如 `INSERT INTO hzb_internal_logs SELECT * FROM hzb_logs;`），否则待保留期过后直接 `DROP` 旧表即可。
+- 如果有看板或临时 SQL 直接查询 `hzb_logs` / `hzb_traces`，请改为新表名。
+
 ## Docker部署方式的升级
 
 1. 若使用了自定义监控模板
