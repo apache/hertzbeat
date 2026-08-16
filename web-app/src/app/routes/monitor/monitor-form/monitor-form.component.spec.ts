@@ -23,6 +23,8 @@ import { configureShallowTest } from '@testing';
 
 import { Monitor } from '../../../pojo/Monitor';
 import { MonitorFormComponent } from './monitor-form.component';
+import { Param } from '../../../pojo/Param';
+import { ParamDefine } from '../../../pojo/ParamDefine';
 
 describe('MonitorFormComponent', () => {
   let component: MonitorFormComponent;
