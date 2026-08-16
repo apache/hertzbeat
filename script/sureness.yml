@@ -106,6 +106,9 @@ resourceRole:
   - /api/ai/**===put===[admin]
   - /api/ai/**===delete===[admin]
   - /api/otlp/v1/**===post===[admin,user]
+  # deprecated 1.8.x OTLP log aliases, forwarded to /api/otlp/v1/logs, removed in 2.0
+  - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs/ingest/**===post===[admin,user]
   - /api/observability/logs===delete===[admin]
   - /api/observability/**===get===[admin,user,guest]
   # The OpenAPI document is a map of every route, parameter and model, so it is

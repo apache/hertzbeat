@@ -11,6 +11,10 @@ keywords: [open source monitoring, log integration, log management, multi-source
 The log integration feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
 :::
 
+:::warning Upgrading from 1.8.x? The ingestion path changed
+The 1.8.x endpoint `POST /api/logs/otlp/v1/logs` (and `POST /api/logs/ingest/otlp`) is replaced by `POST /api/otlp/v1/logs`. Update the `logs_endpoint` of every OpenTelemetry Collector / SDK exporter that points at HertzBeat. On 1.9.x the old paths still work as deprecated aliases (the response carries `Deprecation: true` and HertzBeat logs a warning); they are removed in 2.0. The query paths `/api/logs/**`, `/api/traces/**` and `/api/ingestion/otlp/**` moved to `/api/observability/**` with no alias. See the [Version Upgrade Guide](../start/upgrade) for the full old/new path table.
+:::
+
 :::info HertzBeat 1.9.0 transition
 Metrics, logs, and traces share `/api/otlp/v1/{signal}` for ingestion and `/api/observability/**` for queries. This release intentionally does not create or bind Entity records from telemetry. External OTLP signal tables are also separate from HertzBeat's internal self-telemetry tables.
 :::

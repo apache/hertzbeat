@@ -47,10 +47,22 @@ class EntityFreeObservabilityTransitionContractTest {
         Path sourceRoot = REPOSITORY_ROOT.resolve("hertzbeat-observability/src/main/java");
         assertTrue(Files.isDirectory(sourceRoot));
 
+        // The deprecated 1.8.x OTLP log ingestion aliases live in exactly one class so the
+        // 2.0 removal is a single file delete plus the matching Sureness rules.
+        Path legacyAliasController = sourceRoot.resolve(
+                "org/apache/hertzbeat/observability/controller/LegacyOtlpLogRouteController.java");
+        assertTrue(Files.isRegularFile(legacyAliasController));
+        String legacyAliasSource = Files.readString(legacyAliasController);
+        assertTrue(legacyAliasSource.contains("@Deprecated(since = \"1.9.0\", forRemoval = true)"));
+        assertTrue(legacyAliasSource.contains("/api/logs/otlp/v1/logs"));
+        assertTrue(legacyAliasSource.contains("/api/logs/ingest/{protocol}"));
+        assertTrue(legacyAliasSource.contains("logIngestionService.ingestHttp(content, headers)"));
+
         String productionSources;
         try (Stream<Path> sources = Files.walk(sourceRoot)) {
             productionSources = sources
                     .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> !path.equals(legacyAliasController))
                     .map(EntityFreeObservabilityTransitionContractTest::readSource)
                     .reduce("", (left, right) -> left + '\n' + right);
         }
@@ -116,7 +128,12 @@ class EntityFreeObservabilityTransitionContractTest {
             assertTrue(securityConfig.contains("/api/otlp/v1/**===post===[admin,user]"), relativePath);
             assertTrue(securityConfig.contains("/api/observability/**===get===[admin,user,guest]"), relativePath);
             assertTrue(securityConfig.contains("/api/observability/logs===delete===[admin]"), relativePath);
-            assertFalse(securityConfig.contains("/api/logs/"), relativePath);
+            // deprecated 1.8.x ingestion aliases keep the canonical write roles; no other legacy log rule may exist
+            assertTrue(securityConfig.contains("/api/logs/otlp/**===post===[admin,user]"), relativePath);
+            assertTrue(securityConfig.contains("/api/logs/ingest/**===post===[admin,user]"), relativePath);
+            assertFalse(securityConfig.replace("/api/logs/otlp/**===post===[admin,user]", "")
+                    .replace("/api/logs/ingest/**===post===[admin,user]", "")
+                    .contains("/api/logs/"), relativePath);
             assertFalse(securityConfig.contains("/api/ingestion/otlp"), relativePath);
             assertFalse(securityConfig.contains("/api/traces/"), relativePath);
             assertFalse(securityConfig.contains("/api/otlp/**"), relativePath);
@@ -145,10 +162,6 @@ class EntityFreeObservabilityTransitionContractTest {
                 "web-app/src/app/service/log.service.ts",
                 "web-app/src/app/service/observability.service.ts",
                 "web-app/src/app/routes/log/log-stream/log-stream.component.ts",
-                "web-app/src/assets/doc/log-integration/otlp.en-US.md",
-                "web-app/src/assets/doc/log-integration/otlp.zh-CN.md",
-                "home/docs/help/log_integration.md",
-                "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help/log_integration.md",
                 "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/vector.yml"
         }) {
             String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
@@ -158,6 +171,37 @@ class EntityFreeObservabilityTransitionContractTest {
             assertFalse(content.contains("/ingestion/otlp/metrics"), relativePath);
             assertFalse(content.contains("/traces/list"), relativePath);
             assertFalse(content.contains("/traces/stats"), relativePath);
+        }
+
+        // Integration docs must lead with the canonical route; the 1.8.x ingestion paths may only
+        // appear inside the upgrade notice that marks them as deprecated aliases.
+        for (String relativePath : new String[] {
+                "web-app/src/assets/doc/log-integration/otlp.en-US.md",
+                "web-app/src/assets/doc/log-integration/otlp.zh-CN.md",
+                "home/docs/help/log_integration.md",
+                "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help/log_integration.md"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertTrue(content.contains("POST /api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("/api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("Deprecation: true"), relativePath);
+            assertFalse(content.contains("logs_endpoint: http://{hertzbeat_host}:1157/api/logs/"), relativePath);
+            assertFalse(content.contains("/logs/list"), relativePath);
+            assertFalse(content.contains("/logs/stats"), relativePath);
+            assertFalse(content.contains("/ingestion/otlp/metrics"), relativePath);
+            assertFalse(content.contains("/traces/list"), relativePath);
+            assertFalse(content.contains("/traces/stats"), relativePath);
+        }
+
+        // The upgrade guide must carry the 1.8.x -> 1.9.0 route table so operators see the break.
+        for (String relativePath : new String[] {
+                "home/docs/start/upgrade.md",
+                "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/start/upgrade.md"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertTrue(content.contains("`POST /api/logs/otlp/v1/logs` | `POST /api/otlp/v1/logs`"), relativePath);
+            assertTrue(content.contains("`GET /api/logs/list` | `GET /api/observability/logs`"), relativePath);
+            assertTrue(content.contains("`GET /api/traces/**` | `GET /api/observability/traces/**`"), relativePath);
         }
 
         String logService = Files.readString(REPOSITORY_ROOT.resolve("web-app/src/app/service/log.service.ts"));

@@ -6,6 +6,8 @@ HertzBeat 1.9.0 的指标、日志和链路统一使用 `/api/otlp/v1/{signal}` 
 
 `POST /api/otlp/v1/logs`
 
+> 从 1.8.x 升级：原 `POST /api/logs/otlp/v1/logs` / `POST /api/logs/ingest/otlp` 在 1.9.x 仍作为 deprecated 别名可用（响应带 `Deprecation: true`），2.0 将移除，请把 exporter 指向 `/api/otlp/v1/logs`。
+
 ### 请求头
 
 - `Content-Type`: `application/json` or `application/x-protobuf`

@@ -11,6 +11,10 @@ keywords: [开源监控, 日志集成, 日志管理, 多源日志]
 日志集成功能目前处于 Beta（实验性）阶段，可能存在潜在缺陷和局限性。该功能正在积极开发和迭代中。
 :::
 
+:::warning 从 1.8.x 升级？接收路径已变更
+1.8.x 的接收端点 `POST /api/logs/otlp/v1/logs`（以及 `POST /api/logs/ingest/otlp`）已由 `POST /api/otlp/v1/logs` 取代，请更新所有指向 HertzBeat 的 OpenTelemetry Collector / SDK exporter 的 `logs_endpoint`。1.9.x 仍保留旧路径作为 deprecated 别名（响应带 `Deprecation: true`，HertzBeat 日志会打印告警），2.0 将移除。查询侧的 `/api/logs/**`、`/api/traces/**`、`/api/ingestion/otlp/**` 已迁移到 `/api/observability/**`，没有别名。完整的新旧路径对照表见[版本升级指南](../start/upgrade)。
+:::
+
 :::info HertzBeat 1.9.0 过渡版本
 指标、日志和链路统一通过 `/api/otlp/v1/{signal}` 接收，并通过 `/api/observability/**` 查询。该版本不会根据遥测数据创建或绑定 Entity；外部 OTLP 三信号表也与 HertzBeat 自身遥测表分开存储。
 :::

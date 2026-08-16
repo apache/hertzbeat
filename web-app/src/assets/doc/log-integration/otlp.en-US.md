@@ -6,6 +6,8 @@ In HertzBeat 1.9.0, metrics, logs, and traces share the canonical `/api/otlp/v1/
 
 `POST /api/otlp/v1/logs`
 
+> Upgrading from 1.8.x: the former `POST /api/logs/otlp/v1/logs` / `POST /api/logs/ingest/otlp` endpoints still work on 1.9.x as deprecated aliases (responses carry `Deprecation: true`) and will be removed in 2.0. Point your exporters at `/api/otlp/v1/logs`.
+
 ### Request Headers
 
 - `Content-Type`: `application/json` or `application/x-protobuf`
