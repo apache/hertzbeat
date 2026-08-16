@@ -706,6 +706,7 @@ public class HttpCollectImpl extends AbstractCollect {
                         if (alias.startsWith("$.")) {
                             // per-row evaluation, a global "parseScript + alias" query would misalign rows missing the path
                             List<Object> aliasValues = JsonPathParser.parseRowWithJsonPath(objectValue, alias);
+                            // a wildcard alias matching multiple values is kept whole and rendered as "[v1, v2]"
                             Object resultValue = aliasValues.size() == 1 ? aliasValues.get(0) : (aliasValues.isEmpty() ? null : aliasValues);
                             valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                         } else {

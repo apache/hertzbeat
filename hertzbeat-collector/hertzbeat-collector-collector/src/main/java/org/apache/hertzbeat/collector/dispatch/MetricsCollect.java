@@ -427,7 +427,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         }
         String field = cal.substring(0, splitIndex).trim();
         String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#", "#");
-        // a direct alias reference is not a formula, JEXL parses "[0]" in such paths as array access and silently returns null
+        // a direct alias reference (RHS must exactly equal an aliasField, no whitespace/case tolerance) is not a formula,
+        // JEXL parses "[0]" in such paths as array access and silently returns null
         if (aliasFields.contains(expressionStr)) {
             fieldAliasMap.put(field, expressionStr);
             return null;

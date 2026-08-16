@@ -17,10 +17,12 @@
 
 package org.apache.hertzbeat.collector.util;
 
+import com.jayway.jsonpath.PathNotFoundException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -63,6 +65,12 @@ class JsonPathParserTest {
         assertTrue(values.contains("c1"));
         assertTrue(values.contains(true));
         assertTrue(values.contains(5));
+    }
+
+    @Test
+    void parseContentWithJsonPathStillThrowsWhenPathMissing() {
+        assertThrows(PathNotFoundException.class,
+                () -> JsonPathParser.parseContentWithJsonPath(ROW_JSON, "$.spec.nodeName"));
     }
 
     @Test
