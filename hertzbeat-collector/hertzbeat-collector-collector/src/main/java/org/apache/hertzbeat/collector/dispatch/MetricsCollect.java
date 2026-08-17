@@ -252,11 +252,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
+        List<String> aliasFields = Optional.ofNullable(metrics.getAliasFields()).orElseGet(Collections::emptyList);
         // eg: database_pages=Database pages unconventional mapping
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
-                .map(cal -> transformCal(cal, fieldAliasMap))
+                .map(cal -> transformCal(cal, fieldAliasMap, aliasFields))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
 
@@ -270,7 +271,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
-        List<String> aliasFields = Optional.ofNullable(metrics.getAliasFields()).orElseGet(Collections::emptyList);
         Map<String, String> aliasFieldValueMap = new HashMap<>(8);
         Map<String, Object> fieldValueMap = new HashMap<>(8);
         Map<String, Object> stringTypefieldValueMap = new HashMap<>(8);
@@ -420,13 +420,19 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * @param fieldAliasMap field alias map
      * @return expr
      */
-    private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
+    private Object[] transformCal(String cal, Map<String, String> fieldAliasMap, List<String> aliasFields) {
         int splitIndex = cal.indexOf("=");
         if (splitIndex < 0) {
             return null;
         }
         String field = cal.substring(0, splitIndex).trim();
         String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#", "#");
+        // a direct alias reference (RHS must exactly equal an aliasField, no whitespace/case tolerance) is not a formula,
+        // JEXL parses "[0]" in such paths as array access and silently returns null
+        if (aliasFields.contains(expressionStr)) {
+            fieldAliasMap.put(field, expressionStr);
+            return null;
+        }
         JexlExpression expression;
         try {
             expression = JexlExpressionRunner.compile(expressionStr);
