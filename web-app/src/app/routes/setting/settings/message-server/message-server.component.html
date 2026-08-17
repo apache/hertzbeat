@@ -134,6 +134,14 @@
           <nz-switch [(ngModel)]="emailSender.emailStarttls" required name="emailStarttls" id="emailStarttls"></nz-switch>
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="emailSender.emailSsl || emailSender.emailStarttls">
+        <nz-form-label nzSpan="7" nzFor="emailSslCertVerify" nzRequired="true">{{
+          'alert.notice.sender.mail.ssl-cert-verify' | i18n
+        }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="emailSender.emailSslCertVerify" required name="emailSslCertVerify" id="emailSslCertVerify"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
