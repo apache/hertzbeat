@@ -27,6 +27,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -69,8 +70,8 @@ public class AlertDefine {
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
-    @Size(max = 2048)
-    @Column(length = 2048)
+    @Size(max = 65535)
+    @Lob
     private String expr;
 
     @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
