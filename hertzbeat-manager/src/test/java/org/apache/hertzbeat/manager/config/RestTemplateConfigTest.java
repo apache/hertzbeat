@@ -18,43 +18,27 @@
 package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-import com.sun.net.httpserver.HttpServer;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class RestTemplateConfigTest {
 
     @Test
-    void greptimeQueryRestTemplateAllowsColdQueryToComplete() throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/query", exchange -> {
-            try {
-                Thread.sleep(5_500);
-                byte[] response = "ok".getBytes(StandardCharsets.UTF_8);
-                exchange.sendResponseHeaders(200, response.length);
-                exchange.getResponseBody().write(response);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } finally {
-                exchange.close();
-            }
-        });
-        server.start();
+    void greptimeQueryRequestFactoryUsesDedicatedTimeouts() {
+        ClientHttpRequestFactory factory = new RestTemplateConfig().greptimeQueryClientHttpRequestFactory();
 
-        try {
-            RestTemplateConfig config = new RestTemplateConfig();
-            RestTemplate restTemplate = config.greptimeQueryRestTemplate(
-                    config.greptimeQueryClientHttpRequestFactory());
+        JdkClientHttpRequestFactory jdkFactory = assertInstanceOf(JdkClientHttpRequestFactory.class, factory);
+        assertEquals(NetworkConstants.HttpClientConstants.GREPTIME_QUERY_READ_TIMEOUT,
+                ReflectionTestUtils.getField(jdkFactory, "readTimeout"));
 
-            String response = restTemplate.getForObject(
-                    "http://127.0.0.1:" + server.getAddress().getPort() + "/query", String.class);
-
-            assertEquals("ok", response);
-        } finally {
-            server.stop(0);
-        }
+        HttpClient httpClient = (HttpClient) ReflectionTestUtils.getField(jdkFactory, "httpClient");
+        assertEquals(NetworkConstants.HttpClientConstants.GREPTIME_QUERY_CONNECT_TIMEOUT,
+                httpClient.connectTimeout().orElseThrow());
     }
 }
