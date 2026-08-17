@@ -60,6 +60,10 @@ resourceRole:
   - /api/collector/**===post===[admin,user]
   - /api/collector/**===put===[admin,user]
   - /api/collector/**===delete===[admin]
+  - /api/plugin/**===get===[admin]
+  - /api/plugin/**===post===[admin]
+  - /api/plugin/**===put===[admin]
+  - /api/plugin/**===delete===[admin]
   # the secret config holds the jwt signing key and the aes key protecting stored
   # credentials, so it stays admin only and is additionally refused by the controller
   - /api/config/secret===get===[admin]
