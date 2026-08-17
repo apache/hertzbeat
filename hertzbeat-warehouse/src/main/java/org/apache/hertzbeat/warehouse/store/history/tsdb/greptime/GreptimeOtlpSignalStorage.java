@@ -86,7 +86,7 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
         if ("metrics".equals(signal)) {
             headers.set(GREPTIME_PROMOTE_RESOURCE_HEADER, PROMOTED_RESOURCE_ATTRIBUTES);
         } else if ("traces".equals(signal)) {
-            headers.set(GREPTIME_TRACE_TABLE_HEADER, "hertzbeat_traces");
+            headers.set(GREPTIME_TRACE_TABLE_HEADER, WarehouseConstants.TRACE_TABLE_NAME);
             headers.set(GREPTIME_PIPELINE_HEADER, "greptime_trace_v1");
         } else {
             headers.set(GREPTIME_LOG_TABLE_HEADER, WarehouseConstants.LOG_TABLE_NAME);

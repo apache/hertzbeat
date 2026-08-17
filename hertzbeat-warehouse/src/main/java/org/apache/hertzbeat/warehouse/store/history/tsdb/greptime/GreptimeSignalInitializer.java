@@ -64,9 +64,9 @@ public class GreptimeSignalInitializer {
             String traceSchema = new ClassPathResource(TRACE_SCHEMA)
                     .getContentAsString(StandardCharsets.UTF_8).strip();
             sqlQueryExecutor.execute(StringUtils.trimTrailingCharacter(traceSchema, ';'));
-            sqlQueryExecutor.execute("ALTER TABLE hertzbeat_traces ADD COLUMN IF NOT EXISTS "
+            sqlQueryExecutor.execute("ALTER TABLE " + WarehouseConstants.TRACE_TABLE_NAME + " ADD COLUMN IF NOT EXISTS "
                     + "\"resource_attributes.service.namespace\" STRING NULL");
-            sqlQueryExecutor.execute("ALTER TABLE hertzbeat_traces ADD COLUMN IF NOT EXISTS "
+            sqlQueryExecutor.execute("ALTER TABLE " + WarehouseConstants.TRACE_TABLE_NAME + " ADD COLUMN IF NOT EXISTS "
                     + "\"resource_attributes.deployment.environment.name\" STRING NULL");
             String logSchema = new ClassPathResource(LOG_SCHEMA)
                     .getContentAsString(StandardCharsets.UTF_8).strip();

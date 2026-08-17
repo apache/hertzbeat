@@ -63,7 +63,7 @@ import tools.jackson.core.type.TypeReference;
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 public class GreptimeThreeSignalQueryService implements ThreeSignalQueryService {
 
-    private static final String TRACE_TABLE = "hertzbeat_traces";
+    private static final String TRACE_TABLE = WarehouseConstants.TRACE_TABLE_NAME;
     private static final Pattern SAFE_IDENTIFIER = Pattern.compile("[A-Za-z_:][A-Za-z0-9_:.-]*");
     private static final Pattern SAFE_LABEL = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final Set<String> AGGREGATIONS = Set.of("sum", "avg", "min", "max", "count");
