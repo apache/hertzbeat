@@ -76,19 +76,18 @@ export class MonitorFormComponent implements OnChanges {
     }
 
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
-      for (const advancedParam of changes.advancedParams.currentValue) {
-        if (advancedParam.display !== false) {
-          this.hasAdvancedParams = true;
-          break;
-        }
-      }
+      this.hasAdvancedParams = this.advancedParams?.some(param => param.display !== false) ?? false;
     }
     if (changes.paramDefines && changes.paramDefines.currentValue !== changes.paramDefines.previousValue) {
       changes.paramDefines.currentValue.forEach((paramDefine: any) => {
+        const paramVal =
+          this.paramValueMap?.get(paramDefine.field)?.paramValue ??
+          this.params?.find(p => p.field === paramDefine.field)?.paramValue ??
+          paramDefine.defaultValue;
         if (paramDefine.type == 'radio') {
-          this.onDependChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+          this.onDependChanged(paramVal, paramDefine.field);
         } else if (paramDefine.type == 'boolean') {
-          this.onParamBooleanChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+          this.onParamBooleanChanged(paramVal, paramDefine.field);
         }
       });
     }
@@ -232,39 +231,46 @@ export class MonitorFormComponent implements OnChanges {
   }
 
   onDependChanged(dependValue: string, dependField: string) {
-    this.paramDefines.forEach((paramDefine, index) => {
-      if (paramDefine.depend) {
-        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+    this.paramDefines?.forEach((paramDefine, index) => {
+      if (paramDefine.depend && this.params && this.params[index]) {
+        const fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
         if (fieldValues) {
-          this.params[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
             this.params[index].display = true;
+          } else {
+            this.params[index].display = false;
+            this.params[index].paramValue = null;
           }
         }
       }
     });
-    this.sdDefines.forEach((paramDefine, index) => {
-      if (paramDefine.depend) {
-        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+    this.sdDefines?.forEach((paramDefine, index) => {
+      if (paramDefine.depend && this.sdParams && this.sdParams[index]) {
+        const fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
         if (fieldValues) {
-          this.sdParams[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
             this.sdParams[index].display = true;
+          } else {
+            this.sdParams[index].display = false;
+            this.sdParams[index].paramValue = null;
           }
         }
       }
     });
-    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
-      if (advancedParamDefine.depend) {
-        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
+    this.advancedParamDefines?.forEach((advancedParamDefine, index) => {
+      if (advancedParamDefine.depend && this.advancedParams && this.advancedParams[index]) {
+        const fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
         if (fieldValues) {
-          this.advancedParams[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
             this.advancedParams[index].display = true;
+          } else {
+            this.advancedParams[index].display = false;
+            this.advancedParams[index].paramValue = null;
           }
         }
       }
     });
+    this.hasAdvancedParams = this.advancedParams?.some(param => param.display !== false) ?? false;
   }
 
   //start grafana

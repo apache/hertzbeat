@@ -17,14 +17,16 @@
  * under the License.
  */
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { Subscription } from 'rxjs';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
+import { AuthorizedSseService } from '../../../service/authorized-sse.service';
 
 interface ExtendedGroupAlert extends GroupAlert {
   isNew?: boolean;
@@ -39,6 +41,8 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
     private alertSvc: AlertService,
+    private authorizedSseSvc: AuthorizedSseService,
+    private ngZone: NgZone,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -50,7 +54,7 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   checkedAlertIds = new Set<number>();
   filterStatus!: string;
   filterContent: string | undefined;
-  private eventSource!: EventSource;
+  private alertStream$!: Subscription;
 
   ngOnInit(): void {
     this.loadAlertsTable();
@@ -58,28 +62,24 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-    }
+    this.alertStream$?.unsubscribe();
   }
 
   // Initialize SSE subscription for real-time alerts
   private initSSESubscription(): void {
-    this.eventSource = new EventSource('/api/alert/sse/subscribe');
-    this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
-      try {
-        const newAlert: GroupAlert = JSON.parse(evt.data);
-        this.updateAlertList(newAlert);
-      } catch (error) {
-        console.error('Error parsing SSE data:', error);
-      }
+    // read through AuthorizedSseService rather than EventSource: the stream now requires a
+    // credential, and EventSource cannot carry an Authorization header
+    this.alertStream$ = this.authorizedSseSvc.stream('/api/alert/sse/subscribe', 'ALERT_EVENT').subscribe({
+      next: data => {
+        try {
+          const newAlert: GroupAlert = JSON.parse(data);
+          this.ngZone.run(() => this.updateAlertList(newAlert));
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
+        }
+      },
+      error: error => console.error('SSE connection error:', error)
     });
-
-    // Handle SSE errors
-    this.eventSource.onerror = error => {
-      console.error('SSE connection error:', error);
-      this.eventSource.close();
-    };
   }
 
   private updateAlertList(newAlert: GroupAlert): void {
