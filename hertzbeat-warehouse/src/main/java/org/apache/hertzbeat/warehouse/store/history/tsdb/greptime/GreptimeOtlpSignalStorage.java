@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /** GreptimeDB storage implementation for validated OTLP protobuf requests. */
@@ -66,15 +67,29 @@ public class GreptimeOtlpSignalStorage implements OtlpSignalStorage {
     public byte[] writeProtobuf(String signal, byte[] content) {
         String normalizedSignal = normalizeSignal(signal);
         HttpHeaders headers = greptimeHeaders(normalizedSignal);
-        ResponseEntity<byte[]> response = restTemplate.exchange(
-                endpoint(greptimeProperties.httpEndpoint(), "/v1/otlp/v1/" + normalizedSignal),
-                HttpMethod.POST,
-                new HttpEntity<>(content == null ? new byte[0] : content, headers),
-                byte[].class);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new IllegalStateException("GreptimeDB rejected OTLP " + normalizedSignal);
+        ResponseEntity<byte[]> response;
+        try {
+            response = restTemplate.exchange(
+                    endpoint(greptimeProperties.httpEndpoint(), "/v1/otlp/v1/" + normalizedSignal),
+                    HttpMethod.POST,
+                    new HttpEntity<>(content == null ? new byte[0] : content, headers),
+                    byte[].class);
+        } catch (HttpClientErrorException exception) {
+            // A 4xx from GreptimeDB means the payload itself was rejected: surface it as a client error
+            // instead of a retryable storage failure so exporters stop retrying a request that can never succeed.
+            throw new IllegalArgumentException(rejectionMessage(normalizedSignal, exception), exception);
         }
+        // 5xx and transport failures propagate as RestClientException and keep their retryable semantics.
         return response.getBody() == null ? new byte[0] : response.getBody();
+    }
+
+    private static String rejectionMessage(String signal, HttpClientErrorException exception) {
+        String detail = exception.getResponseBodyAsString(StandardCharsets.UTF_8);
+        if (!StringUtils.hasText(detail)) {
+            detail = exception.getStatusText();
+        }
+        return "GreptimeDB rejected OTLP " + signal + " (" + exception.getStatusCode().value() + "): "
+                + detail.strip();
     }
 
     private HttpHeaders greptimeHeaders(String signal) {

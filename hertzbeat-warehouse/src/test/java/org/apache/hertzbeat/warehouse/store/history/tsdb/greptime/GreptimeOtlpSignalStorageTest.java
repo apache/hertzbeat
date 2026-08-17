@@ -32,8 +32,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,5 +102,40 @@ class GreptimeOtlpSignalStorageTest {
         assertThatThrownBy(() -> storage.writeProtobuf("profiles", new byte[0]))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported OTLP signal");
+    }
+
+    @Test
+    void shouldSurfaceGreptimeRejectionAsClientErrorWithResponseBody() {
+        byte[] body = "{\"error\":\"pipeline hertzbeat_otlp_log_v1 not found\"}".getBytes(StandardCharsets.UTF_8);
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
+                        new HttpHeaders(), body, StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("logs", new byte[0]))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("GreptimeDB rejected OTLP logs (400): "
+                        + "{\"error\":\"pipeline hertzbeat_otlp_log_v1 not found\"}")
+                .hasCauseInstanceOf(HttpClientErrorException.class);
+    }
+
+    @Test
+    void shouldFallBackToStatusTextWhenGreptimeRejectionHasNoBody() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, "Unauthorized",
+                        new HttpHeaders(), new byte[0], StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("metrics", new byte[0]))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("GreptimeDB rejected OTLP metrics (401): Unauthorized");
+    }
+
+    @Test
+    void shouldKeepServerErrorsRetryable() {
+        when(restTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
+                .thenThrow(HttpServerErrorException.create(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable",
+                        new HttpHeaders(), new byte[0], StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> storage.writeProtobuf("traces", new byte[0]))
+                .isInstanceOf(HttpServerErrorException.class);
     }
 }
