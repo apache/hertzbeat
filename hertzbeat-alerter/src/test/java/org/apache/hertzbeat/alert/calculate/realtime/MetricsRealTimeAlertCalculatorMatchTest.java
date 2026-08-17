@@ -27,11 +27,13 @@ import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -43,6 +45,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -252,6 +255,91 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         verify(alarmCacheManager, times(1)).getPending(any(), any());
         verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    @Test
+    void testEmptyStringFieldStillTriggersAlert() throws InterruptedException {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        builder.setId(518679137103104L)
+                .setApp("fullsite")
+                .setMetrics("summary")
+                .setPriority(1)
+                .setCode(CollectRep.Code.SUCCESS);
+
+        CollectRep.Field url = CollectRep.Field.newBuilder().setName("url").setType(CommonConstants.TYPE_STRING).setLabel(true).build();
+        CollectRep.Field statusCode = CollectRep.Field.newBuilder().setName("statusCode").setType(CommonConstants.TYPE_STRING).build();
+        CollectRep.Field errorMsg = CollectRep.Field.newBuilder().setName("errorMsg").setType(CommonConstants.TYPE_STRING).build();
+
+        Map<String, String> meta = new HashMap<>();
+        meta.put(MetricDataConstants.INSTANCE_NAME, "site");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
+
+        builder.addMetadataAll(meta);
+        builder.addAllFields(Lists.newArrayList(url, statusCode, errorMsg));
+        builder.addValueRow(CollectRep.ValueRow.newBuilder()
+                .addColumn("https://example.com/broken").addColumn("404").addColumn("").build());
+
+        CollectRep.MetricsData metricsData = builder.build();
+
+        AlertDefine matchDefine = new AlertDefine();
+        matchDefine.setId(1L);
+        matchDefine.setName("sitemap-status");
+        matchDefine.setExpr("equals(__app__,\"fullsite\") && !matches(statusCode,\"^2[0-9]+\") && !contains(errorMsg,\"timed out\")");
+        matchDefine.setTemplate("site down: ${url}");
+        matchDefine.setTimes(1);
+
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(Collections.singletonList(matchDefine));
+        when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
+
+        metricsRealTimeAlertCalculator.startCalculate();
+
+        Thread.sleep(3000);
+
+        ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(alertCaptor.capture());
+        assertEquals("site down: https://example.com/broken", alertCaptor.getValue().getContent());
+    }
+
+    @Test
+    void testUnparseableNumberFieldDoesNotAbortRule() throws InterruptedException {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        builder.setId(518679137103105L)
+                .setApp("fullsite")
+                .setMetrics("summary")
+                .setPriority(1)
+                .setCode(CollectRep.Code.SUCCESS);
+
+        CollectRep.Field url = CollectRep.Field.newBuilder().setName("url").setType(CommonConstants.TYPE_STRING).setLabel(true).build();
+        CollectRep.Field responseTime = CollectRep.Field.newBuilder().setName("responseTime").setType(CommonConstants.TYPE_NUMBER).build();
+
+        Map<String, String> meta = new HashMap<>();
+        meta.put(MetricDataConstants.INSTANCE_NAME, "site");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
+
+        builder.addMetadataAll(meta);
+        builder.addAllFields(Lists.newArrayList(url, responseTime));
+        builder.addValueRow(CollectRep.ValueRow.newBuilder()
+                .addColumn("https://example.com/a").addColumn("").build());
+
+        CollectRep.MetricsData metricsData = builder.build();
+
+        AlertDefine guardedDefine = new AlertDefine();
+        guardedDefine.setId(2L);
+        guardedDefine.setName("slow-site");
+        guardedDefine.setExpr("equals(__app__,\"fullsite\") && exists(responseTime) && responseTime > 100");
+        guardedDefine.setTemplate("slow: ${url}");
+        guardedDefine.setTimes(1);
+
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(Collections.singletonList(guardedDefine));
+        when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
+
+        metricsRealTimeAlertCalculator.startCalculate();
+
+        Thread.sleep(3000);
+
+        // unparseable number is defined as null: exists() short-circuits to false, no alarm and no abort
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
+        verify(alarmCacheManager, times(1)).removeFiring(any(), any());
     }
 
 }

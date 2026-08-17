@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -188,6 +189,8 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
         String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
+        validateIdentifier(metric, "metric");
+        validateIdentifier(table, "table");
         String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, dateAdd);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         try {
@@ -228,6 +231,8 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
         String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
+        validateIdentifier(metric, "metric");
+        validateIdentifier(table, "table");
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
         // query all metric_labels
@@ -247,7 +252,7 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                 instances.add("");
             }
             for (String instanceValue : instances) {
-                String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric, table, instanceValue.replace("'", "\\'"), dateAdd);
+                String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric, table, escapeStringLiteral(instanceValue), dateAdd);
                 Map<String, Object> selectResult = executeQuery(selectSql);
                 if (selectResult == null || !selectResult.containsKey("dataset")) {
                     continue;
@@ -363,6 +368,44 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                     .replace("]", "_");
         }
         return app + "_" + metrics + "_" + instance;
+    }
+
+    /**
+     * Identifier allowlist for QuestDB double-quoted identifiers (table/column names).
+     * Keeping these to a safe charset prevents breaking out of the surrounding
+     * {@code "..."} quotes in the templated SQL, since none of the allowed
+     * characters can terminate the identifier or introduce SQL syntax.
+     */
+    private static final Pattern IDENTIFIER = Pattern.compile("^[A-Za-z0-9_-]+$");
+
+    /**
+     * Fail closed when an interpolated SQL identifier carries anything outside the
+     * safe charset. The {@code metric} and {@code table} values originate from rest
+     * path variables, so without this check they could inject into the query.
+     *
+     * @param name  identifier to validate
+     * @param label human-readable field name for the error message
+     */
+    private static void validateIdentifier(String name, String label) {
+        if (name == null || !IDENTIFIER.matcher(name).matches()) {
+            throw new IllegalArgumentException("QuestDB query rejected: invalid " + label + " identifier");
+        }
+    }
+
+    /**
+     * Escape a value interpolated into a single-quoted QuestDB string literal.
+     * QuestDB follows the ANSI rule: a single quote is escaped by doubling it
+     * ({@code '} -> {@code ''}). The previous {@code replace("'", "\\'")} was not
+     * a valid QuestDB escape and left the literal injectable.
+     *
+     * @param value raw value, may be null
+     * @return value safe to place inside {@code '...'}
+     */
+    private static String escapeStringLiteral(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("'", "''");
     }
 
     private String parseDoubleValue(String value) {

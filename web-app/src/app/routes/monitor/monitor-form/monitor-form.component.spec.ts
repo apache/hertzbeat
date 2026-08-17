@@ -22,6 +22,8 @@ import { FormsModule } from '@angular/forms';
 import { configureShallowTest } from '@testing';
 
 import { Monitor } from '../../../pojo/Monitor';
+import { Param } from '../../../pojo/Param';
+import { ParamDefine } from '../../../pojo/ParamDefine';
 import { MonitorFormComponent } from './monitor-form.component';
 
 describe('MonitorFormComponent', () => {
@@ -41,5 +43,60 @@ describe('MonitorFormComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should reset dependent paramValue to null and set display to false when dependency is not met', () => {
+    const payloadDefine = new ParamDefine();
+    payloadDefine.field = 'payload';
+    payloadDefine.name = 'Payload';
+    payloadDefine.type = 'textarea';
+    (payloadDefine as any).depend = {
+      httpMethod: ['POST', 'PUT']
+    };
+
+    const payloadParam = new Param();
+    payloadParam.field = 'payload';
+    payloadParam.paramValue = '{"test": "data"}';
+    payloadParam.display = true;
+
+    component.paramDefines = [];
+    component.params = [];
+    component.sdDefines = [];
+    component.sdParams = [];
+    component.advancedParamDefines = [payloadDefine];
+    component.advancedParams = [payloadParam];
+
+    component.onDependChanged('GET', 'httpMethod');
+
+    expect(payloadParam.display).toBeFalse();
+    expect(payloadParam.paramValue).toBeNull();
+    expect(component.hasAdvancedParams).toBeFalse();
+  });
+
+  it('should set display to true when dependency is met', () => {
+    const payloadDefine = new ParamDefine();
+    payloadDefine.field = 'payload';
+    payloadDefine.name = 'Payload';
+    payloadDefine.type = 'textarea';
+    (payloadDefine as any).depend = {
+      httpMethod: ['POST', 'PUT']
+    };
+
+    const payloadParam = new Param();
+    payloadParam.field = 'payload';
+    payloadParam.paramValue = null;
+    payloadParam.display = false;
+
+    component.paramDefines = [];
+    component.params = [];
+    component.sdDefines = [];
+    component.sdParams = [];
+    component.advancedParamDefines = [payloadDefine];
+    component.advancedParams = [payloadParam];
+
+    component.onDependChanged('POST', 'httpMethod');
+
+    expect(payloadParam.display).toBeTrue();
+    expect(component.hasAdvancedParams).toBeTrue();
   });
 });

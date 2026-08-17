@@ -17,10 +17,11 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { SILENT_HTTP_ERROR } from '../core/interceptor/http-context';
 import { Message } from '../pojo/Message';
 
 const account_auth_refresh_uri = '/account/auth/refresh';
@@ -32,11 +33,12 @@ const account_token = '/account/token';
 export class AuthService {
   constructor(private http: HttpClient) {}
 
-  public refreshToken(refreshToken: string): Observable<Message<any>> {
+  public refreshToken(refreshToken: string, silentHttpError = false): Observable<Message<any>> {
     let body = {
       token: refreshToken
     };
-    return this.http.post<Message<any>>(`${account_auth_refresh_uri}`, body);
+    const context = new HttpContext().set(SILENT_HTTP_ERROR, silentHttpError);
+    return this.http.post<Message<any>>(`${account_auth_refresh_uri}`, body, { context });
   }
 
   public generateToken(name?: string, expireSeconds?: number): Observable<Message<any>> {
