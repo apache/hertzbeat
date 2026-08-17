@@ -170,8 +170,8 @@ metrics:
       method: GET
       parseType: prometheus
 
-  # ---- Priority 4: sq latency ----
-  - name: milvus_proxy_sq_latency
+  # ---- Priority 4: sq latency (histogram buckets) ----
+  - name: milvus_proxy_sq_latency_bucket
     i18n:
       zh-CN: 搜索/查询请求延迟
       en-US: Search/Query Request Latency
@@ -201,8 +201,8 @@ metrics:
       method: GET
       parseType: prometheus
 
-  # ---- Priority 5: mutation latency ----
-  - name: milvus_proxy_mutation_latency
+  # ---- Priority 5: mutation latency (histogram buckets) ----
+  - name: milvus_proxy_mutation_latency_bucket
     i18n:
       zh-CN: 写入请求延迟
       en-US: Mutation Request Latency

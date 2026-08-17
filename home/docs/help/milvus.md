@@ -38,49 +38,107 @@ If Milvus is deployed via Helm on Kubernetes, the metrics port is exposed by def
 
 ## Collected Metrics
 
-### Metric Group: availability
+### Metric Group: milvus_proxy_req_count
 
-*Priority 0 — collected first. All other groups only run if this succeeds.*
+*Priority 0 — collected first to determine availability.*
 
-| Metric Name  | Unit | Description                                |
-|--------------|------|--------------------------------------------|
-| responseTime | ms   | Time taken to receive a response from Milvus |
+| Metric Name | Unit | Description |
+|---|---|---|
+| function_name | | Name of the RPC function called on the proxy |
+| status | | Request result status (e.g. `OK`, `fail`) |
+| value | | Number of requests |
 
-### Metric Group: proxy_metrics
+### Metric Group: milvus_proxy_slow_query_count
 
-*Covers the Milvus Proxy layer, which handles all inbound client requests.*
+*Priority 1*
 
-| Metric Name                      | Unit | Description                                              |
-|----------------------------------|------|----------------------------------------------------------|
-| milvus_proxy_req_count           |      | Total number of requests received by the proxy           |
-| milvus_proxy_slow_query_count    |      | Number of slow queries recorded                          |
-| milvus_proxy_search_vectors_count|      | Cumulative number of vectors searched                    |
-| milvus_proxy_insert_vectors_count|      | Cumulative number of vectors inserted                    |
-| milvus_proxy_sq_latency_sum      | ms   | Total search/query request latency                       |
-| milvus_proxy_sq_latency_count    |      | Total number of search/query requests                    |
-| milvus_proxy_mutation_latency_sum| ms   | Total latency of insert/delete (mutation) requests       |
-| milvus_proxy_receive_bytes_count | B    | Bytes received for insert/delete operations              |
-| milvus_proxy_send_bytes_count    | B    | Bytes sent back to clients (query results)               |
+| Metric Name | Unit | Description |
+|---|---|---|
+| function_name | | Name of the slow query RPC function |
+| value | | Number of slow queries recorded |
 
-### Metric Group: querynode_metrics
+### Metric Group: milvus_proxy_search_vectors_count
 
-*Covers the QueryNode component, which executes searches against loaded segments.*
+*Priority 2*
 
-| Metric Name                            | Unit | Description                                    |
-|----------------------------------------|------|------------------------------------------------|
-| milvus_querynode_collection_num        |      | Number of collections currently loaded         |
-| milvus_querynode_entity_num            |      | Number of entities currently loaded            |
-| milvus_querynode_search_req_latency_sum| ms   | Total latency of search requests on this node  |
-| milvus_querynode_search_group_nq_sum   |      | Total NQ (number of query vectors) in batches  |
-| milvus_querynode_evicted_memory_size   | B    | Memory evicted from the node                   |
+| Metric Name | Unit | Description |
+|---|---|---|
+| value | | Cumulative number of vectors searched |
 
-### Metric Group: rootcoord_metrics
+### Metric Group: milvus_proxy_insert_vectors_count
 
-*Covers the RootCoord component, which manages metadata and DDL/DML coordination.*
+*Priority 3*
 
-| Metric Name                      | Unit | Description                            |
-|----------------------------------|------|----------------------------------------|
-| milvus_rootcoord_collection_num  |      | Total number of collections            |
-| milvus_rootcoord_partition_num   |      | Total number of partitions             |
-| milvus_rootcoord_dml_req_count   |      | Total DML (insert/delete) request count |
-| milvus_rootcoord_ddl_req_count   |      | Total DDL (schema/collection) request count |
+| Metric Name | Unit | Description |
+|---|---|---|
+| value | | Cumulative number of vectors inserted |
+
+### Metric Group: milvus_proxy_sq_latency_bucket
+
+*Priority 4 — search/query request latency histogram buckets.*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| le | | Histogram bucket upper bound (e.g. `1`, `5`, `+Inf`) |
+| value | ms | Number of requests whose latency falls within this bucket |
+
+### Metric Group: milvus_proxy_mutation_latency_bucket
+
+*Priority 5 — insert/delete request latency histogram buckets.*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| le | | Histogram bucket upper bound |
+| value | ms | Number of mutation requests whose latency falls within this bucket |
+
+### Metric Group: milvus_querynode_collection_num
+
+*Priority 6*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| node_id | | QueryNode instance identifier |
+| value | | Number of collections currently loaded on this node |
+
+### Metric Group: milvus_querynode_entity_num
+
+*Priority 7*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| node_id | | QueryNode instance identifier |
+| value | | Number of entities currently loaded on this node |
+
+### Metric Group: milvus_rootcoord_collection_num
+
+*Priority 8*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| value | | Total number of collections managed by RootCoord |
+
+### Metric Group: milvus_rootcoord_partition_num
+
+*Priority 9*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| value | | Total number of partitions managed by RootCoord |
+
+### Metric Group: milvus_rootcoord_dml_req_count
+
+*Priority 10*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| status | | DML request result status |
+| value | | Total DML (insert/delete) request count |
+
+### Metric Group: milvus_rootcoord_ddl_req_count
+
+*Priority 11*
+
+| Metric Name | Unit | Description |
+|---|---|---|
+| status | | DDL request result status |
+| value | | Total DDL (schema/collection) request count |
