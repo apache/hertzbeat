@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, NgZone, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { Mute } from '../../../pojo/Mute';
 import { SingleAlert } from '../../../pojo/SingleAlert';
 import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
+import { AuthorizedSseService } from '../../../service/authorized-sse.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 
 @Component({
@@ -125,7 +127,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   private previousCount = 0;
   // default to mute status
   mute: Mute = { mute: true };
-  private eventSource!: EventSource;
+  private alertStream$!: Subscription;
+  private managerStream$!: Subscription;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
@@ -134,7 +137,9 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     private alertSvc: AlertService,
     private modal: NzModalService,
     private cdr: ChangeDetectorRef,
-    private alertSound: AlertSoundService
+    private alertSound: AlertSoundService,
+    private authorizedSseSvc: AuthorizedSseService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -166,9 +171,10 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    if (this.eventSource) {
-      this.eventSource.close();
-    }
+    // both streams are unsubscribed: they used to share one field, so the alert connection
+    // was never closed once the manager one overwrote it
+    this.alertStream$?.unsubscribe();
+    this.managerStream$?.unsubscribe();
   }
 
   onPopoverVisibleChange(visible: boolean): void {
@@ -285,74 +291,70 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   }
 
   private initAlertSSEConnection(): void {
-    const sseUrl = '/api/alert/sse/subscribe';
-
-    this.eventSource = new EventSource(sseUrl);
-
-    this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
-      let list: any[] = [];
-      let alert: SingleAlert = JSON.parse(evt.data);
-      let item = {
-        id: alert.id,
-        avatar: '/assets/img/notification.svg',
-        // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.severity.${alert.severity}`)}`,
-        title: alert.content,
-        datetime: new Date(alert.activeAt).toLocaleString(),
-        color: 'blue',
-        status: alert.status,
-        type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
-      };
-      console.log('alert:', alert);
-      list.push(item);
-      this.data = this.updateNoticeData(list);
-      if (!this.mute.mute && !this.notifiedAlert.includes(alert.id)) {
-        this.notifiedAlert.push(alert.id);
-        this.alertSound.playAlertSound(this.i18nSvc.currentLang);
-        const notification = new Notification(this.i18nSvc.fanyi('alert.notify.title'), {
-          body: this.i18nSvc.fanyi('alert.notify.body'),
-          icon: 'assets/logo.svg'
-        });
-        notification.onclick = () => {
-          window.focus();
-          this.router.navigateByUrl(`/alert/center`);
-          notification.close();
-        };
-      }
-      this.cdr.detectChanges();
+    // read through AuthorizedSseService rather than EventSource: the stream now requires a
+    // credential, and EventSource cannot carry an Authorization header
+    this.alertStream$ = this.authorizedSseSvc.stream('/api/alert/sse/subscribe', 'ALERT_EVENT').subscribe({
+      next: data =>
+        this.ngZone.run(() => {
+          let list: any[] = [];
+          let alert: SingleAlert = JSON.parse(data);
+          let item = {
+            id: alert.id,
+            avatar: '/assets/img/notification.svg',
+            // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.severity.${alert.severity}`)}`,
+            title: alert.content,
+            datetime: new Date(alert.activeAt).toLocaleString(),
+            color: 'blue',
+            status: alert.status,
+            type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
+          };
+          console.log('alert:', alert);
+          list.push(item);
+          this.data = this.updateNoticeData(list);
+          if (!this.mute.mute && !this.notifiedAlert.includes(alert.id)) {
+            this.notifiedAlert.push(alert.id);
+            this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+            const notification = new Notification(this.i18nSvc.fanyi('alert.notify.title'), {
+              body: this.i18nSvc.fanyi('alert.notify.body'),
+              icon: 'assets/logo.svg'
+            });
+            notification.onclick = () => {
+              window.focus();
+              this.router.navigateByUrl(`/alert/center`);
+              notification.close();
+            };
+          }
+          this.cdr.detectChanges();
+        }),
+      error: error => console.error('SSE connection error:', error)
     });
-    this.eventSource.onerror = error => {
-      console.error('SSE connection error:', error);
-      this.eventSource.close();
-    };
   }
 
   private initManagerSSEConnection(): void {
-    const sseUrl = '/api/manager/sse/subscribe';
-    this.eventSource = new EventSource(sseUrl);
-    this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
-      let msg = JSON.parse(evt.data);
-      if (msg.notifyLevel === 'SUCCESS') {
-        this.notifySvc.success(
-          this.i18nSvc.fanyi('common.notice'),
-          this.i18nSvc.fanyi('common.notify.import-success-detail', { taskName: msg.taskName })
-        );
-      } else if (msg.notifyLevel === 'ERROR') {
-        this.notifySvc.error(
-          this.i18nSvc.fanyi('common.notice'),
-          this.i18nSvc.fanyi('common.notify.import-fail-detail', { taskName: msg.taskName, errMsg: msg.errMsg })
-        );
-      } else if (msg.notifyLevel === 'INFO') {
-        this.notifySvc.info(
-          this.i18nSvc.fanyi('common.notice'),
-          this.i18nSvc.fanyi('common.notify.import-progress', { taskName: msg.taskName, progress: msg.progress })
-        );
-      } else {
-        console.error('Parse message error, msg:', evt.data);
-      }
+    this.managerStream$ = this.authorizedSseSvc.stream('/api/manager/sse/subscribe', 'IMPORT_TASK_EVENT').subscribe({
+      next: data =>
+        this.ngZone.run(() => {
+          let msg = JSON.parse(data);
+          if (msg.notifyLevel === 'SUCCESS') {
+            this.notifySvc.success(
+              this.i18nSvc.fanyi('common.notice'),
+              this.i18nSvc.fanyi('common.notify.import-success-detail', { taskName: msg.taskName })
+            );
+          } else if (msg.notifyLevel === 'ERROR') {
+            this.notifySvc.error(
+              this.i18nSvc.fanyi('common.notice'),
+              this.i18nSvc.fanyi('common.notify.import-fail-detail', { taskName: msg.taskName, errMsg: msg.errMsg })
+            );
+          } else if (msg.notifyLevel === 'INFO') {
+            this.notifySvc.info(
+              this.i18nSvc.fanyi('common.notice'),
+              this.i18nSvc.fanyi('common.notify.import-progress', { taskName: msg.taskName, progress: msg.progress })
+            );
+          } else {
+            console.error('Parse message error, msg:', data);
+          }
+        }),
+      error: error => console.error('Manager SSE connection error:', error)
     });
-    this.eventSource.onerror = error => {
-      console.error('Manager SSE connection error:', error);
-      this.eventSource.close();
-    };
   }
 }
