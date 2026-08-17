@@ -704,13 +704,11 @@ public class HttpCollectImpl extends AbstractCollect {
                         valueRowBuilder.addColumn(String.valueOf(value));
                     } else {
                         if (alias.startsWith("$.")) {
-                            List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
-                            if (subResults != null && subResults.size() > i) {
-                                Object resultValue = subResults.get(i);
-                                valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
-                            } else {
-                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                            }
+                            // per-row evaluation, a global "parseScript + alias" query would misalign rows missing the path
+                            List<Object> aliasValues = JsonPathParser.parseRowWithJsonPath(objectValue, alias);
+                            // a wildcard alias matching multiple values is kept whole and rendered as "[v1, v2]"
+                            Object resultValue = aliasValues.size() == 1 ? aliasValues.get(0) : (aliasValues.isEmpty() ? null : aliasValues);
+                            valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                         } else {
                             addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
