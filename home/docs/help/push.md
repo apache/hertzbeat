@@ -16,7 +16,7 @@ keywords: [open source monitoring tool, open source push monitoring tool, monito
 
 ## Push Endpoint
 
-```
+```http
 POST http://{hertzbeat-host}:{port}/api/push/prometheus/job/{job}/instance/{instance}
 Content-Type: text/plain
 ```
@@ -32,7 +32,7 @@ Content-Type: text/plain
 
 The request body must follow the **Prometheus text exposition format**. Each non-comment, non-empty line defines one sample:
 
-```
+```promtail
 # HELP http_requests_total Total HTTP requests handled
 # TYPE http_requests_total counter
 http_requests_total{method="GET",status="200"} 1234

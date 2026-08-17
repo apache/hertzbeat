@@ -16,7 +16,7 @@ keywords: [开源监控系统, 开源推送监控, 推送方式指标监控]
 
 ## 推送端点
 
-```
+```http
 POST http://{hertzbeat-host}:{port}/api/push/prometheus/job/{job}/instance/{instance}
 Content-Type: text/plain
 ```
@@ -32,7 +32,7 @@ Content-Type: text/plain
 
 请求体须遵循 **Prometheus 文本格式**，每行（非注释、非空行）定义一个采样点：
 
-```
+```promtail
 # HELP http_requests_total 处理的 HTTP 请求总数
 # TYPE http_requests_total counter
 http_requests_total{method="GET",status="200"} 1234
