@@ -18,6 +18,7 @@
  */
 
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { SettingPluginsComponent } from './plugin.component';
 
@@ -26,9 +27,7 @@ describe('SettingPluginsComponent', () => {
   let fixture: ComponentFixture<SettingPluginsComponent>;
 
   beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [SettingPluginsComponent]
-    }).compileComponents();
+    configureShallowTest(SettingPluginsComponent).compileComponents();
   }));
 
   beforeEach(() => {

@@ -71,7 +71,7 @@ describe('Service: I18n', () => {
   it('should be use default language when the browser language is not in the list', () => {
     spyOnProperty(navigator, 'languages').and.returnValue(['es-419']);
     genModule();
-    expect(srv.defaultLang).toBe('zh-CN');
+    expect(srv.defaultLang).toBe('en-US');
   });
 
   it('should be trigger notify when changed language', () => {

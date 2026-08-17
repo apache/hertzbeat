@@ -16,7 +16,7 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
@@ -70,6 +70,23 @@ resourceRole:
   - /api/config/**===post===[admin]
   - /api/config/**===put===[admin]
   - /api/config/**===delete===[admin]
+  # queue depth of the hertzbeat process itself, operational data
+  - /api/metrics===get===[admin]
+  # per account metric favourites rendered on the monitor pages
+  - /api/metrics/**===get===[admin,user,guest]
+  - /api/metrics/**===post===[admin,user,guest]
+  - /api/metrics/**===delete===[admin,user,guest]
+  - /api/label/**===get===[admin,user,guest]
+  - /api/label/**===post===[admin,user]
+  - /api/label/**===put===[admin,user]
+  - /api/label/**===delete===[admin]
+  # the storage availability probe is read by every monitor page, while the query
+  # route forwards a raw promql expression straight to the time series database
+  - /api/warehouse/**===get===[admin,user,guest]
+  - /api/warehouse/query===post===[admin]
+  - /api/logs/otlp/**===post===[admin,user]
+  - /api/logs===delete===[admin]
+  - /api/v2/alerts===post===[admin,user]
   - /api/status/page/**===get===[admin,user,guest]
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
@@ -96,11 +113,18 @@ resourceRole:
   - /api/ingestion/otlp/**===get===[admin,user,guest]
   - /api/logs/**===get===[admin,user,guest]
   - /api/traces/**===get===[admin,user,guest]
+  # The OpenAPI document is a map of every route, parameter and model, so it is
+  # scoped like any other administrative resource instead of being anonymous
+  - /v3/api-docs/**===get===[admin]
+  - /v3/api-docs.yaml===get===[admin]
+  - /v3/api-docs.yaml/**===get===[admin]
+  - /v2/api-docs/**===get===[admin]
+  - /swagger-resources/**===get===[admin]
   # spring boot actuator exposes jvm, http and datasource internals for scraping
   - /actuator/**===get===[admin]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*
@@ -137,10 +161,6 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui resource
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 

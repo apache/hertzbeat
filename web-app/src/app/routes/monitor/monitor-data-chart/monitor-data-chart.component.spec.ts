@@ -18,6 +18,7 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureShallowTest } from '@testing';
 
 import { MonitorDataChartComponent } from './monitor-data-chart.component';
 
@@ -26,9 +27,7 @@ describe('MonitorDataChartComponent', () => {
   let fixture: ComponentFixture<MonitorDataChartComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MonitorDataChartComponent]
-    }).compileComponents();
+    await configureShallowTest(MonitorDataChartComponent).compileComponents();
   });
 
   beforeEach(() => {

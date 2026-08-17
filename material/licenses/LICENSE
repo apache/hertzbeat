@@ -525,9 +525,9 @@ The following components are provided under the MIT License. See project link fo
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc/10.2.0.jre8 MIT
-    https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on/1.69 MIT
-    https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on/1.69 MIT
-    https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk15on/1.69 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on/1.85 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on/1.85 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk18on/1.85 MIT
     https://mvnrepository.com/artifact/org.checkerframework/checker-qual/3.33.0 MIT
     https://mvnrepository.com/artifact/org.codehaus.mojo/animal-sniffer-annotations/1.21 MIT
     https://mvnrepository.com/artifact/org.influxdb/influxdb-java/2.23 MIT
