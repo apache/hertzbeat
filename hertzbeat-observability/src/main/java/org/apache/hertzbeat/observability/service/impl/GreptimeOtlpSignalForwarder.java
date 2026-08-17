@@ -62,10 +62,11 @@ public class GreptimeOtlpSignalForwarder implements OtlpSignalForwarder {
         HttpHeaders safeHeaders = requestHeaders == null ? new HttpHeaders() : requestHeaders;
         byte[] normalized = maybeDecompress(content, safeHeaders);
         MediaType contentType = safeHeaders.getContentType();
-        byte[] protobuf = contentType != null && MediaType.APPLICATION_JSON.includes(contentType)
-                ? jsonToProtobuf(signal, normalized) : validateProtobuf(signal, normalized);
-        byte[] response = forwardProtobuf(signal, protobuf);
-        if (contentType != null && MediaType.APPLICATION_JSON.includes(contentType)) {
+        boolean json = contentType != null && MediaType.APPLICATION_JSON.includes(contentType);
+        // Both branches yield already-validated protobuf, so write directly instead of re-parsing via forwardProtobuf.
+        byte[] protobuf = json ? jsonToProtobuf(signal, normalized) : validateProtobuf(signal, normalized);
+        byte[] response = signalStorage.writeProtobuf(signal, protobuf);
+        if (json) {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                     .body("{}".getBytes(StandardCharsets.UTF_8));
         }
