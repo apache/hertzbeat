@@ -78,27 +78,30 @@ public class AlibabaSmsClientImpl implements SmsClient {
 
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
-        // Extract alert info
-        String instance = null;
-        String priority = null;
-        String content = null;
-        if (alert.getCommonLabels() != null) {
-            instance = alert.getCommonLabels().get("instance");
-            priority = alert.getCommonLabels().get("priority");
-            content = alert.getCommonAnnotations().get("summary");
-            content = content == null ? alert.getCommonAnnotations().get("description") : content;
-            if (content == null) {
-                content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
+        sendSms(receiver.getPhone(), buildTemplateParam(alert));
+    }
+
+    // Aliyun rejects the whole request when any template variable is null or blank,
+    // so every value must fall back to non-blank text
+    String buildTemplateParam(GroupAlert alert) {
+        Map<String, String> labels = alert.getCommonLabels() == null ? Map.of() : alert.getCommonLabels();
+        Map<String, String> annotations = alert.getCommonAnnotations() == null ? Map.of() : alert.getCommonAnnotations();
+
+        Map<String, String> templateParam = new HashMap<>();
+        templateParam.put("instance", firstNonBlank(labels.get("instance"), alert.getGroupKey(), "unknown"));
+        templateParam.put("priority", firstNonBlank(labels.get("priority"), "unknown"));
+        templateParam.put("content", firstNonBlank(annotations.get("summary"), annotations.get("description"),
+                annotations.values().stream().findFirst().orElse(null), "alert triggered"));
+        return JsonUtil.toJson(templateParam);
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
             }
         }
-
-        // Build template parameters
-        Map<String, String> templateParam = new HashMap<>();
-        templateParam.put("instance", instance == null ? alert.getGroupKey() : instance);
-        templateParam.put("priority", priority == null ? "unknown" : priority);
-        templateParam.put("content", content);
-
-        sendSms(receiver.getPhone(), JsonUtil.toJson(templateParam));
+        return "unknown";
     }
 
     private void sendSms(String phoneNumber, String templateParam) {
