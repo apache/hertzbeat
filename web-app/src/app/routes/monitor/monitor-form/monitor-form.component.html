@@ -133,7 +133,18 @@
                 >{{ paramDefine.name }}
               </nz-form-label>
               <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="advancedParams[i].paramValue" />
+                <app-form-field
+                  [item]="paramDefine"
+                  [name]="paramDefine.field"
+                  [(ngModel)]="advancedParams[i].paramValue"
+                  (ngModelChange)="
+                    paramDefine.type === 'boolean'
+                      ? onParamBooleanChanged($event, paramDefine.field)
+                      : paramDefine.type === 'radio'
+                      ? onDependChanged($event, paramDefine.field)
+                      : null
+                  "
+                />
               </nz-form-control>
             </nz-form-item>
           </ng-container>
