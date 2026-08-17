@@ -159,7 +159,8 @@
             "help/websocket",
             "help/mqtt",
             "help/modbus",
-            "help/jenkins"
+            "help/jenkins",
+            "help/push"
           ]
         },
         {
