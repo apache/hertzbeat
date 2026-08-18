@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.exception.FlywayValidateException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer;
 import org.springframework.boot.flyway.autoconfigure.FlywayProperties;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.DependsOn;
  * Delays Flyway execution until after Hibernate has created/updated the schema.
  */
 @Configuration
+@Slf4j
 @ConditionalOnProperty(prefix = "spring.flyway", name = "enabled", havingValue = "true")
 public class FlywayConfiguration {
 
@@ -52,7 +55,18 @@ public class FlywayConfiguration {
     @DependsOn("entityManagerFactory")
     Dummy delayedFlywayInitializer(Flyway flyway, FlywayProperties flywayProperties) {
         if (flywayProperties.isEnabled()) {
-            flyway.migrate();
+            try {
+                flyway.migrate();
+            } catch (FlywayValidateException e) {
+                if (e.getMessage() == null || !e.getMessage().contains("failed migration")) {
+                    // checksum mismatches and other validation problems need a human decision
+                    throw e;
+                }
+                // a recorded failed migration blocks every later start; repair + one retry un-bricks it
+                log.warn("Flyway history has a failed migration, repairing and retrying once: {}", e.getMessage());
+                flyway.repair();
+                flyway.migrate();
+            }
         }
         return new Dummy();
     }
