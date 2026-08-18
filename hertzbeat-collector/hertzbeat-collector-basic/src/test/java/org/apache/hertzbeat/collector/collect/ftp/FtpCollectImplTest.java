@@ -18,15 +18,23 @@
 package org.apache.hertzbeat.collector.collect.ftp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
+import java.security.KeyPairGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
+import org.apache.sshd.client.keyverifier.ServerKeyVerifier;
+import org.apache.sshd.common.config.keys.KeyUtils;
+import org.apache.sshd.common.digest.BuiltinDigests;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -143,5 +151,55 @@ class FtpCollectImplTest {
 
     }
 
+    @Test
+    void serverKeyVerifierSupportsHostKeyRotationWindow() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        var currentKey = keyPairGenerator.generateKeyPair().getPublic();
+        var nextKey = keyPairGenerator.generateKeyPair().getPublic();
+        var unrelatedKey = keyPairGenerator.generateKeyPair().getPublic();
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.sha256, currentKey)
+                        + System.lineSeparator()
+                        + KeyUtils.getFingerPrint(BuiltinDigests.sha256, nextKey))
+                .build();
 
+        ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
+
+        assertTrue(verifier.verifyServerKey(null, null, currentKey));
+        assertTrue(verifier.verifyServerKey(null, null, nextKey));
+        assertFalse(verifier.verifyServerKey(null, null, unrelatedKey));
+    }
+
+    @Test
+    void serverKeyVerifierAlwaysUsesSha256() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        var serverKey = keyPairGenerator.generateKeyPair().getPublic();
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .hostKeyFingerprint(KeyUtils.getFingerPrint(BuiltinDigests.sha256, serverKey))
+                .build();
+        var previousFactory = KeyUtils.getDefaultFingerPrintFactory();
+
+        try {
+            KeyUtils.setDefaultFingerPrintFactory(BuiltinDigests.md5);
+            ServerKeyVerifier verifier = FtpCollectImpl.createServerKeyVerifier(ftpProtocol);
+            assertTrue(verifier.verifyServerKey(null, null, serverKey));
+        } finally {
+            KeyUtils.setDefaultFingerPrintFactory(previousFactory);
+        }
+    }
+
+    @Test
+    void serverKeyVerifierAllowsExplicitVerificationOptOut() {
+        FtpProtocol ftpProtocol = FtpProtocol.builder()
+                .insecureSkipVerify("true")
+                .build();
+
+        assertSame(
+                AcceptAllServerKeyVerifier.INSTANCE,
+                FtpCollectImpl.createServerKeyVerifier(ftpProtocol));
+    }
 }

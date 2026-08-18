@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test;
 
 class FtpProtocolTest {
 
+    private static final String VALID_SHA256_FINGERPRINT =
+            "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
     @Test
     void isInvalidValidAnonymousFtp() {
         FtpProtocol protocol = FtpProtocol.builder()
@@ -46,6 +49,7 @@ class FtpProtocolTest {
                 .ssl("true")
                 .username("admin")
                 .password("secret")
+                .hostKeyFingerprint(VALID_SHA256_FINGERPRINT)
                 .build();
         assertFalse(protocol.isInvalid());
     }
@@ -81,6 +85,50 @@ class FtpProtocolTest {
                 .timeout("3000")
                 .ssl("true")
                 .username("admin")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWithoutHostIdentityConfiguration() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isValidSftpWithExplicitVerificationOptOut() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .insecureSkipVerify("true")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidSftpWithMalformedHostKeyFingerprint() {
+        FtpProtocol protocol = FtpProtocol.builder()
+                .host("sftp.example.com")
+                .port("22")
+                .direction("/data")
+                .timeout("3000")
+                .ssl("true")
+                .username("admin")
+                .password("secret")
+                .hostKeyFingerprint("SHA256:not-a-valid-fingerprint")
                 .build();
         assertTrue(protocol.isInvalid());
     }
