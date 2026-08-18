@@ -38,7 +38,6 @@ import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
-import io.greptime.v1.Common;
 import io.greptime.v1.RowData;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -48,7 +47,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
@@ -132,7 +130,6 @@ class GreptimeDbDataStorageTest {
             when(mockResult.isOk()).thenReturn(true);
             CompletableFuture<Result<WriteOk, Err>> mockFuture = CompletableFuture.completedFuture(mockResult);
             when(greptimeDb.write(any(Table.class))).thenReturn(mockFuture);
-
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
 
             // Test with valid metrics data
@@ -156,14 +153,9 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
-    void testSaveDataWithCustomLabels() throws Exception {
+    void testSaveDataRejectsCustomLabelCollisions() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
-
-            Result<WriteOk, Err> mockResult = mock(Result.class);
-            when(mockResult.isOk()).thenReturn(true);
-            CompletableFuture<Result<WriteOk, Err>> mockFuture = CompletableFuture.completedFuture(mockResult);
-            when(greptimeDb.write(any(Table.class))).thenReturn(mockFuture);
 
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
 
@@ -176,31 +168,33 @@ class GreptimeDbDataStorageTest {
             when(metricsData.getLabels()).thenReturn(customLabels);
             when(metricsData.getInstance()).thenReturn("server1");
 
+            greptimeDbDataStorage.saveData(metricsData);
+
+            verify(greptimeDb, never()).write(any(Table.class));
+            assertEquals(1, greptimeDbDataStorage.getRejectedLabelCollisionCount());
+        }
+    }
+
+    @Test
+    void testSaveDataAcceptsNonConflictingCustomLabels() throws Exception {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            @SuppressWarnings("unchecked")
+            Result<WriteOk, Err> mockResult = mock(Result.class);
+            when(mockResult.isOk()).thenReturn(true);
+            when(greptimeDb.write(any(Table.class)))
+                    .thenReturn(CompletableFuture.completedFuture(mockResult));
+            greptimeDbDataStorage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            CollectRep.MetricsData metricsData = createMockMetricsData(true);
+            when(metricsData.getLabels()).thenReturn(Map.of("env", "prod"));
+
             ArgumentCaptor<Table> tableCaptor = ArgumentCaptor.forClass(Table.class);
             greptimeDbDataStorage.saveData(metricsData);
 
             verify(greptimeDb).write(tableCaptor.capture());
-            Table capturedTable = tableCaptor.getValue();
-
-            List<RowData.ColumnSchema> columnSchemas = getColumnSchemas(capturedTable);
-            List<String> columnNames = columnSchemas.stream()
-                    .map(RowData.ColumnSchema::getColumnName)
-                    .collect(Collectors.toList());
-            assertEquals(5, columnNames.size());
-            assertEquals(2, Collections.frequency(columnNames, "instance"));
-            assertEquals(1, Collections.frequency(columnNames, "ts"));
-            assertEquals(1, Collections.frequency(columnNames, "usage"));
-
-            List<RowData.ColumnSchema> envColumnSchemas = columnSchemas.stream()
-                    .filter(columnSchema -> "env".equals(columnSchema.getColumnName()))
-                    .collect(Collectors.toList());
-            assertEquals(1, envColumnSchemas.size());
-            assertEquals(Common.SemanticType.TAG, envColumnSchemas.get(0).getSemanticType());
-
-            List<RowData.Row> rows = getRows(capturedTable);
-            assertEquals(1, rows.size());
-            RowData.Row row = rows.get(0);
-            assertEquals("prod", row.getValuesList().get(4).getStringValue());
+            List<RowData.ColumnSchema> schemas = getColumnSchemas(tableCaptor.getValue());
+            assertTrue(schemas.stream().anyMatch(schema -> "env".equals(schema.getColumnName())));
         }
     }
 

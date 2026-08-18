@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,7 +70,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -107,6 +107,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private final VictoriaMetricsSelectProperties vmSelectProps;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+    private final AtomicLong rejectedLabelCollisionCount = new AtomicLong();
 
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
@@ -186,6 +187,15 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
+        var managedLabelCollisions =
+                VictoriaMetricsDataStorage.findManagedLabelCollisions(metricsData.getLabels());
+        if (!managedLabelCollisions.isEmpty()) {
+            long rejectedCount = rejectedLabelCollisionCount.incrementAndGet();
+            log.error("[warehouse victoria-metrics] reject metrics data {} because custom labels contain "
+                    + "HertzBeat-managed keys {}; cumulative rejected batches: {}.",
+                    metricsData.getId(), managedLabelCollisions, rejectedCount);
+            return;
+        }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
         boolean isPrometheusAuto;
@@ -243,10 +253,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 }
                                 labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
-                                var customizedLabels = metricsData.getLabels();
-                                if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                    labels.putAll(customizedLabels);
-                                }
+                                VictoriaMetricsDataStorage.addCustomizedLabels(labels, metricsData.getLabels());
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
                                     .values(new Double[]{entry.getValue()})
@@ -274,6 +281,10 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         } catch (Exception e) {
             log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
         }
+    }
+
+    long getRejectedLabelCollisionCount() {
+        return rejectedLabelCollisionCount.get();
     }
 
     @Override
