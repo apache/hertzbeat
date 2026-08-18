@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
@@ -108,7 +109,12 @@ public class ManageServer implements CommandLineRunner {
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
         nettyServerConfig.setIdleStateEventTriggerTime(schedulerProperties.getServer().getIdleStateEventTriggerTime());
         NettyEventListener nettyEventListener = new ManageNettyEventListener();
-        this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
+        this.remotingServer = new NettyRemotingServer(
+                nettyServerConfig,
+                nettyEventListener,
+                threadPool,
+                schedulerProperties.getServer().getAuthentication(),
+                AesUtil::getDefaultSecretKey);
         
         // register processor
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));

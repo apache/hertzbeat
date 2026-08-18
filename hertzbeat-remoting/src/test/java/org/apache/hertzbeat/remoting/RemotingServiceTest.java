@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
+import org.apache.hertzbeat.remoting.netty.ClusterMessageAuthConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.apache.hertzbeat.remoting.netty.NettyServerConfig;
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.Test;
  * test NettyRemotingClient and NettyRemotingServer
  */
 public class RemotingServiceTest {
+
+    private static final String SHARED_SECRET = "cluster-authentication-secret-32!!";
 
     private final BackgroundTaskExecutor threadPool = new BackgroundTaskExecutor() {
         private final ExecutorService executor = Executors.newCachedThreadPool();
@@ -64,7 +67,12 @@ public class RemotingServiceTest {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(port);
         // todo test NettyEventListener
-        RemotingServer server = new NettyRemotingServer(nettyServerConfig, null, threadPool);
+        RemotingServer server = new NettyRemotingServer(
+                nettyServerConfig,
+                null,
+                threadPool,
+                authConfig(),
+                () -> SHARED_SECRET);
         server.start();
         return server;
     }
@@ -73,7 +81,12 @@ public class RemotingServiceTest {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         nettyClientConfig.setServerHost("localhost");
         nettyClientConfig.setServerPort(port);
-        RemotingClient client = new NettyRemotingClient(nettyClientConfig, null, threadPool);
+        RemotingClient client = new NettyRemotingClient(
+                nettyClientConfig,
+                null,
+                threadPool,
+                authConfig(),
+                () -> SHARED_SECRET);
         client.start();
         return client;
     }
@@ -109,6 +122,7 @@ public class RemotingServiceTest {
         if (count < 0) {
             throw new RuntimeException("remoting client start error");
         }
+        Thread.sleep(100);
     }
 
     @AfterEach
@@ -173,6 +187,13 @@ public class RemotingServiceTest {
                 .setMsg(ByteString.copyFromUtf8("hello world"))
                 .build();
         this.remotingClient.sendMsg(request);
+    }
+
+    private ClusterMessageAuthConfig authConfig() {
+        ClusterMessageAuthConfig config = new ClusterMessageAuthConfig();
+        config.setMode(ClusterMessageAuthConfig.Mode.REQUIRED);
+        config.setActiveKeyId("active");
+        return config;
     }
 
 }

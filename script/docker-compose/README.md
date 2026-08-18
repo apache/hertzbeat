@@ -4,6 +4,11 @@ Suggest the [HertzBeat + GreptimeDB + Postgresql Solution](hertzbeat-postgresql-
 
 Notes:
 
+- Before `docker compose up`, create the install-specific `.env` described in
+  the selected solution README. Every Compose definition requires an AES
+  `COMMON_SECRET` shared by Manager and standalone Collectors, plus an
+  independent `CLUSTER_AUTH_ACTIVE_SECRET`. Keep that file private and
+  preserve both values across upgrades.
 - MySQL, MariaDB, OceanBase, and TiDB SQL query metrics can use the built-in MySQL-compatible query engine without `mysql-connector-j`.
 - If you place `mysql-connector-j` in `ext-lib`, HertzBeat prefers JDBC after restart.
 - Oracle and DB2 still require external JDBC driver jars in `ext-lib`.

@@ -25,7 +25,18 @@
    如果你希望 HertzBeat 在重启后优先走 JDBC，可以把 `mysql-connector-j` 放到 `ext-lib`。
    Oracle、DB2 这类场景仍然需要把外部 JDBC 驱动放到 `ext-lib`。
 
-3. 进入部署脚本 docker-compose 目录, 执行
+3. 创建两份相互独立且仅供本次安装使用的密钥。`COMMON_SECRET` 是 Manager
+   与所有独立 Collector 必须完全相同的 32 字节 AES 密钥；
+   `CLUSTER_AUTH_ACTIVE_SECRET` 是另一份消息认证密钥。升级时必须保留两者，
+   并且不要将 `.env` 提交到版本库。
+
+   ```shell
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   ```
+
+4. 进入部署脚本 docker-compose 目录, 执行
 
    `docker compose up -d`
 

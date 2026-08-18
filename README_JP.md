@@ -57,10 +57,16 @@
 
 ##### 方式１：Docker
 
-1. `docker` で以下の指令を実行します：
+1. インストール専用の独立した 2 つのシークレットを作成します。
+   `COMMON_SECRET` は Manager とすべてのスタンドアロン Collector で同一にする
+   32 バイトの AES キーです。`CLUSTER_AUTH_ACTIVE_SECRET` は別のメッセージ認証
+   シークレットです。2 つの値を再利用せず、`.env` をコミットしないでください。
 
    ```shell
-   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   umask 077
+   printf 'COMMON_SECRET=%s\n' "$(openssl rand -hex 16)" > .env
+   printf 'CLUSTER_AUTH_ACTIVE_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env
+   docker run -d --env-file .env -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
 2. スタート：`http://localhost:1157`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
@@ -68,7 +74,7 @@
 3. コレクタークラスタのデプロイメント（オプション）
 
    ```shell
-   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   docker run -d --env-file .env -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
    - `-e IDENTITY=custom-collector-name` ：コレクターのユニーク ID。
@@ -82,10 +88,14 @@
 ##### 方式２：インストールパッケージ
 
 1. リリースパッケージ `apache-hertzbeat-xx-bin.tar.gz` をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
-2. HertzBeat の設定ファイル `hertzbeat/config/application.yml` を編集します（任意）
-3. コマンド `$ ./bin/startup.sh` または `bin/startup.bat` を実行します
-4. ブラウザで `http://localhost:1157` にアクセスします。デフォルトのアカウントとパスワードは `admin/hertzbeat` です
-5. コレクタークラスタのデプロイメント（オプション）
+2. 上記のコマンドで 2 つの独立したシークレットを生成します。Manager とすべての
+   スタンドアロン Collector に同一で 16/24/32 バイトの `COMMON_SECRET` を設定し、
+   さらに同一の `CLUSTER_AUTH_ACTIVE_SECRET` を設定します。アップグレード時も
+   両方を保持してください。
+3. HertzBeat の設定ファイル `hertzbeat/config/application.yml` を編集します（任意）
+4. コマンド `$ ./bin/startup.sh` または `bin/startup.bat` を実行します
+5. ブラウザで `http://localhost:1157` にアクセスします。デフォルトのアカウントとパスワードは `admin/hertzbeat` です
+6. コレクタークラスタのデプロイメント（オプション）
    - 別ホストにコレクターのインストールパッケージ `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM コレクター）または対象プラットフォーム向けの Native コレクターパッケージ（例: `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`）をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
    - コレクターの設定ファイル `hertzbeat-collector/config/application.yml` を編集します
      ```yaml

@@ -32,7 +32,6 @@ import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.springframework.aot.hint.BindingReflectionHintsRegistrar;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
@@ -55,7 +54,6 @@ public class CollectorRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
     @Override
     public void registerHints(@NonNull RuntimeHints hints, ClassLoader classLoader) {
         BindingReflectionHintsRegistrar bindingRegistrar = new BindingReflectionHintsRegistrar();
-        registerType(bindingRegistrar, hints, ServerInfo.class);
         scanBindingPackage(classLoader, bindingRegistrar, hints, JOB_PACKAGE);
         scanBindingPackage(classLoader, bindingRegistrar, hints, JOB_PROTOCOL_PACKAGE);
         hints.reflection().registerType(NettyAllocationManager.class, MemberCategory.DECLARED_FIELDS);
