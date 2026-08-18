@@ -52,7 +52,9 @@ ${FORMATTER [{ + | - }`<DURATION>` `<TIME_UNIT>`]}
 
 #### Where to Use
 
+- Request path (URL) for HTTP protocol monitoring types
 - Request parameters for HTTP protocol monitoring types
+- Request headers for HTTP protocol monitoring types
 - Request Body for HTTP protocol monitoring types
 
 #### Usage Examples
