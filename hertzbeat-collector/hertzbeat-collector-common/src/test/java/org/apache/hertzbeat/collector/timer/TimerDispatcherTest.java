@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.collector.timer;
 
 import java.lang.reflect.Field;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
 import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
@@ -298,5 +300,42 @@ public class TimerDispatcherTest {
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
         }
+    }
+
+    @Test
+    void testFirstCyclicDelayJittersWithinInterval() {
+        when(job.isCyclic()).thenReturn(true);
+        when(job.getScheduleType()).thenReturn(null);
+        when(job.getDispatchTime()).thenReturn(0L);
+        when(job.getInterval()).thenReturn(600L);
+        when(job.getId()).thenReturn(4242L);
+
+        Set<Long> delays = new HashSet<>();
+        for (int i = 0; i < 50; i++) {
+            long delay = timerDispatcher.initialCyclicDelay(job);
+            assertTrue(delay >= 1 && delay <= 600, "delay out of interval: " + delay);
+            delays.add(delay);
+        }
+        assertTrue(delays.size() > 1, "no jitter observed across 50 samples");
+    }
+
+    @Test
+    void testExecutedJobKeepsRemainingIntervalOnReAdd() {
+        when(job.getScheduleType()).thenReturn(null);
+        when(job.getDispatchTime()).thenReturn(System.currentTimeMillis() - 10_000L);
+        when(job.getInterval()).thenReturn(600L);
+
+        long expected = timerDispatcher.getNextExecutionInterval(job);
+        long actual = timerDispatcher.initialCyclicDelay(job);
+        assertTrue(Math.abs(actual - expected) <= 1, "remaining interval must not be jittered");
+    }
+
+    @Test
+    void testCronScheduleKeepsFixedPhase() {
+        when(job.getScheduleType()).thenReturn(ScheduleTypeEnum.CRON.getType());
+        when(job.getCronExpression()).thenReturn("0 0 3 * * ?");
+        long expected = timerDispatcher.getNextExecutionInterval(job);
+        long actual = timerDispatcher.initialCyclicDelay(job);
+        assertTrue(Math.abs(actual - expected) <= 1, "cron phase must not be jittered");
     }
 }
