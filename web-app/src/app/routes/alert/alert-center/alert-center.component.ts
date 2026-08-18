@@ -22,7 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { Subscription } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
@@ -54,6 +54,7 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   checkedAlertIds = new Set<number>();
   filterStatus!: string;
   filterContent: string | undefined;
+  exportButtonLoading: boolean = false;
   private alertStream$!: Subscription;
 
   ngOnInit(): void {
@@ -297,5 +298,36 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), error.msg);
       }
     );
+  }
+
+  exportAlerts() {
+    this.exportButtonLoading = true;
+    const exportAlerts$ = this.alertSvc
+      .exportAlerts(this.filterStatus, this.filterContent)
+      .pipe(
+        finalize(() => {
+          this.exportButtonLoading = false;
+          exportAlerts$.unsubscribe();
+        })
+      )
+      .subscribe(
+        response => {
+          const body = response.body!;
+          if (body.type == 'application/json') {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
+          } else {
+            const blob = new Blob([body], { type: response.headers.get('Content-Type')! });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
+            a.href = url;
+            a.click();
+            window.URL.revokeObjectURL(url);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
+        }
+      );
   }
 }

@@ -27,6 +27,7 @@
   "alert.center.content": "알람 내용",
   "alert.center.deal": "처리 완료로 표시",
   "alert.center.delete": "알람 삭제",
+  "alert.center.export": "알람 내보내기",
   "alert.center.end-time": "종료 시간",
   "alert.center.filter-priority": "알람 우선순위",
   "alert.center.filter-status": "알람 상태",
