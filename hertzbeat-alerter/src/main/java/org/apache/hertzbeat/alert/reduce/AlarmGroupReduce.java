@@ -171,7 +171,7 @@ public class AlarmGroupReduce implements DisposableBean {
                 .factory());
     }
 
-    private void runCheckAndSendGroups() {
+    void runCheckAndSendGroups() {
         beforeCheckAndSendGroupsRun();
         try {
             long now = System.currentTimeMillis();
@@ -179,7 +179,6 @@ public class AlarmGroupReduce implements DisposableBean {
                 if (shouldSendGroup(cache, now)) {
                     sendGroupAlert(cache);
                     cache.setLastSendTime(now);
-                    cache.getAlertFingerprints().clear();
                 }
             });
         } catch (Exception e) {
@@ -262,22 +261,19 @@ public class AlarmGroupReduce implements DisposableBean {
             return newCache;
         });
         String fingerprint = alert.getFingerprint();
-        // Check if this is a duplicate alert
+        // Preserve the original startAt when updating an alert that is still tracked
         SingleAlert existingAlert = cache.getAlertFingerprints().get(fingerprint);
         if (existingAlert != null) {
-            // Update existing alert timestamp
             alert.setStartAt(existingAlert.getStartAt());
-            cache.getAlertFingerprints().put(fingerprint, alert);
-            return;
         }
-        
-        // Add new alert
+        // Add or update the alert. The cache retains every currently-active alert of the
+        // group, so the group status is always computed over the full member set rather
+        // than only the alerts received within the current send window.
         cache.getAlertFingerprints().put(fingerprint, alert);
-        
+
         if (shouldSendGroupImmediately(cache)) {
             sendGroupAlert(cache);
             cache.setLastSendTime(System.currentTimeMillis());
-            cache.getAlertFingerprints().clear();
         }
     }
     
@@ -288,21 +284,27 @@ public class AlarmGroupReduce implements DisposableBean {
         
         long now = System.currentTimeMillis();
         String status = determineGroupStatus(cache.getAlertFingerprints().values());
-        
+
+        boolean hasResolvedAlert = cache.getAlertFingerprints().values().stream()
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
+
         // For firing alerts, check repeat interval
         if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
             long repeatInterval = ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
-            
-            // Skip if within repeat interval
-            if (cache.getLastRepeatTime() > 0 
+
+            // Skip if within repeat interval. The throttle only suppresses repeated firing
+            // notifications; it must never swallow a pending resolved transition, so we still
+            // send when the batch carries a member that has just recovered.
+            if (!hasResolvedAlert
+                && cache.getLastRepeatTime() > 0
                 && now - cache.getLastRepeatTime() < repeatInterval) {
                 return;
             }
             cache.setLastRepeatTime(now);
         }
-        
+
         GroupAlert groupAlert = GroupAlert.builder()
                 .groupKey(cache.getGroupKey())
                 .groupLabels(cache.getGroupLabels())
@@ -313,6 +315,14 @@ public class AlarmGroupReduce implements DisposableBean {
                 .build();
 
         alarmInhibitReduce.inhibitAlarm(groupAlert);
+
+        // The resolved members have now been emitted, so drop them from the group. Firing
+        // members are retained until they recover, keeping the group firing while any member
+        // is still active instead of flushing the whole cache after every send.
+        if (hasResolvedAlert) {
+            cache.getAlertFingerprints().values().removeIf(
+                    alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
+        }
     }
     
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {

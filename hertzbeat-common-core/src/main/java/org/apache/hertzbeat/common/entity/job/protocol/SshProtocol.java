@@ -87,6 +87,11 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
     private String parseType;
 
     /**
+     * Charset of the remote command output, default UTF-8
+     */
+    private String charset;
+
+    /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER PROXY HOST
      */
     private String proxyHost;
