@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -102,6 +103,13 @@ class StatusPageServiceImplTimeTest {
         assertEquals(30, service.queryComponentsStatus(30).get(0).getHistory().size());
         assertEquals(1, service.queryComponentsStatus(1).get(0).getHistory().size());
         assertEquals(90, service.queryComponentsStatus(90).get(0).getHistory().size());
+        assertEquals(365, service.queryComponentsStatus(365).get(0).getHistory().size());
+    }
+
+    @Test
+    void testDaysRangeValidation() {
+        assertThrows(IllegalArgumentException.class, () -> service.queryComponentsStatus(0));
+        assertThrows(IllegalArgumentException.class, () -> service.queryComponentsStatus(366));
     }
 
     @Test
