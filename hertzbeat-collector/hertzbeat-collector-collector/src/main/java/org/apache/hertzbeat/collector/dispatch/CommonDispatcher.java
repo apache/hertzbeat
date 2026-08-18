@@ -183,9 +183,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             .setTime(System.currentTimeMillis())
                             .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
-                    if (metricsData.getPriority() == 0) {
-                        dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
-                    }
+                    dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
                 }
             }
         } catch (Exception e) {
