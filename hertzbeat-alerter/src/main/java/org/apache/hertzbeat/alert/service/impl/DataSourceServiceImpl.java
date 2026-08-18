@@ -31,7 +31,6 @@ import org.apache.hertzbeat.alert.expr.AlertExpressionLexer;
 import org.apache.hertzbeat.alert.expr.AlertExpressionParser;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
-import org.apache.hertzbeat.common.support.valid.SqlSecurityException;
 import org.apache.hertzbeat.common.support.valid.SqlSecurityValidator;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
@@ -57,6 +56,13 @@ public class DataSourceServiceImpl implements DataSourceService {
      * Default allowed tables for SQL queries
      */
     private static final List<String> DEFAULT_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+
+    /**
+     * The policy for an alert expression is read only and nothing narrower: which tables it
+     * may read is not constrained, because metric tables are created per metric on demand and
+     * a whitelist would reject every legitimate metric query.
+     */
+    private static final SqlSecurityValidator EXPRESSION_SQL_VALIDATOR = SqlSecurityValidator.selectOnly();
 
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
@@ -93,7 +99,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
         try {
-            return evaluate(expr, executor);
+            return evaluate(expr, guardSql(executor, EXPRESSION_SQL_VALIDATOR));
         } catch (AlertExpressionException ae) {
             log.error("Calculate query parse error, datasource: {}, expr: {}, msg: {}", datasource, expr, ae.getMessage(), ae);
             throw ae;
@@ -119,13 +125,11 @@ public class DataSourceServiceImpl implements DataSourceService {
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
 
-        // SQL security validation for SQL-based datasources
-        if (isSqlDatasource(datasource)) {
-            validateSqlSecurity(expr);
-        }
-
         try {
-            return executor.execute(expr);
+            return guardSql(executor, sqlSecurityValidator).execute(expr);
+        } catch (AlertExpressionException ae) {
+            // A statement the policy rejected, whose message names the part it broke.
+            throw ae;
         } catch (Exception e) {
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new AlertExpressionException(e.getMessage());
@@ -133,22 +137,22 @@ public class DataSourceServiceImpl implements DataSourceService {
     }
 
     /**
-     * Check if the datasource is SQL-based
+     * Wraps an executor that speaks sql so that nothing runs on it unvalidated.
+     *
+     * <p>The decision is made from the executor rather than from the datasource string the
+     * caller passed, because the executor is what actually holds the database credentials.
+     * A datasource that does not speak sql is handed back untouched: a promql endpoint takes
+     * a query string, not a statement, and running it through a sql parser would only reject
+     * valid promql.
+     * @param executor Executor chosen for this datasource
+     * @param validator Policy to enforce, read only for expressions and whitelisting for raw log queries
+     * @return The executor, guarded when it speaks sql
      */
-    private boolean isSqlDatasource(String datasource) {
-        return datasource != null && datasource.equalsIgnoreCase(WarehouseConstants.SQL);
-    }
-
-    /**
-     * Validate SQL statement for security
-     */
-    private void validateSqlSecurity(String sql) {
-        try {
-            sqlSecurityValidator.validate(sql);
-        } catch (SqlSecurityException e) {
-            log.warn("SQL security validation failed: {}", e.getMessage());
-            throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
+    private QueryExecutor guardSql(QueryExecutor executor, SqlSecurityValidator validator) {
+        if (!executor.support(WarehouseConstants.SQL)) {
+            return executor;
         }
+        return new SqlValidatingQueryExecutor(executor, validator);
     }
 
     private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
