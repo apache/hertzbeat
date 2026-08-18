@@ -51,6 +51,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -182,6 +186,70 @@ class VictoriaMetricsDataStorageTest {
                         assertThat(postForEntityCount.get())
                                 // minimum flushes: ensure all data is processed (threadCount * writeSize / bufferSize)
                                 .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
+    }
+
+    @Test
+    void failedSingleNodeFlushRetainsTheBatchAndRetriesQuickly() {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10, 1, new VictoriaMetricsProperties.Compression(false)));
+        List<String> attemptedBodies = new CopyOnWriteArrayList<>();
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            HttpEntity<String> request = invocation.getArgument(1);
+            attemptedBodies.add(request.getBody());
+            if (writes.getAndIncrement() == 0) {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            return ResponseEntity.noContent().build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+
+        Awaitility.await()
+                .pollInterval(250, TimeUnit.MILLISECONDS)
+                .atMost(7, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(attemptedBodies).hasSizeGreaterThanOrEqualTo(2));
+        assertThat(attemptedBodies.get(1)).isEqualTo(attemptedBodies.get(0));
+    }
+
+    @Test
+    void persistentSingleNodeFailureDoesNotBlockTheWarehouseProducerIndefinitely() throws Exception {
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                1, 3600, new VictoriaMetricsProperties.Compression(false)));
+        AtomicInteger writes = new AtomicInteger();
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            writes.incrementAndGet();
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        });
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+        ExecutorService producer = Executors.newSingleThreadExecutor();
+        Future<?> pendingWrite = null;
+
+        try {
+            victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+            Awaitility.await().atMost(3, TimeUnit.SECONDS).until(() -> writes.get() > 0);
+            victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+
+            pendingWrite = producer.submit(
+                    () -> victoriaMetricsDataStorage.saveData(generateMockedMetricsData()));
+
+            pendingWrite.get(3, TimeUnit.SECONDS);
+            assertThat(victoriaMetricsDataStorage.getDroppedMetricCount()).isGreaterThanOrEqualTo(1);
+        } finally {
+            if (pendingWrite != null) {
+                pendingWrite.cancel(true);
+            }
+            producer.shutdownNow();
+        }
     }
 
     @AfterEach
