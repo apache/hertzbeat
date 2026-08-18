@@ -28,6 +28,17 @@ allow external access.
 | Bound Tags          | Tags for categorizing and managing monitoring resources.                                                           |
 | Description/Remarks | Additional remarks to identify and describe this monitoring. Users can add notes here.                             |
 
+### Credential upgrade behavior
+
+The API key is encrypted before it is stored and is returned by the monitor API
+as `******`. Submitting that mask while editing an existing monitor keeps the
+stored key unchanged. If the host, port, or SSL setting changes, the key must
+be re-entered so that a stored credential cannot be replayed to a new endpoint.
+
+On the first startup after upgrading, HertzBeat encrypts API keys created by
+older versions before scheduling collection jobs. The migration is idempotent
+and does not change an already encrypted value.
+
 ### Collection Metrics
 
 #### Metric Set: Version Info

@@ -98,7 +98,11 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
 
     @Override
     public void exportConfig(OutputStream os, List<Long> configList) {
-        var monitorList = configList.stream().map(it -> monitorService.getMonitorDto(it)).filter(Objects::nonNull).map(this::convert).toList();
+        var monitorList = configList.stream()
+                .map(monitorService::getMonitorDtoForExport)
+                .filter(Objects::nonNull)
+                .map(this::convert)
+                .toList();
         writeOs(monitorList, os);
     }
 

@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,6 +84,12 @@ class AppServiceTest {
     @Test
     void getAppParamDefines() {
         assertDoesNotThrow(() -> appService.getAppParamDefines("jvm"));
+    }
+
+    @Test
+    void credentialParametersUsePasswordType() {
+        assertEquals("password", findParam("ollama", "apiKey").getType());
+        assertEquals("password", findParam("http_sd", "__sd_token__").getType());
     }
 
     @Test
@@ -202,5 +209,12 @@ class AppServiceTest {
         List<ParamDefineInfo> appParamDefines = appService.getAppParamDefines(define.getApp());
         assertNotNull(appParamDefines);
         assertTrue(appParamDefines.stream().anyMatch(t -> t.getField().equals("host_test")));
+    }
+
+    private ParamDefineInfo findParam(String app, String field) {
+        return appService.getAppParamDefines(app).stream()
+            .filter(param -> field.equals(param.getField()))
+            .findFirst()
+            .orElseThrow();
     }
 }

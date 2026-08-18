@@ -50,6 +50,18 @@ You need to provide or develop an HTTP API that meets the following requirements
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds. |
 | Description remarks | For more information about identifying and describing this monitoring, users can note information here.                  |
 
+### Credential upgrade behavior
+
+The access token and password parameters are encrypted before they are stored
+and are returned by the monitor API as `******`. Submitting that mask while
+editing an existing monitor keeps the stored credential unchanged. If the
+service-discovery URL or authentication type changes, the credential must be
+re-entered so that a stored value cannot be replayed to a new endpoint.
+
+On the first startup after upgrading, HertzBeat encrypts access tokens created
+by older versions before scheduling service-discovery jobs. The migration is
+idempotent and leaves already encrypted values unchanged.
+
 ### Usage Steps
 
 1. **Prepare HTTP API**

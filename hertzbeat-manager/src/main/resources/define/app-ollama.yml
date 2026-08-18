@@ -65,7 +65,7 @@ params:
       zh-CN: API Key
       en-US: API Key
       ja-JP: API キー
-    type: text
+    type: password
     required: false
 # collect metrics config list
 metrics:
